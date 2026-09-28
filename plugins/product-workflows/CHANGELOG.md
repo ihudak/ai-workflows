@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.8.5] — 2026-09-26
+
+**Update `workflows-core` to 1.7.8 with this release.** `/idea` Phase 3 cites its `grilling-technique` rule *"A decision the source already states is settled"*, which an older `workflows-core` does not carry.
+
+### Fixed — behaviour
+
+- **`/idea`'s grill could argue past a scope boundary its own source had drawn.** A source that excluded something explicitly, but in passing (a parenthetical, a line near the end), had that exclusion captured by `idea-reader` inside `raw_context` prose and nowhere else. The orchestrator then wrote a grill recommendation whose rationale assumed the excluded surface was in scope, and used that breadth as its reason, so the user had to correct the premise before the parent decision could settle. The recommendation happened to survive the correction on a different rationale; unchallenged, it would have recorded a correct decision on a false premise. Seen on a sibling edition's run, where the input reached the orchestrator intact and the failure was at synthesis. `idea-reader` now returns `stated_scope` (every explicit **in** and **out** boundary, each with a verbatim `quote`, its `ref`, and `firmness: firm | tentative`). `/idea` Phase 3 seeds the design tree with the firm entries as decisions already made, which take no question slot. It puts a tentative one to the user to confirm, and checks every recommended answer **and its rationale** against the set before showing it. Arguing that a stated boundary is wrong is still possible, as an explicit challenge quoting it that competes for a slot. Phase 4 writes every entry into `## Rough scope` unless the grill reversed it, naming them before the section is written, and the Final report lists them with any reversal. `idea-format.md` Section 4 says the same of the file.
+
 ## [3.8.4] — 2026-09-24
 
 **Update `workflows-core` to 1.7.7 with this release.** Its `next-phase-offer` names the `/brd-interview` hand-over this release adds; beside 1.7.6 it still lists only the packaging, round and re-grounding steps after `/brd-interview`.

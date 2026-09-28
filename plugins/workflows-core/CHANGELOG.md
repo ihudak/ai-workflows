@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.7.8] — 2026-09-26
+
+**Update `product-workflows` to 3.8.5 with this release**, whose `/idea` Phase 3 applies the rule below to the `stated_scope` its `idea-reader` now returns.
+
+### Fixed — behaviour
+
+- **`grilling-technique` had no rule for a decision the source had already made.** The fact-vs-decision split told a grill what to look up and what to ask, but said nothing about an explicit inclusion, exclusion or constraint the ingested material (or an earlier answer) already stated. A grill could therefore re-ask it, or, worse, put a recommendation whose rationale assumed the opposite. A new mechanic makes such a statement settled: it is not re-asked, no question, recommended answer or **rationale** may assume the opposite, and revisiting it takes an explicit challenge that quotes the source. A hedged statement is put to the user to confirm, recommending the source's position. It applies to every caller of this file.
+
+### Fixed — the repository's gates (not shipped in any plugin)
+
+- **`scripts/check-docs.sh` check 6 counted bytes, not characters, under `mawk`**, the default `awk` on Debian and Ubuntu containers. A 199-character table cell carrying a few arrows or em dashes read as over 200, so `main` failed 15 times locally while passing on a runner whose `awk` is `gawk`. The check now runs under `LC_ALL=C` and subtracts UTF-8 continuation bytes, so both `awk`s count characters; it assumes well-formed UTF-8, which the comment says. A new selftest case, a 190-character cell of multibyte characters, fails on the old code.
+- **Check 18 was inert in a C or POSIX locale.** Its `[—-]` bracket expression is a set of bytes there, so the three-byte em dash never matched, and an `— Unreleased` heading on a publishing ref passed; the selftest's red case failed locally with `LANG` unset. The pattern is now the alternation `(—|-)`, and the selftest passes under both `LC_ALL=C` and `C.UTF-8`.
+
 ## [1.7.7] — 2026-09-24
 
 ### Changed — the marketplace is now `shipwright`, and the repository `ihudak/ai-workflows`

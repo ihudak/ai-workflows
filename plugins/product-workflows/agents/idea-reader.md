@@ -101,6 +101,8 @@ these files, never summarise it, and never infer what it holds from its name or 
 Note an unresolved link or image in a page that was read — the source, or a page the walk took — in
 `wikilinks_broken` and continue; a broken link is never fatal.
 
+**Stated scope (every provenance).** Extract every explicit scope statement the source makes into `stated_scope` — what it says is **in** and what it says is **out** — each with a **verbatim** quote and the ref it came from. Look everywhere, not just a "scope" heading: exclusions are often stated in passing, in parentheses, or near the end (*"export is not available for archived projects — only for active ones"*). Mark a hedged statement (*"maybe except archived projects"*) `firmness: tentative`; everything else is `firm`. Record only what the source states. Never infer a boundary it does not draw. The same statement also stays in `raw_context`. `stated_scope` exists so the caller cannot lose a boundary by synthesising over prose.
+
 ## Output
 
 Return this exact YAML shape (no preamble, no chatter):
@@ -117,6 +119,17 @@ source_refs:             # exactly one entry for a markdown source; [] for a pro
     salient_summary: <≤150 words: what this source says that matters to the idea>
 raw_context: |
   <distilled problem / users / value / scope hints from the source(s)>
+stated_scope:            # explicit boundaries the source draws; empty lists when it draws none
+  in:
+    - statement: <the boundary, in one line>
+      quote:     <verbatim source text>
+      ref:       <path | "prompt">
+      firmness:  firm | tentative
+  out:
+    - statement: <…>
+      quote:     <…>
+      ref:       <…>
+      firmness:  firm | tentative
 signals:
   - <demand-evidence bullet: requester, upvotes, recurring ask, linked case>
 images:
@@ -188,3 +201,4 @@ collapsed into one entry.
 - On a missing or unreadable source file, return `status: NOT_FOUND` with a clear message; do not guess.
 - NEVER mine a `prd` source for requesters, upvotes, or demand signals — a Product Requirements Document is prior art, not a demand ticket. Fabricating them is a correctness failure, not a stylistic one.
 - A `salient_summary` summarises **only** what was actually read; never infer content for a broken link.
+- NEVER omit an explicit scope statement from `stated_scope` because it is brief, parenthetical, or hedged, and NEVER add one the source does not make. Every entry carries a verbatim `quote`.

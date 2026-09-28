@@ -501,7 +501,11 @@ check_table_cells() {
   [ -n "$files" ] || return 0
   hits=$(while IFS= read -r f; do
            [ -n "$f" ] || continue
-           awk -v FILE="${f#$root/}" '
+           # LC_ALL=C + subtracting UTF-8 continuation bytes counts CHARACTERS the same way under
+           # gawk and mawk. A bare length() counts bytes under mawk (Debian/Ubuntu's default awk),
+           # so a 199-character cell carrying a few arrows or em dashes read as over 200.
+           # Assumes well-formed UTF-8: a stray continuation byte with no lead byte is subtracted too.
+           LC_ALL=C awk -v FILE="${f#$root/}" '
              /^[ \t]*(```|~~~)/ { infence = !infence; next }
              infence   { next }
              /^[[:space:]]*\|/ {
@@ -509,8 +513,9 @@ check_table_cells() {
                last = ($0 ~ /\|[[:space:]]*$/) ? n - 1 : n   # no trailing pipe => the final field IS a cell
                for (i = 2; i <= last; i++) {
                  c = cells[i]; gsub(/^ +| +$/, "", c)
-                 if (length(c) > 200)
-                   printf "%s:%d cell is %d chars (max 200)\n", FILE, NR, length(c)
+                 t = c; len = length(c) - gsub(/[\200-\277]/, "", t)
+                 if (len > 200)
+                   printf "%s:%d cell is %d chars (max 200)\n", FILE, NR, len
                }
              }' "$f"
          done <<<"$files")
@@ -1328,6 +1333,8 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf '{\"dev-workflows\": [\"alpha\", \"alpha-two\"], \"fixture-two\": [\"omega\"], \"fixture-unlisted\": [\"theta\"]}\n' > $NS_MAP_REL"
   expect_fail "a missing namespace manifest is rejected" 4 "rm -f $NS_MAP_REL"
   expect_fail "an undocumented env var is rejected" 5 "printf 'Reads \$NEW_SETTABLE_VAR here.\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "a 190-character cell of multibyte characters is accepted (check 6 counts characters, not bytes)" \
+    "printf '\\n| a | %s |\\n|---|---|\\n| b | c |\\n' \"\$(printf '\\342\\206\\222%.0s' \$(seq 190))\" >> $PLUGIN_REL/docs/reference/hooks.md"
   expect_fail "an over-long table cell is rejected" 6 "awk 'BEGIN{s=\"\"; while(length(s)<260) s=s \"x\"; printf \"\\n| a | %s |\\n|---|---|\\n| b | c |\\n\", s}' >> $PLUGIN_REL/docs/reference/hooks.md"
   expect_fail "a drifted install block is rejected" 7 "sed -i.bak 's|$CLI plugin install ${PLUGIN_REL##*/}@fixture-plugins|$CLI plugin install ${PLUGIN_REL##*/}@drifted|' $PLUGIN_REL/docs/getting-started.md"
   expect_fail "a documented nonexistent skill is rejected" 4 "printf '\n| \`ghost-skill\` | Yes | fixture mutation |\n' >> $PLUGIN_REL/docs/reference/references.md"
@@ -2630,13 +2637,16 @@ check_published_changelog() {
     seen=$((seen + 1))
     rp="${f#$root/}"
     # `##`-or-deeper heading, a bracketed version, an em dash or hyphen, then Unreleased.
+    # An alternation, never a bracket expression: `[—-]` is a set of BYTES in a C/POSIX locale
+    # (a container with LANG unset), where the three-byte em dash can never match it and the
+    # check went silently inert on the form this repo actually writes.
     while IFS= read -r line; do
       [ -n "$line" ] || continue
       n="${line%%:*}"
       hit="${line#*:}"
       fail 18 "$rp:$n is headed \`${hit# }\` on a ref that publishes it -- this file's own header says an \`— Unreleased\` section \"has not been published yet\", and everything on the default branch is what \`claude plugin update\` fetches. Date it with the day of the push that publishes it"
     done <<EOF
-$(grep -nE '^#{2,}[[:space:]]+\[[^]]+\][[:space:]]*[—-][[:space:]]*Unreleased[[:space:]]*$' "$f" || true)
+$(grep -nE '^#{2,}[[:space:]]+\[[^]]+\][[:space:]]*(—|-)[[:space:]]*Unreleased[[:space:]]*$' "$f" || true)
 EOF
   done
   [ "$seen" -gt 0 ] \

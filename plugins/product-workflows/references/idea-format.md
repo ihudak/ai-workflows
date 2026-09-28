@@ -64,6 +64,9 @@ insufficient. No proposed solution, no technology detail.
 ## Section 4 — Rough scope
 
 `## Rough scope` — **In:** initial in-scope bullets; **Out:** initial guardrails. *What*, not *how*.
+Every boundary the source states explicitly (the `idea-reader` digest's `stated_scope`) appears here
+as the source put it, unless the user reversed it during the grill. A stated exclusion is never dropped
+because nothing contradicted it.
 
 ## Section 5 — Signals & evidence
 

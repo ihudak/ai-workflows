@@ -1,6 +1,6 @@
 {
   "name": "workflows-core",
-  "version": "1.7.7",
+  "version": "1.7.8",
   "description": "Shared foundation for the dev-workflows plugin family: the addressing grammar and specs-repo git entry points, phase handoff, model routing, escalation and finding-triage rules, cost/feedback/follow-up emission, and the reference loader skill that lets a dependent plugin read them. Also carries the family-meta utility commands — /feedback, /prompt, /prompt-brainstorm, /prompt-grill-me, /statusline — and /frames for indexing design frame sets.",
   "author": {
     "name": "Ivan Gudak",

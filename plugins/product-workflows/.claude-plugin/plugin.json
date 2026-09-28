@@ -1,6 +1,6 @@
 {
   "name": "product-workflows",
-  "version": "3.8.4",
+  "version": "3.8.5",
   "description": "Fourteen slash commands for defining a product — its requirements, architecture and specification: a six-command BRD-to-PRD route (/brd-intake → /brd-split → /prd-ground → /brd-split → /brd-interview → /brd-package → /brd-reconcile) that grounds a customer's requirements document, settles it with them, and seeds the PRD, ARD and specification; the idea→PRD→ARD→specification ladder (/idea → /create-prd → /update-prd → /create-ard → /specify), with /prd-ground optionally grounding the PRD itself; /epics, deriving Epics from a PRD; and /prd-proposal and /brd-proposal, pricing a graded requirement set in human hours — never money — with every cost driver citing a record on disk and gating nothing. Fourteen agents carry the grounding, figure transcription, reconciliation, review and Epic writing. Twelve reference pages define the artifact formats and the link walk these commands share.",
   "author": {
     "name": "Ivan Gudak",
