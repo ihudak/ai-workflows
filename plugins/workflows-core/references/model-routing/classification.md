@@ -96,7 +96,7 @@ degradation** in the Phase 0 / Step 0 routing record and again in the final repo
 
 The "currently selected model" is whatever the orchestrator itself is running
 under. Sub-agents inherit it unless the orchestrator explicitly overrides via
-the `task` tool's `model` argument.
+the `task` tool's `model` argument (and under §10 every dispatch overrides it).
 
 ---
 
@@ -116,6 +116,18 @@ Use the first available:
 
 If neither Sonnet is available, fall back to the session model and announce it.
 Record the chosen model as `detection_model:` in the `model_routing` block.
+
+---
+
+## 2.2 Cheap ("bugs-only") fallback chain
+
+Used only by `defect-reporter` under `--skip-feedback` (`workflows-core:run-flags`
+§4). Use the first available:
+
+1. `claude-haiku-4-5`
+2. the §2.1 chain
+
+Record it as `defect_model:` in the `model_routing` block when used.
 
 ---
 
@@ -176,8 +188,11 @@ model_routing:
   review_model:   <e.g. claude-opus-5-5>       # only set for SIGNIFICANT/HIGH-RISK
   implementation_model: <e.g. claude-sonnet-5 or current_model>
   detection_model: <e.g. claude-sonnet-5>    # mid-tier steps (§2.1); never the session model
+  defect_model:   <e.g. claude-haiku-4-5>    # §2.2 cheap chain; set only under --skip-feedback
   fixes_model:    <same as implementation_model>
   opus_available: true | false
+  enforced_model: <e.g. claude-opus-5-5>     # §10: set only when run_flags.enforced_model is set
+  routing: bypassed                          # §10: present only alongside enforced_model
   gate_tests_on_review: true | false   # optional; default false. Only meaningful for SIGNIFICANT/HIGH-RISK.
                                        # When true, the executor/fixer sub-agent stops after the build,
                                        # returns status: AWAITING_REVIEW, and waits for a follow-up call
@@ -479,7 +494,7 @@ rule.
 - **Orchestrator-executed** judgment steps — the inline prose writing and the
   interactive gates, plus the orchestration itself — run on the session model
   and CANNOT be overridden from inside a running command. Handle them with an
-  **advisory** (recommend relaunching on the §2 chain), never an override. This advisory applies when the task is SIGNIFICANT/HIGH-RISK. Where the authoring step is the orchestrator itself, how it is discharged is the command's own to state and differs: `/design` and `/create-ard` make it a HARD gate on `current_model` that stops and offers a relaunch, while `/create-prd` degrades to the best available model and records the degradation instead of stopping. Read the command rather than assuming a gate. Where the writing is delegated to a writer on its own Opus pin, the writing is already off the session model and the residual risk is the orchestrator's own context window, so the advisory narrows there to a large non-Opus run, as in `/document`. At SIMPLE/MODERATE §3.1 requires none, and requires nothing against one either: it asks only that no *mandatory* Opus step be added, so a command that offers a soft advisory anyway (`/design`) is stricter by its own choice and not in breach.
+  **advisory** (recommend relaunching on the §2 chain), never an override. This advisory applies when the task is SIGNIFICANT/HIGH-RISK. Where the authoring step is the orchestrator itself, how it is discharged is the command's own to state and differs: `/design` and `/create-ard` make it a HARD gate on `current_model` that stops and offers a relaunch, while `/create-prd` degrades to the best available model and records the degradation instead of stopping — except under §10, where no such gate fires. Read the command rather than assuming a gate. Where the writing is delegated to a writer on its own Opus pin, the writing is already off the session model and the residual risk is the orchestrator's own context window, so the advisory narrows there to a large non-Opus run, as in `/document`. At SIMPLE/MODERATE §3.1 requires none, and requires nothing against one either: it asks only that no *mandatory* Opus step be added, so a command that offers a soft advisory anyway (`/design`) is stricter by its own choice and not in breach.
 
 ### 9.2 Role → chain map
 
@@ -523,3 +538,18 @@ scan that feeds an Opus synthesis (e.g. `/implement`'s `risk-planner`) still run
 on Sonnet — the reasoning power is applied in the synthesis step, not the scan.
 The only carve-out is size-driven, not session-driven: escalate a single
 oversized repo slice's `code-scanner` to Opus (§8.3).
+
+---
+
+## 10. Enforced model
+
+`run_flags.enforced_model` (`workflows-core:run-flags`) lets a run pin every subagent dispatch to one model, bypassing model routing's own per-step selection. Classification and the routing rules above are unchanged in what they select — this section changes only which model each selection resolves to.
+
+- **Chain resolution.** When `run_flags.enforced_model` is set, every resolution of §2, §2.1, §2.2, and §8.3's oversized-slice escalation returns that id instead of walking its own chain. Every `*_model` field of the §4 `model_routing` block — `planning_model`, `review_model`, `implementation_model`, `detection_model`, `defect_model`, `fixes_model` — equals it, and the block gains `enforced_model: <id>` and `routing: bypassed`. `opus_available` is still resolved and reported truthfully: it is a property of the environment (§9.3), not of the enforcement choice, so it is never rewritten to agree with the enforced id.
+- **Every dispatch.** Every `task` tool dispatch passes `model: <enforced>` explicitly, including the agents whose frontmatter pins `model: opus` — the dispatch's `model:` argument overrides the frontmatter pin. Every "frontmatter-pinned … no override" statement at a command's dispatch site reads "no override unless §10 enforces a model", so no live sentence contradicts this section.
+- **Nested dispatch.** An agent that itself dispatches another agent (`docs-style-checker` → `prose-style-checker`; `upgrade-executor` / `vuln-fixer` → `test-baseliner` via the `task` tool) receives `enforced_model` in its prompt and passes it as `model:` on its own dispatch, so enforcement reaches every model a run touches, not only the orchestrator's own direct calls.
+- **Steps unchanged.** Classification (§1) still runs and still selects the §3 sequence for the task's class — a SIGNIFICANT/HIGH-RISK task still gets its plan and review gates, a SIMPLE/MODERATE task still skips them. Enforcement changes which model each selected step runs on, never whether the step runs.
+- **The orchestrator.** The orchestrator itself stays on the session model; it cannot be switched from inside a running command, exactly as §2's "currently selected model" already says. `workflows-core:run-flags` §3 step 7 prints the one relaunch advisory — `orchestrator runs on <session-model>; relaunch after /model <alias> to enforce it there too` — when the enforced id differs from `current_model`.
+- **Opus-session gates do not fire.** §9.1's HARD gates in `/design` and `/create-ard`, and `/create-prd`'s degrade path, do not fire under enforcement — the user chose the model, and testing the enforced id in their place would let a Sonnet session pass an Opus gate, since the inline grill these gates protect still runs on the session model. The `run-flags` §3 step 7 advisory is the only notice of a session/enforced mismatch; §9.1's own relaunch advisory is not issued alongside it.
+- **Degradation notices are suppressed.** §2's "no Opus available" notice and §9.3's no-Opus degradation notice are not emitted under enforcement — there is no fallback to announce, since every resolution already returns the enforced id. §7's report states `Model routing: bypassed — enforced <id> (flag|env)` in place of the degradation line it would otherwise carry.
+- **Unpriced ids.** A reachable enforced id absent from `cost-prices.yaml` does not stop the run: `workflows-core:run-flags` §2 prints the Phase 0 unpriced-model warning, and `workflows-core:cost-emission` §6.1's dominance warning covers it in the final report.

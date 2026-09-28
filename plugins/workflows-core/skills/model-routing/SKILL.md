@@ -15,3 +15,5 @@ Then classify the current task as exactly one of `SIMPLE`, `MODERATE`,
 `SIGNIFICANT`, or `HIGH-RISK` using the criteria in that file, and apply the
 model fallback chain and `model_routing` handoff block it defines. That file is
 the single source of truth — do not paraphrase or cache its contents here.
+
+Under `--enforce-model` (`run_flags.enforced_model`), apply §10 of that file, which overrides every chain resolution.
