@@ -27,9 +27,13 @@ BRD route's `[BR#n]` inventory and the idea route's PRD-level `[AC#n]`/`[FR#n]`/
 It is deliberately not `/design-index`: `/design` is the engineering-design workflow, and a name
 adjacent to it would invite an operator who wanted an index into the wrong command.
 
+Usage: `/frames <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
+
 ---
 
 ## Phase 0 — Resolve the address + model routing
+
+**Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
 
 0. **The environment.** `$SPECS_PATH` must resolve: every path this command reads or writes is under
    it. Unset or not a directory → apply the *Required path environment variable unset* rule in
@@ -42,8 +46,10 @@ adjacent to it would invite an operator who wanted an index into the wrong comma
    in this same step fire either way; they never needed `$SPECS_PATH`, so *the only reachable stop*,
    which this sentence used to say, was wrong in both directions.)
 
-   **`/frames` defines no flags, and takes exactly one address.** A second non-flag token, or a token
-   beginning with `--`, is a stop rather than a silent discard:
+   **`/frames` defines no flags of its own — only the three universal run flags stripped above — and
+   takes exactly one address.** A second non-flag token, or a token beginning with `--` that survives
+   the strip above (so neither `--skip-costs`, `--skip-feedback` nor `--enforce-model`), is a stop
+   rather than a silent discard:
    `FRAMES_EXTRA_ARGUMENT: /frames takes one address and no flags; '<token>' is neither. It indexes the frame sets of one folder per run — re-run once per folder.`
    A discarded second address is a folder the operator believes was indexed and was not.
 
@@ -110,6 +116,7 @@ adjacent to it would invite an operator who wanted an index into the wrong comma
      classification: MODERATE          # a bounded read plus a mechanical reconciliation
      reason: <one-line>
      current_model: <the model this orchestrator is running under>
+     enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
      detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # frame-describer
      opus_available: <true if a §2 Opus model resolved, else false>
      notes: <any §2/§2.1 fallback or degradation>
@@ -383,6 +390,8 @@ gap** (a capability the run needed but the plugin lacked), `emit-block` (per
 `${CLAUDE_PLUGIN_ROOT}/references/feedback-emission.md`) at that halt **before** escalating. NEVER
 `emit-block` for an environment / user halt (an address that resolves to nothing, a cancellation).
 
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` as this phase's only output. Capture-at-block (`emit-block`) is unaffected by the flag.
+
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model: `<detection_model — §2.1 Sonnet chain>`):
    > "Analyse this session and return a Lessons Learned report.
    >
@@ -399,7 +408,7 @@ gap** (a capability the run needed but the plugin lacked), `emit-block` (per
    with the Lessons Learned report, `command: /frames`, `key` = the resolved folder's key, the run's
    `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`).
    Surface the persisted path (or "no plugin-facing signal — nothing persisted").
-3. **Session cost (ALWAYS runs).** Cite `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md` and call
+3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, cite `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md` and call
    its `emit-cost` entry point with `command: /frames`, `phase: inferred`, `role: inferred`, `key` =
    the resolved folder's key, the run's `source`, and `plugin_version`. §7's discriminator is the
    resolved folder's own `kind`, which Phase 0 already read: `brd` attributes the run to
@@ -452,8 +461,8 @@ clears it. State the
 count even when it did not bite ("all N frames described; the 40-frame cap did not apply"), because
 the absence of a truncation notice is only informative once the run is known to print one.
 
-Also report: the resolved model routing (with any degradation); the feedback path; the cost path (or
-the report-only notice); the `Specs repo:` outcome line from `commit-artifacts`
+Also report: the resolved model routing (with any degradation), including `Model routing: bypassed — enforced <id> (flag|env)` in place of the degradation line wherever `run_flags.enforced_model` is set; the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line); the cost path (or
+the report-only notice, or, under `--skip-costs`, the `Session cost: …` line); the `Specs repo:` outcome line from `commit-artifacts`
 (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §6), with any guard notice repeated in full;
 and the `Phase handoff:` outcome line for whichever of the two outcomes Phase 3's offer reached —
 `handoff-to-main`'s own line on the first option, and §4.1's *Declined by the user* line on either

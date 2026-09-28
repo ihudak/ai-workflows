@@ -9,10 +9,12 @@ Logs a manual note about the plugin family itself — friction you hit, or an im
 ## Synopsis
 
 ```
-/feedback [<note>]
+/feedback [<note>] [--skip-costs]
 ```
 
-`$ARGUMENTS` is the note text — the friction you hit and the improvement you want, in your own words. Leave it empty and Phase 1 asks for it directly; it never guesses at content you didn't express.
+`--skip-costs` (or `$WORKFLOWS_SKIP_COSTS`, [`environment.md`](../reference/environment.md)) skips this run's session-cost entry, still advancing the checkpoint; it is the only run flag this command applies — `--skip-feedback` and `--enforce-model` are reported ignored, since `/feedback` dispatches no `impl-maintenance` and invokes no model routing.
+
+`$ARGUMENTS`, once the run flag above is stripped, is the note text — the friction you hit and the improvement you want, in your own words. Leave it empty and Phase 1 asks for it directly; it never guesses at content you didn't express.
 
 ## What it needs
 

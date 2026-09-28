@@ -15,9 +15,13 @@ grills the fix **inline** following the embedded grilling technique
 The interrogation is self-contained — this command owns the grill and has **no
 plugin dependency**.
 
+Usage: `/prompt-grill-me <corrective request> [--skip-costs]`
+
 ---
 
 ## Phase 0 — Specs-repo preflight
+
+**Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step, including the **verbatim** User prompt below, reads only the stripped string this leaves. This command dispatches no `impl-maintenance` and invokes no `workflows-core:model-routing`, so an explicit `--skip-feedback` or `--enforce-model` fails `strip-run-flags`' applicability test and is reported `Run flags: --<flag> does not apply to /prompt-grill-me — ignored`; only `--skip-costs` applies.
 
 Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
 `specs-preflight` entry point (§3) inline: flush any leftover session
@@ -71,6 +75,8 @@ intent record now, before ceding:
   this marketplace; recording the home makes that a property of the record rather
   than of the current allocation.
 
+Under `run_flags.skip_costs`, write the record with `"skip": true` (`workflows-core:cost-emission` §13.1): the next measured run still carves this segment out of its own window and then writes no entry for it.
+
 **Append — never overwrite.** The file holds a JSON **array**: read it if it
 exists, append this record, write it back; create it with a one-element array
 when absent. A session may cede more than once, and a record that replaces its
@@ -90,7 +96,7 @@ It NEVER touches a code/docs repo, or the current working
 directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when
 the run carries `specs_git: blocked` (§3.3 G0), re-emitting that notice.
 Print its §6 outcome line here, prefixed `Specs repo:`, with any guard notice
-repeated in full.
+repeated in full. Repeat the `Run flags: …` line here too, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — this is the run's last printed output before the Phase 3 grill takes over the session.
 
 ## Phase 3 — Grill the fix (inline)
 

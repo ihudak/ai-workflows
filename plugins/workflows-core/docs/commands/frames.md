@@ -17,10 +17,12 @@ That is strict on purpose, and it left the obvious workflow with no way out. A h
 ## Synopsis
 
 ```
-/frames <KEY>|@<path>
+/frames <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 One address, resolved with the same resolver every keyed command uses: a key, or `@<path>` to the folder or to a file inside it. No kind is passed, because `design/` is reserved at every level.
+
+All three run flags apply to this command ([`environment.md`](../reference/environment.md)). `--skip-costs` (or `$WORKFLOWS_SKIP_COSTS`) skips this run's session-cost entry, still advancing the checkpoint. `--skip-feedback` (or `$WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 4's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance`. `--enforce-model=<model>` (or `$WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `frame-describer` and, under `--skip-feedback`, `defect-reporter` — to one model, bypassing the routing this page's [How it runs](#how-it-runs) section otherwise selects.
 
 ## How it runs
 

@@ -9,10 +9,12 @@ Logs a corrective interaction, then grills the fix inline with a bounded (≤5-q
 ## Synopsis
 
 ```
-/prompt-grill-me <corrective request>
+/prompt-grill-me <corrective request> [--skip-costs]
 ```
 
-`$ARGUMENTS` is the corrective request, captured **verbatim** as the User prompt block. Phase 1 infers the target command from recent context, asking only if genuinely ambiguous; if none applies, it records `n/a`.
+`--skip-costs` (or `$WORKFLOWS_SKIP_COSTS`, [`environment.md`](../reference/environment.md)) writes the deferred §13.1 record below with `"skip": true`, so the next cost-emitting run in the session still carves this segment out of its own window and then writes no entry for it; it is the only run flag this command applies — `--skip-feedback` and `--enforce-model` are reported ignored, since `/prompt-grill-me` dispatches no `impl-maintenance` and invokes no model routing.
+
+`$ARGUMENTS`, once the run flag above is stripped, is the corrective request, captured **verbatim** as the User prompt block. Phase 1 infers the target command from recent context, asking only if genuinely ambiguous; if none applies, it records `n/a`.
 
 ## What it needs
 

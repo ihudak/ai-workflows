@@ -16,9 +16,13 @@ Captured (per `${CLAUDE_PLUGIN_ROOT}/references/feedback-emission.md` §1):
 2. **User prompt** — your corrective request, **verbatim** (`$ARGUMENTS`).
 3. **Resolution** — what the AI actually did.
 
+Usage: `/prompt <corrective request> [--skip-costs]`
+
 ---
 
 ## Phase 0 — Specs-repo preflight
+
+**Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step, including the **verbatim** User prompt above, reads only the stripped string this leaves. This command dispatches no `impl-maintenance` and invokes no `workflows-core:model-routing`, so an explicit `--skip-feedback` or `--enforce-model` fails `strip-run-flags`' applicability test and is reported `Run flags: --<flag> does not apply to /prompt — ignored`; only `--skip-costs` applies.
 
 Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
 `specs-preflight` entry point (§3) inline: flush any leftover session
@@ -61,7 +65,9 @@ Cite `${CLAUDE_PLUGIN_ROOT}/references/feedback-emission.md` and call its
 the entry with the two extra prose blocks (`origin: prompt`), and appends per §3
 (prompt entries are never silently skipped). Write silently — a single append.
 
-**Then emit session cost.** Cite `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md`
+**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way.
+
+**Otherwise, emit session cost.** Cite `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md`
 and call its `emit-cost` entry point with `command: /prompt`, `phase: inferred`,
 `role: inferred`, `target_command: <the Phase 1 target command, or `n/a`>`, the run's
 `key` (or `null`) and `source`, and `plugin_version`. **`target_command` is
@@ -90,7 +96,7 @@ run carries `specs_git: blocked` (§3.3 G0), re-emitting that notice. Hold its
 
 ## Phase 4 — Report
 
-Surface the persisted path and any degradation notice, then the `Specs repo:`
+Repeat the `Run flags: …` line whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6). Surface the persisted path and any degradation notice (or, under `--skip-costs`, the `Session cost: …` line in its place), then the `Specs repo:`
 outcome line from `commit-artifacts`
 (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §6), with any guard
 notice repeated in full.

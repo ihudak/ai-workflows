@@ -11,10 +11,12 @@ Logs a corrective interaction — a command anywhere in the plugin family produc
 ## Synopsis
 
 ```
-/prompt <corrective request>
+/prompt <corrective request> [--skip-costs]
 ```
 
-`$ARGUMENTS` is the corrective request itself, captured **verbatim** as the User prompt block — never paraphrased. Phase 1 infers which command's output you're correcting from recent context, asking only if genuinely ambiguous; if none applies, it records `n/a`.
+`--skip-costs` (or `$WORKFLOWS_SKIP_COSTS`, [`environment.md`](../reference/environment.md)) skips this run's session-cost entry, still advancing the checkpoint; it is the only run flag this command applies — `--skip-feedback` and `--enforce-model` are reported ignored, since `/prompt` dispatches no `impl-maintenance` and invokes no model routing.
+
+`$ARGUMENTS`, once the run flag above is stripped, is the corrective request itself, captured **verbatim** as the User prompt block — never paraphrased. Phase 1 infers which command's output you're correcting from recent context, asking only if genuinely ambiguous; if none applies, it records `n/a`.
 
 ## What it needs
 
