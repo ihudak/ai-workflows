@@ -47,7 +47,7 @@ A new reference `plugins/workflows-core/references/run-flags.md` is the single s
   - `--skip-feedback` → the 25 commands that dispatch `impl-maintenance` (`grep -l 'workflows-core:impl-maintenance' plugins/*/commands/*.md`).
   - `--skip-costs` → the 27 commands with a `cost-emission` §7 row: the 25 that call `emit-cost`, plus `/prompt-brainstorm` and `/prompt-grill-me`, which defer.
   - `--enforce-model` → the 26 commands that load `workflows-core:model-routing`.
-  - A flag (or env default) given to a command it does not apply to is accepted and ignored with a one-line notice, so env defaults never break `/docs-serve`, `/feedback`, `/statusline` or `/docs-profile`.
+  - A flag given explicitly to a command it does not apply to is accepted and ignored with a one-line notice; an env default outside its set is silently ignored — so env defaults never break `/docs-serve`, `/feedback`, `/statusline` or `/docs-profile`.
 - **The record:** Phase 0 builds `run_flags: {skip_costs, skip_feedback, enforced_model, source: {<flag>: flag|env}}`. It prints one `Run flags:` line only when any is non-default, and the final report repeats it.
 
 ## 2. `--skip-costs`

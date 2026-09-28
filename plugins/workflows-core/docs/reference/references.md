@@ -58,7 +58,7 @@ The bookkeeping every long-running command emits around its actual work.
 
 What the family needs configured around it, and how a command chooses the model it runs on.
 
-- `run-flags.md` — the three run flags every applicable command accepts (`--skip-costs`, `--skip-feedback`, `--enforce-model`), their `$WORKFLOWS_*` environment defaults, the model-alias table, the `run_flags` record built in Phase 0, and the `strip-run-flags` / `skip-cost` entry points.
+- `run-flags.md` — the three run flags every applicable command accepts (`--skip-costs`, `--skip-feedback`, `--enforce-model`), their `$WORKFLOWS_SKIP_COSTS` / `$WORKFLOWS_SKIP_FEEDBACK` / `$WORKFLOWS_ENFORCE_MODEL` environment defaults, the model-alias table, the `run_flags` record built in Phase 0, and the `strip-run-flags` / `skip-cost` entry points.
 - `dependencies.md` — the two kinds of relationship a plugin here can have with another: a declared, host-resolved `dependencies` entry inside this family (an unsatisfied one disables the plugin), and an optional companion outside it resolved at runtime with graceful fallback.
 - `classification.md` — lives under `model-routing/`, not the top level; the single source of truth for task-complexity classification, the model fallback chain, the mandatory Opus code-review checklist, and the `model_routing` handoff block every pipeline command loads at its own classification step.
 
