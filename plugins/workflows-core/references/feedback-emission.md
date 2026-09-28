@@ -165,7 +165,7 @@ Excluded: friction, wishes, improvements, polish; user mistakes (wrong argument,
 When projecting an `impl-maintenance` report (§6 `emit-auto`), the plugin-facing
 slice is exactly its **Command workflow improvements**, **New agents / skills**,
 and **Reference docs** (paths under `${CLAUDE_PLUGIN_ROOT}`) sections, plus the
-**Key observations** that triggered them. Discard its **CLAUDE.md rules** and
+**Key observations** that triggered them, plus any **Key observations** naming an ai-containers defect (§4), projected as `category: environment-defect`. Discard its **CLAUDE.md rules** and
 **Hooks** sections (target-project advice).
 
 ## 5. Interaction model — silent, high-recall
@@ -203,7 +203,8 @@ Inputs: the `impl-maintenance` **Lessons Learned report**, `command` (the exact
 slash-command name), `key` (or `null`), `source` (`specs | directory | none`).
 
 Behavior: project the plugin-facing slice per §4 (Command workflow improvements
-+ New agents / skills + plugin Reference docs + the triggering Key observations);
++ New agents / skills + plugin Reference docs + the triggering Key observations
++ Key observations naming an ai-containers defect (§4), as `category: environment-defect`);
 render one `origin: auto` entry per distinct plugin-facing signal (Friction =
 the observation, Suggested improvement = the suggestion); dedupe by stable `id`
 (§3); resolve the target (§2); write silently (§5). Return the persisted path,

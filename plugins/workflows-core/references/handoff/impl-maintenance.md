@@ -24,7 +24,7 @@ If `Command run` is missing from the handoff, default to
 report's `### Session summary` so the caller notices and updates their
 invocation.
 
-Under `--skip-feedback` (`workflows-core:run-flags` §4), the orchestrator sends this exact same handoff shape to `workflows-core:defect-reporter` instead of this agent.
+Under `--skip-feedback` (`workflows-core:run-flags` §4), the orchestrator sends this same handoff shape, plus a `Plugin root:` field naming its own `${CLAUDE_PLUGIN_ROOT}`, to `workflows-core:defect-reporter` instead of this agent.
 
 ## Output (impl-maintenance → impl orchestrator)
 

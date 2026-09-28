@@ -766,6 +766,6 @@ since finished, which is why it could never have committed its own.
   is this case: the new session has its own `deferred-<session_id>.json`, so the
   old record is never read again and is safe to delete.
 - **It is not a general mechanism for skipping the cost phase.** A command that
-  *can* measure itself must; deferral exists only for a run that provably cannot,
+  *can* measure itself must — unless the user skipped it (`workflows-core:run-flags` §5); deferral exists only for a run that provably cannot,
   and adding a third deferring command means showing that its Phase 3 cedes the
   session too.
