@@ -13,6 +13,12 @@ Two capture paths feed the same file, distinguished by their `origin`:
 
 None of this pauses the run for approval. Capture is silent and high-recall by design — curation is the maintainer's job centrally, at analysis time, not something to ask a non-expert engineer to triage mid-run.
 
+## Bugs only (`--skip-feedback`)
+
+`--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows the automatic maintenance phase — carried by all fourteen of this plugin's commands — to bug capture only. Under the flag, the maintenance phase dispatches `workflows-core:defect-reporter` in place of `workflows-core:impl-maintenance`, on the cheap `classification.md` §2.2 chain (or the run's enforced model), with the same compact session handoff. `defect-reporter` returns only real defects — a wrong or self-contradictory instruction, a broken script, gate or hook, a missing or wrong reference, a command contradicting its own documentation, a crash, or a defect in the ai-containers environment the family runs in (a missing tool, a wrong mount, a bad default) — never friction, wishes, polish, or the target-project tooling advice the in-session Lessons Learned report would otherwise carry, all of which this path drops entirely.
+
+Any defect it returns is persisted through `emit-bugs` into the same `<KEY>-feedback.md` file, `origin: auto`, `category: environment-defect` for a container-environment location and the usual vocabulary otherwise. A defect-free run loads `workflows-core:feedback-emission` not at all and writes nothing. The run reports `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of the usual persisted-path line.
+
 ## Where files land
 
 The primary target is `<PRD-dir>/dev-workflows/<KEY>-feedback.md` — one file per PRD, resolved the same specs-first way session cost is. `$SPECS_PATH` writable with the PRD directory matched is the primary case; `$SPECS_PATH` writable but no PRD directory found writes to `$SPECS_PATH/dev-workflows-feedback/<KEY-or-date>.md` at the specs-repo root instead, marked unfiled so it can be moved under the right PRD dir later with a loud warning that it will not auto-aggregate to the maintainer; a folder in the specs tree with neither available writes beside that directory; and if nothing resolves at all, the entry stays in the run's own printed output and is never written into your current working directory. In every non-primary tier the entry also stays visible in the run's final output, so nothing is silently lost even when it can't be filed where it belongs.

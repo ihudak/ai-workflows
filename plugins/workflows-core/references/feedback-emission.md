@@ -1,11 +1,6 @@
 # Session Feedback Emission — Shared Reference
 
-Single source of truth for the plugin family's session-feedback emitter. Every
-capture surface — the automatic maintenance phase of all twenty-five workflow
-commands, and the `/feedback` and `/prompt*` commands — cites this file and
-executes its steps inline. The orchestrator owns every prompt; this reference
-owns the entry format, the persistence ladder, dedup/attribution, the
-plugin-facing predicate, and the caller contract.
+Single source of truth for the plugin family's session-feedback emitter. Every capture surface — the automatic maintenance phase of all twenty-five workflow commands, or, under `--skip-feedback`, its bugs-only replacement, and the `/feedback` and `/prompt*` commands — cites this file and executes its steps inline. The orchestrator owns every prompt; this reference owns the entry format, the persistence ladder, dedup/attribution, the plugin-facing predicate, and the caller contract.
 
 **Purpose.** Capture friction and improvement signals about the **plugin
 family itself** and persist them per-PRD into the **specs repo** so the plugin
@@ -83,7 +78,7 @@ back in review because the two products differ here.
   value when it fits so clusters don't fragment):
   `missing-capability`, `wrong-output`, `ambiguous-prompt`,
   `missing-reference-doc`, `model-routing`, `manual-workaround`,
-  `false-positive`, `docs-ux`, `other`.
+  `false-positive`, `docs-ux`, `environment-defect`, `other`.
 - **`origin: prompt` entries add two more prose blocks** after Friction /
   Suggested improvement: **User prompt** (the user's corrective request,
   verbatim) and **Resolution** (what the AI actually did).
@@ -141,7 +136,7 @@ mount / permission) drops to the next tier with the same notice.
 
 ## 4. Plugin-facing predicate — what persists
 
-Persist **only** signals about **this plugin family** itself — `workflows-core` and every plugin that declares it, currently `dev-workflows`, `product-workflows` and `docs-workflows`. This line said "the dev-workflows plugin" until the family spanned four, and read literally it dropped every signal about the other three:
+Persist **only** signals about **this plugin family** itself — `workflows-core` and every plugin that declares it, currently `dev-workflows`, `product-workflows` and `docs-workflows` — and **defects in the ai-containers environment** the family is run in (`ihudak/ai-containers`). This line said "the dev-workflows plugin" until the family spanned four, and read literally it dropped every signal about the other three:
 
 - Command workflow improvements (a command should behave differently — e.g. the
   `cloud|self-hosted` scoping case).
@@ -149,11 +144,23 @@ Persist **only** signals about **this plugin family** itself — `workflows-core
 - Gaps in the reference docs of **whichever family plugin the signal is about** — `plugins/<that plugin>/references/**`, resolved from the running command's own plugin, and **not** `${CLAUDE_PLUGIN_ROOT}/references/**`. Written in this file that variable resolves to the plugin that *ships this reference* (`workflows-core`), so a `/prd-ground` run classifying a gap in `product-workflows`'s `brd-format.md` would test it against the wrong tree — the same hazard §3's `plugin_version` paragraph states, met one section later.
 - Corrective interactions captured by `/prompt*` (any command output the user
   had to fix).
+- Defects in the ai-containers environment — a tool the run needed and the container lacks, a wrong mount, a bad default — as `category: environment-defect`.
 
 **Do NOT persist target-project tooling advice** — project `CLAUDE.md` rules,
 target-repo hooks, and other repo-specific suggestions stay in
 `impl-maintenance`'s in-session report, not the feedback file. That advice is
 for the engineer's current repo, not the plugin maintainer.
+
+### 4.1 Defect predicate
+
+Fixable in the plugin family or in ai-containers:
+
+- a wrong or self-contradictory instruction; a broken script, gate or hook; a missing or wrong reference; a command contradicting its own documentation; a crash;
+- a container environment defect: a missing tool, a wrong mount, a bad default.
+
+Excluded: friction, wishes, improvements, polish; user mistakes (wrong argument, typo, misaddressed key); target-project issues; Claude Code / model / external-service issues neither repo can fix.
+
+`workflows-core:defect-reporter` applies this predicate directly under `--skip-feedback` (`workflows-core:run-flags` §4) — it cites this section, never copies it. The widening in this section's opening paragraph applies to every run, not only a bugs-only one: an ai-containers defect is now in scope for a full `emit-auto` run too, so a container bug surfacing during an ordinary session is no longer dropped by the plugin-only reading this predicate used to have.
 
 When projecting an `impl-maintenance` report (§6 `emit-auto`), the plugin-facing
 slice is exactly its **Command workflow improvements**, **New agents / skills**,
@@ -179,10 +186,11 @@ signal the maintainer needs.
   surfaced by the caller's existing `BLOCKED` escalation, **not** by a feedback
   prompt — capture-at-block stays inside the silent model (no interrupt beyond
   the block that was already happening, no curation gate).
+- **`emit-bugs`** writes silently exactly like `emit-auto`; the caller surfaces the persisted path — or the "no defects" notice — only in its `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` / `— no defects` report line (`workflows-core:run-flags` §4), never as a curation prompt.
 
 ## 6. Caller contract
 
-Three named entry points. Every caller supplies `plugin_version` (§3) and lets
+Five named entry points: `emit-auto`, `emit-manual`, `emit-prompt`, `emit-block`, and `emit-bugs`. Every caller supplies `plugin_version` (§3) and lets
 this reference resolve the target (§2), dedupe/append (§3), and format the
 entry (§1). None of them commits; none writes into a docs/code repo or the
 current working directory, where it is not the specs repository. The artifacts are committed later, once, by the
@@ -241,3 +249,11 @@ the run needed). It does **NOT** fire for: a code / doc / Epic review **BLOCK**
 (repo-missing, dirty-tree, key-not-found, refresh-blocked, and the other
 `escalation-rules.md` cases); or user cancellation. The §4 plugin-facing scoping
 applies (never target-project `CLAUDE.md` / hook advice).
+
+### `emit-bugs` — bugs-only callers (`--skip-feedback`, `workflows-core:run-flags` §4)
+
+Inputs: the `defect-reporter` **Defects** list, `command` (the exact slash-command name), `key` (or `null`), `source` (`specs | directory | none`), and `plugin_version`.
+
+Behavior: render one `origin: auto` entry per defect — Friction = the defect plus its evidence; Suggested improvement = the repro plus the location to fix; `impact` is `blocker | friction` only, never `polish` (a defect the reporter marked `polish` is dropped before it reaches this entry point); `category` is drawn from §1's vocabulary — `environment-defect` for a container-environment location, else `wrong-output` / `missing-reference-doc` / `missing-capability` / `other` as fits; dedupe by the stable `id` (§3); resolve the target (§2); write silently (§5). Return the persisted path.
+
+`emit-bugs` replaces `emit-auto` for the duration of `--skip-feedback`, and is called only when `defect-reporter` returned at least one defect — the orchestrator dispatches `workflows-core:defect-reporter` in place of `impl-maintenance` and, only on a non-empty Defects list, calls `emit-bugs` on the result; when the list is empty, this reference is not loaded at all and the caller reports `— no defects` directly (`workflows-core:run-flags` §4).

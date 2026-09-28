@@ -46,11 +46,7 @@ worked by 23 teams) and **no dedup / no prose** (pure measurement, append-only).
 No dedup or cross-reference between the three. This subsystem does NOT use the
 `impl-maintenance` agent.
 
-**Cost ALWAYS runs.** Unlike feedback (which writes nothing when there is no
-plugin signal), the cost phase always computes and always advances the checkpoint
-(§3) — even when it can only report-only. A silent write with no interaction is
-the norm; the sole interactive moment is pending reconciliation (§9), and only
-when pending files exist.
+**Cost runs unless the user skipped it.** Unlike feedback (which writes nothing when there is no plugin signal), the cost phase always computes and always advances the checkpoint (§3) — even when it can only report-only — except under `--skip-costs`, where `workflows-core:run-flags` `skip-cost` advances the checkpoint without loading this file and writes no entry. A silent write with no interaction is the norm; the sole interactive moment is pending reconciliation (§9), and only when pending files exist.
 
 ## 1. Session-artifact resolution
 
@@ -189,8 +185,7 @@ a repo-local `cost-prices.yaml` -> the shipped
 `${CLAUDE_PLUGIN_ROOT}/references/cost-prices.yaml`. The shipped rates are the
 standard first-party Claude API prices (from Anthropic's pricing page) for every
 model the routing policy can reach — the Opus chain and the Sonnet chain —
-**plus Haiku, priced as a harmless defensive entry even though no routing path
-in `classification.md` currently reaches it**; a maintainer refreshes them when
+**plus Haiku, reached only by §2.2 (`defect-reporter` under `--skip-feedback`) and by `--enforce-model=haiku`**; a maintainer refreshes them when
 Anthropic's prices change. **Permanent standard
 rates are used deliberately — never promotional/introductory rates** — so cost
 stays comparable across PRDs over time (a temporary promo would make identical
@@ -557,7 +552,7 @@ and `/prompt-grill-me` through the §13 record a replay reads it from. `emit-cos
 into a docs/code repo or the current working directory, where it is not the specs repository, and NEVER fails the
 run. The cost entry is committed later, once, by the run's terminal
 `commit-artifacts` step (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md`
-§4). Cost ALWAYS runs.
+§4). Cost runs unless the user skipped it — under `--skip-costs` the calling command runs `workflows-core:run-flags`' `skip-cost` in place of this entry point, and `emit-cost` is never called at all.
 
 Inputs:
 - `command` — the exact slash-command name (e.g. `/implement`,
@@ -668,7 +663,7 @@ because the earlier run is over.
    "phase": "inferred", "role": "inferred",
    "target_command": "/document", "key": "PRODUCT-1234", "epic": null,
    "source": "specs", "plugin_version": "1.0.0",
-   "ceded_at": "2026-09-01T10:04:00Z"}
+   "ceded_at": "2026-09-01T10:04:00Z", "skip": false}
 ]
 ```
 
@@ -683,6 +678,8 @@ resolved kind is `epic`, `null` otherwise, so a replayed entry is keyed exactly
 as a self-measured one. `ceded_at` becomes the replayed entry's `date` and the
 timestamp in its `id`, which is what keeps two records replayed by one run from
 colliding on §6's uniqueness rule.
+
+`skip: true` is written by a ceding run under `--skip-costs`. The replay (§13.3) still passes the `--claim`, so the segment is carved out of the replaying run's remainder exactly as before; it then writes **no entry** for that claim. An absent field means `false`.
 
 Same home, lifetime and status as the §3 checkpoint beside it — **per-user,
 per-session, transient, local, NEVER committed, and safe to delete.**
@@ -735,6 +732,8 @@ For each matched claim, build the entry (§6) from its segment, taking
 `phase`/`role` by resolving that record's own `target_command` through §7, and
 dating it `ceded_at` (§13.1). Append it through the §8 ladder using the record's
 own `key`, `epic` and `source` — which may differ from this run's.
+
+A claim whose record carries `skip: true` builds no entry; its segment is discarded after the partition.
 
 The partition is **exhaustive and disjoint at the token level**: every usage
 record lands in exactly one bucket, so the claims' tokens plus the remainder's

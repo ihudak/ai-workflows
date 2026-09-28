@@ -19,6 +19,12 @@ Every long-running command in the family also emits session feedback automatical
 
 Feedback writes **one file per folder**, not one per session — the opposite of the cost subsystem's split, because feedback is read as a stream about a plugin rather than measured per run. The resolution ladder is the same as cost's: a resolved folder in `$SPECS_PATH` first, a pending location where no folder resolves, and report-only where nothing does. Nothing is committed by the emitting phase itself; the run's terminal artifact commit picks it up with everything else it wrote.
 
+## Bugs only (`--skip-feedback`)
+
+`--skip-feedback` (or `$WORKFLOWS_SKIP_FEEDBACK`) narrows the automatic maintenance phase to bug capture only. It applies to every command whose maintenance phase dispatches `impl-maintenance` — in this plugin, that is `/frames` alone; `/feedback`, `/prompt`, `/prompt-brainstorm` and `/prompt-grill-me` never dispatch `impl-maintenance`, so the flag has nothing to narrow on them. Under the flag, `/frames` dispatches `defect-reporter` instead, on `references/model-routing/classification.md` §2.2's cheap chain (or the run's enforced model) — the same compact session handoff, but returning only real defects: a wrong or self-contradictory instruction, a broken script, gate or hook, a missing or wrong reference, a command contradicting its own documentation, a crash, or a defect in the ai-containers environment the family runs in (a missing tool, a wrong mount, a bad default). Everything else the in-session Lessons Learned report would otherwise surface — friction, wishes, polish, target-project tooling advice, and every non-defect observation — is dropped; nothing is written for it.
+
+Any defect `defect-reporter` returns lands through `emit-bugs` in the same `<KEY>-feedback.md` file, in the same entry format, `origin: auto`, `category: environment-defect` for a container-environment location and the usual §1 vocabulary otherwise. A run with no defects loads `references/feedback-emission.md` not at all and writes nothing. The run reports `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of the usual persisted-path line.
+
 ## What a correction costs
 
 A `/prompt*` or `/feedback` run is charged to the phase of the command it is correcting, not to a phase of its own — see [Roles and phases](../roles-and-phases.md#plugin-feedback) for the inheritance rule and the `plugin-feedback` fallback, and [Session cost](session-cost.md) for the mechanics.
