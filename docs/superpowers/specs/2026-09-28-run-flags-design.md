@@ -81,7 +81,7 @@ A new reference `plugins/workflows-core/references/run-flags.md` is the single s
 3. **Nested dispatch:** agents that dispatch agents (`docs-style-checker` → `prose-style-checker`; `upgrade-executor`, `vuln-fixer` via Task) receive the enforced id in their handoff and pass it on.
 4. **Steps unchanged:** classification still runs; a SIGNIFICANT task still gets its plan and review gates, on the enforced model.
 5. **Orchestrator:** stays on the session model. When `current_model` ≠ the enforced id, Phase 0 prints one advisory: `orchestrator runs on <session>; relaunch after /model <x> to enforce it there too`, and continues.
-6. **Opus-session gates** (`/design`, `/create-ard` HARD gates; `/create-prd`'s degrade path) test the enforced id instead of `current_model`; a Sonnet enforcement passes, recorded.
+6. **Opus-session gates** (`/design`, `/create-ard` HARD gates; `/create-prd`'s degrade path) do not fire under enforcement — the user chose the model. (Testing the enforced id instead would pass an Opus gate on a Sonnet session, since the grill runs on the session model.) The §5 advisory is the only notice of a session/enforced mismatch.
 7. **Degradation notices** (§2 "no Opus available", §9.3) are suppressed under enforcement; the final report says `Model routing: bypassed — enforced <id> (flag|env)`.
 8. **Unpriced ids:** a reachable full id absent from `cost-prices.yaml` gets a Phase 0 warning; `cost-emission` §6.1's dominance warning covers the report.
 
@@ -97,6 +97,6 @@ A new reference `plugins/workflows-core/references/run-flags.md` is the single s
 
 ## Testing
 
-- `session-cost.py --selftest` gains cases: `--advance-only` writes the same checkpoint a full run would; a `skip: true` claim is carved out and produces no entry, and its tokens are excluded from the remainder.
+- `session-cost.py --selftest` gains cases: `--advance-only` writes the same checkpoint a full run would, prices nothing, and refuses a missing `--checkpoint`. (`skip: true` claims need no script change — carving is identical; the discard is `emit-cost` prose.)
 - The full gate chain from `.github/workflows/validate-catalog.yml`, run as one `&&` chain.
 - A claim-expiry sweep (`CLAUDE.md` § Editing discipline) for "Cost ALWAYS runs", "cost ALWAYS runs", "frontmatter-pinned", "no override", "plugin family itself", and the `impl-maintenance` caller counts — each rewritten against the shipped behaviour, with before/after literal counts.
