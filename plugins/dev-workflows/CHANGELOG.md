@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.3.0] — 2026-09-29
+
+**Update `workflows-core` to 1.8.0 with this release**: its new `run-flags` reference and `defect-reporter` agent are what these commands now dispatch.
+
+### Added
+
+- **All five commands (`/design`, `/implement`, `/ready`, `/upgrade`, `/vuln`) now accept `--skip-feedback` and `--enforce-model=<model>`; `/design`, `/implement` and `/ready` also accept `--skip-costs`** (`workflows-core:run-flags`) — `/upgrade` and `/vuln` emit no cost entry at all (unchanged), so `--skip-costs` does not apply to them and, given explicitly, is reported ignored rather than acted on. `--skip-feedback` dispatches `workflows-core:defect-reporter` in place of `impl-maintenance` and persists only real defects — bugs-only, defects in the `ihudak/ai-containers` environment included — through `emit-bugs`; a run with no defects persists nothing. `--skip-costs` runs `run-flags`' `skip-cost` entry point, which advances the checkpoint and drops any deferred record rather than writing a cost entry. `--enforce-model` pins every dispatched subagent to one model for the run — including each command's frontmatter-pinned Opus reviewer (`design-reviewer`, `code-review`, `readiness-reviewer`, `risk-planner`) — while the orchestrator itself stays on its own session model and prints one relaunch advisory when the two differ; `/design`'s own `current_model` HARD gate does not fire under enforcement. A flag may sit anywhere in the argument list except inside `/implement`'s free-text prompt span, where only the leading and trailing runs of flag tokens are stripped and everything between is kept verbatim.
+- A defect in the `ihudak/ai-containers` environment is now captured on an ordinary run too, not only a bugs-only one, as `category: environment-defect`.
+- `/design`'s, `/implement`'s and `/ready`'s docs pages now say a pending deferred cost record from `/prompt-brainstorm` or `/prompt-grill-me` is dropped under `--skip-costs`, matching `/feedback`'s and `/prompt`'s pages, which already said so.
+
 ## [4.2.5] — 2026-09-24
 
 ### Changed — the marketplace is now `shipwright`, and the repository `ihudak/ai-workflows`
