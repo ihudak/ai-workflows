@@ -130,7 +130,9 @@ Record the chosen model as `detection_model:` in the `model_routing` block.
 
 Dispatched only for `defect-reporter` under `--skip-feedback` (`workflows-core:run-flags`
 §4); also resolves `run-flags` §2's `haiku` alias, for any applicable command's
-`--enforce-model=haiku` (or `$WORKFLOWS_ENFORCE_MODEL=haiku`). Use the first available:
+`--enforce-model=haiku` (or `$WORKFLOWS_ENFORCE_MODEL=haiku`), where the model parameter
+accepts ids; see `run-flags` §2 Reachability (a family-only harness resolves the bare
+alias to the family itself). Use the first available:
 
 1. `claude-haiku-4-5`
 2. the §2.1 chain

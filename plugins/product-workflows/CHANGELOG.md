@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.9.1] — 2026-09-29
+
+**Update `workflows-core` to 1.8.1 with this release**: its `classification.md` §5 dispatch rule — pass a model's family name where the agent tool accepts only family names — is what the text below now cites.
+
+### Fixed — behaviour
+
+- **The model-routing reference page promised exact-version `--enforce-model`, which a family-only agent tool cannot deliver.** Claude Code's Agent tool accepts only family names (`sonnet`, `opus`, `haiku`, `fable`). The page now says the chain lands on a family's first row there, and that a version-specific value is honoured only for a family's newest chain row (`haiku4.5` included) and runs as the family name, while an older one such as `opus5` stops before any work.
+
 ## [3.9.0] — 2026-09-29
 
 **Update `workflows-core` to 1.8.0 with this release**: its new `run-flags` reference and `defect-reporter` agent are what all fourteen commands now dispatch.

@@ -14,7 +14,7 @@ first and treat its content as that section.
 ## Upgrade Execution Request
 repo: /absolute/path/to/repo
 phase: full                # full (default) | verify-resume | regression-resume — see "Phase" below
-enforced_model: <model id>  # optional; run_flags.enforced_model (classification.md §10) when the
+enforced_model: <model id or family>  # optional; run_flags.enforced_model (classification.md §10) when the
                             # orchestrator's run has one set. When present, pass it as `model:` on
                             # the agent's own test-baseliner dispatch in place of the Sonnet detection
                             # chain — the nested-dispatch rule §10 states for this agent.

@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.4.1] — 2026-09-29
+
+**Update `workflows-core` to 1.8.1 with this release**: its `classification.md` §5 dispatch rule — pass a model's family name where the agent tool accepts only family names — is what the text below now cites.
+
+### Fixed — behaviour
+
+- **`docs-style-checker` passed a full model id on its nested `prose-style-checker` dispatch**, which fails Claude Code's Agent tool, whose `model` parameter accepts only family names (`sonnet`, `opus`, `haiku`, `fable`). It now passes the Sonnet-chain id or the caller's `enforced_model` in `classification.md` §5's dispatch form (the family name where only families are accepted).
+
 ## [1.4.0] — 2026-09-29
 
 **Update `workflows-core` to 1.8.0 with this release**: its new `run-flags` reference and `defect-reporter` agent are what six of this plugin's seven commands now dispatch.
