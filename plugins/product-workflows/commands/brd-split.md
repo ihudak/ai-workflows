@@ -60,9 +60,10 @@ four-resolution one.
 1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first non-flag token; validate with `key-valid`
    (`workflows-core:addressing` §1). If absent or invalid, stop:
    `BRD_SPLIT_NEEDS_KEY: /brd-split needs a BRD key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) — re-run '/product-workflows:brd-split <KEY>'.`
-1a. **`<instruction>` (mandatory on a root that still has a row to place, optional on a slice).** Every **non-flag** token after
+1a. **`<instruction>` (mandatory on a root that still has a row to place, optional on a slice).** Every token after
    the key, joined verbatim, is a slicing instruction in the operator's own words — `cover orders and
-   measurements in the first iteration`, `slice everything EPIC-008 still holds that no child covers`.
+   measurements in the first iteration`, `slice everything EPIC-008 still holds that no child covers` — a
+   flag name among them where the operator wrote one as instruction text rather than as a flag.
    **Parse it here and carry it; its absence is stopped on in step 11, never here.** Phase 2 clusters by the Phase 1.5 placement — every `unallocated` row on an ordinary run, and every row in the **re-cut candidate set** on the re-cut path step 10 selects — and a root carries no findings to read, so the grouping comes from the instruction or from nowhere; but that is a statement about a run that *has* something to cluster, and whether this one does is not known until step 8 reads the ledger and step 9a builds that candidate set.
    Stopping on the absence here made the instruction mandatory on every `full` run, including the one
    on which Phase 2 never runs at all: a parent whose walk is complete and whose only remaining work
@@ -71,11 +72,12 @@ four-resolution one.
    slice among them — which Phase 4.5 exists to serve, and the operator taking it wants to carve nothing.
    Absent on a slice → this command behaves exactly as it did before the switch existed, on every
    path below; nothing in it is conditional on an instruction being given except where a phase says so. This command parses no
-   flags of its own — the three run flags (`--skip-costs`, `--skip-feedback`, `--enforce-model`) are
-   already stripped by step 1's `strip-run-flags` call before this step reads a token — so "non-flag tokens after the key" and "everything left after the key" still pick out
-   the same string — it is written the first way because that stops being true the moment a
-   flag of this command's own is added, and `/dev-workflows:design` Phase 0 already strips its own flag before classifying
-   for exactly that reason. The instruction is **never validated against anything**: it is prose, and
+   flags of its own: the three run flags (`--skip-costs`, `--skip-feedback`, `--enforce-model`) are
+   stripped by step 1's `strip-run-flags` call only where they sit before the key, or as a trailing run
+   at the very end of `$ARGUMENTS` (`workflows-core:run-flags` §3 step 1, whose protected prose span
+   begins right after the key) — so the instruction is simply everything that call leaves after the
+   key, a flag name included wherever the operator typed one as instruction text instead of as a
+   trailing flag. The instruction is **never validated against anything**: it is prose, and
    what it means is settled in Phase 1.5 against this BRD's own rows, never by pattern.
 2. **`$SPECS_PATH` (required).** If unset, stop naming `SPECS_PATH`, per the
    `Required path environment variable unset` rule in `workflows-core:escalation-rules`:

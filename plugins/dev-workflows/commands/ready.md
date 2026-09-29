@@ -178,7 +178,7 @@ model_routing:
   classification: MODERATE        # typical; SIGNIFICANT possible for a large multi-Epic PRD
   reason: <one-line>
   current_model: <the model this orchestrator is running under>
-  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # the folder read (Phase 2) and the Phase 6 maintenance agents; the Phase 3 deterministic skeleton is mechanical and runs orchestrator-inline, not delegated
   review_model:    <§2 Opus chain>     # readiness-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model)
   opus_available: <true if a §2 Opus model resolved, else false>

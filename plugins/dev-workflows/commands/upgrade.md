@@ -56,7 +56,7 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
        classification: [SIMPLE | MODERATE | SIGNIFICANT | HIGH-RISK]
        reason: <one-line>
        current_model: <the model this orchestrator is running under>
-       enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
+       enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
        detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # upgrade-planner, test-baseliner; upgrade-executor (SIMPLE/MODERATE); review-fixer
        planning_model: <§2 Opus chain>   # risk-planner (SIGNIFICANT/HIGH-RISK; frontmatter-pinned, recorded, no override unless §10 enforces a model); upgrade-executor escalates here only if HIGH-RISK
        review_model:  <§2 Opus chain>    # code-review (frontmatter-pinned; recorded, no override unless §10 enforces a model)
@@ -165,7 +165,7 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
        classification: [component class]
        reason: <one-line>
        current_model: <the model this orchestrator is running under>
-       enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
+       enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
        detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # upgrade-planner, test-baseliner; upgrade-executor (SIMPLE/MODERATE); review-fixer
        planning_model: <§2 Opus chain>   # risk-planner (SIGNIFICANT/HIGH-RISK; frontmatter-pinned, recorded, no override unless §10 enforces a model); upgrade-executor escalates here only if HIGH-RISK
        review_model:  <§2 Opus chain>    # code-review (frontmatter-pinned; recorded, no override unless §10 enforces a model)

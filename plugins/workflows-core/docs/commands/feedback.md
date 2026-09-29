@@ -16,7 +16,7 @@ Logs a manual note about the plugin family itself — friction you hit, or an im
 
 `$ARGUMENTS`, once the run flag above is stripped, is the note text — the friction you hit and the improvement you want, in your own words. Leave it empty and Phase 1 asks for it directly; it never guesses at content you didn't express.
 
-Write the flag before the note, not inside it: only a leading run of flag tokens is stripped, so a `--skip-costs` written inside the note text itself is kept as part of the note, not read as a flag.
+Write the flag before or after the note, never inside it: a leading run of flag tokens and a trailing run of flag tokens are stripped, so a `--skip-costs` written in the middle of the note text itself is kept as part of the note, not read as a flag.
 
 ## What it needs
 

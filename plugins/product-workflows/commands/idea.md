@@ -27,7 +27,7 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
 
 ## Phase 0 — Resolve the address + model routing
 
-1. **The address (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--docs` always consumes the token after it, and `--ground-code` only as the Flags paragraph above conditions it, and a value skipped as "non-flag" would be read as the key and validate it with `key-valid`
+1. **The address (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Because the token after the key may be this command's own free-text `<prompt>`, that prose is protected per `workflows-core:run-flags` §3 step 1 (the prose span begins at the first token after the key): a run-flag token before the key, or in a trailing run at the very end of `$ARGUMENTS`, is stripped, but one written inside the prompt itself is kept as prompt text, even where it looks like a flag. Parse the first token that is neither a flag nor a flag's value — `--docs` always consumes the token after it, and `--ground-code` only as the Flags paragraph above conditions it, and a value skipped as "non-flag" would be read as the key and validate it with `key-valid`
    (`workflows-core:addressing` §1). Absent or malformed → stop:
    `IDEA_NEEDS_KEY: /idea needs a PRD key (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-77) — it names the folder this idea will live in. Re-run '/product-workflows:idea <PRD-KEY> [<prompt>|@<file>]'.`
 
@@ -106,7 +106,7 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
      classification: MODERATE          # idea refinement is typically MODERATE
      reason: <one-line>
      current_model: <the model this orchestrator/grill is running under>
-     enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
+     enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
      detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # idea-reader
      extraction_model: <§2 Opus chain>   # figure-reader (frontmatter-pinned to opus; recorded, no override unless §10 enforces a model)
      authoring_model: <= current_model>   # the interactive grill + idea.md authoring (session model, not a delegated subagent)

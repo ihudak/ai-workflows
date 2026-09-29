@@ -242,7 +242,7 @@ model_routing:
   classification: SIGNIFICANT | HIGH-RISK   # SIGNIFICANT is the floor here; see the reason below
   reason: <one-line>
   current_model: <the model this orchestrator/grill is running under>
-  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # impl-maintenance
   review_model:    <§2 Opus chain>     # proposal-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model)
   authoring_model: <= current_model>   # the profile grill + both artifacts (session model, not a delegated subagent)
