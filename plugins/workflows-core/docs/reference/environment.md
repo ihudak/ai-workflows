@@ -80,7 +80,7 @@ Every one of the eight is read by a reference this plugin ships — the corpus i
 
 - **`$WORKFLOWS_ENFORCE_MODEL`** — the persistent default for the `--enforce-model` run flag; pins every subagent a command dispatches to one model, bypassing model-routing's own per-step selection.
 
-**Resolution.** An alias, a full model id, or `routing`; resolved against `run-flags.md` §2's alias table and reachability check. Unset, or set to `routing`, means no enforcement. An `--enforce-model=<value>` flag on the command line always overrides it.
+**Resolution.** An alias, a full model id, or `routing`; resolved against `run-flags.md` §2's alias table and reachability check. Unset, set but empty, or set to `routing` (matched case-insensitively, as the aliases are) means no enforcement. An `--enforce-model=<value>` flag on the command line always overrides it.
 
 **When unset.** No enforcement — model routing selects each step's model exactly as if the variable did not exist.
 

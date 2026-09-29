@@ -50,7 +50,7 @@ Every `SIGNIFICANT`/`HIGH-RISK` Opus step resolves against the same ordered list
 7. `claude-sonnet-4-6` (further fallback)
 8. `claude-sonnet-4-5` (further fallback — the report notes "no Opus or Sonnet 5/4.6 available")
 
-`claude-sonnet-4-5` is the floor. If nothing in the list is available, the run stops and asks how to proceed rather than silently downgrading. You never pick a model for any of this yourself — the orchestrator resolves the chain automatically against what your environment has available, and every downgrade from the top of the chain is announced in the run's own report rather than happening quietly.
+`claude-sonnet-4-5` is the floor, except where you enforce one model ([below](#enforcing-one-model)), which bypasses this list altogether. If nothing in the list is available, the run stops and asks how to proceed rather than silently downgrading. You never pick a model for any of this yourself — the orchestrator resolves the chain automatically against what your environment has available, and every downgrade from the top of the chain is announced in the run's own report rather than happening quietly.
 
 ## Enforcing one model
 

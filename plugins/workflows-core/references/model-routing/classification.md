@@ -85,9 +85,10 @@ Use the first model in this list that is available in the environment:
 7. `claude-sonnet-4-6` (further fallback)
 8. `claude-sonnet-4-5` (further fallback — note "no Opus or Sonnet 5/4.6 available")
 
-Sonnet 4.5 is the floor; if no model in the list is available, abort the
-SIGNIFICANT/HIGH-RISK gates and ask the user how to proceed rather than
-silently downgrading.
+Sonnet 4.5 is the floor (§10 excepted — under an enforced model this chain is
+not walked, and the enforced id may sit below it); if no model in the list is
+available, abort the SIGNIFICANT/HIGH-RISK gates and ask the user how to proceed
+rather than silently downgrading.
 
 The list of available models can be inspected from the `task` tool's `model`
 parameter documentation. If none of the Opus models are available **and** the
@@ -233,8 +234,9 @@ Sub-agents that receive a `model_routing` block:
 - **A sub-agent whose handoff file declares no `model_routing:` input is sent
   none, and reads no field of one.** Its tier is fixed either by its own
   frontmatter `model:` pin (the Opus reviewers) or by the `model:` argument on
-  the dispatch (under §10 the dispatch's `model:` overrides a frontmatter pin), and the orchestrator's own `model_routing` record names the
-  chain it resolved.
+  the dispatch, and the orchestrator's own `model_routing` record names the
+  chain it resolved. Under §10 the dispatch always carries a `model:` argument,
+  and that argument overrides a frontmatter pin.
 
 ---
 
@@ -493,8 +495,8 @@ rule.
   Opus (otherwise an Opus session burns Opus on cheap work).
 - **Orchestrator-executed** judgment steps — the inline prose writing and the
   interactive gates, plus the orchestration itself — run on the session model
-  and CANNOT be overridden from inside a running command. Handle them with an
-  **advisory** (recommend relaunching on the §2 chain), never an override. This advisory applies when the task is SIGNIFICANT/HIGH-RISK. Where the authoring step is the orchestrator itself, how it is discharged is the command's own to state and differs: `/design` and `/create-ard` make it a HARD gate on `current_model` that stops and offers a relaunch, while `/create-prd` degrades to the best available model and records the degradation instead of stopping — except under §10, where no gate or degrade path of this kind fires for any command that carries one (§10's *Opus-session gates do not fire* bullet is the general rule; these three are only its best-known examples). Read the command rather than assuming a gate. Where the writing is delegated to a writer on its own Opus pin, the writing is already off the session model and the residual risk is the orchestrator's own context window, so the advisory narrows there to a large non-Opus run, as in `/document`. At SIMPLE/MODERATE §3.1 requires none, and requires nothing against one either: it asks only that no *mandatory* Opus step be added, so a command that offers a soft advisory anyway (`/design`) is stricter by its own choice and not in breach.
+  and CANNOT be overridden from inside a running command. Except under §10, where none of the rest of this bullet fires — no advisory, no gate, no degrade path, for any command that carries one (§10's *Opus-session gates do not fire* bullet is the general rule, and `workflows-core:run-flags` §3 step 7's advisory is the only notice) — handle them with an
+  **advisory** (recommend relaunching on the §2 chain), never an override. This advisory applies when the task is SIGNIFICANT/HIGH-RISK. Where the authoring step is the orchestrator itself, how it is discharged is the command's own to state and differs: `/design` and `/create-ard` make it a HARD gate on `current_model` that stops and offers a relaunch, while `/create-prd` degrades to the best available model and records the degradation instead of stopping. Read the command rather than assuming a gate. Where the writing is delegated to a writer on its own Opus pin, the writing is already off the session model and the residual risk is the orchestrator's own context window, so the advisory narrows there to a large non-Opus run, as in `/document`. At SIMPLE/MODERATE §3.1 requires none, and requires nothing against one either: it asks only that no *mandatory* Opus step be added, so a command that offers a soft advisory anyway (`/design`) is stricter by its own choice and not in breach.
 
 ### 9.2 Role → chain map
 
@@ -549,7 +551,7 @@ oversized repo slice's `code-scanner` to Opus (§8.3).
 - **Every dispatch.** Every `task` tool dispatch passes `model: <enforced>` explicitly, including the agents whose frontmatter pins `model: opus` — the dispatch's `model:` argument overrides the frontmatter pin. Every "frontmatter-pinned … no override" statement at a command's dispatch site reads "no override unless §10 enforces a model", so no live sentence contradicts this section.
 - **Nested dispatch.** An agent that itself dispatches another agent (`docs-style-checker` → `prose-style-checker`; `upgrade-executor` / `vuln-fixer` → `test-baseliner` via the `task` tool) receives `enforced_model` in its prompt and passes it as `model:` on its own dispatch, so enforcement reaches every model a run touches, not only the orchestrator's own direct calls.
 - **Steps unchanged.** Classification (§1) still runs and still selects the §3 sequence for the task's class — a SIGNIFICANT/HIGH-RISK task still gets its plan and review gates, a SIMPLE/MODERATE task still skips them. Enforcement changes which model each selected step runs on, never whether the step runs.
-- **The orchestrator.** The orchestrator itself stays on the session model; it cannot be switched from inside a running command, exactly as §2's "currently selected model" already says. `workflows-core:run-flags` §3 step 7 prints the one relaunch advisory — `orchestrator runs on <session-model>; relaunch after /model <alias> to enforce it there too` — when the enforced id differs from `current_model`.
-- **Opus-session gates do not fire.** Every gate or degrade path that tests `current_model` for an Opus session does not fire under enforcement — not a named list, but the whole class of them, since each exists to require or prefer an Opus-tier session and the user has already chosen the model. Examples that exist today: §9.1's HARD gates in `/design` and `/create-ard`, `/prd-proposal`'s and `/brd-proposal`'s stops, and `/create-prd`'s degrade path (`grep -n "current_model" plugins/*/commands/*.md` finds these and every other `current_model` test). Testing the enforced id in a gate's place would let a Sonnet session pass an Opus gate, since the inline grill or authoring these gates protect still runs on the session model, not the enforced one. The `run-flags` §3 step 7 advisory is the only notice of a session/enforced mismatch; §9.1's own relaunch advisory is not issued alongside it.
-- **Degradation notices are suppressed.** §2's "no Opus available" notice and §9.3's no-Opus degradation notice are not emitted under enforcement — there is no fallback to announce, since every resolution already returns the enforced id. §7's report states `Model routing: bypassed — enforced <id> (flag|env)` in place of the degradation line it would otherwise carry.
+- **The orchestrator.** The orchestrator itself stays on the session model; it cannot be switched from inside a running command, exactly as §2's "currently selected model" already says. `workflows-core:run-flags` §3 step 7 prints the one relaunch advisory when the enforced id differs from `current_model`; its wording is that step's, not restated here.
+- **Opus-session gates do not fire.** Every gate or degrade path that tests `current_model` for an Opus session does not fire under enforcement — not a named list, but the whole class of them, since each exists to require or prefer an Opus-tier session and the user has already chosen the model. Examples that exist today: §9.1's HARD gates in `/design` and `/create-ard`, `/prd-proposal`'s and `/brd-proposal`'s stops, and `/create-prd`'s degrade path (a maintainer finds the candidates with `grep -n "current_model" plugins/*/commands/*.md`, which lists every mention of the field — routing records and reports as well as gates — so each hit is read to tell a gate of this class from the rest). Testing the enforced id in a gate's place would let a Sonnet session pass an Opus gate, since the inline grill or authoring these gates protect still runs on the session model, not the enforced one. The `run-flags` §3 step 7 advisory is the only notice of a session/enforced mismatch; §9.1's own relaunch advisory is not issued alongside it.
+- **Degradation notices are suppressed.** §2's "no Opus available" notice and §9.3's no-Opus degradation notice are not emitted under enforcement — there is no fallback to announce, since every resolution already returns the enforced id. §7's report carries `Model routing: bypassed — enforced <id> (flag|env)` in its `Notes:` field, in place of the degradation or fallback that field would otherwise record.
 - **Unpriced ids.** A reachable enforced id absent from `cost-prices.yaml` does not stop the run: `workflows-core:run-flags` §2 prints the Phase 0 unpriced-model warning, and `workflows-core:cost-emission` §6.1's dominance warning covers it in the final report.
