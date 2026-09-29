@@ -54,10 +54,10 @@ already made mandatory for carving a root.
   flag being added for it** — on a fully allocated root it selects the sibling re-cut (below). On a slice it stays optional and seeds only the
   walk's per-row recommendation; omitted there, the command behaves exactly as it did before the
   argument existed. It is prose and is never validated against anything — what it means is settled
-  against this BRD's own rows in Phase 1.5. The three run flags below are stripped from the argument
-  list only before the key or as a trailing run at its very end: one written before the instruction
-  or after it is stripped, but a flag name written inside the instruction itself is kept as
-  instruction text.
+  against this BRD's own rows in Phase 1.5. The three run flags below are stripped only where they
+  are written before the key, or form a trailing run after the instruction, at the very end of the
+  argument list; a flag written right after the key, with no such trailing run reaching back to it,
+  is instruction text.
 
 All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 8's session-cost entry, still advancing the checkpoint — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 8's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins the one dispatched agent in this run — `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; Phase 1.5's reading and grill and Phase 4's walk still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
 
