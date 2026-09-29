@@ -16,6 +16,8 @@ Logs a corrective interaction, then hands off to `superpowers:brainstorming` to 
 
 `$ARGUMENTS`, once the run flag above is stripped, is the corrective request, captured **verbatim** as the User prompt block. Phase 1 infers the target command from recent context, asking only if genuinely ambiguous; if none applies, it records `n/a`.
 
+Write the flag before the request, not inside it: only a leading run of flag tokens is stripped, so a `--skip-costs` written inside the request text itself is kept as part of the verbatim request, not read as a flag.
+
 ## What it needs
 
 - **`$ARGUMENTS` itself, verbatim** — the correction to explore, and the corrective-triple's User prompt block.

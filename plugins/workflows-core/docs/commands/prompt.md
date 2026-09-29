@@ -18,6 +18,8 @@ Logs a corrective interaction — a command anywhere in the plugin family produc
 
 `$ARGUMENTS`, once the run flag above is stripped, is the corrective request itself, captured **verbatim** as the User prompt block — never paraphrased. Phase 1 infers which command's output you're correcting from recent context, asking only if genuinely ambiguous; if none applies, it records `n/a`.
 
+Write the flag before the request, not inside it: only a leading run of flag tokens is stripped, so a `--skip-costs` written inside the request text itself is kept as part of the verbatim request, not read as a flag.
+
 ## What it needs
 
 - **`$ARGUMENTS` itself, verbatim** — the correction to apply, and the corrective-triple's User prompt block.

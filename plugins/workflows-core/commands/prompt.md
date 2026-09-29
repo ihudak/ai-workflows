@@ -1,7 +1,7 @@
 ---
 name: prompt
 description: Log a corrective interaction — a command produced something wrong and you're fixing it — as plugin feedback, then act on your correction directly. Captures the friction, your verbatim prompt, and the resolution to the specs repo for the maintainer.
-allowed-tools: Read Edit Write Bash Glob Grep Task
+allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 ---
 
 Log a corrective interaction and act on it: $ARGUMENTS
@@ -22,7 +22,7 @@ Usage: `/prompt <corrective request> [--skip-costs]`
 
 ## Phase 0 — Specs-repo preflight
 
-**Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step, including the **verbatim** User prompt above, reads only the stripped string this leaves. This command dispatches no `impl-maintenance` and invokes no `workflows-core:model-routing`, so an explicit `--skip-feedback` or `--enforce-model` fails `strip-run-flags`' applicability test and is reported `Run flags: --<flag> does not apply to /prompt — ignored`; only `--skip-costs` applies.
+**Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step, including the **verbatim** User prompt above, reads only the stripped string this leaves. Because this command's argument is free prose kept verbatim, only the **leading run** of run-flag tokens is stripped (`workflows-core:run-flags` §3 step 1) — stripping stops at the first token that is neither a run flag nor the value of a preceding `--enforce-model`, and everything from there on is the corrective request, kept exactly as typed even where it contains a flag name. This command dispatches no `impl-maintenance` and invokes no `workflows-core:model-routing`, so an explicit `--skip-feedback` or `--enforce-model` fails `strip-run-flags`' applicability test and is reported `Run flags: --<flag> does not apply to /prompt — ignored`; only `--skip-costs` applies.
 
 Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
 `specs-preflight` entry point (§3) inline: flush any leftover session
@@ -65,7 +65,7 @@ Cite `${CLAUDE_PLUGIN_ROOT}/references/feedback-emission.md` and call its
 the entry with the two extra prose blocks (`origin: prompt`), and appends per §3
 (prompt entries are never silently skipped). Write silently — a single append.
 
-**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way.
+**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The terminal `commit-artifacts` step below runs unchanged either way.
 
 **Otherwise, emit session cost.** Cite `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md`
 and call its `emit-cost` entry point with `command: /prompt`, `phase: inferred`,
