@@ -499,7 +499,7 @@ model_routing:
                                   # gates the run, and the rendered prompt leaves the organisation
   reason: <one-line>
   current_model: <the model this orchestrator is running under>
-  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # impl-maintenance only
   review_model:    <§2 Opus chain>     # brd-package-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model)
   opus_available: <true if a §2 Opus model resolved, else false>
@@ -515,7 +515,7 @@ from the delivery team present to correct it — a proposal is read outside the 
 it is read, not run. If no Opus resolves, degrade to best-available, record it in `notes`, in the
 self-review's own header and in the final report — a package whose adversarial pass ran on a weaker
 model is still a package, and the customer's own reviewer is the second pass, but the operator must
-know which they got. Never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded.
+know which they got. Never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded — the self-review's own header records that enforced id as the model the pass ran on, the same way `/prd-ground`'s `ground_tier` does.
 
 ---
 
@@ -598,7 +598,8 @@ would sit forever on an agent designed never to emit one.
 
 **An empty findings list is accepted only with its account.** The agent owes a per-pass statement of
 what each of the six passes examined; an empty list arriving without it is the same output an agent
-produces when it read nothing. Missing account → re-dispatch once, naming the omission; still
+produces when it read nothing. Missing account → re-dispatch once, with the same `model:` as the
+first dispatch (under §10, `run_flags.enforced_model`), naming the omission; still
 missing → stop rather than package against a review that may not have happened:
 `BRD_PACKAGE_REVIEW_UNACCOUNTED: brd-package-reviewer returned no findings and no per-pass account — the review cannot be distinguished from a run that read nothing.`
 
@@ -767,7 +768,8 @@ whatever its named artifact.** A correction changes what the customer will be sh
 artifacts the row above admits are the ones this command renders for them — and a correction made
 under one finding can break a position another finding left standing. So once every `fixed`
 correction has been made or, for an artifact a later phase writes, recorded against its finding,
-re-dispatch `brd-package-reviewer` once, with this run's `self-review-<YYYYMMDD>.md` — its findings,
+re-dispatch `brd-package-reviewer` once, with the same `model:` as the first dispatch (under §10,
+`run_flags.enforced_model`) and this run's `self-review-<YYYYMMDD>.md` — its findings,
 their dispositions and each recorded correction — in `prior_reviews`; that agent reads
 `prior_reviews` last, after its own passes are complete, which is exactly the ordering wanted here.
 **The corrections reach that pass through the review file, not through `package:`**, whose documents

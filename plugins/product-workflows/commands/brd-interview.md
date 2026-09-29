@@ -420,7 +420,7 @@ model_routing:
                                   # over a long inventory, or a re-open that reopens decisions
   reason: <one-line>
   current_model: <the model this orchestrator is running under>
-  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # impl-maintenance only — no other agent runs in this command
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
@@ -430,7 +430,7 @@ model_routing:
 already independently re-derived by `/prd-ground`'s `grounding-verifier` pass, and re-deriving it
 here would be a second unverified opinion, not a second check. `detection_model` therefore exists
 only for the terminal `impl-maintenance` dispatch. If no Opus resolves for `current_model`, degrade
-to best-available, record it in `notes` and in the final report, and never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) no degradation is recorded; the `impl-maintenance` dispatch uses the enforced model, while the round's reading, tagging and interactive walk still run on `current_model`.
+to best-available, record it in `notes` and in the final report, and never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) no degradation is recorded; dispatched steps (`impl-maintenance`, or `defect-reporter` under `--skip-feedback`) use the enforced model, while the round's reading, tagging and interactive walk still run on `current_model`.
 
 ---
 

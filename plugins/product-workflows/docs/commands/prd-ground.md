@@ -3,7 +3,7 @@
 Grounding workflow serving both routes into a PRD, its route detected from the resolved folder and
 never declared. Pins every mounted repository to a verified commit, grounds every claim in the
 resolved folder's own claim list against code (`code-grounder`, Opus) and an exported design frame set
-(`design-grounder`, Opus), independently re-derives every live finding (`grounding-verifier`, Opus), and, on
+(`design-grounder`, Opus), independently re-derives every live finding (`grounding-verifier`, Opus) — each frontmatter-pinned, no override unless `--enforce-model` enforces one — and, on
 the BRD route, assigns each finding a `current` / `will-change` horizon against declared
 prerequisite BRDs.
 
@@ -137,12 +137,12 @@ flowchart TD
 ```
 
 The phases are the same shape on either route — only Phase 0's gate and claim-list source fork, per
-"Which route" above. Five subagents are dispatched, the first four read-only against every
-repository or root they touch: `workflows-core:docs-grounder` (Phase 4.5, read-only grounding on the shipped product
+"Which route" above. Five subagents are dispatched, and all five are read-only — the first four
+against every repository or root they touch: `workflows-core:docs-grounder` (Phase 4.5, read-only grounding on the shipped product
 docs — default ON when `$DOCS_PATH` resolves, advisory, never a gate), `code-grounder` (Phase 5, one
-per repository, ≤4 concurrent, frontmatter-pinned to Opus), `design-grounder` (Phase 5, one per exported frame set, after every
-`code-grounder` instance has returned — its fourth reconciliation class cites a `[CG#n]` — frontmatter-pinned to Opus), and
-`grounding-verifier` (Phase 7, one per finding, frontmatter-pinned to Opus — no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one), plus `workflows-core:impl-maintenance` (Phase 11, session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`).
+per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one), `design-grounder` (Phase 5, one per exported frame set, after every
+`code-grounder` instance has returned — its fourth reconciliation class cites a `[CG#n]` — frontmatter-pinned to Opus, no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one), and
+`grounding-verifier` (Phase 7, one per finding, frontmatter-pinned to Opus — no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one) — plus `workflows-core:impl-maintenance` (Phase 11, session lessons-learned, also read-only: it reads the session handoff and suggests, writing nothing — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`).
 
 ## What it needs
 
@@ -442,7 +442,7 @@ building, and a premise the code contradicts is a requirement that would have be
 both found before an architecture or a specification is authored against them. It earns little on a
 greenfield PRD, where every finding is a verified absence — true, and low-information — and each one
 still costs an independent Opus re-derivation (Phase 7, one `grounding-verifier` dispatch per
-finding). The Final report says so outright rather than only reporting it: where every claim comes
+finding, frontmatter-pinned — no override unless `--enforce-model` enforces one). The Final report says so outright rather than only reporting it: where every claim comes
 back a verified absence, it states plainly that this PRD is greenfield against the repositories
 resolved, instead of presenting a wall of absences as a mixed result — a second run over the same
 folder is exactly what that headline exists to make unnecessary.
@@ -458,7 +458,7 @@ has merged:
 
 The run resolves the slice, gates its inventory and ledger on main, resolves the repositories in
 scope and the documentation root, pins and proves each repository clean, grounds every `[BR#n]`
-claim against code and any exported design frames, independently re-derives every live finding on Opus,
+claim against code and any exported design frames, independently re-derives every live finding on Opus (frontmatter-pinned — no override unless `--enforce-model` enforces one),
 assigns horizons against any declared prerequisites, writes the findings, and offers to branch,
 commit, push, and open a pull request. Its next-step offer names
 [`/brd-split`](brd-split.md) running in `allocate-only` mode: this slice's ledger is walked to a

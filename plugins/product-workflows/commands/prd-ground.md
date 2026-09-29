@@ -660,7 +660,7 @@ model_routing:
                                    # the multi-source rule in model-routing/classification.md §1.1
   reason: <one-line>
   current_model: <the model this orchestrator is running under>
-  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # docs-grounder (Phase 4.5) — retrieval, not adjudication; also the Phase 9 impl-maintenance dispatch
   review_model:    <§2 Opus chain>     # code-grounder, design-grounder (Phase 5), grounding-verifier (Phase 7) — all three frontmatter-pinned; recorded, no override unless §10 enforces a model
   ground_tier:     <the tier the [CG#n]/[DG#n] corpus was actually ground at — the resolved review_model, or the degraded model where no Opus resolved>
@@ -668,7 +668,7 @@ model_routing:
   notes: <any §2/§2.1 fallback or degradation>
 ```
 
-**All three grounding agents keep a frontmatter Opus pin regardless of classification**, the same way
+**All three grounding agents keep a frontmatter Opus pin regardless of classification, unless `run_flags.enforced_model` enforces a different one (`workflows-core:model-routing/classification` §10)**, the same way
 `design-reviewer`/`epic-reviewer` do elsewhere — the floor at `SIGNIFICANT` records that a
 multi-repository run carries more cross-cutting risk; it does not change which model any of them runs
 on. If no Opus resolves, degrade to best-available and record it in `notes` and the final report —
@@ -1365,7 +1365,8 @@ leaves standing on a superseded `[CG#n]` is Phase 8's cascade's.
 
 **Every finding the sweep re-dispatches carries the `frame_set_dir` its own Phase 5 dispatch named**
 (Phase 5, *Record which frame set each `[DG#n]` came from*), so every one whose cited `[CG#n]` this
-phase rewrote can be re-derived rather than retired: re-dispatch `grounding-verifier` once and act
+phase rewrote can be re-derived rather than retired: re-dispatch `grounding-verifier` once, with the
+same `model:` as the first dispatch (under §10, `run_flags.enforced_model`), and act
 on the returned outcome as above — the own-run branch, since a held finding is not on file.
 
 **An inherited finding that owes a control and carries none is `contradict` like any other, and gets

@@ -313,7 +313,7 @@ model_routing:
   classification: MODERATE        # typical; SIGNIFICANT for an unusually long or heavily-conflicting BRD
   reason: <one-line>
   current_model: <the model this orchestrator is running under>
-  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # docs-grounder (Phase 3.5)
   extraction_model: <§2 Opus chain>   # figure-reader (Phase 2.5) and brd-reader (Phase 3) — both frontmatter-pinned to opus; recorded, no override unless §10 enforces a model
   authoring_model: <= current_model>   # Phase 1's confirmation and Phase 4's interactive defect classification (session model, not a delegated subagent)
@@ -322,7 +322,7 @@ model_routing:
 ```
 
 `figure-reader` and `brd-reader` run on Opus regardless of `classification`, per their own frontmatter
-pins. A misread label, a missed annotation or an unproposed conflict yields no candidate, so Phase 4's
+pins, unless `run_flags.enforced_model` enforces a different one (`workflows-core:model-routing/classification` §10). A misread label, a missed annotation or an unproposed conflict yields no candidate, so Phase 4's
 human never sees it — the tier is bought where a miss is silent. If no Opus resolves, **degrade to
 best-available + record** in `notes` and the final report — do not hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded.
 
@@ -849,7 +849,7 @@ choices: ["Re-read — re-dispatch brd-reader over the whole set and reconcile<r
 ```
 
   **It is put once per run, because a re-read is allowed once per run.** *Re-read* re-dispatches
-  `brd-reader` with the same inputs — it takes the whole set, the document, every linked markdown
+  `brd-reader` with the same inputs and the same `model:` as the first dispatch (under §10, `run_flags.enforced_model`) — it takes the whole set, the document, every linked markdown
   file Phase 2 copied and the figures copy, and numbers from `BR#1` on every read, so there is no
   narrower re-dispatch — and **the re-read's result replaces this read's wholesale**: its rows, its
   candidates, its `figures` entries with their `illustrates`, and its `notes`, the first read's

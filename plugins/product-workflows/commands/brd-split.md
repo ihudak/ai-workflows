@@ -428,7 +428,7 @@ model_routing:
   classification: MODERATE        # typical; SIGNIFICANT for an unusually large requirement count or slice fan-out
   reason: <one-line>
   current_model: <the model this orchestrator is running under>
-  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # impl-maintenance only — no other agent runs in this command
   authoring_model: <= current_model>   # Phase 1.5's reading and bounded grill, and Phase 4's walk — session model, not a delegated subagent
   opus_available: <true if a §2 Opus model resolved, else false>
@@ -449,7 +449,7 @@ may grill the residue, and Phase 4 walks the ledger — all in the session, the 
 judgement about the operator's words, so a run that made it on a degraded model should say which
 model made it. If no Opus
 resolves for `current_model`, degrade to best-available + record in `notes` and the final report —
-never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) no degradation is recorded; the `impl-maintenance` dispatch uses the enforced model, while Phase 1.5's reading and grill and Phase 4's walk still run on `current_model`.
+never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) no degradation is recorded; dispatched steps (`impl-maintenance`, or `defect-reporter` under `--skip-feedback`) use the enforced model, while Phase 1.5's reading and grill and Phase 4's walk still run on `current_model`.
 
 ---
 
