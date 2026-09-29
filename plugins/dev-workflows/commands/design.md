@@ -170,7 +170,7 @@ subagent):**
   good architecture. Where `opus_available` is **also** false there is nothing to relaunch onto, so per
   `workflows-core:model-routing/classification` §9.3 the relaunch option is dropped and the array is
   `choices: ["Proceed on the Sonnet floor — the degradation is recorded in `notes` and the final report (Recommended)", "Cancel"]`.
-- **SIMPLE / MODERATE + not Opus → soft advisory.** Recommend Opus but proceed; record the choice in
+- **Unless `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10 — then no gate fires): SIMPLE / MODERATE + not Opus → soft advisory.** Recommend Opus but proceed; record the choice in
   `notes` and the final report.
 - **Opus session →** proceed (the intended case).
 
@@ -483,7 +483,7 @@ written (§10 privacy).
 
 ## Final report
 
-Report: feature-folder path; classification + model-gate outcome (or `Model routing: bypassed — enforced <id> (flag|env)` in place of it wherever `run_flags.enforced_model` is set — no gate fired, per `workflows-core:model-routing/classification` §10); `design.md` sections authored (and
+Report: feature-folder path; classification + model-gate outcome (or `Model routing: bypassed — enforced <id> (flag|env)` in place of the model-gate outcome wherever `run_flags.enforced_model` is set — no gate fired, per `workflows-core:model-routing/classification` §10); `design.md` sections authored (and
 those `_N/A_`); spec challenges recorded (count of `## Engineering review` notes / new spec `- [ ]`);
 confirmed repo set (and any removed-from-scope); the `design-reviewer` verdict; the PR URL (if
 opened); the `Specs repo:` outcome line from `commit-artifacts`

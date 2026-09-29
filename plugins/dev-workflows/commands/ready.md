@@ -187,7 +187,7 @@ model_routing:
 
 **No relaunch advisory for MODERATE** — the mechanical steps run on their detection pin and the
 orchestration runs on `current_model`, which §3.1 allows. If no Opus is available, `readiness-reviewer`
-falls to the Sonnet floor — record the degradation in `notes` and the final report.
+falls to the Sonnet floor — record the degradation in `notes` and the final report. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded.
 
 ---
 
@@ -445,6 +445,7 @@ plugin-gap halt (see Invariants).
    - Detection steps — the folder read (detection_model): [model]
    - readiness-reviewer (review_model): [model]
    - Opus available: [yes | no]
+   - [`Model routing: bypassed — enforced <id> (flag|env)` in place of the `readiness-reviewer (review_model)` and `Opus available` lines above, wherever `run_flags.enforced_model` is set — no Sonnet-floor degradation applies, per `workflows-core:model-routing/classification` §10]
    - Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` / `Session cost: …` skip lines, where they fire, are carried in Phase 6's and Phase 8's own trailing output below, not restated here.]
 
    ### Scope
@@ -728,7 +729,7 @@ a code or docs repository, or the current working directory, where it is not the
 - ALWAYS pass the Phase 3(0) derived phase to `readiness-reviewer` with the artifacts that placed it there, plus any `--claimed` value verbatim — never inferred,
   never re-derived, and never as a `declared_status` field, which has no producer anywhere in this command
 - ALWAYS resolve the `model_routing` block at Phase 1.5 and pin the detection steps to the §2.1 Sonnet chain;
-  `readiness-reviewer` keeps its frontmatter Opus pin (no override); coordination + the Phase 3
+  `readiness-reviewer` keeps its frontmatter Opus pin (no override unless §10 enforces a model); coordination + the Phase 3
   deterministic skeleton run on `current_model`
 - ALWAYS invoke `readiness-reviewer` before Phase 5 — no verdict is written or reported without it
 - ALWAYS pass `Change type: docs` in the Phase 6 change summary block

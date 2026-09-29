@@ -253,7 +253,7 @@ model_routing:
   notes: <any §2 / §2.1 fallback or degradation>
 ```
 
-Each subagent dispatch below cites its chain (§9 role→chain map); mechanical steps pin `detection_model` via `model:`, and the frontmatter-Opus gates (`risk-planner`, `code-review`) are recorded but never overridden.
+Each subagent dispatch below cites its chain (§9 role→chain map); mechanical steps pin `detection_model` via `model:`, and the frontmatter-Opus gates (`risk-planner`, `code-review`) are recorded, and overridden only when §10 enforces a model.
 
 **Detect task shape.** Inspect the description for defect signals (fix / bug / regression / broken / incorrect / wrong output / crash / fails). If bug-shaped, set `task_shape: bug`. `task_shape: bug` only affects the SIGNIFICANT / HIGH-RISK path (Phase 2B/3B); for SIMPLE / MODERATE it is guidance only (no extra question). On the SIGNIFICANT / HIGH-RISK path, if it is genuinely ambiguous whether this is a defect fix or new work, ask with a `choices` prompt (2–4 options; the harness supplies the free-text escape).
 
@@ -391,7 +391,7 @@ Once the file map is returned, delegate planning to Opus.
 
 When a `specification.md`/`design.md` is in scope, extract its **in-scope** `[Uxx]`/`[ACxx]`/`[TCxx]` IDs (reuse the specs resolved in Phase 0) into `in_scope_ids` for the review dispatch below. When `task_shape: bug`, the plan will lead with a repro step and a ranked-hypotheses section — surface them in the normal plan-approval gate (no extra interrupt) **when the ranking is present**. When the planner instead returns `Ranking withheld — no red-capable repro`, the withheld-repro branch below fires first and the normal gate does not run.
 
-→ Agent (subagent_type: "dev-workflows:risk-planner"):  # planning_model — §2 Opus chain; frontmatter-pinned, recorded in model_routing, no override added unless §10 enforces a model
+→ Agent (subagent_type: "dev-workflows:risk-planner", model: `<omit — frontmatter Opus pin; under §10, run_flags.enforced_model>`):  # planning_model — §2 Opus chain; frontmatter-pinned, recorded in model_routing, no override added unless §10 enforces a model
   > "Produce the risk-weighted plan for the following brief:
   >
   > Task description: [substitute full description]
@@ -605,7 +605,7 @@ At each checkpoint, also consider suggesting **`/compact`** to free context befo
 5. After all changes are written: **DO NOT run tests yet.** When `task_shape: bug`, first **strip every `[DEBUG-xxxx]` probe** added during diagnosis (per `${CLAUDE_PLUGIN_ROOT}/references/bug-diagnosis.md`); the review diff must contain no debug instrumentation. Capture the diff and the project root. Use `git add -N . && git diff` — this includes intent-to-add untracked new files so the diff is never empty for implementations that only create new files, and it now also includes the test files from step 4a. Write this diff to a temp file (`command mktemp -t dw-impl-diff-XXXXXX`, never inside a repo tree) and record its absolute path as `review_diff_file`; the code-review dispatch (step 6) receives this path. Also capture `git diff --stat` for the summary (small — kept inline).
 6. **Opus code review** — spawn.
 
-   → Agent (subagent_type: "dev-workflows:code-review"):  # review_model — §2 Opus chain; frontmatter-pinned, recorded in model_routing, no override added unless §10 enforces a model
+   → Agent (subagent_type: "dev-workflows:code-review", model: `<omit — frontmatter Opus pin; under §10, run_flags.enforced_model>`):  # review_model — §2 Opus chain; frontmatter-pinned, recorded in model_routing, no override added unless §10 enforces a model
      > "Produce the Opus code review for this brief:
      >
      > Task description: [substitute full description]
@@ -896,7 +896,7 @@ The resume pointer is written in the terminal cost phase (Phase 7), per `workflo
 Guidance only — see `workflows-core:session-hygiene`.
 ```
 
-Also repeat the `Run flags: …` line whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6), and carry the `Session feedback: …` line wherever Phase 4 printed one (under `--skip-feedback`) and the `Session cost: …` line wherever Phase 7 printed one (under `--skip-costs`).
+Also repeat the `Run flags: …` line whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6), and carry the `Session feedback: …` line wherever Phase 4 printed one (under `--skip-feedback`). The `Session cost: …` line is Phase 7's own output, printed after this report and not restated in it.
 
 ---
 
