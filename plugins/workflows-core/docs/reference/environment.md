@@ -82,7 +82,7 @@ Every one of the eight is read by a reference this plugin ships — the corpus i
 
 **Resolution.** An alias, a full model id, or `routing`; resolved against `run-flags.md` §2's alias table and reachability check. Unset, set but empty, or set to `routing` (matched case-insensitively, as the aliases are) means no enforcement. An `--enforce-model=<value>` flag on the command line always overrides it.
 
-**When the value is bad.** A value matching none of `run-flags.md` §2's forms stops every command `--enforce-model` applies to with `RUN_FLAGS_BAD_MODEL`, and a value that resolves to an unreachable model stops it with `RUN_FLAGS_MODEL_UNAVAILABLE` — both in Phase 0, before any write, each message tagging the value `(from WORKFLOWS_ENFORCE_MODEL)` so the environment, not the command line, is the thing to fix. A command it does not apply to (`run-flags.md` §3 step 3) ignores it silently, bad value or not.
+**When the value is bad.** On a run whose command line gives no `--enforce-model` of its own, a value matching none of `run-flags.md` §2's forms stops every command `--enforce-model` applies to with `RUN_FLAGS_BAD_MODEL`, and a value that resolves to an unreachable model stops it with `RUN_FLAGS_MODEL_UNAVAILABLE` — both before any write, when the run flags are stripped, each message tagging the value `(from WORKFLOWS_ENFORCE_MODEL)` so the environment, not the command line, is the thing to fix. A command it does not apply to (`run-flags.md` §3 step 3) ignores it silently, bad value or not.
 
 **When unset.** No enforcement — model routing selects each step's model exactly as if the variable did not exist.
 
