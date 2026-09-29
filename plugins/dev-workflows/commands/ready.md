@@ -721,7 +721,7 @@ a code or docs repository, or the current working directory, where it is not the
   **plugin / skill / command / reference gap** — a `readiness-reviewer` run that cannot get a verdict
   because the plugin lacked something it needed still records it. NEVER for the reviewer's own
   `PARTIAL`/`NOT-SUPPORTED` verdict (a finding about the *work*, not the plugin) or an environment/user
-  halt (specs-repo dirty/non-main, key-not-found, cancellation). **A halt on a missing container tool always fires it:** a halt because the container lacks a tool the run needs is a container defect rather than an environment or user halt, so `emit-block` records it with `category: environment-defect` (`workflows-core:feedback-emission`'s `emit-block` predicate).
+  halt (specs-repo dirty/non-main, key-not-found, cancellation). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 - the `emit-cost` phase (Phase 8) **ALWAYS runs** — unlike feedback, it never "writes nothing" — except under `run_flags.skip_costs`, where Phase 8 still runs but executes `skip-cost` in place of `emit-cost`, advancing the checkpoint and writing no cost entry
 - ALWAYS resolve one positional address (Phase 0) and stop when none is given
 - ALWAYS require `$SPECS_PATH` — stop naming it explicitly if unset (like `/design`)

@@ -33,7 +33,7 @@ All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_CO
 | Phase | What happens |
 |---|---|
 | 0 — Resolve | Strip flags; resolve the repository and report the rung; run the specs-repo preflight; read the profile and the source repositories; settle what kind of run this is against any backlog already there. |
-| 1 — Model routing | Classify SIGNIFICANT and record the routing block. The review model is pinned to the Opus chain regardless. |
+| 1 — Model routing | Classify SIGNIFICANT and record the routing block. The review model is pinned to the Opus chain regardless (unless `--enforce-model`, §10). |
 | 2 — Scan | Dispatch one `code-scanner` per repository in a single response, capped at 4 concurrent, asking about all seven surface kinds; one narrow second round for a theme the first could not settle. |
 | 2.5 — The specs-tree read | Enumerate the `decision` and `release` surfaces, which come from no code repository: the ARDs under the specifications tree, and the release-notes drafts grouped by version. |
 | 3 — Enumerate surfaces | `docs-auditor` turns those answers into the `surfaces[]` table, with `volatility` measured from commit density at the scanned ref. |

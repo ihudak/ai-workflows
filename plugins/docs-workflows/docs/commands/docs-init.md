@@ -31,7 +31,7 @@ All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_CO
 | Phase | What happens |
 |---|---|
 | 0 — Resolve and validate | Strip flags; resolve the target and report the rung; run the specs-repo preflight; establish a writable git work tree or offer to create one; refuse a directory carrying a docs signal. |
-| 1 — Model routing | Classify MODERATE and record the routing block. The review model is pinned to the Opus chain regardless. |
+| 1 — Model routing | Classify MODERATE and record the routing block. The review model is pinned to the Opus chain regardless (unless `--enforce-model`, §10). |
 | 2 — Source repos and toolchain preflight | Confirm the code repositories the portal documents — Phase 6 records them as the profile's `source_repos[]`, read later by `/docs-audit` and `/docs-brand` — plus product name, version and toolchain. |
 | 2.5 — Branch | Create the branch, **before anything is written**, behind a clean-tree check that is only meaningful ahead of the first write. |
 | 3 — Scaffold | Write the tree, the stubs, the generated navigation, both build configs, the visibility markers, and the CI workflow, resolving every substitution including the pinned Vale release. |

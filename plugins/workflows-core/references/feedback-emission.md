@@ -144,7 +144,7 @@ Persist **only** signals about **this plugin family** itself — `workflows-core
 - Gaps in the reference docs of **whichever family plugin the signal is about** — `plugins/<that plugin>/references/**`, resolved from the running command's own plugin, and **not** `${CLAUDE_PLUGIN_ROOT}/references/**`. Written in this file that variable resolves to the plugin that *ships this reference* (`workflows-core`), so a `/prd-ground` run classifying a gap in `product-workflows`'s `brd-format.md` would test it against the wrong tree — the same hazard §3's `plugin_version` paragraph states, met one section later.
 - Corrective interactions captured by `/prompt*` (any command output the user
   had to fix).
-- Defects in the ai-containers environment — a tool the run needed and the container lacks, a wrong mount, a bad default — as `category: environment-defect`.
+- Defects in the ai-containers environment — a tool the ai-containers image is meant to provide and lacks, a wrong mount, a bad default — as `category: environment-defect`.
 
 **Do NOT persist target-project tooling advice** — project `CLAUDE.md` rules,
 target-repo hooks, and other repo-specific suggestions stay in
@@ -156,7 +156,7 @@ for the engineer's current repo, not the plugin maintainer.
 Fixable in the plugin family or in ai-containers:
 
 - a wrong or self-contradictory instruction; a broken script, gate or hook; a missing or wrong reference; a command contradicting its own documentation; a crash;
-- a container environment defect: a missing tool, a wrong mount, a bad default.
+- a container environment defect: a tool missing from the ai-containers image, a wrong mount, a bad default (a tool missing on the user's own machine or from any other container is not one — §6 `emit-block`).
 
 Excluded: friction, wishes, improvements, polish; user mistakes (wrong argument, typo, misaddressed key); target-project issues; Claude Code / model / external-service issues neither repo can fix.
 
@@ -229,28 +229,26 @@ Behavior: `origin: prompt`; write the entry with the two extra prose blocks
 (User prompt verbatim + Resolution, §1); never silently skipped (§3); resolve
 the target (§2); write silently (§5); surface the path.
 
-### `emit-block` — capture-at-block (a run halting on a plugin gap or a missing container tool)
+### `emit-block` — capture-at-block (a run halting on a plugin gap or on a tool the ai-containers image lacks)
 
 Inputs: `command` (exact slash-command name), `key` (or `null`), `source` (`specs | directory | none`), and the **halting gap** — a short description of
 the plugin capability / reference / skill / command-path the run needed but the
-plugin lacked, or the tool the run needed and the container lacked. Unlike `emit-auto`, no `impl-maintenance` report exists (the run
+plugin lacked, or the tool the run needed that the ai-containers image is meant to provide and lacks. Unlike `emit-auto`, no `impl-maintenance` report exists (the run
 is being abandoned mid-flight), so the gap is passed directly.
 
 Behavior: render **one** entry with `origin: auto` and **`impact: blocker`**;
 `category` from the §1 vocab (`missing-capability` / `missing-reference-doc` /
 `manual-workaround` / `model-routing` as fits, and `environment-defect` for a
-missing container tool); dedupe by the stable `id` (§3) —
+tool the ai-containers image lacks); dedupe by the stable `id` (§3) —
 so it will not double-log if a later terminal `emit-auto` captures the same gap
 on a resumed run; resolve the target (§2); **write silently** (§5). Return the
 persisted path (for the caller's block message / report). The caller then
 surfaces its normal `BLOCKED` escalation — `emit-block` never prompts.
 
 **Predicate — fires ONLY for a plugin-facing gap** (the plugin lacked something
-the run needed) **or a container defect that halts the run** — a tool the run
-needs that the container lacks, which is a §4.1 container defect and fires
+the run needed) **or a halt on a tool the ai-containers image is meant to provide and lacks** — a §4.1 container defect, which fires
 `emit-block` with `category: environment-defect`. That case wins over the
-environment exclusion below: a halt on a missing container tool is never
-classed as an environment halt. It does **NOT** fire for: a code / doc / Epic review **BLOCK**
+environment exclusion below, and it is the only missing-tool halt that does: a tool missing on the user's own machine, or from any container not built from ai-containers (e.g. the project's own build tool behind a `test-baseliner` `COMMAND_NOT_FOUND`, or a docs tool `toolchain-preflight` reports missing), is an environment halt and does not fire `emit-block`. This paragraph is the single statement of that scope; every command's capture-at-block paragraph points here rather than restating it. It does **NOT** fire for: a code / doc / Epic review **BLOCK**
 (a defect in the *work*, not the plugin); any other environment / user halt
 (repo-missing, dirty-tree, key-not-found, refresh-blocked, and the other
 `escalation-rules.md` cases); or user cancellation. The §4 plugin-facing scoping

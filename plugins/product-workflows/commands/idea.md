@@ -728,7 +728,7 @@ Terminal phase — runs after Phase 5, NEVER interrupts an earlier phase.
 gap** (a capability the run needed but the plugin lacked), `emit-block` (per
 `workflows-core:feedback-emission`) at that halt **before** escalating — so a run
 abandoned at the block still records the gap. NEVER `emit-block` for an environment / user halt (bad
-source-not-found, cancellation). **A halt on a missing container tool always fires it:** a halt because the container lacks a tool the run needs is a container defect rather than an environment or user halt, so `emit-block` records it with `category: environment-defect` (`workflows-core:feedback-emission`'s `emit-block` predicate).
+source-not-found, cancellation). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
 **Session-hygiene invariant.** End Phase 5 with a `### Context hygiene` note per
 `workflows-core:session-hygiene` — a same-role `/compact` suggestion, and neither a `resume.md`
