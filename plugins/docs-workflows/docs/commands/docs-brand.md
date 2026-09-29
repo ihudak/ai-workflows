@@ -9,10 +9,12 @@ Extracts a logo and a rough primary/accent colour pair from a product's own code
 ## Synopsis
 
 ```
-/docs-brand [<docs-repo-path>] [--from <code-repo-path>] [--inline]
+/docs-brand [<docs-repo-path>] [--from <code-repo-path>] [--inline] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 `--from` and `--inline` are stripped from `$ARGUMENTS` before the remaining token is read as the optional docs-repo path (Phase 0). `--from <code-repo-path>` names the product's code repository to extract from; without it, the run falls through the resolved docs profile's own `source_repos[]` — written by `/docs-init` and by `/docs-audit`, so a portal either has touched usually answers here — and then a confirmed listing under `$REPOS_PATH` (Phase 2). `--inline` switches the run to the caller-embedded mode described above, skipping this command's own preflight, review gate, pull request, and emitter tail.
+
+All three run flags apply to a **standalone** run the same way they apply elsewhere in the family: `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 14's session-cost entry, still advancing the checkpoint — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 12's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — under the flag only real defects are persisted, never the in-session Lessons Learned report; `docs-workflows` ships no dedicated session-feedback reference page, so this paragraph is that explanation. `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins `docs-scaffold-reviewer`, overriding its frontmatter Opus pin, to one model. **`--inline` never re-strips these from its own `$ARGUMENTS`**: `/docs-init` Phase 5 constructs that run's whole argument list itself (the resolved docs-repo root, `--from`, `--inline`), which never carries a run-flag token, so this run instead inherits the `run_flags` record `/docs-init` already resolved — its `enforced_model`, where set, reaches this phase's Phase 1 classification the same way, even though `--inline` runs no reviewer or maintenance dispatch of its own to spend it on.
 
 ## What it needs
 

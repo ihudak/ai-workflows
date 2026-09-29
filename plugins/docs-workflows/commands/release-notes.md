@@ -17,7 +17,7 @@ release-notes body — a plain **Category:** label + `### title` + prose for the
 wrapper), runs a light style gate, and writes the draft to a persistent destination for the
 user to paste wherever their release notes are published.
 
-Usage: `/release-notes <ADDRESS> [--version <v>] [--no-docs] [--docs <path>]`. `--docs <path>` — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`; **strip the flag and its value together** before any remaining-argument classification, or the path is read as part of the address. Declared for every consumer by `workflows-core:docs-grounding` *Procedure* step 1 (*Flags first*), which resolves it; this command only has to recognise it and pass the invocation through. Here `<ADDRESS>` is a key or an
+Usage: `/release-notes <ADDRESS> [--version <v>] [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`. `--docs <path>` — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`; **strip the flag and its value together** before any remaining-argument classification, or the path is read as part of the address. Declared for every consumer by `workflows-core:docs-grounding` *Procedure* step 1 (*Flags first*), which resolves it; this command only has to recognise it and pass the invocation through. Here `<ADDRESS>` is a key or an
 `@<path>` naming a folder in the specs tree.
 
 - **`--version <v>`** (optional) — the release this note belongs to. Absent, the grill asks once;
@@ -30,6 +30,8 @@ This command makes **zero external API calls** and **never writes into the docs 
 ---
 
 ## Phase 0 — Load
+
+**Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step, step 0 below included, parses only what it leaves.
 
 0. **Flags.** Strip every recognised flag from `$ARGUMENTS` before step 1 reads a positional token —
    `--version <v>` and `--docs <path>`, **each together with the token after it**, and `--no-docs`
@@ -353,7 +355,7 @@ choices: ["Skip and continue without its refs", "I'll clone it — wait", "Cance
 
 ## Phase 5 — Diff summarisation (only if diff grounding is ON)
 
-Spawn `diff-summarizer` in batches of up to 4 concurrent agents per Agent message, each pinned with ``model: `<detection_model — §9 / §2.1 Sonnet chain>` ``, passing each resolved absolute `repo_path`, its `repo_url_slug`, and `refs[]` — the `{branch_from, branch_to, title}` elements Phase 3 built for that repo, which is the only element list that agent takes. Collect the outputs into a `diff_summaries` array.
+Spawn `diff-summarizer` in batches of up to 4 concurrent agents per Agent message, each pinned with ``model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>` ``, passing each resolved absolute `repo_path`, its `repo_url_slug`, and `refs[]` — the `{branch_from, branch_to, title}` elements Phase 3 built for that repo, which is the only element list that agent takes. Collect the outputs into a `diff_summaries` array.
 
 **Per-repo summarizer status.** Handle each returned status before continuing:
 
@@ -394,7 +396,7 @@ A flat glob alone would also be **narrower than the signal this step says it reu
 
 This is the same inference `emit-cost` already applies in Phase 11; do not add a question for it.
 
-→ Agent (subagent_type: "docs-workflows:release-notes-writer", model: `<detection_model — §9.2 delegated writer / §2.1 Sonnet chain; this run is MODERATE (Phase 1.5)>`):
+→ Agent (subagent_type: "docs-workflows:release-notes-writer", model: `<detection_model — §9.2 delegated writer / §2.1 Sonnet chain; this run is MODERATE (Phase 1.5); under §10, run_flags.enforced_model>`):
   > "Render the release-notes draft for this brief:
   >
   > folder_read: [the Phase 3 handoff — scoped to that `EPIC-` folder and what it holds when focus_key is set]
@@ -459,13 +461,13 @@ Pass `code_repos` (the Phase-4 resolved map) to the writer when diff-grounding i
 
 If the user chose a style check in Phase 1:
 
-→ Agent (subagent_type: "prose-style:prose-style-checker", model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5>`) on the `combined_rendered` draft, written first to a scratch file of its own — `command mktemp -t rn-draft-XXXXXX` names one, outside every repository — since the checker and the fixer both take files, and hand the checker `repo_root`: the specs repository, `git -C <the resolved PRD folder> rev-parse --show-toplevel`, wherever that finds one. **Never to `release-notes.md`**: Phase 8 appends the draft there exactly once, and a checker or fixer handed that file would also check, and could edit, the sections earlier runs appended. **The rules that apply are the specs repository's, as for `release-notes.md` itself.** The checker takes its house-style overlay from `<repo-root>/.prose-style/rules/`, and where no `repo_root` names that repository it derives it from the files it is handed: for a scratch file outside every repository, that is the working directory's repository, or none — a code clone's rules, say, where the session stands in one. `repo_root` makes it the repository `release-notes.md` lives in, so the draft is checked under the rules that file would be checked under, the checker's later orders included. That is why the scratch copy stays rather than a check in place: it keeps the checker and the fixer off every earlier run's section and writes nothing into a repository mid-run, and `repo_root` costs neither.
+→ Agent (subagent_type: "prose-style:prose-style-checker", model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5; under §10, run_flags.enforced_model>`) on the `combined_rendered` draft, written first to a scratch file of its own — `command mktemp -t rn-draft-XXXXXX` names one, outside every repository — since the checker and the fixer both take files, and hand the checker `repo_root`: the specs repository, `git -C <the resolved PRD folder> rev-parse --show-toplevel`, wherever that finds one. **Never to `release-notes.md`**: Phase 8 appends the draft there exactly once, and a checker or fixer handed that file would also check, and could edit, the sections earlier runs appended. **The rules that apply are the specs repository's, as for `release-notes.md` itself.** The checker takes its house-style overlay from `<repo-root>/.prose-style/rules/`, and where no `repo_root` names that repository it derives it from the files it is handed: for a scratch file outside every repository, that is the working directory's repository, or none — a code clone's rules, say, where the session stands in one. `repo_root` makes it the repository `release-notes.md` lives in, so the draft is checked under the rules that file would be checked under, the checker's later orders included. That is why the scratch copy stays rather than a check in place: it keeps the checker and the fixer off every earlier run's section and writes nothing into a repository mid-run, and `repo_root` costs neither.
 
 **Then, where Phase 7 handed the checker `repo_root`, read it back from the checker's output**, where `prose-style` 0.4.0, which added the input, echoes the `<repo-root>` it took. Where the echo is the path handed to it, the draft was checked under the specs repository's rules. Where the output carries no `repo_root` — a `prose-style` older than 0.4.0, which ignores the input and derives `<repo-root>` as though none were named, from the scratch copy and then the working directory — or carries another path, record the style check **`DEGRADED`** in the Phase 8 report: its reason says the specs repository's house-style rules may not have applied, names the rule set the checker did apply (its `rules_source`), and says to update `prose-style` to 0.4.0 or later. So an older checker never applies another repository's rules silently. This plugin declares `prose-style` by name alone, with no version range, so an older one can be installed beside it: the echo is the test that holds wherever this command runs.
 
 If violations are returned and the user chose auto-fix:
 
-→ Agent (subagent_type: "prose-style:prose-fixer", model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5>`) to apply safe fixes to that scratch file.
+→ Agent (subagent_type: "prose-style:prose-fixer", model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5; under §10, run_flags.enforced_model>`) to apply safe fixes to that scratch file.
 
 Then read the scratch file back as `combined_rendered`.
 
@@ -491,6 +493,8 @@ Then read the scratch file back as `combined_rendered`.
    - Not read: <per repository whose commits Phase 5 dropped from the read set, the repository and why — skipped at Phase 4, no clone resolved, `unresolved_prs`, a `resolved_via: key_commits` fallback that opened nothing this run had carried, or an escalation that ended without a summary — and each commit by SHA | none — every provisional commit was read> — on a run with diff grounding on; nothing listed here is written into the scope comment, so the next grounded run reads it again, and on the `key_commits` cause that means this block returns next release
    - Branch-name probe: <per repository the whole-key scan left at zero matches: each commit it matched, by SHA, date and subject — may name a key inside a branch name, inspect by hand | fired on <repo>, matched nothing | not fired — the scan matched in every repository> — on a run with diff grounding on; nothing listed here was read
    - Style check: <applied N safe fixes | report only (M findings) | skipped — you chose "Skip style check"> — rules: <the checker's rules_source, where it ran><; DEGRADED — Phase 7's reason, where Phase 7 recorded it>
+   - Model routing: <under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` — every dispatch above already carries the enforced id, per `workflows-core:model-routing/classification` §10 | "MODERATE — detection chain throughout, no degradation (Phase 1.5)">
+   - Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` skip line is Phase 9's own output; the `Session cost: …` skip line is Phase 11's own output, printed after this report and not restated in it.]
    - Reminder: paste the draft just appended to <the resolved PRD folder>/release-notes.md, under <version | Unreleased> → <## Breaking changes | ## Feature updates | ## Fixes>, wherever your release notes are published — the docs automation adds the {{#internal-note}} metadata and emits it into example-docs.
 
    ### Next step
@@ -516,7 +520,9 @@ an earlier phase. `/release-notes` has no built-in maintenance agent, so this
 phase invokes `impl-maintenance` on the Sonnet detection chain and then
 persists the plugin-facing slice of its report as session feedback.
 
-1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5>`):
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 3's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
+
+1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5; under §10, run_flags.enforced_model>`):
    > "Analyse this session and return a Lessons Learned report.
    >
    > Session handoff:
@@ -579,7 +585,9 @@ Terminal phase — the NEW final operational phase; runs after Phase 10
 (follow-ups) and NEVER interrupts an earlier phase. Records this command's
 token-cost contribution to the PRD by invoking `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and calling its single `emit-cost` entry point. Unlike feedback, **cost ALWAYS runs**.
 
-`/release-notes` runs at two different phases by two roles (a PM's early bare-PRD
+**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way.
+
+Otherwise, `/release-notes` runs at two different phases by two roles (a PM's early bare-PRD
 run and a dev's documenting re-run), so DO NOT pass a fixed phase/role: call
 `emit-cost` with `command: /release-notes`, `phase: inferred`, `role: inferred`,
 the run's `key` (or `null`) and `source`, and `plugin_version` (read from

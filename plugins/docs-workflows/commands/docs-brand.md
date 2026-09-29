@@ -10,7 +10,7 @@ Brand the documentation site: $ARGUMENTS
 
 `/docs-brand` extracts a logo and a rough primary/accent colour pair from a product's own code and applies them to a documentation site's Material for MkDocs theme. Expectations are deliberately modest: a mark and a colour pair, not a design system. It runs two ways: **standalone**, reviewing its own diff and finishing on a branch with a drafted pull request the same way `/docs-workflows:docs-profile` does; and **`--inline`**, dispatched by `/docs-workflows:docs-init` Phase 5, where it skips its own preflight, its own review gate, its own pull request, and its own emitter tail entirely, and returns its diff plus its contrast finding for the caller's single review and single PR to absorb, or — where it cannot brand — `no branding applied: <reason>` under the failure contract below, which never ends the caller's run. Rebrands happen, and re-scaffolding a whole docs site to pick up a new logo would be absurd (D14).
 
-**Signature:** `/docs-brand [<docs-repo-path>] [--from <code-repo-path>] [--inline]`
+**Signature:** `/docs-brand [<docs-repo-path>] [--from <code-repo-path>] [--inline] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 **The `--inline` contract.** A caller passes the docs-repo path it just scaffolded as the positional token, explicitly — it is not required to, since Phase 0's `resolve-docs-repo` ladder below would otherwise resolve one on its own, but a ladder resolving independently of what the caller already has open is exactly the kind of drift this contract exists to prevent. `/docs-workflows:docs-init` is this contract's one consumer today.
 
@@ -21,6 +21,8 @@ Brand the documentation site: $ARGUMENTS
 ## Phase 0 — Resolve and validate
 
 0. **Flags.** Strip `--from <code-repo-path>` (together with the path token immediately after it) and `--inline` from `$ARGUMENTS` wherever they appear, before reading a positional token. Record `inline = true` when `--inline` was present, and `from_repo` when `--from` was. What remains is the optional `<docs-repo-path>`.
+
+   **Strip the run flags first, standalone only.** Before the flag strip above, on a standalone invocation, execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS`: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. **`--inline` does not re-strip and inherits its caller's `run_flags` instead.** `/docs-workflows:docs-init` Phase 5 constructs this run's whole `$ARGUMENTS` explicitly — the resolved docs-repo root, `--from <path>` and `--inline` — from values it already holds, so that string never carries a run-flag token of its own to find; a fresh `strip-run-flags` call against it would resolve every flag to its unset default and silently drop a caller's `--enforce-model`. Instead this run reuses the `run_flags` record `/docs-init` already resolved at its own Phase 0, unchanged, for every step below that reads one.
 
 1. Execute **`resolve-docs-repo`** from `${CLAUDE_PLUGIN_ROOT}/references/docs-workflow/repo-resolution.md` §1 — the signal-positive form, since branding applies to a site that already exists. Do not restate its ladder here; the entry point owns it. Report which rung answered, per its own hard rule — a command that quietly works in an unexpected directory is expensive to unpick afterwards. Record the resolved absolute path as `<repo>`. **An `--inline` caller's positional token is this ladder's rung 1** — see the `--inline` contract above — so this ladder only ever runs its own independent search on a standalone invocation, or on an `--inline` caller that violated the contract.
 
@@ -51,13 +53,14 @@ model_routing:
   classification: MODERATE
   reason: "deterministic extraction against a fixed precedence order; templated application"
   current_model: <the model this orchestrator is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # impl-maintenance
   review_model: <the §2 Opus chain — claude-opus-5-5, fallback per §2 — pinned regardless of MODERATE classification, per D17/D20>
   opus_available: true | false
   notes: <any §2 degradation, e.g. "Opus unavailable; docs-scaffold-reviewer fell back to Sonnet 5">
 ```
 
-Phase 9 dispatches `docs-scaffold-reviewer`, which is already pinned to Opus by its own frontmatter — no dispatch override is needed unless Opus is unavailable, in which case the fallback is announced here and again in the final report.
+Phase 9 dispatches `docs-scaffold-reviewer`, which is already pinned to Opus by its own frontmatter — no dispatch override is needed unless Opus is unavailable, or unless `run_flags.enforced_model` is set (§10), in which case the fallback or the enforced id is announced here and again in the final report. This block is computed on both paths, but on `--inline` neither `review_model` nor `detection_model` reaches a dispatch this command makes itself — Phase 9 (the reviewer) and Phase 12 (`impl-maintenance`) are both standalone-only, so the block is inert there, carried along for whoever reads it rather than acted on.
 
 ---
 
@@ -211,7 +214,7 @@ Nothing in this phase touches the code repo — every write below lands only in 
 
 Dispatch `docs-scaffold-reviewer` — pinned to Opus by its own frontmatter, per Phase 1:
 
-→ Agent (subagent_type: "docs-workflows:docs-scaffold-reviewer"):
+→ Agent (subagent_type: "docs-workflows:docs-scaffold-reviewer", model: `<review_model — §2 Opus chain, equal to docs-scaffold-reviewer's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "Review the documentation-repository scaffold changes from this brief:
   >
   > Task description: [/docs-brand standalone run — theme colours and a logo extracted from <code-repo> and applied to <docs-repo>]
@@ -254,6 +257,11 @@ There is no re-review cycle — with no fixer, there is no second pass to gate a
 
 ### Classification
 MODERATE — deterministic extraction against a fixed precedence order; templated application (review gate is Opus regardless, D17/D20)
+
+### Model Routing
+Detection model (§2.1): <detection_model>   Review model (§2): <review_model>   Opus available: <true | false>   Notes: <any §2 fallback, or "none">
+[Under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` in place of the line above — every dispatched step already carries the enforced id, per `workflows-core:model-routing/classification` §10.]
+Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` skip line is Phase 12's own output; the `Session cost: …` skip line is Phase 14's own output, printed after this report and not restated in it.]
 
 ### Source
 Code repo: <resolved path>
@@ -300,7 +308,9 @@ Left uncommitted: <"none" | <path> — ignored by .gitignore:<N> `<line>`; confi
 
 Terminal phase — runs AFTER the Phase 11 report; NEVER interrupts an earlier phase.
 
-1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5>`):
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 3's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
+
+1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5; under §10, run_flags.enforced_model>`):
    > "Analyse this session and return a Lessons Learned report.
    >
    > Session handoff:
@@ -334,7 +344,9 @@ ADDITIVE — this phase NEVER fails the run, NEVER commits, and NEVER writes int
 
 Terminal phase — the final operational phase; runs after Phase 13 and NEVER interrupts an earlier phase. Records this command's token-cost contribution by invoking `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and calling its single `emit-cost` entry point. **Cost ALWAYS runs on the standalone path — including a run that cancelled at Phase 7.**
 
-Call `emit-cost` with `command: /docs-brand`, `phase: docs-scaffold`, `role: dev` — a **fixed** pair (`workflows-core:cost-emission` §7), never `inferred`. **Only the standalone path emits.** An `--inline` run's cost belongs to `/docs-workflows:docs-init`'s own entry; emitting a second time would double-count one run, which is exactly why Phases 12–14 are skipped there rather than run with a key-less variant of the same call. Pass `key: null`, `source: none`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). With no PRD dir, `cost-emission.md` §8 rung 2's **documentation branch** — which names this command's standalone path explicitly — applies: the entry lands at `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/cost/<sid8>.md`, where `<docs-repo-slug>` is the one-segment name `workflows-core:specs-repo-git` §2.1 defines for the resolved docs repo — cited rather than re-derived here, because that section's staging rule admits exactly one segment and a second derivation is how the two drift (design D19). That rung is inserted before pending precisely because documentation work on a docs repo alone frequently has no PRD and never will, so a pending entry from it would await a reconciliation that is never coming; the pending file (§9) is now only for a genuinely keyless run that may still acquire a key. `specs-repo-git.md` §2.1's `$SPECS_PATH/documentation/<docs-repo-slug>/…` shape is what stages it.
+**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way.
+
+Otherwise, call `emit-cost` with `command: /docs-brand`, `phase: docs-scaffold`, `role: dev` — a **fixed** pair (`workflows-core:cost-emission` §7), never `inferred`. **Only the standalone path emits.** An `--inline` run's cost belongs to `/docs-workflows:docs-init`'s own entry; emitting a second time would double-count one run, which is exactly why Phases 12–14 are skipped there rather than run with a key-less variant of the same call. Pass `key: null`, `source: none`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). With no PRD dir, `cost-emission.md` §8 rung 2's **documentation branch** — which names this command's standalone path explicitly — applies: the entry lands at `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/cost/<sid8>.md`, where `<docs-repo-slug>` is the one-segment name `workflows-core:specs-repo-git` §2.1 defines for the resolved docs repo — cited rather than re-derived here, because that section's staging rule admits exactly one segment and a second derivation is how the two drift (design D19). That rung is inserted before pending precisely because documentation work on a docs repo alone frequently has no PRD and never will, so a pending entry from it would await a reconciliation that is never coming; the pending file (§9) is now only for a genuinely keyless run that may still acquire a key. `specs-repo-git.md` §2.1's `$SPECS_PATH/documentation/<docs-repo-slug>/…` shape is what stages it.
 
 **Then write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` §1. With no PRD dir, rung 2 applies: skip the file, rely on the printed `### Next step`.
 
