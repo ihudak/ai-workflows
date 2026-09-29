@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.8.1] — 2026-09-29
+
+### Fixed — behaviour
+
+- **`--enforce-model` and every model-routing dispatch assumed the agent tool accepts full model ids; Claude Code's accepts only family names.** The Agent tool's `model` parameter enumerates `sonnet | opus | haiku | fable` and nothing else, so `run-flags` §2 read reachability from a list in which no resolved id such as `claude-opus-5-5` ever appears — an explicit `--enforce-model=opus5.5` either stopped wrongly with `RUN_FLAGS_MODEL_UNAVAILABLE` or left the agent to guess — and any dispatch passing a full id as `model:` (`classification.md` §5's own example among them) failed the tool's schema unless the orchestrator translated it on its own initiative. Now:
+  - `classification.md` §2 defines a **family-only harness**: where the parameter enumerates only family names, a chain row counts as available when its family is listed, and the harness decides which version of the family runs.
+  - `classification.md` §5 states the **dispatch rule** for every dispatch in every command and agent: the `model_routing` record keeps the resolved id as the record of intent, while `model:` passes what the tool accepts — the id where it accepts ids, otherwise its family name (`claude-opus-*` → `opus`, `claude-sonnet-*` → `sonnet`, `claude-haiku-*` → `haiku`, `claude-fable-*` → `fable`). §10's dispatch and nested-dispatch bullets follow it, and so do `upgrade-executor`'s, `vuln-fixer`'s and `docs-style-checker`'s own nested dispatches.
+  - `run-flags` §2: in a family-only harness a bare family alias is reachable iff listed and is recorded as the family (`enforced_model: opus`); a version-specific form (`opus5.5`, `claude-opus-5-5`) is honoured only when it is its family's newest chain row, and is then passed as the family name; any older one (`opus5`) stops `RUN_FLAGS_MODEL_UNAVAILABLE` with a message saying this harness selects models by family only and suggesting `--enforce-model=<family>`. `fable` is now an alias row of its own (the highest reachable `claude-fable-…` id where the parameter accepts ids). Where the parameter accepts ids, behaviour is unchanged. The unpriced-model check prices a bare family by its newest chain row, and §3 step 7's relaunch advisory compares by family there.
+  - The `Model routing: bypassed — enforced <id> (flag|env)` line (`run-flags` §6, `classification.md` §10) now renders `<id>` as what the dispatches were actually passed, plus the requested value where it differs — `enforced opus (from opus5.5; the harness picks the version) (flag)`.
+  - The environment reference, the getting-started page, and `dev-workflows`' and `product-workflows`' model-routing pages say what a family-only harness does with a version-specific value.
+
 ## [1.8.0] — 2026-09-29
 
 **Update `dev-workflows`, `product-workflows` and `docs-workflows` together with this release**: their commands now cite the new `run-flags` reference and dispatch the new `defect-reporter` agent.

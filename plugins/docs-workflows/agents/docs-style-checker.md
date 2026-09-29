@@ -91,7 +91,7 @@ the output you parse.
 
    `prose-style` is a declared dependency of `docs-workflows`, so its `prose-style-checker` agent is always available — an unsatisfied dependency disables the plugin rather than letting a run reach this step without it. Invoke it:
    - `subagent_type: "prose-style:prose-style-checker"`
-   - `model: <the caller's enforced_model when its prompt carries one (workflows-core:model-routing/classification §10), else the Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5>` — a style check is mechanical, so the tier is pinned here rather than inherited, unless the caller's own run enforces a model
+   - `model: <the caller's enforced_model when its prompt carries one (workflows-core:model-routing/classification §10), else the Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5 — either one in classification §5's dispatch form: the id itself where the `model` parameter accepts ids, its family name (`sonnet`, `opus`, …) where it enumerates only family names>` — a style check is mechanical, so the tier is pinned here rather than inherited, unless the caller's own run enforces a model
    - Input: `files: <the same files list>`, `doc_type: <"product-docs" for docs repos, "general" otherwise>`.
 
    Map the return into this agent's schema:

@@ -56,7 +56,7 @@ Persistent default for the `--skip-feedback` run flag — narrows an applicable 
 
 ### `WORKFLOWS_ENFORCE_MODEL`
 
-Persistent default for the `--enforce-model` run flag — pins every subagent an applicable command dispatches to one model (an alias, a full model id, or `routing` for no enforcement), bypassing model-routing's own per-step selection. See `workflows-core:run-flags`.
+Persistent default for the `--enforce-model` run flag — pins every subagent an applicable command dispatches to one model (an alias, a full model id, or `routing` for no enforcement), bypassing model-routing's own per-step selection. Where the agent tool selects models by family only, a version-specific value is honoured only for its family's newest model and runs as the family name; the harness picks the version. See `workflows-core:run-flags`.
 
 ## Install the status line
 
