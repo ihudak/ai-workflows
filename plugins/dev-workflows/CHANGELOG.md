@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.3.1] — 2026-09-29
+
+**Update `workflows-core` to 1.8.1 with this release**: its `classification.md` §5 dispatch rule — pass a model's family name where the agent tool accepts only family names — is what the text below now cites.
+
+### Fixed — behaviour
+
+- **`upgrade-executor` and `vuln-fixer` passed a full model id on their nested `test-baseliner` dispatch**, which fails Claude Code's Agent tool, whose `model` parameter accepts only family names (`sonnet`, `opus`, `haiku`, `fable`). Both agents now pass the Sonnet-chain id or the caller's `enforced_model` in `classification.md` §5's dispatch form (the family name where only families are accepted), and their handoff files' `enforced_model` field reads `<model id or family>`. The model-routing reference page now says the chain lands on a family's first row where the tool selects by family, and what `--enforce-model` does with a version-specific value there (honoured only for a family's newest chain row, `haiku4.5` included; an older one such as `opus5` stops before any work).
+
 ## [4.3.0] — 2026-09-29
 
 **Update `workflows-core` to 1.8.0 with this release**: its new `run-flags` reference and `defect-reporter` agent are what these commands now dispatch.
