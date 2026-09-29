@@ -1519,7 +1519,7 @@ that this run is `allocate-only`, and the run continues through it. Neither is a
 — an instruction that placed no row, a grill that reached its cap, and a `Cancel` mid-grill are all
 readings of a sentence the operator typed, never a capability this plugin lacks. Nor is the
 operator's own `Cancel` later in the run — at Phase 2's proposal, mid-key-taking in Phase 3, or
-mid-walk in Phase 4 — each a user halt that reports what it left written.
+mid-walk in Phase 4 — each a user halt that reports what it left written. **A halt on a missing container tool always fires it:** a halt because the container lacks a tool the run needs is a container defect rather than an environment or user halt, so `emit-block` records it with `category: environment-defect` (`workflows-core:feedback-emission`'s `emit-block` predicate).
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 

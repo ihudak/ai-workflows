@@ -659,7 +659,7 @@ a code or docs repository, or the current working directory, where it is not the
 ## Phase 8 — Session cost
 
 Terminal phase — runs after Phase 7 and NEVER interrupts an earlier phase. Records this command's
-token-cost contribution to the PRD. **Cost ALWAYS runs** — it never "writes nothing".
+token-cost contribution to the PRD. **Cost ALWAYS runs** — it never "writes nothing" (short of `run_flags.skip_costs`, below, which writes no entry).
 
 **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way.
 
@@ -721,8 +721,8 @@ a code or docs repository, or the current working directory, where it is not the
   **plugin / skill / command / reference gap** — a `readiness-reviewer` run that cannot get a verdict
   because the plugin lacked something it needed still records it. NEVER for the reviewer's own
   `PARTIAL`/`NOT-SUPPORTED` verdict (a finding about the *work*, not the plugin) or an environment/user
-  halt (specs-repo dirty/non-main, key-not-found, cancellation)
-- the `emit-cost` phase (Phase 8) **ALWAYS runs** — unlike feedback, it never "writes nothing"
+  halt (specs-repo dirty/non-main, key-not-found, cancellation). **A halt on a missing container tool always fires it:** a halt because the container lacks a tool the run needs is a container defect rather than an environment or user halt, so `emit-block` records it with `category: environment-defect` (`workflows-core:feedback-emission`'s `emit-block` predicate).
+- the `emit-cost` phase (Phase 8) **ALWAYS runs** — unlike feedback, it never "writes nothing" — except under `run_flags.skip_costs`, where Phase 8 still runs but executes `skip-cost` in place of `emit-cost`, advancing the checkpoint and writing no cost entry
 - ALWAYS resolve one positional address (Phase 0) and stop when none is given
 - ALWAYS require `$SPECS_PATH` — stop naming it explicitly if unset (like `/design`)
 - ALWAYS read artifacts from the specs repo's clean **main** — never a branch

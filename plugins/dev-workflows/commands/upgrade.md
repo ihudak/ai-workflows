@@ -265,6 +265,8 @@ Caveats: none
 
 Append a `### Review triage` section with one line per SIGNIFICANT/HIGH-RISK component that went through Opus review: - **Review triage:** [N findings reviewed, M survived] — dismissals: [one line per dismissal, `finding — reason`; or "none"] — or "N/A (SIMPLE / MODERATE, no Opus review)" for components that never reached review.
 
+Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10), add one line below the table, `Model routing: bypassed — enforced <id> (flag|env)`, in place of any §2 / §2.1 fallback or degradation the per-component `model_routing` blocks' `notes` would otherwise report; their `opus_available` stays what the environment resolved, never rewritten to match the enforced id.
+
 Include the `impl-maintenance` lessons-learned report after the summary table — or, under `run_flags.skip_feedback`, the `Session feedback: …` line in its place.
 
 Also repeat the `Run flags: …` line whenever the run-flags strip at the top of this command printed one during this run (`workflows-core:run-flags` §6).
@@ -299,7 +301,7 @@ evidence at all.
 
 ## Invariants (always enforced)
 
-- ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation)
+- ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation). **A halt on a missing container tool always fires it:** a halt because the container lacks a tool the run needs is a container defect rather than an environment or user halt, so `emit-block` records it with `category: environment-defect` (`workflows-core:feedback-emission`'s `emit-block` predicate).
 - NEVER skip per-component classification after planning
 - NEVER use Opus for a `MODERATE` component unless the user explicitly asks for it
 - NEVER run tests for a `SIGNIFICANT` / `HIGH-RISK` component before the Opus review returns a non-BLOCK verdict

@@ -3,7 +3,7 @@
 Single source of truth for the plugin family's session-feedback emitter. Every capture surface — the automatic maintenance phase of all twenty-five workflow commands, or, under `--skip-feedback`, its bugs-only replacement, and the `/feedback` and `/prompt*` commands — cites this file and executes its steps inline. The orchestrator owns every prompt; this reference owns the entry format, the persistence ladder, dedup/attribution, the plugin-facing predicate, and the caller contract.
 
 **Purpose.** Capture friction and improvement signals about the **plugin
-family itself** and persist them per-PRD into the **specs repo** so the plugin
+family itself**, and defects in the ai-containers environment the family runs in (§4), and persist them per-PRD into the **specs repo** so the plugin
 maintainer can aggregate feedback across engineers. Feedback reaches the
 maintainer only if it lands in the committed, pushed specs repo — hence the
 persistence ladder is **specs-first** (§2), and hence every command's terminal
@@ -229,24 +229,29 @@ Behavior: `origin: prompt`; write the entry with the two extra prose blocks
 (User prompt verbatim + Resolution, §1); never silently skipped (§3); resolve
 the target (§2); write silently (§5); surface the path.
 
-### `emit-block` — capture-at-block (a run halting on a plugin gap)
+### `emit-block` — capture-at-block (a run halting on a plugin gap or a missing container tool)
 
 Inputs: `command` (exact slash-command name), `key` (or `null`), `source` (`specs | directory | none`), and the **halting gap** — a short description of
 the plugin capability / reference / skill / command-path the run needed but the
-plugin lacked. Unlike `emit-auto`, no `impl-maintenance` report exists (the run
+plugin lacked, or the tool the run needed and the container lacked. Unlike `emit-auto`, no `impl-maintenance` report exists (the run
 is being abandoned mid-flight), so the gap is passed directly.
 
 Behavior: render **one** entry with `origin: auto` and **`impact: blocker`**;
 `category` from the §1 vocab (`missing-capability` / `missing-reference-doc` /
-`manual-workaround` / `model-routing` as fits); dedupe by the stable `id` (§3) —
+`manual-workaround` / `model-routing` as fits, and `environment-defect` for a
+missing container tool); dedupe by the stable `id` (§3) —
 so it will not double-log if a later terminal `emit-auto` captures the same gap
 on a resumed run; resolve the target (§2); **write silently** (§5). Return the
 persisted path (for the caller's block message / report). The caller then
 surfaces its normal `BLOCKED` escalation — `emit-block` never prompts.
 
 **Predicate — fires ONLY for a plugin-facing gap** (the plugin lacked something
-the run needed). It does **NOT** fire for: a code / doc / Epic review **BLOCK**
-(a defect in the *work*, not the plugin); an environment / user halt
+the run needed) **or a container defect that halts the run** — a tool the run
+needs that the container lacks, which is a §4.1 container defect and fires
+`emit-block` with `category: environment-defect`. That case wins over the
+environment exclusion below: a halt on a missing container tool is never
+classed as an environment halt. It does **NOT** fire for: a code / doc / Epic review **BLOCK**
+(a defect in the *work*, not the plugin); any other environment / user halt
 (repo-missing, dirty-tree, key-not-found, refresh-blocked, and the other
 `escalation-rules.md` cases); or user cancellation. The §4 plugin-facing scoping
 applies (never target-project `CLAUDE.md` / hook advice).
@@ -255,6 +260,6 @@ applies (never target-project `CLAUDE.md` / hook advice).
 
 Inputs: the `defect-reporter` **Defects** list, `command` (the exact slash-command name), `key` (or `null`), `source` (`specs | directory | none`), and `plugin_version`.
 
-Behavior: render one `origin: auto` entry per defect — Friction = the defect plus its evidence; Suggested improvement = the repro plus the location to fix; `impact` is `blocker | friction` only, never `polish` (a defect the reporter marked `polish` is dropped before it reaches this entry point); `category` is drawn from §1's vocabulary — `environment-defect` for a container-environment location, else `wrong-output` / `missing-reference-doc` / `missing-capability` / `other` as fits; dedupe by the stable `id` (§3); resolve the target (§2); write silently (§5). Return the persisted path.
+Behavior: render one `origin: auto` entry per defect — Friction = the defect plus its evidence; Suggested improvement = the repro plus the location to fix; `impact` is `blocker | friction` only, never `polish` — `emit-bugs` drops any defect marked `polish` and writes no entry for it; `category` is drawn from §1's vocabulary — `environment-defect` for a container-environment location, else `wrong-output` / `missing-reference-doc` / `missing-capability` / `other` as fits; dedupe by the stable `id` (§3); resolve the target (§2); write silently (§5). Return the persisted path.
 
 `emit-bugs` replaces `emit-auto` for the duration of `--skip-feedback`, and is called only when `defect-reporter` returned at least one defect — the orchestrator dispatches `workflows-core:defect-reporter` in place of `impl-maintenance` and, only on a non-empty Defects list, calls `emit-bugs` on the result; when the list is empty, this reference is not loaded at all and the caller reports `— no defects` directly (`workflows-core:run-flags` §4).

@@ -12,7 +12,7 @@ Logs a manual note about the plugin family itself — friction you hit, or an im
 /feedback [<note>] [--skip-costs]
 ```
 
-`--skip-costs` (or `$WORKFLOWS_SKIP_COSTS`, [`environment.md`](../reference/environment.md)) skips this run's session-cost entry, still advancing the checkpoint; it is the only run flag this command applies — `--skip-feedback` and `--enforce-model` are reported ignored, since `/feedback` dispatches no `impl-maintenance` and invokes no model routing.
+`--skip-costs` (or `$WORKFLOWS_SKIP_COSTS`, [`environment.md`](../reference/environment.md)) skips this run's session-cost entry, still advancing the checkpoint, and drops any deferred cost record a ceded [`/prompt-brainstorm`](prompt-brainstorm.md) or [`/prompt-grill-me`](prompt-grill-me.md) left pending in this session — naming each dropped record in its output rather than writing its entry (`references/run-flags.md` §5 step 3); it is the only run flag this command applies — `--skip-feedback` and `--enforce-model` are reported ignored, since `/feedback` dispatches no `impl-maintenance` and invokes no model routing.
 
 `$ARGUMENTS`, once the run flag above is stripped, is the note text — the friction you hit and the improvement you want, in your own words. Leave it empty and Phase 1 asks for it directly; it never guesses at content you didn't express.
 

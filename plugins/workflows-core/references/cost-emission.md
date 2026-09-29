@@ -185,7 +185,7 @@ a repo-local `cost-prices.yaml` -> the shipped
 `${CLAUDE_PLUGIN_ROOT}/references/cost-prices.yaml`. The shipped rates are the
 standard first-party Claude API prices (from Anthropic's pricing page) for every
 model the routing policy can reach — the Opus chain and the Sonnet chain —
-**plus Haiku, reached only by §2.2 (`defect-reporter` under `--skip-feedback`) and by `--enforce-model=haiku`**; a maintainer refreshes them when
+**plus Haiku, reached only by §2.2 (`defect-reporter` under `--skip-feedback`) and by any `--enforce-model` (or `$WORKFLOWS_ENFORCE_MODEL`) resolving to a Haiku id**; a maintainer refreshes them when
 Anthropic's prices change. **Permanent standard
 rates are used deliberately — never promotional/introductory rates** — so cost
 stays comparable across PRDs over time (a temporary promo would make identical
@@ -638,7 +638,10 @@ something else at their Phase 3 and never get it back. Neither can run a cost
 phase after its own expensive work, because there is no "after" it controls.
 This section is how their spend is measured anyway: **the run that cedes records
 what it would have claimed; the next cost-emitting run in the session claims it
-on that run's behalf.**
+on that run's behalf** — short of `--skip-costs`, which writes no entry for it
+from either side: a `skip: true` record (§13.1) is carved out and discarded,
+and a replaying run under the flag drops the record unreplayed
+(`workflows-core:run-flags` §5 step 3).
 
 ### 13.1 The intent file
 
@@ -728,12 +731,10 @@ k-th claim with the k-th boundary and a single `/vuln` in the window shifts ever
 claim by one — filing a security run's spend under a PRD lifecycle phase, which
 is the exact misattribution this section exists to remove.
 
-For each matched claim, build the entry (§6) from its segment, taking
+For each matched claim whose record does not carry `skip: true`, build the entry (§6) from its segment, taking
 `phase`/`role` by resolving that record's own `target_command` through §7, and
 dating it `ceded_at` (§13.1). Append it through the §8 ladder using the record's
-own `key`, `epic` and `source` — which may differ from this run's.
-
-A claim whose record carries `skip: true` builds no entry; its segment is discarded after the partition.
+own `key`, `epic` and `source` — which may differ from this run's. A matched claim whose record carries `skip: true` builds no entry: its segment is still carved out of this run's remainder by the partition, and then discarded.
 
 The partition is **exhaustive and disjoint at the token level**: every usage
 record lands in exactly one bucket, so the claims' tokens plus the remainder's

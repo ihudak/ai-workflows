@@ -12,7 +12,7 @@ The same compact session handoff `impl-maintenance` receives (`${CLAUDE_PLUGIN_R
 
 ## Method
 
-1. Take each Key event and Workaround in turn. Ask: did a **plugin file** or the **container environment** behave wrongly, contrary to its own documentation, or not at all? If the cause is the user's input, the target project, Claude Code itself, the model, or an external service — it is not a defect; drop it.
+1. Take each Key event and Workaround in turn and test it against §4.1's defect predicate as loaded above — its inclusions and its **Excluded** list, applied as written there rather than restated here. A candidate that list excludes is not a defect; drop it.
 2. For a **plugin** candidate, search two roots with Glob/Grep: the handoff's **Plugin root** for the command, reference or agent the session named, and this agent's own `${CLAUDE_PLUGIN_ROOT}` for a `workflows-core` file. Confirm the wrong line exists in whichever root holds it. A candidate naming a path neither root reaches is **kept, not dropped** — report it with the path exactly as the session evidence states it, and mark it `location unverified`. For a **container** candidate there is no plugin file to confirm against: the session's own observation is the check — a missing binary, a wrong mount path, a bad default actually seen in the session — and its location is `ai-containers (<component>)`.
 3. Never report an improvement, a preference, or a missing nice-to-have.
 

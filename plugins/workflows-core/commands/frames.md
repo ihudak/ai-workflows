@@ -50,7 +50,7 @@ Usage: `/frames <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-model=
    takes exactly one address.** A second non-flag token, or a token beginning with `--` that survives
    the strip above (so neither `--skip-costs`, `--skip-feedback` nor `--enforce-model`), is a stop
    rather than a silent discard:
-   `FRAMES_EXTRA_ARGUMENT: /frames takes one address and no flags; '<token>' is neither. It indexes the frame sets of one folder per run — re-run once per folder.`
+   `FRAMES_EXTRA_ARGUMENT: /frames takes one address and no flags other than the run flags; '<token>' is neither. It indexes the frame sets of one folder per run — re-run once per folder.`
    A discarded second address is a folder the operator believes was indexed and was not.
 
 1. **The address (mandatory).** Parse the first non-flag token and resolve it with `resolve-address`
@@ -388,7 +388,7 @@ including the run that found no `design/` at all.
 **Capture-at-block invariant.** If an EARLIER phase **halts on a plugin / skill / command / reference
 gap** (a capability the run needed but the plugin lacked), `emit-block` (per
 `${CLAUDE_PLUGIN_ROOT}/references/feedback-emission.md`) at that halt **before** escalating. NEVER
-`emit-block` for an environment / user halt (an address that resolves to nothing, a cancellation).
+`emit-block` for an environment / user halt (an address that resolves to nothing, a cancellation). **A halt on a missing container tool always fires it:** a halt because the container lacks a tool the run needs is a container defect rather than an environment or user halt, so `emit-block` records it with `category: environment-defect` (the same reference's `emit-block` predicate).
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 
