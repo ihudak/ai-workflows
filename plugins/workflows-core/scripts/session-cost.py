@@ -1092,13 +1092,35 @@ def main():
     line_offset = checkpoint["line_offset"] if isinstance(checkpoint["line_offset"], int) else 0
     last_dt = parse_ts(checkpoint["last_ts"])
 
-    prices = load_prices(args.prices) if args.prices else {"models": {}}
     ns_map = load_namespace_map(args.namespaces)
 
     records = []
     new_line_offset, main_first_ts, boundaries, main_records = scan_main(
         args.transcript, line_offset, ns_map
     )
+    current_snapshot = read_snapshot_cost(args.snapshot)
+    baseline_snapshot = checkpoint["last_snapshot_cost"]
+    new_last_snapshot_cost = (
+        current_snapshot if isinstance(current_snapshot, (int, float)) else baseline_snapshot
+    )
+    new_checkpoint = {
+        "line_offset": new_line_offset,
+        "last_ts": iso_z(now_dt),
+        "last_snapshot_cost": new_last_snapshot_cost,
+    }
+    # --advance-only needs nothing past the checkpoint: return before the
+    # subagent read, the claim match and any pricing.
+    if args.advance_only:
+        tmp_ck = args.checkpoint + ".tmp"
+        os.makedirs(os.path.dirname(os.path.abspath(args.checkpoint)), exist_ok=True)
+        with open(tmp_ck, "w", encoding="utf-8") as fh:
+            json.dump(new_checkpoint, fh)
+        os.replace(tmp_ck, args.checkpoint)
+        print("checkpoint advanced: line_offset=%s last_ts=%s"
+              % (new_checkpoint["line_offset"], new_checkpoint["last_ts"]))
+        return
+
+    prices = load_prices(args.prices) if args.prices else {"models": {}}
     records.extend(main_records)
     sub_first_ts = read_subagents(args.subagents_dir, last_dt, now_dt, records)
 
@@ -1143,14 +1165,9 @@ def main():
     # apportioned once part of the window has been carved off. With any claim the
     # field is omitted rather than over-reported against the remainder.
     cost_statusline = None
-    current_snapshot = read_snapshot_cost(args.snapshot)
-    baseline_snapshot = checkpoint["last_snapshot_cost"]
     if not matched and isinstance(current_snapshot, (int, float)) \
             and isinstance(baseline_snapshot, (int, float)):
         cost_statusline = round(current_snapshot - baseline_snapshot, 4)
-    new_last_snapshot_cost = (
-        current_snapshot if isinstance(current_snapshot, (int, float)) else baseline_snapshot
-    )
 
     claims_out = []
     for m in matched:
@@ -1175,22 +1192,8 @@ def main():
         "command_boundaries": boundaries,
         "claims": claims_out,
         "unmatched_claims": unmatched,
-        "new_checkpoint": {
-            "line_offset": new_line_offset,
-            "last_ts": iso_z(now_dt),
-            "last_snapshot_cost": new_last_snapshot_cost,
-        },
+        "new_checkpoint": new_checkpoint,
     }
-    if args.advance_only:
-        tmp_ck = args.checkpoint + ".tmp"
-        os.makedirs(os.path.dirname(os.path.abspath(args.checkpoint)), exist_ok=True)
-        with open(tmp_ck, "w", encoding="utf-8") as fh:
-            json.dump(result["new_checkpoint"], fh)
-        os.replace(tmp_ck, args.checkpoint)
-        nc = result["new_checkpoint"]
-        print("checkpoint advanced: line_offset=%s last_ts=%s"
-              % (nc["line_offset"], nc["last_ts"]))
-        return
     print(json.dumps(result, indent=2))
 
 
