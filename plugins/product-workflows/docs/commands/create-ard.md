@@ -9,12 +9,14 @@ Grounds on the mounted implementation repos it discovers and authors an Architec
 ## Synopsis
 
 ```
-/create-ard <ADDRESS> [--no-docs] [--docs <path>]
+/create-ard <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 `/create-ard <PRD-KEY>` authors a **PRD-level** ARD. `/create-ard <EPIC-KEY>` authors an **Epic-level** ARD, which inherits the PRD-level ARD read-only and layers its own `[AD#N]` decisions on top (an Epic/area decision wins on conflict — a real contradiction is caught by `ard-reviewer` at authoring time, not left for a downstream consumer to resolve). A bare `<Epic-KEY>` also resolves, auto-finding its parent PRD. The folder's prefix sets the altitude, never the kind it asserts; a legacy folder with no prefix is placed by what it holds — a carrier asserting `kind: epic` as an Epic folder, one asserting `kind: prd` or a `brd-link.md` naming a `parent:` as a PRD folder. `--no-docs` turns off the optional Phase 3 documentation-grounding pass.
 
 - **The BRD route** — detected from the resolved folder's `brd-link.md`, never declared. It authors an ARD into the `PRD-` slice folder [`/brd-split`](brd-split.md) carved, from that folder's `ard-seed.md`. A `BRD-` container is refused with `CREATE_ARD_BRD_NOT_SLICED`: a BRD holds `brd/`, `grounding/`, `coverage-ledger.md` and `slices.md`, and no ARD.
+
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 8's session-cost entry, still advancing the checkpoint — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 8's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `workflows-core:docs-grounder`, `workflows-core:code-scanner`, `ard-reviewer` (overriding its frontmatter Opus pin), and, under `--skip-feedback`, `defect-reporter` — to one model, and it is also the one flag that changes a *gate*: the tiered HARD model gate below does not fire under it, since the user has already chosen the model — see [Model routing](../reference/model-routing.md).
 
 ## How it runs
 
@@ -32,7 +34,7 @@ flowchart TD
     p7 --> p8["Phase 8 — Session maintenance, feedback & cost"]
 ```
 
-Four subagents are dispatched: `workflows-core:docs-grounder` (Phase 3, read-only grounding on the shipped product docs — default ON when `$DOCS_PATH` resolves, advisory, never a gate), `workflows-core:code-scanner` (Phase 3, one instance per confirmed repo, up to 4 concurrent per batch), `ard-reviewer` (Phase 5, Opus-pinned), and `workflows-core:impl-maintenance` (Phase 8, session lessons-learned). The detection-tier agents run at `detection_model` (the §2.1 Sonnet chain); `ard-reviewer` runs at `review_model` (the §2 Opus chain, frontmatter-pinned, no override). The interview and the ARD authoring itself run inline on the session's own `current_model` rather than through a delegated subagent.
+Four subagents are dispatched: `workflows-core:docs-grounder` (Phase 3, read-only grounding on the shipped product docs — default ON when `$DOCS_PATH` resolves, advisory, never a gate), `workflows-core:code-scanner` (Phase 3, one instance per confirmed repo, up to 4 concurrent per batch), `ard-reviewer` (Phase 5, Opus-pinned), and `workflows-core:impl-maintenance` (Phase 8, session lessons-learned). The detection-tier agents run at `detection_model` (the §2.1 Sonnet chain); `ard-reviewer` runs at `review_model` (the §2 Opus chain, frontmatter-pinned, no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one). The interview and the ARD authoring itself run inline on the session's own `current_model` rather than through a delegated subagent.
 
 ## What it needs
 
@@ -70,7 +72,7 @@ With the BRD route the run is seeded by a BRD instead of a PRD, and what it need
 
 ## Gates
 
-Phase 5 dispatches `ard-reviewer`, Opus-pinned by frontmatter (`model: opus`, no override), checking grounding integrity (every as-is claim cites a real `file:line`), `[AD#N]` well-formedness, non-contradiction of inherited PRD-level invariants, altitude purity (no per-repo solutions at PRD level), and recorded open questions. `PASS` / `PASS WITH RECOMMENDATIONS` proceeds. `BLOCK` triggers one inline fix cycle — the orchestrator/grill edits the ARD directly; there is no delegated fixer — and one re-review; if still `BLOCK`, each unresolved BLOCKER is escalated individually. Cap: one fix cycle plus one re-review.
+Phase 5 dispatches `ard-reviewer`, Opus-pinned by frontmatter (`model: opus`, no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one), checking grounding integrity (every as-is claim cites a real `file:line`), `[AD#N]` well-formedness, non-contradiction of inherited PRD-level invariants, altitude purity (no per-repo solutions at PRD level), and recorded open questions. `PASS` / `PASS WITH RECOMMENDATIONS` proceeds. `BLOCK` triggers one inline fix cycle — the orchestrator/grill edits the ARD directly; there is no delegated fixer — and one re-review; if still `BLOCK`, each unresolved BLOCKER is escalated individually. Cap: one fix cycle plus one re-review.
 
 Before the review, Phase 4.5 runs a structural pre-lint (`workflows-core:pre-lint`) — advisory only, never blocking — that inline-fixes mechanical issues (a duplicate `[AD#N]`, a stray placeholder) and leaves content gaps for the grill and the author to close.
 

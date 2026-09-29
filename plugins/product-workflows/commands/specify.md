@@ -19,7 +19,7 @@ Opus `spec-reviewer` and offers to land the spec on the specs repo's main branch
 Key distinction from `/epics`: `/epics` *splits* a PRD into Epic drafts; `/specify` *authors one
 specification* for a single item (typically an Epic). Run `/epics` first, then `/specify` per Epic.
 
-Usage: `/specify <ADDRESS> [--no-docs] [--docs <path>]`, where `<ADDRESS>` is a key or an `@<path>`. `--docs <path>` — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`; **strip the flag and its value together** before any remaining-argument classification, or the path is read as part of the address. Declared for every consumer by `workflows-core:docs-grounding` *Procedure* step 1 (*Flags first*), which resolves it; this command only has to recognise it and pass the invocation through. On the BRD
+Usage: `/specify <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`, where `<ADDRESS>` is a key or an `@<path>`. `--docs <path>` — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`; **strip the flag and its value together** before any remaining-argument classification, or the path is read as part of the address. Declared for every consumer by `workflows-core:docs-grounding` *Procedure* step 1 (*Flags first*), which resolves it; this command only has to recognise it and pass the invocation through. On the BRD
 route the run is seeded from a decided BRD slice and the address is the **`PRD-` slice key**
 `/brd-split` carved; a `BRD-` container is refused (Phase 0 step 0). One address on every route: a
 second positional token is refused (Phase 0 step 1, `SPECIFY_ONE_ADDRESS`).
@@ -122,6 +122,8 @@ second positional token is refused (Phase 0 step 1, `SPECIFY_ONE_ADDRESS`).
      decisions — saying only that the dispositions are replaced is not the disclosure.
 
 1. **Resolve the address.**
+
+   **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
 
    **Strip recognised flags before anything counts positional tokens.** `--no-docs` (boolean) and
    `--docs <path>` (which consumes the token after it) are removed from `$ARGUMENTS` first, together
@@ -429,14 +431,15 @@ model_routing:
   classification: MODERATE        # typical; SIGNIFICANT possible for large/cross-cutting PRDs
   reason: <one-line>
   current_model: <the model this orchestrator/grill is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # the folder read, code-scanner
-  review_model:    <§2 Opus chain>     # spec-reviewer (frontmatter-pinned; recorded, no override)
+  review_model:    <§2 Opus chain>     # spec-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model)
   authoring_model: <= current_model>   # the interactive grill + specification.md authoring (session model, not a delegated subagent)
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
 ```
 
-The grill + authoring run inline on `current_model` (interactive judgment — not a delegated subagent), consistent with the model-routing SSOT. If no Opus is available, `spec-reviewer` falls to the Sonnet floor — record the degradation in `notes` and the final report.
+The grill + authoring run inline on `current_model` (interactive judgment — not a delegated subagent), consistent with the model-routing SSOT. If no Opus is available, `spec-reviewer` falls to the Sonnet floor — record the degradation in `notes` and the final report. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded.
 
 ---
 
@@ -893,7 +896,7 @@ the grill/author. **Advisory** — never blocks; proceed to Phase 6 once finding
 
 1. **Dispatch `spec-reviewer`.**
 
-→ Agent (subagent_type: "product-workflows:spec-reviewer", model: `<review_model — §2 Opus chain; frontmatter-pinned, recorded, no override>`):
+→ Agent (subagent_type: "product-workflows:spec-reviewer", model: `<review_model — §2 Opus chain, equal to spec-reviewer's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "Review the specification for this brief:
   >
   > Specification path: [absolute path to specification.md]
@@ -990,6 +993,8 @@ guidance only), then a
 span suggestion (PRD-level→`/product-workflows:epics` `/compact`; Epic-level→`/dev-workflows:design` `/clear`) +
 `/rename <PRD-ID>-<slug>-pe`. Guidance only, never auto-run.
 
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` as this phase's only output. Capture-at-block (`emit-block`) is unaffected by the flag.
+
 **The run's key on the BRD route.** Phase 0 resolved a BRD key, which is a folder name and never a
 second identity (`workflows-core:addressing` §1). Any tracker identity for this work,
 if one exists at all, is the `key` in the PRD this BRD folder holds — glob
@@ -1037,7 +1042,7 @@ and NEVER interrupts an earlier phase. Records this command's token-cost
 contribution to the PRD by invoking `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and calling its single `emit-cost` entry point. Unlike feedback, **cost ALWAYS runs** — it never "writes
 nothing".
 
-Call `emit-cost` with `command: /specify`, `phase: specification`, `role: pe`,
+**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, call `emit-cost` with `command: /specify`, `phase: specification`, `role: pe`,
 the run's `key` (or `null`) and `source`, and `plugin_version` (read from
 `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). It resolves the session
 transcript + subagents (§1), loads and **advances the chained checkpoint** (§3),
@@ -1072,7 +1077,7 @@ written (§10 privacy).
 
 ## Final report
 
-Report: feature-folder path; stage/user-story/AC/TC counts; open-question count; unmounted-repo advisories; **the PRD gate's return value and whether an authored `prd.md` was read from `prd_dir`** — the same two lines on every route, so a reader can tell an `absent` PRD from an unrun gate; the `spec-reviewer` verdict; the `Phase handoff:` outcome line from `handoff-to-main` (`workflows-core:phase-handoff` §4.1); the `Specs repo:` outcome line from `commit-artifacts` (`workflows-core:specs-repo-git` §6), with any guard notice repeated in full; and a reminder of the Epic flow described above + that `Published: yes` is a human-only freeze step.
+Report: feature-folder path; stage/user-story/AC/TC counts; open-question count; unmounted-repo advisories; **the PRD gate's return value and whether an authored `prd.md` was read from `prd_dir`** — the same two lines on every route, so a reader can tell an `absent` PRD from an unrun gate; the `spec-reviewer` verdict; the resolved model routing (+ any Opus degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); the `Phase handoff:` outcome line from `handoff-to-main` (`workflows-core:phase-handoff` §4.1); the `Session feedback: …` line wherever Phase 8 printed one (under `--skip-feedback`) and the `Session cost: …` line wherever Phase 9 printed one (under `--skip-costs`); the `Specs repo:` outcome line from `commit-artifacts` (`workflows-core:specs-repo-git` §6), with any guard notice repeated in full; and a reminder of the Epic flow described above + that `Published: yes` is a human-only freeze step.
 
 **Wherever `prd_dir` holds `grounding/`, on either route, additionally:** which of
 `<prd_dir>/grounding/code-grounding.md` and `<prd_dir>/grounding/design-grounding.md` were present, which of

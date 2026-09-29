@@ -9,7 +9,7 @@ Reads the resolved Epic or PRD folder, lightly grounds in code, and authors an o
 ## Synopsis
 
 ```
-/specify <ADDRESS> [--no-docs] [--docs <path>]
+/specify <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 **The BRD route** — where the resolved folder is a `PRD-` folder carrying a `brd-link.md`, or an `EPIC-` folder inside one, the run authors the specification for a decided BRD slice. It is detected, not declared: there is no flag. A `BRD-` container is refused (`SPECIFY_BRD_NOT_SLICED`). The address is then the slice's key (or an Epic's inside it), validated against `^[A-Z][A-Z0-9_]*(-\d+)+$` for shape only (so a three-segment slice key such as `EPIC-008-01` is as valid as `EPIC-008`) and resolved through `resolve-address`, which searches every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus its legacy fallback — so an `@<path>` is only for a folder outside the normal layout. It takes **one address**, like every other route: a second positional token stops the run (`SPECIFY_ONE_ADDRESS`), because a key encodes its own ancestry and no command takes a chain (D4). The pickers, Epic counts and folder read described below run on this route too — a slice is a PRD folder, and [`/epics`](epics.md) can mint Epics inside it — and the route adds to them rather than replacing them: it also reads the slice's `spec-seed.md`, `decisions.md` and `brd-link.md`, and writes no `idea.md`.
@@ -25,6 +25,8 @@ Key distinction from [`/epics`](epics.md): `/epics` *splits* a PRD into Epic dra
 **There is no fourth case.** An Epic always has a PRD above it — [`/epics`](epics.md) is the only command that creates an `EPIC-` folder, and it writes every one of them under a PRD folder — so a top-level `EPIC-` folder with no PRD above it is no longer a shape `/specify` resolves. A per-Epic feature folder that does not exist is a stop (`SPECIFY_EPIC_NOT_FOUND`) naming `/product-workflows:epics <PRD>`, never a directory this command creates.
 
 Addressing the Epic directly — `/specify <EPIC-KEY>`, or an `@<path>` to its folder — skips the picker entirely: the Epic is already chosen, and its parent PRD is the folder above it. There is no two-key form to skip the picker with; `/specify` takes **one** address and refuses a second positional token (`SPECIFY_ONE_ADDRESS`). `--no-docs` turns off the optional Phase 4 documentation-grounding pass.
+
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 9's session-cost entry, still advancing the checkpoint — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 8's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `workflows-core:docs-grounder`, `workflows-core:code-scanner`, `spec-reviewer` (overriding its frontmatter Opus pin), and, under `--skip-feedback`, `defect-reporter` — to one model, and it is also the flag that changes a degrade path: if no Opus resolves, Phase 6 otherwise degrades `spec-reviewer` to the Sonnet floor and records it, which does not happen under enforcement since the enforced model is used instead — see [Model routing](../reference/model-routing.md).
 
 ## How it runs
 
@@ -83,7 +85,7 @@ On the BRD route the run is seeded by a decided BRD slice, and what it needs cha
 
 ## Gates
 
-Phase 6 dispatches `spec-reviewer`, Opus-pinned by frontmatter (`model: opus`, no override), checking per-stage quality, cross-stage consistency, coverage, and identifier integrity. `BLOCK` fixes the BLOCKER findings inline — the orchestrator/grill edits `specification.md` directly; there is no delegated writer to re-dispatch — and re-reviews once; an unresolved BLOCKER after that cycle is escalated individually, with "Defer" appending a `## Refinement notes` section to the spec itself. `MAJOR`/`MINOR`/`NIT` under `PASS WITH RECOMMENDATIONS` are deferred to the final report with no mandatory fix cycle. Cap: one fix cycle plus one re-review.
+Phase 6 dispatches `spec-reviewer`, Opus-pinned by frontmatter (`model: opus`, no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one), checking per-stage quality, cross-stage consistency, coverage, and identifier integrity. `BLOCK` fixes the BLOCKER findings inline — the orchestrator/grill edits `specification.md` directly; there is no delegated writer to re-dispatch — and re-reviews once; an unresolved BLOCKER after that cycle is escalated individually, with "Defer" appending a `## Refinement notes` section to the spec itself. `MAJOR`/`MINOR`/`NIT` under `PASS WITH RECOMMENDATIONS` are deferred to the final report with no mandatory fix cycle. Cap: one fix cycle plus one re-review.
 
 Ahead of the review, Phase 5.5 runs a structural pre-lint (`workflows-core:pre-lint`) — advisory only — checking the Universal checks and the spec block, including that the header's `Open questions` count matches the actual `- [ ]` count.
 

@@ -21,11 +21,13 @@ Flags: `--deep` switches the grill from bounded (≤10 questions) to relentless 
 (see Phase 1); the token after it is always its value.
 `--ground-code [<repo>[,<repo>…]]` grounds the idea against mounted code (see Phase 2.6) — bare it derives the repo set, with a value it scans exactly those repos. The token after `--ground-code` is its value **only** when it contains no whitespace and every comma-separated part matches a top-level directory basename under `${REPOS_PATH:-/workspace}`; otherwise the flag is bare and the token is idea text.
 
+Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--ground-code[=<repo>[,<repo>…]]] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
+
 ---
 
 ## Phase 0 — Resolve the address + model routing
 
-1. **The address (mandatory).** Parse the first token that is neither a flag nor a flag's value — `--docs` always consumes the token after it, and `--ground-code` only as the Flags paragraph above conditions it, and a value skipped as "non-flag" would be read as the key and validate it with `key-valid`
+1. **The address (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--docs` always consumes the token after it, and `--ground-code` only as the Flags paragraph above conditions it, and a value skipped as "non-flag" would be read as the key and validate it with `key-valid`
    (`workflows-core:addressing` §1). Absent or malformed → stop:
    `IDEA_NEEDS_KEY: /idea needs a PRD key (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-77) — it names the folder this idea will live in. Re-run '/product-workflows:idea <PRD-KEY> [<prompt>|@<file>]'.`
 
@@ -104,13 +106,16 @@ Flags: `--deep` switches the grill from bounded (≤10 questions) to relentless 
      classification: MODERATE          # idea refinement is typically MODERATE
      reason: <one-line>
      current_model: <the model this orchestrator/grill is running under>
+     enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
      detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # idea-reader
+     extraction_model: <§2 Opus chain>   # figure-reader (frontmatter-pinned to opus; recorded, no override unless §10 enforces a model)
      authoring_model: <= current_model>   # the interactive grill + idea.md authoring (session model, not a delegated subagent)
      opus_available: <true if a §2 Opus model resolved, else false>
      notes: <any §2/§2.1 fallback or degradation>
    ```
    The grill + authoring run inline on `current_model` (the §2 Opus chain — interactive judgment, not a
-   delegated subagent). `idea-reader` runs on `detection_model`. If no Opus resolves, **degrade to the
+   delegated subagent). `idea-reader` runs on `detection_model`, and `figure-reader` on `extraction_model`.
+   If no Opus resolves, **degrade to the
    best available and record the degradation** in `notes` and the final report — do NOT hard-block (a PM
    must not be blocked from capturing an idea by a momentary Opus outage). A `--ground-code` run does
    **not** floor the classification at `SIGNIFICANT`: §1.1's multi-source floor is written for
@@ -272,7 +277,7 @@ reading the source as the source (`agents/idea-reader.md`, *What the caller hand
 before the reader, at most 10 per dispatch and at most 4 dispatches in a single response, in further
 waves until none remain:
 
-→ Agent (subagent_type: "product-workflows:figure-reader", model: opus — frontmatter-pinned):
+→ Agent (subagent_type: "product-workflows:figure-reader", model: `<extraction_model — §2 Opus chain, equal to figure-reader's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as extraction_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "figures: [absolute path of each taken image in this batch, in the walk's order]"
 
 An `INPUT_MISSING` return is this run's defect — it sent an empty batch — and is fixed and
@@ -729,6 +734,8 @@ nor a `/rename` label. Two different reasons, neither of them a missing key: no 
 this run hands its brief off in the same run rather than being a phase a later run resumes (§1),
 and no label because the ideation phase is short (§4). Guidance only, never auto-run.
 
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
+
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model: `<detection_model — §2.1 Sonnet chain>`):
    > "Analyse this session and return a Lessons Learned report.
    >
@@ -746,7 +753,7 @@ and no label because the ideation phase is short (§4). Guidance only, never aut
    plugin-facing slice (§4), dedupes by stable `id` (§3), resolves the target via the §2 specs-first
    ladder, and writes silently. Surface the persisted path (or "no plugin-facing signal — nothing
    persisted").
-3. **Session cost (ALWAYS runs).** Invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /idea`, `phase: prd-creation`, `role: pm`, `key` = the run's own key,
+3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The terminal `commit-artifacts` step below runs unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /idea`, `phase: prd-creation`, `role: pm`, `key` = the run's own key,
    the run's `source`, and `plugin_version`. The key is always present — `/idea` refuses to run without
    one — so the entry lands on the keyed tier and never on the pending ladder (§9), which
    **advances the chained checkpoint** (§3); surface the persisted path (or the report-only notice).
@@ -793,8 +800,8 @@ index row dropped because its image is gone, and every source left uncopied with
 opens — not markdown, not an image — with its extension, or a copy that failed) — stated plainly
 where nothing was vendored at all ("no source to vendor: the idea came from a prompt", or "nothing
 linked"), and naming no
-directory this run did not actually create; the resolved model routing (+ any Opus degradation); the feedback path; the cost
-path (or notice); the `Specs repo:` outcome line from `commit-artifacts`
+directory this run did not actually create; the resolved model routing (+ any Opus degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line printed by Phase 6); the cost
+path (or notice, or, under `--skip-costs`, the `Session cost: …` line printed by Phase 6); the `Specs repo:` outcome line from `commit-artifacts`
 (`workflows-core:specs-repo-git` §6), with any guard notice repeated in full; the
 `Phase handoff:` outcome line (`workflows-core:phase-handoff` §4.1) — `handoff-to-main`'s on the
 first option, and the *Declined by the user* line on either other (Phase 5), that line being the one

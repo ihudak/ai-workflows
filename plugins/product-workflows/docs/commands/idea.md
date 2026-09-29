@@ -9,7 +9,7 @@ Refines one raw source — a prompt, a file, a community post, or a saved file �
 ## Synopsis
 
 ```
-/idea <PRD-KEY> [<prompt> | @<file>] [--deep] [--ground-code [<repo>,…]] [--no-docs] [--docs <path>]
+/idea <PRD-KEY> [<prompt> | @<file>] [--deep] [--ground-code [<repo>,…]] [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 The argument after the key is classified into one of **two** source forms (Phase 1), by precedence:
@@ -20,6 +20,8 @@ The argument after the key is classified into one of **two** source forms (Phase
 There is no third classification and no tracker-export source form; a path that looks like one but resolves to no file is caught and put back to you rather than ingested as prose.
 
 Four flags: `--deep` switches the grill from bounded (≤10 questions) to relentless (runs to convergence, no cap); `--ground-code` adds an optional code-grounding pass; `--no-docs` turns documentation grounding off; `--docs <path>` points documentation grounding at a specific docs root instead of the resolved default.
+
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 6's session-cost entry, still advancing the checkpoint — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 6's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `idea-reader`, `figure-reader` (overriding its frontmatter Opus pin), `workflows-core:docs-grounder`, `workflows-core:code-scanner`, and, under `--skip-feedback`, `defect-reporter` — to one model; the interactive grill and the `idea.md` authoring itself still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
 
 ## How it runs
 
