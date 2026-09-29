@@ -349,7 +349,7 @@ model_routing:
   notes: <any §2/§2.1 fallback or degradation>
 ```
 
-Each subagent dispatch below cites its chain (§9 role→chain map). **No relaunch advisory** for MODERATE — the writer runs on its detection pin and the gates run on `current_model`, which §3.1 allows (**unless `run_flags.enforced_model` is set** — `workflows-core:model-routing/classification` §10 — then no gate or advisory of this kind fires: if a run is classified SIGNIFICANT/HIGH-RISK, the §9.1 advisory applies and `epic-writer` escalates to the §2 chain). If no Opus is available, `epic-reviewer` falls to the Sonnet floor — record the degradation in `notes` and the Phase 9 report. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded.
+Each subagent dispatch below cites its chain (§9 role→chain map). **No relaunch advisory** for MODERATE — the writer runs on its detection pin and the gates run on `current_model`, which §3.1 allows (if a run is classified SIGNIFICANT/HIGH-RISK, the §9.1 advisory applies — unless `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10 — then no advisory fires) — and `epic-writer` escalates to the §2 chain). If no Opus is available, `epic-reviewer` falls to the Sonnet floor — record the degradation in `notes` and the Phase 9 report. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded.
 
 ---
 
@@ -842,7 +842,7 @@ MODERATE — Epic drafting for a single PRD
 - Detection steps — the folder read, code-scanner, prose-style-checker, doc-fixer (detection_model): [model]
 - epic-reviewer (review_model): [model]
 - [`Model routing: bypassed — enforced <id> (flag|env)` in place of the `epic-reviewer (review_model)` line above, wherever `run_flags.enforced_model` is set — no Sonnet-floor degradation applies, per `workflows-core:model-routing/classification` §10.]
-- Opus available: [yes | no] — unaffected by enforcement; reports the environment truthfully (§10: `opus_available` is never rewritten to agree with the enforced id).
+- Opus available: [yes | no — unaffected by enforcement; reports the environment truthfully (§10: `opus_available` is never rewritten to agree with the enforced id)]
 - Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` skip line, where it fires, is carried in the Session learnings (Agent 4) line below; the `Session cost: …` skip line is Phase 11's own output, printed after this report and not restated in it.]
 
 ### PRD summary

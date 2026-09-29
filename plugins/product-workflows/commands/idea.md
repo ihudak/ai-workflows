@@ -21,7 +21,7 @@ Flags: `--deep` switches the grill from bounded (≤10 questions) to relentless 
 (see Phase 1); the token after it is always its value.
 `--ground-code [<repo>[,<repo>…]]` grounds the idea against mounted code (see Phase 2.6) — bare it derives the repo set, with a value it scans exactly those repos. The token after `--ground-code` is its value **only** when it contains no whitespace and every comma-separated part matches a top-level directory basename under `${REPOS_PATH:-/workspace}`; otherwise the flag is bare and the token is idea text.
 
-Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--ground-code[=<repo>[,<repo>…]]] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
+Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--ground-code [<repo>[,<repo>…]]] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 ---
 
@@ -117,7 +117,9 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
    delegated subagent). `idea-reader` runs on `detection_model`, and `figure-reader` on `extraction_model`.
    If no Opus resolves, **degrade to the
    best available and record the degradation** in `notes` and the final report — do NOT hard-block (a PM
-   must not be blocked from capturing an idea by a momentary Opus outage). A `--ground-code` run does
+   must not be blocked from capturing an idea by a momentary Opus outage). Under `run_flags.enforced_model`
+   (`workflows-core:model-routing/classification` §10) no degradation is recorded; dispatched steps use the
+   enforced model, while the grill and authoring still run on `current_model`. A `--ground-code` run does
    **not** floor the classification at `SIGNIFICANT`: §1.1's multi-source floor is written for
    `/implement`, and §8.3's purpose — the strongest available model on synthesis — is already met
    here, because the grill and authoring run inline on `current_model` while the scanners run on
