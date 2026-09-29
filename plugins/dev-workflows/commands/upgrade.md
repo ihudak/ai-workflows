@@ -6,9 +6,13 @@ allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
 
 Upgrade components: $ARGUMENTS
 
+Usage: `/upgrade <component[:exact|:minor|:latest|:lts]> [<component…>] [--no-commit] [--skip-feedback] [--enforce-model=<model>]`
+
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
-**Strip `--no-commit` first**, before parsing any component token: an unstripped flag is read as a component name and the run fails resolving it. When present, steps 6.5 and 7.5 are both skipped and the changes are left in the working tree. It is the one opt-out from a commit that is otherwise prompt-free (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §1 rule 5) — typed rather than clicked, which is the difference — and a run under it says once what it costs: the work is recoverable only on this machine.
+**Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
+
+**Strip `--no-commit` next**, before parsing any component token: an unstripped flag is read as a component name and the run fails resolving it. When present, steps 6.5 and 7.5 are both skipped and the changes are left in the working tree. It is the one opt-out from a commit that is otherwise prompt-free (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §1 rule 5) — typed rather than clicked, which is the difference — and a run under it says once what it costs: the work is recoverable only on this machine.
 
 Each token is one of: `component:1.2.3` (exact), `component:minor` (latest patch on current minor), `component:latest` (latest stable), `component:lts` (latest LTS), or bare `component` (latest compatible with everything else).
 
@@ -52,9 +56,10 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
        classification: [SIMPLE | MODERATE | SIGNIFICANT | HIGH-RISK]
        reason: <one-line>
        current_model: <the model this orchestrator is running under>
+       enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
        detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # upgrade-planner, test-baseliner; upgrade-executor (SIMPLE/MODERATE); review-fixer
-       planning_model: <§2 Opus chain>   # risk-planner (SIGNIFICANT/HIGH-RISK; frontmatter-pinned, recorded, no override); upgrade-executor escalates here only if HIGH-RISK
-       review_model:  <§2 Opus chain>    # code-review (frontmatter-pinned; recorded, no override)
+       planning_model: <§2 Opus chain>   # risk-planner (SIGNIFICANT/HIGH-RISK; frontmatter-pinned, recorded, no override unless §10 enforces a model); upgrade-executor escalates here only if HIGH-RISK
+       review_model:  <§2 Opus chain>    # code-review (frontmatter-pinned; recorded, no override unless §10 enforces a model)
        opus_available: <true if a §2 Opus model resolved, else false>
        gate_tests_on_review: <true for SIGNIFICANT/HIGH-RISK, false otherwise>
        notes: <any §2 / §2.1 fallback or degradation>"
@@ -70,7 +75,7 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
 
 5. **Classify each READY component** — Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-routing"`) to load the classification rules, then apply them using the actual resolved change, related upgrades, and planner findings. Print one classification line per component. When in doubt, escalate to `SIGNIFICANT`.
 
-6. **Risk plan for SIGNIFICANT / HIGH-RISK components** — For every component classified `SIGNIFICANT` or `HIGH-RISK`, invoke `risk-planner` before execution (frontmatter-pinned to Opus; recorded as `planning_model` above, no `model:` override needed):
+6. **Risk plan for SIGNIFICANT / HIGH-RISK components** — For every component classified `SIGNIFICANT` or `HIGH-RISK`, invoke `risk-planner` before execution (frontmatter-pinned to Opus; recorded as `planning_model` above, no `model:` override needed unless §10 enforces a model):
 
    ```
    task(
@@ -147,6 +152,7 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
      prompt: "## Upgrade Execution Request
      repo: [absolute repo path]
      phase: full
+     enforced_model: [run_flags.enforced_model, or omit]
      command_hint: [the recorded `test_command_hint` — include this line only where Phase 2 prep step 2 recorded one; it must reach step 3's verify call]
      baseline_block: |
        [the captured ## Test Baseline block, verbatim and whole]
@@ -158,9 +164,10 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
        classification: [component class]
        reason: <one-line>
        current_model: <the model this orchestrator is running under>
+       enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
        detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # upgrade-planner, test-baseliner; upgrade-executor (SIMPLE/MODERATE); review-fixer
-       planning_model: <§2 Opus chain>   # risk-planner (SIGNIFICANT/HIGH-RISK; frontmatter-pinned, recorded, no override); upgrade-executor escalates here only if HIGH-RISK
-       review_model:  <§2 Opus chain>    # code-review (frontmatter-pinned; recorded, no override)
+       planning_model: <§2 Opus chain>   # risk-planner (SIGNIFICANT/HIGH-RISK; frontmatter-pinned, recorded, no override unless §10 enforces a model); upgrade-executor escalates here only if HIGH-RISK
+       review_model:  <§2 Opus chain>    # code-review (frontmatter-pinned; recorded, no override unless §10 enforces a model)
        opus_available: <true if a §2 Opus model resolved, else false>
        gate_tests_on_review: [true for SIGNIFICANT / HIGH-RISK, false otherwise]
        notes: <any §2 / §2.1 fallback or degradation>
@@ -173,7 +180,7 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
 
 4. **Review gate for SIGNIFICANT / HIGH-RISK** — If the executor returns `status: AWAITING_REVIEW`, run the Opus code-review gate before any test verification:
    - Capture the diff to a temp file: write `git add -N . && git diff` to `command mktemp -t dw-upgrade-diff-XXXXXX` (never inside a repo tree) and record its path as `review_diff_file`
-   - Write the executor output to a temp file (`command mktemp -t dw-upgrade-claims-XXXXXX`, never inside a repo tree) and record its path as `claims_file`. Invoke `code-review` using the approved risk plan, the diff (from `review_diff_file`), and `claims_file: [the path]` (frontmatter-pinned to Opus; recorded as `review_model` above, no `model:` override needed)
+   - Write the executor output to a temp file (`command mktemp -t dw-upgrade-claims-XXXXXX`, never inside a repo tree) and record its path as `claims_file`. Invoke `code-review` using the approved risk plan, the diff (from `review_diff_file`), and `claims_file: [the path]` (frontmatter-pinned to Opus; recorded as `review_model` above, no `model:` override needed unless §10 enforces a model)
    - **Check the review's first line before acting on the verdict.** If it is `Diff: unreadable at <path>`, the orchestrator's own `review_diff_file` could not be read — an orchestrator bug, not a user choice: surface the unreadable path to the user and stop working this component, marking it `BLOCKED` in the Step 7 results table. Do NOT triage the finding and do NOT dispatch `review-fixer`: the finding names a capture failure no fixer can act on, and running the cycle would spend a fix dispatch and a re-review to arrive back here.
    - **Triage sub-step** (before any fixer dispatch): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep or dismiss; record every dismissal with a reason that disposes of that finding's own claim. Hand the fixer **survivors only**, and carry the dismissal list into this run's report.
    - If review returns `BLOCK` or `PASS WITH RECOMMENDATIONS`, invoke `review-fixer` with model: `<detection_model — §2.1 Sonnet chain>` for the surviving `BLOCKER` and `MAJOR` findings
@@ -209,6 +216,8 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
    named as unreadable, which stays for the operator to look at (that reference again); a component
    that ended early (step 3a's unreadable `plan_file`, the `review-fixer` `NEEDS HUMAN` stop, a second
    verdict still `BLOCK`) keeps its files until here, since the loop goes on to the next component.
+
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 8, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto` in step 9, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 9's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 
 8. **Post-batch maintenance** — After all components finish, invoke `impl-maintenance` (subagent_type: `"workflows-core:impl-maintenance"`, model: `<detection_model — §2.1 Sonnet chain>`) with a compact session handoff summarising what was upgraded, key failures or workarounds, and the overall result. **Always pass `Command run: /upgrade`** in that handoff — omitting it makes `impl-maintenance` default to `/implement`, mislabeling the run.
 
@@ -255,7 +264,9 @@ Caveats: none
 
 Append a `### Review triage` section with one line per SIGNIFICANT/HIGH-RISK component that went through Opus review: - **Review triage:** [N findings reviewed, M survived] — dismissals: [one line per dismissal, `finding — reason`; or "none"] — or "N/A (SIMPLE / MODERATE, no Opus review)" for components that never reached review.
 
-Include the `impl-maintenance` lessons-learned report after the summary table.
+Include the `impl-maintenance` lessons-learned report after the summary table — or, under `run_flags.skip_feedback`, the `Session feedback: …` line in its place.
+
+Also repeat the `Run flags: …` line whenever the run-flags strip at the top of this command printed one during this run (`workflows-core:run-flags` §6).
 
 ---
 

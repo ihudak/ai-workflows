@@ -18,6 +18,10 @@ branch: fix/PROJ-2423-CVE-2023-46604   # REQUIRED on phase: full. The orchestrat
                                     # vuln-fixer creates exactly this branch and never derives one,
                                     # because /vuln Step 3.9 pushes the same value. Absent => BLOCKED.
 phase: full                        # full (default) | verify-resume | regression-resume — see "Phase" below
+enforced_model: claude-opus-5-5    # optional; run_flags.enforced_model (classification.md §10) when the
+                                    # orchestrator's run has one set. When present, pass it as `model:` on
+                                    # the agent's own test-baseliner dispatch in place of the Sonnet
+                                    # detection chain — the nested-dispatch rule §10 states for this agent.
 baseline_tests: provided           # "provided" — the only value
   # The orchestrator captures the baseline once per run and supplies it below,
   # on BOTH paths and whatever gate_tests_on_review says (see `/vuln` Step 3).

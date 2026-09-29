@@ -22,12 +22,13 @@ Key distinction from `/specify`: `/specify` (PE) *authors* the requirements spec
 
 Flags: `--design-twice` forces the Phase 5 interface fan-out on the run's load-bearing interface, even when no contested-interface signal fired (`references/design-format.md` `## Seams`).
 
+Usage: `/design <ADDRESS> [--design-twice] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
+
 ---
 
 ## Phase 0 — Resolve input
 
-1. **Resolve the address — strip every recognised flag first.** `--design-twice` is removed from
-   `$ARGUMENTS` before anything else, exactly as `/product-workflows:idea`'s Phase 1 strips its own: an
+1. **Resolve the address.** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. `--design-twice` is removed next, exactly as `/product-workflows:idea`'s Phase 1 strips its own: an
    unstripped flag is read as the positional token and resolution then fails on a token that was
    never an address.
 
@@ -150,8 +151,9 @@ model_routing:
   classification: <SIMPLE|MODERATE|SIGNIFICANT|HIGH-RISK>
   reason: <one-line>
   current_model: <the model this orchestrator/grill is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # code-scanner, interface-designer, impl-maintenance
-  review_model:    <§2 Opus chain>     # design-reviewer (frontmatter-pinned; recorded, no override)
+  review_model:    <§2 Opus chain>     # design-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model)
   authoring_model: <= current_model>   # the interactive grill + design.md authoring (session model, not a delegated subagent)
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
@@ -161,7 +163,7 @@ The grill + authoring run inline on `current_model` (interactive judgment — no
 
 **Tiered model gate (stricter than `/implement` — `/design`'s critical synthesis is inline, not an Opus
 subagent):**
-- **SIGNIFICANT / HIGH-RISK + `current_model` is not an Opus-tier model → HARD gate.** Stop and require
+- **Unless `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10 — then no gate fires): SIGNIFICANT / HIGH-RISK + `current_model` is not an Opus-tier model → HARD gate.** Stop and require
   relaunching `/design` on Opus (the run is resumable from `_design-session.md`):
   `choices: ["I'll relaunch /dev-workflows:design on Opus (Recommended)", "Override — proceed on the current model (logged in the final report)", "Cancel"]`
   Design authoring for risky work must be Opus — the Opus `design-reviewer` reviews, it cannot originate
@@ -344,7 +346,7 @@ enforces the open-questions hard block).
 
 Dispatch `design-reviewer` (Opus):
 
-→ Agent (subagent_type: "dev-workflows:design-reviewer", model: `<review_model — §2 Opus chain; frontmatter-pinned, recorded, no override>`):
+→ Agent (subagent_type: "dev-workflows:design-reviewer", model: `<review_model — §2 Opus chain; frontmatter-pinned, recorded, no override unless §10 enforces a model; under §10, run_flags.enforced_model>`):
   > "Review the design for this brief:
   >
   > Design path:        [absolute path to design.md]
@@ -405,6 +407,8 @@ persists the plugin-facing slice of its report as session feedback.
 guidance only), then a
 same-role `/compact` suggestion + `/rename <PRD-ID>-<slug>-dev`. Guidance only, never auto-run.
 
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 3's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
+
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model: `<detection_model — §2.1 Sonnet chain>`):
    > "Analyse this session and return a Lessons Learned report.
    >
@@ -439,10 +443,12 @@ file inside `$SPECS_PATH`, alongside the feature folder — the intended home.
 
 Terminal phase — the NEW final operational phase; runs after Phase 8 (feedback)
 and NEVER interrupts an earlier phase. Records this command's token-cost
-contribution to the PRD by invoking `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and calling its single `emit-cost` entry point. Unlike feedback, **cost ALWAYS runs** — it never "writes
+contribution to the PRD. Unlike feedback, **cost ALWAYS runs** — it never "writes
 nothing".
 
-Call `emit-cost` with `command: /design`, `phase: planning`, `role: dev`, the
+**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way.
+
+Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call `emit-cost` with `command: /design`, `phase: planning`, `role: dev`, the
 run's `key` (or `null`) and `source`, and `plugin_version` (read from
 `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). It resolves the session
 transcript + subagents (§1), loads and **advances the chained checkpoint** (§3),
@@ -477,12 +483,14 @@ written (§10 privacy).
 
 ## Final report
 
-Report: feature-folder path; classification + model-gate outcome; `design.md` sections authored (and
+Report: feature-folder path; classification + model-gate outcome (or `Model routing: bypassed — enforced <id> (flag|env)` in place of it wherever `run_flags.enforced_model` is set — no gate fired, per `workflows-core:model-routing/classification` §10); `design.md` sections authored (and
 those `_N/A_`); spec challenges recorded (count of `## Engineering review` notes / new spec `- [ ]`);
 confirmed repo set (and any removed-from-scope); the `design-reviewer` verdict; the PR URL (if
 opened); the `Specs repo:` outcome line from `commit-artifacts`
 (`workflows-core:specs-repo-git` §6), with any guard notice repeated in full;
 and the `### Next step` recommendation (below).
+
+Also repeat the `Run flags: …` line whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6), and carry the `Session feedback: …` line wherever Phase 8 printed one (under `--skip-feedback`) and the `Session cost: …` line wherever Phase 9 printed one (under `--skip-costs`).
 
 The report always states exactly one of the Phase 5 interface fan-out outcomes whenever the run reaches the Final report (a Phase 1.5 model gate or a Phase 3 strict-repo hard stop ends the run before it):
 
