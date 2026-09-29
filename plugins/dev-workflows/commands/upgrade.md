@@ -80,7 +80,7 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
    ```
    task(
      subagent_type: "dev-workflows:risk-planner",
-     model: `<omit — frontmatter Opus pin; under §10, run_flags.enforced_model>`,
+     model: `<planning_model — §2 Opus chain, equal to risk-planner's frontmatter pin; under §10, run_flags.enforced_model>`,
      description: "Plan risky upgrade",
      prompt: "Task description: Upgrade [component] from [current] to [target] in this repo.
      Classification: [SIGNIFICANT | HIGH-RISK] — reason: [routing trigger]
@@ -181,7 +181,7 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
 
 4. **Review gate for SIGNIFICANT / HIGH-RISK** — If the executor returns `status: AWAITING_REVIEW`, run the Opus code-review gate before any test verification:
    - Capture the diff to a temp file: write `git add -N . && git diff` to `command mktemp -t dw-upgrade-diff-XXXXXX` (never inside a repo tree) and record its path as `review_diff_file`
-   - Write the executor output to a temp file (`command mktemp -t dw-upgrade-claims-XXXXXX`, never inside a repo tree) and record its path as `claims_file`. Invoke `code-review` using the approved risk plan, the diff (from `review_diff_file`), `claims_file: [the path]`, and `model: <omit — frontmatter Opus pin; under §10, run_flags.enforced_model>` (frontmatter-pinned to Opus; recorded as `review_model` above, no override unless §10 enforces a model)
+   - Write the executor output to a temp file (`command mktemp -t dw-upgrade-claims-XXXXXX`, never inside a repo tree) and record its path as `claims_file`. Invoke `code-review` using the approved risk plan, the diff (from `review_diff_file`), `claims_file: [the path]`, and `model: <review_model — §2 Opus chain, equal to code-review's frontmatter pin; under §10, run_flags.enforced_model>` (frontmatter-pinned to Opus; recorded as `review_model` above, no override unless §10 enforces a model)
    - **Check the review's first line before acting on the verdict.** If it is `Diff: unreadable at <path>`, the orchestrator's own `review_diff_file` could not be read — an orchestrator bug, not a user choice: surface the unreadable path to the user and stop working this component, marking it `BLOCKED` in the Step 7 results table. Do NOT triage the finding and do NOT dispatch `review-fixer`: the finding names a capture failure no fixer can act on, and running the cycle would spend a fix dispatch and a re-review to arrive back here.
    - **Triage sub-step** (before any fixer dispatch): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep or dismiss; record every dismissal with a reason that disposes of that finding's own claim. Hand the fixer **survivors only**, and carry the dismissal list into this run's report.
    - If review returns `BLOCK` or `PASS WITH RECOMMENDATIONS`, invoke `review-fixer` with model: `<detection_model — §2.1 Sonnet chain>` for the surviving `BLOCKER` and `MAJOR` findings

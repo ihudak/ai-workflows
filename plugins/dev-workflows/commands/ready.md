@@ -445,7 +445,7 @@ plugin-gap halt (see Invariants).
    - Detection steps — the folder read (detection_model): [model]
    - readiness-reviewer (review_model): [model]
    - Opus available: [yes | no]
-   - [`Model routing: bypassed — enforced <id> (flag|env)` in place of the `readiness-reviewer (review_model)` and `Opus available` lines above, wherever `run_flags.enforced_model` is set — no Sonnet-floor degradation applies, per `workflows-core:model-routing/classification` §10]
+   - [`Model routing: bypassed — enforced <id> (flag|env)` in place of the `readiness-reviewer (review_model)` line above, wherever `run_flags.enforced_model` is set — no Sonnet-floor degradation applies, per `workflows-core:model-routing/classification` §10. The `Opus available` line above is unaffected and still reports the environment truthfully (§10: `opus_available` is a property of the environment, never rewritten to agree with the enforced id).]
    - Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` / `Session cost: …` skip lines, where they fire, are carried in Phase 6's and Phase 8's own trailing output below, not restated here.]
 
    ### Scope

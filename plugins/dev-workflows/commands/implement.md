@@ -391,7 +391,7 @@ Once the file map is returned, delegate planning to Opus.
 
 When a `specification.md`/`design.md` is in scope, extract its **in-scope** `[Uxx]`/`[ACxx]`/`[TCxx]` IDs (reuse the specs resolved in Phase 0) into `in_scope_ids` for the review dispatch below. When `task_shape: bug`, the plan will lead with a repro step and a ranked-hypotheses section — surface them in the normal plan-approval gate (no extra interrupt) **when the ranking is present**. When the planner instead returns `Ranking withheld — no red-capable repro`, the withheld-repro branch below fires first and the normal gate does not run.
 
-→ Agent (subagent_type: "dev-workflows:risk-planner", model: `<omit — frontmatter Opus pin; under §10, run_flags.enforced_model>`):  # planning_model — §2 Opus chain; frontmatter-pinned, recorded in model_routing, no override added unless §10 enforces a model
+→ Agent (subagent_type: "dev-workflows:risk-planner", model: `<planning_model — §2 Opus chain, equal to risk-planner's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as planning_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "Produce the risk-weighted plan for the following brief:
   >
   > Task description: [substitute full description]
@@ -605,7 +605,7 @@ At each checkpoint, also consider suggesting **`/compact`** to free context befo
 5. After all changes are written: **DO NOT run tests yet.** When `task_shape: bug`, first **strip every `[DEBUG-xxxx]` probe** added during diagnosis (per `${CLAUDE_PLUGIN_ROOT}/references/bug-diagnosis.md`); the review diff must contain no debug instrumentation. Capture the diff and the project root. Use `git add -N . && git diff` — this includes intent-to-add untracked new files so the diff is never empty for implementations that only create new files, and it now also includes the test files from step 4a. Write this diff to a temp file (`command mktemp -t dw-impl-diff-XXXXXX`, never inside a repo tree) and record its absolute path as `review_diff_file`; the code-review dispatch (step 6) receives this path. Also capture `git diff --stat` for the summary (small — kept inline).
 6. **Opus code review** — spawn.
 
-   → Agent (subagent_type: "dev-workflows:code-review", model: `<omit — frontmatter Opus pin; under §10, run_flags.enforced_model>`):  # review_model — §2 Opus chain; frontmatter-pinned, recorded in model_routing, no override added unless §10 enforces a model
+   → Agent (subagent_type: "dev-workflows:code-review", model: `<review_model — §2 Opus chain, equal to code-review's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
      > "Produce the Opus code review for this brief:
      >
      > Task description: [substitute full description]
