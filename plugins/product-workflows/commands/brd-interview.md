@@ -15,7 +15,7 @@ is tagged before it is asked, and the tag decides who may answer it**
 (`${CLAUDE_PLUGIN_ROOT}/references/interview-tagging.md` §1). This command exists to make that
 happen, not to restate it.
 
-Usage: `/brd-interview <BRD-KEY> [--round N]`
+Usage: `/brd-interview <BRD-KEY> [--round N] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 `<BRD-KEY>` still resolves through `resolve-address`, which searches every level
 `workflows-core:addressing` §3 bounds — three below `specifications/` — and so returns a BRD that owns
@@ -122,7 +122,7 @@ and nothing downstream can tell the difference afterwards.
 
 ## Phase 0 — Resolve inputs and gate the grounded BRD
 
-1. **`<BRD-KEY>` (mandatory).** Parse the first token that is neither a flag nor a flag's value — `--round` consumes the token after it (step 2), and a value skipped as "non-flag" would be read as the key; validate with `key-valid`
+1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--round` consumes the token after it (step 2), and a value skipped as "non-flag" would be read as the key; validate with `key-valid`
    (`workflows-core:addressing` §1). If absent or invalid, stop:
    `BRD_INTERVIEW_NEEDS_KEY: /brd-interview needs a BRD key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) — re-run '/product-workflows:brd-interview <KEY>'.`
 2. **`--round N`.** Optional, consuming the next token, which must be a positive integer. Malformed
@@ -420,6 +420,7 @@ model_routing:
                                   # over a long inventory, or a re-open that reopens decisions
   reason: <one-line>
   current_model: <the model this orchestrator is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # impl-maintenance only — no other agent runs in this command
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
@@ -429,7 +430,7 @@ model_routing:
 already independently re-derived by `/prd-ground`'s `grounding-verifier` pass, and re-deriving it
 here would be a second unverified opinion, not a second check. `detection_model` therefore exists
 only for the terminal `impl-maintenance` dispatch. If no Opus resolves for `current_model`, degrade
-to best-available, record it in `notes` and in the final report, and never hard-block.
+to best-available, record it in `notes` and in the final report, and never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) no degradation is recorded; the `impl-maintenance` dispatch uses the enforced model, while the round's reading, tagging and interactive walk still run on `current_model`.
 
 ---
 
@@ -2341,6 +2342,8 @@ by an interrupted `/brd-split` on the parent, or written and since lost), unveri
 `BRD_INTERVIEW_ALL_DELEGATED` — a BRD that kept no requirement of its own — is an allocation outcome
 this command reports correctly, not a capability it lacks.
 
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
+
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model:
    `<detection_model>`) with a compact handoff: command `/brd-interview`; what was produced (the round
    worked, the register entries written, the code-defect log when this round raised or
@@ -2352,7 +2355,7 @@ this command reports correctly, not a capability it lacks.
    `<BRD-KEY>`), `source`, and `plugin_version` (read from
    `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or "no
    plugin-facing signal — nothing persisted").
-3. **Session cost (ALWAYS runs).** Invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-interview`, `phase: brd-to-prd`, `role: pm`, the
+3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-interview`, `phase: brd-to-prd`, `role: pm`, the
    run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only
    notice).
 4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the commit
@@ -2373,7 +2376,7 @@ working directory, where it is not the specs repository; no user name is ever wr
 ## Final report
 
 Report: the BRD folder and which level it sits at; the classification and model routing
-(+ any Opus degradation); **the round** — its number, and whether this run opened it, resumed it, or
+(+ any Opus degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); **the round** — its number, and whether this run opened it, resumed it, or
 re-opened it with the cause recorded; every torn write an interrupted run left, as the *Resolve
 inputs and gate the grounded BRD* phase reported it, and whether this run removed it, with each
 re-decision standing at a round no record names; **the question counts by tag**, `[G]` / `[V]` / `[C]`, and
@@ -2405,7 +2408,7 @@ superseded it; every held record waiting on its
 prerequisite, with the successor still `will-change` and the prerequisite it names; and every plain
 record whose successors confirmed it, which raised nothing; the count of decisions and assumptions still `consumed_by: none`
 (`decision-register-format.md` §1); whether the round closed or stays open, and what it is waiting on;
-the feedback + cost paths; the `Phase handoff:` outcome line (`workflows-core:phase-handoff` §4.1); the
+the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line) and cost path (or, under `--skip-costs`, the `Session cost: …` line); the `Phase handoff:` outcome line (`workflows-core:phase-handoff` §4.1); the
 `Specs repo:` outcome line (`workflows-core:specs-repo-git` §6); the next-step recommendation; and end with the
 ledger line, read fresh from the (unmodified-by-this-run) `coverage-ledger.md`, exactly per
 `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §6:

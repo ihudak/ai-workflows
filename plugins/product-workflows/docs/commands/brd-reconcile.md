@@ -20,7 +20,7 @@ record, once that dependent has its own register on the default branch.
 ## Synopsis
 
 ```
-/brd-reconcile <BRD-KEY> @<review-file> [--sent <path>…]
+/brd-reconcile <BRD-KEY> @<review-file> [--sent <path>…] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 - **`<BRD-KEY>`** (mandatory) — the slice this review answers. `resolve-address` searches every
@@ -59,6 +59,8 @@ record, once that dependent has its own register on the default branch.
 
 There is **no `--no-docs` flag**, because this command does no documentation grounding at all — see
 [What it does not do](#what-it-does-not-do).
+
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 15's session-cost entry, still advancing the checkpoint — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 15's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `customer-review-reader`, `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model, and it is also the flag that changes a degrade path: if no Opus resolves, Phase 1 otherwise degrades to the best-available model and records it, which does not happen under enforcement since the enforced model is used instead and the confirmation walk, the freeze and the sweep still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
 
 ## No inferred decision becomes a `[CD#n]` without a human
 
@@ -109,7 +111,7 @@ flowchart TD
 ```
 
 `customer-review-reader` is dispatched once, on the detection chain. `workflows-core:impl-maintenance` runs in the
-terminal phase for session lessons-learned. No other subagent is dispatched.
+terminal phase for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`. No other subagent is dispatched.
 
 ## What it needs
 

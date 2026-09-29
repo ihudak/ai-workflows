@@ -17,13 +17,13 @@ agent's say-so alone, and writes a coverage ledger in which every requirement st
 `unallocated` — the state `/brd-split`, the route's allocation step, cannot complete past until each
 row has been given a fate.
 
-Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [--docs <path>]`
+Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 ---
 
 ## Phase 0 — Resolve inputs
 
-1. **`<BRD-KEY>` (mandatory).** Parse the first token that is neither a flag, nor a flag's value, nor the `@<brd-file>` argument — `--sort-existing` and `--docs` each consume the token after them (step 4), and a value skipped as "non-flag" would be read as the key; a token opening with `@` is step 2's source wherever it stands, so an operator who types the path first is not told the key is missing; validate it with `key-valid`
+1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag, nor a flag's value, nor the `@<brd-file>` argument — `--sort-existing` and `--docs` each consume the token after them (step 4), and a value skipped as "non-flag" would be read as the key; a token opening with `@` is step 2's source wherever it stands, so an operator who types the path first is not told the key is missing; validate it with `key-valid`
    (`workflows-core:addressing` §1's `key-valid` — shape only,
    never checked against a tracker). If absent or invalid, **stop gracefully**:
    `BRD_INTAKE_NEEDS_KEY: /brd-intake needs a BRD key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-001) — pick a short stable identifier for this business requirements document, then re-run '/product-workflows:brd-intake <KEY> @<brd-file>'.`
@@ -313,8 +313,9 @@ model_routing:
   classification: MODERATE        # typical; SIGNIFICANT for an unusually long or heavily-conflicting BRD
   reason: <one-line>
   current_model: <the model this orchestrator is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # docs-grounder (Phase 3.5)
-  extraction_model: <§2 Opus chain>   # figure-reader (Phase 2.5) and brd-reader (Phase 3) — both frontmatter-pinned to opus; recorded, no override
+  extraction_model: <§2 Opus chain>   # figure-reader (Phase 2.5) and brd-reader (Phase 3) — both frontmatter-pinned to opus; recorded, no override unless §10 enforces a model
   authoring_model: <= current_model>   # Phase 1's confirmation and Phase 4's interactive defect classification (session model, not a delegated subagent)
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
@@ -323,7 +324,7 @@ model_routing:
 `figure-reader` and `brd-reader` run on Opus regardless of `classification`, per their own frontmatter
 pins. A misread label, a missed annotation or an unproposed conflict yields no candidate, so Phase 4's
 human never sees it — the tier is bought where a miss is silent. If no Opus resolves, **degrade to
-best-available + record** in `notes` and the final report — do not hard-block.
+best-available + record** in `notes` and the final report — do not hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded.
 
 **Collect `figure-reader`'s and `brd-reader`'s own `notes` too, and report them** — in the final report, and `brd-reader`'s at Phase 4's start as well, the last read's where a re-read replaced the first (Phase 3) — an image too low in resolution for its small text, an unusually structured source, a passage that could not be confidently split, an observation the agent made and did not propose as a defect. The inventory is the spine every later command walks, so a `[BR#n]` split out of a passage the reader was unsure of must not read as confidently extracted.
 
@@ -515,7 +516,7 @@ reading it did (`brd-format.md` §1.2).
 2. **Dispatch `figure-reader` over the rest**, at most 10 images per dispatch and at most 4 dispatches
    in a single response, in further waves until none remain:
 
-   → Agent (subagent_type: "product-workflows:figure-reader", model: `<extraction_model — frontmatter-pinned to opus>`):
+   → Agent (subagent_type: "product-workflows:figure-reader", model: `<extraction_model — frontmatter-pinned to opus, no override unless §10 enforces a model, then run_flags.enforced_model>`):
      > "figures: [absolute path of each image's copy under `<BRD-dir>/brd/` in this batch, in Phase 2's capture order]"
 
    **Each path is the copy Phase 2 made, never the original** — the copy is what a section describes
@@ -566,7 +567,7 @@ over, they come back as the agent's own numbering, and the mapping below would t
 different row. The copy is made on a first intake too, where every line is empty, so every read is
 handed the same shape. Remove the directory once this phase's last read has returned. Then dispatch:
 
-→ Agent (subagent_type: "product-workflows:brd-reader", model: `<extraction_model — frontmatter-pinned to opus>`):
+→ Agent (subagent_type: "product-workflows:brd-reader", model: `<extraction_model — frontmatter-pinned to opus, no override unless §10 enforces a model, then run_flags.enforced_model>`):
   > "source_path: [absolute path to the copied document at `<BRD-dir>/brd/source/<basename>`]
   >  appendices:  [absolute path of every linked markdown file Phase 2 copied — under `brd/source/` or `brd/source-external/` — in Phase 2's capture order; `[]` when none]
   >  figures_path: [absolute path to that copy of `<BRD-dir>/brd/brd-figures.md`, its *Rows* lines removed; omit when no figures file exists after Phase 2.5]"
@@ -1474,6 +1475,8 @@ capability gap, so `emit-block` never fires from this command's own Phase 0. Nor
 `BRD_INTAKE_UNREAD_ATTACHMENTS`: linked files the operator must convert first are an operator halt,
 as Phase 1 says where it stops.
 
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
+
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model:
    `<detection_model — §2.1 Sonnet chain>`) with a compact handoff: command `/brd-intake`; what was
    produced (the copied source and the files it links, the figures transcriptions, the inventory,
@@ -1485,7 +1488,7 @@ as Phase 1 says where it stops.
    with the Lessons Learned report, `command: /brd-intake`, the run's `key` (the `<BRD-KEY>`),
    `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`).
    Surface the persisted path (or "no plugin-facing signal — nothing persisted").
-3. **Session cost (ALWAYS runs).** Invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-intake`, `phase: brd-to-prd`, `role: pm`, the
+3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-intake`, `phase: brd-to-prd`, `role: pm`, the
    run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only
    notice).
 4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry above, and before
@@ -1536,11 +1539,11 @@ extraction*, with the rows citing it, and each `conflict` or `duplicate` entry r
 some of its pairs, with the pairs no candidate joined (Phase 4); the `docs grounding:` line from
 Phase 1 verbatim, and — when it was ON — the `docs_references` list of requirements the shipped
 documentation describes as already built, flagged for `/prd-ground` to check against code; whether
-Phase 6 wrote seeds and which; resolved model routing (+ any Opus degradation); every agent's
+Phase 6 wrote seeds and which; resolved model routing (+ any Opus degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); every agent's
 `notes` — `figure-reader`'s and `brd-reader`'s, as Phase 1.5 collects them, the latter's being the
 standing read's — the read Phase 3's `OK` branch fixes, or, where that branch never ran, the one
 read there was — with its `[BR#n]`s mapped as Phase 3 maps one, by its reconciliation on a re-run
-and by its numbering on a first intake; the feedback and cost paths;
+and by its numbering on a first intake; the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line) and cost path (or, under `--skip-costs`, the `Session cost: …` line);
 the `Phase handoff:` outcome line (`workflows-core:phase-handoff` §4.1) — `handoff-to-main`'s on the first choice, and the
 *Declined by the user* line on either other (Phase 7); the `Specs repo:` outcome line from
 `commit-artifacts` (`workflows-core:specs-repo-git` §6); the next-step recommendation; and end with

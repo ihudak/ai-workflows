@@ -16,7 +16,7 @@ finding is independently re-derived by a different agent before it counts as evi
 (`workflows-core:grounding-format` §8) — this command's whole job is to make
 that discipline happen, not to ground anything itself.
 
-Usage: `/prd-ground <KEY> [--depends-on <BRD-KEY>…] [--derivation-matrix|--no-derivation-matrix] [--no-code] [--no-design] [--no-docs] [--docs <path>] [--rebaseline]`
+Usage: `/prd-ground <KEY> [--depends-on <BRD-KEY>…] [--derivation-matrix|--no-derivation-matrix] [--no-code] [--no-design] [--no-docs] [--docs <path>] [--rebaseline] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 `<BRD-KEY>` still resolves through `resolve-address`, which searches every level
 `workflows-core:addressing` §3 bounds — three below `specifications/` — and so returns a BRD that owns
@@ -37,7 +37,7 @@ behaviour, not the behaviour.
 
 ## Phase 0 — Resolve inputs and gate on main
 
-1. **`<BRD-KEY>` (mandatory).** Parse the first token that is neither a flag nor a flag's value — `--depends-on` and `--docs` each consume the token after them (step 2), and a value skipped as "non-flag" would be read as the key; validate with `key-valid`
+1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--depends-on` and `--docs` each consume the token after them (step 2), and a value skipped as "non-flag" would be read as the key; validate with `key-valid`
    (`workflows-core:addressing` §1). If absent or invalid, stop:
    `PRD_GROUND_NEEDS_KEY: /prd-ground needs a key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) — re-run '/product-workflows:prd-ground <KEY>'.`
 2. **Flags.** `--depends-on <BRD-KEY>` — repeatable, each consuming the next token; validate each
@@ -660,8 +660,9 @@ model_routing:
                                    # the multi-source rule in model-routing/classification.md §1.1
   reason: <one-line>
   current_model: <the model this orchestrator is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every *_model below equals it and routing: bypassed
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # docs-grounder (Phase 4.5) — retrieval, not adjudication; also the Phase 9 impl-maintenance dispatch
-  review_model:    <§2 Opus chain>     # code-grounder, design-grounder (Phase 5), grounding-verifier (Phase 7) — all three frontmatter-pinned; recorded, no override
+  review_model:    <§2 Opus chain>     # code-grounder, design-grounder (Phase 5), grounding-verifier (Phase 7) — all three frontmatter-pinned; recorded, no override unless §10 enforces a model
   ground_tier:     <the tier the [CG#n]/[DG#n] corpus was actually ground at — the resolved review_model, or the degraded model where no Opus resolved>
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
@@ -671,7 +672,7 @@ model_routing:
 `design-reviewer`/`epic-reviewer` do elsewhere — the floor at `SIGNIFICANT` records that a
 multi-repository run carries more cross-cutting risk; it does not change which model any of them runs
 on. If no Opus resolves, degrade to best-available and record it in `notes` and the final report —
-never hard-block.
+never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded, and `ground_tier` records that enforced id.
 
 **Why the grounders are pinned and `docs-grounder` is not, since this is the family's most
 token-expensive phase and the pin is not free.** Grounding **adjudicates**: it decides whether a
@@ -928,7 +929,7 @@ re-grounds, and the claims each dispatch carries are the claims it re-grounds th
 set Phase 8's frame-set rule reads; Phase 3's baseline finding, minted for every repository it pins,
 puts none in it:
 
-→ Agent (subagent_type: "product-workflows:code-grounder", model: `<review_model>`):
+→ Agent (subagent_type: "product-workflows:code-grounder", model: `<review_model — §2 Opus chain, equal to code-grounder's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "repo_path: [resolved absolute path from Phase 1]
   > commit:    [Phase 3 pinned commit for this repo]
   > claims:
@@ -965,7 +966,7 @@ fourth reconciliation class cites a `[CG#n]`, so the findings it needs must alre
 read from file is what `cg_findings` carries, which is the whole reason the mode can add design
 grounding at all:
 
-→ Agent (subagent_type: "product-workflows:design-grounder", model: `<review_model>`):
+→ Agent (subagent_type: "product-workflows:design-grounder", model: `<review_model — §2 Opus chain, equal to design-grounder's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "frame_set_dir: [absolute path to this frame set]
   > inventory:
   >   - id:   [the requirement id exactly as Phase 0 step 8 (or 8i) recorded it — BR#n on route:
@@ -1077,9 +1078,9 @@ alike, `provenance: inherited` (below), and none under `--no-code` (below) — *
 `[DG#n]`**, which no run of this command re-checks. A moved repository's on-file findings are not
 among them: a `--rebaseline` pass supersedes them in Phase 8. One instance per finding,
 same ≤4-concurrent batching discipline as Phase 5, pinned to the Opus chain (`review_model`,
-frontmatter-pinned, no override):
+frontmatter-pinned, no override unless §10 enforces a model):
 
-→ Agent (subagent_type: "product-workflows:grounding-verifier", model: `<review_model>`):
+→ Agent (subagent_type: "product-workflows:grounding-verifier", model: `<review_model — §2 Opus chain, equal to grounding-verifier's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "finding:
   >   id:       [CG#n or DG#n]
   >   claim:    [the requirement premise as the finding recorded it — a BR#n on route: brd, an
@@ -1856,6 +1857,8 @@ the rule is what binds: a Phase 0 stop added later is covered by it without bein
 `PRD_GROUND_VERIFY_INCOMPLETE`, which is the verifier getting its return contract wrong: both do
 fire `emit-block`.
 
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
+
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model:
    `<detection_model>`) with a compact handoff: command `/prd-ground`; what was produced (baselines,
    code/design findings, verifier tally, prerequisite readiness, documentation divergences); key
@@ -1866,7 +1869,7 @@ fire `emit-block`.
    the run's `key` (the `<BRD-KEY>`), `source`, and `plugin_version` (read from
    `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or "no
    plugin-facing signal — nothing persisted").
-3. **Session cost (ALWAYS runs).** Invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /prd-ground`, `phase: brd-to-prd`, `role: pa`,
+3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /prd-ground`, `phase: brd-to-prd`, `role: pa`,
    the run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the
    report-only notice).
 4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the
@@ -1888,7 +1891,7 @@ directory, where it is not the specs repository; no user name is ever written.
 
 Report: the BRD or PRD folder + resolved repositories (with each one's pinned commit); the
 classification
-and model routing (+ any Opus degradation) — including `ground_tier`, the tier the `[CG#n]`/`[DG#n]`
+and model routing (+ any Opus degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10) — including `ground_tier`, the tier the `[CG#n]`/`[DG#n]`
 corpus was actually ground at, stated as its own line on every run rather than only on a degraded
 one, because a reader cannot otherwise tell an Opus corpus from a degraded one and the two are not
 interchangeable evidence; the prerequisite-readiness block from Phase 4, verbatim
@@ -1919,7 +1922,7 @@ never by an identifier of its own, because it has none); whether the derivation 
 of a settling `[CG#n]`; **on `route: idea`, the claim-exclusion count and prefixes step 8i
 reported** — "11 of 19 requirement rows ground; 8 excluded — 3 `[UC#n]`, 5 `[SM#n]`/`[SMC#n]`" or
 the like, carried here verbatim so a reader of the write-up alone, without the transcript, still
-cannot conclude the PRD was fully ground; the feedback + cost paths; the `Phase handoff:` outcome line
+cannot conclude the PRD was fully ground; the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line) and cost path (or, under `--skip-costs`, the `Session cost: …` line); the `Phase handoff:` outcome line
 (`workflows-core:phase-handoff` §4.1); the `Specs repo:` outcome line (`workflows-core:specs-repo-git` §6); the next-step
 recommendation; and end with —
 

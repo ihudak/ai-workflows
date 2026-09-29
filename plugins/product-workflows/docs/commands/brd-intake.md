@@ -25,7 +25,7 @@ which runs as [pa](../roles-and-phases.md#pa--product-architecture).
 ## Synopsis
 
 ```
-/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [--docs <path>]
+/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 - **`<BRD-KEY>`** (mandatory) — a short stable identifier for the BRD. Format-validated only
@@ -38,6 +38,8 @@ which runs as [pa](../roles-and-phases.md#pa--product-architecture).
   replaces the extraction, it only adds Phase 6 on top of it.
 - **`[--no-docs]`** (optional) — turn documentation grounding off for this run.
 - **`[--docs <path>]`** — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`. The flag and its value are stripped together before the address is parsed.
+
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 9's session-cost entry, still advancing the checkpoint — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 9's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `figure-reader` and `brd-reader` (overriding their frontmatter Opus pin), `workflows-core:docs-grounder`, `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; the interactive Phase 1 confirmation and Phase 4 defect classification still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
 
 ## How it runs
 
@@ -57,13 +59,11 @@ flowchart TD
     p8 --> p9["Phase 9 — Session maintenance, feedback & cost"]
 ```
 
-Three subagents are dispatched: `figure-reader` (Phase 2.5, frontmatter-pinned to Opus — it
+Four subagents are dispatched: `figure-reader` (Phase 2.5, frontmatter-pinned to Opus except under `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` — it
 transcribes every linked image the run takes, in parallel batches, without reading the document that
-links it), `brd-reader` (Phase 3, frontmatter-pinned to Opus — its defect candidates are judgement
-over a long, contradictory document, and a conflict it never proposes reaches no one) and
-`workflows-core:docs-grounder` (Phase 3.5, read-only grounding on the shipped product docs — default
-ON when `$DOCS_PATH` resolves, advisory, never a gate). `workflows-core:impl-maintenance` also runs,
-in Phase 9, for session lessons-learned.
+links it), `brd-reader` (Phase 3, frontmatter-pinned to Opus except under `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` — its defect candidates are judgement
+over a long, contradictory document, and a conflict it never proposes reaches no one), `workflows-core:docs-grounder` (Phase 3.5, read-only grounding on the shipped product docs — default
+ON when `$DOCS_PATH` resolves, advisory, never a gate) and `workflows-core:impl-maintenance` (Phase 9, session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`).
 
 ## What it needs
 
@@ -165,7 +165,7 @@ specs repo's default branch under a new `brd/<BRD-KEY>-<slug>` branch prefix.
 
 ## Gates
 
-- **Phase 3 — `brd-reader`** (Opus, frontmatter-pinned). Read-only extraction from the document, its
+- **Phase 3 — `brd-reader`** (Opus, frontmatter-pinned; no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one). Read-only extraction from the document, its
   linked markdown and the image transcriptions: it proposes a `[BR#n]` row per requirement plus
   unconfirmed `defect_candidates` — an `ambiguity` on any obligation only an image states — and
   never decides a defect itself. `EMPTY` (no identifiable requirement) short-circuits Phase 4. On a
