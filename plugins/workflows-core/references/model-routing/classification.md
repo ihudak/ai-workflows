@@ -250,7 +250,7 @@ task(
   # the two `dev-workflows:` forms are dispatchable from `dev-workflows`'s own commands, and
   # from a plugin that depends on it; every other reader uses "general-purpose" — see the note below
   subagent_type: "dev-workflows:risk-planner" | "dev-workflows:code-review" | "general-purpose",
-  model:      "claude-opus-5-5", # or the highest available per §2
+  model:      "claude-opus-5-5", # or the highest available per §2; under §10, the enforced id
   prompt:     "<full self-contained context — sub-agent has no memory>",
   description:"Opus planning critique" | "Opus code review",
   mode:       "sync"               # always sync for plan/review gates
@@ -260,14 +260,14 @@ task(
 **`risk-planner` and `code-review` belong to `dev-workflows`, not to the plugin that ships this file.** **`dev-workflows`'s own commands name them directly and nothing here conditions that** — some name them by that exact `dev-workflows:` form and some by bare name, and either reaches the agent because a command's own plugin is installed whenever that command runs, so the owning plugin is never the *dependency* case this note is about. **No per-command list of which form each uses stands here on purpose:** it would be a census of three commands' call sites inside a shared reference, going stale on the next edit to any of them, and the rule it was offered as evidence for does not turn on it. Any *other* plugin can count on naming them as a `subagent_type` only by declaring `dev-workflows` in its `dependencies`, which is what installs it alongside; a reader in `workflows-core` — or in any other plugin that neither ships those agents nor declares `dev-workflows` — has no such agent to count on and takes the `general-purpose` fallback below. For those readers the fallback is not a degraded path bolted on for a missing environment: it is the *normal* one, and the §6 checklist this file already carries is complete for them, because none of them hands `code-review` any of the three optional inputs that add a dimension beyond §6's eight — `applicable_ard` and `applicable_spec` (`/implement` only) and `claims_file` (all three of `dev-workflows`'s code-changing commands). **A caller that does pass one and still has to fall back — on the environment half of the trigger below — carries that dimension into the fallback prompt itself**, because §6 does not list it.
 
 - For **planning** on SIGNIFICANT/HIGH-RISK tasks, prefer `subagent_type: "dev-workflows:risk-planner"`
-  with Opus, asking it to critique the proposed plan — available in `dev-workflows` itself, and
+  with Opus (under §10, the enforced id), asking it to critique the proposed plan — available in `dev-workflows` itself, and
   elsewhere only where the calling plugin depends on it.
 - For **post-implementation review** on SIGNIFICANT/HIGH-RISK tasks, use
-  `subagent_type: "dev-workflows:code-review"` with Opus, passing the diff and §6 checklist —
+  `subagent_type: "dev-workflows:code-review"` with Opus (under §10, the enforced id), passing the diff and §6 checklist —
   again, in `dev-workflows` itself and elsewhere only where the calling plugin depends on it.
 - Where either agent is unreachable — the calling plugin neither ships it nor depends on
   `dev-workflows`, or the agent is unavailable in the environment — fall back to
-  `subagent_type: "general-purpose"` with the same Opus model, the same prompt, and the explicit §6
+  `subagent_type: "general-purpose"` with the same Opus model (under §10, the enforced id), the same prompt, and the explicit §6
   checklist embedded in that prompt, plus any conditional dimension the caller's own inputs trigger.
 
 ---

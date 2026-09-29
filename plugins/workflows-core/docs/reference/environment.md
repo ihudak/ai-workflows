@@ -58,7 +58,7 @@ Every one of the eight is read by a reference this plugin ships — the corpus i
 
 ## `$WORKFLOWS_SKIP_COSTS`
 
-- **`$WORKFLOWS_SKIP_COSTS`** — the persistent default for the `--skip-costs` run flag; a command it applies to still computes and advances the session-cost checkpoint, but never writes a cost entry into `$SPECS_PATH`.
+- **`$WORKFLOWS_SKIP_COSTS`** — the persistent default for the `--skip-costs` run flag; a command it applies to still advances the session-cost checkpoint (pricing nothing), but never writes a cost entry into `$SPECS_PATH`.
 
 **Resolution.** Read as a boolean: `1`, `true` or `yes`, matched case-insensitively, is on; any other value, and an unset variable, is off. A `--skip-costs` flag on the command line always overrides it. `run-flags.md` §1 is the single source of truth for the flag/env precedence and boolean grammar shared by all three run flags.
 
@@ -81,6 +81,8 @@ Every one of the eight is read by a reference this plugin ships — the corpus i
 - **`$WORKFLOWS_ENFORCE_MODEL`** — the persistent default for the `--enforce-model` run flag; pins every subagent a command dispatches to one model, bypassing model-routing's own per-step selection.
 
 **Resolution.** An alias, a full model id, or `routing`; resolved against `run-flags.md` §2's alias table and reachability check. Unset, set but empty, or set to `routing` (matched case-insensitively, as the aliases are) means no enforcement. An `--enforce-model=<value>` flag on the command line always overrides it.
+
+**When the value is bad.** A value matching none of `run-flags.md` §2's forms stops every command `--enforce-model` applies to with `RUN_FLAGS_BAD_MODEL`, and a value that resolves to an unreachable model stops it with `RUN_FLAGS_MODEL_UNAVAILABLE` — both in Phase 0, before any write, each message tagging the value `(from WORKFLOWS_ENFORCE_MODEL)` so the environment, not the command line, is the thing to fix. A command it does not apply to (`run-flags.md` §3 step 3) ignores it silently, bad value or not.
 
 **When unset.** No enforcement — model routing selects each step's model exactly as if the variable did not exist.
 
