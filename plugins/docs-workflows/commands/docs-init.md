@@ -47,7 +47,7 @@ Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-rout
 
 `/docs-init` is **MODERATE** — mechanical scaffolding against a known template held in this plugin's own references, applied as a templated diff whose output is reviewed as a pull request before anyone relies on it. State the classification and a one-line reason. (Contrast `/docs-audit`, which classifies SIGNIFICANT because it reasons about what a codebase's documentation *ought* to contain.)
 
-**The review gate is Opus regardless of class.** D17 and D20: every artefact-writing command of the docs-workflow family the 2026-08-29 design's §4 table lists (`/docs-init`, `/docs-brand`, `/docs-audit` and the artefact-writing commands that design plans after them — **not** every command in this plugin: `/document` in direct mode takes a style check and no review gate, `/release-notes` a light gate, `/docs-profile` no review gate at all, and `/docs-serve` writes no artefact and runs none) passes a high-tier review with no tiering by unit, and a MODERATE classification lowers which model plans and executes, never which model reviews. Record a `model_routing` block:
+**The review gate is Opus regardless of class, unless `run_flags.enforced_model` is set (§10, which pins the reviewer dispatch to the enforced id instead).** D17 and D20: every artefact-writing command of the docs-workflow family the 2026-08-29 design's §4 table lists (`/docs-init`, `/docs-brand`, `/docs-audit` and the artefact-writing commands that design plans after them — **not** every command in this plugin: `/document` in direct mode takes a style check and no review gate, `/release-notes` a light gate, `/docs-profile` no review gate at all, and `/docs-serve` writes no artefact and runs none) passes a high-tier review with no tiering by unit, and a MODERATE classification lowers which model plans and executes, never which model reviews. Record a `model_routing` block:
 
 ```yaml
 model_routing:
@@ -220,11 +220,12 @@ Commit what Phase 2.5's branch and Phases 3–7.5 produced, then draft a pull-re
 ## Docs-init Report
 
 ### Classification
-MODERATE — mechanical scaffolding against a known template; output reviewed as a pull request (review gate is Opus regardless, D17/D20)
+MODERATE — mechanical scaffolding against a known template; output reviewed as a pull request (review gate is Opus regardless, D17/D20, unless run_flags.enforced_model is set — §10)
 
 ### Model Routing
-Detection model (§2.1): <detection_model>   Review model (§2): <review_model>   Opus available: <true | false>   Notes: <any §2 fallback, or "none">
-[Under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` in place of the line above — both dispatched steps already carry the enforced id, per `workflows-core:model-routing/classification` §10.]
+Detection model (§2.1): <detection_model>   Review model (§2): <review_model>   Notes: <any §2 fallback, or "none">
+Opus available: <true | false>
+[Under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` in place of the Detection model / Review model line above — both dispatched steps already carry the enforced id, per `workflows-core:model-routing/classification` §10. `Opus available` is unaffected by enforcement (§10: a property of the environment, not of the enforcement choice) and is reported on its own line exactly as it stands.]
 Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` skip line is Phase 9's own output; the `Session cost: …` skip line is Phase 11's own output, printed after this report and not restated in it.]
 
 ### Target
@@ -313,7 +314,7 @@ ADDITIVE — this phase NEVER fails the run, NEVER commits, and NEVER writes int
 
 ## Phase 11 — Session cost
 
-Terminal phase — the final operational phase; runs after Phase 10 and NEVER interrupts an earlier phase. Records this command's token-cost contribution by invoking `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and calling its single `emit-cost` entry point. **Cost ALWAYS runs — including a run that cancelled at Phase 2.5, and including one whose Phase 7 verification failed.**
+Terminal phase — the final operational phase; runs after Phase 10 and NEVER interrupts an earlier phase. Records this command's token-cost contribution by invoking `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and calling its single `emit-cost` entry point. **Cost ALWAYS runs — including a run that cancelled at Phase 2.5, and including one whose Phase 7 verification failed — unless `run_flags.skip_costs` (see below).**
 
 **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way.
 
@@ -339,7 +340,7 @@ Otherwise, call `emit-cost` with `command: /docs-init`, `phase: docs-scaffold`, 
 - NEVER write the visibility marker on a page inside the built public tree, and NEVER omit it from a file under `internal/` or from a snippet intended for internal pages
 - ALWAYS run Phase 7's four verification steps in order, and ALWAYS report a failure rather than working around it — no relaxed `--strict`, no dropped `validation.nav` key, no deleted page, no silenced linter; a scaffold that cannot build is not a scaffold
 - NEVER confirm visibility from the dev server — built output only (`visibility.md` §2)
-- ALWAYS dispatch `docs-scaffold-reviewer` at Opus (D17, D20 — no tiering by unit), ALWAYS tell it which dimensions `--public-only` makes inapplicable, and NEVER let a verification that contradicts `scaffold-tree.md` §6's "Must be identical / May differ" itemisation stand in its place
+- ALWAYS dispatch `docs-scaffold-reviewer` at Opus (D17, D20 — no tiering by unit) unless `run_flags.enforced_model` is set (§10 enforces a model, and the dispatch then carries that id instead), ALWAYS tell it which dimensions `--public-only` makes inapplicable, and NEVER let a verification that contradicts `scaffold-tree.md` §6's "Must be identical / May differ" itemisation stand in its place
 - ALWAYS triage its findings (`workflows-core:finding-triage`) before applying anything; there is NO dedicated fixer (D25) — the orchestrator applies survivors itself, bound by the patch gate, and surfaces a survivor it cannot safely patch rather than guessing
 - ALWAYS pass the resolved docs-repo root to `/docs-workflows:docs-brand --inline` as its positional token (that command's own `--inline` contract), and NEVER let that phase emit a cost entry, open a pull request, or run a review of its own — its diff and its contrast finding join this run's single review and single pull request
 - NEVER abort the scaffold because branding did not happen — a `no branding applied: <reason>` return from `/docs-workflows:docs-brand --inline`, whether a stop or a Cancel, continues the run as if `--no-brand` and records the reason in the pull-request draft and the report
