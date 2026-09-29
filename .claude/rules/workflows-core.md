@@ -35,7 +35,7 @@ The host installs `workflows-core` alongside any of the three family plugins tha
 - The `model_routing` YAML handoff block shared between commands and agents
 - The `phase: verify-resume` protocol for review-gated verification
 - The large-input scan fan-out policy (§8): the input-shape trigger, the `resolved-folder read → parallel code-scanner (cap 4) → Opus synthesis` pattern, the SIGNIFICANT floor it imposes, and §8.5's opt-in seeded second round with its rule that an unresolved theme is named, never flattened into a gap ([why](../../docs/maintainers/rationale.md#model-routing-fan-out))
-- §2.2, the cheap ("bugs-only") fallback chain — Haiku, else the §2.1 Sonnet chain — used only by `defect-reporter` under `--skip-feedback`, recorded as `defect_model` in the `model_routing` block
+- §2.2, the cheap ("bugs-only") fallback chain — Haiku, else the §2.1 Sonnet chain — dispatched only for `defect-reporter` under `--skip-feedback` (recorded as `defect_model` in the `model_routing` block); also the chain `run-flags` §2's `haiku` alias resolves against for `--enforce-model=haiku` on any applicable command
 - §10, enforced model — `run_flags.enforced_model` (`workflows-core:run-flags`) bypasses every chain's own per-step selection: every `model_routing` field naming a **dispatched** step (never the orchestrator's own inline work) resolves to the enforced id, every dispatch passes it as `model:` explicitly (overriding a frontmatter pin), a nested dispatch propagates it to its own `task` calls, and every gate or degrade path that tests `current_model` for an Opus session does not fire
 
 ## Model routing callers
@@ -66,7 +66,7 @@ The `workflows-core` command's line of the family workflow map, the logging comm
                       └── code-scanner (workflows-core)         (used by /epics, /implement multi-source fan-out, /create-ard, /specify, /design, /idea, /docs-audit)
                       └── frame-describer (workflows-core)      (used by /frames)
                       └── docs-grounder (workflows-core)        (used by /idea, /create-prd, /update-prd, /create-ard, /specify, /epics, /release-notes, /brd-intake, /prd-ground)
-                      └── impl-maintenance (workflows-core)     (used by 25 of the 32 commands — all but /docs-profile, /docs-serve, /statusline, /feedback, /prompt, /prompt-brainstorm and /prompt-grill-me — replaced by defect-reporter under --skip-feedback)
+                      └── impl-maintenance (workflows-core)     (used by 25 of the 32 commands — `grep -l 'workflows-core:impl-maintenance' plugins/*/commands/*.md | wc -l` against `find plugins/dev-workflows/commands plugins/product-workflows/commands plugins/docs-workflows/commands plugins/workflows-core/commands -maxdepth 1 -name '*.md' | wc -l` — all but /docs-profile, /docs-serve, /statusline, /feedback, /prompt, /prompt-brainstorm and /prompt-grill-me — replaced by defect-reporter under --skip-feedback)
                       └── defect-reporter (workflows-core)      (used under --skip-feedback by the same commands as impl-maintenance)
 ```
 

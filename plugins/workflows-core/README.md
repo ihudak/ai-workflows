@@ -1,12 +1,12 @@
 # workflows-core
 
-Shared foundation for the `dev-workflows` plugin family: the addressing grammar and specs-repo git entry points, phase handoff, model routing, escalation and finding-triage rules, cost/feedback/follow-up emission, and the grounding and grilling conventions every authoring command applies. It also carries six slash commands — the family-meta utilities and `/frames`, the design-frame-set indexer — plus the five agents any plugin in the family may dispatch.
+Shared foundation for the `dev-workflows` plugin family: the addressing grammar and specs-repo git entry points, phase handoff, model routing, escalation and finding-triage rules, cost/feedback/follow-up emission, and the grounding and grilling conventions every authoring command applies. It also carries six slash commands — the family-meta utilities and `/frames`, the design-frame-set indexer — plus the six agents any plugin in the family may dispatch.
 
 > Part of the `shipwright` marketplace — see the [repo-root setup guide](../../README.md) for marketplace install + prerequisites.
 
 ## What it does
 
-Most of this plugin is not a command at all. It is the corpus a sibling plugin reads: 29 files under `references/`, reached through the `reference` loader skill, the `model-routing` skill that resolves the classification rules, and five agents dispatched by name. The six commands it does ship are the ones that belong to no single pipeline — they act on the plugin family itself, or on the specs tree rather than on a phase of it.
+Most of this plugin is not a command at all. It is the corpus a sibling plugin reads: 30 files under `references/`, reached through the `reference` loader skill, the `model-routing` skill that resolves the classification rules, and six agents dispatched by name. The six commands it does ship are the ones that belong to no single pipeline — they act on the plugin family itself, or on the specs tree rather than on a phase of it.
 
 | Group | Commands | What it does |
 |-------|----------|--------------|
@@ -24,7 +24,7 @@ Most of this plugin is not a command at all. It is the corpus a sibling plugin r
 | [Getting started](docs/getting-started.md) | Install, environment variables, and what this plugin is for. |
 | [Workflow overview](docs/workflow.md) | Where these six commands sit relative to the pipeline they serve. |
 | [Roles and phases](docs/roles-and-phases.md) | The cost-attribution phases these commands reach, and how. |
-| [Agents](docs/reference/agents.md) | The five agents this plugin bundles and who dispatches them. |
+| [Agents](docs/reference/agents.md) | The six agents this plugin bundles and who dispatches them. |
 | [References](docs/reference/references.md) | The reference corpus under `references/`. |
 | [Environment](docs/reference/environment.md) | Every environment variable this plugin reads. |
 | [Hooks](docs/reference/hooks.md) | The two session-wide hooks this plugin bundles, and why they live here. |
