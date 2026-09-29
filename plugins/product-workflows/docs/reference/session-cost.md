@@ -4,7 +4,7 @@ Cost attribution is one of the subsystems the companion `workflows-core` plugin 
 
 ## What a command declares
 
-Every cost-emitting command passes a `phase` and a `role` label at the point it calls the shared entry point, and `workflows-core:cost-emission` §7 carries one attribution row per command. Fourteen commands emit a cost entry here — all of them, and all with a fixed pair rather than an inferred one:
+Every cost-emitting command passes a `phase` and a `role` label at the point it calls the shared entry point, and `workflows-core:cost-emission` §7 carries one attribution row per command. Fourteen commands emit a cost entry here, unless `--skip-costs` ([below](#skipping-cost---skip-costs)) — all of them, and all with a fixed pair rather than an inferred one:
 
 | Command(s) | Phase | Role |
 |---|---|---|
@@ -18,6 +18,12 @@ Every cost-emitting command passes a `phase` and a `role` label at the point it 
 | `/prd-proposal`, `/brd-proposal` | `proposal` | `pm` |
 
 `brd-to-prd` is the one phase shared across two roles: every command of the BRD-to-PRD route runs as PM except `/prd-ground`, which is PM-initiated but PA/Dev-executed, and both roles tag their cost line `brd-to-prd`. [Roles and phases](../roles-and-phases.md) defines what each phase means and what a run in it is accountable for; this page states only what each command passes.
+
+## Skipping cost (`--skip-costs`)
+
+Under `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`), a command's cost phase never calls `emit-cost` and never loads `workflows-core:cost-emission` — it runs `workflows-core:run-flags`'s `skip-cost` entry point in its place. The checkpoint still advances exactly as a full run would, so the next command's window is measured correctly; nothing else happens — no cost entry, no pending file, no reconciliation offer. Any deferred record from a prior ceded `/prompt-brainstorm` or `/prompt-grill-me` run is dropped rather than replayed: the skipping run names each dropped record in its output and deletes the deferred file, since the checkpoint has already moved past what it could have matched.
+
+The run reports `Session cost: skipped (--skip-costs)` or `Session cost: skipped (WORKFLOWS_SKIP_COSTS)` in place of the usual persisted-path line.
 
 ## Where cost files land
 

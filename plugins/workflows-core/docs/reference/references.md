@@ -1,6 +1,6 @@
 # References
 
-`workflows-core` bundles 29 files under `references/` — 25 top-level markdown files, `cost-prices.yaml`, one file under `model-routing/`, and one bundled subtree. This page enumerates every file except the two under `handoff/` (27 of the 29 — the 25 top-level files plus `cost-prices.yaml` plus `model-routing/classification.md`), grouped by concern below, then counts that one subtree rather than listing each file inside it. The arithmetic: 27 named individually, plus 2 markdown pages counted (not enumerated) in `handoff/` — 27 + 2 = 29, against 29 files on disk. `model-routing/` is not a subtree row: its single markdown file is inventoried above as an ordinary entry, because it is a reference page a reader opens rather than a bundled set counted in bulk.
+`workflows-core` bundles 30 files under `references/` — 26 top-level markdown files, `cost-prices.yaml`, one file under `model-routing/`, and one bundled subtree. This page enumerates every file except the two under `handoff/` (28 of the 30 — the 26 top-level files plus `cost-prices.yaml` plus `model-routing/classification.md`), grouped by concern below, then counts that one subtree rather than listing each file inside it. The arithmetic: 28 named individually, plus 2 markdown pages counted (not enumerated) in `handoff/` — 28 + 2 = 30, against 30 files on disk. `model-routing/` is not a subtree row: its single markdown file is inventoried above as an ordinary entry, because it is a reference page a reader opens rather than a bundled set counted in bulk.
 
 This is the corpus the whole `dev-workflows` plugin family reads. A sibling plugin cites a file here by name rather than copying it, which is the reason the corpus was extracted at all: one copy, one place a rule is stated, and every plugin bound by the same version of it.
 
@@ -58,6 +58,7 @@ The bookkeeping every long-running command emits around its actual work.
 
 What the family needs configured around it, and how a command chooses the model it runs on.
 
+- `run-flags.md` — the three run flags every applicable command accepts (`--skip-costs`, `--skip-feedback`, `--enforce-model`), their `$WORKFLOWS_SKIP_COSTS` / `$WORKFLOWS_SKIP_FEEDBACK` / `$WORKFLOWS_ENFORCE_MODEL` environment defaults, the model-alias table, the `run_flags` record built in Phase 0, and the `strip-run-flags` / `skip-cost` entry points.
 - `dependencies.md` — the two kinds of relationship a plugin here can have with another: a declared, host-resolved `dependencies` entry inside this family (an unsatisfied one disables the plugin), and an optional companion outside it resolved at runtime with graceful fallback.
 - `classification.md` — lives under `model-routing/`, not the top level; the single source of truth for task-complexity classification, the model fallback chain, the mandatory Opus code-review checklist, and the `model_routing` handoff block every pipeline command loads at its own classification step.
 

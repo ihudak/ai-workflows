@@ -1,7 +1,7 @@
 ---
 name: statusline
 description: Install the plugin family's multi-line status line (session identity, git, context bar, cost, tokens, rate limits) into your Claude Code settings. Vendors the script to a stable per-user path, backs up anything it would overwrite, and enables the Option B cost snapshot used by session cost reporting.
-allowed-tools: Read Write Edit Bash
+allowed-tools: Read Write Edit Bash Skill
 ---
 
 Install the plugin family's status line: $ARGUMENTS
@@ -23,6 +23,8 @@ are always fully qualified. Direct users to `/workflows-core:statusline`.
 ---
 
 ## Phase 1 — Resolve paths
+
+**Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. No run flag applies to this command; `strip-run-flags` reports an explicit one as ignored. It takes no positional arguments to protect, but a stray flag must not be misread.
 
 1. Source script: `${CLAUDE_PLUGIN_ROOT}/scripts/statusline-command.sh`.
 2. Stable install path: `~/.claude/dev-workflows/statusline-command.sh`

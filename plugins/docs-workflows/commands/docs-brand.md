@@ -10,7 +10,7 @@ Brand the documentation site: $ARGUMENTS
 
 `/docs-brand` extracts a logo and a rough primary/accent colour pair from a product's own code and applies them to a documentation site's Material for MkDocs theme. Expectations are deliberately modest: a mark and a colour pair, not a design system. It runs two ways: **standalone**, reviewing its own diff and finishing on a branch with a drafted pull request the same way `/docs-workflows:docs-profile` does; and **`--inline`**, dispatched by `/docs-workflows:docs-init` Phase 5, where it skips its own preflight, its own review gate, its own pull request, and its own emitter tail entirely, and returns its diff plus its contrast finding for the caller's single review and single PR to absorb, or — where it cannot brand — `no branding applied: <reason>` under the failure contract below, which never ends the caller's run. Rebrands happen, and re-scaffolding a whole docs site to pick up a new logo would be absurd (D14).
 
-**Signature:** `/docs-brand [<docs-repo-path>] [--from <code-repo-path>] [--inline]`
+**Signature:** `/docs-brand [<docs-repo-path>] [--from <code-repo-path>] [--inline] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 **The `--inline` contract.** A caller passes the docs-repo path it just scaffolded as the positional token, explicitly — it is not required to, since Phase 0's `resolve-docs-repo` ladder below would otherwise resolve one on its own, but a ladder resolving independently of what the caller already has open is exactly the kind of drift this contract exists to prevent. `/docs-workflows:docs-init` is this contract's one consumer today.
 
@@ -19,6 +19,8 @@ Brand the documentation site: $ARGUMENTS
 ---
 
 ## Phase 0 — Resolve and validate
+
+**Strip the run flags first, standalone only — where `$ARGUMENTS` carries no `--inline` token.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS`: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. **`--inline` does not re-strip and inherits its caller's `run_flags` instead.** `/docs-workflows:docs-init` Phase 5 constructs this run's whole `$ARGUMENTS` explicitly — the resolved docs-repo root, `--from <path>` and `--inline` — from values it already holds, so that string never carries a run-flag token of its own to find; a fresh strip would resolve each flag to its env default, losing the caller's explicit flags. Instead this run reuses the `run_flags` record `/docs-init` already resolved at its own Phase 0, unchanged, for every step below that reads one.
 
 0. **Flags.** Strip `--from <code-repo-path>` (together with the path token immediately after it) and `--inline` from `$ARGUMENTS` wherever they appear, before reading a positional token. Record `inline = true` when `--inline` was present, and `from_repo` when `--from` was. What remains is the optional `<docs-repo-path>`.
 
@@ -44,20 +46,22 @@ Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-rout
 
 `/docs-brand` is **MODERATE** — deterministic extraction against a fixed precedence order, applied through a small, templated diff (two MkDocs configs at most, one CSS file, a handful of copied assets). State the classification and a one-line reason.
 
-**The review gate is Opus regardless of class.** The family rule (D17, D20) is that every artefact-writing command of the docs-workflow family the 2026-08-29 design's §4 table lists (`/docs-init`, `/docs-brand`, `/docs-audit` and the artefact-writing commands that design plans after them — **not** every command in this plugin: `/document` in direct mode takes a style check and no review gate, `/release-notes` a light gate, `/docs-profile` no review gate at all, and `/docs-serve` writes no artefact and runs none) passes a high-tier review with no tiering by unit — a MODERATE classification lowers which model plans and executes, never which model reviews. Record a `model_routing` block:
+**The review gate is Opus regardless of class, unless `run_flags.enforced_model` is set (§10, which pins the reviewer dispatch to the enforced id instead).** The family rule (D17, D20) is that every artefact-writing command of the docs-workflow family the 2026-08-29 design's §4 table lists (`/docs-init`, `/docs-brand`, `/docs-audit` and the artefact-writing commands that design plans after them — **not** every command in this plugin: `/document` in direct mode takes a style check and no review gate, `/release-notes` a light gate, `/docs-profile` no review gate at all, and `/docs-serve` writes no artefact and runs none) passes a high-tier review with no tiering by unit — a MODERATE classification lowers which model plans and executes, never which model reviews. Record a `model_routing` block:
 
 ```yaml
 model_routing:
   classification: MODERATE
   reason: "deterministic extraction against a fixed precedence order; templated application"
   current_model: <the model this orchestrator is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+  defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # impl-maintenance
   review_model: <the §2 Opus chain — claude-opus-5-5, fallback per §2 — pinned regardless of MODERATE classification, per D17/D20>
   opus_available: true | false
   notes: <any §2 degradation, e.g. "Opus unavailable; docs-scaffold-reviewer fell back to Sonnet 5">
 ```
 
-Phase 9 dispatches `docs-scaffold-reviewer`, which is already pinned to Opus by its own frontmatter — no dispatch override is needed unless Opus is unavailable, in which case the fallback is announced here and again in the final report.
+Phase 9 dispatches `docs-scaffold-reviewer`, which is already pinned to Opus by its own frontmatter — no dispatch override is needed unless Opus is unavailable, or unless `run_flags.enforced_model` is set (§10), in which case the fallback or the enforced id is announced here and again in the final report. This block is computed on both paths, but on `--inline` neither `review_model` nor `detection_model` reaches a dispatch this command makes itself — Phase 9 (the reviewer) and Phase 12 (`impl-maintenance`) are both standalone-only, so the block is inert there, carried along for whoever reads it rather than acted on.
 
 ---
 
@@ -211,7 +215,7 @@ Nothing in this phase touches the code repo — every write below lands only in 
 
 Dispatch `docs-scaffold-reviewer` — pinned to Opus by its own frontmatter, per Phase 1:
 
-→ Agent (subagent_type: "docs-workflows:docs-scaffold-reviewer"):
+→ Agent (subagent_type: "docs-workflows:docs-scaffold-reviewer", model: `<review_model — §2 Opus chain, equal to docs-scaffold-reviewer's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "Review the documentation-repository scaffold changes from this brief:
   >
   > Task description: [/docs-brand standalone run — theme colours and a logo extracted from <code-repo> and applied to <docs-repo>]
@@ -253,7 +257,13 @@ There is no re-review cycle — with no fixer, there is no second pass to gate a
 ## Docs-brand Report
 
 ### Classification
-MODERATE — deterministic extraction against a fixed precedence order; templated application (review gate is Opus regardless, D17/D20)
+MODERATE — deterministic extraction against a fixed precedence order; templated application (review gate is Opus regardless, D17/D20, unless run_flags.enforced_model is set — §10)
+
+### Model Routing
+Detection model (§2.1): <detection_model>   Review model (§2): <review_model>   Notes: <any §2 fallback, or "none">
+Opus available: <true | false>
+[Under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` in place of the Detection model / Review model line above — both dispatched steps already carry the enforced id, per `workflows-core:model-routing/classification` §10. `Opus available` is unaffected by enforcement (§10: a property of the environment, not of the enforcement choice) and is reported on its own line exactly as it stands.]
+Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` skip line is Phase 12's own output; the `Session cost: …` skip line is Phase 14's own output, printed after this report and not restated in it.]
 
 ### Source
 Code repo: <resolved path>
@@ -300,7 +310,9 @@ Left uncommitted: <"none" | <path> — ignored by .gitignore:<N> `<line>`; confi
 
 Terminal phase — runs AFTER the Phase 11 report; NEVER interrupts an earlier phase.
 
-1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5>`):
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 3's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
+
+1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5; under §10, run_flags.enforced_model>`):
    > "Analyse this session and return a Lessons Learned report.
    >
    > Session handoff:
@@ -332,9 +344,11 @@ ADDITIVE — this phase NEVER fails the run, NEVER commits, and NEVER writes int
 
 ## Phase 14 — Session cost (standalone only)
 
-Terminal phase — the final operational phase; runs after Phase 13 and NEVER interrupts an earlier phase. Records this command's token-cost contribution by invoking `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and calling its single `emit-cost` entry point. **Cost ALWAYS runs on the standalone path — including a run that cancelled at Phase 7.**
+Terminal phase — the final operational phase; runs after Phase 13 and NEVER interrupts an earlier phase. Records this command's token-cost contribution — through `emit-cost`, or, under `run_flags.skip_costs`, by advancing the checkpoint alone. **Cost ALWAYS runs on the standalone path — including a run that cancelled at Phase 7 — unless `run_flags.skip_costs` (see below).**
 
-Call `emit-cost` with `command: /docs-brand`, `phase: docs-scaffold`, `role: dev` — a **fixed** pair (`workflows-core:cost-emission` §7), never `inferred`. **Only the standalone path emits.** An `--inline` run's cost belongs to `/docs-workflows:docs-init`'s own entry; emitting a second time would double-count one run, which is exactly why Phases 12–14 are skipped there rather than run with a key-less variant of the same call. Pass `key: null`, `source: none`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). With no PRD dir, `cost-emission.md` §8 rung 2's **documentation branch** — which names this command's standalone path explicitly — applies: the entry lands at `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/cost/<sid8>.md`, where `<docs-repo-slug>` is the one-segment name `workflows-core:specs-repo-git` §2.1 defines for the resolved docs repo — cited rather than re-derived here, because that section's staging rule admits exactly one segment and a second derivation is how the two drift (design D19). That rung is inserted before pending precisely because documentation work on a docs repo alone frequently has no PRD and never will, so a pending entry from it would await a reconciliation that is never coming; the pending file (§9) is now only for a genuinely keyless run that may still acquire a key. `specs-repo-git.md` §2.1's `$SPECS_PATH/documentation/<docs-repo-slug>/…` shape is what stages it.
+**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way.
+
+Otherwise (not skipping), invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call `emit-cost` with `command: /docs-brand`, `phase: docs-scaffold`, `role: dev` — a **fixed** pair (`workflows-core:cost-emission` §7), never `inferred`. **Only the standalone path emits.** An `--inline` run's cost belongs to `/docs-workflows:docs-init`'s own entry; emitting a second time would double-count one run, which is exactly why Phases 12–14 are skipped there rather than run with a key-less variant of the same call. Pass `key: null`, `source: none`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). With no PRD dir, `cost-emission.md` §8 rung 2's **documentation branch** — which names this command's standalone path explicitly — applies: the entry lands at `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/cost/<sid8>.md`, where `<docs-repo-slug>` is the one-segment name `workflows-core:specs-repo-git` §2.1 defines for the resolved docs repo — cited rather than re-derived here, because that section's staging rule admits exactly one segment and a second derivation is how the two drift (design D19). That rung is inserted before pending precisely because documentation work on a docs repo alone frequently has no PRD and never will, so a pending entry from it would await a reconciliation that is never coming; the pending file (§9) is now only for a genuinely keyless run that may still acquire a key. `specs-repo-git.md` §2.1's `$SPECS_PATH/documentation/<docs-repo-slug>/…` shape is what stages it.
 
 **Then write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` §1. With no PRD dir, rung 2 applies: skip the file, rely on the printed `### Next step`.
 
@@ -353,12 +367,12 @@ Call `emit-cost` with `command: /docs-brand`, `phase: docs-scaffold`, `role: dev
 - ALWAYS find the MkDocs configs through the profile's `builds[]` where it records one, else in the resolved directory, and derive every path in the site — the configs followed through `INHERIT`, the stylesheet, the assets — from where each config sits and its `docs_dir`, never from the git top level, where the profile is read and every git call in the docs repository runs (Phase 0 steps 2–3)
 - ALWAYS write `theme` and `extra_css` only into a config that inherits nothing, NEVER into one carrying `INHERIT:` — it already takes both from its parent, and a block of its own there is the divergent-theme defect (`scaffold-tree.md` §6); where two configs both inherit nothing, write the same block into both. ALWAYS edit into the existing `theme:` block rather than replacing it — a literal replacement drops `name: material` and the brand silently does nothing — and write `palette`/`extra_css` only for a confirmed colour and `logo`/`favicon` only for a confirmed logo
 - NEVER let an `--inline` run's stop or Cancel end the caller's run — it returns `no branding applied: <reason>` with an empty diff and no contrast finding (the `--inline` failure contract, above)
-- ALWAYS dispatch `docs-scaffold-reviewer` at Opus for a standalone run (D17, D20 — no tiering by unit); NEVER for `--inline`, whose diff joins the caller's own review instead
+- ALWAYS dispatch `docs-scaffold-reviewer` at Opus for a standalone run (D17, D20 — no tiering by unit) unless `run_flags.enforced_model` is set (§10 enforces a model, and the dispatch then carries that id instead); NEVER for `--inline`, whose diff joins the caller's own review instead
 - ALWAYS triage `docs-scaffold-reviewer`'s findings (`workflows-core:finding-triage`) before applying anything; there is NO dedicated fixer (D25) — the orchestrator applies survivors itself, bound by the patch gate, and surfaces a survivor it cannot safely patch rather than guessing
 - ALWAYS use `choices` arrays for a genuine decision point; 2–4 options, and NEVER author an "Other" option — the harness supplies the free-text escape itself. Where the candidate set is unbounded (Phase 2's repo listing, Phase 4's logo listing) the array is never sized to the list itself: a single candidate is auto-selected with a notice, never offered as a one-option array; otherwise print every candidate as prose first, then cap at three concrete rows plus one overflow option, per `workflows-core:epic-picker` *The cap*
 - ALWAYS run `specs-preflight` at Phase 0 (standalone only) and `commit-artifacts` as the last action (standalone only) (`workflows-core:specs-repo-git`) — bounded to `$SPECS_PATH`'s artifact paths and to plugin-created branches, of which this family creates none; always `git -C "$SPECS_PATH"` and never a `cd`; never force-pushing; never failing the run
 - NEVER push or auto-merge the docs-repo branch — output a reviewable PR (branch + commit + drafted message) for the operator to push, the same discipline as `/docs-workflows:docs-profile`
 - NEVER let `--inline` run its own preflight, branch, review gate, PR, or emitter tail (Phase 0 step 4, Phase 7, Phase 9, Phase 10, Phases 12–14) — it returns its diff and its contrast finding to the caller, whose own single review and single PR cover it
-- NEVER let the standalone path skip its cost entry, and NEVER let `--inline` emit one — emitting on both paths would double-count one run (`workflows-core:cost-emission` §7)
+- NEVER let the standalone path skip its cost entry except under `run_flags.skip_costs` (Phase 14), and NEVER let `--inline` emit one — emitting on both paths would double-count one run (`workflows-core:cost-emission` §7)
 - ALWAYS end a standalone Phase 11 report with a `### Next step` recommendation (per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")`) — guidance only, never auto-invoked, and conditional on whether Phase 7 actually produced a branch and a drafted PR; `--inline` prints none, since control returns to the caller's own report
 - ALWAYS reference this plugin's own bundled files with `${CLAUDE_PLUGIN_ROOT}`; every `workflows-core:<name>` citation is loaded through `Skill(skill: "workflows-core:reference", args: "<name>")`, never by path

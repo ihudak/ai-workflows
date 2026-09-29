@@ -10,6 +10,8 @@ Profile the documentation repository: $ARGUMENTS
 
 `$ARGUMENTS` is an optional repo path (default: the current working directory), optionally followed by `--inline`. The `--inline` token is passed when `/document` (keyed mode) invokes this flow inline (its Phase 0 case (c)); it switches this command to **inline mode** — see Phase 0 step 2, Phase 4's "Keep existing, write nothing", Phase 5 step 1, step 2, step 6, and Phase 6.
 
+Usage: `/docs-profile [<repo-path>] [--inline] [--enforce-model=<model>]`
+
 `/docs-profile` **bootstraps or refreshes** the machine-readable docs-profile that `/document` (keyed mode) consumes. It scans a documentation repository, synthesises a `.dev-workflows/docs-profile.yml` (and complementary CLAUDE.md guidance) that conforms to `${CLAUDE_PLUGIN_ROOT}/references/docs-profiles/docs-profile-schema.md`, then writes the result as a **reviewable PR** — branch + commit + a drafted PR message. It never pushes or auto-merges, and a refresh whose changes the operator declines, or that finds nothing to change, writes nothing at all (Phase 4).
 
 The command is **generic** — it works on any docs repo. A repo publishing one documentation set gets a single `spaces[]` entry; a repo publishing several gets one entry per content root, plus the per-space dev-server and lint/build/format commands that go with them.
@@ -21,6 +23,8 @@ For one-off doc edits use direct mode; for keyed feature documentation use `/doc
 ---
 
 ## Phase 0 — Resolve and validate the target repo
+
+**Strip the run flags first, standalone only — where `$ARGUMENTS` carries no `--inline` token.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS`: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its routing step — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. `--skip-costs` and `--skip-feedback` do not apply to this command — it dispatches no `impl-maintenance` and calls no cost-emission entry point — so an explicit one is reported ignored and resolves to its default, unvalidated; only `--enforce-model` applies, on a standalone run. **`--inline` does not re-strip and inherits its caller's `run_flags` instead.** `/docs-workflows:document` (keyed mode) Phase 0 step 4(c) constructs this run's whole `$ARGUMENTS` explicitly — `docs_repo_resolved --inline` — from a value it already holds, so that string never carries a run-flag token of its own to find; a fresh strip would resolve each flag to its env default, losing the caller's explicit `--enforce-model`. Instead this run reuses the `run_flags` record `/document` already resolved at its own Mode detection, unchanged, for every step below that reads one.
 
 1. **Resolve the repo path.** Strip a `--inline` token (in any position) from `$ARGUMENTS` before reading a positional token — it is the inline-mode flag, never a path; record `inline = true` when present. Execute **`resolve-docs-repo`** from `${CLAUDE_PLUGIN_ROOT}/references/docs-workflow/repo-resolution.md` §1 — the signal-positive form, since this command needs a docs repo that already exists, never one to create. Do not restate its ladder here; the entry point owns it. Report which rung answered, per its own hard rule — a command that quietly works in an unexpected directory is expensive to unpick afterwards. Record the resolved absolute path as `<repo>`.
 
@@ -58,6 +62,7 @@ model_routing:
   classification: SIGNIFICANT
   reason: "cross-cutting synthesis of the whole docs repo; output steers all later /document runs"
   current_model: <the model this orchestrator is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   detection_model: <§2.1 mid-tier Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>
   planning_model: <§2 powerful chain: claude-opus-5-5 … fallback Sonnet 5/4.6/4.5>
   review_model: <same as planning_model — conceptually the synthesis_model; the synthesis step runs on the §2 Opus chain>
@@ -73,7 +78,7 @@ The detection phase (Phase 2) pins its subagent to `detection_model` (the §2.1 
 
 Dispatch a **read-only** detection subagent **pinned to the §2.1 mid-tier chain** via the `task` tool's `model:` override — `claude-sonnet-5`, fallback `claude-sonnet-4-6`/`claude-sonnet-4-5`; record the model actually used as `detection_model` in the `model_routing` block. Detection is mechanical repo scanning, so it must NOT inherit the session model (an Opus session would otherwise burn Opus on a cheap step, per §2.1).
 
-→ Agent (subagent_type: "general-purpose", model: `<detection_model — §2.1: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>`):
+→ Agent (subagent_type: "general-purpose", model: `<detection_model — §2.1: claude-sonnet-5, fallback claude-sonnet-4-6/4-5; under §10, run_flags.enforced_model>`):
   > "Read-only detection scan for a docs-profile. Do NOT write or edit any file — return a structured detection report only.
   >
   > repo_root: <resolved git root from Phase 0>
@@ -98,7 +103,7 @@ Dispatch a **read-only** detection subagent **pinned to the §2.1 mid-tier chain
 
 On the §2 powerful chain (`planning_model`), turn the detection report into a draft `docs-profile.yml`. This synthesis is the SIGNIFICANT reasoning step, so it runs on the strongest available reasoning model (Opus), pinned via the `task` tool's `model:` override — not the §2.1 detection chain.
 
-→ Agent (subagent_type: "general-purpose", model: `<planning_model — §2 chain: claude-opus-5-5, fallback per §2>`):
+→ Agent (subagent_type: "general-purpose", model: `<planning_model — §2 chain: claude-opus-5-5, fallback per §2; under §10, run_flags.enforced_model>`):
   > "Synthesise a docs-profile from a detection report. This is a planning/synthesis task, not a code change — return the drafted YAML + drafted CLAUDE.md additions, nothing else; do not write files.
   >
   > Schema (the draft MUST conform exactly): `${CLAUDE_PLUGIN_ROOT}/references/docs-profiles/docs-profile-schema.md`
@@ -260,6 +265,8 @@ SIGNIFICANT — cross-cutting synthesis of the whole docs repo; output steers al
 - Synthesis model (§2): <planning_model>
 - Opus available: <true | false>
 - Notes: <any §2.1/§2 fallback that occurred, or "none">
+- [Under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` in place of the two model lines above — both dispatched steps already carry the enforced id, per `workflows-core:model-routing/classification` §10.]
+- Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. `--skip-costs` and `--skip-feedback` do not apply to this command.]
 
 ### Git state
 Branch <name> created with 1 commit on <repo-root>. NOT pushed and NOT merged — push and open the PR yourself when ready.

@@ -17,7 +17,7 @@ confidence grades and the closed evidence set — is
 `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md`. This command executes that file; it never
 restates it.
 
-Usage: `/prd-proposal <ADDRESS> [--no-brief] [--profile] [--baseline <path>] [--redo]`
+Usage: `/prd-proposal <ADDRESS> [--no-brief] [--profile] [--baseline <path>] [--redo] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 `<ADDRESS>` resolves through `workflows-core:addressing` §3 `resolve-address`, taken **after**
 `$SPECS_PATH` is settled — a resolution taken before the variable is known returns `absent` for a
@@ -69,6 +69,8 @@ specs tree and the profile. There is no flag to turn off, no `resolve-docs-groun
 ---
 
 ## Phase 0 — Resolve the address, preflight, and gate the PRD
+
+**Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
 
 **Parse the flags before anything counts a positional token**, so a flag is never read as the address.
 `--no-brief`, `--profile` and `--redo` are boolean; `--baseline` consumes the token after it. Strip
@@ -240,8 +242,10 @@ model_routing:
   classification: SIGNIFICANT | HIGH-RISK   # SIGNIFICANT is the floor here; see the reason below
   reason: <one-line>
   current_model: <the model this orchestrator/grill is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+  defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # impl-maintenance
-  review_model:    <§2 Opus chain>     # proposal-reviewer (frontmatter-pinned; recorded, no override)
+  review_model:    <§2 Opus chain>     # proposal-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model)
   authoring_model: <= current_model>   # the profile grill + both artifacts (session model, not a delegated subagent)
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
@@ -255,7 +259,7 @@ plausible number with a defensible-looking argument is more dangerous than an ob
 Escalate to `HIGH-RISK` where the folder's own content warrants it — a contested register, a
 reconciliation against a baseline the operator already believes is wrong.
 
-**Tiered HARD model gate.** For `SIGNIFICANT` / `HIGH-RISK`, require an Opus session — if
+**Unless `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10 — then no gate fires): Tiered HARD model gate.** For `SIGNIFICANT` / `HIGH-RISK`, require an Opus session — if
 `current_model` is not an Opus-tier model, stop:
 `choices: ["I'll relaunch /product-workflows:prd-proposal on Opus (Recommended)", "Override — proceed on the current model (logged in the final report)", "Cancel"]`.
 The condition is `current_model` and not `opus_available`, per
@@ -546,10 +550,9 @@ file describes the archived revision and not this one.
    rather than an oversight to be corrected. There is no artifact-specific pre-lint block for a
    proposal; §4 and §10 are what required-section presence is checked against. Advisory — surface
    every finding, inline-fix the mechanical ones, and proceed; the reviewer is the gate.
-2. **The review gate.** Dispatch `proposal-reviewer` (Opus, frontmatter-pinned; recorded as
-   `review_model`, no override):
+2. **The review gate.** Dispatch `proposal-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no override unless §10 enforces a model):
 
-   → Agent (subagent_type: "product-workflows:proposal-reviewer", model: `<review_model — §2 Opus chain>`):
+   → Agent (subagent_type: "product-workflows:proposal-reviewer", model: `<review_model — §2 Opus chain, equal to proposal-reviewer's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
      > "Review the effort proposal:
      >
      > Proposal path: [absolute path to proposal.md]
@@ -693,7 +696,9 @@ gap, `emit-block` (per `workflows-core:feedback-emission`) fires at that halt **
 `PRD_PROPOSAL_EPIC_FOLDER`, `PRD_PROPOSAL_NEEDS_PRD`, `PRD_PROPOSAL_PRD_NOT_HANDED_OFF`,
 `PRD_PROPOSAL_BASELINE_UNREADABLE`, `PRD_PROPOSAL_NEEDS_PROFILE` and an unset `$SPECS_PATH` each
 report the state of the operator's own argument list, tree or environment — not a capability this
-plugin lacks. A review BLOCK is not one either: that is the gate working.
+plugin lacks. A review BLOCK is not one either: that is the gate working. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
+
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model:
    `<detection_model — §2.1 Sonnet chain>`) with a compact handoff: command `/prd-proposal`; what was
@@ -711,7 +716,7 @@ plugin lacks. A review BLOCK is not one either: that is the gate working.
    work somebody has to do outside this run. Filter with the reference's §6 predicate, resolve the
    write target via its §4 ladder, dedupe per §5, and preview + confirm per §7. ADDITIVE: the same
    items also stay in the final report.
-4. **Session cost (ALWAYS runs).** Invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /prd-proposal`, `phase: proposal`, `role: pm`, the run's `key`, `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or the report-only notice). **This entry records model spend in USD and has no relationship whatever to the human hours the artifacts contain.**
+4. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /prd-proposal`, `phase: proposal`, `role: pm`, the run's `key`, `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or the report-only notice). **This entry records model spend in USD and has no relationship whatever to the human hours the artifacts contain.**
 5. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")`
    and, per its §1, write/overwrite `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry
    above, so the pointer reflects the completed run, and before the commit step below, so it is
@@ -751,7 +756,7 @@ a revision, the archived paths, and whether `--redo` discarded the anchor; the `
 one was given, cited as the operator gave it; the profile's `engagement_model` and whether the profile
 was read back, corrected or re-grilled; the pre-lint findings; the `proposal-reviewer` verdict with
 the triage line — findings reviewed, survivors, and every dismissal with its reason; resolved model
-routing (+ any Opus gate or degradation); the feedback, follow-up and cost paths, with the cost line
+routing (+ any Opus gate or degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10 — no gate or degradation applies); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line), follow-up and cost paths (or, under `--skip-costs`, the `Session cost: …` line), with the cost line
 labelled as **model spend in USD, a different quantity from the hours above**; the
 `Phase handoff:` outcome line from `handoff-to-main` (`workflows-core:phase-handoff` §4.1); the
 `Specs repo:` outcome line from `commit-artifacts` (`workflows-core:specs-repo-git` §6), with any

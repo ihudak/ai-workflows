@@ -17,10 +17,12 @@ That is strict on purpose, and it left the obvious workflow with no way out. A h
 ## Synopsis
 
 ```
-/frames <KEY>|@<path>
+/frames <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 One address, resolved with the same resolver every keyed command uses: a key, or `@<path>` to the folder or to a file inside it. No kind is passed, because `design/` is reserved at every level.
+
+All three run flags apply to this command ([`environment.md`](../reference/environment.md)). `--skip-costs` (or `$WORKFLOWS_SKIP_COSTS`) skips this run's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`references/run-flags.md` §5 step 3). `--skip-feedback` (or `$WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 4's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance`. `--enforce-model=<model>` (or `$WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `frame-describer`, `impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` in its place — to one model, bypassing the routing this page's [How it runs](#how-it-runs) section otherwise selects.
 
 ## How it runs
 
@@ -35,7 +37,7 @@ flowchart TD
 ## What it needs
 
 - **A folder that already exists, of one of the three kinds.** This command indexes; it creates no folder and refuses an address that resolves to none. An ambiguous key is a hard stop naming every match, and an address that resolves to something other than a BRD, PRD or Epic folder is refused by name — pointing `@<path>` at a frame *inside* a set resolves to the set, not to the folder that holds it, so the refusal says which folder to pass instead. A spec folder written before the carrier rule — one whose `prd.md`, `idea.md`, `epic.md`, `brd-link.md` or `brd/brd-inventory.md` asserts no `kind:` or `key:`, or, addressed by key, one holding none of those files — is refused separately, with its own remedy: give one of those files the `key:` and folder `kind` [`addressing.md`](../../references/addressing.md) §5 describes — where the folder holds none of them, and its PRD still carries a pre-rename name such as `<KEY>_<slug>.md`, rename that to `prd.md` and give it `kind: prd` and the key — or, where the folder holds an `idea.md` and no `prd.md`, run `/product-workflows:create-prd <KEY>`, whose `prd.md` gives it one; that last is offered on an `@<path>` only where the folder's name carries no kind prefix, since a prefixed folder asserting no key is one `/create-prd <KEY>` cannot find, and it would create a second.
-- **One address, and no flags.** `/frames` defines none; a second address or a `--flag` is a stop rather than a silent discard, because a discarded second address is a folder you believe was indexed and was not.
+- **One address, and no flags of its own.** `/frames` defines none; the three run flags above are stripped before the address is read, and a second address or any other `--flag` is a stop rather than a silent discard, because a discarded second address is a folder you believe was indexed and was not.
 - **An address is mandatory.** Absent or malformed, the run stops before anything is read.
 - **`$SPECS_PATH`** — the specs-preflight step at Phase 0 settles the branch once the address resolves, before the folder is read or anything is written; silent when the repo is already clean and on its default branch.
 - **Nothing else.** No PRD, no BRD, no code repo, no docs repo, and no Opus.

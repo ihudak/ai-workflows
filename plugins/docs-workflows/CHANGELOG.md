@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.4.0] — 2026-09-29
+
+**Update `workflows-core` to 1.8.0 with this release**: its new `run-flags` reference and `defect-reporter` agent are what six of this plugin's seven commands now dispatch.
+
+### Added
+
+- **`/document`, `/docs-profile`, `/release-notes`, `/docs-init`, `/docs-brand` and `/docs-audit` now accept `--enforce-model=<model>`; all but `/docs-profile` also accept `--skip-costs` and `--skip-feedback`** (`workflows-core:run-flags`) — `/docs-profile` emits neither a cost entry nor a feedback maintenance dispatch, so those two flags do not apply to it, and `/docs-serve` is in none of the three sets. `--skip-feedback` dispatches `workflows-core:defect-reporter` in place of `impl-maintenance` and persists only real defects — bugs-only, defects in the `ihudak/ai-containers` environment included — through `emit-bugs`; a run with no defects persists nothing. `--skip-costs` runs `run-flags`' `skip-cost` entry point in place of `emit-cost`, advancing the checkpoint and dropping any deferred record rather than writing an entry. `--enforce-model` pins every dispatched subagent — the frontmatter-pinned Opus reviewers `doc-reviewer`, `docs-scaffold-reviewer` and `docs-audit-reviewer`, `ia-planner`, and the nested `docs-style-checker` → `prose-style-checker` dispatch — to one model for the run, and prints one relaunch advisory when the orchestrator's own session model differs. `/document`'s direct mode joins the free-text class: only the leading and trailing runs of flag tokens are stripped from its inline text argument, everything between kept verbatim.
+- A defect in the `ihudak/ai-containers` environment is now captured on an ordinary run too, not only a bugs-only one, as `category: environment-defect`.
+- Every `--skip-costs` command page now says a pending deferred cost record from `/prompt-brainstorm` or `/prompt-grill-me` is dropped under the flag, not only `/feedback`'s and `/prompt`'s pages.
+
 ## [1.3.5] — 2026-09-24
 
 ### Changed — the marketplace is now `shipwright`, and the repository `ihudak/ai-workflows`

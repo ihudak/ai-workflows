@@ -4,17 +4,19 @@ Scaffolds a documentation repository for a project that has none — one that bu
 
 ## Who runs it
 
-`/docs-init` is the family's cold-start command, and it runs once per documentation repository. It sits ahead of the pipeline rather than inside it: nothing upstream feeds it, and what it leaves behind is the repository `/document` writes pages into and `/docs-serve` serves. [Workflow overview](../workflow.md) draws it in its own *Cold start* group, with the one edge into `/docs-brand` that it runs as a phase of itself. It classifies as **MODERATE** — mechanical scaffolding against a template held in this plugin's references — but its review gate is Opus regardless, because a scaffold is code and every command of the portal-building set that writes an artefact — this one, `/docs-brand` and `/docs-audit` — passes a high-tier review with no tiering by unit (not every command in the plugin: `/document` in direct mode takes a style check and no review gate, `/release-notes` a light gate, `/docs-profile` no review gate at all, and `/docs-serve` writes no artefact and runs none).
+`/docs-init` is the family's cold-start command, and it runs once per documentation repository. It sits ahead of the pipeline rather than inside it: nothing upstream feeds it, and what it leaves behind is the repository `/document` writes pages into and `/docs-serve` serves. [Workflow overview](../workflow.md) draws it in its own *Cold start* group, with the one edge into `/docs-brand` that it runs as a phase of itself. It classifies as **MODERATE** — mechanical scaffolding against a template held in this plugin's references — but its review gate is Opus regardless of class (unless `--enforce-model` pins it to another model — `workflows-core:model-routing/classification` §10), because a scaffold is code and every command of the portal-building set that writes an artefact — this one, `/docs-brand` and `/docs-audit` — passes a high-tier review with no tiering by unit (not every command in the plugin: `/document` in direct mode takes a style check and no review gate, `/release-notes` a light gate, `/docs-profile` no review gate at all, and `/docs-serve` writes no artefact and runs none).
 
 **It never writes documentation content.** What it produces is a portal shape: directories, one stub per section stating what belongs there and what does not, two build configurations, a linter, a CI workflow, and a profile. Filling the pages in is `/document`'s job.
 
 ## Synopsis
 
 ```
-/docs-init [<docs-repo-path>] [--generator mkdocs-material] [--no-brand] [--public-only] [--with-pricing] [--with-compliance]
+/docs-init [<docs-repo-path>] [--generator mkdocs-material] [--no-brand] [--public-only] [--with-pricing] [--with-compliance] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 Every recognized flag is stripped from `$ARGUMENTS` before the remaining token is read as the optional docs-repo path (Phase 0 step 0). `--generator` accepts `mkdocs-material` and nothing else today; any other value stops the run. `--no-brand` skips the branding phase. `--public-only` omits the internal build config, the `internal/` tree, and the marker gate that separates them. `--with-pricing` and `--with-compliance` each add their optional stubs under `discover/`.
+
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 11's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 9's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance`: under the flag only real defects are persisted, never the in-session Lessons Learned report — `docs-workflows` ships no dedicated session-feedback reference page, so this paragraph is that explanation. `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `docs-scaffold-reviewer` included, overriding its frontmatter Opus pin — to one model, bypassing the detection/Opus-review split described below; a `--inline` `/docs-brand` phase inherits this run's `run_flags` rather than resolving its own, so the enforced model reaches its work too.
 
 ## What it needs
 
@@ -29,7 +31,7 @@ Every recognized flag is stripped from `$ARGUMENTS` before the remaining token i
 | Phase | What happens |
 |---|---|
 | 0 — Resolve and validate | Strip flags; resolve the target and report the rung; run the specs-repo preflight; establish a writable git work tree or offer to create one; refuse a directory carrying a docs signal. |
-| 1 — Model routing | Classify MODERATE and record the routing block. The review model is pinned to the Opus chain regardless. |
+| 1 — Model routing | Classify MODERATE and record the routing block. The review model is pinned to the Opus chain regardless (unless `--enforce-model`, §10). |
 | 2 — Source repos and toolchain preflight | Confirm the code repositories the portal documents — Phase 6 records them as the profile's `source_repos[]`, read later by `/docs-audit` and `/docs-brand` — plus product name, version and toolchain. |
 | 2.5 — Branch | Create the branch, **before anything is written**, behind a clean-tree check that is only meaningful ahead of the first write. |
 | 3 — Scaffold | Write the tree, the stubs, the generated navigation, both build configs, the visibility markers, and the CI workflow, resolving every substitution including the pinned Vale release. |

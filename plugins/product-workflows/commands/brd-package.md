@@ -16,7 +16,7 @@ organisation who cannot ask what a path means**
 (`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1, D12). This command exists to make that
 happen, not to restate it.
 
-Usage: `/brd-package <BRD-KEY> [--depends-on <BRD-KEY>…]`
+Usage: `/brd-package <BRD-KEY> [--depends-on <BRD-KEY>…] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 `<BRD-KEY>` still resolves through `resolve-address`, which searches every level
 `workflows-core:addressing` §3 bounds — three below `specifications/` — and so returns a BRD that owns
@@ -109,7 +109,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
 
 ## Phase 0 — Resolve inputs and gate the decided BRD
 
-1. **`<BRD-KEY>` (mandatory).** Parse the first token that is neither a flag nor a flag's value — `--depends-on` consumes the token after it (step 2), and a value skipped as "non-flag" would be read as the key; validate with `key-valid`
+1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--depends-on` consumes the token after it (step 2), and a value skipped as "non-flag" would be read as the key; validate with `key-valid`
    (`workflows-core:addressing` §1). If absent or invalid, stop:
    `BRD_PACKAGE_NEEDS_KEY: /brd-package needs a BRD key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) — re-run '/product-workflows:brd-package <KEY>'.`
 2. **`--depends-on <BRD-KEY>`.** Repeatable, each consuming the next token; validate each with
@@ -499,22 +499,24 @@ model_routing:
                                   # gates the run, and the rendered prompt leaves the organisation
   reason: <one-line>
   current_model: <the model this orchestrator is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+  defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # impl-maintenance only
-  review_model:    <§2 Opus chain>     # brd-package-reviewer (frontmatter-pinned; recorded, no override)
+  review_model:    <§2 Opus chain>     # brd-package-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model)
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
 ```
 
-`brd-package-reviewer` keeps its frontmatter Opus pin regardless of classification, the same way
+`brd-package-reviewer` keeps its frontmatter Opus pin regardless of classification, unless `run_flags.enforced_model` enforces a different one (`workflows-core:model-routing/classification` §10) — the same way
 `grounding-verifier` does in `/prd-ground` — `review_model` is recorded, never used to override the
-pin. **The classification floors at `SIGNIFICANT`** because of what this run produces rather than how
+pin otherwise. **The classification floors at `SIGNIFICANT`** because of what this run produces rather than how
 much of it there is: a self-review that finds nothing is a rubber stamp, and a rendered prompt is
 the one artifact in this plugin that an outside party pastes into an agent and runs, with nobody
 from the delivery team present to correct it — a proposal is read outside the organisation too, but
 it is read, not run. If no Opus resolves, degrade to best-available, record it in `notes`, in the
 self-review's own header and in the final report — a package whose adversarial pass ran on a weaker
 model is still a package, and the customer's own reviewer is the second pass, but the operator must
-know which they got. Never hard-block.
+know which they got. Never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded — the self-review's own header records that enforced id as the model the pass ran on, the same way `/prd-ground`'s `ground_tier` does.
 
 ---
 
@@ -564,9 +566,9 @@ mechanically by the field rather than by reading — which is the whole point of
 ## Phase 3 — The adversarial self-review
 
 Dispatch `brd-package-reviewer` once, over the whole package, pinned to the Opus chain
-(`review_model`, frontmatter-pinned, no override):
+(`review_model`, frontmatter-pinned, no override unless §10 enforces a model):
 
-→ Agent (subagent_type: "product-workflows:brd-package-reviewer", model: `<review_model>`):
+→ Agent (subagent_type: "product-workflows:brd-package-reviewer", model: `<review_model — §2 Opus chain, equal to brd-package-reviewer's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "brd_key:    [the BRD key]
   > brd_dir:    [absolute path to the resolved BRD folder]
   > package:
@@ -597,7 +599,8 @@ would sit forever on an agent designed never to emit one.
 
 **An empty findings list is accepted only with its account.** The agent owes a per-pass statement of
 what each of the six passes examined; an empty list arriving without it is the same output an agent
-produces when it read nothing. Missing account → re-dispatch once, naming the omission; still
+produces when it read nothing. Missing account → re-dispatch once, with the same `model:` as the
+first dispatch (under §10, `run_flags.enforced_model`), naming the omission; still
 missing → stop rather than package against a review that may not have happened:
 `BRD_PACKAGE_REVIEW_UNACCOUNTED: brd-package-reviewer returned no findings and no per-pass account — the review cannot be distinguished from a run that read nothing.`
 
@@ -766,7 +769,8 @@ whatever its named artifact.** A correction changes what the customer will be sh
 artifacts the row above admits are the ones this command renders for them — and a correction made
 under one finding can break a position another finding left standing. So once every `fixed`
 correction has been made or, for an artifact a later phase writes, recorded against its finding,
-re-dispatch `brd-package-reviewer` once, with this run's `self-review-<YYYYMMDD>.md` — its findings,
+re-dispatch `brd-package-reviewer` once, with the same `model:` as the first dispatch (under §10,
+`run_flags.enforced_model`) and this run's `self-review-<YYYYMMDD>.md` — its findings,
 their dispositions and each recorded correction — in `prior_reviews`; that agent reads
 `prior_reviews` last, after its own passes are complete, which is exactly the ordering wanted here.
 **The corrections reach that pass through the review file, not through `package:`**, whose documents
@@ -1639,7 +1643,9 @@ that already exists, and an unset `$SPECS_PATH` are environment or sequencing ha
 bundle-integrity checks (`BRD_PACKAGE_DEAD_CITATION`, `BRD_PACKAGE_CITATION_MISMATCH`,
 `BRD_PACKAGE_SET_MISMATCH`) report what the assembled bundle and the records it was built from hold;
 `BRD_PACKAGE_UNDISPOSED` is the gate working; and `BRD_PACKAGE_CUSTOMER_CONTENT_HELD` is the
-operator's own ruling on the customer's words.
+operator's own ruling on the customer's words. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
+
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model:
    `<detection_model>`) with a compact handoff: command `/brd-package`; what was produced (the
@@ -1652,7 +1658,7 @@ operator's own ruling on the customer's words.
    `source`, and `plugin_version` (read from
    `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or "no
    plugin-facing signal — nothing persisted").
-3. **Session cost (ALWAYS runs).** Invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-package`, `phase: brd-to-prd`, `role: pm`, the
+3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-package`, `phase: brd-to-prd`, `role: pm`, the
    run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only
    notice).
 4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the commit
@@ -1674,7 +1680,7 @@ repository; no user name is ever written.
 ## Final report
 
 Report: the BRD folder and which level it sits at; the classification and model routing (+ any Opus
-degradation, named again here because a self-review that ran on a weaker model is a weaker gate);
+degradation, named again here because a self-review that ran on a weaker model is a weaker gate, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6);
 **the degradation tier**, and the sentence it obliges the customer's own review to carry; **every
 `[SR#n]` with its disposition**, and every `- **Re-escalates:**` line written, grouped by
 disposition, with the `accepted-risk` ones listed in
@@ -1693,7 +1699,7 @@ asked to rule on, under the *Customer content:* outcome line `bundle-packaging.m
 operator's ruling* fixes and grouped as that section fixes, **or `Customer content: none`**; **the
 delivery note and its delivery-route item** — both printed at *Next steps*, before that phase's
 offer, and named here rather than repeated, so the condition the item carries is printed once; the
-feedback + cost paths; the `Phase handoff:` outcome line
+feedback path (or, under `--skip-feedback`, the `Session feedback: …` line) and cost path (or, under `--skip-costs`, the `Session cost: …` line); the `Phase handoff:` outcome line
 (`workflows-core:phase-handoff` §4.1); the `Specs repo:` outcome line
 (`workflows-core:specs-repo-git` §6); the next-step recommendation; and — before the ledger line —
 the **repo→SHA table**:

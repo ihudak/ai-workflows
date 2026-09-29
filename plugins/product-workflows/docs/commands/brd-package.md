@@ -16,7 +16,7 @@ questions it held, are what this command gates on and packages.
 ## Synopsis
 
 ```
-/brd-package <BRD-KEY> [--depends-on <BRD-KEY>…]
+/brd-package <BRD-KEY> [--depends-on <BRD-KEY>…] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 - **`<BRD-KEY>`** (mandatory) — the slice this run packages. `resolve-address` searches every
@@ -34,6 +34,8 @@ questions it held, are what this command gates on and packages.
 
 There is **no `--no-docs` flag**, because this command does no documentation grounding at all — see
 [What it does not do](#what-it-does-not-do).
+
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 11's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 11's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `brd-package-reviewer` (overriding its frontmatter Opus pin), `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model, and it is also the flag that changes a degrade path: if no Opus resolves, Phase 1 otherwise degrades `brd-package-reviewer` to the best-available model and records it, which does not happen under enforcement since the enforced model is used instead — see [Model routing](../reference/model-routing.md).
 
 ## Everything it sends is read outside your organisation
 
@@ -76,9 +78,9 @@ flowchart TD
     p10 --> p11["Phase 11 — Session maintenance, feedback & cost"]
 ```
 
-`brd-package-reviewer` is dispatched on Opus for the adversarial pass, and once more when a `fixed`
+`brd-package-reviewer` is dispatched on Opus (frontmatter-pinned; no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one) for the adversarial pass, and once more when a `fixed`
 disposition changed the package the review was written against. `workflows-core:impl-maintenance` runs in the
-terminal phase for session lessons-learned. No other subagent is dispatched.
+terminal phase for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`. No other subagent is dispatched.
 
 ## What it needs
 

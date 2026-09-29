@@ -14,13 +14,13 @@ authors a high-quality **Product Requirements Document** that feeds the downstre
 (a PRD): what / why / for-whom, not how. Zero external calls — the PRD is authored as markdown in the specs
 repo, which is where every downstream command reads it from.
 
-Usage: `/create-prd <ADDRESS> [@idea.md] [--from-prd <PRD-KEY|path>] [--lean|--hybrid|--full] [--no-docs] [--docs <path>]` (default `--hybrid`, or `--full` on the BRD route — Phase 0 step 2; the one `--no-*` switch turns off the one grounding source — see Phase 1). `--docs <path>` — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`; **strip the flag and its value together** before any remaining-argument classification, or the path is read as part of the address. Declared for every consumer by `workflows-core:docs-grounding` *Procedure* step 1 (*Flags first*), which resolves it; this command only has to recognise it and pass the invocation through.
+Usage: `/create-prd <ADDRESS> [@idea.md] [--from-prd <PRD-KEY|path>] [--lean|--hybrid|--full] [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]` (default `--hybrid`, or `--full` on the BRD route — Phase 0 step 2; the one `--no-*` switch turns off the one grounding source — see Phase 1). `--docs <path>` — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`; **strip the flag and its value together** before any remaining-argument classification, or the path is read as part of the address. Declared for every consumer by `workflows-core:docs-grounding` *Procedure* step 1 (*Flags first*), which resolves it; this command only has to recognise it and pass the invocation through.
 
 ---
 
 ## Phase 0 — Resolve inputs
 
-0. **Flags.** Strip every recognised flag from `$ARGUMENTS` before step 1 classifies the address or
+0. **Flags.** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Strip every recognised flag from `$ARGUMENTS` before step 1 classifies the address or
    any `@idea.md`: `--from-prd <PRD-KEY|path>` and `--docs <path>` **each together with the token
    after it**, plus the booleans `--no-docs` and `--lean` / `--hybrid` / `--full`. Steps 2 and 2a
    then read the values this step set aside.
@@ -404,14 +404,16 @@ model_routing:
   classification: MODERATE        # typical; SIGNIFICANT for large/cross-cutting PRDs
   reason: <one-line>
   current_model: <the model this orchestrator/grill is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+  defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # impl-maintenance
-  review_model:    <§2 Opus chain>     # prd-reviewer (frontmatter-pinned; recorded, no override)
+  review_model:    <§2 Opus chain>     # prd-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model)
   authoring_model: <= current_model>   # the interactive grill + PRD authoring (session model, not a delegated subagent)
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
 ```
 
-The grill + authoring run inline on `current_model` (the §2 Opus chain — interactive judgment, not a delegated subagent). If no Opus resolves, **degrade to best-available + record** in `notes` and the final report — do not hard-block.
+The grill + authoring run inline on `current_model` (the §2 Opus chain — interactive judgment, not a delegated subagent). If no Opus resolves, **degrade to best-available + record** in `notes` and the final report — do not hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) no degradation is recorded; dispatched steps use the enforced model, while the grill and authoring still run on `current_model`.
 
 **Profile nudge (complex PRDs).** If `classification` is **SIGNIFICANT** (a
 complex / cross-cutting PRD) and the chosen profile is `--lean` or `--hybrid`
@@ -725,9 +727,9 @@ proceed to Phase 4 once findings are surfaced. `prd-reviewer` remains the gate.
 
 ## Phase 4 — Review gate
 
-Dispatch `prd-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no override):
+Dispatch `prd-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no override unless §10 enforces a model):
 
-→ Agent (subagent_type: "product-workflows:prd-reviewer", model: `<review_model — §2 Opus chain>`):
+→ Agent (subagent_type: "product-workflows:prd-reviewer", model: `<review_model — §2 Opus chain, equal to prd-reviewer's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "Review the Product Requirements Document:
   >
   > PRD path: [absolute path to prd.md]
@@ -833,7 +835,7 @@ Guidance only — nothing is auto-run. See `workflows-core:session-hygiene`.
 
 Terminal phase — runs after Phase 6, NEVER interrupts an earlier phase.
 
-**Capture-at-block invariant.** If an EARLIER phase **halts on a plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked), `emit-block` (per `workflows-core:feedback-emission`) at that halt **before** escalating. NEVER `emit-block` for an environment / user halt (missing key, unset `$SPECS_PATH`, cancellation) or a work-quality review BLOCK. **The three BRD-route refusals are of that second class, not the first**: `CREATE_PRD_BRD_NOT_SLICED` (structural, step 5a), `CREATE_PRD_BRD_UNALLOCATED` and `CREATE_PRD_BRD_NOT_ELIGIBLE` (slice-only, step 7) each report the state of the operator's own BRD tree, not a capability this plugin lacks, so none of them `emit-block`s. `CREATE_PRD_EPIC_FOLDER` (step 5b) and `CREATE_PRD_NEEDS_KEY` are the same, and so are step 7a's `CREATE_PRD_REGISTER_NOT_ON_MAIN` and `CREATE_PRD_REGISTER_NOT_HANDED_OFF`, which report where the operator's register sits in git, and Phase 1 step 2's `CREATE_PRD_PRIOR_UNREADABLE` and Phase 3's `CREATE_PRD_ARCHIVE_FAILED`, which report a file or directory the operator's environment will not let this run read or write.
+**Capture-at-block invariant.** If an EARLIER phase **halts on a plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked), `emit-block` (per `workflows-core:feedback-emission`) at that halt **before** escalating. NEVER `emit-block` for an environment / user halt (missing key, unset `$SPECS_PATH`, cancellation) or a work-quality review BLOCK. **The three BRD-route refusals are of that second class, not the first**: `CREATE_PRD_BRD_NOT_SLICED` (structural, step 5a), `CREATE_PRD_BRD_UNALLOCATED` and `CREATE_PRD_BRD_NOT_ELIGIBLE` (slice-only, step 7) each report the state of the operator's own BRD tree, not a capability this plugin lacks, so none of them `emit-block`s. `CREATE_PRD_EPIC_FOLDER` (step 5b) and `CREATE_PRD_NEEDS_KEY` are the same, and so are step 7a's `CREATE_PRD_REGISTER_NOT_ON_MAIN` and `CREATE_PRD_REGISTER_NOT_HANDED_OFF`, which report where the operator's register sits in git, and Phase 1 step 2's `CREATE_PRD_PRIOR_UNREADABLE` and Phase 3's `CREATE_PRD_ARCHIVE_FAILED`, which report a file or directory the operator's environment will not let this run read or write. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
 **Session-hygiene invariant.** End Phase 6 with a `### Context hygiene` block per
 `workflows-core:session-hygiene` — prepare-first (the
@@ -844,9 +846,11 @@ then a span suggestion (PM continue → `/compact`; PA/PE handoff → `/clear`).
 label — not for want of a key, since Phase 0 refuses this run without one, but because the
 PM phase is short (`workflows-core:session-hygiene` §4). Guidance only, never auto-run.
 
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
+
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model: `<detection_model — §2.1 Sonnet chain>`) with a compact handoff: command `/create-prd`; what was authored (PRD + profile); key events (source-ladder friction, unresolved clarifications, BLOCK reviews — or 'none'); workarounds; the `prd-reviewer` verdict; test result N/A; project root = the feature folder.
 2. **Persist plugin feedback (automatic).** Invoke `Skill(skill: "workflows-core:reference", args: "feedback-emission emit-auto")` and call its `emit-auto` entry point (§6) with the Lessons Learned report, `command: /create-prd`, the run's `key` — which on the BRD route is the `<SLICE-KEY>`, matching this PRD's own `$SPECS_PATH` folder, so the write stays on that reference's primary tier instead of dropping to the unfiled one — `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or "no plugin-facing signal — nothing persisted").
-3. **Session cost (ALWAYS runs).** Invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /create-prd`, `phase: prd-creation`, `role: pm`, the run's `key` — on the BRD route the `<SLICE-KEY>`, for the reason step 2 gives, which is also the value this run writes as the PRD's `brd_key` (`workflows-core:prd-format`: `brd_key` names the slice the PRD was authored from, `brd_parent` its parent), so the two never disagree — `source`, and `plugin_version`. Surface the persisted path (or the report-only notice).
+3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /create-prd`, `phase: prd-creation`, `role: pm`, the run's `key` — on the BRD route the `<SLICE-KEY>`, for the reason step 2 gives, which is also the value this run writes as the PRD's `brd_key` (`workflows-core:prd-format`: `brd_key` names the slice the PRD was authored from, `brd_parent` its parent), so the two never disagree — `source`, and `plugin_version`. Surface the persisted path (or the report-only notice).
 4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the pointer reflects the completed run, and before the commit step below, so it is included in it. Redact per §1. Silent; the printed `### Context hygiene` guidance already appeared in the report.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It stages ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows session artifacts (/create-prd)` — or `NOISSUE …` when the run resolved no key at all — with no `Co-Authored-By` trailer. **On the BRD route that `<KEY>` is the `<SLICE-KEY>`, not `NOISSUE`**: this is a specs-repo commit-message prefix, not a tracker lookup, and the slice key is the key this run resolved, the `key` the PRD it wrote carries, and the name of the folder the staged artifacts sit in. It pushes to the branch this run's handoff phase created (§4.1). It NEVER touches anything outside `$SPECS_PATH`; NEVER force-pushes; NEVER fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0), re-emitting that notice. Hold its §6 outcome line for the Final report.
 
@@ -856,7 +860,7 @@ ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git 
 
 ## Final report
 
-Report: the PRD path + profile; the archived snapshot path where the pre-write archive (Phase 3) wrote one; US/AC/SM counts + which adapt-in clusters were included; open-question count; the `prd-reviewer` verdict; the prose style-check outcome (`OK` | `N fixed, M remaining`); the `Phase handoff:` outcome line from `handoff-to-main` (`workflows-core:phase-handoff` §4.1); the handoff reminder; resolved model routing (+ any Opus degradation); the feedback + cost paths; the `Specs repo:` outcome line from `commit-artifacts` (`workflows-core:specs-repo-git` §6), with any guard notice repeated in full; and the next-step recommendations.
+Report: the PRD path + profile; the archived snapshot path where the pre-write archive (Phase 3) wrote one; US/AC/SM counts + which adapt-in clusters were included; open-question count; the `prd-reviewer` verdict; the prose style-check outcome (`OK` | `N fixed, M remaining`); the `Phase handoff:` outcome line from `handoff-to-main` (`workflows-core:phase-handoff` §4.1); the handoff reminder; resolved model routing (+ any Opus degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line) + cost path (or, under `--skip-costs`, the `Session cost: …` line); the `Specs repo:` outcome line from `commit-artifacts` (`workflows-core:specs-repo-git` §6), with any guard notice repeated in full; and the next-step recommendations.
 
 **On the BRD route, additionally:** the `<SLICE-KEY>` seeded from and its resolved folder; which of
 `prd-seed.md` and `decisions.md` were present; the frontmatter `brd_key` / `brd_parent` /

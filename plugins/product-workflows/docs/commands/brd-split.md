@@ -36,13 +36,13 @@ already made mandatory for carving a root.
 ## Synopsis
 
 ```
-/brd-split <BRD-KEY> [<instruction>]
+/brd-split <BRD-KEY> [<instruction>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 - **`<BRD-KEY>`** (mandatory) — the BRD to split and allocate. A key naming either level a
   BRD folder can occupy works, and the level decides the run mode (below). Resolved via
   `resolve-address`; format-validated only, never checked against a tracker.
-- **`<instruction>`** (**mandatory on a root that still has a row to place, optional on a slice**) — every non-flag token after
+- **`<instruction>`** (**mandatory on a root that still has a row to place, optional on a slice**) — every token after
   the key, joined verbatim: a slicing instruction in your own words, such as `cover orders and
   measurements in the first iteration` or `slice everything this BRD still holds that no child
   covers`. **On a root with a row still `unallocated` it cannot be omitted**: a root is never ground,
@@ -54,7 +54,12 @@ already made mandatory for carving a root.
   flag being added for it** — on a fully allocated root it selects the sibling re-cut (below). On a slice it stays optional and seeds only the
   walk's per-row recommendation; omitted there, the command behaves exactly as it did before the
   argument existed. It is prose and is never validated against anything — what it means is settled
-  against this BRD's own rows in Phase 1.5.
+  against this BRD's own rows in Phase 1.5. The three run flags below are stripped only where they
+  are written before the key, or form a trailing run after the instruction, at the very end of the
+  argument list; a flag written right after the key, with no such trailing run reaching back to it,
+  is instruction text.
+
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 8's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 8's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins the one dispatched agent in this run — `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; Phase 1.5's reading and grill and Phase 4's walk still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
 
 ## What an instruction does
 
@@ -248,7 +253,7 @@ from a no-op's until that set exists. The decision is taken in **both** run mode
 slice reaches it exactly as a parent does — `allocate-only` simply satisfies the other parts by
 construction, since no child exists or can be created below a slice and the candidate set is built in
 `full` mode only. `workflows-core:impl-maintenance` runs in
-Phase 8 for session lessons-learned; no other subagent is dispatched — every finding this command
+Phase 8 for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK` — and no other subagent is dispatched — every finding this command
 reads was already independently verified by `/prd-ground`'s own agents.
 
 ## What it needs

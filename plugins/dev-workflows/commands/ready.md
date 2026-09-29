@@ -25,11 +25,13 @@ Key distinction from `/design`'s Epic-picker behavior: a **`PRD-` address** is a
 single Epic. Address an `EPIC-` folder to scope the check to one Epic
 (the Epic ladder) instead.
 
+Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
+
 ---
 
 ## Phase 0 — Resolve input
 
-1. **Resolve the address.** Parse the **single positional address** from `$ARGUMENTS` — a `<KEY>`, or an `@<path>` naming a
+1. **Resolve the address.** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the **single positional address** from `$ARGUMENTS` — a `<KEY>`, or an `@<path>` naming a
    folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind`
    and `key` forward; `ambiguous` → stop, naming every match; `invalid` → stop with `READY_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
 
@@ -168,7 +170,7 @@ the coverage chain spans many Epics/repos. State the classification and a one-se
 
 `/ready` has **no delegated writer/implementation subagent** — the Phase 3 skeleton is deterministic and
 orchestrator-inline, and the only judgment-heavy delegate is the `readiness-reviewer` gate (Opus,
-frontmatter-pinned, mandatory regardless of tier). Resolve the per-step routing per
+frontmatter-pinned, mandatory regardless of tier, no override unless §10 enforces a model). Resolve the per-step routing per
 `workflows-core:model-routing/classification` §9:
 
 ```yaml
@@ -176,15 +178,17 @@ model_routing:
   classification: MODERATE        # typical; SIGNIFICANT possible for a large multi-Epic PRD
   reason: <one-line>
   current_model: <the model this orchestrator is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+  defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # the folder read (Phase 2) and the Phase 6 maintenance agents; the Phase 3 deterministic skeleton is mechanical and runs orchestrator-inline, not delegated
-  review_model:    <§2 Opus chain>     # readiness-reviewer (frontmatter-pinned; recorded, no override)
+  review_model:    <§2 Opus chain>     # readiness-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model)
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
 ```
 
 **No relaunch advisory for MODERATE** — the mechanical steps run on their detection pin and the
 orchestration runs on `current_model`, which §3.1 allows. If no Opus is available, `readiness-reviewer`
-falls to the Sonnet floor — record the degradation in `notes` and the final report.
+falls to the Sonnet floor — record the degradation in `notes` and the final report. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded.
 
 ---
 
@@ -347,12 +351,12 @@ this run. This is the mechanical half of that dimension.
 
 ## Phase 4 — Readiness review
 
-Dispatch `readiness-reviewer` (Opus, frontmatter-pinned — no override) with the Phase 3 skeleton, the
+Dispatch `readiness-reviewer` (Opus, frontmatter-pinned — no override unless §10 enforces a model) with the Phase 3 skeleton, the
 artifact paths from Phase 1 (the reviewer Reads each end-to-end itself — it carries `Read`/`Glob`/
 `Grep`), the Phase 3(0) derived phase and any `--claimed` value, `applicable_ard` (omit entirely when Phase 2.5 was `none`),
 and a pointer to the rubric.
 
-→ Agent (subagent_type: "dev-workflows:readiness-reviewer", model: `<review_model — §2 Opus chain; frontmatter-pinned, recorded, no override>`):
+→ Agent (subagent_type: "dev-workflows:readiness-reviewer", model: `<review_model — §2 Opus chain; frontmatter-pinned, recorded, no override unless §10 enforces a model; under §10, run_flags.enforced_model>`):
   > "Review readiness for this brief:
   >
   > Task description: [one paragraph: <PRD> [+ <EPIC>], the derived phase(s), what is being verified]
@@ -442,6 +446,8 @@ plugin-gap halt (see Invariants).
    - Detection steps — the folder read (detection_model): [model]
    - readiness-reviewer (review_model): [model]
    - Opus available: [yes | no]
+   - [`Model routing: bypassed — enforced <id> (flag|env)` in place of the `readiness-reviewer (review_model)` line above, wherever `run_flags.enforced_model` is set — no Sonnet-floor degradation applies, per `workflows-core:model-routing/classification` §10. The `Opus available` line above is unaffected and still reports the environment truthfully (§10: `opus_available` is a property of the environment, never rewritten to agree with the enforced id).]
+   - Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` / `Session cost: …` skip lines, where they fire, are carried in Phase 6's and Phase 8's own trailing output below, not restated here.]
 
    ### Scope
    - PRD: <PRD> — [summary]
@@ -534,6 +540,8 @@ Notable additions/removals: _readiness.md (over)written with the Phase 4 verdict
 Readiness verdict: [SUPPORTED | PARTIAL | NOT-SUPPORTED]
 ```
 
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` in place of Agent 4 (`impl-maintenance`), with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of the persisted-path line in this phase's own output below. Capture-at-block (`emit-block`) is unaffected by the flag.
+
 Then spawn all four maintenance agents in a **single Agent message**. They are independent and run
 concurrently.
 
@@ -606,8 +614,8 @@ Emit this phase's own short output:
 - Documentation (Agent 1): [result]
 - Knowledge base (Agent 2): [result]
 - Instructions (Agent 3): [result]
-- Session learnings (Agent 4): [top suggestions, or "no suggestions — routine session"]
-- Feedback persisted: [path, or "no plugin-facing signal — nothing persisted"]
+- Session learnings (Agent 4): [top suggestions, or "no suggestions — routine session"] — _or, under `--skip-feedback`, omit this line entirely_
+- Feedback persisted: [path, or "no plugin-facing signal — nothing persisted"] — _or, under `--skip-feedback`, `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` / `— no defects` in its place_
 ```
 
 ADDITIVE — this phase NEVER fails the run and NEVER commits its own output (still true — it writes only
@@ -652,9 +660,11 @@ a code or docs repository, or the current working directory, where it is not the
 ## Phase 8 — Session cost
 
 Terminal phase — runs after Phase 7 and NEVER interrupts an earlier phase. Records this command's
-token-cost contribution to the PRD by invoking `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and calling its single `emit-cost` entry point. **Cost ALWAYS runs** — it never "writes nothing".
+token-cost contribution to the PRD. **Cost ALWAYS runs** — it never "writes nothing" (short of `run_flags.skip_costs`, below, which writes no entry).
 
-Call `emit-cost` with `command: /ready`, `phase: readiness`, `role: dev`, the run's `key` (or
+**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way.
+
+Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call `emit-cost` with `command: /ready`, `phase: readiness`, `role: dev`, the run's `key` (or
 `null`) and `source`, and `plugin_version` (read from
 `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). It resolves the session transcript + subagents
 (§1), loads and **advances the chained checkpoint** (§3), computes the per-model token-cost delta against the price table (§4), records the optional statusline cross-check
@@ -666,7 +676,7 @@ Emit this phase's own short output:
 
 ```
 ### Session cost (Phase 8)
-[persisted path, OR the report-only / pending notice]
+[persisted path, OR the report-only / pending notice, OR, under `--skip-costs`, `Session cost: skipped (--skip-costs)` / `(WORKFLOWS_SKIP_COSTS)`]
 ```
 
 **Then write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the pointer
@@ -712,15 +722,15 @@ a code or docs repository, or the current working directory, where it is not the
   **plugin / skill / command / reference gap** — a `readiness-reviewer` run that cannot get a verdict
   because the plugin lacked something it needed still records it. NEVER for the reviewer's own
   `PARTIAL`/`NOT-SUPPORTED` verdict (a finding about the *work*, not the plugin) or an environment/user
-  halt (specs-repo dirty/non-main, key-not-found, cancellation)
-- the `emit-cost` phase (Phase 8) **ALWAYS runs** — unlike feedback, it never "writes nothing"
+  halt (specs-repo dirty/non-main, key-not-found, cancellation). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
+- the `emit-cost` phase (Phase 8) **ALWAYS runs** — unlike feedback, it never "writes nothing" — except under `run_flags.skip_costs`, where Phase 8 still runs but executes `skip-cost` in place of `emit-cost`, advancing the checkpoint and writing no cost entry
 - ALWAYS resolve one positional address (Phase 0) and stop when none is given
 - ALWAYS require `$SPECS_PATH` — stop naming it explicitly if unset (like `/design`)
 - ALWAYS read artifacts from the specs repo's clean **main** — never a branch
 - ALWAYS pass the Phase 3(0) derived phase to `readiness-reviewer` with the artifacts that placed it there, plus any `--claimed` value verbatim — never inferred,
   never re-derived, and never as a `declared_status` field, which has no producer anywhere in this command
 - ALWAYS resolve the `model_routing` block at Phase 1.5 and pin the detection steps to the §2.1 Sonnet chain;
-  `readiness-reviewer` keeps its frontmatter Opus pin (no override); coordination + the Phase 3
+  `readiness-reviewer` keeps its frontmatter Opus pin (no override unless §10 enforces a model); coordination + the Phase 3
   deterministic skeleton run on `current_model`
 - ALWAYS invoke `readiness-reviewer` before Phase 5 — no verdict is written or reported without it
 - ALWAYS pass `Change type: docs` in the Phase 6 change summary block

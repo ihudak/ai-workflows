@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.9.0] — 2026-09-29
+
+**Update `workflows-core` to 1.8.0 with this release**: its new `run-flags` reference and `defect-reporter` agent are what all fourteen commands now dispatch.
+
+### Added
+
+- **All fourteen commands now accept `--skip-costs`, `--skip-feedback` and `--enforce-model=<model>`** (`workflows-core:run-flags`). `--skip-feedback` dispatches `workflows-core:defect-reporter` in place of `impl-maintenance` and persists only real defects — bugs-only, defects in the `ihudak/ai-containers` environment included — through `emit-bugs`; a run with no defects persists nothing. `--skip-costs` runs `run-flags`' `skip-cost` entry point in place of `emit-cost`, advancing the checkpoint and dropping any deferred record rather than writing an entry. `--enforce-model` pins every dispatched subagent — every frontmatter-pinned Opus reviewer and grounder this plugin dispatches (`prd-reviewer`, `ard-reviewer`, `spec-reviewer`, `epic-reviewer`, `brd-reader`, `figure-reader`, `code-grounder`, `design-grounder`, `grounding-verifier`, `brd-package-reviewer`, `proposal-reviewer`, among others) — to one model for the run, suppresses `/prd-proposal`'s and `/brd-proposal`'s `current_model` stops, `/create-ard`'s Tiered HARD model gate, and every command's own degrade-path notice (`/create-prd`, `/brd-split`, `/brd-interview`, `/brd-reconcile`, among others), and prints one relaunch advisory when the orchestrator's own session model differs from the enforced one. `/idea` and `/brd-split` join the free-text class: only the leading and trailing runs of flag tokens are stripped from their prose argument, everything between kept verbatim.
+- A defect in the `ihudak/ai-containers` environment is now captured on an ordinary run too, not only a bugs-only one, as `category: environment-defect`.
+- Every command's docs page that documents `--skip-costs` now says a pending deferred cost record from `/prompt-brainstorm` or `/prompt-grill-me` is dropped under it, matching `/feedback`'s and `/prompt`'s pages, which already said so.
+
 ## [3.8.5] — 2026-09-26
 
 **Update `workflows-core` to 1.7.8 with this release.** `/idea` Phase 3 cites its `grilling-technique` rule *"A decision the source already states is settled"*, which an older `workflows-core` does not carry.

@@ -17,7 +17,7 @@ set and a fully-allocated ledger are what its Phase 0 gates on.
 ## Synopsis
 
 ```
-/brd-interview <BRD-KEY> [--round N]
+/brd-interview <BRD-KEY> [--round N] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 - **`<BRD-KEY>`** (mandatory) — the slice whose questions this run decides. `resolve-address` searches every
@@ -153,6 +153,8 @@ until each part carries exactly one, and the `[G]` part is answered first, becau
 routinely changes what the business question should ask (§4). A question nobody can tag is
 under-specified and is rewritten — never filed with a guessed tag.
 
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 12's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 12's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins the one dispatched agent in this run — `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; the round's reading, tagging and interactive walk still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
+
 ## How it runs
 
 ```mermaid
@@ -179,7 +181,7 @@ to commit where the register is already on file, nothing was torn, no interrupte
 re-disposition of a code defect was completed and none was left uncommitted; otherwise it hands off what it wrote — `decisions.md`
 as its header line alone where none was on file, any file a torn-write removal or a completed
 re-disposition changed, and a code-defect log an earlier run left changed and uncommitted.
-`workflows-core:impl-maintenance` runs in the terminal phase for session lessons-learned; no other
+`workflows-core:impl-maintenance` runs in the terminal phase for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK` — and no other
 subagent is dispatched — every finding this command reads was already independently re-derived by
 `/prd-ground`'s own verifier pass.
 

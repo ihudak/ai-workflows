@@ -1,8 +1,8 @@
 # Environment reference
 
-[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first use of this plugin. This page says what each variable **is** — its default, what happens when it is unset, and what happens when it points somewhere unreadable. The plugin reads five user-settable variables. The rest of the names its own inventory check encounters while scanning for `$VAR` reads are never user-settable and stay out of scope here: `CLAUDE_PLUGIN_ROOT` and `ARGUMENTS` are runtime plumbing Claude Code itself sets for every plugin invocation, and `OSTYPE`, `BASH_SOURCE`, `BASH_REMATCH`, `ROOT` and `OWNER_REPO` are shell built-ins or internal template names, not plugin configuration.
+[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first use of this plugin. This page says what each variable **is** — its default, what happens when it is unset, and what happens when it points somewhere unreadable. The plugin reads eight user-settable variables. The rest of the names its own inventory check encounters while scanning for `$VAR` reads are never user-settable and stay out of scope here: `CLAUDE_PLUGIN_ROOT` and `ARGUMENTS` are runtime plumbing Claude Code itself sets for every plugin invocation, and `OSTYPE`, `BASH_SOURCE`, `BASH_REMATCH`, `ROOT` and `OWNER_REPO` are shell built-ins or internal template names, not plugin configuration.
 
-Every one of the five is read by a reference this plugin ships — the corpus is where the reads live, and the corpus is here — and for four of the five that is the only read anywhere in this plugin. `$SPECS_PATH` is the exception: `/frames` Phase 0 step 0 gates on it in the command's own body and stops the run on an unset one. Where any of this plugin's other commands names the variable, it is as the scope of the shared entry points they cite, which do the reading. The set is the union of what any downstream plugin needs, plus the price-table override: `docs-workflows` reads all four of the others (`$GIT_USER_INITIALS` included, since it branches a docs repository); `dev-workflows` reads three of the four — it grounds nothing in documentation, so `$DOCS_PATH` is not among the variables its own commands or references read — `dev-workflows:code-handoff` names it only to say it never touches it — while `$GIT_USER_INITIALS` is, since it branches a code repository; `product-workflows` reads three of the four as well — it never creates a branch in a code or docs repo, so `$GIT_USER_INITIALS` is not among the variables its own commands or references touch.
+Every one of the eight is read by a reference this plugin ships — the corpus is where the reads live, and the corpus is here — and for seven of the eight that is the only read anywhere in this plugin. `$SPECS_PATH` is the exception: `/frames` Phase 0 step 0 gates on it in the command's own body and stops the run on an unset one. Where any of this plugin's other commands names the variable, it is as the scope of the shared entry points they cite, which do the reading. The set is the union of what any downstream plugin needs, plus the price-table override and the three run-flag defaults that `workflows-core:run-flags` owns: `docs-workflows` reads all four of the others (`$GIT_USER_INITIALS` included, since it branches a docs repository); `dev-workflows` reads three of the four — it grounds nothing in documentation, so `$DOCS_PATH` is not among the variables its own commands or references read — `dev-workflows:code-handoff` names it only to say it never touches it — while `$GIT_USER_INITIALS` is, since it branches a code repository; `product-workflows` reads three of the four as well — it never creates a branch in a code or docs repo, so `$GIT_USER_INITIALS` is not among the variables its own commands or references touch.
 
 ## `$SPECS_PATH`
 
@@ -50,8 +50,40 @@ Every one of the five is read by a reference this plugin ships — the corpus is
 
 **Resolution.** First-found-wins, three tiers: `$DEV_WORKFLOWS_COST_PRICES` (a path) → a repo-local `cost-prices.yaml` → the bundled `${CLAUDE_PLUGIN_ROOT}/references/cost-prices.yaml`. Whichever file resolves must carry a top-level `models:` map keyed by model id — a file missing that wrapper, override or default, prices every model as `cost_usd: null` rather than raising an error.
 
-**When unset.** Resolution falls straight through to the repo-local file, then the bundled default. This is the variable of the five most users never touch.
+**When unset.** Resolution falls straight through to the repo-local file, then the bundled default. This is the variable of the eight most users never touch.
 
 **When it points somewhere unreadable.** Treated the same as "not set at this tier" — resolution continues down the same chain rather than failing the run.
 
 **Its name keeps the `DEV_WORKFLOWS_` prefix deliberately.** The variable predates this plugin, and renaming it would silently ignore every setting already exported on a working machine. See [Session cost](session-cost.md) for what the table prices.
+
+## `$WORKFLOWS_SKIP_COSTS`
+
+- **`$WORKFLOWS_SKIP_COSTS`** — the persistent default for the `--skip-costs` run flag; a command it applies to still advances the session-cost checkpoint (pricing nothing), but never writes a cost entry into `$SPECS_PATH`.
+
+**Resolution.** Read as a boolean: `1`, `true` or `yes`, matched case-insensitively, is on; any other value, and an unset variable, is off. A `--skip-costs` flag on the command line always overrides it. `run-flags.md` §1 is the single source of truth for the flag/env precedence and boolean grammar shared by all three run flags.
+
+**When unset.** Off — the command's cost phase runs exactly as if the variable did not exist.
+
+**When it points somewhere unreadable.** Not applicable — this variable holds a literal value, not a path.
+
+## `$WORKFLOWS_SKIP_FEEDBACK`
+
+- **`$WORKFLOWS_SKIP_FEEDBACK`** — the persistent default for the `--skip-feedback` run flag; narrows a command's maintenance phase to bug capture only (`run-flags.md` §4).
+
+**Resolution.** Same boolean grammar as `$WORKFLOWS_SKIP_COSTS` above, read by `run-flags.md` §1; a `--skip-feedback` flag on the command line always overrides it.
+
+**When unset.** Off — the maintenance phase dispatches `impl-maintenance` exactly as if the variable did not exist.
+
+**When it points somewhere unreadable.** Not applicable — this variable holds a literal value, not a path.
+
+## `$WORKFLOWS_ENFORCE_MODEL`
+
+- **`$WORKFLOWS_ENFORCE_MODEL`** — the persistent default for the `--enforce-model` run flag; pins every subagent a command dispatches to one model, bypassing model-routing's own per-step selection.
+
+**Resolution.** An alias, a full model id, or `routing`; resolved against `run-flags.md` §2's alias table and reachability check. Unset, set but empty, or set to `routing` (matched case-insensitively, as the aliases are) means no enforcement. An `--enforce-model=<value>` flag on the command line always overrides it.
+
+**When the value is bad.** On a run whose command line gives no `--enforce-model` of its own, a value matching none of `run-flags.md` §2's forms stops every command `--enforce-model` applies to with `RUN_FLAGS_BAD_MODEL`, and a value that resolves to an unreachable model stops it with `RUN_FLAGS_MODEL_UNAVAILABLE` — both before any write, when the run flags are stripped, each message tagging the value `(from WORKFLOWS_ENFORCE_MODEL)` so the environment, not the command line, is the thing to fix. A command it does not apply to (`run-flags.md` §3 step 3) ignores it silently, bad value or not.
+
+**When unset.** No enforcement — model routing selects each step's model exactly as if the variable did not exist.
+
+**When it points somewhere unreadable.** Not applicable — this variable holds a literal value, not a path.

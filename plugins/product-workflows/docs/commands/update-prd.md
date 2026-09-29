@@ -9,13 +9,15 @@ Refreshes an existing Product Requirements Document — routine updates and the 
 ## Synopsis
 
 ```
-/update-prd <KEY> [@transcript-or-notes ...] [--no-docs] [--docs <path>]
+/update-prd <KEY> [@transcript-or-notes ...] [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 - **`<KEY>`** (mandatory) — the existing PRD's key. Format-validated only (`^[A-Z][A-Z0-9_]*(-\d+)+$`). The grammar fixes no depth, and that is what lets [`/create-prd`](create-prd.md) redirect here with a three-segment key — a PRD it authored inside a BRD slice on the BRD route. A two-segment key validates exactly as it always did.
 - **`[@transcript-or-notes ...]`** (optional) — one or more paths to a transcript or notes file, read as secondary, read-only grounding for the grill.
 - **`[--no-docs]`** — turns off documentation grounding for the run (see [What it needs](#what-it-needs)).
 - **`[--docs <path>]`** — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`. The flag and its value are stripped together before the address is parsed.
+
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 7's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 7's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `workflows-core:docs-grounder`, `prose-style:prose-style-checker`, `prd-reviewer` (overriding its frontmatter Opus pin), `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model, and it is also the flag that changes a degrade path: Phase 1.5 otherwise records a degradation in `notes` when no Opus resolves anywhere in the environment — the grill and authoring still run on `current_model` regardless — which does not happen under enforcement, since every dispatched step then uses the enforced model instead — see [Model routing](../reference/model-routing.md).
 
 ## How it runs
 
@@ -60,7 +62,7 @@ Four subagents are dispatched — three of them unconditionally, `docs-grounder`
 
 - **Phase 3.5 — Prose style check**, mirroring [`/create-prd`](create-prd.md) exactly: `prose-style:prose-style-checker` (unconditional — `prose-style` is a declared dependency of `product-workflows`) applies MAJOR fixes inline and re-runs once; a non-gating quality pass.
 - **Phase 3.6 — Structural pre-lint** (`workflows-core:pre-lint`), advisory only — mechanical findings fixed inline, content gaps left for the grill.
-- **Phase 4 — `prd-reviewer`**, Opus-pinned by frontmatter (`model: opus`, no override), reviewing the whole updated PRD against `workflows-core:prd-format`. `PASS` / `PASS WITH RECOMMENDATIONS` proceeds. `BLOCK` triggers one inline fix cycle and one re-review; a persistent `BLOCK` is escalated per `workflows-core:escalation-rules`'s "Review verdict BLOCK" choices, exactly as in [`/create-prd`](create-prd.md).
+- **Phase 4 — `prd-reviewer`**, Opus-pinned by frontmatter (`model: opus`, no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one), reviewing the whole updated PRD against `workflows-core:prd-format`. `PASS` / `PASS WITH RECOMMENDATIONS` proceeds. `BLOCK` triggers one inline fix cycle and one re-review; a persistent `BLOCK` is escalated per `workflows-core:escalation-rules`'s "Review verdict BLOCK" choices, exactly as in [`/create-prd`](create-prd.md). If no Opus model resolves at all, the run degrades to the best available model and records the degradation — unless a model is enforced, in which case the enforced model is used instead and no degradation is recorded.
 
 ## Example
 

@@ -7,7 +7,8 @@ main transcript from a line offset forward plus the session's subagent
 transcripts within a timestamp window, accumulates token usage per model,
 applies a price table (USD per MILLION tokens), and prints a structured JSON
 result to stdout. It NEVER writes the specs repo and NEVER writes the checkpoint
-back — the caller (references/cost-emission.md) persists ``new_checkpoint``.
+back — the caller (references/cost-emission.md) persists ``new_checkpoint``,
+except under ``--advance-only``, which writes it itself (run-flags.md ``skip-cost``).
 
 Claude Code stores no dollar figure in the transcript; every assistant message
 carries ``.message.usage`` + ``.message.model``, so cost is computed, not read.
@@ -934,6 +935,30 @@ def selftest():
     check(xp is not None and tokens(xp["models"]) == 1000,
           "...and that replaying run keeps exactly its own 1000")
 
+    # --advance-only writes exactly the checkpoint a full run reports, prices nothing,
+    # and prints one line. A run skipped with --skip-costs must leave the next
+    # measured command's window starting where a measured run would have.
+    full = run()
+    ck_adv = os.path.join(tmp, "ck-adv.json")
+    with open(ckpt, encoding="utf-8") as src, open(ck_adv, "w", encoding="utf-8") as dst:
+        dst.write(src.read())
+    adv = subprocess.run(
+        [sys.executable, os.path.abspath(__file__), "--transcript", tpath,
+         "--subagents-dir", sdir, "--snapshot", snap, "--checkpoint", ck_adv,
+         "--now-ts", "2026-09-01T10:05:00.000Z", "--advance-only"],
+        capture_output=True, text=True)
+    check(adv.returncode == 0 and adv.stdout.strip().startswith("checkpoint advanced:")
+          and len(adv.stdout.strip().splitlines()) == 1,
+          "--advance-only exits 0 and prints one line, with no --prices")
+    with open(ck_adv, encoding="utf-8") as fh:
+        written = json.load(fh)
+    check(full is not None and written == full["new_checkpoint"],
+          "--advance-only writes the same checkpoint a full run reports")
+    noc = subprocess.run(
+        [sys.executable, os.path.abspath(__file__), "--transcript", tpath, "--advance-only"],
+        capture_output=True, text=True)
+    check(noc.returncode != 0, "--advance-only without --checkpoint is refused")
+
     if failures:
         print("SELFTEST FAIL (%d)" % len(failures))
         return 1
@@ -1026,6 +1051,10 @@ def main():
                          "first (cost-emission.md section 13). Repeatable. Each "
                          "is matched to a boundary BY NAME; the remainder stays "
                          "with this run.")
+    ap.add_argument("--advance-only", action="store_true",
+                    help="Write new_checkpoint to --checkpoint and exit, pricing "
+                         "nothing: the --skip-costs path (run-flags.md skip-cost). "
+                         "Keeps the next measured command's window correct.")
     ap.add_argument("--selftest", action="store_true",
                     help="Run the built-in fixture checks and exit.")
     args = ap.parse_args()
@@ -1035,7 +1064,8 @@ def main():
 
     # --transcript and --prices are declared optional only so --selftest can run
     # without them; for a real measurement they stay mandatory.
-    missing = [f for f in ("transcript", "prices") if not getattr(args, f)]
+    required = ("transcript", "checkpoint") if args.advance_only else ("transcript", "prices")
+    missing = [f for f in required if not getattr(args, f)]
     if missing:
         ap.error("the following arguments are required: "
                  + ", ".join("--" + m for m in missing))
@@ -1062,13 +1092,35 @@ def main():
     line_offset = checkpoint["line_offset"] if isinstance(checkpoint["line_offset"], int) else 0
     last_dt = parse_ts(checkpoint["last_ts"])
 
-    prices = load_prices(args.prices)
     ns_map = load_namespace_map(args.namespaces)
 
     records = []
     new_line_offset, main_first_ts, boundaries, main_records = scan_main(
         args.transcript, line_offset, ns_map
     )
+    current_snapshot = read_snapshot_cost(args.snapshot)
+    baseline_snapshot = checkpoint["last_snapshot_cost"]
+    new_last_snapshot_cost = (
+        current_snapshot if isinstance(current_snapshot, (int, float)) else baseline_snapshot
+    )
+    new_checkpoint = {
+        "line_offset": new_line_offset,
+        "last_ts": iso_z(now_dt),
+        "last_snapshot_cost": new_last_snapshot_cost,
+    }
+    # --advance-only needs nothing past the checkpoint: return before the
+    # subagent read, the claim match and any pricing.
+    if args.advance_only:
+        tmp_ck = args.checkpoint + ".tmp"
+        os.makedirs(os.path.dirname(os.path.abspath(args.checkpoint)), exist_ok=True)
+        with open(tmp_ck, "w", encoding="utf-8") as fh:
+            json.dump(new_checkpoint, fh)
+        os.replace(tmp_ck, args.checkpoint)
+        print("checkpoint advanced: line_offset=%s last_ts=%s"
+              % (new_checkpoint["line_offset"], new_checkpoint["last_ts"]))
+        return
+
+    prices = load_prices(args.prices) if args.prices else {"models": {}}
     records.extend(main_records)
     sub_first_ts = read_subagents(args.subagents_dir, last_dt, now_dt, records)
 
@@ -1113,14 +1165,9 @@ def main():
     # apportioned once part of the window has been carved off. With any claim the
     # field is omitted rather than over-reported against the remainder.
     cost_statusline = None
-    current_snapshot = read_snapshot_cost(args.snapshot)
-    baseline_snapshot = checkpoint["last_snapshot_cost"]
     if not matched and isinstance(current_snapshot, (int, float)) \
             and isinstance(baseline_snapshot, (int, float)):
         cost_statusline = round(current_snapshot - baseline_snapshot, 4)
-    new_last_snapshot_cost = (
-        current_snapshot if isinstance(current_snapshot, (int, float)) else baseline_snapshot
-    )
 
     claims_out = []
     for m in matched:
@@ -1145,11 +1192,7 @@ def main():
         "command_boundaries": boundaries,
         "claims": claims_out,
         "unmatched_claims": unmatched,
-        "new_checkpoint": {
-            "line_offset": new_line_offset,
-            "last_ts": iso_z(now_dt),
-            "last_snapshot_cost": new_last_snapshot_cost,
-        },
+        "new_checkpoint": new_checkpoint,
     }
     print(json.dumps(result, indent=2))
 

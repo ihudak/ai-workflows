@@ -18,13 +18,13 @@ claude plugin update workflows-core@shipwright
 
 ## What this plugin is
 
-`workflows-core` is the shared foundation of the `dev-workflows` plugin family. Most of what it ships is not a command: it is the reference corpus the sibling plugins read — `dev-workflows`, `product-workflows`, and `docs-workflows` all declare it as a dependency — the `model-routing` skill every pipeline command loads at its classification step, and five agents any of them may dispatch. If you have installed a plugin from that family, you want this one installed too.
+`workflows-core` is the shared foundation of the `dev-workflows` plugin family. Most of what it ships is not a command: it is the reference corpus the sibling plugins read — `dev-workflows`, `product-workflows`, and `docs-workflows` all declare it as a dependency — the `model-routing` skill every pipeline command loads at its classification step, and six agents any of them may dispatch. If you have installed a plugin from that family, you want this one installed too.
 
 It does ship six commands of its own, and one of them is worth running first — see below.
 
 ## What you set on your machine
 
-`workflows-core` reads five environment variables, and every one of them is read by a reference this plugin ships — for four of the five, the only read anywhere in this plugin. `SPECS_PATH` is the exception: `/frames` gates on it in its own Phase 0 and refuses to run without it. One is required for anything in the family to have somewhere to write (`SPECS_PATH`); the rest are optional and each degrades to a documented default or a silent skip. [Environment](reference/environment.md) has the exact defaults and failure behaviour.
+`workflows-core` reads eight environment variables, and every one of them is read by a reference this plugin ships — for seven of the eight, the only read anywhere in this plugin. `SPECS_PATH` is the exception: `/frames` gates on it in its own Phase 0 and refuses to run without it. One is required for anything in the family to have somewhere to write (`SPECS_PATH`); the rest are optional and each degrades to a documented default or a silent skip. [Environment](reference/environment.md) has the exact defaults and failure behaviour.
 
 ### `SPECS_PATH`
 
@@ -44,7 +44,19 @@ Your branch identifier. Branch naming is repo-rule-first: where the target repo'
 
 ### `DEV_WORKFLOWS_COST_PRICES`
 
-An optional path to your own price table, overriding the bundled `references/cost-prices.yaml` that session-cost reporting prices tokens against. It is the variable of the five you are least likely ever to set — the bundled defaults are used until you do. It keeps its original name so a setting already exported on a working machine is not silently ignored.
+An optional path to your own price table, overriding the bundled `references/cost-prices.yaml` that session-cost reporting prices tokens against. It is the variable of the eight you are least likely ever to set — the bundled defaults are used until you do. It keeps its original name so a setting already exported on a working machine is not silently ignored.
+
+### `WORKFLOWS_SKIP_COSTS`
+
+Persistent default for the `--skip-costs` run flag every applicable command accepts — the command still advances the session-cost checkpoint, but never writes a cost entry. `workflows-core:run-flags` is the single source of truth for this and the other two run flags.
+
+### `WORKFLOWS_SKIP_FEEDBACK`
+
+Persistent default for the `--skip-feedback` run flag — narrows an applicable command's maintenance phase to bug capture only, dropping the in-session Lessons Learned report. See `workflows-core:run-flags`.
+
+### `WORKFLOWS_ENFORCE_MODEL`
+
+Persistent default for the `--enforce-model` run flag — pins every subagent an applicable command dispatches to one model (an alias, a full model id, or `routing` for no enforcement), bypassing model-routing's own per-step selection. See `workflows-core:run-flags`.
 
 ## Install the status line
 

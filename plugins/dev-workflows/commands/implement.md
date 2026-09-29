@@ -6,13 +6,15 @@ allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
 
 Implement the following: $ARGUMENTS
 
+Usage: `/implement <ADDRESS> | <prompt> [@file…] [@spec-folder] [@repo…] [--no-commit] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
+
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
 ---
 
 ## Phase 0 — Load and classify inputs
 
-**Strip `--no-commit` first**, before any other parsing: it is the only flag this command takes, and an unstripped flag is read as free-text prose and lands in the task description. When present, Phase 4.6 is skipped entirely and the changes are left in the working tree. It is the one opt-out from a commit that is otherwise prompt-free (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §1 rule 5) — typed rather than clicked, which is the difference — and a run under it says once what it costs: the work is recoverable only on this machine, and `/document` and `/release-notes` will not find it later.
+**Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Because a direct run's `<prompt>` is free prose kept verbatim, that prose is protected per `workflows-core:run-flags` §3 step 1: a run-flag token before the prompt begins, or in a trailing run at the very end of `$ARGUMENTS`, is stripped, but one written inside the prompt itself is kept as prompt text, even where it looks like a flag. **Strip `--no-commit` next**, before any other parsing: it is the only command-specific flag this command takes, and an unstripped flag is read as free-text prose and lands in the task description. When present, Phase 4.6 is skipped entirely and the changes are left in the working tree. It is the one opt-out from a commit that is otherwise prompt-free (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §1 rule 5) — typed rather than clicked, which is the difference — and a run under it says once what it costs: the work is recoverable only on this machine, and `/document` and `/release-notes` will not find it later.
 
 `$ARGUMENTS` may contain free-text prose plus **zero or more `@path` tokens** (today's single-`@file` form is a subset). Resolve each `@path` relative to the current working directory. Classify each `@path` — and the current working directory — **by inspection, not by matching the path string**:
 
@@ -241,16 +243,18 @@ model_routing:
   classification: <SIMPLE | MODERATE | SIGNIFICANT | HIGH-RISK>
   reason: <one-line>
   current_model: <the model this orchestrator is running under>   # = the inline implementation coding
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+  defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # the folder read, code-scanner, Phase 2A exploration, test-writer, test-baseliner, review-fixer, the Phase 4 maintenance agents
-  planning_model: <§2 Opus chain>   # risk-planner (Phase 2B; SIGNIFICANT/HIGH-RISK only; frontmatter-pinned, recorded, no override)
-  review_model:  <§2 Opus chain>    # code-review (Phase 3B; frontmatter-pinned, recorded, no override)
+  planning_model: <§2 Opus chain>   # risk-planner (Phase 2B; SIGNIFICANT/HIGH-RISK only; frontmatter-pinned, recorded, no override unless §10 enforces a model)
+  review_model:  <§2 Opus chain>    # code-review (Phase 3B; frontmatter-pinned, recorded, no override unless §10 enforces a model)
   implementation_model: <= current_model>   # coding done inline by the orchestrator
   fixes_model: <= detection_model>          # review-fixer (Phase 3B)
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2 / §2.1 fallback or degradation>
 ```
 
-Each subagent dispatch below cites its chain (§9 role→chain map); mechanical steps pin `detection_model` via `model:`, and the frontmatter-Opus gates (`risk-planner`, `code-review`) are recorded but never overridden.
+Each subagent dispatch below cites its chain (§9 role→chain map); mechanical steps pin `detection_model` via `model:`, and the frontmatter-Opus gates (`risk-planner`, `code-review`) are recorded, and overridden only when §10 enforces a model.
 
 **Detect task shape.** Inspect the description for defect signals (fix / bug / regression / broken / incorrect / wrong output / crash / fails). If bug-shaped, set `task_shape: bug`. `task_shape: bug` only affects the SIGNIFICANT / HIGH-RISK path (Phase 2B/3B); for SIMPLE / MODERATE it is guidance only (no extra question). On the SIGNIFICANT / HIGH-RISK path, if it is genuinely ambiguous whether this is a defect fix or new work, ask with a `choices` prompt (2–4 options; the harness supplies the free-text escape).
 
@@ -388,7 +392,7 @@ Once the file map is returned, delegate planning to Opus.
 
 When a `specification.md`/`design.md` is in scope, extract its **in-scope** `[Uxx]`/`[ACxx]`/`[TCxx]` IDs (reuse the specs resolved in Phase 0) into `in_scope_ids` for the review dispatch below. When `task_shape: bug`, the plan will lead with a repro step and a ranked-hypotheses section — surface them in the normal plan-approval gate (no extra interrupt) **when the ranking is present**. When the planner instead returns `Ranking withheld — no red-capable repro`, the withheld-repro branch below fires first and the normal gate does not run.
 
-→ Agent (subagent_type: "dev-workflows:risk-planner"):  # planning_model — §2 Opus chain; frontmatter-pinned, recorded in model_routing, no override added
+→ Agent (subagent_type: "dev-workflows:risk-planner", model: `<planning_model — §2 Opus chain, equal to risk-planner's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as planning_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "Produce the risk-weighted plan for the following brief:
   >
   > Task description: [substitute full description]
@@ -575,7 +579,7 @@ Once Phase 3.5 returns (passed, skipped, or accepted with failures kept or witho
 
 ## Phase 3B — Implementation + Opus review (SIGNIFICANT / HIGH-RISK)
 
-Use the currently selected model or Sonnet for implementation itself. Opus is reserved for the review.
+Use the currently selected model or Sonnet for implementation itself; Opus is reserved for the review — unless §10 enforces a model, in which case every dispatched step, the review included, runs on `run_flags.enforced_model`. 'Opus review' throughout this command names the Phase 3B review gate, whatever model it runs on.
 
 For a long step list, apply `${CLAUDE_PLUGIN_ROOT}/references/context-management.md` — checkpoint at N,
 offload parallel-safe (`[P]`) steps to subagents, or decompose — so the run does not degrade as context fills.
@@ -602,7 +606,7 @@ At each checkpoint, also consider suggesting **`/compact`** to free context befo
 5. After all changes are written: **DO NOT run tests yet.** When `task_shape: bug`, first **strip every `[DEBUG-xxxx]` probe** added during diagnosis (per `${CLAUDE_PLUGIN_ROOT}/references/bug-diagnosis.md`); the review diff must contain no debug instrumentation. Capture the diff and the project root. Use `git add -N . && git diff` — this includes intent-to-add untracked new files so the diff is never empty for implementations that only create new files, and it now also includes the test files from step 4a. Write this diff to a temp file (`command mktemp -t dw-impl-diff-XXXXXX`, never inside a repo tree) and record its absolute path as `review_diff_file`; the code-review dispatch (step 6) receives this path. Also capture `git diff --stat` for the summary (small — kept inline).
 6. **Opus code review** — spawn.
 
-   → Agent (subagent_type: "dev-workflows:code-review"):  # review_model — §2 Opus chain; frontmatter-pinned, recorded in model_routing, no override added
+   → Agent (subagent_type: "dev-workflows:code-review", model: `<review_model — §2 Opus chain, equal to code-review's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
      > "Produce the Opus code review for this brief:
      >
      > Task description: [substitute full description]
@@ -671,6 +675,8 @@ Files changed (from git diff --stat):
 Notable additions/removals: [new commands, APIs, config keys, dependencies — one line each; or "none"]
 Opus review verdict: [PASS | PASS WITH RECOMMENDATIONS | BLOCK — or "N/A (SIMPLE / MODERATE)"]
 ```
+
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` in place of Agent 4 (`impl-maintenance`), with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in the Phase 5 `### Session learnings` line, in place of the persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 
 Then spawn all four agents. They are independent and can run in any order — spawn them all before waiting for any to complete:
 
@@ -827,6 +833,7 @@ Output a structured report — do NOT ask any closing confirmation:
 
 ### Classification
 [SIMPLE | MODERATE | SIGNIFICANT | HIGH-RISK] — [reason]
+[Under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` — every dispatched step (planner, reviewer, fixer, test agents, scanners) already carries the enforced id in place of its own chain, per `workflows-core:model-routing/classification` §10. The `model_routing` block's `opus_available` is unaffected by enforcement (§10: a property of the environment, never rewritten to agree with the enforced id) and, wherever this report states it, is stated exactly as it stands. Omit the line otherwise.]
 
 ### Branch
 [branch name created in Pre-Phase 3, e.g. feat/add-user-authentication]
@@ -840,8 +847,8 @@ Output a structured report — do NOT ask any closing confirmation:
 ### Files changed
 - path/to/file.ext — [what changed]
 
-### Opus review (if applicable)
-[Verdict and 1-line summary, or "N/A (SIMPLE / MODERATE)"]
+### Opus review (if applicable; on the enforced id under §10)
+[Verdict and 1-line summary — naming the enforced id it ran on wherever `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10) — or "N/A (SIMPLE / MODERATE)"]
 
 ### Review triage
 - **Review triage:** [N findings reviewed, M survived] — dismissals: [one line per dismissal, `finding — reason`; or "none"] — or "N/A (SIMPLE / MODERATE, no Opus review)"
@@ -891,6 +898,8 @@ The resume pointer is written in the terminal cost phase (Phase 7), per `workflo
 Guidance only — see `workflows-core:session-hygiene`.
 ```
 
+Also repeat the `Run flags: …` line whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6), and carry the `Session feedback: …` line wherever Phase 4 printed one (under `--skip-feedback`). The `Session cost: …` line is Phase 7's own output, printed after this report and not restated in it.
+
 ---
 
 ## Phase 6 — Emit follow-up tasks
@@ -925,10 +934,12 @@ NEVER writes into the code repo or the current working directory, where it is no
 
 Terminal phase — the NEW final operational phase; runs after Phase 6 (the
 follow-up phase) and NEVER interrupts an earlier phase. Records this command's
-token-cost contribution to the PRD by invoking `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and calling its single `emit-cost` entry point. Unlike feedback, **cost ALWAYS runs** — it never "writes
-nothing".
+token-cost contribution to the PRD. Unlike feedback, **cost ALWAYS runs** — it never "writes
+nothing" (short of `run_flags.skip_costs`, below, which writes no entry).
 
-Call `emit-cost` with `command: /implement`, `phase: implementation`,
+**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way.
+
+Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call `emit-cost` with `command: /implement`, `phase: implementation`,
 `role: dev`, the run's `key` (or `null`) and `source`, and `plugin_version`
 (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). It resolves the
 session transcript + subagents (§1), loads and **advances the chained
@@ -968,10 +979,10 @@ directory, where it is not the specs repository; no user name is ever written (�
 
 ## Invariants (always enforced)
 
-- ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation)
+- ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 - NEVER skip Phase 1.5 classification — every run must state the level
-- NEVER use Opus for routine implementation; reserve it for planning + review on SIGNIFICANT / HIGH-RISK
-- NEVER run tests on SIGNIFICANT / HIGH-RISK work before the Opus code review returns a non-BLOCK verdict
+- NEVER use Opus for routine implementation, unless §10 enforces a model (`workflows-core:model-routing/classification` §10 — every dispatched step then runs on `run_flags.enforced_model`, whatever it is); otherwise reserve it for planning + review on SIGNIFICANT / HIGH-RISK
+- NEVER run tests on SIGNIFICANT / HIGH-RISK work before the Opus code review (the Phase 3B review gate, whatever model it runs on) returns a non-BLOCK verdict
 - NEVER skip Phase 3.5 — where the Pre-Phase 3.5 capture returns `COMMAND_NOT_FOUND` (no framework detected) or `RUN_FAILED` (every suite the capture actually ran aborted with no parseable counts — *run*, not *detected*, since a `command_hint` can narrow one set against the other, and a suite that ran to completion printing unrecognised output never failed to start), ask the user there, where a baseline can still be taken, rather than silently skipping; a "Skip" decision must be explicit and logged in the Phase 5 report, and it drops steps 4–6 only — step 3's lint and build still run
 - NEVER read a verify report as a pass on any value but `OK` or `PARTIAL` — `RUN_FAILED` means nothing was compared and `COMMAND_NOT_FOUND` means nothing was run, and each is surfaced (Phase 3.5 step 5), never passed over
 - NEVER read `OK` or `PARTIAL` as a pass while the report's `### New failures` list is non-empty — a test this run wrote and that fails now is in neither baseline list, so it moves no `Status` at all; Phase 3.5 step 5 reads the list **beside** the `Status` rather than instead of it (the `PARTIAL` arm's `### Deferred items` record is still owed either way), and a non-empty list then sends the run into step 6's fix loop
@@ -1003,5 +1014,5 @@ directory, where it is not the specs repository; no user name is ever written (�
 - WHEN `task_shape: bug`: the ranked hypotheses MUST be backed by a repro `risk-planner` **actually ran** — its `### Hypotheses (ranked)` block carries the command, its redacted output, and the reproduction rate (`bug-diagnosis.md` step 1's completion criterion). If it returns "Ranking withheld — no red-capable repro", do NOT proceed to implementation on a guess: surface what it tried and ask `choices: ["Help construct a repro (you'll be prompted for what to try)", "Proceed without a repro (recorded in the Phase 5 report)", "Cancel"]`. Proceeding is the user's call to make explicitly, never the default.
 - ALWAYS fan out `code-scanner` one-per-repo in a single response, capped at 4 concurrent — never sequentially
 - NEVER silently skip a referenced `@dir` that is missing or unrecognized — surface it and ask (classification.md §8.4)
-- Scanning agents (the folder read, `code-scanner`) are pinned to the §2.1 detection (Sonnet) chain like every mechanical step (never inherit the session model); escalate a single scanner to Opus only when one repo slice is oversized
+- Scanning agents (the folder read, `code-scanner`) are pinned to the §2.1 detection (Sonnet) chain like every mechanical step (never inherit the session model); escalate a single scanner to Opus only when one repo slice is oversized (under §10, `run_flags.enforced_model` for both the pin and the escalation)
 - ALWAYS end the Phase 5 report with a `### Context hygiene` block per `workflows-core:session-hygiene` — prepare-first (the `resume.md` write runs later, in the terminal cost phase, per `workflows-core:session-hygiene` §1 — this block prints the guidance only), then a same-lane `/compact` suggestion + `/rename <PRD-ID>-<slug>-dev`; **omitted in direct mode** (no PRD/Epic context, no `resume.md`); the Phase 3B checkpoint additionally suggests `/compact` mid-run. Guidance only, never auto-run.

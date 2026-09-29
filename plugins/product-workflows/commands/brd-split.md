@@ -22,7 +22,7 @@ the requirement differently, and `rejected: <SLICE-KEY>/[CD#n]` is a spelling on
 §1) — without this command's gate, a long BRD split across several children could have every child
 quietly wave a requirement past, and nothing would notice.
 
-Usage: `/brd-split <BRD-KEY> [<instruction>]`
+Usage: `/brd-split <BRD-KEY> [<instruction>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 Runs on a root BRD or one of its slices (Phase 0 step 5 refuses an idea-route PRD folder and an
 Epic folder, and step 8 stops, on a `full` run, any other folder whose inventory holds no `[BR#n]` row) — in one of **two modes** Phase 0 step 5 resolves from the folder itself:
@@ -57,12 +57,13 @@ four-resolution one.
 
 ## Phase 0 — Resolve inputs and gate on verification
 
-1. **`<BRD-KEY>` (mandatory).** Parse the first non-flag token; validate with `key-valid`
+1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first non-flag token; validate with `key-valid`
    (`workflows-core:addressing` §1). If absent or invalid, stop:
    `BRD_SPLIT_NEEDS_KEY: /brd-split needs a BRD key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) — re-run '/product-workflows:brd-split <KEY>'.`
-1a. **`<instruction>` (mandatory on a root that still has a row to place, optional on a slice).** Every **non-flag** token after
+1a. **`<instruction>` (mandatory on a root that still has a row to place, optional on a slice).** Every token after
    the key, joined verbatim, is a slicing instruction in the operator's own words — `cover orders and
-   measurements in the first iteration`, `slice everything EPIC-008 still holds that no child covers`.
+   measurements in the first iteration`, `slice everything EPIC-008 still holds that no child covers` — a
+   flag name among them where the operator wrote one as instruction text rather than as a flag.
    **Parse it here and carry it; its absence is stopped on in step 11, never here.** Phase 2 clusters by the Phase 1.5 placement — every `unallocated` row on an ordinary run, and every row in the **re-cut candidate set** on the re-cut path step 10 selects — and a root carries no findings to read, so the grouping comes from the instruction or from nowhere; but that is a statement about a run that *has* something to cluster, and whether this one does is not known until step 8 reads the ledger and step 9a builds that candidate set.
    Stopping on the absence here made the instruction mandatory on every `full` run, including the one
    on which Phase 2 never runs at all: a parent whose walk is complete and whose only remaining work
@@ -71,10 +72,12 @@ four-resolution one.
    slice among them — which Phase 4.5 exists to serve, and the operator taking it wants to carve nothing.
    Absent on a slice → this command behaves exactly as it did before the switch existed, on every
    path below; nothing in it is conditional on an instruction being given except where a phase says so. This command parses no
-   flags today, so "non-flag tokens after the key" and "everything after the key" currently pick out
-   the same string — it is written the first way because the second stops being true the moment a
-   flag is added, and `/dev-workflows:design` Phase 0 already strips its own flag before classifying
-   for exactly that reason. The instruction is **never validated against anything**: it is prose, and
+   flags of its own: the three run flags (`--skip-costs`, `--skip-feedback`, `--enforce-model`) are
+   stripped by step 1's `strip-run-flags` call only where they sit before the key, or as a trailing run
+   at the very end of `$ARGUMENTS` (`workflows-core:run-flags` §3 step 1, whose protected prose span
+   begins right after the key) — so the instruction is simply everything that call leaves after the
+   key, a flag name included wherever the operator typed one as instruction text instead of as a
+   trailing flag. The instruction is **never validated against anything**: it is prose, and
    what it means is settled in Phase 1.5 against this BRD's own rows, never by pattern.
 2. **`$SPECS_PATH` (required).** If unset, stop naming `SPECS_PATH`, per the
    `Required path environment variable unset` rule in `workflows-core:escalation-rules`:
@@ -427,6 +430,8 @@ model_routing:
   classification: MODERATE        # typical; SIGNIFICANT for an unusually large requirement count or slice fan-out
   reason: <one-line>
   current_model: <the model this orchestrator is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+  defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # impl-maintenance only — no other agent runs in this command
   authoring_model: <= current_model>   # Phase 1.5's reading and bounded grill, and Phase 4's walk — session model, not a delegated subagent
   opus_available: <true if a §2 Opus model resolved, else false>
@@ -447,7 +452,7 @@ may grill the residue, and Phase 4 walks the ledger — all in the session, the 
 judgement about the operator's words, so a run that made it on a degraded model should say which
 model made it. If no Opus
 resolves for `current_model`, degrade to best-available + record in `notes` and the final report —
-never hard-block.
+never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) no degradation is recorded; dispatched steps (`impl-maintenance`, or `defect-reporter` under `--skip-feedback`) use the enforced model, while Phase 1.5's reading and grill and Phase 4's walk still run on `current_model`.
 
 ---
 
@@ -1515,7 +1520,9 @@ that this run is `allocate-only`, and the run continues through it. Neither is a
 — an instruction that placed no row, a grill that reached its cap, and a `Cancel` mid-grill are all
 readings of a sentence the operator typed, never a capability this plugin lacks. Nor is the
 operator's own `Cancel` later in the run — at Phase 2's proposal, mid-key-taking in Phase 3, or
-mid-walk in Phase 4 — each a user halt that reports what it left written.
+mid-walk in Phase 4 — each a user halt that reports what it left written. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
+
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model:
    `<detection_model>`) with a compact handoff: command `/brd-split`; what was produced (slices
@@ -1527,7 +1534,7 @@ mid-walk in Phase 4 — each a user halt that reports what it left written.
    with the Lessons Learned report, `command: /brd-split`, the run's `key` (the `<BRD-KEY>`),
    `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`).
    Surface the persisted path (or "no plugin-facing signal — nothing persisted").
-3. **Session cost (ALWAYS runs).** Invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-split`, `phase: brd-to-prd`, `role: pm`, the
+3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-split`, `phase: brd-to-prd`, `role: pm`, the
    run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only
    notice).
 4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry above, and before
@@ -1558,14 +1565,14 @@ ignored — and on a `full` run naming the path is not the whole answer, since t
 interactive walk is one the operator has scrolled past by the end; whether Phase 0 found this
 run a no-op (fully allocated already) or
 whether it actually split and/or walked the ledger — **a fully-allocated ledger is not on its own the no-op**, since the re-cut path and the reconcile path both start from one, so name the branch step 10 took rather than the ledger state it read; **every child Step 3 reconciled although no walk of this run touched it**, with each `[BR#n]` added or withdrawn, every ledger row Step 3 left standing (its case list), and every child Phase 0 step 9 marked unreconcilable, by name, with the file it is missing or cannot read and every target list this run left it out of; the classification and model routing (+ any
-Opus degradation); every slice proposed, keyed, and its folder (or that none were proposed and
+Opus degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); every slice proposed, keyed, and its folder (or that none were proposed and
 why — in `allocate-only` that reason is the cap, not an operator choice); any child removed or
 kept-with-reason for claiming nothing (Phase 4.5) — including any an earlier run left standing and this run resolved — and which, **and for a removal, every row it re-pointed onto this BRD** — by `[BR#n]` and by the ledger it sits on, **this BRD's own ledger included, not only another child's** — or that the removal re-pointed none; the ledger
 walk's resolution tally by disposition, with every new `covered-by` key and every
 `rejected`/`superseded-by` citation named; **every claim this run withdrew, named by the route it was withdrawn on** — `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §2 distinguishes the two and this report does not collapse them: a **provisional** claim, one Phase 3 wrote and this walk settled somewhere else, whose orphan row Phase 4's **reconcile step** wrote the terminal disposition onto; or a **committed** claim, one an earlier run gave the child and the child's own walk then recorded `deferred-to` against, which this run's re-cut moved — and whose orphan row reads `covered-by: <B-KEY>` because **Step 2R** wrote it one step earlier, the reconcile step deliberately leaving it alone. Report each with its
 `[BR#n]`, the child it was withdrawn from, and the disposition its orphan row now carries, so a withdrawal is reported rather than only visible by re-reading two
 files, and so that a re-cut withdrawal is never reported as a provisional claim the walk happened to settle elsewhere; **on the re-cut path (`recut_mode: true`) the whole of that path's own record**: how many rows were re-cuttable and from which donors (Phase 0 step 9a), how many were re-pointed and to which receivers, how many were left with their donor **and why each**, over the same five reasons `slices.md` records — declined at Step 2R's picker, held back from Step 1's bulk offer and then declined, left unplaced by Phase 1.5's reading, placed into a group whose target Phase 3 dropped, or placed into a group Phase 2 confirmed nothing of, which is an answer rather than a failure and is reported as one — every decision the run reported out of a donor's register, **by `id`**, with the note that they were reported and **not touched**, and **any child whose `coverage-ledger.md` step 9a could not read**, named with the read failure, since an unreadable ledger is `unresolved` and never an empty `deferred-to` set (§6.2); **and where step 9a found no candidate at all on a `full` run that was given an instruction, which of its two causes applied** — no child holding a `deferred-to` row of its own, or every such row being one this BRD did not delegate to that child. That last sentence is the one an operator who typed an instruction and got a no-op needs, and without it "nothing to re-cut" is indistinguishable from an instruction the command failed to parse; the `slices.md` path (or that it was skipped on the
-no-op path); the feedback + cost paths; the `Phase handoff:` outcome line from `handoff-to-main`
+no-op path); the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line) and cost path (or, under `--skip-costs`, the `Session cost: …` line); the `Phase handoff:` outcome line from `handoff-to-main`
 (`workflows-core:phase-handoff` §4.1); the `Specs repo:` outcome line from `commit-artifacts`
 (`workflows-core:specs-repo-git` §6); the next-step recommendation; and end with the ledger line, exactly per
 `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §6:

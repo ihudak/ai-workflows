@@ -22,7 +22,7 @@ invariants the downstream (`/specify`, `/design`, `/implement`) will later inher
   refused (Phase 0 step 1a). One address on every route: a second positional token is refused
   (Phase 0 step 1, `CREATE_ARD_ONE_ADDRESS`).
 
-Usage: `/create-ard <ADDRESS> [--no-docs] [--docs <path>]`, where `<ADDRESS>` is a key or an `@<path>`. `--docs <path>` — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`; **strip the flag and its value together** before any remaining-argument classification, or the path is read as part of the address. Declared for every consumer by `workflows-core:docs-grounding` *Procedure* step 1 (*Flags first*), which resolves it; this command only has to recognise it and pass the invocation through.
+Usage: `/create-ard <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`, where `<ADDRESS>` is a key or an `@<path>`. `--docs <path>` — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`; **strip the flag and its value together** before any remaining-argument classification, or the path is read as part of the address. Declared for every consumer by `workflows-core:docs-grounding` *Procedure* step 1 (*Flags first*), which resolves it; this command only has to recognise it and pass the invocation through.
 
 It authors architecture only — no code writing; grounding is **architect-driven** (there are no PRs at
 this stage). Zero external calls.
@@ -31,6 +31,8 @@ this stage). Zero external calls.
 
 ## Phase 0 — Resolve input
 1. **Resolve the address.**
+
+   **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
 
    **Strip recognised flags before anything counts positional tokens.** `--no-docs` (boolean) and
    `--docs <path>` (which consumes the token after it) are removed from `$ARGUMENTS` first, together
@@ -337,14 +339,16 @@ model_routing:
   classification: MODERATE | SIGNIFICANT | HIGH-RISK   # architecture; SIGNIFICANT common for cross-repo PRDs
   reason: <one-line>
   current_model: <the model this orchestrator/grill is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+  defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # the folder read, code-scanner, impl-maintenance
-  review_model:    <§2 Opus chain>     # ard-reviewer (frontmatter-pinned; recorded, no override)
+  review_model:    <§2 Opus chain>     # ard-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model)
   authoring_model: <= current_model>   # the interactive grill + ARD authoring (session model, not a delegated subagent)
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
 ```
 
-**Tiered HARD model gate (like `/design`):** for `SIGNIFICANT` / `HIGH-RISK`, require an Opus session — if `current_model` is not an Opus-tier model, stop: `choices: ["I'll relaunch /product-workflows:create-ard on Opus (Recommended)", "Override — proceed on the current model (logged in the final report)", "Cancel"]`. The condition is `current_model` and not `opus_available`, per `workflows-core:model-routing/classification` §9.3: the ARD is authored inline on the session's own model, and `opus_available` reports what the environment carries rather than what this session runs. Where that gate fires with `opus_available` **also** false there is nothing to relaunch onto, so §9.3 drops the relaunch option and the array is `choices: ["Proceed on the Sonnet floor — the degradation is recorded in `notes` and the final report (Recommended)", "Cancel"]`. For `SIMPLE`/`MODERATE`, degradation is advisory (record in `notes`).
+**Unless `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10 — then no gate fires): Tiered HARD model gate (like `/design`):** for `SIGNIFICANT` / `HIGH-RISK`, require an Opus session — if `current_model` is not an Opus-tier model, stop: `choices: ["I'll relaunch /product-workflows:create-ard on Opus (Recommended)", "Override — proceed on the current model (logged in the final report)", "Cancel"]`. The condition is `current_model` and not `opus_available`, per `workflows-core:model-routing/classification` §9.3: the ARD is authored inline on the session's own model, and `opus_available` reports what the environment carries rather than what this session runs. Where that gate fires with `opus_available` **also** false there is nothing to relaunch onto, so §9.3 drops the relaunch option and the array is `choices: ["Proceed on the Sonnet floor — the degradation is recorded in `notes` and the final report (Recommended)", "Cancel"]`. **Unless `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10 — then no gate fires): for `SIMPLE`/`MODERATE`, degradation is advisory (record in `notes`).**
 
 ---
 
@@ -657,9 +661,9 @@ in a project that actually exists, and wrapping a BRD key would mint a dangling 
 nobody created.
 
 ## Phase 5 — Review gate
-Dispatch `ard-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no override):
+Dispatch `ard-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no override unless §10 enforces a model):
 
-→ Agent (subagent_type: "product-workflows:ard-reviewer", model: `<review_model — §2 Opus chain>`):
+→ Agent (subagent_type: "product-workflows:ard-reviewer", model: `<review_model — §2 Opus chain, equal to ard-reviewer's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "Review the ARD:
   >
   > ARD path: [absolute path to the ard.md]
@@ -848,7 +852,7 @@ Guidance only — see `workflows-core:session-hygiene`.
 ## Phase 8 — Session maintenance, feedback & cost
 Terminal phase — runs after Phase 7, NEVER interrupts an earlier phase.
 
-**Capture-at-block invariant.** If an EARLIER phase **halts on a plugin / skill / command / reference gap**, `emit-block` (per `workflows-core:feedback-emission`) at that halt **before** escalating. NEVER `emit-block` for an environment / user halt (unset `$SPECS_PATH`, missing key, no-ARD-needed, unmounted-repo descope, cancellation) or a review BLOCK. **The six argument-, tree- and git-shaped stops are of that second class**: `CREATE_ARD_NEEDS_KEY`, `CREATE_ARD_ONE_ADDRESS`, `CREATE_ARD_NOT_FOUND`, `CREATE_ARD_BRD_NOT_SLICED`, `CREATE_ARD_REGISTER_NOT_ON_MAIN` and `CREATE_ARD_REGISTER_NOT_HANDED_OFF` report the operator's own argument list, BRD tree or where its register sits in git, not a capability this plugin lacks, so none of them `emit-block`s.
+**Capture-at-block invariant.** If an EARLIER phase **halts on a plugin / skill / command / reference gap**, `emit-block` (per `workflows-core:feedback-emission`) at that halt **before** escalating. NEVER `emit-block` for an environment / user halt (unset `$SPECS_PATH`, missing key, no-ARD-needed, unmounted-repo descope, cancellation) or a review BLOCK. **The six argument-, tree- and git-shaped stops are of that second class**: `CREATE_ARD_NEEDS_KEY`, `CREATE_ARD_ONE_ADDRESS`, `CREATE_ARD_NOT_FOUND`, `CREATE_ARD_BRD_NOT_SLICED`, `CREATE_ARD_REGISTER_NOT_ON_MAIN` and `CREATE_ARD_REGISTER_NOT_HANDED_OFF` report the operator's own argument list, BRD tree or where its register sits in git, not a capability this plugin lacks, so none of them `emit-block`s. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
 **Session-hygiene invariant.** End Phase 7 with a `### Context hygiene` block per
 `workflows-core:session-hygiene` — prepare-first (the
@@ -856,6 +860,8 @@ Terminal phase — runs after Phase 7, NEVER interrupts an earlier phase.
 `workflows-core:session-hygiene` §1 — this block prints the
 guidance only), then a
 PA→PE/Dev handoff suggestion (`/clear`) + `/rename <PRD-ID>-<slug>-pa`. Guidance only, never auto-run.
+
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 
 **The run's key on the BRD route.** Phase 0 resolved a BRD key, which is a folder name and never a
 second identity (`workflows-core:addressing` §1). Any tracker identity for this work,
@@ -869,7 +875,7 @@ exist to keep apart.
 
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model: `<detection_model — §2.1 Sonnet chain>`) with a compact handoff: command `/create-ard`; what was authored (ARD scope + grounded repos); key events (grounding gaps/descopes, BLOCK reviews — or 'none'); workarounds; the `ard-reviewer` verdict; test result N/A; project root = the feature folder.
 2. **Persist plugin feedback (automatic).** Invoke `Skill(skill: "workflows-core:reference", args: "feedback-emission emit-auto")` and call its `emit-auto` entry point (§6) with the report, `command: /create-ard`, the run's `key`, `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or "no plugin-facing signal — nothing persisted").
-3. **Session cost (ALWAYS runs).** Invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /create-ard`, `phase: architecture`, `role: pa`, the run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only notice).
+3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /create-ard`, `phase: architecture`, `role: pa`, the run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only notice).
 4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the pointer reflects the completed run, and before the commit step below, so it is included in it. Redact per §1. Silent; the printed `### Context hygiene` guidance already appeared in the report.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It stages ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows session artifacts (/create-ard)` with no `Co-Authored-By` trailer, and pushes to the branch this run's handoff phase created (§4.1). It NEVER touches anything outside `$SPECS_PATH`; NEVER force-pushes; NEVER fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0), re-emitting that notice. Hold its §6 outcome line for the Final report.
 
@@ -878,7 +884,7 @@ ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git 
 ---
 
 ## Final report
-Report: the ARD path(s) + scope (PRD/Epic, any per-area split); **the PRD gate's return value and whether an authored `prd.md` was read from the resolved folder** — the same two lines on every route, so a reader can tell an `absent` PRD from an unrun gate; the grounded repos + any descoped/ungrounded ones; `AD#N` count; open-question count; the `ard-reviewer` verdict; the `Phase handoff:` outcome line from `handoff-to-main` (`workflows-core:phase-handoff` §4.1); resolved model routing (+ any Opus gate/degradation); the feedback + cost paths; the `Specs repo:` outcome line from `commit-artifacts` (`workflows-core:specs-repo-git` §6), with any guard notice repeated in full; and the adaptive next-step recommendation.
+Report: the ARD path(s) + scope (PRD/Epic, any per-area split); **the PRD gate's return value and whether an authored `prd.md` was read from the resolved folder** — the same two lines on every route, so a reader can tell an `absent` PRD from an unrun gate; the grounded repos + any descoped/ungrounded ones; `AD#N` count; open-question count; the `ard-reviewer` verdict; the `Phase handoff:` outcome line from `handoff-to-main` (`workflows-core:phase-handoff` §4.1); resolved model routing (+ any Opus gate/degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10 — no gate or degradation applies); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line) + cost path (or, under `--skip-costs`, the `Session cost: …` line); the `Specs repo:` outcome line from `commit-artifacts` (`workflows-core:specs-repo-git` §6), with any guard notice repeated in full; and the adaptive next-step recommendation.
 
 **Wherever `prd_dir` holds `grounding/`, on either route, additionally:** the folder read — `prd_dir`,
 which on an Epic-level run is the PRD folder above the Epic, not the folder the address resolved — which of

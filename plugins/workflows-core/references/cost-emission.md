@@ -46,11 +46,7 @@ worked by 23 teams) and **no dedup / no prose** (pure measurement, append-only).
 No dedup or cross-reference between the three. This subsystem does NOT use the
 `impl-maintenance` agent.
 
-**Cost ALWAYS runs.** Unlike feedback (which writes nothing when there is no
-plugin signal), the cost phase always computes and always advances the checkpoint
-(§3) — even when it can only report-only. A silent write with no interaction is
-the norm; the sole interactive moment is pending reconciliation (§9), and only
-when pending files exist.
+**Cost runs unless the user skipped it.** Unlike feedback (which writes nothing when there is no plugin signal), the cost phase always computes and always advances the checkpoint (§3) — even when it can only report-only — except under `--skip-costs`, where `workflows-core:run-flags` `skip-cost` advances the checkpoint without loading this file and writes no entry. A silent write with no interaction is the norm; the sole interactive moment is pending reconciliation (§9), and only when pending files exist.
 
 ## 1. Session-artifact resolution
 
@@ -189,8 +185,7 @@ a repo-local `cost-prices.yaml` -> the shipped
 `${CLAUDE_PLUGIN_ROOT}/references/cost-prices.yaml`. The shipped rates are the
 standard first-party Claude API prices (from Anthropic's pricing page) for every
 model the routing policy can reach — the Opus chain and the Sonnet chain —
-**plus Haiku, priced as a harmless defensive entry even though no routing path
-in `classification.md` currently reaches it**; a maintainer refreshes them when
+**plus Haiku, reached only by §2.2 (`defect-reporter` under `--skip-feedback`) and by any `--enforce-model` (or `$WORKFLOWS_ENFORCE_MODEL`) resolving to a Haiku id**; a maintainer refreshes them when
 Anthropic's prices change. **Permanent standard
 rates are used deliberately — never promotional/introductory rates** — so cost
 stays comparable across PRDs over time (a temporary promo would make identical
@@ -557,7 +552,7 @@ and `/prompt-grill-me` through the §13 record a replay reads it from. `emit-cos
 into a docs/code repo or the current working directory, where it is not the specs repository, and NEVER fails the
 run. The cost entry is committed later, once, by the run's terminal
 `commit-artifacts` step (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md`
-§4). Cost ALWAYS runs.
+§4). Cost runs unless the user skipped it — under `--skip-costs` the calling command runs `workflows-core:run-flags`' `skip-cost` in place of this entry point, and `emit-cost` is never called at all.
 
 Inputs:
 - `command` — the exact slash-command name (e.g. `/implement`,
@@ -643,7 +638,10 @@ something else at their Phase 3 and never get it back. Neither can run a cost
 phase after its own expensive work, because there is no "after" it controls.
 This section is how their spend is measured anyway: **the run that cedes records
 what it would have claimed; the next cost-emitting run in the session claims it
-on that run's behalf.**
+on that run's behalf** — short of `--skip-costs`, which writes no entry for it
+from either side: a `skip: true` record (§13.1) is carved out and discarded,
+and a replaying run under the flag drops the record unreplayed
+(`workflows-core:run-flags` §5 step 3).
 
 ### 13.1 The intent file
 
@@ -668,7 +666,7 @@ because the earlier run is over.
    "phase": "inferred", "role": "inferred",
    "target_command": "/document", "key": "PRODUCT-1234", "epic": null,
    "source": "specs", "plugin_version": "1.0.0",
-   "ceded_at": "2026-09-01T10:04:00Z"}
+   "ceded_at": "2026-09-01T10:04:00Z", "skip": false}
 ]
 ```
 
@@ -683,6 +681,8 @@ resolved kind is `epic`, `null` otherwise, so a replayed entry is keyed exactly
 as a self-measured one. `ceded_at` becomes the replayed entry's `date` and the
 timestamp in its `id`, which is what keeps two records replayed by one run from
 colliding on §6's uniqueness rule.
+
+`skip: true` is written by a ceding run under `--skip-costs`. The replay (§13.3) still passes the `--claim`, so the segment is carved out of the replaying run's remainder exactly as before; it then writes **no entry** for that claim. An absent field means `false`.
 
 Same home, lifetime and status as the §3 checkpoint beside it — **per-user,
 per-session, transient, local, NEVER committed, and safe to delete.**
@@ -731,10 +731,10 @@ k-th claim with the k-th boundary and a single `/vuln` in the window shifts ever
 claim by one — filing a security run's spend under a PRD lifecycle phase, which
 is the exact misattribution this section exists to remove.
 
-For each matched claim, build the entry (§6) from its segment, taking
+For each matched claim whose record does not carry `skip: true`, build the entry (§6) from its segment, taking
 `phase`/`role` by resolving that record's own `target_command` through §7, and
 dating it `ceded_at` (§13.1). Append it through the §8 ladder using the record's
-own `key`, `epic` and `source` — which may differ from this run's.
+own `key`, `epic` and `source` — which may differ from this run's. A matched claim whose record carries `skip: true` builds no entry: its segment is still carved out of this run's remainder by the partition, and then discarded.
 
 The partition is **exhaustive and disjoint at the token level**: every usage
 record lands in exactly one bucket, so the claims' tokens plus the remainder's
@@ -767,6 +767,6 @@ since finished, which is why it could never have committed its own.
   is this case: the new session has its own `deferred-<session_id>.json`, so the
   old record is never read again and is safe to delete.
 - **It is not a general mechanism for skipping the cost phase.** A command that
-  *can* measure itself must; deferral exists only for a run that provably cannot,
+  *can* measure itself must — unless the user skipped it (`workflows-core:run-flags` §5); deferral exists only for a run that provably cannot,
   and adding a third deferring command means showing that its Phase 3 cedes the
   session too.

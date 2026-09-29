@@ -3,7 +3,7 @@
 Grounding workflow serving both routes into a PRD, its route detected from the resolved folder and
 never declared. Pins every mounted repository to a verified commit, grounds every claim in the
 resolved folder's own claim list against code (`code-grounder`, Opus) and an exported design frame set
-(`design-grounder`, Opus), independently re-derives every live finding (`grounding-verifier`, Opus), and, on
+(`design-grounder`, Opus), independently re-derives every live finding (`grounding-verifier`, Opus) — each frontmatter-pinned, no override unless `--enforce-model` enforces one — and, on
 the BRD route, assigns each finding a `current` / `will-change` horizon against declared
 prerequisite BRDs.
 
@@ -61,7 +61,7 @@ sits with PA/Dev rather than PM. On this route it is **optional and ungated**: n
 ## Synopsis
 
 ```
-/prd-ground <KEY> [--depends-on <BRD-KEY>…] [--derivation-matrix|--no-derivation-matrix] [--no-code] [--no-design] [--no-docs] [--docs <path>] [--rebaseline]
+/prd-ground <KEY> [--depends-on <BRD-KEY>…] [--derivation-matrix|--no-derivation-matrix] [--no-code] [--no-design] [--no-docs] [--docs <path>] [--rebaseline] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 - **`<KEY>`** (mandatory) — the folder to ground, on either route. `resolve-address` searches every
@@ -116,6 +116,8 @@ sits with PA/Dev rather than PM. On this route it is **optional and ungated**: n
   which is what lets [`/brd-interview`](brd-interview.md) tell a re-grounding that came back as it
   stood from one that moved a decision's ground.
 
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 11's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 11's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `workflows-core:docs-grounder`, `code-grounder`, `design-grounder`, `grounding-verifier` (overriding their frontmatter Opus pin), `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; if no Opus resolves, the three grounding agents otherwise degrade to the best-available model and record it, and `ground_tier` records that degraded tier, which does not happen under enforcement since the enforced model is used instead and `ground_tier` records that enforced id — see [Model routing](../reference/model-routing.md).
+
 ## How it runs
 
 ```mermaid
@@ -135,13 +137,12 @@ flowchart TD
 ```
 
 The phases are the same shape on either route — only Phase 0's gate and claim-list source fork, per
-"Which route" above. Four subagents are dispatched, all read-only against every repository or root
-they touch: `workflows-core:docs-grounder` (Phase 4.5, read-only grounding on the shipped product
+"Which route" above. Five subagents are dispatched, and all five are read-only — the first four
+against every repository or root they touch: `workflows-core:docs-grounder` (Phase 4.5, read-only grounding on the shipped product
 docs — default ON when `$DOCS_PATH` resolves, advisory, never a gate), `code-grounder` (Phase 5, one
-per repository, ≤4 concurrent), `design-grounder` (Phase 5, one per exported frame set, after every
-`code-grounder` instance has returned — its fourth reconciliation class cites a `[CG#n]`), and
-`grounding-verifier` (Phase 7, one per finding, pinned to Opus). `workflows-core:impl-maintenance`
-also runs, in Phase 11, for session lessons-learned.
+per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one), `design-grounder` (Phase 5, one per exported frame set, after every
+`code-grounder` instance has returned — its fourth reconciliation class cites a `[CG#n]` — frontmatter-pinned to Opus, no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one), and
+`grounding-verifier` (Phase 7, one per finding, frontmatter-pinned to Opus — no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one) — plus `workflows-core:impl-maintenance` (Phase 11, session lessons-learned, also read-only: it reads the session handoff and suggests, writing nothing — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`).
 
 ## What it needs
 
@@ -389,7 +390,7 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   diverges from instead, because a divergence is not an answer to a requirement premise, and a new
   prefix would sit permanently unverified in a namespace where an unverified id blocks
   [`/brd-split`](brd-split.md) (`workflows-core:grounding-format` §8).
-- **Phase 7 — `grounding-verifier` over every finding, pinned to Opus.** Every finding the run holds
+- **Phase 7 — `grounding-verifier` over every finding, frontmatter-pinned to Opus (no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one).** Every finding the run holds
   — its own, and every `[CG#n]` already on file pinned to a repository whose `HEAD` still matches its
   recorded pin (none under `--no-code`), but never a `[DG#n]` already on file — except any already
   reading `SUPERSEDED`: a retired finding keeps the outcome it had, and re-deriving
@@ -441,7 +442,7 @@ building, and a premise the code contradicts is a requirement that would have be
 both found before an architecture or a specification is authored against them. It earns little on a
 greenfield PRD, where every finding is a verified absence — true, and low-information — and each one
 still costs an independent Opus re-derivation (Phase 7, one `grounding-verifier` dispatch per
-finding). The Final report says so outright rather than only reporting it: where every claim comes
+finding, frontmatter-pinned — no override unless `--enforce-model` enforces one). The Final report says so outright rather than only reporting it: where every claim comes
 back a verified absence, it states plainly that this PRD is greenfield against the repositories
 resolved, instead of presenting a wall of absences as a mixed result — a second run over the same
 folder is exactly what that headline exists to make unnecessary.
@@ -457,7 +458,7 @@ has merged:
 
 The run resolves the slice, gates its inventory and ledger on main, resolves the repositories in
 scope and the documentation root, pins and proves each repository clean, grounds every `[BR#n]`
-claim against code and any exported design frames, independently re-derives every live finding on Opus,
+claim against code and any exported design frames, independently re-derives every live finding on Opus (frontmatter-pinned — no override unless `--enforce-model` enforces one),
 assigns horizons against any declared prerequisites, writes the findings, and offers to branch,
 commit, push, and open a pull request. Its next-step offer names
 [`/brd-split`](brd-split.md) running in `allocate-only` mode: this slice's ledger is walked to a

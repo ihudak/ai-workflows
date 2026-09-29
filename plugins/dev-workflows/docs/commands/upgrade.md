@@ -9,10 +9,12 @@ Upgrades libraries, frameworks, runtimes, or build tools to specified or latest 
 ## Synopsis
 
 ```
-/upgrade <component[:exact|:minor|:latest|:lts]> [<component…>] [--no-commit]
+/upgrade <component[:exact|:minor|:latest|:lts]> [<component…>] [--no-commit] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 Each token is a bare `component` (highest version compatible with everything else already in the repo) or `component:1.2.3` (exact), `component:minor` (latest patch on the current minor), `component:latest` (latest stable), or `component:lts` (latest LTS, resolved via `../../references/upgrade/lts-sources.md`; asked of the user on lookup failure). A component can be a library, a framework, a language runtime, a build tool, or a path like `.github/workflows`. Multiple components upgrade in one run, planned together so cross-component conflicts surface before anything is written.
+
+Two of the three run flags apply to this command — `--skip-costs` does not, since `/upgrade` emits no cost attribution at all (see [Who runs it](#who-runs-it) above). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows step 8's post-batch maintenance to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `risk-planner` and `code-review` included, overriding their frontmatter Opus pin, and reaching `upgrade-executor`'s own nested `test-baseliner` dispatch too — see [Model routing](../reference/model-routing.md).
 
 ## How it runs
 

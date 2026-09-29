@@ -10,7 +10,7 @@ Audit a documentation repository's coverage: $ARGUMENTS
 
 `/docs-audit` answers one question — **what is this product missing documentation about, and which of it is worth writing first.** It builds a denominator from the product's own code and from the committed documents in the specs tree, crosses that denominator with the page types each thing actually earns, ranks the result, and writes `.dev-workflows/docs-backlog.yml` in the resolved documentation repository. **It writes no documentation content**: its output is a backlog and a coverage grid, and turning a unit into a page is a later act. **Its bulk lives in this plugin's own references and it does not restate them** — the coverage vocabulary, the file's schema and the evidence contract are `${CLAUDE_PLUGIN_ROOT}/references/docs-audit/`'s, and a second copy of any of them is a second thing to keep in step. This command body names the entry point it is executing at each step, the inputs it owes each agent, and the merges no agent can make on its own.
 
-**Signature:** `/docs-audit [<docs-repo-path>] [--audience user|engineering|both] [--refresh] [--threshold <n>]`
+**Signature:** `/docs-audit [<docs-repo-path>] [--audience user|engineering|both] [--refresh] [--threshold <n>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 **Every stop in this command takes the same route, and each site says so.** A stop is still a run: it prints its `DOCS_AUDIT_*` line, **skips to the Phase 6 report**, which states that stop and nothing else, and then runs the **emitter tail (Phases 7–9)** — so its cost and feedback are recorded and `commit-artifacts` runs as the last action, which is the family invariant every command writing into `$SPECS_PATH` holds. That is what *takes the stop route* means wherever this body uses it below. The exceptions are the runs that end before Phase 0 step 2 has resolved a repository — step 1's three flag stops, and a Cancel at step 2's own choice — since there is nothing yet to report against; Phase 9 states them.
 
@@ -19,6 +19,8 @@ Audit a documentation repository's coverage: $ARGUMENTS
 ---
 
 ## Phase 0 — Resolve
+
+**Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step, step 1 below included, parses only what it leaves.
 
 1. **Flags.** Strip `--refresh`, `--audience <value>` and `--threshold <n>` from `$ARGUMENTS` — **each of the last two together with the token immediately after it** — before reading a positional token. What remains is the optional `<docs-repo-path>`. A value read as a path because the flag ahead of it was not stripped is a run that audits the wrong repository, or none. `--audience` takes `user`, `engineering` or `both`, and nothing else: any other value stops with `DOCS_AUDIT_UNKNOWN_AUDIENCE: <value> is not an audience (user, engineering or both).` Absent, it is `both`. `--threshold` takes a positive integer: anything else stops with `DOCS_AUDIT_BAD_THRESHOLD: <value> is not a positive integer.` **After the recognised flags are stripped, any remaining token that begins with `--` stops the run** — `DOCS_AUDIT_UNKNOWN_FLAG: <token> is not a flag of /docs-audit.` **All three of this step's stops are exceptions to the stop route**, with step 2's Cancel: they fire before step 2 resolves anything, so there is no repository to report against and nothing to file a cost entry to — the stop is printed and the run ends there, which is the exception Phase 9 states from the other end. The rule is general, not a list: `resolve-docs-repo` rung 1 takes the first positional token **as given**, with no signal test, so a mistyped `--dryrun` would become the resolved repository and Phase 5 would write `--dryrun/.dev-workflows/docs-backlog.yml`. That includes `--docs` and `--no-docs`, which this command deliberately does not have — **it resolves no documentation grounding**, see step 7 for why.
 
@@ -82,20 +84,22 @@ Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-rout
 
 `/docs-audit` is **SIGNIFICANT**. It is a cross-cutting synthesis of every scanned repository whose output steers every page anybody later writes: a surface that is not there, a unit in the wrong quadrant, or a rank resting on a reason nothing supports is copied forward into prose and is expensive and silent by the time anybody notices. A wrong backlog has a large blast radius. State the classification and a one-line reason.
 
-**The review gate is Opus regardless of class.** D17 and D20: every artefact-writing command of the docs-workflow family the 2026-08-29 design's §4 table lists (`/docs-init`, `/docs-brand`, `/docs-audit` and the artefact-writing commands that design plans after them — **not** every command in this plugin: `/document` in direct mode takes a style check and no review gate, `/release-notes` a light gate, `/docs-profile` no review gate at all, and `/docs-serve` writes no artefact and runs none) passes a high-tier review with no tiering by unit. Record a `model_routing` block:
+**The review gate is Opus regardless of class, unless `run_flags.enforced_model` is set (§10, which pins the reviewer dispatch to the enforced id instead).** D17 and D20: every artefact-writing command of the docs-workflow family the 2026-08-29 design's §4 table lists (`/docs-init`, `/docs-brand`, `/docs-audit` and the artefact-writing commands that design plans after them — **not** every command in this plugin: `/document` in direct mode takes a style check and no review gate, `/release-notes` a light gate, `/docs-profile` no review gate at all, and `/docs-serve` writes no artefact and runs none) passes a high-tier review with no tiering by unit. Record a `model_routing` block:
 
 ```yaml
 model_routing:
   classification: SIGNIFICANT
   reason: "cross-cutting synthesis of every scanned repository; the backlog steers every page written from it"
   current_model: <the model this orchestrator is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+  defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # code-scanner, docs-auditor, impl-maintenance
   review_model: <the §2 Opus chain — claude-opus-5-5, fallback per §2 — pinned regardless of classification, per D17/D20>
   opus_available: true | false
   notes: <any §2 degradation, e.g. "Opus unavailable; docs-audit-reviewer fell back to Sonnet 5">
 ```
 
-**Three of the five agents this run dispatches are pinned by their own frontmatter and take no `model:` argument** — `ia-planner` and `docs-audit-reviewer` to Opus, `docs-auditor` to Sonnet — so a dispatch override is written for none of them, and an Opus fallback is announced here and again in the final report rather than passed. The other two carry no pin and are pinned by the dispatch itself: `code-scanner` at Phase 2 and `impl-maintenance` at Phase 7, both to the detection chain above.
+**All five agents this run dispatches carry an explicit `model:` argument.** Three are pinned by their own frontmatter and take no override under ordinary routing — `ia-planner` and `docs-audit-reviewer` to Opus, `docs-auditor` to Sonnet — so each one's dispatch simply names that same pin, recorded rather than overriding anything, unless `run_flags.enforced_model` is set (§10), in which case the dispatch substitutes the enforced id there too; an Opus fallback (or the enforced id) is announced here and again in the final report. The other two carry no pin and are pinned by the dispatch itself: `code-scanner` at Phase 2 and `impl-maintenance` at Phase 7, both to the detection chain above, and both to the enforced id under §10.
 
 ---
 
@@ -105,7 +109,7 @@ model_routing:
 
 2. **`code-scanner` refuses to run without `repo_path`, at least one `capability_themes` entry, and a `context`**, so the dispatch supplies a `context` of three to five sentences saying what this scan is for: that this is a documentation coverage audit; that it is looking for **where each kind of thing lives** rather than for a defect; that an `absent` classification is a wanted answer and not a failure; and that every evidence path it returns becomes a surface's evidence in a backlog, so a path it cannot stand up is worse than a theme it classifies `absent`.
 
-3. **Dispatch one `code-scanner` per resolved repository, in a single response, capped at 4 concurrent**, pinned to the §2.1 detection chain, per `workflows-core:model-routing/classification` §8 — cited by name rather than as a bare section number, because that file's own §8.5 is not the only §8.5 a reader could land on. Pass `refresh: { switch_to_default_branch: true, pull: true }`: a coverage denominator is a claim about the product as it ships, so the scan reads the default branch, and a read-only mount reaches neither of those and scans at `prep.scanned_ref` instead (`workflows-core:read-only-repos`). Record each return's `prep.scanned_ref`, with the repository's name and path and the time of the scan, into `sources[]` for the file Phase 5 writes — `{ repo, path, ref, scanned_at }`, the four fields `backlog-format.md` §1 fixes for a source and no others. **Where the confirmed set is empty this phase dispatches nothing and says so** — Phase 0 step 6 has already established that the specs tree is there to supply the two kinds it owns, so an empty set here is a specs-only audit and not a failure.
+3. **Dispatch one `code-scanner` per resolved repository, in a single response, capped at 4 concurrent**, pinned to the §2.1 detection chain (`model: <detection_model — §2.1 chain; under §10, run_flags.enforced_model>`), per `workflows-core:model-routing/classification` §8 — cited by name rather than as a bare section number, because that file's own §8.5 is not the only §8.5 a reader could land on. Pass `refresh: { switch_to_default_branch: true, pull: true }`: a coverage denominator is a claim about the product as it ships, so the scan reads the default branch, and a read-only mount reaches neither of those and scans at `prep.scanned_ref` instead (`workflows-core:read-only-repos`). Record each return's `prep.scanned_ref`, with the repository's name and path and the time of the scan, into `sources[]` for the file Phase 5 writes — `{ repo, path, ref, scanned_at }`, the four fields `backlog-format.md` §1 fixes for a source and no others. **Where the confirmed set is empty this phase dispatches nothing and says so** — Phase 0 step 6 has already established that the specs tree is there to supply the two kinds it owns, so an empty set here is a specs-only audit and not a failure.
 
 4. **Handle every status the agent can return rather than assuming `OK`.** `workflows-core:handoff/code-scanner` fixes six:
 
@@ -140,7 +144,7 @@ model_routing:
 
 ## Phase 3 — Enumerate surfaces (`docs-auditor`)
 
-→ Agent (subagent_type: "docs-workflows:docs-auditor"):
+→ Agent (subagent_type: "docs-workflows:docs-auditor", model: `<detection_model — §2.1 Sonnet chain, equal to docs-auditor's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as detection_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "Enumerate this product's documentation surfaces. The brief is the one `${CLAUDE_PLUGIN_ROOT}/references/handoff/docs-auditor.md` fixes:
   >
   > repos: [one entry per scanned repository — its `repo`, `repo_path`, `status`, `prep` block and `capability_map[]`, exactly as `code-scanner` returned them, with round 2's narrowed answers folded into the theme they settled]
@@ -158,7 +162,7 @@ model_routing:
 
 ## Phase 4 — Type and prioritise (`ia-planner`)
 
-→ Agent (subagent_type: "docs-workflows:ia-planner"):
+→ Agent (subagent_type: "docs-workflows:ia-planner", model: `<review_model — §2 Opus chain, equal to ia-planner's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "Plan the documentation units these surfaces earn. The brief is the one `${CLAUDE_PLUGIN_ROOT}/references/handoff/ia-planner.md` fixes:
   >
   > surfaces: [`docs-auditor`'s `surfaces[]`, verbatim — every field as it returned them, `volatility: unknown` included]
@@ -226,7 +230,7 @@ This phase assembles the file. **It is where the backlog is first written to dis
 
 The backlog steers every page anybody later writes, so it is reviewed before anybody writes from it (D17). Dispatch `docs-audit-reviewer`, pinned to Opus by its own frontmatter:
 
-→ Agent (subagent_type: "docs-workflows:docs-audit-reviewer"):
+→ Agent (subagent_type: "docs-workflows:docs-audit-reviewer", model: `<review_model — §2 Opus chain, equal to docs-audit-reviewer's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "Review the documentation backlog this run wrote:
   >
   > Task description: [/docs-audit run against <top> — <an initial run | a --refresh run>, --audience <value>, threshold <n>, <N> source repositories scanned]
@@ -269,7 +273,13 @@ A **BLOCKER** left deferred — neither fixed nor proceeded past — stops the r
 (Three shapes of run reach this report having written no backlog, and they do **not** fill it in the same way. A **Phase 0 stop or the step-8 Cancel** happened before anything was scanned: Target reports what was resolved and why the run ended, and Sources, Surfaces, Units, Coverage, Top 20 units, Reconciliation and Review all read `N/A — ended at <the stop or the Cancel>`. A **`NO_SURFACES`** return did scan: Sources and Surfaces are filled in full, with `kinds[]` and the unresolved themes saying why nothing was enumerated, and only Units, Coverage, Top 20 units, Reconciliation and Review read `N/A — NO_SURFACES`. A **stop at Phase 3, 4 or 5.5** fills every section the run reached and reads `N/A — ended at <the stop>` below it. The Next step says what to do about it in all three.)
 
 ### Classification
-SIGNIFICANT — cross-cutting synthesis of every scanned repository; the backlog steers every page written from it (review gate is Opus regardless, D17/D20)
+SIGNIFICANT — cross-cutting synthesis of every scanned repository; the backlog steers every page written from it (review gate is Opus regardless, D17/D20, unless run_flags.enforced_model is set — §10)
+
+### Model Routing
+Detection model (§2.1): <detection_model>   Review model (§2): <review_model>   Notes: <any §2 fallback, or "none">
+Opus available: <true | false>
+[Under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` in place of the Detection model / Review model line above — every dispatched step already carries the enforced id, per `workflows-core:model-routing/classification` §10. `Opus available` is unaffected by enforcement (§10: a property of the environment, not of the enforcement choice) and is reported on its own line exactly as it stands.]
+Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` skip line is Phase 7's own output; the `Session cost: …` skip line is Phase 9's own output, printed after this report and not restated in it.]
 
 ### Target
 Docs repo: <resolved directory>  (resolved via: <which resolve-docs-repo rung answered>)
@@ -331,7 +341,9 @@ Not checked: <any dimension or half-dimension an absent input left unchecked, as
 
 Terminal phase — runs AFTER the Phase 6 report; NEVER interrupts an earlier phase.
 
-1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5>`):
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 3's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
+
+1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5; under §10, run_flags.enforced_model>`):
    > "Analyse this session and return a Lessons Learned report.
    >
    > Session handoff:
@@ -363,9 +375,11 @@ ADDITIVE — this phase NEVER fails the run, NEVER commits, and NEVER writes int
 
 ## Phase 9 — Session cost
 
-Terminal phase — the final operational phase; runs after Phase 8 and NEVER interrupts an earlier phase. Records this command's token-cost contribution by invoking `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and calling its single `emit-cost` entry point. **Cost ALWAYS runs once Phase 0 step 2 has resolved the documentation repository** — on a completed run, on the Phase 0 step 8 Cancel, on a `NO_SURFACES` return, and on every one of this command's `DOCS_AUDIT_*` stops from step 2 onward, each of which routes itself here at its own site rather than relying on this sentence to be read from a phase it never reached. **Two kinds of run are the exception, and they are stated rather than left to be inferred** — Phase 0 step 1's three stops, and a Cancel at step 2's `resolve-docs-repo` choice: a rejected flag or flag value, or a ladder the operator abandoned, ends the run before any repository is resolved, so there is no target to file an entry against and a few tokens to attribute; the stop is printed and nothing is emitted.
+Terminal phase — the final operational phase; runs after Phase 8 and NEVER interrupts an earlier phase. Records this command's token-cost contribution — through `emit-cost`, or, under `run_flags.skip_costs`, by advancing the checkpoint alone. **Cost ALWAYS runs once Phase 0 step 2 has resolved the documentation repository — unless `run_flags.skip_costs` (see below)** — on a completed run, on the Phase 0 step 8 Cancel, on a `NO_SURFACES` return, and on every one of this command's `DOCS_AUDIT_*` stops from step 2 onward, each of which routes itself here at its own site rather than relying on this sentence to be read from a phase it never reached. **Two kinds of run are the exception, and they are stated rather than left to be inferred** — Phase 0 step 1's three stops, and a Cancel at step 2's `resolve-docs-repo` choice: a rejected flag or flag value, or a ladder the operator abandoned, ends the run before any repository is resolved, so there is no target to file an entry against and a few tokens to attribute; the stop is printed and nothing is emitted.
 
-Call `emit-cost` with `command: /docs-audit`, `phase: docs-audit`, `role: dev` — a **fixed** pair (`workflows-core:cost-emission` §7), never `inferred`. Pass `key: null`, `source: none`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). No PRD dir ever resolves here, and `cost-emission.md` §8 rung 2's documentation branch applies: the entry lands at `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/cost/<sid8>.md` rather than in the pending queue (design D19), `<docs-repo-slug>` being the same `workflows-core:specs-repo-git` §2.1 name Phase 7 used. **Per docs repo, not one flat bucket** — a person documenting two products must still be able to answer what auditing each one cost — and the inner `dev-workflows/` names the *family*, not the plugin.
+**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way.
+
+Otherwise (not skipping), invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call `emit-cost` with `command: /docs-audit`, `phase: docs-audit`, `role: dev` — a **fixed** pair (`workflows-core:cost-emission` §7), never `inferred`. Pass `key: null`, `source: none`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). No PRD dir ever resolves here, and `cost-emission.md` §8 rung 2's documentation branch applies: the entry lands at `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/cost/<sid8>.md` rather than in the pending queue (design D19), `<docs-repo-slug>` being the same `workflows-core:specs-repo-git` §2.1 name Phase 7 used. **Per docs repo, not one flat bucket** — a person documenting two products must still be able to answer what auditing each one cost — and the inner `dev-workflows/` names the *family*, not the plugin.
 
 **Then write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` §1. With no PRD dir, entry 2 of its **Location** ladder applies: skip the file, rely on the printed `### Next step`. This command is **not** on that section's *Skipped* list and does not belong there — that list exempts runs which do resolve a folder and still write no pointer, and this one never resolves a PRD folder at all, which the Location ladder already answers.
 
@@ -393,7 +407,7 @@ Call `emit-cost` with `command: /docs-audit`, `phase: docs-audit`, `role: dev` �
 - ALWAYS report both `surface: null` counts — how many units carry no surface, and how many of those carry no `journey` either
 - NEVER create a branch or a commit in the documentation repository; the backlog is left in the working tree for the operator, and the terminal `commit-artifacts` step is `$SPECS_PATH`'s alone
 - NEVER force-add the backlog past a project `.gitignore` rule — report the path, the line and its file, write the file, and say it is not committable until that rule changes (`backlog-format.md` §6)
-- ALWAYS dispatch `docs-audit-reviewer` at Opus (D17, D20 — no tiering by unit) over the written file, and ALWAYS tell it which inputs were absent, so a degraded half is reported as unchecked rather than as a pass
+- ALWAYS dispatch `docs-audit-reviewer` over the written file at Opus (D17, D20 — no tiering by unit) unless `run_flags.enforced_model` is set (§10 enforces a model, and the dispatch then carries that id instead), and ALWAYS tell it which inputs were absent, so a degraded half is reported as unchecked rather than as a pass
 - ALWAYS triage its findings (`workflows-core:finding-triage`) before applying anything; there is NO backlog fixer (D25) — the orchestrator applies survivors itself, bound by the patch gate, surfaces a survivor it cannot safely patch, and runs NO re-review
 - NEVER dispatch `docs-grounder`, and NEVER parse `--docs` or `--no-docs`: none of `workflows-core:docs-grounding`'s **three** consumption modes applies — this command runs no grill (grill-rank), authors no prose (writer-attach), and has nothing downstream of a lead (lead-only), since a surface may be enumerated only from a scanner's `capability_map[]` or the specs inventory. Phase 5's reconcile opens the documentation repository directly and matches by `unit:` key, which is a read against a known set of ids and not a retrieval
 - ALWAYS use `choices` arrays for a genuine decision point; 2–4 options, and NEVER author an "Other" option — the harness supplies the free-text escape itself. Where the candidate set is unbounded (Phase 0's repository listing), print every candidate as prose first and keep the array fixed-arity over the *disposition*, resolving a typed answer against the list just printed rather than parsing it (`workflows-core:epic-picker` *The cap*)

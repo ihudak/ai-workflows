@@ -6,9 +6,13 @@ allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
 
 Fix security vulnerabilities: $ARGUMENTS
 
+Usage: `/vuln <ADDRESS:CVE-ID|CVE-ID> [<ADDRESS:CVE-ID|CVE-ID>…] [--skip-feedback] [--enforce-model=<model>]`
+
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
-Each argument token is either `ADDRESS:CVE-ID` (e.g. `PROJ-2423:CVE-2023-46604`) or a bare `CVE-ID` (e.g. `CVE-2023-46604`). Parse and filter each token, research all CVEs first, then fix them one at a time.
+**Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
+
+Each remaining argument token is either `ADDRESS:CVE-ID` (e.g. `PROJ-2423:CVE-2023-46604`) or a bare `CVE-ID` (e.g. `CVE-2023-46604`). Parse and filter each token, research all CVEs first, then fix them one at a time.
 
 ---
 
@@ -59,9 +63,11 @@ task(
     classification: MODERATE
     reason: <one-line>
     current_model: <the model this orchestrator is running under>
+    enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+    defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
     detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # vuln-research; vuln-fixer (SIMPLE/MODERATE); review-fixer
     planning_model: <§2 Opus chain>   # vuln-fixer escalates here only if HIGH-RISK
-    review_model:  <§2 Opus chain>    # code-review (frontmatter-pinned; recorded, no override)
+    review_model:  <§2 Opus chain>    # code-review (frontmatter-pinned; recorded, no override unless §10 enforces a model)
     opus_available: <true if a §2 Opus model resolved, else false>
     gate_tests_on_review: false
     notes: <any §2 / §2.1 fallback or degradation>"
@@ -132,6 +138,7 @@ task(
   prompt: "## Vuln Fix Request
   repo: [absolute repo path]
   phase: full
+  enforced_model: [run_flags.enforced_model, or omit]
   baseline_tests: provided
   baseline_passing: [captured count]
   baseline_block: |
@@ -146,9 +153,11 @@ task(
     classification: [MODERATE]
     reason: <one-line>
     current_model: <the model this orchestrator is running under>
+    enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+    defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
     detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # vuln-research; vuln-fixer (SIMPLE/MODERATE); review-fixer
     planning_model: <§2 Opus chain>   # vuln-fixer escalates here only if HIGH-RISK
-    review_model:  <§2 Opus chain>    # code-review (frontmatter-pinned; recorded, no override)
+    review_model:  <§2 Opus chain>    # code-review (frontmatter-pinned; recorded, no override unless §10 enforces a model)
     opus_available: <true if a §2 Opus model resolved, else false>
     gate_tests_on_review: false
     notes: <any §2 / §2.1 fallback or degradation>
@@ -167,7 +176,7 @@ a fresh research pass — that would re-derive the evidence instead of surfacing
 Otherwise, if the fixer returns `status: TEST_REGRESSION`, follow "Handling Test Failures"
 below, then re-invoke `vuln-fixer` with `phase: regression-resume` + the chosen
 `regression_decision`, passing the same CVE input with the original research report
-re-supplied from `research_file`.
+re-supplied from `research_file`, and the same `enforced_model:` where the first dispatch carried one.
 
 If the resumed agent returns `status: BLOCKED`, the re-supplied file path could not be read:
 report the named path to the user and stop this CVE. Do NOT retry, and do NOT reconstruct
@@ -188,6 +197,7 @@ task(
   prompt: "## Vuln Fix Request
   repo: [absolute repo path]
   phase: full
+  enforced_model: [run_flags.enforced_model, or omit]
   baseline_tests: provided
   baseline_passing: [captured count]
   baseline_block: |
@@ -202,9 +212,11 @@ task(
     classification: [SIGNIFICANT | HIGH-RISK]
     reason: <one-line>
     current_model: <the model this orchestrator is running under>
+    enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+    defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
     detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # vuln-research; vuln-fixer (SIMPLE/MODERATE); review-fixer
     planning_model: <§2 Opus chain>   # vuln-fixer escalates here only if HIGH-RISK
-    review_model:  <§2 Opus chain>    # code-review (frontmatter-pinned; recorded, no override)
+    review_model:  <§2 Opus chain>    # code-review (frontmatter-pinned; recorded, no override unless §10 enforces a model)
     opus_available: <true if a §2 Opus model resolved, else false>
     gate_tests_on_review: true
     notes: <any §2 / §2.1 fallback or degradation>
@@ -215,7 +227,7 @@ task(
 
 3. **Handle a `vuln-fixer` stop.** If the fixer returns `status: BLOCKED`, the research report at `research_file` could not be read — an orchestrator bug, not a user choice: report the unreadable path to the user, mark this CVE `BLOCKED` in the Step 4 summary table, and stop working this CVE (do not retry with a fresh research pass, and do not proceed to Opus review). **Any other first-call return on this path stops this CVE short of the review, and is not run through it** — `BUILD_FAILED` is the reachable one, the fixer having reverted its own change at step 4 — so record the returned status in the Step 4 table, let Step 3.9 decide the handoff by its own tree test rather than by the label, and move to the next CVE. **`AWAITING_REVIEW` is the only return this path's review dispatch fires on**, which is what makes that dispatch safe to write as a single arm; it is also why `vuln-fixer`'s step 1 must never let a baseline status end a gated call in some other state. Otherwise, if the fixer returns `AWAITING_REVIEW`, run Opus code review before tests:
    - Capture the diff to a temp file: write `git add -N . && git diff` to `command mktemp -t dw-vuln-diff-XXXXXX` (never inside a repo tree) and record its path as `review_diff_file`
-   - Write the fixer output to a temp file (`command mktemp -t dw-vuln-claims-XXXXXX`, never inside a repo tree) and record its path as `claims_file`. Invoke `code-review` with the CVE summary, the research handoff (from `research_file`), the diff (from `review_diff_file`), and `claims_file: [the path]` (frontmatter-pinned to Opus; recorded as `review_model` above, no `model:` override needed)
+   - Write the fixer output to a temp file (`command mktemp -t dw-vuln-claims-XXXXXX`, never inside a repo tree) and record its path as `claims_file`. Invoke `code-review` with the CVE summary, the research handoff (from `research_file`), the diff (from `review_diff_file`), `claims_file: [the path]`, and `model: <review_model — §2 Opus chain, equal to code-review's frontmatter pin; under §10, run_flags.enforced_model>` (frontmatter-pinned to Opus; recorded as `review_model` above, no override unless §10 enforces a model)
    - **Check the review's first line before acting on the verdict.** If it is `Diff: unreadable at <path>`, the orchestrator's own `review_diff_file` could not be read — an orchestrator bug, not a user choice: surface the unreadable path to the user and stop working this CVE, marking it `BLOCKED` in the Step 4 summary table. Do NOT triage the finding and do NOT dispatch `review-fixer`: the finding names a capture failure no fixer can act on, and running the cycle would spend a fix dispatch and a re-review to arrive back here.
    - **Triage sub-step** (before any fixer dispatch): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep or dismiss; record every dismissal with a reason that disposes of that finding's own claim. Hand the fixer **survivors only**, and carry the dismissal list into this run's report.
    - If review returns `BLOCK` or `PASS WITH RECOMMENDATIONS`, invoke `review-fixer` with model: `<detection_model — §2.1 Sonnet chain>` for the surviving `BLOCKER` and `MAJOR` findings
@@ -223,12 +235,12 @@ task(
    - If the second verdict is still `BLOCK`, stop and escalate; do not continue to tests. Run Step 3.9 with `clean_finish: false` — same reasoning as the `NEEDS HUMAN` stop above: the work is committed, pushed behind §2.4's consent choice, and any pull request that choice opens is a draft the banner says not to merge
    - **The recorded verdict names the version it was taken against.** Both the resumed verify step below and any regression fix that follows it change the tree after the review that produced this verdict, so the run's report states what the verdict covers and names the edits that followed it, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where nothing followed it, it says that too.
 
-4. **Resume the fixer after review** — Re-invoke `vuln-fixer` with `phase: verify-resume`, **the same `repo:` this CVE's first dispatch carried**, the same baseline block, the same `command_hint:` where one was recorded, and the original research report re-supplied from `research_file`. **`repo:` is not optional on a resume**: this is the call that reaches step 5, and step 5's verify takes its `Project root:` from it with no working-directory fallback, so a resume that omits it leaves verify rooted wherever the shell happens to be and every marker path disagreeing with the baseline's. If the resumed agent returns `status: BLOCKED`, the re-supplied file path could not be read: report the named path to the user and stop this CVE. Do NOT retry, and do NOT reconstruct the artifact — a resume that re-derives its own input is the failure `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`'s read-failure contract exists to prevent.
+4. **Resume the fixer after review** — Re-invoke `vuln-fixer` with `phase: verify-resume`, **the same `repo:` this CVE's first dispatch carried**, the same baseline block, the same `command_hint:` where one was recorded, the original research report re-supplied from `research_file`, and the same `enforced_model:` where step 2's dispatch carried one. **`repo:` is not optional on a resume**: this is the call that reaches step 5, and step 5's verify takes its `Project root:` from it with no working-directory fallback, so a resume that omits it leaves verify rooted wherever the shell happens to be and every marker path disagreeing with the baseline's. If the resumed agent returns `status: BLOCKED`, the re-supplied file path could not be read: report the named path to the user and stop this CVE. Do NOT retry, and do NOT reconstruct the artifact — a resume that re-derives its own input is the failure `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`'s read-failure contract exists to prevent.
 
 5. **If the fixer returns `status: TEST_REGRESSION`** (from step 4's resumed verify), follow
    "Handling Test Failures" below, then re-invoke `vuln-fixer` with `phase: regression-resume` +
-   the chosen `regression_decision`, the same `repo:`, the same baseline block, and the original research report
-   re-supplied from `research_file`. If the resumed agent returns `status: BLOCKED`, the re-supplied file path could not be read: report the named path to the user and stop this CVE. Do NOT retry, and do NOT reconstruct the artifact — a resume that re-derives its own input is the failure `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`'s read-failure contract exists to prevent.
+   the chosen `regression_decision`, the same `repo:`, the same baseline block, the original research report
+   re-supplied from `research_file`, and the same `enforced_model:` where step 2's dispatch carried one. If the resumed agent returns `status: BLOCKED`, the re-supplied file path could not be read: report the named path to the user and stop this CVE. Do NOT retry, and do NOT reconstruct the artifact — a resume that re-derives its own input is the failure `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`'s read-failure contract exists to prevent.
 
 
 ### Step 3.9 — Code-repo handoff (both paths, once per CVE)
@@ -293,9 +305,13 @@ Name each suite and its command, or leave the cell empty where the run verified 
 
 **Where the run recorded `baseline_unverified`, state it once above the table** — the capture failure that produced it, whether it was the operator's own answer or the run's own record after two failed `command_hint` attempts, and that every CVE below therefore finished unverified. That line is the flag's only reader and its whole purpose: `clean_finish` reaches `false` through `TESTS_NOT_RUN` without consulting it, so without this the run would have recorded a decision nothing ever surfaces, and the table would show a column of `TESTS_NOT_RUN` with no statement of why.
 
-Append a `### Model Routing` section summarising the per-CVE classification, why it was chosen, the models used, and any Opus review verdicts.
+Append a `### Model Routing` section summarising the per-CVE classification, why it was chosen, the models used, and any Opus review verdicts. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10), the per-CVE models-used line reads `Model routing: bypassed — enforced <id> (flag|env)` instead.
 
 Append a `### Review triage` section with one line per CVE that went through Opus review: - **Review triage:** [N findings reviewed, M survived] — dismissals: [one line per dismissal, `finding — reason`; or "none"] — or "N/A (SIMPLE / MODERATE path, no Opus review)" for CVEs that never reached review.
+
+Also repeat the `Run flags: …` line whenever the run-flags strip at the top of this command printed one during this run (`workflows-core:run-flags` §6).
+
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` in place of the `impl-maintenance` dispatch below, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto` below, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of the persisted-path line below. Capture-at-block (`emit-block`) is unaffected by the flag.
 
 Then invoke `impl-maintenance` (subagent_type: `"workflows-core:impl-maintenance"`, model: `<detection_model — §2.1 Sonnet chain>`) with a compact session handoff covering the CVEs fixed, notable regressions, workarounds, and overall outcome. **Always pass `Command run: /vuln`** in that handoff — omitting it makes `impl-maintenance` default to `/implement`, mislabeling the run.
 
@@ -385,12 +401,13 @@ All three are Step 3.9's, through `finish-code-branch` (`${CLAUDE_PLUGIN_ROOT}/r
 
 ## Invariants (always enforced)
 
-- ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation)
+- ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 - ALWAYS classify **per CVE** after research
 - NEVER use Opus for a `MODERATE` fix unless the user explicitly asks for it
 - NEVER run tests for a `SIGNIFICANT` / `HIGH-RISK` CVE before the Opus review returns a non-BLOCK verdict
 - ALWAYS capture the test baseline **once per run, at the orchestrator, before the first CVE is worked** — on both paths, `vuln-fixer` never capturing one of its own; and where that capture returns `RUN_FAILED` or `COMMAND_NOT_FOUND`, **ask the operator rather than deciding it** (Step 3), before anything is branched or edited and while a baseline can still be taken. A `NO_TESTS` capture is not that state and is never asked about
 - ALWAYS pass the captured baseline block back to `vuln-fixer` on `phase: verify-resume`
+- ALWAYS re-supply the same `enforced_model:` on every `verify-resume` / `regression-resume` re-invocation of `vuln-fixer` where the first dispatch carried one — the nested `test-baseliner` dispatch inside it needs it on every call, not only the first
 - NEVER read a verify report as a pass while its `### New failures` list is non-empty — a New failure moves no `test-baseliner` `Status`, so `OK` and `PARTIAL` are both reachable with a red suite (`dev-workflows:test-baseliner` verify step 6). The list is read **beside** the `Status`, never instead of it: the `Status` arm's own return stands, the failures are named test by test in the Step 4 `Notes` cell, and the CVE finishes `clean_finish: false`
 - ALWAYS run Step 3.9 (`finish-code-branch`, per `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md`) after a CVE's last fixer return — the commit is prompt-free (§1 rule 5), §2.4's choice is asked once and reused for every later CVE **except where one of §2.4's own two triggers re-asks it**, and a CVE whose fix is on disk is never left uncommitted
 - NEVER let `vuln-fixer` commit, push, or open a pull request — it creates the branch and applies the fix; the orchestrator owns the handoff, because the consent choice behind it is one a subagent cannot ask

@@ -166,6 +166,8 @@ Candidates come from the set, so nothing in a branch name can *become* a key and
 
 A key re-derived by pattern is a key nothing in the tree ever asserted.
 
+The worked example: `workflows-core:specs-repo-git` §3.5's `branch-key` strips the plugin prefix, then tests the remainder against the keys the run already holds — a key counting as a candidate only where the remainder is exactly it or continues with `-` or `_`, longest candidate winning.
+
 ## claim-expiry-sweep
 
 Eleven such sentences were retired in 3.3.0, sitting in ten files — four commands, three references and three documentation pages — and the count grew from six to eleven only because successive agents walked the tree instead of trusting the list they were handed.

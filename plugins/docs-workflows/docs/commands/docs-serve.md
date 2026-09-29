@@ -12,6 +12,8 @@ Starts, stops, or checks a profiled documentation repository's dev server, and r
 /docs-serve [<docs-repo-path>] [--internal] [--stop] [--status] [--build] [--port <n>]
 ```
 
+None of the three run flags apply to this command — it dispatches no `impl-maintenance`, calls no `emit-cost`, and invokes no `workflows-core:model-routing` — but `strip-run-flags` still runs first in Phase 0, so an explicit `--skip-costs`, `--skip-feedback` or `--enforce-model` is recognized and reported ignored rather than misread as the docs-repo path or one of this command's own flags.
+
 Every recognized flag is stripped from `$ARGUMENTS` before the remaining token is read as the optional docs-repo path (Phase 0). `--status`, `--stop`, and `--build` each select a short-circuit mode (Mode dispatch); with none of the three, the command resolves the repo's `dev_servers` profile and serves it. `--internal` selects the internal build's server where the profile distinguishes one, and stops where the profile tags a public server but no internal one — a `--public-only` scaffold — rather than serving the public build in its place; `--port <n>` serves on `<n>`: the port reaches the server only through the `{port}` token in the profile's recorded command, which every run replaces with the port it serves on and which is the only part of a command ever rewritten. On a command without the token — a fixed-port one — `--port` stops rather than start a server that binds elsewhere.
 
 ## What it needs

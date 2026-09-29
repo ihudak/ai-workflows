@@ -6,7 +6,7 @@ Cost attribution is one of the subsystems this plugin exists to hold: `reference
 
 Every cost-emitting command passes a `phase` and a `role` label at the point it calls the shared entry point, and `references/cost-emission.md` §7 carries one attribution row per command. A command that cannot label itself in advance passes `phase: inferred, role: inferred` and lets the cost phase resolve the real values from the run's own context.
 
-Five commands emit a cost entry here: `/feedback`, `/frames`, `/prompt`, `/prompt-brainstorm` and `/prompt-grill-me`. None of the five carries a fixed pair — each infers, either from the folder it resolved (`/frames`) or from the target command it is correcting (the other four). [Roles and phases](../roles-and-phases.md) says what those resolved labels mean. `/statusline` is the one command in this plugin that emits nothing: it sets a configuration value rather than running a task.
+Five commands emit a cost entry here, unless `--skip-costs` ([below](#skipping-cost---skip-costs)): `/feedback`, `/frames`, `/prompt`, `/prompt-brainstorm` and `/prompt-grill-me`. None of the five carries a fixed pair — each infers, either from the folder it resolved (`/frames`) or from the target command it is correcting (the other four). [Roles and phases](../roles-and-phases.md) says what those resolved labels mean. `/statusline` is the one command in this plugin that emits nothing: it sets a configuration value rather than running a task.
 
 ## How cost is computed
 
@@ -18,7 +18,7 @@ The window a figure covers is **chained, not fixed**: a small local checkpoint f
 
 ## Spend a command cannot measure itself
 
-`/prompt-brainstorm` and `/prompt-grill-me` hand control to something else at their Phase 3 — a brainstorming skill, or a long interactive grill — and never get it back. Neither can run a cost phase after its own expensive work, because there is no "after" that it controls, and one placed before the hand-off would price the logging prologue alone. So the run that cedes records the labels it would have claimed into a local, transient, never-committed file beside the checkpoint, and **the next cost-emitting run in the session writes the entry on its behalf** (`references/cost-emission.md` §13).
+`/prompt-brainstorm` and `/prompt-grill-me` hand control to something else at their Phase 3 — a brainstorming skill, or a long interactive grill — and never get it back. Neither can run a cost phase after its own expensive work, because there is no "after" that it controls, and one placed before the hand-off would price the logging prologue alone. So the run that cedes records the labels it would have claimed into a local, transient, never-committed file beside the checkpoint, and **the next cost-emitting run in the session writes the entry on its behalf** (`references/cost-emission.md` §13). **`--skip-costs` stops that entry from either side**: a ceding run under the flag marks its record `skip`, so the replaying run still carves the segment out of its own window and then writes nothing for it, and a replaying run under the flag drops every pending record unreplayed, naming each in its output.
 
 The boundary between the two runs is not guessed. A transcript already records every slash-command invocation, so the replaying run splits its own measurement window: the ceded run gets the segment from its own invocation to the next command of any kind, and everything else stays with the replaying run. The slices are disjoint and sum to what that run would otherwise have claimed whole.
 
@@ -27,6 +27,12 @@ Two details there are doing real work. The ceded run is found **by name**, not b
 The replaying run may be in **another plugin**, and usually is: the deferred claim is resolved from whichever cost-emitting command runs next in the session, wherever it ships from.
 
 **But only from a command of this family, and that boundary is the point.** A claim is matched against a manifest of the family's own `<plugin>:<command>` names, and a command from any other marketplace matches nothing in it. Such a command still **ends** the open window — its spend is its own and is never absorbed into somebody else's figure — while remaining unclaimable, so a deferred claim it interrupts is reported as unmatched and dropped rather than attached to it. The discipline errs the safe way in both directions: the worst outcome is a claim you can see was not resolved, never one command's spend quietly filed under another's phase. Before the manifest existed the rule was `<this plugin>:<this plugin's command>`, resolved against a single plugin — which, once the family spanned four, made a *sibling's* run between a cede and its replay invisible and let the claim swallow it whole.
+
+## Skipping cost (`--skip-costs`)
+
+Under `--skip-costs` (or `$WORKFLOWS_SKIP_COSTS`), the cost phase never calls `emit-cost` and never loads `references/cost-emission.md` — it runs `references/run-flags.md`'s `skip-cost` entry point instead. The checkpoint (see above) still advances exactly as a full run would, so the next command's window is still measured from the right place; nothing else happens. No cost entry is written, no pending file, and no reconciliation offer. Any deferred record left by a prior `/prompt-brainstorm` or `/prompt-grill-me` run — waiting to be replayed into this run's entry — is dropped instead: the skipping run prints `cost attribution for <command> dropped (--skip-costs)` once per record, then deletes the file, since a checkpoint that has already advanced past those records' boundaries could never match them anyway. `/prompt-brainstorm` and `/prompt-grill-me` never run `skip-cost` themselves — both cede the session before a cost phase could run at all — so under this flag each instead writes its own deferred record with `"skip": true`; the replaying run still carves the ceded segment out of its own window for correct attribution, then discards it rather than writing an entry for it.
+
+The run reports `Session cost: skipped (--skip-costs)` or `Session cost: skipped (WORKFLOWS_SKIP_COSTS)`, naming whichever set it, in place of the usual persisted-path line.
 
 ## Where cost files land
 

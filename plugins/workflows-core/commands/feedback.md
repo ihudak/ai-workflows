@@ -1,7 +1,7 @@
 ---
 name: feedback
 description: Log a manual note about this plugin family itself — friction you hit or an improvement you want — to the per-PRD feedback file in the specs repo, for the plugin maintainer to aggregate. Tied to no command; run any time.
-allowed-tools: Read Edit Write Bash Glob Grep
+allowed-tools: Read Edit Write Bash Glob Grep Skill
 ---
 
 Log session feedback about this plugin family: $ARGUMENTS
@@ -16,9 +16,13 @@ This command captures signal about **the plugin**, not about your target
 project. Target-project tooling advice does not belong here (see
 `${CLAUDE_PLUGIN_ROOT}/references/feedback-emission.md` §4).
 
+Usage: `/feedback [<note>] [--skip-costs]`
+
 ---
 
 ## Phase 0 — Specs-repo preflight
+
+**Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Because this command's argument is free prose kept verbatim, a run-flag token is stripped only before or after the note, never inside it (`workflows-core:run-flags` §3 step 1) — stripping consumes a **leading run** of run-flag tokens up to the first token that is neither a run flag nor the value of a preceding `--enforce-model`, plus a **trailing run** — the longest suffix of `$ARGUMENTS` that parses left to right as complete run-flag tokens, a trailing `--enforce-model <value>` pair counting as one unit and consuming whatever token follows it (§1) — at the very end; everything between is the note text, kept exactly as typed even where it contains a flag name. This command dispatches no `impl-maintenance` and invokes no model-routing skill, so an explicit `--skip-feedback` or `--enforce-model` fails `strip-run-flags`' applicability test and is reported `Run flags: --<flag> does not apply to /feedback — ignored`; only `--skip-costs` applies.
 
 Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
 `specs-preflight` entry point (§3) inline: flush any leftover session
@@ -34,7 +38,7 @@ on its default branch. If a guard fires, emit its §5 notice; if it returns
 
 ## Phase 1 — Compose the note
 
-1. If `$ARGUMENTS` is empty, ask the user for the note (the friction and the
+1. `$ARGUMENTS` here is Phase 0's stripped string (leading and trailing runs only — see above), so it may still contain a flag-shaped token if you wrote one inside the note itself. If it is empty, ask the user for the note (the friction and the
    improvement they want). Do not guess.
 2. From the user's text, author two prose blocks — you may lightly tidy wording
    but never invent content the user did not express:
@@ -52,7 +56,7 @@ supplies the free-text escape):
   `${CLAUDE_PLUGIN_ROOT}/references/feedback-emission.md` §1
   (`missing-capability`, `wrong-output`, `ambiguous-prompt`,
   `missing-reference-doc`, `model-routing`, `manual-workaround`,
-  `false-positive`, `docs-ux`, `other`); reuse an existing value when it fits.
+  `false-positive`, `docs-ux`, `environment-defect`, `other`); reuse an existing value when it fits.
   Confirm.
 - **`impact`** — `blocker | friction | polish`.
 - **`author`** — `git config user.email` run in the specs repo (best-effort;
@@ -70,7 +74,9 @@ ladder using `key` and `source`, format the entry per §1 (`origin:
 manual`), and append per §3 (manual entries are never silently skipped — on an
 `id` collision append a numeric suffix and warn). Write silently.
 
-**Then emit session cost.** Cite `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md`
+**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The terminal `commit-artifacts` step below runs unchanged either way.
+
+**Otherwise, emit session cost.** Cite `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md`
 and call its `emit-cost` entry point with `command: /feedback`, `phase: inferred`,
 `role: inferred`, `target_command: <the Phase 2 `command` metadata field, or `n/a`>`, the run's
 `key` (or `null`) and `source`, and `plugin_version`. **`target_command` is
@@ -99,7 +105,7 @@ run carries `specs_git: blocked` (§3.3 G0), re-emitting that notice. Hold its
 
 ## Phase 4 — Report
 
-Surface the persisted path and any degradation notice (e.g. the report-only tier), then the `Specs repo:` outcome line from
+Repeat the `Run flags: …` line whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6). Surface the persisted path and any degradation notice (e.g. the report-only tier, or, under `--skip-costs`, the `Session cost: …` line in its place), then the `Specs repo:` outcome line from
 `commit-artifacts` (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §6),
 with any guard notice repeated in full.
 

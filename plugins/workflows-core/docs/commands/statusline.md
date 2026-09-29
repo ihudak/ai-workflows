@@ -14,7 +14,7 @@ Installs the plugin's multi-line status line into your Claude Code settings, ena
 /workflows-core:statusline
 ```
 
-Takes no arguments. Phase 4 shows the exact settings change and asks you to confirm (`Install / Cancel / Other…`) before writing anything.
+Takes no arguments. None of the three run flags apply to this command ([`environment.md`](../reference/environment.md)) — `strip-run-flags` still runs first, so an explicit `--skip-costs`, `--skip-feedback` or `--enforce-model` is recognized and reported ignored rather than misread as a positional argument. Phase 4 shows the exact settings change and asks you to confirm (`Install / Cancel / Other…`) before writing anything.
 
 ## What it needs
 

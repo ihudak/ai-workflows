@@ -9,7 +9,7 @@ Authors a customer-facing effort proposal for one PRD folder: work packages, hou
 ## Synopsis
 
 ```
-/prd-proposal <ADDRESS> [--no-brief] [--profile] [--baseline <path>] [--redo]
+/prd-proposal <ADDRESS> [--no-brief] [--profile] [--baseline <path>] [--redo] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 `<ADDRESS>` is a key or an `@<path>` naming a `PRD-` folder — an idea-route PRD or a BRD-route slice, since a `PRD-` folder is a `PRD-` folder either way. The four flags:
@@ -18,6 +18,8 @@ Authors a customer-facing effort proposal for one PRD folder: work packages, hou
 - `--profile` — re-grill the proposal profile in full before pricing, regardless of what is on disk.
 - `--baseline <path>` — reconcile against a prior estimate at that path. It may sit outside `$SPECS_PATH` and is read strictly read-only: nothing is copied, committed or rewritten. An unreadable path stops the run naming that path.
 - `--redo` — discard the prior revision as an anchor and re-derive every figure from scratch, for when the previous estimate is known to be wrong.
+
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 12's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 12's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `proposal-reviewer` (overriding its frontmatter Opus pin), `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model, and it is also the one flag that changes a *gate*: the tiered HARD model gate does not fire under it, since the user has already chosen the model — see [Model routing](../reference/model-routing.md).
 
 A `BRD-` container is refused with `PRD_PROPOSAL_BRD_NOT_SLICED`, on the directory prefix, after the specs-repo preflight — which runs once the address resolves, on the key set that resolution gives — and before any file inside the folder is read: an effort proposal for a container is the programme umbrella rather than a slice's own estimate, and the stop names the slices beneath it, one run each.
 
@@ -66,7 +68,7 @@ Every figure in both artifacts is **hours of human delivery time**. Neither carr
 ## Gates
 
 - **The `prd.md` gate**, described under *What it needs*. It is the only hard refusal on readiness.
-- **`proposal-reviewer`** (Phase 9, Opus-pinned by frontmatter, no override) — the review gate, dispatched with both artifact paths, the profile, the resolved tier and the anchor revision where one exists. Its findings are triaged by the orchestrator before anything is edited: each finding is verified at the location it names, every dismissal is recorded with a reason that disposes of that finding's own claim, and only survivors are fixed. Cap: one fix cycle plus one re-review. The agent, its model pin, its tools and what it returns are on the `proposal-reviewer` row of [Agents](../reference/agents.md).
+- **`proposal-reviewer`** (Phase 9, Opus-pinned by frontmatter, no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one) — the review gate, dispatched with both artifact paths, the profile, the resolved tier and the anchor revision where one exists. Its findings are triaged by the orchestrator before anything is edited: each finding is verified at the location it names, every dismissal is recorded with a reason that disposes of that finding's own claim, and only survivors are fixed. Cap: one fix cycle plus one re-review. The agent, its model pin, its tools and what it returns are on the `proposal-reviewer` row of [Agents](../reference/agents.md).
 - **A structural pre-lint** runs first, as the cheap pass before the expensive one — the universal checks, identifier integrity over the `[WP#n]` and `[ED#n]` series, and required-section presence against the two section sets. Advisory, never blocking. Its auto-link collision check deliberately does **not** run here: that check is scoped to documents that get pasted into a tracker, and a proposal is sent to a customer instead.
 
 ## What it does not do

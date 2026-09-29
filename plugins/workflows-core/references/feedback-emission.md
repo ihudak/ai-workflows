@@ -1,14 +1,9 @@
 # Session Feedback Emission — Shared Reference
 
-Single source of truth for the plugin family's session-feedback emitter. Every
-capture surface — the automatic maintenance phase of all twenty-five workflow
-commands, and the `/feedback` and `/prompt*` commands — cites this file and
-executes its steps inline. The orchestrator owns every prompt; this reference
-owns the entry format, the persistence ladder, dedup/attribution, the
-plugin-facing predicate, and the caller contract.
+Single source of truth for the plugin family's session-feedback emitter. Every capture surface — the automatic maintenance phase of all twenty-five workflow commands, or, under `--skip-feedback`, its bugs-only replacement, and the `/feedback` and `/prompt*` commands — cites this file and executes its steps inline. The orchestrator owns every prompt; this reference owns the entry format, the persistence ladder, dedup/attribution, the plugin-facing predicate, and the caller contract.
 
 **Purpose.** Capture friction and improvement signals about the **plugin
-family itself** and persist them per-PRD into the **specs repo** so the plugin
+family itself**, and defects in the ai-containers environment the family runs in (§4), and persist them per-PRD into the **specs repo** so the plugin
 maintainer can aggregate feedback across engineers. Feedback reaches the
 maintainer only if it lands in the committed, pushed specs repo — hence the
 persistence ladder is **specs-first** (§2), and hence every command's terminal
@@ -83,7 +78,7 @@ back in review because the two products differ here.
   value when it fits so clusters don't fragment):
   `missing-capability`, `wrong-output`, `ambiguous-prompt`,
   `missing-reference-doc`, `model-routing`, `manual-workaround`,
-  `false-positive`, `docs-ux`, `other`.
+  `false-positive`, `docs-ux`, `environment-defect`, `other`.
 - **`origin: prompt` entries add two more prose blocks** after Friction /
   Suggested improvement: **User prompt** (the user's corrective request,
   verbatim) and **Resolution** (what the AI actually did).
@@ -141,7 +136,7 @@ mount / permission) drops to the next tier with the same notice.
 
 ## 4. Plugin-facing predicate — what persists
 
-Persist **only** signals about **this plugin family** itself — `workflows-core` and every plugin that declares it, currently `dev-workflows`, `product-workflows` and `docs-workflows`. This line said "the dev-workflows plugin" until the family spanned four, and read literally it dropped every signal about the other three:
+Persist **only** signals about **this plugin family** itself — `workflows-core` and every plugin that declares it, currently `dev-workflows`, `product-workflows` and `docs-workflows` — and **defects in the ai-containers environment** the family is run in (`ihudak/ai-containers`). This line said "the dev-workflows plugin" until the family spanned four, and read literally it dropped every signal about the other three:
 
 - Command workflow improvements (a command should behave differently — e.g. the
   `cloud|self-hosted` scoping case).
@@ -149,16 +144,28 @@ Persist **only** signals about **this plugin family** itself — `workflows-core
 - Gaps in the reference docs of **whichever family plugin the signal is about** — `plugins/<that plugin>/references/**`, resolved from the running command's own plugin, and **not** `${CLAUDE_PLUGIN_ROOT}/references/**`. Written in this file that variable resolves to the plugin that *ships this reference* (`workflows-core`), so a `/prd-ground` run classifying a gap in `product-workflows`'s `brd-format.md` would test it against the wrong tree — the same hazard §3's `plugin_version` paragraph states, met one section later.
 - Corrective interactions captured by `/prompt*` (any command output the user
   had to fix).
+- Defects in the ai-containers environment — a tool the ai-containers image is meant to provide and lacks, a wrong mount, a bad default — as `category: environment-defect`.
 
 **Do NOT persist target-project tooling advice** — project `CLAUDE.md` rules,
 target-repo hooks, and other repo-specific suggestions stay in
 `impl-maintenance`'s in-session report, not the feedback file. That advice is
 for the engineer's current repo, not the plugin maintainer.
 
+### 4.1 Defect predicate
+
+Fixable in the plugin family or in ai-containers:
+
+- a wrong or self-contradictory instruction; a broken script, gate or hook; a missing or wrong reference; a command contradicting its own documentation; a crash;
+- a container environment defect: a tool missing from the ai-containers image, a wrong mount, a bad default (a tool missing on the user's own machine or from any other container is not one — §6 `emit-block`).
+
+Excluded: friction, wishes, improvements, polish; user mistakes (wrong argument, typo, misaddressed key); target-project issues; Claude Code / model / external-service issues neither repo can fix.
+
+`workflows-core:defect-reporter` applies this predicate directly under `--skip-feedback` (`workflows-core:run-flags` §4) — it cites this section, never copies it. The widening in this section's opening paragraph applies to every run, not only a bugs-only one: an ai-containers defect is now in scope for a full `emit-auto` run too, so a container bug surfacing during an ordinary session is no longer dropped by the plugin-only reading this predicate used to have.
+
 When projecting an `impl-maintenance` report (§6 `emit-auto`), the plugin-facing
 slice is exactly its **Command workflow improvements**, **New agents / skills**,
 and **Reference docs** (paths under `${CLAUDE_PLUGIN_ROOT}`) sections, plus the
-**Key observations** that triggered them. Discard its **CLAUDE.md rules** and
+**Key observations** that triggered them, plus any **Key observations** naming an ai-containers defect (§4), projected as `category: environment-defect`. Discard its **CLAUDE.md rules** and
 **Hooks** sections (target-project advice).
 
 ## 5. Interaction model — silent, high-recall
@@ -179,10 +186,11 @@ signal the maintainer needs.
   surfaced by the caller's existing `BLOCKED` escalation, **not** by a feedback
   prompt — capture-at-block stays inside the silent model (no interrupt beyond
   the block that was already happening, no curation gate).
+- **`emit-bugs`** writes silently exactly like `emit-auto`; the caller surfaces the persisted path — or the "no defects" notice — only in its `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` / `— no defects` report line (`workflows-core:run-flags` §4), never as a curation prompt.
 
 ## 6. Caller contract
 
-Three named entry points. Every caller supplies `plugin_version` (§3) and lets
+Five named entry points: `emit-auto`, `emit-manual`, `emit-prompt`, `emit-block`, and `emit-bugs`. Every caller supplies `plugin_version` (§3) and lets
 this reference resolve the target (§2), dedupe/append (§3), and format the
 entry (§1). None of them commits; none writes into a docs/code repo or the
 current working directory, where it is not the specs repository. The artifacts are committed later, once, by the
@@ -195,7 +203,8 @@ Inputs: the `impl-maintenance` **Lessons Learned report**, `command` (the exact
 slash-command name), `key` (or `null`), `source` (`specs | directory | none`).
 
 Behavior: project the plugin-facing slice per §4 (Command workflow improvements
-+ New agents / skills + plugin Reference docs + the triggering Key observations);
++ New agents / skills + plugin Reference docs + the triggering Key observations
++ Key observations naming an ai-containers defect (§4), as `category: environment-defect`);
 render one `origin: auto` entry per distinct plugin-facing signal (Friction =
 the observation, Suggested improvement = the suggestion); dedupe by stable `id`
 (§3); resolve the target (§2); write silently (§5). Return the persisted path,
@@ -220,24 +229,35 @@ Behavior: `origin: prompt`; write the entry with the two extra prose blocks
 (User prompt verbatim + Resolution, §1); never silently skipped (§3); resolve
 the target (§2); write silently (§5); surface the path.
 
-### `emit-block` — capture-at-block (a run halting on a plugin gap)
+### `emit-block` — capture-at-block (a run halting on a plugin gap or on a tool the ai-containers image lacks)
 
 Inputs: `command` (exact slash-command name), `key` (or `null`), `source` (`specs | directory | none`), and the **halting gap** — a short description of
 the plugin capability / reference / skill / command-path the run needed but the
-plugin lacked. Unlike `emit-auto`, no `impl-maintenance` report exists (the run
+plugin lacked, or the tool the run needed that the ai-containers image is meant to provide and lacks. Unlike `emit-auto`, no `impl-maintenance` report exists (the run
 is being abandoned mid-flight), so the gap is passed directly.
 
 Behavior: render **one** entry with `origin: auto` and **`impact: blocker`**;
 `category` from the §1 vocab (`missing-capability` / `missing-reference-doc` /
-`manual-workaround` / `model-routing` as fits); dedupe by the stable `id` (§3) —
+`manual-workaround` / `model-routing` as fits, and `environment-defect` for a
+tool the ai-containers image lacks); dedupe by the stable `id` (§3) —
 so it will not double-log if a later terminal `emit-auto` captures the same gap
 on a resumed run; resolve the target (§2); **write silently** (§5). Return the
 persisted path (for the caller's block message / report). The caller then
 surfaces its normal `BLOCKED` escalation — `emit-block` never prompts.
 
 **Predicate — fires ONLY for a plugin-facing gap** (the plugin lacked something
-the run needed). It does **NOT** fire for: a code / doc / Epic review **BLOCK**
-(a defect in the *work*, not the plugin); an environment / user halt
+the run needed) **or a halt on a tool the ai-containers image is meant to provide and lacks** — a §4.1 container defect, which fires
+`emit-block` with `category: environment-defect`. That case wins over the
+environment exclusion below, and it is the only missing-tool halt that does: a tool missing on the user's own machine, or from any container not built from ai-containers (e.g. the project's own build tool behind a `test-baseliner` `COMMAND_NOT_FOUND`, or a docs tool `toolchain-preflight` reports missing), is an environment halt and does not fire `emit-block`. This paragraph is the single statement of that scope; every command's capture-at-block paragraph points here rather than restating it. It does **NOT** fire for: a code / doc / Epic review **BLOCK**
+(a defect in the *work*, not the plugin); any other environment / user halt
 (repo-missing, dirty-tree, key-not-found, refresh-blocked, and the other
 `escalation-rules.md` cases); or user cancellation. The §4 plugin-facing scoping
 applies (never target-project `CLAUDE.md` / hook advice).
+
+### `emit-bugs` — bugs-only callers (`--skip-feedback`, `workflows-core:run-flags` §4)
+
+Inputs: the `defect-reporter` **Defects** list, `command` (the exact slash-command name), `key` (or `null`), `source` (`specs | directory | none`), and `plugin_version`.
+
+Behavior: render one `origin: auto` entry per defect — Friction = the defect plus its evidence; Suggested improvement = the repro plus the location to fix; `impact` is `blocker | friction` only, never `polish` — `emit-bugs` drops any defect marked `polish` and writes no entry for it; `category` is drawn from §1's vocabulary — `environment-defect` for a container-environment location, else `wrong-output` / `missing-reference-doc` / `missing-capability` / `other` as fits; dedupe by the stable `id` (§3); resolve the target (§2); write silently (§5). Return the persisted path.
+
+`emit-bugs` replaces `emit-auto` for the duration of `--skip-feedback`, and is called only when `defect-reporter` returned at least one defect — the orchestrator dispatches `workflows-core:defect-reporter` in place of `impl-maintenance` and, only on a non-empty Defects list, calls `emit-bugs` on the result; when the list is empty, this reference is not loaded at all and the caller reports `— no defects` directly (`workflows-core:run-flags` §4).

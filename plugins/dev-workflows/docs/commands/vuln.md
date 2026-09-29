@@ -9,10 +9,12 @@ Researches CVEs via NVD, applies dependency and code fixes one at a time, and ve
 ## Synopsis
 
 ```
-/vuln <ADDRESS:CVE-ID | CVE-ID> [<ADDRESS:CVE-ID | CVE-ID>…]
+/vuln <ADDRESS:CVE-ID | CVE-ID> [<ADDRESS:CVE-ID | CVE-ID>…] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 Each argument token is either `ADDRESS:CVE-ID` (e.g. `PROJ-2423:CVE-2023-46604`) or a bare `CVE-ID` (e.g. `CVE-2023-46604`) — multiple tokens fix multiple CVEs in one run. A non-CVE token (`CWE-*`, an OWASP pattern) is filtered out with a warning rather than passed through. Every token is parsed and every CVE researched **before** any fix is applied.
+
+Two of the three run flags apply to this command — `--skip-costs` does not, since `/vuln` emits no cost attribution at all (see [Who runs it](#who-runs-it) above). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Step 4's maintenance to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `code-review` included, overriding its frontmatter Opus pin, and reaching `vuln-fixer`'s own nested `test-baseliner` dispatch too — see [Model routing](../reference/model-routing.md).
 
 ## How it runs
 

@@ -1,8 +1,10 @@
 ---
 name: docs-style-checker
 description: Runs the docs repo's project-configured prose linter (e.g. Vale) on files written by `/document` (keyed mode, or direct mode) AND also runs prose-style-checker — a complementary semantic / cross-page-consistency pass beside a primary linter, the FALLBACK where every detected linter failed, and the SOLE check on a repository that configures none. Merges and dedupes both finding sets into the doc-reviewer / doc-fixer schema. Detects tooling (Vale, project lint script, markdownlint, remark) from the repo; does not embed any specific style guide. Model tier assigned by the caller per the model-routing policy (no fixed pin).
-tools: ["Read", "Glob", "Grep", "Bash", "Task"]
+tools: ["Read", "Glob", "Grep", "Bash", "Task", "Skill"]
 ---
+
+**Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
 Run the docs repo's project-configured prose linter on a set of files, and ALSO run `prose-style-checker`: a complementary semantic / cross-page-consistency pass where a primary linter produced a result, the FALLBACK pass where every detected rung failed, and the SOLE check where the repository configures none (step 5). The merge rules below turn on which of those three roles it took — FALLBACK and SOLE merge alike, as the only result. Merge and dedupe their findings into a single reviewer finding schema.
 
@@ -37,6 +39,10 @@ spaces:    # OPTIONAL. Supplied by the caller from profile.spaces + profile.comm
   - id:           <space id>
     content_root: <path relative to repo_root, e.g. self-hosted/_content>
     lint:         <the space's lint command, e.g. "pnpm self-hosted:lint">
+enforced_model: <OPTIONAL. The caller's run_flags.enforced_model (workflows-core:model-routing/classification §10),
+                 when its own run set one. This agent passes it as model: on its own prose-style-checker
+                 dispatch (step 5) in place of the Sonnet detection chain. Omitted when the caller's run
+                 carries no enforced model.>
 ```
 
 Refuse to run without `repo_root` and at least one entry in `files`. `spaces` is optional: when absent
@@ -85,7 +91,7 @@ the output you parse.
 
    `prose-style` is a declared dependency of `docs-workflows`, so its `prose-style-checker` agent is always available — an unsatisfied dependency disables the plugin rather than letting a run reach this step without it. Invoke it:
    - `subagent_type: "prose-style:prose-style-checker"`
-   - `model: <Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5>` — a style check is mechanical, so the tier is pinned here rather than inherited
+   - `model: <the caller's enforced_model when its prompt carries one (workflows-core:model-routing/classification §10), else the Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5>` — a style check is mechanical, so the tier is pinned here rather than inherited, unless the caller's own run enforces a model
    - Input: `files: <the same files list>`, `doc_type: <"product-docs" for docs repos, "general" otherwise>`.
 
    Map the return into this agent's schema:

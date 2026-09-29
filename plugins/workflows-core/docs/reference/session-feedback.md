@@ -1,6 +1,6 @@
 # Session feedback
 
-Session feedback is the family's channel for friction about **the plugin itself**, as distinct from the product it is used to build. `references/feedback-emission.md` is the contract; this page says what the four feedback commands in this plugin put through it. The plugin's fifth emitter, `/frames`, puts through only the automatic end-of-run feedback every long-running command emits, described below.
+Session feedback is the family's channel for friction about **the plugin itself**, and for defects in the ai-containers environment the family runs in, as distinct from the product it is used to build. `references/feedback-emission.md` is the contract; this page says what the four feedback commands in this plugin put through it. The plugin's fifth emitter, `/frames`, puts through only the automatic end-of-run feedback every long-running command emits, described below.
 
 ## What gets logged, and by what
 
@@ -18,6 +18,12 @@ Every long-running command in the family also emits session feedback automatical
 ## Where files land
 
 Feedback writes **one file per folder**, not one per session — the opposite of the cost subsystem's split, because feedback is read as a stream about a plugin rather than measured per run. The resolution ladder is the same as cost's: a resolved folder in `$SPECS_PATH` first, a pending location where no folder resolves, and report-only where nothing does. Nothing is committed by the emitting phase itself; the run's terminal artifact commit picks it up with everything else it wrote.
+
+## Bugs only (`--skip-feedback`)
+
+`--skip-feedback` (or `$WORKFLOWS_SKIP_FEEDBACK`) narrows the automatic maintenance phase to bug capture only. It applies to every command whose maintenance phase dispatches `impl-maintenance` — in this plugin, that is `/frames` alone; `/feedback`, `/prompt`, `/prompt-brainstorm` and `/prompt-grill-me` never dispatch `impl-maintenance`, so the flag has nothing to narrow on them. Under the flag, `/frames` dispatches `defect-reporter` instead, on `references/model-routing/classification.md` §2.2's cheap chain (or the run's enforced model) — the same compact session handoff plus a `Plugin root:` line (the dispatching command's own plugin directory, where `defect-reporter` looks for the command, reference or agent file a candidate defect names), but returning only real defects: a wrong or self-contradictory instruction, a broken script, gate or hook, a missing or wrong reference, a command contradicting its own documentation, a crash, or a defect in the ai-containers environment the family runs in (a missing tool, a wrong mount, a bad default). Everything else the in-session Lessons Learned report would otherwise surface — friction, wishes, polish, target-project tooling advice, and every non-defect observation — is dropped; nothing is written for it.
+
+Any defect `defect-reporter` returns lands through `emit-bugs` in the same `<KEY>-feedback.md` file, in the same entry format, `origin: auto`, `category: environment-defect` for a container-environment location and the usual §1 vocabulary otherwise. A run with no defects loads `references/feedback-emission.md` not at all and writes nothing. The run reports `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of the usual persisted-path line.
 
 ## What a correction costs
 

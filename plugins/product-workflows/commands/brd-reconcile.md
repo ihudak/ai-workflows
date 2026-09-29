@@ -17,7 +17,7 @@ the customer answered and an operator confirmed the answer** (D14,
 `${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §1). This command exists to make that
 happen, not to restate it.
 
-Usage: `/brd-reconcile <BRD-KEY> @<review-file> [--sent <path>…]`
+Usage: `/brd-reconcile <BRD-KEY> @<review-file> [--sent <path>…] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 `<BRD-KEY>` still resolves through `resolve-address`, which searches every level
 `workflows-core:addressing` §3 bounds — three below `specifications/` — and so returns a BRD that owns
@@ -137,7 +137,7 @@ write would re-ask a question already answered.
 
 ## Phase 0 — Resolve inputs and gate the sent package
 
-1. **`<BRD-KEY>` (mandatory).** Parse the first token that is neither a flag nor a flag's value — `--sent` consumes the token after it (step 2), and a value skipped as "non-flag" would be read as the key; validate with `key-valid`
+1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--sent` consumes the token after it (step 2), and a value skipped as "non-flag" would be read as the key; validate with `key-valid`
    (`workflows-core:addressing` §1). If absent or invalid, stop:
    `BRD_RECONCILE_NEEDS_KEY: /brd-reconcile needs a BRD key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) and a returned review — re-run '/product-workflows:brd-reconcile <KEY> @<review-file>'.`
 2. **`@<review-file>` (mandatory).** The file the customer sent back, **at whatever path it arrived
@@ -388,6 +388,8 @@ model_routing:
                                   # register and writes dispositions into other BRDs' registers
   reason: <one-line>
   current_model: <the model this orchestrator is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+  defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # customer-review-reader, impl-maintenance
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
@@ -397,7 +399,7 @@ model_routing:
 of it there is: a `[CD#n]` is the only record in this workflow that carries authority the delivery
 organisation cannot re-take on its own, and the propagation sweep writes into registers belonging to
 BRDs this run was not pointed at. If no Opus resolves for `current_model`, degrade to best-available,
-record it in `notes` and in the final report, and never hard-block.
+record it in `notes` and in the final report, and never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) no degradation is recorded; dispatched steps use the enforced model, while the confirmation walk, the freeze and the sweep still run on `current_model`.
 
 `customer-review-reader` runs at `detection_model` and carries no frontmatter pin, and that is safe
 for a reason worth stating rather than assuming: **nothing that agent returns is authority.** Every
@@ -2534,7 +2536,9 @@ parse that failed or a review that contradicts itself, and nothing in the run te
 is not a dispatch the agent refused, the file is the customer's rather than one of the plugin's own
 records, and the operator settles it by opening that file and re-running with it read as prose; and
 `BRD_RECONCILE_UNCONFIRMED`, `BRD_RECONCILE_UNDISPOSED_CORRECTION` and `BRD_RECONCILE_UNSWEPT` are
-the gates working.
+the gates working. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
+
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model:
    `<detection_model>`) with a compact handoff: command `/brd-reconcile`; what was produced (the
@@ -2547,7 +2551,7 @@ the gates working.
    `<BRD-KEY>`), `source`, and `plugin_version` (read from
    `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or "no
    plugin-facing signal — nothing persisted").
-3. **Session cost (ALWAYS runs).** Invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-reconcile`, `phase: brd-to-prd`, `role: pm`, the
+3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-reconcile`, `phase: brd-to-prd`, `role: pm`, the
    run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only
    notice).
 4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the commit
@@ -2567,7 +2571,7 @@ offered only in the two handoff phases), and NEVER writes into a code/docs repo,
 ## Final report
 
 Report: the BRD folder and which level it sits at; the classification and model routing
-(+ any Opus degradation); **the review** — the canonicalised path, the original path, the mode and
+(+ any Opus degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); **the review** — the canonicalised path, the original path, the mode and
 what decided it, the verdict, the readiness statement quoted verbatim, and the evidence limitations
 as stated or the fact that they were not; **every anomaly**, unrepaired, because each one changes how
 the rest of the review should be read; every torn write found (`decision-register-format.md` §8), by
@@ -2583,7 +2587,7 @@ bannered; the defect resolutions with the log's path; the ledger rows moved; **t
 sweep** — per dependent BRD, the `conditional_on` positions first, then the citing items, each with
 its disposition, plus every dependent recorded-not-written with its concrete state; **the
 stale cross-reference sweep** — the hit counts by outcome and every `needs-a-human` hit named;
-**what still needs a human**, in full; the artifacts written, by path; the feedback + cost paths;
+**what still needs a human**, in full; the artifacts written, by path; the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line) and cost path (or, under `--skip-costs`, the `Session cost: …` line);
 **both** `Phase handoff:` outcome lines — §4.1 counts one **per handoff offered** and this command
 offers two — **each labelled with the handoff it reports and neither printed bare**, as that
 section requires of a multi-handoff producer: the review's and the run's, in that order, the run's

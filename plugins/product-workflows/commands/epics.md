@@ -16,11 +16,13 @@ Key distinction from `/document` (keyed mode): the PRD being Epic-ized is **not 
 
 `/epics` **never branches** and **never commits the Epic drafts** (still true — the run's git **writes** are confined to `$SPECS_PATH`, per `workflows-core:specs-repo-git`; the run does make read-only git calls elsewhere — Phase 4's `git remote get-url origin` per candidate clone and Phase 8's `git diff --stat` from `project_root` — but none of them writes), and writes only inside the resolved PRD folder — one `EPIC-<PRD-KEY>-NN-<eslug>/` per Epic, plus `_coverage.md` beside `prd.md`. Git hygiene of the write target is the user's responsibility — they may or may not have it under version control. The run commits only inside `$SPECS_PATH`, and only its bounded session-artifact paths (`workflows-core:specs-repo-git` §2.1) — via the `specs-preflight` flush at run start (§3.4) and the terminal `commit-artifacts` step (§4); never the drafts, never the write target. It still creates no branch (still true — `specs-preflight` switches `$SPECS_PATH` only between branches that already exist, and only plugin-created ones (`workflows-core:specs-repo-git` §2.2); it creates none).
 
+Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
+
 ---
 
 ## Phase 0 — Load
 
-0. **Flags.** `--no-docs` — boolean; turns documentation grounding off for this run (Phase 2). `--docs <path>` — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`; **strip the flag and its value together** before any remaining-argument classification, or the path is read as part of the address. Declared for every consumer by `workflows-core:docs-grounding` *Procedure* step 1 (*Flags first*), which resolves it; this command only has to recognise it and pass the invocation through. Strip both, and `--docs`'s value, from `$ARGUMENTS` before step 1 classifies what remains.
+0. **Flags.** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. `--no-docs` — boolean; turns documentation grounding off for this run (Phase 2). `--docs <path>` — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`; **strip the flag and its value together** before any remaining-argument classification, or the path is read as part of the address. Declared for every consumer by `workflows-core:docs-grounding` *Procedure* step 1 (*Flags first*), which resolves it; this command only has to recognise it and pass the invocation through. Strip both, and `--docs`'s value, from `$ARGUMENTS` before step 1 classifies what remains.
 1. **Resolve the address.** Parse the **single positional address** from `$ARGUMENTS` — a `<KEY>`, or an
    `@<path>` naming a folder or a file inside one — and resolve it with
    `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), **with no `<KIND>`
@@ -332,21 +334,23 @@ No branching context is shown — this command never branches (still true — `s
 
 Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-routing"`) to load the classification rules, then classify the task as exactly one of: `SIMPLE`, `MODERATE`, `SIGNIFICANT`, or `HIGH-RISK`. Epic writing is typically **MODERATE** (bounded scope, single PRD, specs-tree output). State the classification and a one-sentence reason.
 
-MODERATE → no separate Opus planner; the `epic-reviewer` gate (Opus, frontmatter-pinned) is mandatory. Resolve the per-step routing per `workflows-core:model-routing/classification` §9:
+MODERATE → no separate Opus planner; the `epic-reviewer` gate (Opus, frontmatter-pinned; no override unless §10 enforces a model) is mandatory. Resolve the per-step routing per `workflows-core:model-routing/classification` §9:
 
 ```yaml
 model_routing:
   classification: MODERATE        # typical; SIGNIFICANT possible
   reason: <one-line>
   current_model: <the model this orchestrator is running under>
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+  defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # the folder read, code-scanner, prose-style-checker, doc-fixer, the Phase 8 maintenance agents, epic-writer (MODERATE)
-  review_model:    <§2 Opus chain>     # epic-reviewer (frontmatter-pinned; recorded, no override)
+  review_model:    <§2 Opus chain>     # epic-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model)
   implementation_model: <= detection_model>   # the epic-writer subagent (Phase 6); planning_model if SIGNIFICANT/HIGH-RISK
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
 ```
 
-Each subagent dispatch below cites its chain (§9 role→chain map). **No relaunch advisory** for MODERATE — the writer runs on its detection pin and the gates run on `current_model`, which §3.1 allows (if a run is classified SIGNIFICANT/HIGH-RISK, the §9.1 advisory applies and `epic-writer` escalates to the §2 chain). If no Opus is available, `epic-reviewer` falls to the Sonnet floor — record the degradation in `notes` and the Phase 9 report.
+Each subagent dispatch below cites its chain (§9 role→chain map). **No relaunch advisory** for MODERATE — the writer runs on its detection pin and the gates run on `current_model`, which §3.1 allows (if a run is classified SIGNIFICANT/HIGH-RISK, the §9.1 advisory applies — unless `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10 — then no advisory fires) — and `epic-writer` escalates to the §2 chain). If no Opus is available, `epic-reviewer` falls to the Sonnet floor — record the degradation in `notes` and the Phase 9 report. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded.
 
 ---
 
@@ -673,9 +677,9 @@ gate.
 
 ## Phase 7 — Epic review gate
 
-Invoke `epic-reviewer` (Opus). This reviewer is Epic-specific — scope clarity, acceptance-criteria testability, non-duplication of existing Epics. `docs-style-checker` is NOT used here (no repo linter for specs-tree content); Prose style is handled by the Phase 6.2 `prose-style-checker` step above.
+Invoke `epic-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no override unless §10 enforces a model). This reviewer is Epic-specific — scope clarity, acceptance-criteria testability, non-duplication of existing Epics. `docs-style-checker` is NOT used here (no repo linter for specs-tree content); Prose style is handled by the Phase 6.2 `prose-style-checker` step above.
 
-→ Agent (subagent_type: "product-workflows:epic-reviewer"):
+→ Agent (subagent_type: "product-workflows:epic-reviewer", model: `<review_model — §2 Opus chain, equal to epic-reviewer's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "Review the Epic drafts for this brief:
   >
   > Task description: [one-paragraph: PRD key, PRD goal, number of Epics drafted]
@@ -748,6 +752,8 @@ Files changed:
 Notable additions/removals: [new Epics by key — one line each]
 Epic-review verdict: [PASS | PASS WITH RECOMMENDATIONS | BLOCK]
 ```
+
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` in place of Agent 4 (`impl-maintenance`), with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in the Phase 9 report's Session learnings line, in place of the persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 
 Then spawn all four maintenance agents in a **single Agent message**. They are independent and run concurrently.
 
@@ -836,7 +842,9 @@ MODERATE — Epic drafting for a single PRD
 - epic-writer (implementation_model): [model] — detection (MODERATE) | reasoning (SIGNIFICANT)
 - Detection steps — the folder read, code-scanner, prose-style-checker, doc-fixer (detection_model): [model]
 - epic-reviewer (review_model): [model]
-- Opus available: [yes | no]
+- [`Model routing: bypassed — enforced <id> (flag|env)` in place of the `epic-reviewer (review_model)` line above, wherever `run_flags.enforced_model` is set — no Sonnet-floor degradation applies, per `workflows-core:model-routing/classification` §10.]
+- Opus available: [yes | no — unaffected by enforcement; reports the environment truthfully (§10: `opus_available` is never rewritten to agree with the enforced id)]
+- Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` skip line, where it fires, is carried in the Session learnings (Agent 4) line below; the `Session cost: …` skip line is Phase 11's own output, printed after this report and not restated in it.]
 
 ### PRD summary
 - Key: <KEY>
@@ -885,7 +893,7 @@ MODERATE — Epic drafting for a single PRD
 - [summary of change] OR "no update required"
 
 ### Session learnings (Agent 4)
-- [top suggestions from impl-maintenance agent, or "no suggestions — routine session"]
+- [top suggestions from impl-maintenance agent, or "no suggestions — routine session" — or, under `--skip-feedback`, `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` / `— no defects` in its place]
 
 ### Deferred items
 [MINOR / NIT findings that were not applied, OR epic-reviewer BLOCK findings that were overridden / deferred with the ## Refinement notes section appended — one line each; or "none"]
@@ -938,10 +946,10 @@ NEVER writes into the current working directory, where it is not the specs repos
 
 Terminal phase — the NEW final operational phase; runs after Phase 10 (the
 follow-up phase) and NEVER interrupts an earlier phase. Records this command's
-token-cost contribution to the PRD by invoking `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and calling its single `emit-cost` entry point. Unlike feedback, **cost ALWAYS runs** — it never "writes
-nothing".
+token-cost contribution to the PRD — through `emit-cost`, or, under `run_flags.skip_costs`, by advancing the checkpoint alone. Unlike feedback, **cost ALWAYS runs** — it never "writes
+nothing" (short of `run_flags.skip_costs`, below, which writes no entry).
 
-Call `emit-cost` with `command: /epics`, `phase: epic-refinement`, `role: pe`,
+**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`), printed after the Phase 9 report as this phase's own output. The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise (not skipping), invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call `emit-cost` with `command: /epics`, `phase: epic-refinement`, `role: pe`,
 the run's `key` (or `null`) and `source`, and `plugin_version` (read from
 `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). It resolves the session
 transcript + subagents (§1), loads and **advances the chained checkpoint** (§3),
@@ -981,7 +989,7 @@ user name is ever written (§10 privacy).
 
 ## Invariants (always enforced)
 
-- ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation)
+- ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 - ALWAYS resolve one positional address (Phase 0) — a key or an `@<path>` naming a folder in the specs tree works without it; `/epics` is cwd-agnostic and rejects `mode: direct`
 - ALWAYS gate the resolved folder in Phase 0 step 1b on **`prd.md`'s own `kind: prd`** (and, one level down, `epic.md`'s own `kind: epic`) — NEVER on the folder's asserted `kind:`, which a `PRD-` slice folder sets to `brd`; two shapes are accepted (a PRD folder → draft; an `EPIC-` folder with a PRD above it → re-refine, `focus_key` derived from it) and every other shape is refused
 - NEVER partition a `BRD-` container (step 1a, `EPICS_BRD_NOT_SLICED`, taken on the directory prefix after the specs-repo preflight and before any other read) or an `EPIC-` folder with no PRD above it (`EPICS_EPIC_NOT_UNDER_PRD`) or no `epic.md` in it (`EPICS_NO_PRD`) — Epics come from a PRD only, and `/epics` is the ONLY command that creates an `EPIC-` folder
@@ -993,7 +1001,7 @@ user name is ever written (§10 privacy).
 - ALWAYS write to `EPIC-<PRD-KEY>-NN-<eslug>/epic.md` under the resolved PRD folder — one home, derived rather than asked for  — auto-create the directory if missing
 - ALWAYS escalate missing repos before proceeding — never silent skip
 - ALWAYS invoke `epic-reviewer` before Phase 8 maintenance
-- ALWAYS resolve the `model_routing` block at Phase 1.5 and pin each subagent dispatch to its §9 chain via `model:` — the mechanical steps (the folder read, `code-scanner`, `prose-style-checker`, `doc-fixer`, the Phase 8 maintenance agents) and `epic-writer` (MODERATE) to the §2.1 Sonnet chain; `epic-reviewer` keeps its frontmatter Opus pin (no override); coordination + interactive gates run on `current_model`
+- ALWAYS resolve the `model_routing` block at Phase 1.5 and pin each subagent dispatch to its §9 chain via `model:` — the mechanical steps (the folder read, `code-scanner`, `prose-style-checker`, `doc-fixer`, the Phase 8 maintenance agents) and `epic-writer` (MODERATE) to the §2.1 Sonnet chain; `epic-reviewer` keeps its frontmatter Opus pin (no override unless §10 enforces a model); coordination + interactive gates run on `current_model`
 - ALWAYS delegate Phase 6 writing to the `epic-writer` subagent (write-only); the orchestrator never writes Epics itself and never commits the drafts (still true — the Epic files land in the PRD folder, which the terminal `commit-artifacts` step never stages; git management there is the user's responsibility)
 - ALWAYS cap review/fix cycles: 1 fix + 1 re-review max
 - ALWAYS pass `Change type: docs` in the Phase 8 change summary block

@@ -14,9 +14,13 @@ Signature: one positional address — a key, or an `@<path>` naming a folder in 
 
 For small one-off doc edits, use direct mode (below). For writing child Epic drafts from a PRD, use `/epics`. For release notes, use `/release-notes` — this command never writes release-notes / what's-new pages, because those are generated from the tracker by the docs team's automation.
 
+Usage: `/document <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-model=<model>]` (keyed mode) or `/document [@<path-to-markdown-file>|<free text>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]` (direct mode — the run flags may stand before or after the free text, never inside it).
+
 ---
 
 ## Mode detection
+
+**Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. **The strip makes its own address test, rather than waiting on the mode test below**: after the leading run of run-flag tokens is consumed, it tests the next token against `workflows-core:addressing` §1's key grammar and against `@<path>` naming a folder in the specs tree (`workflows-core:run-flags` §3 step 1). A hit gets the ordinary strip — run flags removed wherever they appear, the address left untouched. A miss gets the free-text rule: the leading region is a single `@<path>` token where the stripped argument opens with one and it is not such a folder (direct mode's own file argument, Phase 0 step 1), otherwise nothing of the command's own; the prose span begins there, kept exactly as typed even where it contains a flag name, and the usual trailing run of complete run-flag tokens is stripped at the very end either way. **The mode test below then re-reads the stripped result** to make its own, authoritative keyed/direct call — it never runs before this strip, and this strip never waits on it; every later step, the mode test included, parses only what this strip leaves.
 
 `/document` has **two modes**, selected by the first argument token:
 
@@ -187,7 +191,7 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
 4. **Resolve the profile** (record `profile_source`). The profile steers all later phases' conventions. Resolve in this order:
    - **(a) In-repo profile →** `in-repo`. If `<docs_repo_path>/.dev-workflows/docs-profile.yml` exists — the profile's one home, since step 2 took `docs_repo_path` to the top level — load it. `profile_source: in-repo`.
    - **(b) Built-in default profile →** `built-in`. Else, if `is_known_docs_repo`, load `${CLAUDE_PLUGIN_ROOT}/references/docs-profiles/docs-profile.default.yml`. `profile_source: built-in`.
-   - **(c) Custom repo, no profile →** `generated`. Else (a custom docs repo with no profile), run **inline on-demand profiling**: invoke the `/docs-profile` flow against `docs_repo_resolved` (Skill tool, `skill: "docs-workflows:docs-profile"`, with `docs_repo_resolved --inline` as its arguments — the `--inline` token tells profiling to skip its branch-naming prompt and standalone PR-draft handoff, since this command owns the single branch + PR draft) and wait for it to return. Pass the directory step 2's rung answered with, not its top level: profiling's Phase 0 step 3 tests the directory it is handed and that directory's top level for a docs signal, so handed the top level of a monorepo whose site sits in `docs/` it tests one signal-less directory twice and asks "Profile it anyway?" about a repository this command has just found by its signal. It resolves the same top level (its Phase 0 step 2) and, finding no profile there — (a) has just looked — bootstraps one: it cuts its branch, writes `<docs_repo_path>/.dev-workflows/docs-profile.yml`, commits it, and hands back that branch as `profile_branch` and that commit as `profile_commit` (its Phase 6). Load the file, and record `profile_source: generated` with both values — Phase 6.2 renames `profile_branch` and Phase 8.5 squashes onto `profile_commit`. It also hands back two lists, `fixed_port_servers` and `server_command_defects`, the lines its standalone report would carry: print both to the operator now, as prose under a `Profile notes:` line, before the run goes on, and carry them into Phase 9's `### Assumptions & limitations`. Each is `none` where no server qualifies, and then one line says so. If the user cancels profiling (it produces no profile), stop with the named error `PROFILE_REQUIRED: a docs-profile is required to write into a custom docs repo; run /docs-workflows:docs-profile or switch to a profiled repo.` Where profiling stops on a named error of its own instead — `DOCS_PROFILE_BOOTSTRAP_BRANCH_EXISTS`, which it raises on a bootstrap branch an earlier run left behind — stop with that error as it stands, since it names what to fix.
+   - **(c) Custom repo, no profile →** `generated`. Else (a custom docs repo with no profile), run **inline on-demand profiling**: invoke the `/docs-profile` flow against `docs_repo_resolved` (Skill tool, `skill: "docs-workflows:docs-profile"`, with `docs_repo_resolved --inline` as its arguments — the `--inline` token tells profiling to skip its branch-naming prompt and standalone PR-draft handoff, since this command owns the single branch + PR draft) and wait for it to return. **This run's `run_flags` — resolved once, in the shared `## Mode detection` section above — carry straight into that continuation**: `/docs-profile --inline` runs in this same session, on the record already stripped and resolved there, and does not re-invoke `strip-run-flags` on the synthetic `docs_repo_resolved --inline` argument this step constructs, which never carries a run-flag token of its own; a `run_flags.enforced_model` this run carries pins its Phase 2 detection and Phase 3 synthesis dispatches too. Pass the directory step 2's rung answered with, not its top level: profiling's Phase 0 step 3 tests the directory it is handed and that directory's top level for a docs signal, so handed the top level of a monorepo whose site sits in `docs/` it tests one signal-less directory twice and asks "Profile it anyway?" about a repository this command has just found by its signal. It resolves the same top level (its Phase 0 step 2) and, finding no profile there — (a) has just looked — bootstraps one: it cuts its branch, writes `<docs_repo_path>/.dev-workflows/docs-profile.yml`, commits it, and hands back that branch as `profile_branch` and that commit as `profile_commit` (its Phase 6). Load the file, and record `profile_source: generated` with both values — Phase 6.2 renames `profile_branch` and Phase 8.5 squashes onto `profile_commit`. It also hands back two lists, `fixed_port_servers` and `server_command_defects`, the lines its standalone report would carry: print both to the operator now, as prose under a `Profile notes:` line, before the run goes on, and carry them into Phase 9's `### Assumptions & limitations`. Each is `none` where no server qualifies, and then one line says so. If the user cancels profiling (it produces no profile), stop with the named error `PROFILE_REQUIRED: a docs-profile is required to write into a custom docs repo; run /docs-workflows:docs-profile or switch to a profiled repo.` Where profiling stops on a named error of its own instead — `DOCS_PROFILE_BOOTSTRAP_BRANCH_EXISTS`, which it raises on a bootstrap branch an earlier run left behind — stop with that error as it stands, since it names what to fix.
 
      **Where profiling hands back no commit** — it made none, as its refresh does when answered "Keep existing, write nothing" or when it finds nothing to change — it cut no branch either. (a) and profiling look for the profile in the same place, so profiling starts from none here and that refresh does not arise; should profiling hand back no commit anyway and leave a profile at `<docs_repo_path>/.dev-workflows/docs-profile.yml`, load it and record `profile_source: in-repo`, never `generated`. The two lists above are handed back here too, and shown the same way, since the profile this run loads is the final one either way. The in-repo base guard below then tests whether that profile is on the base, and Phase 6.2 takes its normal case: its inline-profiling case renames `profile_branch`, a branch this run did not cut, and Phase 8.5 has no `profile_commit` to squash onto.
 
@@ -350,18 +354,20 @@ model_routing:
   classification: SIGNIFICANT
   reason: <one-line>
   current_model: <the model this orchestrator is running under>   # = the inline writer + Phase 5.8 framing
+  enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+  defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   detection_model: <§2.1 mid-tier Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>
   planning_model:  <§2 powerful chain: claude-opus-5-5 … fallback Sonnet per §2>   # doc-planner (5.7)
-  review_model:    <§2 powerful chain>     # doc-reviewer (frontmatter-pinned; recorded here, no override added)
+  review_model:    <§2 powerful chain>     # doc-reviewer (frontmatter-pinned; recorded here, no override added unless §10 enforces a model)
   implementation_model: <= planning_model>  # the doc-writer subagent (Phase 6.3) — now a delegated, Opus-pinned writer
   fixes_model: <= detection_model>         # doc-fixer (6.4 / 7) runs on the detection chain
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2 / §2.1 fallback or degradation>
 ```
 
-Each subagent dispatch below cites which chain it uses (the §9 role→chain map): `doc-planner` → `planning_model`; the folder read, `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, and the Phase 8 maintenance agents → `detection_model`; `doc-reviewer` keeps its own frontmatter Opus pin (recorded as `review_model`, no override added).
+Each subagent dispatch below cites which chain it uses (the §9 role→chain map): `doc-planner` → `planning_model`; the folder read, `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, and the Phase 8 maintenance agents → `detection_model`; `doc-reviewer` keeps its own frontmatter Opus pin (recorded as `review_model`, no override added unless §10 enforces a model).
 
-**Orchestration advisory (window-focused).** `doc-planner` (5.7) and `doc-writer` (6.3) run on the §2 Opus chain regardless of session; only coordination + the interactive gates (5.8 decision, 6.1) run on `current_model`. So:
+**Orchestration advisory (window-focused).** `doc-planner` (5.7) and `doc-writer` (6.3) run on the §2 Opus chain regardless of session; only coordination + the interactive gates (5.8 decision, 6.1) run on `current_model`. **Unless `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10 — then neither the relaunch bullet nor the degradation bullet below fires: `planning_model`, `review_model` and `implementation_model` already carry the enforced id, per this phase's `model_routing` block, and §10 suppresses this relaunch advisory alongside its own degradation notice):**
 
 - **`current_model` is on the §2 chain** → no advisory.
 - **`current_model` is NOT on the §2 chain and `opus_available: true`** → the heavy synthesis + writing are already on Opus; the residual risk is the orchestrator's **context window** on a **large multi-repo ticket**. Offer relaunch **only** on such a ticket — that condition gates the prompt, so once the list is shown the recommendation holds unconditionally (per the `(Recommended)`-marker rule in `workflows-core:escalation-rules`):
@@ -510,7 +516,7 @@ Spawn `diff-summarizer` instances in **batches of up to 4 concurrent agents** pe
 
 For each repo, in the same Agent message:
 
-→ Agent (subagent_type: "docs-workflows:diff-summarizer", model: `<detection_model — §9 / §2.1 Sonnet chain>`):
+→ Agent (subagent_type: "docs-workflows:diff-summarizer", model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`):
   > "Summarise this repo's recorded refs for the brief:
   >
   > repo_path:     <resolved absolute path for this repo from Phase 4>
@@ -550,7 +556,7 @@ choices: ["Proceed with PRD-only content (Recommended — writer/planner draw fr
 
 Invoke `doc-location-finder`:
 
-→ Agent (subagent_type: "docs-workflows:doc-location-finder", model: `<detection_model — §9 / §2.1 Sonnet chain>`):
+→ Agent (subagent_type: "docs-workflows:doc-location-finder", model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`):
   > "Find write target(s) for the brief:
   >
   > repo_root:       [the resolved docs_repo_path (Phase 0)]
@@ -660,7 +666,7 @@ The selected add-list paths populate the existing **`screenshots[]`** passed to 
 
 Invoke `doc-planner`:
 
-→ Agent (subagent_type: "docs-workflows:doc-planner", model: `<planning_model — §9 / §2 Opus chain>`):
+→ Agent (subagent_type: "docs-workflows:doc-planner", model: `<planning_model — §9 / §2 Opus chain; under §10, run_flags.enforced_model>`):
   > "Produce the documentation checklist for the brief:
   >
   > folder_read: [paste full YAML from Phase 3; when focus_key is set, restrict the folder read to focus_items]
@@ -819,7 +825,7 @@ The writing is delegated to the **`doc-writer`** subagent (pinned to the §2 Opu
 
 2. **Dispatch the writer:**
 
-→ Agent (subagent_type: "docs-workflows:doc-writer", model: `<planning_model — §9 / §2 Opus chain>`):
+→ Agent (subagent_type: "docs-workflows:doc-writer", model: `<planning_model — §9 / §2 Opus chain; under §10, run_flags.enforced_model>`):
   > "Write the product documentation for this brief.
   >
   > handoff_file: [absolute path of the temp handoff file from step 1]"
@@ -859,13 +865,14 @@ This table governs the **documentation write target only**. Independently of eve
 
 Invoke `docs-style-checker` on the files written in Phase 6.3:
 
-→ Agent (subagent_type: "docs-workflows:docs-style-checker", model: `<detection_model — §9 / §2.1 Sonnet chain>`):
+→ Agent (subagent_type: "docs-workflows:docs-style-checker", model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`):
   > "Run the style check for this brief:
   >
   > repo_root: [the resolved docs_repo_path (Phase 0)]
   > site_root: [docs_repo_resolved (Phase 0 step 2), where it differs from docs_repo_path — the site's own .vale.ini, package.json and lint configuration are looked for there first, then in each directory above it up to docs_repo_path; omit the key otherwise]
   > files:     [absolute paths of every file written or modified in Phase 6.3]
-  > spaces:    [one entry per space in profile.spaces that has a profile.commands.per_space entry — {id, content_root, lint}; omit the key entirely when the profile declares no per_space commands]"
+  > spaces:    [one entry per space in profile.spaces that has a profile.commands.per_space entry — {id, content_root, lint}; omit the key entirely when the profile declares no per_space commands]
+  > enforced_model: [run_flags.enforced_model, when set — docs-style-checker passes it as model: on its own prose-style-checker dispatch in place of the Sonnet detection chain (workflows-core:model-routing/classification §10); omit the key otherwise]"
 
 Write the `style_check` ledger row before acting on the return — rewriting the row Phase 0's preflight pre-seeded if there is one, per `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` §3's one-row-per-gate rule, and preserving any `user_decision` it carries (schema:
 `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` §3), deriving its outcome from the agent's
@@ -886,7 +893,7 @@ Then act on the return:
 - **`status: OK`** — the chain ran (primary and/or complementary), zero merged violations. Proceed to Phase 7.
 - **`status: VIOLATIONS_FOUND`** — invoke `doc-fixer` with the violations treated as per their severity. After `doc-fixer` completes, **check its `Stop condition flag`**: `docs-style-checker` maps a linter's own blocking failure to `BLOCKER` (`agents/docs-style-checker.md`), so this dispatch can return `NEEDS HUMAN` — the fixer deferred a blocking violation it could not safely fix. On `NEEDS HUMAN`, surface each deferred BLOCKER with the fixer's reason and ask the user how to resolve it — fix by hand and re-run, or skip the check. A silent re-run only reports the same violation again. The `style_check` gate row stays open until that answer lands and then records its outcome per `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` — `RAN` after a hand fix and re-run, `SKIPPED_BY_USER` with the choice quoted verbatim if skipped. Only on `CLEAR` re-run the linter once:
 
-  → Agent (subagent_type: "workflows-core:doc-fixer", model: `<detection_model — §9 / §2.1 Sonnet chain>`):
+  → Agent (subagent_type: "workflows-core:doc-fixer", model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`):
     > "Fix the style violations for this brief:
     >
     > Task description: [doc writing for <KEY>]
@@ -921,7 +928,7 @@ Resolve the builds to run, most specific first (`${CLAUDE_PLUGIN_ROOT}/reference
 - **Otherwise** → `profile.commands.per_space.<space>.build`, else the flat `profile.commands.build`, run for every space in the **verification set** (`render-verification.md` §2): every space whose `content_root` holds at least one affected page.
 
 Run each from `docs_repo_path`, the top level every command the profile records runs from (Phase 0 step 2). Record **each build on its own** — its `builds[]` `id` (or, without `builds[]`, its space), its command, its exit code and, on a failure, its output — so a failure names the build that failed. Do NOT re-run the Phase 6.4 prose linter. Classify each failing build:
-- **Content failure** (the template won't compile, unresolved snippet include, broken postid/internal link, malformed token) → invoke `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain>`; Severities: BLOCKER and MAJOR), handing it **the failing build's output** as its `Reviewer or style-checker output` — each failing build under its `id` (or space), with its command and its output verbatim, every error it reports a BLOCKER at the file it names — then re-run every build this step resolved, once. If failures remain:
+- **Content failure** (the template won't compile, unresolved snippet include, broken postid/internal link, malformed token) → invoke `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`; Severities: BLOCKER and MAJOR), handing it **the failing build's output** as its `Reviewer or style-checker output` — each failing build under its `id` (or space), with its command and its output verbatim, every error it reports a BLOCKER at the file it names — then re-run every build this step resolved, once. If failures remain:
   ```
   choices: ["Proceed to smoke-check anyway", "Show remaining and fix manually", "Cancel"]
   ```
@@ -1027,9 +1034,9 @@ Carry the table and the Step 1/Step 2 outcomes into the Phase 9 `### Render veri
 
 ## Phase 7 — Doc review gate
 
-Invoke `doc-reviewer` (Opus — pinned by its own frontmatter; recorded as `review_model`, no dispatch override added). The reviewer is **product-docs-only**; Epic drafts go through `epic-reviewer` in `/epics`.
+Invoke `doc-reviewer` (Opus — pinned by its own frontmatter; recorded as `review_model`, no dispatch override added unless §10 enforces a model). The reviewer is **product-docs-only**; Epic drafts go through `epic-reviewer` in `/epics`.
 
-→ Agent (subagent_type: "docs-workflows:doc-reviewer"):
+→ Agent (subagent_type: "docs-workflows:doc-reviewer", model: `<review_model — §2 Opus chain, equal to doc-reviewer's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
   > "Review the written product documentation for this brief:
   >
   > Task description: [one-paragraph summary of the feature and <KEY>]
@@ -1049,15 +1056,15 @@ Act on the verdict:
 
 **Triage sub-step** (before any fixer dispatch): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep or dismiss; record every dismissal with a reason that disposes of that finding's own claim. Hand the fixer **survivors only**, and carry the dismissal list into this run's report.
 
-- **BLOCK** — invoke `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain>`) with `Severities to fix: BLOCKER and MAJOR`. Write the `doc-fixer` Fix Report to a temp file (`command mktemp -t dw-doc-claims-XXXXXX`, never inside a repo tree or the specs tree), record its path as `claims_file`, then **check `doc-fixer`'s `Stop condition flag` before re-invoking anything**. If it is `NEEDS HUMAN`, the fixer deferred at least one BLOCKER as needing a human decision: do NOT re-invoke `doc-reviewer` — a re-review can only re-find the BLOCKER the fixer has just reported it could not resolve — and instead surface each deferred BLOCKER with the reason the fixer gave, then escalate it individually per the `Review verdict BLOCK (unresolved after one fix cycle) — /document` rule in `workflows-core:escalation-rules`, which names this entry point alongside the second-BLOCK one. Only when the flag is `CLEAR` do you re-invoke `doc-reviewer` once **passing `claims_file`** — so the re-review falsifies the fixer's account rather than assuming it. If the second verdict is still BLOCK, escalate for each unresolved BLOCKER individually per the `Review verdict BLOCK (unresolved after one fix cycle) — /document` rule in `workflows-core:escalation-rules`:
+- **BLOCK** — invoke `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`) with `Severities to fix: BLOCKER and MAJOR`. Write the `doc-fixer` Fix Report to a temp file (`command mktemp -t dw-doc-claims-XXXXXX`, never inside a repo tree or the specs tree), record its path as `claims_file`, then **check `doc-fixer`'s `Stop condition flag` before re-invoking anything**. If it is `NEEDS HUMAN`, the fixer deferred at least one BLOCKER as needing a human decision: do NOT re-invoke `doc-reviewer` — a re-review can only re-find the BLOCKER the fixer has just reported it could not resolve — and instead surface each deferred BLOCKER with the reason the fixer gave, then escalate it individually per the `Review verdict BLOCK (unresolved after one fix cycle) — /document` rule in `workflows-core:escalation-rules`, which names this entry point alongside the second-BLOCK one. Only when the flag is `CLEAR` do you re-invoke `doc-reviewer` once **passing `claims_file`** — so the re-review falsifies the fixer's account rather than assuming it. If the second verdict is still BLOCK, escalate for each unresolved BLOCKER individually per the `Review verdict BLOCK (unresolved after one fix cycle) — /document` rule in `workflows-core:escalation-rules`:
   ```
   choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding", "Cancel the whole run"]
   ```
-  "Manual fix notes" → take free-text from the user; apply via `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain>`) in a bounded one-shot pass (no further re-review cycle). "Defer" → record in Phase 9 `### Deferred items` without an override flag. "Override" → record in `### Deferred items` with the user's rationale. "Cancel" aborts.
+  "Manual fix notes" → take free-text from the user; apply via `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`) in a bounded one-shot pass (no further re-review cycle). "Defer" → record in Phase 9 `### Deferred items` without an override flag. "Override" → record in `### Deferred items` with the user's rationale. "Cancel" aborts.
 
 - **PASS WITH RECOMMENDATIONS** — invoke `doc-fixer` for MAJOR findings only:
 
-  → Agent (subagent_type: "workflows-core:doc-fixer", model: `<detection_model — §9 / §2.1 Sonnet chain>`):
+  → Agent (subagent_type: "workflows-core:doc-fixer", model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`):
     > "Fix the review findings for this brief:
     >
     > Task description: [doc writing for <KEY>]
@@ -1103,7 +1110,7 @@ Doc-review verdict: [PASS | PASS WITH RECOMMENDATIONS | BLOCK]
 
 Then spawn all four Phase 4-style maintenance agents in a **single Agent message**. They are independent and run concurrently.
 
-**Agent 1 — Documentation** (general-purpose, model: `<detection_model — §9 / §2.1 Sonnet chain>`):
+**Agent 1 — Documentation** (general-purpose, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`):
 > "Post-write documentation review. Change summary:
 > [paste change summary block]
 >
@@ -1114,7 +1121,7 @@ Then spawn all four Phase 4-style maintenance agents in a **single Agent message
 > If an update is warranted: apply minimal edits to the relevant section(s).
 > Return: file updated and what changed, OR 'no update required (reason)'."
 
-**Agent 2 — Knowledge base** (general-purpose, model: `<detection_model — §9 / §2.1 Sonnet chain>`):
+**Agent 2 — Knowledge base** (general-purpose, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`):
 > "Post-write knowledge review. Change summary:
 > [paste change summary block]
 >
@@ -1129,7 +1136,7 @@ Then spawn all four Phase 4-style maintenance agents in a **single Agent message
 > - **Ref**: [first 60 chars of the key + feature summary]
 > Return: `{file, anchor, replacement, reason}` — `anchor` is the exact existing text to change, or the section to append to; `replacement` is the entry above in full; `reason` is why it's warranted — OR 'no update required'."
 
-**Agent 3 — Instructions** (general-purpose, model: `<detection_model — §9 / §2.1 Sonnet chain>`):
+**Agent 3 — Instructions** (general-purpose, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`):
 > "Post-write instructions review. Change summary:
 > [paste change summary block]
 >
@@ -1139,7 +1146,9 @@ Then spawn all four Phase 4-style maintenance agents in a **single Agent message
 > If YES: keep it minimal, additive, and scoped — do not propose rewriting sections wholesale — and return a proposed edit — write nothing.
 > Return: `{file, anchor, replacement, reason}` — `anchor` is the exact existing text to change, or the section to append to; `replacement` is the proposed new/changed text; `reason` is what this run revealed that warrants it — OR 'no update required'."
 
-**Agent 4 — Session maintenance** (workflows-core:impl-maintenance, model: `<detection_model — §9 / §2.1 Sonnet chain>`):
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of Agent 4 (`impl-maintenance`), with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in the Phase 9 report's Session learnings line, in place of the persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
+
+**Agent 4 — Session maintenance** (workflows-core:impl-maintenance, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`):
 > "Analyse this session and return a Lessons Learned report.
 >
 > Session handoff:
@@ -1255,6 +1264,8 @@ SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 - Detection steps — the folder read, diff-summarizer, doc-location-finder, docs-style-checker, doc-fixer, maintenance (detection_model): [model]
 - doc-reviewer (review_model): [model]
 - Opus available: [yes | no]
+- [Under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` in place of the three dispatched-step lines above (doc-planner synthesis, Detection steps, doc-reviewer) — each already equals the enforced id, per `workflows-core:model-routing/classification` §10. `current_model` and `Opus available` are unaffected by enforcement (§10: the orchestrator stays on the session model, and `opus_available` is a property of the environment) and are reported above exactly as they stand.]
+- Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` skip line, where it fires, is carried in the Session learnings (Agent 4) line below; the `Session cost: …` skip line is Phase 11's own output, printed after this report and not restated in it.]
 
 ### PRD folder summary
 - PRD: [<PRD>] [summary, 1 line]
@@ -1313,7 +1324,7 @@ SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 [Every Phase 8.6 proposal with disposition `applied-uncommitted` — file, one-line summary, reason — one per line. These edits are deliberately excluded from the Phase 8.5 docs commit: a repo-governance file like `CLAUDE.md` needs its own PR on the user's timing, not a ride on this run's docs commit. Run `git status` in the docs repo to review before committing them separately. OR "none".]
 
 ### Session learnings (Agent 4)
-- [top suggestions from impl-maintenance agent, or "no suggestions — routine session"]
+- [top suggestions from impl-maintenance agent, or "no suggestions — routine session" — or, under `--skip-feedback`, `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` / `— no defects` in its place]
 
 ### Screenshots to upload manually
 [Only populated for the **Defer** path of Phase 6.1 — i.e. a target used image_policy: cdn_upload_required (a target whose ambiguous policy Phase 5.7's **Ambiguous image policy** step, or Phase 6.3's `BLOCKED` loop after it, resolved to "Stage for manual upload to the repo's image-management tool" included) AND the user chose "Defer — stage with TODO placeholders" at the Phase 6.1 CDN handoff, or where Phase 6.3's loop asked it. For each staged screenshot: src (original user-provided path), staging path under <screenshot_staging_dir> (the staging directory), the target page it belongs on, the proposed alt-text, and the upload_note from the planner. Omit this section entirely when no screenshots were staged — including when the user chose "Upload now" in Phase 6.1 (those images carry real CDN URLs in the markdown and need no manual step).]
@@ -1382,10 +1393,12 @@ into the docs repo or the current working directory, where it is not the specs r
 
 Terminal phase — the NEW final operational phase; runs after Phase 10 (the
 follow-up phase) and NEVER interrupts an earlier phase. Records this command's
-token-cost contribution to the PRD by invoking `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and calling its single `emit-cost` entry point. Unlike feedback, **cost ALWAYS runs** — it never "writes
+token-cost contribution to the PRD — through `emit-cost`, or, under `run_flags.skip_costs`, by advancing the checkpoint alone. Unlike feedback, **cost ALWAYS runs** — unless `run_flags.skip_costs` (see below) — it never "writes
 nothing".
 
-Call `emit-cost` with `command: /document (keyed mode)`, `phase: documenting`,
+**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way.
+
+Otherwise (not skipping), invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call `emit-cost` with `command: /document (keyed mode)`, `phase: documenting`,
 `role: dev`, the run's `key` and `source`, and `plugin_version` (read from
 `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). It resolves the session
 transcript + subagents (§1), loads and **advances the chained checkpoint** (§3),
@@ -1423,7 +1436,7 @@ name is ever written (§10 privacy).
 
 ## Invariants (always enforced)
 
-- ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation, and Mode A Phase 0 step 1's named stops on a folder that resolved — `DOCUMENT_BRD_NOT_SLICED`, `DOCUMENT_FOLDER_NOT_PLACED`, `DOCUMENT_PRD_NO_KEY` and `DOCUMENT_NO_PRD`, each reporting the operator's own tree)
+- ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation, and Mode A Phase 0 step 1's named stops on a folder that resolved — `DOCUMENT_BRD_NOT_SLICED`, `DOCUMENT_FOLDER_NOT_PLACED`, `DOCUMENT_PRD_NO_KEY` and `DOCUMENT_NO_PRD`, each reporting the operator's own tree). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 - ALWAYS run Phase 0 docs-repo detection; if 0 signals, require user confirmation before proceeding
 - NEVER call a forge's REST API directly over HTTPS, on any host. A keyed run has no forge URL to resolve in the first place: it passes `refs[]` only (Phase 4 step 6), and `diff-summarizer` takes a `refs` element's diff with pure local `git`. The one forge command this command names is the `gh pr create` Phase 8.5 offers the **user** for the run's own pull request, and `gh` wraps the API rather than calling it directly
 - NEVER write inside `_archive/` — that path is read-only by convention
@@ -1435,7 +1448,7 @@ name is ever written (§10 privacy).
 - ALWAYS append each gate's ledger row at the moment that gate completes, per `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` — NEVER reconstruct the ledger at Phase 9, and NEVER leave a registry gate without a row
 - NEVER present a phase's `choices:` array in an order, wording, or recommendation other than the one written; the "Choice lists are presented verbatim" rule in `workflows-core:escalation-rules` binds every prompt in this command
 - ALWAYS invoke `doc-reviewer` before Phase 8 maintenance
-- ALWAYS resolve the `model_routing` block at Phase 1.5 and pin each subagent dispatch to its §9 chain via `model:` — `doc-planner` to the §2 Opus chain, the mechanical steps (the folder read, `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, maintenance) to the §2.1 Sonnet chain; `doc-reviewer` keeps its frontmatter Opus pin (no override); the inline writer + gates run on `current_model` (advisory only)
+- ALWAYS resolve the `model_routing` block at Phase 1.5 and pin each subagent dispatch to its §9 chain via `model:` — `doc-planner` to the §2 Opus chain, the mechanical steps (the folder read, `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, maintenance) to the §2.1 Sonnet chain; `doc-reviewer` keeps its frontmatter Opus pin (no override unless §10 enforces a model); the inline writer + gates run on `current_model` (advisory only)
 - ALWAYS cap review/fix cycles: 1 fix + 1 re-review max
 - ALWAYS pass `Change type: docs` in the Phase 8 change summary block
 - ALWAYS pass `Command run: /document (keyed mode)` in the Phase 8 Agent 4 session handoff — the mode-qualified name this run already passes `emit-auto` in the same phase and `emit-cost` in Phase 11, and what keeps a returned phase-numbered suggestion resolvable between two modes that each number from their own Phase 0
@@ -1461,7 +1474,7 @@ If the argument starts with `@`, treat it as a path to a markdown file. Resolve 
 
 For net-new documentation assembled from a PRD folder plus the diffs its implementation record names, use keyed mode (above). For writing child Epic drafts from a Product Requirements Document, use `/product-workflows:epics`.
 
-No model-routing reminder is injected for this command — classification still happens but is always SIMPLE or MODERATE, and Opus is never invoked.
+No model-routing reminder is injected for this command — classification still happens but is always SIMPLE or MODERATE, and Opus is never invoked, unless `run_flags.enforced_model` names one (`workflows-core:model-routing/classification` §10): every dispatch below then carries the enforced id in place of the Sonnet chain, bypassing this mode's own Opus-never rule because the user explicitly chose it.
 
 ---
 
@@ -1553,7 +1566,7 @@ State the classification and a one-line reason, then proceed to Phase 2A.
 
 **Repo exploration** — Before writing the plan, spawn an exploration subagent to map the relevant docs and any sibling conventions:
 
-→ Agent (subagent_type: "general-purpose", tools: Read/Glob/Grep only — no Bash, no Edit, model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5>`):
+→ Agent (subagent_type: "general-purpose", tools: Read/Glob/Grep only — no Bash, no Edit, model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5; under §10, run_flags.enforced_model>`):
   "Given this doc-edit description: [paste the full description from Phase 0 or Phase 1 here], find and return:
    - Target file(s) and their current structure (headings, frontmatter, approximate size)
    - Sibling / adjacent pages that may need matching updates (cross-references, navigation files, index pages)
@@ -1615,12 +1628,13 @@ choices: ["Approve & implement now (Recommended)", "Revise plan", "Cancel"]
 
 After writing the edits and before Phase 4, dispatch `docs-style-checker` on the changed file(s), against the repository Phase 0 step 3 resolved from the edit target, whichever repository cwd sits in:
 
-→ Agent (subagent_type: "docs-workflows:docs-style-checker", model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5>`):
+→ Agent (subagent_type: "docs-workflows:docs-style-checker", model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5; under §10, run_flags.enforced_model>`):
   > repo_root: [the `repo_root` Phase 0 step 3 resolved]
   > site_root: [the `site_root` Phase 0 step 3 resolved, where it set one — the site's own .vale.ini, package.json and lint configuration are looked for there first, then in each directory above it up to repo_root; omit the key otherwise]
   > files:     [the files edited in Phase 3]
+  > enforced_model: [run_flags.enforced_model, when set — docs-style-checker passes it as model: on its own prose-style-checker dispatch in place of the Sonnet detection chain (workflows-core:model-routing/classification §10); omit the key otherwise]
 
-- `VIOLATIONS_FOUND` → apply safe fixes via `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5>`, one fix cycle), then check the fixer's `Stop condition flag`. On `NEEDS HUMAN` it deferred a blocking violation it could not safely fix: surface each deferred BLOCKER with the fixer's reason and ask the user whether to fix it by hand and re-run, or skip the check — direct mode runs no reviewer, so nothing downstream would catch it. Record the `style_check` row from that answer per `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` (`RAN` after a hand fix and re-run, `SKIPPED_BY_USER` with the choice quoted verbatim). Only on `CLEAR` re-run once.
+- `VIOLATIONS_FOUND` → apply safe fixes via `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5; under §10, run_flags.enforced_model>`, one fix cycle), then check the fixer's `Stop condition flag`. On `NEEDS HUMAN` it deferred a blocking violation it could not safely fix: surface each deferred BLOCKER with the fixer's reason and ask the user whether to fix it by hand and re-run, or skip the check — direct mode runs no reviewer, so nothing downstream would catch it. Record the `style_check` row from that answer per `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` (`RAN` after a hand fix and re-run, `SKIPPED_BY_USER` with the choice quoted verbatim). Only on `CLEAR` re-run once.
 - `OK` → proceed to Phase 4.
 - `ERROR` → neither a primary rung nor the `prose-style-checker` pass produced a result, so the gate has no coverage. Record `style_check` as `UNAVAILABLE` and convert it per `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` §5 before proceeding. Direct mode has no reviewer gate, so this prompt is the only place the gap surfaces — never proceed past it silently.
 
@@ -1649,7 +1663,7 @@ Validation result: [PASS | PARTIAL — with note on what's still broken]
 
 Then spawn all four Phase 4 agents. They are independent and can run in any order — spawn them all before waiting for any to complete:
 
-**Agent 1 — Documentation** (general-purpose, model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5>`):
+**Agent 1 — Documentation** (general-purpose, model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5; under §10, run_flags.enforced_model>`):
 > "Post-doc-edit documentation review. Change summary:
 > [paste change summary block]
 >
@@ -1660,7 +1674,7 @@ Then spawn all four Phase 4 agents. They are independent and can run in any orde
 > If an update is warranted: apply minimal edits to the relevant section(s).
 > Return: file updated and what changed, OR 'no update required (reason)'."
 
-**Agent 2 — Knowledge base** (general-purpose, model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5>`):
+**Agent 2 — Knowledge base** (general-purpose, model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5; under §10, run_flags.enforced_model>`):
 > "Post-doc-edit knowledge review. Change summary:
 > [paste change summary block]
 >
@@ -1675,7 +1689,7 @@ Then spawn all four Phase 4 agents. They are independent and can run in any orde
 > - **Ref**: [first 60 chars of the doc-edit description]
 > Return: `{file, anchor, replacement, reason}` — `anchor` is the exact existing text to change, or the section to append to; `replacement` is the entry above in full; `reason` is why it's warranted — OR 'no update required'."
 
-**Agent 3 — Instructions** (general-purpose, model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5>`):
+**Agent 3 — Instructions** (general-purpose, model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5; under §10, run_flags.enforced_model>`):
 > "Post-doc-edit instructions review. Change summary:
 > [paste change summary block]
 >
@@ -1685,7 +1699,9 @@ Then spawn all four Phase 4 agents. They are independent and can run in any orde
 > If YES: keep it minimal, additive, and scoped — do not propose rewriting sections wholesale — and return a proposed edit — write nothing.
 > Return: `{file, anchor, replacement, reason}` — `anchor` is the exact existing text to change, or the section to append to; `replacement` is the proposed new/changed text; `reason` is what this edit revealed that warrants it — OR 'no update required'."
 
-**Agent 4 — Session maintenance** (workflows-core:impl-maintenance, model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5>`):
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of Agent 4 (`impl-maintenance`), with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in the Phase 5 `### Session learnings (Agent 4)` line, in place of the persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
+
+**Agent 4 — Session maintenance** (workflows-core:impl-maintenance, model: `<Sonnet detection chain — claude-sonnet-5, fallback claude-sonnet-4-6 / 4-5; under §10, run_flags.enforced_model>`):
 > "Analyse this session and return a Lessons Learned report.
 >
 > Session handoff:
@@ -1763,6 +1779,9 @@ Output a structured report — do NOT ask any closing confirmation:
 ### Classification
 [SIMPLE | MODERATE] — [reason]
 
+### Run flags
+[The `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this section entirely otherwise. When `run_flags.enforced_model` is set, add `Model routing: bypassed — enforced <id> (flag|env)` — every dispatch above already carries the enforced id in place of the Sonnet chain, per `workflows-core:model-routing/classification` §10. The `Session cost: …` skip line is Phase 7's own output, printed after this report and not restated in it.]
+
 ### What was edited
 [High-level summary]
 
@@ -1786,7 +1805,7 @@ Output a structured report — do NOT ask any closing confirmation:
 [Every Phase 4.5 proposal with disposition `applied-uncommitted` — file, one-line summary, reason — one per line. Direct mode never commits the doc edits (the terminal `commit-artifacts` step stages only `$SPECS_PATH`'s bookkeeping paths), so these edits already sit in the same uncommitted working tree as the rest of this run's changes; listed separately so an accepted `CLAUDE.md` / knowledge-base edit doesn't get lost among the doc edits when you review before committing. OR "none".]
 
 ### Session learnings (Agent 4)
-- [top suggestions from impl-maintenance agent, or "no suggestions — routine session"]
+- [top suggestions from impl-maintenance agent, or "no suggestions — routine session" — or, under `--skip-feedback`, `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` / `— no defects` in its place]
 
 ### Verification gates
 | Gate | Outcome | Detail |
@@ -1832,10 +1851,12 @@ into the docs repo or the current working directory, where it is not the specs r
 
 Terminal phase — the NEW final operational phase; runs after Phase 6 (the
 follow-up phase) and NEVER interrupts an earlier phase. Records this command's
-token-cost contribution by invoking `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and calling its single `emit-cost` entry point. Unlike feedback, **cost ALWAYS runs** — it never "writes
+token-cost contribution — through `emit-cost`, or, under `run_flags.skip_costs`, by advancing the checkpoint alone. Unlike feedback, **cost ALWAYS runs** — unless `run_flags.skip_costs` (see below) — it never "writes
 nothing".
 
-Call `emit-cost` with `command: /document (direct mode)`, `phase: documenting`,
+**Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). No `resume.md` is written in this mode, so only the terminal `commit-artifacts` step below runs unchanged either way.
+
+Otherwise (not skipping), invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call `emit-cost` with `command: /document (direct mode)`, `phase: documenting`,
 `role: dev`, the run's `key` (usually `null` in direct mode) and `source`,
 and `plugin_version` (read from
 `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). It resolves the session
@@ -1868,11 +1889,11 @@ directory, where it is not the specs repository; no user name is ever written (�
 
 ## Invariants (always enforced)
 
-- ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation)
+- ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 - ALWAYS run Phase 3.5 (style check) after editing — `docs-style-checker` always also runs `prose-style-checker` — complementary beside a repo linter that produced a result, FALLBACK where every detected rung failed, SOLE where the repository configures none (its step 5); never skip style on tool-absence judgement
 - NEVER create a git branch — this mode never branches. `specs-preflight` may switch `$SPECS_PATH` between branches that already exist, and only ones the plugin created (`workflows-core:specs-repo-git` §2.2); it creates none.
 - NEVER run tests (this command has no test phase)
-- NEVER invoke Opus (no planning agent, no review agent — docs edits are always SIMPLE or MODERATE)
+- NEVER invoke Opus (no planning agent, no review agent — docs edits are always SIMPLE or MODERATE), unless `run_flags.enforced_model` names one (§10)
 - NEVER commit the doc edits, or anything else in a docs/code repo or the current working directory, where it is not the specs repository — the user manages git manually there. The terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1).
 - ALWAYS run `specs-preflight` in the shared `## Mode detection` section, before dispatching to either mode — so it runs for Mode B as well as Mode A — and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`) — bounded to `$SPECS_PATH`'s artifact paths (§2.1) and to plugin-created branches (§2.2), always `git -C "$SPECS_PATH"` and never a `cd` (§1 rule 1), never force-pushing, and never failing the run
 - NEVER make assumptions that could have been asked — ask instead
