@@ -408,7 +408,7 @@ gap** (a capability the run needed but the plugin lacked), `emit-block` (per
    with the Lessons Learned report, `command: /frames`, `key` = the resolved folder's key, the run's
    `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`).
    Surface the persisted path (or "no plugin-facing signal — nothing persisted").
-3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The terminal `commit-artifacts` step below runs unchanged either way. Otherwise, cite `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md` and call
+3. **Session cost (ALWAYS runs — writing no entry under `run_flags.skip_costs`).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The terminal `commit-artifacts` step below runs unchanged either way. Otherwise, cite `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md` and call
    its `emit-cost` entry point with `command: /frames`, `phase: inferred`, `role: inferred`, `key` =
    the resolved folder's key, the run's `source`, and `plugin_version`. §7's discriminator is the
    resolved folder's own `kind`, which Phase 0 already read: `brd` attributes the run to

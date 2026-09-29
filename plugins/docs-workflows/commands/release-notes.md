@@ -583,11 +583,11 @@ working directory, where it is not the specs repository.
 
 Terminal phase — the NEW final operational phase; runs after Phase 10
 (follow-ups) and NEVER interrupts an earlier phase. Records this command's
-token-cost contribution to the PRD by invoking `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and calling its single `emit-cost` entry point. Unlike feedback, **cost ALWAYS runs** — unless `run_flags.skip_costs` (see below).
+token-cost contribution to the PRD — through `emit-cost`, or, under `run_flags.skip_costs`, by advancing the checkpoint alone. Unlike feedback, **cost ALWAYS runs** — unless `run_flags.skip_costs` (see below).
 
 **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way.
 
-Otherwise, `/release-notes` runs at two different phases by two roles (a PM's early bare-PRD
+Otherwise (not skipping), invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")`. `/release-notes` runs at two different phases by two roles (a PM's early bare-PRD
 run and a dev's documenting re-run), so DO NOT pass a fixed phase/role: call
 `emit-cost` with `command: /release-notes`, `phase: inferred`, `role: inferred`,
 the run's `key` (or `null`) and `source`, and `plugin_version` (read from

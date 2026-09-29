@@ -448,8 +448,8 @@ is each member's own rather than a new condition here:
 - **Follow-ups are a no-op.** No signal qualifies, so that phase resolves no
   target, writes nothing and ends silently (`followup-emission.md` §6).
 
-- **The cost entry is written.** `cost-emission.md` §11 settles it already —
-  *Cost ALWAYS runs* — and it is the member that makes this tail matter on a
+- **The cost entry is written, unless `--skip-costs`, in which case `workflows-core:run-flags` `skip-cost` advances the checkpoint and writes nothing.** `cost-emission.md` §11 settles it already —
+  *Cost runs unless the user skipped it* — and it is the member that makes this tail matter on a
   refusal: the run spent the session's tokens whether or not it wrote a file,
   and a keyless one has a home under that file's §9 pending ladder. A refusal
   that skipped the tail would break §11 silently, which is why the tail is not
@@ -462,7 +462,7 @@ is each member's own rather than a new condition here:
   so writing one here would replace a live pointer to a real position with a
   run that did nothing, and what it replaced cannot be recovered.
 
-- **This step runs**, for the cost entry above. Where the refusal came before
+- **This step runs**, for the cost entry above (under `--skip-costs` there is none, and the gates below settle the step exactly as they would for any run with nothing new to stage). Where the refusal came before
   `$SPECS_PATH` was resolved, step 1's gate no-ops it silently; where that
   entry is the only new path, step 4 commits it alone; where nothing is dirty,
   step 3's `nothing to commit` line stands.

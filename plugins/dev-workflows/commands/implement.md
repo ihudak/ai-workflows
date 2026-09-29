@@ -832,6 +832,7 @@ Output a structured report — do NOT ask any closing confirmation:
 
 ### Classification
 [SIMPLE | MODERATE | SIGNIFICANT | HIGH-RISK] — [reason]
+[Under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` — every dispatched step (planner, reviewer, fixer, test agents, scanners) already carries the enforced id in place of its own chain, per `workflows-core:model-routing/classification` §10. The `model_routing` block's `opus_available` is unaffected by enforcement (§10: a property of the environment, never rewritten to agree with the enforced id) and, wherever this report states it, is stated exactly as it stands. Omit the line otherwise.]
 
 ### Branch
 [branch name created in Pre-Phase 3, e.g. feat/add-user-authentication]
@@ -845,8 +846,8 @@ Output a structured report — do NOT ask any closing confirmation:
 ### Files changed
 - path/to/file.ext — [what changed]
 
-### Opus review (if applicable)
-[Verdict and 1-line summary, or "N/A (SIMPLE / MODERATE)"]
+### Opus review (if applicable; on the enforced id under §10)
+[Verdict and 1-line summary — naming the enforced id it ran on wherever `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10) — or "N/A (SIMPLE / MODERATE)"]
 
 ### Review triage
 - **Review triage:** [N findings reviewed, M survived] — dismissals: [one line per dismissal, `finding — reason`; or "none"] — or "N/A (SIMPLE / MODERATE, no Opus review)"
@@ -979,7 +980,7 @@ directory, where it is not the specs repository; no user name is ever written (�
 
 - ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 - NEVER skip Phase 1.5 classification — every run must state the level
-- NEVER use Opus for routine implementation; reserve it for planning + review on SIGNIFICANT / HIGH-RISK
+- NEVER use Opus for routine implementation, unless §10 enforces a model (`workflows-core:model-routing/classification` §10 — every dispatched step then runs on `run_flags.enforced_model`, whatever it is); otherwise reserve it for planning + review on SIGNIFICANT / HIGH-RISK
 - NEVER run tests on SIGNIFICANT / HIGH-RISK work before the Opus code review returns a non-BLOCK verdict
 - NEVER skip Phase 3.5 — where the Pre-Phase 3.5 capture returns `COMMAND_NOT_FOUND` (no framework detected) or `RUN_FAILED` (every suite the capture actually ran aborted with no parseable counts — *run*, not *detected*, since a `command_hint` can narrow one set against the other, and a suite that ran to completion printing unrecognised output never failed to start), ask the user there, where a baseline can still be taken, rather than silently skipping; a "Skip" decision must be explicit and logged in the Phase 5 report, and it drops steps 4–6 only — step 3's lint and build still run
 - NEVER read a verify report as a pass on any value but `OK` or `PARTIAL` — `RUN_FAILED` means nothing was compared and `COMMAND_NOT_FOUND` means nothing was run, and each is surfaced (Phase 3.5 step 5), never passed over
