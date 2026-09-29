@@ -240,7 +240,7 @@ Also display: the resolved PRD folder, its `key`, `$REPOS_PATH` (or "N/A — PRD
 
 ## Phase 1.5 — Classify
 
-Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-routing"`), then classify the task. Release-notes drafting is **MODERATE** (bounded prose synthesis from a single ticket; no Opus planning or review gate). State the classification and a one-sentence reason, and record the `model_routing` block §4 defines — Phase 6 pastes it, and its `detection_model` (the §2.1 Sonnet chain) is what Phase 5's `diff-summarizer` batch and Phase 6's writer are pinned to.
+Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-routing"`), then classify the task. Release-notes drafting is **MODERATE** (bounded prose synthesis from a single ticket; no Opus planning or review gate). State the classification and a one-sentence reason, and record the `model_routing` block §4 defines — its `defect_model` (§2.2 cheap chain — only under `--skip-feedback`; under §10, `run_flags.enforced_model`) included — Phase 6 pastes it, and its `detection_model` (the §2.1 Sonnet chain) is what Phase 5's `diff-summarizer` batch and Phase 6's writer are pinned to.
 
 ---
 

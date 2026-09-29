@@ -92,6 +92,7 @@ model_routing:
   reason: "cross-cutting synthesis of every scanned repository; the backlog steers every page written from it"
   current_model: <the model this orchestrator is running under>
   enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
+  defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5, fallback claude-sonnet-4-6/4-5>   # code-scanner, docs-auditor, impl-maintenance
   review_model: <the §2 Opus chain — claude-opus-5-5, fallback per §2 — pinned regardless of classification, per D17/D20>
   opus_available: true | false
