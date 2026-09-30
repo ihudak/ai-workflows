@@ -30,7 +30,12 @@ repo: /absolute/path/to/repo   # the project root, and the scan root in BOTH mod
 mode: capture              # capture | verify
 command_hint: "./mvnw test -q"   # optional; one or more commands. Detection still runs —
                                  # the hint narrows what is RUN, never what is DETECTED.
-                                 # Omitted ⇒ every detected suite runs. A hint sent on the
+                                 # Omitted ⇒ every detected suite runs — and where nothing
+                                 # is detected, the test command the repository declares
+                                 # for itself (its CI file, else CONTRIBUTING.md/README.md),
+                                 # read once at capture as `declared#<n>` suites and replayed
+                                 # at verify from the baseline's own rows, so a caller sends
+                                 # nothing for it (capture step 1's last rule). A hint sent on the
                                  # capture call is sent again on every verify call against
                                  # that baseline — the same commands IN THE SAME ORDER —
                                  # or the two runs have nothing to pair: a command that
@@ -115,7 +120,8 @@ lexicographically first of the folded candidates' marker paths where the `Make`
 wrapper rule folded more than one of that framework, which is the folded
 candidate's own where it folded one — a candidate a division would have carved
 included, since that rule is asked first and no row is then carved at all;
-`command_hint#<n>` where a hinted command matched no detected suite), command,
+`command_hint#<n>` where a hinted command matched no detected suite,
+`declared#<n>` for a declared suite), command,
 per-suite status, per-suite
 counts — including any the `command_hint` left `not run`. Where more than one of that
 row's markers qualified in the one directory, which of them the column records
@@ -144,8 +150,8 @@ its own number): `pom.xml` for a suite at the scan root,
 marker's own** — a suite the `Make` wrapper folded runs at the `Makefile`'s, a
 `--workspace` row of a workspaces division and a member row of a Cargo one run at
 the candidate's, and a hinted
-command matching no suite runs at the scan root — and the first two are named in
-`### Notes`, the third being what a `command_hint#<n>` marker value already says. A
+command matching no suite runs at the scan root, as a declared suite does — and the first two are named in
+`### Notes`, the third being what a `command_hint#<n>` or `declared#<n>` marker value already says. A
 single-suite repository's block is unchanged in every field, `### Suites` aside
 — **the identifier prefix included**, which is why the example at the head of
 this section carries `[Maven] ` on each of its two lists and why the prefix is
@@ -169,14 +175,18 @@ division and for the member rows of a Cargo one), every candidate a `Make` fold
 covering more than one of one framework
 holds and every unit of a divided candidate such a fold took, with the fact that
 its identifiers are not attributed to them, a `Make` wrapper one level did not
-settle, "no runner found", a recipe whose output matched no parse pattern. **Two
-of those read, from the `Status` and `### Suites` alone, exactly like a suite
-that genuinely failed** — a carve-out that did not fire and a recipe whose output
-matched no pattern, each leaving a `RUN_FAILED` row with a command beside it — so
-a caller that reports a failed suite without reading this section reports the
-wrong cause. **Three more stand beside a return whose every row reads `OK`**: the
-unsettled `Make` wrapper, the fold's unattributed identifiers, and a qualifying
-marker a non-recursing container kept out of the candidate set — which is what
+settle, a CTest candidate with no configured tree, the file and step each declared
+suite was read from, an identifier one suite printed more than once, a
+best-effort suite recorded by its exit status, "no runner found" with the files
+read. **Two of those read, from the `Status` and `### Suites` alone, exactly like
+a suite that genuinely failed** — a carve-out that did not fire and a best-effort
+command that printed no count and exited non-zero, each leaving a `RUN_FAILED`
+row with a command beside it — so a caller that reports a failed suite without
+reading this section reports the wrong cause. **Six more stand beside a return
+whose every row reads `OK`**: the unsettled `Make` wrapper, the fold's
+unattributed identifiers, a qualifying marker a non-recursing container kept out
+of the candidate set, a duplicated identifier, a suite recorded by its exit
+status alone, and a declared suite — which is what
 the marked lines below are for, and why they are read on every status rather than
 on the ones a caller already stops at. Verify mode has carried the same
 section since before capture did, and it is the same section: capture's detection
@@ -187,7 +197,7 @@ moved between the two calls, never that anything about it failed.
 
 **A line opening with the literal `CAVEAT: ` is a note whose harm the `Status`,
 the counts and the test lists cannot show, and a caller surfaces every one of
-them on every status — `OK` and `NO_TESTS` included.** Three of the kinds that
+them on every status — `OK` and `NO_TESTS` included.** Six of the kinds that
 carry the mark can stand beside a green return: a `Make` fold's identifiers,
 which are not attributed to what printed them — the candidates it folded, or
 the units of a divided candidate it took, the wrapper rule being asked before
@@ -197,10 +207,17 @@ copy; a
 did not settle, where two suites run and the same tests may be summed twice; and
 a qualifying marker a **non-recursing** container left out of the candidate set,
 where a real suite is never run and no row says so — a `package.json` with no
-`workspaces` field over another, `go test ./...` over a nested `go.mod`, or a
-Cargo workspace member outside the default set `cargo test` at that root runs. The other two — a watch
+`workspaces` field over another, `go test ./...` over a nested `go.mod`, a
+Cargo workspace member outside the default set `cargo test` at that root runs,
+or one of the six cases the rows for .NET, PHPUnit, sbt, Mix, Dart and CTest
+add (capture step 1); an identifier one suite printed more than once, where the
+lists record it once and a loss of one copy is masked by the other; a suite
+recorded by its exit status alone — a `Make` suite, or a declared or hinted one
+naming no runner of the table, whose output yielded no count or no test name —
+where one identifier stands for every test; and a declared suite, whose command
+the repository chose rather than the table. The other two — a watch
 carve-out that did not fire on a suite whose row then reads `RUN_FAILED`, and a
-parser that recognised no count pattern — arrive on an arm the `Status` does
+best-effort suite that printed no count and exited non-zero — arrive on an arm the `Status` does
 flag, and there the mark is what reaches a caller that reads this section on none
 of its arms. Verify marks three more of its own: an abort of a suite whose
 baseline row could lose no passing test, step 2's *"more than one of each for a
@@ -224,8 +241,9 @@ own `notes` verbatim, and its orchestrator carries it from there
 - `RUN_FAILED` — **every** suite that was run aborted with no parseable counts,
   so the baseline records nothing for a later verify to compare against
 - `NO_TESTS` — every suite ran cleanly and the combined Total = 0
-- `COMMAND_NOT_FOUND` — no candidate matched and no `command_hint` supplied one,
-  so nothing ran (**Framework** then reads `not detected`)
+- `COMMAND_NOT_FOUND` — no candidate matched, no `command_hint` supplied one and
+  the repository declares no test command capture step 1 could take, so nothing
+  ran (**Framework** then reads `not detected`)
 
 **Field mapping for callers that need YAML-shaped fields** (e.g. `vuln-fixer`'s
 and `upgrade-executor`'s `baseline:` input — see their own handoff docs):
@@ -302,9 +320,9 @@ Maven | pom.xml | `./mvnw test -q` | OK | Total 47, Passing 46, Failing 1, Skipp
   alone, which is why it is refused rather than computed**: with an uncovering
   baseline every count is 0, nothing can go missing, and a ladder allowed to run
   would return `OK` wherever this call's own suites produced counts
-- `COMMAND_NOT_FOUND` — no candidate matched and no `command_hint` supplied one,
-  so nothing ran (**Framework** then reads `not detected`) — the same test capture
-  mode applies, a hint being something to run rather than nothing. Never emitted
+- `COMMAND_NOT_FOUND` — no candidate matched, no `command_hint` supplied one and
+  the baseline holds no declared suite, so nothing ran (**Framework** then reads
+  `not detected`) — the same test capture mode applies, a hint being something to run rather than nothing. Never emitted
   once a call reaches the run step
 
 **What a consumer may do with each.** `REGRESSIONS` is the only value that is

@@ -29,7 +29,7 @@ The PM/PA/PE commands that used to sit here — `/idea`, `/create-prd`, `/update
 ## Reference
 
 - [Agents](reference/agents.md) — the subagent inventory: what each helper agent does and which command calls it.
-- [Test suite detection](reference/test-suite-detection.md) — the eleven marker rows `test-baseliner` scans for, what each one runs, what happens to a stack the table does not list, and what adding one takes.
+- [Test suite detection](reference/test-suite-detection.md) — the seventeen marker rows `test-baseliner` scans for, what each one runs, the repository-declared test command it falls back to for a stack the table does not list, and what adding one takes.
 - [References](reference/references.md) — the reference-doc inventory under `references/`, grouped by subtree.
 - Skills — this plugin ships 0 bundled skills of its own. The `model-routing` skill every pipeline command loads at its classification step ships in `workflows-core`, alongside the classification reference it resolves; `docs-frontmatter`, the one skill that used to ship here, moved to `docs-workflows` with the `docs-profiles/` conventions it applies.
 - [Environment](reference/environment.md) — every environment variable the plugin reads, and what it configures.

@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.8.2] — 2026-09-30
 
-**Update `dev-workflows` to 4.3.2, `docs-workflows` to 1.4.2 and `product-workflows` to 3.10.0 together with this release**: their chain-head references now name `claude-sonnet-5-5`, which this release adds to the §2 and §2.1 chains.
+**Update `dev-workflows` to 4.4.0, `docs-workflows` to 1.4.2 and `product-workflows` to 3.10.0 together with this release**: their chain-head references now name `claude-sonnet-5-5`, which this release adds to the §2 and §2.1 chains.
 
 ### Fixed — behaviour
 
