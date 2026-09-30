@@ -187,10 +187,15 @@ An updated PRD can invalidate what was derived from it. Where this run can go ne
 choices: ["Re-run the spec — /product-workflows:specify <KEY> (PE, if one exists) <merge-clause>", "Re-run architecture — /product-workflows:create-ard <KEY> (PA, if one exists) <merge-clause>", "Re-run epics — /product-workflows:epics <KEY> (PE)", "Stop here"]
 
 **The offer is conditional on Phase 0 step 5a, not flat**, and where step 5a found a
-`release-notes.md` it **gains an option this list does not carry** — `"Re-draft the release note
+`release-notes.md` it **gains a route this list does not carry** — `"Re-draft the release note
 — /docs-workflows:release-notes <KEY> (PM)"` — because that command lives in `docs-workflows`
 and so is absent from this plugin's own next-phase list, while the artifact it produces is
-exactly the one an update most often falsifies.
+exactly the one an update most often falsifies. **That route makes five with `Stop here`, and
+the prompt renders four** (`workflows-core:escalation-rules` §0), so it is placed by
+`workflows-core:next-phase-offer`'s overflow rule and never appended as a fifth option: the
+prose list above carries every route that survives the conditions below, the array carries
+`Stop here` plus the three the run's outcome makes most likely — a Recommended one first, then
+in the prose's order — and the run says in one line that the list is longer than the prompt.
 
 - **A downstream artifact exists AND this update changed something it depends on** — say so
   before the list, naming the artifact, its path, and the specific requirement or section the

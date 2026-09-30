@@ -13,6 +13,10 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 - The §2.1 chain-head references in `/implement`, `/ready`, `/upgrade`, `/vuln` and `/design`, and the fallback chain on the model-routing docs page, name `claude-sonnet-5-5` — the current Sonnet, which no routing path could previously select.
 
+### Fixed
+
+- **Every reviewer's three verdicts are a partition.** `PASS` read "no findings above MINOR" beside a `PASS WITH RECOMMENDATIONS` of "MAJOR / MINOR / NIT only", so a lone MINOR matched both and the verdict was the reviewer's coin-toss, while the caller dispatches a fixer on one of the two. `docs-scaffold-reviewer` and `docs-audit-reviewer` had already settled it as *no findings at all*; `code-review` and `design-reviewer` now read the same way, and `readiness-reviewer`'s `PARTIAL` needs at least one MAJOR, so a lone MINOR or NIT leaves the verdict `SUPPORTED`.
+
 ## [4.3.1] — 2026-09-29
 
 **Update `workflows-core` to 1.8.1 with this release**: its `classification.md` §5 dispatch rule — pass a model's family name where the agent tool accepts only family names — is what the text below now cites.

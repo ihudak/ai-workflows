@@ -38,7 +38,7 @@ Refuse to review without the written file paths and the caller's `requirements[]
 7. Flag any unresolved `[NEEDS CLARIFICATION]` marker as a BLOCKER.
 8. When `applicable_ard` is present, check each Epic against the `AD#N` invariants: a violating Epic WITHOUT a matching `- ARD deviation: … flag: architect` line is a BLOCKER; WITH one it is allowed-but-flagged. When absent, skip this dimension.
 9. For each dimension below, record findings in the shared severity schema (`BLOCKER` / `MAJOR` / `MINOR` / `NIT`). Skip dimensions that are clearly not applicable, but say so explicitly (`"N/A — reason"`).
-10. Derive a single verdict: `PASS` (no findings above MINOR), `PASS WITH RECOMMENDATIONS` (MAJOR / MINOR / NIT only, no blockers), `BLOCK` (at least one BLOCKER finding).
+10. Derive a single verdict: `PASS` (no findings at all), `PASS WITH RECOMMENDATIONS` (no blockers, but at least one MAJOR, MINOR or NIT), `BLOCK` (at least one BLOCKER finding). The three are a **partition**: every finding set matches exactly one. `PASS` used to read "no findings above MINOR" beside a `PASS WITH RECOMMENDATIONS` of "MAJOR / MINOR / NIT only", so a lone MINOR matched both and the verdict was the reviewer's coin-toss — and the caller dispatches a fixer on one of the two.
 
 ## Review dimensions
 

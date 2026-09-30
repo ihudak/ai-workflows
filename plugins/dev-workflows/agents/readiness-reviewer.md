@@ -51,8 +51,8 @@ Refuse to review without the derived phase and at least the requirement inventor
 4. Skip a dimension only when it is genuinely not applicable (e.g. dimension 4 with no `applicable_ard`),
    and say so explicitly (`"N/A — reason"`) — never silently.
 5. Derive a single verdict: `SUPPORTED` (no findings above MINOR — the artifacts justify the derived
-   phase and the next transition), `PARTIAL` (MAJOR / MINOR / NIT findings but no BLOCKER — the phase
-   is broadly justified with named gaps), `NOT-SUPPORTED` (at least one BLOCKER finding).
+   phase and the next transition), `PARTIAL` (at least one MAJOR finding and no BLOCKER — the phase
+   is broadly justified with named gaps; MINOR / NIT findings may accompany it, and alone they leave the verdict `SUPPORTED`, so the three are a partition), `NOT-SUPPORTED` (at least one BLOCKER finding).
 
 ## Review dimensions
 

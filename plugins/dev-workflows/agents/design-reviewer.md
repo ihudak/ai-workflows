@@ -90,8 +90,8 @@ Fix: <concrete recommendation, or "needs engineering input">
 ```
 
 Then a final line — the verdict:
-- `PASS` — no findings above MINOR.
-- `PASS WITH RECOMMENDATIONS` — MAJOR/MINOR/NIT only, no BLOCKER.
+- `PASS` — no findings at all.
+- `PASS WITH RECOMMENDATIONS` — no BLOCKER, but at least one MAJOR, MINOR or NIT. The three are a **partition**: every finding set matches exactly one. `PASS` used to read "no findings above MINOR" beside a `PASS WITH RECOMMENDATIONS` of "MAJOR / MINOR / NIT only", so a lone MINOR matched both and the verdict was the reviewer's coin-toss — and the caller dispatches a fixer on one of the two.
 - `BLOCK` — at least one BLOCKER (includes any unresolved `design.md` open question).
 
 If nothing is actionable, say so and state the classification you reviewed against.

@@ -70,8 +70,8 @@ Refuse to review without a diff - ask the caller to produce one.
    - **Observation** - what is wrong or risky
    - **Suggestion** - concrete, minimal fix
 5. Derive a verdict:
-   - `PASS` - no findings above MINOR
-   - `PASS WITH RECOMMENDATIONS` - MAJOR / MINOR / NIT only, no blockers
+   - `PASS` - no findings at all
+   - `PASS WITH RECOMMENDATIONS` - no blockers, but at least one MAJOR, MINOR or NIT. The three are a **partition**: every finding set matches exactly one. `PASS` used to read "no findings above MINOR" beside a `PASS WITH RECOMMENDATIONS` of "MAJOR / MINOR / NIT only", so a lone MINOR matched both and the verdict was the reviewer's coin-toss — and the caller dispatches a fixer on one of the two.
    - `BLOCK` - at least one BLOCKER finding
 
 ## Escape hatch: down-classification

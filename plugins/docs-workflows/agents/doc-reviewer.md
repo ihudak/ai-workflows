@@ -38,7 +38,7 @@ Refuse to review without the written file paths, the `doc-planner` checklist, an
 1. Read every written file end-to-end before forming any judgement.
 2. For each written file, cross-check its claims against the PRD folder (read the relevant files under the **PRD folder path**) and the `diff_summaries` array. If a claim has no backing in either source, flag it.
 3. For each dimension below, record findings in the shared severity schema (`BLOCKER` / `MAJOR` / `MINOR` / `NIT`). Skip dimensions that are clearly not applicable for the change, but say so explicitly (`"N/A — reason"`).
-4. Derive a single verdict: `PASS` (no findings above MINOR), `PASS WITH RECOMMENDATIONS` (MAJOR / MINOR / NIT only, no blockers), `BLOCK` (at least one BLOCKER finding).
+4. Derive a single verdict: `PASS` (no findings at all), `PASS WITH RECOMMENDATIONS` (no blockers, but at least one MAJOR, MINOR or NIT), `BLOCK` (at least one BLOCKER finding). The three are a **partition**: every finding set matches exactly one. `PASS` used to read "no findings above MINOR" beside a `PASS WITH RECOMMENDATIONS` of "MAJOR / MINOR / NIT only", so a lone MINOR matched both and the verdict was the reviewer's coin-toss — and the caller dispatches a fixer on one of the two.
 
 ## Review dimensions
 
