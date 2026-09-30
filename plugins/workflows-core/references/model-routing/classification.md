@@ -81,9 +81,10 @@ Use the first model in this list that is available in the environment:
 3. `claude-opus-4-8`
 4. `claude-opus-4-7`
 5. `claude-opus-4-6`
-6. `claude-sonnet-5` (fallback only — note in the report that no Opus was available)
-7. `claude-sonnet-4-6` (further fallback)
-8. `claude-sonnet-4-5` (further fallback — note "no Opus or Sonnet 5/4.6 available")
+6. `claude-sonnet-5-5` (fallback only — note in the report that no Opus was available)
+7. `claude-sonnet-5` (further fallback)
+8. `claude-sonnet-4-6` (further fallback)
+9. `claude-sonnet-4-5` (further fallback — note "no Opus or Sonnet 5.5/5/4.6 available")
 
 Sonnet 4.5 is the floor (§10 excepted — under an enforced model this chain is
 not walked, and the enforced id may sit below it); if no model in the list is
@@ -117,11 +118,12 @@ Opus, defeating the point).
 
 Use the first available:
 
-1. `claude-sonnet-5` (latest Sonnet)
-2. `claude-sonnet-4-6` (fallback)
-3. `claude-sonnet-4-5` (further fallback — note the degradation in the report)
+1. `claude-sonnet-5-5` (latest Sonnet)
+2. `claude-sonnet-5` (fallback)
+3. `claude-sonnet-4-6` (further fallback)
+4. `claude-sonnet-4-5` (further fallback — note the degradation in the report)
 
-If neither Sonnet is available, fall back to the session model and announce it.
+If no Sonnet is available, fall back to the session model and announce it.
 Record the chosen model as `detection_model:` in the `model_routing` block.
 
 ---

@@ -692,6 +692,25 @@ def selftest():
           "a dated Opus 5.5 id prices at the longest matching key")
     check(price_model("claude-opus-5", _tk, _pt) == (5.5, None),
           "claude-opus-5 still prices at its own key")
+    # The synthetic table above proves the ENGINE. Nothing proved the SHIPPED table still
+    # carries the keys the engine needs -- which is how claude-fable-5-1 went missing while
+    # `claude-fable-5` shadowed it and priced 5.1's cache reads 4x high, silently, with no
+    # `unpriced-model` note. These pin the shipped file.
+    _shipped = load_prices(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                        "..", "references", "cost-prices.yaml"))
+    for _mid, _want in (("claude-opus-5-5", 4.2), ("claude-opus-5", 5.5),
+                        ("claude-fable-5-1", 10.25), ("claude-fable-5", 11.0),
+                        ("claude-sonnet-5-5", 2.2), ("claude-sonnet-5", 2.2)):
+        _got = price_model(_mid, _tk, _shipped)
+        check(_got[1] is None and _got[0] is not None and abs(_got[0] - _want) < 1e-9,
+              "shipped cost-prices.yaml keys %s at its own rates (1M in + 1M cache read = $%s)"
+              % (_mid, _want))
+    # The Sonnet pair is the one case a price assertion CANNOT police: 5.5 and 5 bill
+    # identically today, so dropping the `claude-sonnet-5-5` key leaves the figure unchanged
+    # (longest-prefix falls through) and both checks above still pass. The key exists to
+    # survive a future divergence, so it is asserted present by name.
+    check("claude-sonnet-5-5" in _shipped.get("models", {}),
+          "shipped cost-prices.yaml keys claude-sonnet-5-5 explicitly, not by prefix")
 
     tmp = tempfile.mkdtemp(prefix="session-cost-selftest-")
     tpath = os.path.join(tmp, "t.jsonl")

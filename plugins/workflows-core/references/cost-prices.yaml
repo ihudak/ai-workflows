@@ -25,8 +25,9 @@
 # Override without editing this file: set $DEV_WORKFLOWS_COST_PRICES to a path, or
 # drop a repo-local cost-prices.yaml. Cache multipliers follow Anthropic's model
 # (cache_read = input * 0.1, cache_write_5m = input * 1.25, cache_write_1h = input * 2.0),
-# except Opus 5.5, whose cache reads bill at input * 0.05 -- which is why every rate below
-# is keyed explicitly rather than derived from `input`.
+# except Opus 5.5, whose cache reads bill at input * 0.05, and Fable 5.1, whose bill at
+# input * 0.025 -- which is why every rate below is keyed explicitly rather than derived
+# from `input`.
 models:
   # Opus chain (§2). Opus 5.5 bills at $4 / $20 with cache reads at 0.05x ($0.20);
   # Opus 5 and Opus 4.6-4.8 all bill at $5 / $25.
@@ -62,8 +63,19 @@ models:
     cache_read: 0.5
     cache_write_5m: 6.25
     cache_write_1h: 10.0
-  # Sonnet chain (§2.1). Sonnet 5 bills at $2 / $10 since 2026-09-02 (see the header);
+  # Sonnet chain (§2.1). Sonnet 5.5 and Sonnet 5 both bill at $2 / $10 (see the header);
   # Sonnet 4.5/4.6 remain at $3 / $15.
+  # claude-sonnet-5-5 is keyed explicitly even though its rates currently equal Sonnet 5's,
+  # because `claude-sonnet-5` is a strict PREFIX of it. Without its own key the table is
+  # correct only by coincidence, and the day either model is repriced that silently becomes
+  # a wrong figure with no `unpriced-model` note -- exactly what claude-opus-5-5 did against
+  # claude-opus-5 until 1.7.5. Two models at one rate is not a reason to share one key.
+  claude-sonnet-5-5:
+    input: 2.0
+    output: 10.0
+    cache_read: 0.2
+    cache_write_5m: 2.5
+    cache_write_1h: 4.0
   claude-sonnet-5:
     input: 2.0
     output: 10.0
@@ -83,8 +95,22 @@ models:
     cache_write_5m: 3.75
     cache_write_1h: 6.0
   # Fable. Not reachable by the routing policy (§2/§2.1 never select it), but a session may
-  # RUN on it, and an unpriced session records tokens with a null cost. The undated key is a
-  # prefix of claude-fable-5-1, so the longest-prefix rule prices both from this one entry.
+  # RUN on it, and an unpriced session records tokens with a null cost. Two traps, both
+  # load-bearing:
+  #   1. Fable 5.1 reads cache at 0.025x input ($0.25), not the 0.1x every other model here
+  #      uses. Anthropic states it as a per-model exception on the pricing page.
+  #   2. `claude-fable-5` is a strict PREFIX of `claude-fable-5-1`, so dropping the 5.1 key
+  #      does not yield "no price" -- longest-prefix fallback silently prices 5.1's cache
+  #      reads at Fable 5's $1, 4x high, on the token class that dominates a cached agentic
+  #      session. Both keys must stay, and stay separate. This comment used to assert the
+  #      opposite ("the longest-prefix rule prices both from this one entry"), which is true
+  #      of input/output and false of cache_read -- the field that matters most here.
+  claude-fable-5-1:
+    input: 10.0
+    output: 50.0
+    cache_read: 0.25
+    cache_write_5m: 12.5
+    cache_write_1h: 20.0
   claude-fable-5:
     input: 10.0
     output: 50.0
