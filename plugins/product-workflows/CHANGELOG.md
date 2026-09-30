@@ -13,6 +13,10 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 - **`/update-prd` discovers what an update may INVALIDATE, not only what grounds it.** New Phase 0 step 5a globs for artifacts a later phase already produced — `release-notes.md`, `ard.md`, `specification.md`, `design.md` — and Phase 1 confirms each with its path and mtime. The next-phase offer is then **conditional**: an artifact this update contradicts is named, recommended and put first; one it does not touch is listed without a recommendation; one that does not exist is dropped from the menu. Where step 5a found a `release-notes.md`, the offer gains a `/docs-workflows:release-notes` option this plugin's own list cannot carry — that command lives in `docs-workflows` while the artifact it produces is the one an update most often falsifies. An update once reversed an acceptance criterion a published draft depended on, turning it into a false customer-facing claim about data retention, and it was caught only because the same session had authored the draft and the orchestrator remembered. A write hook was considered and declined, with the reason recorded.
 
+### Fixed
+
+- **An `[AC#N]` that defeated its own PRD's Goal passed every consistency check there was.** `/create-prd`'s self-consistency check and `prd-reviewer`'s internal-consistency dimension both compared a criterion against `## Scope` and its siblings; a criterion can satisfy every sibling and still defeat the outcome the PRD exists to deliver. Both now test each criterion against `## Goal` itself, `/update-prd`'s copy of the check says the same, and `/create-prd` states that a criterion derived from docs grounding is evidence about the status quo — inherited or overridden, said explicitly. Reported from a field run in the Claude edition and present here unchanged.
+
 ### Changed
 
 - The §2.1 chain-head references across all fourteen commands, and the fallback chain on the model-routing docs page, name `claude-sonnet-5-5` (`workflows-core` 1.8.2).

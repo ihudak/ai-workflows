@@ -46,6 +46,19 @@ Use when the `qmd` binary is available (`command -v qmd`). **This agent never bu
 | 2 | a collection covers `docs_path`, vectors == 0 | `timeout 30s qmd search "<terms>"` | `qmd-lexical` |
 | 3 | no collection covers `docs_path`, `qmd` absent, a project-local index is shadowing, or either probe fails | Path B | `fallback` |
 
+**Rung 3 must say WHICH of its preconditions fired.** They are not one condition, and the
+caller cannot tell them apart from the rung alone. A generic "collection not found" note is
+the defect here: the orchestrator's own step 3.5 reaches the same rung from the same
+evidence, so both ends report the same non-answer and neither surfaces the cause. Record in
+`notes` exactly one of — `qmd absent`; `probe failed: <which call, exit or timeout>`;
+`project-local .qmd index at <path> shadowing the user-scope one`; `no collection covers
+<docs_path> and the index reports 0 vectors` (genuinely un-built); or **`registry
+inconsistency: index reports <N> vectors but no collection row reaches <docs_path>`** — the
+last being an intact, populated index whose `store_collections` row is missing, which looks
+identical to un-built on a `collection list` probe alone and is the one case where a rebuild
+is the wrong remedy. `resolve-docs-grounding` step 3.5 reads the same distinction; the two are
+meant to agree, and they only can if both name it.
+
    `<terms>` = `feature_summary` keywords + `themes`, minus stopwords. **Union of the two ranked lists:** interleave `qmd search` and `qmd vsearch` results by rank position, dedupe by path keeping the better rank, truncate at the Bounding cap of 8.
 3. **Read the top hits** with `timeout 30s qmd get "<file>"` (or `Read`), capped per Bounding.
 4. **A timeout or non-zero exit on any qmd call drops one rung** and is recorded in `notes` — except that a failing `qmd search` drops straight to Path B, because rung 2 depends on that same call and would fail identically. This is the backstop for anything qmd does that this procedure did not anticipate.

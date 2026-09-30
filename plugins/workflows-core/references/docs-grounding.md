@@ -34,7 +34,9 @@ documentation does not inform that decision.
      (`find "$docs_root" -type f -name '*.md' -print -quit` is non-empty).
    On a host where `/workspace/docs` is absent, the gate fails → `OFF` → the run
    behaves exactly as it does without docs grounding.
-3.5. **Index state — qmd only.** Skip entirely when `command -v qmd` fails: `retrieval: fallback`, silent, exactly as it does without this step. Otherwise probe with `timeout 10s qmd status` and `timeout 10s qmd collection list`. **If either probe fails or times out, treat that exactly as `qmd` absent** — `retrieval: fallback`, silent, no prompt — which mirrors `docs-grounder`'s rung 3 so the command and the agent degrade identically instead of disagreeing about the same broken install. Otherwise take one branch.
+3.5. **Index state — qmd only.** Skip entirely when `command -v qmd` fails: `retrieval: fallback`, silent, exactly as it does without this step. Otherwise probe with `timeout 10s qmd status` and `timeout 10s qmd collection list`. **If either probe fails or times out, treat that exactly as `qmd` absent** — `retrieval: fallback`, silent, no prompt — which mirrors `docs-grounder`'s rung 3 so the command and the agent degrade identically instead of disagreeing about the same broken install. Otherwise take one branch — testing the reconciliation case below **first**, because it is indistinguishable from the "no collection" branch on the evidence that branch reads.
+
+   **A healthy index unreachable through its registry (check this first)** → `retrieval: fallback`, silent, **no build prompt**. `qmd status` reports `Vectors: <N>`; when `N > 0` but `qmd collection list` shows no collection covering `docs_root`, the index exists and is populated while the `store_collections` registry row that would reach it is missing. That state is **not** "no index has been built yet", and the distinction matters because the other branch's remedy is destructive of time: a build prompt here offers a ~1.3 GB model download plus a re-embed of documents that are already embedded. Degrade exactly as a failed probe does — mirroring `docs-grounder`'s rung 3 — and add the registry clause to the plan-approval line so the user is told the cause rather than steered into a duplicate rebuild. Repairing the registry needs direct SQLite work and is **out of scope for this step**: report it, never attempt it.
 
    **A collection covers `docs_root`** → `timeout 60s qmd update`. Incremental (qmd re-indexes only changed files), instant when nothing changed, and safe to kill because the index is SQLite and rolls back. On a cap breach, prompt once — never silently pay 60 seconds on every future run:
 
@@ -55,6 +57,8 @@ documentation does not inform that decision.
    On "Build": `qmd collection add "<docs_root>" --name docs` then `qmd embed`, **uncapped** — killing a consented build wastes the work it has already done — reporting elapsed time on completion. The prompt disappears permanently once the index exists.
 
    **Index building NEVER happens inside `docs-grounder`.** An agent cannot ask, so an agent told to self-heal has only two options: burn many minutes silently, or abort on its own judgment. This step exists because the orchestrator can ask.
+   **Embedding coverage is a proportion, not a boolean.** `qmd status` reports both a document count and a vector count, so the `qmd-vector` rung is selected on *partial* coverage exactly as on full — and a collection that is, say, two-thirds embedded returns low-relevance noise from `qmd vsearch` for most queries while the digest in fact comes from lexical `qmd search`. Reporting full semantic retrieval while delivering little of it is the defect, not the degradation itself. When the index has embeddings but fewer than the document count, keep `retrieval: qmd-vector` — vector search does work for the embedded slice — and append the partial-coverage clause to the plan-approval line, naming both numbers.
+
 4. **Return** `{ docs_grounding, docs_root, retrieval, reason }`, where `retrieval` is `qmd-vector | qmd-lexical | fallback`. `docs-grounder` re-probes and its rung selection is authoritative; this value drives the prompts above and the line below.
 
 **Default-safety note.** A `/workspace/*` default is safe here because this is a
@@ -71,6 +75,8 @@ docs grounding: ON <root> (retrieval: qmd-lexical — index has no embeddings)
 docs grounding: ON <root> (retrieval: qmd-vector; index refresh exceeded 60s — some pages may be stale)
 docs grounding: ON <root> (retrieval: qmd-vector; docs checkout <N> days old — refresh on the host)
 docs grounding: ON <root> (retrieval: fallback — no qmd index; build once: qmd collection add "<root>" --name docs && qmd embed)
+docs grounding: ON <root> (retrieval: qmd-vector; index <M> of <N> documents embedded — vector search covers only part of the corpus)
+docs grounding: ON <root> (retrieval: fallback — a <N>-vector index exists but no collection registry row reaches <root>; the registry needs repair, NOT a rebuild)
 docs grounding: ON <root> (retrieval: fallback — a project-local .qmd index in <cwd> is shadowing the user-scope one; run from another directory or remove it)
 docs grounding: OFF (<reason>)
 ```

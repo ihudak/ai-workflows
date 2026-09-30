@@ -5,7 +5,7 @@
 ```yaml
 folder_read: <the YAML the orchestrator assembled by reading the PRD folder — the resolved folder, or the one above it where the address named an Epic folder — the PRD frontmatter and body, the Epic set, and the artifacts present, the render input scoped to that Epic's folder where the dispatch says so; the orchestrator names its keys in the dispatch, since no schema file defines them>
 diff_summaries:      <optional array of diff-summarizer outputs; one entry per repo; omit when diff-grounding is off>
-code_repos:          <optional array of {slug, path}; provided when diff-grounding is on — enables the writer's Source-truth check>
+code_repos:          <optional array of {slug, path}; provided when diff-grounding is on — enables the code half of the writer's Source-truth check (8b); the acceptance-criteria half (8a) runs without it>
 change_type:            <change_type from the resolved PRD's frontmatter; null otherwise — nothing returns it from outside, so a value that is absent or not routable is inferred, and confirmed in the command's own grill where the inference is low-confidence>
 release_notes_category: <release_notes_category from the resolved PRD's frontmatter; null otherwise — used verbatim as the category label>
 run_phase:                       <"pm" | "dev" — inferred by the command from whether specification.md / design.md exist under the PRD's specs dir; gates the release-note-types.md §4 documentation-link rule only>
