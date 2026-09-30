@@ -1352,7 +1352,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   expect_fail "a documented-but-unread env var is rejected"    5 "printf '\n**\`\$PHANTOM_VAR\`** — never read anywhere.\n' >> $PLUGIN_REL/docs/reference/environment.md"
   expect_fail "an over-long cell in the ROOT README is rejected" 6 "awk 'BEGIN{s=\"\"; while(length(s)<260) s=s \"x\"; printf \"\n| a | %s |\n|---|---|\n| b | c |\n\", s}' >> README.md"
   # ${CLI_VERBS##*|} is the LAST verb in the alternation -- every edition has one by
-  # construction (canonical "reinstall", copilot "update") -- so this is extracted by
+  # construction ("update" in both editions) -- so this is extracted by
   # check 7 in every edition, regardless of which verbs exist there. The target names
   # a line absent from the root README, so it is extracted AND counts as extra.
   expect_fail "an install line absent from the root README is rejected" 7 "printf '\n$CLI plugin ${CLI_VERBS##*|} ${PLUGIN_REL##*/}@extra-fixture-target\n' >> $PLUGIN_REL/docs/getting-started.md"
