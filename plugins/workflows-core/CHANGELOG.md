@@ -5,13 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.9.0] — 2026-09-30
+## [1.8.2] — 2026-09-30
 
-**Update `dev-workflows` to 4.4.0, `docs-workflows` to 1.5.0 and `product-workflows` to 3.10.0 together with this release**: all three retire their review caps for the new `review-convergence` reference below.
-
-### Added
-
-- **`references/review-convergence.md` — how many times a review gate re-runs, stated once for the family.** Outcome-keyed, not capped: re-review while the last pass's own fixes introduced something, stop when they did not, and the user may decline from the second pass onward. A finding recurring after a fix is oscillation rather than provenance, and escalates instead of looping. A voluntary fix under a passing verdict still requires a re-review — the reviewer approved the artifact it saw, not the one the fix produced.
+**Update `dev-workflows` to 4.3.2, `docs-workflows` to 1.4.2 and `product-workflows` to 3.10.0 together with this release**: their chain-head references now name `claude-sonnet-5-5`, which this release adds to the §2 and §2.1 chains.
 
 ### Fixed — behaviour
 

@@ -722,9 +722,10 @@ per-session, transient, local, NEVER committed, and safe to delete.**
 ### 13.2 Where the window is cut
 
 The boundary is not guessed and is not recorded by the ceding run: it is read out
-of the transcript, which marks every slash-command invocation. `session-cost.py`
-reports them as `command_boundaries`, resolved against the §2 manifest. Three
-disciplines make that safe, and each exists because its absence was a live
+of the transcript, which records every command invocation — a typed one as a
+`<command-name>` envelope, a prose-invoked one as a Skill `tool_use` block.
+`session-cost.py` reports them as `command_boundaries`, resolved against the §2
+manifest. Four disciplines make that safe, and each exists because its absence was a live
 defect:
 
 - **Anchored to the envelope, not to one tag.** Claude Code writes the envelope

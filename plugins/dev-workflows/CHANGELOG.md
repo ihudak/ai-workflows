@@ -5,14 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.4.0] — 2026-09-30
+## [4.3.2] — 2026-09-30
 
-**Update `workflows-core` to 1.9.0 with this release**: its new `review-convergence` reference is what `/design`'s gate now cites.
+**Update `workflows-core` to 1.8.2 with this release**: it adds `claude-sonnet-5-5` to the §2 and §2.1 chains, which the references below now name.
 
 ### Changed
 
-- **`/design`'s review gate is outcome-keyed, not capped.** `Cap: one fix cycle + one re-review` is withdrawn for `workflows-core:review-convergence`: re-review while the last pass's own fixes introduced something, stop when they did not, and the user may decline from the second pass onward. A fixed count cannot bound this — fixes introduce defects at a rate comparable to the ones they resolve — and a ceiling binds precisely when the artifact is furthest from correct.
-- The §2.1 chain-head references in `/implement`, `/ready`, `/upgrade`, `/vuln` and `/design`, and the fallback chain on the model-routing docs page, name `claude-sonnet-5-5` (`workflows-core` 1.9.0).
+- The §2.1 chain-head references in `/implement`, `/ready`, `/upgrade`, `/vuln` and `/design`, and the fallback chain on the model-routing docs page, name `claude-sonnet-5-5` — the current Sonnet, which no routing path could previously select.
 
 ## [4.3.1] — 2026-09-29
 

@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.5.0] — 2026-09-30
+## [1.4.2] — 2026-09-30
 
-**Update `workflows-core` to 1.9.0 with this release**: its new `review-convergence` reference is what `/document`'s gate now cites.
+**Update `workflows-core` to 1.8.2 with this release**: it adds `claude-sonnet-5-5` to the §2.1 chain, which the references below now name.
 
 ### Fixed — behaviour
 
@@ -15,7 +15,6 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Changed
 
-- **`/document`'s review gate is outcome-keyed, not capped** (`workflows-core:review-convergence`).
 - `/docs-audit`, `/docs-brand`, `/docs-init` and `/docs-profile` name `claude-sonnet-5-5` in their §2.1 chain-head references.
 
 ## [1.4.1] — 2026-09-29

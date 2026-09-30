@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [3.10.0] — 2026-09-30
 
-**Update `workflows-core` to 1.9.0 with this release**: its new `review-convergence` reference is what five of these commands' gates now cite.
+**Update `workflows-core` to 1.8.2 with this release**: it adds `claude-sonnet-5-5` to the §2.1 chain, which the references below now name.
 
 ### Added
 
@@ -15,8 +15,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Changed
 
-- **The review gates of `/create-prd`, `/update-prd`, `/create-ard`, `/specify` and `/epics` are outcome-keyed, not capped** (`workflows-core:review-convergence`). Demonstrated wrong twice on one PRD, the first time letting a Goal-contradicting requirement reach the default branch because a voluntary fix under a passing verdict was never re-reviewed.
-- The §2.1 chain-head references across all fourteen commands, and the fallback chain on the model-routing docs page, name `claude-sonnet-5-5` (`workflows-core` 1.9.0).
+- The §2.1 chain-head references across all fourteen commands, and the fallback chain on the model-routing docs page, name `claude-sonnet-5-5` (`workflows-core` 1.8.2).
 
 ## [3.9.1] — 2026-09-29
 

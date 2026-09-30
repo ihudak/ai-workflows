@@ -1076,7 +1076,7 @@ Act on the verdict:
 
 - **PASS** — proceed to Phase 8.
 
-**Review convergence is outcome-keyed, not capped** — execute `Skill(skill: "workflows-core:reference", args: "review-convergence")` and follow it: re-review while the last pass's own fixes introduced something, stop when they did not, and offer the user a decline from the second pass onward. **If you fix a MAJOR under a passing verdict you must still re-review** — the reviewer approved the artifact it saw, not the one your fix produced. The final report names the pass count and why the loop ended.
+Cap: one fix cycle + one re-review maximum.
 
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
 

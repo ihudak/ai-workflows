@@ -64,7 +64,7 @@ model_routing:
   current_model: <the model this orchestrator is running under>
   enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   detection_model: <§2.1 mid-tier Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>
-  planning_model: <§2 powerful chain: claude-opus-5-5 … fallback Sonnet 5/4.6/4.5>
+  planning_model: <§2 powerful chain: claude-opus-5-5 … fallback Sonnet 5.5/5/4.6/4.5>
   review_model: <same as planning_model — conceptually the synthesis_model; the synthesis step runs on the §2 Opus chain>
   opus_available: true | false
   notes: <any §2.1/§2 degradation, e.g. "Opus unavailable; synthesis fell back to claude-sonnet-5">
