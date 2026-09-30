@@ -124,22 +124,60 @@ def extract_usage(obj):
     return (model or "unknown"), usage
 
 
+STANDARD_SPEED = "standard"
+GLOBAL_GEO = "global"
+# `inference_geo` values that bill at the standard rate with no table lookup:
+# the default routing, and the two ways a record says "no residency pinned".
+_STANDARD_GEOS = (None, "", GLOBAL_GEO, "not_available")
+
+
+def variant_key(usage):
+    """(speed, geo) for one usage record -- the two facts a transcript records
+    that change the RATE rather than the token count.
+
+    `usage.speed` is `standard` or `fast`; `usage.inference_geo` is `global`,
+    `us`, or `not_available`. Both fields are absent from older records, and an
+    absent field is the standard case, not an unknown one. Any OTHER value is
+    kept verbatim rather than folded into the default: a value this function
+    does not recognise is one the price table must then answer for, and
+    `price_model` reports it unpriced where the table cannot -- folding it to
+    `standard` here would price it at a rate nobody confirmed."""
+    speed = usage.get("speed")
+    if not isinstance(speed, str) or speed in ("", STANDARD_SPEED):
+        speed = STANDARD_SPEED
+    geo = usage.get("inference_geo")
+    if geo in _STANDARD_GEOS or not isinstance(geo, str):
+        geo = GLOBAL_GEO
+    return speed, geo
+
+
 def add_usage(acc, model, usage):
-    """Accumulate one assistant message's token usage into acc[model]."""
+    """Accumulate one assistant message's token usage into acc[model].
+
+    Totals land in the five TOKEN_KEYS exactly as before, so every consumer of
+    the row format is unaffected. The same increments ALSO land in
+    acc[model]["_v"][(speed, geo)], which is what `price_model` prices from:
+    fast mode and US-only inference change the rate, not the count, so a model's
+    cost is the sum over its variants and cannot be recovered from the totals."""
     m = acc.setdefault(model, _blank())
-    m["input"] += _num(usage.get("input_tokens"))
-    m["output"] += _num(usage.get("output_tokens"))
-    m["cache_read"] += _num(usage.get("cache_read_input_tokens"))
+    inc = _blank()
+    inc["input"] = _num(usage.get("input_tokens"))
+    inc["output"] = _num(usage.get("output_tokens"))
+    inc["cache_read"] = _num(usage.get("cache_read_input_tokens"))
     cc = usage.get("cache_creation")
     if isinstance(cc, dict) and (
         cc.get("ephemeral_5m_input_tokens") is not None
         or cc.get("ephemeral_1h_input_tokens") is not None
     ):
-        m["cache_write_5m"] += _num(cc.get("ephemeral_5m_input_tokens"))
-        m["cache_write_1h"] += _num(cc.get("ephemeral_1h_input_tokens"))
+        inc["cache_write_5m"] = _num(cc.get("ephemeral_5m_input_tokens"))
+        inc["cache_write_1h"] = _num(cc.get("ephemeral_1h_input_tokens"))
     else:
         # No 5m/1h split available -> price all cache-creation at the 5m rate.
-        m["cache_write_5m"] += _num(usage.get("cache_creation_input_tokens"))
+        inc["cache_write_5m"] = _num(usage.get("cache_creation_input_tokens"))
+    v = m.setdefault("_v", {}).setdefault(variant_key(usage), _blank())
+    for k in TOKEN_KEYS:
+        m[k] += inc[k]
+        v[k] += inc[k]
 
 
 MARKER_OPEN = "<command-name>"
@@ -495,14 +533,61 @@ def price_model(model, tok, prices):
         rates = table.get(best) if best is not None else None
     if not isinstance(rates, dict):
         return None, "unpriced-model"
-    cost = (
-        tok["input"] * _rate(rates, "input")
-        + tok["output"] * _rate(rates, "output")
-        + tok["cache_read"] * _rate(rates, "cache_read")
-        + tok["cache_write_5m"] * _rate(rates, "cache_write_5m")
-        + tok["cache_write_1h"] * _rate(rates, "cache_write_1h")
-    )
+    # A token dict built by add_usage carries its (speed, geo) variants; one
+    # built by hand (the selftest's, or any caller pricing plain totals) does
+    # not, and is the standard/global case by definition.
+    variants = tok.get("_v") if isinstance(tok, dict) else None
+    if not isinstance(variants, dict) or not variants:
+        variants = {(STANDARD_SPEED, GLOBAL_GEO): tok}
+    cost = 0.0
+    for (speed, geo) in sorted(variants):
+        vt = variants[(speed, geo)]
+        vrates = rates
+        if speed != STANDARD_SPEED:
+            # A non-standard speed prices from that model's own sub-block
+            # (`fast:`), keyed explicitly like every other rate in the table.
+            # No block -> the table cannot price it. Falling back to the
+            # standard rates would be a confident figure known to be low by a
+            # factor of two, which is worse than a null the run reports.
+            vrates = rates.get(speed)
+            if not isinstance(vrates, dict):
+                return None, "unpriced-speed:" + speed
+        mult = 1.0
+        if geo != GLOBAL_GEO:
+            mult = geo_multiplier(prices, geo)
+            if mult is None:
+                return None, "unpriced-inference-geo:" + geo
+        cost += mult * sum(vt[k] * _rate(vrates, k) for k in TOKEN_KEYS)
     return round(cost / 1_000_000.0, 4), None
+
+
+def geo_multiplier(prices, geo):
+    """The all-categories multiplier for a non-default `inference_geo`, from the
+    table's `modifiers.inference_geo` map, or None where the table has none.
+
+    Only reached for a value outside _STANDARD_GEOS, so a price file written
+    before this map existed -- a user's $DEV_WORKFLOWS_COST_PRICES override --
+    still prices every global record exactly as it did."""
+    mods = prices.get("modifiers") if isinstance(prices, dict) else None
+    geos = mods.get("inference_geo") if isinstance(mods, dict) else None
+    v = geos.get(geo) if isinstance(geos, dict) else None
+    return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else None
+
+
+def pricing_modifiers(tok):
+    """The non-default variants that contributed tokens to this model, as the
+    strings the entry's optional `modifiers:` field carries -- so a row whose
+    cost per token looks high says why, instead of looking like a bad table."""
+    variants = tok.get("_v") if isinstance(tok, dict) else None
+    out = set()
+    for (speed, geo), vt in (variants or {}).items():
+        if not any(vt[k] for k in TOKEN_KEYS):
+            continue
+        if speed != STANDARD_SPEED:
+            out.add("speed:" + speed)
+        if geo != GLOBAL_GEO:
+            out.add("inference-geo:" + geo)
+    return sorted(out)
 
 
 def read_snapshot_cost(path):
@@ -758,6 +843,83 @@ def selftest():
     # survive a future divergence, so it is asserted present by name.
     check("claude-sonnet-5-5" in _shipped.get("models", {}),
           "shipped cost-prices.yaml keys claude-sonnet-5-5 explicitly, not by prefix")
+
+    # Fast mode and data residency change the RATE, not the token count, so they
+    # are priced per (speed, geo) variant. The transcript records both on every
+    # assistant message; until this existed the engine read neither and a /fast
+    # session priced 50% low. Built through add_usage, not by hand, so the path
+    # from a usage record to a variant bucket is what is under test.
+    def _use(speed=None, geo=None, inp=1_000_000, cr=1_000_000):
+        u = {"input_tokens": inp, "output_tokens": 0, "cache_read_input_tokens": cr}
+        if speed is not None:
+            u["speed"] = speed
+        if geo is not None:
+            u["inference_geo"] = geo
+        return u
+    def _cost(model, table, *uses):
+        acc = {}
+        for u in uses:
+            add_usage(acc, model, u)
+        return price_model(model, acc[model], table), acc[model]
+    _ft = {"models": {"claude-opus-5-5": {
+               "input": 4, "output": 20, "cache_read": 0.2,
+               "cache_write_5m": 5, "cache_write_1h": 8,
+               "fast": {"input": 8, "output": 40, "cache_read": 0.4,
+                        "cache_write_5m": 10, "cache_write_1h": 16}},
+           "claude-opus-4-7": {"input": 5, "output": 25, "cache_read": 0.5,
+                               "cache_write_5m": 6.25, "cache_write_1h": 10}},
+           "modifiers": {"inference_geo": {"us": 1.1}}}
+    check(_cost("claude-opus-5-5", _ft, _use())[0] == (4.2, None),
+          "a record with no speed / geo field prices at the standard rate")
+    check(_cost("claude-opus-5-5", _ft, _use("standard", "global"))[0] == (4.2, None),
+          "speed=standard + geo=global prices at the standard rate")
+    check(_cost("claude-opus-5-5", _ft, _use("standard", "not_available"))[0] == (4.2, None),
+          "geo=not_available is the standard case, not an unknown one")
+    check(_cost("claude-opus-5-5", _ft, _use("fast"))[0] == (8.4, None),
+          "speed=fast prices from the model's fast block ($8 in + $0.40 cache read)")
+    check(_cost("claude-opus-5-5", _ft, _use("standard", "us"))[0] == (4.62, None),
+          "geo=us applies the 1.1x multiplier to every category")
+    check(_cost("claude-opus-5-5", _ft, _use("fast", "us"))[0] == (9.24, None),
+          "fast and geo=us stack (1.1 x the fast rates)")
+    _mixed, _mtok = _cost("claude-opus-5-5", _ft, _use(), _use("fast"))
+    check(_mixed == (12.6, None),
+          "one model's standard and fast records are priced separately and summed")
+    check(_mtok["input"] == 2_000_000 and _mtok["cache_read"] == 2_000_000,
+          "...while the row's token totals stay the plain sum across variants")
+    check(_cost("claude-opus-4-7", _ft, _use("fast"))[0] == (None, "unpriced-speed:fast"),
+          "fast on a model with no fast block is unpriced, never priced at standard")
+    check(_cost("claude-opus-5-5", _ft, _use("standard", "eu"))[0]
+          == (None, "unpriced-inference-geo:eu"),
+          "a geo the table has no multiplier for is unpriced, never priced at 1.0")
+    _legacy = {"models": {"claude-opus-5-5": _ft["models"]["claude-opus-5-5"]}}
+    check(_cost("claude-opus-5-5", _legacy, _use("standard", "global"))[0] == (4.2, None),
+          "a price file with no modifiers block still prices global records")
+    check(_cost("claude-opus-5-5-20260901", _ft, _use("fast"))[0] == (8.4, None),
+          "a dated id reaches its prefix key's fast block")
+    _pb, _ = price_block({"claude-opus-5-5": _cost("claude-opus-5-5", _ft, _use("fast", "us"))[1]}, _ft)
+    check(_pb[0].get("modifiers") == ["inference-geo:us", "speed:fast"],
+          "a row priced with modifiers names them")
+    _pb2, _ = price_block({"claude-opus-5-5": _cost("claude-opus-5-5", _ft, _use())[1]}, _ft)
+    check("modifiers" not in _pb2[0],
+          "a standard row carries no modifiers field")
+    # ...and the SHIPPED table carries the blocks the engine needs.
+    for _mid, _want in (("claude-opus-5-5", 8.4), ("claude-opus-5", 11.0),
+                        ("claude-opus-4-8", 11.0)):
+        check(_cost(_mid, _shipped, _use("fast"))[0] == (_want, None),
+              "shipped cost-prices.yaml prices %s in fast mode (1M in + 1M cache read = $%s)"
+              % (_mid, _want))
+    check(_cost("claude-opus-5-5", _shipped, _use("standard", "us"))[0] == (4.62, None),
+          "shipped cost-prices.yaml carries the 1.1x US-inference multiplier")
+    for _mid in ("claude-opus-4-7", "claude-opus-4-6", "claude-sonnet-5-5"):
+        check(_cost(_mid, _shipped, _use("fast"))[0] == (None, "unpriced-speed:fast"),
+              "shipped cost-prices.yaml gives %s no fast block (fast mode does not exist there)"
+              % _mid)
+    for _mid, _want in (("claude-mythos-5-1", 10.25), ("claude-mythos-5", 11.0)):
+        _got = price_model(_mid, _tk, _shipped)
+        check(_got[1] is None and _got[0] is not None and abs(_got[0] - _want) < 1e-9,
+              "shipped cost-prices.yaml keys %s at its own rates (1M in + 1M cache read = $%s)"
+              % (_mid, _want))
+
 
     tmp = tempfile.mkdtemp(prefix="session-cost-selftest-")
     tpath = os.path.join(tmp, "t.jsonl")
@@ -1126,6 +1288,9 @@ def price_block(acc, prices):
         }
         if note:
             entry["note"] = note
+        mods = pricing_modifiers(tok)
+        if mods:
+            entry["modifiers"] = mods
         models.append(entry)
     return models, round(total, 4)
 
