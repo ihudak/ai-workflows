@@ -199,5 +199,16 @@ Both follow the same schema (see `wiki-schema` skill).
 Skills that create or modify content must never write to:
 `Meetings/`, `Daily/`, `Customers/`, `People/`, `Clippings/`, `Research/`.
 
-Exception: `/wiki-task` and `/wiki-tasks-extract` may write to `Projects/` and
-`Tasks.md` (task insertion is explicitly allowed outside the wiki boundary).
+Exceptions — the complete set of wiki commands that write outside `wiki/` and `.raw/`,
+derived from the commands themselves rather than from this list:
+
+- `/wiki-task` and `/wiki-tasks-extract` may write to `Projects/` files and `Tasks.md`
+  (task insertion is explicitly allowed outside the wiki boundary).
+- `/wiki-tags-refresh` updates `.obsidian/copilot/tag-index.md`.
+- `/wiki-init` writes `.obsidian/copilot/` (the schema, tag-index and task-rules copies),
+  creates `.raw/` and its `.gitkeep`, and maintains the wiki blocks in the vault's own
+  agent-instruction files.
+
+This paragraph named only the first two for as long as it existed, while the authoritative copy
+inside `wiki-init/SKILL.md`'s own vault block named all four — two live instructions disagreeing
+about the same boundary. Keep them in step: a new outside-`wiki/` writer belongs in both.

@@ -705,6 +705,22 @@ defect:
 - **Namespaced, and both halves resolved against the §2 manifest.** A boundary is accepted only as `<a plugin of this marketplace>:<that plugin's own command>` — the namespace must be a key of the manifest and the name must be in *that key's* list. Two facts force the namespace requirement. Claude Code's built-ins are written **bare**, and one of them — `/upgrade` — collides with a command a plugin here also ships, so accepting a bare name mints a boundary from a subscription command nothing here ever ran. And another marketplace's `/superpowers:implement` must not read as this family's `/implement`, which is what discarding the namespace would do. This is `specs-repo-git.md` §3.5's `branch-key` discipline applied to a transcript: resolve against the set you hold, never parse.
   **Since PS3 the manifest governs claiming only; cutting needs no manifest at all.** A command from a marketplace outside this one now ends the open window — its spend is its own — while remaining unclaimable, because a claim may only match a manifest name. Before that split a foreign invocation between a cede and its replay minted nothing and its spend was absorbed into the claim, which is the same conflation described just below, one marketplace further out. **What widened at the split is which namespaces are accepted, and a namespace *list* would not have been enough.** The rule used to be `<this plugin>:<this plugin's command>`, resolved against whichever single plugin supplied the command set — so once the family spanned several plugins, a **sibling's** invocation between a cede and its replay was invisible, and §13.3 gives a claim the segment up to the next boundary *of any kind*. The claim then swallowed the sibling's run whole: reproduced at 9000 tokens claimed where 5000 was correct, taken silently out of the replaying run's own remainder. Both halves are resolved at once, which is why widening only the namespaces still rejects `/dev-workflows:vuln` and still mis-measures; the manifest widens both, and the two safety properties above are asserted against it rather than argued. It errs safe either way — an invocation missed becomes an unmatched claim, reported and dropped (§13.4), where a phantom one would silently file one command's spend under another's phase.
 - **Matched by name, never by position.** See §13.3.
+- **Both invocation shapes are read, because only one leaves an envelope.** The
+  envelope above is emitted when the user **types** the slash command. When the user
+  asks in prose and the model reaches the command through the **Skill tool**, the
+  invocation appears only as an assistant `tool_use` block named `Skill` whose
+  `input.skill` is the command — no user message, no envelope — so a detector reading
+  user messages alone misses the whole invocation, and §13.3 hands the preceding claim
+  the segment running to the next boundary of any kind, i.e. straight through it.
+  Measured: a typed grill command followed by two prose-invoked runs, neither cutting
+  the window, and the grill's claim absorbed both. **The Skill half resolves against
+  the manifest where the typed half does not** — a deliberate asymmetry. The typed half
+  is permissive because a user can only type a real command, so a name it cannot see
+  is a swallowed boundary at no cost. A Skill call is different in kind: commands
+  dispatch non-command skills constantly (model-routing, the reference loader, several
+  times a run), and cutting on those would shatter one command's window into spurious
+  segments — worse than the miss. Both halves are asserted in the selftest so a later
+  reader cannot "harmonise" them and reintroduce one of the two defects.
 
 `session-cost.py --selftest` covers each, paired with the broken implementation it
 exists to catch.

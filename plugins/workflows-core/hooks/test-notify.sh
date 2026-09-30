@@ -94,8 +94,19 @@ if "mvn" in cmd:
                    sumall(r"Errors: (\d+)", out))
     line = f"{c[0]} run, {c[1]} failed, {c[2]} errors" if c else None
 elif "gradlew" in cmd or "gradle" in cmd:
-    c = counts(first(r"(\d+) tests? completed", out),
-               first(r", (\d+) failed", out))
+    # A multi-project build prints ONE summary per subproject, so these are sums,
+    # not first(). first() returns m[-1] -- the LAST match -- which reported only
+    # the final subproject's numbers and silently dropped a failing earlier one:
+    # a red build could be notified as green. The failed count is read out of each
+    # matched line's own trailing clauses rather than by a bare ", N failed" scan,
+    # so a stray clause elsewhere in the log is not summed into the total. A green
+    # Gradle run prints no summary line at all, so no match means no measurement
+    # (None), exactly as before.
+    _g = re.findall(r"(\d+) tests? completed((?:, \d+ (?:failed|skipped))*)", out)
+    _done = str(sum(int(n) for n, _ in _g)) if _g else None
+    _failed = (str(sum(int(n) for _, tail in _g
+                       for n in re.findall(r", (\d+) failed", tail))) if _g else None)
+    c = counts(_done, _failed)
     line = f"{c[0]} completed, {c[1]} failed" if c else None
 elif "pytest" in cmd:
     c = counts(first(r"(\d+) passed", out),

@@ -235,7 +235,50 @@ def load_namespace_map(path):
 NON_CUTTING_BUILTINS = frozenset({"compact"})
 
 
-def command_envelope(obj):
+def _skill_invocation(obj, ns_map):
+    """The typed-form name if `obj` is an assistant record invoking a command of
+    THIS marketplace through the Skill tool, else None.
+
+    WHY THIS SHAPE EXISTS. The `<command-name>` envelope is emitted when the user
+    TYPES the slash command. When the user asks in prose and the model reaches the
+    command through the **Skill tool**, the invocation appears only as an assistant
+    `tool_use` block named `Skill` whose `input.skill` is the command -- no user
+    message, no envelope -- so a detector reading user messages alone misses the
+    invocation entirely, and section 13.3 hands the preceding claim the segment
+    running to the next boundary of any kind, i.e. straight through it. Measured on
+    a real session: a typed grill command was followed by two prose-invoked runs,
+    neither of which cut the window, and the grill's claim absorbed both.
+
+    WHY THIS HALF RESOLVES WHERE command_envelope DOES NOT -- a deliberate
+    asymmetry, and the one thing to get right here. command_envelope cuts on ANY
+    command, foreign marketplaces included, because a typed name it cannot see is
+    swallowed whole into some claim's segment; a user can only type a real command,
+    so permissiveness costs nothing there. A Skill call is different in kind:
+    commands dispatch NON-command skills constantly -- the model-routing skill and
+    the reference loader, several times a run -- and cutting on those would shatter
+    one command's window into spurious segments, which is worse than the miss this
+    function exists to fix. So a Skill call cuts only where `ns_map` resolves it to
+    a real command of this marketplace."""
+    if obj.get("type") != "assistant":
+        return None
+    msg = obj.get("message")
+    if not isinstance(msg, dict):
+        return None
+    for block in (msg.get("content") or []):
+        if not isinstance(block, dict) or block.get("type") != "tool_use":
+            continue
+        if block.get("name") != "Skill":
+            continue
+        inp = block.get("input")
+        if not isinstance(inp, dict):
+            continue
+        skill = inp.get("skill")
+        if claimable_command(skill, ns_map) is not None:
+            return skill
+    return None
+
+
+def command_envelope(obj, ns_map=None):
     """The typed command text (e.g. "workflows-core:prompt-grill-me", or the
     bare built-in "upgrade") if obj is a transcript record for ANY well-formed
     slash-command invocation, else None. Decides WHERE TO CUT a window.
@@ -257,7 +300,11 @@ def command_envelope(obj):
     content elsewhere in a transcript, and an unanchored search matches that
     too. And exactly one name is excluded, by deliberate decision rather than
     by parsed shape -- see NON_CUTTING_BUILTINS."""
-    if not isinstance(obj, dict) or obj.get("type") != "user":
+    if not isinstance(obj, dict):
+        return None
+    if obj.get("type") == "assistant":
+        return _skill_invocation(obj, ns_map)
+    if obj.get("type") != "user":
         return None
     msg = obj.get("message")
     if not isinstance(msg, dict):
@@ -356,7 +403,7 @@ def scan_main(path, line_offset, ns_map):
             except (ValueError, TypeError):
                 continue
             ts = parse_ts(obj.get("timestamp") if isinstance(obj, dict) else None)
-            typed = command_envelope(obj)
+            typed = command_envelope(obj, ns_map)
             if typed is not None and ts is not None:
                 # The raw stamp is kept, not iso_z's whole-second form: segment
                 # edges are compared against record timestamps, and flooring the
@@ -977,6 +1024,40 @@ def selftest():
         [sys.executable, os.path.abspath(__file__), "--transcript", tpath, "--advance-only"],
         capture_output=True, text=True)
     check(noc.returncode != 0, "--advance-only without --checkpoint is refused")
+
+    # Skill-tool boundary detection. A command invoked in prose reaches the family
+    # through the Skill tool and leaves no <command-name> envelope, so reading user
+    # messages alone let the preceding claim run straight through the invocation.
+    _ns = {"product-workflows": {"update-prd"}, "workflows-core": {"prompt"}}
+    def _sk(skill):
+        return {"type": "assistant", "timestamp": "2026-09-01T10:00:00.000Z",
+                "message": {"content": [{"type": "tool_use", "name": "Skill",
+                                         "input": {"skill": skill}}]}}
+    check(command_envelope(_sk("product-workflows:update-prd"), _ns)
+          == "product-workflows:update-prd",
+          "a Skill-tool invocation of a known command CUTS the window")
+    check(command_envelope(_sk("workflows-core:model-routing"), _ns) is None,
+          "a Skill-tool invocation of a NON-command skill does not cut")
+    check(command_envelope(_sk("superpowers:brainstorming"), _ns) is None,
+          "a Skill-tool invocation of another marketplace's skill does not cut")
+    check(command_envelope(_sk("update-prd"), _ns) is None,
+          "a bare (un-namespaced) Skill name does not cut")
+    check(command_envelope({"type": "assistant", "message": {"content": [
+              {"type": "tool_use", "name": "Bash", "input": {"command": "x"}}]}},
+              _ns) is None,
+          "a non-Skill tool_use does not cut")
+    # The asymmetry is the point: the typed half stays permissive (it cuts on a
+    # foreign marketplace's command too), the Skill half resolves. Asserting both
+    # keeps a later reader from "harmonising" them and reintroducing one of the
+    # two defects -- a swallowed boundary, or a shattered window.
+    check(command_envelope({"type": "user", "message": {"content":
+              "<command-name>/superpowers:implement</command-name>"}}, _ns)
+          == "superpowers:implement",
+          "the TYPED half still cuts on a foreign command (deliberately permissive)")
+    check(command_envelope({"type": "user", "message": {"content":
+              "<command-name>/product-workflows:update-prd</command-name>"}}, _ns)
+          == "product-workflows:update-prd",
+          "the typed shape still resolves after the Skill shape was added")
 
     if failures:
         print("SELFTEST FAIL (%d)" % len(failures))

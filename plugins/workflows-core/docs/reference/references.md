@@ -1,6 +1,6 @@
 # References
 
-`workflows-core` bundles 30 files under `references/` — 26 top-level markdown files, `cost-prices.yaml`, one file under `model-routing/`, and one bundled subtree. This page enumerates every file except the two under `handoff/` (28 of the 30 — the 26 top-level files plus `cost-prices.yaml` plus `model-routing/classification.md`), grouped by concern below, then counts that one subtree rather than listing each file inside it. The arithmetic: 28 named individually, plus 2 markdown pages counted (not enumerated) in `handoff/` — 28 + 2 = 30, against 30 files on disk. `model-routing/` is not a subtree row: its single markdown file is inventoried above as an ordinary entry, because it is a reference page a reader opens rather than a bundled set counted in bulk.
+`workflows-core` bundles 31 files under `references/` — 27 top-level markdown files, `cost-prices.yaml`, one file under `model-routing/`, and one bundled subtree. This page enumerates every file except the two under `handoff/` (29 of the 31 — the 27 top-level files plus `cost-prices.yaml` plus `model-routing/classification.md`), grouped by concern below, then counts that one subtree rather than listing each file inside it. The arithmetic: 29 named individually, plus 2 markdown pages counted (not enumerated) in `handoff/` — 29 + 2 = 31, against 31 files on disk. `model-routing/` is not a subtree row: its single markdown file is inventoried above as an ordinary entry, because it is a reference page a reader opens rather than a bundled set counted in bulk.
 
 This is the corpus the whole `dev-workflows` plugin family reads. A sibling plugin cites a file here by name rather than copying it, which is the reason the corpus was extracted at all: one copy, one place a rule is stated, and every plugin bound by the same version of it.
 
@@ -29,6 +29,7 @@ The entry points that bound every write into the specs repo and every phase boun
 
 ## Review, triage and escalation
 
+- `review-convergence.md` — how many times a review gate re-runs: outcome-keyed, not capped. Re-review while the last pass's own fixes introduced something; stop when they did not; the user may decline from the second pass onward. Cited by every command whose reviewer gate offers a fix cycle.
 The shared discipline between a reviewer's findings and a fixer's edits, and the shape every stop-and-ask prompt takes.
 
 - `finding-triage.md` — the step between a reviewer's findings and a fixer's edits: verify each finding at the location it names, record every dismissal with a reason, and hand the fixer survivors only.
