@@ -75,6 +75,14 @@ Usage: `/update-prd <KEY> [@transcript-or-notes ...] [--no-docs] [--docs <path>]
    **This used to be a ladder, and the ladder's premise is what went.** The authoritative PRD text lived in a tracker, so this step read an imported copy, stopped when none existed, and offered a refresh when one was more than three days old. There is one copy now and it is in the folder this run resolved: nothing to import, nothing to go stale, and no second copy to disagree with.
 5. **Secondary grounding (read-only).** Discover in the feature folder: the folder's `prd.md`, any `ard.md`, `specification.md`, `grounding/code-grounding.md` and `grounding/design-grounding.md`; plus any `@transcript` / notes path(s) passed in `$ARGUMENTS`.
 
+5a. **Downstream-artifact discovery (read-only) — what this update may INVALIDATE.** Step 5 finds what grounds the update; this step finds what the update could falsify. Glob for artifacts a **later** phase already produced from the document you are about to change, in every place one can land: `<feature-folder>/release-notes.md` (the one destination Phase 1 derives), plus the `ard.md`, `specification.md` and `design.md` step 5 already found. Read-only, never gated, and **never a reason to stop**.
+
+   Report every hit in the Phase 1 confirmation as a **downstream artifact that may be invalidated by this update**, naming its path and its mtime. Carry the list into the next-phase offer.
+
+   **Why this is control flow and not a reminder.** An update run reversed an acceptance criterion that an already-written release-notes.md depended on — the draft said a pinned build remains obtainable for as long as any cluster is pinned to it, including after that version line reaches end of support, and the update inverted exactly that. The draft became a false customer-facing claim about data retention, behind a follow-up task telling someone to publish it. It was caught **only because the same session had authored it and the orchestrator remembered**; a different session, a different person, or a context clear in between, and a false retention claim reaches customers. Discovery belongs here, where the run is already globbing the folder and already has a confirmation step to surface it in, rather than in anyone's memory.
+
+   **A write hook on the canonical document path was considered and declined.** It would be an always-on backstop independent of any orchestrator, which is its appeal. But it fires on every write including the ones that change nothing a draft asserts, it cannot tell an invalidating edit from a typo fix, and a hook must exit 0 and so can only warn into a stream nobody is reading at that moment. This step and the conditional offer cover the case structurally; revisit the hook only if a run is found that bypasses both.
+
 These reads are deliberately **not** gated: `require-on-main` (`workflows-core:phase-handoff` §3) is never executed by this command. `/update-prd`'s authoritative base is the resolved folder's own `prd.md`, and Phase 2 already rules that it wins where a secondary artifact disagrees. Gating advisory grounding would block a legitimate PRD refresh because an unrelated ARD sits on a branch. The grounding files are advisory here for the same reason the ARD and specification are: they carry verified findings about the code and the design, not decisions about the PRD, and a finding carrying no verifier `outcome` is not evidence and grounds nothing (`workflows-core:grounding-format` §8). Where a discovered `ard.md`, `specification.md`, `grounding/code-grounding.md` or `grounding/design-grounding.md` is **not** on the specs repo's default branch, say so in the Phase 1 confirmation — the user should know the grounding is unapproved, not be stopped by it.
 
 `/update-prd` is **cwd-agnostic** and needs **no repos mounted** (product-level; no code scan).
@@ -177,6 +185,28 @@ An updated PRD can invalidate what was derived from it. Where this run can go ne
 
 ```
 choices: ["Re-run the spec — /product-workflows:specify <KEY> (PE, if one exists) <merge-clause>", "Re-run architecture — /product-workflows:create-ard <KEY> (PA, if one exists) <merge-clause>", "Re-run epics — /product-workflows:epics <KEY> (PE)", "Stop here"]
+
+**The offer is conditional on Phase 0 step 5a, not flat**, and where step 5a found a
+`release-notes.md` it **gains an option this list does not carry** — `"Re-draft the release note
+— /docs-workflows:release-notes <KEY> (PM)"` — because that command lives in `docs-workflows`
+and so is absent from this plugin's own next-phase list, while the artifact it produces is
+exactly the one an update most often falsifies.
+
+- **A downstream artifact exists AND this update changed something it depends on** — say so
+  before the list, naming the artifact, its path, and the specific requirement or section the
+  update altered. Mark its re-run option **(Recommended — <artifact> asserts something this
+  update reversed)** and put it first. This is the case that reached a false customer-facing
+  retention claim: the option was present, worded identically to the ones beside it, and carried
+  nothing to distinguish "you should do this" from "you could do this".
+- **A downstream artifact exists and this update touched nothing it asserts** — list its re-run
+  option with the artifact named, and no recommendation.
+- **No such artifact exists** — drop that option rather than offering a re-run of something never
+  produced.
+
+**Whether an update "changed something the artifact depends on" is judged, not grepped** — the
+run has both the artifact's text and its own diff in context. Where the answer is genuinely
+unclear, treat it as changed: an unnecessary re-draft costs one command; a missed one costs a
+false published claim.
 ```
 
 **The release note is on the list and not in the array**, and the ordering is the reference's rule 3
