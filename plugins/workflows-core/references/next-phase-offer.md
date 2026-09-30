@@ -115,11 +115,7 @@ array carries every option.
 - `/product-workflows:create-prd <ADDRESS>`:
   `/docs-workflows:release-notes <PRD>` (PM — draft the release note; recommended clear next step); hand to PA
   *(optional)* → `/product-workflows:create-ard <PRD>`; or hand to PE → `/product-workflows:epics <PRD>` (or `/product-workflows:specify <PRD>`).
-- `/product-workflows:update-prd <KEY>` — re-entry, not a linear node: reached when
-  `/product-workflows:create-prd` redirects an existing-PRD call, or when a later phase forces a PRD
-  refresh. It offers:
-  `/docs-workflows:release-notes <PRD>` (PM), `/product-workflows:create-ard <PRD>` (PA, if one exists),
-  `/product-workflows:epics <PRD>` (PE), `/product-workflows:specify <PRD>` (PE, if one exists).
+- `/product-workflows:update-prd <KEY>` — re-entry, not a linear node: reached when `/product-workflows:create-prd` redirects an existing-PRD call, or when a later phase forces a PRD refresh. Its Phase 6 offers re-runs only for existing downstream artifacts, recommends those affected by the update, and skips the picker when none exist, without skipping terminal bookkeeping. Candidate routes are `/docs-workflows:release-notes <PRD>` (PM), `/product-workflows:create-ard <PRD>` (PA), `/product-workflows:epics <PRD>` (PE), and `/product-workflows:specify <PRD>` (PE).
 
 **PM / PA — the BRD-to-PRD route**
 

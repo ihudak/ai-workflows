@@ -48,12 +48,18 @@ release_notes_block:
 
 gaps:
   - field:              <feature_title | prose | change_type | deprecation_eol>
+    kind:               <acceptance-criteria | source-truth; required for discrepancies from step 8, omitted for other gaps>
     reason:             <why this is low-confidence or missing. For change_type: the destination was inferred and the source supports two destinations roughly equally; the proposed value is still set on release_notes_block. For deprecation_eol: a deprecation was detected but the required end-of-life date is not derivable from the source.>
     recommended_action: "ask user" | "mark TODO in draft" | "note in report"
-    prd_phrasing:      <only for source-truth discrepancies — the draft's current (PRD-derived) phrasing>
-    source_phrasing:    <only for source-truth discrepancies — what the source code actually shows>
-    source_location:    <only for source-truth discrepancies — file:line the source_phrasing was verified against>
+    draft_phrasing:     <only for kind: acceptance-criteria — the draft's contradictory wording, verbatim>
+    criteria_phrasing:  <only for kind: acceptance-criteria — the acceptance criterion, verbatim>
+    criteria_location:  <only for kind: acceptance-criteria — the supplied artifact and criterion identifier or heading>
+    prd_phrasing:       <only for kind: source-truth — intended wording supported by the PRD, never a draft error flagged by step 8a>
+    source_phrasing:    <only for kind: source-truth — what the source code actually shows>
+    source_location:    <only for kind: source-truth — file:line the source_phrasing was verified against>
 ```
+
+The two discrepancy kinds have disjoint evidence fields. An `acceptance-criteria` gap needs no code evidence and never requests an implementation-gap report. A `source-truth` gap requires verified code evidence; where both kinds concern the same claim, its `prd_phrasing` uses the cited criterion rather than the contradictory draft.
 
 `status: PARTIAL` when at least one gap has `recommended_action: "ask user"`.
 

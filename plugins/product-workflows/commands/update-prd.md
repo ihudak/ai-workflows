@@ -172,8 +172,7 @@ Act on the verdict as `/create-prd` Phase 4 does: on `BLOCK`, fix the BLOCKER fi
 ## Phase 6 — Next steps
 
 Offer (guidance only — never auto-invoke), per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")`.
-Five routes do not fit in four slots, so the prose carries all of them and the array carries `Stop
-here` plus three — that reference's overflow rule:
+The following menu is a candidate set, not a prompt to emit before filtering. Apply the artifact conditions below first, then render the surviving routes:
 
 ```
 An updated PRD can invalidate what was derived from it. Where this run can go next:
@@ -185,17 +184,9 @@ An updated PRD can invalidate what was derived from it. Where this run can go ne
 
 ```
 choices: ["Re-run the spec — /product-workflows:specify <KEY> (PE, if one exists) <merge-clause>", "Re-run architecture — /product-workflows:create-ard <KEY> (PA, if one exists) <merge-clause>", "Re-run epics — /product-workflows:epics <KEY> (PE)", "Stop here"]
+```
 
-**The offer is conditional on Phase 0 step 5a, not flat**, and where step 5a found a
-`release-notes.md` it **gains a route this list does not carry** — `"Re-draft the release note
-— /docs-workflows:release-notes <KEY> (PM)"` — because that command lives in `docs-workflows`
-and so is absent from this plugin's own next-phase list, while the artifact it produces is
-exactly the one an update most often falsifies. **That route makes five with `Stop here`, and
-the prompt renders four** (`workflows-core:escalation-rules` §0), so it is placed by
-`workflows-core:next-phase-offer`'s overflow rule and never appended as a fifth option: the
-prose list above carries every route that survives the conditions below, the array carries
-`Stop here` plus the three the run's outcome makes most likely — a Recommended one first, then
-in the prose's order — and the run says in one line that the list is longer than the prompt.
+**The offer is conditional on Phase 0 step 5a, not flat.** Where step 5a found `release-notes.md`, add `"Re-draft the release note — /docs-workflows:release-notes <KEY> (PM)"` to the candidate options before applying the cap. That command lives in `docs-workflows`, but its artifact is one an update can invalidate just as it can a spec or an ARD.
 
 - **A downstream artifact exists AND this update changed something it depends on** — say so
   before the list, naming the artifact, its path, and the specific requirement or section the
@@ -212,17 +203,12 @@ in the prose's order — and the run says in one line that the list is longer th
 run has both the artifact's text and its own diff in context. Where the answer is genuinely
 unclear, treat it as changed: an unnecessary re-draft costs one command; a missed one costs a
 false published claim.
-```
 
-**The release note is on the list and not in the array**, and the ordering is the reference's rule 3
-rather than taste: an updated PRD invalidates what was *derived* from it — the spec, the ARD, the
-Epics — before it changes what is *said about the release*, which is drafted last and from the
-shipped diff rather than from the PRD. Say in one line that the list is longer than the options and
-that the release-note route is reachable through the free-text option.
+**Render after filtering.** Count forward routes, excluding `Stop here`. With none, do not call `AskUserQuestion` or print an empty route list: say that no existing downstream artifact needs a re-run offer, then continue through Context hygiene and Phase 7. With one to three, show every surviving route plus `Stop here` (two to four options). With more than three, apply `workflows-core:next-phase-offer`'s overflow rule: list every surviving route in prose, prompt with the three the run's outcome makes most likely plus `Stop here`, and say that the remaining prose routes are reachable through free text. Put recommended routes first in both prose and prompt; the release-note route is not automatically demoted. Only this overflowing case says the prose list is longer than the prompt.
 
-**One key appears in that array.** `<ADDRESS>` is what this run was invoked with; it resolves the `$SPECS_PATH` folder Phase 0 step 3 found, and every command offered below resolves that same folder through the same entry point. There is no second identity to keep straight and no import to wait for.
+**Every surviving route uses the same key.** `<ADDRESS>` is what this run was invoked with; it resolves the `$SPECS_PATH` folder Phase 0 step 3 found, and every offered command resolves that same folder through the same entry point. There is no second identity to keep straight and no import to wait for.
 
-**Two options carry `<merge-clause>` and two do not, and which is which is derived, not stylistic.** `/product-workflows:create-ard` and `/product-workflows:specify` both gate this run's PRD on the specs repo's default branch, so both stop where the updated PRD reached a branch; where it reached none, `workflows-core:phase-handoff` §3.4's rows for them apply unchanged — `/create-ard` falls back to the resolved folder, reported, and `/specify` skips the grounding confirmation rather than stopping; `/product-workflows:epics` gates `<PRD-dir>/specification.md` and `/docs-workflows:release-notes` gates nothing, so neither waits on anything this run wrote. The placeholder is resolved from this run's own `Phase handoff:` outcome line (§4.1) per `workflows-core:next-phase-offer` and is never written as an unconditional "once the pull request above is merged" — a declined handoff, a failed push and a nothing-to-commit run — among the other outcomes §4.1 lists — each leave a different wait, and none of those three opens a pull request to wait on. It is a placeholder, not an instruction to reword an option, so the array is still presented verbatim per `workflows-core:escalation-rules`.
+**The spec and architecture routes carry `<merge-clause>` when offered; the Epics and release-note routes do not.** `/product-workflows:create-ard` and `/product-workflows:specify` both gate this run's PRD on the specs repo's default branch, so both stop where the updated PRD reached a branch; where it reached none, `workflows-core:phase-handoff` §3.4's rows for them apply unchanged — `/create-ard` falls back to the resolved folder, reported, and `/specify` skips the grounding confirmation rather than stopping; `/product-workflows:epics` gates `<PRD-dir>/specification.md` and `/docs-workflows:release-notes` gates nothing, so neither waits on anything this run wrote. The placeholder is resolved from this run's own `Phase handoff:` outcome line (§4.1) per `workflows-core:next-phase-offer` and is never written as an unconditional "once the pull request above is merged" — a declined handoff, a failed push and a nothing-to-commit run — among the other outcomes §4.1 lists — each leave a different wait, and none of those three opens a pull request to wait on. It is a placeholder, not an instruction to reword an option, so the surviving options retain their authored wording apart from the prescribed placeholders and recommendation markers, per `workflows-core:escalation-rules`.
 
 ### Context hygiene
 

@@ -61,9 +61,11 @@ Each line taken is a **declared suite**, listed in `### Suites` as `declared#1`,
 
 The fallback is narrow on purpose:
 
-- It fires **only when the table matched nothing.** A command read out of a CI file never runs beside, or instead of, a suite the table did find — that would be the guess the table exists to avoid.
+- During capture, it fires **only when the table matched nothing.** Capture never runs a command read out of a CI file beside, or instead of, a suite the table did find — that would be the guess the table exists to avoid.
 - A verify runs **the command the capture ran**, read back from the baseline and never re-read from the CI file, so a change that edits the workflow cannot change what is compared.
 - Every declared suite carries a `CAVEAT: ` note naming the file and the step it came from, and every caller surfaces those notes whatever the status.
+
+Verification pairs every suite row by framework and marker value, including `declared#<n>` and `command_hint#<n>` rows. A matched declared or supplied command is enough to compare even when the marker scan finds nothing. A newly detected suite runs alongside replayed declared rows, not instead of them. The no-match refusal applies only when no suite row pairs; the separate refusal of a baseline with no `OK` or `NO_TESTS` row is unchanged.
 
 Where nothing qualifies and the repository declares nothing either, **that is not a failure and it is not silent.** With no candidate, no declared command and no supplied one, the agent runs nothing and returns its normal structure with `Status: COMMAND_NOT_FOUND`, `Framework: not detected`, every count 0, and a `### Notes` line saying no runner was found and naming the files it read. It does not fail the call.
 

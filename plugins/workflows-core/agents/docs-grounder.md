@@ -46,18 +46,7 @@ Use when the `qmd` binary is available (`command -v qmd`). **This agent never bu
 | 2 | a collection covers `docs_path`, vectors == 0 | `timeout 30s qmd search "<terms>"` | `qmd-lexical` |
 | 3 | no collection covers `docs_path`, `qmd` absent, a project-local index is shadowing, or either probe fails | Path B | `fallback` |
 
-**Rung 3 must say WHICH of its preconditions fired.** They are not one condition, and the
-caller cannot tell them apart from the rung alone. A generic "collection not found" note is
-the defect here: the orchestrator's own step 3.5 reaches the same rung from the same
-evidence, so both ends report the same non-answer and neither surfaces the cause. Record in
-`notes` exactly one of — `qmd absent`; `probe failed: <which call, exit or timeout>`;
-`project-local .qmd index at <path> shadowing the user-scope one`; `no collection covers
-<docs_path> and the index reports 0 vectors` (genuinely un-built); or **`registry
-inconsistency: index reports <N> vectors but no collection row reaches <docs_path>`** — the
-last being an intact, populated index whose `store_collections` row is missing, which looks
-identical to un-built on a `collection list` probe alone and is the one case where a rebuild
-is the wrong remedy. `resolve-docs-grounding` step 3.5 reads the same distinction; the two are
-meant to agree, and they only can if both name it.
+**Rung 3 must say WHICH of its preconditions fired.** Record the observed cause in `notes`: `qmd absent`; `probe failed: <which call, exit or timeout>`; `project-local .qmd index at <path> shadowing the user-scope one`; or `no collection covers <docs_path>`. A positive global vector count may belong entirely to other collections and does not change the last diagnosis. These probes alone cannot establish orphaned documents or registry corruption; do not claim either or recommend registry repair. `resolve-docs-grounding` step 3.5 uses the same root-coverage test and may offer a consented build for an uncovered root; this agent only falls back.
 
    `<terms>` = `feature_summary` keywords + `themes`, minus stopwords. **Union of the two ranked lists:** interleave `qmd search` and `qmd vsearch` results by rank position, dedupe by path keeping the better rank, truncate at the Bounding cap of 8.
 3. **Read the top hits** with `timeout 30s qmd get "<file>"` (or `Read`), capped per Bounding.

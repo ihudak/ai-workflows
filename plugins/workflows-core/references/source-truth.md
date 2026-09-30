@@ -273,7 +273,7 @@ claims per file against the source using §3 techniques. **Severity rule
 is a **BLOCKER** UNLESS the doc contains an explicit intentional-discrepancy
 marker explaining the gap. See §7 for the marker format.
 
-**Note on `release-notes-writer`:** This agent applies the same source-truth verification to the specific option/label/count claims its draft makes (when `code_repos` is provided), and on every run checks its conditional and quantitative claims against the acceptance criteria it was handed, recording discrepancies from either in its `gaps[]` for the release-notes command to escalate to the user.
+**Note on `release-notes-writer`:** This agent applies the same source-truth verification to the specific option/label/count claims its draft makes (when `code_repos` is provided), and on every run checks its conditional and quantitative claims against the acceptance criteria it was handed. Its `gaps[]` separates `kind: acceptance-criteria` (draft versus cited criterion, an authoring discrepancy) from `kind: source-truth` (PRD-supported intent versus verified code). The release-notes command resolves the criteria kind first without an implementation-gap report; only a separate source-truth gap with code evidence reaches this reference's intended-versus-actual decision flow.
 
 ## 5. Hard rules
 
