@@ -4,6 +4,12 @@ All notable changes to the **obsidian-llm-wiki** plugin are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 
+## [0.4.4] — 2026-09-30
+
+### Fixed
+
+- **`skills/_shared/vault-conventions.md` named 2 of the 4 commands that write outside `wiki/`**, while the authoritative copy inside `wiki-init/SKILL.md`'s own vault block named all four — two live instructions disagreeing about the same boundary. Synced to the complete set (`/wiki-task`, `/wiki-tasks-extract`, `/wiki-tags-refresh`, `/wiki-init`), derived from the commands themselves, with a note that the two copies move together.
+
 ## [0.4.3] — 2026-09-24
 
 ### Changed — the marketplace is now `shipwright`, and the repository `ihudak/ai-workflows`

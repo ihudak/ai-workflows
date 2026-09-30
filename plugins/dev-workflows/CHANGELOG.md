@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.4.0] — 2026-09-30
+
+**Update `workflows-core` to 1.9.0 with this release**: its new `review-convergence` reference is what `/design`'s gate now cites.
+
+### Changed
+
+- **`/design`'s review gate is outcome-keyed, not capped.** `Cap: one fix cycle + one re-review` is withdrawn for `workflows-core:review-convergence`: re-review while the last pass's own fixes introduced something, stop when they did not, and the user may decline from the second pass onward. A fixed count cannot bound this — fixes introduce defects at a rate comparable to the ones they resolve — and a ceiling binds precisely when the artifact is furthest from correct.
+- The §2.1 chain-head references in `/implement`, `/ready`, `/upgrade`, `/vuln` and `/design`, and the fallback chain on the model-routing docs page, name `claude-sonnet-5-5` (`workflows-core` 1.9.0).
+
 ## [4.3.1] — 2026-09-29
 
 **Update `workflows-core` to 1.8.1 with this release**: its `classification.md` §5 dispatch rule — pass a model's family name where the agent tool accepts only family names — is what the text below now cites.

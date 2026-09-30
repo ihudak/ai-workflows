@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.9.0] — 2026-09-30
+
+**Update `dev-workflows` to 4.4.0, `docs-workflows` to 1.5.0 and `product-workflows` to 3.10.0 together with this release**: all three retire their review caps for the new `review-convergence` reference below.
+
+### Added
+
+- **`references/review-convergence.md` — how many times a review gate re-runs, stated once for the family.** Outcome-keyed, not capped: re-review while the last pass's own fixes introduced something, stop when they did not, and the user may decline from the second pass onward. A finding recurring after a fix is oscillation rather than provenance, and escalates instead of looping. A voluntary fix under a passing verdict still requires a re-review — the reviewer approved the artifact it saw, not the one the fix produced.
+
+### Fixed — behaviour
+
+- **A Skill-tool invocation never cut the cost window.** The `<command-name>` envelope is emitted only when the user *types* the slash command; a prose request reaching the command through the **Skill tool** appears solely as an assistant `tool_use` block. `command_envelope` read user messages only, so a prose-invoked run cut nothing and §13.3's "segment to the next boundary of any kind" ran straight through it — measured on a real transcript as a typed grill command absorbing two later prose-invoked runs. Both shapes are now read. **The Skill half resolves against the manifest where the typed half deliberately does not**: the typed half is permissive because a user can only type a real command, while commands dispatch non-command skills constantly (`model-routing`, the `reference` loader, several times a run) and cutting on those would shatter one window into spurious segments. Seven selftest cases pin both halves so neither can be "harmonised" into the other.
+- **Fable 5.1 cache reads were priced 4x high.** `cost-prices.yaml` keyed only `claude-fable-5` and its comment asserted the longest-prefix rule covered 5.1 from that entry — true of `input`/`output`, false of `cache_read`, the field that dominates a cached agentic session: Fable 5.1 bills cache reads at 0.025x input ($0.25), a per-model exception, not the 0.1x ($1.00) every other model uses. Both ids are now keyed separately and the false claim is replaced by a statement of why it was false.
+- **`claude-sonnet-5-5` was unreachable and unpriced.** §2.1 still headed with `claude-sonnet-5`, so no routing path could select the current Sonnet, and pricing was correct only by the coincidence that `claude-sonnet-5` is a strict prefix of it with currently-equal rates — the same latent shape that priced Opus 5.5 about 25 percent high until 1.7.5. Added at the head of §2.1 and as §2's first Sonnet fallback, with the 41 literal chain-head references across the commands, both `model-routing.md` docs pages, their "family's newest model" claim, and `run-flags.md`'s unpriced-model check all moved in the same change.
+- **The selftest proved the engine and never the shipped table**, which is how the Fable gap survived. Shipped-table pins added for all six keyed ids. The Sonnet pin is a **key-presence** assertion rather than a price one: 5.5 and 5 bill identically today, so dropping the key leaves every price check green. Both mutation-verified.
+- **`hooks/test-notify.sh`'s gradle branch dropped a failing subproject.** `first()` returns `m[-1]`, so a multi-project build reported only the last subproject's numbers and a red build could notify as green. Now sums across subprojects, reading each line's failed count from that line's own trailing clauses so a stray `, N failed` elsewhere in the log is not summed in. Verified: `13 completed, 3 failed` where the old code said `5 completed, 3 failed`; single-project and green-run behaviour unchanged.
+
 ## [1.8.1] — 2026-09-29
 
 **Update `dev-workflows` to 4.3.1, `docs-workflows` to 1.4.1 and `product-workflows` to 3.9.1 together with this release**: their nested-dispatch agents and model-routing pages now follow the §5 dispatch rule below.

@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.5.0] — 2026-09-30
+
+**Update `workflows-core` to 1.9.0 with this release**: its new `review-convergence` reference is what `/document`'s gate now cites.
+
+### Fixed — behaviour
+
+- **A re-drafted `# Unreleased` note was appended beside the note it supersedes.** Phase 8's append rule is right for a `# <version>` section — an earlier note there describes what actually shipped, and replacing it would destroy the record — and wrong for exactly one section. An unreleased note can be re-drafted because the PRD it describes changed, and appending left the superseded claim and the true one in the same section, both undated-as-superseded, for whoever pastes from the file: the stale-downstream-draft defect arriving from the other direction. Now, where this run's draft lands under `# Unreleased` in a section already holding a note with the **same key** in its scope comment, the earlier note is marked superseded **in place** — nothing deleted, both drafts' provenance intact, which is what the scope comment exists for — and the report says so. Two notes for one key is the trigger, not two under one Change Type: several PRDs shipping in one version is ordinary.
+
+### Changed
+
+- **`/document`'s review gate is outcome-keyed, not capped** (`workflows-core:review-convergence`).
+- `/docs-audit`, `/docs-brand`, `/docs-init` and `/docs-profile` name `claude-sonnet-5-5` in their §2.1 chain-head references.
+
 ## [1.4.1] — 2026-09-29
 
 **Update `workflows-core` to 1.8.1 with this release**: its `classification.md` §5 dispatch rule — pass a model's family name where the agent tool accepts only family names — is what the text below now cites.

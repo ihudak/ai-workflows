@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.10.0] — 2026-09-30
+
+**Update `workflows-core` to 1.9.0 with this release**: its new `review-convergence` reference is what five of these commands' gates now cite.
+
+### Added
+
+- **`/update-prd` discovers what an update may INVALIDATE, not only what grounds it.** New Phase 0 step 5a globs for artifacts a later phase already produced — `release-notes.md`, `ard.md`, `specification.md`, `design.md` — and Phase 1 confirms each with its path and mtime. The next-phase offer is then **conditional**: an artifact this update contradicts is named, recommended and put first; one it does not touch is listed without a recommendation; one that does not exist is dropped from the menu. Where step 5a found a `release-notes.md`, the offer gains a `/docs-workflows:release-notes` option this plugin's own list cannot carry — that command lives in `docs-workflows` while the artifact it produces is the one an update most often falsifies. An update once reversed an acceptance criterion a published draft depended on, turning it into a false customer-facing claim about data retention, and it was caught only because the same session had authored the draft and the orchestrator remembered. A write hook was considered and declined, with the reason recorded.
+
+### Changed
+
+- **The review gates of `/create-prd`, `/update-prd`, `/create-ard`, `/specify` and `/epics` are outcome-keyed, not capped** (`workflows-core:review-convergence`). Demonstrated wrong twice on one PRD, the first time letting a Goal-contradicting requirement reach the default branch because a voluntary fix under a passing verdict was never re-reviewed.
+- The §2.1 chain-head references across all fourteen commands, and the fallback chain on the model-routing docs page, name `claude-sonnet-5-5` (`workflows-core` 1.9.0).
+
 ## [3.9.1] — 2026-09-29
 
 **Update `workflows-core` to 1.8.1 with this release**: its `classification.md` §5 dispatch rule — pass a model's family name where the agent tool accepts only family names — is what the text below now cites.
