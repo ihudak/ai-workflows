@@ -82,6 +82,9 @@ if "mvn" in cmd:
     # appends that one suffix and only when flakes > 0. Matching both endings at
     # end of line sums modules without counting every class a second time. Where
     # nothing matches that anchored form, fall back to the unanchored counts.
+    # A hand-written test fixture must keep the per-class suffix: a per-class
+    # line that also ends at "Skipped: N" is indistinguishable from a summary
+    # line here and is counted again. Real Surefire output always carries it.
     rows = re.findall(
         r"Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: \d+"
         r"(?:, Flakes: \d+)?[ \t]*\r?$",

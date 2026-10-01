@@ -12,8 +12,8 @@
 #
 #   * FAST MODE is a per-model `fast:` sub-block, keyed explicitly like every other rate here.
 #     It exists on Opus 5.5 ($8/$40) and on Opus 5 and Opus 4.8 ($10/$50) -- 2x their standard
-#     rates -- and on nothing else: Opus 4.7 rejects `speed: "fast"` outright, and Opus 4.6
-#     accepts it but runs and bills at standard. "Prompt caching multipliers apply on top of
+#     rates. Opus 4.7 rejects `speed: "fast"` outright, so it has no block; Opus 4.6 accepts
+#     it but runs and bills at standard, so its block repeats the standard rates. "Prompt caching multipliers apply on top of
 #     fast mode pricing", so a fast block's cache rates are the model's own multipliers applied
 #     to its FAST input price -- Opus 5.5's cache read is 0.05 x $8, not 0.05 x $4. A `fast`
 #     record on a model with no `fast:` block is reported `unpriced-speed:fast` with a null
@@ -103,6 +103,22 @@ models:
     cache_write_5m: 6.25
     cache_write_1h: 10.0
   claude-opus-4-6:
+    input: 5.0
+    output: 25.0
+    cache_read: 0.5
+    cache_write_5m: 6.25
+    cache_write_1h: 10.0
+    fast:                   # usage.speed == "fast" runs and bills at STANDARD here (pricing page)
+      input: 5.0
+      output: 25.0
+      cache_read: 0.5
+      cache_write_5m: 6.25
+      cache_write_1h: 10.0
+  # Opus 4.5 is outside the §2 chain, but a session can run on it by hand, and pricing keys
+  # off the model id the transcript records. No other key prefixes `claude-opus-4-5`, so
+  # without this entry such a run prices `unpriced-model`. It predates US-only inference
+  # (Claude 4.6 and later), so a `us` record on it is not expected.
+  claude-opus-4-5:
     input: 5.0
     output: 25.0
     cache_read: 0.5

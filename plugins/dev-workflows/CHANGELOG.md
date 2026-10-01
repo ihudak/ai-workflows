@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.4.1] — 2026-10-01
+
+### Fixed — documentation
+
+- **The command pages' diagrams drew orders the commands do not run.** `/implement`'s drew one `test-writer` step and a risk fork after it; the fork is the Phase 1.5 classification, and each path dispatches `test-writer` itself — Phase 3.5 on the standard path, Phase 3B step 4a before the review diff on the risky one — so the fork now comes first. `/vuln` and `/upgrade` drew a reviewed change going straight to the summary; it returns to the fixer or executor's `verify-resume` call, which runs the tests against the baseline. `/design`'s drew Phase 1.5's gate as a hard stop; it pauses for the operator's decision — relaunch on Opus, an explicit override, or the Sonnet floor where no Opus is reachable — and `--enforce-model` bypasses it.
+
 ## [4.4.0] — 2026-09-30
 
 **Update `workflows-core` to 1.8.2 with this release**: it adds `claude-sonnet-5-5` to the §2 and §2.1 chains, which the references below now name.

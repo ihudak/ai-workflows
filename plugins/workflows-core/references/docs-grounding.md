@@ -38,6 +38,16 @@ documentation does not inform that decision.
 
    **Global vector counts do not prove coverage of this root.** A positive `Vectors:` count from `qmd status` can belong entirely to unrelated collections. Successful probes that find no collection covering `docs_root` therefore take the no-collection branch even when the global count is positive. These probes alone establish neither orphaned documents nor a corrupt registry: do not diagnose either, recommend registry repair, or suppress the build choice on that evidence. No direct SQLite inspection or repair belongs to this procedure.
 
+   **One state is narrower, and it is the one the probes can see: an index with documents and no collections at all.** `qmd collection list` reports none — `Collections (0)`, `No collections found`, or no collection entry at all — while `qmd status` reports `Total: <D> files indexed` with `D > 0`. Positive vectors belonging to other roots cannot explain that, because there are no other roots: the index holds documents that no collection reaches. A field run met exactly this — 22,000 documents and 92,330 vectors under an empty collection registry — and was steered into rebuilding what was already built. The cause is still not diagnosed here (a damaged registry, a removed collection whose rows survive, a `qmd cleanup` that has not run), so the no-collection prompt is still shown, but its recommendation moves, its build option says what it may cost, and the plan-approval line says why:
+
+   ```
+   choices: ["Skip — ground with keyword fallback this run (Recommended — the index already holds <D> documents that no collection reaches; inspect it with 'qmd status' before rebuilding)",
+             "Build the docs index anyway — <N> markdown files; may re-embed documents the index already holds",
+             "Turn docs grounding off for this run"]
+   ```
+
+   A collection that exists and does not cover `docs_root` is the ordinary no-collection branch, whatever either count says.
+
    **A collection covers `docs_root`** → `timeout 60s qmd update`. Incremental (qmd re-indexes only changed files), instant when nothing changed, and safe to kill because the index is SQLite and rolls back. On a cap breach, prompt once — never silently pay 60 seconds on every future run:
 
    ```
@@ -77,6 +87,7 @@ docs grounding: ON <root> (retrieval: qmd-vector; docs checkout <N> days old —
 docs grounding: ON <root> (retrieval: fallback — qmd absent)
 docs grounding: ON <root> (retrieval: fallback — probe failed: <which call, exit or timeout>)
 docs grounding: ON <root> (retrieval: fallback — no collection covers this docs root; build once: qmd collection add "<root>" --name docs && qmd embed)
+docs grounding: ON <root> (retrieval: fallback — the index holds <D> documents but no collections; a rebuild may duplicate them — check `qmd status` first)
 docs grounding: ON <root> (retrieval: qmd-vector; index <M> of <N> documents embedded — vector search covers only part of the corpus)
 docs grounding: ON <root> (retrieval: fallback — a project-local .qmd index in <cwd> is shadowing the user-scope one; run from another directory or remove it)
 docs grounding: OFF (<reason>)

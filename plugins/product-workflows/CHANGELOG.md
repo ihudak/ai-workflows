@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.10.1] — 2026-10-01
+
+### Fixed — documentation
+
+- **The workflow pages drew hand-overs the commands do not make, and missed ones they do.** `docs/workflow.md` now draws `/prd-ground` as two nodes, since a BRD slice and an idea-route PRD reach it differently; draws `/update-prd`'s dashed return paths to the ARD, specification, Epics and release note it found, stating that they refresh existing artifacts and never author missing ones; and draws `/brd-interview`'s hand-over to `/create-ard` and `/specify` on a slice with nothing for the customer to review, as `docs/brd-workflow.md` now does too. `docs/commands/specify.md` draws an Epic-scoped run skipping the Epic count, and a PRD with no Epics stopping — split first, follow the prerequisite, or cancel — unless you choose one broad PRD-level spec.
+
 ## [3.10.0] — 2026-09-30
 
 **Update `workflows-core` to 1.8.2 with this release**: it adds `claude-sonnet-5-5` to the §2.1 chain, which the references below now name.

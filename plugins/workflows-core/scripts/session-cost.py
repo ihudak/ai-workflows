@@ -795,7 +795,7 @@ def _st_crossplugin_rows():
     ]
 
 
-def selftest():
+def _selftest_body(tmp):
     import subprocess
     import tempfile
 
@@ -908,9 +908,15 @@ def selftest():
         check(_cost(_mid, _shipped, _use("fast"))[0] == (_want, None),
               "shipped cost-prices.yaml prices %s in fast mode (1M in + 1M cache read = $%s)"
               % (_mid, _want))
+    # Opus 4.6 accepts speed=fast and bills it at its STANDARD rate (pricing page); a null
+    # here would price a real run at $0 and call it unknown.
+    check(_cost("claude-opus-4-6", _shipped, _use("fast"))[0] == (5.5, None),
+          "shipped cost-prices.yaml prices claude-opus-4-6 fast mode at its standard rate")
+    check(price_model("claude-opus-4-5", _tk, _shipped) == (5.5, None),
+          "shipped cost-prices.yaml keys claude-opus-4-5 (1M in + 1M cache read = $5.5)")
     check(_cost("claude-opus-5-5", _shipped, _use("standard", "us"))[0] == (4.62, None),
           "shipped cost-prices.yaml carries the 1.1x US-inference multiplier")
-    for _mid in ("claude-opus-4-7", "claude-opus-4-6", "claude-sonnet-5-5"):
+    for _mid in ("claude-opus-4-7", "claude-sonnet-5-5"):
         check(_cost(_mid, _shipped, _use("fast"))[0] == (None, "unpriced-speed:fast"),
               "shipped cost-prices.yaml gives %s no fast block (fast mode does not exist there)"
               % _mid)
@@ -921,7 +927,6 @@ def selftest():
               % (_mid, _want))
 
 
-    tmp = tempfile.mkdtemp(prefix="session-cost-selftest-")
     tpath = os.path.join(tmp, "t.jsonl")
     with open(tpath, "w", encoding="utf-8") as fh:
         for r in _st_rows():
@@ -1227,6 +1232,22 @@ def selftest():
     print("SELFTEST PASS")
     return 0
 
+
+
+def selftest():
+    """Run the selftest in a fresh temporary directory and always remove it.
+
+    The body returns early on several failures; the temporary tree it writes
+    (transcripts, a price table, a fake plugin root) is removed on every path,
+    so repeated runs leave nothing behind -- on a developer machine or a CI
+    runner that is reused."""
+    import shutil
+    import tempfile
+    tmp = tempfile.mkdtemp(prefix="session-cost-selftest-")
+    try:
+        return _selftest_body(tmp)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
 def match_claims(claim_names, boundaries):
     """Pair each claimed command name with the boundary it actually ran at.

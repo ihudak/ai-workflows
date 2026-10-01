@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.4.3] — 2026-10-01
+
+### Fixed — documentation
+
+- **The workflow page drew `/docs-audit` handing its backlog to `/document`.** Nothing reads the backlog: a person works through it. The page now draws that work as a gray manual step — select a unit, write, verify and publish — with keyed and direct `/document` as separate nodes, direct mode as optional prose help, and a periodic `--refresh` back to `/docs-audit`. `/docs-init`'s call into `/docs-brand` is drawn conditional on `--no-brand`, and `docs/reference/docs-backlog.md` says a refresh publishes a unit only where its page carries no unresolved claim markers.
+
 ## [1.4.2] — 2026-09-30
 
 **Update `workflows-core` to 1.8.2 with this release**: it adds `claude-sonnet-5-5` to the §2.1 chain, which the references below now name.

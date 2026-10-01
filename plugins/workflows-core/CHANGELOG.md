@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.8.3] — 2026-10-01
+
+### Fixed — behaviour
+
+- **`docs-grounding` again tells an index nobody can reach from an index nobody built — narrowly.** 1.8.2 rightly stopped inferring registry corruption from a positive global `Vectors:` count, which can belong to other collections, but it also put every uncovered root back on the build prompt, including the state the rule was first written for: `qmd collection list` reporting **no collections at all** while `qmd status` reports indexed documents. No other collection can own those documents, so that state is visible from the two probes alone. Step 3.5 now handles it as its own case: the no-collection prompt is still shown, but *Skip* is recommended, the build option says it may re-embed documents the index already holds, and the plan-approval line names the document count and points at `qmd status`. A collection that exists and does not cover the root is unchanged. `docs-grounder`'s rung 3 records the same distinction in `notes`. The cause is still not diagnosed and nothing is repaired.
+- **A fast-mode Opus 4.6 turn was priced as unknown.** Opus 4.6 accepts `speed: "fast"` and runs and bills it at its standard rate, as the pricing page and this table's own header say; with no `fast:` block the engine reported `unpriced-speed:fast` and a null cost. Its block now repeats the standard rates. Opus 4.7, which rejects fast mode, still has none.
+- **Claude Opus 4.5 had no price key.** It is outside the §2 chain, but a session can run on it by hand, and no other key prefixes `claude-opus-4-5`, so such a run priced `unpriced-model`. Keyed at $5 / $25.
+- **`session-cost.py --selftest` left a temporary directory behind on every run.** The body returns early on several failures and removed nothing on any path; it now runs inside a wrapper that removes its tree whichever way it returns.
+
+Both pricing fixes carry shipped-table selftest pins, each confirmed to fail with its key removed. `cost-emission.md` §4 states the Opus 4.6 / 4.7 split. `hooks/test-notify.sh`'s Maven comment now warns that a hand-written fixture must keep Surefire's per-class suffix, without which a per-class line is counted again.
+
+### Changed — documentation
+
+- **`docs/family-map.md`** gains a legend entry and a gray node for the manual backlog work after `/docs-audit`, qualifies the command names a built-in shadows, draws `/prd-ground` as two nodes (BRD slice, idea PRD), and draws the hand-overs `/brd-interview` and `/update-prd` actually make.
+
 ## [1.8.2] — 2026-09-30
 
 **Update `dev-workflows` to 4.4.0, `docs-workflows` to 1.4.2 and `product-workflows` to 3.10.0 together with this release**: their chain-head references now name `claude-sonnet-5-5`, which this release adds to the §2 and §2.1 chains.
