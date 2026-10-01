@@ -35,7 +35,8 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
    files, not authored content, and each artifact already carries its own
    `author:` field (`feedback-emission.md` §1).
 7. **Prompt-free.** Neither entry point asks the user anything. `specs-preflight`
-   is silent unless it acts; `commit-artifacts` emits one outcome line (§6).
+   is silent unless it acts, a guard fires, or §3.1 reports a misconfigured
+   `$SPECS_PATH`; `commit-artifacts` emits one outcome line (§6).
 
 ## 2. Bounded write authority
 
@@ -183,9 +184,10 @@ asserts), and runs this before any placement or refusal reads the resolved folde
 takes none, or whose key set is its validated argument keys as typed — `/dev-workflows:vuln`'s
 per-token keys among them, keyless where no token carries one — runs it as soon as `$SPECS_PATH`
 is known, and resolves afterwards. Where resolution comes first,
-a run that stops on its address — `invalid`, `ambiguous`, or `absent` — runs none. Prompt-free.
-Silent when the repository is already clean and on the default branch; it emits
-a block only when it acts or when a guard fires.
+a run that stops on its address — `invalid`, `ambiguous`, `misrooted` or `absent` — runs none. Prompt-free.
+Silent when the repository is already clean and on the default branch and §3.1 finds
+`$SPECS_PATH` well placed; it emits a block only when it acts or when a guard fires, and a
+one-line notice only where §3.1 reports a misconfigured `$SPECS_PATH`.
 
 ### 3.1 Gate
 
@@ -201,7 +203,9 @@ state in this container setup.
 - **`.git` resolves but is not writable → silent no-op**, exactly as before. The artifacts are going to a report-only tier the plugin does not manage, and a read-only specs mount is a normal state in this container setup. Saying nothing is correct here: there is nothing for the operator to fix.
 - **`$SPECS_PATH` is set to a path that is not a directory, or `rev-parse --git-dir` fails there → emit a one-line notice** naming the variable and the path, then continue. This is **never** a supported state: a set-but-not-a-repository `$SPECS_PATH` is a typo, a missing mount, or a path that was right in another container. Under the old blanket silence it looked identical to the read-only case, so a run would write its deliverables, commit nothing, open no pull request, and end on a terminal gate-failed line that named none of it — the operator's first clue being an empty specs tree some time later. **Where the path is a directory holding no `specifications/` directory and either signal of `workflows-core:addressing` §3 `resolve-key` step 0 holds there, the same line also says which one, and names what that step names**: the parent to set for (a), or for (b) the specs folder found directly under the path. A `specifications/` directory mounted on its own fails `rev-parse` in exactly this way, because the repository's git directory sits above the mount point. A command that resolves no key never reaches that step's stop; where this notice fires, it is how such a command learns the cause.
 
-Still **never fatal** (§1): the notice reports and the run continues. What changes is that the condition is now *said*.
+**A passing gate is tested once more, for a `$SPECS_PATH` set inside the specs tree.** On an ordinary checkout, `$SPECS_PATH=<repo>/specifications` meets all three conditions, because git finds the repository above it. A run that resolves no key would then file its bookkeeping inside `specifications/` with nothing said. Examples are `/upgrade`, `/vuln` on tokens carrying none, `/implement` on a direct prompt, `/document` in direct mode, `/docs-init`, `/docs-brand`, `/docs-audit` and the four logging commands. So **where the gate passes and `$SPECS_PATH/specifications/` is not a directory, test the two signals of `workflows-core:addressing` §3 `resolve-key` step 0**, exactly as that step defines them. Where either holds, emit a one-line notice naming the variable, its value, which signal holds and the value to set, then continue. Signal (a) on an ordinary checkout always carries a non-empty `git -C "$SPECS_PATH" rev-parse --show-prefix`, which step 0 requires. **The precondition keeps it quiet everywhere else.** A `$SPECS_PATH` holding a `specifications/` directory is never tested, so a monorepo's `<repo>/specs` with `specs/specifications/` inside it says nothing. A specs repository nothing has been written into yet matches neither signal.
+
+Still **never fatal** (§1): each notice reports and the run continues. What changes is that the condition is now *said*.
 
 ### 3.2 Resolution inputs
 

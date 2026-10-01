@@ -15,7 +15,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed — documentation
 
-- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals every keyed command tests before it searches, and the `SPECS_PATH_INSIDE_TREE` stop, which comes before `/idea`, `/create-prd` or `/brd-intake` could create a folder at `specifications/specifications/…`. `docs/getting-started.md` says to set the variable to the repository's root.
+- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals every keyed command tests before it searches, and the `SPECS_PATH_INSIDE_TREE` stop, which comes before `/idea`, `/create-prd` or `/brd-intake` could create a folder at `specifications/specifications/…`. It also describes the one-line notice a run that resolves no key gets instead. `docs/getting-started.md` says to set the variable to the repository's root.
 
 ## [3.10.1] — 2026-10-01
 

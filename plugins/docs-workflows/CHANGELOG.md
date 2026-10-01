@@ -11,7 +11,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed — documentation
 
-- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals `/document` in keyed mode and `/release-notes` test on a `<KEY>` address, and the `SPECS_PATH_INSIDE_TREE` stop that now comes before a not-found one. `docs/getting-started.md` says to set the variable to the repository's root.
+- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals `/document` in keyed mode and `/release-notes` test on a `<KEY>` address, the `SPECS_PATH_INSIDE_TREE` stop that now comes before a not-found one, and the one-line notice that direct-mode `/document`, `/docs-init`, `/docs-brand` and `/docs-audit` get instead. `docs/getting-started.md` says to set the variable to the repository's root.
 
 ## [1.4.3] — 2026-10-01
 

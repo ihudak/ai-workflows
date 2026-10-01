@@ -127,7 +127,11 @@ the kind is frequently what decides the run's mode.
    so its absence alone proves nothing and is never a stop. Where it is absent, two positive signals
    are tested, each against the filesystem and neither by parsing a name:
    - **(a) `$SPECS_PATH` is itself the `specifications/` directory**:
-     `[ "$SPECS_PATH/../specifications" -ef "$SPECS_PATH" ]`. Its parent,
+     `[ "$SPECS_PATH/../specifications" -ef "$SPECS_PATH" ]`, where `$SPECS_PATH` is not itself a
+     git work tree's top level. Where `git -C "$SPECS_PATH" rev-parse --show-prefix` succeeds, it
+     must print a non-empty prefix. A specs repository cloned into a directory that happens to be
+     named `specifications` is a repository root, not a directory inside one, and has no
+     `specifications/` of its own until something is written into it. Its parent,
      `$(cd -- "$SPECS_PATH/.." && pwd -P)`, is named as the value to set only where it is a git
      work tree's top level, i.e. `git -C "<parent>" rev-parse --show-toplevel` succeeds and prints
      a path that is `-ef` the parent. A `specifications/` directory mounted on its own under that
@@ -150,6 +154,9 @@ the kind is frequently what decides the run's mode.
    override would leave the next run, and every command that resolves no key, pointed at the same
    place. A command that runs `specs-preflight` ahead of resolution (`/idea`) would also already
    have run it against the wrong path. Neither signal holding → step 1, exactly as before.
+   `workflows-core:specs-repo-git` §3.1 tests these same two signals at run start, under the same
+   precondition, and reports them in a one-line notice that never stops the run. That notice is how
+   a run that resolves no key learns the cause.
 1. **Glob `specifications/**/*-<KEY>-*`, bounded at three levels below `specifications/`.** Do not
    narrow the glob by `<KIND>`: the folder **prefix** and the asserted **`kind:`** are allowed to
    differ, and on the BRD route they routinely do — `/brd-split` creates a slice as a `PRD-` folder
