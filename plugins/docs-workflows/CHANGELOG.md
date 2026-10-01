@@ -13,6 +13,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 - **Every command names `specs_git: misrooted` beside `specs_git: blocked`**, at its preflight and at its terminal `commit-artifacts` step (#70). `/document`'s drafts and `/release-notes`' draft are named as written and not committed under either flag, and `/docs-init`, `/docs-audit`, `/docs-brand` and direct `/document` say their documentation-branch entries stay in the run's output under the misrooted flag.
 - **`/release-notes` and keyed `/document` gain `misrooted` in their status lists as a stop** (#70). `/release-notes` Phase 6 never reads it as *neither present*.
+- **`/docs-audit` read the specs tree at its ref with a bare `<ref>:<path>`** (#70), which git resolves from the repository's top level. In a specs tree inside a larger repository, where the preflight's notice lets the run go on, `docs-auditor` found no `decision` or `release` path and `docs-audit-reviewer` reported every one missing. Both now write `<ref>:./<path>`, as `workflows-core:phase-handoff` §3.2 does.
 - **The preflight step said it was "Prompt-free and silent when the specs repo is clean and on its default branch"**, which a misconfigured `$SPECS_PATH` now falsifies (#70). Every such sentence takes `specs-repo-git` §1 rule 7's wording instead: silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. This applies to `/document`, `/release-notes`, `/docs-init`, `/docs-brand` and `/docs-audit`.
 
 ### Fixed — documentation
