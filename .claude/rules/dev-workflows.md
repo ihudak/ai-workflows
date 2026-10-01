@@ -15,7 +15,7 @@ Three extractions took content out of `dev-workflows` and none is coming back: t
 
 ## Docs tree
 
-`dev-workflows` carries 20 pages — `docs/README.md` (the index), `getting-started.md`, `workflow.md` and `roles-and-phases.md`, 5 per-command pages under `docs/commands/`, and 11 reference pages under `docs/reference/` — with the plugin README reduced to a role-indexed pointer table.
+`dev-workflows` carries 20 pages — `docs/README.md` (the index), `getting-started.md`, `workflow.md` and `roles-and-phases.md`, 5 per-command pages under `docs/commands/`, and 11 reference pages under `docs/reference/` — with the plugin README reduced to a role-indexed pointer table. Re-derive with `find plugins/dev-workflows/docs -type f -name '*.md' | wc -l`, and the same command scoped to `plugins/dev-workflows/docs/commands` and `plugins/dev-workflows/docs/reference` for the two subtotals.
 
 ## Authorities
 
@@ -28,7 +28,7 @@ Three extractions took content out of `dev-workflows` and none is coming back: t
 The `dev-workflows` commands' lines of the family workflow map, and the caller lines of the agents `plugins/dev-workflows/agents/` ships.
 
 ```
-/implement           → [require-on-main: in-scope specification.md/design.md] → [Phase 1.6 input scale assessment] → (multi-source? → [read the resolved folder → code-scanner×N (parallel, cap 4) → §8.5 narrow round 2] → synthesis, unresolved themes named) → [risk-planner@Opus plan critique] → [code-review@Opus] → [triage: verify each finding] → review-fixer → test-writer → tests → impl-maintenance → [handoff-to-main: escalated spec/design notes, when any] → [finish-code-branch: commit + consent-gated push/PR in the code repo] → commit-artifacts
+/implement           → [require-on-main: in-scope specification.md/design.md] → [Phase 1.6 input scale assessment] → (multi-source? → [read the resolved folder → code-scanner×N (parallel, cap 4) → §8.5 narrow round 2] → synthesis, unresolved themes named) → [risk-planner@Opus plan critique] → implementation → test-writer → [code-review@Opus] → [triage: verify each finding] → review-fixer → tests → impl-maintenance → [handoff-to-main: escalated spec/design notes, when any] → [finish-code-branch: commit + consent-gated push/PR in the code repo] → commit-artifacts
 /vuln                → vuln-research → vuln-fixer (branch + fix, uncommitted) → [code-review@Opus] → [triage: verify each finding] → review-fixer → tests → [finish-code-branch: commit + push/PR, per CVE, from the base branch] → impl-maintenance → commit-artifacts
 /upgrade             → upgrade-planner → [risk-planner@Opus] → upgrade-executor → [code-review@Opus] → [triage: verify each finding] → review-fixer → tests → [finish-code-branch §2.2–§2.3: commit this component] ⟲ → [finish-code-branch: push/PR once for the batch] → impl-maintenance → commit-artifacts
 /design              → [require-on-main: specification.md] → [code-scanner×N (parallel, cap 4, STRICT gate)] → (embedded grilling, challenges spec) → [interface-designer×3 (offered on a contested interface; --design-twice forces the fan-out, no offer)] → [design-reviewer@Opus] → write design.md → [handoff-to-main: design.md] → impl-maintenance → commit-artifacts

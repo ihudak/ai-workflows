@@ -49,6 +49,8 @@ flowchart TD
     reconcile -->|slice key + the BRD route — nothing left to re-enter for| createard
     reconcile -->|slice key + the BRD route — nothing left to re-enter for| specify
     interview -.->|nothing for the customer to review, PRD-eligible — no reconciliation needed| createprd
+    interview -.->|nothing for the customer to review — no reconciliation needed| createard
+    interview -.->|nothing for the customer to review — no reconciliation needed| specify
 
     classDef prod fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
     classDef cust fill:#f3f4f6,stroke:#6b7280,color:#1f2937

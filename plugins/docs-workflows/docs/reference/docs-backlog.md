@@ -41,7 +41,7 @@ stateDiagram-v2
   verified --> published: "the page ships"
   published --> stale: "the code moved under it"
   stale --> drafted: "re-queued"
-  missing --> published: "/docs-audit --refresh finds a page carrying this unit id"
+  missing --> published: "/docs-audit --refresh finds a page carrying this unit id and no unresolved claim markers"
 ```
 
 **Three of those seven transitions have a command behind them today, and it is `/docs-audit` every time.** The initial run mints units as `missing`; a `--refresh` run that finds a page already carrying the id of a unit still `missing` moves that unit to `published` or to `drafted`, by the test in the next paragraph. The rest are drawn for commands that make it up the road — `verified` belongs to the verification command of the next spec, `stale` to the drift command of the one after, and the writing command of the next spec also moves a unit to `drafted` when it writes the page — and **until those ship, you move a unit between those states by editing the file.** The diagram shows the model, not seven pieces of automation you have today.

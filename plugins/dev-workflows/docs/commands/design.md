@@ -20,14 +20,17 @@ All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_CO
 
 ## How it runs
 
-`/design` has 13 `## Phase` headings. The diagram below picks out the two decision nodes worth knowing before you run the command — the Opus-tier session requirement and the strict repo-mount gate. They are not the run's only stopping conditions: the `require-on-main` specification gate and an `unmerged` ARD both stop it too, and both are described under `## What it needs`.
+`/design` has 13 `## Phase` headings. The diagram below highlights the tiered model gate, its explicit override paths, and the strict repo-mount gate. They are not the run's only stopping conditions: the `require-on-main` specification gate and an `unmerged` ARD both stop it too, and both are described under `## What it needs`.
 
 ```mermaid
 flowchart TD
     p0["Phase 0 — Resolve input"] --> p1["Phase 1 — Configure"]
     p1 --> p15["Phase 1.5 — Classify + tiered model gate"]
-    p15 --> d1{"SIGNIFICANT/HIGH-RISK on a non-Opus session?"}
-    d1 -->|Yes| stop1["Hard stop — Opus-tier session required"]
+    p15 --> d1{"SIGNIFICANT/HIGH-RISK, non-Opus session, and no enforced model?"}
+    d1 -->|Yes| choice{"Pause for the operator's model decision"}
+    choice -->|"Relaunch on Opus, where available; or cancel"| stop1["Stop this run — resumable"]
+    choice -->|"Explicit override; or accept Sonnet floor when Opus unavailable"| override["Record override or degradation"]
+    override --> p2
     d1 -->|No| p2["Phase 2 — Read the spec / Phase 2.5 — Resolve applicable ARD (optional)"]
     p2 --> p3["Phase 3 — Derive repos + STRICT gate"]
     p3 --> d2{"Every confirmed repo mounted?"}
@@ -51,7 +54,7 @@ Phase 5 conducts the design as a relentless, one-question-at-a-time interview ru
 - **The merged `specification.md` itself**, gated on the specs repo's main branch. **Of this plugin's three gated inputs this is the one that genuinely stops on absence** (`workflows-core:phase-handoff` §3): this plugin's other gated inputs fall back to prior behavior when absent and report it (the `product-workflows` commands whose gated input was never optional stop too — §3.4 names them), but here no specification anywhere is a hard stop — `no specification.md exists yet for this item — run /product-workflows:specify for it and merge it to the specs repo main first.` An *unmerged* spec (an open pull request, not yet on main) also stops, naming the branch and any PR — as `/implement`'s gate does, whereas `/ready` records an unmerged gated input as a finding and carries on (§3.3 rows D/E).
 - **An optional ARD** (Phase 2.5) — `status: none` skips silently; `status: unmerged` stops, naming the branch/PR; `status: found` carries its invariants into the grill, and a necessary deviation is recorded as an `## ARD deviations` section plus an open question, never edited into the ARD itself.
 - **Every implementation repo the design must span**, mounted under `$REPOS_PATH` — Phase 3's **STRICT** gate. Unlike the companion `product-workflows` plugin's `/specify` and its soft repo gate, which proceeds without a repo it cannot resolve, `/design` hard-stops on any confirmed repo that isn't mounted: it must see all implementation repos to design against them, so the developer either remounts and re-scans, or explicitly removes the repo from scope.
-- **An Opus-tier session for `SIGNIFICANT`/`HIGH-RISK` work** — Phase 1.5's tiered model gate. Because the grill and the `design.md` authoring both run inline rather than through a delegated subagent, a risky classification on a non-Opus session is a **hard** gate: the run stops and requires relaunching on Opus (resumable from `_design-session.md`), with an explicit, logged override to proceed anyway — and where no Opus tier is reachable at all the stop stands without the relaunch offer, since there is nothing to relaunch onto. `SIMPLE`/`MODERATE` work on a non-Opus session gets only a soft advisory. See [Model routing](../reference/model-routing.md) for the full fallback chain and why this differs from the companion `product-workflows` plugin's `/specify` and `/create-prd`, which degrade to the best available model instead of stopping.
+- **The model decision for `SIGNIFICANT`/`HIGH-RISK` work** — unless `run_flags.enforced_model` is set, Phase 1.5 pauses a non-Opus session because the grill and `design.md` authoring run inline rather than through a delegated subagent. The operator can relaunch on Opus, explicitly override and continue on the current model with the choice recorded, or cancel. Where no Opus tier is available, the choice is to accept the recorded Sonnet-floor degradation or cancel, not to relaunch onto an unavailable model. `SIMPLE`/`MODERATE` work on a non-Opus session gets only a soft advisory. Model enforcement bypasses both gates; it pins dispatched agents and does not change the inline session model. See [Model routing](../reference/model-routing.md) for the fallback chain and why this differs from the companion `product-workflows` plugin's `/specify` and `/create-prd`.
 
 ## What it produces
 
@@ -63,7 +66,7 @@ Behind a consent choice, Phase 7 hands the feature folder off via `handoff-to-ma
 
 Phase 6 dispatches `design-reviewer` (Opus, frontmatter-pinned) against `design.md`, `specification.md`, the classification, and any ARD invariants. **Any unresolved open question in `design.md` is a BLOCKER by policy** — this is the gate a `/design` run actually hits, since the interview is required to resolve every open question to zero before Phase 6, pushing a genuinely undecidable one onto the spec instead. On `BLOCK`, the orchestrator/grill fixes the BLOCKER findings inline (no delegated writer) and re-reviews once; `MAJOR` / `MINOR` / `NIT` findings — those surfaced under a `PASS WITH RECOMMENDATIONS` verdict — are deferred to the final report. Cap: one fix cycle plus one re-review — an unresolved BLOCKER after that is escalated individually rather than looped on. See [Model routing](../reference/model-routing.md) for the Opus fallback chain `design-reviewer` resolves against.
 
-Ahead of the review, Phase 5.5 runs a structural pre-lint against the drafted `design.md` — advisory only, and it never blocks: it surfaces findings and inline-fixes the mechanical ones (a stray placeholder token), leaving content gaps for the grill to resolve. Phase 1.5's tiered model gate and Phase 3's STRICT repo gate stop the run, and so does every input stop under "What it needs" — a missing `$SPECS_PATH` or address, a BRD container, an absent or unmerged `specification.md`, an unmerged ARD; Phase 6 is the only gate that can send the run back for a fix cycle rather than stopping it outright.
+Ahead of the review, Phase 5.5 runs a structural pre-lint against the drafted `design.md` — advisory only, and it never blocks: it surfaces findings and inline-fixes the mechanical ones (a stray placeholder token), leaving content gaps for the grill to resolve. Phase 1.5's tiered model gate pauses for the operator's decision unless model enforcement bypasses it; the explicit override and accepted Sonnet-floor paths continue with the decision recorded. Phase 3's STRICT repo gate stops the run, as does every input stop under "What it needs" — a missing `$SPECS_PATH` or address, a BRD container, an absent or unmerged `specification.md`, an unmerged ARD. Phase 6 can send BLOCKER findings through a fix cycle rather than stopping immediately.
 
 ## Example
 

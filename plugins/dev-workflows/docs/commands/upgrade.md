@@ -29,9 +29,9 @@ flowchart TD
     d1 -->|"NOT_FOUND"| skip1["Warn and skip"]
     p2 --> d2{"SIGNIFICANT · HIGH-RISK component?"}
     d2 -->|"Yes"| rv["Opus code-review → triage → review-fixer, before tests"]
-    d2 -->|"No"| tv["Verify tests against baseline directly"]
-    rv --> done["Collect results → Post-batch maintenance"]
-    tv --> done
+    d2 -->|"No"| tv["Verify tests against baseline"]
+    rv -->|"review cleared — verify-resume"| tv
+    tv --> done["Collect results → Post-batch maintenance"]
 ```
 
 **The run is safe to execute because planning and execution are two separate agents with a user confirmation gate between them.** Phase 1 dispatches `upgrade-planner` once per requested component, in parallel — it detects the component in the repo, resolves the requested target version, and verifies compatibility with every *other* component in the repo, **before anything is written to disk**. Only once every `READY` plan is confirmed by the user does Phase 2 begin: `upgrade-executor` then applies the approved plan for one component at a time, sequentially, to avoid conflicting edits to shared dependency files. For every component classified `SIGNIFICANT`/`HIGH-RISK`, Phase 1 additionally dispatches `risk-planner` (Opus, frontmatter-pinned) before execution to plan around blast radius, migration order, and rollback. `upgrade-planner`, `upgrade-executor` (on `SIMPLE`/`MODERATE`), and `test-baseliner` run at `detection_model` — the Sonnet chain; `risk-planner` and `code-review` keep their frontmatter Opus pins.

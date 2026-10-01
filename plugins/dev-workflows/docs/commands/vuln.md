@@ -25,10 +25,11 @@ flowchart TD
     s0["Step 0 — Classify & Route"] --> s1["Step 1 — Prepare"]
     s1 --> s2["Step 2 — Research (parallel)"]
     s2 --> d1{"Finalized per-CVE class?"}
-    d1 -->|"SIMPLE · MODERATE"| s3a["Step 3 — Fix: vuln-fixer, then verify against the run's baseline"]
+    d1 -->|"SIMPLE · MODERATE"| s3a["Step 3 — Fix: vuln-fixer"]
     d1 -->|"SIGNIFICANT · HIGH-RISK"| s3b["Step 3 — Fix: vuln-fixer, Opus code-review → triage → review-fixer, before tests"]
-    s3a --> s4["Step 4 — Summarise"]
-    s3b --> s4
+    s3a --> tv["Verify against the run's baseline"]
+    s3b -->|"review cleared — verify-resume"| tv
+    tv --> s4["Step 4 — Summarise"]
 ```
 
 Two subagents are dispatched explicitly by name in Step 2 and Step 3: `vuln-research` (Step 2, one instance per valid CVE, single batched message) and `vuln-fixer` (Step 3, one CVE at a time — sequential, to avoid conflicting edits to the same dependency files). Step 3 also dispatches `test-baseliner` once for the run, before the first fix and whatever the classifications are. The `SIGNIFICANT`/`HIGH-RISK` path additionally dispatches `code-review` (Opus, frontmatter-pinned) and, on a surviving finding, `review-fixer` — the same review/triage/fixer machinery `/implement` and `/upgrade` use. Classification (Step 0) is **per CVE**, based on the size of the required repository change from the research report, not the CVE category alone — research starts under a provisional `MODERATE` routing block and the classification is finalized once the fix shape is known, before any fix is applied.

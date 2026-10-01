@@ -13,7 +13,7 @@ flowchart TD
         rnpm["/docs-workflows:release-notes (early draft)"]:::docs
     end
     subgraph DOCS["Dev — documentation & release notes"]
-        document["/docs-workflows:document"]:::docs
+        document["/docs-workflows:document (keyed)"]:::docs
         rndev["/docs-workflows:release-notes (final)"]:::docs
     end
     subgraph COLD["Cold start — a project with no docs repository"]
@@ -21,6 +21,10 @@ flowchart TD
     end
     subgraph PLAN["Plan — what the portal is still missing"]
         audit["/docs-workflows:docs-audit"]:::docs
+    end
+    subgraph MANUAL["Implement the backlog — manual today"]
+        units["Manual: select unit, write, verify and publish"]:::manual
+        direct["/docs-workflows:document (direct — optional prose help)"]:::docs
     end
     subgraph SETUP["Anytime — setup utilities"]
         profile["/docs-workflows:docs-profile"]:::docs
@@ -33,11 +37,14 @@ flowchart TD
     createprd -.->|prd.md, before any spec or design| rnpm
     createprd -->|prd.md| rndev
     document -.->|next step, not an input| rndev
-    init -->|inline| brand
+    init -.->|call: inline unless --no-brand| brand
     init -->|"source_repos[] in the profile"| audit
     createard -.->|ard.md| audit
     rndev -.->|release-notes.md| audit
-    audit -.->|a backlog a person works through — /document never reads it| document
+    audit -->|.dev-workflows/docs-backlog.yml| units
+    units -.->|action: optional prose edit| direct
+    direct -.->|edited pages — unit tracking stays manual| units
+    units -.->|action: periodic --refresh| audit
     init -->|.dev-workflows/docs-profile.yml| docsserve
     profile -.->|.dev-workflows/docs-profile.yml| document
     profile -.->|.dev-workflows/docs-profile.yml| audit
@@ -47,11 +54,14 @@ flowchart TD
     classDef prod fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
     classDef dev fill:#dcfce7,stroke:#15803d,color:#14532d
     classDef docs fill:#fef3c7,stroke:#b45309,color:#78350f
+    classDef manual fill:#f3f4f6,stroke:#6b7280,color:#1f2937,stroke-dasharray:5 5
 ```
 
 Three nodes are drawn for continuity and are not this plugin's commands: `/dev-workflows:implement` ships in the companion `dev-workflows` plugin, and `/product-workflows:create-prd` and `/product-workflows:create-ard` in the companion `product-workflows` plugin, and each is documented there.
 
-**`/release-notes` is drawn twice** because it runs at two moments: an early draft from `prd.md`, before any specification or design, and a final note once the Epics are implemented. It reads nothing `/document` writes — its inputs are `prd.md`, the Epic folder an Epic address names, its own earlier notes, and `implementation.md` where diff grounding is on — so the edge between the two documentation commands is the order `/document` suggests, not a handover. The same holds for `/docs-audit`'s backlog: a person works through it, and `/document` never reads it.
+**`/release-notes` is drawn twice** because it runs at two moments: an early draft from `prd.md`, before any specification or design, and a final note once the Epics are implemented. It reads nothing `/document` writes — its inputs are `prd.md`, the Epic folder an Epic address names, its own earlier notes, and `implementation.md` where diff grounding is on — so the edge between the two documentation commands is the order `/document` suggests, not a handover.
+
+**The gray backlog step is manual, not an installed command.** Follow [The documentation route](docs-workflow.md) to select an actionable unit, write its page, maintain the page's `unit:` and the backlog's `page_path` / `status`, verify its claims and publish it. `/document` direct mode can help with a described edit, but neither mode reads the backlog or manages those fields. `/docs-write` is planned, not shipped. The return edge to `/docs-audit --refresh` is a periodic coverage check, not a substitute for verifying the page.
 
 **One command name here collides with a Claude Code built-in of the same name: `/release-notes`.** Typing the bare form reaches Claude Code's own command instead of this one, so use the qualified `/docs-workflows:release-notes`. `/document`, `/docs-init`, `/docs-audit`, `/docs-profile`, `/docs-brand`, and `/docs-serve` are not known to collide today, so the rest work either way, and the diagram above spells out the qualified form throughout because that form always works.
 

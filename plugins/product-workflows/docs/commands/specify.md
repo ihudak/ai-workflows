@@ -20,7 +20,7 @@ Key distinction from [`/epics`](epics.md): `/epics` *splits* a PRD into Epic dra
 
 - **A PRD with exactly 1 Epic** — no picker; that Epic auto-resolves as the focus, with a one-line notice.
 - **A PRD with ≥2 Epics** — Phase 2 renders a progress-aware picker: one row per child Epic (marked ○ not started / ◐ in progress / ● done), plus an explicit **"Author one broad PRD-level spec instead"** choice.
-- **A PRD with 0 Epics** — offered `choices: ["Split into Epics first with /product-workflows:epics (Recommended)", "Author one broad PRD-level spec now", "Cancel"]`. `/epics` writes the Epic folders into this PRD folder, where `/specify` sees them immediately.
+- **A PRD with 0 Epics and an authored `prd.md`** — offered `choices: ["Split into Epics first with /product-workflows:epics (Recommended)", "Author one broad PRD-level spec now", "Cancel"]`. Choosing the split stops `/specify` and points at `/epics`; it does not continue authoring a specification. Re-run `/specify` after the Epics exist. Without an authored PRD, the first option instead names the applicable PRD-authoring or BRD-allocation prerequisite, or is absent when none can be offered; the broad-spec and Cancel choices remain available.
 
 **There is no fourth case.** An Epic always has a PRD above it — [`/epics`](epics.md) is the only command that creates an `EPIC-` folder, and it writes every one of them under a PRD folder — so a top-level `EPIC-` folder with no PRD above it is no longer a shape `/specify` resolves. A per-Epic feature folder that does not exist is a stop (`SPECIFY_EPIC_NOT_FOUND`) naming `/product-workflows:epics <PRD>`, never a directory this command creates.
 
@@ -35,10 +35,16 @@ flowchart TD
     p0["Phase 0 — Resolve input"] --> p1["Phase 1 — Configure"]
     p1 --> p15["Phase 1.5 — Classify"]
     p15 --> p2["Phase 2 — Read the resolved folder"]
-    p2 --> d1{"Epic count for this PRD? (Phase 2 Step A)"}
-    d1 -- "exactly 1 child Epic → auto-resolved" --> p25["Phase 2.5 — Resolve applicable ARD (optional)"]
+    p2 --> scope{"Resolved scope?"}
+    scope -->|Epic — already selected| p25["Phase 2.5 — Resolve applicable ARD (optional)"]
+    scope -->|PRD| d1{"Epic count for this PRD? (Phase 2 Step A)"}
+    d1 -- "exactly 1 child Epic → auto-resolved" --> p25
     d1 -- "≥2 child Epics → pick one, or author one broad PRD-level spec" --> p25
-    d1 -- "0 child Epics → split via /epics, or author one broad PRD-level spec" --> p25
+    d1 -->|"0 child Epics"| noepics{"Broad spec or prerequisite first?"}
+    noepics -->|"Author one broad PRD-level spec"| p25
+    noepics -->|"Split first — authored PRD exists"| split["Stop; run /product-workflows:epics, then re-run /specify"]
+    noepics -->|"No authored PRD — prerequisite offered"| prerequisite["Stop; follow the applicable PRD / allocation prerequisite"]
+    noepics -->|Cancel| cancel["Stop this run"]
     p25 --> p3["Phase 3 — Derive repos + soft gate"]
     p3 --> p4["Phase 4 — Light code scan"]
     p4 --> p5["Phase 5 — Author via grill"]
