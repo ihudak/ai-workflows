@@ -409,9 +409,9 @@ record does not treat it as one:
    trains its reader to skim the list that also carries the real ones.
 
 **Verification is unchanged and is not an exception.** `grounding-verifier` re-derives a baseline
-finding by re-running `baseline-integrity` against the commit it was handed, which its own Process
-step 1 already does for every finding that rests on code — so the re-derivation *is* that re-run,
-and the outcome it returns is a real outcome, not a courtesy. Its `own_evidence` for such a finding
+finding by re-running `baseline-integrity` against the commit it was handed, which its blind
+step does first for every batch that rests on code — so the re-derivation *is* that re-run,
+and the outcome its comparison returns is a real outcome, not a courtesy. Its `own_evidence` for such a finding
 carries the same command output the finding does, in place of the `path`/`lines` shape a claim
 finding uses. A baseline finding with no outcome blocks `/brd-split` exactly like any other (§8);
 none of this section excuses it from the gate.
@@ -789,6 +789,8 @@ answers the claim. Instead, `grounding-verifier` independently re-derives the cl
 source the finding rests on**, starting from the requirement premise — a `[BR#n]` on the BRD route,
 an `[AC#n]`/`[FR#n]`/`[US#n]` on the idea route — rather than from the finding's evidence, and
 returns one of four outcomes, each with its own evidence.
+
+**Independence is structural, not a discipline the verifier keeps.** The step that re-derives is handed the requirement premise and the source the finding rests on, and nothing of the finding's answer — not its `verdict`, its `evidence`, its `control`, or a class-4 `[DG#n]`'s `cites`. An agent cannot un-read text in its own context, so a re-derivation whose input carried the answer is anchored to it however carefully it was told not to look. Verification is therefore two steps, each its own dispatch: a blind re-derivation, which refuses an input carrying any of those fields, then a comparison, which is handed the original beside the blind result, runs the original's control, and decides the outcome without revising the blind result. `product-workflows:prd-ground`'s *Verify* phase dispatches both; `product-workflows:grounding-verifier` owns each step's inputs.
 
 **Which source that is follows from the finding, not from the verifier's convenience.** Which
 finding rests on what, and which anchor inputs are therefore required of a caller, is the table in
