@@ -22,7 +22,7 @@ Write the flag before or after the note, never inside it: a leading run of flag 
 
 - **The note itself** — friction plus a suggested improvement. The command lightly tidies wording but never invents content you didn't say.
 - **Confirmed metadata**, resolved in one grouped prompt: `command` (inferred from recent context, or `n/a`), `category` (a controlled, reuse-first vocabulary), and `impact` (`blocker | friction | polish`).
-- **`$SPECS_PATH`** — the specs-preflight step at Phase 0 settles the branch before anything is written; it is silent when the repo is already clean and on its default branch and `$SPECS_PATH` names the repository's root rather than a directory inside it.
+- **`$SPECS_PATH`** — the specs-preflight step at Phase 0 settles the branch before anything is written; it is silent when the repo is already clean and on its default branch and `$SPECS_PATH` names the directory that holds `specifications/` rather than a directory inside the tree.
 
 ## What it produces
 

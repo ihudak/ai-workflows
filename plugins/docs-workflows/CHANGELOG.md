@@ -16,7 +16,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed — documentation
 
-- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals `/document` in keyed mode and `/release-notes` test on either address form, the `SPECS_PATH_INSIDE_TREE` stop that now comes before a not-found one, the one-line notice that direct-mode `/document`, `/docs-init`, `/docs-brand` and `/docs-audit` get instead, and the one unsupported layout. The `/release-notes` page lists the new stop among the run's refusals. `docs/getting-started.md` says to set the variable to the repository's root.
+- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals `/document` in keyed mode and `/release-notes` test on either address form, the `SPECS_PATH_INSIDE_TREE` stop that now comes before a not-found one, the one-line notice that direct-mode `/document`, `/docs-init`, `/docs-brand` and `/docs-audit` get instead, the detection of a tree an earlier run already damaged, and the one unsupported layout. The `/release-notes` page lists the new stop among the run's refusals. `docs/getting-started.md` says to set the variable to the directory that holds `specifications/`, which is a repository root except in a monorepo. `/docs-brand` and direct-mode `/document` no longer call `$SPECS_PATH`'s top level "the specs-repo root".
 
 ## [1.4.3] — 2026-10-01
 

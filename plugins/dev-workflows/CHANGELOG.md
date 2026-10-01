@@ -16,7 +16,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed — documentation
 
-- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals `/design`, `/ready`, `/implement` and `/vuln` test on either address form, the `SPECS_PATH_INSIDE_TREE` stop, the one-line notice `/upgrade` and other runs that resolve no address get instead, and the one unsupported layout. `docs/getting-started.md` says to set the variable to the repository's root.
+- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals `/design`, `/ready`, `/implement` and `/vuln` test on either address form, the `SPECS_PATH_INSIDE_TREE` stop, the one-line notice `/upgrade` and other runs that resolve no address get instead, the detection of a tree an earlier run already damaged, and the one unsupported layout. `docs/getting-started.md` says to set the variable to the directory that holds `specifications/`, which is a repository root except in a monorepo. `docs/reference/session-feedback.md` places an unfiled entry at the top of `$SPECS_PATH`.
 
 ## [4.4.1] — 2026-10-01
 

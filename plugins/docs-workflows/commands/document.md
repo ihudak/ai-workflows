@@ -1723,7 +1723,7 @@ the report's **Command workflow improvements**, **New agents / skills**, and
 plugin **Reference docs** sections plus the **Key observations** that
 triggered them (§4 plugin-facing predicate) — never target-project
 `CLAUDE.md`/hook advice — as `origin: auto` entries, dedupes by stable `id`
-(§3), resolves the target via the §2 specs-first ladder, and writes silently. A direct-mode run with no PRD folder takes that ladder's documentation branch (design D19): `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/feedback/<date>.md`, where `<docs-repo-slug>` is `workflows-core:specs-repo-git` §2.1's name for the write target Phase 0 step 3 resolved — filed against the repository this run edited, never left unfiled at the specs-repo root.
+(§3), resolves the target via the §2 specs-first ladder, and writes silently. A direct-mode run with no PRD folder takes that ladder's documentation branch (design D19): `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/feedback/<date>.md`, where `<docs-repo-slug>` is `workflows-core:specs-repo-git` §2.1's name for the write target Phase 0 step 3 resolved — filed against the repository this run edited, never left unfiled at the top of `$SPECS_PATH`.
 List the persisted path (or "no plugin-facing signal — nothing persisted") in
 the Phase 5 `### Session learnings (Agent 4)` line. ADDITIVE — the
 impl-maintenance report still appears in the report; this step NEVER fails the

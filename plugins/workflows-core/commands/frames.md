@@ -415,7 +415,7 @@ gap** (a capability the run needed but the plugin lacked), `emit-block` (per
    resolved folder's own `kind`, which Phase 0 already read: `brd` attributes the run to
    `brd-to-prd`/`pm`, `prd` and `epic` to `prd-creation`/`pm`. A BRD-route slice is a `PRD-` folder
    asserting `brd`, so its frame set is `brd-to-prd`; an Epic folder under it asserts `epic`, and
-   is `prd-creation`. The key is always present on any path that reaches here — Phase 0's stops (`FRAMES_NEEDS_ADDRESS`, `FRAMES_EXTRA_ARGUMENT`, `FRAMES_NO_FOLDER`, `FRAMES_NO_CARRIER`, `FRAMES_NOT_A_SPEC_FOLDER`, an ambiguous key, an unset `SPECS_PATH`) all stop Phase 0 before it has a spec folder whose kind and key it can index — `FRAMES_NO_CARRIER` among them, taken on a folder asserting neither — and this phase runs after them, which is why its scope is stated as *every path that reached Phase 1* rather than every path. This
+   is `prd-creation`. The key is always present on any path that reaches here — Phase 0's stops (`FRAMES_NEEDS_ADDRESS`, `FRAMES_EXTRA_ARGUMENT`, `FRAMES_NO_FOLDER`, `FRAMES_NO_CARRIER`, `FRAMES_NOT_A_SPEC_FOLDER`, an ambiguous key, an unset `SPECS_PATH`, a `SPECS_PATH` set inside the specs tree (`SPECS_PATH_INSIDE_TREE`)) all stop Phase 0 before it has a spec folder whose kind and key it can index — `FRAMES_NO_CARRIER` among them, taken on a folder asserting neither — and this phase runs after them, which is why its scope is stated as *every path that reached Phase 1* rather than every path. This
    command refuses to run without a resolved folder — so the entry lands on the keyed tier and never
    on the pending ladder (§9), which **advances the chained checkpoint** (§3); surface the persisted
    path (or the report-only notice).
