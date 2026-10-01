@@ -623,6 +623,11 @@ the manual path:
    route-sequencing gate, which must stay first so a BRD whose inventory never merged is refused
    before anything else happens at all, and an index build is a durable, run-independent artifact
    that a later stop does not waste.
+0a. **State the cost before asking for repositories**, on every run that grounds code (never under `--no-code`, which resolves no repository to ground). N is Phase 0 step 8's claim count; M is the number of `[CG#n]` already on file in `grounding/code-grounding.md` and not reading `SUPERSEDED` — 0 on a first run. M is the most Phase 7 re-verifies: a repository that has moved is re-ground under `--rebaseline` instead, and its findings are superseded rather than re-verified. Print, in place of the bracketed values:
+
+    > This requirement set has N claims. Each repository you name is ground against all N, and every finding is verified on Opus in two steps, in batches of up to 25: K repositories → K×N findings and about K×⌈N/25⌉×2 verification dispatches. A re-run re-verifies every finding already on file for a repository that has not moved (up to M today).
+
+    Print it with K left as the symbol — the operator has not named the repositories yet — and with N and M filled in. **It informs and gates nothing**: Phase 5 still sends every claim to every repository named, and nothing here narrows that. It is here because adding a repository multiplies both fan-outs by the full claim count, and the cost was otherwise visible only at Phase 7, after both had been paid for.
 1. Prompt for the repos in scope for this BRD's claims — a free-text list of short names, one per
    line or space-separated.
 2. **Build a slug→clone map**, exactly as `/epics` Phase 4 does: for each top-level directory
@@ -1075,7 +1080,7 @@ be decided (`/product-workflows:brd-interview`, *A decision the re-grounding mov
 **Batches.** Cut the set into batches before dispatching anything:
 
 - A `[CG#n]` batches with the other `[CG#n]` pinned to the same repository. A `[DG#n]` batches with the other `[DG#n]` of the same frame set — the one Phase 5 recorded for it, or for a Phase 6 successor the frame set Phase 8's placement puts its superseded block in. A class-4 `[DG#n]` carries, beside its frame set, the repository and commit of the `[CG#n]` it cites, so one frame-set batch may hold several repository pairs.
-- Within a group, put a repository's baseline `[CG#n]` first, then order the `[CG#n]` by the requirement id each one's `claim` names, and the `[DG#n]` by finding id. Cut each group into batches of at most **25** findings, the baseline counting toward its batch. **The cap is stated here and nowhere else.**
+- Within a group, put a repository's baseline `[CG#n]` first, then order the `[CG#n]` by the requirement id each one's `claim` names, and the `[DG#n]` by finding id. Cut each group into batches of at most **25** findings, the baseline counting toward its batch. **The cap is defined here; Phase 1's cost statement quotes it and must change with it.**
 - **Nothing about a finding's answer decides its batch** — not its `verdict`, `evidence`, `control` or `cites`. A batch made of "the `NOT-PROVABLE` ones" would tell the blind step what the original concluded.
 
 **Two dispatches per batch, in this order: `mode: derive`, then `mode: compare`** (`workflows-core:grounding-format` §8). At most four dispatches per Agent message — wait for a message's dispatches before sending the next — and a batch's compare dispatch may go in any message after its derive dispatch has returned. Both are pinned to the Opus chain (`review_model`, frontmatter-pinned, no override unless §10 enforces a model):
@@ -1901,7 +1906,9 @@ with its successor's id and both horizons — or, for a design finding no frame 
 successor and the horizon it would have written — and every `--no-code` horizon it did not move;
 finding counts by verdict for `[CG#n]` and `[DG#n]`
 separately, and the verifier
-tally (`agree` / `extend` / `contradict` / `unprovable`) with every `contradict` named by id and by
+tally (`agree` / `extend` / `contradict` / `unprovable`) — with the number of batches, the number of
+`mode: derive` and `mode: compare` dispatches, and every retry by finding id and the step retried,
+or "no retries" — with every `contradict` named by id and by
 what it wrote — an own-run finding's in-place rewrite; an on-file finding's supersession with its
 successor's id; an on-file finding superseded with no successor because the verifier's own verdict
 was `SUPERSEDED`, the one `contradict` no block records; and an on-file finding left incomplete — a
@@ -1909,6 +1916,8 @@ was `SUPERSEDED`, the one `contradict` no block records; and an on-file finding 
 after its retry (Phase 7, *Retry once*) — which wrote nothing and leaves that finding **not
 verified by this run** — say so of it by id, beside the `outcome` an earlier run left on it (on an
 own-run finding the same return stops the run instead, with `PRD_GROUND_VERIFY_INCOMPLETE`) —
+every `agree`/`extend`/`unprovable` that proceeded after its retry with the blind verdict's own
+control still missing, by id —
 **and, separately, every outcome Phase 7 normalised**, each named by finding id with the outcome
 as returned, both verdicts, and which of the two routes forced it (a differing `own_verdict`, or a
 `control_outcome` of `missing`, or of `failed` on a finding whose verdict rests on the absence), or an explicit "none" where the verifier and the findings agreed
