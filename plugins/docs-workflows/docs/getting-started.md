@@ -38,7 +38,7 @@ This plugin reads four environment variables. None is required for a direct-mode
 
 ### `SPECS_PATH`
 
-The shared, team-visible repository holding the Product Requirements Document folder a keyed run reads, and the one place a run commits its own session bookkeeping. Set it to your specs clone. Without it, neither `/document` nor `/release-notes` has anything to resolve a key against, and each stops on a key address, naming the variable and offering to set it or cancel; given an `@<path>` address instead, `/release-notes` runs on and falls back to attributing its cost to the PM's early phase.
+The shared, team-visible repository holding the Product Requirements Document folder a keyed run reads, and the one place a run commits its own session bookkeeping. Set it to your specs clone's root, the directory that holds `specifications/`, never to `specifications/` itself: a keyed run against the latter stops and names the value to set instead ([Environment](reference/environment.md)). Without it, neither `/document` nor `/release-notes` has anything to resolve a key against, and each stops on a key address, naming the variable and offering to set it or cancel; given an `@<path>` address instead, `/release-notes` runs on and falls back to attributing its cost to the PM's early phase.
 
 ### `REPOS_PATH`
 

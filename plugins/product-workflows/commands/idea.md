@@ -43,7 +43,7 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
    or take a folder as an idea-route one that is not.
    Resolve the folder here with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`,
    §3): `found` is the folder this run writes into — **where it is an idea-route PRD folder**, below
-   — and `ambiguous` is §3's hard stop. **On `absent` nothing is created here**, because Phase 0
+   — and `ambiguous` and `misrooted` are §3's two hard stops. **On `absent` nothing is created here**, because Phase 0
    holds no slug to name a folder with: the folder is created by Phase 4's first write, as
    `PRD-<KEY>-<candidate_slug>/` (`workflows-core:addressing` §2), `candidate_slug` being the one
    Phase 2's digest returns. Creating it with `idea.md`, which carries its `kind` and `key`, is also

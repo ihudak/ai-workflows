@@ -28,7 +28,7 @@ It does ship six commands of its own, and one of them is worth running first —
 
 ### `SPECS_PATH`
 
-The **shared, team-visible store for the AI-authored documents** and for every run's bookkeeping — cost entries, session feedback, follow-ups. It has no default: nothing is guessed, and with it unset those entries degrade to report-only rather than being written somewhere else. `/frames` is the exception among this plugin's commands — *"every path this command reads or writes is under it"* — so it stops in Phase 0 rather than degrading.
+The **shared, team-visible store for the AI-authored documents** and for every run's bookkeeping — cost entries, session feedback, follow-ups. It has no default: nothing is guessed, and with it unset those entries degrade to report-only rather than being written somewhere else. `/frames` is the exception among this plugin's commands — *"every path this command reads or writes is under it"* — so it stops in Phase 0 rather than degrading. Set it to the repository's root, the directory that holds `specifications/`, never to `specifications/` itself: a run that resolves a key against the latter stops and names the value to set instead ([Environment](reference/environment.md)).
 
 ### `REPOS_PATH`
 

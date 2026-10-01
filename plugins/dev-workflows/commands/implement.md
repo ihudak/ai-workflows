@@ -35,8 +35,9 @@ That is the whole mode test, and it unifies the input grammar with `/document`. 
 *Required path environment variable unset*) — a key is found only by searching the specs tree, so
 with no tree the `absent` stop below would name the wrong cause and offer a re-enter that cannot
 succeed. An `@<path>` address needs no specs tree: it is resolved without the variable and runs on,
-its record written into the folder it names, and a direct run is unaffected. `ambiguous` is §3's
-hard stop, naming every match. **`status: absent` is a stop, never a fall-through to direct mode**
+its record written into the folder it names, and a direct run is unaffected. `ambiguous` and
+`misrooted` are §3's two hard stops, the first naming every match and the second a `$SPECS_PATH`
+set inside the specs tree. **`status: absent` is a stop, never a fall-through to direct mode**
 — the `key dir not found` rule in `workflows-core:escalation-rules` (`["Re-enter key", "Cancel"]`),
 naming what creates a folder this command reads: a `PRD-` folder comes from
 `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from

@@ -118,6 +118,38 @@ the kind is frequently what decides the run's mode.
 
 ### Entry point: `resolve-key <KEY> [<KIND>]`
 
+0. **Refuse a `$SPECS_PATH` that points inside the tree, before anything is globbed.** Every folder
+   this file addresses lives under `$SPECS_PATH/specifications/`. A `$SPECS_PATH` set to
+   `specifications/` itself, or to a mount of it, therefore resolves every key `absent`, and a caller
+   that creates the folder it did not find would create `<that path>/specifications/<KIND>-<KEY>-<slug>/`
+   inside the tree. **This step tests only where `$SPECS_PATH` is set and `$SPECS_PATH/specifications/`
+   is not a directory.** A specs repository nothing has been written into yet has no `specifications/`,
+   so its absence alone proves nothing and is never a stop. Where it is absent, two positive signals
+   are tested, each against the filesystem and neither by parsing a name:
+   - **(a) `$SPECS_PATH` is itself the `specifications/` directory**:
+     `[ "$SPECS_PATH/../specifications" -ef "$SPECS_PATH" ]`. Its parent,
+     `$(cd -- "$SPECS_PATH/.." && pwd -P)`, is named as the value to set only where it is a git
+     work tree's top level, i.e. `git -C "<parent>" rev-parse --show-toplevel` succeeds and prints
+     a path that is `-ef` the parent. A `specifications/` directory mounted on its own under that
+     name has a parent that is not the repository, and naming it would only replace one wrong path
+     with another.
+   - **(b) `$SPECS_PATH` holds a specs folder directly**: an immediate subdirectory whose §4 carrier
+     asserts a `key:` and a folder kind. A repository root holds none, because every folder lives
+     under `specifications/`. This is the signal for a `specifications/` directory mounted under
+     another name, whose parent (a) cannot see, and for a `$SPECS_PATH` pointing into a folder below
+     it. Stop testing at the first subdirectory that qualifies.
+
+   **Either signal is a hard stop, `status: misrooted`**, issued here as `ambiguous`'s is, so no
+   caller proceeds past it and none needs a branch of its own for it. The stop names the variable,
+   its value, the signal and, where (a) found one, the value to set:
+
+   `SPECS_PATH_INSIDE_TREE: SPECS_PATH is <value>, which <is itself a specifications/ directory | holds the specs folder <subdirectory> directly> — every folder lives under $SPECS_PATH/specifications/, so <KEY> cannot resolve here and nothing was created. Set SPECS_PATH to <the parent named by (a) | the specs repository's root, the directory that holds specifications/> where it is set, and re-run.`
+
+   **It offers no "enter the path" option**, unlike *Required path environment variable unset*
+   (`workflows-core:escalation-rules`). The wrong value lives in the environment, so a per-run
+   override would leave the next run, and every command that resolves no key, pointed at the same
+   place. A command that runs `specs-preflight` ahead of resolution (`/idea`) would also already
+   have run it against the wrong path. Neither signal holding → step 1, exactly as before.
 1. **Glob `specifications/**/*-<KEY>-*`, bounded at three levels below `specifications/`.** Do not
    narrow the glob by `<KIND>`: the folder **prefix** and the asserted **`kind:`** are allowed to
    differ, and on the BRD route they routinely do — `/brd-split` creates a slice as a `PRD-` folder
@@ -150,7 +182,7 @@ the kind is frequently what decides the run's mode.
 ### The resolution record
 
 ```yaml
-status:  found | absent | ambiguous | invalid
+status:  found | absent | ambiguous | invalid | misrooted   # misrooted: resolve-key step 0's hard stop
 path:    <absolute path of the resolved folder>   # found only
 kind:    brd | prd | epic                         # found only; empty on a folder with no carrier (§5)
 key:     <the folder's asserted key>              # found only; read, never parsed (§4) — on a folder with no carrier, the key searched for (§5), or empty on a path to one (§3 step 1)

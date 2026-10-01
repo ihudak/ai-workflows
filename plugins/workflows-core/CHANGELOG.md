@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.8.5] — 2026-10-01
+
+### Fixed
+
+- **A `$SPECS_PATH` pointing at `specifications/` itself, or at a mount of it, resolved every key `absent`, and a command that creates the folder it did not find then created `specifications/specifications/<KIND>-<KEY>-<slug>/`** (#70, behaviour). `addressing.md` §3's `resolve-key` gains a step 0. Where `$SPECS_PATH/specifications/` is not a directory, it tests two signals on the filesystem: `$SPECS_PATH` is itself the `specifications/` directory (`[ "$SPECS_PATH/../specifications" -ef "$SPECS_PATH" ]`), or an immediate subdirectory's §4 carrier asserts a `key:` and a folder kind. Either one is a hard stop, `status: misrooted`, printed as `SPECS_PATH_INSIDE_TREE`. It names the variable, its value and the signal, plus the parent to set where that parent is a git work tree's top level. A specs repository nothing has been written into yet has no `specifications/` and matches neither signal, so it resolves as before. The stop offers no "enter the path" option, since the wrong value lives in the environment and a per-run override would leave the next run pointed at the same place.
+- **`specs-preflight`'s notice for a `$SPECS_PATH` that is not a git repository now names the cause when the path is a `specifications/` directory mounted on its own** (#70). `rev-parse` fails there because the git directory sits above the mount point. Where step 0's signals hold, the notice says which one and what to set, so a command that resolves no key learns the cause too.
+
+### Fixed — documentation
+
+- `docs/reference/environment.md` gains *When it points inside the specs tree*. Its *unreadable or unwritable* paragraph no longer says every such state is reported: a read-only specs mount degrades silently, and only a path that is not a directory or not a repository is reported. `docs/getting-started.md` says to set `SPECS_PATH` to the repository's root.
+
 ## [1.8.4] — 2026-10-01
 
 ### Fixed — the repository's gates (not shipped in any plugin)
