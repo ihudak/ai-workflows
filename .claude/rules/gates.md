@@ -120,7 +120,7 @@ Every `choices:` option in the `/brd-*` and `/prd-*` families — the families c
 
 ## `scripts/validate-catalog.py`
 
-Besides the catalog, it gates the instruction tiers. **Sizes**, as Python `len` of the decoded file: `CLAUDE.md` fails above 40,000 characters and warns above 36,000; a `.claude/rules/*.md` file warns above 20,000 and is then split with narrower `paths:` globs, or its evidence moved to the rationale. **Paths**: every rules file must carry frontmatter with a top-level `paths:` block list (without one it loads every session), and every glob must match at least one *file* outside `.git`, worktree copies, `node_modules` and `.superpowers`. Globs are matched by pathlib, which has no brace expansion, so a `{a,b}` glob is reported dead: write each alternative as its own entry.
+Besides the catalog, it gates the instruction tiers. **Sizes**, as Python `len` of the decoded file: `CLAUDE.md` fails above 40,000 characters and warns above 36,000; a `.claude/rules/*.md` file warns above 20,000 and is then split with narrower `paths:` globs, or its evidence moved to the rationale. **Paths**: every rules file must carry frontmatter with a top-level `paths:` block list (without one it loads every session), and every glob must match at least one *file* outside `.git`, worktrees, fixtures, `node_modules`, `.superpowers` and `.claude/rules/`. Globs are matched by pathlib, which has no brace expansion, so a `{a,b}` glob is reported dead: write each alternative as its own entry.
 
 ## Mermaid gate (`scripts/mermaid/check-mermaid.mjs`)
 

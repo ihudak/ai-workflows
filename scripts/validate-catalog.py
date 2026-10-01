@@ -48,8 +48,9 @@ caught by applying the length check to both files.
 It also enforces the repo-root instruction budget: ``CLAUDE.md`` fails above 40,000
 characters and warns above 36,000, and each ``.claude/rules/*.md`` warns above 20,000.
 And it checks that every ``.claude/rules/*.md`` declares a non-empty ``paths:`` frontmatter
-list whose every glob matches at least one file, so a rule that would load into every
-session, or a glob left dead by a rename, fails the build instead of surviving unnoticed.
+list whose every glob matches at least one file outside ``.claude/rules/`` itself, so a rule
+that would load into every session, a glob left dead by a rename, or a glob that matches only
+its own rules file fails the build instead of surviving unnoticed.
 
 Usage:
     python3 scripts/validate-catalog.py [REPO_ROOT ...]
@@ -211,18 +212,22 @@ def check_instruction_sizes(root: Path) -> tuple[int, int]:
 
 def check_rules_paths(root: Path) -> tuple[int, int]:
     """Return (errors, warnings): every .claude/rules/*.md must declare a non-empty `paths:`
-    list, and every glob in it must match at least one file under root.
+    list, and every glob in it must match at least one file under root, outside
+    .claude/rules/ itself.
 
     Parser limits, stated so a reader does not mistake them for Claude Code's: `paths:` must
     be a top-level (unindented) key of the frontmatter, other top-level keys may sit before
     or after it, and its value must be a block list of `- ` items -- an inline `[a, b]` list
     or a bare string is not read. Globs go through pathlib, which has no brace expansion, so
     a `{a,b}` glob matches nothing and is reported dead; Claude Code's support for braces is
-    unverified, so write each alternative as its own entry."""
+    unverified, so write each alternative as its own entry. A match under .claude/rules/ is
+    not counted, so a glob whose every match is a rules file is reported -- including one
+    written on purpose to load a rule while rules files are edited; none exists today."""
     errors = warnings = 0
     rules_dir = root / ".claude" / "rules"
     if not rules_dir.is_dir():
         return errors, warnings
+    rules_parts = (".claude", "rules")
 
     no_paths = (
         "no paths: -- without one, Claude Code loads this file into every session, "
@@ -306,8 +311,23 @@ def check_rules_paths(root: Path) -> tuple[int, int]:
                     for prefix in SKIP_PREFIXES
                 )
             ]
+            # A match under .claude/rules/ does not count either. A rules file is a real
+            # file, so a glob naming its own path -- or two rules naming only each other --
+            # passed as live, yet such a rule loads only when a rules file is itself opened,
+            # never during the work it governs.
+            outside = [p for p in matches if p.relative_to(root).parts[:2] != rules_parts]
             if not matches:
                 print(f"  ERROR {rel}: paths: glob {glob!r} matches no file under {root}")
+                errors += 1
+            elif not outside:
+                inside = ", ".join(sorted(str(p.relative_to(root)) for p in matches))
+                print(
+                    f"  ERROR {rel}: paths: glob {glob!r} matches only files under "
+                    f".claude/rules/ ({inside}) -- a rule loads when Claude reads a file its "
+                    f"paths: match, and a rules file is read only when it is itself opened, "
+                    f"never during the work the rule governs; point the glob at the files the "
+                    f"rule is about"
+                )
                 errors += 1
 
     return errors, warnings
@@ -611,6 +631,35 @@ def _selftest() -> int:
     case("a paths: key after another frontmatter key is found, and passes", True, "OK",
          rules={"keyed.md": '---\ndescription: an area\npaths:\n  - "plugins/fixture/**/*.json"\n'
                             'other: x\n---\n\nA rule.\n'})
+
+    # A match under .claude/rules/ does not count. A rules file is a real file, so Path.glob
+    # finds it, and a rule whose only glob names its own path counted as live -- it loads
+    # only when it is itself opened, never for the work it describes. Two rules whose globs
+    # name only each other are the same defect one step removed, and excluding the file
+    # itself alone would pass them; the whole folder is excluded for that reason.
+    case("a rules file whose only glob is its own path is rejected", False,
+         "matches only files under .claude/rules/",
+         rules={"selfref.md": '---\npaths:\n  - ".claude/rules/selfref.md"\n---\n\nA rule.\n'})
+    case("two rules files whose globs match only each other are rejected", False,
+         "a.md: paths: glob '.claude/rules/b.md' matches only files under .claude/rules/",
+         rules={"a.md": '---\npaths:\n  - ".claude/rules/b.md"\n---\n\nA rule.\n',
+                "b.md": '---\npaths:\n  - ".claude/rules/a.md"\n---\n\nA rule.\n'})
+    # The pair. One glob, `**/*.md`, which matches the rules file itself either way; the only
+    # difference is whether a real file outside the folder (CLAUDE.md) also matches. A gate
+    # that rejected any glob touching the folder fails the green case; a gate that still
+    # counted the rules file fails the red one.
+    case("a glob matching a rules file and a file outside the folder passes", True,
+         "OK", claude_md="A file outside the rules folder.\n",
+         rules={"broad.md": '---\npaths:\n  - "**/*.md"\n---\n\nA rule.\n'})
+    case("the same glob, with nothing outside the folder to match, is rejected", False,
+         "paths: glob '**/*.md' matches only files under .claude/rules/",
+         rules={"broad.md": '---\npaths:\n  - "**/*.md"\n---\n\nA rule.\n'})
+    # The rules loop mirrors find_files' SKIP_PREFIXES: a glob whose only match sits inside a
+    # worktree copy at the root is dead, though Path.glob finds the bytes there.
+    case("a paths: glob matching only a root worktree copy is rejected", False,
+         "paths: glob '.worktrees/**/*.json' matches no file",
+         duplicate_at=".worktrees/wt",
+         rules={"wt.md": '---\npaths:\n  - ".worktrees/**/*.json"\n---\n\nA rule.\n'})
 
     print("SELFTEST PASS" if rc == 0 else "SELFTEST FAIL")
     return rc
