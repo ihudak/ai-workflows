@@ -411,10 +411,11 @@ record does not treat it as one:
 **Verification is unchanged and is not an exception.** `grounding-verifier` re-derives a baseline
 finding by re-running `baseline-integrity` against the commit it was handed, which its blind
 step does first for every batch that rests on code — so the re-derivation *is* that re-run,
-and the outcome its comparison returns is a real outcome, not a courtesy. Its `own_evidence` for such a finding
-carries the same command output the finding does, in place of the `path`/`lines` shape a claim
-finding uses. A baseline finding with no outcome blocks `/brd-split` exactly like any other (§8);
-none of this section excuses it from the gate.
+and the outcome its comparison returns is a real outcome, not a courtesy.
+Its `own_evidence` for such a finding carries the same command output the finding does, in
+place of the `path`/`lines` shape a claim finding uses. A baseline finding with no outcome
+blocks `/brd-split` exactly like any other (§8); none of this section excuses it from the
+gate.
 
 ## 5. Horizon
 
