@@ -1160,20 +1160,26 @@ a class-4 `[DG#n]`'s repository pair is that of the on-file `[CG#n]` it cites, a
 that on-file record.
 
 **`provenance` is set per finding, by origin — never by which phase produced it, and never
-blanket.** `own-run` for any finding **this invocation itself produced**, regardless of which
-phase did the producing: Phase 3's baseline `[CG#n]` findings qualify exactly as Phase 5's claim
-findings do, because Phase 3 re-runs `baseline-integrity` and assigns a fresh id every invocation —
-first run or `--rebaseline` alike — never carrying a prior run's baseline finding forward
-unreproduced. `inherited` for a finding **this invocation did not reproduce** — concretely, any re-run in which
-a given repository's `HEAD` still matched its recorded pin, so Phase 3's first bullet skipped
+blanket.** `own-run` for any finding **this invocation itself produced**, regardless of which phase
+did the producing: Phase 3's baseline `[CG#n]` findings qualify exactly as Phase 5's claim findings
+do, because Phase 3 re-runs `baseline-integrity` and assigns a fresh id every invocation — first run
+or `--rebaseline` alike — never carrying a prior run's baseline finding forward unreproduced.
+`inherited` for a finding **this invocation did not reproduce** — concretely, any re-run in which a
+given repository's `HEAD` still matched its recorded pin, so Phase 3's first bullet skipped
 re-grounding every claim that repository had already answered and the pre-existing findings from an
-earlier invocation stand as they were, now being re-checked rather than regenerated. **That bullet fires on a plain
-re-run and on a `--rebaseline` pass alike** — it is keyed on the pin still matching, not on the
-flag — so a plain re-run against an unmoved repository inherits exactly as a `--rebaseline` pass
-over one does. Illustrating only the flagged case would read as though the flag were what made a
-finding `inherited`; the rule is the origin, and the flag never enters it. Phrasing the rule by origin rather than by
-phase number is deliberate: it is immune to a future renumbering the way a phase-keyed rule is not.
-`workflows-core:grounding-format` §8 defines an inherited finding as one from "another team's report, or from an earlier run of this workflow", and a finding surviving from before this invocation, unreproduced, is the second of those, regardless of how confident its write-up reads. **`provenance` is this phase's own bookkeeping, and it is never sent to the verifier**: it decides which `contradict` branch below writes — an in-place rewrite or a supersession — and the derive step, which never sees a finding's answer, searches an inherited finding exactly as hard as any other without being told which it is.
+earlier invocation stand as they were, now being re-checked rather than regenerated. **That bullet
+fires on a plain re-run and on a `--rebaseline` pass alike** — it is keyed on the pin still
+matching, not on the flag — so a plain re-run against an unmoved repository inherits exactly as a
+`--rebaseline` pass over one does. Illustrating only the flagged case would read as though the flag
+were what made a finding `inherited`; the rule is the origin, and the flag never enters it. Phrasing
+the rule by origin rather than by phase number is deliberate: it is immune to a future renumbering
+the way a phase-keyed rule is not. `workflows-core:grounding-format` §8 defines an inherited finding
+as one from "another team's report, or from an earlier run of this workflow", and a finding
+surviving from before this invocation, unreproduced, is the second of those, regardless of how
+confident its write-up reads. **`provenance` is this phase's own bookkeeping, and it is never sent
+to the verifier**: it decides which `contradict` branch below writes — an in-place rewrite or a
+supersession — and the derive step, which never sees a finding's answer, searches an inherited
+finding exactly as hard as any other without being told which it is.
 
 **Act on `status` first — an `outcome` is acted on only where a compare entry reads `status: OK`, or `status: INCOMPLETE` and carries one (*Retry once*, below).** Each return carries a **batch** `status` and, on `OK`, a `status` per finding. Every batch status other than `OK`, and a finding's `INPUT_MISSING`, is a refusal, not a verdict: no outcome was produced, and a finding carrying no outcome is not evidence and blocks `/brd-split` for as long as it stays on file (`workflows-core:grounding-format` §8). So none of them may be shrugged off and none may be written. An `INCOMPLETE` compare entry is not a refusal: it carries an outcome where only the blind verdict's own control was missing and none where there was no blind verdict to compare, and *Retry once* settles it.
 
@@ -1191,15 +1197,15 @@ phase number is deliberate: it is immune to a future renumbering the way a phase
 
 **Finding statuses:**
 
-- **`OK`** (compare) — act on `outcome`, below.
+- **`OK`** (compare), its echo matching the derive return — act on `outcome`, below.
 - **`INPUT_MISSING`** — this command's dispatch was short a field that finding's row requires (most often a `[DG#n]` sent without its `class`). Stop, quoting the field and row the agent named, and fire `emit-block` as above.
 - **`INCOMPLETE`** (compare), **no entry**, a **blank `own_evidence`**, or a compare echo that **differs** from the derive return (a difference in the value of `own_verdict`, `own_evidence` or `own_control`, never in key order or formatting) — incomplete; *Retry once*, below.
 
-**Retry once.** Re-dispatch every incomplete finding once, through the step that failed. A finding left incomplete by its derive return — missing from it, or with a blank `own_evidence` — is not sent in that batch's first compare dispatch: it goes straight to a fresh derive dispatch and then a compare dispatch. A finding its compare return marked `INCOMPLETE` gets the same, a fresh derive dispatch and then a compare dispatch; a finding missing from a compare return, or whose compare echo differed, gets a fresh compare dispatch over its existing derive entry. Retries go out as one batch per group (repository or frame set) holding that group's incomplete findings, under the cap *Batches* states. **One retry per finding per run, never more.** A finding still incomplete after its retry falls to the rules below, in this order:
+**Retry once.** Re-dispatch every incomplete finding once, through the step that failed. A finding left incomplete by its derive return — missing from it, or with a blank `own_evidence` — is not sent in that batch's first compare dispatch: it goes straight to a fresh derive dispatch and then a compare dispatch. A finding its compare return marked `INCOMPLETE` gets the same, a fresh derive dispatch and then a compare dispatch; a finding missing from a compare return, or whose compare echo differed, gets a fresh compare dispatch over its existing derive entry. Retries go out in batches cut at the cap *Batches* states, per group (repository or frame set) and per step: a retry derive dispatch carries only the findings that need a fresh derive, and a retry compare dispatch carries those that need only a fresh compare, over their existing derive entries, together with those whose fresh derive has returned — so a finding that needs only a compare is never re-derived. **One retry per finding per run, never more.** A finding still incomplete after its retry falls to the rules below, in this order:
 
 - **A compare entry that exists, whose echo matches the derive return and which carries an `outcome`** — an `INCOMPLETE` entry whose only gap is the blind verdict's own control — is acted on through the reconciliation and control normalisation below, never around them. Where the outcome is `contradict`, the *incomplete return* branches under `contradict` below apply (an own-run finding stops the run with `PRD_GROUND_VERIFY_INCOMPLETE`; an on-file one writes nothing and is reported not verified by this run). Where it is `agree`, `extend` or `unprovable`, the finding proceeds — the record keeps the original's control, which compare ran, and the `unprovable` branch keeps the finding's verdict and control unchanged, so the missing blind control never reaches the record — and the Final report notes it. A `missing` control, or a `failed` one on a verdict other than `NOT-PROVABLE`, still normalises the outcome to `contradict`, and the `contradict` branches then apply.
 - **Anything else** — a finding still missing from a return, a blank `own_evidence`, a compare entry still `INCOMPLETE` that carries no `outcome`, or a compare echo still differing — is not verified, and what it does turns on whether the finding is on file. An **own-run** finding stops the run before Phase 8's first write, and fires `emit-block` per Phase 11's capture-at-block invariant:
-  `PRD_GROUND_VERIFY_INCOMPLETE: <finding-id> could not be verified — its <derive|compare> result was <missing from the return | a blank own_evidence | an INCOMPLETE entry with no outcome | an echo differing from the derive return> on the first dispatch and on its retry. No finding was written; re-run '/product-workflows:prd-ground <KEY>' with the flags this run was given.`
+  `PRD_GROUND_VERIFY_INCOMPLETE: <finding-id> could not be verified — its first <derive|compare> result was <reason> and its retry's <derive|compare> result was <reason>, each <missing from the return | a blank own_evidence | an INCOMPLETE entry with no outcome | an echo differing from the derive return>. No finding was written; re-run '/product-workflows:prd-ground <KEY>' with the flags this run was given.`
   An **on-file** finding writes nothing, keeps every field and the `outcome` it had, and is reported **not verified by this run**, with the reason; the run continues, as in the on-file *incomplete return* branch under `contradict` below.
 
 **Nothing reaches Phase 8 unverified.** Any stop above happens before Phase 8's first write, and so
@@ -1415,7 +1421,7 @@ a file whose readers report findings as missing that are on the page. Each block
 `consumed_by` — `none` on a block this run appends, while a block already on file keeps the value it holds, since `/create-prd`, `/create-ard` and `/specify` write it later and nothing here may erase a stamp — plus `prior_verdict` on every finding reading `SUPERSEDED`, `prerequisite` on every finding reading `horizon: will-change`, `control` on every finding asserting an absence, `class`/`cites` on a
 `[DG#n]` and `commit` on everything **except** a
 `[DG#n]` of class 1, 2 or 3 — those are settled from the frame set alone and are pinned to no commit,
-per §2's applicability note) plus this run's verifier `outcome` — on every block but two kinds, each of which keeps the `outcome` it holds: one Phase 7 superseded, its `contradict` written on its successor or, where there is none, recorded in the Final report only; and an on-file one whose `contradict` was an incomplete return, owing a control and returning no `own_control`, whose block this run does not touch and whose `contradict` the Final report records as not verified by this run (Phase 7, *On-file*, both) — **and any `notes` the verifier returned** — **and nothing else.** §2.1 makes the field set closed: `own_verdict`, `own_evidence`, `own_control`, `control_outcome` and the verifier's re-derivation `commit` are return fields Phase 7 has already acted on — where a `contradict` rewrote an own-run finding or appended an on-file finding's successor, their values are already in that block under the record's own names (`verdict`, `evidence`, `control`) and the return names never appear — and a block carrying `own_verdict` beside `verdict` states two verdicts at once, leaving every downstream reader free to quote whichever half suits. That is the state `/brd-split` step 7 and `/brd-interview` step 7 now refuse, so writing it here deadlocks the route rather than merely muddying the record. Its contract calls those *"anything the caller should know before recording this outcome"*, so they are read before the outcome is written, not after — a verdict recorded without them is recorded against a caveat the verifier raised and nothing carried.
+per §2's applicability note) plus this run's verifier `outcome` — on every block but three kinds, each of which keeps the `outcome` it holds: one Phase 7 superseded, its `contradict` written on its successor or, where there is none, recorded in the Final report only; and an on-file one whose `contradict` was an incomplete return, owing a control and returning no `own_control`, whose block this run does not touch and whose `contradict` the Final report records as not verified by this run (Phase 7, *On-file*); and an on-file one still incomplete after its retry, which Phase 7 left **not verified by this run**, writing nothing and keeping every field (Phase 7, *Retry once*) — **and any `notes` the verifier returned** — **and nothing else.** §2.1 makes the field set closed: `own_verdict`, `own_evidence`, `own_control`, `control_outcome` and the verifier's re-derivation `commit` are return fields Phase 7 has already acted on — where a `contradict` rewrote an own-run finding or appended an on-file finding's successor, their values are already in that block under the record's own names (`verdict`, `evidence`, `control`) and the return names never appear — and a block carrying `own_verdict` beside `verdict` states two verdicts at once, leaving every downstream reader free to quote whichever half suits. That is the state `/brd-split` step 7 and `/brd-interview` step 7 now refuse, so writing it here deadlocks the route rather than merely muddying the record. Its contract calls those *"anything the caller should know before recording this outcome"*, so they are read before the outcome is written, not after — a verdict recorded without them is recorded against a caveat the verifier raised and nothing carried.
 A `--rebaseline` run appends its new findings after the existing ones and marks any finding it
 superseded — never one already reading `SUPERSEDED`, whichever run retired it — with `verdict:
 SUPERSEDED`, id retained, rather than deleting or renumbering it — and writes the verdict that
@@ -1898,8 +1904,9 @@ separately, and the verifier
 tally (`agree` / `extend` / `contradict` / `unprovable`) with every `contradict` named by id and by
 what it wrote — an own-run finding's in-place rewrite; an on-file finding's supersession with its
 successor's id; an on-file finding superseded with no successor because the verifier's own verdict
-was `SUPERSEDED`, the one `contradict` no block records; and an incomplete return on an on-file
-finding, owing a control and returning none, which wrote nothing and leaves that finding **not
+was `SUPERSEDED`, the one `contradict` no block records; and an on-file finding left incomplete — a
+`contradict` incomplete return owing a control and returning none, or any state still incomplete
+after its retry (Phase 7, *Retry once*) — which wrote nothing and leaves that finding **not
 verified by this run** — say so of it by id, beside the `outcome` an earlier run left on it (on an
 own-run finding the same return stops the run instead, with `PRD_GROUND_VERIFY_INCOMPLETE`) —
 **and, separately, every outcome Phase 7 normalised**, each named by finding id with the outcome
