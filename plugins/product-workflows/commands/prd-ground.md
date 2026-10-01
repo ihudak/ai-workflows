@@ -623,7 +623,7 @@ the manual path:
    route-sequencing gate, which must stay first so a BRD whose inventory never merged is refused
    before anything else happens at all, and an index build is a durable, run-independent artifact
    that a later stop does not waste.
-0a. **State the cost before asking for repositories**, on every run that grounds code (never under `--no-code`, which resolves no repository to ground). N is Phase 0 step 8's claim count; M is the number of `[CG#n]` already on file in `grounding/code-grounding.md` and not reading `SUPERSEDED` — 0 on a first run. M is the most Phase 7 re-verifies: a repository that has moved is re-ground under `--rebaseline` instead, and its findings are superseded rather than re-verified. Print, in place of the bracketed values:
+0a. **State the cost before asking for repositories**, on every run that grounds code (never under `--no-code`, which produces no `[CG#n]` and verifies none, so the K×N arithmetic does not apply). N is the claim count — Phase 0 step 8's on `route: brd`, step 8i's (after its exclusions) on `route: idea`; M is the number of `[CG#n]` already on file in `grounding/code-grounding.md` and not reading `SUPERSEDED` — 0 on a first run. M counts every on-file `[CG#n]` not reading `SUPERSEDED`, and is an upper bound because Phase 1 runs before Phase 3: Phase 3 then excludes the findings of any repository that has moved, and Phase 7 re-verifies only those at an unmoved pin. Print, with N and M replaced by their values:
 
     > This requirement set has N claims. Each repository you name is ground against all N, and every finding is verified on Opus in two steps, in batches of up to 25: K repositories → K×N findings and about K×⌈N/25⌉×2 verification dispatches. A re-run re-verifies every finding already on file for a repository that has not moved (up to M today).
 
@@ -1906,18 +1906,18 @@ with its successor's id and both horizons — or, for a design finding no frame 
 successor and the horizon it would have written — and every `--no-code` horizon it did not move;
 finding counts by verdict for `[CG#n]` and `[DG#n]`
 separately, and the verifier
-tally (`agree` / `extend` / `contradict` / `unprovable`) — with the number of batches, the number of
-`mode: derive` and `mode: compare` dispatches, and every retry by finding id and the step retried,
-or "no retries" — with every `contradict` named by id and by
-what it wrote — an own-run finding's in-place rewrite; an on-file finding's supersession with its
+tally (`agree` / `extend` / `contradict` / `unprovable`), the number of batches, the number of
+`mode: derive` and `mode: compare` dispatches, and every retry by finding id and the step or steps
+retried (derive then compare, or compare alone), or "no retries"; with every `contradict` named by
+id and by what it wrote — an own-run finding's in-place rewrite; an on-file finding's supersession with its
 successor's id; an on-file finding superseded with no successor because the verifier's own verdict
 was `SUPERSEDED`, the one `contradict` no block records; and an on-file finding left incomplete — a
 `contradict` incomplete return owing a control and returning none, or any state still incomplete
 after its retry (Phase 7, *Retry once*) — which wrote nothing and leaves that finding **not
 verified by this run** — say so of it by id, beside the `outcome` an earlier run left on it (on an
-own-run finding the same return stops the run instead, with `PRD_GROUND_VERIFY_INCOMPLETE`) —
+own-run finding the same return stops the run instead, with `PRD_GROUND_VERIFY_INCOMPLETE`);
 every `agree`/`extend`/`unprovable` that proceeded after its retry with the blind verdict's own
-control still missing, by id —
+control still missing, by id;
 **and, separately, every outcome Phase 7 normalised**, each named by finding id with the outcome
 as returned, both verdicts, and which of the two routes forced it (a differing `own_verdict`, or a
 `control_outcome` of `missing`, or of `failed` on a finding whose verdict rests on the absence), or an explicit "none" where the verifier and the findings agreed
