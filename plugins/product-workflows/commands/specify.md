@@ -294,8 +294,7 @@ an absolute `$SPECS_PATH`-rooted directory, so it does not require cwd to be ins
 **Specs-repo preflight** — run once step 1's resolution returns `status: found`, with the run key
 set fixed in the paragraph after step 1, before step 0's refusal, step 1's placement or any later step reads the
 folder. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier
-run, retry an artifact commit that failed to push, and settle the branch. Prompt-free and silent
-when the specs repo is clean and on its default branch. If a guard fires, emit its §5 notice; if
+run, retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if
 it returns `specs_git: blocked` (§3.3 G0), carry that flag for the whole run — the terminal
 `commit-artifacts` step skips on it.
 

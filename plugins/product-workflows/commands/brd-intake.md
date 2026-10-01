@@ -48,8 +48,7 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
    ```
    choices: ["Set SPECS_PATH (enter the path)", "Cancel"]
    ```
-6. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline. Prompt-free and silent when the specs repo is
-   clean and on its default branch. If a guard fires, emit its §5 notice; if it returns
+6. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
    `specs_git: blocked` (§3.3 G0), carry that flag for the whole run — the terminal
    `commit-artifacts` step skips on it.
 7. **Resolve or derive the BRD folder** via `resolve-address <BRD-KEY>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). Found → an existing folder, and where it is a

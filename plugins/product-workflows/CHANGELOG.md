@@ -7,15 +7,16 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [3.10.2] — 2026-10-01
 
-**Update `workflows-core` to 1.8.5 with this release**: its `resolve-key` now stops on a `$SPECS_PATH` that points inside the specs tree, the case Phase 0 of every keyed command here now meets before it searches.
+**Update `workflows-core` to 1.8.5 with this release**: its `resolve-address` now stops, on either address form, on a `$SPECS_PATH` that points inside the specs tree, which the commands and pages below handle and describe.
 
 ### Fixed
 
-- **`/idea` Phase 0 named `ambiguous` as `addressing` §3's hard stop**, and §3 now has two (#70). It names `misrooted` beside it.
+- **`/idea` Phase 0 named `ambiguous` as `addressing` §3's hard stop**, and §3 now has two (#70). It names `misrooted` beside it. `/epics` (Phase 0 and Phase 2.6, where it is a stop and never a skip) and `/update-prd` name it in their status lists as a stop.
+- **The preflight step said it was "Prompt-free and silent when the specs repo is clean and on its default branch"**, which a misconfigured `$SPECS_PATH` now falsifies (#70). Every such sentence takes `specs-repo-git` §1 rule 7's wording instead: silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. This applies to all fourteen commands.
 
 ### Fixed — documentation
 
-- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals every keyed command tests before it searches, and the `SPECS_PATH_INSIDE_TREE` stop, which comes before `/idea`, `/create-prd` or `/brd-intake` could create a folder at `specifications/specifications/…`. It also describes the one-line notice a run that resolves no key gets instead. `docs/getting-started.md` says to set the variable to the repository's root.
+- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals every command that resolves an address tests on either form, and the `SPECS_PATH_INSIDE_TREE` stop, which comes before `/idea`, `/create-prd` or `/brd-intake` could create a folder at `specifications/specifications/…`. It also describes the one-line notice a run that resolves no address gets instead, and the one unsupported layout. `docs/getting-started.md` says to set the variable to the repository's root.
 
 ## [3.10.1] — 2026-10-01
 

@@ -59,8 +59,7 @@ Usage: `/create-prd <ADDRESS> [@idea.md] [--from-prd <PRD-KEY|path>] [--lean|--h
 2b. **`$SPECS_PATH`, then the specs-repo preflight — both before step 3's gate.** If `$SPECS_PATH` is
     unset, stop naming it (`choices: ["Set SPECS_PATH (enter the path)", "Cancel"]`). Then invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point
     (§3) inline: flush any leftover session artifacts from an earlier run, retry an artifact commit
-    that failed to push, and settle the branch. Prompt-free and silent when the specs repo is clean and
-    on its default branch. If a guard fires, emit its §5 notice; if it returns `specs_git: blocked`
+    that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns `specs_git: blocked`
     (§3.3 G0), carry that flag for the whole run — the terminal `commit-artifacts` step skips on it.
 
     **The ordering is the point, not the tidiness.** Step 3's `require-on-main` performs no fetch of

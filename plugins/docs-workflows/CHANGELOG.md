@@ -7,11 +7,16 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.4.4] — 2026-10-01
 
-**Update `workflows-core` to 1.8.5 with this release**: its `resolve-key` now stops on a `$SPECS_PATH` that points inside the specs tree, which the pages below describe.
+**Update `workflows-core` to 1.8.5 with this release**: its `resolve-address` now stops, on either address form, on a `$SPECS_PATH` that points inside the specs tree, which the commands and pages below handle and describe.
+
+### Fixed
+
+- **`/release-notes` and keyed `/document` gain `misrooted` in their status lists as a stop** (#70). `/release-notes` Phase 6 never reads it as *neither present*.
+- **The preflight step said it was "Prompt-free and silent when the specs repo is clean and on its default branch"**, which a misconfigured `$SPECS_PATH` now falsifies (#70). Every such sentence takes `specs-repo-git` §1 rule 7's wording instead: silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. This applies to `/document`, `/release-notes`, `/docs-init`, `/docs-brand` and `/docs-audit`.
 
 ### Fixed — documentation
 
-- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals `/document` in keyed mode and `/release-notes` test on a `<KEY>` address, the `SPECS_PATH_INSIDE_TREE` stop that now comes before a not-found one, and the one-line notice that direct-mode `/document`, `/docs-init`, `/docs-brand` and `/docs-audit` get instead. `docs/getting-started.md` says to set the variable to the repository's root.
+- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals `/document` in keyed mode and `/release-notes` test on either address form, the `SPECS_PATH_INSIDE_TREE` stop that now comes before a not-found one, the one-line notice that direct-mode `/document`, `/docs-init`, `/docs-brand` and `/docs-audit` get instead, and the one unsupported layout. The `/release-notes` page lists the new stop among the run's refusals. `docs/getting-started.md` says to set the variable to the repository's root.
 
 ## [1.4.3] — 2026-10-01
 

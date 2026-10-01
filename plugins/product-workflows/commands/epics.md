@@ -31,7 +31,7 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
    resolves on the other (`workflows-core:addressing` §3, `resolve-key` step 1). The kind gate is step 1b's, and
    it is taken on what the resolved folder **holds**.
    `status: found` → carry its `path`, `kind` and `key` forward; `ambiguous` → stop,
-   naming every match and `@<path>` as the way through. **`absent` is a graceful stop, not a folder
+   naming every match and `@<path>` as the way through; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message. **`absent` is a graceful stop, not a folder
    to create** — `/epics` partitions a PRD folder that exists and creates no PRD folder of its own:
    ```
    EPICS_NOT_FOUND: no folder found for <ADDRESS> under $SPECS_PATH/specifications/ (every level addressing.md §3 bounds, plus §5's legacy fallback) — check the address. /epics partitions an existing PRD folder and creates none. A PRD folder is created by /product-workflows:idea <KEY> or /product-workflows:create-prd <KEY> on the idea route, and by /product-workflows:brd-split on its parent BRD on the BRD route; an EPIC- folder is created by this command and by no other, so an Epic address that resolves to nothing was never drafted here.
@@ -259,8 +259,7 @@ directory (resolved in Phase 1), so it does **not** require cwd to be anywhere i
 **Specs-repo preflight** — run at the end of step 1, with the run key set step 1 fixes, before step
 1a or 1b reads anything. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session
 artifacts from an earlier run, retry an artifact commit that failed to push,
-and settle the branch. Prompt-free and silent when the specs repo is clean and
-on its default branch. If a guard fires, emit its §5 notice; if it returns
+and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
 `specs_git: blocked` (§3.3 G0), carry that flag for the whole run — the
 terminal `commit-artifacts` step skips on it.
 
@@ -408,7 +407,7 @@ inventory. **Additive, zero-cost when absent** — the common case, since
 
 1. **Resolve the PRD dir:** call `resolve-address <PRD>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches every level §3 bounds and carries §5's legacy fallback. `status: found` →
    use its `path`; `status: absent` → none exists; `status: ambiguous` → stop, naming every match
-   and `@<path>` as the way through. No matching rule is written here: a second copy of the one §5
+   and `@<path>` as the way through; `status: misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message, never a skip. No matching rule is written here: a second copy of the one §5
    states is the drift §1 warns about. If `$SPECS_PATH` is
    unset/unresolvable, or no PRD dir matches at either level → **skip** (set
    `vi_spec_present: false`) — the same skip a PRD with no PRD-level specification

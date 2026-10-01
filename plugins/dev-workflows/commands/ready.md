@@ -33,7 +33,7 @@ Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback]
 
 1. **Resolve the address.** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the **single positional address** from `$ARGUMENTS` — a `<KEY>`, or an `@<path>` naming a
    folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind`
-   and `key` forward; `ambiguous` → stop, naming every match; `invalid` → stop with `READY_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
+   and `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `READY_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
 
    **Then settle the specs checkout, before the placement below reads anything.** Fix the run key
    set (`workflows-core:specs-repo-git` §3.2), reading only carrier frontmatter (`key:`, `kind:`) as
@@ -101,8 +101,7 @@ Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback]
 
 **Specs-repo preflight** — run at the end of step 1's address resolution, with the run key set step 1
 fixes, before step 1 places the folder or takes any of its stops. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run,
-retry an artifact commit that failed to push, and settle the branch. Prompt-free and silent when the
-specs repo is clean and on its default branch. If a guard fires, emit its §5 notice; if it returns
+retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
 `specs_git: blocked` (§3.3 G0), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.
 
@@ -117,7 +116,7 @@ step skips on it.
 4. **Map onto the specs repo (PRD dir + optional Epic subdir).** Resolve the PRD dir with
    `resolve-address <PRD>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
    every level §3 bounds and carries §5's legacy fallback; `status: absent` means none exists, and
-   `ambiguous` is a stop naming every match. The same entry point resolves what `workflows-core:ard-resolution`
+   `ambiguous` is a stop naming every match, and `misrooted` a stop with §3's `SPECS_PATH_INSIDE_TREE` message. The same entry point resolves what `workflows-core:ard-resolution`
    and `/design` resolve, which is what keeps the three from drifting apart. When `focus_key` is set, additionally resolve the per-Epic subdir
    `<PRD-dir>/EPIC-<EPIC>-<eslug>/` by the same tolerance. **Unlike `/design`, a missing dir is NOT a hard
    stop** — an early-lifecycle PRD (e.g. `Open` / `Problem stated`) legitimately has no specs-repo

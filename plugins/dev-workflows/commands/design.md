@@ -81,15 +81,14 @@ Usage: `/design <ADDRESS> [--design-twice] [--skip-costs] [--skip-feedback] [--e
 
 **Specs-repo preflight** — run at the end of step 1's address resolution, with the run key set step 1
 fixes, before step 1 places the folder or takes any of its stops. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier
-run, retry an artifact commit that failed to push, and settle the branch. Prompt-free and silent
-when the specs repo is clean and on its default branch. If a guard fires, emit its §5 notice; if
+run, retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if
 it returns `specs_git: blocked` (§3.3 G0), carry that flag for the whole run — the terminal
 `commit-artifacts` step skips on it.
 
 *(The preflight runs before the gate below — at the end of step 1, earlier still — because `require-on-main` performs **no** `fetch` of its own — §3.2 — and relies on this step's best-effort one. Gating first would test never-fetched refs: a just-merged artifact would be missed on `origin/<default>` while the stale remote-tracking ref for its deleted branch still carries it, producing a false row D/E stop. `specs-preflight` self-gates on `$SPECS_PATH`, so it is safe this early.)*
 
 3. **Map onto the specs repo + require the spec on main.** Derive provisional kebab-case slugs from the relevant title(s): `<vslug>` for `<PRD>`, and `<eslug>` for `<EPIC>` when `<EPIC>` is set.
-   - **Resolve the PRD dir:** call `resolve-address <PRD>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3) and use its `path`; on `ambiguous`, stop naming every match and `@<path>` as the way through. No matching rule is written here — §5 owns it, and it carries the legacy fallback. Use a freshly derived `PRD-<PRD>-<vslug>` only on `status: absent`. Every later `specifications/<PRD>-<vslug>/` in this command — the Epic-enumeration ref test included — names the dir resolved here.
+   - **Resolve the PRD dir:** call `resolve-address <PRD>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3) and use its `path`; on `ambiguous`, stop naming every match and `@<path>` as the way through; on `misrooted`, stop with §3's `SPECS_PATH_INSIDE_TREE` message. No matching rule is written here — §5 owns it, and it carries the legacy fallback. Use a freshly derived `PRD-<PRD>-<vslug>` only on `status: absent`. Every later `specifications/<PRD>-<vslug>/` in this command — the Epic-enumeration ref test included — names the dir resolved here.
    - **Resolve the feature folder** by case:
      - **`<EPIC>` set** → the per-Epic home `specifications/<PRD>-<vslug>/EPIC-<EPIC>-<eslug>/` (same honor-existing tolerance on the `EPIC-<EPIC>-<eslug>` segment); the target is `specification.md` there.
      - **`<EPIC>` null** → resolved in step 4 (Granularity): either the flat PRD dir (a broad PRD-level spec) or a per-Epic subfolder the picker selects.

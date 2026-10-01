@@ -36,8 +36,8 @@ That is the whole mode test, and it unifies the input grammar with `/document`. 
 with no tree the `absent` stop below would name the wrong cause and offer a re-enter that cannot
 succeed. An `@<path>` address needs no specs tree: it is resolved without the variable and runs on,
 its record written into the folder it names, and a direct run is unaffected. `ambiguous` and
-`misrooted` are §3's two hard stops, the first naming every match and the second a `$SPECS_PATH`
-set inside the specs tree. **`status: absent` is a stop, never a fall-through to direct mode**
+`misrooted` are §3's two hard stops, the first naming every match and the second, on either address form,
+a `$SPECS_PATH` set inside the specs tree. **`status: absent` is a stop, never a fall-through to direct mode**
 — the `key dir not found` rule in `workflows-core:escalation-rules` (`["Re-enter key", "Cancel"]`),
 naming what creates a folder this command reads: a `PRD-` folder comes from
 `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from
@@ -62,8 +62,7 @@ from `IMPLEMENT_BRD_NOT_SLICED`'s listing, or an Epic folder, `specification.md`
 artifacts from an earlier run, retry an artifact commit that failed to push,
 and settle the branch. This runs against `$SPECS_PATH` only — `git -C
 "$SPECS_PATH"`, never a `cd`, so the code/docs repo this run is working
-in is untouched (§1 rule 1). Prompt-free and silent when the specs repo
-is clean and on its default branch. If a guard fires, emit its §5 notice;
+in is untouched (§1 rule 1). Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice;
 if it returns `specs_git: blocked` (§3.3 G0), carry that flag for the whole
 run — the terminal `commit-artifacts` step skips on it.
 

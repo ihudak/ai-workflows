@@ -7,15 +7,16 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [4.4.2] — 2026-10-01
 
-**Update `workflows-core` to 1.8.5 with this release**: its `resolve-key` now stops on a `$SPECS_PATH` that points inside the specs tree, which the pages below describe.
+**Update `workflows-core` to 1.8.5 with this release**: its `resolve-address` now stops, on either address form, on a `$SPECS_PATH` that points inside the specs tree, which the commands and pages below handle and describe.
 
 ### Fixed
 
-- **`/implement` Phase 0 named `ambiguous` as `addressing` §3's hard stop**, and §3 now has two (#70). It names `misrooted` beside it.
+- **`/implement` Phase 0 named `ambiguous` as `addressing` §3's hard stop**, and §3 now has two (#70). It names `misrooted` beside it, on either address form. `/ready` (both resolutions) and `/design` name it in their status lists as a stop.
+- **The preflight step said it was "Prompt-free and silent when the specs repo is clean and on its default branch"**, which a misconfigured `$SPECS_PATH` now falsifies (#70). Every such sentence takes `specs-repo-git` §1 rule 7's wording instead: silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. This applies to all five commands.
 
 ### Fixed — documentation
 
-- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals `/design`, `/ready`, `/implement` and `/vuln` test before resolving a `<KEY>`, the `SPECS_PATH_INSIDE_TREE` stop, and the one-line notice `/upgrade` and other keyless runs get instead. `docs/getting-started.md` says to set the variable to the repository's root.
+- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals `/design`, `/ready`, `/implement` and `/vuln` test on either address form, the `SPECS_PATH_INSIDE_TREE` stop, the one-line notice `/upgrade` and other runs that resolve no address get instead, and the one unsupported layout. `docs/getting-started.md` says to set the variable to the repository's root.
 
 ## [4.4.1] — 2026-10-01
 

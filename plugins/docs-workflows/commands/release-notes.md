@@ -46,7 +46,7 @@ This command makes **zero external API calls** and **never writes into the docs 
    with no tree the `absent` stop below would name the wrong cause and offer a re-enter that cannot
    succeed. An `@<path>` address needs no specs tree to resolve and runs on, exactly as `/document`'s
    *Mode detection* does. Then resolve the address with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). Carry the resolved `path`, `kind` and
-   `key` forward; `ambiguous` → stop, naming every match; `invalid` → stop with `RELEASE_NOTES_NEEDS_KEY` below, naming the token that failed §1's grammar (a token that fails it is no `<KEY>`, so the `$SPECS_PATH` test above does not stop it, and `resolve-address` tests the grammar before it searches). **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
+   `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `RELEASE_NOTES_NEEDS_KEY` below, naming the token that failed §1's grammar (a token that fails it is no `<KEY>`, so the `$SPECS_PATH` test above does not stop it, and `resolve-address` tests the grammar before it searches). **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
 
    **Then settle the specs checkout, before the placement below reads anything.** Fix the run key
    set (`workflows-core:specs-repo-git` §3.2), reading only carrier frontmatter (`key:`, `kind:`) as
@@ -168,8 +168,7 @@ fixes, before step 1 places the folder or takes any of its named stops (above). 
 artifacts from an earlier run, retry an artifact commit that failed to push,
 and settle the branch. This runs against `$SPECS_PATH` only — `git -C
 "$SPECS_PATH"`, never a `cd`, so the code/docs repo this run is working
-in is untouched (§1 rule 1). Prompt-free and silent when the specs repo
-is clean and on its default branch. If a guard fires, emit its §5 notice;
+in is untouched (§1 rule 1). Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice;
 if it returns `specs_git: blocked` (§3.3 G0), carry that flag for the whole
 run — the terminal `commit-artifacts` step skips on it.
 
@@ -382,7 +381,7 @@ Diff grounding is opt-in and advisory here: a repo the user skips degrades the g
 **Resolve `run_phase`.** `/release-notes` runs at two points in a PRD's life, and the
 `release-note-types.md` §4 documentation-link rule depends on which. Reuse the existing signal from
 `workflows-core:cost-emission` §7 — resolve the PRD's specs dir
-by calling `resolve-address <PRD>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), then glob it for `specification.md` and `design.md`. That entry point searches every level §3 bounds and carries §5's legacy fallback; `workflows-core:addressing` §7 records why this command is one of its adopters.
+by calling `resolve-address <PRD>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), then glob it for `specification.md` and `design.md`. A `misrooted` status stops the run with §3's `SPECS_PATH_INSIDE_TREE` message and is never read as *neither present*, though Phase 0's resolution, which runs the same check on either address form, has already stopped any run it would reach. That entry point searches every level §3 bounds and carries §5's legacy fallback; `workflows-core:addressing` §7 records why this command is one of its adopters.
 A flat glob alone would also be **narrower than the signal this step says it reuses**: cost-emission
 §7 defers to the specs-dir matching `workflows-core:feedback-emission` and
 `workflows-core:followup-emission` perform, whose pattern already spans both levels.

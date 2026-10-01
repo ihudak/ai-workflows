@@ -29,8 +29,7 @@ Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
 artifacts from an earlier run, retry an artifact commit that failed to push,
 and settle the branch. This runs against `$SPECS_PATH` only — `git -C
 "$SPECS_PATH"`, never a `cd`, so whatever repository you are standing in is
-untouched (§1 rule 1). Prompt-free and silent when the specs repo is clean and
-on its default branch. If a guard fires, emit its §5 notice; if it returns
+untouched (§1 rule 1). Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
 `specs_git: blocked` (§3.3 G0), carry that flag — the terminal
 `commit-artifacts` step skips on it.
 

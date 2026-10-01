@@ -67,6 +67,7 @@ Usage: `/frames <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-model=
      **This command creates no folder**, so `absent` is a stop rather than a create.
    - `status: ambiguous` → §3 rule 5's hard stop, naming **every** match and `@<path>` as the way
      through it. Never choose between them.
+   - `status: misrooted` → `specs-root-check`'s hard stop, with §3's `SPECS_PATH_INSIDE_TREE` message.
    - `status: found` → carry `path`, `kind` and `key`. Report `legacy: true` once as deprecated when
      §5's fallback resolved it.
 
@@ -130,8 +131,7 @@ Usage: `/frames <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-model=
 **Specs-repo preflight** — run at the end of step 1's resolution, on `status: found`, with the run key
 set step 1 fixes, before step 1's carrier and kind tests read the folder. Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
 `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run,
-retry an artifact commit that failed to push, and settle the branch. Prompt-free and silent when the
-specs repo is clean and on its default branch. If a guard fires, emit its §5 notice; if it returns
+retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
 `specs_git: blocked` (§3.3 G0), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.
 
