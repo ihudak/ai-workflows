@@ -153,21 +153,23 @@ by either of two tests, each against the filesystem and none by parsing a name:
     `specifications/` directory mounted on its own under that name.
 - **(b) `$SPECS_PATH` is, or directly holds, a specs folder.** Either `$SPECS_PATH` itself has a §4
   carrier, or an immediate subdirectory whose name is not one of §2's reserved subdirectory names has
-  one. **Where `$SPECS_PATH/specifications/` exists, a carrier counts only where its directory's name
-  passes §4.1's prefix test**: it begins `<KIND>-<key>-`, with `<KIND>` one of §2's three and `<key>`
-  the key read off that carrier. This applies to `$SPECS_PATH`'s own name as well as each
-  subdirectory's. A correct root can hold carrier-bearing files that are no specs folder: a
-  `templates/` or `_templates/` copy of the plugin's own templates, or a `README.md` or `docs/` page
-  that carries `key:` and a folder `kind:`. None of them is named like a specs folder, so the prefix
-  test keeps that root quiet. A folder the tree itself holds is named that way, so a nested
-  `specifications/` that a misrooted run already wrote cannot hide this signal. That covers a PRD
-  folder an earlier `/idea` wrote `specifications/PRD-…` into, and a `specifications/` directory
-  mounted under another name after any run wrote into it. Where no `specifications/` exists, any
-  carrier counts, as before. This is the signal for that mount, whose parent (a) cannot see, and for
-  a `$SPECS_PATH` pointing at a folder in the tree, with or without keyed folders below it. Reserved
-  subdirectories are skipped because `revisions/` holds archived copies of a PRD and `brd/` holds the
-  inventory, and both of those assert their parent's key and kind. Stop testing at the first that
-  qualifies.
+  one. **A carrier counts only where its directory's name passes §4.1's prefix test**: it begins
+  `<KIND>-<key>-`, with `<KIND>` one of §2's three and `<key>` the key read off that carrier. This
+  applies to `$SPECS_PATH`'s own name as well as to each subdirectory's, and it applies whether or not
+  `$SPECS_PATH/specifications/` exists. Every folder the plugin creates is kind-prefixed (§2), so a
+  folder the tree holds passes the test. A carrier that is no specs folder does not: a `templates/`
+  or `_templates/` copy of the plugin's own templates, or a `README.md` or `docs/` page carrying
+  `key:` and a folder `kind:`. Those never stop a run, at a fresh root or a populated one. A nested
+  `specifications/` that a misrooted run already wrote therefore cannot hide this signal. That covers
+  a PRD folder an earlier `/idea` wrote `specifications/PRD-…` into, and a `specifications/`
+  directory mounted under another name after any run wrote into it. This is the signal for that
+  mount, whose parent (a) cannot see, and for a `$SPECS_PATH` pointing at a PRD or Epic folder in the
+  tree, with or without keyed folders below it. Reserved subdirectories are skipped because
+  `revisions/` holds archived copies of a PRD and `brd/` holds the inventory, and both of those assert
+  their parent's key and kind. Stop testing at the first that qualifies.
+  **The one cost: a `$SPECS_PATH` pointing at a legacy directory that holds only unprefixed folders
+  (§5's layout) is not detected by (b).** Signal (a) still catches it where that directory is named
+  `specifications`.
 
 A specs repository nothing has been written into yet has no `specifications/` and prints an empty
 prefix, so it matches nothing and is never a stop. A `$SPECS_PATH` below its repository's top level
