@@ -2050,8 +2050,10 @@ that ends this write of the round record (above).
 ## Phase 10 — Handoff
 
 Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and **execute §4.3 in
-full rather than its array alone**: run §2.1's push-target probe first, and where it sets
-`remote: none` print §4.3's no-remote line immediately above the array, unreworded. Then present its
+full rather than its array alone**: run §2.1's push-target probe first, and print the one line
+§4.3 puts immediately above the array where one applies, unreworded — its flag line on a run
+carrying `specs_git: blocked` or `specs_git: misrooted`, otherwise its no-remote line where the
+probe set `remote: none`. Then present its
 §4.3 choice array verbatim — the **gated — stopping** variant (§4.1 bullet 1), since `/brd-package`
 stops on this run's `decisions.md` (`workflows-core:phase-handoff` §3.4):
 

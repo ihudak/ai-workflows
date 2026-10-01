@@ -598,8 +598,9 @@ dirty by construction rather than by a choice; and a `status: refined` run whose
 **taken** and whose `workflows-core:phase-handoff` §2.1 gate then refused it committed nothing
 either, which is the *Gate failed* line §4.1 emits and which Phase 5 already names beside a decline.
 That third one is reachable rather than theoretical: §2.1 fails on path, repo or permission grounds
-**or** on `specs_git: blocked`, and Phase 0 carries that flag for the whole run whenever its own
-preflight returns `workflows-core:specs-repo-git` §3.3's G0. The other non-landing §4.1 rows are not
+**or** on either run-wide flag it names — `specs_git: blocked`, which Phase 0 carries for the whole
+run whenever its own preflight returns `workflows-core:specs-repo-git` §3.3's G0, and
+`specs_git: misrooted`, which it carries whenever that preflight's §3.1 notice set it. The other non-landing §4.1 rows are not
 further routes — *No remote* and *Push failed* both committed on a branch first (§2.4 runs before
 §2.5), and *Nothing to commit* changed nothing.
 
@@ -608,7 +609,8 @@ one: the preflight **ends** there, at advisory severity, listing the paths — n
 no push — and because §3.4's leftover flush and §3.5's branch disposition run only when stage 1 matched
 nothing, **both are suppressed for the rest of that session**. G1 does **not** set `specs_git: blocked`,
 so the terminal `commit-artifacts` still runs and nothing is lost or halted; the suppression repeats on
-every later run until those paths are committed or the handoff is taken.
+every later run until those paths are committed or the handoff is taken. A run carrying
+`specs_git: misrooted` runs no guard at all, so none of this applies to it.
 
 ---
 

@@ -1174,15 +1174,16 @@ later, and the note this phase writes is one of the files it commits, so the not
 repository's default branch, where a customer pulling the repository finds it — which it does when
 the handoff's pull request merges — and three facts decide whether this run can start it on its
 way, all of them held before anything is committed: the specs repository passes
-`workflows-core:phase-handoff` §2.1's gate — `$SPECS_PATH` an existing directory,
-`git -C "$SPECS_PATH" rev-parse --git-dir` succeeding there, the resolved `.git` directory
-writable, and the run not carrying `specs_git: blocked`; §2.1's push-target probe finds an `origin`
-remote to push to; and the operator consents to the handoff. Take all three here:
+`workflows-core:phase-handoff` §2.1's gate — every condition that section lists, its run-wide
+`specs_git` flags as well as its repository tests, so a run carrying `specs_git: blocked` or
+`specs_git: misrooted` fails it here; §2.1's push-target probe finds an `origin` remote to push to;
+and the operator consents to the handoff. Take all three here:
 
 1. **Take the handoff's consent now.** Invoke
    `Skill(skill: "workflows-core:reference", args: "phase-handoff")`, test §2.1's gate conditions —
-   each is a read — and run its push-target probe, printing §4.3's no-remote line above the array
-   where the probe set `remote: none`; then present its §4.3 choice array verbatim:
+   each is a read — and run its push-target probe, printing the one line §4.3 puts above the array
+   where one applies: its flag line on a run carrying either flag, otherwise its no-remote line where
+   the probe set `remote: none`. Then present its §4.3 choice array verbatim:
 
    ```
    choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]

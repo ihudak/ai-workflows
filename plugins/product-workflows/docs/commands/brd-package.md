@@ -205,7 +205,8 @@ serves both delivery routes, and the run settles which one at the delivery note 
 consent is asked there rather than at the handoff phase that acts on it: the note is one of the
 files the handoff commits, so its route cannot wait on the handoff's outcome. Where the specs repo
 passes the handoff's gate (an existing git repository whose `.git` is writable, on no detached
-HEAD), has an `origin` remote to push to, and the operator consents, the run asks, recommending that
+HEAD, and a `$SPECS_PATH` the run has not found misplaced), has an `origin` remote to push to, and
+the operator consents, the run asks, recommending that
 the customer pull the bundle; where any of the three fails — declining the handoff among them, which
 declines only the handoff and ends nothing else — nothing this run does puts the bundle where a
 customer can pull it, so it takes the archive route without asking and says so. The note names no

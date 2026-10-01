@@ -188,7 +188,8 @@ a run that stops on its address — `invalid`, `ambiguous`, `misrooted` or `abse
 Silent when the repository is already clean and on the default branch and §3.1 finds
 `$SPECS_PATH` well placed; it emits a block only when it acts or when a guard fires, and a
 notice only where §3.1 reports a misconfigured `$SPECS_PATH`. That notice is one line, plus one more
-line naming anything a misrooted run left behind.
+line naming anything a misrooted run left behind. On a run carrying `specs_git: misrooted`, §3.5 adds
+one line where it stays on a branch it would otherwise have left.
 
 ### 3.1 Gate
 
@@ -206,11 +207,15 @@ state in this container setup.
 
 **A passing gate is tested once more, for a `$SPECS_PATH` set inside the specs tree.** On an ordinary checkout, `$SPECS_PATH=<repo>/specifications` meets all three conditions, because git finds the repository above it. A run that resolves no address would then file its bookkeeping inside `specifications/` with nothing said. Examples are `/upgrade`, `/vuln` on tokens carrying none, `/implement` on a direct prompt, `/document` in direct mode, `/docs-init`, `/docs-brand`, `/docs-audit` and the four logging commands. So **where the gate passes, run the tests of `workflows-core:addressing` §3 `specs-root-check`**, exactly as that entry point defines them, its exclusions included. Where a signal holds, emit a notice naming the variable, its value, which signal holds and the value to set, **set `specs_git: misrooted` for the whole run**, then continue. The notice is the stop's own text. It is one line, with the unsupported-layout clause where that applies, plus one more line naming anything a misrooted run left behind and where it belongs. Like the stop, it moves nothing and gives no commands. A run that resolves no address learns all of it here, and nothing later repeats it. On an ordinary checkout, `$SPECS_PATH=<repo>/specifications` prints the prefix `specifications/`, which that entry point's first test catches whether or not an earlier run left a nested `specifications/` behind. **It stays quiet at a correct root.** A correct root's own carrier-bearing files, such as a `templates/` folder, a `README.md` or a `docs/` page, fail (b)'s prefix test, whether or not `specifications/` exists yet. A `$SPECS_PATH` like `<repo>/specs` holding `specs/specifications/` prints `specs/`, matches no signal, and draws the notice below instead. A specs repository nothing has been written into yet matches nothing. `specs-root-check` records two unsupported layouts, each with its own reason. The specs root that is itself a subdirectory named `specifications` draws this notice on every run. The specs tree inside a larger repository draws the notice below.
 
-**A `$SPECS_PATH` below its repository's top level.** `$SPECS_PATH` names the root of a dedicated specs repository, the directory that holds `specifications/`. **A specs tree inside a larger repository is unsupported**, because this plugin switches branches and commits in the repository `$SPECS_PATH` belongs to. §3.5 settles and switches its branch at run start, `commit-artifacts` (§4) commits on it, and `workflows-core:phase-handoff` §2 cuts a branch there and commits a deliverable. In a repository that also holds code, each of those moves the checkout of everything else that repository holds. So where the gate passes and `git -C "$SPECS_PATH" rev-parse --show-prefix` prints a non-empty prefix, emit one notice line, **set `specs_git: misrooted` for the whole run**, then continue (§1). The line names the variable, its value and the repository's top level (`git -C "$SPECS_PATH" rev-parse --show-toplevel`), and says that a specs tree inside a larger repository is unsupported because the plugin switches branches and commits there. This is a misconfigured `$SPECS_PATH` in §1 rule 7's sense. **Skip it where the inside-tree notice above already fired this run.** That notice names the same path and what to set instead, and, where the value it names is below its repository's top level, that the layout is unsupported. **What a run that stops on `specs-root-check` prints depends on its order (§3).** A command that resolves its address first stops there and runs no preflight, so it prints neither notice, only the stop. A command that runs `specs-preflight` first, on its argument keys as typed (`/idea`, and `/vuln` on a token carrying a key, among them), prints the inside-tree notice here and then stops at its resolution, so the operator sees the notice and then the stop, which name the same cause.
+**A `$SPECS_PATH` below its repository's top level.** `$SPECS_PATH` names the root of a dedicated specs repository, the directory that holds `specifications/`. **A specs tree inside a larger repository is unsupported**, because this plugin switches branches and commits in the repository `$SPECS_PATH` belongs to. On a correct root, §3.5 settles and switches its branch at run start, `commit-artifacts` (§4) commits on it, and `workflows-core:phase-handoff` §2 cuts a branch there and commits a deliverable. In a repository that also holds code, each of those would move the checkout of everything else that repository holds, so none of them switches or commits under the flag this notice sets. So where the gate passes and `git -C "$SPECS_PATH" rev-parse --show-prefix` prints a non-empty prefix, emit one notice line, **set `specs_git: misrooted` for the whole run**, then continue (§1). The line names the variable, its value and the repository's top level (`git -C "$SPECS_PATH" rev-parse --show-toplevel`), and says that a specs tree inside a larger repository is unsupported because the plugin switches branches and commits there. This is a misconfigured `$SPECS_PATH` in §1 rule 7's sense. **Skip it where the inside-tree notice above already fired this run.** That notice names the same path and what to set instead, and, where the value it names is below its repository's top level, that the layout is unsupported. **What a run that stops on `specs-root-check` prints depends on its order (§3).** A command that resolves its address first stops there and runs no preflight, so it prints neither notice, only the stop. A command that runs `specs-preflight` first, on its argument keys as typed (`/idea`, and `/vuln` on a token carrying a key, among them), prints the inside-tree notice here and then stops at its resolution, so the operator sees the notice and then the stop, which name the same cause.
 
 Still **never fatal** (§1): each notice reports and the run continues. **Where the path is a directory and `specs-root-check` finds a signal there, the non-repository notice above sets `specs_git: misrooted` too.**
 
-**`specs_git: misrooted` is the run-wide record that `$SPECS_PATH` is misplaced.** It is set by either notice above, or by `workflows-core:addressing` §3 `specs-root-check` where it stops the run at resolution. Under it, every emitter of the tail falls to its report-only tier, so nothing more is written under a path the run has found wrong. That covers cost (`cost-emission.md` §8), feedback (`feedback-emission.md` §2), follow-ups (`followup-emission.md` §2) and `resume.md` (`session-hygiene.md` §1). The preflight itself goes no further than the notice (§3.3–§3.5 do not run). §4's `commit-artifacts` skips, as it does on `specs_git: blocked`. `workflows-core:phase-handoff` §2.1's `handoff-to-main` refuses the handoff, and its row C offers no repair. **No step of the family switches a branch or commits under the flag.** Writing there would only add files §2.1's classifier puts in OTHER, or artifact paths that cannot be staged from `$SPECS_PATH` and that the first run after the variable is fixed would commit in the wrong place: a pending cost there never reconciles, and G1 fires on every run after the variable is corrected. **What the flag leaves alone is the deliverable.** A run a notice let continue still writes it where the command puts it, and it stays there, written and uncommitted, for the operator to move or commit once `$SPECS_PATH` is right. A run stopped at resolution writes nothing under the path at all. What changes is that the condition is now *said*.
+**`specs_git: misrooted` is the run-wide record that `$SPECS_PATH` is misplaced.** It is set by either notice above, or by `workflows-core:addressing` §3 `specs-root-check` where it stops the run at resolution. Under it, every emitter of the tail falls to its report-only tier, so the tail writes nothing under a path the run has found wrong. That covers cost (`cost-emission.md` §8), feedback (`feedback-emission.md` §2), follow-ups (`followup-emission.md` §2) and `resume.md` (`session-hygiene.md` §1). Writing there would only add files §2.1's classifier puts in OTHER, or artifact paths that cannot be staged from `$SPECS_PATH` and that the first run after the variable is fixed would commit in the wrong place: a pending cost there never reconciles, and G1 fires on every run after the variable is corrected.
+
+**The preflight itself performs no write under the flag**: no leftover flush, no push retry, no branch switch, creation or deletion, no pull, no commit and no push. Where the gate passed, it still reads, because `workflows-core:phase-handoff`'s `require-on-main` runs on what it reads. §3.2 runs in full, its best-effort fetch included, which refreshes the remote-tracking refs every `<default-ref>` test reads and moves no checkout. §3.5 classifies the branch, and a row that would switch stays and reports instead. §3.3's guards and §3.4's flush do not run, and each section says why. §4's `commit-artifacts` skips, as it does on `specs_git: blocked`. `workflows-core:phase-handoff` §2.1's `handoff-to-main` refuses the handoff, its §4.3 says so above the consent array, and its row C offers no repair. **So none of `specs-preflight`, `commit-artifacts`, `handoff-to-main` and `require-on-main` switches a branch or commits under the flag.** That bound is those four entry points', not the run's. A command that changes code still cuts its own branch and commits on it in the code repository it changed (`dev-workflows:code-handoff`), and a documentation command does the same in its docs repository. Where the specs tree sits inside that same repository, that branch moves the specs checkout too, which is one reason that layout is unsupported.
+
+**What the flag leaves alone is what the command itself writes.** A run a notice let continue still writes its deliverable where the command puts it, and any of §2.1's single files it writes beside it: `implementation.md`, the `release-notes.md` draft, `pr-draft.md` or the implementation-gaps draft. They stay there, written and uncommitted, for the operator to move or commit once `$SPECS_PATH` is right. A run stopped at resolution writes nothing under the path at all. What changes is that the condition is now *said*.
 
 ### 3.2 Resolution inputs
 
@@ -283,7 +288,7 @@ well have one. A run that is keyless here is not thereby committing under
 
 ### 3.3 Stage 1 — guards
 
-Not reached on a run carrying `specs_git: misrooted`: the preflight ends at §3.1's notice (§3.4 says why).
+Not run on a run carrying `specs_git: misrooted` (§3.1). Each guard's notice tells the operator what this run's `commit-artifacts` will or will not commit, and under that flag it commits nothing, whatever a guard would find; §3.1's notice has already said why. A detached HEAD is still caught: `commit-artifacts` and `handoff-to-main` refuse on the flag, and `workflows-core:phase-handoff` §3.3 row I tests the state itself. The preflight goes on from §3.2 to §3.5's classification, skipping §3.4 too.
 
 **Any match ends the preflight; the run proceeds.** Every guard emits the §5
 notice, never a quiet line.
@@ -296,7 +301,7 @@ notice, never a quiet line.
 
 ### 3.4 Stage 2 — flush leftovers
 
-Always runs when stage 1 matched nothing **and the run does not carry `specs_git: misrooted`** (§3.1). Under that flag the preflight ends at its notice, the way a guard match ends it at §3.3: no flush, no push retry and no branch disposition. A flush there would `git add` paths that porcelain prints relative to the repository's top level and that do not exist from `$SPECS_PATH`, which fails with exit 128 on every run. Where `$SPECS_PATH` is a correct root holding a stray folder, it would commit and push while the notice says the run wrote nothing.
+Always runs when stage 1 matched nothing **and the run does not carry `specs_git: misrooted`** (§3.1). Under that flag it does not run at all, so there is no flush and no push retry, and the preflight goes on to §3.5, which switches nothing under the flag. A flush there would `git add` paths that porcelain prints relative to the repository's top level and that do not exist from `$SPECS_PATH`, which fails with exit 128 on every run. Where `$SPECS_PATH` is a correct root holding a stray folder, it would commit and push while the notice says the run wrote nothing.
 
 - **Dirty ARTIFACT paths exist** → commit them **onto the current branch** (they
   belong to the run that wrote them) and push, per §4 steps 2–6.
@@ -328,6 +333,8 @@ First matching row applies.
 | B2 | Plugin branch, and `git -C "$SPECS_PATH" merge-base --is-ancestor HEAD <default-ref>` succeeds (already merged upstream) | Switch to default, `git -C "$SPECS_PATH" pull --ff-only`, `git -C "$SPECS_PATH" branch -d <branch>`. If `-d` fails, report and skip — **never `-D`**. If `pull --ff-only` fails (the local default branch has diverged), report and continue on default **without** pulling — never merge, rebase, or reset. |
 | B3 | Plugin branch, unmerged, `branch-key` (below) resolves the branch to **any** key in the run key set (§3.2) | **Stay on it.** See §3.6. |
 | B4 | Plugin branch, unmerged, `branch-key` resolves the branch to **no** key in the set, or the set is empty (keyless run) | Switch to default, `git -C "$SPECS_PATH" pull --ff-only`. **Leave the branch and its pull request alone.** Report the branch name. |
+
+**Under `specs_git: misrooted` (§3.1) the table classifies and moves nothing.** Take the first matching row exactly as above: §3.2's fetch has already refreshed `<default-ref>` for B2's ancestry test, and `branch-key` below resolves B3 and B4 unchanged. Then act on that row without writing. B1 and B3 stay where they are, as they always do. B2 and B4 stay too, with no `switch`, no `pull --ff-only` and no `branch -d`. Each prints one line in place of its action: `Specs preflight: staying on <branch> — specs_git: misrooted, so no branch is switched (it would have <switched to <default> and deleted it, as it is merged | switched to <default>, as no key of this run names it>)`. A B3 here keeps the checkout on the caller's own branch exactly as it does on a correct `$SPECS_PATH`, so `workflows-core:phase-handoff` §3.3 row B still passes a resumed run. Where HEAD is on no plugin branch, no row applies here, as always.
 
 **Branch key resolution — `branch-key <branch>`.** The branch's key is resolved
 *against the run key set*, by testing the keys the run already holds. It is never
@@ -379,7 +386,8 @@ the name B4 reported; it exists and the plugin created it), then run stages 1–
 then stays on it. That is the state a single run holding the new set from the start would have kept,
 and a second preflight standing on the default branch cannot reach it by B1–B4 alone. A switch that
 fails is reported with the branch name, and the run continues from the branch it stands on. No
-other re-run switches anything outside the table above.
+other re-run switches anything outside the table above. Under `specs_git: misrooted` there is nothing
+to switch back to: no earlier B4 switched away, so the re-run classifies again and stays.
 
 **No auto-merge, deliberately.** No row above creates a merge commit or merges a
 branch into the default branch, and none should be added. The routing here
@@ -408,8 +416,8 @@ B3 keeps the working tree containing the artifact the run is about to read or am
 ### 3.7 Detached HEAD is blocking, not merely skipped
 
 G0 is the one guard that refuses to commit, and it is a data-loss guard
-rather than a courtesy. (`specs_git: misrooted`, §3.1, also stops every commit,
-but it is set by the gate's notices, not by a guard.)
+rather than a courtesy. (`specs_git: misrooted`, §3.1, also stops `commit-artifacts`
+and `phase-handoff`'s deliverable commit, but it is set by the gate's notices, not by a guard.)
 
 A commit made on a detached HEAD is reachable from no ref. Nothing points at it,
 `git branch` will not list it, and it is eligible for garbage collection. If
@@ -501,9 +509,11 @@ to state.
      notice. The repo *is* managed; the plugin is deliberately refusing to
      commit, and the user must know.
    - Fails on `specs_git: misrooted` → **not silent**: re-emit the §3.1 notice,
-     or `specs-root-check`'s stop, that set it. Nothing new was written under
-     `$SPECS_PATH`, and what is already there sits where this run found it
-     wrong.
+     or `specs-root-check`'s stop, that set it. Nothing is committed, and the
+     tail's emitters wrote nothing under `$SPECS_PATH` (§3.1). What the command
+     itself wrote there — a noticed run's deliverable, or one of §2.1's single
+     files such as `implementation.md` — stays written and uncommitted, and
+     what was already there sits where this run found it wrong.
 2. **Enumerate and stage** per §2.1. OTHER paths are never staged.
 3. **Nothing staged** (the gate passed but no artifact path is dirty) → no
    commit; emit the §6 `nothing to commit` outcome line. This is distinct from

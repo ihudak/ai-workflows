@@ -218,7 +218,7 @@ nothing.
      out below. `/specify` specifies a PRD that exists; a PRD folder that does not exist holds no
      `prd.md` for Phase 2 to read and no artifact for the PRD gate to find, so authoring into a
      freshly-minted one would write a specification against nothing. Every later
-     `specifications/<PRD>-<vslug>/` in this command — the PRD gate's `ls-tree` path and Phase 2's
+     `specifications/<PRD>-<vslug>/` in this command — the path the PRD gate hands `require-on-main` and Phase 2's
      per-Epic paths included — names the dir resolved here.
    - **Resolve the feature folder itself**, by case. **There are two cases, not three**: an Epic
      always has a PRD above it, because `/product-workflows:epics` is the only command that creates an

@@ -350,7 +350,8 @@ repair rather than a blocked one. Say that, and say one thing more, because it i
 index is an OTHER path under `design/**`, so on the next run of any command sharing this repo
 `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §3.3's **G1** matches — the preflight ends there
 at advisory severity listing the paths, and §3.4's leftover flush and §3.5's branch disposition are
-suppressed for the rest of that session. G1 does not set `specs_git: blocked`, so nothing is lost or
+suppressed for the rest of that session — unless that run carries `specs_git: misrooted`, under
+which no guard runs. G1 does not set `specs_git: blocked`, so nothing is lost or
 halted, and the suppression repeats until the paths are committed or the handoff is taken. Beyond
 those two facts, neither more nor less — and name no command that could not run against the folder
 this run actually resolved.
