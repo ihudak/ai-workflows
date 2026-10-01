@@ -820,7 +820,7 @@ pushed"* rather than reporting an empty diff against a ref the remote does not h
 
 This file is what `/document` and `/release-notes` read to ground their prose in the shipped diff
 (§4 of that reference), and what `workflows-core:epic-picker`'s ● marker is computed from. It is committed by
-the terminal `commit-artifacts` step with the rest of the run's `$SPECS_PATH` artifacts.
+the terminal `commit-artifacts` step with the rest of the run's `$SPECS_PATH` artifacts — unless the run carries `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), when it is written and not committed.
 
 ---
 

@@ -492,7 +492,7 @@ follow-ups already use. Record `prd` always and `epic` when the resolved kind is
 Reuse `feedback-emission.md`'s specs-first ladder, targeting the **`cost/`**
 subdir. Walk top-down; stop at the first tier that applies:
 
-**Before tier 1: the run carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1, or `addressing.md` §3 `specs-root-check`'s stop) → **report-only**, as in tier 4, whatever else would apply. `$SPECS_PATH` is set but misplaced, so any write under it lands where `specs-repo-git.md` §2.1's classifier puts it in OTHER, or commits it in the wrong place. A pending entry written there would never reconcile, and §9 does not run either.
+**Before tier 1: the run carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1, or `addressing.md` §3 `specs-root-check`'s stop) → **report-only**, as in tier 4, whatever else would apply. `$SPECS_PATH` is set but misplaced, so any write under it lands where `specs-repo-git.md` §2.1's classifier puts it in OTHER, or takes it for an artifact that cannot be staged from `$SPECS_PATH` and that the first run after the variable is fixed would commit in the wrong place. A pending entry written there would never reconcile, and §9 does not run either.
 
 1. `$SPECS_PATH` writable **and** the PRD dir exists (matched by
    `$SPECS_PATH/{specs|specifications|vis}/…/<KEY>{-|_}<slug>/…`) ->

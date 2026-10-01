@@ -157,10 +157,13 @@ by either of two tests, each against the filesystem and none by parsing a name:
 - **(b) `$SPECS_PATH` is, or directly holds, a specs folder.** Either `$SPECS_PATH` itself has a §4
   carrier, or an immediate subdirectory whose name is not one of §2's reserved subdirectory names has
   one. **A carrier counts only where its directory's name passes §4.1's prefix test**: it begins
-  `<KIND>-<key>-`, with `<KIND>` one of §2's three and `<key>` the key read off that carrier. The
-  name tested is the physical one (`cd -P`), so a symlink is judged by the folder it reaches, never by
-  the name of the link. This applies to `$SPECS_PATH`'s own name as well as to each subdirectory's, and it applies whether or not
-  `$SPECS_PATH/specifications/` exists. Every folder the plugin creates is kind-prefixed (§2), so a
+  `<KIND>-<key>-`, with `<KIND>` one of §2's three and `<key>` the key read off that carrier.
+  **`$SPECS_PATH`'s own name is tested physically** (`cd -P`), so a `$SPECS_PATH` reached through a
+  symlink is judged by the folder it reaches, never by the name of the link. **A subdirectory is
+  tested by its own name**, and **one whose physical path resolves inside
+  `$SPECS_PATH/specifications/` is skipped**. A convenience link at a correct root, such as
+  `current -> specifications/PRD-A-1-a`, points into the tree rather than out of it, and must not
+  stop every keyed run. The test applies whether or not `$SPECS_PATH/specifications/` exists. Every folder the plugin creates is kind-prefixed (§2), so a
   folder the tree holds passes the test. A carrier that is no specs folder does not: a `templates/`
   or `_templates/` copy of the plugin's own templates, or a `README.md` or `docs/` page carrying
   `key:` and a folder `kind:`. Those never stop a run, at a fresh root or a populated one. A nested
@@ -236,14 +239,18 @@ Each item is named with where it belongs: the nested folders in
 What each one costs is not the same. `specs-repo-git` §2.1's classifier never stages
 `dev-workflows-feedback/` or `dev-workflows-cost/` left at that depth, so G1 fires on every later
 run, and a pending cost there never reconciles. A `documentation/<slug>/dev-workflows/` there matches
-§2.1's `<specs-root>/documentation/*/dev-workflows/**` shape one level too deep, so it **was**
-committed, in the wrong place. The line says so, and it has to be moved like the rest. **The plugin
+§2.1's `<specs-root>/documentation/*/dev-workflows/**` shape one level too deep, so the classifier
+takes it for an artifact. **While `$SPECS_PATH` stays misrooted it is never committed**: porcelain
+prints its path relative to the repository's top level, and `git -C "$SPECS_PATH" add` names a path
+that does not exist from there, which fails. **The first run after the variable is fixed commits it,
+in the wrong place, unless it is moved first.** The line says so, and it has to be moved like the
+rest. **The plugin
 moves nothing and gives no commands**: a move has to be right in every state the repository might
 be in, and only the operator can see that state:
 
 `SPECS_PATH_INSIDE_TREE: SPECS_PATH is <value>, which <is itself a specifications/ directory | is inside the specifications/ directory | is itself a specs folder, asserting key <key> | holds the specs folder <subdirectory> directly> — every folder lives under $SPECS_PATH/specifications/, so this run would look for and create folders in the wrong place; it wrote nothing under that path, and its cost and feedback are reported here instead. Set SPECS_PATH to <the value the walk found | the directory that holds specifications/> where it is set, and re-run.[ <the value the walk found> is not the top level of its repository (<that repository's top level>), and a specs tree inside a larger repository is unsupported: this plugin switches branches and commits in that repository.]`
 `[top-level variant: SPECS_PATH_INSIDE_TREE: SPECS_PATH is <value>, the top level of its repository, and holds the specs folder <subdirectory> outside <value>/specifications/, where every folder lives. SPECS_PATH is right; move <subdirectory> into <value>/specifications/ yourself, commit the move, then re-run — the plugin moves nothing. This run wrote nothing under <value>, and its cost and feedback are reported here instead.]`
-`[Misrooted runs left: <value>/specifications/ (<folder>, …), which belongs in <the value the walk found>/specifications/ | the specs repository's specifications/; <value>/<bookkeeping directory>/, which belongs at <the value the walk found>/<bookkeeping directory>/ | the same path at the specs repository's top level[, and was committed there in the wrong place]; … Move them yourself, commit the move, then re-run — the plugin moves nothing.]`
+`[Misrooted runs left: <value>/specifications/ (<folder>, …), which belongs in <the value the walk found>/specifications/ | the specs repository's specifications/; <value>/<bookkeeping directory>/, which belongs at <the value the walk found>/<bookkeeping directory>/ | the same path at the specs repository's top level[, which the first run after SPECS_PATH is fixed commits there in the wrong place unless it is moved first]; … Move them yourself, commit the move, then re-run — the plugin moves nothing.]`
 
 **It offers no "enter the path" option**, unlike *Required path environment variable unset*
 (`workflows-core:escalation-rules`). The wrong value lives in the environment, so a per-run override

@@ -6,9 +6,7 @@ Single source of truth for the plugin family's session-feedback emitter. Every c
 family itself**, and defects in the ai-containers environment the family runs in (§4), and persist them per-PRD into the **specs repo** so the plugin
 maintainer can aggregate feedback across engineers. Feedback reaches the
 maintainer only if it lands in the committed, pushed specs repo — hence the
-persistence ladder is **specs-first** (§2), and hence every command's terminal
-`commit-artifacts` step commits and pushes it
-(`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §4). This emitter still
+persistence ladder is **specs-first** (§2), and hence every command's terminal `commit-artifacts` step commits and pushes it (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §4), save on a run carrying `specs_git: blocked` or `specs_git: misrooted`; under the second, §2 writes no entry in the first place. This emitter still
 never touches git itself (§6 caller contract); the commit is a separate,
 bounded, end-of-run step.
 
@@ -91,7 +89,7 @@ back in review because the two products differ here.
 **deterministic** (no interactive path prompt, consistent with silent
 capture, §5). Walk the ladder top-down and stop at the first tier that applies:
 
-**Before tier 1: the run carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1, or `addressing.md` §3 `specs-root-check`'s stop) → **report-only**, as in tier 4, whatever else would apply. `$SPECS_PATH` is set but misplaced, so any write under it lands where `specs-repo-git.md` §2.1's classifier puts it in OTHER, or commits it in the wrong place. Every entry point below resolves its target here, so this covers them all.
+**Before tier 1: the run carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1, or `addressing.md` §3 `specs-root-check`'s stop) → **report-only**, as in tier 4, whatever else would apply. `$SPECS_PATH` is set but misplaced, so any write under it lands where `specs-repo-git.md` §2.1's classifier puts it in OTHER, or takes it for an artifact that cannot be staged from `$SPECS_PATH` and that the first run after the variable is fixed would commit in the wrong place. Every entry point below resolves its target here, so this covers them all.
 
 1. **`$SPECS_PATH` resolvable + writable + the PRD dir exists** — the dir matched
    by `$SPECS_PATH/{specs|specifications|vis}/…/<KEY>{-|_}<slug>/…` →

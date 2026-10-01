@@ -35,13 +35,15 @@ in two places is a summary that drifts in one of them.
 alongside the artifacts the follow-ups are about.
 
 **No folder resolved, or the run carries `specs_git: misrooted` (`specs-repo-git.md` §3.1) → report-only.** The follow-ups stay in the Final Report and the phase emits a
-one-line notice: `⚠ No resolved folder — N follow-up(s) kept in this report only.` **NEVER write into
+one-line notice naming its reason: `⚠ No resolved folder — N follow-up(s) kept in this report only.`, or,
+under the flag, whether or not a folder resolved, `⚠ SPECS_PATH is misplaced (specs_git: misrooted) — N follow-up(s) kept in this report only.` **NEVER write into
 the current working directory**, which may be a code repository.
 
 **That is the whole ladder now, and it used to have four rungs.** The vault was the primary target,
 `$SPECS_PATH` the second, a directory beside an import the third, and report-only the last. With no
-vault and no import, two rungs described places that no longer exist. A run that resolved a folder is
-byte-identical to what it was — it took the `$SPECS_PATH` rung then too.
+vault and no import, two rungs described places that no longer exist. A run that resolved a folder and
+carries no `specs_git: misrooted` is byte-identical to what it was — it took the `$SPECS_PATH` rung then
+too. One that carries the flag is the one change: it now reports where it used to write.
 
 ## 3. Verbose notes
 

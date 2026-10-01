@@ -210,7 +210,7 @@ state in this container setup.
 
 Still **never fatal** (§1): each notice reports and the run continues. **Where the path is a directory and `specs-root-check` finds a signal there, the non-repository notice above sets `specs_git: misrooted` too.**
 
-**`specs_git: misrooted` is the run-wide record that `$SPECS_PATH` is misplaced.** It is set by either notice above, or by `workflows-core:addressing` §3 `specs-root-check` where it stops the run at resolution. Under it, every emitter of the tail falls to its report-only tier, so nothing more is written under a path the run has found wrong. That covers cost (`cost-emission.md` §8), feedback (`feedback-emission.md` §2), follow-ups (`followup-emission.md` §2) and `resume.md` (`session-hygiene.md` §1). §4's `commit-artifacts` skips, as it does on `specs_git: blocked`. Writing there would only add files §2.1's classifier puts in OTHER or files in the wrong place: a pending cost there never reconciles, and G1 fires on every run after the variable is corrected. It changes nothing else the run does: a run the notice let continue still writes its deliverable where it would have, and `workflows-core:phase-handoff` gates on its own conditions, not on this flag. What changes is that the condition is now *said*.
+**`specs_git: misrooted` is the run-wide record that `$SPECS_PATH` is misplaced.** It is set by either notice above, or by `workflows-core:addressing` §3 `specs-root-check` where it stops the run at resolution. Under it, every emitter of the tail falls to its report-only tier, so nothing more is written under a path the run has found wrong. That covers cost (`cost-emission.md` §8), feedback (`feedback-emission.md` §2), follow-ups (`followup-emission.md` §2) and `resume.md` (`session-hygiene.md` §1). The preflight itself goes no further than the notice (§3.3–§3.5 do not run). §4's `commit-artifacts` skips, as it does on `specs_git: blocked`. `workflows-core:phase-handoff` §2.1's `handoff-to-main` refuses the handoff, and its row C offers no repair. **No step of the family switches a branch or commits under the flag.** Writing there would only add files §2.1's classifier puts in OTHER, or artifact paths that cannot be staged from `$SPECS_PATH` and that the first run after the variable is fixed would commit in the wrong place: a pending cost there never reconciles, and G1 fires on every run after the variable is corrected. **What the flag leaves alone is the deliverable.** A run a notice let continue still writes it where the command puts it, and it stays there, written and uncommitted, for the operator to move or commit once `$SPECS_PATH` is right. A run stopped at resolution writes nothing under the path at all. What changes is that the condition is now *said*.
 
 ### 3.2 Resolution inputs
 
@@ -283,6 +283,8 @@ well have one. A run that is keyless here is not thereby committing under
 
 ### 3.3 Stage 1 — guards
 
+Not reached on a run carrying `specs_git: misrooted`: the preflight ends at §3.1's notice (§3.4 says why).
+
 **Any match ends the preflight; the run proceeds.** Every guard emits the §5
 notice, never a quiet line.
 
@@ -294,7 +296,7 @@ notice, never a quiet line.
 
 ### 3.4 Stage 2 — flush leftovers
 
-Always runs when stage 1 matched nothing.
+Always runs when stage 1 matched nothing **and the run does not carry `specs_git: misrooted`** (§3.1). Under that flag the preflight ends at its notice, the way a guard match ends it at §3.3: no flush, no push retry and no branch disposition. A flush there would `git add` paths that porcelain prints relative to the repository's top level and that do not exist from `$SPECS_PATH`, which fails with exit 128 on every run. Where `$SPECS_PATH` is a correct root holding a stray folder, it would commit and push while the notice says the run wrote nothing.
 
 - **Dirty ARTIFACT paths exist** → commit them **onto the current branch** (they
   belong to the run that wrote them) and push, per §4 steps 2–6.
@@ -405,8 +407,9 @@ B3 keeps the working tree containing the artifact the run is about to read or am
 
 ### 3.7 Detached HEAD is blocking, not merely skipped
 
-G0 is the one state where the plugin refuses to commit at all, and it is a
-data-loss guard rather than a courtesy.
+G0 is the one guard that refuses to commit, and it is a data-loss guard
+rather than a courtesy. (`specs_git: misrooted`, §3.1, also stops every commit,
+but it is set by the gate's notices, not by a guard.)
 
 A commit made on a detached HEAD is reachable from no ref. Nothing points at it,
 `git branch` will not list it, and it is eligible for garbage collection. If
