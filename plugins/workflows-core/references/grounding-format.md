@@ -249,10 +249,11 @@ different answers about the same finding.
 
 **The verifier checks the control, and checks it the way it checks everything else — by
 re-deriving.** `product-workflows:grounding-verifier` does not confirm that the control's cited line
-exists; it runs the control itself, and it is handed `control` in its inputs to do so. **A control
-that does not reproduce falsifies the absence, not the finding**: it forces `contradict` only where
-the finding's verdict rests on that absence, and a finding already reading `NOT-PROVABLE` with its
-failed control recorded is agreed with. §8 owns the outcome vocabulary and the exact rule.
+exists; it runs the control itself, and it is handed `control` only in its compare step, never in
+the blind one. **A control that does not reproduce falsifies the absence, not the finding**: it
+forces `contradict` only where the finding's verdict rests on that absence, and a finding already
+reading `NOT-PROVABLE` with its failed control recorded is agreed with. §8 owns the outcome
+vocabulary and the exact rule.
 
 ```
 - id: [CG#31]
