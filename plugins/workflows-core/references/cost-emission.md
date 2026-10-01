@@ -492,6 +492,8 @@ follow-ups already use. Record `prd` always and `epic` when the resolved kind is
 Reuse `feedback-emission.md`'s specs-first ladder, targeting the **`cost/`**
 subdir. Walk top-down; stop at the first tier that applies:
 
+**Before tier 1: the run carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1, or `addressing.md` §3 `specs-root-check`'s stop) → **report-only**, as in tier 4, whatever else would apply. `$SPECS_PATH` is set but misplaced, so any write under it lands where `specs-repo-git.md` §2.1's classifier puts it in OTHER, or commits it in the wrong place. A pending entry written there would never reconcile, and §9 does not run either.
+
 1. `$SPECS_PATH` writable **and** the PRD dir exists (matched by
    `$SPECS_PATH/{specs|specifications|vis}/…/<KEY>{-|_}<slug>/…`) ->
    `<PRD-dir>/dev-workflows/cost/<sid8>.md`. *[primary]*
@@ -530,7 +532,7 @@ mount / permission) drops to the next tier with the same notice.
 ## 9. Pending & reconciliation (keyless runs)
 
 When no PRD key resolves and §8 tier 2's documentation branch does not apply,
-write the entry to a pending file:
+and the run does not carry `specs_git: misrooted` (§8), write the entry to a pending file:
 
 ```
 $SPECS_PATH/dev-workflows-cost/pending-<date>-<sid8>.md

@@ -128,7 +128,7 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
 
 **Specs-repo preflight** — run in step 1, as soon as `$SPECS_PATH` is known and before the folder is resolved. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run,
 retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
-`specs_git: blocked` (§3.3 G0), carry that flag for the whole run — the terminal `commit-artifacts`
+`specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.
 
 ---
@@ -763,8 +763,7 @@ and no label because the ideation phase is short (§4). Guidance only, never aut
    ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows
    session artifacts (/idea)` — the key is mandatory here, so `NOISSUE` never applies — and pushes. It NEVER
    touches a code/docs repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER
-   fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0), re-emitting
-   that notice. Hold its §6 outcome line for the Final report.
+   fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the Final report.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (idea.md itself is handed off separately, before this phase, via `workflows-core:phase-handoff` §2, behind Phase 5's §4.3 consent choice; the terminal step above commits only the bounded session-artifact paths in `$SPECS_PATH`), and NEVER writes into a code/docs repo or the current working directory, where it is not the specs repository; no user name is ever written.
 

@@ -85,7 +85,7 @@ four-resolution one.
    choices: ["Set SPECS_PATH (enter the path)", "Cancel"]
    ```
 3. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
-   `specs_git: blocked` (§3.3 G0), carry that flag for the whole run — the terminal
+   `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal
    `commit-artifacts` step skips on it.
 4. **Resolve the BRD folder.** `resolve-address <BRD-KEY>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
    every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus §5's legacy fallback (§2 step 2) — and so can return any folder kind it finds there: a `BRD-` folder directly under `specifications/`, a `PRD-` folder (a slice inside a BRD, or an idea-route PRD folder), or an `EPIC-` folder inside a `PRD-` folder. Step 5 answers the level question on what it returns. Absent → stop, without asserting which command would create it, because nothing on disk
@@ -1542,8 +1542,7 @@ mid-walk in Phase 4 — each a user halt that reports what it left written. The 
    inside `$SPECS_PATH`, commits `<BRD-KEY> Add dev-workflows session artifacts (/brd-split)` with
    no `Co-Authored-By` trailer, and pushes to the branch Phase 6's handoff created. It NEVER touches
    a code repo, a docs repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER
-   fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0),
-   re-emitting that notice. Hold its §6 outcome line for the final report.
+   fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the final report.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git for the deliverable
 is offered only in Phase 6), and NEVER writes into a code/docs repo or the current working

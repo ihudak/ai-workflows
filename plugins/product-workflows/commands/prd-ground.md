@@ -97,8 +97,7 @@ behaviour, not the behaviour.
    ```
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort
-   one, the same ordering `/design` Phase 0 uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If it returns `specs_git: blocked`
-   (§3.3 G0), carry that flag for the whole run.
+   one, the same ordering `/design` Phase 0 uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run.
 5. **Resolve the BRD folder.** `resolve-address <BRD-KEY>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
    every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus §5's legacy fallback — and so can return any folder kind it finds there: a `BRD-` folder directly under `specifications/`, a `PRD-` folder (a slice inside a BRD, or an idea-route PRD folder), or an `EPIC-` folder inside a `PRD-` folder. Step 5a answers the level question on what it returns.
    Absent → stop, without asserting which command would create it: no folder exists, so no
@@ -1879,7 +1878,7 @@ fire `emit-block`. The one exception is a halt on a tool the ai-containers image
    ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits
    `<BRD-KEY> Add dev-workflows session artifacts (/prd-ground)` with no `Co-Authored-By` trailer,
    and pushes to the branch Phase 9's handoff created. NEVER touches a code repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; skips entirely when the run
-   carries `specs_git: blocked`, re-emitting that notice. Hold its §6 outcome line for the final
+   carries `specs_git: blocked` or `specs_git: misrooted`, re-emitting that notice. Hold its §6 outcome line for the final
    report.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git for the deliverable

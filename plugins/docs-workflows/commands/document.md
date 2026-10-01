@@ -43,7 +43,7 @@ artifacts from an earlier run, retry an artifact commit that failed to push,
 and settle the branch. This runs against `$SPECS_PATH` only — `git -C
 "$SPECS_PATH"`, never a `cd`, so the code/docs repo this run is working
 in is untouched (§1 rule 1). Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice;
-if it returns `specs_git: blocked` (§3.3 G0), carry that flag for the whole
+if it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole
 run — the terminal `commit-artifacts` step skips on it.
 
 Echo the detected mode, then proceed to that mode's phases. The two modes share the same style pass and the same fixer — `docs-workflows:docs-style-checker`, which reports and never modifies a file, and `workflows-core:doc-fixer`, which applies what it reports; the two ship from different plugins and are dispatched by their qualified `subagent_type` everywhere below; only Keyed mode also runs `doc-reviewer` (each mode emits its own final report).
@@ -1420,7 +1420,7 @@ per §4 step 5. It NEVER writes into the docs repo this run just changed —
 the documentation commit, branch, and PR are untouched — NEVER touches a
 code repo, anything outside `$SPECS_PATH`;
 NEVER force-pushes; NEVER fails the run; and skips entirely when the run carries
-`specs_git: blocked` (§3.3 G0), re-emitting that notice. Because the Phase 9
+`specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Because the Phase 9
 report was composed before this phase, **print its §6 outcome line here**,
 as the run's last output — prefixed `Specs repo:`, with any guard notice
 repeated in full.
@@ -1516,8 +1516,8 @@ No model-routing reminder is injected for this command — classification still 
 
 **Specs-repo preflight.** Already run — the shared `## Mode detection` section executed
 `specs-preflight` (`workflows-core:specs-repo-git` §3) before dispatching to
-either mode, so it runs for Mode B exactly as it does for Mode A, and any `specs_git: blocked` flag
-it set is carried into this mode too. Do not run it a second time.
+either mode, so it runs for Mode B exactly as it does for Mode A, and any `specs_git: blocked` or
+`specs_git: misrooted` flag it set is carried into this mode too. Do not run it a second time.
 
 ---
 
@@ -1872,7 +1872,7 @@ when this doc-edit run resolved no key — and pushes per §4 step 5. It NEVER
 writes into the docs repo this run just changed, NEVER touches a code repo,
 anything outside `$SPECS_PATH`;
 NEVER force-pushes; NEVER fails the run; and skips entirely when the run
-carries `specs_git: blocked` (§3.3 G0), re-emitting that notice. Because
+carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Because
 the Phase 5 report was composed before this phase, **print its §6 outcome
 line here**, as the run's last output — prefixed `Specs repo:`, with
 any guard notice repeated in full. No `resume.md` is written in this mode

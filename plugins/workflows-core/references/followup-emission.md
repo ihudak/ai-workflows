@@ -34,7 +34,7 @@ in two places is a summary that drifts in one of them.
 **`follow-ups.md` in the folder the run resolved**, appended. One file per PRD or Epic folder,
 alongside the artifacts the follow-ups are about.
 
-**No folder resolved → report-only.** The follow-ups stay in the Final Report and the phase emits a
+**No folder resolved, or the run carries `specs_git: misrooted` (`specs-repo-git.md` §3.1) → report-only.** The follow-ups stay in the Final Report and the phase emits a
 one-line notice: `⚠ No resolved folder — N follow-up(s) kept in this report only.` **NEVER write into
 the current working directory**, which may be a code repository.
 

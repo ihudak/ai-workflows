@@ -91,6 +91,8 @@ back in review because the two products differ here.
 **deterministic** (no interactive path prompt, consistent with silent
 capture, §5). Walk the ladder top-down and stop at the first tier that applies:
 
+**Before tier 1: the run carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1, or `addressing.md` §3 `specs-root-check`'s stop) → **report-only**, as in tier 4, whatever else would apply. `$SPECS_PATH` is set but misplaced, so any write under it lands where `specs-repo-git.md` §2.1's classifier puts it in OTHER, or commits it in the wrong place. Every entry point below resolves its target here, so this covers them all.
+
 1. **`$SPECS_PATH` resolvable + writable + the PRD dir exists** — the dir matched
    by `$SPECS_PATH/{specs|specifications|vis}/…/<KEY>{-|_}<slug>/…` →
    `<PRD-dir>/dev-workflows/<KEY>-feedback.md`. *[primary — the whole point]*

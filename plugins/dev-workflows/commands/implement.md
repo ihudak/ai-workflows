@@ -63,7 +63,7 @@ artifacts from an earlier run, retry an artifact commit that failed to push,
 and settle the branch. This runs against `$SPECS_PATH` only — `git -C
 "$SPECS_PATH"`, never a `cd`, so the code/docs repo this run is working
 in is untouched (§1 rule 1). Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice;
-if it returns `specs_git: blocked` (§3.3 G0), carry that flag for the whole
+if it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole
 run — the terminal `commit-artifacts` step skips on it.
 
 **Epic-unit resolution (keyed runs).** `/implement` implements one Epic at a time. When
@@ -965,8 +965,7 @@ consent choice, §2.8's base-branch ladder and §2.6's `gh` capability probe
 allowed, through a different reference and against a different remote —
 NEVER touches a docs repo or the current working directory, where it is not the specs repository;
 NEVER force-pushes;
-NEVER fails the run; and skips entirely when the run carries `specs_git:
-blocked` (§3.3 G0), re-emitting that notice. Because the Phase 5 report was
+NEVER fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Because the Phase 5 report was
 composed before this phase, **print its §6 outcome line here**, as the run's
 last output — prefixed `Specs repo:`, with any guard notice repeated in full.
 

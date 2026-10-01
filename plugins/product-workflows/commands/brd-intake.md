@@ -49,7 +49,7 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
    choices: ["Set SPECS_PATH (enter the path)", "Cancel"]
    ```
 6. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
-   `specs_git: blocked` (§3.3 G0), carry that flag for the whole run — the terminal
+   `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal
    `commit-artifacts` step skips on it.
 7. **Resolve or derive the BRD folder** via `resolve-address <BRD-KEY>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). Found → an existing folder, and where it is a
    root BRD this invocation is a re-run over it; use it. Only a root is: the slice test below and the
@@ -1497,8 +1497,7 @@ as Phase 1 says where it stops. The one exception is a halt on a tool the ai-con
    inside `$SPECS_PATH`, commits `<BRD-KEY> Add dev-workflows session artifacts (/brd-intake)` with
    no `Co-Authored-By` trailer, and pushes to the branch Phase 7's handoff created. It NEVER touches
    a code repo, a docs repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER
-   fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0), re-emitting
-   that notice. Hold its §6 outcome line for the final report.
+   fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the final report.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git for the deliverable is
 offered only in Phase 7), and NEVER writes into a code/docs repo or the current working directory, where it is not the specs repository;

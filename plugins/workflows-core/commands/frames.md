@@ -132,7 +132,7 @@ Usage: `/frames <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-model=
 set step 1 fixes, before step 1's carrier and kind tests read the folder. Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
 `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run,
 retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
-`specs_git: blocked` (§3.3 G0), carry that flag for the whole run — the terminal `commit-artifacts`
+`specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.
 
 ---
@@ -424,7 +424,7 @@ gap** (a capability the run needed but the plugin lacked), `emit-block` (per
    ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows session
    artifacts (/frames)` and pushes. It NEVER touches a code/docs repo or the current working
    directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when the run carries
-   `specs_git: blocked` (§3.3 G0), re-emitting that notice. Hold its §6 outcome line for the Final
+   `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the Final
    report.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits a deliverable (each `index.md` is handed off

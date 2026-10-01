@@ -260,7 +260,7 @@ directory (resolved in Phase 1), so it does **not** require cwd to be anywhere i
 1a or 1b reads anything. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session
 artifacts from an earlier run, retry an artifact commit that failed to push,
 and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
-`specs_git: blocked` (§3.3 G0), carry that flag for the whole run — the
+`specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the
 terminal `commit-artifacts` step skips on it.
 
 **Refuse a PRD that states no requirements**, once step 1b's table has accepted the run — so after
@@ -972,7 +972,7 @@ stages ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits
 It NEVER touches a code/docs
 repo, or the current working directory, where it is not the specs repository; NEVER
 force-pushes; NEVER fails the run; and skips entirely when the run carries
-`specs_git: blocked` (§3.3 G0), re-emitting that notice. Because the Phase 9
+`specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Because the Phase 9
 report was composed before this phase, **print its §6 outcome line here**, as
 the run's last output — prefixed `Specs repo:`, with any guard notice repeated
 in full.

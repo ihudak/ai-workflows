@@ -11,12 +11,13 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed
 
+- **Every command names `specs_git: misrooted` beside `specs_git: blocked`**, at its preflight and at its terminal `commit-artifacts` step (#70).
 - **`/implement` Phase 0 named `ambiguous` as `addressing` §3's hard stop**, and §3 now has two (#70). It names `misrooted` beside it, on either address form. `/ready` (both resolutions) and `/design` name it in their status lists as a stop.
 - **The preflight step said it was "Prompt-free and silent when the specs repo is clean and on its default branch"**, which a misconfigured `$SPECS_PATH` now falsifies (#70). Every such sentence takes `specs-repo-git` §1 rule 7's wording instead: silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. This applies to all five commands.
 
 ### Fixed — documentation
 
-- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals `/design`, `/ready`, `/implement` and `/vuln` test on either address form, the `SPECS_PATH_INSIDE_TREE` stop, the notice (one line, plus one more naming anything a misrooted run left behind) `/upgrade` and other runs that resolve no address get instead, the detection of a tree an earlier run already damaged, with the stop naming what to move and where, though it moves nothing, and the two unsupported layouts, each with its reason. `docs/getting-started.md` says to set the variable to the root of a dedicated specs repository, the directory that holds `specifications/`. The environment page also says why a specs tree inside a larger repository is unsupported. `docs/reference/session-feedback.md` places an unfiled entry at the top of `$SPECS_PATH`.
+- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals `/design`, `/ready`, `/implement` and `/vuln` test on either address form, the `SPECS_PATH_INSIDE_TREE` stop, the notice (one line, plus one more naming anything a misrooted run left behind) `/upgrade` and other runs that resolve no address get instead, the detection of a tree an earlier run already damaged, the fact that a stopped or noticed run writes nothing under the misplaced path, with the stop naming what to move and where, though it moves nothing, and the two unsupported layouts, each with its reason. `docs/getting-started.md` says to set the variable to the root of a dedicated specs repository, the directory that holds `specifications/`. The environment page also says why a specs tree inside a larger repository is unsupported. `docs/reference/session-feedback.md` places an unfiled entry at the top of `$SPECS_PATH`.
 
 ## [4.4.1] — 2026-10-01
 

@@ -102,7 +102,7 @@ Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback]
 **Specs-repo preflight** — run at the end of step 1's address resolution, with the run key set step 1
 fixes, before step 1 places the folder or takes any of its stops. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run,
 retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
-`specs_git: blocked` (§3.3 G0), carry that flag for the whole run — the terminal `commit-artifacts`
+`specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.
 
 3. **Read from a clean specs-repo main — never a branch.** The specs repo's `main` (or `master`) branch
@@ -685,7 +685,7 @@ Silent; the printed `### Context hygiene` guidance already appeared in the Phase
 **Then commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It stages ONLY
 the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows session artifacts
 (/ready)`, and pushes per §4 step 5. It NEVER touches a code/docs repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when the
-run carries `specs_git: blocked` (§3.3 G0), re-emitting that notice. Because the Phase 5 report was
+run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Because the Phase 5 report was
 composed before this phase, **print its §6 outcome line here**, as the run's last output — prefixed
 `Specs repo:`, with any guard notice repeated in full.
 

@@ -136,26 +136,30 @@ instead go on silently without the ARD or specification it should have read.
 **What it tests, and where.** It tests only where `$SPECS_PATH` is set. Two signals are tested, (a)
 by either of two tests, each against the filesystem and none by parsing a name:
 
-- **(a) `$SPECS_PATH` is itself the `specifications/` directory.** Either of two tests shows it:
-  - **`git -C "$SPECS_PATH" rev-parse --show-prefix` prints exactly `specifications/`**, i.e. it is
-    the `specifications/` directory directly under a git work tree's top level. **This test runs
-    whether or not `$SPECS_PATH/specifications/` exists.** One that does is the damage a run made
+- **(a) `$SPECS_PATH` is, or is inside, the `specifications/` directory.** Either of two tests shows
+  it:
+  - **`git -C "$SPECS_PATH" rev-parse --show-prefix` prints `specifications/`, or a prefix beginning
+    with it**, i.e. it is the `specifications/` directory directly under a git work tree's top level,
+    or any directory inside that one, a folder of any name included. **This test runs whether or not
+    `$SPECS_PATH/specifications/` exists.** One that does is the damage a run made
     before this check existed, which created its folders at `specifications/specifications/`. A
     precondition that skipped it would keep the plugin reading the nested tree forever, and the
     users it would skip are exactly the ones who already met the misroot.
-  - **Only where `$SPECS_PATH/specifications/` is not a directory:**
-    `[ "$SPECS_PATH/../specifications" -ef "$SPECS_PATH" ]`, where `$SPECS_PATH` is not itself a git
-    work tree's top level. Where `git -C "$SPECS_PATH" rev-parse --show-prefix` succeeds, it must
-    print a non-empty prefix. A specs repository cloned into a directory that happens to be named
-    `specifications` is a repository root, not a directory inside one, and has no
-    `specifications/` of its own until something is written into it. This catches the same misroot
-    below a directory that is not a repository's top level (`<repo>/specs/specifications`), and a
-    `specifications/` directory mounted on its own under that name.
+  - **`[ "$SPECS_PATH/../specifications" -ef "$SPECS_PATH" ]`, where `$SPECS_PATH` is not itself a
+    git work tree's top level.** Where `git -C "$SPECS_PATH" rev-parse --show-prefix` succeeds, it
+    must print a non-empty prefix. A specs repository cloned into a directory that happens to be
+    named `specifications` is a repository root, not a directory inside one, whether or not it holds
+    a `specifications/` yet. This test too runs whether or not `$SPECS_PATH/specifications/` exists.
+    It catches the same misroot below a directory that is not a repository's top level
+    (`<repo>/specs/specifications`), and a `specifications/` directory mounted on its own under that
+    name, including one a run already wrote a nested `specifications/` into. Neither has a
+    repository prefix for the first test to read.
 - **(b) `$SPECS_PATH` is, or directly holds, a specs folder.** Either `$SPECS_PATH` itself has a §4
   carrier, or an immediate subdirectory whose name is not one of §2's reserved subdirectory names has
   one. **A carrier counts only where its directory's name passes §4.1's prefix test**: it begins
-  `<KIND>-<key>-`, with `<KIND>` one of §2's three and `<key>` the key read off that carrier. This
-  applies to `$SPECS_PATH`'s own name as well as to each subdirectory's, and it applies whether or not
+  `<KIND>-<key>-`, with `<KIND>` one of §2's three and `<key>` the key read off that carrier. The
+  name tested is the physical one (`cd -P`), so a symlink is judged by the folder it reaches, never by
+  the name of the link. This applies to `$SPECS_PATH`'s own name as well as to each subdirectory's, and it applies whether or not
   `$SPECS_PATH/specifications/` exists. Every folder the plugin creates is kind-prefixed (§2), so a
   folder the tree holds passes the test. A carrier that is no specs folder does not: a `templates/`
   or `_templates/` copy of the plugin's own templates, or a `README.md` or `docs/` page carrying
@@ -167,8 +171,11 @@ by either of two tests, each against the filesystem and none by parsing a name:
   tree, with or without keyed folders below it. Reserved subdirectories are skipped because
   `revisions/` holds archived copies of a PRD and `brd/` holds the inventory, and both of those assert
   their parent's key and kind. Stop testing at the first that qualifies.
-  **The one cost: a `$SPECS_PATH` pointing at a legacy directory that holds only unprefixed folders
-  (§5's layout) is not detected by (b).** Signal (a) still catches it where that directory is named
+  **What neither signal sees, as a class: a `$SPECS_PATH` that is, or holds only, folders not named
+  `<KIND>-<key>-`, and that lies outside any work tree's top-level `specifications/`.** Inside a
+  repository, (a)'s first test catches every such path by its prefix, a legacy unprefixed folder
+  (§5) included. Outside one, a mount of a legacy folder, or of a PRD folder under another name,
+  holding no prefixed folder below it, passes unseen. (a)'s second test still catches a mount named
   `specifications`.
 
 A specs repository nothing has been written into yet has no `specifications/` and prints an empty
@@ -203,21 +210,40 @@ stop says *the directory that holds `specifications/`* instead.
 
 **Any signal is a hard stop, `status: misrooted`**, issued here as `ambiguous`'s is, so no caller
 proceeds past it. A caller that maps the record's statuses onto outcomes of its own names
-`misrooted` as a stop, never as `none` or `absent`. **The stop is one line**, naming the variable,
-its value, the signal and the value to set, plus the unsupported-layout clause where it applies.
+`misrooted` as a stop, never as `none` or `absent`. **The stop also sets `specs_git: misrooted` for
+the whole run**, as `specs-repo-git` §3.3 G0 sets `specs_git: blocked`. A stopped run still runs its
+emitter tail (`specs-repo-git` §4), and under that flag every emitter falls to its report-only tier:
+cost (`cost-emission` §8), feedback (`feedback-emission` §2), follow-ups (`followup-emission` §2) and
+`resume.md` (`session-hygiene` §1). `commit-artifacts` skips with the notice repeated, so the run
+writes nothing under `$SPECS_PATH`.
+
+**The stop is one line**, naming the variable, its value, the signal and the value to set, plus the
+unsupported-layout clause where it applies. **Where `$SPECS_PATH` is itself a work tree's top level**
+(`--show-prefix` prints nothing), the variable is right and only (b)'s second half can have fired: a
+stray specs folder sits at the top, outside `specifications/`. The stop then names no value to set.
+It names each stray folder and `<value>/specifications/` as where it belongs, and nothing else.
+
 **Where a run made while misrooted left anything behind, it adds one more line naming it.** That
 covers a nested `$SPECS_PATH/specifications/` and the folders in it, and any of
 `$SPECS_PATH/dev-workflows-feedback/`, `$SPECS_PATH/dev-workflows-cost/` and
-`$SPECS_PATH/documentation/<slug>/dev-workflows/` that exist. Each is named with where it belongs:
-the nested folders in `<the value the walk found>/specifications/`, and each bookkeeping directory
-at the same path under `<the value the walk found>`. Where the walk found no value, they belong in
-*the specs repository's `specifications/`* and at *its top level*. `specs-repo-git` §2.1's
-classifier never stages bookkeeping left at that depth, so G1 fires on every later run until it
-moves. **The plugin moves nothing and gives no commands**: a move has to be right in every state
-the repository might be in, and only the operator can see that state:
+`$SPECS_PATH/documentation/<slug>/dev-workflows/` that exist. **It is never added where `$SPECS_PATH`
+is a work tree's top level**: there `specifications/` and those directories are where they belong.
+Each item is named with where it belongs: the nested folders in
+`<the value the walk found>/specifications/`, and each bookkeeping directory at the same path under
+`<the value the walk found>`. Where the walk found no value, they belong in *the specs repository's
+`specifications/`* and at *its top level*.
 
-`SPECS_PATH_INSIDE_TREE: SPECS_PATH is <value>, which <is itself a specifications/ directory | is itself a specs folder, asserting key <key> | holds the specs folder <subdirectory> directly> — every folder lives under $SPECS_PATH/specifications/, so this run would look for and create folders in the wrong place, and nothing was created. Set SPECS_PATH to <the value the walk found | the directory that holds specifications/> where it is set, and re-run.[ <the value the walk found> is not the top level of its repository (<that repository's top level>), and a specs tree inside a larger repository is unsupported: this plugin switches branches and commits in that repository.]`
-`[Misrooted runs left: <value>/specifications/ (<folder>, …), which belongs in <the value the walk found>/specifications/ | the specs repository's specifications/; <value>/<bookkeeping directory>/, which belongs at <the value the walk found>/<bookkeeping directory>/ | the same path at the specs repository's top level; … Move them yourself, commit the move, then re-run — the plugin moves nothing.]`
+What each one costs is not the same. `specs-repo-git` §2.1's classifier never stages
+`dev-workflows-feedback/` or `dev-workflows-cost/` left at that depth, so G1 fires on every later
+run, and a pending cost there never reconciles. A `documentation/<slug>/dev-workflows/` there matches
+§2.1's `<specs-root>/documentation/*/dev-workflows/**` shape one level too deep, so it **was**
+committed, in the wrong place. The line says so, and it has to be moved like the rest. **The plugin
+moves nothing and gives no commands**: a move has to be right in every state the repository might
+be in, and only the operator can see that state:
+
+`SPECS_PATH_INSIDE_TREE: SPECS_PATH is <value>, which <is itself a specifications/ directory | is inside the specifications/ directory | is itself a specs folder, asserting key <key> | holds the specs folder <subdirectory> directly> — every folder lives under $SPECS_PATH/specifications/, so this run would look for and create folders in the wrong place; it wrote nothing under that path, and its cost and feedback are reported here instead. Set SPECS_PATH to <the value the walk found | the directory that holds specifications/> where it is set, and re-run.[ <the value the walk found> is not the top level of its repository (<that repository's top level>), and a specs tree inside a larger repository is unsupported: this plugin switches branches and commits in that repository.]`
+`[top-level variant: SPECS_PATH_INSIDE_TREE: SPECS_PATH is <value>, the top level of its repository, and holds the specs folder <subdirectory> outside <value>/specifications/, where every folder lives. SPECS_PATH is right; move <subdirectory> into <value>/specifications/ yourself, commit the move, then re-run — the plugin moves nothing. This run wrote nothing under <value>, and its cost and feedback are reported here instead.]`
+`[Misrooted runs left: <value>/specifications/ (<folder>, …), which belongs in <the value the walk found>/specifications/ | the specs repository's specifications/; <value>/<bookkeeping directory>/, which belongs at <the value the walk found>/<bookkeeping directory>/ | the same path at the specs repository's top level[, and was committed there in the wrong place]; … Move them yourself, commit the move, then re-run — the plugin moves nothing.]`
 
 **It offers no "enter the path" option**, unlike *Required path environment variable unset*
 (`workflows-core:escalation-rules`). The wrong value lives in the environment, so a per-run override
@@ -240,7 +266,7 @@ against the wrong path. No signal holding → the branch `resolve-address` was g
   its repository's top level, it is also an instance of the first layout.
 
 `workflows-core:specs-repo-git` §3.1 runs these same signals at run start, exactly as defined here,
-and reports them in a notice that never stops the run: one line, plus one more line naming
+sets the same `specs_git: misrooted` flag, and reports them in a notice that never stops the run: one line, plus one more line naming
 anything a misrooted run left behind, exactly as the stop's. That notice is how a run that
 resolves no address learns the cause.
 

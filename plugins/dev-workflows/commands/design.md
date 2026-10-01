@@ -82,7 +82,7 @@ Usage: `/design <ADDRESS> [--design-twice] [--skip-costs] [--skip-feedback] [--e
 **Specs-repo preflight** — run at the end of step 1's address resolution, with the run key set step 1
 fixes, before step 1 places the folder or takes any of its stops. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier
 run, retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if
-it returns `specs_git: blocked` (§3.3 G0), carry that flag for the whole run — the terminal
+it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal
 `commit-artifacts` step skips on it.
 
 *(The preflight runs before the gate below — at the end of step 1, earlier still — because `require-on-main` performs **no** `fetch` of its own — §3.2 — and relies on this step's best-effort one. Gating first would test never-fetched refs: a just-merged artifact would be missed on `origin/<default>` while the stale remote-tracking ref for its deleted branch still carries it, producing a false row D/E stop. `specs-preflight` self-gates on `$SPECS_PATH`, so it is safe this early.)*
@@ -472,7 +472,7 @@ stages ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits
 trailer, and pushes to the branch this run's handoff phase created (§4.1). It
 NEVER touches a code repo, a docs repo, or the current working
 directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when the
-run carries `specs_git: blocked` (§3.3 G0), re-emitting that notice. Hold its
+run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its
 §6 outcome line for the Final report.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git
