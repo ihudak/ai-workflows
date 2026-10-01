@@ -426,10 +426,12 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   from — see `workflows-core:grounding-format` §8. A verifier that
   refuses rather than verifying (a moved `HEAD`, a repository or frame set no longer resolvable)
   stops the run before Phase 8 writes anything, and so does a finding this run produced that is still
-  incomplete after its one retry (`PRD_GROUND_VERIFY_INCOMPLETE`) — a `contradict` whose return lacks
-  the positive control the rewritten finding would owe — so no finding is ever written without an
-  outcome, which is what keeps `/brd-split`'s own verification gate reachable on the BRD route. The
-  same incomplete return on an on-file finding, after its retry, writes nothing: the finding keeps the
+  incomplete after its one retry (`PRD_GROUND_VERIFY_INCOMPLETE`), so no finding is ever written
+  without an outcome, which is what keeps `/brd-split`'s own verification gate reachable on the BRD
+  route. A finding is incomplete when it is missing from a return, has a blank `own_evidence`, is an
+  `INCOMPLETE` entry carrying no outcome, has a comparison echo that differs from the blind result, or
+  is a `contradict` whose return lacks the positive control the rewritten finding would owe. The same
+  incomplete return on an on-file finding, after its retry, writes nothing: the finding keeps the
   verdict and outcome it had, the report names it as **not verified by this run**, and the run
   continues. An `agree`/`extend`/`unprovable` finding whose blind verdict still lacks its owed control
   after the retry proceeds through the normal reconciliation.
