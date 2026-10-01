@@ -69,6 +69,13 @@ if [ "${1:-}" = "--selftest" ]; then
   expect "a \`worktrees\` directory below the scan root is still walked" 1 "$wtroot/red" \
          "[AC-1]" "[SM-1]"
   expect "docs/maintainers is scanned although docs/superpowers is not" 1 "$wtroot/maint" "[FR-1]"
+  # The mermaid gate's installed parser: `npm ci` puts third-party package docs under
+  # scripts/mermaid/node_modules/, which is git-ignored and nothing this repository wrote.
+  mkdir -p "$wtroot/green-nm/scripts/mermaid/node_modules/pkg"
+  printf '# a third-party package readme\n\n[AC-1] and [SM-1]\n' \
+    > "$wtroot/green-nm/scripts/mermaid/node_modules/pkg/README.md"
+  printf '# compliant\n\n[AC#1] and [SM#1]\n' > "$wtroot/green-nm/kept.md"
+  expect "the mermaid gate's installed packages are not walked" 0 "$wtroot/green-nm"
   if [ "$rc" -eq 0 ]; then
     echo "SELFTEST PASS"
   else
@@ -130,7 +137,10 @@ PATTERN="\[(US|AC|SM|SMC|UC|FR|AD)-${NUM}+\]|\[SM-C${NUM}+\]|(^|[^[:alnum:]_[])(
 #                       names are excluded because both are what the worktree tooling
 #                       creates; only `.worktrees` is in this repo's .gitignore today.
 #   scripts/fixtures -- this gate's own negative-control fixtures
-EXCLUDED_SUBTREES='^\./(docs/superpowers|\.remember|\.superpowers|\.worktrees|worktrees|scripts/fixtures)/'
+#   scripts/mermaid/node_modules -- the mermaid gate's installed parser (`npm ci`),
+#                       git-ignored: third-party package docs, nothing this
+#                       repository wrote or ships
+EXCLUDED_SUBTREES='^\./(docs/superpowers|\.remember|\.superpowers|\.worktrees|worktrees|scripts/fixtures|scripts/mermaid/node_modules)/'
 
 # CHANGELOG.md is history and keeps the dash form (spec Global Constraints).
 # A line carrying the marker `id-grammar-ok:` is documenting the legacy form on

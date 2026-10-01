@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.8.4] — 2026-10-01
+
+### Fixed — the repository's gates (not shipped in any plugin)
+
+- **`scripts/validate-catalog.py` counted a rules file's own path as a live `paths:` match.** A rules file is a real file, so a glob naming only itself — or two rules naming only each other — passed, though such a rule loads only when a rules file is itself opened, never during the work it governs. A match under `.claude/rules/` no longer counts, and the error says why. `--selftest` 26 → 31: the self-reference, the mutual pair, and a pair sharing one `**/*.md` glob that passes only while a file outside the folder also matches, each confirmed to fail against a gate that excludes only the file itself and one that rejects any glob touching the folder; plus a case for the existing worktree exclusion inside the `paths:` loop, which nothing exercised.
+- **`scripts/check-docs.sh` check 11 read a handoff's declared paths from the start of the `deliverable_paths` line to the end of the `title:` line.** A line routinely cites a reference file before the token or names the deliverable again after `title:` — `/dev-workflows:design`'s does the latter, and `/dev-workflows:implement`'s and `/product-workflows:idea`'s the former — so a declaration reworded to name no path still looked extractable. None of those three is examined by the check today, so nothing was missed yet. The span now starts at the token and ends at `title:`; two selftest cases, one per bound, each confirmed red first.
+- **`scripts/check-id-grammar.sh` walked `scripts/mermaid/node_modules/`**, the git-ignored tree `npm ci` installs the mermaid gate's parser into, so a local run after the install scanned every third-party markdown file there. CI was unaffected, because the install runs after that gate. The anchored exclusion list now names it, and a selftest case pins it.
+
 ## [1.8.3] — 2026-10-01
 
 ### Fixed — behaviour

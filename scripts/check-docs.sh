@@ -1050,10 +1050,17 @@ check_merge_clause() {
 
       # writers: the backticked *.md paths inside this command's `deliverable_paths` = ...
       # `title:` span. The `=` is required: the same word appears in prose that lists nothing.
+      # The span starts AT the `deliverable_paths` token and ends AT the `title:` token, each on
+      # the line that carries it, never at that line's start or end: a line routinely cites a
+      # reference file before the token and names the deliverable again in prose after
+      # `title:`, and either one would keep a declaration reworded to name no path looking
+      # extractable.
       writers=$(awk '
-        /`deliverable_paths`[[:space:]]*=/ { span = 1; k = 0 }
+        /`deliverable_paths`[[:space:]]*=/ { span = 1; k = 0; first = 1 }
         span {
           line = $0
+          if (first) { line = substr(line, index(line, "`deliverable_paths`")); first = 0 }
+          if ((q = index(line, "`title:")) > 0) line = substr(line, 1, q - 1)
           while (match(line, /`[^`]*\.md`/)) {
             t = substr(line, RSTART + 1, RLENGTH - 2); sub(/.*\//, "", t); print t
             line = substr(line, RSTART + RLENGTH)
@@ -1500,6 +1507,15 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # This mutation is the one a review demonstrated against the live tree on prd-ground.md.
   expect_fail "a family command whose handoff declares no path is rejected" 11 \
     "sed -i.bak 's|\`deliverable_paths\` = |\`deliverable_paths\` lists |' $(cmd_file $PLUGIN_REL alpha)"
+  # The declaration's span is bounded at BOTH ends, on the line that carries each bound: it
+  # starts at the `deliverable_paths` token, not at the start of its line, and ends at the
+  # `title:` token, not at the end of its line. A line routinely cites a reference file before
+  # the token and names the deliverable again in prose after `title:`; read whole, either one
+  # keeps a declaration reworded to name no path looking extractable.
+  expect_fail "a path named only after the title: token is not a declared path" 11 \
+    "sed -i.bak 's|\`deliverable_paths\` = \`alpha-deliverable.md\`,|\`deliverable_paths\` = the fixture file, \`title: fixture handoff\`, which writes \`alpha-deliverable.md\`,|' $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail "a path cited before the deliverable_paths token is not a declared path" 11 \
+    "sed -i.bak 's|with \`deliverable_paths\` = \`alpha-deliverable.md\`,|per \`alpha-deliverable.md\`, with \`deliverable_paths\` = the fixture file,|' $(cmd_file $PLUGIN_REL alpha)"
   # The three vacuity guards rewrite through a temp file OUTSIDE the reference dir rather than
   # with `sed -i.bak`: a stray `.bak` there is a file `find $REF_DIR -type f` counts, so the
   # mutation would trip check 9's reference-file count too and blur what the case proves.

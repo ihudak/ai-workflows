@@ -135,7 +135,7 @@ The evidence behind the rules — measured cases, refused widenings, history —
 
 **Run the gates as one `&&` chain and read the chain's own exit code.** `.github/workflows/validate-catalog.yml`'s `run:` steps are the authoritative list of them, in order. A trailing `echo "EXIT=$?"` makes the invocation's own status 0, so read the printed value. ([why](docs/maintainers/rationale.md#gate-chain-exit))
 
-`scripts/validate-catalog.py` fails `CLAUDE.md` above 40,000 characters and warns above 36,000, warns on a rules file above 20,000, and fails a rules file without `paths:` or with a glob matching no file — overflow belongs in a rules file or the rationale (`.claude/rules/gates.md` § `scripts/validate-catalog.py`).
+`scripts/validate-catalog.py` fails `CLAUDE.md` above 40,000 characters and warns above 36,000, warns on a rules file above 20,000, and fails a rules file without `paths:` or with a glob matching no file outside `.claude/rules/` — overflow belongs in a rules file or the rationale (`.claude/rules/gates.md` § `scripts/validate-catalog.py`).
 
 ## Shared authorities
 
