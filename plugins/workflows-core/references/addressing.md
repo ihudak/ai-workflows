@@ -148,8 +148,8 @@ by either of two tests, each against the filesystem and none by parsing a name:
     work tree's top level. Where `git -C "$SPECS_PATH" rev-parse --show-prefix` succeeds, it must
     print a non-empty prefix. A specs repository cloned into a directory that happens to be named
     `specifications` is a repository root, not a directory inside one, and has no
-    `specifications/` of its own until something is written into it. This catches the misroot one
-    level deeper than a repository root, `M/specs/specifications` in a monorepo, and a
+    `specifications/` of its own until something is written into it. This catches the same misroot
+    below a directory that is not a repository's top level (`<repo>/specs/specifications`), and a
     `specifications/` directory mounted on its own under that name.
 - **(b) `$SPECS_PATH` is, or directly holds, a specs folder, tested only where
   `$SPECS_PATH/specifications/` is not a directory.** `$SPECS_PATH` itself has a §4 carrier, or an
@@ -162,8 +162,10 @@ by either of two tests, each against the filesystem and none by parsing a name:
   assert their parent's key and kind. Stop testing at the first that qualifies.
 
 A specs repository nothing has been written into yet has no `specifications/` and prints an empty
-prefix, so it matches nothing. A monorepo's `M/specs` holding `specs/specifications/` prints
-`specs/` and is never tested further. Neither is ever a stop.
+prefix, so it matches nothing and is never a stop. A `$SPECS_PATH` below its repository's top level
+that holds `specifications/` (`<repo>/specs`) prints another prefix and is not stopped here either.
+It is the unsupported layout of a specs tree inside a larger repository, which `specs-repo-git` §3.1
+reports in a notice, and this check does not try to tell it apart.
 
 **The value to set.** Walk up from `$(cd -P -- "$SPECS_PATH" && pwd)`, starting with that directory
 itself and going at most three levels above it (§3's bound). Take the first directory `D` for which
@@ -179,7 +181,11 @@ and prints the same path as `git -C "$D/.." rev-parse --show-toplevel`. The valu
   symptom this check exists to prevent.
 
 The value is `R` for an ordinary repository, through a symlink too, and for an Epic folder inside
-one. In a monorepo (`M/specs/specifications`) it is `M/specs`, never the repository root `M`. Where
+one. Where the value is not its own work tree's top level, because `git -C "<value>" rev-parse
+--show-prefix` prints a non-empty prefix (as `<repo>/specs` does for `<repo>/specs/specifications`),
+the stop still names it, since that is where `specifications/` sits. It does not present it as a
+supported configuration, though: it adds that a specs tree inside a larger repository is unsupported
+(`specs-repo-git` §3.1), so the value ends this stop and draws that notice instead. Where
 no directory on the walk passes, as with a mount of either kind, no path can be established, and the
 stop says *the directory that holds `specifications/`* instead.
 
@@ -190,7 +196,7 @@ signal and the value to set. Where `$SPECS_PATH/specifications/` exists, it also
 directory's contents as folders to move up one level, with the command that does it. The plugin
 moves nothing itself:
 
-`SPECS_PATH_INSIDE_TREE: SPECS_PATH is <value>, which <is itself a specifications/ directory | is itself a specs folder, asserting key <key> | holds the specs folder <subdirectory> directly> — every folder lives under $SPECS_PATH/specifications/, so this run would look for and create folders in the wrong place, and nothing was created. Set SPECS_PATH to <the value the walk found | the directory that holds specifications/> where it is set, and re-run.[ It also holds <value>/specifications/, folders an earlier run created one level too deep. Move them up with: cd "<the value the walk found>" && git mv specifications/specifications/* specifications/ && rmdir specifications/specifications — merging by hand any name present at both levels, which git mv refuses, and moving with plain mv anything not yet committed, which git mv does not track.]`
+`SPECS_PATH_INSIDE_TREE: SPECS_PATH is <value>, which <is itself a specifications/ directory | is itself a specs folder, asserting key <key> | holds the specs folder <subdirectory> directly> — every folder lives under $SPECS_PATH/specifications/, so this run would look for and create folders in the wrong place, and nothing was created. Set SPECS_PATH to <the value the walk found | the directory that holds specifications/> where it is set, and re-run.[ <value> is not the top level of its repository (<top level>), and a specs tree inside a larger repository is unsupported: this plugin switches branches and commits in that repository.][ It also holds <value>/specifications/, folders an earlier run created one level too deep. Move them up with: cd "<the value the walk found>" && git mv specifications/specifications/* specifications/ && rmdir specifications/specifications — merging by hand any name present at both levels, which git mv refuses, and moving with plain mv anything not yet committed, which git mv does not track.]`
 
 **It offers no "enter the path" option**, unlike *Required path environment variable unset*
 (`workflows-core:escalation-rules`). The wrong value lives in the environment, so a per-run override
