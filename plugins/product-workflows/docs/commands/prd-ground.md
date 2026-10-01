@@ -3,7 +3,7 @@
 Grounding workflow serving both routes into a PRD, its route detected from the resolved folder and
 never declared. Pins every mounted repository to a verified commit, grounds every claim in the
 resolved folder's own claim list against code (`code-grounder`, Opus) and an exported design frame set
-(`design-grounder`, Opus), independently re-derives every live finding (`grounding-verifier`, Opus) — each frontmatter-pinned, no override unless `--enforce-model` enforces one — and, on
+(`design-grounder`, Opus), independently re-derives every live finding — blind, then compared, in batches (`grounding-verifier`, Opus) — each frontmatter-pinned, no override unless `--enforce-model` enforces one — and, on
 the BRD route, assigns each finding a `current` / `will-change` horizon against declared
 prerequisite BRDs.
 
@@ -142,7 +142,7 @@ against every repository or root they touch: `workflows-core:docs-grounder` (Pha
 docs — default ON when `$DOCS_PATH` resolves, advisory, never a gate), `code-grounder` (Phase 5, one
 per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one), `design-grounder` (Phase 5, one per exported frame set, after every
 `code-grounder` instance has returned — its fourth reconciliation class cites a `[CG#n]` — frontmatter-pinned to Opus, no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one), and
-`grounding-verifier` (Phase 7, one per finding, frontmatter-pinned to Opus — no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one) — plus `workflows-core:impl-maintenance` (Phase 11, session lessons-learned, also read-only: it reads the session handoff and suggests, writing nothing — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`).
+`grounding-verifier` (Phase 7, two dispatches per batch of up to 25 findings — a blind `mode: derive`, then `mode: compare` — frontmatter-pinned to Opus — no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one) — plus `workflows-core:impl-maintenance` (Phase 11, session lessons-learned, also read-only: it reads the session handoff and suggests, writing nothing — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`).
 
 ## What it needs
 
@@ -393,8 +393,7 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
 - **Phase 7 — `grounding-verifier` over every finding, frontmatter-pinned to Opus (no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one).** Every finding the run holds
   — its own, and every `[CG#n]` already on file pinned to a repository whose `HEAD` still matches its
   recorded pin (none under `--no-code`), but never a `[DG#n]` already on file — except any already
-  reading `SUPERSEDED`: a retired finding keeps the outcome it had, and re-deriving
-  it could only bring it back to life beside its successor. A finding without a
+  reading `SUPERSEDED`: a retired finding keeps the outcome it had, and re-deriving it could only bring it back to life beside its successor. It runs in batches of up to 25 findings per repository or frame set, each in two dispatches: a blind re-derivation that is handed each finding's requirement and source and never its verdict, evidence, control or citation — and refuses a dispatch that carries one — then a comparison that runs the original's control and settles the outcome without changing the blind result. A finding whose result comes back incomplete is re-dispatched once. A finding without a
   verifier outcome is never treated as evidence. **The outcome is first reconciled against the verdict
   the verifier re-derived**, which it returns on every outcome: `agree` means *the same verdict* and
   `extend` means *the claim holds*, so either arriving with a differing verdict is a return that
@@ -426,12 +425,14 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   against the pinned repository, a class-1/2/3 `[DG#n]` against the frame set it was reconciled
   from — see `workflows-core:grounding-format` §8. A verifier that
   refuses rather than verifying (a moved `HEAD`, a repository or frame set no longer resolvable)
-  stops the run before Phase 8 writes anything, and so does a `contradict` on a finding this run
-  produced whose return lacks the positive control the rewritten finding would owe
-  (`PRD_GROUND_VERIFY_INCOMPLETE`), so no finding is ever written without an outcome — which is what
-  keeps `/brd-split`'s own verification gate reachable on the BRD route. The same incomplete return
-  on an on-file finding writes nothing: the finding keeps the verdict and outcome it had, and the
-  report names it as not verified by this run.
+  stops the run before Phase 8 writes anything, and so does a finding this run produced that is still
+  incomplete after its one retry (`PRD_GROUND_VERIFY_INCOMPLETE`) — a `contradict` whose return lacks
+  the positive control the rewritten finding would owe — so no finding is ever written without an
+  outcome, which is what keeps `/brd-split`'s own verification gate reachable on the BRD route. The
+  same incomplete return on an on-file finding, after its retry, writes nothing: the finding keeps the
+  verdict and outcome it had, the report names it as **not verified by this run**, and the run
+  continues. An `agree`/`extend`/`unprovable` finding whose blind verdict still lacks its owed control
+  after the retry proceeds through the normal reconciliation.
 
 ## When it is worth running (idea route)
 
@@ -441,8 +442,7 @@ existing product being extended: an `[AC#n]` the code already satisfies is scope
 building, and a premise the code contradicts is a requirement that would have been built on sand —
 both found before an architecture or a specification is authored against them. It earns little on a
 greenfield PRD, where every finding is a verified absence — true, and low-information — and each one
-still costs an independent Opus re-derivation (Phase 7, one `grounding-verifier` dispatch per
-finding, frontmatter-pinned — no override unless `--enforce-model` enforces one). The Final report says so outright rather than only reporting it: where every claim comes
+still costs an independent Opus re-derivation (Phase 7, batched — the run states the arithmetic before you name repositories — frontmatter-pinned, no override unless `--enforce-model` enforces one). The Final report says so outright rather than only reporting it: where every claim comes
 back a verified absence, it states plainly that this PRD is greenfield against the repositories
 resolved, instead of presenting a wall of absences as a mixed result — a second run over the same
 folder is exactly what that headline exists to make unnecessary.
