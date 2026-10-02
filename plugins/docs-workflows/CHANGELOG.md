@@ -11,11 +11,11 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Changed
 
-- **Under `--skip-feedback`, every command dispatches `defect-reporter` on the §2.1 Sonnet chain**, the tier `impl-maintenance` runs on, instead of the retired Haiku-first chain, and records it as `defect_model`.
+- **Under `--skip-feedback`, every command the flag applies to dispatches `defect-reporter` on the §2.1 Sonnet chain**, the tier `impl-maintenance` runs on, instead of the retired Haiku-first chain, and records it as `defect_model`.
 
 ### Fixed
 
-- **`/docs-profile` Phase 2 named the §2.1 chain as `claude-sonnet-5`, then `4-6` and `4-5`**, leaving out Sonnet 5.5. Where the agent tool accepts model ids, the detection dispatch would have run on Sonnet 5 while Sonnet 5.5 was available; it now starts at `claude-sonnet-5-5`, as Phase 1's `detection_model` line already did. The fallback examples in `/docs-profile`, `/docs-audit`, `/docs-brand` and `/docs-init` name Sonnet 5.5, the first Sonnet row of the Opus chain.
+- **`/docs-profile` Phase 2 named the §2.1 chain as `claude-sonnet-5`, then `4-6` and `4-5`**, leaving out Sonnet 5.5, so Phase 2's prose contradicted its own dispatch line and Phase 1's `detection_model` line, both of which start at `claude-sonnet-5-5`; the prose now does too. The fallback examples in `/docs-profile`, `/docs-audit`, `/docs-brand` and `/docs-init` name Sonnet 5.5, the first Sonnet row of the Opus chain.
 
 ## [1.4.4] — 2026-10-02
 

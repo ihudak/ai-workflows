@@ -195,8 +195,8 @@ models:
     cache_read: 1.0
     cache_write_5m: 12.5
     cache_write_1h: 20.0
-  # Haiku. Not reachable by the routing policy (no chain selects it, `defect-reporter`
-  # included), but a session or an --enforce-model value may run on it.
+  # Haiku. No chain selects it (`defect-reporter` included), but a session or an
+  # --enforce-model value may run on it.
   claude-haiku-4-5:
     input: 1.0
     output: 5.0

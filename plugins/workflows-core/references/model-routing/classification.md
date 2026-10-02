@@ -128,7 +128,7 @@ Record the chosen model as `detection_model:` in the `model_routing` block.
 
 **`defect-reporter` runs on this chain too**, under `--skip-feedback`
 (`workflows-core:run-flags` §4), recorded as `defect_model:`. Telling a defect from
-friction and confirming the wrong line in the plugin's source is judgement, not
+friction and locating the wrong line in the plugin's source is judgement, not
 throughput; it takes this chain because it is the tier `impl-maintenance`, the agent it
 replaces, runs on. No chain in this file names Haiku; `run-flags` §2 carries the Haiku
 rows an enforced Haiku value resolves against.

@@ -11,7 +11,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Changed
 
-- **Under `--skip-feedback`, every command dispatches `defect-reporter` on the §2.1 Sonnet chain**, the tier `impl-maintenance` runs on, instead of the retired Haiku-first chain, and records it as `defect_model`. `docs/reference/model-routing.md` now says where the Haiku row a version-specific `haiku4.5` is checked against lives.
+- **Under `--skip-feedback`, every command the flag applies to dispatches `defect-reporter` on the §2.1 Sonnet chain**, the tier `impl-maintenance` runs on, instead of the retired Haiku-first chain, and records it as `defect_model`. `docs/reference/model-routing.md` now says where the Haiku row a version-specific `haiku4.5` is checked against lives.
 
 ## [3.11.1] — 2026-10-02
 
