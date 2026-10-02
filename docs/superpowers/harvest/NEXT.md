@@ -395,6 +395,47 @@ Both are deliberate. Do not "resync" either one without a fresh decision.
 presets, SDD ledger / 5-round fix-breaker, generic lens engine, git-push-blocking hook, PRD-coach
 "never recommend an answer", batch-grill-me denser rounds. (See INDEX.md "Deliberately NOT adopting".)
 
+## Harvest round 4 — surveyed 2026-10-02; Round 1 SHIPPED (2026-10-02)
+Survey of the four upstreams against the round-2 baseline: superpowers `b36e0829`..`8ca22dba` (v6.3.0 → v6.4.2), mattpocock/skills `5b15a47`..`d81f3a1` (v1.3, unreleased changesets), BMAD-METHOD `67d876f1`..`4f61d4e7` (v6.12.0 + Unreleased), spec-kit `27f50f7e`..`4a339209` (1.0.1 → 1.0.13). 21 portable items; the six that were **defects in text all three editions shipped** went first, as Round 1. Spec (with an "Amended during review" section per review round) + plan: `docs/superpowers/specs/2026-10-02-harvest-round-4-defects-design.md` and `docs/superpowers/plans/2026-10-02-harvest-round-4-defects.md`.
+
+**Round 1 — what shipped.** This repository: `workflows-core` 1.10.0, `dev-workflows` 4.5.0, `product-workflows` 3.11.3, `docs-workflows` 1.4.6 (merged with this entry). The internal edition: `dev-workflows` 2.66.0, merge `f689511`. The Copilot edition: `dev-workflows` 2.35.0, merge `83f2bf3`.
+1. `diff-summarizer` read a ref that had landed as an empty range and reported it resolved (superpowers 5bf4e780). It now reads the merge that landed it (`<landing>^1...<branch_from>`, `landing` found by intersecting `rev-list --first-parent` with `rev-list --ancestry-path` — the two flags in one call follow first-parent edges only on git 2.43), reads a fast-forwarded single commit as its own change, reads the base as `origin/<branch>` where the local branch is behind, treats a parentless commit and an empty single commit explicitly, and never reports an empty range resolved. `/document` and `/release-notes` state how a `refs[]` element is built, and `/release-notes` states it passes no keys. The other two editions' resolver also read two-dot on every path (now three-dot), and its Strategy 3 is one rule: the newest commit whose **subject** names the PR in a forge's own form, searched uncapped and printing sha/parents/subject only; its search by PR title is gone, since it read other PRs' merges as this one.
+2. `code-review` dimension 10 judged the diff alone — a requirement an earlier run delivered came back `missing` (MAJOR); it now judges the code as it stands, treats plan tags as claims, and reports `exceeds` (spec-kit #4621), never escalated onto the spec.
+3. `risk-planner` carried the "what without how" rule upstream writing-plans withdrew (#2333); now "Unambiguous, not complete", spec-pinned values quoted verbatim (spec-kit #4430), proportion check on `### Steps`.
+4. "design tree" survived the July rename in every caller; this repository now asks from the frontier, the other two say "decision tree" everywhere.
+5. This repository's grill had no confirmation gate; it now has one, and all three play the understanding back at it; with no human turn the gate does not hold the write.
+6. `test-baseliner` could read a filter's exit status through a pipe and record a failing status-only suite passing (spec-kit #4604); long output now goes through a temp file outside the repository.
+
+**Found while executing, beyond the six — keep these:**
+- **`workflows-core:implementation-format` §4's commit scan takes `--no-merges`.** A merge commit's range is the whole branch it merged (or, merged the other way, the base's own work), which the scan reaches commit by commit; a forge writes a PR's `[<key>]` title into its merge commit, so without the flag nearly every merge landing came back as unrecorded work. The cost, stated in §4 and on `commit-convention.md`: work a merge commit's message carries alone is not found; the branch-name probe keeps merge commits. A first attempt (round 2) instead excluded scan commits that "re-land" recorded work; round 3 showed it hid work, counted unread commits as read and could not run as written — the simple rule replaced it.
+- **The anchored key boundary stays**, and §4 now says what a digit-aware one would add (a squash commit naming the branch, as a forge may write) and why it is not taken here: it changes the one boundary every reader of the file shares.
+- Two pre-existing resolver defects in the other two editions were fixed on the way: the `gh` path fell back to `gh pr checkout`, which switches the working tree, against its own "never run"; and the strategies' placeholders were never mapped to the inputs.
+
+**Seven whole-branch review rounds**, one fresh Opus reviewer per edition per round, every finding fixed (minors and nits included): round 1 found 6 Important, round 2 two, rounds 3–4 a handful each — most in text the previous round's fix had just written — and round 7 returned zero findings in all three editions. **The lesson worth keeping:** every Important from round 2 on came from a *new rule* written to close the previous round's finding; where a fix needs a new mechanism, look first for a principle the authority already states (§4's double-report rule gave `--no-merges`; "a candidate qualifies by its subject" replaced three patches to Strategy 3).
+
+**Backlog — surveyed, not yet built** (items 7–21; each applies to all three editions unless noted):
+7. Triage: "couldn't verify" is not "refuted" — defer a serious-if-true unsubstantiated finding with what would settle it; defer fixes to agent-instruction files; row count equals findings (BMAD 3433612d, b0d27c3c). M.
+8. Re-review keeps prior triage dispositions; the second review is triaged (BMAD 7c3e5827, 85d968fc). M.
+9. Effect-based severity where the spec is silent, and a reviewer's declined-to-judge list (superpowers 5bf4e780 #2319). S–M.
+10. A plan "Review focus" section — implied inputs no test exercises — tested by `test-writer`, checked by `code-review` (superpowers 5bf4e780 #2319). M.
+11. `code-review` edge-case checks: handle lifetime, call vs declaration (BMAD 44e0f806), implicit enum branch at code altitude, removed code whose contract nothing replaced. S.
+12. `code-review` finds the repo's documented standards — CLAUDE.md, AGENTS.md, copilot-instructions, CONTRIBUTING, CODING_STANDARDS (BMAD 23f134e2; mattpocock code-review step 3). S.
+13. `/implement` looks before asking, and can re-classify upward after exploring (BMAD 7e571784, 124ea1af, 2c10d5ba). M.
+14. Design contracts: owning side, behavioural obligations, provider-side conformance (spec-kit aaa8fa92). S.
+15. PR body: merge danger (one-way/two-way door, blast radius), before/after evidence, honour a repo's PR template (mattpocock `pr`). M.
+16. `bug-diagnosis.md` drift: performance branch, one-variable probes, minimise the repro, no-loop fallback, name the confirmed hypothesis (mattpocock diagnosing-bugs). S–M.
+17. `impl-maintenance`: sort each miss into "build a check" or "write a standard"; flag no-op instructions (mattpocock `retro`). S–M.
+18. `/epics` dependency checks: needs and owners, collisions, one home per shared decision, touched-unit coverage (BMAD f033e70a, ba252f1b). S–M.
+19. Acceptance-criteria wording tests: false before, true after; the rule, not an example; 3–8 (BMAD bmad-ticket). S; `specification-format.md` stays frozen.
+20. Redact secrets, emails, hosts and home paths before `/prompt` and feedback capture write user text (superpowers diagnosing-superpowers redaction policy). S.
+21. Low or deferred: a glossary input for `interface-designer` (mattpocock DESIGN-IT-TWICE); a transcript-based session-diagnosis command (superpowers diagnosing-superpowers) — L.
+
+**Rejected again** (reasons unchanged): superpowers' native executing-plans / SDD ledger, verify-a-fix-by-test instead of re-review, nested mid-tier orchestrator; mattpocock `implement-spec`, `retro` as its own command, `pr`'s picture menu and Mermaid; BMAD's user-pinned review depth (bypasses the classification gate), finding floors scaled by diff size, the ticket store and walkthrough; spec-kit's extension and catalog machinery, `taskstoissues` (a tracker), the constitution sync report.
+
+**Recorded divergences** — decisions, not gaps:
+- **Grilling rhythm.** The internal and Copilot editions ask relentless callers' questions in rounds; this repository stays one question at a time, because `/brd-split`'s ledger walk forbids batching.
+- **"design tree" vs "decision tree".** mattpocock renamed it "decision tree" (`3bb587f`) and then back (`a4b2009`); we keep "decision tree" for our own reason — "design tree" collides with `design.md`.
+
 ## Standing constraints (still apply for any new work)
 - Pushes are AUTHORISED (user, 2026-08-21) — merge to `main` and push in all three repos once the round
   is finished, not incrementally. Commit trailer names **the model that did the work**, not
