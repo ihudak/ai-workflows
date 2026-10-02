@@ -520,7 +520,7 @@ Carry the digest into Phase 3 with **grill-rank** consumption. When docs groundi
 
 ## Phase 3 — Author via grill
 
-**Interview technique (grilling — embedded; no runtime dependency).** Conduct a **relentless** interview per `Skill(skill: "workflows-core:reference", args: "grilling-technique")` — one question at a time, recommend each answer, fact-vs-decision split (look up facts from the idea/sources; put only decisions to the user), walk the design tree in dependency order, continue to shared understanding then write each section. Rank every `docs_challenges` entry from Phase 2.5 into the grill's question order; a challenge competes for attention, it never suspends the spine below.
+**Interview technique (grilling — embedded; no runtime dependency).** Conduct a **relentless** interview per `Skill(skill: "workflows-core:reference", args: "grilling-technique")` — one question at a time, recommend each answer, fact-vs-decision split (look up facts from the idea/sources; put only decisions to the user), ask from the frontier, and clear the confirmation gate before writing each section. Rank every `docs_challenges` entry from Phase 2.5 into the grill's question order; a challenge competes for attention, it never suspends the spine below.
 
 **Pre-write archive — before this run's first write to `prd.md`.** Immediately before this run's
 first write to `<feature-folder>/prd.md` — ordinarily the first live write of the authoring below,
