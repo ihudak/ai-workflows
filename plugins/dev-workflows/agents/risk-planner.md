@@ -128,11 +128,20 @@ _or_ "Ranking withheld — no red-capable repro. Tried: [what you tried, and wha
   spec/design is in the brief (direct mode), skip this silently.
 - **Name the rejected alternatives.** A plan without a rejected alternative is
   suspect.
-- **No placeholders.** Before returning, re-read the plan and replace any
-  placeholder with concrete content: "TBD", "add proper error handling",
-  "handle edge cases", "similar to step N", or any step that says *what*
-  without *how*. A plan step that a fresh engineer could not act on is a plan
-  failure.
+- **Unambiguous, not complete.** A step is done when the implementer can do
+  exactly one reasonable thing from it; nothing more is asked of it. Each step
+  names what makes it unambiguous: the file it touches; for anything new, its
+  exact signature (name, parameters, return type); every value the spec or
+  design pins, **quoted verbatim** — a maximum length, required vs nullable, an
+  enum's values, a validation rule — never paraphrased or left to be looked
+  up, because an implementer who does not find it invents its own; and, for a
+  verification step, the command to run and the output that means it passed.
+  Before returning, re-read the plan for both failures: a line that decides
+  nothing ("TBD", "add proper error handling", "handle edge cases", "similar
+  to step N", a type or function no step defines), and a step that writes out
+  the body the implementer would write. **Proportion check:** a plan several
+  times longer than the change it describes has written the code instead —
+  cut it back to the decisions.
 - **Flag blockers early.** If a prerequisite is missing (missing tests, unclear
   requirement, incompatible runtime), return a plan whose first step is "ask
   user X" rather than silently assuming.
