@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ### Changed
 
 - **`grounding-format` §8: independence is structural, not a discipline the verifier keeps (#73).** The step that re-derives is handed the requirement premise and the source, never the finding's verdict, evidence, control or citation; verification is a blind re-derivation followed by a comparison, each its own dispatch. §4.1 says the baseline re-derivation is the blind step's integrity re-run. §2.2 now says the verifier is handed `control` only in its compare step. `product-workflows` 3.11.0 implements it.
-- **§8 now says a disputed `contradict` gets a second blind re-derivation.** The comparison never revises a blind result, but it flags one whose own evidence does not establish its own verdict. Where a `contradict` rests on such a verdict, and not on the control route, a second blind derivation decides: agreement upholds the `contradict`, and disagreement makes the outcome `unprovable`. §2.1 lists `blind_disputed` among the verifier's return fields, never a record field.
+- **§8 now says a disputed `contradict` gets a second blind re-derivation.** The comparison never revises a blind result, but it flags one whose own evidence does not establish its own verdict. Where a `contradict` rests on such a verdict, and not on the control route, a second blind derivation decides: agreement upholds the `contradict`, and disagreement makes the outcome `unprovable`, with notes recording the disagreement. A control-forced `contradict` is never disputed, even where the blind verdict also differs, since that route is deterministic and takes precedence. §2.1 lists `blind_disputed` among the verifier's return fields, never a record field.
 
 ### Fixed
 

@@ -107,7 +107,7 @@ So, canonically:
   in that block happens to be. Alignment is a rendering choice made per block, which makes the
   bytes of a record a property of its neighbours.
 - **One block per finding**, keys in the §2 table's order, every key of a block at the same
-  indentation, and no blank line inside a block. `outcome` (§8) and any verifier `notes` follow the
+  indentation, and no blank line inside a block. `outcome` (§8) and any verification `notes` follow the
   §2 fields, in that order, where the run that wrote the block had them.
 - **The field set is closed: §2's fields, `outcome` and `notes`, and nothing else.** A verifier
   returns more than the record keeps — `own_verdict`, `own_evidence`, `own_control`, `control_outcome`, `blind_disputed` and its own re-derivation
@@ -871,10 +871,13 @@ contradiction beside the verdict it contradicts, which §2.1 forbids.
 result: it has seen the original, so anything it re-derived would not be independent. It does flag
 a blind result whose own evidence does not establish its own verdict, and never one merely because
 the original's verdict differs. Where a `contradict` rests on a flagged blind verdict, and not on
-the control route below, the caller re-derives that finding blind once more. Where the two blind
-verdicts agree, the `contradict` stands; where they disagree, the outcome is `unprovable` and the
-finding keeps its verdict and evidence. `product-workflows:prd-ground`'s *Verify* phase holds the
-procedure.
+the control route below, the caller re-derives that finding blind once more. **A `contradict` the
+control route forces is never disputed, even where the blind verdict also differs**: that route
+takes precedence, and it is deterministic, since the same control against the same pinned source
+gives the same result on every run. Where the two blind verdicts agree, the `contradict` stands;
+where they disagree, the outcome is `unprovable`, the finding keeps its verdict and evidence, and
+its notes record the disagreement rather than either comparison's argument.
+`product-workflows:prd-ground`'s *Verify* phase holds the procedure.
 
 **`agree` and `extend` both assert the verdict holds, so a differing re-derived verdict falsifies the
 outcome rather than qualifying it.** The verifier returns its own re-derived verdict alongside every

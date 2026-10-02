@@ -410,7 +410,7 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   pinned to a repository whose `HEAD` still matches its recorded pin (none under `--no-code`), but
   never a `[DG#n]` already on file, nor an earlier baseline finding (the run supersedes a
   repository's for the fresh one it records, and any other repository's is not this run's to
-  re-check). A retired finding keeps the outcome it had, and re-deriving it could only bring it back to life beside its successor. It runs in batches of up to 25 findings per repository or frame set, each in two dispatches: a blind re-derivation that is handed each finding's requirement and source and never its verdict, evidence, control or citation — and refuses a dispatch that carries one — then a comparison that runs the original's control and settles the outcome without changing the blind result. A finding whose result comes back incomplete is re-dispatched once per verification pass — the first pass, and the class-4 sweep's re-check of a design finding whose cited code finding this run rewrote. The comparison is handed the blind result verbatim, and its copy counts as changed only where a structured value changed — the re-derived verdict, an evidence entry's path or lines, or a control's result — never where a free-text note was reworded. A finding without a
+  re-check). A retired finding keeps the outcome it had, and re-deriving it could only bring it back to life beside its successor. It runs in batches of up to 25 findings per repository or frame set, each in two dispatches: a blind re-derivation that is handed each finding's requirement and source and never its verdict, evidence, control or citation — and refuses a dispatch that carries one — then a comparison that runs the original's control and settles the outcome without changing the blind result. A finding whose result comes back incomplete is re-dispatched once in each verification pass and in each second opinion (below) — the first pass, and the class-4 sweep's re-check of a design finding whose cited code finding this run rewrote. The comparison is handed the blind result verbatim, and its copy counts as changed only where a structured value changed — the re-derived verdict, an evidence entry's path or lines, or a control's result — never where a free-text note was reworded. A finding without a
   verifier outcome is never treated as evidence. **The outcome is first reconciled against the verdict
   the verifier re-derived**, which it returns on every outcome: `agree` means *the same verdict* and
   `extend` means *the claim holds*, so either arriving with a differing verdict is a return that
@@ -431,11 +431,13 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   a writer to do, and reproducing its result is agreement. **A `contradict` the comparison disputes
   gets a second blind opinion.** The comparison never changes the blind result, but it flags one whose
   own evidence does not establish its own verdict — never one merely because the original's verdict
-  differs. A `contradict` resting on a flagged blind verdict, and not forced by the control, is
-  re-derived blind once more: where the two blind verdicts agree the `contradict` stands, and where
-  they disagree the outcome becomes `unprovable`, the finding keeps its verdict, and the report flags
-  it as verification inconclusive, naming both verdicts. The second opinion is not a retry, and its
-  own dispatches get one retry of their own. A `contradict` outcome on an own-run
+  differs. A `contradict` resting on a flagged blind verdict is re-derived blind once more, unless
+  the control forced it: that route takes precedence even where the blind verdict also differs, and
+  the control gives the same result on every run. Where the two blind verdicts agree the
+  `contradict` stands. Where they disagree the outcome becomes `unprovable`, the finding keeps its
+  verdict, its notes record the two verdicts and the dispute, and the report flags it as
+  verification inconclusive, naming both verdicts. The second opinion is not a retry, and its own
+  dispatches get one retry of their own. A `contradict` outcome on an own-run
   finding — one this run produced, which nothing outside this run cites yet — rewrites it in place:
   same id, replaced verdict and evidence. On an on-file finding — one an earlier run wrote, which a
   decision may already cite — it supersedes the finding instead, keeping its verdict as
