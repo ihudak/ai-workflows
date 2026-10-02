@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.11.1] — 2026-10-02
+
+### Fixed
+
+- **`/specify` wrote an `idea.md` on the keyed route that could overwrite `/idea`'s, and never committed it.** Phase 2 Step B wrote an `idea.md` derived from the folder's text into the feature folder on every route but the BRD one. Taking the broad PRD-level spec, the feature folder is the PRD folder — where `/idea` writes `idea.md`, lands it through its own handoff, and `/create-prd`'s ladder reads it — so `/idea` → `/create-prd` → `/specify <KEY>` silently replaced the idea the user had worked out. The file was also never in Phase 7's `deliverable_paths` and matches no `workflows-core:specs-repo-git` §2.1 shape, so it sat uncommitted and fired G1 on every later preflight. The reason the BRD route already gave for skipping the write holds on the keyed route too: the folders Phase 2 reads already carry their provenance in the tree, and `workflows-core:source-truth` lists `idea.md` under *Ignore* whenever a specification is provided — which the same run writes. **`/specify` now writes no `idea.md` on either route** and leaves one already in the folder untouched; the routes no longer diverge on it.
+  **Upgrading:** check any `idea.md` in a folder an earlier `/specify` ran on with `git -C "$SPECS_PATH" status --short -- <folder>/idea.md`. `M` (modified) means it overwrote a committed `/idea` brief: `git -C "$SPECS_PATH" restore -- <folder>/idea.md` brings the brief back. Deleting it instead turns `M` into `D`, still a dirty path, so G1 keeps firing and `/create-prd`'s gate on `idea.md` stops on it. `??` (untracked) is either `/specify`'s own restatement or `/idea`'s brief whose handoff was declined or, as a `status: draft`, never offered — read it before deleting anything; only an `idea.md` inside an `EPIC-` folder is certainly `/specify`'s, since `/idea` never writes there. Where `/specify` replaced an uncommitted brief, the brief cannot be recovered.
+- **`/specify`'s handoff ignored Phase 1's "Use a different path".** Phase 7 wrote the spec's files into the folder Phase 1 confirmed, but handed `handoff-to-main` a `feature_folder` derived from the address, so a run on another path declared paths it never wrote and staged nothing. The handoff now takes the run's feature folder — by default the derived one, or the Epic subfolder Step A re-pointed the run to.
+- **`/specify`'s BRD-route Final-report item** "whether `/dev-workflows:design` was named … and, when it was not" now ends ", why", as `/create-ard`'s sibling item does.
+
+### Fixed — documentation
+
+- **`docs/commands/specify.md` listed `idea.md` among the files `/specify` produces, and said "the whole feature folder is committed".** It now lists the three files the run writes, says the spec's files are committed, and states that the run writes no `idea.md`.
+
 ## [3.11.0] — 2026-10-02
 
 **Update `workflows-core` to 1.9.0 with this release**: §8 states the structural rule the verifier's new contract implements.
