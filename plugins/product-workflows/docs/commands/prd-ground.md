@@ -386,7 +386,11 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   two this run resolved at the same `HEAD`, or one whose `HEAD` is a pin `grounding/baselines.md`
   records for another, stop the run before any grounding. A finding records a commit and never a repository, so this is what lets every
   later phase read a finding's repository off its commit. Two clones of one project at one commit
-  are the usual cause, and the stop names both and the re-run that separates them.
+  are the usual cause, and the stop names both and the re-run that separates them. The one case it
+  does not cover is the earlier pin of a repository a `--rebaseline` pass re-pins, where
+  `grounding/baselines.md` already records a second repository at that pin from a run before this
+  check existed: that pass retires every finding at the pin, whichever repository ground it, and
+  a class-4 `[DG#n]` citing one of them is superseded through the cascade, with its note.
 - **Phase 4.5 — documentation is a lead and a divergence, never evidence.** No `[CG#n]` or
   `[DG#n]` may cite a documentation page in its `evidence`, under any verdict, in any phase.
   Grounding answers whether a claim is true of a *specific commit*

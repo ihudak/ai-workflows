@@ -641,6 +641,11 @@ the manual path:
    ```
    choices: ["Skip and continue without this repo", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo"]
    ```
+   A clone reached through *Specify a different absolute path for this repo* is named by its own
+   remote slug, read as step 2 reads one, where its `origin` reads; where it does not — the one way
+   this phase resolves a clone with no readable `origin` — it is named by the name the operator
+   typed for it in step 1's prompt. That name is the slug Phase 3 compares and Phase 8 records in
+   `grounding/baselines.md` (`workflows-core:grounding-format` §4 step 1).
 4. Empty final list (every repo skipped or missing) → escalate per the `No repos derivable — /epics`
    rule in `workflows-core:escalation-rules`, whose `/prd-ground` variant
    this is:
