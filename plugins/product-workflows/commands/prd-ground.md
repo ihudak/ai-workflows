@@ -601,7 +601,7 @@ behaviour, not the behaviour.
 
 > This requirement set has N claims. Each repository you name is ground against all N, and every finding is verified on MODEL in two steps, in batches of up to 25: K repositories → K×N claim findings plus K baseline findings, in K×⌈(N+1)/25⌉ batches and K×⌈(N+1)/25⌉×2 verification dispatches, plus ⌈D/25⌉×2 dispatches for each frame set whose design pass returns D findings. A re-run re-verifies every claim finding already on file for a repository that has not moved (up to M today).
 
-Fill in K, and the products it enters, where the repositories are already named; leave it as the symbol where step 1 is still to prompt for them. N and M are always filled in. **D is always printed as the symbol**: a frame set's `[DG#n]` count is known only once Phase 5's design pass returns. Drop the frame-set clause where no `[DG#n]` can be produced — under `--no-design`, or where `<BRD-dir>/design/` holds no subdirectory. A repository's term is ⌈(N+1)/25⌉ rather than ⌈N/25⌉ because its baseline counts toward its batches (Phase 7, *Batches*). The figures are the verification pass itself; a retry (Phase 7, *Retry once*), the class-4 sweep's re-dispatches and a successor Phase 6 appends to an on-file `[DG#n]` add to them. **The statement informs and gates nothing**: Phase 5 still sends every claim to every repository named, and nothing here narrows that. It exists because adding a repository multiplies both fan-outs by the full claim count, and the cost was otherwise visible only at Phase 7, after both had been paid for.
+Fill in K, and the products it enters, where the repositories are already named; leave it as the symbol where step 1 is still to prompt for them. N and M are always filled in. **D is always printed as the symbol**: a frame set's `[DG#n]` count is known only once Phase 5's design pass returns. Drop the frame-set clause where Phase 5 runs no design pass — under `--no-design`, or where `<BRD-dir>/design/` holds no subdirectory: the clause counts the frame-set batches that pass's findings fill, and a successor Phase 6 appends to an on-file `[DG#n]`, which such a run can still produce, is among the additions the next sentence names. A repository's term is ⌈(N+1)/25⌉ rather than ⌈N/25⌉ because its baseline counts toward its batches (Phase 7, *Batches*). The figures are the verification pass itself; a retry (Phase 7, *Retry once*), the class-4 sweep's re-dispatches and a successor Phase 6 appends to an on-file `[DG#n]` add to them. **The statement informs and gates nothing**: Phase 5 still sends every claim to every repository named, and nothing here narrows that. It exists because adding a repository multiplies both fan-outs by the full claim count, and the cost was otherwise visible only at Phase 7, after both had been paid for.
 
 BRDs carry no PR links to auto-derive a repo list from (unlike `/epics`), so this phase is always
 the manual path:
@@ -757,15 +757,17 @@ already records a pin for a repository:
   (grounding-format.md §3, `SUPERSEDED`) — a citation into an already-sent package still resolves.
 
 **No two repositories share a pin.** Once every repository this run resolved has passed steps 1–3
-and the bullets above, compare the pins. Stop where two different repositories stand at one commit
-and at least one of them is a repository this run resolved: two this run resolved whose `HEAD` is
-the same commit, or one this run resolved whose `HEAD` is a pin `grounding/baselines.md` records
-under a different repository — in any entry, not only that repository's latest, since
+and the bullets above, compare the pins, telling repositories apart by slug — the identifier
+`workflows-core:grounding-format` §4 step 1 fixes for a `grounding/baselines.md` entry, which is the
+remote slug Phase 1 resolved each one by. Stop where two repositories with different slugs stand
+at one commit and at least one of them is a repository this run resolved: two this run resolved
+whose `HEAD` is the same commit, or one this run resolved whose `HEAD` is a pin
+`grounding/baselines.md` records under a different slug — in any entry, not only that repository's latest, since
 `/product-workflows:brd-interview` reads a superseded finding's repository through every entry the
 file holds. Two clones of one project at one commit are the usual cause:
-`PRD_GROUND_AMBIGUOUS_PIN: <repo-a> and <repo-b> both stand at <commit> — <repo-a> pinned by this run, <repo-b> <pinned by this run | recorded there by grounding/baselines.md> — and a finding records a commit, never a repository, so a finding pinned there could be either one's. <remedy>`
+`PRD_GROUND_AMBIGUOUS_PIN: <repo-a> and <repo-b> both stand at <commit> — <repo-a> pinned by this run, <repo-b> <pinned by this run | recorded there by grounding/baselines.md> — and this folder's grounding holds one repository per pin, so it cannot ground both there. <remedy>`
 
-`<repo-a>` is always a repository this run resolved, and `<remedy>` is the first of these that fits:
+Each repository is named by its slug. `<repo-a>` is always a repository this run resolved, and `<remedy>` is the first of these that fits:
 
 - **`grounding/baselines.md` records both there** — an earlier run ground both at one commit, before
   this check existed, so no choice of repositories separates them:
@@ -780,12 +782,12 @@ records a commit and never a repository (`workflows-core:grounding-format` §2),
 *answers* test, Phase 7's set and *Batches*, and Phase 8's frame-set rule each read a finding's
 repository off its `commit`. Once this check passes, every commit this run pinned belongs to one
 repository alone, in this run and in every entry of `grounding/baselines.md`, so each of those
-reads names one repository. One commit-keyed write is left that this check does not cover, and it
-needs no owner: a `--rebaseline` pass retires every finding on file at the earlier pin of a
-repository it re-pins, whichever repository ground it, and a class-4 `[DG#n]` citing one is
-superseded either way, by Phase 8's frame-set rule or by its cascade. Those findings differ from
-that repository's own only where the file already records a second repository at that pin, from a
-run before this check existed.
+reads names one repository. One case is left that this check does not cover: the earlier pin of a
+repository a `--rebaseline` pass re-pins, where the file already records a second repository at
+that pin, from a run before this check existed. It needs no owner. That pass retires every finding
+on file at the pin, whichever repository ground it, and a class-4 `[DG#n]` citing one of them is
+superseded by Phase 8's cascade, with the cascade's note — never by Phase 8's frame-set rule, which
+takes such a finding only where one repository stands at that pin.
 
 **Record the outcome as a `[CG#n]` finding** (`workflows-core:grounding-format` §4: "the outcome is recorded
 as a `[CG#n]` finding" — a verified fact about a code repository at a commit is exactly what that
@@ -818,7 +820,8 @@ remedy the message names changes: `--rebaseline` is unavailable under this mode,
 the tree would pin new findings to a commit the repository has left.
 
 **Hold one dated `grounding/baselines.md` entry per repository for Phase 8 to append** — **except under `--no-code`, which writes no baseline entry at all** (stated in full above; repeated here because this is the instruction it excepts, and a reader who arrives at an unconditional imperative does not go looking for its exception):
-the repo, the pinned commit, the verification result, and the `[CG#n]` id assigned above — the same
+the repository, by the slug `workflows-core:grounding-format` §4 step 1 fixes, the pinned commit,
+the verification result, and the `[CG#n]` id assigned above — the same
 three commands are what the customer's own reviewer re-runs later against their own checkout.
 **This phase writes nothing to that file.** A pin is recorded together with the findings it pins,
 in Phase 8, and never before them: every stop between here and Phase 8 — Phase 5's and Phase 7's —
@@ -1617,12 +1620,17 @@ resolves — and give each the one-line note `superseded: frame set <frame-set> 
 re-grounding retired — which looked for a successor to it in this run and found none, so no later run
 owes it one — from a finding still waiting on a run that will re-derive it. **A prior class-4 finding is among them only where this run re-ground its claim against
 the repository its cited `[CG#n]` is pinned to.** That repository is the one whose
-`grounding/baselines.md` entry records a pin equal to that `[CG#n]`'s `commit` (Phase 3, *No two
-repositories share a pin*, says when that is a single repository), and *re-ground* is
+`grounding/baselines.md` entry records a pin equal to that `[CG#n]`'s `commit`, entries told apart
+by slug (`workflows-core:grounding-format` §4 step 1), and *re-ground* is
 Phase 5's known set, never a judgement: Phase 5 dispatched a `code-grounder` against that repository
 this run, and that dispatch's claims carried the requirement id the `[CG#n]`'s `claim` names. A
 `--rebaseline` pass re-grounds every claim against a moved repository, so it takes every such
-finding citing that repository's old pin; **a plain re-run against an unmoved repository re-grounds
+finding citing that repository's old pin — **except where the file records that pin for a second
+slug too**, a pin two repositories shared before Phase 3's *No two repositories share a pin*
+existed. There no one repository is the one its cited `[CG#n]` is pinned to, so this rule does not
+take the finding, and the class-4 cascade above marks it with the cascade's own note, which
+`/product-workflows:brd-interview` reads as it reads any finding the cascade retired: one a later
+run re-derives. **A plain re-run against an unmoved repository re-grounds
 only the claims no `[CG#n]` on file answered at its pin** — a row a later re-cut gave this slice —
 so it takes a prior class-4 finding on such a claim and on no other. **Or under `--no-code`**, where
 `cg_findings` is the whole unsuperseded `[CG#n]` set on file. Otherwise it stands: a design pass
@@ -1911,7 +1919,7 @@ legacy folder holding an `idea.md` and no `prd.md`, whose missing input is the P
 an inventory carrying no claim at all
 (`PRD_GROUND_EMPTY_INVENTORY`, which is a fact about what the
 parent allocated, not about this plugin), and an unset `$REPOS_PATH`. The list is illustrative and
-the rule is what binds: a Phase 0 stop added later is covered by it without being named here. `PRD_GROUND_DIRTY_TREE`, `PRD_GROUND_NEEDS_REBASELINE`, and Phase 7's
+the rule is what binds: a Phase 0 stop added later is covered by it without being named here. `PRD_GROUND_DIRTY_TREE`, `PRD_GROUND_NEEDS_REBASELINE`, `PRD_GROUND_AMBIGUOUS_PIN` (two repositories at one pin, which the operator settles), and Phase 7's
 `PRD_GROUND_VERIFY_COMMIT_MISMATCH` are repository state, not a plugin gap, either — unlike Phase
 7's `INPUT_MISSING` and `INPUT_UNBLIND` (`PRD_GROUND_VERIFY_UNBLIND`), which are this command getting its own dispatch contract wrong, and
 `PRD_GROUND_VERIFY_INCOMPLETE`, which is the verifier getting its return contract wrong: all three do

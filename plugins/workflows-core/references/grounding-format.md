@@ -364,7 +364,14 @@ git -C "<repo>" status --porcelain                  # any entry -> line-count co
 1. **`rev-parse HEAD`** pins the commit every `file:line` in the package will cite. Record it in
    `baselines.md` — in the same write as the findings pinned to it, never before them, so a run that
    stops after this procedure and before its findings are written leaves the previously recorded
-   pin standing (`product-workflows:prd-ground` Phase 3).
+   pin standing (`product-workflows:prd-ground` Phase 3). **An entry names its repository by slug**:
+   the last path segment of the clone's `origin` remote URL, `.git` stripped — the identifier
+   `product-workflows:prd-ground` Phase 1 resolves a named repository by — or, for a clone with no
+   readable `origin`, the name the operator gave it there. Never a directory name or a path: a slug
+   is the same in every clone of a repository and at every mount point, so an entry still names its
+   repository after the clone moves, and two entries name one repository exactly where their slugs
+   are equal. Every reader that compares entries, or an entry with a resolved repository, compares
+   slugs.
 2. **`diff --ignore-cr-at-eol --stat`** must produce no output. `--ignore-cr-at-eol` is not
    optional: without it, a checkout can report hundreds of modified files that differ only in line
    endings, and a gate that fires on every line-ending checkout trains its own operators to ignore

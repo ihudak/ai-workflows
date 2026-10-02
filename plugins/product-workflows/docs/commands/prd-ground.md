@@ -317,7 +317,8 @@ Under the resolved folder — the `PRD-<SLICE-KEY>-<slug>/` slice folder inside 
 ([addressing](../reference/references.md) §2, §6), or `/create-prd`'s own
 `PRD-<KEY>-<slug>/` folder on the idea route:
 
-- `grounding/baselines.md` — one dated entry per repository: the pinned commit and how it was
+- `grounding/baselines.md` — one dated entry per repository, named by its remote slug (the last
+  segment of its `origin` URL, the name Phase 1 resolves it by): the pinned commit and how it was
   verified, appended in Phase 8 with the findings it pins, never earlier. `--rebaseline` appends rather than overwrites.
 - `grounding/code-grounding.md` — every `[CG#n]` finding, plus the optional derivation matrix and,
   when documentation grounding ran, a `## Documentation divergences` section: one identifier-free
@@ -381,9 +382,9 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   repository and supersedes that repository's earlier baseline findings — each one an earlier
   `grounding/baselines.md` entry records by id — rather than re-verifying them, so a repository
   carries one live baseline finding however often the folder is re-ground. **No two repositories
-  may stand at one commit** (`PRD_GROUND_AMBIGUOUS_PIN`): two this run resolved at the same `HEAD`,
-  or one whose `HEAD` is a pin `grounding/baselines.md` records for another, stop the run before
-  any grounding. A finding records a commit and never a repository, so this is what lets every
+  may stand at one commit** (`PRD_GROUND_AMBIGUOUS_PIN`), repositories told apart by remote slug:
+  two this run resolved at the same `HEAD`, or one whose `HEAD` is a pin `grounding/baselines.md`
+  records for another, stop the run before any grounding. A finding records a commit and never a repository, so this is what lets every
   later phase read a finding's repository off its commit. Two clones of one project at one commit
   are the usual cause, and the stop names both and the re-run that separates them.
 - **Phase 4.5 — documentation is a lead and a divergence, never evidence.** No `[CG#n]` or
@@ -401,11 +402,11 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   prefix would sit permanently unverified in a namespace where an unverified id blocks
   [`/brd-split`](brd-split.md) (`workflows-core:grounding-format` §8).
 - **Phase 7 — `grounding-verifier` over every finding, frontmatter-pinned to Opus (no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one).** Every finding the run holds
-  — its own, and every `[CG#n]` already on file pinned to a repository whose `HEAD` still matches its
-  recorded pin (none under `--no-code`), but never a `[DG#n]` already on file, nor an earlier
-  baseline finding — the run supersedes a repository's for the fresh one it records, and one recorded
-  for a repository the run did not resolve is not this run's to re-check — except any
-  already reading `SUPERSEDED`: a retired finding keeps the outcome it had, and re-deriving it could only bring it back to life beside its successor. It runs in batches of up to 25 findings per repository or frame set, each in two dispatches: a blind re-derivation that is handed each finding's requirement and source and never its verdict, evidence, control or citation — and refuses a dispatch that carries one — then a comparison that runs the original's control and settles the outcome without changing the blind result. A finding whose result comes back incomplete is re-dispatched once per verification pass — the first pass, and the class-4 sweep's re-check of a design finding whose cited code finding this run rewrote. A finding without a
+  is verified, except any already reading `SUPERSEDED`: its own, and every `[CG#n]` already on file
+  pinned to a repository whose `HEAD` still matches its recorded pin (none under `--no-code`), but
+  never a `[DG#n]` already on file, nor an earlier baseline finding (the run supersedes a
+  repository's for the fresh one it records, and any other repository's is not this run's to
+  re-check). A retired finding keeps the outcome it had, and re-deriving it could only bring it back to life beside its successor. It runs in batches of up to 25 findings per repository or frame set, each in two dispatches: a blind re-derivation that is handed each finding's requirement and source and never its verdict, evidence, control or citation — and refuses a dispatch that carries one — then a comparison that runs the original's control and settles the outcome without changing the blind result. A finding whose result comes back incomplete is re-dispatched once per verification pass — the first pass, and the class-4 sweep's re-check of a design finding whose cited code finding this run rewrote. A finding without a
   verifier outcome is never treated as evidence. **The outcome is first reconciled against the verdict
   the verifier re-derived**, which it returns on every outcome: `agree` means *the same verdict* and
   `extend` means *the claim holds*, so either arriving with a differing verdict is a return that

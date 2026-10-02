@@ -15,6 +15,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 - **`grounding-format` did not say whether a baseline finding owes a positive control**, and a live verifier ruled that it did, forcing `contradict` on every run's baseline; §2.2 and §4.1 now say it owes none, because `baseline-integrity`'s three commands are git's own report over the whole checkout rather than a search, and §8's `not-owed` row names it.
 - **§4.1 now says a run that mints a baseline finding supersedes that repository's earlier baseline findings**, each one an earlier `baselines.md` entry records by id, so a plain re-run no longer leaves two live baseline findings for one repository and pin; an entry that records no id, or an id no block carries, supersedes nothing and is reported.
+- **§4 never said what names the repository in a `baselines.md` entry**; step 1 now fixes it as the clone's remote slug, the identifier `/prd-ground` Phase 1 resolves a repository by, so every reader that compares entries compares slugs rather than paths or directory names.
 - **`phase-handoff` §2.4 named a fixed model, `Claude Opus 5`, in the deliverable commit's `Co-Authored-By` trailer**, which goes stale with every model release; the trailer now names the model the session runs on.
 
 ## [1.8.5] — 2026-10-02
