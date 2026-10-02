@@ -5,6 +5,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.4.4] — 2026-10-02
+
+**Update `workflows-core` to 1.8.5 with this release**: its `resolve-address` now stops, on either address form, on a `$SPECS_PATH` that points inside the specs tree, which the commands and pages below handle and describe.
+
+### Fixed
+
+- **Every command names `specs_git: misrooted` beside `specs_git: blocked`**, at its preflight and at its terminal `commit-artifacts` step (#70). `/document`'s drafts and `/release-notes`' draft are named as written and not committed under either flag, and `/docs-init`, `/docs-audit`, `/docs-brand` and direct `/document` say their documentation-branch entries stay in the run's output under the misrooted flag.
+- **`/release-notes` and keyed `/document` gain `misrooted` in their status lists as a stop** (#70). `/release-notes` Phase 6 never reads it as *neither present*.
+- **`/docs-audit` read the specs tree at its ref with a bare `<ref>:<path>`** (#70), which git resolves from the repository's top level. In a specs tree inside a larger repository, where the preflight's notice lets the run go on, `docs-auditor` found no `decision` or `release` path and `docs-audit-reviewer` reported every one missing. Both now write `<ref>:./<path>`, as `workflows-core:phase-handoff` §3.2 does.
+- **`/document`, `/docs-init`, `/docs-audit` and `/docs-brand` put the misrooted exception inside the sentence that names where an entry lands** (#70), so `/document` read as if the run's output were that path, and `(design D19)` and the slug's definition attached to the exception. Each sentence now names the landing path in full, and the exception follows as its own sentence.
+- **The preflight step said it was "Prompt-free and silent when the specs repo is clean and on its default branch"**, which a misconfigured `$SPECS_PATH` now falsifies (#70). Every such sentence takes `specs-repo-git` §1 rule 7's wording instead: silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. This applies to `/document`, `/release-notes`, `/docs-init`, `/docs-brand` and `/docs-audit`.
+
+### Fixed — documentation
+
+- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals `/document` in keyed mode and `/release-notes` test on either address form, the `SPECS_PATH_INSIDE_TREE` stop that now comes before a not-found one, the notice (one line, plus one more naming anything a misrooted run left behind) that direct-mode `/document`, `/docs-init`, `/docs-brand` and `/docs-audit` get instead, the detection of a tree an earlier run already damaged, the fact that a stopped run writes nothing under the misplaced path while a noticed one writes only what the command itself writes, uncommitted, and hands nothing off, though a command that changes code or documentation still branches in the repository it changed, with the stop naming what to move and where, though it moves nothing, and the two unsupported layouts, each with its reason. The `/release-notes` page lists the new stop among the run's refusals. `docs/getting-started.md` says to set the variable to the root of a dedicated specs repository, the directory that holds `specifications/`. The environment page also says why a specs tree inside a larger repository is unsupported. `/docs-brand` and direct-mode `/document` no longer call `$SPECS_PATH`'s top level "the specs-repo root".
+- `docs/workflow.md` and the `/docs-init` and `/docs-audit` pages said cost and feedback always land under `documentation/<docs-repo-slug>/`. Each now names the exception the commands carry: under `specs_git: misrooted` the entries stay in the run's output.
+- The session-cost page defined `specs_git: misrooted` as a `$SPECS_PATH` set inside the specs tree or below its repository's top level, which leaves out a correct root holding a stray specs folder. They now point at the environment page and cite `workflows-core:specs-repo-git` §3.1 instead of restating the cases. The environment page says how the stop reads where `$SPECS_PATH` holds a stray folder below a repository's top level or is no repository, and that a nested `specifications/` left in place is committed from, and searched for keys, once the variable is fixed.
+
 ## [1.4.3] — 2026-10-01
 
 ### Fixed — documentation

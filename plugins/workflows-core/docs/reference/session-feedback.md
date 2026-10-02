@@ -17,7 +17,7 @@ Every long-running command in the family also emits session feedback automatical
 
 ## Where files land
 
-Feedback writes **one file per folder**, not one per session — the opposite of the cost subsystem's split, because feedback is read as a stream about a plugin rather than measured per run. The resolution ladder is the same as cost's: a resolved folder in `$SPECS_PATH` first, a pending location where no folder resolves, and report-only where nothing does. Nothing is committed by the emitting phase itself; the run's terminal artifact commit picks it up with everything else it wrote.
+Feedback writes **one file per folder**, not one per session — the opposite of the cost subsystem's split, because feedback is read as a stream about a plugin rather than measured per run. The resolution ladder is the same as cost's: a resolved folder in `$SPECS_PATH` first, a pending location where no folder resolves, and report-only where nothing does. On a run carrying `specs_git: misrooted`, meaning the run found `$SPECS_PATH` misplaced in any of the cases [Environment](environment.md) describes (`workflows-core:specs-repo-git` §3.1 is the authority on them), the entry stays in the run's printed output instead, whatever else resolves, so nothing is written under a path the run found wrong. Nothing is committed by the emitting phase itself; the run's terminal artifact commit picks it up with everything else it wrote.
 
 ## Bugs only (`--skip-feedback`)
 

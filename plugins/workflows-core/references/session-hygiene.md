@@ -11,7 +11,7 @@ Everything here is **guidance-only** — the plugin NEVER auto-invokes `/compact
 `/clear`, or `/rename`. The goal is to stop relying on a human to keep asking "prepare
 for a compact/clear": the pipeline does the prep and prompts the choice itself.
 
-## 1. Prepare-checkpoint (runs FIRST — unconditional for PRD-scoped runs)
+## 1. Prepare-checkpoint (runs FIRST — unconditional for PRD-scoped runs, save one carrying `specs_git: misrooted`)
 
 At command finalization — AFTER the deliverable artifact is saved/committed, AFTER
 `emit-cost` / feedback / follow-up, and BEFORE the terminal `commit-artifacts` step
@@ -35,6 +35,8 @@ write would land before the cost entry it is supposed to follow, and it would st
 uncommitted, since `commit-artifacts` runs after cost. Prepare-first is still satisfied:
 the write happens before the run ends, and therefore before the user can act on the
 printed suggestion.
+
+**Not written on a run that carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1): `$SPECS_PATH` is misplaced, so the pointer would land where the next run, with the variable corrected, never looks.
 
 **Skipped**: `/idea` (its brief is the anchor, and it is written and handed off in the same run), `/implement`
 **direct** mode, `/document` **doc-edit** mode (Mode B), `/vuln`, `/upgrade`, `/frames`. There the
@@ -140,7 +142,8 @@ folder, and carries no line there either.
 1. **Guidance-only** — never auto-invokes `/compact`, `/clear`, or `/rename`.
 2. **Prepare-first** — the disk flush (resume pointer) always happens before the run
    ends, so acting on the printed suggestion is safe. Prepare is unconditional
-   (PRD-scoped); only the suggestion is adaptive. The canonical terminal order is:
+   (PRD-scoped), save on a run carrying `specs_git: misrooted` (§1); only the
+   suggestion is adaptive. The canonical terminal order is:
    **deliverable + handoff → feedback → follow-ups → cost → `resume.md` →
    `commit-artifacts` → the run's last printed output**. What binds every
    command is the **emitter tail** — feedback → follow-ups → cost →

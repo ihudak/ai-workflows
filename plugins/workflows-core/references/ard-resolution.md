@@ -16,7 +16,9 @@ convention live in ONE place.
    carries §5's legacy fallback, so this step states no matching rule of its own: a key-number match
    tolerating a stray `-`/`_` and a human-adjusted slug is exactly what §5 does, and a second copy of
    it here is the drift `addressing.md` §1 warns about. `status: absent` → no ARD exists; return
-   `none`.
+   `none`. `status: misrooted` is `addressing.md` §3's hard stop and stops the run here with
+   its `SPECS_PATH_INSIDE_TREE` message — never `none`, which would let the caller go on without an
+   ARD it should have enforced.
 
    **This step is the only route by which that resolution reaches an ARD.** All six consumers below
    delegate their ARD lookup here, so none of them finds an ARD by resolving its *own* folder —

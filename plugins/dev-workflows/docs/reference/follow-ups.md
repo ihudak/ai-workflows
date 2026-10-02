@@ -28,6 +28,9 @@ as a section below the checklist, and the line links it.
 **No folder resolved → report-only.** The follow-ups stay in the Final Report and the run says so.
 Nothing is ever written into your working directory, which may be a code repository.
 
+**The run carries `specs_git: misrooted` → report-only too**, whether or not a folder resolved: `$SPECS_PATH` is
+misplaced, so nothing is written under it, and the notice says that is the reason.
+
 That is the whole ladder. It used to have four rungs, the first of which was a vault; with no vault
 and no import, two of them described places that no longer exist.
 

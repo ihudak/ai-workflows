@@ -46,7 +46,7 @@ This command makes **zero external API calls** and **never writes into the docs 
    with no tree the `absent` stop below would name the wrong cause and offer a re-enter that cannot
    succeed. An `@<path>` address needs no specs tree to resolve and runs on, exactly as `/document`'s
    *Mode detection* does. Then resolve the address with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). Carry the resolved `path`, `kind` and
-   `key` forward; `ambiguous` → stop, naming every match; `invalid` → stop with `RELEASE_NOTES_NEEDS_KEY` below, naming the token that failed §1's grammar (a token that fails it is no `<KEY>`, so the `$SPECS_PATH` test above does not stop it, and `resolve-address` tests the grammar before it searches). **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
+   `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `RELEASE_NOTES_NEEDS_KEY` below, naming the token that failed §1's grammar (a token that fails it is no `<KEY>`, so the `$SPECS_PATH` test above does not stop it, and `resolve-address` tests the grammar before it searches). **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
 
    **Then settle the specs checkout, before the placement below reads anything.** Fix the run key
    set (`workflows-core:specs-repo-git` §3.2), reading only carrier frontmatter (`key:`, `kind:`) as
@@ -168,9 +168,8 @@ fixes, before step 1 places the folder or takes any of its named stops (above). 
 artifacts from an earlier run, retry an artifact commit that failed to push,
 and settle the branch. This runs against `$SPECS_PATH` only — `git -C
 "$SPECS_PATH"`, never a `cd`, so the code/docs repo this run is working
-in is untouched (§1 rule 1). Prompt-free and silent when the specs repo
-is clean and on its default branch. If a guard fires, emit its §5 notice;
-if it returns `specs_git: blocked` (§3.3 G0), carry that flag for the whole
+in is untouched (§1 rule 1). Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice;
+if it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole
 run — the terminal `commit-artifacts` step skips on it.
 
 ---
@@ -226,7 +225,7 @@ run — the terminal `commit-artifacts` step skips on it.
 
   **NEVER write into a docs repo, a code repo, or the current working directory, where it is not the specs repository.** The PRD
   folder is in `$SPECS_PATH`, which is where the terminal `commit-artifacts` step commits it with the
-  rest of the run's artifacts.
+  rest of the run's artifacts — unless the run carries `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), when it is written and not committed.
 
 
 - **Style check** (default ON):
@@ -382,7 +381,7 @@ Diff grounding is opt-in and advisory here: a repo the user skips degrades the g
 **Resolve `run_phase`.** `/release-notes` runs at two points in a PRD's life, and the
 `release-note-types.md` §4 documentation-link rule depends on which. Reuse the existing signal from
 `workflows-core:cost-emission` §7 — resolve the PRD's specs dir
-by calling `resolve-address <PRD>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), then glob it for `specification.md` and `design.md`. That entry point searches every level §3 bounds and carries §5's legacy fallback; `workflows-core:addressing` §7 records why this command is one of its adopters.
+by calling `resolve-address <PRD>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), then glob it for `specification.md` and `design.md`. A `misrooted` status stops the run with §3's `SPECS_PATH_INSIDE_TREE` message and is never read as *neither present*, though Phase 0's resolution, which runs the same check on either address form, has already stopped any run it would reach. That entry point searches every level §3 bounds and carries §5's legacy fallback; `workflows-core:addressing` §7 records why this command is one of its adopters.
 A flat glob alone would also be **narrower than the signal this step says it reuses**: cost-emission
 §7 defers to the specs-dir matching `workflows-core:feedback-emission` and
 `workflows-core:followup-emission` perform, whose pattern already spans both levels.
@@ -633,8 +632,7 @@ stages ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits
 resolved PRD folder is §2.1's `/release-notes` draft, so this step commits
 and pushes it with the rest of the run's artifacts, and edits nothing in it.
 It NEVER writes into a docs repo, NEVER touches a code repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run;
-and skips entirely when the run carries `specs_git: blocked` (§3.3 G0),
-re-emitting that notice. Because the Phase 8 report was composed before this
+and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Because the Phase 8 report was composed before this
 phase, **print its §6 outcome line here**, as the run's last output — prefixed
 `Specs repo:`, with any guard notice repeated in full.
 
@@ -658,7 +656,7 @@ current working directory, where it is not the specs repository; no user name is
 - The run has **no worthiness gate**: every PRD is relevant for release notes, so there is no content state in which this command refuses to draft. `relevant_for_release_notes` is retired (`workflows-core:prd-format`) and a value left in an existing PRD is read by nothing. Whether a note is drafted is the decision of whoever runs the command.
 - NEVER write into a docs repo. The draft's one destination is `release-notes.md` in the resolved PRD folder, which is persistent (never `/tmp`), and it is appended to, never overwritten: no earlier section is ever rewritten or removed (Phase 8). The style gate's scratch copy is removed in every case, with `command rm -f --` (Phase 7).
 - ALWAYS use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0).
-- Light gate only — no Opus review, no tests, no branch (still true — `specs-preflight`, its same-run re-run after a slice key is entered included (`workflows-core:specs-repo-git` §3.5), switches `$SPECS_PATH` only between branches that already exist, and only plugin-created ones (§2.2); it creates none), and no commit of anything in a docs/code repo or the current working directory, where it is not the specs repository. The terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1) — the draft, `release-notes.md` in the resolved PRD folder, among them, so it is committed in the specs repository and nowhere else.
+- Light gate only — no Opus review, no tests, no branch (still true — `specs-preflight`, its same-run re-run after a slice key is entered included (`workflows-core:specs-repo-git` §3.5), switches `$SPECS_PATH` only between branches that already exist, and only plugin-created ones (§2.2); it creates none), and no commit of anything in a docs/code repo or the current working directory, where it is not the specs repository. The terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1) — the draft, `release-notes.md` in the resolved PRD folder, among them, so it is committed in the specs repository and nowhere else — unless the run carries `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), when it is written and not committed.
 - ALWAYS run `specs-preflight` at Phase 0 — again, with the slice's key set, where step 1 re-enters for a slice the operator entered at `RELEASE_NOTES_BRD_NOT_SLICED` — and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`) — bounded to `$SPECS_PATH`'s artifact paths (§2.1) and to plugin-created branches (§2.2), always `git -C "$SPECS_PATH"` and never a `cd` (§1 rule 1), never force-pushing, and never failing the run
 - ALWAYS end the Phase 8 report with a `### Next step` recommendation (per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")`) — guidance only, never auto-invoked; the pipeline leaf (adaptive: continue any pending PA/PE phase, else the PRD is fully processed).
 - ALWAYS end the Phase 8 report with a `### Context hygiene` block per `workflows-core:session-hygiene` — prepare-first (the `resume.md` write runs later, in the terminal cost phase, per `workflows-core:session-hygiene` §1 — this block prints the guidance only), then a leaf-aware suggestion (done → nothing; pending role → `/clear`) + `/rename <PRD-ID>-<slug>-<role>` using this run's inferred lane (`pm` or `dev`, per the Phase 6 inference); guidance only, never auto-run.

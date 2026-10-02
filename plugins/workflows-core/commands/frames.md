@@ -67,6 +67,7 @@ Usage: `/frames <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-model=
      **This command creates no folder**, so `absent` is a stop rather than a create.
    - `status: ambiguous` → §3 rule 5's hard stop, naming **every** match and `@<path>` as the way
      through it. Never choose between them.
+   - `status: misrooted` → `specs-root-check`'s hard stop, with §3's `SPECS_PATH_INSIDE_TREE` message.
    - `status: found` → carry `path`, `kind` and `key`. Report `legacy: true` once as deprecated when
      §5's fallback resolved it.
 
@@ -130,9 +131,8 @@ Usage: `/frames <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-model=
 **Specs-repo preflight** — run at the end of step 1's resolution, on `status: found`, with the run key
 set step 1 fixes, before step 1's carrier and kind tests read the folder. Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
 `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run,
-retry an artifact commit that failed to push, and settle the branch. Prompt-free and silent when the
-specs repo is clean and on its default branch. If a guard fires, emit its §5 notice; if it returns
-`specs_git: blocked` (§3.3 G0), carry that flag for the whole run — the terminal `commit-artifacts`
+retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+`specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.
 
 ---
@@ -350,7 +350,8 @@ repair rather than a blocked one. Say that, and say one thing more, because it i
 index is an OTHER path under `design/**`, so on the next run of any command sharing this repo
 `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §3.3's **G1** matches — the preflight ends there
 at advisory severity listing the paths, and §3.4's leftover flush and §3.5's branch disposition are
-suppressed for the rest of that session. G1 does not set `specs_git: blocked`, so nothing is lost or
+suppressed for the rest of that session — unless that run carries `specs_git: misrooted`, under
+which no guard runs. G1 does not set `specs_git: blocked`, so nothing is lost or
 halted, and the suppression repeats until the paths are committed or the handoff is taken. Beyond
 those two facts, neither more nor less — and name no command that could not run against the folder
 this run actually resolved.
@@ -415,7 +416,7 @@ gap** (a capability the run needed but the plugin lacked), `emit-block` (per
    resolved folder's own `kind`, which Phase 0 already read: `brd` attributes the run to
    `brd-to-prd`/`pm`, `prd` and `epic` to `prd-creation`/`pm`. A BRD-route slice is a `PRD-` folder
    asserting `brd`, so its frame set is `brd-to-prd`; an Epic folder under it asserts `epic`, and
-   is `prd-creation`. The key is always present on any path that reaches here — Phase 0's stops (`FRAMES_NEEDS_ADDRESS`, `FRAMES_EXTRA_ARGUMENT`, `FRAMES_NO_FOLDER`, `FRAMES_NO_CARRIER`, `FRAMES_NOT_A_SPEC_FOLDER`, an ambiguous key, an unset `SPECS_PATH`) all stop Phase 0 before it has a spec folder whose kind and key it can index — `FRAMES_NO_CARRIER` among them, taken on a folder asserting neither — and this phase runs after them, which is why its scope is stated as *every path that reached Phase 1* rather than every path. This
+   is `prd-creation`. The key is always present on any path that reaches here — Phase 0's stops (`FRAMES_NEEDS_ADDRESS`, `FRAMES_EXTRA_ARGUMENT`, `FRAMES_NO_FOLDER`, `FRAMES_NO_CARRIER`, `FRAMES_NOT_A_SPEC_FOLDER`, an ambiguous key, an unset `SPECS_PATH`, a `SPECS_PATH` set inside the specs tree (`SPECS_PATH_INSIDE_TREE`)) all stop Phase 0 before it has a spec folder whose kind and key it can index — `FRAMES_NO_CARRIER` among them, taken on a folder asserting neither — and this phase runs after them, which is why its scope is stated as *every path that reached Phase 1* rather than every path. This
    command refuses to run without a resolved folder — so the entry lands on the keyed tier and never
    on the pending ladder (§9), which **advances the chained checkpoint** (§3); surface the persisted
    path (or the report-only notice).
@@ -424,7 +425,7 @@ gap** (a capability the run needed but the plugin lacked), `emit-block` (per
    ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows session
    artifacts (/frames)` and pushes. It NEVER touches a code/docs repo or the current working
    directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when the run carries
-   `specs_git: blocked` (§3.3 G0), re-emitting that notice. Hold its §6 outcome line for the Final
+   `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the Final
    report.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits a deliverable (each `index.md` is handed off

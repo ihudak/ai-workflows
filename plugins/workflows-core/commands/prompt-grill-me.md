@@ -28,9 +28,8 @@ Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its
 artifacts from an earlier run, retry an artifact commit that failed to push,
 and settle the branch. This runs against `$SPECS_PATH` only — `git -C
 "$SPECS_PATH"`, never a `cd`, so whatever repository you are standing in is
-untouched (§1 rule 1). Prompt-free and silent when the specs repo is clean and
-on its default branch. If a guard fires, emit its §5 notice; if it returns
-`specs_git: blocked` (§3.3 G0), carry that flag — the terminal
+untouched (§1 rule 1). Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+`specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag — the terminal
 `commit-artifacts` step skips on it.
 
 ---
@@ -94,7 +93,7 @@ inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows session artifacts
 (/prompt-grill-me)` — or `NOISSUE …` when no `key` resolved — and pushes.
 It NEVER touches a code/docs repo, or the current working
 directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when
-the run carries `specs_git: blocked` (§3.3 G0), re-emitting that notice.
+the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice.
 Print its §6 outcome line here, prefixed `Specs repo:`, with any guard notice
 repeated in full. Repeat the `Run flags: …` line here too, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — this is the run's last printed output before the Phase 3 grill takes over the session.
 

@@ -388,7 +388,10 @@ Behind the handoff phase's consent choice, these are committed, pushed, and a pu
 against the specs repo's default branch under the shared `brd/<BRD-KEY>-<slug>` branch prefix. That
 choice is preceded by a read-only probe for an `origin` remote, and where the specs repo has none
 the run says so in a line above the choice: the first option still branches and commits locally,
-but the push and the pull request cannot run.
+but the push and the pull request cannot run. On a run carrying `specs_git: blocked` (a detached
+HEAD in the specs repository) or `specs_git: misrooted` (a misplaced `$SPECS_PATH`), the line above
+the choice says instead that the first option will be refused, and nothing is committed whichever
+option is picked.
 
 ## Gates
 

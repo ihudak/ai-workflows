@@ -5,6 +5,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.10.2] — 2026-10-02
+
+**Update `workflows-core` to 1.8.5 with this release**: its `resolve-address` now stops, on either address form, on a `$SPECS_PATH` that points inside the specs tree, which the commands and pages below handle and describe.
+
+### Fixed
+
+- **Every command names `specs_git: misrooted` beside `specs_git: blocked`**, at its preflight and at its terminal `commit-artifacts` step (#70).
+- **`/idea` Phase 0 named `ambiguous` as `addressing` §3's hard stop**, and §3 now has two (#70). It names `misrooted` beside it. `/epics` (Phase 0 and Phase 2.6, where it is a stop and never a skip) and `/update-prd` name it in their status lists as a stop.
+- **`/brd-package` settled the delivery route from a restated handoff gate that omitted `specs_git: misrooted`** (#70). On a specs tree inside a larger repository it recommended "They pull the specs repository" and wrote a delivery note telling the customer to pull a bundle the handoff then refused. It now cites `workflows-core:phase-handoff` §2.1's gate, run-wide flags included, so either flag takes the archive route. `/idea` names the flag among the ways §2.1 refuses a taken handoff.
+- **`/brd-package` and `/brd-interview` print `phase-handoff` §4.3's flag line** above the consent array on a run carrying either flag, in place of the no-remote line (#70).
+- **`/create-ard` and `/specify` named "the PRD gate's `ls-tree` path"**, a primitive `require-on-main` does not have (#70). Both now name the path the PRD gate hands `require-on-main`. `/idea` also says a run carrying `specs_git: misrooted` runs no guard, so its G1 consequences do not apply there.
+- **The preflight step said it was "Prompt-free and silent when the specs repo is clean and on its default branch"**, which a misconfigured `$SPECS_PATH` now falsifies (#70). Every such sentence takes `specs-repo-git` §1 rule 7's wording instead: silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. This applies to all fourteen commands.
+
+### Fixed — documentation
+
+- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals every command that resolves an address tests on either form, and the `SPECS_PATH_INSIDE_TREE` stop, which comes before `/idea`, `/create-prd` or `/brd-intake` could create a folder at `specifications/specifications/…`. It also describes the notice (one line, plus one more naming anything a misrooted run left behind) a run that resolves no address gets instead, the detection of a tree an earlier run already damaged, the fact that a stopped run writes nothing under the misplaced path while a noticed one writes only what the command itself writes, uncommitted, and hands nothing off, though a command that changes code or documentation still branches in the repository it changed, with the stop naming what to move and where, though it moves nothing, and the two unsupported layouts, each with its reason. `docs/getting-started.md` says to set the variable to the root of a dedicated specs repository, the directory that holds `specifications/`. The environment page also says why a specs tree inside a larger repository is unsupported. `docs/reference/session-feedback.md` places an unfiled entry at the top of `$SPECS_PATH`.
+- The `/brd-package` page names a misplaced `$SPECS_PATH` among the states that fail the handoff's gate, the `/brd-interview` page describes the flag line above the consent choice, and the `/idea` page says its handoff runs behind a consent choice that either flag refuses.
+- The `/epics`, `/idea`, `/create-ard`, `/specify` and `/update-prd` pages said a refusal is taken after the preflight has settled the branch, so a stale plugin branch cannot hide a file. Under `specs_git: misrooted` the preflight switches no branch and names the one it stays on, and each page now says so.
+- The session-cost and session-feedback pages defined `specs_git: misrooted` as a `$SPECS_PATH` set inside the specs tree or below its repository's top level, which leaves out a correct root holding a stray specs folder. They now point at the environment page and cite `workflows-core:specs-repo-git` §3.1 instead of restating the cases. The environment page says how the stop reads where `$SPECS_PATH` holds a stray folder below a repository's top level or is no repository, and that a nested `specifications/` left in place is committed from, and searched for keys, once the variable is fixed.
+
 ## [3.10.1] — 2026-10-01
 
 ### Fixed — documentation
