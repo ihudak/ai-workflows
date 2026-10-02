@@ -86,9 +86,9 @@ not work: a flag is a token, so `--redo` would arrive as the address.
 
 3. **Specs-repo preflight — once step 2's resolution returns `status: found`.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")`
    and execute its `specs-preflight` entry point (§3) inline, before step 4's slice refusal and every later read, Phase 4's gate among them — `require-on-main` performs no fetch of its own
-   (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one. Prompt-free and
-   silent when the specs repo is clean and on its default branch. If a guard fires, emit its §5
-   notice; if it returns `specs_git: blocked` (§3.3 G0), carry that flag for the whole run — the
+   (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one. Prompt-free, and
+   silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5
+   notice; if it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the
    terminal `commit-artifacts` step skips on it.
    Its run key set (`workflows-core:specs-repo-git` §3.2) is fixed from what step 2 returned and
    nothing more: the resolved `key`, read off the folder's carrier frontmatter as
@@ -704,7 +704,7 @@ either: that is the gate working. The one exception is a halt on a tool the ai-c
    `<KEY> Add dev-workflows session artifacts (/brd-proposal)` with no `Co-Authored-By` trailer, and
    pushes to the branch this run's handoff phase created (§4.1). It NEVER touches anything outside
    `$SPECS_PATH`; NEVER force-pushes; NEVER fails the run; and skips entirely when the run carries
-   `specs_git: blocked` (§3.3 G0), re-emitting that notice. Hold its §6 outcome line for the final
+   `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the final
    report.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git for the deliverable is

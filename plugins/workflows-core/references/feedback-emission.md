@@ -6,9 +6,7 @@ Single source of truth for the plugin family's session-feedback emitter. Every c
 family itself**, and defects in the ai-containers environment the family runs in (§4), and persist them per-PRD into the **specs repo** so the plugin
 maintainer can aggregate feedback across engineers. Feedback reaches the
 maintainer only if it lands in the committed, pushed specs repo — hence the
-persistence ladder is **specs-first** (§2), and hence every command's terminal
-`commit-artifacts` step commits and pushes it
-(`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §4). This emitter still
+persistence ladder is **specs-first** (§2), and hence every command's terminal `commit-artifacts` step commits and pushes it (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §4), save on a run carrying `specs_git: blocked` or `specs_git: misrooted`; under the second, §2 writes no entry in the first place. This emitter still
 never touches git itself (§6 caller contract); the commit is a separate,
 bounded, end-of-run step.
 
@@ -91,6 +89,8 @@ back in review because the two products differ here.
 **deterministic** (no interactive path prompt, consistent with silent
 capture, §5). Walk the ladder top-down and stop at the first tier that applies:
 
+**Before tier 1: the run carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1, or `addressing.md` §3 `specs-root-check`'s stop) → **report-only**, as in tier 4, whatever else would apply. `$SPECS_PATH` is set but misplaced, so any write under it lands where `specs-repo-git.md` §2.1's classifier puts it in OTHER, or takes it for an artifact that cannot be staged from `$SPECS_PATH` and that the first run after the variable is fixed would commit in the wrong place. Every entry point below resolves its target here, so this covers them all.
+
 1. **`$SPECS_PATH` resolvable + writable + the PRD dir exists** — the dir matched
    by `$SPECS_PATH/{specs|specifications|vis}/…/<KEY>{-|_}<slug>/…` →
    `<PRD-dir>/dev-workflows/<KEY>-feedback.md`. *[primary — the whole point]*
@@ -99,13 +99,13 @@ capture, §5). Walk the ladder top-down and stop at the first tier that applies:
    first:
    - **The run is `/docs-init`, `/docs-audit`, `/docs-brand` on its standalone path, or `/document` in direct mode**, and it resolved the target it writes into (design D19) → `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/feedback/<date>.md`, where `<docs-repo-slug>` is the one-segment name `specs-repo-git.md` §2.1 defines for that repo — for direct mode, the write target its own Phase 0 step 3 resolved, which every direct-mode run holds from that step on — cited, never re-derived here, because the staging classifier admits exactly one segment there. Filed, not unfiled: the docs repo is that family's unit of attribution exactly as the PRD directory is the pipeline's, so there is nothing to move it under later. **Per docs repo, not one flat bucket**, and the inner `dev-workflows/` names the *family*, not the emitting plugin. `specs-repo-git.md` §2.1's `<specs-root>/documentation/*/dev-workflows/**` shape stages it.
    - **Otherwise** → `$SPECS_PATH/dev-workflows-feedback/<KEY-or-date>.md` at
-     the specs-repo root. Still committed & aggregated; notice:
+     the top of `$SPECS_PATH`. Still committed & aggregated; notice:
      `unfiled — move under the PRD dir if it belongs to one.`
 
    **The branch names the runs it serves rather than testing "did the run resolve a
    docs repo"** — the same four, for the same reasons, as `cost-emission.md` §8
    gives. `/document` direct mode joined it after shipping outside it, when its
-   entries landed unfiled at the specs-repo root with no PRD to be moved under;
+   entries landed unfiled at the top of `$SPECS_PATH` with no PRD to be moved under;
    entries it filed there before then stay where they are.
 3. **`source = directory`** (a passed directory, no `$SPECS_PATH`) → beside that
    directory.

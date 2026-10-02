@@ -5,6 +5,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.4.2] — 2026-10-02
+
+**Update `workflows-core` to 1.8.5 with this release**: its `resolve-address` now stops, on either address form, on a `$SPECS_PATH` that points inside the specs tree, which the commands and pages below handle and describe.
+
+### Fixed
+
+- **Every command names `specs_git: misrooted` beside `specs_git: blocked`**, at its preflight and at its terminal `commit-artifacts` step (#70). `/implement` says `implementation.md` is written and not committed under either flag.
+- **`/implement` Phase 0 named `ambiguous` as `addressing` §3's hard stop**, and §3 now has two (#70). It names `misrooted` beside it, on either address form. `/ready` (both resolutions) and `/design` name it in their status lists as a stop.
+- **`/ready` gave a row-C stop that offered no repair no reason of its own** (#70). Its `require-on-main` mapping named only row C after a failed retry, and said row C's prompt already ran, but under `specs_git: misrooted`, and on a read-only specs mount, row C stops at once with no prompt and no retry. Both cases are now one fourth reason, on the default branch but the checkout differs and no repair was offered, naming the flag or the mount. A repair the operator declined with `Cancel` mapped to no reason at all; the stale-or-dirty reason now takes row C wherever its repair was offered and failed or was declined, so the two row-C reasons split on whether a repair was offered. Phase 3's coverage map and status checklist cite Phase 1's list of reasons instead of counting three, so every reason reaches the reviewer at no less than MAJOR. The coverage map no longer says every ⚠ artifact but rows D/E has a local file, which rows G and I need not: it greps a ⚠ artifact only where its file is on disk.
+- **`/design`'s Epic ref test read a bare `<default-ref>:specifications/…`**, which git resolves from the repository's top level (#70). It now reads `<default-ref>:./specifications/…`, as `workflows-core:phase-handoff` §3.2 does, so a specs tree inside a larger repository finds its spec'd Epics.
+- **The preflight step said it was "Prompt-free and silent when the specs repo is clean and on its default branch"**, which a misconfigured `$SPECS_PATH` now falsifies (#70). Every such sentence takes `specs-repo-git` §1 rule 7's wording instead: silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. This applies to all five commands.
+
+### Fixed — documentation
+
+- **The environment pages said nothing about a `$SPECS_PATH` set to `specifications/` itself** (#70). `docs/reference/environment.md` gains *When it points inside the specs tree*: the two signals `/design`, `/ready`, `/implement` and `/vuln` test on either address form, the `SPECS_PATH_INSIDE_TREE` stop, the notice (one line, plus one more naming anything a misrooted run left behind) `/upgrade` and other runs that resolve no address get instead, the detection of a tree an earlier run already damaged, the fact that a stopped run writes nothing under the misplaced path while a noticed one writes only what the command itself writes, uncommitted, and hands nothing off, though a command that changes code or documentation still branches in the repository it changed, with the stop naming what to move and where, though it moves nothing, and the two unsupported layouts, each with its reason. `docs/getting-started.md` says to set the variable to the root of a dedicated specs repository, the directory that holds `specifications/`. The environment page also says why a specs tree inside a larger repository is unsupported. `docs/reference/session-feedback.md` places an unfiled entry at the top of `$SPECS_PATH`.
+- The `/implement` and `/ready` pages said every refusal is taken after the preflight has settled the branch, so a stale plugin branch cannot hide a file. Under `specs_git: misrooted` the preflight switches no branch and names the one it stays on, and both pages now say so.
+- The session-cost and session-feedback pages defined `specs_git: misrooted` as a `$SPECS_PATH` set inside the specs tree or below its repository's top level, which leaves out a correct root holding a stray specs folder. They now point at the environment page and cite `workflows-core:specs-repo-git` §3.1 instead of restating the cases. The environment page says how the stop reads where `$SPECS_PATH` holds a stray folder below a repository's top level or is no repository, and that a nested `specifications/` left in place is committed from, and searched for keys, once the variable is fixed.
+
 ## [4.4.1] — 2026-10-01
 
 ### Fixed — documentation

@@ -43,7 +43,7 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
    or take a folder as an idea-route one that is not.
    Resolve the folder here with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`,
    §3): `found` is the folder this run writes into — **where it is an idea-route PRD folder**, below
-   — and `ambiguous` is §3's hard stop. **On `absent` nothing is created here**, because Phase 0
+   — and `ambiguous` and `misrooted` are §3's two hard stops. **On `absent` nothing is created here**, because Phase 0
    holds no slug to name a folder with: the folder is created by Phase 4's first write, as
    `PRD-<KEY>-<candidate_slug>/` (`workflows-core:addressing` §2), `candidate_slug` being the one
    Phase 2's digest returns. Creating it with `idea.md`, which carries its `kind` and `key`, is also
@@ -127,9 +127,8 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
    `detection_model`.
 
 **Specs-repo preflight** — run in step 1, as soon as `$SPECS_PATH` is known and before the folder is resolved. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run,
-retry an artifact commit that failed to push, and settle the branch. Prompt-free and silent when the
-specs repo is clean and on its default branch. If a guard fires, emit its §5 notice; if it returns
-`specs_git: blocked` (§3.3 G0), carry that flag for the whole run — the terminal `commit-artifacts`
+retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+`specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.
 
 ---
@@ -599,8 +598,9 @@ dirty by construction rather than by a choice; and a `status: refined` run whose
 **taken** and whose `workflows-core:phase-handoff` §2.1 gate then refused it committed nothing
 either, which is the *Gate failed* line §4.1 emits and which Phase 5 already names beside a decline.
 That third one is reachable rather than theoretical: §2.1 fails on path, repo or permission grounds
-**or** on `specs_git: blocked`, and Phase 0 carries that flag for the whole run whenever its own
-preflight returns `workflows-core:specs-repo-git` §3.3's G0. The other non-landing §4.1 rows are not
+**or** on either run-wide flag it names — `specs_git: blocked`, which Phase 0 carries for the whole
+run whenever its own preflight returns `workflows-core:specs-repo-git` §3.3's G0, and
+`specs_git: misrooted`, which it carries whenever that preflight's §3.1 notice set it. The other non-landing §4.1 rows are not
 further routes — *No remote* and *Push failed* both committed on a branch first (§2.4 runs before
 §2.5), and *Nothing to commit* changed nothing.
 
@@ -609,7 +609,8 @@ one: the preflight **ends** there, at advisory severity, listing the paths — n
 no push — and because §3.4's leftover flush and §3.5's branch disposition run only when stage 1 matched
 nothing, **both are suppressed for the rest of that session**. G1 does **not** set `specs_git: blocked`,
 so the terminal `commit-artifacts` still runs and nothing is lost or halted; the suppression repeats on
-every later run until those paths are committed or the handoff is taken.
+every later run until those paths are committed or the handoff is taken. A run carrying
+`specs_git: misrooted` runs no guard at all, so none of this applies to it.
 
 ---
 
@@ -764,8 +765,7 @@ and no label because the ideation phase is short (§4). Guidance only, never aut
    ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows
    session artifacts (/idea)` — the key is mandatory here, so `NOISSUE` never applies — and pushes. It NEVER
    touches a code/docs repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER
-   fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0), re-emitting
-   that notice. Hold its §6 outcome line for the Final report.
+   fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the Final report.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (idea.md itself is handed off separately, before this phase, via `workflows-core:phase-handoff` §2, behind Phase 5's §4.3 consent choice; the terminal step above commits only the bounded session-artifact paths in `$SPECS_PATH`), and NEVER writes into a code/docs repo or the current working directory, where it is not the specs repository; no user name is ever written.
 
