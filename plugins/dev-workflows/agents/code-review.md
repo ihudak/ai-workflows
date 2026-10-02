@@ -137,15 +137,28 @@ full review.
    deviations recorded, which is the conservative reading.
 10. **Spec/design conformance** (conditional — only when `applicable_spec` is
     provided; otherwise this dimension does not apply — omit it silently) —
-    trace each `in_scope_ids` requirement against the diff and classify it:
-    `satisfied` / `missing` / `partial` / `contradicts`. This checks
-    design→**code** — it does NOT re-verify spec→design traceability (that is
-    `design-reviewer`'s pre-code job). Severity:
+    classify each `in_scope_ids` requirement against **the code as it stands
+    after this change**, not against the diff alone: `satisfied` / `missing` /
+    `partial` / `contradicts`. Start from the diff; where the diff does not
+    deliver a requirement, search the codebase before classifying it — a
+    requirement an earlier run, or code predating the spec, already delivers
+    is `satisfied`, counted as *already present*. A plan step's
+    `implements [ID]` tag, an earlier implementation record and a ticked box
+    are claims about coverage, not evidence of it: verify the behaviour in the
+    code either way. Then report **`exceeds`**: behaviour this change adds that
+    no in-scope requirement and no plan step asks for — judged on the diff
+    only, since code that predates the change is not this change's
+    over-build. This checks design→**code** — it does NOT re-verify
+    spec→design traceability (that is `design-reviewer`'s pre-code job).
+    Severity:
     - `contradicts` (the code does the opposite of a requirement) → `BLOCKER`.
     - `missing` with **no** recorded deferral → `MAJOR`.
     - `missing` **with** a recorded deferral (named in the plan's `Out of
       scope`, or an explicit deferral note in the brief) → `MINOR` flagged note.
     - `partial` → `MINOR`.
+    - `exceeds` → `MINOR`; `MAJOR` where it builds something the plan's or the
+      design's `Out of scope` names. Report-only: no caller writes it onto the
+      spec.
 11. **Claims falsification** (conditional — only when `claims_file` is provided;
     otherwise this dimension does not apply — omit it silently). **Precondition:
     dimensions 1–10 are complete and their findings recorded.** Only now, for the
@@ -217,9 +230,11 @@ Return this exact shape (no chatter, no preamble):
 - ...
 
 #### Spec/design conformance (only if applicable_spec provided)
-- Coverage: [N satisfied / M missing / P partial / C contradicts]
-- [severity] `[ACxx]` - [missing | partial | contradicts] - [what the diff
+- Coverage: [N satisfied (K already present) / M missing / P partial / C contradicts / X exceeds]
+- [severity] `[ACxx]` - [missing | partial | contradicts] - [what the code
   does vs. what the requirement demands]
+- [severity] `path:line` - exceeds - [what the change adds that no in-scope
+  requirement or plan step asks for]
 - _or_ "no findings — all in-scope requirements satisfied"
 
 #### Claims falsification (only if claims_file provided)

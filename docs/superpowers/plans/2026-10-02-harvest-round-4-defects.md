@@ -67,7 +67,8 @@ EDITFILE holds one or more blocks:
     >>>>>>> NEW
 <n> is how many times OLD must match TARGET. A run of whitespace in OLD matches any run of
 whitespace in TARGET, so a passage wrapped differently in another edition still matches;
-NEW is written verbatim. A count mismatch on any block aborts before anything is written.
+NEW is written with its outer whitespace stripped (the file's own indentation before the match
+stays). A count mismatch on any block aborts before anything is written.
 """
 import re, sys
 
@@ -92,7 +93,7 @@ if cur is not None or not blocks:
     sys.exit(f'ABORT {editfile}: unterminated or empty edit file')
 text = open(target).read()
 for b in blocks:
-    old, new = '\n'.join(b['old']), '\n'.join(b['new'])
+    old, new = '\n'.join(b['old']), '\n'.join(b['new']).strip()  # the match spans no outer whitespace, so NEW carries none
     pat = re.compile(r'\s+'.join(map(re.escape, old.split())))
     found = len(pat.findall(text))
     if found != b['n']:
