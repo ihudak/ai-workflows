@@ -35,7 +35,7 @@ or an ancestor of it) — except where `branch_from` has already landed on `bran
 the agent then reads the merge that landed it (`<landing>^1...<branch_from>`), or, where a
 fast-forward left no merge and `branch_from` is a single commit, that commit's own change. Where
 the branch or the sha does not resolve, where a branch name or a merge commit landed with no merge to read, or where
-a range changes no file — save a single one-parent commit whose own change is empty — the agent's
+a range changes no file — save a single commit, one-parent or root, whose own change is empty — the agent's
 **Key-commit fallback** greps `keys_hierarchy` when the caller
 supplied one. An empty range is never reported as resolved, save a single commit whose own change is empty. A
 commit with no parent is read against the empty tree, or, in a shallow clone, where it may only be
