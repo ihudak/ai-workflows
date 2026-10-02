@@ -30,8 +30,11 @@ Refuse to run without `repo_path` and at least one element in **`refs`**.
 records `repo` / `branch` / `base` / `commit` / `pushed` — no URL, no host, no PR id — so there is no
 host to route on and no forge to ask. The diff is taken directly
 (`git -C <repo_path> diff <branch_to>...<branch_from>`, `branch_from` accepted as a commit sha when
-the branch is gone); where neither resolves, the agent's **Key-commit fallback** greps
-`keys_hierarchy` when the caller supplied one.
+the branch is gone) — except where `branch_from` has already landed on `branch_to`, which empties
+that range: the agent then reads the merge that landed it (`<landing>^1...<branch_from>`). Where
+neither resolves, where a fast-forward left no merge to read, or where a range changes no file, the
+agent's **Key-commit fallback** greps `keys_hierarchy` when the caller supplied one. An empty range
+is never reported as resolved.
 
 When `repo_url_slug` is provided, before summarising run
 `git -C <repo_path> remote get-url origin`, strip a trailing `.git`, and compare

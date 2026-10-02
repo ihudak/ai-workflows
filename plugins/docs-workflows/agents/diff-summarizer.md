@@ -36,6 +36,14 @@ Refuse to run without `repo_path` and at least one element in **`refs`**.
 
 **`refs` is the shape the callers have, and the only one.** `workflows-core:implementation-format` §1 records `repo` / `branch` / `base` / `commit` / `pushed` — no URL, no host, no PR id — because nothing in this plugin reads a tracker or a pull-request API any more. So there is no host to route on and no forge to ask: take each element's diff directly, `git -C <repo_path> diff <branch_to>...<branch_from>` (`resolved_via: local_ref`), with `branch_from` accepted as a commit sha when the branch is gone (`workflows-core:implementation-format` §1 records both for exactly that reason).
 
+**A ref that has already landed has an empty three-dot range, so test for it before taking the diff.** Run `git -C "<repo_path>" merge-base --is-ancestor <branch_from> <branch_to>` first. Where it exits non-zero, `branch_from` has not landed on `branch_to`, and the three-dot diff above is the element's content. Where it exits 0, the work reached `branch_to` by a merge commit or a fast-forward, the range's merge base *is* `branch_from`, and `<branch_to>...<branch_from>` is empty by construction. Read the element from the merge that landed it instead:
+
+1. **Find `landing`** — the oldest commit on `branch_to`'s first-parent line that descends from `branch_from`: the last commit `git -C "<repo_path>" rev-list --first-parent <branch_from>..<branch_to>` lists that `git -C "<repo_path>" rev-list --ancestry-path <branch_from>..<branch_to>` lists too. Take the two lists separately and intersect them: the two flags in one call follow first-parent edges only, and find nothing for a branch that reached `branch_to` through an intermediate branch's merge.
+2. **Read the merge.** Where `landing` exists, `git -C "<repo_path>" rev-list --parents -n 1 <landing>` names two or more parents, and `git -C "<repo_path>" merge-base --is-ancestor <branch_from> <landing>^1` exits non-zero — `branch_from` arrived through one of the merge's later parents — the element's diff is `git -C "<repo_path>" diff <landing>^1...<branch_from>`, with `resolved_via: local_ref` and `base` the merge base of `<landing>^1` and `branch_from`. That is the branch's own work from its fork point, which is what the three-dot range read before the merge.
+3. **Otherwise there is no merge to read** — no `landing`, a `landing` with one parent (a fast-forward), or a `branch_from` the merge's first parent already holds. The element goes to the **Key-commit fallback** below.
+
+**An empty range is never a resolution.** Where the range an element resolved to changes no file (`git -C "<repo_path>" diff --quiet <range>` exits 0), do not report it `local_ref` with `files_changed: 0`. It goes to the Key-commit fallback, and where that finds nothing, to `unresolved_prs` with the range named in its `reason`. A summary of nothing tells the caller the work changed nothing, and `/document` and `/release-notes` would write from it.
+
 When `repo_url_slug` is provided, before summarising run
 `git -C <repo_path> remote get-url origin`, strip a trailing `.git`, and compare
 the URL's last path segment to `repo_url_slug`. On mismatch, return
@@ -44,7 +52,7 @@ repository. When `repo_url_slug` is absent, trust `repo_path` as given.
 
 ## Key-commit fallback (pure local; no HTTPS)
 
-Reached only where an element's own diff does not resolve — `branch_from` is neither a branch in the clone nor a commit in it, which is what a squash-merge leaves behind.
+Reached where an element's own diff does not resolve, in one of three ways: `branch_from` is neither a branch in the clone nor a commit in it, which is what a squash-merge leaves behind; it landed on `branch_to` with no merge commit to read it from (step 3 above); or the range it resolved to changes no file (above).
 
 If the caller supplied `keys_hierarchy`, for each key run `git -C "<repo_path>" log --all --extended-regexp --regexp-ignore-case --grep='(^|[^A-Za-z0-9_-])<key>([^A-Za-z0-9_-]|$)' --oneline` — the whole-key match `workflows-core:implementation-format` §4 defines, the key's ERE metacharacters escaped, so a PRD key `ACME-7` finds `[ACME-7]` and never `[ACME-77]`. Treat matches as "commits associated with this feature" rather than a reconstruction of this element's own ref. Read every match's full diff (`git -C "<repo_path>" show --format= <sha>`) and return **one `per_pr` entry for this element** — `per_pr` is one entry per input element on every path, this one included — carrying the element's `ref`, `resolved_via: key_commits`, `head` = the newest matched sha, and `files_changed` / `insertions` / `deletions` summed over every commit read. Annotate the `summary` explicitly, naming each sha it drew on:
 *"Diff reconstructed from commits <sha>, <sha> … matched on key <key>; this may not correspond to the ref's own content exactly."*
@@ -120,6 +128,7 @@ aggregate_summary: |
 - NEVER mutate the repo (no commits, no branch creation, no `git reset`, no `git clean`).
 - NEVER switch the repo's HEAD when `refresh.pull` is false — leave the working tree as found.
 - NEVER fabricate diff content. If an element cannot be resolved, record it in `unresolved_prs`.
+- NEVER report an empty range as resolved. A `local_ref` element changes at least one file; one whose range changes none goes to the Key-commit fallback, then to `unresolved_prs`.
 - If `resolved_via == key_commits`, the `summary` MUST carry the explicit caveat — omitting it would silently degrade content trust.
 - On `REPO_MISSING`, `DIRTY_TREE`, `REFRESH_BLOCKED`: return immediately with the status; do NOT partially resolve any element.
 - On a read-only mount, NEVER `git fetch`, `git pull`, `git switch`, or `git remote set-head` — all write. Invoke `Skill(skill: "workflows-core:reference", args: "read-only-repos")` and follow it instead of returning `REFRESH_BLOCKED`.

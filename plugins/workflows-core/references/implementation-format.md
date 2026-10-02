@@ -87,9 +87,12 @@ names, read against the Epic's own `specification.md`. **A block that cannot be 
 stays where it is and stays the PRD folder's** — a block moved on a guess attributes work to an
 Epic that did not get it, and every Epic-level reader then reports it as that Epic's.
 
-**Branch for convenience, commit for durability.** A merged branch is deleted; the squashed commit
-stays reachable from the base. `diff-summarizer` accepts either, and recording both is what makes the
-file survive branch cleanup.
+**Branch for convenience, commit for durability.** A merged branch is usually deleted, so the record
+names the commit as well. After a merge commit or a fast-forward that commit is reachable from the
+base; after a squash-merge no branch reaches it once its own is deleted, and it survives only while a
+clone still holds it — which is why `diff-summarizer` falls back to a key-commit search there.
+`diff-summarizer` accepts either, and recording both is what makes the file survive branch cleanup;
+how it reads a commit that has already landed on the base is that agent's own rule.
 
 **`pushed:` is recorded, not assumed.** A later run reading `pushed: false` says *"this was never
 pushed"* rather than reporting an empty diff against a ref the remote does not have.
