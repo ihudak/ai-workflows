@@ -7,9 +7,9 @@
 ```yaml
 repo_path:   <absolute path to a local clone, e.g. /workspace/<repo-name>>
 repo_url_slug: <repo slug, e.g. "cluster"; optional, enables upstream cross-check>
-refs:                              # what implementation.md records; the only element list
-  - branch_from: <the feature branch, or the commit sha, this run wrote>
-    branch_to:   <the base it was branched from>
+refs:                              # what implementation.md records, and commits only the scan found; the only element list
+  - branch_from: <the feature branch, or the commit sha, this run wrote; or a commit only the scan found>
+    branch_to:   <the base it was branched from; for a commit only the scan found, <sha>^>
     title:       <one line naming the work; optional>
 context: |
   <what this repo's changes relate to — for documentation focus>
@@ -29,9 +29,17 @@ Refuse to run without `repo_path` and at least one element in **`refs`**.
 **`refs` is the shape the callers have, and the only one.** `workflows-core:implementation-format` §1
 records `repo` / `branch` / `base` / `commit` / `pushed` — no URL, no host, no PR id — so there is no
 host to route on and no forge to ask. The diff is taken directly
-(`git -C <repo_path> diff <branch_to>...<branch_from>`, `branch_from` accepted as a commit sha when
-the branch is gone); where neither resolves, the agent's **Key-commit fallback** greps
-`keys_hierarchy` when the caller supplied one.
+(`git -C <repo_path> diff <branch_to>...<branch_from>`, `branch_from` accepted as a commit sha, the
+form both callers hand, `branch_to` read as `origin/<branch_to>` wherever the local branch is absent
+or an ancestor of it) — except where `branch_from` has already landed on `branch_to`, which empties that range:
+the agent then reads the merge that landed it (`<landing>^1...<branch_from>`), or, where a
+fast-forward left no merge and `branch_from` is a single commit, that commit's own change. Where
+the branch or the sha does not resolve, where a branch name or a merge commit landed with no merge to read, or where
+a range changes no file — save a single commit, one-parent or root, whose own change is empty — the agent's
+**Key-commit fallback** greps `keys_hierarchy` when the caller
+supplied one. An empty range is never reported as resolved, save a single commit whose own change is empty. A
+commit with no parent is read against the empty tree, or, in a shallow clone, where it may only be
+the clone's boundary, comes back unresolved.
 
 When `repo_url_slug` is provided, before summarising run
 `git -C <repo_path> remote get-url origin`, strip a trailing `.git`, and compare

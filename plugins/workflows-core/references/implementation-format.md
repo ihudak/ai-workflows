@@ -21,7 +21,7 @@ One `## <YYYY-MM-DD> — /implement` block per run, one entry per repository the
 - repo:    orders-service
   branch:  feat/ACME-77-01-order-intake
   base:    main
-  commit:  a3f91c2          # squashed
+  commit:  a3f91c2
   pushed:  true
 - repo:    billing-api
   branch:  feat/ACME-77-01-order-intake
@@ -87,9 +87,15 @@ names, read against the Epic's own `specification.md`. **A block that cannot be 
 stays where it is and stays the PRD folder's** — a block moved on a guess attributes work to an
 Epic that did not get it, and every Epic-level reader then reports it as that Epic's.
 
-**Branch for convenience, commit for durability.** A merged branch is deleted; the squashed commit
-stays reachable from the base. `diff-summarizer` accepts either, and recording both is what makes the
-file survive branch cleanup.
+**Branch for convenience, commit for durability.** A merged branch is usually deleted, so the record
+names the commit as well — the one commit `/implement` Phase 4.6 made for the run. After a merge
+commit or a fast-forward that commit is reachable from the base; after a squash or a rebase merge the
+base holds a copy of the change rather than the commit, so once the branch is deleted no branch
+reaches it and it survives only while a clone still holds it — which is why `diff-summarizer` falls
+back to a key-commit search there, where its caller supplies keys — `/document` does; `/release-notes`
+does not, and there the element comes back unread. `diff-summarizer` accepts the branch or the commit, and recording
+both is what makes the file survive branch cleanup; how it reads a commit that has already landed on
+the base is that agent's own rule.
 
 **`pushed:` is recorded, not assumed.** A later run reading `pushed: false` says *"this was never
 pushed"* rather than reporting an empty diff against a ref the remote does not have.
@@ -160,7 +166,7 @@ A consumer combines **this file's blocks** with a **scan of commit messages** fo
 the run already holds:
 
 ```
-git -C <repo> log --extended-regexp --regexp-ignore-case \
+git -C <repo> log --no-merges --extended-regexp --regexp-ignore-case \
     --grep='(^|[^A-Za-z0-9_-])<key>([^A-Za-z0-9_-]|$)' \
     --grep='(^|[^A-Za-z0-9_-])<workitem_key>([^A-Za-z0-9_-]|$)'
 ```
@@ -168,6 +174,19 @@ git -C <repo> log --extended-regexp --regexp-ignore-case \
 over the repositories this file names — or, when it names none, the repositories resolved from
 `$REPOS_PATH` — with one `--grep` for each key and each `workitem_key` below; git lists a commit
 that matches any of them anywhere in its message, its trailers included.
+
+**The scan takes no merge commit (`--no-merges`).** A merge commit's range is the whole branch it
+merged — work the blocks and the scan already reach commit by commit, which it would report a second
+time — or, where the base was merged into a work branch, the base's own work, which is not this
+key's at all. A forge writes a merged pull request's title, `[<key>]` included, into the merge
+commit, so without the flag nearly every merge-commit landing would come back as unrecorded work.
+Every commit the scan returns therefore has at most one parent — a root commit has none, and so does
+a shallow clone's boundary commit, a merge there included, which shows no parents and is returned —
+and a commit with a parent, or a true root read against the empty tree, has its own change as its
+whole content; a shallow clone's boundary has none the clone can show.
+**The cost:** work a merge commit's message carries alone — a hand-made branch whose own commits name
+no key — is not found. The unanchored probe below is the one `git log` here that keeps merge
+commits, since a branch name, or a whole key, inside a merge commit's message is what it looks for.
 
 **A token matches only as a whole key.** Each `--grep` wraps its token in
 `(^|[^A-Za-z0-9_-])` and `([^A-Za-z0-9_-]|$)`, every ERE metacharacter in the token
@@ -186,27 +205,38 @@ and the boundary deliberately does not reach it. A merge commit's own subject is
 `references/branch-naming.md` §1.4, so the key there is followed by `-` — and admitting `-` or `_`
 to reach it would admit `[ACME-70-01]` and `[ACME-7-01]` again, which is the over-match this
 boundary exists to remove. A boundary aware enough to tell the two apart, admitting `-` only where
-a digit does not follow, would reach the merge commit and hand `/document` a commit whose diff is
-the whole branch, every commit of which the scan already lists separately — so the branch's work
-would be reported twice.
+a digit does not follow, would still not reach the merge commit, which the scan does not take
+(`--no-merges`, above). What it would add is a one-parent commit whose message names a branch — on a
+forge that writes the branch into a squash commit (`Merged in <branch> (pull request #N)`), that
+branch's whole landed work. It is not taken here because it changes the one boundary every reader of
+this file shares, which is its own change to make; until then the probe below reports such a commit
+on a repository the scan left at zero matches.
 
-**What that costs:** the scan finds no commit of a branch whose own subjects carry no `[<key>]` and
-whose merge commit names the key only inside the branch name. **Population: every `/document` scan,
+**What that costs:** the scan finds no commit of a branch whose own messages name no key: its
+merge commit is not scanned (above), and where the subject the forge wrote for it names the key only
+inside the branch name, this boundary would not reach it even if it were. **Population: every `/document` scan,
 and every `/release-notes` scan with diff grounding on, over a repository where a key's work is
 carried by a branch name alone — from `workflows-core` 1.7.1, since the unanchored grep it replaces
-did match inside a branch name, and matched every longer key with it.**
+did match inside a branch name, and matched every longer key with it — and, from `workflows-core`
+1.10.0, over one where it is carried by a merge commit's message alone, the `--no-merges` cost
+above.**
 
 **The recovery is a report, not a read: where the whole-key scan matches nothing in a repository,
-run one unanchored probe over it.** Repeat that repository's `git log` with **its tokens bare** —
+run one unanchored probe over it.** Repeat that repository's `git log` with **its tokens bare** and without `--no-merges` —
 the same token set the scan used there, one `--grep` each, every ERE metacharacter in each still
 escaped exactly as above, but with neither `(^|[^A-Za-z0-9_-])` nor `([^A-Za-z0-9_-]|$)` around
 them — and print each commit it matched by **its SHA, date and subject**, as *"may name this key
-inside a branch name — inspect by hand"*. The escaping is not optional here: a `workitem_key`
+inside a branch name or in a merge commit — inspect by hand"*. The escaping is not optional here: a `workitem_key`
 carrying a `.` matches any character without it, which is a wider probe than the one this exists to
 recover from. **Nothing is read.** Not one of those commits is handed to `diff-summarizer`, none
 enters the run's read set, and none enters a drop set, so the probe owes no boundary rule of its
 own and leaves nothing behind for a later run: the operator is told where to look, and the run's
 own sources are exactly what they were.
+
+**The probe is also where the `--no-merges` cost shows**: on a repository the scan left at zero matches, a merge
+commit whose message names the key whole, which the scan skips, comes back here, and so does one
+naming it inside a branch name. Where the scan matched anything, the probe does not run, and work
+only a merge commit's message carries shows nowhere.
 
 **The trigger is per repository, and stays there.** It fires **only** on a repository the whole-key
 scan left at zero matches — the one state in which the loss above is indistinguishable from a
@@ -328,7 +358,8 @@ is.
   the note — a rebased commit dated after that heading is found by comparing the two dates by hand,
   which is what the listing gives the operator the material for.
 
-**What is honestly still lost, and what a run therefore says out loud:** only a commit whose message
-names the key is findable, no convention compels a human to follow one, and so **the run reports how
-many commits it scanned and how many matched**. A zero-match scan in a repository that has commits is
+**What is honestly still lost, and what a run therefore says out loud:** only a non-merge commit whose
+message names the key is findable, no convention compels a human to follow one, and so **the run reports how
+many commits it scanned — the non-merge commits it walked, `git -C <repo> rev-list --no-merges
+--count HEAD` — and how many matched**. A zero-match scan in a repository that has commits is
 a signal about the convention, not proof that no work happened.

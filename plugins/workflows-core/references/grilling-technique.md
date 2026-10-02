@@ -13,7 +13,8 @@ technique adapted from mattpocock grill-me/grilling. Each caller cites this file
 - **A decision the source already states is settled, not a gap.** An explicit inclusion, exclusion, or constraint in the material the caller ingested (the prompt, the markdown source, the `idea.md`, the PRD) or in an earlier answer is a decision the user has already made. Do not re-ask it as if it were open, and never let a question, a recommended answer, **or the rationale behind a recommendation** assume the opposite. Check each recommendation's reasoning against the stated scope before you put it: a rationale that rests on a premise the source contradicts is a defect even when the recommendation would survive the correction, because an unchallenged answer then records a correct decision on a false premise. To argue for revisiting a stated decision, raise it as an explicit challenge that quotes the source (*"the source excludes X — '…' — I'd revisit it because …"*); never build on the opposite silently. A hedged statement (*"maybe except X"*) is a decision to confirm, not to drop: ask it with the quote, and recommend the source's position unless you have evidence against it.
 - **Force terminology precision.** When a term is overloaded or fuzzy (e.g. "user" vs. "buyer" vs. "payer"; "enable" vs. "install"), name the ambiguity and make the user pick a precise meaning before building on it.
 - **Ask from the frontier.** The **frontier** is every decision whose prerequisites are already settled — the questions answerable *now*, without guessing at an answer not yet heard. Ask **one** of them, then recompute: each answer settles a decision and pushes the frontier outward, unblocking questions that depended on it. A question whose answer depends on another still open is not on the frontier and is not asked yet. This is dependency order named rather than described, and the name is what makes "is this askable yet?" a test rather than a feeling. (Also ported — see below; upstream asks the **whole** frontier in one round, and that half is not ported.)
-- Continue until you and the user reach a **shared understanding** for the current section, then write that section.
+- **The confirmation gate.** Reaching a shared understanding is the user's call to declare, not yours to infer from a quiet turn. The gate fires **wherever understanding is about to become an artifact or an irreversible step** — before writing a section, and, where a caller wrote its artifact section by section, once more over the whole artifact before the first reviewer dispatch, handoff or commit that follows the interview, playing back only what changed since its sections were confirmed. It is therefore *not* a single end-of-interview event: a caller that writes its artifact section by section — its own interview-technique paragraph says it writes *each section* or *that stage's section* — closes the gate for each section as the interview settles it, over the part that is settled, and the frontier keeps turning afterwards. Confirming a section is not confirming the whole artifact.
+- **At the gate, play the understanding back.** In a few lines, state what is settled for the part about to be written (at the whole-artifact gate, only what changed since its sections were confirmed): the intended outcome, the constraints, what success looks like. Mark what the user said and what you inferred, then ask the user to confirm or correct it. An inference the user has not confirmed is still an assumption, and it is the line most worth their reading. The play-back asks no decision, so it spends no slot of a bounded caller's cap and is not numbered against it.
 
 ## Autonomous / background invocation
 
@@ -21,7 +22,10 @@ When the command runs with **no human turn available** to answer (autonomous or 
 invocation), do NOT fabricate answers to genuine **decision** questions. The fact-vs-decision split
 still holds — facts you resolve yourself — but a genuine decision that would otherwise go to the user
 is **recorded as an open question** rather than self-answered. Never grill yourself into a fabricated
-decision.
+decision. The confirmation gate cannot be self-satisfied either, and it does not hold the
+write: with no human turn the caller writes, and takes the steps after the write, as it would on a
+confirmed understanding — every decision already recorded as an open question above — and its final
+report states that the understanding was never confirmed.
 
 **Which notation is used is the artifact's choice, not the depth's.** Use whatever the caller's own
 format authority defines: `[NEEDS CLARIFICATION]` for `idea.md`
@@ -69,21 +73,24 @@ in one place: a hard, host-resolved `dependencies` entry is for another plugin *
 at runtime, where a miss must degrade one feature and never break a run. Grilling is **mid-run in ten commands**, which is a different risk from
 `/prompt-brainstorm`'s single terminal hand-off to `superpowers:brainstorming`.
 
-**Read upstream for ideas, not for parity — and three have already been taken.** Its *frontier*
+**Read upstream for ideas, not for parity — and four have already been taken.** Its *frontier*
 framing, its rendered question format, and its rule that a fact is fetched rather than asked are all
-in the Mechanics and Depth sections above, each marked where it landed. **Each was ported in part,
-and the part left behind was left behind for the same reason every time**: the half that depends on
-asking a whole round at once. Upstream's frontier is *asked* wholesale where ours supplies the next
-question; its numbering counts a round where ours counts against a cap; its fetch-a-fact rule is
-non-blocking because the rest of the round proceeds meanwhile. A future port should expect the same
-split rather than assume an idea arrives whole. Port deliberately, record it here, and do not cite
-upstream at runtime.
+in the Mechanics and Depth sections above, each marked where it landed. **Each of those three was
+ported in part, and the part left behind was left behind for the same reason every time**: the half
+that depends on asking a whole round at once. Upstream's frontier is *asked* wholesale where ours
+supplies the next question; its numbering counts a round where ours counts against a cap; its
+fetch-a-fact rule is non-blocking because the rest of the round proceeds meanwhile. **The fourth, its
+confirmation gate, was ported whole, because nothing in it depends on a round**: it closes the
+Mechanics list, with a play-back of the understanding beside it adapted from superpowers'
+brainstorming skill. A future port should expect the three's split wherever an idea leans on asking a
+round at once, rather than assume an idea arrives whole. Port deliberately, record it here, and do
+not cite upstream at runtime.
 
 ## Depth (the caller chooses)
 
 - **Bounded** — a capped set of the highest Impact×Uncertainty questions, then stop; unresolved high-impact gaps are recorded (e.g. `[NEEDS CLARIFICATION]`). Used by `/idea` (≤10; `--deep` switches to relentless), `/prompt-grill-me` (≤5) and `/brd-split` (≤5, and only when given a slicing instruction).
   **A bounded caller states what its cap costs, because that is what sizes it.** For `/idea` an unresolved gap becomes a marker inside the shipped artifact, so a low cap leaves a hole and ≤10 earns its length. For `/brd-split` an unplaced row simply reaches its own ledger walk without a recommendation, in a Phase 4 that settles every row anyway — one at a time, or inside its Step 1 bulk offer, which names each row it would write and lets any of them be held back to the one-at-a-time walk — the residue has a free fallback, so its cap is lower and its questions carry a further gate of the caller's own (`/product-workflows:brd-split` Phase 1.5: ask only where one answer places more than one row). Neither the extra gate nor the differing numbers are this file's to fix; what this file fixes is that a caller declaring **bounded** owes a stated cap rather than an open-ended interview called capped.
-- **Relentless** — keep walking the tree until convergence, no cap. Used by `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, and by `/prd-proposal` and `/brd-proposal` for their proposal profile.
+- **Relentless** — keep asking from the frontier until convergence, no cap. Used by `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, and by `/prd-proposal` and `/brd-proposal` for their proposal profile.
 
 **A bounded caller numbers its questions against its cap; a relentless one does not.** Render a
 bounded question as `Q<n>/<cap>` — `Q3/5`, `Q7/10` — so the user can see what they are committing to

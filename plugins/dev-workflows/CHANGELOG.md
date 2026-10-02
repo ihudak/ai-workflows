@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.5.0] — 2026-10-02
+
+**Update `workflows-core` to 1.10.0 with this release**: `/design`'s interview paragraph now clears that version's confirmation gate.
+
+### Added
+- **`code-review`'s spec/design-conformance dimension reports `exceeds`** — behaviour the change adds that no in-scope requirement and no plan step asks for, judged on the diff only. `MINOR`, or `MAJOR` where it builds what the specification's, the plan's or the design's `Out of scope` names; never escalated onto the spec by `/implement` step 7.5, listed in its Phase 5 report beside the other classes, and — where `MAJOR` — triaged and fixed like any other finding. Upstream spec-kit's converge (#4621) flags code that "exceeds" the stated intent; this family's July adoption left that class out without recording why.
+
+### Changed
+- **`risk-planner`'s step rule is "Unambiguous, not complete"**, replacing *No placeholders*. A step names the file it touches where it touches one, the exact signature of anything new, every value the spec or design pins quoted verbatim, and for a verification step the command and the output that means it passed; the self-review checks both for lines that decide nothing and for steps that write the implementer's code, plus a proportion check on `### Steps` alone. Upstream writing-plans withdrew the *"steps that say what without how"* wording this agent carried, measuring plans at a quarter of the time and a third of the tokens with no loss of planted-defect catches; the verbatim-constraint rule is from spec-kit's tasks template (#4430).
+
+### Fixed
+- **`code-review` dimension 10 classified requirements against the diff alone.** A keyed `/implement` run's in-scope IDs are the whole unit's, so a requirement an earlier run delivered — reachable through *"implement anyway"* on an Epic that holds a record — was `missing` (`MAJOR`), sending `review-fixer` after work that existed and writing a spurious `- [ ]` note onto the spec. It now classifies against the code as it stands after the change, searching the codebase before calling anything `missing`, and treats plan tags and earlier records as claims, not evidence.
+- **`test-baseliner` could record a failing suite as passing.** Nothing forbade reading a suite's status through `| tail` or `| grep`, whose exit status is the filter's — and for a status-only suite that status is the whole result. Both modes now take the status from the suite's own command, and trim long output through a temp file outside the repository, since a file left in the tree would be swept into the run's commit.
+- **`docs/reference/commit-convention.md` told contributors any commit whose subject names the key is found.** With `workflows-core` 1.10.0's scan taking no merge commit, it now says so and asks for the key on the branch's own commits, not only on the pull request — a squash commit counts wherever its message carries the key.
+- **`/design` still said "walk the design tree"**, a term that collides with `design.md` and a mechanic `workflows-core`'s grilling reference had replaced; it now asks from the frontier and clears the confirmation gate before writing each section.
+
 ## [4.4.3] — 2026-10-02
 
 **Update `workflows-core` to 1.9.1 with this release**: its `classification.md` retires the cheap chain these commands named for `defect-reporter`.
