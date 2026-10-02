@@ -597,6 +597,12 @@ behaviour, not the behaviour.
 
 ## Phase 1 — Resolve repositories
 
+**State the cost first — the first output of this phase**, on every run that grounds code (never under `--no-code`, which produces no `[CG#n]` and verifies none, so the K×N arithmetic does not apply), **whether or not step 1 then prompts for repositories**. A run handed its repositories up front — headless, or by an operator who named them in the invocation — never reaches the prompt, and a statement tied to the prompt went unprinted on exactly those runs. N is the claim count — Phase 0 step 8's on `route: brd`, step 8i's (after its exclusions) on `route: idea`. M is the number of claim findings already on file: every `[CG#n]` in `grounding/code-grounding.md` that does not read `SUPERSEDED` and that no `grounding/baselines.md` entry records — 0 on a first run. A baseline finding is never among them, since a run that mints a fresh baseline supersedes the earlier ones rather than re-verifying them (Phase 8, *Supersede the earlier baselines*). M is an upper bound because Phase 1 runs before Phase 3: Phase 3 then excludes the findings of any repository that has moved, and Phase 7 re-verifies only those at an unmoved pin. MODEL is the review model, which Phase 2 resolves after this phase, so print `Opus` for it, or the enforced id where `run_flags.enforced_model` is set (Phase 0 step 1 resolved it), and never a chain row or a degradation, which Phase 2 reports when it finds one. Print, with N, M and MODEL replaced by their values:
+
+> This requirement set has N claims. Each repository you name is ground against all N, and every finding is verified on MODEL in two steps, in batches of up to 25: K repositories → K×N claim findings plus K baseline findings, in K×⌈(N+1)/25⌉ batches and K×⌈(N+1)/25⌉×2 verification dispatches, plus ⌈D/25⌉×2 dispatches for each frame set whose design pass returns D findings. A re-run re-verifies every claim finding already on file for a repository that has not moved (up to M today).
+
+Fill in K, and the products it enters, where the repositories are already named; leave it as the symbol where step 1 is still to prompt for them. N and M are always filled in. **D is always printed as the symbol**: a frame set's `[DG#n]` count is known only once Phase 5's design pass returns. Drop the frame-set clause where Phase 5 runs no design pass — under `--no-design`, or where `<BRD-dir>/design/` holds no subdirectory: the clause counts the frame-set batches that pass's findings fill, and a successor Phase 6 appends to an on-file `[DG#n]`, which such a run can still produce, is among the additions the next sentence names. A repository's term is ⌈(N+1)/25⌉ rather than ⌈N/25⌉ because its baseline counts toward its batches (Phase 7, *Batches*). The figures are the verification pass itself; a retry (Phase 7, *Retry once*), a second opinion on a disputed `contradict` (Phase 7), the class-4 sweep's re-dispatches and a successor Phase 6 appends to an on-file `[DG#n]` add to them. **The statement informs and gates nothing**: Phase 5 still sends every claim to every repository named, and nothing here narrows that. It exists because adding a repository multiplies both fan-outs by the full claim count, and the cost was otherwise visible only at Phase 7, after both had been paid for. The Final report prints the same arithmetic again, filled in with what the run actually dispatched, as its verification block — printed there whether or not this line was.
+
 BRDs carry no PR links to auto-derive a repo list from (unlike `/epics`), so this phase is always
 the manual path:
 
@@ -635,6 +641,11 @@ the manual path:
    ```
    choices: ["Skip and continue without this repo", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo"]
    ```
+   A clone reached through *Specify a different absolute path for this repo* is named by its own
+   remote slug, read as step 2 reads one, where its `origin` reads; where it does not — the one way
+   this phase resolves a clone with no readable `origin` — it is named by the name the operator
+   typed for it in step 1's prompt. That name is the slug Phase 3 compares and Phase 8 records in
+   `grounding/baselines.md` (`workflows-core:grounding-format` §4 step 1).
 4. Empty final list (every repo skipped or missing) → escalate per the `No repos derivable — /epics`
    rule in `workflows-core:escalation-rules`, whose `/prd-ground` variant
    this is:
@@ -661,7 +672,7 @@ model_routing:
   enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   defect_model: <§2.2 cheap chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>   # docs-grounder (Phase 4.5) — retrieval, not adjudication; also the Phase 9 impl-maintenance dispatch
-  review_model:    <§2 Opus chain>     # code-grounder, design-grounder (Phase 5), grounding-verifier (Phase 7) — all three frontmatter-pinned; recorded, no override unless §10 enforces a model
+  review_model:    <§2 Opus chain>     # code-grounder, design-grounder (Phase 5), grounding-verifier (Phase 7, both steps) — all three frontmatter-pinned; recorded, no override unless §10 enforces a model
   ground_tier:     <the tier the [CG#n]/[DG#n] corpus was actually ground at — the resolved review_model, or the degraded model where no Opus resolved>
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
@@ -750,12 +761,45 @@ already records a pin for a repository:
   against the new pin, and Phase 8 supersedes the old findings by ID rather than renumbering them
   (grounding-format.md §3, `SUPERSEDED`) — a citation into an already-sent package still resolves.
 
+**No two repositories share a pin.** Once every repository this run resolved has passed steps 1–3
+and the bullets above, compare the pins, telling repositories apart by slug — the identifier
+`workflows-core:grounding-format` §4 step 1 fixes for a `grounding/baselines.md` entry, which is the
+remote slug Phase 1 resolved each one by. Stop where two repositories with different slugs stand
+at one commit and at least one of them is a repository this run resolved: two this run resolved
+whose `HEAD` is the same commit, or one this run resolved whose `HEAD` is a pin
+`grounding/baselines.md` records under a different slug — in any entry, not only that repository's latest, since
+`/product-workflows:brd-interview` reads a superseded finding's repository through every entry the
+file holds. Two clones of one project at one commit are the usual cause:
+`PRD_GROUND_AMBIGUOUS_PIN: <repo-a> and <repo-b> both stand at <commit> — <repo-a> pinned by this run, <repo-b> <pinned by this run | recorded there by grounding/baselines.md> — and this folder's grounding holds one repository per pin, so it cannot ground both there. <remedy>`
+
+Each repository is named by its slug. `<repo-a>` is always a repository this run resolved, and `<remedy>` is the first of these that fits:
+
+- **`grounding/baselines.md` records both there** — an earlier run ground both at one commit, before
+  this check existed, so no choice of repositories separates them:
+  `Check out another commit in <repo-a> — the plugin will not do it for you — then re-run '/product-workflows:prd-ground <KEY> --rebaseline' without <repo-b> and without --no-code, which refuses that flag: <repo-a>'s HEAD will have left the pin the file records for it, and no repository can stand at <commit> again.`
+- **It records one of the two there:**
+  `Re-run '/product-workflows:prd-ground <KEY>' with the flags this run was given, naming <the one it records there> and not <the other> — adding --rebaseline, without --no-code, where <the one it records there>'s HEAD has left the pin the file records for it — or check out another commit in <the other> first; the plugin will not do it for you.`
+- **It records neither** — both are pinned by this run:
+  `Re-run '/product-workflows:prd-ground <KEY>' with the flags this run was given, naming only one of the two: both clone one project at one commit, so grounding the second adds nothing.`
+
+**This check is what lets a commit name a repository, and it is stated here once.** A finding
+records a commit and never a repository (`workflows-core:grounding-format` §2), and Phase 5's
+*answers* test, Phase 7's set and *Batches*, and Phase 8's frame-set rule each read a finding's
+repository off its `commit`. Once this check passes, every commit this run pinned belongs to one
+repository alone, in this run and in every entry of `grounding/baselines.md`, so each of those
+reads names one repository. One case is left that this check does not cover: the earlier pin of a
+repository a `--rebaseline` pass re-pins, where the file already records a second repository at
+that pin, from a run before this check existed. It needs no owner. That pass retires every finding
+on file at the pin, whichever repository ground it, and a class-4 `[DG#n]` citing one of them is
+superseded by Phase 8's cascade, with the cascade's note — never by Phase 8's frame-set rule, which
+takes such a finding only where one repository stands at that pin.
+
 **Record the outcome as a `[CG#n]` finding** (`workflows-core:grounding-format` §4: "the outcome is recorded
 as a `[CG#n]` finding" — a verified fact about a code repository at a commit is exactly what that
 prefix denotes, and inventing a separate prefix for it would only fragment the namespace). One per
 repository that passes this gate, assigned first, in repo-resolution order, **before** Phase 5's
 claim-level findings — `CG#1..CG#R` on a first run for `R` resolved repositories, continuing after
-whatever the highest `CG#n` already on file is on a `--rebaseline` run. Each carries every field
+whatever the highest `CG#n` already on file is on any later run. Each carries every field
 `workflows-core:grounding-format` §2 defines: `claim` — "baseline integrity: `<repo>` is pinned at a verified,
 unmodified commit"; `verdict: CONFIRMED` (a repository that failed this gate never reaches a
 finding — it stopped the run instead); `evidence` — the three command outputs (the pinned SHA, the
@@ -764,9 +808,9 @@ empty `--stat` diff, and the `--porcelain`/line-count result); `commit` — the 
 permanent and reports no gap, per `workflows-core:grounding-format` §4.1: there is nothing for a PRD, an ARD or a
 specification to draw from an assertion that a commit is identifiable, so every downstream
 unconsumed-item report excludes these findings rather than carrying one open item per repository
-forever. Phase 5 continues the BRD-wide
-`[CG#n]` sequence from these, never restarting at `CG#1` once a baseline finding already claimed
-it. Phase 7 verifies these findings the same as any other — `grounding-verifier`'s own Process
+forever — and no `control`, which a baseline finding never owes (`workflows-core:grounding-format`
+§4.1). Phase 5 continues the BRD-wide `[CG#n]` sequence from these, never restarting at `CG#1`
+once a baseline finding already claimed it. Phase 7 verifies these findings the same as any other — `grounding-verifier`'s own Process
 step 1 already re-runs `baseline-integrity` for whatever finding it is handed, so re-checking a
 baseline finding is exactly that re-run.
 
@@ -781,7 +825,8 @@ remedy the message names changes: `--rebaseline` is unavailable under this mode,
 the tree would pin new findings to a commit the repository has left.
 
 **Hold one dated `grounding/baselines.md` entry per repository for Phase 8 to append** — **except under `--no-code`, which writes no baseline entry at all** (stated in full above; repeated here because this is the instruction it excepts, and a reader who arrives at an unconditional imperative does not go looking for its exception):
-the repo, the pinned commit, the verification result, and the `[CG#n]` id assigned above — the same
+the repository, by the slug `workflows-core:grounding-format` §4 step 1 fixes, the pinned commit,
+the verification result, and the `[CG#n]` id assigned above — the same
 three commands are what the customer's own reviewer re-runs later against their own checkout.
 **This phase writes nothing to that file.** A pin is recorded together with the findings it pins,
 in Phase 8, and never before them: every stop between here and Phase 8 — Phase 5's and Phase 7's —
@@ -920,7 +965,8 @@ a `--rebaseline` pass re-pins, that is the whole claim list** (Phase 0 step 8). 
 `HEAD` still matches its recorded pin, it is every claim of that list no `[CG#n]` on file answers
 there** — a `[CG#n]` answers a claim at a repository where its `verdict` is not `SUPERSEDED`, its
 `claim` names that claim's requirement id (read for the id it names, as Phase 8 reads it), and its
-`commit` equals that repository's recorded pin (Phase 3's first bullet). A repository left with no
+`commit` equals that repository's recorded pin (Phase 3's first bullet) — a pin no other
+repository holds (Phase 3, *No two repositories share a pin*). A repository left with no
 claim to answer is not dispatched. Within that set nothing is pre-filtered: a BRD carries no
 per-repo claim tagging, and a claim that genuinely belongs to a different system is exactly what
 `NOT-PROVABLE` exists to say. **The repositories this run dispatches here are the ones it
@@ -948,9 +994,9 @@ run still stands, `HEAD` has left it, and a plain re-run stops with `PRD_GROUND_
 **Renumber into one BRD-wide sequence.** Each `code-grounder` instance numbers its own output from
 `CG#1` (its own contract, per dispatch) — this is per-instance, not global. Merge every batch's
 findings, in repo-resolution order, into one contiguous `[CG#n]` sequence continuing from the
-highest `CG#n` already assigned this run — Phase 3's own baseline findings on a first run, or
-whatever the highest `CG#n` already on file is on a `--rebaseline` run — never trusting an agent's
-own numbers as the BRD's numbering.
+highest `CG#n` already assigned this run — Phase 3's own baseline findings, which start at `CG#1`
+on a first run and continue after whatever the highest `CG#n` already on file is on any later run
+(Phase 3) — never trusting an agent's own numbers as the BRD's numbering.
 
 **Then `design-grounder`, unless `--no-design`.** Look for `<BRD-dir>/design/`; each immediate
 subdirectory is a candidate exported frame set. The location and the index requirement are
@@ -1034,7 +1080,9 @@ successor takes this phase's horizon directly, nor on one Phase 8's frame-set ru
 run (*A set this run re-ground supersedes its own prior findings* — a prior finding of a set this
 run's design pass reconciled, whether or not it returned a finding there, and a class-4 one only on
 the terms that rule gives), whose re-derived successor
-in that set, where that set has one on its claim, takes this phase's horizon directly — a copy
+in that set, where that set has one on its claim, takes this phase's horizon directly, nor on an
+earlier baseline finding Phase 8 supersedes this run (*Supersede the earlier baselines*), whose
+replacement is the fresh baseline Phase 3 minted, which takes this phase's horizon directly — a copy
 appended here would stand beside that successor as a second live finding for one claim, and would
 put a second rule's write on a block that rule retires:
 
@@ -1068,141 +1116,145 @@ be decided (`/product-workflows:brd-interview`, *A decision the re-grounding mov
 
 ## Phase 7 — Verify
 
-Dispatch `grounding-verifier` over **every** finding this run holds — Phase 3's baseline `[CG#n]`
-findings, freshly-merged Phase 5 claim findings, the successors Phase 6 appended for a moved
-horizon, and **the on-file findings this run re-checks, which are exactly these**: every `[CG#n]`
-already on file that does not read `SUPERSEDED` and whose `commit` equals the recorded pin of a
-repository whose `HEAD` still matched it in Phase 3 — on a plain re-run and a `--rebaseline` pass
-alike, `provenance: inherited` (below), and none under `--no-code` (below) — **and never an on-file
-`[DG#n]`**, which no run of this command re-checks. A moved repository's on-file findings are not
-among them: a `--rebaseline` pass supersedes them in Phase 8. One instance per finding,
-same ≤4-concurrent batching discipline as Phase 5, pinned to the Opus chain (`review_model`,
-frontmatter-pinned, no override unless §10 enforces a model):
+**The set.** Phase 7 verifies **every** finding this run holds — Phase 3's baseline `[CG#n]` findings, freshly-merged Phase 5 claim findings, the successors Phase 6 appended for a moved horizon, and **the on-file findings this run re-checks, which are exactly these**: every `[CG#n]` already on file that does not read `SUPERSEDED` and whose `commit` equals the recorded pin of a repository whose `HEAD` still matched it in Phase 3, **and that no `grounding/baselines.md` entry records** (a claim finding, never an earlier baseline) — on a plain re-run and a `--rebaseline` pass alike, `provenance: inherited` (below), and none under `--no-code` (below) — **and never an on-file `[DG#n]`**, which no run of this command re-checks. A moved repository's on-file findings are not among them: a `--rebaseline` pass supersedes them in Phase 8. Nor is any earlier baseline finding — each `[CG#n]` an earlier `grounding/baselines.md` entry records, never one matched out of a `claim`. An unmoved repository's is one Phase 8 supersedes (*Supersede the earlier baselines*) for the fresh one Phase 3 minted it, as it does for every repository it pins on any run but `--no-code`, so re-deriving it would spend an Opus pass on a block retired in the same run; and any other repository's is pinned where no repository this run found unmoved stands (Phase 3, *No two repositories share a pin*), so it was never this run's to re-check.
+
+**Batches.** Cut the set into batches before dispatching anything:
+
+- A `[CG#n]` batches with the other `[CG#n]` of the same repository. A finding this run produced belongs to the repository it was produced for — a claim finding to its Phase 5 dispatch's, a baseline to the repository Phase 3 pinned it for. `grounding/code-grounding.md` records no repository for a claim finding — `workflows-core:grounding-format` §2 gives the record no such field, and Phase 8 writes no section per repository — so an on-file `[CG#n]`, or a Phase 6 successor of one, belongs to the repository Phase 3 found unmoved whose recorded pin equals its `commit`, of which there is exactly one (Phase 3, *No two repositories share a pin*); a class-4 `[DG#n]`'s repository pair is read the same way, from the `[CG#n]` it cites.
+- A `[DG#n]` batches with the other `[DG#n]` of the same frame set — the one Phase 5 recorded for it, or for a Phase 6 successor the frame set Phase 8's placement puts its superseded block in. A class-4 `[DG#n]` carries, beside its frame set, the repository and commit of the `[CG#n]` it cites, so one frame-set batch may hold several repository pairs.
+- Within a group, put a repository's baseline `[CG#n]` first, then order the `[CG#n]` by the requirement id each one's `claim` names, and the `[DG#n]` by finding id. Cut each group into batches of at most **25** findings, the baseline counting toward its batch. **The cap is defined here, and five other sites quote it and must change with it**: Phase 1's cost statement, with the paragraph under it; this command's documentation page, `docs/commands/prd-ground.md`, twice — its agent list under *How it runs* and its Phase 7 gate; and, in the source repository, `.claude/rules/brd-route.md`'s `/prd-ground` map line and `docs/maintainers/rationale.md`'s *verifier-blind-batched* section, whose dispatch arithmetic moves with it. A `CHANGELOG.md` entry that quotes it is history and stays as written.
+- **Nothing about a finding's answer decides its batch** — not its `verdict`, `evidence`, `control` or `cites`. A batch made of "the `NOT-PROVABLE` ones" would tell the blind step what the original concluded.
+
+**Two dispatches per batch, in this order: `mode: derive`, then `mode: compare`** (`workflows-core:grounding-format` §8). At most four dispatches per Agent message — wait for a message's dispatches before sending the next — and a batch's compare dispatch may go in any message after its derive dispatch has returned. Both are pinned to the Opus chain (`review_model`, frontmatter-pinned, no override unless §10 enforces a model):
 
 → Agent (subagent_type: "product-workflows:grounding-verifier", model: `<review_model — §2 Opus chain, equal to grounding-verifier's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
-  > "finding:
-  >   id:       [CG#n or DG#n]
-  >   claim:    [the requirement premise as the finding recorded it — a BR#n on route: brd, an
-  >              AC#n/FR#n/US#n on route: idea]
-  >   class:    [1-4 — DG#n only, omit for CG#n]
-  >   verdict:  [the finding's verdict]
-  >   evidence: [the finding's evidence list]
-  >   control:  [the finding's control, where it carries one — omit where it carries none; the
-  >              agent decides owed-ness itself from grounding-format §2.2's closed-set rule and
-  >              never from the field being absent]
-  >   commit:   [the finding's pinned commit — every CG#n and every class-4 DG#n; omit only for a
-  >              class-1/2/3 DG#n, which is pinned to no commit]
-  >   cites:    [class-4 DG#n only — the CG#n it cites]
-  > repo_path:     [the repository this finding is pinned against — every CG#n; for a class-4
-  >                 DG#n, the repository the cited CG#n is pinned against; omit for a
-  >                 class-1/2/3 DG#n]
-  > frame_set_dir: [every DG#n — the Phase 5 frame set this finding was reconciled against; omit
-  >                 for a CG#n]
-  > inventory:     [every DG#n — the Phase 0 step 8 claim list, id and text, exactly as
-  >                 design-grounder was handed it; omit for a CG#n]
-  > provenance: [own-run | inherited — see below]"
+  > "mode: derive
+  > repo_path:     [a [CG#n] batch: the repository all of its findings are pinned against; omit on a [DG#n] batch]
+  > frame_set_dir: [a [DG#n] batch: its frame set; omit on a [CG#n] batch]
+  > inventory:     [a [DG#n] batch: the Phase 0 step 8 claim list, id and text, exactly as design-grounder was handed it; omit on a [CG#n] batch]
+  > findings:
+  >   - id:        [CG#n or DG#n]
+  >     claim:     [the requirement premise as the finding recorded it — a BR#n on route: brd, an AC#n/FR#n/US#n on route: idea]
+  >     class:     [1-4 — DG#n only, omit for CG#n]
+  >     commit:    [the finding's pinned commit — every CG#n and every class-4 DG#n; omit only for a class-1/2/3 DG#n]
+  >     repo_path: [class-4 DG#n only — the repository the CG#n it cites is pinned against]"
+
+**The derive dispatch carries the question and never the answer.** It names no finding's `verdict`, `evidence`, `control` or `cites`, and no path under `$SPECS_PATH` other than `frame_set_dir`. This replaces a contract that handed the verifier the whole record and relied on it not to read the answer until it had derived its own; four of eight dispatches in one live run reported, unprompted, that they could not honour that, since nothing in an agent's context can be un-read. The agent refuses a derive dispatch carrying any of those fields (`INPUT_UNBLIND`, below), so a slip here stops the run instead of passing as a verification.
+
+→ Agent (subagent_type: "product-workflows:grounding-verifier", model: `<review_model — as the derive dispatch>`):
+  > "mode: compare
+  > repo_path, frame_set_dir, inventory: [exactly as this batch's derive dispatch]
+  > findings:
+  >   - id, claim, class, commit, repo_path: [exactly as this batch's derive dispatch]
+  >     verdict:  [the finding's verdict]
+  >     evidence: [the finding's evidence list]
+  >     control:  [the finding's control, where it carries one — omit where it carries none; the agent decides owed-ness itself from grounding-format §2.2's closed-set rule and never from the field being absent]
+  >     cites:    [class-4 DG#n only — the CG#n it cites]
+  >     cited:    [class-4 DG#n only — that CG#n's record as this run holds it at dispatch: verdict, evidence, control]
+  >     derived:  [this finding's entry from the derive return, verbatim]"
 
 **A finding already reading `verdict: SUPERSEDED` is not in that set, whichever run superseded it.**
-It no longer stands (`workflows-core:grounding-format` §3), and its verifier `outcome` stays
-exactly as the run that retired it left it. Dispatching it would re-derive the claim it once answered:
-a `[CG#n]` superseded by a `--rebaseline` pass is pinned to the commit the repository has left, so
-the verifier stops the run with `COMMIT_MISMATCH`, and the `--rebaseline` re-run that stop names
-would dispatch the same finding again and stop the same way; and any other re-derivation returns a live verdict, which the reconciliation below
-normalises to `contradict` against `SUPERSEDED` and the `contradict` branch would write — a retired
-finding brought back to life beside its successor, its `prior_verdict` left on a block whose verdict
-is no longer `SUPERSEDED`, where §2.1 forbids it. The class-4 sweep below excludes, for the same
-reason, any finding this phase has itself marked `SUPERSEDED`.
+It no longer stands (`workflows-core:grounding-format` §3), and its verifier `outcome` stays exactly
+as the run that retired it left it. Dispatching it would re-derive the claim it once answered: a
+`[CG#n]` superseded by a `--rebaseline` pass is pinned to the commit the repository has left, so a
+batch holding it either names more than one commit, which the agent refuses as batch
+`INPUT_MISSING`, or, alone in its batch, fails `baseline-integrity` as `COMMIT_MISMATCH` — a stop
+either way, and the `--rebaseline` re-run a `COMMIT_MISMATCH` stop names would dispatch the same
+finding again and stop the same way; and any other re-derivation returns a live verdict, which the
+reconciliation below normalises to `contradict` against `SUPERSEDED` and the `contradict` branch
+would write — a retired finding brought back to life beside its successor, its `prior_verdict` left
+on a block whose verdict is no longer `SUPERSEDED`, where §2.1 forbids it. The class-4 sweep below
+excludes, for the same reason, any finding this phase has itself marked `SUPERSEDED`.
 
-Supply the finding **exactly as the agent's own Inputs contract declares it** — including
-`evidence` and, for a class-4 `[DG#n]`, `cites` — even though the agent's own hard rules forbid
-reading either before it finishes its independent re-derivation. That sequencing discipline is the
-agent's to enforce on itself (its Process step 2 is explicit about it); this orchestrator's job is
-only to hand over the full, correctly-shaped record, never to withhold a field the contract lists.
+**Match every returned entry to its finding by `finding_id`, never by position.** An agent may return a batch's entries in another order, or leave one out; a finding with no entry in a return is incomplete (*Retry once*, below).
+
+**`own_verdict`, `own_evidence` and `own_control` are read from the derive return, never from the compare return.** Relay each finding's derive entry into its compare dispatch's `derived` verbatim. Compare passes the three through unchanged by its contract, and its echo **differs** from the derive return only where a structured value does: `own_verdict`; the `path` and `lines` of each `own_evidence` entry, entry for entry; or `own_control`'s result, the trailing `<path:line>` or `— no match` of `workflows-core:grounding-format` §2.2's shape. Never the free-text `note` of an evidence entry, `own_control`'s method text or `notes`, and never key order or formatting: **a reworded note is not a difference**, since a relay can paraphrase one without touching anything the record is built from. Where the echo differs, compare revised a blind result it must not touch, and that finding's compare entry is incomplete (*Retry once*, below).
 
 **Which anchor fields go with which finding is that contract's own Inputs table, not this
 command's** — read it there (`agents/grounding-verifier.md`, Inputs), never from a copy kept here
-that could drift from it. Two consequences for this dispatch:
+that could drift from it. Three consequences for both dispatches:
 
-- **Always pass `class` for a `[DG#n]`.** The agent's row selection is fail-closed — a `[DG#n]`
-  arriving without a readable `class` is treated as resting on code and refused for want of a
-  commit — so an omitted `class` does not relax the gate, it stops the finding. Phase 5 recorded
-  the class on every `[DG#n]` it merged; pass it through.
-- **Always pass `frame_set_dir` for a `[DG#n]`.** Phase 5 dispatched `design-grounder` once per
-  frame set, so every `[DG#n]` on file traces back to exactly one directory; carry that association
-  forward from Phase 5 rather than re-deriving it here. A `[DG#n]` Phase 6 appended as a successor
-  was produced by no Phase 5 dispatch: its directory is the one frame set Phase 8's placement puts
-  its superseded block in, which Phase 6 required before it superseded anything. A class-4 `[DG#n]`
-  gets both it and the code pair — it is the one finding with a foot in each source.
-- **Always pass `inventory` for a `[DG#n]`** — the same Phase 0 step 8 claim list Phase 5 handed
-  `design-grounder`, unchanged. A `[DG#n]` is a reconciliation between the frame set and the
+- **Always pass `class` for a `[DG#n]`, in both dispatches.** The agent's row selection is
+  fail-closed — a `[DG#n]` arriving without a readable `class` is treated as resting on code and
+  refused for want of a commit — so an omitted `class` does not relax the gate, it stops the
+  finding. Phase 5 recorded the class on every `[DG#n]` it merged; pass it through.
+- **Always pass `frame_set_dir` for a `[DG#n]` batch.** Phase 5 dispatched `design-grounder` once
+  per frame set, so every `[DG#n]` on file traces back to exactly one directory; carry that
+  association forward from Phase 5 rather than re-deriving it here. A `[DG#n]` Phase 6 appended as a
+  successor was produced by no Phase 5 dispatch: its directory is the one frame set Phase 8's
+  placement puts its superseded block in, which Phase 6 required before it superseded anything. A
+  class-4 `[DG#n]` gets both it and the code pair — it is the one finding with a foot in each
+  source.
+- **Always pass `inventory` for a `[DG#n]` batch** — the same Phase 0 step 8 claim list Phase 5
+  handed `design-grounder`, unchanged. A `[DG#n]` is a reconciliation between the frame set and the
   inventory, so handing over only the frames gives the verifier one side of the comparison. A
   **class-1** finding cannot be re-derived at all without it: it asserts that no requirement asks
-  for what the frame shows — a negative over the whole set — and its `claim` is
-  `none — frame-only: <field>`, naming a field and no requirement, so there is no requirement id in the record to stand in for the set. The verifier
-  correctly returns `NOT-PROVABLE`, and the finding is then permanently unverifiable and can never
-  become evidence (`workflows-core:grounding-format` §8). This dispatch omitted the field, which is
-  where that dead end came from.
+  for what the frame shows — a negative over the whole set — and its `claim` is `none — frame-only:
+  <field>`, naming a field and no requirement, so there is no requirement id in the record to stand
+  in for the set. The verifier correctly returns `NOT-PROVABLE`, and the finding is then permanently
+  unverifiable and can never become evidence (`workflows-core:grounding-format` §8). An earlier form
+  of this dispatch omitted the field, which is where that dead end came from.
 
 **Under `--no-code`, "every finding this run holds" is the new `[DG#n]` set — Phase 5's, and any
-successor Phase 6 appended — and nothing else.**
-Every `[CG#n]` on file was neither produced nor reproduced by this invocation and already carries
-the outcome from the run that did produce it. Re-dispatching them would spend one Opus verification
-per finding to re-decide a settled one, and a single `contradict` would supersede a finding and
-append its successor in a file this mode holds read-only — which is precisely the exposure the mode
-exists to remove. The `[CG#n]` a class-4 `[DG#n]` cites is still checked in passing: the verifier
-re-runs
-`baseline-integrity` against the pin it is handed, as its own Process step 1.
+successor Phase 6 appended — and nothing else.** Every `[CG#n]` on file was neither produced nor
+reproduced by this invocation and already carries the outcome from the run that did produce it.
+Re-dispatching them would spend a full Opus re-derivation on each of them to re-decide a settled
+finding, and a single `contradict` would supersede a finding and append its successor in a file this
+mode holds read-only — which is precisely the exposure the mode exists to remove. The `[CG#n]` a
+class-4 `[DG#n]` cites is still checked in passing: the verifier re-runs `baseline-integrity`
+against the pin it is handed, as its own Process step 1. So no `[CG#n]` batch exists on such a run;
+a class-4 `[DG#n]`'s repository pair is that of the on-file `[CG#n]` it cites, and `cited` carries
+that on-file record.
 
 **`provenance` is set per finding, by origin — never by which phase produced it, and never
-blanket.** `own-run` for any finding **this invocation itself produced**, regardless of which
-phase did the producing: Phase 3's baseline `[CG#n]` findings qualify exactly as Phase 5's claim
-findings do, because Phase 3 re-runs `baseline-integrity` and assigns a fresh id every invocation —
-first run or `--rebaseline` alike — never carrying a prior run's baseline finding forward
-unreproduced. `inherited` for a finding **this invocation did not reproduce** — concretely, any re-run in which
-a given repository's `HEAD` still matched its recorded pin, so Phase 3's first bullet skipped
-re-grounding every claim that repository had already answered and the pre-existing findings from an
-earlier invocation stand as they were, now being re-checked rather than regenerated. **That bullet fires on a plain
-re-run and on a `--rebaseline` pass alike** — it is keyed on the pin still matching, not on the
-flag — so a plain re-run against an unmoved repository inherits exactly as a `--rebaseline` pass
-over one does. Illustrating only the flagged case would read as though the flag were what made a
-finding `inherited`; the rule is the origin, and the flag never enters it. Phrasing the rule by origin rather than by
-phase number is deliberate: it is immune to a future renumbering the way a phase-keyed rule is not.
-The agent's own Inputs contract and `workflows-core:grounding-format` §8 both define `inherited` as "another
-team's report **or an earlier run of this workflow**," and a finding surviving from before this
-invocation, unreproduced, is the second of those, regardless of how confident its write-up reads —
-mislabelling it `own-run` would tell the verifier to relax exactly where §5 of its own instructions
-say rigor must not drop.
+blanket.** `own-run` for any finding **this invocation itself produced**, regardless of which phase
+did the producing: Phase 3's baseline `[CG#n]` findings qualify exactly as Phase 5's claim findings
+do, because Phase 3 re-runs `baseline-integrity` and assigns a fresh id every invocation — first run,
+plain re-run or `--rebaseline` alike — never carrying a prior run's baseline finding forward
+unreproduced (Phase 8 supersedes it instead, *Supersede the earlier baselines*).
+`inherited` for a finding **this invocation did not reproduce** — concretely, any re-run in which a
+given repository's `HEAD` still matched its recorded pin, so Phase 3's first bullet skipped
+re-grounding every claim that repository had already answered and the pre-existing claim findings
+from an earlier invocation stand as they were, now being re-checked rather than regenerated.
+**That bullet fires on a plain re-run and on a `--rebaseline` pass alike** — it is keyed on the pin still
+matching, not on the flag — so a plain re-run against an unmoved repository inherits exactly as a
+`--rebaseline` pass over one does. Illustrating only the flagged case would read as though the flag
+were what made a finding `inherited`; the rule is the origin, and the flag never enters it. Phrasing
+the rule by origin rather than by phase number is deliberate: it is immune to a future renumbering
+the way a phase-keyed rule is not. `workflows-core:grounding-format` §8 defines an inherited finding
+as one from "another team's report, or from an earlier run of this workflow", and a finding
+surviving from before this invocation, unreproduced, is the second of those, regardless of how
+confident its write-up reads. **`provenance` is this phase's own bookkeeping, and it is never sent
+to the verifier**: it decides which `contradict` branch below writes — an in-place rewrite or a
+supersession — and the derive step, which never sees a finding's answer, searches an inherited
+finding exactly as hard as any other without being told which it is.
 
-**Act on `status` first — an `outcome` exists only on `status: OK`.** Every status below other than
-`OK` is a refusal, not a verdict: the agent performed no re-derivation and returned no `outcome`, and a
-finding carrying no outcome is not evidence and blocks `/brd-split` for as long as it stays on file
-(`workflows-core:grounding-format` §8). So none of them may be shrugged off and none may be written:
+**Act on `status` first — an `outcome` is acted on only where a compare entry reads `status: OK`, or `status: INCOMPLETE` and carries one (*Retry once*, below).** Each return carries a **batch** `status` and, on `OK`, a `status` per finding. Every batch status other than `OK`, and a finding's `INPUT_MISSING`, is a refusal, not a verdict: no outcome was produced, and a finding carrying no outcome is not evidence and blocks `/brd-split` for as long as it stays on file (`workflows-core:grounding-format` §8). So none of them may be shrugged off and none may be written. An `INCOMPLETE` compare entry is not a refusal: it carries an outcome where only the blind verdict's own control was missing and none where there was no usable blind result, and *Retry once* settles it.
 
-- **`OK`** — act on `outcome`, below.
-- **`COMMIT_MISMATCH`** — the repository moved between Phase 3's pin and this dispatch. Stop:
-  `PRD_GROUND_VERIFY_COMMIT_MISMATCH: <finding-id> could not be verified — <repo> is at <resolved-HEAD>, not the pinned <commit>. Re-run '/product-workflows:prd-ground <KEY> --rebaseline' from a clean tree.`
+**Batch statuses**, from either dispatch:
+
+- **`OK`** — act on each finding's own `status`, below.
+- **`COMMIT_MISMATCH`** — a repository moved between Phase 3's pin and this dispatch. Stop:
+  `PRD_GROUND_VERIFY_COMMIT_MISMATCH: <the batch's finding ids> could not be verified — <repo> is at <resolved-HEAD>, not the pinned <commit>. Re-run '/product-workflows:prd-ground <KEY> --rebaseline' from a clean tree.`
   **Under `--no-code` the same message names the re-run without the mode** — `'/product-workflows:prd-ground <KEY> --rebaseline'`, no `--no-code` — since that mode refuses the flag the remedy requires, and the finding that failed here is pinned to a repository the design pass cannot re-pin on its own.
-  The same repair as Phase 5's own `COMMIT_MISMATCH`: re-run from Phase 3, which re-pins and
-  re-grounds. **`--rebaseline` is part of the remedy, not an optional extra**, and the message says
-  so: where `grounding/baselines.md` recorded a pin for this repository when the run began, this
-  run never replaced it — Phase 8 records a new pin, and this stop comes before it — and `HEAD` has
-  moved off it, so the re-run stops with `PRD_GROUND_NEEDS_REBASELINE` unless the flag is given.
-  "Re-run from a clean tree" on its own would send the operator straight into that second stop.
-  Where no pin was recorded, the flag changes nothing and costs nothing.
-- **`INPUT_MISSING`** — this orchestrator's dispatch was malformed (most often a `[DG#n]` sent
-  without its `inventory`, its `class` or its `frame_set_dir` — `inventory` first, because it is the
-  newest requirement and the one whose omission made a class-1 finding permanently unverifiable). Stop, quoting the field and row the agent named, and
-  fire `emit-block` per Phase 11's capture-at-block invariant — a dispatch this command controls
-  getting the contract wrong is a plugin gap, unlike Phase 0's environment halts.
-- **`REPO_MISSING` / `FRAME_SET_MISSING` / `NO_INDEX` / `STALE_INDEX`** — the source this finding rests on is gone
-  or unusable (a repository unmounted mid-run, a frame set removed or exported without an index
-  since it was ground). Stop, naming the finding and the path the agent reported — and the
-  command that resolves it: on `NO_INDEX` that is
-  `/workflows-core:frames <this run's KEY>`, then re-run this command. **On `STALE_INDEX` it is
-  not** — the index is there and its descriptions are intact; the frames are gone. Re-running
-  `/frames` on an empty directory writes nothing (`workflows-core:grounding-format` §6.2 step 6 forbids it), so
-  naming it would send the operator to a no-op. Name the missing frames instead: restore them to the
-  directory, then re-run this command — and `/frames` only if the set changed while they were away.
+  The same repair as Phase 5's own `COMMIT_MISMATCH`: re-run from Phase 3, which re-pins and re-grounds. **`--rebaseline` is part of the remedy, not an optional extra**, and the message says so: where `grounding/baselines.md` recorded a pin for this repository when the run began, this run never replaced it — Phase 8 records a new pin, and this stop comes before it — and `HEAD` has moved off it, so the re-run stops with `PRD_GROUND_NEEDS_REBASELINE` unless the flag is given. "Re-run from a clean tree" on its own would send the operator straight into that second stop. Where no pin was recorded, the flag changes nothing and costs nothing.
+- **`INPUT_UNBLIND`** (derive only) — this command handed the blind step a finding's answer. Stop, and fire `emit-block` per Phase 11's capture-at-block invariant — a dispatch this command controls getting the contract wrong is a plugin gap:
+  `PRD_GROUND_VERIFY_UNBLIND: the derive dispatch for <the batch's finding ids> carried <field> on <finding-id> — the blind step must never be handed the answer it re-derives. No finding was written.`
+- **`INPUT_MISSING`** — a batch anchor was absent, a `[CG#n]` batch named more than one commit, or `mode` was absent or unrecognised. Stop, quoting what the agent named, and fire `emit-block` as above (most often a `[DG#n]` batch sent without its `inventory` or its `frame_set_dir` — `inventory` first, because it is the newest requirement and the one whose omission made a class-1 finding permanently unverifiable).
+- **`REPO_MISSING` / `FRAME_SET_MISSING` / `NO_INDEX` / `STALE_INDEX`** — the source this batch rests on is gone or unusable (a repository unmounted mid-run, a frame set removed or exported without an index since it was ground). Stop, naming the batch's findings and the path the agent reported — and the command that resolves it: on `NO_INDEX` that is `/workflows-core:frames <this run's KEY>`, then re-run this command. **On `STALE_INDEX` it is not** — the index is there and its descriptions are intact; the frames are gone. Re-running `/frames` on an empty directory writes nothing (`workflows-core:grounding-format` §6.2 step 6 forbids it), so naming it would send the operator to a no-op. Name the missing frames instead: restore them to the directory, then re-run this command — and `/frames` only if the set changed while they were away.
+
+**Finding statuses:**
+
+- **`OK`** (compare), its echo matching the derive return — act on `outcome`, below.
+- **`INPUT_MISSING`** — this command's dispatch was short a field that finding's row requires (most often a `[DG#n]` sent without its `class`). Stop, quoting the field and row the agent named, and fire `emit-block` as above.
+- **`INCOMPLETE`** (compare), **no entry**, a **blank `own_evidence`**, or a compare echo that **differs** from the derive return (in `own_verdict`, an `own_evidence` entry's `path` or `lines`, or `own_control`'s result, as defined above — never in a reworded note, `notes`, key order or formatting) — incomplete; *Retry once*, below.
+
+**Retry once.** Re-dispatch every incomplete finding once, through the step that failed. A finding left incomplete by its derive return — missing from it, or with a blank `own_evidence` — is not sent in that batch's first compare dispatch: it goes straight to a fresh derive dispatch and then a compare dispatch. A finding its compare return marked `INCOMPLETE` gets the same, a fresh derive dispatch and then a compare dispatch; a finding missing from a compare return, or whose compare echo differed, gets a fresh compare dispatch over its existing derive entry. Retries go out in batches cut at the cap *Batches* states, per group (repository or frame set) and per step: a retry derive dispatch carries only the findings that need a fresh derive, and a retry compare dispatch carries those that need only a fresh compare, over their existing derive entries, together with those whose fresh derive has returned — so a finding that needs only a compare is never re-derived. **One retry per finding in each verification pass and in each second opinion, never more.** The first pass, the class-4 sweep's (below) and a second opinion on a disputed `contradict` (below) are each a unit of their own, and a finding gets at most one retry in each. The sweep re-verifies a finding whose cited `[CG#n]` changed, so a finding it dispatches gets its own single retry there, whether or not the first pass retried it; and a second opinion is not a retry, so its own derive and compare dispatches get one retry of their own. A finding still incomplete after its retry in that unit falls to the rules below, in this order:
+
+- **A compare entry that exists, whose echo matches the derive return and which carries an `outcome`** — an `INCOMPLETE` entry whose only gap is the blind verdict's own control — is acted on through the reconciliation, the control normalisation and the second opinion below, never around them — a second opinion's own entry through the reconciliation alone, since the control normalisation forces nothing on it (*The second opinion*, below). Where the outcome they leave is `contradict`, the *incomplete return* branches under `contradict` below apply (an own-run finding stops the run with `PRD_GROUND_VERIFY_INCOMPLETE`; an on-file one writes nothing and is reported not verified by this run). Where it is `agree`, `extend` or `unprovable`, the finding proceeds — the record keeps the original's control, which compare ran, and the `unprovable` branch keeps the finding's verdict and control unchanged, so the missing blind control never reaches the record — and the Final report notes it. A `missing` control, or a `failed` one on a verdict other than `NOT-PROVABLE`, still normalises the outcome to `contradict`, and the `contradict` branches then apply — on every entry but a second opinion's, which that normalisation never reaches (*The second opinion*, below).
+- **Anything else** — a finding still missing from a return, a blank `own_evidence`, a compare entry still `INCOMPLETE` that carries no `outcome`, or a compare echo still differing — is not verified, and what it does turns on whether the finding is on file. An **own-run** finding stops the run before Phase 8's first write, and fires `emit-block` per Phase 11's capture-at-block invariant:
+  `PRD_GROUND_VERIFY_INCOMPLETE: <finding-id> could not be verified — in <the first pass | the class-4 sweep | its second opinion>, its <derive|compare> result was <reason> and its retry's <derive|compare> result was <reason>, each <missing from the return | a blank own_evidence | an INCOMPLETE entry with no outcome | an echo differing from the derive return>. No finding was written; re-run '/product-workflows:prd-ground <KEY>' with the flags this run was given.`
+  An **on-file** finding writes nothing, keeps every field and the `outcome` it had, and is reported **not verified by this run**, with the reason; the run continues, as in the on-file *incomplete return* branch under `contradict` below.
 
 **Nothing reaches Phase 8 unverified.** Any stop above happens before Phase 8's first write, and so
 does the incomplete-return stop below (*Act on `outcome`*, own-run), so a finding without an outcome
@@ -1225,8 +1277,9 @@ alone.
 **A `control_outcome` of `missing` — or of `failed` on a finding whose verdict rests on the absence —
 is a second, independent route to `contradict`.** The verifier decides first whether the finding
 *owed* a control at all (`workflows-core:grounding-format` §2.2's closed-set rule), so `not-owed` is
-an ordinary clean result and is never normalised: three of the four `[DG#n]` classes legitimately
-carry none, and treating their empty field as a defect would contradict every one of them.
+an ordinary clean result and is never normalised: a baseline finding and three of the four `[DG#n]`
+classes legitimately carry none, and treating their empty field as a defect would contradict every
+one of them.
 
 - **`missing`** — the finding owed a control and carries none. Normalise to `contradict`.
 - **`failed`**, and the finding's verdict is anything **other than** `NOT-PROVABLE` — the absence
@@ -1244,14 +1297,52 @@ and it is the only one that can also apply to a returned `unprovable` — the co
 the **original** search was incapable, which is a different and stronger fact than the verifier's own
 search having settled nothing.
 
+**A disputed `contradict` gets a second blind opinion before anything acts on it.** Compare never
+revises the blind result, so where it finds that result's own evidence does not establish its own
+verdict, it returns `blind_disputed: true` with its reason in `notes` and leaves the outcome as the
+blind verdict makes it (`agents/grounding-verifier.md`, step 6). Acting on that outcome would write
+a verdict the step that read the evidence doubted; overruling it here would let the comparison,
+which has seen the original, decide the verdict after all. A second blind derivation settles it
+instead:
+
+- **Which entries are disputable.** A compare entry carrying `blind_disputed: true` whose outcome,
+  after the two normalisations above, is `contradict` because its `own_verdict` differs from the
+  finding's `verdict` — returned as `contradict`, or an `agree` or `extend` the `own_verdict`
+  reconciliation normalised. **A `contradict` the control normalisation forces is never
+  disputable, even where its `own_verdict` also differs** — a `control_outcome` of `missing`, or of
+  `failed` on a verdict other than `NOT-PROVABLE`. The control route takes precedence: it rests on
+  the original's own search, which no second blind derivation repairs, and it is deterministic, the
+  same control against the same pinned source giving the same result on every run. Nor is a second
+  opinion's own entry: one second opinion per finding per pass.
+- **The second opinion.** Dispatch one fresh `mode: derive` for each disputed finding, then a
+  `mode: compare` handed that second derive entry as `derived`, each built exactly as a first
+  dispatch is and on the same `model:` (under §10, `run_flags.enforced_model`). Batch disputed
+  findings per group (repository or frame set) under the cap *Batches* states, as retries are. Its
+  returns take *Retry once* and the `own_verdict` reconciliation above like any other. The control
+  normalisation forces nothing on them: the original's control is the one the first compare ran,
+  it gives the same result on every run, and on a disputable entry it forced no `contradict` — so
+  the settling below is the one path such a finding takes.
+- **Settling**, by the two blind verdicts — the first derive's `own_verdict` and the second's:
+  - **They agree** → that verdict stands, and the finding takes the `contradict` branch below as any
+    other does, on the second opinion's returns: `own_verdict`, `own_evidence` and `own_control`
+    from its derive entry, `notes` from its compare entry.
+  - **They differ** → normalise the outcome to `unprovable`. The finding keeps its original
+    `verdict`, `evidence` and `control` and takes the `unprovable` branch below, and the Final report
+    flags it **verification inconclusive — two blind re-derivations disagreed**, naming both blind
+    verdicts. **Its record's `notes` state that disagreement and nothing else**: both blind verdicts
+    and the first compare's reason for disputing — never either compare's argument for an outcome
+    this run did not write, which the second compare's notes, arguing from its own blind verdict,
+    usually are.
+
 **Record every normalisation and report the count** — the finding id, the outcome as returned, and
-both verdicts — in the Final report's verifier tally. A normalisation that happens silently is
-indistinguishable from an agent that never disagreed, which is the state this step exists to make
-visible.
+both verdicts — in the Final report's verifier tally, and every dispute beside them: the finding
+id, both blind verdicts, and whether the second opinion upheld the `contradict` or normalised it to
+`unprovable`. A normalisation that happens silently is indistinguishable from an agent that never
+disagreed, which is the state this step exists to make visible.
 
 **None of the verifier's own field NAMES reaches the record**, though a `contradict` writes their
 values into the record's own fields. `own_verdict`, `own_evidence`, `own_control`,
-`control_outcome` and the verifier's re-derivation `commit` are return fields
+`control_outcome`, `blind_disputed` and the verifier's re-derivation `commit` are return fields
 (`workflows-core:grounding-format` §2.1's closed field set). What Phase 8 writes is the `verdict`
 this step settles, plus `outcome` and any `notes` — never a second verdict beside the first.
 
@@ -1261,7 +1352,8 @@ Act on `outcome`:
   finding's `evidence` list; record the outcome.
 - **`unprovable`** — keep the finding's verdict unchanged (the verifier's own search settling
   nothing either way is not the same as it being wrong); record the outcome and flag the finding
-  in the report as verification-inconclusive.
+  in the report as verification-inconclusive — on one a dispute settled `unprovable`, as **two
+  blind re-derivations disagreed**, naming both blind verdicts.
 - **`contradict`** — **what it writes turns on whether the finding is already on file, never on
   which phase produced it.** An **own-run finding** is one this invocation produced
   (`provenance: own-run`, above) and Phase 8 has not yet written, so nothing outside this run cites
@@ -1269,7 +1361,9 @@ Act on `outcome`:
   invocation — every `inherited` finding is one — and a decision, a ledger row or a sent package may
   already cite it. **No finding is both**: every finding this invocation produces takes a fresh id
   (Phase 3, Phase 5), so a claim it re-produces is a new own-run block beside the on-file one, never
-  the on-file block itself.
+  the on-file block itself. **A disputed `contradict` reaches this branch only once its second
+  opinion upheld it**, and then on the second opinion's returns (above); one whose two blind
+  verdicts disagreed takes the `unprovable` branch instead.
   - **Own-run: the finding is rewritten, and the rewrite retains the same id.** Replace the
     finding's `verdict` with the verifier's `own_verdict` and its `evidence` with `own_evidence`,
     and keep a one-line note of the pre-rewrite verdict for the audit trail — and where
@@ -1281,7 +1375,8 @@ Act on `outcome`:
     never be placed in its frame set again, which is how
     `/product-workflows:brd-interview`'s successor test finds a design finding's source. **Where the
     rewritten finding *owes* a control — §2.2's closed-set rule, the same test the verifier applied
-    to the original and not "does it assert an absence", which gets classes 1 and 4 wrong — its
+    to the original and not "does it assert an absence", which gets classes 1 and 4 and a baseline
+    finding wrong — its
     `control` is the verifier's `own_control`**: a rewritten finding owes one exactly as an original
     does, and the run holds no other search to build it from. The id never changes, so every
     citation into an own-run finding — this run's own, the only kind it has — still resolves.
@@ -1362,21 +1457,17 @@ cited, which this phase never rewrites in place either. **So a `--no-design` run
 class-4 finding in Phase 5, gives the sweep nothing to do**; every class-4 finding such a run
 leaves standing on a superseded `[CG#n]` is Phase 8's cascade's.
 
-**Every finding the sweep re-dispatches carries the `frame_set_dir` its own Phase 5 dispatch named**
-(Phase 5, *Record which frame set each `[DG#n]` came from*), so every one whose cited `[CG#n]` this
-phase rewrote can be re-derived rather than retired: re-dispatch `grounding-verifier` once, with the
-same `model:` as the first dispatch (under §10, `run_flags.enforced_model`), and act
-on the returned outcome as above — the own-run branch, since a held finding is not on file.
+**Every finding the sweep re-dispatches carries the `frame_set_dir` its own Phase 5 dispatch named** (Phase 5, *Record which frame set each `[DG#n]` came from*), so every one whose cited `[CG#n]` this phase rewrote can be re-derived rather than retired: batch them by frame set, under the cap *Batches* states, and dispatch each batch through both steps again — `mode: derive`, then `mode: compare` with `cited` carrying the rewritten `[CG#n]` — with the same `model:` as the first dispatches (under §10, `run_flags.enforced_model`), and act on the returned outcomes as above — the own-run branch, since a held finding is not on file — *Retry once* and the second opinion on a disputed `contradict` included: each finding the sweep dispatches gets one retry, and at most one second opinion, of its own in this pass, whether or not the first pass gave it either, and one still incomplete after that retry falls to *Retry once*'s rules on their own-run side.
 
 **An inherited finding that owes a control and carries none is `contradict` like any other, and gets
 no discount for being old.** `workflows-core:grounding-format` §8 makes an inherited finding
-unverified by definition, and `product-workflows:grounding-verifier`'s own rules forbid searching one
-any less hard; an exception here would admit an uncontrolled absence claim as evidence precisely
-where the claim is *least* checked. The verifier has re-derived it and returned its own
-`own_control`, so its successor is a properly controlled finding rather than a hole. **Expect this
-to fire in bulk on the first run over a corpus written before the field existed**, and report it by
-count, so a wall of supersessions reads as the one-time conversion it is rather than as a corpus
-falling apart.
+unverified by definition, and the derive step, which never learns a finding's provenance, searches
+it exactly as hard as any other; an exception here would admit an uncontrolled absence claim as
+evidence precisely where the claim is *least* checked. The verifier has re-derived it and returned
+its own `own_control`, so its successor is a properly controlled finding rather than a hole.
+**Expect this to fire in bulk on the first run over a corpus written before the field existed**, and
+report it by count, so a wall of supersessions reads as the one-time conversion it is rather than as
+a corpus falling apart.
 
 Where the cited `[CG#n]` was rewritten and still settles the capture question the same way, the pair
 is recorded as re-checked and nothing changes. **Report every state the sweep reached** — the findings
@@ -1418,10 +1509,10 @@ padding, keys in the §2 table's order, and an inapplicable field omitted rather
 That section is not a style note — a writer that aligns one section's keys and not the next produces
 a file whose readers report findings as missing that are on the page. Each block carries every field
 `workflows-core:grounding-format` §2 defines (`id`, `claim`, `verdict`, `evidence`, `altitude`, `horizon`,
-`consumed_by` — `none` on a block this run appends, while a block already on file keeps the value it holds, since `/create-prd`, `/create-ard` and `/specify` write it later and nothing here may erase a stamp — plus `prior_verdict` on every finding reading `SUPERSEDED`, `prerequisite` on every finding reading `horizon: will-change`, `control` on every finding asserting an absence, `class`/`cites` on a
+`consumed_by` — `none` on a block this run appends, while a block already on file keeps the value it holds, since `/create-prd`, `/create-ard` and `/specify` write it later and nothing here may erase a stamp — plus `prior_verdict` on every finding reading `SUPERSEDED`, `prerequisite` on every finding reading `horizon: will-change`, `control` on every finding that owes one by `workflows-core:grounding-format` §2.2's closed-set rule, `class`/`cites` on a
 `[DG#n]` and `commit` on everything **except** a
 `[DG#n]` of class 1, 2 or 3 — those are settled from the frame set alone and are pinned to no commit,
-per §2's applicability note) plus this run's verifier `outcome` — on every block but two kinds, each of which keeps the `outcome` it holds: one Phase 7 superseded, its `contradict` written on its successor or, where there is none, recorded in the Final report only; and an on-file one whose `contradict` was an incomplete return, owing a control and returning no `own_control`, whose block this run does not touch and whose `contradict` the Final report records as not verified by this run (Phase 7, *On-file*, both) — **and any `notes` the verifier returned** — **and nothing else.** §2.1 makes the field set closed: `own_verdict`, `own_evidence`, `own_control`, `control_outcome` and the verifier's re-derivation `commit` are return fields Phase 7 has already acted on — where a `contradict` rewrote an own-run finding or appended an on-file finding's successor, their values are already in that block under the record's own names (`verdict`, `evidence`, `control`) and the return names never appear — and a block carrying `own_verdict` beside `verdict` states two verdicts at once, leaving every downstream reader free to quote whichever half suits. That is the state `/brd-split` step 7 and `/brd-interview` step 7 now refuse, so writing it here deadlocks the route rather than merely muddying the record. Its contract calls those *"anything the caller should know before recording this outcome"*, so they are read before the outcome is written, not after — a verdict recorded without them is recorded against a caveat the verifier raised and nothing carried.
+per §2's applicability note) plus this run's verifier `outcome` — on every finding Phase 7 verified, and on each successor a Phase 7 `contradict` appended, but three kinds, each of which keeps the `outcome` it holds: an on-file one Phase 7 superseded, its `contradict` written on its successor or, where there is none, recorded in the Final report only; and an on-file one whose `contradict` was an incomplete return, owing a control and returning no `own_control`, whose block this run does not touch and whose `contradict` the Final report records as not verified by this run (Phase 7, *On-file*); and an on-file one still incomplete after its retry, which Phase 7 left **not verified by this run**, writing nothing and keeping every field (Phase 7, *Retry once*) — **and the `notes` of the `mode: compare` return that settled that outcome**, where it carried any: compare's alone, since they hold the comparison, and derive's already reached compare inside `derived` — **and nothing else.** **On an outcome a dispute settled `unprovable`, no compare return settled it**, so the record's `notes` are the ones Phase 7 writes in their place, stating both blind verdicts and the first compare's reason for disputing (Phase 7, *Settling*). A block Phase 7 did not verify keeps the `outcome` it holds, among them every on-file block another of this run's supersessions retires — Phase 6's for a moved horizon, a `--rebaseline` pass's, an earlier baseline's (*Supersede the earlier baselines*), the class-4 cascade's and a re-ground frame set's (below) — none of which Phase 7 dispatches. §2.1 makes the field set closed: `own_verdict`, `own_evidence`, `own_control`, `control_outcome`, `blind_disputed` and the verifier's re-derivation `commit` are return fields Phase 7 has already acted on — where a `contradict` rewrote an own-run finding or appended an on-file finding's successor, their values are already in that block under the record's own names (`verdict`, `evidence`, `control`) and the return names never appear — and a block carrying `own_verdict` beside `verdict` states two verdicts at once, leaving every downstream reader free to quote whichever half suits. That is the state `/brd-split` step 7 and `/brd-interview` step 7 now refuse, so writing it here deadlocks the route rather than merely muddying the record. Compare's contract calls its `notes` *"anything the caller should know before recording this outcome"*, so they are read before the outcome is written, not after — a verdict recorded without them is recorded against a caveat the verifier raised and nothing carried.
 A `--rebaseline` run appends its new findings after the existing ones and marks any finding it
 superseded — never one already reading `SUPERSEDED`, whichever run retired it — with `verdict:
 SUPERSEDED`, id retained, rather than deleting or renumbering it — and writes the verdict that
@@ -1437,15 +1528,31 @@ already retired: superseding overwrites `verdict`, and `/product-workflows:brd-i
 decision the re-grounding moved* reads `prior_verdict` to tell a re-grounding that came back as it
 stood from one that moved a decision's ground.
 
+**Supersede the earlier baselines** (`workflows-core:grounding-format` §4.1) — never under
+`--no-code`, which mints no baseline finding (Phase 3). For every repository Phase 3 minted a fresh
+baseline `[CG#n]` for, every earlier baseline finding of that repository — each `[CG#n]` an earlier
+`grounding/baselines.md` entry for it records, resolved against the blocks parsed
+(`workflows-core:grounding-format` §2.1's reading rule), never matched out of a `claim` — that does
+not read `SUPERSEDED` takes `verdict: SUPERSEDED`, its verdict as `prior_verdict`, and a one-line
+note naming the fresh baseline finding; every other field stays as it stood, its `outcome`
+included, and no successor is appended, since the fresh finding is this run's own. Phase 3 mints a
+fresh id on every run by design (Phase 7, *`provenance`*), and without this write each plain re-run
+would add one more live baseline finding for the same repository and pin. **On a repository a
+`--rebaseline` pass re-pinned, that pass's supersession already takes its earlier baseline
+findings**, each being one of that moved repository's on-file findings, so this write takes only an
+unmoved repository's and no block is superseded twice. An earlier entry that records no id, or an id
+no block carries, supersedes nothing; the Final report names it.
+
 **Superseding a `[CG#n]` supersedes every class-4 `[DG#n]` citing it, on file or held, in the same
-pass — whichever route superseded it.** Three routes do: a `--rebaseline` pass, which replaces a
-`[CG#n]` against a moved commit; Phase 7's `contradict` on an on-file `[CG#n]`, which replaces its
-verdict at the same commit; and Phase 6's horizon supersession, which replaces its horizon at the
-same commit. In each case the `[DG#n]` asserted the pinned code could not perform a capture on the
-authority of a finding this run has just replaced; leaving it means a design finding standing on a
-superseded code finding, with a citation that still resolves and a claim id that still matches —
-the state `workflows-core:grounding-format` §6.3 forbids and the one no reader can detect. It is
-never Phase 7's sweep's, which acts only on a `[CG#n]` rewritten in place.
+pass — whichever route superseded it.** Three routes supersede a claim finding: a `--rebaseline`
+pass, which replaces a `[CG#n]` against a moved commit; Phase 7's `contradict` on an on-file
+`[CG#n]`, which replaces its verdict at the same commit; and Phase 6's horizon supersession, which
+replaces its horizon at the same commit. In each case the `[DG#n]` asserted the pinned code could
+not perform a capture on the authority of a finding this run has just replaced; leaving it means a
+design finding standing on a superseded code finding, with a citation that still resolves and a
+claim id that still matches — the state `workflows-core:grounding-format` §6.3 forbids and the one
+no reader can detect. It is never Phase 7's sweep's, which acts only on a `[CG#n]` rewritten in
+place.
 
 **Which rule writes such a `[DG#n]` turns on its frame set, never on the route:**
 
@@ -1504,8 +1611,9 @@ report, beside the Phase 7 sweep's own states and never folded into them.
 
 **Every edit to a finding already on file is written in place — same id, never a second block
 appended for it** — among them every supersession: Phase 6's for a moved horizon, Phase 7's on a
-`contradict`, a `--rebaseline` pass's, the cascade's above, and a re-ground frame set's (below). A
-successor is a new block with a new id, appended; it is never written over the block it succeeds.
+`contradict`, a `--rebaseline` pass's, an earlier baseline's, the cascade's above, and a re-ground
+frame set's (below). A successor is a new block with a new id, appended; it is never written over
+the block it succeeds.
 The Phase 7 sweep edits none of them: every finding it re-derives is one this run holds, written
 like any other of this run's. **This applies on a `--no-design` run too**, which writes no
 `[DG#n]` of Phase 5's: on such a run an on-file design finding changes by Phase 6's horizon
@@ -1558,11 +1666,17 @@ resolves — and give each the one-line note `superseded: frame set <frame-set> 
 re-grounding retired — which looked for a successor to it in this run and found none, so no later run
 owes it one — from a finding still waiting on a run that will re-derive it. **A prior class-4 finding is among them only where this run re-ground its claim against
 the repository its cited `[CG#n]` is pinned to.** That repository is the one whose
-`grounding/baselines.md` entry records a pin equal to that `[CG#n]`'s `commit`, and *re-ground* is
+`grounding/baselines.md` entry records a pin equal to that `[CG#n]`'s `commit`, entries told apart
+by slug (`workflows-core:grounding-format` §4 step 1), and *re-ground* is
 Phase 5's known set, never a judgement: Phase 5 dispatched a `code-grounder` against that repository
 this run, and that dispatch's claims carried the requirement id the `[CG#n]`'s `claim` names. A
 `--rebaseline` pass re-grounds every claim against a moved repository, so it takes every such
-finding citing that repository's old pin; **a plain re-run against an unmoved repository re-grounds
+finding citing that repository's old pin — **except where the file records that pin for a second
+slug too**, a pin two repositories shared before Phase 3's *No two repositories share a pin*
+existed. There no one repository is the one its cited `[CG#n]` is pinned to, so this rule does not
+take the finding, and the class-4 cascade above marks it with the cascade's own note, which
+`/product-workflows:brd-interview` reads as it reads any finding the cascade retired: one a later
+run re-derives. **A plain re-run against an unmoved repository re-grounds
 only the claims no `[CG#n]` on file answered at its pin** — a row a later re-cut gave this slice —
 so it takes a prior class-4 finding on such a claim and on no other. **Or under `--no-code`**, where
 `cg_findings` is the whole unsuperseded `[CG#n]` set on file. Otherwise it stands: a design pass
@@ -1851,10 +1965,10 @@ legacy folder holding an `idea.md` and no `prd.md`, whose missing input is the P
 an inventory carrying no claim at all
 (`PRD_GROUND_EMPTY_INVENTORY`, which is a fact about what the
 parent allocated, not about this plugin), and an unset `$REPOS_PATH`. The list is illustrative and
-the rule is what binds: a Phase 0 stop added later is covered by it without being named here. `PRD_GROUND_DIRTY_TREE`, `PRD_GROUND_NEEDS_REBASELINE`, and Phase 7's
+the rule is what binds: a Phase 0 stop added later is covered by it without being named here. `PRD_GROUND_DIRTY_TREE`, `PRD_GROUND_NEEDS_REBASELINE`, `PRD_GROUND_AMBIGUOUS_PIN` (two repositories at one pin, which the operator settles), and Phase 7's
 `PRD_GROUND_VERIFY_COMMIT_MISMATCH` are repository state, not a plugin gap, either — unlike Phase
-7's `INPUT_MISSING`, which is this command getting its own dispatch contract wrong, and
-`PRD_GROUND_VERIFY_INCOMPLETE`, which is the verifier getting its return contract wrong: both do
+7's `INPUT_MISSING` and `INPUT_UNBLIND` (`PRD_GROUND_VERIFY_UNBLIND`), which are this command getting its own dispatch contract wrong, and
+`PRD_GROUND_VERIFY_INCOMPLETE`, which is the verifier getting its return contract wrong: all three do
 fire `emit-block`. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
@@ -1899,18 +2013,37 @@ in the two-column form Phase 4 step 3 fixes (on `route: idea` this is always `pr
 declared`, per step 2's refusal); every on-file finding Phase 6 superseded for a moved horizon,
 with its successor's id and both horizons — or, for a design finding no frame set places, with no
 successor and the horizon it would have written — and every `--no-code` horizon it did not move;
+every earlier baseline finding Phase 8 superseded, with the fresh one that replaced it, and any
+earlier `baselines.md` entry that named no id, or an id no block carries;
 finding counts by verdict for `[CG#n]` and `[DG#n]`
 separately, and the verifier
-tally (`agree` / `extend` / `contradict` / `unprovable`) with every `contradict` named by id and by
-what it wrote — an own-run finding's in-place rewrite; an on-file finding's supersession with its
+tally (`agree` / `extend` / `contradict` / `unprovable`), opened by the run's verification
+arithmetic — Phase 1's cost statement as this run actually came out, printed as this one block with
+every value filled in (`none` for a part the run had nothing in), because a headless orchestrator
+may compress Phase 1's printed lines and the Final report is the output a reader always sees:
+
+```
+Verification: <K> repositories × <N> claims · batches: <repo> <n>[, <repo> <n> …] | none; frame sets: <set> <n>[, <set> <n> …] | none · dispatches: <d> derive, <c> compare, of which <r> retries and <s> second opinions · on-file claim findings re-verified: <m> (Phase 1's M: <M>)
+```
+
+— then every retry by finding id, the unit it was made in (the first pass, the class-4 sweep's, or
+a second opinion's) and the step or steps retried (derive then compare, or compare alone), or "no retries"; every disputed
+`contradict` by finding id, with both blind verdicts and how its second opinion settled it — upheld,
+or `unprovable` as **verification inconclusive — two blind re-derivations disagreed** — or "no
+disputes"; with every `contradict` named by
+id and by what it wrote — an own-run finding's in-place rewrite; an on-file finding's supersession with its
 successor's id; an on-file finding superseded with no successor because the verifier's own verdict
-was `SUPERSEDED`, the one `contradict` no block records; and an incomplete return on an on-file
-finding, owing a control and returning none, which wrote nothing and leaves that finding **not
+was `SUPERSEDED`, the one `contradict` no block records; and an on-file finding left incomplete — a
+`contradict` incomplete return owing a control and returning none, or any state still incomplete
+after its retry (Phase 7, *Retry once*) — which wrote nothing and leaves that finding **not
 verified by this run** — say so of it by id, beside the `outcome` an earlier run left on it (on an
-own-run finding the same return stops the run instead, with `PRD_GROUND_VERIFY_INCOMPLETE`) —
+own-run finding the same return stops the run instead, with `PRD_GROUND_VERIFY_INCOMPLETE`);
+every `agree`/`extend`/`unprovable` that proceeded after its retry with the blind verdict's own
+control still missing, by id;
 **and, separately, every outcome Phase 7 normalised**, each named by finding id with the outcome
-as returned, both verdicts, and which of the two routes forced it (a differing `own_verdict`, or a
-`control_outcome` of `missing`, or of `failed` on a finding whose verdict rests on the absence), or an explicit "none" where the verifier and the findings agreed
+as returned, both verdicts, and which route or routes of the three forced it (a differing `own_verdict`; a
+`control_outcome` of `missing`, or of `failed` on a finding whose verdict rests on the absence; or a
+disputed `contradict` whose two blind verdicts disagreed, settled `unprovable`), or an explicit "none" where the verifier and the findings agreed
 throughout, so a clean run reads as checked rather than as unchecked; the class-4 sweep's result in every state it reached — every `[DG#n]` re-derived, every one
 re-checked and left standing, and, where it did nothing, which of the three reasons applied: an
 empty set; a non-empty one over which this phase rewrote no `[CG#n]` at all; or a non-empty one

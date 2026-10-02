@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.9.0] — 2026-10-02
+
+### Changed
+
+- **`grounding-format` §8: independence is structural, not a discipline the verifier keeps (#73).** The step that re-derives is handed the requirement premise and the source, never the finding's verdict, evidence, control or citation, and reads neither the specs repository's files nor its history, which can name them; verification is a blind re-derivation followed by a comparison, each its own dispatch. §4.1 says the baseline re-derivation is the blind step's integrity re-run. §2.2 now says the verifier is handed `control` only in its compare step. `product-workflows` 3.11.0 implements it.
+- **§8 now says a disputed `contradict` gets a second blind re-derivation.** The comparison never revises a blind result, but it flags one whose own evidence does not establish its own verdict. Where a `contradict` rests on such a verdict, and not on the control route, a second blind derivation decides: agreement upholds the `contradict`, and disagreement makes the outcome `unprovable`, with notes recording the disagreement. A control-forced `contradict` is never disputed, even where the blind verdict also differs, since that route is deterministic and takes precedence. §2.1 lists `blind_disputed` among the verifier's return fields, never a record field.
+
+### Fixed
+
+- **`grounding-format` did not say whether a baseline finding owes a positive control**, and a live verifier ruled that it did, forcing `contradict` on every run's baseline; §2.2 and §4.1 now say it owes none, because `baseline-integrity`'s three commands are git's own report over the whole checkout rather than a search, and §8's `not-owed` row names it.
+- **§4.1 now says a run that mints a baseline finding supersedes that repository's earlier baseline findings**, each one an earlier `baselines.md` entry records by id, so a plain re-run no longer leaves two live baseline findings for one repository and pin; an entry that records no id, or an id no block carries, supersedes nothing and is reported.
+- **§4 never said what names the repository in a `baselines.md` entry**; step 1 now fixes it as the clone's remote slug, the identifier `/prd-ground` Phase 1 resolves a repository by, so every reader that compares entries compares slugs rather than paths or directory names.
+- **`phase-handoff` §2.4 named a fixed model, `Claude Opus 5`, in the deliverable commit's `Co-Authored-By` trailer**, which goes stale with every model release; the trailer now names the model the session runs on.
+
 ## [1.8.5] — 2026-10-02
 
 ### Fixed

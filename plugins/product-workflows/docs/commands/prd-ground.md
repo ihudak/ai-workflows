@@ -3,7 +3,7 @@
 Grounding workflow serving both routes into a PRD, its route detected from the resolved folder and
 never declared. Pins every mounted repository to a verified commit, grounds every claim in the
 resolved folder's own claim list against code (`code-grounder`, Opus) and an exported design frame set
-(`design-grounder`, Opus), independently re-derives every live finding (`grounding-verifier`, Opus) — each frontmatter-pinned, no override unless `--enforce-model` enforces one — and, on
+(`design-grounder`, Opus), independently re-derives every live finding — blind, then compared, in batches (`grounding-verifier`, Opus) — each frontmatter-pinned, no override unless `--enforce-model` enforces one — and, on
 the BRD route, assigns each finding a `current` / `will-change` horizon against declared
 prerequisite BRDs.
 
@@ -142,7 +142,7 @@ against every repository or root they touch: `workflows-core:docs-grounder` (Pha
 docs — default ON when `$DOCS_PATH` resolves, advisory, never a gate), `code-grounder` (Phase 5, one
 per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one), `design-grounder` (Phase 5, one per exported frame set, after every
 `code-grounder` instance has returned — its fourth reconciliation class cites a `[CG#n]` — frontmatter-pinned to Opus, no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one), and
-`grounding-verifier` (Phase 7, one per finding, frontmatter-pinned to Opus — no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one) — plus `workflows-core:impl-maintenance` (Phase 11, session lessons-learned, also read-only: it reads the session handoff and suggests, writing nothing — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`).
+`grounding-verifier` (Phase 7, two dispatches per batch of up to 25 findings — a blind `mode: derive`, then `mode: compare` — frontmatter-pinned to Opus — no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one) — plus `workflows-core:impl-maintenance` (Phase 11, session lessons-learned, also read-only: it reads the session handoff and suggests, writing nothing — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`).
 
 ## What it needs
 
@@ -317,7 +317,8 @@ Under the resolved folder — the `PRD-<SLICE-KEY>-<slug>/` slice folder inside 
 ([addressing](../reference/references.md) §2, §6), or `/create-prd`'s own
 `PRD-<KEY>-<slug>/` folder on the idea route:
 
-- `grounding/baselines.md` — one dated entry per repository: the pinned commit and how it was
+- `grounding/baselines.md` — one dated entry per repository, named by its remote slug (the last
+  segment of its `origin` URL, the name Phase 1 resolves it by): the pinned commit and how it was
   verified, appended in Phase 8 with the findings it pins, never earlier. `--rebaseline` appends rather than overwrites.
 - `grounding/code-grounding.md` — every `[CG#n]` finding, plus the optional derivation matrix and,
   when documentation grounding ran, a `## Documentation divergences` section: one identifier-free
@@ -376,6 +377,20 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   it is never `consumed_by` anything, and the downstream reports that list what is still unconsumed
   exclude it (`workflows-core:grounding-format` §4.1). Counting it would
   put one item per repository into every such report forever, with no action that could close one.
+  It owes no positive control: the three commands are git's own report over the whole checkout, not
+  a search that could have missed something. And each run that grounds code records a fresh one per
+  repository and supersedes that repository's earlier baseline findings — each one an earlier
+  `grounding/baselines.md` entry records by id — rather than re-verifying them, so a repository
+  carries one live baseline finding however often the folder is re-ground. **No two repositories
+  may stand at one commit** (`PRD_GROUND_AMBIGUOUS_PIN`), repositories told apart by remote slug:
+  two this run resolved at the same `HEAD`, or one whose `HEAD` is a pin `grounding/baselines.md`
+  records for another, stop the run before any grounding. A finding records a commit and never a repository, so this is what lets every
+  later phase read a finding's repository off its commit. Two clones of one project at one commit
+  are the usual cause, and the stop names both and the re-run that separates them. The one case it
+  does not cover is the earlier pin of a repository a `--rebaseline` pass re-pins, where
+  `grounding/baselines.md` already records a second repository at that pin from a run before this
+  check existed: that pass retires every finding at the pin, whichever repository ground it, and
+  a class-4 `[DG#n]` citing one of them is superseded through the cascade, with its note.
 - **Phase 4.5 — documentation is a lead and a divergence, never evidence.** No `[CG#n]` or
   `[DG#n]` may cite a documentation page in its `evidence`, under any verdict, in any phase.
   Grounding answers whether a claim is true of a *specific commit*
@@ -391,10 +406,11 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   prefix would sit permanently unverified in a namespace where an unverified id blocks
   [`/brd-split`](brd-split.md) (`workflows-core:grounding-format` §8).
 - **Phase 7 — `grounding-verifier` over every finding, frontmatter-pinned to Opus (no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one).** Every finding the run holds
-  — its own, and every `[CG#n]` already on file pinned to a repository whose `HEAD` still matches its
-  recorded pin (none under `--no-code`), but never a `[DG#n]` already on file — except any already
-  reading `SUPERSEDED`: a retired finding keeps the outcome it had, and re-deriving
-  it could only bring it back to life beside its successor. A finding without a
+  is verified, except any already reading `SUPERSEDED`: its own, and every `[CG#n]` already on file
+  pinned to a repository whose `HEAD` still matches its recorded pin (none under `--no-code`), but
+  never a `[DG#n]` already on file, nor an earlier baseline finding (the run supersedes a
+  repository's for the fresh one it records, and any other repository's is not this run's to
+  re-check). A retired finding keeps the outcome it had, and re-deriving it could only bring it back to life beside its successor. It runs in batches of up to 25 findings per repository or frame set, each in two dispatches: a blind re-derivation that is handed each finding's requirement and source and never its verdict, evidence, control or citation — and refuses a dispatch that carries one — then a comparison that runs the original's control and settles the outcome without changing the blind result. A finding whose result comes back incomplete is re-dispatched once in each verification pass and in each second opinion (below) — the first pass, and the class-4 sweep's re-check of a design finding whose cited code finding this run rewrote. The comparison is handed the blind result verbatim, and its copy counts as changed only where a structured value changed — the re-derived verdict, an evidence entry's path or lines, or a control's result — never where a free-text note was reworded. A finding without a
   verifier outcome is never treated as evidence. **The outcome is first reconciled against the verdict
   the verifier re-derived**, which it returns on every outcome: `agree` means *the same verdict* and
   `extend` means *the claim holds*, so either arriving with a differing verdict is a return that
@@ -403,15 +419,25 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   that the verifier's own search settled nothing.
 
   **A second, independent route to `contradict` runs off the finding's positive control.** The
-  verifier decides first whether the finding owed one at all — three of the four `[DG#n]` classes
-  owe none: classes 1 and 3 resolve against the requirement inventory the caller handed in, which is
-  a lookup rather than a search, and class 4's code half belongs to the `[CG#n]` it cites — then runs
+  verifier decides first whether the finding owed one at all — a baseline finding owes none, and
+  neither do three of the four `[DG#n]` classes: classes 1 and 3 resolve against the requirement
+  inventory the caller handed in, which is a lookup rather than a search, and class 4's code half
+  belongs to the `[CG#n]` it cites — then runs
   any control it finds rather than reading it. A control that owed to be
   there and is not, or one that fails on a finding whose verdict **rests on** the absence,
   normalises to `contradict` even where the verifier's own search also found nothing: two searches
   sharing one blind spot is the state a control exists to expose. The one exception is a finding
   already reading `NOT-PROVABLE` with its own failed control recorded — that is what the format tells
-  a writer to do, and reproducing its result is agreement. A `contradict` outcome on an own-run
+  a writer to do, and reproducing its result is agreement. **A `contradict` the comparison disputes
+  gets a second blind opinion.** The comparison never changes the blind result, but it flags one whose
+  own evidence does not establish its own verdict — never one merely because the original's verdict
+  differs. A `contradict` resting on a flagged blind verdict is re-derived blind once more, unless
+  the control forced it: that route takes precedence even where the blind verdict also differs, and
+  the control gives the same result on every run. Where the two blind verdicts agree the
+  `contradict` stands. Where they disagree the outcome becomes `unprovable`, the finding keeps its
+  verdict, its notes record the two verdicts and the dispute, and the report flags it as
+  verification inconclusive, naming both verdicts. The second opinion is not a retry, and its own
+  dispatches get one retry of their own. A `contradict` outcome on an own-run
   finding — one this run produced, which nothing outside this run cites yet — rewrites it in place:
   same id, replaced verdict and evidence. On an on-file finding — one an earlier run wrote, which a
   decision may already cite — it supersedes the finding instead, keeping its verdict as
@@ -426,12 +452,16 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   against the pinned repository, a class-1/2/3 `[DG#n]` against the frame set it was reconciled
   from — see `workflows-core:grounding-format` §8. A verifier that
   refuses rather than verifying (a moved `HEAD`, a repository or frame set no longer resolvable)
-  stops the run before Phase 8 writes anything, and so does a `contradict` on a finding this run
-  produced whose return lacks the positive control the rewritten finding would owe
-  (`PRD_GROUND_VERIFY_INCOMPLETE`), so no finding is ever written without an outcome — which is what
-  keeps `/brd-split`'s own verification gate reachable on the BRD route. The same incomplete return
-  on an on-file finding writes nothing: the finding keeps the verdict and outcome it had, and the
-  report names it as not verified by this run.
+  stops the run before Phase 8 writes anything, and so does a finding this run produced that is still
+  incomplete after its retry in the pass that dispatched it (`PRD_GROUND_VERIFY_INCOMPLETE`), so no finding is ever written
+  without an outcome, which is what keeps `/brd-split`'s own verification gate reachable on the BRD
+  route. A finding is incomplete when it is missing from a return, has a blank `own_evidence`, is an
+  `INCOMPLETE` entry carrying no outcome, has a comparison echo that differs from the blind result, or
+  is a `contradict` whose return lacks the positive control the rewritten finding would owe. The same
+  incomplete return on an on-file finding, after its retry, writes nothing: the finding keeps the
+  verdict and outcome it had, the report names it as **not verified by this run**, and the run
+  continues. An `agree`/`extend`/`unprovable` finding whose blind verdict still lacks its owed control
+  after the retry proceeds through the normal reconciliation.
 
 ## When it is worth running (idea route)
 
@@ -441,8 +471,7 @@ existing product being extended: an `[AC#n]` the code already satisfies is scope
 building, and a premise the code contradicts is a requirement that would have been built on sand —
 both found before an architecture or a specification is authored against them. It earns little on a
 greenfield PRD, where every finding is a verified absence — true, and low-information — and each one
-still costs an independent Opus re-derivation (Phase 7, one `grounding-verifier` dispatch per
-finding, frontmatter-pinned — no override unless `--enforce-model` enforces one). The Final report says so outright rather than only reporting it: where every claim comes
+still costs an independent Opus re-derivation (Phase 7, batched, frontmatter-pinned, no override unless `--enforce-model` enforces one). Phase 1 states that cost as its first output on every run that grounds code: the claim count; the findings each repository adds, one per claim plus its baseline; the verification batches and dispatches those take, and those each frame set's design findings take; the model they run on, Opus unless `--enforce-model` sets another; and how many claim findings already on file, baselines excluded, a re-run re-verifies. The Final report repeats that arithmetic as a verification block filled in with what the run actually dispatched, derive, compare, retry and second-opinion dispatches included, since a headless run may not show Phase 1's lines. The Final report names a greenfield PRD outright rather than only reporting its findings: where every claim comes
 back a verified absence, it states plainly that this PRD is greenfield against the repositories
 resolved, instead of presenting a wall of absences as a mixed result — a second run over the same
 folder is exactly what that headline exists to make unnecessary.
