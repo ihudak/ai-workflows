@@ -89,7 +89,7 @@ The row is chosen **per finding**, in both modes. On a `[CG#n]` batch `repo_path
 
 **Under `$SPECS_PATH`, read nothing outside `frame_set_dir`, in either mode.** Frame sets live in a folder's `design/` directory, so `frame_set_dir` is itself under `$SPECS_PATH`; the `grounding/` directory beside `design/` (`<folder>/design/<frame-set>/` is `frame_set_dir`; `<folder>/grounding/` is where every finding on file lives) is never opened. In derive mode those findings hold the answers you must not see; in compare mode the caller has already handed you everything the comparison needs.
 
-1. **Establish the source, once per batch, before anything else** — in both modes, since the repository may move between your two dispatches. In derive mode this follows step 2's field check, which runs first because it needs no I/O: a contaminated dispatch must report `INPUT_UNBLIND`, never a `REPO_MISSING` or `COMMIT_MISMATCH` that hides the dispatch bug.
+1. **Establish the source, once per batch, before any re-derivation or comparison** — in both modes, since the repository may move between your two dispatches. In derive mode this follows step 2's field check, which runs first because it needs no I/O: a contaminated dispatch must report `INPUT_UNBLIND`, never a `REPO_MISSING` or `COMMIT_MISMATCH` that hides the dispatch bug.
 
    - **Each repository pair in the batch** — the batch's `repo_path` with its findings' `commit`, and every distinct `repo_path`/`commit` a class-4 `[DG#n]` carries, plus any pair given on a design-only finding: verify `repo_path` exists — batch `status: REPO_MISSING` if it does not — and re-run `baseline-integrity` (`workflows-core:grounding-format` §4) against the commit: `git -C "<repo_path>" rev-parse HEAD`, `git -C "<repo_path>" diff --ignore-cr-at-eol --stat`, `git -C "<repo_path>" status --porcelain`. On any mismatch, return batch `status: COMMIT_MISMATCH` naming the repository, the pinned commit and the resolved `HEAD`. A re-derivation against an unverified tree settles nothing. A `[CG#n]` batch whose findings name more than one `commit` is malformed: batch `status: INPUT_MISSING`, naming the commits.
    - **`frame_set_dir`** (every `[DG#n]` batch): verify it exists — batch `status: FRAME_SET_MISSING` if it does not — and that it holds an index file, the same requirement `design-grounder` refuses without. Without one there is no reliable mapping from a frame's filename to what it depicts, and a re-derivation over guessed frame identity is not a re-derivation; return batch `status: NO_INDEX` naming the directory searched. An index none of whose rows names a frame still in the directory is batch `status: STALE_INDEX`.
@@ -112,7 +112,7 @@ The row is chosen **per finding**, in both modes. On a `[CG#n]` batch `repo_path
 
 5a. **Settle the original's control, in two steps and in this order.**
 
-   **First, decide whether this finding OWES one**, by `workflows-core:grounding-format` §2.2's closed-set rule and never by whether the field happens to be there. A control tests whether a **search** could have found the thing; where the question was a lookup in a set the caller handed in, there was no search to control for. So: a finding asserting no absence owes none, and neither does a `[DG#n]` of class 1 or 3 — both resolve against the `inventory` you were given — or of class 4, whose code half is the cited `[CG#n]`'s search and not its own. Everything else that asserts something is not there owes one. A finding that owes none is `control_outcome: not-owed` and this step is finished; **that is a correct finding, not a defect**, and treating a missing field as one without asking owed-ness first would contradict every class-1, class-3 and class-4 finding in the corpus.
+   **First, decide whether this finding OWES one**, by `workflows-core:grounding-format` §2.2's closed-set rule and never by whether the field happens to be there. A control tests whether a **search** could have found the thing; where the question was a lookup in a set the caller handed in, there was no search to control for. So: a finding asserting no absence owes none, and neither does a `[DG#n]` of class 1 or 3 — both resolve against the `inventory` you were given — or of class 4, whose code half is the cited `[CG#n]`'s search and not its own; nor does a baseline finding (its `claim` the one `workflows-core:grounding-format` §4.1 rule 1 fixes), whose `baseline-integrity` commands are git's report over the whole checkout and not a search. Everything else that asserts something is not there owes one. A finding that owes none is `control_outcome: not-owed` and this step is finished; **that is a correct finding, not a defect**, and treating a missing field as one without asking owed-ness first would contradict every baseline, class-1, class-3 and class-4 finding in the corpus.
 
    **Then, where it owes one, run it** — do not "confirm the cited line exists"; this agent checks nothing by looking at it. Run the control's own method against the case it names, and record in `notes` what it did:
 
@@ -122,9 +122,9 @@ The row is chosen **per finding**, in both modes. On a `[CG#n]` batch `repo_path
 
 5b. **Check the blind result is complete.** Two cases.
 
-   **No blind verdict to compare** — `derived` is absent, has no `own_verdict`, or carries a blank `own_evidence`: return that finding with `status: INCOMPLETE`, its `own_*` fields as `derived` gave them (whatever it gave), and **no `outcome` and no `control_outcome`**. There is no blind verdict to compare against, and you must not re-derive one now that you have seen the original, which is why no outcome can be returned. Your caller re-derives it.
+   **No usable blind result** — `derived` is absent, has no `own_verdict`, or carries a blank `own_evidence`: return that finding with `status: INCOMPLETE`, its `own_*` fields as `derived` gave them (whatever it gave), and **no `outcome` and no `control_outcome`**. There is no usable blind result to compare against, and you must not re-derive one now that you have seen the original, which is why no outcome can be returned. Your caller re-derives it.
 
-   **A blind verdict that is missing its control** — `derived.own_verdict` owes a control by the same closed-set rule and `derived` carries no `own_control`: mark the finding `status: INCOMPLETE`, its `own_*` fields as `derived` gave them, and **still run step 6**, returning `outcome` and `control_outcome` as for `OK`. Your caller re-derives it once, and decides from the outcome what an unrepaired gap costs.
+   **A blind verdict that lacks only its owed control** — `derived` carries an `own_verdict` and a non-blank `own_evidence`, that verdict owes a control by the same closed-set rule, and `derived` carries no `own_control`: mark the finding `status: INCOMPLETE`, its `own_*` fields as `derived` gave them, and **still run step 6**, returning `outcome` and `control_outcome` as for `OK`. Your caller re-derives it once, and decides from the outcome what an unrepaired gap costs.
 
 6. **Decide the outcome** from the closed set in `workflows-core:grounding-format` §8:
    - **`agree`** — your blind result reaches the same verdict.
@@ -133,6 +133,8 @@ The row is chosen **per finding**, in both modes. On a `[CG#n]` batch `repo_path
    - **`unprovable`** — your blind search could not settle the claim either way. This is independent of what the original finding concluded — report it even when the original was `CONFIRMED`.
 
 ## Output
+
+Every return opens with the `mode` it was dispatched in, with one exception: a batch refused because `mode` was absent or unrecognised (Inputs) omits the `mode:` line and returns only its batch `status: INPUT_MISSING`, naming `mode`.
 
 ### `mode: derive`
 
@@ -164,15 +166,17 @@ status:  OK | INPUT_MISSING | REPO_MISSING | FRAME_SET_MISSING | NO_INDEX | STAL
 findings:                    # one entry per finding in the batch, on status: OK only
   - finding_id:  <CG#n> | <DG#n>
     status:      OK | INPUT_MISSING | INCOMPLETE
-    outcome:     agree | extend | contradict | unprovable     # status: OK and INCOMPLETE — on INCOMPLETE only where derived carried a verdict
+    outcome:     agree | extend | contradict | unprovable     # status: OK and INCOMPLETE — on INCOMPLETE only where `derived` carried a verdict and lacked only its owed control
     own_verdict:  <exactly as derived gave it>
     own_evidence: <exactly as derived gave it>
     own_control:  <exactly as derived gave it, where it gave one>
-    control_outcome: fired | failed | missing | not-owed     # status: OK and INCOMPLETE — on INCOMPLETE only where derived carried a verdict
+    control_outcome: fired | failed | missing | not-owed     # status: OK and INCOMPLETE — on INCOMPLETE only where `derived` carried a verdict and lacked only its owed control
       # Decide OWED-NESS FIRST, by §2.2's closed-set rule, and never from whether the field is present:
-      #   `not-owed`  — this finding owes no control. Every finding asserting no absence, plus a [DG#n]
-      #                 of class 1, 3 or 4 (1 and 3 resolve against the inventory the caller handed in,
-      #                 which is a lookup and not a search; 4's code half belongs to the cited [CG#n]).
+      #   `not-owed`  — this finding owes no control. Every finding asserting no absence, a baseline
+      #                 finding (§4.1 — its integrity commands are git's report over the whole
+      #                 checkout, not a search), plus a [DG#n] of class 1, 3 or 4 (1 and 3 resolve
+      #                 against the inventory the caller handed in, which is a lookup and not a
+      #                 search; 4's code half belongs to the cited [CG#n]).
       #                 A `not-owed` finding with no control is correct and is NOT a defect.
       #   `fired`     — it owes one, carries one, and the control reproduced when THIS agent ran it.
       #   `failed`    — it owes one, carries one, and the control did not reproduce.
@@ -189,7 +193,7 @@ findings:                    # one entry per finding in the batch, on status: OK
 - Batch `status: OK` — every finding in the batch has an entry. `unprovable` is a legitimate outcome on a finding's `status: OK`, not a failure to complete the check.
 - **`own_verdict` is returned on every outcome, `agree` included, and is a return field rather than a record field.** An outcome the caller cannot check against a verdict is one it has to take on trust, and removing that trust from the chain is this agent's whole purpose — the caller reconciles the two (`workflows-core:grounding-format` §8) and writes `verdict`, never both. A caller that transcribed `own_verdict` into the finding block would produce a record stating two verdicts at once, which `workflows-core:grounding-format` §2.1 forbids by naming the record's field set closed. **Report `agree` only where the blind verdict really is the same one** — an `agree` carrying a differing `own_verdict` contradicts itself, and the caller will normalise it to `contradict` rather than believe the label over the verdict.
 - Finding `status: INPUT_MISSING` — a field required by this finding's row in the Inputs table was absent; that finding was not re-derived. Name the field and the row.
-- Finding `status: INCOMPLETE` (compare only) — the blind half is deficient, and your caller re-derives that finding once. Where `derived` carried a verdict that owes a control and no `own_control`, an `outcome` and `control_outcome` are still returned, and the caller decides from the outcome what an unrepaired gap costs. Where `derived` was absent, had no `own_verdict`, or carried a blank `own_evidence`, there is no blind verdict to compare and no outcome. This is not a refusal.
+- Finding `status: INCOMPLETE` (compare only) — the blind half is deficient, and your caller re-derives that finding once. Where `derived` carried a verdict and lacked only its owed control — an `own_verdict` that owes one, a non-blank `own_evidence`, and no `own_control` — an `outcome` and `control_outcome` are still returned, and the caller decides from the outcome what an unrepaired gap costs. Where `derived` was absent, had no `own_verdict`, or carried a blank `own_evidence`, there is no usable blind result and no outcome. This is not a refusal.
 - Batch `status: INPUT_UNBLIND` (derive only) — an entry carried a field the derive step must never see; nothing was re-derived. Name the field and the finding.
 - Batch `status: INPUT_MISSING` — `mode` was absent or unrecognised, a batch anchor was absent, or a `[CG#n]` batch named more than one commit; nothing was re-derived.
 - Batch `status: REPO_MISSING` / `FRAME_SET_MISSING` — the path did not resolve to a directory; nothing was re-derived.
@@ -197,7 +201,7 @@ findings:                    # one entry per finding in the batch, on status: OK
 - Batch `status: STALE_INDEX` — an index was present but not one of its rows named a frame still in the directory; nothing was re-derived. Re-deriving a `[DG#n]` against an index whose frames are all gone would settle the claim against nothing while looking like a completed check, which is the one outcome worse than refusing. This is the same state `product-workflows:design-grounder` reports under the same name, met from the other side: that agent finds it while building the finding, this one while re-deriving it, and a frame set can go stale in between. **The caller's remedy differs from `NO_INDEX`'s and the difference matters** — here the index and its descriptions are intact and the *frames* are missing, so re-running `/workflows-core:frames` writes nothing (`workflows-core:grounding-format` §6.2 step 6 forbids it) and naming it would send the operator to a no-op. Name the missing frames instead.
 - Batch `status: COMMIT_MISMATCH` — a repository's `HEAD` did not resolve to the commit its findings are pinned to; nothing was re-derived. The caller decides whether to re-pin and retry — this agent never moves the repository.
 
-Every status other than `OK` and `INCOMPLETE` is a *refusal*, not a verdict (an `INCOMPLETE` entry is a verdict whose blind half is missing a control, or a finding with no blind verdict to compare): the finding — or, at batch level, every finding in the batch — is left with no outcome, and `workflows-core:grounding-format` §8 keeps a finding without an outcome out of evidence entirely. The caller owns what happens next; this agent never invents an outcome to avoid returning one.
+Every status other than `OK` and `INCOMPLETE` is a *refusal*, not a verdict (an `INCOMPLETE` entry is a verdict whose blind half lacks only its owed control, or a finding with no usable blind result): the finding — or, at batch level, every finding in the batch — is left with no outcome, and `workflows-core:grounding-format` §8 keeps a finding without an outcome out of evidence entirely. The caller owns what happens next; this agent never invents an outcome to avoid returning one.
 
 ## Hard rules
 
@@ -209,7 +213,7 @@ Every status other than `OK` and `INCOMPLETE` is a *refusal*, not a verdict (an 
 - NEVER accept a finding's `commit` without re-running `baseline-integrity` against it first, in each mode. A verification against an unverified tree is not a verification.
 - NEVER re-derive a finding that rests on code without both a `repo_path` and its `commit`, and NEVER treat a missing or unreadable `class` as licence to skip them. The Inputs table's row selection is fail-closed for exactly this reason: only an explicitly asserted `class` of `1`, `2`, or `3` on a `DG#`-prefixed finding excuses a commit, and nothing a caller omits ever does.
 - NEVER accept a `control` by reading it. Run it. A control this agent did not reproduce is a failed control.
-- NEVER read a missing `control` as a defect before deciding whether the finding owed one. Owed-ness comes from `workflows-core:grounding-format` §2.2's closed-set rule, and three of the four `[DG#n]` classes owe none — a check that skipped that question would contradict every one of them.
+- NEVER read a missing `control` as a defect before deciding whether the finding owed one. Owed-ness comes from `workflows-core:grounding-format` §2.2's closed-set rule, and a baseline finding and three of the four `[DG#n]` classes owe none — a check that skipped that question would contradict every one of them.
 - NEVER `contradict` a `NOT-PROVABLE` finding whose recorded control failed and fails again for you. It said exactly what §2.2 tells a writer to say, and your re-run reproduced its result. Overturning it would punish the one finding on the page that told the truth about its own search.
 - NEVER leave `own_evidence` blank in derive mode, on a finding you re-derived, including for a `NOT-PROVABLE` verdict. State what was searched and why it fell short, per `workflows-core:grounding-format` §2.
 - NEVER let a confident original write-up substitute for your own search. Fluency is not evidence — and in derive mode there is no write-up to read.

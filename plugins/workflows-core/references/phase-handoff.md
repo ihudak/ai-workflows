@@ -79,7 +79,7 @@ Nothing staged → no commit. Emit the §4.1 `nothing to commit` line. This is n
 
 ### 2.4 Commit
 
-Message `<KEY> <summary>`, matching the specs repo's own `<KEY|NOISSUE> <summary>` convention. Carry `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>` (§1 rule 6).
+Message `<KEY> <summary>`, matching the specs repo's own `<KEY|NOISSUE> <summary>` convention. Carry `Co-Authored-By: <the session model's name> <noreply@anthropic.com>` (§1 rule 6).
 
 ### 2.5 Push
 

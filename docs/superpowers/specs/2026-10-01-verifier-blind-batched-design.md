@@ -1,6 +1,6 @@
 # Blind, batched grounding verification — `/prd-ground` Phase 7
 
-Date: 2026-10-01. Status: approved design, not implemented. Issues: #73, #74.
+Date: 2026-10-01. Status: implemented on branch `iv-gu/verifier-blind`. Issues: #73, #74.
 
 ## Problem
 
@@ -17,7 +17,7 @@ Two amplifiers the issue did not name, found while reading Phase 7:
 
 1. The re-derivation is blind **by construction**: the finding's answer is never in the deriving agent's context.
 2. Phase 7's dispatch count follows batches, not findings.
-3. The operator sees the cost when choosing repositories, before anything is paid for.
+3. The operator sees the cost before anything is paid for — when choosing repositories, wherever Phase 1 asks for them.
 4. A transient contract break by the agent does not discard the pass.
 
 ## Non-goals
@@ -25,7 +25,7 @@ Two amplifiers the issue did not name, found while reading Phase 7:
 - Weakening any single finding's verification — no cheaper model tier, no sampling, no repository-scope finding standing in for individual re-derivations (D1).
 - Carrying a verifier outcome forward from an earlier run (D2).
 - Checkpointing Phase 7 for resume across runs (D4).
-- Changing Phase 5's no-pre-filtering rule, the membership of Phase 7's verification set, the reconciliation and write rules that act on a returned outcome, or `/brd-split`'s gate.
+- Changing Phase 5's no-pre-filtering rule, the membership of Phase 7's verification set, the reconciliation and write rules that act on a returned outcome, or `/brd-split`'s gate. (The live smoke run later found a pre-existing defect that changed the membership by one exclusion — §1.)
 - Continuing a running agent with follow-up messages. Nothing in the plugin family relies on agent continuation, and the commands must run in harnesses that lack it.
 
 ## Decisions
@@ -44,22 +44,22 @@ Two amplifiers the issue did not name, found while reading Phase 7:
 
 ## 1. Batching
 
-- **Membership is unchanged.** Phase 7 builds the set exactly as today: this run's own findings (Phase 3's baselines, Phase 5's claim findings, Phase 6's successors), the on-file `[CG#n]` at unmoved pins, never an on-file `[DG#n]`, and the `--no-code` variant.
+- **Membership is unchanged.** Phase 7 builds the set exactly as today: this run's own findings (Phase 3's baselines, Phase 5's claim findings, Phase 6's successors), the on-file `[CG#n]` at unmoved pins, never an on-file `[DG#n]`, and the `--no-code` variant. One exclusion was added after the live smoke run: a repository's earlier baseline findings, which Phase 8 now supersedes for the fresh one Phase 3 mints (`grounding-format` §4.1), since re-verifying a block retired in the same run spends an Opus pass for nothing.
 - **Grouping.** A `[CG#n]` batches with the other `[CG#n]` of its repository. A `[DG#n]` batches with the other `[DG#n]` of its frame set; a class-4 `[DG#n]` carries, in addition, the repository and commit of the `[CG#n]` it cites, so a frame-set batch can hold several repository pairs.
-- **Order and cap.** Within a group, findings are ordered by requirement id (`[CG#n]`) or by finding id (`[DG#n]`, since one requirement can carry several), and cut into batches of at most **25**. The cap is stated once, in Phase 7.
-- **Baselines.** Each repository's baseline `[CG#n]` goes in that repository's first batch. Its re-derivation is the `baseline-integrity` re-run that both steps perform first anyway (`grounding-format` §4.1).
+- **Order and cap.** Within a group, findings are ordered by requirement id (`[CG#n]`) or by finding id (`[DG#n]`, since one requirement can carry several), and cut into batches of at most **25**. The cap is defined in Phase 7; Phase 1's cost statement quotes it (ruling R13).
+- **Baselines.** Each repository's baseline `[CG#n]` goes in that repository's first batch. Its re-derivation is the `baseline-integrity` re-run that both steps perform first anyway (`grounding-format` §4.1), and it owes no positive control: those three commands are git's report over the whole checkout, not a search (§2.2, added after the live smoke run).
 - **Composition never depends on the answer.** Nothing about a finding's `verdict`, `evidence` or `control` may decide which batch it lands in or where. A batch of "the `NOT-PROVABLE` ones" would tell the blind step what the original concluded.
 - **Scale.** The reported run becomes 2 repositories × ⌈138/25⌉ = 6 batches × 2 steps ≈ 24 dispatches, at most 4 concurrent, where it was 278.
 
 ## 2. The verifier's contract (`agents/grounding-verifier.md`)
 
-**Both modes.** The Opus frontmatter pin, read-only posture, and the fail-closed row selection of the Inputs table (which anchors each finding requires) are unchanged. Each batch runs Process step 1 — establish the source, `baseline-integrity` against the pinned commit — once, before anything else. Batch-level refusals are today's: `REPO_MISSING`, `COMMIT_MISMATCH`, `FRAME_SET_MISSING`, `NO_INDEX`, `STALE_INDEX`, applying to every finding in the batch. `INPUT_MISSING` is per finding: one finding short of a field its row requires does not refuse its batch-mates.
+**Both modes.** The Opus frontmatter pin, read-only posture, and the fail-closed row selection of the Inputs table (which anchors each finding requires) are unchanged. Each batch runs Process step 1 — establish the source, `baseline-integrity` against the pinned commit — once, before any re-derivation or comparison (in derive mode, after the field check of §2.1, which needs no I/O). Batch-level refusals are today's: `REPO_MISSING`, `COMMIT_MISMATCH`, `FRAME_SET_MISSING`, `NO_INDEX`, `STALE_INDEX`, applying to every finding in the batch. `INPUT_MISSING` is per finding: one finding short of a field its row requires does not refuse its batch-mates. A `mode` that is absent or reads anything but `derive` or `compare` is a batch `INPUT_MISSING`: the agent never guesses a mode from the shape of the entries.
 
 ### 2.1 `mode: derive` — the blind re-derivation
 
 - **Inputs:** the source anchors (`repo_path` + `commit`; `frame_set_dir` + `inventory`; for a class-4 `[DG#n]`, both), and per finding its `id`, its `claim` as recorded (the premise under test), and, for a `[DG#n]`, its `class`.
-- **Never in the input:** `verdict`, `evidence`, `control`, `cites` — and no path into `$SPECS_PATH` other than `frame_set_dir`.
-- **`INPUT_UNBLIND`** (new, batch-level refusal): a derive dispatch carrying any of the four fields above is refused whole, naming the field and the finding. The agent never "mitigates" a contaminated input.
+- **Never in the input:** `verdict`, `evidence`, `control`, `cites` — nor compare's own `cited` and `derived` — and no path into `$SPECS_PATH` other than `frame_set_dir`.
+- **`INPUT_UNBLIND`** (new, batch-level refusal): a derive dispatch carrying any of the six fields above is refused whole, naming the field and the finding. The agent never "mitigates" a contaminated input.
 - **New hard rule:** under `$SPECS_PATH`, read nothing outside `frame_set_dir`. Frame sets live in a folder's `design/` directory, so `frame_set_dir` is itself under `$SPECS_PATH`; its sibling `grounding/`, where every on-file original lives, is not to be opened.
 - **Per-item independence:** each finding is worked from its own premise. A fact the agent established for one finding (for example, "this repository holds no persistence layer") may be cited for another only after checking it bears on that finding's premise, and each finding's `own_evidence` stands on its own.
 - **Returns per finding:** `finding_id`, `status` (`OK` | `INPUT_MISSING`), `own_verdict`, `own_evidence` (never blank), `own_control` wherever its own verdict owes one under §2.2's closed-set rule, and `notes`. Plus `commit` per repository checked.
@@ -68,7 +68,7 @@ Two amplifiers the issue did not name, found while reading Phase 7:
 
 - **Inputs:** the batch's original findings in full (today's dispatch fields, `provenance` excepted) and the derive result for each; for a class-4 `[DG#n]`, also the record of the `[CG#n]` it cites, as this run holds it at dispatch, since step 3 compares against it. A `[CG#n]` this phase later rewrites reaches its class-4 citers through the sweep, as today.
 - **Process:** re-run `baseline-integrity` (the repository may have moved between the steps); settle whether the **original** owes a control and **run** any it owes (today's step 3a, unchanged); settle whether the **blind verdict** owes one; decide the outcome from the two records and the control run (today's step 4, unchanged).
-- **`INCOMPLETE`** (new, per finding): the blind verdict owes a control and the derive step returned none.
+- **`INCOMPLETE`** (new, per finding), in two cases. Where the blind verdict lacks only its owed control — an `own_verdict` that owes one, a non-blank `own_evidence`, no `own_control` — the entry still carries `outcome` and `control_outcome` (ruling R5). Where `derived` is malformed — absent, with no `own_verdict`, or with a blank `own_evidence` — there is no usable blind result, and the entry carries no outcome.
 - **New hard rule:** compare never revises the blind result — not `own_verdict`, `own_evidence` or `own_control`. It has seen the original, so anything it re-derived would not be independent. It may add `notes`.
 - **Returns per finding:** today's return fields unchanged — `status`, `finding_id`, `outcome`, `own_verdict`, `own_evidence`, `own_control`, `control_outcome`, `commit`, `notes` — with `own_*` passed through from the derive result.
 
@@ -86,14 +86,14 @@ The frontmatter `description` is rewritten as a stable capability blurb naming b
 2. **Derive dispatches**, one per batch, at most four per Agent message. The paragraph beginning "Supply the finding **exactly as the agent's own Inputs contract declares it**" is replaced: the derive step is handed the question and never the answer, and the anchor rules (`class`, `frame_set_dir`, `inventory` always on a `[DG#n]`) are kept.
 3. **Compare dispatches**, one per batch, each starting as soon as its derive batch returns.
 4. **Statuses.** A batch-level refusal takes today's stop and message (`PRD_GROUND_VERIFY_COMMIT_MISMATCH`, `REPO_MISSING` … `STALE_INDEX`), naming the batch's findings. `INPUT_UNBLIND` and `INPUT_MISSING` stop the run and fire `emit-block` per Phase 11's capture-at-block invariant: this command built the dispatch wrong.
-5. **Retry once.** A finding is incomplete when a step's return omits it, when its `own_evidence` comes back blank, or when compare marks it `INCOMPLETE`. It is re-dispatched once through the step that failed, as a batch of its own — for `INCOMPLETE`, a fresh derive of that finding, then a compare. Still incomplete after the retry, today's rule applies: an own-run `contradict` stops with `PRD_GROUND_VERIFY_INCOMPLETE`; an on-file one writes nothing and is reported "not verified by this run"; an `agree` or `extend` whose blind verdict lacks its control proceeds — the record keeps the original's control, which compare ran — and the report notes it.
+5. **Retry once.** A finding is incomplete when a step's return omits it, when its `own_evidence` comes back blank, when compare marks it `INCOMPLETE`, or when compare's echo of the blind result differs from the derive return. It is re-dispatched once through the step that failed, as a batch of its own — for `INCOMPLETE`, a fresh derive of that finding, then a compare. After its retry, an `agree`, `extend` or `unprovable` whose blind verdict lacks only its owed control proceeds through the reconciliation and control normalisation — the record keeps the original's control, which compare ran — and the report notes it (ruling R9). A finding still incomplete after its retry in any other way — missing from a return, a blank `own_evidence`, an `INCOMPLETE` entry with no outcome, a differing echo, or a `contradict` lacking its owed control — is not verified: an **on-file** one writes nothing, keeps its earlier outcome, is reported "not verified by this run", and the run continues; an **own-run** one stops with `PRD_GROUND_VERIFY_INCOMPLETE` (ruling R11).
 6. **Unchanged from here:** reconciling `outcome` against `own_verdict`, the control normalisation, the own-run and on-file `contradict` writes, the class-4 sweep — whose re-dispatch now goes through both steps, batched per frame set — and "Nothing reaches Phase 8 unverified".
 7. **Model routing.** Both steps take `review_model` (the §2 Opus chain, equal to the frontmatter pin). Under §10, both take `run_flags.enforced_model`. No new `model_routing` field.
 8. **Final report.** The verifier tally adds the number of batches, dispatches per step, and every retry by finding id and step.
 
 ## 4. Phase 1 cost warning
 
-Printed immediately before Phase 1 step 1's repository prompt, on every run that grounds code (not under `--no-code`), with N from Phase 0 step 8's claim list and M the on-file `[CG#n]` count Phase 7 would re-verify:
+Printed as the first output of Phase 1, on every run that grounds code, whether or not the repositories are then prompted for — K filled in where they were named up front, left as the symbol where they are still to be prompted for. (It was first placed immediately before the repository prompt, and the live smoke run, handed its repositories up front, never reached it.) It never prints under `--no-code`, because no `[CG#n]` is produced or verified there. N is Phase 0 step 8's claim count on `route: brd`, step 8i's (after its exclusions) on `route: idea`; M is the on-file `[CG#n]` count Phase 7 would re-verify:
 
 > This requirement set has N claims. Each repository you name is ground against all N, and every finding is verified on Opus in two steps, in batches of 25: K repositories → K×N findings and K×⌈N/25⌉×2 verification dispatches. A re-run re-verifies every finding already on file for a repository that has not moved (M today).
 

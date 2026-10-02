@@ -16,8 +16,14 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Added
 
-- **Phase 1 states the cost before repositories are chosen** — the claim count, the per-repository multiplier, the batch arithmetic, and the findings on file a re-run re-verifies.
+- **Phase 1 opens by stating the cost** — the claim count, the per-repository multiplier, the batch arithmetic, and the findings on file a re-run re-verifies.
 - **An incomplete verifier result is retried once**, through the step that failed. After the retry, an `agree`, `extend` or `unprovable` whose blind verdict lacks its owed control proceeds through reconciliation and is noted in the Final report; an own-run finding still incomplete stops the run (`PRD_GROUND_VERIFY_INCOMPLETE`), and an on-file one writes nothing, keeps its earlier outcome, is reported not verified by this run, and the run continues. A derive dispatch this command built wrong stops with `PRD_GROUND_VERIFY_UNBLIND`.
+
+### Fixed
+
+- **The Phase 1 cost statement printed only before the repository prompt**, so a run handed its repositories up front, as both live smoke runs were, never printed it; it is now Phase 1's first output on every run that grounds code, with K filled in where the repositories are already named.
+- **`grounding-verifier` demanded a positive control of a baseline finding**, returning `control_outcome: missing` and `contradict` for every run's baseline; it now reads a baseline finding as owing none, as `workflows-core` 1.9.0's `grounding-format` §2.2 and §4.1 state.
+- **Each plain re-run added one more live baseline finding** for the same repository and pin; Phase 8 now supersedes every earlier baseline finding of a repository Phase 3 pinned afresh, and Phase 7 no longer re-verifies one it is about to retire.
 
 ## [3.10.2] — 2026-10-02
 

@@ -247,6 +247,13 @@ gets class 1 wrong** — that class is a negative over the requirement set, and 
 one. Stating the closed-set rule here, once, is what keeps the writer and the verifier from reaching
 different answers about the same finding.
 
+**A baseline finding (§4.1) owes no control either, on the same line.** Its "unmodified commit" is a
+negative — no content diff, no line-count mismatch — but no search reached it: `baseline-integrity`'s
+three commands are git's own report over every path in the checkout, not a pattern looked for, so
+there is no case of the same kind they could have missed and nothing for a control to test.
+Demanding one would turn every baseline finding into `contradict` (`control_outcome: missing`) on
+every run.
+
 **The verifier checks the control, and checks it the way it checks everything else — by
 re-deriving.** `product-workflows:grounding-verifier` does not confirm that the control's cited line
 exists; it runs the control itself, and it is handed `control` only in its compare step, never in
@@ -388,10 +395,10 @@ The same three commands are handed to the customer's reviewer in the delivery pr
 customer can re-run them against their own checkout rather than take the package's word for the
 pin.
 
-### 4.1 A baseline finding differs from a claim finding in three ways, and each has a consequence
+### 4.1 A baseline finding differs from a claim finding in four ways, and each has a consequence
 
 Sharing the `[CG#n]` prefix is deliberate (above), but a baseline finding is an answer about a
-**repository**, not about a requirement row. Three rules follow, so that a consumer written against §2's
+**repository**, not about a requirement row. Four rules follow, so that a consumer written against §2's
 record does not treat it as one:
 
 1. **Its `claim` is not a requirement premise** — not a `[BR#n]`, and not an `[AC#n]`/`[FR#n]`/`[US#n]`
@@ -408,6 +415,9 @@ record does not treat it as one:
    excludes them. Counting them would put one permanently-open item per repository into every such
    report, on every run, with no action that could ever close one — a gap that cannot be closed
    trains its reader to skim the list that also carries the real ones.
+4. **It owes no `control`** (§2.2). Its "unmodified commit" reads as an absence, so a consumer that
+   settles owed-ness by asking whether a finding asserts one demands a control, finds none, and
+   overturns every baseline finding on every run.
 
 **Verification is unchanged and is not an exception.** `grounding-verifier` re-derives a baseline
 finding by re-running `baseline-integrity` against the commit it was handed, which its blind
@@ -417,6 +427,14 @@ Its `own_evidence` for such a finding carries the same command output the findin
 place of the `path`/`lines` shape a claim finding uses. A baseline finding with no outcome
 blocks `/brd-split` exactly like any other (§8); none of this section excuses it from the
 gate.
+
+**A run that mints a baseline finding supersedes every earlier live one for that repository.**
+`product-workflows:prd-ground` assigns a fresh baseline id on every run that grounds code, so
+without this each re-run would leave one more live finding asserting the same repository's pin.
+Each earlier block takes `verdict: SUPERSEDED`, its verdict as `prior_verdict`, and a note naming
+the fresh finding, every other field — its `outcome` included — as it stood: the supersession §2
+and §8 define. Nothing re-verifies a block retired this way; the run that retires it verifies its
+successor.
 
 ## 5. Horizon
 
@@ -783,14 +801,16 @@ Seven classes:
 ## 8. Verification
 
 **A finding is not evidence until independently re-derived by a different agent.** `grounding-verifier`
-runs as a separate pass, on a different agent from whichever wrote the finding it is checking.
+runs as a separate pass of two dispatches — a blind re-derivation, then a comparison — on a
+different agent from whichever wrote the finding it is checking.
 
 **The verifier does not check citations.** Confirming that a cited `file:line` exists and contains
 what the finding says proves only that the citation is real — it does not prove the citation
 answers the claim. Instead, `grounding-verifier` independently re-derives the claim **from whatever
 source the finding rests on**, starting from the requirement premise — a `[BR#n]` on the BRD route,
 an `[AC#n]`/`[FR#n]`/`[US#n]` on the idea route — rather than from the finding's evidence, and
-returns one of four outcomes, each with its own evidence.
+returns one of four outcomes, each with its own evidence, decided in the comparison step from the
+blind re-derivation's result and the original.
 
 **Independence is structural, not a discipline the verifier keeps.** The step that re-derives is handed the requirement premise and the source the finding rests on, and nothing of the finding's answer — not its `verdict`, its `evidence`, its `control`, or a class-4 `[DG#n]`'s `cites`. An agent cannot un-read text in its own context, so a re-derivation whose input carried the answer is anchored to it however carefully it was told not to look. Verification is therefore two steps, each its own dispatch: a blind re-derivation, which refuses an input carrying any of those fields, then a comparison, which is handed the original beside the blind result, runs the original's control, and decides the outcome without revising the blind result. `product-workflows:prd-ground`'s *Verify* phase dispatches both; `product-workflows:grounding-verifier` owns each step's inputs.
 
@@ -805,7 +825,7 @@ outcome can never become evidence by the rule below.
 | Outcome | Meaning |
 |---|---|
 | `agree` | Independent re-derivation reaches the same verdict |
-| `extend` | The claim holds, but the verifier's own search surfaces evidence the original finding missed |
+| `extend` | The claim holds, but the blind re-derivation surfaces evidence the original finding missed |
 | `contradict` | Independent re-derivation reaches a different verdict. The caller rewrites an own-run finding in place and supersedes an on-file one (below) |
 | `unprovable` | The verifier could not settle the claim either way, independent of what the original finding concluded |
 
@@ -859,7 +879,7 @@ above:
 
 | `control_outcome` | Meaning | Effect |
 |---|---|---|
-| `not-owed` | The finding owes no control: it asserts no absence, or it is a `[DG#n]` of class 1, 3 or 4 | None. An ordinary clean result |
+| `not-owed` | The finding owes no control: it asserts no absence, it is a baseline finding (§4.1), or it is a `[DG#n]` of class 1, 3 or 4 | None. An ordinary clean result |
 | `fired` | It owes one, carries one, and the control reproduced | None |
 | `failed` | It owes one, carries one, and the control did not reproduce | `contradict` — **unless** the verdict is `NOT-PROVABLE` |
 | `missing` | It owes one and carries none | `contradict` |
