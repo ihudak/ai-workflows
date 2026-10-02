@@ -451,6 +451,10 @@ unrecorded work — the probe tells the operator where to look and changes nothi
 
 Hand each resolved ref to `diff-summarizer` as a `refs[]` element — `{branch_from, branch_to, title}`,
 the shape its Inputs declare for `refs[]`, `title` optional — taken on the pure-local-git path.
+Build each element from what the run holds: a record entry is `{branch_from: <its commit, wherever
+the clone holds that commit — its branch otherwise>, branch_to: <its base>}`, and a commit only the
+scan found is `{branch_from: <its sha>, branch_to: <its sha>^}`, so its range is that commit's own
+change.
 `repo_path` is a top-level input of that agent, passed once at the Phase 5 dispatch and never
 repeated inside an element. No URL, no host classification, no `gh` requirement.
 

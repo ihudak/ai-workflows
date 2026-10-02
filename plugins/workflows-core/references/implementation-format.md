@@ -21,7 +21,7 @@ One `## <YYYY-MM-DD> — /implement` block per run, one entry per repository the
 - repo:    orders-service
   branch:  feat/ACME-77-01-order-intake
   base:    main
-  commit:  a3f91c2          # squashed
+  commit:  a3f91c2
   pushed:  true
 - repo:    billing-api
   branch:  feat/ACME-77-01-order-intake
@@ -88,11 +88,13 @@ stays where it is and stays the PRD folder's** — a block moved on a guess attr
 Epic that did not get it, and every Epic-level reader then reports it as that Epic's.
 
 **Branch for convenience, commit for durability.** A merged branch is usually deleted, so the record
-names the commit as well. After a merge commit or a fast-forward that commit is reachable from the
-base; after a squash-merge no branch reaches it once its own is deleted, and it survives only while a
-clone still holds it — which is why `diff-summarizer` falls back to a key-commit search there.
-`diff-summarizer` accepts either, and recording both is what makes the file survive branch cleanup;
-how it reads a commit that has already landed on the base is that agent's own rule.
+names the commit as well — the one commit `/implement` Phase 4.6 made for the run. After a merge
+commit or a fast-forward that commit is reachable from the base; after a squash or a rebase merge the
+base holds a copy of the change rather than the commit, so once the branch is deleted no branch
+reaches it and it survives only while a clone still holds it — which is why `diff-summarizer` falls
+back to a key-commit search there. `diff-summarizer` accepts the branch or the commit, and recording
+both is what makes the file survive branch cleanup; how it reads a commit that has already landed on
+the base is that agent's own rule.
 
 **`pushed:` is recorded, not assumed.** A later run reading `pushed: false` says *"this was never
 pushed"* rather than reporting an empty diff against a ref the remote does not have.

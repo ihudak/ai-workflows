@@ -156,9 +156,10 @@ full review.
     - `missing` **with** a recorded deferral (named in the plan's `Out of
       scope`, or an explicit deferral note in the brief) → `MINOR` flagged note.
     - `partial` → `MINOR`.
-    - `exceeds` → `MINOR`; `MAJOR` where it builds something the plan's or the
-      design's `Out of scope` names. Report-only: no caller writes it onto the
-      spec.
+    - `exceeds` → `MINOR`; `MAJOR` where it builds something the
+      specification's, the plan's or the design's `Out of scope` names. Never
+      escalated: no caller writes it onto the spec, and a `MAJOR` one goes
+      through triage and `review-fixer` like any other finding.
 11. **Claims falsification** (conditional — only when `claims_file` is provided;
     otherwise this dimension does not apply — omit it silently). **Precondition:
     dimensions 1–10 are complete and their findings recorded.** Only now, for the

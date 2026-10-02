@@ -255,7 +255,7 @@ Handle per-repo status after the batch returns:
 
 ## Phase 5 — Grill: challenge + design
 
-**Interview technique (grilling — embedded; no runtime dependency).** Conduct the design as a **relentless** interview per `Skill(skill: "workflows-core:reference", args: "grilling-technique")` — one question at a time, recommend each answer, explore the Phase 4 code scan / spec to self-answer (fact-vs-decision), ask from the frontier, and clear the confirmation gate before writing the section.
+**Interview technique (grilling — embedded; no runtime dependency).** Conduct the design as a **relentless** interview per `Skill(skill: "workflows-core:reference", args: "grilling-technique")` — one question at a time, recommend each answer, explore the Phase 4 code scan / spec to self-answer (fact-vs-decision), ask from the frontier, and clear the confirmation gate before writing each section.
 
 Run **two intertwined tracks**, authoring `design.md` live against
 `${CLAUDE_PLUGIN_ROOT}/references/design-format.md`, applying the no-hard-wrap prose convention in `Skill(skill: "workflows-core:reference", args: "prose-formatting")`, sections scaled by the Phase 1.5 classification:
