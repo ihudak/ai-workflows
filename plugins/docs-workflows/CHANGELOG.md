@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.4.6] — 2026-10-02
+
+### Fixed
+- **`diff-summarizer` returned an empty diff for work that had already been merged.** It took `<branch_to>...<branch_from>`; once the branch lands by a merge commit or a fast-forward it is an ancestor of the base, the range's merge base is the branch itself, and the element came back `OK` with zero files — so `/document` and `/release-notes`, which usually run after the merge, wrote without the code. The agent now tests whether the ref has landed and reads it from the merge that landed it (`<landing>^1...<branch_from>`); a fast-forward, which leaves no fork point to read, goes to the key-commit fallback; and a range that changes no file is never reported as resolved. Prompted by upstream superpowers' review-package fix for the same class (5bf4e780).
+- **`/release-notes` said the key-commit fallback is reached only for a ref absent from the clone**, and dropped every commit a fallback-resolved element carried as unread. The fallback now also takes a fast-forwarded ref and an empty range, where the carried commit is in the clone and the fallback may read it; the read-set drop now spares a carried commit the fallback's summary names, and the command and its docs page state all three triggers.
+
 ## [1.4.5] — 2026-10-02
 
 **Update `workflows-core` to 1.9.1 with this release**: its `classification.md` retires the cheap chain these commands named for `defect-reporter`.

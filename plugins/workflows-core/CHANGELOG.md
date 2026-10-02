@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.10.0] — 2026-10-02
+
+### Added
+- **`grilling-technique.md` gains the confirmation gate.** Reaching a shared understanding is the user's to declare, never the agent's to infer from a quiet turn: the gate fires wherever understanding is about to become an artifact or an irreversible step — before writing a section, and before a reviewer dispatch, a handoff or a commit — and a caller that writes section by section closes it per section. In autonomous or background invocation it cannot be self-satisfied, and the understanding is reported unconfirmed. Ported from upstream `grilling`; the July harvest had skipped it as "already a superset", which covered only the autonomous half. Previously the Mechanics ended *"Continue until you and the user reach a shared understanding … then write that section"*, which left the judgement with the agent.
+- **At the gate, the agent plays its understanding back** — the intended outcome, the constraints and what success looks like, marking what the user said and what was inferred — and asks for confirmation or correction. The play-back asks no decision, so it spends no slot of a bounded caller's cap. Adapted from superpowers' brainstorming skill. `docs/reference/references.md` describes the gate.
+
+### Fixed
+- **`implementation-format.md` §1 said a merged branch's recorded commit "stays reachable from the base"** for every merge style. After a squash-merge no branch reaches it once its own is deleted; the paragraph now says what is true per merge style, and that how a landed commit is read is `diff-summarizer`'s rule.
+- **`grilling-technique.md`'s relentless depth said "keep walking the tree"**, a mechanic the file had replaced with asking from the frontier.
+
 ## [1.9.1] — 2026-10-02
 
 ### Changed
