@@ -198,7 +198,7 @@ a repo-local `cost-prices.yaml` -> the shipped
 `${CLAUDE_PLUGIN_ROOT}/references/cost-prices.yaml`. The shipped rates are the
 standard first-party Claude API prices (from Anthropic's pricing page) for every
 model the routing policy can reach — the Opus chain and the Sonnet chain —
-**plus Haiku, reached only by §2.2 (`defect-reporter` under `--skip-feedback`) and by any `--enforce-model` (or `$WORKFLOWS_ENFORCE_MODEL`) resolving to a Haiku id**; a maintainer refreshes them when
+**plus the models no chain names but a session's own model or an `--enforce-model` (or `$WORKFLOWS_ENFORCE_MODEL`) value can be — Opus 4.5, Mythos, Fable and Haiku**; a maintainer refreshes them when
 Anthropic's prices change. **Permanent standard
 rates are used deliberately — never promotional/introductory rates** — so cost
 stays comparable across PRDs over time (a temporary promo would make identical

@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.9.1] — 2026-10-02
+
+### Changed
+
+- **`defect-reporter` runs on the §2.1 Sonnet chain, the tier of the `impl-maintenance` it replaces, instead of a cheap chain headed by Haiku.** Under `--skip-feedback` it is the run's only post-session feedback capture (`emit-block` still fires on a halt), and its work is judgement: it applies the defect predicate and its exclusions, then tries to confirm the wrong line in the plugin's source. Haiku saved cents on one dispatch per run. `classification.md` §2.2 is retired, its `defect-reporter` rule now sits in §2.1, and `defect_model` records a §2.1 resolution. `run-flags` §4, `/frames`, `defect-reporter`'s description and the docs pages say the same.
+- **`run-flags` §2 now carries the Haiku rows itself.** The `haiku` alias, and a version-specific Haiku value in a family-only harness, used to resolve against §2.2; no `classification.md` chain names Haiku any longer, so `--enforce-model=haiku` and `haiku4.5` resolve exactly as before, against `run-flags` §2's own rows.
+
+### Fixed
+
+- **`cost-emission.md` said Haiku was reached only by §2.2 and by an enforced model**, which omitted a session running on Haiku and left Fable out of the priced models. It now names Haiku and Fable, with Opus 4.5 and Mythos, which the table also keys, as models no chain names but a session or an enforced model can run on. `cost-prices.yaml`'s comment listed the Sonnet chain without Sonnet 5.5, and now lists all four rows.
+- **`classification.md` §4's example `model_routing` block named `claude-sonnet-5`** for `detection_model` and `implementation_model`; it now names `claude-sonnet-5-5`, the chain's first row.
+
 ## [1.9.0] — 2026-10-02
 
 ### Changed

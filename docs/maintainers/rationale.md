@@ -294,6 +294,15 @@ A trailing `echo "EXIT=$?"` prints the **chain's** status correctly — `$?` exp
 
 §8.5's opt-in seeded second round has its adopters named in §8.5's own *Opt-in* paragraph, not copied into `CLAUDE.md`.
 
+## defect-reporter-tier
+
+**`defect-reporter` runs on the §2.1 Sonnet chain, not on Haiku (2026-10-02).** It shipped in `workflows-core` 1.8.0 on a cheap chain headed by `claude-haiku-4-5`, on the reasoning that a bugs-only pass is a cheap pass. The work is not cheap: it applies `feedback-emission` §4.1's defect predicate and its exclusions, which is judgement, and tries to confirm the wrong line in a plugin's source before it reports one. Under `--skip-feedback` it is the run's only post-session feedback capture (`emit-block` still fires on a halt), so a miss loses a defect outright, and a false report becomes a persisted entry somebody has to triage. The saving was small: one dispatch per run, at Haiku 4.5's $1 / $5 per million input / output tokens against Sonnet 5.5's $2 / $10 in `cost-prices.yaml`. `impl-maintenance`, the agent it replaces, already ran on §2.1.
+
+**Refused, with the reason:**
+
+- *Keeping Haiku as the chain's first row, with Sonnet behind it as the fallback.* In a family-only harness the first row of a listed family wins, so Haiku would still run on every dispatch.
+- *Retiring the `haiku` alias with the chain.* An enforced model is the user's own choice, so `run-flags` §2 keeps the Haiku rows that choice resolves against.
+
 ## worktree-not-checkout
 
 A duplicate commit on another session's branch is theirs to resolve and, where the content is identical, merges cleanly.

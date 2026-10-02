@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.4.5] — 2026-10-02
+
+**Update `workflows-core` to 1.9.1 with this release**: its `classification.md` retires the cheap chain these commands named for `defect-reporter`.
+
+### Changed
+
+- **Under `--skip-feedback`, every command the flag applies to dispatches `defect-reporter` on the §2.1 Sonnet chain**, the tier `impl-maintenance` runs on, instead of the retired Haiku-first chain, and records it as `defect_model`.
+
+### Fixed
+
+- **`/docs-profile` Phase 2 named the §2.1 chain as `claude-sonnet-5`, then `4-6` and `4-5`**, leaving out Sonnet 5.5, so Phase 2's prose contradicted its own dispatch line and Phase 1's `detection_model` line, both of which start at `claude-sonnet-5-5`; the prose now does too. The fallback examples in `/docs-profile`, `/docs-audit`, `/docs-brand` and `/docs-init` name Sonnet 5.5, the first Sonnet row of the Opus chain.
+
 ## [1.4.4] — 2026-10-02
 
 **Update `workflows-core` to 1.8.5 with this release**: its `resolve-address` now stops, on either address form, on a `$SPECS_PATH` that points inside the specs tree, which the commands and pages below handle and describe.
