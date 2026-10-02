@@ -453,13 +453,12 @@ Hand each resolved ref to `diff-summarizer` as a `refs[]` element — `{branch_f
 the shape its Inputs declare for `refs[]`, `title` optional — taken on the pure-local-git path.
 Build each element from what the run holds: a record entry is `{branch_from: <its commit — its branch
 only where the entry records none>, branch_to: <its base>}`, handed even where this clone does not
-hold the commit yet, since `diff-summarizer` fetches before it resolves anything; and a commit only the
-scan found is `{branch_from: <its sha>, branch_to: <its sha>^}` — its own change for a one-parent
-commit, the whole branch it merged for a merge commit. A scan commit that only re-lands work a block
-already reads stays listed as unrecorded work and becomes no element, since its range would read that
-work a second time: a merge from whose later parent a block's commit is reachable but not from
-`<its sha>^1`, or a one-parent commit whose `git patch-id --stable` equals a block commit's — the
-squash of that one commit.
+hold the commit yet — `diff-summarizer`'s Refresh step fetches before it resolves anything, except
+under `refresh.fetch: false` or on a read-only mount, where a commit the clone lacks comes back
+unresolved; and a commit only the scan found — the scan takes no merge commit
+(`workflows-core:implementation-format` §4) — is `{branch_from: <its sha>, branch_to: <its sha>^}`,
+its own change. A squash of a recorded commit is read beside that commit's own element: the same
+change summarised twice, which costs less than missing either.
 `repo_path` is a top-level input of that agent, passed once at the Phase 5 dispatch and never
 repeated inside an element. No URL, no host classification, no `gh` requirement.
 

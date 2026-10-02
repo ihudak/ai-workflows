@@ -166,7 +166,7 @@ A consumer combines **this file's blocks** with a **scan of commit messages** fo
 the run already holds:
 
 ```
-git -C <repo> log --extended-regexp --regexp-ignore-case \
+git -C <repo> log --no-merges --extended-regexp --regexp-ignore-case \
     --grep='(^|[^A-Za-z0-9_-])<key>([^A-Za-z0-9_-]|$)' \
     --grep='(^|[^A-Za-z0-9_-])<workitem_key>([^A-Za-z0-9_-]|$)'
 ```
@@ -174,6 +174,16 @@ git -C <repo> log --extended-regexp --regexp-ignore-case \
 over the repositories this file names — or, when it names none, the repositories resolved from
 `$REPOS_PATH` — with one `--grep` for each key and each `workitem_key` below; git lists a commit
 that matches any of them anywhere in its message, its trailers included.
+
+**The scan takes no merge commit (`--no-merges`).** A merge commit's range is the whole branch it
+merged — work the blocks and the scan already reach commit by commit, which it would report a second
+time — or, where the base was merged into a work branch, the base's own work, which is not this
+key's at all. A forge writes a merged pull request's title, `[<key>]` included, into the merge
+commit, so without the flag nearly every merge-commit landing would come back as unrecorded work.
+Every commit the scan returns therefore has one parent, and its own change is its whole content.
+**The cost:** work a merge commit's message carries alone — a hand-made branch whose own commits name
+no key — is not found. The unanchored probe below is the one `git log` here that keeps merge
+commits, since a branch name inside a merge commit's subject is what it looks for.
 
 **A token matches only as a whole key.** Each `--grep` wraps its token in
 `(^|[^A-Za-z0-9_-])` and `([^A-Za-z0-9_-]|$)`, every ERE metacharacter in the token
@@ -196,14 +206,15 @@ a digit does not follow, would reach the merge commit and hand `/document` a com
 the whole branch, every commit of which the scan already lists separately — so the branch's work
 would be reported twice.
 
-**What that costs:** the scan finds no commit of a branch whose own subjects carry no `[<key>]` and
-whose merge commit names the key only inside the branch name. **Population: every `/document` scan,
+**What that costs:** the scan finds no commit of a branch whose own subjects carry no `[<key>]`: its
+merge commit is not scanned (above), and where the subject the forge wrote for it names the key only
+inside the branch name, this boundary would not reach it even if it were. **Population: every `/document` scan,
 and every `/release-notes` scan with diff grounding on, over a repository where a key's work is
 carried by a branch name alone — from `workflows-core` 1.7.1, since the unanchored grep it replaces
 did match inside a branch name, and matched every longer key with it.**
 
 **The recovery is a report, not a read: where the whole-key scan matches nothing in a repository,
-run one unanchored probe over it.** Repeat that repository's `git log` with **its tokens bare** —
+run one unanchored probe over it.** Repeat that repository's `git log` with **its tokens bare** and without `--no-merges` —
 the same token set the scan used there, one `--grep` each, every ERE metacharacter in each still
 escaped exactly as above, but with neither `(^|[^A-Za-z0-9_-])` nor `([^A-Za-z0-9_-]|$)` around
 them — and print each commit it matched by **its SHA, date and subject**, as *"may name this key
