@@ -110,7 +110,7 @@ So, canonically:
   indentation, and no blank line inside a block. `outcome` (§8) and any verifier `notes` follow the
   §2 fields, in that order, where the run that wrote the block had them.
 - **The field set is closed: §2's fields, `outcome` and `notes`, and nothing else.** A verifier
-  returns more than the record keeps — `own_verdict`, `own_evidence`, `own_control`, `control_outcome` and its own re-derivation
+  returns more than the record keeps — `own_verdict`, `own_evidence`, `own_control`, `control_outcome`, `blind_disputed` and its own re-derivation
   `commit` are how it reports to the caller, which **acts** on them (§8) rather than transcribing
   them. **`own_verdict` in particular is never a record field**, and writing it is not a harmless
   extra: `verdict` is what every downstream consumer reads, so a block carrying both states two
@@ -866,6 +866,15 @@ keeps every field it holds — its `verdict` and its earlier `outcome` included 
 reported as not verified by this run. Recording `outcome: contradict` on either would put a
 contradiction beside the verdict it contradicts, which §2.1 forbids.
 `product-workflows:prd-ground`'s *Verify* phase holds the full procedure, its edge cases included.
+
+**A disputed `contradict` gets a second blind re-derivation.** The comparison never revises a blind
+result: it has seen the original, so anything it re-derived would not be independent. It does flag
+a blind result whose own evidence does not establish its own verdict, and never one merely because
+the original's verdict differs. Where a `contradict` rests on a flagged blind verdict, and not on
+the control route below, the caller re-derives that finding blind once more. Where the two blind
+verdicts agree, the `contradict` stands; where they disagree, the outcome is `unprovable` and the
+finding keeps its verdict and evidence. `product-workflows:prd-ground`'s *Verify* phase holds the
+procedure.
 
 **`agree` and `extend` both assert the verdict holds, so a differing re-derived verdict falsifies the
 outcome rather than qualifying it.** The verifier returns its own re-derived verdict alongside every
