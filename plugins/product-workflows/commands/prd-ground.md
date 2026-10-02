@@ -756,6 +756,37 @@ already records a pin for a repository:
   against the new pin, and Phase 8 supersedes the old findings by ID rather than renumbering them
   (grounding-format.md §3, `SUPERSEDED`) — a citation into an already-sent package still resolves.
 
+**No two repositories share a pin.** Once every repository this run resolved has passed steps 1–3
+and the bullets above, compare the pins. Stop where two different repositories stand at one commit
+and at least one of them is a repository this run resolved: two this run resolved whose `HEAD` is
+the same commit, or one this run resolved whose `HEAD` is a pin `grounding/baselines.md` records
+under a different repository — in any entry, not only that repository's latest, since
+`/product-workflows:brd-interview` reads a superseded finding's repository through every entry the
+file holds. Two clones of one project at one commit are the usual cause:
+`PRD_GROUND_AMBIGUOUS_PIN: <repo-a> and <repo-b> both stand at <commit> — <repo-a> pinned by this run, <repo-b> <pinned by this run | recorded there by grounding/baselines.md> — and a finding records a commit, never a repository, so a finding pinned there could be either one's. <remedy>`
+
+`<repo-a>` is always a repository this run resolved, and `<remedy>` is the first of these that fits:
+
+- **`grounding/baselines.md` records both there** — an earlier run ground both at one commit, before
+  this check existed, so no choice of repositories separates them:
+  `Check out another commit in <repo-a> — the plugin will not do it for you — then re-run '/product-workflows:prd-ground <KEY> --rebaseline' without <repo-b> and without --no-code, which refuses that flag: <repo-a>'s HEAD will have left the pin the file records for it, and no repository can stand at <commit> again.`
+- **It records one of the two there:**
+  `Re-run '/product-workflows:prd-ground <KEY>' with the flags this run was given, naming <the one it records there> and not <the other> — adding --rebaseline, without --no-code, where <the one it records there>'s HEAD has left the pin the file records for it — or check out another commit in <the other> first; the plugin will not do it for you.`
+- **It records neither** — both are pinned by this run:
+  `Re-run '/product-workflows:prd-ground <KEY>' with the flags this run was given, naming only one of the two: both clone one project at one commit, so grounding the second adds nothing.`
+
+**This check is what lets a commit name a repository, and it is stated here once.** A finding
+records a commit and never a repository (`workflows-core:grounding-format` §2), and Phase 5's
+*answers* test, Phase 7's set and *Batches*, and Phase 8's frame-set rule each read a finding's
+repository off its `commit`. Once this check passes, every commit this run pinned belongs to one
+repository alone, in this run and in every entry of `grounding/baselines.md`, so each of those
+reads names one repository. One commit-keyed write is left that this check does not cover, and it
+needs no owner: a `--rebaseline` pass retires every finding on file at the earlier pin of a
+repository it re-pins, whichever repository ground it, and a class-4 `[DG#n]` citing one is
+superseded either way, by Phase 8's frame-set rule or by its cascade. Those findings differ from
+that repository's own only where the file already records a second repository at that pin, from a
+run before this check existed.
+
 **Record the outcome as a `[CG#n]` finding** (`workflows-core:grounding-format` §4: "the outcome is recorded
 as a `[CG#n]` finding" — a verified fact about a code repository at a commit is exactly what that
 prefix denotes, and inventing a separate prefix for it would only fragment the namespace). One per
@@ -926,7 +957,8 @@ a `--rebaseline` pass re-pins, that is the whole claim list** (Phase 0 step 8). 
 `HEAD` still matches its recorded pin, it is every claim of that list no `[CG#n]` on file answers
 there** — a `[CG#n]` answers a claim at a repository where its `verdict` is not `SUPERSEDED`, its
 `claim` names that claim's requirement id (read for the id it names, as Phase 8 reads it), and its
-`commit` equals that repository's recorded pin (Phase 3's first bullet). A repository left with no
+`commit` equals that repository's recorded pin (Phase 3's first bullet) — a pin no other
+repository holds (Phase 3, *No two repositories share a pin*). A repository left with no
 claim to answer is not dispatched. Within that set nothing is pre-filtered: a BRD carries no
 per-repo claim tagging, and a claim that genuinely belongs to a different system is exactly what
 `NOT-PROVABLE` exists to say. **The repositories this run dispatches here are the ones it
@@ -1076,12 +1108,11 @@ be decided (`/product-workflows:brd-interview`, *A decision the re-grounding mov
 
 ## Phase 7 — Verify
 
-**The set.** Phase 7 verifies **every** finding this run holds — Phase 3's baseline `[CG#n]` findings, freshly-merged Phase 5 claim findings, the successors Phase 6 appended for a moved horizon, and **the on-file findings this run re-checks, which are exactly these**: every `[CG#n]` already on file that does not read `SUPERSEDED` and whose `commit` equals the recorded pin of a repository whose `HEAD` still matched it in Phase 3, **and that no `grounding/baselines.md` entry records** (a claim finding, never an earlier baseline) — on a plain re-run and a `--rebaseline` pass alike, `provenance: inherited` (below), and none under `--no-code` (below) — **and never an on-file `[DG#n]`**, which no run of this command re-checks. A moved repository's on-file findings are not among them: a `--rebaseline` pass supersedes them in Phase 8. Nor is any earlier baseline finding — each `[CG#n]` an earlier `grounding/baselines.md` entry records, never one matched out of a `claim`. An unmoved repository's is one Phase 8 supersedes (*Supersede the earlier baselines*) for the fresh one Phase 3 minted it, as it does for every repository it pins on any run but `--no-code`, so re-deriving it would spend an Opus pass on a block retired in the same run; and one an entry records for a repository this run did not resolve answers for a repository this run did not pin, whatever its `commit`.
+**The set.** Phase 7 verifies **every** finding this run holds — Phase 3's baseline `[CG#n]` findings, freshly-merged Phase 5 claim findings, the successors Phase 6 appended for a moved horizon, and **the on-file findings this run re-checks, which are exactly these**: every `[CG#n]` already on file that does not read `SUPERSEDED` and whose `commit` equals the recorded pin of a repository whose `HEAD` still matched it in Phase 3, **and that no `grounding/baselines.md` entry records** (a claim finding, never an earlier baseline) — on a plain re-run and a `--rebaseline` pass alike, `provenance: inherited` (below), and none under `--no-code` (below) — **and never an on-file `[DG#n]`**, which no run of this command re-checks. A moved repository's on-file findings are not among them: a `--rebaseline` pass supersedes them in Phase 8. Nor is any earlier baseline finding — each `[CG#n]` an earlier `grounding/baselines.md` entry records, never one matched out of a `claim`. An unmoved repository's is one Phase 8 supersedes (*Supersede the earlier baselines*) for the fresh one Phase 3 minted it, as it does for every repository it pins on any run but `--no-code`, so re-deriving it would spend an Opus pass on a block retired in the same run; and any other repository's is pinned where no repository this run found unmoved stands (Phase 3, *No two repositories share a pin*), so it was never this run's to re-check.
 
 **Batches.** Cut the set into batches before dispatching anything:
 
-- A `[CG#n]` batches with the other `[CG#n]` of the same repository, **read from a record, never from its `commit` alone**. A finding this run produced belongs to the repository it was produced for — a claim finding to its Phase 5 dispatch's, a baseline to the repository Phase 3 pinned it for. `grounding/code-grounding.md` records no repository for a claim finding — `workflows-core:grounding-format` §2 gives the record no such field, and Phase 8 writes no section per repository — so an on-file `[CG#n]`, or a Phase 6 successor of one, belongs to the one repository Phase 3 found unmoved whose recorded pin equals its `commit`; a class-4 `[DG#n]`'s repository pair is read the same way, from the `[CG#n]` it cites. **Where two such repositories' recorded pins both equal that `commit`** — two clones of one project at one commit — no record says which one the finding was ground against, so it belongs to no one batch. Stop before the first dispatch, naming both:
-  `PRD_GROUND_VERIFY_AMBIGUOUS_REPO: <finding ids> are pinned to <commit>, the recorded pin of both <repo-a> and <repo-b> — grounding/code-grounding.md records no repository per finding, so they cannot be batched against either. Re-run '/product-workflows:prd-ground <KEY>' with the flags this run was given, naming only one of the two: both clone one project at one commit, so grounding the second adds nothing.`
+- A `[CG#n]` batches with the other `[CG#n]` of the same repository. A finding this run produced belongs to the repository it was produced for — a claim finding to its Phase 5 dispatch's, a baseline to the repository Phase 3 pinned it for. `grounding/code-grounding.md` records no repository for a claim finding — `workflows-core:grounding-format` §2 gives the record no such field, and Phase 8 writes no section per repository — so an on-file `[CG#n]`, or a Phase 6 successor of one, belongs to the repository Phase 3 found unmoved whose recorded pin equals its `commit`, of which there is exactly one (Phase 3, *No two repositories share a pin*); a class-4 `[DG#n]`'s repository pair is read the same way, from the `[CG#n]` it cites.
 - A `[DG#n]` batches with the other `[DG#n]` of the same frame set — the one Phase 5 recorded for it, or for a Phase 6 successor the frame set Phase 8's placement puts its superseded block in. A class-4 `[DG#n]` carries, beside its frame set, the repository and commit of the `[CG#n]` it cites, so one frame-set batch may hold several repository pairs.
 - Within a group, put a repository's baseline `[CG#n]` first, then order the `[CG#n]` by the requirement id each one's `claim` names, and the `[DG#n]` by finding id. Cut each group into batches of at most **25** findings, the baseline counting toward its batch. **The cap is defined here, and five other sites quote it and must change with it**: Phase 1's cost statement, with the paragraph under it; this command's documentation page, `docs/commands/prd-ground.md`, twice — its agent list under *How it runs* and its Phase 7 gate; and, in the source repository, `.claude/rules/brd-route.md`'s `/prd-ground` map line and `docs/maintainers/rationale.md`'s *verifier-blind-batched* section, whose dispatch arithmetic moves with it. A `CHANGELOG.md` entry that quotes it is history and stays as written.
 - **Nothing about a finding's answer decides its batch** — not its `verdict`, `evidence`, `control` or `cites`. A batch made of "the `NOT-PROVABLE` ones" would tell the blind step what the original concluded.
@@ -1586,7 +1617,8 @@ resolves — and give each the one-line note `superseded: frame set <frame-set> 
 re-grounding retired — which looked for a successor to it in this run and found none, so no later run
 owes it one — from a finding still waiting on a run that will re-derive it. **A prior class-4 finding is among them only where this run re-ground its claim against
 the repository its cited `[CG#n]` is pinned to.** That repository is the one whose
-`grounding/baselines.md` entry records a pin equal to that `[CG#n]`'s `commit`, and *re-ground* is
+`grounding/baselines.md` entry records a pin equal to that `[CG#n]`'s `commit` (Phase 3, *No two
+repositories share a pin*, says when that is a single repository), and *re-ground* is
 Phase 5's known set, never a judgement: Phase 5 dispatched a `code-grounder` against that repository
 this run, and that dispatch's claims carried the requirement id the `[CG#n]`'s `claim` names. A
 `--rebaseline` pass re-grounds every claim against a moved repository, so it takes every such

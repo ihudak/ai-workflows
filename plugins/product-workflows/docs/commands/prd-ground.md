@@ -380,7 +380,12 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   a search that could have missed something. And each run that grounds code records a fresh one per
   repository and supersedes that repository's earlier baseline findings — each one an earlier
   `grounding/baselines.md` entry records by id — rather than re-verifying them, so a repository
-  carries one live baseline finding however often the folder is re-ground.
+  carries one live baseline finding however often the folder is re-ground. **No two repositories
+  may stand at one commit** (`PRD_GROUND_AMBIGUOUS_PIN`): two this run resolved at the same `HEAD`,
+  or one whose `HEAD` is a pin `grounding/baselines.md` records for another, stop the run before
+  any grounding. A finding records a commit and never a repository, so this is what lets every
+  later phase read a finding's repository off its commit. Two clones of one project at one commit
+  are the usual cause, and the stop names both and the re-run that separates them.
 - **Phase 4.5 — documentation is a lead and a divergence, never evidence.** No `[CG#n]` or
   `[DG#n]` may cite a documentation page in its `evidence`, under any verdict, in any phase.
   Grounding answers whether a claim is true of a *specific commit*
@@ -436,10 +441,7 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   stops the run before Phase 8 writes anything, and so does a finding this run produced that is still
   incomplete after its retry in the pass that dispatched it (`PRD_GROUND_VERIFY_INCOMPLETE`), so no finding is ever written
   without an outcome, which is what keeps `/brd-split`'s own verification gate reachable on the BRD
-  route. A code finding on file whose commit is the recorded pin of two repositories this run
-  resolved stops the run before Phase 8 too (`PRD_GROUND_VERIFY_AMBIGUOUS_REPO`): the findings file
-  records no repository per finding, so it belongs to no one batch. The stop names both
-  repositories; re-run naming only one, since both clone one project at one commit. A finding is incomplete when it is missing from a return, has a blank `own_evidence`, is an
+  route. A finding is incomplete when it is missing from a return, has a blank `own_evidence`, is an
   `INCOMPLETE` entry carrying no outcome, has a comparison echo that differs from the blind result, or
   is a `contradict` whose return lacks the positive control the rewritten finding would owe. The same
   incomplete return on an on-file finding, after its retry, writes nothing: the finding keeps the

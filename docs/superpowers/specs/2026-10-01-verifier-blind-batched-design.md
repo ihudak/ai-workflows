@@ -93,11 +93,7 @@ The frontmatter `description` is rewritten as a stable capability blurb naming b
 
 ## 4. Phase 1 cost warning
 
-Printed as the first output of Phase 1, on every run that grounds code, whether or not the repositories are then prompted for — K filled in where they were named up front, left as the symbol where they are still to be prompted for. (It was first placed immediately before the repository prompt, and the live smoke run, handed its repositories up front, never reached it.) It never prints under `--no-code`, because no `[CG#n]` is produced or verified there. N is Phase 0 step 8's claim count on `route: brd`, step 8i's (after its exclusions) on `route: idea`; M is the on-file `[CG#n]` count Phase 7 would re-verify:
-
-> This requirement set has N claims. Each repository you name is ground against all N, and every finding is verified on Opus in two steps, in batches of 25: K repositories → K×N findings and K×⌈N/25⌉×2 verification dispatches. A re-run re-verifies every finding already on file for a repository that has not moved (M today).
-
-The wording is final at implementation; its content is the claim count, the per-repository multiplier, the batch arithmetic, and the re-run fact.
+Printed as the first output of Phase 1, on every run that grounds code, whether or not the repositories are then prompted for — K filled in where they were named up front, left as the symbol where they are still to be prompted for. (It was first placed immediately before the repository prompt, and the live smoke run, handed its repositories up front, never reached it.) It never prints under `--no-code`, because no `[CG#n]` is produced or verified there. `/prd-ground` Phase 1 holds the line it prints and the definition of each symbol; this spec does not restate the line, so the two cannot drift. In summary, the line gives the claim count N, and the K×N claim findings plus K baselines that K repositories produce. It gives their verification batches and dispatches, K×⌈(N+1)/25⌉ each in two steps, because a repository's baseline counts toward its batches, plus ⌈D/25⌉×2 for each frame set that returns D design findings. It names the review model, which is Opus unless `--enforce-model` sets another, and it gives M, the on-file claim findings (baselines excluded) a re-run re-verifies.
 
 ## 5. Authorities and ripple
 
