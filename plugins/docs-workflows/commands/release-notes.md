@@ -239,7 +239,7 @@ Also display: the resolved PRD folder, its `key`, `$REPOS_PATH` (or "N/A — PRD
 
 ## Phase 1.5 — Classify
 
-Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-routing"`), then classify the task. Release-notes drafting is **MODERATE** (bounded prose synthesis from a single ticket; no Opus planning or review gate). State the classification and a one-sentence reason, and record the `model_routing` block §4 defines — its `defect_model` (§2.2 cheap chain — only under `--skip-feedback`; under §10, `run_flags.enforced_model`) included — Phase 6 pastes it, and its `detection_model` (the §2.1 Sonnet chain) is what Phase 5's `diff-summarizer` batch and Phase 6's writer are pinned to.
+Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-routing"`), then classify the task. Release-notes drafting is **MODERATE** (bounded prose synthesis from a single ticket; no Opus planning or review gate). State the classification and a one-sentence reason, and record the `model_routing` block §4 defines — its `defect_model` (§2.1 Sonnet chain — only under `--skip-feedback`; under §10, `run_flags.enforced_model`) included — Phase 6 pastes it, and its `detection_model` (the §2.1 Sonnet chain) is what Phase 5's `diff-summarizer` batch and Phase 6's writer are pinned to.
 
 ---
 
@@ -537,7 +537,7 @@ an earlier phase. `/release-notes` has no built-in maintenance agent, so this
 phase invokes `impl-maintenance` on the Sonnet detection chain and then
 persists the plugin-facing slice of its report as session feedback.
 
-**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.2 cheap chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 3's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 3's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model: `<Sonnet detection chain — claude-sonnet-5-5, fallback claude-sonnet-5 / 4-6 / 4-5; under §10, run_flags.enforced_model>`):
    > "Analyse this session and return a Lessons Learned report.

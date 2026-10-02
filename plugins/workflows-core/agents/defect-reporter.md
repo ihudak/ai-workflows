@@ -1,6 +1,6 @@
 ---
 name: defect-reporter
-description: Bugs-only post-session reporter used under --skip-feedback in place of impl-maintenance. Reads the compact session handoff and returns only real defects fixable in this plugin family or in the ai-containers environment — each with its location, the session evidence and a minimal repro — or none. Excludes friction, wishes, polish, user mistakes, target-project issues and anything neither repo can fix. Read-only. Model tier assigned by the caller (the §2.2 cheap chain, or the enforced model).
+description: Bugs-only post-session reporter used under --skip-feedback in place of impl-maintenance. Reads the compact session handoff and returns only real defects fixable in this plugin family or in the ai-containers environment — each with its location, the session evidence and a minimal repro — or none. Excludes friction, wishes, polish, user mistakes, target-project issues and anything neither repo can fix. Read-only. Model tier assigned by the caller (the §2.1 Sonnet chain, or the enforced model).
 tools: ["Read", "Glob", "Grep"]
 ---
 

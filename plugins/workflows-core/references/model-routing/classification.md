@@ -96,7 +96,7 @@ parameter documentation. **Where that parameter enumerates only family names**
 (`opus`, `sonnet`, `haiku`, `fable`) — a **family-only harness**, which is what
 Claude Code's Agent tool is today — a chain row counts as available when its
 family is listed, and the harness, not this policy, decides which version of the
-family runs. Every chain here and in §2.1 / §2.2 therefore resolves to its first
+family runs. Every chain here and in §2.1 therefore resolves to its first
 row of a listed family, and §5 says what such a resolution passes as `model:`.
 If none of the Opus models are available **and** the
 task is `SIGNIFICANT` / `HIGH-RISK`, proceed with Sonnet but **announce the
@@ -126,20 +126,12 @@ Use the first available:
 If no Sonnet is available, fall back to the session model and announce it.
 Record the chosen model as `detection_model:` in the `model_routing` block.
 
----
-
-## 2.2 Cheap ("bugs-only") fallback chain
-
-Dispatched only for `defect-reporter` under `--skip-feedback` (`workflows-core:run-flags`
-§4); also resolves `run-flags` §2's `haiku` alias, for any applicable command's
-`--enforce-model=haiku` (or `$WORKFLOWS_ENFORCE_MODEL=haiku`), where the model parameter
-accepts ids; see `run-flags` §2 Reachability (a family-only harness resolves the bare
-alias to the family itself). Use the first available:
-
-1. `claude-haiku-4-5`
-2. the §2.1 chain
-
-Record it as `defect_model:` in the `model_routing` block when used.
+**`defect-reporter` runs on this chain too**, under `--skip-feedback`
+(`workflows-core:run-flags` §4), recorded as `defect_model:`. Telling a defect from
+friction and confirming the wrong line in the plugin's source is judgement, not
+throughput; it takes this chain because it is the tier `impl-maintenance`, the agent it
+replaces, runs on. No chain in this file names Haiku; `run-flags` §2 carries the Haiku
+rows an enforced Haiku value resolves against.
 
 ---
 
@@ -198,9 +190,9 @@ model_routing:
   current_model: <e.g. claude-opus-5-5>        # the model the orchestrator is running
   planning_model: <e.g. claude-opus-5-5>       # only set for SIGNIFICANT/HIGH-RISK
   review_model:   <e.g. claude-opus-5-5>       # only set for SIGNIFICANT/HIGH-RISK
-  implementation_model: <e.g. claude-sonnet-5 or current_model>
-  detection_model: <e.g. claude-sonnet-5>    # mid-tier steps (§2.1); never the session model
-  defect_model:   <e.g. claude-haiku-4-5>    # §2.2 cheap chain; set only under --skip-feedback
+  implementation_model: <e.g. claude-sonnet-5-5 or current_model>
+  detection_model: <e.g. claude-sonnet-5-5>  # mid-tier steps (§2.1); never the session model
+  defect_model:   <e.g. claude-sonnet-5-5>   # §2.1 chain; set only under --skip-feedback
   fixes_model:    <same as implementation_model>
   opus_available: true | false
   enforced_model: <e.g. claude-opus-5-5, or opus>  # §10: set only when run_flags.enforced_model is set
@@ -562,7 +554,7 @@ oversized repo slice's `code-scanner` to Opus (§8.3).
 
 `run_flags.enforced_model` (`workflows-core:run-flags`) lets a run pin every subagent dispatch to one model, bypassing model routing's own per-step selection. Classification and the routing rules above are unchanged in what they select — this section changes only which model each selection resolves to.
 
-- **Chain resolution.** When `run_flags.enforced_model` is set, every resolution of §2, §2.1, §2.2, and §8.3's oversized-slice escalation returns that id instead of walking its own chain — or that family, where `workflows-core:run-flags` §2 resolved a bare family alias in a §2 family-only harness to the family itself (`opus`); every "enforced id" in this section and in the commands that cite it covers that family value too. Every `*_model` field of the §4 `model_routing` block that names a **dispatched** step equals it — `planning_model`, `review_model`, `detection_model`, `fixes_model`, `defect_model` (present only under `--skip-feedback`, §2.2), and `implementation_model` wherever it names a delegated writer or executor rather than inline coding — and the block gains `enforced_model: <id>` and `routing: bypassed`. A field that instead records the orchestrator's own inline work keeps the session model, never the enforced id, because enforcement pins subagent dispatches and not the orchestrator's own session: `current_model` always does, and so does `implementation_model` / `authoring_model` wherever a command codes or authors inline rather than delegating — `/implement`'s `implementation_model` (inline coding) and `/prd-proposal`'s and `/brd-proposal`'s `authoring_model` (inline grill + authoring) among them. `opus_available` is still resolved and reported truthfully: it is a property of the environment (§9.3), not of the enforcement choice, so it is never rewritten to agree with the enforced id.
+- **Chain resolution.** When `run_flags.enforced_model` is set, every resolution of §2, §2.1 and §8.3's oversized-slice escalation returns that id instead of walking its own chain — or that family, where `workflows-core:run-flags` §2 resolved a bare family alias in a §2 family-only harness to the family itself (`opus`); every "enforced id" in this section and in the commands that cite it covers that family value too. Every `*_model` field of the §4 `model_routing` block that names a **dispatched** step equals it — `planning_model`, `review_model`, `detection_model`, `fixes_model`, `defect_model` (present only under `--skip-feedback`, §2.1), and `implementation_model` wherever it names a delegated writer or executor rather than inline coding — and the block gains `enforced_model: <id>` and `routing: bypassed`. A field that instead records the orchestrator's own inline work keeps the session model, never the enforced id, because enforcement pins subagent dispatches and not the orchestrator's own session: `current_model` always does, and so does `implementation_model` / `authoring_model` wherever a command codes or authors inline rather than delegating — `/implement`'s `implementation_model` (inline coding) and `/prd-proposal`'s and `/brd-proposal`'s `authoring_model` (inline grill + authoring) among them. `opus_available` is still resolved and reported truthfully: it is a property of the environment (§9.3), not of the enforcement choice, so it is never rewritten to agree with the enforced id.
 - **Every dispatch.** Every `task` tool dispatch passes `model: <enforced>` explicitly, in §5's dispatch form — the enforced id itself where the tool's `model` parameter accepts ids, its family name in a §2 family-only harness — including the agents whose frontmatter pins `model: opus`: the dispatch's `model:` argument overrides the frontmatter pin. The `model_routing` fields above keep the enforced value as `run-flags` §2 resolved it, never the translated argument. Every "frontmatter-pinned … no override" statement at a command's dispatch site reads "no override unless §10 enforces a model", so no live sentence contradicts this section.
 - **Nested dispatch.** An agent that itself dispatches another agent (`docs-style-checker` → `prose-style-checker`; `upgrade-executor` / `vuln-fixer` → `test-baseliner` via the `task` tool) receives `enforced_model` in its prompt and passes it as `model:` on its own dispatch, in §5's dispatch form, so enforcement reaches every model a run touches, not only the orchestrator's own direct calls.
 - **Steps unchanged.** Classification (§1) still runs and still selects the §3 sequence for the task's class — a SIGNIFICANT/HIGH-RISK task still gets its plan and review gates, a SIMPLE/MODERATE task still skips them. Enforcement changes which model each selected step runs on, never whether the step runs.

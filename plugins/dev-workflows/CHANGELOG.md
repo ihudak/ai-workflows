@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.4.3] — 2026-10-02
+
+**Update `workflows-core` to 1.9.1 with this release**: its `classification.md` retires the cheap chain these commands named for `defect-reporter`.
+
+### Changed
+
+- **Under `--skip-feedback`, every command dispatches `defect-reporter` on the §2.1 Sonnet chain**, the tier `impl-maintenance` runs on, instead of the retired Haiku-first chain, and records it as `defect_model`. `docs/reference/model-routing.md` now says where the Haiku row a version-specific `haiku4.5` is checked against lives.
+
 ## [4.4.2] — 2026-10-02
 
 **Update `workflows-core` to 1.8.5 with this release**: its `resolve-address` now stops, on either address form, on a `$SPECS_PATH` that points inside the specs tree, which the commands and pages below handle and describe.

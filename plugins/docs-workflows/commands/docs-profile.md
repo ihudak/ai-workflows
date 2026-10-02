@@ -67,7 +67,7 @@ model_routing:
   planning_model: <§2 powerful chain: claude-opus-5-5 … fallback Sonnet 5.5/5/4.6/4.5>
   review_model: <same as planning_model — conceptually the synthesis_model; the synthesis step runs on the §2 Opus chain>
   opus_available: true | false
-  notes: <any §2.1/§2 degradation, e.g. "Opus unavailable; synthesis fell back to claude-sonnet-5">
+  notes: <any §2.1/§2 degradation, e.g. "Opus unavailable; synthesis fell back to claude-sonnet-5-5">
 ```
 
 The detection phase (Phase 2) pins its subagent to `detection_model` (the §2.1 chain) via the `task` tool's `model:` override — never the session model. The synthesize phase (Phase 3) pins to `planning_model` (the §2 Opus chain). Announce any fallback now and again in Phase 6.
@@ -76,7 +76,7 @@ The detection phase (Phase 2) pins its subagent to `detection_model` (the §2.1 
 
 ## Phase 2 — Detect (Sonnet-tier)
 
-Dispatch a **read-only** detection subagent **pinned to the §2.1 mid-tier chain** via the `task` tool's `model:` override — `claude-sonnet-5`, fallback `claude-sonnet-4-6`/`claude-sonnet-4-5`; record the model actually used as `detection_model` in the `model_routing` block. Detection is mechanical repo scanning, so it must NOT inherit the session model (an Opus session would otherwise burn Opus on a cheap step, per §2.1).
+Dispatch a **read-only** detection subagent **pinned to the §2.1 mid-tier chain** via the `task` tool's `model:` override — `claude-sonnet-5-5`, fallback `claude-sonnet-5`/`claude-sonnet-4-6`/`claude-sonnet-4-5`; record the model actually used as `detection_model` in the `model_routing` block. Detection is mechanical repo scanning, so it must NOT inherit the session model (an Opus session would otherwise burn Opus on a cheap step, per §2.1).
 
 → Agent (subagent_type: "general-purpose", model: `<detection_model — §2.1: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5; under §10, run_flags.enforced_model>`):
   > "Read-only detection scan for a docs-profile. Do NOT write or edit any file — return a structured detection report only.
