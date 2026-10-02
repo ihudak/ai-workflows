@@ -242,9 +242,8 @@ nothing.
        null-`focus_key` case**, so `<PRD>` is always a PRD's own key and never an Epic's.
    - All delimiters this step writes are hyphens; matching an existing dir tolerates a stray `-`/`_`.
      The PRD dir is not created here **and not by a later phase either**: on `status: absent` this
-     step stops, so the folder this step resolves — the one every later phase writes into, unless
-     Phase 1's "Use a different path" names another — already existed when the address was
-     resolved. The per-Epic feature folder is likewise never created, by the
+     step stops, so the PRD folder already existed when the address was resolved. The per-Epic
+     feature folder is likewise never created, by the
      `SPECIFY_EPIC_NOT_FOUND` stop above.
 
    **On the BRD route the feature folder is the resolved `PRD-` slice folder**, and it is never
@@ -568,7 +567,7 @@ single-Epic and ≥2-Epic-selection cases), the feature folder becomes that Epic
 `specifications/<PRD>-<vslug>/EPIC-<EPIC>-<eslug>/` (Phase 0 step 3's `focus_key`-set case), superseding the
 provisional PRD-level folder confirmed in Phase 1 — Phase 0 already marks that folder provisional until
 the folder read runs. Re-detect a prior run there (a `_session.md` → a resume is available for that
-Epic). The broad-PRD-spec case — the only other one left — leaves the Phase 0 folder unchanged.
+Epic). The broad-PRD-spec case — the only other one left — leaves the folder Phase 1 confirmed unchanged.
 
 ### Step B — Full Epic-scoped read
 
@@ -924,7 +923,7 @@ Cap: one fix cycle + one re-review maximum.
 
 ## Phase 7 — Handoff
 
-Write `specification.md` (`Published: no`), `_session.md` and `_glossary.md` — never an `idea.md`, on either route (Phase 2) — into the feature folder Phase 2 resolved: the PRD folder itself (on the BRD route, the slice folder) when `focus_key` is null, or the `EPIC-` subfolder `focus_key` names, whether addressed directly or selected by Step A, when it is set — unless Phase 1's "Use a different path" named another folder.
+Write `specification.md` (`Published: no`), `_session.md` and `_glossary.md` — never an `idea.md`, on either route (Phase 2) — into the run's feature folder: the folder Phase 1 confirmed (the PRD folder, the slice folder on the BRD route, or the `EPIC-` subfolder an Epic address resolved), unless Step A then re-pointed the run to an Epic, whose `EPIC-` subfolder supersedes it (*Re-pointing the feature folder after the picker*).
 
 **Wherever `prd_dir` holds `grounding/`, on either route, close the consumption loop before
 the offer.** The design's *Consumption tracking* section (§7.3) has every finding and decision record
