@@ -25,8 +25,10 @@ was.
 **Put the key on your branch's own commits, not only on the pull request.** The scan reads no merge
 commit, so a key that only a merge commit carries — your own `git merge -m`, or the pull-request
 title a forge writes into the merge commit it makes — is not found, and the branch's work goes
-unread. A squash merge is different: the forge writes the title into the one commit it lands, which
-the scan does read.
+unread. A squash merge is different: it lands one ordinary commit, which the scan does read — wherever that
+commit's message carries the key. Most forges write the pull request's title there, but GitHub's
+default keeps a single-commit pull request's own commit message, so the key still has to be on that
+commit.
 
 ## Where the key comes from
 

@@ -182,10 +182,11 @@ key's at all. A forge writes a merged pull request's title, `[<key>]` included, 
 commit, so without the flag nearly every merge-commit landing would come back as unrecorded work.
 Every commit the scan returns therefore has at most one parent — a root commit has none, and so does
 a shallow clone's boundary commit, a merge there included, which shows no parents and is returned —
-and its own change is its whole content.
+and a commit with a parent, or a true root read against the empty tree, has its own change as its
+whole content; a shallow clone's boundary has none the clone can show.
 **The cost:** work a merge commit's message carries alone — a hand-made branch whose own commits name
 no key — is not found. The unanchored probe below is the one `git log` here that keeps merge
-commits, since a branch name inside a merge commit's subject is what it looks for.
+commits, since a branch name, or a whole key, inside a merge commit's message is what it looks for.
 
 **A token matches only as a whole key.** Each `--grep` wraps its token in
 `(^|[^A-Za-z0-9_-])` and `([^A-Za-z0-9_-]|$)`, every ERE metacharacter in the token
@@ -205,10 +206,13 @@ and the boundary deliberately does not reach it. A merge commit's own subject is
 to reach it would admit `[ACME-70-01]` and `[ACME-7-01]` again, which is the over-match this
 boundary exists to remove. A boundary aware enough to tell the two apart, admitting `-` only where
 a digit does not follow, would still not reach the merge commit, which the scan does not take
-(`--no-merges`, above): all it could add is a one-parent commit whose message names a branch, which
-is rarely where a key's work is — so it would widen the boundary for almost nothing it can read.
+(`--no-merges`, above). What it would add is a one-parent commit whose message names a branch — on a
+forge that writes the branch into a squash commit (`Merged in <branch> (pull request #N)`), that
+branch's whole landed work. It is not taken here because it changes the one boundary every reader of
+this file shares, which is its own change to make; until then the probe below reports such a commit
+on a repository the scan left at zero matches.
 
-**What that costs:** the scan finds no commit of a branch whose own subjects carry no `[<key>]`: its
+**What that costs:** the scan finds no commit of a branch whose own messages name no key: its
 merge commit is not scanned (above), and where the subject the forge wrote for it names the key only
 inside the branch name, this boundary would not reach it even if it were. **Population: every `/document` scan,
 and every `/release-notes` scan with diff grounding on, over a repository where a key's work is
@@ -229,8 +233,10 @@ enters the run's read set, and none enters a drop set, so the probe owes no boun
 own and leaves nothing behind for a later run: the operator is told where to look, and the run's
 own sources are exactly what they were.
 
-**The probe is also where the `--no-merges` cost shows**: a merge commit whose message names the key
-whole, which the scan skips, comes back here, and so does one naming it inside a branch name.
+**The probe is also where the `--no-merges` cost shows**: on a repository the scan left at zero matches, a merge
+commit whose message names the key whole, which the scan skips, comes back here, and so does one
+naming it inside a branch name. Where the scan matched anything, the probe does not run, and work
+only a merge commit's message carries shows nowhere.
 
 **The trigger is per repository, and stays there.** It fires **only** on a repository the whole-key
 scan left at zero matches — the one state in which the loss above is indistinguishable from a

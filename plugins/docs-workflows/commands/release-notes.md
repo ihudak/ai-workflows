@@ -311,8 +311,8 @@ merge commit — inspect by hand"*. Printing is the whole of it: none of those c
 `diff-summarizer`, none joins this run's read set (the carry above names its three sources, and this
 is not one), and none joins a drop set, so the note this run appends covers not one of them. **The
 whole-key scan will not match them on a later run either** — carrying the key only inside a branch name, or only in a merge commit the scan does not take, is exactly what it cannot see — so what re-reports them is this same probe, and only while
-that repository is still at zero whole-key matches: one commit there whose **message** carries one
-of this run's tokens — a body line or a `Work-Item:` trailer as readily as a subject, since the scan
+that repository is still at zero whole-key matches: one non-merge commit there whose **message** carries
+one of this run's tokens whole — a body line or a `Work-Item:` trailer as readily as a subject, since the scan
 matches anywhere in a message (§4) — silences the probe and leaves them unreported.
 
 Hand each resolved ref to `diff-summarizer` as a `refs[]` element — `{branch_from, branch_to, title}`,
@@ -323,7 +323,7 @@ hold the commit yet — `diff-summarizer`'s Refresh step fetches before it resol
 under `refresh.fetch: false` or on a read-only mount, where a commit the clone lacks comes back
 unresolved; and a commit only the scan found — the scan takes no merge commit
 (`workflows-core:implementation-format` §4) — is `{branch_from: <its sha>, branch_to: <its sha>^}`,
-its own change (a root commit's, against the empty tree). A squash of a recorded commit is read beside that commit's own element: the same
+its own change (a root commit's, against the empty tree; a shallow clone's boundary commit, merge or not, comes back unresolved). A squash of a recorded commit is read beside that commit's own element: the same
 change summarised twice, which costs less than missing either.
 `repo_path` is a top-level input of that agent, passed once at the Phase 5 dispatch and never
 repeated inside an element. No URL, no host classification, no `gh` requirement.
