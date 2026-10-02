@@ -242,8 +242,8 @@ nothing.
        null-`focus_key` case**, so `<PRD>` is always a PRD's own key and never an Epic's.
    - All delimiters this step writes are hyphens; matching an existing dir tolerates a stray `-`/`_`.
      The PRD dir is not created here **and not by a later phase either**: on `status: absent` this
-     step stops, so every phase that writes — Phase 2's `idea.md` write included — runs against a
-     folder that already existed when the address was resolved. The per-Epic feature folder is
+     step stops, so every phase that writes runs against a folder that already existed when the
+     address was resolved. The per-Epic feature folder is
      likewise never created, by the `SPECIFY_EPIC_NOT_FOUND` stop above.
 
    **On the BRD route the feature folder is the resolved `PRD-` slice folder**, and it is never
@@ -452,13 +452,15 @@ implementation-altitude seed* section at the end of this phase is an **addition*
 replacement for them: it reads the seed, the register, the verified findings and the derivation matrix a
 slice carries and a keyed-route PRD folder does not.
 
-**One divergence stays, and it is a real one: no `idea.md` is written on the BRD route.** Step B's
-`idea.md` write records pre-spec provenance for an item whose provenance is otherwise unrecorded. A slice
-folder already carries its provenance in the tree — `brd-link.md`, the register, the grounding findings,
-and the customer's own document under the parent's `brd/source/` — and writing a fourth, derived account
-of it beside those would put an unreviewed restatement of a signed-off document in the folder. So the
-`idea.md` bullet in Step B is skipped on the BRD route and the run says so; every other part of Steps A
-and B runs unchanged.
+**Neither route writes an `idea.md`, so there is no divergence here either.** Every folder this phase
+reads already carries its provenance, committed in the tree: on the keyed route the `prd.md` and the
+`EPIC-` folders, on the BRD route `brd-link.md`, the register, the grounding findings and the
+customer's own document under the parent's `brd/source/`. A derived `idea.md` beside them would be a
+second, weaker, unreviewed restatement — and `workflows-core:source-truth` stops treating any
+`idea.md` as authoritative once `specification.md` exists, which this run writes. On the keyed route
+it would also land on someone else's file: a broad PRD-level spec's feature folder is the PRD folder,
+where `/idea` writes `idea.md` and lands it through its own handoff, and `/create-prd`'s ladder reads
+it. An `idea.md` already in the feature folder is never this command's to touch.
 
 Phase 2 reads the folder in **two steps, cheap before expensive**. Step A settles *granularity* — the
 input's type and, for a multi-Epic PRD, *which* Epic — with a cheap `prd-plus-epics` read (and, when
@@ -588,15 +590,12 @@ folder does hold. Then:
   `EPIC-` folder at all. When `focus_key` is null (broad PRD-level spec), read the PRD folder and every
   `EPIC-` folder under it. There is no `linked_items` list and no Story/Sub-task subtree to filter: those
   were fields of a tracker export that no command produces any more (Step A), and the `EPIC-` folders on
-  disk are the hierarchy now. Everything below — themes, `idea.md`, the Phase 5 raw material — derives
+  disk are the hierarchy now. Everything below — themes and the Phase 5 raw material — derives
   from the folders this bullet named.
 - Extract **capability themes** and component/product mentions from the folders just read — feeds
   Phase 3's repo derivation and Phase 4's `code-scanner` dispatches.
-- Write **`idea.md`** in the feature folder from the text of the folders just read — **except on the
-  BRD route**, where the provenance is already in the tree and this write is skipped and reported (the
-  divergence named at the head of this phase) — pre-spec brainstorming provenance, in the same spirit
-  as the `idea.md` convention `workflows-core:source-truth` already treats as non-authoritative once
-  `specification.md` exists.
+- **Write no `idea.md`**, on either route — the head of this phase gives the reason — and leave one
+  already in the feature folder as it is.
 - Carry what those folders hold forward into Phase 5 — the raw material the grill mines for user
   stories, acceptance criteria, and test cases.
 
@@ -642,12 +641,11 @@ normal route creates `spec-seed.md` at all (above), so a reconciled BRD routinel
 of `spec-seed.md` and `decisions.md` were absent — a reader cannot tell an unwritten file from an
 unread one — and carry what is there.
 
-**No `idea.md` is written on this route.** Step B writes one as pre-spec provenance derived from the
-PRD text; there is none here, and the BRD folder already holds the provenance this spec was
-built from — the register and the findings, each committed by the `/brd-*` run that wrote it, plus a
-`spec-seed.md` where a `--sort-existing` migration left one. Minting an `idea.md` from any of them
-would add a second, weaker record of the same thing in a folder whose whole point is that the first
-one is auditable.
+**No `idea.md` is written on this route, as on the keyed one** (the head of this phase). The BRD
+folder already holds the provenance this spec was built from — the register and the findings, each
+committed by the `/brd-*` run that wrote it, plus a `spec-seed.md` where a `--sort-existing`
+migration left one. Minting an `idea.md` from any of them would add a second, weaker record of the
+same thing in a folder whose whole point is that the first one is auditable.
 
 **Partition the register before the grill starts, because the partition is what freezes it.** The
 five states and their treatment are `decision-register-format.md` §3's: a `decided` record is an
@@ -925,7 +923,7 @@ Cap: one fix cycle + one re-review maximum.
 
 ## Phase 7 — Handoff
 
-Write the feature folder: `specification.md` (`Published: no`), `idea.md`, `_session.md` and `_glossary.md`. **On the BRD route there is no `idea.md`** (Phase 2, the one divergence that phase keeps) — the other three are written exactly as above, into the feature folder Phase 2 resolved: the slice folder itself when `focus_key` is null, or the `EPIC-` subfolder Step A selected when it is set.
+Write the feature folder: `specification.md` (`Published: no`), `_session.md` and `_glossary.md` — never an `idea.md`, on either route (Phase 2). On the BRD route the three are written exactly as on the keyed route, into the feature folder Phase 2 resolved: the slice folder itself when `focus_key` is null, or the `EPIC-` subfolder Step A selected when it is set.
 
 **Wherever `prd_dir` holds `grounding/`, on either route, close the consumption loop before
 the offer.** The design's *Consumption tracking* section (§7.3) has every finding and decision record
@@ -1103,7 +1101,7 @@ granularity, the same way `spec-seed.md`'s is below.
 **On the BRD route, additionally:** the `<SLICE-KEY>` seeded from and its resolved folder; this run's
 `parent:` key — every run of this route is slice-level — and the `(prd, epic)` pair Phase
 2.5 passed to `workflows-core:ard-resolution` with the `status` it returned; which of `spec-seed.md`
-and `decisions.md` were present; that no `idea.md` was written and why; every `[VD#n]`/`[CD#n]`/`[AS#n]`
+and `decisions.md` were present; every `[VD#n]`/`[CD#n]`/`[AS#n]`
 carried in as a gap rather than an input, by id and status; every contradiction Phase 5 recorded
 rather than decided, with the reopening route named for each; `spec-seed.md`'s
 consumption at file granularity; and any product- or
