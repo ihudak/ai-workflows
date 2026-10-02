@@ -92,7 +92,8 @@ names the commit as well — the one commit `/implement` Phase 4.6 made for the 
 commit or a fast-forward that commit is reachable from the base; after a squash or a rebase merge the
 base holds a copy of the change rather than the commit, so once the branch is deleted no branch
 reaches it and it survives only while a clone still holds it — which is why `diff-summarizer` falls
-back to a key-commit search there. `diff-summarizer` accepts the branch or the commit, and recording
+back to a key-commit search there, where its caller supplies keys — `/document` does; `/release-notes`
+does not, and there the element comes back unread. `diff-summarizer` accepts the branch or the commit, and recording
 both is what makes the file survive branch cleanup; how it reads a commit that has already landed on
 the base is that agent's own rule.
 

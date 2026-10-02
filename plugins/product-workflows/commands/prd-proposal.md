@@ -299,8 +299,8 @@ calendar:
 
 **How the profile is obtained, in three states:**
 
-- **Absent** — grill it into existence (`workflows-core:grilling-technique`), field by field, and
-  write it. **The depth is relentless**: no cap and no `Q<n>/<cap>` numbering — the grill is done
+- **Absent** — grill it into existence (`workflows-core:grilling-technique`), field by field, clear
+  its confirmation gate, and write it. **The depth is relentless**: no cap and no `Q<n>/<cap>` numbering — the grill is done
   when every field of the profile above has been asked and none is left as a recorded gap, and it cannot
   close while `roles`, `productivity` or `calendar` lacks an answer — a proposal cannot state a
   team, a schedule or a productivity basis without them. `engagement_model` **restructures the engagement-governance, change-control and

@@ -451,10 +451,15 @@ unrecorded work — the probe tells the operator where to look and changes nothi
 
 Hand each resolved ref to `diff-summarizer` as a `refs[]` element — `{branch_from, branch_to, title}`,
 the shape its Inputs declare for `refs[]`, `title` optional — taken on the pure-local-git path.
-Build each element from what the run holds: a record entry is `{branch_from: <its commit, wherever
-the clone holds that commit — its branch otherwise>, branch_to: <its base>}`, and a commit only the
-scan found is `{branch_from: <its sha>, branch_to: <its sha>^}`, so its range is that commit's own
-change.
+Build each element from what the run holds: a record entry is `{branch_from: <its commit — its branch
+only where the entry records none>, branch_to: <its base>}`, handed even where this clone does not
+hold the commit yet, since `diff-summarizer` fetches before it resolves anything; and a commit only the
+scan found is `{branch_from: <its sha>, branch_to: <its sha>^}` — its own change for a one-parent
+commit, the whole branch it merged for a merge commit. A scan commit that only re-lands work a block
+already reads stays listed as unrecorded work and becomes no element, since its range would read that
+work a second time: a merge from whose later parent a block's commit is reachable but not from
+`<its sha>^1`, or a one-parent commit whose `git patch-id --stable` equals a block commit's — the
+squash of that one commit.
 `repo_path` is a top-level input of that agent, passed once at the Phase 5 dispatch and never
 repeated inside an element. No URL, no host classification, no `gh` requirement.
 

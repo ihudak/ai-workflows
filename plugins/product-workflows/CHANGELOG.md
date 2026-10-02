@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 **Update `workflows-core` to 1.10.0 with this release**: the grilling callers below now clear that version's confirmation gate.
 
 ### Fixed
-- **`/idea`, `/create-prd`, `/create-ard`, `/specify` and `/update-prd` said "walk the design tree" or "dependency order"** — the first a term that collides with `design.md`, both a mechanic `workflows-core`'s grilling reference had replaced with asking from the frontier — and *"continue to shared understanding then write"*, which left the end of the interview to the agent. Each now asks from the frontier and clears the confirmation gate before writing. `/idea` counts its source-stated scope among the settled decisions the frontier starts from, and `docs/reference/model-routing.md` no longer says `/idea` "walks the design tree".
+- **`/idea`, `/create-prd`, `/create-ard`, `/specify` and `/update-prd` said "walk the design tree" or "dependency order"** — the first a term that collides with `design.md`, both a mechanic `workflows-core`'s grilling reference had replaced with asking from the frontier — and *"continue to shared understanding then write"*, which left the end of the interview to the agent. Each now asks from the frontier and clears the confirmation gate before writing — `/update-prd`, which edits `prd.md` live, before each section it writes. `/prd-proposal` and `/brd-proposal` clear the gate before writing a proposal profile they grill into existence. `/idea` counts its source-stated scope among the settled decisions the frontier starts from, and `docs/reference/model-routing.md` no longer says `/idea` "walks the design tree".
 
 ## [3.11.2] — 2026-10-02
 
