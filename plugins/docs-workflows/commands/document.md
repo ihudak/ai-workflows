@@ -438,14 +438,15 @@ alongside it.
 **unrecorded work**, named as such with its commits listed: folding hand-made commits silently into
 the recorded set would make the record look more complete than it is.
 
-**Report the scan's own reach.** Say **how many commits it scanned and how many matched**. Only a
+**Report the scan's own reach.** Say **how many commits it scanned** — the non-merge commits it walked,
+`git -C <repo> rev-list --no-merges --count HEAD` — **and how many matched**. Only a non-merge
 commit whose message names the key is findable, and no convention compels a human to follow one — so
 a zero-match scan in a repository that has commits is a signal about the commit convention
 (`docs/reference/commit-convention.md`), not proof that no work happened.
 
 **On a repository the scan left at zero matches, run §4's report-only unanchored probe** and print
-what it matched, in the words that section gives — *"may name this key inside a branch name —
-inspect by hand"*. Printing is the whole of it: none of those commits is handed to
+what it matched, in the words that section gives — *"may name this key inside a branch name or in a
+merge commit — inspect by hand"*. Printing is the whole of it: none of those commits is handed to
 `diff-summarizer`, none joins the refs this phase builds, and none is reported as this run's
 unrecorded work — the probe tells the operator where to look and changes nothing the run reads.
 
@@ -457,7 +458,7 @@ hold the commit yet — `diff-summarizer`'s Refresh step fetches before it resol
 under `refresh.fetch: false` or on a read-only mount, where a commit the clone lacks comes back
 unresolved; and a commit only the scan found — the scan takes no merge commit
 (`workflows-core:implementation-format` §4) — is `{branch_from: <its sha>, branch_to: <its sha>^}`,
-its own change. A squash of a recorded commit is read beside that commit's own element: the same
+its own change (a root commit's, against the empty tree). A squash of a recorded commit is read beside that commit's own element: the same
 change summarised twice, which costs less than missing either.
 `repo_path` is a top-level input of that agent, passed once at the Phase 5 dispatch and never
 repeated inside an element. No URL, no host classification, no `gh` requirement.
@@ -528,7 +529,7 @@ For each repo, in the same Agent message:
   >
   > repo_path:     <resolved absolute path for this repo from Phase 4>
   > repo_url_slug: <repo slug, e.g. "cluster">
-  > refs:        [ ... the {branch_from, branch_to, title} elements Phase 4 built for this repo from `implementation.md` and the commit scan (and, when focus_key is set, restricted to focus_items) ... ]
+  > refs:        [ ... the {branch_from, branch_to, title} elements Phase 3 built for this repo from `implementation.md` and the commit scan (and, when focus_key is set, restricted to focus_items) ... ]
   > context:    |
   >   [1–2 sentences: PRD goal + themes relevant to this repo]
   > keys_hierarchy:
@@ -1292,7 +1293,7 @@ SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 
 ### Branch-name probe
 [Phase 3's *Report the scan's own reach* step, one line per repository the whole-key commit scan left at zero matches — the only repositories it runs on. Omit the section entirely when it fired nowhere.]
-- <repo> — [each commit by SHA, date and subject — may name a key inside a branch name, inspect by hand | matched nothing]
+- <repo> — [each commit by SHA, date and subject — may name a key inside a branch name or in a merge commit, inspect by hand | matched nothing]
 - Nothing here was read: no commit above reached `diff-summarizer`, joined the refs, or is reported as unrecorded work.
 
 ### Output file(s)

@@ -296,7 +296,8 @@ was not read and is not written, so a later run reads it again"*). Phase 5 adds 
 whole of what can enter it (that same §1, which fixes the 12-character form every entry is written
 in).
 
-**Report the scan's own reach.** Say **how many commits it scanned and how many matched**. Only a
+**Report the scan's own reach.** Say **how many commits it scanned** — the non-merge commits it walked,
+`git -C <repo> rev-list --no-merges --count HEAD` — **and how many matched**. Only a non-merge
 commit whose message names the key is findable, and no convention compels a human to follow one — so
 a zero-match scan in a repository that has commits is a signal about the commit convention
 (`docs/reference/commit-convention.md`), not proof that no work happened.
@@ -305,12 +306,11 @@ a zero-match scan in a repository that has commits is a signal about the commit 
 **before** the note boundary drops anything, since a repository where the whole-key `--grep` matched
 and an earlier note had already read every match is one whose work is fully reported rather than
 one the scan could not reach, and reading the count after the drop would fire the probe there — and
-print what it matched, in the words that section gives — *"may name this key inside a branch name —
-inspect by hand"*. Printing is the whole of it: none of those commits is handed to
+print what it matched, in the words that section gives — *"may name this key inside a branch name or in a
+merge commit — inspect by hand"*. Printing is the whole of it: none of those commits is handed to
 `diff-summarizer`, none joins this run's read set (the carry above names its three sources, and this
 is not one), and none joins a drop set, so the note this run appends covers not one of them. **The
-whole-key scan will not match them on a later run either** — carrying the key only inside a branch
-name is exactly what it cannot see — so what re-reports them is this same probe, and only while
+whole-key scan will not match them on a later run either** — carrying the key only inside a branch name, or only in a merge commit the scan does not take, is exactly what it cannot see — so what re-reports them is this same probe, and only while
 that repository is still at zero whole-key matches: one commit there whose **message** carries one
 of this run's tokens — a body line or a `Work-Item:` trailer as readily as a subject, since the scan
 matches anywhere in a message (§4) — silences the probe and leaves them unreported.
@@ -323,7 +323,7 @@ hold the commit yet — `diff-summarizer`'s Refresh step fetches before it resol
 under `refresh.fetch: false` or on a read-only mount, where a commit the clone lacks comes back
 unresolved; and a commit only the scan found — the scan takes no merge commit
 (`workflows-core:implementation-format` §4) — is `{branch_from: <its sha>, branch_to: <its sha>^}`,
-its own change. A squash of a recorded commit is read beside that commit's own element: the same
+its own change (a root commit's, against the empty tree). A squash of a recorded commit is read beside that commit's own element: the same
 change summarised twice, which costs less than missing either.
 `repo_path` is a top-level input of that agent, passed once at the Phase 5 dispatch and never
 repeated inside an element. No URL, no host classification, no `gh` requirement.
@@ -515,8 +515,8 @@ Outside that one case there is no question to ask and no option that replaces th
    - Deprecation: <EOL <date> (end-of-support <date | —>) | none>
    - Diff grounding: <on (repos: …) | off>
    - Blocks used: <each block by its record and heading date | none>; dropped by §4's date fallback: <each block by its record and heading date, and each commit the date rule dropped by its own date, by SHA, date and subject — a commit dropped with a block recording it is accounted for by that block's listing | none> — on a run with diff grounding on
-   - Not read: <per repository whose commits Phase 5 dropped from the read set, the repository and why — skipped at Phase 4, no clone resolved, `unresolved_prs`, a `resolved_via: key_commits` fallback that opened nothing this run had carried (unreachable while Phase 5 passes no keys), or an escalation that ended without a summary — and each commit by SHA | none — every provisional commit was read> — on a run with diff grounding on; nothing listed here is written into the scope comment, so the next grounded run reads it again, and on the `unresolved_prs` cause — a ref whose commits have left the clone — that means its block, or its scan commit, returns next release, unread again
-   - Branch-name probe: <per repository the whole-key scan left at zero matches: each commit it matched, by SHA, date and subject — may name a key inside a branch name, inspect by hand | fired on <repo>, matched nothing | not fired — the scan matched in every repository> — on a run with diff grounding on; nothing listed here was read
+   - Not read: <per repository whose commits Phase 5 dropped from the read set, the repository and why — skipped at Phase 4, no clone resolved, `unresolved_prs`, a `resolved_via: key_commits` fallback that opened nothing this run had carried (unreachable while Phase 5 passes no keys), or an escalation that ended without a summary — and each commit by SHA | none — every provisional commit was read> — on a run with diff grounding on; nothing listed here is written into the scope comment, so the next grounded run reads it again, and on the `unresolved_prs` cause — usually a ref whose commits have left the clone — that means its block, or its scan commit, returns next release, unread again
+   - Branch-name probe: <per repository the whole-key scan left at zero matches: each commit it matched, by SHA, date and subject — may name a key inside a branch name or in a merge commit, inspect by hand | fired on <repo>, matched nothing | not fired — the scan matched in every repository> — on a run with diff grounding on; nothing listed here was read
    - Style check: <applied N safe fixes | report only (M findings) | skipped — you chose "Skip style check"> — rules: <the checker's rules_source, where it ran><; DEGRADED — Phase 7's reason, where Phase 7 recorded it>
    - Model routing: <under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` — every dispatch above already carries the enforced id, per `workflows-core:model-routing/classification` §10 | "MODERATE — detection chain throughout, no degradation (Phase 1.5)">
    - Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` skip line is Phase 9's own output; the `Session cost: …` skip line is Phase 11's own output, printed after this report and not restated in it.]

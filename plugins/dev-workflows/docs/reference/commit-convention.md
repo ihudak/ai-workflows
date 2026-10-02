@@ -18,9 +18,15 @@ from a scan of your repository's commit messages for the key.
 
 The scan is what finds **everything the plugin did not do itself** — the commit you wrote by hand
 after the session ran out, the fix a colleague pushed, the follow-up nobody ran a command for. A
-commit whose subject names the key is one those commands can find. A commit that names nothing is
+commit whose subject names the key — any commit but a merge commit — is one those commands can find. A commit that names nothing is
 invisible to them, and the release note or the documentation page comes out thinner than the work
 was.
+
+**Put the key on your branch's own commits, not only on the pull request.** The scan reads no merge
+commit, so a key that only a merge commit carries — your own `git merge -m`, or the pull-request
+title a forge writes into the merge commit it makes — is not found, and the branch's work goes
+unread. A squash merge is different: the forge writes the title into the one commit it lands, which
+the scan does read.
 
 ## Where the key comes from
 

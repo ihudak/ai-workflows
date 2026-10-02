@@ -37,7 +37,9 @@ fast-forward left no merge and `branch_from` is a single commit, that commit's o
 the branch or the sha does not resolve, where a branch name or a merge commit landed with no merge to read, or where
 a range changes no file — save a single one-parent commit whose own change is empty — the agent's
 **Key-commit fallback** greps `keys_hierarchy` when the caller
-supplied one. An empty range is never reported as resolved, save a single commit whose own change is empty.
+supplied one. An empty range is never reported as resolved, save a single commit whose own change is empty. A
+commit with no parent is read against the empty tree, or, in a shallow clone, where it may only be
+the clone's boundary, comes back unresolved.
 
 When `repo_url_slug` is provided, before summarising run
 `git -C <repo_path> remote get-url origin`, strip a trailing `.git`, and compare
