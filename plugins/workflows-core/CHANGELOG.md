@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.9.0] — 2026-10-02
+
+### Changed
+
+- **`grounding-format` §8: independence is structural, not a discipline the verifier keeps (#73).** The step that re-derives is handed the requirement premise and the source, never the finding's verdict, evidence, control or citation; verification is a blind re-derivation followed by a comparison, each its own dispatch. §4.1 says the baseline re-derivation is the blind step's integrity re-run. §2.2 now says the verifier is handed `control` only in its compare step. `product-workflows` 3.11.0 implements it.
+
 ## [1.8.5] — 2026-10-02
 
 ### Fixed

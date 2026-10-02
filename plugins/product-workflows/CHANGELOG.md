@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.11.0] — 2026-10-02
+
+**Update `workflows-core` to 1.9.0 with this release**: §8 states the structural rule the verifier's new contract implements.
+
+### Changed
+
+- **`/prd-ground` verifies blind, in batches (#73, #74).** Phase 7 cuts its verification set into batches of up to 25 findings per repository or frame set and dispatches `grounding-verifier` twice per batch: `mode: derive`, handed each finding's requirement and source and never its verdict, evidence, control or citation, then `mode: compare`, handed the original beside the blind result. The old contract handed the verifier the whole finding and relied on it not to read the answer first; four of eight dispatches in one live run reported they could not. A 138-claim, two-repository run drops from 278 verifier dispatches to about 24, with every finding still re-derived on Opus and every finding on file still re-verified on a re-run.
+- **`grounding-verifier` has two modes.** Derive refuses a dispatch carrying a finding's answer, including `cited` and `derived` (`INPUT_UNBLIND`), refuses a missing or unknown `mode` (batch `INPUT_MISSING`), and reads nothing under `$SPECS_PATH` outside the frame set; compare runs each original's control, never revises the blind result, and returns the same per-finding fields as before. The `provenance` input is gone: the blind step searches an inherited finding exactly as hard as any other without being told which it is.
+
+### Added
+
+- **Phase 1 states the cost before repositories are chosen** — the claim count, the per-repository multiplier, the batch arithmetic, and the findings on file a re-run re-verifies.
+- **An incomplete verifier result is retried once**, through the step that failed. After the retry, an `agree`, `extend` or `unprovable` whose blind verdict lacks its owed control proceeds through reconciliation and is noted in the Final report; an own-run finding still incomplete stops the run (`PRD_GROUND_VERIFY_INCOMPLETE`), and an on-file one writes nothing, keeps its earlier outcome, is reported not verified by this run, and the run continues. A derive dispatch this command built wrong stops with `PRD_GROUND_VERIFY_UNBLIND`.
+
 ## [3.10.2] — 2026-10-02
 
 **Update `workflows-core` to 1.8.5 with this release**: its `resolve-address` now stops, on either address form, on a `$SPECS_PATH` that points inside the specs tree, which the commands and pages below handle and describe.
