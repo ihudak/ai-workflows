@@ -205,7 +205,7 @@ state in this container setup.
 - **`.git` resolves but is not writable → silent no-op**, exactly as before. The artifacts are going to a report-only tier the plugin does not manage, and a read-only specs mount is a normal state in this container setup. Saying nothing is correct here: there is nothing for the operator to fix.
 - **`$SPECS_PATH` is set to a path that is not a directory, or `rev-parse --git-dir` fails there → emit a notice**, one line naming the variable and the path, then continue. This is **never** a supported state: a set-but-not-a-repository `$SPECS_PATH` is a typo, a missing mount, or a path that was right in another container. Under the old blanket silence it looked identical to the read-only case, so a run would write its deliverables, commit nothing, open no pull request, and end on a terminal gate-failed line that named none of it — the operator's first clue being an empty specs tree some time later. **Where the path is a directory and `workflows-core:addressing` §3 `specs-root-check` finds a signal there, the same line also says which one, and names the value to set and the clause that entry point's stop adds. Where that stop has a second line, naming what a misrooted run left behind, the notice adds that line too.** A `specifications/` directory mounted on its own fails `rev-parse` in exactly this way, because the repository's git directory sits above the mount point. A command that resolves no address never reaches that entry point's stop; where this notice fires, it is how such a command learns the cause.
 
-**A passing gate is tested once more, for a `$SPECS_PATH` set inside the specs tree.** On an ordinary checkout, `$SPECS_PATH=<repo>/specifications` meets all three conditions, because git finds the repository above it. A run that resolves no address would then file its bookkeeping inside `specifications/` with nothing said. Examples are `/upgrade`, `/vuln` on tokens carrying none, `/implement` on a direct prompt, `/document` in direct mode, `/docs-init`, `/docs-brand`, `/docs-audit` and the four logging commands. So **where the gate passes, run the tests of `workflows-core:addressing` §3 `specs-root-check`**, exactly as that entry point defines them, its exclusions included. Where a signal holds, emit a notice naming the variable, its value, which signal holds and the value to set, **set `specs_git: misrooted` for the whole run**, then continue. The notice is the stop's own text. It is one line, with the unsupported-layout clause where that applies, plus one more line naming anything a misrooted run left behind and where it belongs. Like the stop, it moves nothing and gives no commands. A run that resolves no address learns all of it here, and nothing later repeats it. On an ordinary checkout, `$SPECS_PATH=<repo>/specifications` prints the prefix `specifications/`, which that entry point's first test catches whether or not an earlier run left a nested `specifications/` behind. **It stays quiet at a correct root.** A correct root's own carrier-bearing files, such as a `templates/` folder, a `README.md` or a `docs/` page, fail (b)'s prefix test, whether or not `specifications/` exists yet. A `$SPECS_PATH` like `<repo>/specs` holding `specs/specifications/` prints `specs/`, matches no signal, and draws the notice below instead. A specs repository nothing has been written into yet matches nothing. `specs-root-check` records two unsupported layouts, each with its own reason. The specs root that is itself a subdirectory named `specifications` draws this notice on every run. The specs tree inside a larger repository draws the notice below.
+**A passing gate is tested once more, for a `$SPECS_PATH` set inside the specs tree.** On an ordinary checkout, `$SPECS_PATH=<repo>/specifications` meets all three conditions, because git finds the repository above it. A run that resolves no address would then file its bookkeeping inside `specifications/` with nothing said. Examples are `/upgrade`, `/vuln` on tokens carrying none, `/implement` on a direct prompt, `/document` in direct mode, `/docs-init`, `/docs-brand`, `/docs-audit` and the four logging commands. So **where the gate passes, run the tests of `workflows-core:addressing` §3 `specs-root-check`**, exactly as that entry point defines them, its exclusions included. Where a signal holds, emit a notice naming the variable, its value, which signal holds and the value to set, **set `specs_git: misrooted` for the whole run**, then continue. The notice is the stop's own text. It is one line, with the unsupported-layout clause where that applies, plus one more line naming anything a misrooted run left behind and where it belongs. Like the stop, it moves nothing and gives no commands. A run that resolves no address learns all of it here, and only `commit-artifacts` repeats it, verbatim, at the end of the run (§4 step 1, §6). On an ordinary checkout, `$SPECS_PATH=<repo>/specifications` prints the prefix `specifications/`, which that entry point's first test catches whether or not an earlier run left a nested `specifications/` behind. **It stays quiet at a correct root.** A correct root's own carrier-bearing files, such as a `templates/` folder, a `README.md` or a `docs/` page, fail (b)'s prefix test, whether or not `specifications/` exists yet. A `$SPECS_PATH` like `<repo>/specs` holding `specs/specifications/` prints `specs/`, matches no signal, and draws the notice below instead. A specs repository nothing has been written into yet matches nothing. `specs-root-check` records two unsupported layouts, each with its own reason. The specs root that is itself a subdirectory named `specifications` draws this notice on every run. The specs tree inside a larger repository draws the notice below.
 
 **A `$SPECS_PATH` below its repository's top level.** `$SPECS_PATH` names the root of a dedicated specs repository, the directory that holds `specifications/`. **A specs tree inside a larger repository is unsupported**, because this plugin switches branches and commits in the repository `$SPECS_PATH` belongs to. On a correct root, §3.5 settles and switches its branch at run start, `commit-artifacts` (§4) commits on it, and `workflows-core:phase-handoff` §2 cuts a branch there and commits a deliverable. In a repository that also holds code, each of those would move the checkout of everything else that repository holds, so none of them switches or commits under the flag this notice sets. So where the gate passes and `git -C "$SPECS_PATH" rev-parse --show-prefix` prints a non-empty prefix, emit one notice line, **set `specs_git: misrooted` for the whole run**, then continue (§1). The line names the variable, its value and the repository's top level (`git -C "$SPECS_PATH" rev-parse --show-toplevel`), and says that a specs tree inside a larger repository is unsupported because the plugin switches branches and commits there. This is a misconfigured `$SPECS_PATH` in §1 rule 7's sense. **Skip it where the inside-tree notice above already fired this run.** That notice names the same path and what to set instead, and, where the value it names is below its repository's top level, that the layout is unsupported. **What a run that stops on `specs-root-check` prints depends on its order (§3).** A command that resolves its address first stops there and runs no preflight, so it prints neither notice, only the stop. A command that runs `specs-preflight` first, on its argument keys as typed (`/idea`, and `/vuln` on a token carrying a key, among them), prints the inside-tree notice here and then stops at its resolution, so the operator sees the notice and then the stop, which name the same cause.
 
@@ -431,7 +431,7 @@ So G0 propagates: it sets `specs_git: blocked` for the whole run,
 tree, uncommitted and intact, and the notice gives the exact command to attach
 them to a branch.
 
-**Of the three guards, this is the only one that disables the terminal commit** — `commit-artifacts` step 1's gate also no-ops silently where §3.1's environment conditions fail, so *the only condition* full stop, which this sentence used to claim, is wider than the guards it is about. In particular
+**Of the three guards, this is the only one that disables the terminal commit** — `commit-artifacts` step 1's gate also no-ops silently where §3.1's environment conditions fail on a run carrying neither flag, so *the only condition* full stop, which this sentence used to claim, is wider than the guards it is about. In particular
 G1 does not — see the note in its row.
 
 ## 4. `commit-artifacts` — terminal step
@@ -502,18 +502,27 @@ to state.
 
 1. **Gate.** All of §3.1's environment conditions, **plus** the run must not
    carry `specs_git: blocked` from §3.3 G0 or `specs_git: misrooted` from §3.1.
-   - Fails on path / repo / permission grounds → **silent no-op**, matching the
-     emission ladders' silent-skip discipline. Nothing committed, nothing
-     reported, run unaffected.
-   - Fails on `specs_git: blocked` → **not silent**: re-emit the §5 blocking
+   **Test the two flags first, and a flag's outcome below takes precedence
+   over an environment failure**, so each state has one outcome.
+   `specs_git: misrooted` is often set where an environment condition fails
+   too: §3.1's non-repository notice sets it where `specs-root-check` finds a
+   signal, as on a `specifications/` directory bind-mounted on its own, and
+   that entry point's stop sets it on a path no `rev-parse` reaches. Such a
+   run takes the misrooted outcome, never the silent one. `specs_git: blocked`
+   is set only behind a passing gate (§3.3 G0), so it never meets one.
+   - Carries `specs_git: blocked` → **not silent**: re-emit the §5 blocking
      notice. The repo *is* managed; the plugin is deliberately refusing to
      commit, and the user must know.
-   - Fails on `specs_git: misrooted` → **not silent**: re-emit the §3.1 notice,
-     or `specs-root-check`'s stop, that set it. Nothing is committed, and the
-     tail's emitters wrote nothing under `$SPECS_PATH` (§3.1). What the command
+   - Carries `specs_git: misrooted` → **not silent**: re-emit the §3.1 notice,
+     or `specs-root-check`'s stop, that set it, whether or not §3.1's
+     environment conditions hold. Nothing is committed, and the tail's
+     emitters wrote nothing under `$SPECS_PATH` (§3.1). What the command
      itself wrote there — a noticed run's deliverable, or one of §2.1's single
      files such as `implementation.md` — stays written and uncommitted, and
      what was already there sits where this run found it wrong.
+   - Carries neither, and fails on path / repo / permission grounds →
+     **silent no-op**, matching the emission ladders' silent-skip discipline.
+     Nothing committed, nothing reported, run unaffected.
 2. **Enumerate and stage** per §2.1. OTHER paths are never staged.
 3. **Nothing staged** (the gate passed but no artifact path is dirty) → no
    commit; emit the §6 `nothing to commit` outcome line. This is distinct from
@@ -646,8 +655,8 @@ report was composed earlier.
 | Nothing to commit | `Specs repo: no session artifacts to commit` |
 | Locked | `Specs repo: skipped — another session holds the repo (index.lock); the next run picks the artifacts up` |
 | Blocked (G0) | `Specs repo: NOT COMMITTED — see the notice below`, followed by the §5 G0 block verbatim |
-| Misrooted (§3.1) | `Specs repo: NOT COMMITTED — SPECS_PATH is misplaced; see the notice below`, followed by the §3.1 notice, or `specs-root-check`'s stop, verbatim |
-| Gate failed on environment | *(no line at all — silent no-op)* |
+| Misrooted (§3.1), whether or not the environment conditions hold | `Specs repo: NOT COMMITTED — SPECS_PATH is misplaced; see the notice below`, followed by the §3.1 notice, or `specs-root-check`'s stop, verbatim |
+| Gate failed on environment, on a run carrying neither flag | *(no line at all — silent no-op)* |
 
 When a guard fired at §3.3 G1 or G2, the outcome line is followed by that
 guard's §5 block, repeated verbatim.

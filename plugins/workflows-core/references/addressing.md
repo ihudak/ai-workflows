@@ -173,7 +173,8 @@ by either of two tests, each against the filesystem and none by parsing a name:
   mount, whose parent (a) cannot see, and for a `$SPECS_PATH` pointing at a PRD or Epic folder in the
   tree, with or without keyed folders below it. Reserved subdirectories are skipped because
   `revisions/` holds archived copies of a PRD and `brd/` holds the inventory, and both of those assert
-  their parent's key and kind. Stop testing at the first that qualifies.
+  their parent's key and kind. Stop testing at the first that qualifies; the stray-folder form of the
+  stop below finishes the loop and names every subdirectory that qualifies.
   **What neither signal sees, as a class: a `$SPECS_PATH` that is, or holds only, folders not named
   `<KIND>-<key>-`, and that lies outside any work tree's top-level `specifications/`.** Inside a
   repository, (a)'s first test catches every such path by its prefix, a legacy unprefixed folder
@@ -221,16 +222,36 @@ cost (`cost-emission` §8), feedback (`feedback-emission` §2), follow-ups (`fol
 writes nothing under `$SPECS_PATH`.
 
 **The stop is one line**, naming the variable, its value, the signal and the value to set, plus the
-unsupported-layout clause where it applies. **Where `$SPECS_PATH` is itself a work tree's top level**
-(`--show-prefix` prints nothing), the variable is right and only (b)'s second half can have fired: a
-stray specs folder sits at the top, outside `specifications/`. The stop then names no value to set.
-It names each stray folder and `<value>/specifications/` as where it belongs, and nothing else.
+unsupported-layout clause where it applies. **Where only (b)'s second half fired and the walk found no
+value**, that one-line form has nothing true to name, because the folder that fired sits beside `$SPECS_PATH`'s
+tree rather than above it. The stop takes one of two other forms instead, chosen in this order. Where
+the walk did find a value, `$SPECS_PATH` lies at or below a `specifications/` directory and the form
+above is right, whichever signal fired.
+
+- **The stray-folder form**, where `git -C "$SPECS_PATH" rev-parse --show-prefix` succeeds and either
+  prints nothing, so `$SPECS_PATH` is a work tree's top level, or `$SPECS_PATH/specifications/` exists.
+  The variable names the right directory, and specs folders sit beside `specifications/` rather than
+  in it. The stop names no value to set. It finishes (b)'s loop and names every subdirectory that
+  qualifies, with `<value>/specifications/` as where they belong, and nothing else, plus the
+  unsupported-layout clause where `--show-prefix` is not empty: `<repo>/specs` holding
+  `specs/specifications/` and a hand-placed `specs/PRD-S-9-x/` is that case.
+- **The two-readings form** everywhere else: where `rev-parse` fails, or where `$SPECS_PATH` is below
+  its repository's top level and holds no `specifications/`. Nothing on disk tells the two layouts
+  apart. `$SPECS_PATH` may be a `specifications/` directory mounted or named otherwise, whose folders
+  are where they belong and whose own nested `specifications/`, where there is one, is what a
+  misrooted run left. Or it may be a specs root whose folders belong in a `specifications/` below it.
+  The stop states both readings and what each needs, and the operator chooses. Where `rev-parse`
+  fails, the second reading also needs `$SPECS_PATH` made a repository's top level, since
+  `specs-repo-git` §3.1 reports a non-repository `$SPECS_PATH` on every run. Where it succeeds, the
+  second reading carries the unsupported-layout clause.
 
 **Where a run made while misrooted left anything behind, it adds one more line naming it.** That
 covers a nested `$SPECS_PATH/specifications/` and the folders in it, and any of
 `$SPECS_PATH/dev-workflows-feedback/`, `$SPECS_PATH/dev-workflows-cost/` and
-`$SPECS_PATH/documentation/<slug>/dev-workflows/` that exist. **It is never added where `$SPECS_PATH`
-is a work tree's top level**: there `specifications/` and those directories are where they belong.
+`$SPECS_PATH/documentation/<slug>/dev-workflows/` that exist. **It is never added in the stray-folder
+form**: there `specifications/` and those directories are where they belong. In the two-readings form
+it is added under the first reading only, and the line says so, because under the second those
+directories are where they belong too.
 Each item is named with where it belongs: the nested folders in
 `<the value the walk found>/specifications/`, and each bookkeeping directory at the same path under
 `<the value the walk found>`. Where the walk found no value, they belong in *the specs repository's
@@ -238,19 +259,25 @@ Each item is named with where it belongs: the nested folders in
 
 What each one costs is not the same. `specs-repo-git` §2.1's classifier never stages
 `dev-workflows-feedback/` or `dev-workflows-cost/` left at that depth, so G1 fires on every later
-run, and a pending cost there never reconciles. A `documentation/<slug>/dev-workflows/` there matches
-§2.1's `<specs-root>/documentation/*/dev-workflows/**` shape one level too deep, so the classifier
-takes it for an artifact. **While `$SPECS_PATH` stays misrooted it is never committed**: porcelain
-prints its path relative to the repository's top level, and `git -C "$SPECS_PATH" add` names a path
-that does not exist from there, which fails. **The first run after the variable is fixed commits it,
-in the wrong place, unless it is moved first.** The line says so, and it has to be moved like the
-rest. **The plugin
+run, and a pending cost there never reconciles. **A `documentation/<slug>/dev-workflows/` and a
+nested `specifications/` are worse, because part of each is committed in the wrong place.** Seen from
+the repository's top level, which is where porcelain prints from, every path under either begins
+`specifications/`. Their bookkeeping matches §2.1's `^(specs|specifications|vis)/.+/dev-workflows/`
+shape, and an `implementation.md` or another of §2.1's single files in a nested folder matches its
+single-file shape, so the classifier takes both for artifacts. **While `$SPECS_PATH` stays
+misrooted they are never committed**: `git -C "$SPECS_PATH" add` names a path that does not exist
+from there, which fails. **The first run after the variable is fixed commits them, in the wrong
+place, unless they are moved first.** A deliverable in a nested folder is OTHER and fires G1 on
+every run instead. A nested tree left in place also lies within `resolve-address`'s three-level
+search (§3) from the corrected root, so a key whose folder only that tree holds resolves into it.
+The line says so for each, and each has to be moved like the rest. **The plugin
 moves nothing and gives no commands**: a move has to be right in every state the repository might
 be in, and only the operator can see that state:
 
 `SPECS_PATH_INSIDE_TREE: SPECS_PATH is <value>, which <is itself a specifications/ directory | is inside the specifications/ directory | is itself a specs folder, asserting key <key> | holds the specs folder <subdirectory> directly> — every folder lives under $SPECS_PATH/specifications/, so this run would look for and create folders in the wrong place; it wrote nothing under that path, and its cost and feedback are reported here instead. Set SPECS_PATH to <the value the walk found | the directory that holds specifications/> where it is set, and re-run.[ <the value the walk found> is not the top level of its repository (<that repository's top level>), and a specs tree inside a larger repository is unsupported: this plugin switches branches and commits in that repository.]`
-`[top-level variant: SPECS_PATH_INSIDE_TREE: SPECS_PATH is <value>, the top level of its repository, and holds the specs folder <subdirectory> outside <value>/specifications/, where every folder lives. SPECS_PATH is right; move <subdirectory> into <value>/specifications/ yourself, commit the move, then re-run — the plugin moves nothing. This run wrote nothing under <value>, and its cost and feedback are reported here instead.]`
-`[Misrooted runs left: <value>/specifications/ (<folder>, …), which belongs in <the value the walk found>/specifications/ | the specs repository's specifications/; <value>/<bookkeeping directory>/, which belongs at <the value the walk found>/<bookkeeping directory>/ | the same path at the specs repository's top level[, which the first run after SPECS_PATH is fixed commits there in the wrong place unless it is moved first]; … Move them yourself, commit the move, then re-run — the plugin moves nothing.]`
+`[stray-folder form: SPECS_PATH_INSIDE_TREE: SPECS_PATH is <value>, <the top level of its repository | which holds <value>/specifications/>, and holds the specs folder(s) <subdirectory>[, <subdirectory>…] outside <value>/specifications/, where every folder lives. SPECS_PATH names the right directory; move <subdirectory>[, <subdirectory>…] into <value>/specifications/ yourself, commit the move, then re-run — the plugin moves nothing. This run wrote nothing under <value>, and its cost and feedback are reported here instead.[ <value> is not the top level of its repository (<that repository's top level>), and a specs tree inside a larger repository is unsupported: this plugin switches branches and commits in that repository.]]`
+`[two-readings form: SPECS_PATH_INSIDE_TREE: SPECS_PATH is <value>, which holds the specs folder <subdirectory> directly, and nothing on disk says whether <value> is a specifications/ directory under another name or a specs root. If it is a specifications/ directory, set SPECS_PATH to the directory that holds it, where it is set. If it is a specs root, move <subdirectory> and every other specs folder beside it into <value>/specifications/ yourself and commit the move<, and make <value> the top level of a git repository, which it is not | ; <value> is not the top level of its repository (<that repository's top level>), and a specs tree inside a larger repository is unsupported: this plugin switches branches and commits in that repository>. Then re-run — the plugin moves nothing. This run wrote nothing under that path, and its cost and feedback are reported here instead.]`
+`[<in the two-readings form only: If <value> is a specifications/ directory, m|M>isrooted runs left: <value>/specifications/ (<folder>, …), which belongs in <the value the walk found>/specifications/ | the specs repository's specifications/, and which the first run after SPECS_PATH is fixed searches for keys and commits bookkeeping from, in the wrong place, unless it is moved first; <value>/<bookkeeping directory>/, which belongs at <the value the walk found>/<bookkeeping directory>/ | the same path at the specs repository's top level[, which the first run after SPECS_PATH is fixed commits there in the wrong place unless it is moved first]; … Move them yourself, commit the move, then re-run — the plugin moves nothing.]`
 
 **It offers no "enter the path" option**, unlike *Required path environment variable unset*
 (`workflows-core:escalation-rules`). The wrong value lives in the environment, so a per-run override
