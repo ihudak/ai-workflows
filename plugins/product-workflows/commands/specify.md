@@ -924,7 +924,7 @@ Cap: one fix cycle + one re-review maximum.
 
 ## Phase 7 — Handoff
 
-Write `specification.md` (`Published: no`), `_session.md` and `_glossary.md` — never an `idea.md`, on either route (Phase 2) — into the feature folder Phase 2 resolved: the PRD folder itself (on the BRD route, the slice folder) when `focus_key` is null, or the `EPIC-` subfolder `focus_key` names, whether addressed directly or selected by Step A, when it is set.
+Write `specification.md` (`Published: no`), `_session.md` and `_glossary.md` — never an `idea.md`, on either route (Phase 2) — into the feature folder Phase 2 resolved: the PRD folder itself (on the BRD route, the slice folder) when `focus_key` is null, or the `EPIC-` subfolder `focus_key` names, whether addressed directly or selected by Step A, when it is set — unless Phase 1's "Use a different path" named another folder.
 
 **Wherever `prd_dir` holds `grounding/`, on either route, close the consumption loop before
 the offer.** The design's *Consumption tracking* section (§7.3) has every finding and decision record
