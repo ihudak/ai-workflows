@@ -44,9 +44,9 @@
 # follow it.
 #
 # Keys cover every model the plugin's routing policy can reach: the Opus chain (§2) and
-# the Sonnet chain (§2.1: claude-sonnet-5-5 -> 5 -> 4-6 -> 4-5) -- plus Fable and Haiku,
-# which no chain selects but a session or an enforced model may run on. The engine
-# exact-matches first, then falls back to the longest table key that is a prefix of the
+# the Sonnet chain (§2.1: claude-sonnet-5-5 -> 5 -> 4-6 -> 4-5) -- plus Opus 4.5, Mythos,
+# Fable and Haiku, which no chain selects but a session or an enforced model may run on.
+# The engine exact-matches first, then falls back to the longest table key that is a prefix of the
 # model id, so a dated id (claude-sonnet-5-20250930, claude-haiku-4-5-20251001) prices
 # off its undated base key automatically.
 #

@@ -131,7 +131,7 @@ Record the chosen model as `detection_model:` in the `model_routing` block.
 friction and locating the wrong line in the plugin's source is judgement, not
 throughput; it takes this chain because it is the tier `impl-maintenance`, the agent it
 replaces, runs on. No chain in this file names Haiku; `run-flags` §2 carries the Haiku
-rows an enforced Haiku value resolves against.
+rows the `haiku` alias resolves against.
 
 ---
 
