@@ -14,7 +14,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ### Fixed
 
 - **`grounding-format` did not say whether a baseline finding owes a positive control**, and a live verifier ruled that it did, forcing `contradict` on every run's baseline; §2.2 and §4.1 now say it owes none, because `baseline-integrity`'s three commands are git's own report over the whole checkout rather than a search, and §8's `not-owed` row names it.
-- **§4.1 now says a run that mints a baseline finding supersedes every earlier live one for that repository**, so a plain re-run no longer leaves two live baseline findings for one repository and pin.
+- **§4.1 now says a run that mints a baseline finding supersedes that repository's earlier baseline findings**, each one an earlier `baselines.md` entry records by id, so a plain re-run no longer leaves two live baseline findings for one repository and pin; an entry that records no id, or an id no block carries, supersedes nothing and is reported.
 - **`phase-handoff` §2.4 named a fixed model, `Claude Opus 5`, in the deliverable commit's `Co-Authored-By` trailer**, which goes stale with every model release; the trailer now names the model the session runs on.
 
 ## [1.8.5] — 2026-10-02

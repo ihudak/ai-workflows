@@ -141,9 +141,6 @@ Every return opens with the `mode` it was dispatched in, with one exception: a b
 ```yaml
 mode:    derive
 status:  OK | INPUT_MISSING | INPUT_UNBLIND | REPO_MISSING | FRAME_SET_MISSING | NO_INDEX | STALE_INDEX | COMMIT_MISMATCH
-commits:                     # every repository pair Process step 1 checked — omitted on a design-only batch
-  - repo_path: <absolute path>
-    commit:    <the resolved commit this re-derivation was checked against>
 findings:                    # one entry per finding in the batch, on status: OK only
   - finding_id:   <CG#n> | <DG#n>
     status:       OK | INPUT_MISSING

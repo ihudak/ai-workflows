@@ -313,4 +313,4 @@ A duplicate commit on another session's branch is theirs to resolve and, where t
 - *One dispatch with the originals sealed in a file the agent opens after deriving.* Blind by instruction again.
 - *The comparison done inline by Phase 7.* Running controls and judging agreement would move to the session's model, which need not be Opus, and every result would land in the orchestrator's context.
 - *Continuing the same agent with the withheld fields.* Agent continuation is not available in every harness these commands run in.
-- *Checkpoint and resume across a Phase 7 stop.* With batching a lost pass is about 24 dispatches; an incomplete result is retried once instead.
+- *Checkpoint and resume across a Phase 7 stop.* With batching a lost pass is about 24 dispatches; an incomplete result is retried once per verification pass instead.

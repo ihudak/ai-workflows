@@ -378,8 +378,9 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   put one item per repository into every such report forever, with no action that could close one.
   It owes no positive control: the three commands are git's own report over the whole checkout, not
   a search that could have missed something. And each run that grounds code records a fresh one per
-  repository and supersedes that repository's earlier baseline findings rather than re-verifying
-  them, so a repository carries one live baseline finding however often the folder is re-ground.
+  repository and supersedes that repository's earlier baseline findings — each one an earlier
+  `grounding/baselines.md` entry records by id — rather than re-verifying them, so a repository
+  carries one live baseline finding however often the folder is re-ground.
 - **Phase 4.5 — documentation is a lead and a divergence, never evidence.** No `[CG#n]` or
   `[DG#n]` may cite a documentation page in its `evidence`, under any verdict, in any phase.
   Grounding answers whether a claim is true of a *specific commit*
@@ -396,9 +397,10 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   [`/brd-split`](brd-split.md) (`workflows-core:grounding-format` §8).
 - **Phase 7 — `grounding-verifier` over every finding, frontmatter-pinned to Opus (no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one).** Every finding the run holds
   — its own, and every `[CG#n]` already on file pinned to a repository whose `HEAD` still matches its
-  recorded pin (none under `--no-code`), but never a `[DG#n]` already on file, nor a repository's
-  earlier baseline finding, which the run supersedes for the fresh one it records — except any
-  already reading `SUPERSEDED`: a retired finding keeps the outcome it had, and re-deriving it could only bring it back to life beside its successor. It runs in batches of up to 25 findings per repository or frame set, each in two dispatches: a blind re-derivation that is handed each finding's requirement and source and never its verdict, evidence, control or citation — and refuses a dispatch that carries one — then a comparison that runs the original's control and settles the outcome without changing the blind result. A finding whose result comes back incomplete is re-dispatched once. A finding without a
+  recorded pin (none under `--no-code`), but never a `[DG#n]` already on file, nor an earlier
+  baseline finding — the run supersedes a repository's for the fresh one it records, and one recorded
+  for a repository the run did not resolve is not this run's to re-check — except any
+  already reading `SUPERSEDED`: a retired finding keeps the outcome it had, and re-deriving it could only bring it back to life beside its successor. It runs in batches of up to 25 findings per repository or frame set, each in two dispatches: a blind re-derivation that is handed each finding's requirement and source and never its verdict, evidence, control or citation — and refuses a dispatch that carries one — then a comparison that runs the original's control and settles the outcome without changing the blind result. A finding whose result comes back incomplete is re-dispatched once per verification pass — the first pass, and the class-4 sweep's re-check of a design finding whose cited code finding this run rewrote. A finding without a
   verifier outcome is never treated as evidence. **The outcome is first reconciled against the verdict
   the verifier re-derived**, which it returns on every outcome: `agree` means *the same verdict* and
   `extend` means *the claim holds*, so either arriving with a differing verdict is a return that
@@ -432,9 +434,12 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   from — see `workflows-core:grounding-format` §8. A verifier that
   refuses rather than verifying (a moved `HEAD`, a repository or frame set no longer resolvable)
   stops the run before Phase 8 writes anything, and so does a finding this run produced that is still
-  incomplete after its one retry (`PRD_GROUND_VERIFY_INCOMPLETE`), so no finding is ever written
+  incomplete after its retry in the pass that dispatched it (`PRD_GROUND_VERIFY_INCOMPLETE`), so no finding is ever written
   without an outcome, which is what keeps `/brd-split`'s own verification gate reachable on the BRD
-  route. A finding is incomplete when it is missing from a return, has a blank `own_evidence`, is an
+  route. A code finding on file whose commit is the recorded pin of two repositories this run
+  resolved stops the run before Phase 8 too (`PRD_GROUND_VERIFY_AMBIGUOUS_REPO`): the findings file
+  records no repository per finding, so it belongs to no one batch. The stop names both
+  repositories; re-run naming only one, since both clone one project at one commit. A finding is incomplete when it is missing from a return, has a blank `own_evidence`, is an
   `INCOMPLETE` entry carrying no outcome, has a comparison echo that differs from the blind result, or
   is a `contradict` whose return lacks the positive control the rewritten finding would owe. The same
   incomplete return on an on-file finding, after its retry, writes nothing: the finding keeps the
@@ -450,7 +455,7 @@ existing product being extended: an `[AC#n]` the code already satisfies is scope
 building, and a premise the code contradicts is a requirement that would have been built on sand —
 both found before an architecture or a specification is authored against them. It earns little on a
 greenfield PRD, where every finding is a verified absence — true, and low-information — and each one
-still costs an independent Opus re-derivation (Phase 7, batched — the run states the arithmetic at the start of Phase 1 — frontmatter-pinned, no override unless `--enforce-model` enforces one). The Final report says so outright rather than only reporting it: where every claim comes
+still costs an independent Opus re-derivation (Phase 7, batched, frontmatter-pinned, no override unless `--enforce-model` enforces one). Phase 1 states that cost as its first output on every run that grounds code: the claim count; the findings each repository adds, one per claim plus its baseline; the verification batches and dispatches those take, and those each frame set's design findings take; the model they run on, Opus unless `--enforce-model` sets another; and how many claim findings already on file, baselines excluded, a re-run re-verifies. The Final report names a greenfield PRD outright rather than only reporting its findings: where every claim comes
 back a verified absence, it states plainly that this PRD is greenfield against the repositories
 resolved, instead of presenting a wall of absences as a mixed result — a second run over the same
 folder is exactly what that headline exists to make unnecessary.

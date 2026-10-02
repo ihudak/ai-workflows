@@ -428,13 +428,16 @@ place of the `path`/`lines` shape a claim finding uses. A baseline finding with 
 blocks `/brd-split` exactly like any other (§8); none of this section excuses it from the
 gate.
 
-**A run that mints a baseline finding supersedes every earlier live one for that repository.**
+**A run that mints a baseline finding supersedes that repository's earlier baseline findings — each
+`[CG#n]` an earlier `baselines.md` entry for it records, resolved against the blocks parsed (§2.1)
+and never matched out of a `claim`, that does not already read `SUPERSEDED`.**
 `product-workflows:prd-ground` assigns a fresh baseline id on every run that grounds code, so
 without this each re-run would leave one more live finding asserting the same repository's pin.
 Each earlier block takes `verdict: SUPERSEDED`, its verdict as `prior_verdict`, and a note naming
 the fresh finding, every other field — its `outcome` included — as it stood: the supersession §2
-and §8 define. Nothing re-verifies a block retired this way; the run that retires it verifies its
-successor.
+and §8 define. An earlier entry that records no id, or an id no block carries, supersedes nothing,
+and the run reports it rather than searching the file for a block that looks like a baseline.
+Nothing re-verifies a block retired this way; the run that retires it verifies its successor.
 
 ## 5. Horizon
 
