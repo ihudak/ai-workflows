@@ -205,23 +205,28 @@ spec §6.4 records against `/ready --claimed`, not a second one.
 
 ## Phase 1 — Clarification
 
-**Rule: Ask, don't guess. This rule is absolute.**
+**Rule: Look, then ask; never guess.** The description is the starting intent, however brief — never ask the user to restate it.
 
-Before producing a plan, analyze the description for:
+Before producing a plan, list the candidate ambiguities in the description:
 - Ambiguous scope or unclear boundaries
 - Missing constraints (performance, security, backwards-compatibility)
 - Multiple valid implementation approaches
 - Undefined integration points or dependencies
 - Missing acceptance criteria
 
-If **any** ambiguity exists, ask the user. Rules:
+**Look before asking.** Try to settle each candidate from what this run can read: the inputs Phase 0 resolved, the code, the repository's own `CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md` and `README.md`, and `git log`. Look only as far as each candidate needs — this is not Phase 2A's or Phase 2B's exploration, which still runs. Then sort each candidate:
+- **Settled by the reading** — missing evidence, not a decision: ask nothing, and carry it into the plan with where it was found.
+- **Left open, and its answer changes what the user would notice in the result** — behaviour, scope, an interface, compatibility, a constraint nobody wrote down: a **decision**. Ask it.
+- **Left open, and the user would not notice the answer** — settle it yourself and list it in the plan's Assumptions.
+
+Ask every decision. Rules:
 - Use `choices` arrays for every question — never plain text questions
 - Every `choices` array carries 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`Skill(skill: "workflows-core:reference", args: "escalation-rules")` §0), which is what allows free-text
 - When a clearly superior default exists, make it the first choice and label it `"(Recommended)"`
 - Group related decisions into a single question (minimize total questions)
 - Do **not** proceed until all questions are answered
 
-If **nothing** is ambiguous, skip directly to Phase 1.5.
+If no candidate is left a decision, skip directly to Phase 1.5.
 
 ---
 
@@ -359,6 +364,8 @@ Only when the run resolved a key (PRD/Epic) — i.e. NOT direct-prompt mode — 
 
 **Wait for the agent's response before proceeding. If the agent returns no relevant files or fails, proceed with the plan using your own file reads to gather context. Do not begin writing the plan until the file map is returned or you have gathered context yourself.**
 
+**Write the exploration down, then re-test the class.** Write the returned file map — or, where you gathered context yourself, what those reads found — to a temp file (`command mktemp -t dw-impl-summary-XXXXXX`, never inside a repo tree) and record its absolute path as `summary_file`. Then test the Phase 1.5 class again against `workflows-core:model-routing/classification` §1.1, reading the file map: the files the change will need to touch, and what they do. Where a §1.1 trigger now applies — more than 3–5 non-test files, authentication or authorization, a schema or migration, a public contract, concurrency, or any other item on that list — raise the class to SIGNIFICANT (HIGH-RISK under §1.1's multiplier), announce `Re-classified upward after exploration: <trigger> (<path>)`, record the new class and that reason in the `model_routing` block, and continue at Phase 2B with `summary_file` as its codebase summary — no second exploration. **Skip this paragraph where this phase was entered from a `### Re-classification` the user accepted at Phase 2B**: `summary_file` already holds the exploration, and that acceptance is the plan-approval override, which a re-test would undo.
+
 → Use the returned file map as codebase context when writing the plan below.
 
 Produce a written implementation plan:
@@ -387,7 +394,9 @@ choices: ["Approve & implement now (Recommended)", "Revise plan", "Cancel"]
 
 ## Phase 2B — Opus-planned (SIGNIFICANT / HIGH-RISK)
 
-**Codebase exploration** — If Phase 1.7 ran (`fan_out = true`), use its **multi-source codebase summary** (already written to `summary_file` in Phase 1.7 step 4) as the codebase context and skip the single Explore subagent. Otherwise, run the same exploration subagent call as Phase 2A (same prompt, same fallback rule), then write the Explore agent's returned output to a temp file (`command mktemp -t dw-impl-summary-XXXXXX`, never inside a repo tree) recorded as `summary_file`. Either way, `summary_file` holds an absolute path before the planner is dispatched.
+**Phase 3A step 5's re-plan also runs this phase**, from the `risk-planner` dispatch on, and that step says where each arm below leads on it.
+
+**Codebase exploration** — If Phase 1.7 ran (`fan_out = true`), use its **multi-source codebase summary** (already written to `summary_file` in Phase 1.7 step 4) as the codebase context and skip the single Explore subagent. If Phase 2A's re-test raised the class, use the exploration it wrote to `summary_file` the same way, and skip the subagent likewise. Otherwise, run the same exploration subagent call as Phase 2A (same prompt, same fallback rule), then write the Explore agent's returned output to a temp file (`command mktemp -t dw-impl-summary-XXXXXX`, never inside a repo tree) recorded as `summary_file`. Either way, `summary_file` holds an absolute path before the planner is dispatched.
 
 Once the file map is returned, delegate planning to Opus.
 
@@ -397,10 +406,11 @@ When a `specification.md`/`design.md` is in scope, extract its **in-scope** `[Ux
   > "Produce the risk-weighted plan for the following brief:
   >
   > Task description: [substitute full description]
-  > Classification: [SIGNIFICANT | HIGH-RISK] — reason: [the criterion from Phase 1.5, or the multi-source floor from Phase 1.6 when fan_out]
+  > Classification: [SIGNIFICANT | HIGH-RISK] — reason: [the criterion from Phase 1.5, the multi-source floor from Phase 1.6 when fan_out, or the raise — Phase 2A's re-test or Phase 3A step 5 — with its trigger and path]
   > Codebase summary: read it from the file at [the `summary_file` absolute path]
   > Constraints: [any from clarification, plus runtime/version/deadline known]
   > Current state: branch = [git branch], uncommitted = [git status --short summary]
+  > Work so far: [on Phase 3A step 5's re-plan only — read the diff at the `partial_diff_file` path: edits already on the branch, part of this change; omit the line otherwise]
   > Specs in scope: [the resolved specification.md/design.md path(s) from Phase 0, or "none"]
   > Unresolved scan themes: [the summary's `## Unresolved` entries, or "none"] — each is a theme the scan could not settle, NOT a confirmed gap; carry every one into the plan's risks and never plan as though its location is known
   > task_shape: [bug | omit]"
@@ -410,7 +420,7 @@ When a `specification.md`/`design.md` is in scope, extract its **in-scope** `[Ux
 1. A full plan in the risk-weighted format (the normal case).
 2. A short `### Re-classification` section, if the planner decided on inspection that the task is actually `SIMPLE` or `MODERATE`.
 
-**If the return contains `### Re-classification`:** surface it to the user, ask for confirmation of the revised level with a `choices` prompt (`["Accept revised classification (Recommended)", "Override and stay SIGNIFICANT/HIGH-RISK", "Cancel"]`). If the user accepts, **fall back to Phase 2A** (standard plan) using the codebase context already captured above (the `summary_file` path) — the Phase 1.7 **multi-source codebase summary** when `fan_out = true`, otherwise the Explore summary — and do not re-run exploration. Accepting here is the user exercising the **plan-approval override** of the multi-source SIGNIFICANT floor (Phase 1.6); that is the sanctioned way to leave the fan_out floor. If the user overrides, re-invoke risk-planner with an additional constraint stating the classification is intentional; do not down-classify again. If the user cancels, stop and summarize.
+**If the return contains `### Re-classification`:** surface it to the user, ask for confirmation of the revised level with a `choices` prompt (`["Accept revised classification (Recommended)", "Override and stay SIGNIFICANT/HIGH-RISK", "Cancel"]`). If the user accepts, **fall back to Phase 2A** (standard plan) using the codebase context already captured above (the `summary_file` path) — the Phase 1.7 **multi-source codebase summary** when `fan_out = true`, otherwise the Explore summary — and do not re-run exploration. Accepting here is the user exercising the **plan-approval override** — of the multi-source SIGNIFICANT floor (Phase 1.6), or of a raise; that is the sanctioned way to leave either, and Phase 2A's re-test does not run again. If the user overrides, re-invoke risk-planner with an additional constraint stating the classification is intentional; do not down-classify again. If the user cancels, stop and summarize.
 
 **If the return is a full plan whose `### Hypotheses (ranked)` section contains `Ranking withheld`:**
 the planner could not get a red-capable repro, so its hypotheses are absent by design and the rest of
@@ -517,7 +527,13 @@ Store the returned `## Test Baseline` block verbatim — it will be passed to `t
 2. Make precise, surgical changes — do not modify unrelated code
 3. Follow existing code style and LF line endings
 4. Assume broad permissions; avoid unnecessary stops
-5. If a **new ambiguity** emerges mid-implementation: STOP, ask with choices (2–4 options; the harness supplies the free-text escape), resume after answer
+5. If something **new** emerges mid-implementation, look before stopping, and sort it:
+   - **A §1.1 trigger the approved plan did not state** — a fact its Steps and Files did not name: a schema change or migration, an authentication or authorization path, a public contract, concurrency, the non-test files changed passing §1.1's 3–5, or any other item on `workflows-core:model-routing/classification` §1.1's list → **re-plan upward**, once per run:
+     1. Stop editing. Raise the class to SIGNIFICANT (HIGH-RISK under §1.1's multiplier), announce `Re-classified upward during implementation: <trigger> (<path>)`, and record the new class and that reason in the `model_routing` block.
+     2. Write the diff so far — `git add -N . && git diff` — to a temp file (`command mktemp -t dw-impl-partial-XXXXXX`, never inside a repo tree) and record its absolute path as `partial_diff_file`.
+     3. Run Phase 2B from its `risk-planner` dispatch on, with the complete brief: `summary_file` as its codebase summary, this raise as its classification reason, and its `Work so far:` line naming `partial_diff_file`. Its arms lead where they always do, save these: **Approve** writes the new plan over `plan_file` and continues at Phase 3B step 1 — Pre-Phase 3 and Pre-Phase 3.5 are not run again, and the baseline still predates every edit; **Accept revised classification** resumes Phase 3A where it stopped, on the plan already approved; and each **Cancel** — the re-classification prompt's, the repro prompt's and the plan-approval prompt's — stops through Phase 4.6, since files are written (its `"Every run"` list). Every re-dispatch on this path — **Override**, **Revise**, **Help construct a repro** — carries the complete brief, its `Work so far:` line included.
+   - **A decision** — Phase 1's test: the repository cannot settle it, and its answer changes what the user would notice in the result → STOP, ask with choices (2–4 options; the harness supplies the free-text escape), resume after answer. A §1.1 trigger met after this run's one re-plan is asked here too.
+   - **Anything else** → look it up, and continue.
 6. **Run Phase 3.5 below** (test writing + regression verification) — do NOT run tests directly here; Phase 3.5 owns the lint/build/test sequence and the fix loop
 7. Verify the outcome matches the approved plan
 8. Proceed to Phase 4 (post-implementation maintenance).
@@ -541,7 +557,7 @@ Runs after Phase 3A step 5 completes (all code changes written), before the outc
 
 2. **Handle a `test-writer` stop.** Check the report's first line before anything else. If it is `Diff: unreadable at <path>`, the orchestrator's own `test_diff_file` could not be read — this is an orchestrator bug, not a user choice: surface the unreadable path to the user and **stop the run**; do not offer to skip tests (skipping would silently proceed past evidence that could not be read). Otherwise, **where Pre-Phase 3.5 recorded a `test_decision`, apply it** rather than asking again — that question was put to the user before any file was edited. **Record in the Phase 5 `### Deferred items` section every behaviour — a Review focus line included — that the report's `### Notes` names as untested, with the reason it gives** (one it cannot test in isolation, or a `hinted` or `declared` command with no test of its own to follow): it is a test this run could not write. On `skip`, run step 3 (linters and builds) and skip **steps 4–6**, then proceed to Phase 3A step 7 (Verify outcome). **The skip is scoped to the tests because that is what was asked**: Pre-Phase 3.5's option reads *"Skip tests for this run"*, and the lint and build gate is neither a test nor something a missing baseline prevents — a run that skips it commits code that was never compiled, which nobody consented to. There is no second prompt here, and a command supplied here would not help: a capture taken after the edits is a test run, not a baseline. **The gate is the recorded decision, not the report's `Framework` field**: `Framework: not detected` is emitted only where the capture was `COMMAND_NOT_FOUND` (`dev-workflows:test-baseliner` capture step 4), while the other capture that asked — `RUN_FAILED` — names the suites it could not run, so `test-writer` writes against them and reading the field alone would drop the recorded skip — of either provenance — and re-prompt at step 5.
 
-3. **Run linters and builds.** Use the project's standard lint/build commands as discovered by whichever codebase exploration this run actually performed — Phase 2A's subagent, Phase 2B's Explore subagent, or the Phase 1.7 fan-out summary on a `fan_out` run — and, where none of them named one, read them from the repo's own build/lint configuration. **Do not cite Phase 2A here**: Phase 3B step 8 re-enters this step on the SIGNIFICANT / HIGH-RISK path, where Phase 2A never ran, and a Phase 2B `### Re-classification` the user accepts reaches Phase 3A with Phase 2A's own exploration deliberately not re-run. Do not run the full test suite here — that is step 4.
+3. **Run linters and builds.** Use the project's standard lint/build commands as discovered by whichever codebase exploration this run actually performed — Phase 2A's subagent, Phase 2B's Explore subagent, or the Phase 1.7 fan-out summary on a `fan_out` run — and, where none of them named one, read them from the repo's own build/lint configuration. **Do not cite Phase 2A here**: Phase 3B step 8 re-enters this step on the SIGNIFICANT / HIGH-RISK path, which a run reaches with or without Phase 2A's exploration, and a Phase 2B `### Re-classification` the user accepts reaches Phase 3A with Phase 2A's own exploration deliberately not re-run. Do not run the full test suite here — that is step 4.
 
 4. **Invoke `test-baseliner` in verify mode** against the baseline captured in Pre-Phase 3.5:
 
@@ -590,7 +606,7 @@ At each checkpoint, also consider suggesting **`/compact`** to free context befo
 1. Work through each step in order
 2. Make precise, surgical changes — do not modify unrelated code
 3. Follow existing code style and LF line endings
-4. If a **new ambiguity** emerges mid-implementation: STOP, ask with choices (2–4 options; the harness supplies the free-text escape), resume after answer
+4. If something **new** emerges mid-implementation, look before stopping: **a decision** — Phase 1's test: the repository cannot settle it, and its answer changes what the user would notice in the result → STOP, ask with choices (2–4 options; the harness supplies the free-text escape), resume after answer; **anything else** → look it up, and continue.
 4a. **Invoke `test-writer` agent** (inserted before the review diff capture in step 5 so the Opus review sees code and tests together — test adequacy is already a review dimension in `code-review.md`). First, at the orchestrator, capture the diff for the dispatch: write `git add -N . && git diff` (so new files are included) to a temp file (`command mktemp -t dw-impl-diff-XXXXXX`, never inside a repo tree) and record its absolute path as `test_diff_file`. `test-writer` has no shell tool — it can only `Read` the path it is given. Then spawn:
 
    → Agent (subagent_type: "dev-workflows:test-writer", model: `<detection_model — §2.1 Sonnet chain>`):
@@ -611,7 +627,7 @@ At each checkpoint, also consider suggesting **`/compact`** to free context befo
      > "Produce the Opus code review for this brief:
      >
      > Task description: [substitute full description]
-     > Classification: [SIGNIFICANT | HIGH-RISK] — reason: [from Phase 1.5]
+     > Classification: [SIGNIFICANT | HIGH-RISK] — reason: [as the `model_routing` block records it — Phase 1.5's criterion, the multi-source floor, or a raise]
      > Plan: read it from the file at [the `plan_file` path]
      > Diff: read it from the file at [the `review_diff_file` path from step 5]
      > Project root: [absolute path]
@@ -653,8 +669,9 @@ At each checkpoint, also consider suggesting **`/compact`** to free context befo
 ## Phase 4 — Post-implementation maintenance (both branches)
 
 **First remove this run's handoff files.** Nothing from here on reads one — `summary_file`, `plan_file`,
-every `test_diff_file` and `review_diff_file` this run wrote (a re-capture that overwrote a path leaves
-one file, a fresh `mktemp` another), `review_file` and `claims_file`. Remove each as
+`partial_diff_file` where Phase 3A step 5 re-planned, every `test_diff_file` and `review_diff_file` this
+run wrote (a re-capture that overwrote a path leaves one file, a fresh `mktemp` another), `review_file`
+and `claims_file`. Remove each as
 `command rm -f -- "<path>"`, per `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`
 (**Hand off by file, not paste**), which says why nothing else would. A run that stops before this
 phase — the two unreadable-`test_diff_file` stops, the unreadable-`review_diff_file` stop, the
@@ -774,11 +791,11 @@ Runs on **every** run that created a branch in Pre-Phase 3 — both classificati
 
 **The commit is prompt-free and the push and pull request are not** (§1 rule 5). There is no "leave it uncommitted" option in §2.4's choice, and a run that ends with the implementation sitting in a working tree is a defect rather than a style.
 
-**"Every run" includes every early stop that happens after the branch exists.** This command has exits that stop *after* Pre-Phase 3 created the branch and after files were written: the two unreadable-`test_diff_file` stops (Phase 3.5 step 2 and Phase 3B step 4a), the **Cancel** arms of both Phase 3.5 prompts (step 5's unverified-run prompt and step 6's regression prompt), the unreadable-`review_diff_file` stop (Phase 3B), the `review-fixer` `NEEDS HUMAN` stop, a review that stayed blocked (Phase 3B step 7, or step 8's review of the Phase 3.5 delta), and the **Keep the verdict** and **Cancel** arms of either of `workflows-core:finding-triage`'s settle prompts (Phase 3B steps 7 and 8). **Each of those runs Phase 4.6 before it stops**, with `clean_finish: false` and the stop's reason as the blocking fact. Skipping it would leave a written, branched, sometimes fully-reviewed implementation uncommitted — which this command's own invariants call a defect, and which is the case where losing the work costs most. Phase 4 is skipped on these paths (its maintenance agents have nothing to summarise for an aborted run), so 4.6's "after every in-repo write" precondition is satisfied trivially. Report the §3.1 line with the stop, not in a Phase 5 report that will not be produced.
+**"Every run" includes every early stop that happens after the branch exists.** This command has exits that stop *after* Pre-Phase 3 created the branch and after files were written: the two unreadable-`test_diff_file` stops (Phase 3.5 step 2 and Phase 3B step 4a), the **Cancel** arms of both Phase 3.5 prompts (step 5's unverified-run prompt and step 6's regression prompt), the unreadable-`review_diff_file` stop (Phase 3B), the `review-fixer` `NEEDS HUMAN` stop, a review that stayed blocked (Phase 3B step 7, or step 8's review of the Phase 3.5 delta), the **Keep the verdict** and **Cancel** arms of either of `workflows-core:finding-triage`'s settle prompts (Phase 3B steps 7 and 8), and the **Cancel** arm of each of Phase 2B's three prompts — the re-classification prompt, the repro prompt and the plan-approval prompt — when Phase 3A step 5's re-plan reached it. **Each of those runs Phase 4.6 before it stops**, with `clean_finish: false` and the stop's reason as the blocking fact. Skipping it would leave a written, branched, sometimes fully-reviewed implementation uncommitted — which this command's own invariants call a defect, and which is the case where losing the work costs most. Phase 4 is skipped on these paths (its maintenance agents have nothing to summarise for an aborted run), so 4.6's "after every in-repo write" precondition is satisfied trivially. Report the §3.1 line with the stop, not in a Phase 5 report that will not be produced.
 
 **Neither *Investigate further* arm is in that set, because neither stops the run.** Step 5's says *"diagnose manually and re-run step 4 when ready"* and step 6's *"stop the automated loop; the session model diagnoses manually and re-runs verify when ready"* — the loop ends, the run does not, and both come back through step 4 into Phase 4 and then into this phase in its ordinary place, where the Phase 5 report the paragraph above says will not be produced *is*. Calling 4.6 on them would commit the implementation before Phase 4, which this command's own invariant forbids outright. The list dropped both arms and dropped nothing else: every arm in it that actually ends the run is still in it.
 
-**Two Cancels are not in that set, and the test is the written file rather than the branch.** Phase 2B's repro prompt runs *before* Pre-Phase 3, so cancelling there leaves no branch and no written file. Pre-Phase 3.5's framework prompt runs *after* the branch and still before the first edit — its Cancel leaves a branch with nothing on it, and there is as little for this phase to commit as in the Phase 2B case. Neither loses a stash: any stop after Pre-Phase 3 step 1 names an outstanding `stash_ref` in its own message, which is that step's rule rather than this phase's.
+**Two Cancels are not in that set, and the test is the written file rather than the branch.** Phase 2B's repro prompt runs *before* Pre-Phase 3, so cancelling there leaves no branch and no written file — save on Phase 3A step 5's re-plan, which reaches that prompt after files were written, so its Cancel there is in the set above. Pre-Phase 3.5's framework prompt runs *after* the branch and still before the first edit — its Cancel leaves a branch with nothing on it, and there is as little for this phase to commit as in the Phase 2B case. Neither loses a stash: any stop after Pre-Phase 3 step 1 names an outstanding `stash_ref` in its own message, which is that step's rule rather than this phase's.
 
 Placement is load-bearing. Phase 4's maintenance agents edit files **inside the code repo** — `README.md`, `CHANGELOG.md`, `docs/`, `CLAUDE.md`, and any project-level memory entry — so a call placed before Phase 4 would commit a partial run and leave those edits behind (`code-handoff.md` §4 obligation 1). Phase 4.5 runs first because it commits a *different* repository (`$SPECS_PATH`), and interleaving the two would make the run's two outcome lines impossible to attribute.
 
@@ -834,6 +851,7 @@ Output a structured report — do NOT ask any closing confirmation:
 
 ### Classification
 [SIMPLE | MODERATE | SIGNIFICANT | HIGH-RISK] — [reason]
+[each raise, one line: `Raised from <class> after exploration` or `… during implementation`, then `— <trigger> (<path>)`; omit the line where the class was never raised]
 [Under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` — every dispatched step (planner, reviewer, fixer, test agents, scanners) already carries the enforced id in place of its own chain, per `workflows-core:model-routing/classification` §10. The `model_routing` block's `opus_available` is unaffected by enforcement (§10: a property of the environment, never rewritten to agree with the enforced id) and, wherever this report states it, is stated exactly as it stands. Omit the line otherwise.]
 
 ### Branch
@@ -987,7 +1005,7 @@ directory, where it is not the specs repository; no user name is ever written (�
 - NEVER skip Phase 3.5 — where the Pre-Phase 3.5 capture returns `COMMAND_NOT_FOUND` (no framework detected) or `RUN_FAILED` (every suite the capture actually ran aborted with no parseable counts — *run*, not *detected*, since a `command_hint` can narrow one set against the other, and a suite that ran to completion printing unrecognised output never failed to start), ask the user there, where a baseline can still be taken, rather than silently skipping; a "Skip" decision must be explicit and logged in the Phase 5 report, and it drops steps 4–6 only — step 3's lint and build still run
 - NEVER read a verify report as a pass on any value but `OK` or `PARTIAL` — `RUN_FAILED` means nothing was compared and `COMMAND_NOT_FOUND` means nothing was run, and each is surfaced (Phase 3.5 step 5), never passed over
 - NEVER read `OK` or `PARTIAL` as a pass while the report's `### New failures` list is non-empty — a test this run wrote and that fails now is in neither baseline list, so it moves no `Status` at all; Phase 3.5 step 5 reads the list **beside** the `Status` rather than instead of it (the `PARTIAL` arm's `### Deferred items` record is still owed either way), and a non-empty list then sends the run into step 6's fix loop
-- NEVER make assumptions that could have been asked — ask instead
+- NEVER assume what the evidence leaves open and the user would notice — look first, then ask (Phase 1); NEVER ask what the repository already answers
 - NEVER end implementation with "Should I implement?" — if approved, implement
 - NEVER rewrite files wholesale when only an append/edit is needed
 - NEVER skip Phase 4 — documentation, knowledge, instructions, and session-maintenance are mandatory after every successful impl; always collect all four agent summaries for Phase 5
