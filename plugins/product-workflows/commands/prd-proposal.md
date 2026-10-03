@@ -582,8 +582,9 @@ file describes the archived revision and not this one.
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
 
 Report the triage per `workflows-core:finding-triage` § Reporting — one line per review pass, naming
-the counts, the survivors, the unverified findings and every dismissal with its reason: a triage that
-reports only survivors is indistinguishable from a reviewer that found less.
+the counts, the survivors, the unverified findings, every dismissal with its reason and any settle
+prompt's answer: a triage that reports only survivors is indistinguishable from a reviewer that found
+less.
 
 ---
 
@@ -763,7 +764,7 @@ a revision, the archived paths, and whether `--redo` discarded the anchor; the `
 one was given, cited as the operator gave it; the profile's `engagement_model` and whether the profile
 was read back, corrected or re-grilled; the pre-lint findings; the `proposal-reviewer` verdict with
 the triage line per `workflows-core:finding-triage` § Reporting — the counts, survivors, unverified
-findings and every dismissal with its reason; resolved model routing (+ any Opus gate or degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10 — no gate or degradation applies); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line), follow-up and cost paths (or, under `--skip-costs`, the `Session cost: …` line), with the cost line
+findings, every dismissal with its reason and any settle prompt's answer; resolved model routing (+ any Opus gate or degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10 — no gate or degradation applies); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line), follow-up and cost paths (or, under `--skip-costs`, the `Session cost: …` line), with the cost line
 labelled as **model spend in USD, a different quantity from the hours above**; the
 `Phase handoff:` outcome line from `handoff-to-main` (`workflows-core:phase-handoff` §4.1); the
 `Specs repo:` outcome line from `commit-artifacts` (`workflows-core:specs-repo-git` §6), with any

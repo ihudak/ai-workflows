@@ -275,19 +275,20 @@ plugins/docs-workflows/docs/commands/docs-audit.md edits/aw-doc-dismissal-is.txt
 plugins/docs-workflows/docs/commands/docs-init.md edits/aw-doc-dismissal-init.txt
 plugins/product-workflows/docs/commands/prd-proposal.md edits/aw-doc-dismissal-is.txt
 plugins/workflows-core/docs/reference/references.md edits/aw-doc-wc-refs.txt
+plugins/docs-workflows/references/docs-workflow/scaffold-tree.md edits/aw-scaffold-tree.txt
 plugins/docs-workflows/docs/commands/docs-init.md edits/aw-doc-docs-init.txt
 plugins/docs-workflows/docs/commands/docs-brand.md edits/aw-doc-docs-brand.txt
 EOF
 while read f e; do python3 "$S/wsub.py" "$f" "$S/$e" --dry || break; done < "$S/gen/aw-task5.list"
 ```
-Expected: twenty-four `checked` lines and no `ABORT`. Then apply: `while read f e; do python3 "$S/wsub.py" "$f" "$S/$e" || break; done < "$S/gen/aw-task5.list"` → twenty-four `applied` lines.
+Expected: twenty-five `checked` lines and no `ABORT`. Then apply: `while read f e; do python3 "$S/wsub.py" "$f" "$S/$e" || break; done < "$S/gen/aw-task5.list"` → twenty-five `applied` lines.
 
 - [ ] **Step 3: GREEN** — `python3 "$S/check.py" aw "$AW" | tail -1` → `aw: 107/107 checks pass`.
 - [ ] **Step 4: The rules files' size and the claim-expiry sweep** — `python3 -c 'import sys;print(len(open(sys.argv[1]).read()))' .claude/rules/docs-workflows.md` → `19955`. Then sweep by subject across refinement 4's scope (`plugins/` with every `CHANGELOG.md`, `README.md`, `CLAUDE.md`, `.claude/rules/`, `docs/maintainers/`): `grep -rn -i -E "dismiss|survivor|re-review|second verdict|still .BLOCK|Review verdict BLOCK|documented standard|Missed edge|Acceptance checks|patch gate" plugins README.md CLAUDE.md .claude/rules docs/maintainers --include=*.md | grep -v CHANGELOG`. Read each hit outside the files this round edited against the new rules; any that now states something false is fixed (a new edit block, ledgered as a `Ruling:`). Ledger the hit count and the disposition.
 - [ ] **Step 5: Commit** (`.claude/rules` needs `-f`)
 
 ```bash
-cd "$AW" && test "$(git branch --show-current)" = iv-gu/harvest-r4-review && git add CLAUDE.md plugins/dev-workflows/agents/vuln-fixer.md plugins/product-workflows/commands/{create-prd,update-prd,create-ard}.md plugins/dev-workflows/commands/design.md plugins/product-workflows/docs/commands/{create-prd,update-prd,epics,prd-proposal}.md plugins/dev-workflows/docs/commands/{implement,vuln,upgrade}.md plugins/docs-workflows/docs/commands/{document,docs-audit,docs-init,docs-brand}.md plugins/workflows-core/docs/reference/references.md && git add -f .claude/rules/{workflows-core,dev-workflows,docs-workflows,dev-workflows-tests}.md && git commit -q -m "fix: commands that fix inline cite an escalation heading that exists; rules and docs describe the three outcomes and the re-review
+cd "$AW" && test "$(git branch --show-current)" = iv-gu/harvest-r4-review && git add CLAUDE.md plugins/docs-workflows/references/docs-workflow/scaffold-tree.md plugins/dev-workflows/agents/vuln-fixer.md plugins/product-workflows/commands/{create-prd,update-prd,create-ard}.md plugins/dev-workflows/commands/design.md plugins/product-workflows/docs/commands/{create-prd,update-prd,epics,prd-proposal}.md plugins/dev-workflows/docs/commands/{implement,vuln,upgrade}.md plugins/docs-workflows/docs/commands/{document,docs-audit,docs-init,docs-brand}.md plugins/workflows-core/docs/reference/references.md && git add -f .claude/rules/{workflows-core,dev-workflows,docs-workflows,dev-workflows-tests}.md && git commit -q -m "fix: commands that fix inline cite an escalation heading that exists; rules and docs describe the three outcomes and the re-review
 
 Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git log --oneline -1
 ```
@@ -677,6 +678,7 @@ aw)
   w plugins/docs-workflows/docs/commands/document.md "$E/aw-doc-document.txt"
   w plugins/product-workflows/docs/commands/epics.md "$E/aw-doc-epics.txt"
   for p in plugins/docs-workflows/docs/commands/docs-audit.md plugins/product-workflows/docs/commands/prd-proposal.md; do w $p "$E/aw-doc-dismissal-is.txt"; done; w plugins/docs-workflows/docs/commands/docs-init.md "$E/aw-doc-dismissal-init.txt"
+  w plugins/docs-workflows/references/docs-workflow/scaffold-tree.md "$E/aw-scaffold-tree.txt"
   w plugins/docs-workflows/docs/commands/docs-init.md "$E/aw-doc-docs-init.txt"
   w plugins/docs-workflows/docs/commands/docs-brand.md "$E/aw-doc-docs-brand.txt"
   w plugins/workflows-core/docs/reference/references.md "$E/aw-doc-wc-refs.txt" ;;
@@ -992,7 +994,7 @@ _or_ "none — checked"
 <<<<<<< OLD 1
 Write against the conventions of the test files that command already runs, and where you can find none, write nothing and say so in `### Notes` rather than inventing a framework.
 =======
-Write against the conventions of the test files that command already runs, and where you can find none, write no test against that suite — name in `### Notes`, as untested, each behaviour step 3 finds in a changed file this suite covers (the second paragraph above) — rather than inventing a framework.
+Write against the conventions of the test files that command already runs, and where you can find none, write no test against that suite — name in `### Notes`, as untested, each behaviour step 3 finds in a changed file no other suite's tests live alongside — every one, where this is the baseline's only suite — rather than inventing a framework.
 >>>>>>> NEW
 `````
 
@@ -1043,8 +1045,9 @@ Report findings reviewed, survivors, and every dismissal with its reason: a tria
 survivors is indistinguishable from a reviewer that found less.
 =======
 Report the triage per `workflows-core:finding-triage` § Reporting — one line per review pass, naming
-the counts, the survivors, the unverified findings and every dismissal with its reason: a triage that
-reports only survivors is indistinguishable from a reviewer that found less.
+the counts, the survivors, the unverified findings, every dismissal with its reason and any settle
+prompt's answer: a triage that reports only survivors is indistinguishable from a reviewer that found
+less.
 >>>>>>> NEW
 <<<<<<< OLD 1
 slices it affects; the pre-lint findings; the `proposal-reviewer` verdict with the triage line —
@@ -1053,9 +1056,9 @@ was a slice document rather than the umbrella; resolved model routing (+ any Opu
 degradation, or
 =======
 slices it affects; the pre-lint findings; the `proposal-reviewer` verdict with the triage line per
-`workflows-core:finding-triage` § Reporting — the counts, survivors, unverified findings and every
-dismissal with its reason — and every survivor whose location was a slice document rather than the
-umbrella; resolved model routing (+ any Opus gate or degradation, or
+`workflows-core:finding-triage` § Reporting — the counts, survivors, unverified findings, every
+dismissal with its reason and any settle prompt's answer — and every survivor whose location was a
+slice document rather than the umbrella; resolved model routing (+ any Opus gate or degradation, or
 >>>>>>> NEW
 `````
 
@@ -1121,7 +1124,7 @@ every dismissal is recorded with a reason that disposes of that finding's own cl
 - `DOCS_BRAND_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-scaffold-reviewer` was neither fixed nor overridden.
 =======
 - `DOCS_BRAND_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-scaffold-reviewer` was neither fixed nor overridden.
-- A Cancel at the review gate, or keeping the review's verdict after triage left no finding behind it standing (every one dismissed or unverified), stops a standalone run there: the branding stays uncommitted on its branch, no pull request is drafted, and the cost entry is still recorded. Settle the findings, check each written path with `git check-ignore -v <path>` — leave any it reports unstaged, after removing every config reference to it — and commit by hand.
+- A Cancel at the review gate, or keeping the review's verdict after triage left no finding behind it standing (every one dismissed or unverified), stops a standalone run there: the branding stays uncommitted on its branch, no pull request is drafted, and the cost entry is still recorded. Settle the findings, check each written path with `git check-ignore <path>` — leave any it prints unstaged, after removing every config reference to it — and commit by hand.
 >>>>>>> NEW
 <<<<<<< OLD 1
 all but `DOCS_BRAND_UNRESOLVED_BLOCKER`, which belongs to the standalone review gate an `--inline` run skips
@@ -1137,7 +1140,7 @@ all but `DOCS_BRAND_UNRESOLVED_BLOCKER` and a stop at the review gate, both of w
 - `DOCS_INIT_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-scaffold-reviewer` was neither fixed nor explicitly overridden.
 =======
 - `DOCS_INIT_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-scaffold-reviewer` was neither fixed nor explicitly overridden.
-- A Cancel at the review gate, or keeping the review's verdict after triage left no finding behind it standing (every one dismissed or unverified), stops the run there: the scaffold stays uncommitted on its branch, no pull request is drafted, and the cost entry is still recorded. Settle the findings, check each written path with `git check-ignore -v <path>` — leave any it reports unstaged, after removing every config reference to it — and commit by hand — a re-run would refuse the scaffolded tree.
+- A Cancel at the review gate, or keeping the review's verdict after triage left no finding behind it standing (every one dismissed or unverified), stops the run there: the scaffold stays uncommitted on its branch, no pull request is drafted, and the cost entry is still recorded. Settle the findings, check each written path with `git check-ignore <path>` — leave any it prints unstaged, after removing every config reference to it — and commit by hand — a re-run would refuse the scaffolded tree.
 >>>>>>> NEW
 `````
 
@@ -1257,12 +1260,27 @@ fix only a defect a finding actually demonstrated, never guard state it did not 
 <<<<<<< OLD 1
 Findings: <N reviewed, M survived triage, K applied, J deferred or overridden with reason | "N/A">
 =======
-Findings: <N reviewed — M survived triage, U unverified, X dismissed; K applied, J deferred or overridden with reason — every dismissal, unverified finding and raise listed per `workflows-core:finding-triage` § Reporting | "N/A">
+Findings: <N reviewed — M survived triage, U unverified, X dismissed; K applied, J deferred or overridden with reason — every dismissal, unverified finding and raise, and any settle prompt's answer, listed per `workflows-core:finding-triage` § Reporting | "N/A">
 >>>>>>> NEW
 <<<<<<< OLD 1
 Where triage empties the survivor set on a non-PASS verdict, follow that reference's own disposition: surface it and let the operator settle the verdict, never silently promote it to PASS.
 =======
 Where triage empties the survivor set on a non-PASS verdict, follow that reference's own disposition: surface it and let the operator settle the verdict with the prompt it gives a caller that runs no re-review, never silently promoting it to PASS. **Keep the verdict** there takes the `DOCS_AUDIT_UNRESOLVED_BLOCKER` stop below — or, on a kept verdict that is not `BLOCK`, which raised no BLOCKER, ends the run as Cancel does — and **Cancel** ends the run as a Cancel below does.
+>>>>>>> NEW
+<<<<<<< OLD 1
+Run `git -C <top> check-ignore -v <top>/.dev-workflows/docs-backlog.yml`.
+=======
+Run `git -C <top> check-ignore -v <top>/.dev-workflows/docs-backlog.yml`; a line it prints whose pattern starts with `!` re-includes the path, and is no match.
+>>>>>>> NEW
+<<<<<<< OLD 1
+Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — NO_SURFACES, nothing written to review">
+=======
+Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — NO_SURFACES, nothing written to review" | "<the verdict> — settled by the user at the settle prompt">
+>>>>>>> NEW
+<<<<<<< OLD 1
+Review verdict: [PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | N/A — never reached]
+=======
+Review verdict: [PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | N/A — never reached | <the verdict> — settled by the user at the settle prompt]
 >>>>>>> NEW
 `````
 
@@ -1282,7 +1300,7 @@ fix only a defect a finding actually demonstrated, never guard state it did not 
 <<<<<<< OLD 1
 Findings: <N reviewed, M survived triage, K applied, J deferred or overridden with reason | "N/A">
 =======
-Findings: <N reviewed — M survived triage, U unverified, X dismissed; K applied, J deferred or overridden with reason — every dismissal, unverified finding and raise listed per `workflows-core:finding-triage` § Reporting | "N/A">
+Findings: <N reviewed — M survived triage, U unverified, X dismissed; K applied, J deferred or overridden with reason — every dismissal, unverified finding and raise, and any settle prompt's answer, listed per `workflows-core:finding-triage` § Reporting | "N/A">
 >>>>>>> NEW
 <<<<<<< OLD 1
 Where triage empties the survivor set entirely on a non-PASS verdict, follow the reference's own disposition — surface it and let the operator settle the verdict; never silently promote it to PASS.
@@ -1319,12 +1337,12 @@ Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelle
 <<<<<<< OLD 1
 guidance only, never auto-invoked. **When a branch and a drafted PR exist:**
 =======
-guidance only, never auto-invoked. **After a stop at the review gate:** name the findings left to settle and the branch holding the uncommitted branding; settle them there, check each written path with `git check-ignore -v <path>` — leave any path it reports unstaged, after removing every config reference to it (`scaffold-tree.md` §7 lists them) — and commit by hand — a re-run would find the tree dirty and offer to stash that work. **When a branch and a drafted PR exist:**
+guidance only, never auto-invoked. **After a stop at the review gate:** name the findings left to settle and the branch holding the uncommitted branding; settle them there, check each written path with `git check-ignore <path>` — leave any path it prints unstaged, after removing every config reference to it (`scaffold-tree.md` §7 lists them) — and commit by hand — a re-run would find the tree dirty and offer to stash that work. **When a branch and a drafted PR exist:**
 >>>>>>> NEW
 <<<<<<< OLD 1
 BLOCK, resolved | N/A — cancelled before Phase 9]
 =======
-BLOCK, resolved | N/A — cancelled before Phase 9 | <the verdict> — stopped at the review gate]
+BLOCK, resolved | N/A — cancelled before Phase 9 | <the verdict> — stopped at the review gate | <the verdict> — settled by the user at the settle prompt]
 >>>>>>> NEW
 <<<<<<< OLD 1
 **A standalone run that cancelled at Phase 7 never reaches this phase either**
@@ -1359,7 +1377,7 @@ fix only a defect a finding actually demonstrated, never guard state it did not 
 <<<<<<< OLD 1
 Findings: <N reviewed, M survived triage, K applied, J deferred or overridden with reason | "N/A">
 =======
-Findings: <N reviewed — M survived triage, U unverified, X dismissed; K applied, J deferred or overridden with reason — every dismissal, unverified finding and raise listed per `workflows-core:finding-triage` § Reporting | "N/A">
+Findings: <N reviewed — M survived triage, U unverified, X dismissed; K applied, J deferred or overridden with reason — every dismissal, unverified finding and raise, and any settle prompt's answer, listed per `workflows-core:finding-triage` § Reporting | "N/A">
 >>>>>>> NEW
 <<<<<<< OLD 1
 Where triage empties the survivor set on a non-PASS verdict, follow that reference's own disposition: surface it and let the operator settle the verdict, never silently promote it to PASS.
@@ -1396,12 +1414,12 @@ Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelle
 <<<<<<< OLD 1
 guidance only, never auto-invoked. On a completed run:
 =======
-guidance only, never auto-invoked. After a stop at the review gate: name the findings left to settle and the branch holding the uncommitted scaffold; settle them there, check each written path with `git check-ignore -v <path>` — leave any path it reports unstaged, after removing every config reference to it (`scaffold-tree.md` §7 lists them) — and commit by hand — a re-run would refuse the tree, whose `mkdocs.yml`, `.vale.ini` and `docs-profile.yml` Phase 0 reads as an existing docs repository. On a completed run:
+guidance only, never auto-invoked. After a stop at the review gate: name the findings left to settle and the branch holding the uncommitted scaffold; settle them there, check each written path with `git check-ignore <path>` — leave any path it prints unstaged, after removing every config reference to it (`scaffold-tree.md` §7 lists them) — and commit by hand — a re-run would refuse the tree, whose `mkdocs.yml`, `.vale.ini` and `docs-profile.yml` Phase 0 reads as an existing docs repository. On a completed run:
 >>>>>>> NEW
 <<<<<<< OLD 1
 BLOCK, resolved | N/A — cancelled before Phase 7.5]
 =======
-BLOCK, resolved | N/A — cancelled before Phase 7.5 | <the verdict> — stopped at the review gate]
+BLOCK, resolved | N/A — cancelled before Phase 7.5 | <the verdict> — stopped at the review gate | <the verdict> — settled by the user at the settle prompt]
 >>>>>>> NEW
 <<<<<<< OLD 1
 <no written path ignored | left uncommitted, ignored by a project line:
@@ -1664,15 +1682,16 @@ Report findings reviewed, survivors, and every dismissal with its reason: a tria
 survivors is indistinguishable from a reviewer that found less.
 =======
 Report the triage per `workflows-core:finding-triage` § Reporting — one line per review pass, naming
-the counts, the survivors, the unverified findings and every dismissal with its reason: a triage that
-reports only survivors is indistinguishable from a reviewer that found less.
+the counts, the survivors, the unverified findings, every dismissal with its reason and any settle
+prompt's answer: a triage that reports only survivors is indistinguishable from a reviewer that found
+less.
 >>>>>>> NEW
 <<<<<<< OLD 1
 the triage line — findings reviewed, survivors, and every dismissal with its reason; resolved model
 routing (+ any Opus gate or degradation, or
 =======
 the triage line per `workflows-core:finding-triage` § Reporting — the counts, survivors, unverified
-findings and every dismissal with its reason; resolved model routing (+ any Opus gate or degradation, or
+findings, every dismissal with its reason and any settle prompt's answer; resolved model routing (+ any Opus gate or degradation, or
 >>>>>>> NEW
 `````
 
@@ -1751,6 +1770,16 @@ The first clause is not made unqualified: that would have to remove **both** esc
 the three-step process (verify each finding's own claimed consequence at the location it names, keep or dismiss, record every dismissal with a reason that disposes of that finding's own claim — there is no silent-drop disposition), the patch gate (auto-fix only a defect that actually occurs, missing coverage for a specific case, or a broken gate/convention — never a state nothing reaches, and never a fix that guards state the finding did not demonstrate), the reporting contract (findings reviewed, survivors, and every dismissal with its reason — a triage that reports only survivors is indistinguishable from a reviewer that found less), and the disposition when triage empties the survivor set (never dispatch a fixer with nothing to apply, never run the unresolved-BLOCKER escalation on a refuted BLOCKER, and never silently promote a non-PASS verdict — the user settles a verdict its own findings no longer support).
 =======
 the step (verify each finding's own claimed consequence at the location it names; keep it, mark it unverified — verification could not settle it and it would be `MAJOR` or `BLOCKER` if true, so it is recorded at that grade with what would settle it and never reaches a fixer — or dismiss it with a reason that disposes of that finding's own claim; raise a survivor's grade only by effect, to `MAJOR` at most; rule on each line of a `code-review` `### Declined to judge` list — there is no silent-drop disposition), the patch gate (auto-fix only a defect that actually occurs, missing coverage for a specific case, or a broken gate/convention — never a state nothing reaches, never a fix that guards state the finding did not demonstrate, and never one that edits a repository instruction or contributor file the change did not itself edit), the reporting contract (one line per review pass, where survived, unverified and dismissed sum to the findings reviewed and every dismissal and unverified finding is stated — a triage that reports only survivors is indistinguishable from a reviewer that found less), the disposition when triage empties the survivor set (never dispatch a fixer with nothing to apply, never run the unresolved-BLOCKER escalation on a BLOCKER that did not survive triage unless the user keeps the verdict, and never silently promote a non-PASS verdict — the user settles a verdict its own findings no longer support), and § On re-review (a re-review carries this run's earlier rulings forward, no survivor of it is handed to a fixer, and the second-verdict stop acts on a review that **stayed blocked** — a BLOCKER surviving its triage, or a verdict the user keeps at a settle prompt — with the user settling a `BLOCK` no surviving BLOCKER supports).
+>>>>>>> NEW
+`````
+
+#### `edits/aw-scaffold-tree.txt`
+
+`````text
+<<<<<<< OLD 1
+Test each written path with `git -C <root> check-ignore -v <path>`. For each path that matches:
+=======
+Test each written path with `git -C <root> check-ignore -v <path>`; a line it prints whose pattern starts with `!` re-includes the path, and is no match. For each path that matches:
 >>>>>>> NEW
 `````
 
@@ -2635,8 +2664,7 @@ The orchestrator's run report carries one triage line per review pass, and the l
 - every unverified finding with its grade if true and what would settle it;
 - every raise, with the grade it moved from and to and the effect that moved it;
 - where the review carried a `### Declined to judge` list, each line with its ruling;
-- where a settle prompt was asked, its answer: a verdict the user settled is reported as settled by
-  the user, never bare.
+- where a settle prompt was asked, its answer, so a verdict the user settled is never left unmarked.
 >>>>>>> NEW
 `````
 
@@ -2660,7 +2688,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 ### Changed
 - **`/implement`, `/vuln` and `/upgrade` triage the re-review** (`workflows-core:finding-triage` § On re-review) and stop only on a review that **stayed blocked**: a second `BLOCK` whose `BLOCKER`s did not survive triage now goes to the user to settle, where it used to stop the run. `/vuln` and `/upgrade` count a settle prompt's Cancel, like its Keep-the-verdict, as the unit's review having stayed blocked — the CVE or component stops and is committed, and the run moves on; the test-gate invariant of all three names a settle prompt's Proceed. `/implement` Phase 3B step 8's review of the Phase 3.5 delta is triaged and acted on the same way — it had no verdict handling. `/implement`'s early-stop lists now name both settle prompts' Keep-the-verdict and Cancel arms, so those stops commit the work with `clean_finish: false` like every other stop after the branch exists.
 - **`/implement` records in `### Deferred items` each behaviour `test-writer` names as untested**, a Review focus line included — a test the run could not write, which no section used to name.
-- **The triage report line** names unverified findings, raises and the reviewer's set-aside behaviours; `review-fixer` applies the patch gate's instruction-file clause by the finding's location, since it is not handed the diff; `code-handoff` §2.9 names a review that stayed blocked.
+- **The triage report line** names unverified findings, raises, the reviewer's set-aside behaviours and any settle prompt's answer; `review-fixer` applies the patch gate's instruction-file clause by the finding's location, since it is not handed the diff; `code-handoff` §2.9 names a review that stayed blocked.
 
 ### Fixed
 - **`/design` escalated an unresolved BLOCKER per the `/epics` rule**, whose "Defer" appends a refinement note to the draft — which `/design`'s own handoff refuses while an item in it is open. It now cites `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`.
@@ -2674,8 +2702,11 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 **Update `workflows-core` to 1.11.0 with this release**: the commands below follow its `finding-triage` § On re-review and its patch gate's instruction-file clause.
 
 ### Changed
-- **`/document` triages its re-review** (`workflows-core:finding-triage` § On re-review) and escalates only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — ending the run as Cancel does on a kept verdict that is not `BLOCK`; its triage line names unverified findings and raises.
-- **`/docs-init`, `/docs-brand` and `/docs-audit` report unverified findings and raises** beside survivors and dismissals, settle an emptied survivor set with a prompt that has no re-review arm — `/docs-init` and `/docs-brand` stop at their review gate on its Keep-the-verdict or Cancel, the report saying which, and `/docs-audit` takes its unresolved-BLOCKER stop, or its Cancel route on a kept verdict that is not `BLOCK` — and `/docs-init` and `/docs-brand` list unverified findings in their pull-request drafts and say what a Cancel at the review gate leaves behind; their direct edits honour the patch gate's instruction-file clause; `docs-audit-reviewer` no longer counts the reference's steps.
+- **`/document` triages its re-review** (`workflows-core:finding-triage` § On re-review) and escalates only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — ending the run as Cancel does on a kept verdict that is not `BLOCK`; its triage line names unverified findings, raises and any settle prompt's answer.
+- **`/docs-init`, `/docs-brand` and `/docs-audit` report unverified findings, raises and any settle prompt's answer** beside survivors and dismissals, a verdict the user settled marked as such, settle an emptied survivor set with a prompt that has no re-review arm — `/docs-init` and `/docs-brand` stop at their review gate on its Keep-the-verdict or Cancel, the report saying which, and `/docs-audit` takes its unresolved-BLOCKER stop, or its Cancel route on a kept verdict that is not `BLOCK` — and `/docs-init` and `/docs-brand` list unverified findings in their pull-request drafts and say what a Cancel at the review gate leaves behind; their direct edits honour the patch gate's instruction-file clause; `docs-audit-reviewer` no longer counts the reference's steps.
+
+### Fixed
+- **`scaffold-tree.md` §7's and `/docs-audit`'s ignore test read every line `git check-ignore -v` prints as a match**, though it also prints a negated `!` pattern that re-includes the path; a path a project re-includes was left unstaged and its config references removed. A `!` line is now no match.
 `````
 
 #### `cl/aw-product-workflows.md`
@@ -2686,7 +2717,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 **Update `workflows-core` to 1.11.0 with this release**: the commands below cite its new escalation heading and its `finding-triage` § On re-review.
 
 ### Changed
-- **`/epics`, `/prd-proposal` and `/brd-proposal` triage their re-review** (`workflows-core:finding-triage` § On re-review) and escalate only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — ending the run instead, as Cancel does, on a kept verdict that is not `BLOCK`; their triage reports unverified findings and raises, and `proposal-reviewer` describes the three outcomes.
+- **`/epics`, `/prd-proposal` and `/brd-proposal` triage their re-review** (`workflows-core:finding-triage` § On re-review) and escalate only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — ending the run instead, as Cancel does, on a kept verdict that is not `BLOCK`; their triage reports unverified findings, raises and any settle prompt's answer, and `proposal-reviewer` describes the three outcomes.
 
 ### Fixed
 - **`/create-prd`, `/update-prd`, `/create-ard`, `/prd-proposal` and `/brd-proposal` escalated per a `Review verdict BLOCK` rule `escalation-rules` did not have.** They now cite `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`, and `/create-prd`'s inline copy of its choices matches that heading word for word.
@@ -2726,7 +2757,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 - **A plan's Review focus** — up to five input classes or failure modes the task implies and no step's tests exercise: `risk-planner` returns `### Review focus`, `implement:`'s Phase 2A plan carries it as item 9, `test-writer` writes a test for each line or names why it cannot, and `code-review` checks each one. Prompted by superpowers 5bf4e780.
 
 ### Changed
-- **The patch gate never edits an instruction or contributor file the change did not itself edit** (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `.claude/rules/`, `.github/instructions/`, `CONTRIBUTING.md`, `CODING_STANDARDS.md`); `review-fixer` and `doc-fixer`, which are not handed the diff, defer such an edit unless the finding's own location is in that file. The triage line is one per review pass, and survived + unverified + dismissed must sum to the findings reviewed.
+- **The patch gate never edits an instruction or contributor file the change did not itself edit** (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `.claude/rules/`, `.github/instructions/`, `CONTRIBUTING.md`, `CODING_STANDARDS.md`); `review-fixer` and `doc-fixer`, which are not handed the diff, defer such an edit unless the finding's own location is in that file. The triage line is one per review pass, survived + unverified + dismissed must sum to the findings reviewed, and it carries any settle prompt's answer.
 
 ### Fixed
 - **`create-vi:`, `update-vi:` and `create-ard:` escalated per a `Review verdict BLOCK` rule `escalation-rules` did not have**, and `design:` cited the `epics:` variant, whose "Defer" appends a refinement note to the draft its own handoff then refuses. All four now cite the new heading `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`, and `create-vi:`'s inline choices match it word for word. `specify:` keeps the `epics:` rule on purpose: it defines its own "Defer" to mirror it.
@@ -2745,7 +2776,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 - **A plan's Review focus** — up to five input classes or failure modes the task implies and no step's tests exercise: `risk-planner` returns `### Review focus`, `/implement`'s Phase 2A plan carries it as item 9, `test-writer` writes a test for each line or names why it cannot, and `code-review` checks each one. Prompted by superpowers 5bf4e780.
 
 ### Changed
-- **The patch gate never edits an instruction or contributor file the change did not itself edit** (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `.claude/rules/`, `.github/instructions/`, `CONTRIBUTING.md`, `CODING_STANDARDS.md`); `review-fixer` and `doc-fixer`, which are not handed the diff, defer such an edit unless the finding's own location is in that file. The triage line is one per review pass, and survived + unverified + dismissed must sum to the findings reviewed.
+- **The patch gate never edits an instruction or contributor file the change did not itself edit** (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `.claude/rules/`, `.github/instructions/`, `CONTRIBUTING.md`, `CODING_STANDARDS.md`); `review-fixer` and `doc-fixer`, which are not handed the diff, defer such an edit unless the finding's own location is in that file. The triage line is one per review pass, survived + unverified + dismissed must sum to the findings reviewed, and it carries any settle prompt's answer.
 
 ### Fixed
 - **`/create-vi`, `/update-vi` and `/create-ard` escalated per a `Review verdict BLOCK` rule `escalation-rules` did not have**, and `/design` cited the `/epics` variant, whose "Defer" appends a refinement note to the draft its own handoff then refuses. All four now cite the new heading `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`, and `/create-vi`'s inline choices match it word for word. `/specify` keeps the `/epics` rule on purpose: it defines its own "Defer" to mirror it.

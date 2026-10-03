@@ -585,8 +585,9 @@ recommend `/product-workflows:prd-proposal <SLICE-KEY>` — editing another phas
 here would leave that slice's own reviewer verdict standing over content it never saw.
 
 Report the triage per `workflows-core:finding-triage` § Reporting — one line per review pass, naming
-the counts, the survivors, the unverified findings and every dismissal with its reason: a triage that
-reports only survivors is indistinguishable from a reviewer that found less.
+the counts, the survivors, the unverified findings, every dismissal with its reason and any settle
+prompt's answer: a triage that reports only survivors is indistinguishable from a reviewer that found
+less.
 
 ---
 
@@ -750,9 +751,9 @@ and not this one; whether this run was a revision, the archived paths, and wheth
 the anchor; the profile's `engagement_model`, whether the profile was read back, corrected or
 re-grilled, and any correction that moved a field the included slices were priced under, with the
 slices it affects; the pre-lint findings; the `proposal-reviewer` verdict with the triage line per
-`workflows-core:finding-triage` § Reporting — the counts, survivors, unverified findings and every
-dismissal with its reason — and every survivor whose location was a slice document rather than the
-umbrella; resolved model routing (+ any Opus gate or degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10 — no gate or degradation applies); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line), follow-up and cost paths (or, under `--skip-costs`, the `Session cost: …` line), with the cost line labelled as **model spend in
+`workflows-core:finding-triage` § Reporting — the counts, survivors, unverified findings, every
+dismissal with its reason and any settle prompt's answer — and every survivor whose location was a
+slice document rather than the umbrella; resolved model routing (+ any Opus gate or degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10 — no gate or degradation applies); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line), follow-up and cost paths (or, under `--skip-costs`, the `Session cost: …` line), with the cost line labelled as **model spend in
 USD, a different quantity from the hours above**; the `Phase handoff:` outcome line from
 `handoff-to-main` (`workflows-core:phase-handoff` §4.1); the `Specs repo:` outcome line from
 `commit-artifacts` (`workflows-core:specs-repo-git` §6), with any guard notice repeated in full; and
