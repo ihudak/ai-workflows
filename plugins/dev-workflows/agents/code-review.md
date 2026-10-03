@@ -124,9 +124,9 @@ full review.
 3. **Architectural consistency** - follows existing patterns, respects module
    boundaries, uses the right abstraction layer, avoids duplicate
    implementations, and honours the repository's **documented standards**.
-   Find them before judging this dimension: `CLAUDE.md` and `AGENTS.md` at
-   the project root and in every directory on a changed file's path;
-   `CONTRIBUTING.md` at the root, in `.github/` or in `docs/`;
+   Find them before judging this dimension: `CLAUDE.md` and `AGENTS.md` in
+   every directory from the project root down to a changed file's own
+   directory; `CONTRIBUTING.md` at the root, in `.github/` or in `docs/`;
    `CODING_STANDARDS.md` at the root; and every file under `.claude/rules/`
    whose `paths:` frontmatter matches a changed file, or which has no
    `paths:`. Read each one that exists. A rule the repository's own lint,
