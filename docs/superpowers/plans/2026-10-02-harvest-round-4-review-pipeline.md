@@ -670,7 +670,10 @@ ie|ce)
   else P=dev-workflows; FT=$P/skills/_shared; CMD(){ echo $P/skills/$1/SKILL.md; }; DOCP(){ echo $P/docs/skills/$1.md; }; REF=$P/docs/reference/references.md; fi
   w $FT/finding-triage.md "$(g triage-core.txt)"
   w $P/agents/code-review.md "$E/all-code-review.txt"
-  [ $ed = ce ] && w $P/agents/code-review.md "$E/ce-code-review.txt"
+  if [ $ed = ce ]; then  # ce-code-review.txt edits text all-code-review.txt inserts: a dry run checks it on a copy with that applied
+    if [ -z "$dry" ]; then w $P/agents/code-review.md "$E/ce-code-review.txt"
+    else t=$(mktemp); cp "$R/$P/agents/code-review.md" "$t"; python3 "$S/wsub.py" "$t" "$E/all-code-review.txt" >/dev/null && python3 "$S/wsub.py" "$t" "$E/ce-code-review.txt" --dry; rc=$?; rm -f "$t"; [ $rc = 0 ]; fi
+  fi
   w $P/agents/risk-planner.md "$E/all-risk-planner.txt"
   w $P/agents/test-writer.md "$E/all-test-writer.txt"
   w $P/agents/review-fixer.md "$E/all-review-fixer.txt"
@@ -1934,7 +1937,8 @@ Only survivors are handed to the fixer.
    - **Keep** a finding where verification confirmed its consequence. A kept finding is a **survivor**.
    - **Dismiss** noise, and a claim the verification refuted — no path to the claimed consequence at the
      named site is a refutation, checked, and a valid disposal. Whatever the reason, **it must dispose
-     of that finding's own claim**: a true fact about neighbouring code that leaves the claim standing
+     of that finding's own claim** — by refuting it, or, for an unverified finding the next bullet
+     dismisses, by its grade if true: a true fact about neighbouring code that leaves the claim standing
      settles nothing, and the finding is kept where verification confirmed it and is otherwise one
      verification could not settle.
    - **Mark unverified** a finding verification could not settle — the diff and the code around it leave
@@ -1942,16 +1946,16 @@ Only survivors are handed to the fixer.
      are enough to decide, keep the finding or dismiss it. One that would be `MAJOR` or `BLOCKER` if
      true is recorded at that grade, marked `(unverified)`, with what would settle it — the file to
      read, the input to trace, the run that would show it. One that would be only `MINOR` or `NIT` if
-     true is dismissed, with that note as its reason. An unverified finding changes nothing the verdict
-     gates; it reaches the user through § Reporting.
+     true is dismissed, with that grade and what would settle it as its reason. An unverified finding
+     changes nothing the verdict gates; it reaches the user through § Reporting.
 3. **Record every dismissal and every unverified finding with its reason.** Never drop a finding
    silently. There is no "reject and say nothing" disposition and none may be added.
 4. **Raise a grade by effect, never lower one.** Where a survivor's grade reflects the spec's, the
    plan's or the task's silence on the input that triggers it, rather than what the people the change
    serves meet if it ships as it stands — users of the software, readers of the document — raise
-   it, to `MAJOR` at most: a `BLOCKER` changes the verdict, and the verdict is not triage's to restate (§ When
-   triage empties the survivor set). An unverified finding is recorded at the reviewer's grade raised by
-   the same rule. Record every raise with its reason.
+   it, to `MAJOR` at most: a `BLOCKER` changes the verdict, and the verdict is not triage's to
+   restate (§ When triage empties the survivor set). An unverified finding is recorded at the
+   reviewer's grade raised by the same rule. Record every raise with its reason.
 5. **Rule on what the reviewer set aside.** Where the review carries a `### Declined to judge` list
    (`code-review` returns one), rule on each line: it **stands** — record why — or it is a **defect**,
    recorded with its grade by effect and what shows it. A line ruled a defect is never handed to the

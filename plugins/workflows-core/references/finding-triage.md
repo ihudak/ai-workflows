@@ -19,7 +19,7 @@ Wherever an **Opus reviewer's reasoned findings feed a fixer**:
 | `proposal-reviewer` → the orchestrator itself (`/prd-proposal`, `/brd-proposal`) | yes |
 | a style checker → `doc-fixer` (`/document` direct mode, and the style-fix cycles inside `/document` keyed mode and `/epics`) | **no** |
 
-**Where there is no fixer, the orchestrator is the fixer, and triage still runs.** `docs-scaffold-reviewer`, `docs-audit-reviewer` and `proposal-reviewer` are Opus-pinned and their findings are reasoned claims, but none has a dedicated fixer agent behind it: `/docs-init` and a standalone `/docs-brand` apply the survivors themselves, by direct edit, because the scaffold diff has none (docs-workflows design D25); `/docs-audit` applies them to `docs-backlog.yml` itself, on the same design decision and for the same reason — the file it wrote is the artefact under review and a fixer would add nothing between the finding and the edit; and `/prd-proposal` and `/brd-proposal` fix surviving BLOCKERs inline, editing both proposal artifacts themselves, because a proposal has no delegated writer. **The three group two and one on re-review, so a new caller states which group it follows rather than leaving it to the nearest neighbour.** For `/docs-init`, a standalone `/docs-brand` and `/docs-audit`, which run no re-review at all, that makes the station argument above *stronger*, not moot — the dismissal and the edit sit in one place, so nothing downstream would catch a finding dropped without a reason. `/prd-proposal` and `/brd-proposal` do re-review once after their inline fix, and that re-review can re-raise a finding triage dropped — but only a run that had a surviving BLOCKER to fix reaches it, so a dismissal there still has to carry its own reason. Everything below applies unchanged with "the fixer" read as "the orchestrator's own edit": survivors only, the patch gate binds that edit, and an emptied survivor set is settled by the user rather than silently promoted. An `--inline` `/docs-brand` run dispatches no review of its own; its diff is triaged inside `/docs-init`'s.
+**Where there is no fixer, the orchestrator is the fixer, and triage still runs.** `docs-scaffold-reviewer`, `docs-audit-reviewer` and `proposal-reviewer` are Opus-pinned and their findings are reasoned claims, but none has a dedicated fixer agent behind it: `/docs-init` and a standalone `/docs-brand` apply the survivors themselves, by direct edit, because the scaffold diff has none (docs-workflows design D25); `/docs-audit` applies them to `docs-backlog.yml` itself, on the same design decision and for the same reason — the file it wrote is the artefact under review and a fixer would add nothing between the finding and the edit; and `/prd-proposal` and `/brd-proposal` fix surviving BLOCKERs inline, editing both proposal artifacts themselves, because a proposal has no delegated writer. **The three group two and one on re-review, so a new caller states which group it follows rather than leaving it to the nearest neighbour.** For `/docs-init`, a standalone `/docs-brand` and `/docs-audit`, which run no re-review at all, that makes the station argument above *stronger*, not moot — the dismissal and the edit sit in one place, so nothing downstream would catch a finding dropped without a reason. `/prd-proposal` and `/brd-proposal` do re-review once after their inline fix, and § On re-review carries a finding triage already dropped forward at its recorded outcome rather than deciding it again — but only a run that had a surviving BLOCKER to fix reaches that re-review, so a dismissal there still has to carry its own reason. Everything below applies unchanged with "the fixer" read as "the orchestrator's own edit": survivors only, the patch gate binds that edit, and an emptied survivor set is settled by the user rather than silently promoted. An `--inline` `/docs-brand` run dispatches no review of its own; its diff is triaged inside `/docs-init`'s.
 
 The seam is **reasoned-claim producer vs deterministic producer**, not code vs docs. A reviewer finding
 is a claim about consequence and can be checked against the thing it names. A linter violation is not —
@@ -38,29 +38,51 @@ For each finding, **before any grouping or deduplication**:
 1. **Verify its own claimed consequence** at the location it names. Read past the changed lines — into
    the callers, the guards upstream, whatever else the site depends on — far enough to tell whether that
    consequence actually occurs. Another finding's outcome, however adjacent, never settles this one.
-2. **Keep or dismiss.** Keep a finding only where verification confirmed its consequence. Dismiss noise,
-   claims the verification refuted, and claims it could not substantiate — no path to the claimed
-   consequence at the named site is a valid disposal. Whatever the reason, **it must dispose of that
-   finding's own claim**: a true fact about neighbouring code that leaves the claim standing is not a
-   dismissal, and the finding stays kept.
-3. **Record every dismissal with its reason.** Never drop a finding silently. There is no "reject and
-   say nothing" disposition and none may be added.
+2. **Keep, mark unverified, or dismiss** — one outcome per finding, from what verification established:
+   - **Keep** a finding where verification confirmed its consequence. A kept finding is a **survivor**.
+   - **Dismiss** noise, and a claim the verification refuted — no path to the claimed consequence at the
+     named site is a refutation, checked, and a valid disposal. Whatever the reason, **it must dispose
+     of that finding's own claim** — by refuting it, or, for an unverified finding the next bullet
+     dismisses, by its grade if true: a true fact about neighbouring code that leaves the claim standing
+     settles nothing, and the finding is kept where verification confirmed it and is otherwise one
+     verification could not settle.
+   - **Mark unverified** a finding verification could not settle — the diff and the code around it leave
+     open whether its consequence occurs. Use this only where they leave the question open; where they
+     are enough to decide, keep the finding or dismiss it. One that would be `MAJOR` or `BLOCKER` if
+     true is recorded at that grade, marked `(unverified)`, with what would settle it — the file to
+     read, the input to trace, the run that would show it. One that would be only `MINOR` or `NIT` if
+     true is dismissed, with that grade and what would settle it as its reason. An unverified finding
+     changes nothing the verdict gates; it reaches the user through § Reporting.
+3. **Record every dismissal and every unverified finding with its reason.** Never drop a finding
+   silently. There is no "reject and say nothing" disposition and none may be added.
+4. **Raise a grade by effect, never lower one.** Where a survivor's grade reflects the spec's, the
+   plan's or the task's silence on the input that triggers it, rather than what the people the change
+   serves meet if it ships as it stands — users of the software, readers of the document — raise
+   it, to `MAJOR` at most: a `BLOCKER` changes the verdict, and the verdict is not triage's to
+   restate (§ When triage empties the survivor set). An unverified finding is recorded at the
+   reviewer's grade raised by the same rule. Record every raise with its reason.
+5. **Rule on what the reviewer set aside.** Where the review carries a `### Declined to judge` list
+   (`code-review` returns one), rule on each line: it **stands** — record why — or it is a **defect**,
+   recorded with its grade by effect and what shows it. A line ruled a defect is never handed to the
+   fixer: no finding of the review carries it, and the verdict was taken without it.
 
-Only survivors are handed to the fixer.
+Only survivors are handed to the fixer — never an unverified finding, never a dismissed one.
 
 ## When triage empties the survivor set
 
-Triage disposes of findings; it does not restate the verdict. Where every finding behind a non-`PASS`
-verdict is dismissed, the verdict is left standing on nothing — and because the **verdict**, not the
-survivor set, is what gates every downstream branch, the run would otherwise dispatch a fixer with no
-findings to apply, or escalate a `BLOCKER` triage has already refuted. The disposition, in order:
+Triage disposes of findings; it does not restate the verdict. Where no finding behind a non-`PASS`
+verdict survives, every one of them dismissed or unverified, the verdict is left standing on nothing —
+and because the **verdict**, not the survivor set, is what gates every downstream branch, the run would
+otherwise dispatch a fixer with no findings to apply, or escalate a `BLOCKER` triage has already
+refuted. The disposition, in order:
 
 1. **Never dispatch the fixer with an empty survivor list.** It has nothing to apply, and the Fix
    Report a later re-review would falsify has nothing to be falsified against. Skip the dispatch.
 2. **Never run the unresolved-`BLOCKER` escalation on a refuted `BLOCKER`.** That escalation exists
    for a `BLOCKER` that survived a fix cycle, not for one that never survived triage.
 3. **Surface it and let the user settle the verdict.** Report the verdict, the fact that nothing
-   survived, and every dismissal with its reason, then ask:
+   survived, every dismissal with its reason and every unverified finding with what would settle it,
+   then ask:
    ```
    choices: ["Proceed as if the verdict were PASS — the dismissals are recorded (Recommended)", "Re-review, supplying the dismissal reasons", "Keep the verdict and stop for a human decision", "Cancel"]
    ```
@@ -70,19 +92,73 @@ findings to apply, or escalate a `BLOCKER` triage has already refuted. The dispo
 A partly emptied set is not this case: where at least one finding survived, the verdict stands and the
 command's normal branch runs on the survivors.
 
+This section governs the first review. On a re-review, § On re-review settles the verdict instead —
+there, no fixer is dispatched whatever survives, and its own prompt carries no re-review arm. The two
+prompts are this reference's **settle prompts**.
+
 ## The patch gate
 
 A survivor may be auto-fixed only where it shows a defect that **actually occurs**, missing coverage for
 a specific case, or a broken gate or convention — **not a state nothing reaches** — and where the
-smallest fix adds no public surface and **guards no state the finding did not demonstrate**. A survivor
-failing any of those conditions is surfaced for a human decision instead of patched.
+smallest fix adds no public surface, **guards no state the finding did not demonstrate**, and **edits no
+file that tells agents or contributors how to work in the repository — `CLAUDE.md`, `AGENTS.md`,
+`.github/copilot-instructions.md`, a file under `.claude/rules/` or `.github/instructions/`,
+`CONTRIBUTING.md`, `CODING_STANDARDS.md` — that the change under review did not itself edit**. A
+survivor failing any of those conditions is surfaced for a human decision instead of patched.
 
-That last clause is the load-bearing one: a guard added for a state the finding never demonstrated is
+The guard clause is the load-bearing one: a guard added for a state the finding never demonstrated is
 the most common shape of a "fix" applied to a false positive, and it is invisible afterwards because it
 looks like defensive coding.
 
+The instruction-file clause exists because `code-review` reads those files as the repository's
+documented standards: a finding that the change contradicts one of them is the likeliest kind to reach
+the fixer, and editing the file to agree with the code makes such a finding disappear without settling
+it. Where the change under review itself edited the file, a finding on it is a finding on the change,
+and the clause does not apply.
+
+## On re-review
+
+A **re-review** is any review a run dispatches after a fix cycle or an orchestrator edit over the same
+artifact: the one re-review a caller's cap allows, a re-review the user chose at § When triage empties
+the survivor set, and `/implement`'s review of its Phase 3.5 fix delta. Its findings are triaged by
+§ The step, with one check first and three rules after.
+
+**First, carry what this run already ruled.** A finding that names the same code site as a row this
+run already logged — line numbers may have moved with the fix — and makes the same claim, where the
+code there still reads as the row describes, keeps that row's outcome. It is marked **carried**, is not
+verified again, and is never handed to a fixer again. A row whose fix changed the code no longer
+matches: verify that finding afresh. A carried survivor is a fix that did not take, and counts as a
+survivor below.
+
+**Then:**
+
+1. **No survivor of a re-review is handed to a fixer** — the caller's cap is one fix cycle, and it is
+   spent. Each survivor is recorded in the triage line at its own severity, and a second verdict that
+   is not `BLOCK` gates nothing further.
+2. **The caller's second-verdict stop or escalation acts on a `BLOCKER` surviving the re-review's
+   triage — never on the verdict word.** A `BLOCKER` carried as dismissed or unverified is not one.
+   A review whose re-review leaves a `BLOCKER` surviving, or whose verdict the user keeps at point
+   3's prompt, **stayed blocked** — the name every caller gives this stop.
+3. **Where the second verdict is `BLOCK` and no `BLOCKER` survives**, the verdict is one its own
+   findings no longer support. Never promote it silently: report the verdict, each carried row with
+   its outcome and every new disposition, then ask:
+   ```
+   choices: ["Proceed — no BLOCKER survived triage, and every disposition is recorded (Recommended)", "Keep the verdict and stop for a human decision", "Cancel"]
+   ```
+   There is no re-review arm: this is the re-review the cap allows. **Proceed** continues as the
+   caller does after a second verdict that is not `BLOCK`. **Keep the verdict** means the review
+   stayed blocked: the caller takes its stop or escalation over the `BLOCKER`s the reviewer raised —
+   at the user's word, not on triage's. **Cancel** is the caller's own cancel.
+
 ## Reporting
 
-The orchestrator's run report names, for the triage step: how many findings were reviewed, how many
-survived, and **every dismissal with its reason**. A triage that reports only survivors is
-indistinguishable from a reviewer that found less.
+The orchestrator's run report carries one triage line per review pass, and the line names:
+
+- how many findings were reviewed, and how many **survived**, are **unverified** and were
+  **dismissed** — the three always sum to the findings reviewed, and a finding in none of them is a
+  triage failure; on a re-review, also how many were **carried**;
+- **every dismissal with its reason** — a triage that reports only survivors is indistinguishable from
+  a reviewer that found less;
+- every unverified finding with its grade if true and what would settle it;
+- every raise, with the grade it moved from and to and the effect that moved it;
+- where the review carried a `### Declined to judge` list, each line with its ruling.
