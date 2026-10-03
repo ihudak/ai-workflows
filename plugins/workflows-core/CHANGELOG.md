@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.11.0] — 2026-10-03
+
+### Added
+- **`finding-triage` gains a third outcome, `unverified`.** A finding the orchestrator can neither confirm nor refute — the diff and the code around it leave the question open — is no longer dismissed as unsubstantiated: one that would be `MAJOR` or `BLOCKER` if true is recorded at that grade, marked `(unverified)`, with what would settle it, and reaches the user in the triage line; one that would be only `MINOR` or `NIT` is dismissed with the same note. It never reaches a fixer and changes nothing the verdict gates. Prompted by BMAD's `maybe-false` triage verdict (3433612d, b0d27c3c).
+- **`finding-triage` § On re-review.** The second review is now triaged too. A finding at the same code site, making the same claim as a row this run already logged, where the code still reads as that row describes, keeps the row's outcome (`carried`) and is neither verified nor patched again; no fixer runs after a re-review; and the caller's second-verdict stop acts on a `BLOCKER` surviving that triage — the review **stayed blocked** — never on the verdict word. A second `BLOCK` with no surviving `BLOCKER` is the user's to settle, at a prompt with no re-review arm, never promoted silently. Prompted by BMAD 7c3e5827 and 85d968fc.
+- **Triage raises a grade by effect, to `MAJOR` at most, and never lowers one**, and rules on each line of a `code-review` `### Declined to judge` list — a line ruled a defect is recorded, never handed to a fixer. Prompted by superpowers 5bf4e780 (#2319).
+- **`escalation-rules`: `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`** — the heading five commands already cited (see Fixed).
+
+### Changed
+- **The patch gate never edits an instruction or contributor file the change did not itself edit** — `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, a file under `.claude/rules/` or `.github/instructions/`, `CONTRIBUTING.md`, `CODING_STANDARDS.md`: such a fix is surfaced for a human decision. `doc-fixer` applies the clause. `code-review` now reads those files as the repository's standards, which makes "edit the file to agree with the code" the likeliest wrong fix.
+- **The triage line is one per review pass**, and survived + unverified + dismissed must sum to the findings reviewed.
+- **`model-routing/classification` §6**: a disposition may be an unverified record, and item 4 names the four edge-case checks `code-review` dimension 4 gained.
+
+### Fixed
+- **Five commands escalated per a `Review verdict BLOCK` rule this reference did not have** (`/create-prd`, `/update-prd`, `/create-ard`, `/prd-proposal`, `/brd-proposal`) — only the `— /document` and `— /epics` variants existed — and `/design` cited the `— /epics` one, whose "Defer" appends a refinement note to the draft that `/design`'s own handoff then refuses. The new heading is the one all six cite (`product-workflows` 3.12.0, `dev-workflows` 4.6.0). `/specify` keeps the `— /epics` rule on purpose: it defines its own "Defer" to mirror it.
+
 ## [1.10.0] — 2026-10-02
 
 ### Added

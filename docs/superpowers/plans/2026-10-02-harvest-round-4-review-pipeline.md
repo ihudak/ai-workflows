@@ -2081,7 +2081,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 #### `cl/aw-dev-workflows.md`
 
 `````markdown
-## [4.6.0] — 2026-10-02
+## [4.6.0] — 2026-10-03
 
 **Update `workflows-core` to 1.11.0 with this release**: the review cycles below follow its `finding-triage` § On re-review.
 
@@ -2102,7 +2102,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 #### `cl/aw-docs-workflows.md`
 
 `````markdown
-## [1.5.0] — 2026-10-02
+## [1.5.0] — 2026-10-03
 
 **Update `workflows-core` to 1.11.0 with this release**: the commands below follow its `finding-triage` § On re-review and its patch gate's instruction-file clause.
 
@@ -2114,7 +2114,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 #### `cl/aw-product-workflows.md`
 
 `````markdown
-## [3.12.0] — 2026-10-02
+## [3.12.0] — 2026-10-03
 
 **Update `workflows-core` to 1.11.0 with this release**: the commands below cite its new escalation heading and its `finding-triage` § On re-review.
 
@@ -2128,7 +2128,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 #### `cl/aw-workflows-core.md`
 
 `````markdown
-## [1.11.0] — 2026-10-02
+## [1.11.0] — 2026-10-03
 
 ### Added
 - **`finding-triage` gains a third outcome, `unverified`.** A finding the orchestrator can neither confirm nor refute — the diff and the code around it leave the question open — is no longer dismissed as unsubstantiated: one that would be `MAJOR` or `BLOCKER` if true is recorded at that grade, marked `(unverified)`, with what would settle it, and reaches the user in the triage line; one that would be only `MINOR` or `NIT` is dismissed with the same note. It never reaches a fixer and changes nothing the verdict gates. Prompted by BMAD's `maybe-false` triage verdict (3433612d, b0d27c3c).
@@ -2148,7 +2148,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 #### `cl/ce-dev-workflows.md`
 
 `````markdown
-## [2.36.0] — 2026-10-02
+## [2.36.0] — 2026-10-03
 
 ### Added
 - **`finding-triage` gains a third outcome, `unverified`.** A finding the orchestrator can neither confirm nor refute — the diff and the code around it leave the question open — is no longer dismissed as unsubstantiated: one that would be `MAJOR` or `BLOCKER` if true is recorded at that grade, marked `(unverified)`, with what would settle it, and reaches the user in the triage line; one that would be only `MINOR` or `NIT` is dismissed with the same note. It never reaches a fixer and changes nothing the verdict gates. Prompted by BMAD's `maybe-false` triage verdict (3433612d, b0d27c3c).
@@ -2167,7 +2167,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 #### `cl/ie-dev-workflows.md`
 
 `````markdown
-## [2.67.0] — 2026-10-02
+## [2.67.0] — 2026-10-03
 
 ### Added
 - **`finding-triage` gains a third outcome, `unverified`.** A finding the orchestrator can neither confirm nor refute — the diff and the code around it leave the question open — is no longer dismissed as unsubstantiated: one that would be `MAJOR` or `BLOCKER` if true is recorded at that grade, marked `(unverified)`, with what would settle it, and reaches the user in the triage line; one that would be only `MINOR` or `NIT` is dismissed with the same note. It never reaches a fixer and changes nothing the verdict gates. Prompted by BMAD's `maybe-false` triage verdict (3433612d, b0d27c3c).

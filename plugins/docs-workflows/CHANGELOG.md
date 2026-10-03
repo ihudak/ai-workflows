@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.5.0] — 2026-10-03
+
+**Update `workflows-core` to 1.11.0 with this release**: the commands below follow its `finding-triage` § On re-review and its patch gate's instruction-file clause.
+
+### Changed
+- **`/document` triages its re-review** (`workflows-core:finding-triage` § On re-review) and escalates only on a review that **stayed blocked**.
+- **`/docs-init`, `/docs-brand` and `/docs-audit` report unverified findings** beside survivors and dismissals, and their direct edits honour the patch gate's instruction-file clause; `docs-audit-reviewer` no longer counts the reference's steps.
+
 ## [1.4.6] — 2026-10-02
 
 **Update `workflows-core` to 1.10.0 with this release**: `/document` and `/release-notes` rely on its commit scan taking no merge commit.
