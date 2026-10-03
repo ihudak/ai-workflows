@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.11.1] — 2026-10-03
+
+### Changed
+- **`implementation-format` no longer names a repository a multi-source `/implement` run edited and never branched** as one of the ways a run ends uncommitted: from `dev-workflows` 4.7.0, `/implement` writes only into the repository it branches.
+
 ## [1.11.0] — 2026-10-03
 
 ### Added

@@ -225,6 +225,8 @@ The split is what makes per-unit committing worth having: a batch that dies on c
 
 **Where each unit gets its own branch there is no split.** `/vuln` is that case: a unit-level call that only committed would leave that CVE's branch unpushed forever, since the terminal call can push only the branch it is standing on. Each CVE runs the **full** entry point, and §2.4's once-per-run caching keeps that from asking N times.
 
+**A unit-level commit a hook rejects ends the split.** §2.3 leaves its changes staged and forbids carrying on as though it landed, so the caller works no later unit — a later unit's §2.2 would fold the rejected changes into that unit's commit — and goes to its terminal call, which then stages and commits nothing: it runs §2.1, then §2.4 onward for the commits the branch already carries, and its §3.1 line carries the *A unit commit rejected* append. Where the branch carries no commit yet, its line is the *Commit rejected by a hook* row.
+
 **A unit-level call emits no §3.1 line** (§3.1 allows one per *full* call), but it is not silent: it returns its outcome — commit sha, `nothing staged`, or a commit failure with its reason — to the caller, which records it in its own per-unit results table. §2.10's "every failure is reported" is satisfied there, not by a `Code repo:` line.
 
 ---
@@ -253,6 +255,7 @@ Exactly one per **full** call, prefixed `Code repo:`. A caller that finishes sev
 | Commit rejected by a hook | `Code repo: NOT committed — <n> unit(s) rejected by a <hook> hook (<reason>). The changes are staged.` |
 | Gate failed | `Code repo: NOT committed — <reason>. Your changes are still in the working tree.` |
 | Skipped under `--no-commit` | `Code repo: not committed — --no-commit. Your changes are in the working tree on <branch>.` |
+| A unit commit rejected (§2.12) | append `; <unit> NOT committed — rejected by a <hook> hook (<reason>); its changes are staged.` |
 | Pre-existing dirty paths skipped | append `; <n> pre-existing dirty path(s) were left uncommitted.` |
 | A stash is outstanding | append `; a stash from this run's branch step is still on the stack (<stash_ref>).` |
 

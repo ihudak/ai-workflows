@@ -134,9 +134,7 @@ weaker than doing it, and a command that does not commit cannot write a commit s
 longer any command's situation: the commit is prompt-free (`code-handoff.md` §1 rule 5), so a run
 ends uncommitted only by choice — it typed `--no-commit` — or where no commit could be made — for example a failed
 gate or a hook rejection (`code-handoff.md` §2.1 and §2.3 respectively, each reported on a
-`NOT committed` line, §3.1),
-or, on a multi-source `/implement` run, a repository it edited and never branched, which that run
-reports as uncommitted rather than committing. The convention still needs to be
+`NOT committed` line, §3.1). The convention still needs to be
 written down, because the people whose commits the §4 scan has to find are mostly not running the
 plugin at all — which is what `docs/reference/commit-convention.md` is for.
 
