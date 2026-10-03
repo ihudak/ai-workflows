@@ -56,6 +56,8 @@ A failed gate is reported through §3.1's `NOT committed` line and the run conti
 
 ### 2.2 What gets staged
 
+**After a §2.12 unit-level commit a hook rejected, this step stages nothing** — the rejected changes stay staged and uncommitted — and the call goes straight on to §2.4 (§2.12).
+
 **The precondition.** The caller is responsible for establishing, before its first file edit, that the tree held nothing it did not put there — `/implement` at Pre-Phase 3 step 1 and `/upgrade` at Phase 2 prep step 1 do it with an explicit dirty-tree prompt, and `/vuln` does it by capturing the porcelain set at the top of Step 3 and passing it as `pre_existing_dirty` (it never prompts, so on `/vuln` a non-empty set always takes carve-out 1 below rather than the `add -A` path). Where the tree was established clean, everything uncommitted in the repo now **is** this run's work — the same reasoning `docs-workflows:finish-and-handoff` §2 applies to the docs repo — and staging is `git -C "<repo>" add -A`.
 
 Enumerate before staging regardless: `git -C "<repo>" status --porcelain -z --untracked-files=all`. `--untracked-files=all` is required because the default collapses an untracked directory to a single `?? dir/` line, which would hide individual files from carve-out 1's set subtraction below. **`-z` is required for the reason `workflows-core:phase-handoff` §2.3 gives** — without it git wraps any path carrying a space, a `"`, a `\` or a non-ASCII byte in double quotes and octal-escapes the non-ASCII bytes, so carve-out 1 would stage that path in its quoted form and `git add` would match no file; under `-z` each record is NUL-terminated and the path is raw. **The caller's `pre_existing_dirty` capture reads the same form**, and that is not optional either: carve-out 1 subtracts one set from the other, so a quoted recorded path beside a raw current one fails to subtract and sweeps somebody else's uncommitted work into this run's commit — the one thing that carve-out exists to prevent. All three callers capture it with `-z` (`/implement` Pre-Phase 3 step 1, `/upgrade` Phase 2 prep step 1, `/vuln` Step 3).
@@ -92,7 +94,7 @@ Everything the convention leaves open comes from the repository, never from habi
 
 Never `--amend` (§1 rule 3): an amend rewrites a commit that may already be pushed, and this step is reachable more than once per run.
 
-**A rejected commit is a reported failure, never a silent one.** A `pre-commit` / `commit-msg` hook can reject the commit; the changes then stay staged. Do not retry, do not bypass with `--no-verify`, and do not proceed to the next unit as though the commit landed — a later unit's `add -A` would fold this unit's diff into that unit's commit under the wrong message. Record the failure and its hook output; in the §2.12 split form the caller reports it in its own per-unit results table, and the terminal call's §3.1 line names the count of units that failed to commit.
+**A rejected commit is a reported failure, never a silent one.** A `pre-commit` / `commit-msg` hook can reject the commit; the changes then stay staged. Do not retry, do not bypass with `--no-verify`, and do not proceed to the next unit as though the commit landed — a later unit's `add -A` would fold this unit's diff into that unit's commit under the wrong message. Record the failure and its hook output; in the §2.12 split form the caller reports it in its own per-unit results table, and the terminal call's §3.1 line names the unit that failed to commit (§2.12).
 
 ### 2.4 The consent choice
 
@@ -190,6 +192,8 @@ An exhausted ladder (or no `origin`) means no pull request can be opened: report
 
   **That second exclusion is the operator's answer, never the bare token.** `test_decision: skip` has a *second* provenance: `/implement` records it **itself** after two `command_hint` attempts that also failed to capture (Pre-Phase 3.5's *"Ask at most twice in a run; after that record `test_decision: skip`"*). Nothing was typed and nothing was declined there — the operator asked twice for a working command and the run gave up — so that state matches this bullet's own predicate word for word and **does** flip the flag. A caller must therefore pass which provenance it holds and never the token alone; `/implement` does, in its Phase 4.6 `clean_finish` list. The distinction is worth stating because the token is what a reader reaches for: the exclusion above was written as "a typed decision", and the run can type nothing and record the same value.
 
+- a §2.12 unit-level commit a hook rejected — the pull request carries fewer units than the run was asked for, and the rejected unit's changes sit staged beside it.
+
 **The commit runs exactly as it would on a clean finish, and the push is still *offered* under §2.4's choice.** Unreviewed work that exists is recoverable; work that was never committed is not, and a failed gate is the case where losing it hurts most. *Offered* rather than guaranteed, because this flag is §2.4's own first re-ask trigger: where it differs from the flag the recorded answer was given under, that choice is put again and can be answered *"Neither"*. What the flag itself changes is only the pull request:
 
 - opened with `--draft`, so it cannot be merged by reflex;
@@ -225,7 +229,7 @@ The split is what makes per-unit committing worth having: a batch that dies on c
 
 **Where each unit gets its own branch there is no split.** `/vuln` is that case: a unit-level call that only committed would leave that CVE's branch unpushed forever, since the terminal call can push only the branch it is standing on. Each CVE runs the **full** entry point, and §2.4's once-per-run caching keeps that from asking N times.
 
-**A unit-level commit a hook rejects ends the split.** §2.3 leaves its changes staged and forbids carrying on as though it landed, so the caller works no later unit — a later unit's §2.2 would fold the rejected changes into that unit's commit — and goes to its terminal call, which then stages and commits nothing: it runs §2.1, then §2.4 onward for the commits the branch already carries, and its §3.1 line carries the *A unit commit rejected* append. Where the branch carries no commit yet, its line is the *Commit rejected by a hook* row.
+**A unit-level commit a hook rejects ends the split.** §2.3 leaves its changes staged and forbids carrying on as though it landed, so the caller works no later unit — a later unit's §2.2 would fold the rejected changes into that unit's commit — and goes to its terminal call, which then stages and commits nothing: it runs §2.1, then §2.4 onward for the commits the branch already carries, its §3.1 line carries the *A unit commit rejected* append, and the caller sets `clean_finish: false` (§2.9). Where the branch carries no commit yet, its line is the *Commit rejected by a hook* row.
 
 **A unit-level call emits no §3.1 line** (§3.1 allows one per *full* call), but it is not silent: it returns its outcome — commit sha, `nothing staged`, or a commit failure with its reason — to the caller, which records it in its own per-unit results table. §2.10's "every failure is reported" is satisfied there, not by a `Code repo:` line.
 
@@ -237,7 +241,7 @@ The split is what makes per-unit committing worth having: a batch that dies on c
 
 Exactly one per **full** call, prefixed `Code repo:`. A caller that finishes several branches in one run (a `/vuln` CVE loop) emits one line per branch. A §2.12 unit-level call emits none.
 
-`<what>` below is `<sha7> on <branch>` for a call that committed, and `<n> commit(s) on <branch>` for a terminal call whose own staging was empty but whose branch carries commits from unit-level calls.
+`<what>` below is `<sha7> on <branch>` for a call that committed, and `<n> commit(s) on <branch>` for a terminal call whose own staging was empty, or skipped after a rejected unit (§2.12), but whose branch carries commits from unit-level calls.
 
 | Case | Line |
 |---|---|

@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.11.1] — 2026-10-03
 
 ### Changed
-- **`implementation-format` no longer names a repository a multi-source `/implement` run edited and never branched** as one of the ways a run ends uncommitted: from `dev-workflows` 4.7.0, `/implement` writes only into the repository it branches.
+- **`implementation-format` records one code repository per `/implement` run.** Its §1 example showed one run writing two repositories, and §3 named a repository a multi-source run edited and never branched as a way a run ends uncommitted; from `dev-workflows` 4.7.0, `/implement` changes code only in the repository it branches, and a second repository is a later run with a block of its own.
 
 ## [1.11.0] — 2026-10-03
 
