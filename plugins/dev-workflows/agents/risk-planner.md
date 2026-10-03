@@ -110,6 +110,12 @@ _or_ "Ranking withheld — no red-capable repro. Tried: [what you tried, and wha
 
 ### Acceptance checks
 - [concrete observable conditions that prove success]
+
+### Review focus
+1. [an input class or failure mode the task implies and no step's tests
+   exercise] - [the behaviour a reasonable user would expect]
+2. ...
+_or_ "none — checked"
 ```
 
 ## Planning discipline
@@ -144,6 +150,16 @@ _or_ "Ranking withheld — no red-capable repro. Tried: [what you tried, and wha
   runs several times longer than the change it describes, the steps have
   written the code — cut them back to the decisions. The other sections are
   not measured against the change.
+- **Name the review focus.** In `### Review focus`, list up to five input
+  classes or failure modes the task implies and no step's tests exercise,
+  most likely to bite a user first, each with the behaviour a reasonable
+  user would expect. Draw them from the task, the spec where the brief
+  carries one, and the code the steps touch: the spec says what the change
+  must do, not every input it will meet, and its silence on one is not
+  permission for that input to break the program. `code-review` checks
+  each line, and where the command dispatches `test-writer` it writes a
+  test for each, so every line is acted on. `none — checked` means you
+  looked and found none, never that you skipped the look.
 - **Flag blockers early.** If a prerequisite is missing (missing tests, unclear
   requirement, incompatible runtime), return a plan whose first step is "ask
   user X" rather than silently assuming.

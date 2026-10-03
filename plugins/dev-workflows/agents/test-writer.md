@@ -42,6 +42,7 @@ Refuse to write tests without a diff and a baseline — ask the caller to supply
    - **Include**: new public functions, new exported types, new branches in existing control flow, new API surfaces (routes, CLI flags, config keys), new error paths that can be observed.
    - **Skip**: renames with no behavior change, comment-only edits, formatting-only changes, pure internal refactors that don't alter observable behavior.
    - **Flag as `### Skipped (pre-existing untested code)`**: files that clearly pre-existed and remain untested — this agent never retrofits tests for unchanged code.
+   - **Review focus**: where the **Plan** carries a Review focus section, each line names an input class or failure mode this change must handle and the behaviour expected of it — map each line to the behaviour it covers and write the test that pins it, under step 5's rules. A line you cannot test in isolation goes in `### Notes` with the reason; never drop one silently.
 
 4. **Discover test patterns.** Read 2–3 representative test files from the project's conventional test location, **once per suite you are writing against** (e.g. `src/test/java/`, `tests/`, `__tests__/`, `spec/`) — two suites have two sets of conventions and neither is evidence about the other. Note:
    - File naming (`*Test.java` vs `test_*.py` vs `*.test.ts` etc.)

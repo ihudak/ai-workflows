@@ -69,6 +69,21 @@ Refuse to review without a diff - ask the caller to produce one.
    - **Location** - `path:line` (use `path:start-end` for ranges)
    - **Observation** - what is wrong or risky
    - **Suggestion** - concrete, minimal fix
+
+   **Grade by effect.** Where a dimension below fixes a finding's severity,
+   that rule governs — dimension 3's judgment-call floor and dimensions 9,
+   10 and 11. Everywhere else a finding's severity is what a reasonable
+   person using this software meets if the change ships as it stands. The
+   task, the plan and the spec say what the change must do, not every input
+   it will meet: where they are silent on the input that triggers a finding,
+   a reasonable user's expectation is the requirement, and the silence is not
+   permission. A crash, lost data or a wrong result on an input nothing
+   mentions is graded by that crash, that loss or that result.
+
+   **Set nothing aside silently.** Every behaviour you considered and set
+   aside as outside the task, the plan or the spec goes in
+   `### Declined to judge`, one line each with the reason. The caller rules
+   on each line.
 5. Derive a verdict:
    - `PASS` - no findings at all
    - `PASS WITH RECOMMENDATIONS` - no blockers, but at least one MAJOR, MINOR or NIT. The three are a **partition**: every finding set matches exactly one. `PASS` used to read "no findings above MINOR" beside a `PASS WITH RECOMMENDATIONS` of "MAJOR / MINOR / NIT only", so a lone MINOR matched both and the verdict was the reviewer's coin-toss — and the caller dispatches a fixer on one of the two.
@@ -104,17 +119,47 @@ full review.
    trust boundaries.
 3. **Architectural consistency** - follows existing patterns, respects module
    boundaries, uses the right abstraction layer, avoids duplicate
-   implementations. As a **floor** when the repo has no documented standard
-   (a documented standard **overrides** this list), watch for the classic
-   code smells — flag as judgment-call findings (`MINOR`/`NIT`, not hard
-   violations): Mysterious Name, Duplicated Code, Feature Envy, Data Clumps,
-   Primitive Obsession, Repeated Switches, Shotgun Surgery, Divergent Change,
-   Speculative Generality, Message Chains, Middle Man, Refused Bequest.
+   implementations, and honours the repository's **documented standards**.
+   Find them before judging this dimension: `CLAUDE.md` and `AGENTS.md` at
+   the project root and in every directory between it and a changed file;
+   `CONTRIBUTING.md` at the root, in `.github/` or in `docs/`;
+   `CODING_STANDARDS.md` at the root; and every file under `.claude/rules/`
+   whose `paths:` frontmatter matches a changed file, or which has no
+   `paths:`. Read each one that exists. A rule the repository's own lint,
+   format or type-check configuration already enforces is that tool's to
+   report, not this review's. As a **floor** where those files document no
+   standard on a point (a standard documented in one of them **overrides**
+   this list), watch for the classic code smells — flag as judgment-call
+   findings (`MINOR`/`NIT`, not hard violations): Mysterious Name,
+   Duplicated Code, Feature Envy, Data Clumps, Primitive Obsession,
+   Repeated Switches, Shotgun Surgery, Divergent Change, Speculative
+   Generality, Message Chains, Middle Man, Refused Bequest.
 4. **Missed edge cases** - nulls, empty collections, zero/negative/boundary
    values, unicode, timezones, concurrent access, partial failures, retries,
    idempotency, rate limiting. Also the **missing-adoption gap** — a sibling
    call site that should adopt the changed behaviour and doesn't (an untouched
-   caller of the same pattern), with no test catching the omission.
+   caller of the same pattern), with no test catching the omission. Then,
+   mechanically:
+   - **Implicit branches** — where the change special-cases some members of
+     a fixed value set (enum values, status codes, sentinels, type tags,
+     flags, value ranges), the members it does not name are branches too:
+     say what each one meets.
+   - **Handle lifetime** — where the changed code re-checks, re-fetches or
+     re-validates something it already holds (a handle, an index, an id, a
+     pointer), name the intervening call that can invalidate it, what that
+     call does to it, and what the code skips when the re-check fails.
+   - **Call against declaration** — at every call site the diff adds or
+     changes, tests included, read the callee's declaration and check the
+     call's argument count, order, types and defaults against it.
+   - **Removed contracts** — for code the diff removes or replaces (not a
+     pure rename or whitespace change), ask whether it carried a behaviour
+     or a contract the change neither re-establishes nor intentionally
+     retires. A regression, an orphaned reference or newly dead code is a
+     finding.
+
+   Where the **Plan** carries a Review focus section, check each of its
+   lines deliberately, and report a finding for each input or failure mode
+   the change does not handle the way its line expects.
 5. **Migration risks** - forward/backward compatibility, data migration
    ordering, feature-flag interaction, deploy order (DB before app vs after),
    schema changes under live traffic.
@@ -243,6 +288,11 @@ Return this exact shape (no chatter, no preamble):
   Suggestion: [correction]
 - _or_ "no findings — every checkable claim verified"
 
+### Declined to judge
+- [a behaviour you considered and set aside] - [why it is outside the task,
+  the plan or the spec]
+- _or_ "none — nothing set aside"
+
 ### Recommended next step
 - If BLOCK: [the specific thing that must be fixed before tests run]
 - If PASS WITH RECOMMENDATIONS: "triage, then invoke review-fixer for the surviving MAJOR findings in the same commit; then run tests; MINOR / NIT can be deferred."
@@ -277,4 +327,7 @@ No dimension was assessed.
 - NEVER modify files. The reviewer reads; the caller writes.
 - NEVER return a PASS if a BLOCKER finding exists.
 - NEVER skip a dimension silently - either report findings or say "N/A - reason".
+- NEVER set a behaviour aside silently - it goes in `### Declined to judge`.
+  The `### Re-classification` return and the `Diff: unreadable` return carry
+  no such section; every full report does.
 - NEVER recommend running tests when the verdict is BLOCK.

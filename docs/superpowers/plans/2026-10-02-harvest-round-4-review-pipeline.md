@@ -943,10 +943,10 @@ _or_ "none — checked"
   user would expect. Draw them from the task, the spec where the brief
   carries one, and the code the steps touch: the spec says what the change
   must do, not every input it will meet, and its silence on one is not
-  permission for that input to break the program. `test-writer` writes a
-  test for each line and `code-review` checks each one, so every line is
-  acted on. `none — checked` means you looked and found none, never that
-  you skipped the look.
+  permission for that input to break the program. `code-review` checks
+  each line, and where the command dispatches `test-writer` it writes a
+  test for each, so every line is acted on. `none — checked` means you
+  looked and found none, never that you skipped the look.
 >>>>>>> NEW
 `````
 
