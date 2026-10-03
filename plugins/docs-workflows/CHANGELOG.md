@@ -14,7 +14,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`/docs-init`, `/docs-brand` and `/docs-audit` report unverified findings, raises and any settle prompt's answer** beside survivors and dismissals, a verdict the user settled marked as such, settle an emptied survivor set with a prompt that has no re-review arm — `/docs-init` and `/docs-brand` stop at their review gate on its Keep-the-verdict or Cancel, the report saying which, and `/docs-audit` takes its unresolved-BLOCKER stop, or its Cancel route on a kept verdict that is not `BLOCK` — and `/docs-init` and `/docs-brand` list unverified findings in their pull-request drafts and say what a Cancel at the review gate leaves behind; their direct edits honour the patch gate's instruction-file clause; `docs-audit-reviewer` no longer counts the reference's steps.
 
 ### Fixed
-- **`scaffold-tree.md` §7's and `/docs-audit`'s ignore test read every line `git check-ignore -v` prints as a match**, though it also prints a negated `!` pattern that re-includes the path; a path a project re-includes was left unstaged and its config references removed. A `!` line is now no match.
+- **`scaffold-tree.md` §7's and `/docs-audit`'s ignore test read every line `git check-ignore -v` prints as a match**, though it also prints a negated `!` pattern that re-includes the path; the scaffold left such a path unstaged and removed its config references, and `/docs-audit` reported its backlog as ignored. A `!` line is now no match.
 
 ## [1.4.6] — 2026-10-02
 
