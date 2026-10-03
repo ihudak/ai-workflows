@@ -26,8 +26,8 @@ The caller passes a structured brief:
 - **Classification** - `SIGNIFICANT` or `HIGH-RISK` (with the reason).
 - **Plan** - the risk-weighted plan that was approved (produced by the
   `risk-planner` system prompt at `${CLAUDE_PLUGIN_ROOT}/agents/risk-planner.md`, or a
-  user-approved equivalent) — where `/implement` re-planned mid-implementation, two plans under
-  headings — the re-plan's Steps are the work remaining, every Review focus line in either plan
+  user-approved equivalent) — where the user approved `/implement`'s mid-implementation re-plan, two
+  plans under headings — the re-plan's Steps are the work remaining, every Review focus line in either plan
   applies, and the re-plan governs only where two items contradict.
 - **Diff** - `git diff` or a file-by-file list of changes. MANDATORY.
   Both **Plan** and **Diff** may be given inline or as an absolute file
