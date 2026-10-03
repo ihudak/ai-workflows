@@ -1124,7 +1124,7 @@ every dismissal is recorded with a reason that disposes of that finding's own cl
 <<<<<<< OLD 1
 A BLOCKER that is neither fixed nor explicitly overridden stops the run.
 =======
-A BLOCKER that is neither fixed nor explicitly overridden stops the run. Where triage leaves no finding behind a verdict other than `PASS` standing (every one dismissed or unverified), you settle the verdict at a prompt instead: proceeding continues the run, keeping a `BLOCK` verdict takes that same stop, and keeping any other verdict or cancelling ends the run as a Cancel does.
+A BLOCKER that is neither fixed nor explicitly overridden stops the run. Where triage leaves no finding behind a verdict other than `PASS` standing (every one dismissed or unverified), you settle the verdict at a prompt instead: proceeding continues the run, keeping a `BLOCK` verdict takes that same stop, and keeping any other verdict, or cancelling, ends the run there — the backlog stays on disk, the report names the review as cancelled, and the run's bookkeeping still finishes.
 >>>>>>> NEW
 <<<<<<< OLD 1
 - `DOCS_AUDIT_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-audit-reviewer` was neither fixed nor accepted by you.
@@ -1140,7 +1140,7 @@ A BLOCKER that is neither fixed nor explicitly overridden stops the run. Where t
 - `DOCS_BRAND_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-scaffold-reviewer` was neither fixed nor overridden.
 =======
 - `DOCS_BRAND_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-scaffold-reviewer` was neither fixed nor overridden.
-- A Cancel at the review gate, or keeping the review's verdict after triage left no finding behind it standing (every one dismissed or unverified), stops a standalone run there: the branding stays uncommitted on its branch, no pull request is drafted, and the cost entry is still recorded. Settle the findings, check each written path with `git check-ignore <path>` — leave any it prints unstaged, after removing every config reference to it — and commit by hand.
+- A Cancel at the review gate, or keeping the review's verdict after triage left no finding behind it standing (every one dismissed or unverified), stops a standalone run there: the branding stays uncommitted on its branch, no pull request is drafted, and the cost entry is still recorded. Settle the findings, check each written path with `git check-ignore <path>` and leave any it prints unstaged, after removing every config reference to it, then commit by hand.
 >>>>>>> NEW
 <<<<<<< OLD 1
 all but `DOCS_BRAND_UNRESOLVED_BLOCKER`, which belongs to the standalone review gate an `--inline` run skips
@@ -1156,7 +1156,7 @@ all but `DOCS_BRAND_UNRESOLVED_BLOCKER` and a stop at the review gate, both of w
 - `DOCS_INIT_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-scaffold-reviewer` was neither fixed nor explicitly overridden.
 =======
 - `DOCS_INIT_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-scaffold-reviewer` was neither fixed nor explicitly overridden.
-- A Cancel at the review gate, or keeping the review's verdict after triage left no finding behind it standing (every one dismissed or unverified), stops the run there: the scaffold stays uncommitted on its branch, no pull request is drafted, and the cost entry is still recorded. Settle the findings, check each written path with `git check-ignore <path>` — leave any it prints unstaged, after removing every config reference to it — and commit by hand — a re-run would refuse the scaffolded tree.
+- A Cancel at the review gate, or keeping the review's verdict after triage left no finding behind it standing (every one dismissed or unverified), stops the run there: the scaffold stays uncommitted on its branch, no pull request is drafted, and the cost entry is still recorded. Settle the findings, check each written path with `git check-ignore <path>` and leave any it prints unstaged, after removing every config reference to it, then commit by hand — a re-run would refuse the scaffolded tree.
 >>>>>>> NEW
 `````
 
@@ -1353,7 +1353,7 @@ Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelle
 <<<<<<< OLD 1
 guidance only, never auto-invoked. **When a branch and a drafted PR exist:**
 =======
-guidance only, never auto-invoked. **After a stop at the review gate:** name the findings left to settle and the branch holding the uncommitted branding; settle them there, check each written path with `git check-ignore <path>` — leave any path it prints unstaged, after removing every config reference to it (`scaffold-tree.md` §7 lists them) — and commit by hand — a re-run would find the tree dirty and offer to stash that work. **When a branch and a drafted PR exist:**
+guidance only, never auto-invoked. **After a stop at the review gate:** name the findings left to settle and the branch holding the uncommitted branding; settle them there, check each written path with `git check-ignore <path>` and leave any path it prints unstaged, after removing every config reference to it (`scaffold-tree.md` §7 lists them), then commit by hand — a re-run would find the tree dirty and offer to stash that work. **When a branch and a drafted PR exist:**
 >>>>>>> NEW
 <<<<<<< OLD 1
 BLOCK, resolved | N/A — cancelled before Phase 9]
@@ -1430,7 +1430,7 @@ Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelle
 <<<<<<< OLD 1
 guidance only, never auto-invoked. On a completed run:
 =======
-guidance only, never auto-invoked. After a stop at the review gate: name the findings left to settle and the branch holding the uncommitted scaffold; settle them there, check each written path with `git check-ignore <path>` — leave any path it prints unstaged, after removing every config reference to it (`scaffold-tree.md` §7 lists them) — and commit by hand — a re-run would refuse the tree, whose `mkdocs.yml`, `.vale.ini` and `docs-profile.yml` Phase 0 reads as an existing docs repository. On a completed run:
+guidance only, never auto-invoked. After a stop at the review gate: name the findings left to settle and the branch holding the uncommitted scaffold; settle them there, check each written path with `git check-ignore <path>` and leave any path it prints unstaged, after removing every config reference to it (`scaffold-tree.md` §7 lists them), then commit by hand — a re-run would refuse the tree, whose `mkdocs.yml`, `.vale.ini` and `docs-profile.yml` Phase 0 reads as an existing docs repository. On a completed run:
 >>>>>>> NEW
 <<<<<<< OLD 1
 BLOCK, resolved | N/A — cancelled before Phase 7.5]
