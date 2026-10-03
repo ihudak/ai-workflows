@@ -12,7 +12,7 @@ convention is a separate thing with a wider writer set — all three of the comm
 
 ## 1. The block
 
-One `## <YYYY-MM-DD> — /implement` block per run, with one entry: the code repository the run branched (`dev-workflows:code-handoff`'s `repo`). A change another repository needed is a later run from there, with a block of its own:
+One `## <YYYY-MM-DD> — /implement` block per run, with one entry: the code repository the run branched. A change another code repository needed is a later run from there, with a block of its own:
 
 ```markdown
 # Implementation — ACME-77-01 order intake

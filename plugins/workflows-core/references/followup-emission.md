@@ -77,6 +77,7 @@ re-insert.
 Emit a task ONLY for signals whose action lands OUTSIDE the current change or
 requires a MANUAL human step:
 
+- A change another code repository needs (`/dev-workflows:implement` changes code only in the repository it branches, and records one for a run from there).
 - Files/pages owned by others (the owner was surfaced and the edit is theirs to make).
 - Implementation gaps (PRD vs source; the `<KEY>-implementation-gaps.md`
   draft) → the task links the draft; verbose context → a note (§3).

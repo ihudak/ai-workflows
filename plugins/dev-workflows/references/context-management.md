@@ -16,7 +16,7 @@ without degrading. Apply when the plan/step list is large or the run is nearing 
   diff, review package, prior-phase summary) to a file and hand the subagent the *path*, not the pasted
   content. Pasted dispatch content stays resident in the orchestrator's context and is re-read on every
   later turn; a file path costs one line. Always `command mktemp` the handoff file — **never inside a repo working
-  tree** (and never in the specs tree) — so a later `git add -N . && git diff` never picks it up; `command`
+  tree** (and never in the specs tree) — so a later `git add -N :/ && git diff` never picks it up; `command`
   for the reason the removal below gives, since an alias or a shell function of that name would print its
   own text into the path the run then writes to and hands on.
 - **Remove every file so handed off, once no later step reads it** — and at the latest before the run

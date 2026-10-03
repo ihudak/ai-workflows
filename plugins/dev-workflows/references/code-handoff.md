@@ -56,7 +56,7 @@ A failed gate is reported through §3.1's `NOT committed` line and the run conti
 
 ### 2.2 What gets staged
 
-**After a §2.12 unit-level commit a hook rejected, this step stages nothing** — the rejected changes stay staged and uncommitted — and the call goes straight on to §2.4 (§2.12).
+**After a §2.12 unit-level commit a hook rejected, this step stages nothing** — the rejected changes stay staged and uncommitted — and the call goes straight on to §2.4 where the branch carries a commit this run made, and otherwise ends on §3.1's *Commit rejected by a hook* row (§2.12).
 
 **The precondition.** The caller is responsible for establishing, before its first file edit, that the tree held nothing it did not put there — `/implement` at Pre-Phase 3 step 1 and `/upgrade` at Phase 2 prep step 1 do it with an explicit dirty-tree prompt, and `/vuln` does it by capturing the porcelain set at the top of Step 3 and passing it as `pre_existing_dirty` (it never prompts, so on `/vuln` a non-empty set always takes carve-out 1 below rather than the `add -A` path). Where the tree was established clean, everything uncommitted in the repo now **is** this run's work — the same reasoning `docs-workflows:finish-and-handoff` §2 applies to the docs repo — and staging is `git -C "<repo>" add -A`.
 
@@ -94,7 +94,7 @@ Everything the convention leaves open comes from the repository, never from habi
 
 Never `--amend` (§1 rule 3): an amend rewrites a commit that may already be pushed, and this step is reachable more than once per run.
 
-**A rejected commit is a reported failure, never a silent one.** A `pre-commit` / `commit-msg` hook can reject the commit; the changes then stay staged. Do not retry, do not bypass with `--no-verify`, and do not proceed to the next unit as though the commit landed — a later unit's `add -A` would fold this unit's diff into that unit's commit under the wrong message. Record the failure and its hook output; in the §2.12 split form the caller reports it in its own per-unit results table, and the terminal call's §3.1 line names the unit that failed to commit (§2.12).
+**A rejected commit is a reported failure, never a silent one.** A `pre-commit` / `commit-msg` hook can reject the commit; the changes then stay staged. Do not retry, do not bypass with `--no-verify`, and do not proceed to the next unit as though the commit landed — a later unit's `add -A` would fold this unit's diff into that unit's commit under the wrong message. Record the failure and its hook output; in the §2.12 split form the caller reports it in its own per-unit results table, and the terminal call's §3.1 line names the unit that failed to commit where an earlier unit committed, and is otherwise the *Commit rejected by a hook* row (§2.12).
 
 ### 2.4 The consent choice
 
