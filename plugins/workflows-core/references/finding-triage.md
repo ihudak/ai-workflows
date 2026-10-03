@@ -184,6 +184,7 @@ The orchestrator's run report carries one triage line per review pass, and the l
 - how many findings were reviewed, and how many **survived**, are **unverified** and were
   **dismissed** — the three always sum to the findings reviewed, and a finding in none of them is a
   triage failure; on a re-review, also how many were **carried**;
+- on a re-review, every survivor with its severity — none of them reaches a fixer;
 - **every dismissal with its reason** — a triage that reports only survivors is indistinguishable from
   a reviewer that found less;
 - every unverified finding with its grade if true and what would settle it;

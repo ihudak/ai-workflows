@@ -852,7 +852,7 @@ Output a structured report — do NOT ask any closing confirmation:
 [Verdict and 1-line summary — naming the enforced id it ran on wherever `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10) — or "N/A (SIMPLE / MODERATE)"]
 
 ### Review triage
-- **Review triage:** [one line per review pass, per `workflows-core:finding-triage` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"] — settled: [the answer given at a settle prompt, or "not asked"] — or "N/A (SIMPLE / MODERATE, no Opus review)"
+- **Review triage:** [one line per review pass, per `workflows-core:finding-triage` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — survivors, on a re-review: [`finding — severity`, or "none"] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"] — settled: [the answer given at a settle prompt, or "not asked"] — or "N/A (SIMPLE / MODERATE, no Opus review)"
 
 ### Spec/design conformance (if a spec/design was in scope)
 [coverage summary from code-review's dimension; list any missing/partial/contradicts/exceeds, and the already-present count — or "N/A"; if Phase 4.5 escalated notes, add the `Phase handoff:` outcome line from `handoff-to-main` (`workflows-core:phase-handoff` §4.1)]
@@ -877,7 +877,7 @@ Output a structured report — do NOT ask any closing confirmation:
 
 ### Deferred items (from review or tests)
 [every line below that has content; "none" only where all of them are empty. Nine instructions in this file write test records here and the heading admits every one of them — they land in the seven test bullets below, the two `CAVEAT: ` instructions (Pre-Phase 3.5's over its capture and Phase 3.5 step 5's over its verify) sharing one and the two `test-writer` `### Notes` instructions (Phase 3.5 step 2's and Phase 3B step 4a's) sharing another, and a template naming only the review half is how those records get dropped; this section is the run's only account of what it did not verify. Phase 6 deliberately does **not** turn these into follow-ups, on the ground that they are in-scope work already carried by this task — which holds only if they are written down here.]
-- [MINOR / NIT review findings that were not applied; omit the line where there are none]
+- [review findings that were not applied — MINOR / NIT, and every survivor of a re-review, with its severity; omit the line where there are none]
 - [each suite the Pre-Phase 3.5 capture left unmarked `OK`/`NO_TESTS`, with the command that failed and whatever that block's `### Notes` said about it (Pre-Phase 3.5's `PARTIAL` arm); omit where none]
 - [the recorded `test_decision: skip` — the operator's rationale, or, on the run's own record, the capture failure that produced it (Pre-Phase 3.5); omit where none]
 - [each suite the Phase 3.5 verify could not run at either end, with whatever that report's `### Notes` said about it (step 5's `PARTIAL` arm); omit where none]
