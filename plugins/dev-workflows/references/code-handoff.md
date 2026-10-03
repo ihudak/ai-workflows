@@ -157,7 +157,7 @@ Body: **written to a file** — `<body-path>`, a `command mktemp -t` path outsid
    - **Blast radius** — a short phrase naming what breaks if the change is wrong: an API's consumers, a data store, a screen, the build.
 4. `## Review` — the run's classification; the reviewer verdict and triage summary where the caller has them, or, where no review ran, that none did and why; and every review finding the caller did not apply, with its severity.
 
-**The repository's own template wins.** Resolve it against a fixed set of paths, never by searching for one: list the committed tree's candidates with `git -C "<repo>" ls-tree -r -z --name-only HEAD | tr '\0' '\n' | grep -i -E '^(\.github/|docs/)?pull_request_template(\.md|/[^/]+\.md)$|^\.gitlab/merge_request_templates/default\.md$'` — `-z` because, without it, git quotes a name holding a non-ASCII byte and the anchor never matches it; no output is no template — and stop at the first rung below that a listed path matches, comparing without regard to case —
+**The repository's own template wins.** Resolve it against a fixed set of paths, never by searching for one: list the committed tree's candidates with `git -C "<repo>" ls-tree -r -z --full-tree --name-only HEAD | tr '\0' '\n' | grep -i -E '^(\.github/|docs/)?pull_request_template(\.md|/[^/]+\.md)$|^\.gitlab/merge_request_templates/default\.md$'` — `-z` because, without it, git quotes a name holding a non-ASCII byte and the anchor never matches it, and `--full-tree` so the listing is the whole tree wherever `<repo>` points; no output is no template — and stop at the first rung below that a listed path matches, comparing without regard to case —
 
 1. `.github/pull_request_template.md`, then `pull_request_template.md` at the root, then `docs/pull_request_template.md`;
 2. the first of `.github/PULL_REQUEST_TEMPLATE/`, `PULL_REQUEST_TEMPLATE/` and `docs/PULL_REQUEST_TEMPLATE/` that holds a `.md` file directly: where it holds exactly one, that file; where it holds several, none — a directory of templates names no default, so the body is written as above and its last line says the repository offers several templates, naming the directory;
@@ -204,7 +204,7 @@ Never fatal (§1 rule 4). Every failure is reported, and no report may imply a s
 
 | Input | Meaning |
 |---|---|
-| `repo` | absolute path of the code repository |
+| `repo` | absolute path of the code repository's top level — where the caller holds a path inside it, `git -C <path> rev-parse --show-toplevel` of that path: §2.2's porcelain paths are relative to the top level, and `git add` run from a subdirectory reads them against the wrong root |
 | `branch` | the branch the caller created or adopted — §2.1 check 4 verifies HEAD is actually on it |
 | `pre_existing_dirty` | porcelain paths dirty before the run's first edit, or `null` |
 | `stash_ref` | the stash the caller pushed at branch time, or `null` |
