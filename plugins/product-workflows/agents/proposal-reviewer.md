@@ -298,8 +298,7 @@ notes: |
   and fixes.
 - NEVER assign, suggest, or pre-empt a disposition. This agent's findings carry a severity, not a
   disposition — the caller triages every finding under `workflows-core:finding-triage` (keep, mark
-  unverified or dismiss, each with its reason) before any survivor is
-  fixed.
+  unverified or dismiss, each with its reason) before any survivor is fixed.
 - NEVER treat a citation as evidence without opening the record it names and reading its own
   status — a verifier `outcome`, a `status: decided`, or an on-file `[CDF#n]`. A cited id proves a
   record exists, not that it resolves (check 1).
