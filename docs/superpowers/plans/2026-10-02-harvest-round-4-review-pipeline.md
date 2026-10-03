@@ -261,6 +261,7 @@ plugins/product-workflows/docs/commands/create-prd.md edits/aw-prd-docs.txt
 plugins/product-workflows/docs/commands/update-prd.md edits/aw-prd-docs.txt
 .claude/rules/workflows-core.md edits/aw-rules-wc.txt
 .claude/rules/dev-workflows.md edits/aw-rules-dw.txt
+.claude/rules/dev-workflows.md edits/aw-rules-fixer.txt
 .claude/rules/docs-workflows.md edits/all-rules-docs.txt
 .claude/rules/dev-workflows-tests.md edits/aw-rules-tests.txt
 plugins/dev-workflows/agents/vuln-fixer.md gen/aw-vuln-fixer.txt
@@ -277,7 +278,7 @@ plugins/workflows-core/docs/reference/references.md edits/aw-doc-wc-refs.txt
 EOF
 while read f e; do python3 "$S/wsub.py" "$f" "$S/$e" --dry || break; done < "$S/gen/aw-task5.list"
 ```
-Expected: twenty-one `checked` lines and no `ABORT`. Then apply: `while read f e; do python3 "$S/wsub.py" "$f" "$S/$e" || break; done < "$S/gen/aw-task5.list"` → twenty-one `applied` lines.
+Expected: twenty-two `checked` lines and no `ABORT`. Then apply: `while read f e; do python3 "$S/wsub.py" "$f" "$S/$e" || break; done < "$S/gen/aw-task5.list"` → twenty-two `applied` lines.
 
 - [ ] **Step 3: GREEN** — `python3 "$S/check.py" aw "$AW" | tail -1` → `aw: 107/107 checks pass`.
 - [ ] **Step 4: The rules files' size and the claim-expiry sweep** — `python3 -c 'import sys;print(len(open(sys.argv[1]).read()))' .claude/rules/docs-workflows.md` → `19955`. Then sweep by subject across refinement 4's scope (`plugins/` with every `CHANGELOG.md`, `README.md`, `CLAUDE.md`, `.claude/rules/`, `docs/maintainers/`): `grep -rn -i -E "dismiss|survivor|re-review|second verdict|still .BLOCK|Review verdict BLOCK|documented standard|Missed edge|Acceptance checks|patch gate" plugins README.md CLAUDE.md .claude/rules docs/maintainers --include=*.md | grep -v CHANGELOG`. Read each hit outside the files this round edited against the new rules; any that now states something false is fixed (a new edit block, ledgered as a `Ruling:`). Ledger the hit count and the disposition.
@@ -666,6 +667,7 @@ aw)
   for c in create-prd update-prd; do w plugins/product-workflows/docs/commands/$c.md "$E/aw-prd-docs.txt"; done
   w .claude/rules/workflows-core.md "$E/aw-rules-wc.txt"
   w .claude/rules/dev-workflows.md "$E/aw-rules-dw.txt"
+  w .claude/rules/dev-workflows.md "$E/aw-rules-fixer.txt"
   w .claude/rules/docs-workflows.md "$E/all-rules-docs.txt"
   w .claude/rules/dev-workflows-tests.md "$E/aw-rules-tests.txt"
   w plugins/dev-workflows/docs/commands/implement.md "$E/aw-doc-implement.txt"
@@ -696,7 +698,7 @@ ie|ce)
   for c in update-vi create-ard; do w $(CMD $c) "$(g ed-bare-pointer.tpl)"; done
   w $(CMD design) "$(g ed-design-pointer.tpl)"
   if [ $ed = ie ]; then
-    w .claude/rules/dev-workflows-code.md "$E/aw-rules-wc.txt"; w .claude/rules/dev-workflows-code.md "$E/aw-rules-dw.txt"
+    w .claude/rules/dev-workflows-code.md "$E/aw-rules-wc.txt"; w .claude/rules/dev-workflows-code.md "$E/aw-rules-dw.txt"; w .claude/rules/dev-workflows-code.md "$E/ie-rules-fixer.txt"
     w .claude/rules/dev-workflows-docs.md "$E/all-rules-docs.txt"
     w $(DOCP implement) "$E/aw-doc-implement.txt"; w $(DOCP implement) "$E/ed-doc-failed-gate.txt"
     for c in vuln upgrade document epics; do w $(DOCP $c) "$E/aw-doc-$c.txt"; done
@@ -1081,6 +1083,11 @@ If still `BLOCK`, escalate per the `Review verdict BLOCK` rule in `workflows-cor
 =======
 If still `BLOCK`, escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` rule in `workflows-core:escalation-rules` for each unresolved BLOCKER individually (`choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding", "Cancel the whole run"]`).
 >>>>>>> NEW
+<<<<<<< OLD 1
+Act on the verdict (mirrors `/specify`):
+=======
+Act on the verdict (mirrors `/specify`, save the escalation rule it cites):
+>>>>>>> NEW
 `````
 
 #### `edits/aw-doc-dismissal-init.txt`
@@ -1281,7 +1288,7 @@ Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelle
 <<<<<<< OLD 1
 guidance only, never auto-invoked. **When a branch and a drafted PR exist:**
 =======
-guidance only, never auto-invoked. **After a stop at the review gate:** name the findings left to settle, and re-run once they are. **When a branch and a drafted PR exist:**
+guidance only, never auto-invoked. **After a stop at the review gate:** name the findings left to settle and the branch holding the uncommitted branding; settle them there and commit by hand — a re-run would find the tree dirty and offer to stash that work. **When a branch and a drafted PR exist:**
 >>>>>>> NEW
 <<<<<<< OLD 1
 BLOCK, resolved | N/A — cancelled before Phase 9]
@@ -1292,6 +1299,11 @@ BLOCK, resolved | N/A — cancelled before Phase 9 | <the verdict> — stopped a
 **A standalone run that cancelled at Phase 7 never reaches this phase either**
 =======
 **A standalone run that cancelled at Phase 7, or stopped at Phase 9's review gate, never reaches this phase either**
+>>>>>>> NEW
+<<<<<<< OLD 1
+never reaches this phase either** — see Phase 7's cancel path, which jumps straight to Phase 11.
+=======
+never reaches this phase either** — see Phase 7's cancel path and Phase 9's review-gate stop, each of which goes straight to Phase 11.
 >>>>>>> NEW
 `````
 
@@ -1348,7 +1360,7 @@ Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelle
 <<<<<<< OLD 1
 guidance only, never auto-invoked. On a completed run:
 =======
-guidance only, never auto-invoked. After a stop at the review gate: name the findings left to settle, and re-run once they are. On a completed run:
+guidance only, never auto-invoked. After a stop at the review gate: name the findings left to settle and the branch holding the uncommitted scaffold; settle them there and commit by hand — a re-run would refuse the tree, whose `mkdocs.yml`, `.vale.ini` and `docs-profile.yml` Phase 0 reads as an existing docs repository. On a completed run:
 >>>>>>> NEW
 <<<<<<< OLD 1
 BLOCK, resolved | N/A — cancelled before Phase 7.5]
@@ -1363,7 +1375,7 @@ BLOCK, resolved | N/A — cancelled before Phase 7.5 | <the verdict> — stopped
 <<<<<<< OLD 1
 **Triage sub-step** (before any fixer dispatch): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep or dismiss; record every dismissal with a reason that disposes of that finding's own claim. Hand the fixer **survivors only**, and carry the dismissal list into this run's report.
 =======
-**Triage sub-step** (before any fixer dispatch, and on every re-review): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; and raise a grade only by effect. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no fixer runs after it. At either of that reference's settle prompts, **Keep the verdict** means the review **stayed blocked** (below) — on a kept verdict that is not `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run, as the escalation's own *Cancel the whole run* does.
+**Triage sub-step** (before any fixer dispatch, and on every re-review): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; and raise a grade only by effect. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no survivor of it is handed to a fixer. At either of that reference's settle prompts, **Keep the verdict** means the review **stayed blocked** (below) — on a kept verdict that is not `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run, as the escalation's own *Cancel the whole run* does.
 >>>>>>> NEW
 <<<<<<< OLD 1
 If the second verdict is still BLOCK, escalate for each unresolved BLOCKER individually per the `Review verdict BLOCK (unresolved after one fix cycle) — /document` rule
@@ -1393,7 +1405,7 @@ only, never the dismissed or unverified ones]
 <<<<<<< OLD 1
 **Triage sub-step** (before any fixer dispatch): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep or dismiss; record every dismissal with a reason that disposes of that finding's own claim. Hand the fixer **survivors only**, and carry the dismissal list into this run's report.
 =======
-**Triage sub-step** (before any fixer dispatch, and on every re-review): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; and raise a grade only by effect. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no fixer runs after it. At either of that reference's settle prompts, **Keep the verdict** means the review **stayed blocked** (below) — on a kept verdict that is not `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run, as the escalation's own *Cancel the whole run* does.
+**Triage sub-step** (before any fixer dispatch, and on every re-review): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; and raise a grade only by effect. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no survivor of it is handed to a fixer. At either of that reference's settle prompts, **Keep the verdict** means the review **stayed blocked** (below) — on a kept verdict that is not `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run, as the escalation's own *Cancel the whole run* does.
 >>>>>>> NEW
 <<<<<<< OLD 1
 If still BLOCK, escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — /epics` rule
@@ -1473,7 +1485,7 @@ Do not run tests until the verdict is not BLOCK, or a settle prompt's **Proceed*
 <<<<<<< OLD 1
 **Triage sub-step** (before any fixer dispatch): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep or dismiss; record every dismissal with a reason that disposes of that finding's own claim. Hand the fixer **survivors only**, and carry the dismissal list into this run's report.
 =======
-**Triage sub-step** (before any fixer dispatch, and on every re-review): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; raise a grade only by effect; and rule on each line of the review's `### Declined to judge`. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the BLOCK branch allows, one you chose at the first settle prompt, and step 8's review of the Phase 3.5 delta — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no fixer runs after it. At either of that reference's settle prompts, **Keep the verdict** means the review **stayed blocked** — the BLOCK branch's stop — **Cancel** stops the run through Phase 4.6, and **Proceed** continues to step 8 — or, after step 8's own delta review, to step 9.
+**Triage sub-step** (before any fixer dispatch, and on every re-review): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; raise a grade only by effect; and rule on each line of the review's `### Declined to judge`. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the BLOCK branch allows, one you chose at the first settle prompt, and step 8's review of the Phase 3.5 delta — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no survivor of it is handed to a fixer. At either of that reference's settle prompts, **Keep the verdict** means the review **stayed blocked** — the BLOCK branch's stop — **Cancel** stops the run through Phase 4.6, and **Proceed** continues to step 8 — or, after step 8's own delta review, to step 9.
 >>>>>>> NEW
 <<<<<<< OLD 1
 so the re-review reads the post-Phase-3.5 diff). If the reviewer WAS down-classified, skip the re-review.
@@ -1644,6 +1656,16 @@ each finding verified at the location it names, every dismissal recorded with a 
 >>>>>>> NEW
 `````
 
+#### `edits/aw-rules-fixer.txt`
+
+`````text
+<<<<<<< OLD 1
+- `review-fixer` handles BLOCKER findings; only one `review-fixer` cycle per review
+=======
+- `review-fixer` handles surviving BLOCKER and MAJOR findings; at most one `review-fixer` cycle per reviewed artifact, and none after its re-review (`workflows-core:finding-triage` § On re-review)
+>>>>>>> NEW
+`````
+
 #### `edits/aw-rules-tests.txt`
 
 `````text
@@ -1685,7 +1707,7 @@ The first clause is not made unqualified: that would have to remove **both** esc
 <<<<<<< OLD 1
 the three-step process (verify each finding's own claimed consequence at the location it names, keep or dismiss, record every dismissal with a reason that disposes of that finding's own claim — there is no silent-drop disposition), the patch gate (auto-fix only a defect that actually occurs, missing coverage for a specific case, or a broken gate/convention — never a state nothing reaches, and never a fix that guards state the finding did not demonstrate), the reporting contract (findings reviewed, survivors, and every dismissal with its reason — a triage that reports only survivors is indistinguishable from a reviewer that found less), and the disposition when triage empties the survivor set (never dispatch a fixer with nothing to apply, never run the unresolved-BLOCKER escalation on a refuted BLOCKER, and never silently promote a non-PASS verdict — the user settles a verdict its own findings no longer support).
 =======
-the step (verify each finding's own claimed consequence at the location it names; keep it, mark it unverified — verification could not settle it and it would be `MAJOR` or `BLOCKER` if true, so it is recorded at that grade with what would settle it and never reaches a fixer — or dismiss it with a reason that disposes of that finding's own claim; raise a survivor's grade only by effect, to `MAJOR` at most; rule on each line of a `code-review` `### Declined to judge` list — there is no silent-drop disposition), the patch gate (auto-fix only a defect that actually occurs, missing coverage for a specific case, or a broken gate/convention — never a state nothing reaches, never a fix that guards state the finding did not demonstrate, and never one that edits a repository instruction or contributor file the change did not itself edit), the reporting contract (one line per review pass, where survived, unverified and dismissed sum to the findings reviewed and every dismissal and unverified finding is stated — a triage that reports only survivors is indistinguishable from a reviewer that found less), the disposition when triage empties the survivor set (never dispatch a fixer with nothing to apply, never run the unresolved-BLOCKER escalation on a BLOCKER that did not survive triage unless the user keeps the verdict, and never silently promote a non-PASS verdict — the user settles a verdict its own findings no longer support), and § On re-review (a re-review carries this run's earlier rulings forward, no fixer runs after it, and the second-verdict stop acts on a review that **stayed blocked** — a BLOCKER surviving its triage, or a verdict the user keeps at a settle prompt — with the user settling a `BLOCK` no surviving BLOCKER supports).
+the step (verify each finding's own claimed consequence at the location it names; keep it, mark it unverified — verification could not settle it and it would be `MAJOR` or `BLOCKER` if true, so it is recorded at that grade with what would settle it and never reaches a fixer — or dismiss it with a reason that disposes of that finding's own claim; raise a survivor's grade only by effect, to `MAJOR` at most; rule on each line of a `code-review` `### Declined to judge` list — there is no silent-drop disposition), the patch gate (auto-fix only a defect that actually occurs, missing coverage for a specific case, or a broken gate/convention — never a state nothing reaches, never a fix that guards state the finding did not demonstrate, and never one that edits a repository instruction or contributor file the change did not itself edit), the reporting contract (one line per review pass, where survived, unverified and dismissed sum to the findings reviewed and every dismissal and unverified finding is stated — a triage that reports only survivors is indistinguishable from a reviewer that found less), the disposition when triage empties the survivor set (never dispatch a fixer with nothing to apply, never run the unresolved-BLOCKER escalation on a BLOCKER that did not survive triage unless the user keeps the verdict, and never silently promote a non-PASS verdict — the user settles a verdict its own findings no longer support), and § On re-review (a re-review carries this run's earlier rulings forward, no survivor of it is handed to a fixer, and the second-verdict stop acts on a review that **stayed blocked** — a BLOCKER surviving its triage, or a verdict the user keeps at a settle prompt — with the user settling a `BLOCK` no surviving BLOCKER supports).
 >>>>>>> NEW
 `````
 
@@ -1716,7 +1738,7 @@ A caller that runs no re-review — `/docs-init`, a standalone `/docs-brand`, `/
 <<<<<<< OLD 1
 **Triage sub-step** (before any fixer dispatch): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep or dismiss; record every dismissal with a reason that disposes of that finding's own claim. Hand the fixer **survivors only**, and carry the dismissal list into this run's report.
 =======
-**Triage sub-step** (before any fixer dispatch, and on every re-review): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; raise a grade only by effect; and rule on each line of the review's `### Declined to judge`. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no fixer runs after it. At either of that reference's settle prompts, **Keep the verdict** means this component's review **stayed blocked** (below), and so does **Cancel**: this component stops, and the loop moves on to the next one.
+**Triage sub-step** (before any fixer dispatch, and on every re-review): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; raise a grade only by effect; and rule on each line of the review's `### Declined to judge`. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no survivor of it is handed to a fixer. At either of that reference's settle prompts, **Keep the verdict** means this component's review **stayed blocked** (below), and so does **Cancel**: this component stops, and the loop moves on to the next one.
 >>>>>>> NEW
 <<<<<<< OLD 1
 - If the second verdict is still `BLOCK`, stop and escalate; do not continue to tests
@@ -1778,7 +1800,7 @@ its review verdict is non-`BLOCK` or a settle prompt's **Proceed** settled it,
 <<<<<<< OLD 1
 **Triage sub-step** (before any fixer dispatch): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep or dismiss; record every dismissal with a reason that disposes of that finding's own claim. Hand the fixer **survivors only**, and carry the dismissal list into this run's report.
 =======
-**Triage sub-step** (before any fixer dispatch, and on every re-review): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; raise a grade only by effect; and rule on each line of the review's `### Declined to judge`. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no fixer runs after it. At either of that reference's settle prompts, **Keep the verdict** means this CVE's review **stayed blocked** (below), and so does **Cancel**: this CVE stops, and the run moves on to the next one.
+**Triage sub-step** (before any fixer dispatch, and on every re-review): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; raise a grade only by effect; and rule on each line of the review's `### Declined to judge`. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no survivor of it is handed to a fixer. At either of that reference's settle prompts, **Keep the verdict** means this CVE's review **stayed blocked** (below), and so does **Cancel**: this CVE stops, and the run moves on to the next one.
 >>>>>>> NEW
 <<<<<<< OLD 1
 If the second verdict is still `BLOCK`, stop and escalate; do not continue to tests.
@@ -1963,6 +1985,11 @@ each finding verified where it points, every dismissal and unverified finding re
 =======
 — each finding verified where it points and kept, left unverified, or dismissed with a reason disposing of its own claim; survivors only,
 >>>>>>> NEW
+<<<<<<< OLD 1
+- `review-fixer` handles BLOCKER findings; only one review-fixer cycle per review
+=======
+- `review-fixer` handles surviving BLOCKER and MAJOR findings; one review-fixer cycle per reviewed artifact, none after its re-review
+>>>>>>> NEW
 `````
 
 #### `edits/ed-bare-pointer.tpl`
@@ -1987,6 +2014,11 @@ If still `BLOCK`, escalate per the `Review verdict BLOCK (unresolved after one f
 for each unresolved BLOCKER (`choices: ["Provide manual fix notes", "Defer to a follow-up issue", "Override and accept", "Cancel"
 =======
 for each unresolved BLOCKER individually (`choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding", "Cancel the whole run"
+>>>>>>> NEW
+<<<<<<< OLD 1
+Act on the verdict (mirrors `{{SPECCMD}}`):
+=======
+Act on the verdict (mirrors `{{SPECCMD}}`, save the escalation rule it cites):
 >>>>>>> NEW
 `````
 
@@ -2036,7 +2068,7 @@ a review that stayed blocked after its one fix cycle,
 <<<<<<< OLD 1
 For each finding, verify its claimed consequence at the location it names; keep or dismiss; record every dismissal with a reason that disposes of that finding's own claim. Hand the fixer **survivors only**, and carry the dismissal list into this run's report.
 =======
-For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; and raise a grade only by effect. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no fixer runs after it. At either of that reference's settle prompts, **Keep the verdict** means the review **stayed blocked** (below) — on a kept verdict that is not `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run, as the escalation's own *Cancel the whole run* does.
+For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; and raise a grade only by effect. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no survivor of it is handed to a fixer. At either of that reference's settle prompts, **Keep the verdict** means the review **stayed blocked** (below) — on a kept verdict that is not `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run, as the escalation's own *Cancel the whole run* does.
 >>>>>>> NEW
 <<<<<<< OLD 1
 If the second verdict is still BLOCK, escalate for each unresolved BLOCKER individually per the
@@ -2071,7 +2103,7 @@ only, never the dismissed or unverified ones]
 <<<<<<< OLD 1
 For each finding, verify its claimed consequence at the location it names; keep or dismiss; record every dismissal with a reason that disposes of that finding's own claim. Hand the fixer **survivors only**, and carry the dismissal list into this run's report.
 =======
-For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; and raise a grade only by effect. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no fixer runs after it. At either of that reference's settle prompts, **Keep the verdict** means the review **stayed blocked** (below) — on a kept verdict that is not `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run, as the escalation's own *Cancel the whole run* does.
+For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; and raise a grade only by effect. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no survivor of it is handed to a fixer. At either of that reference's settle prompts, **Keep the verdict** means the review **stayed blocked** (below) — on a kept verdict that is not `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run, as the escalation's own *Cancel the whole run* does.
 >>>>>>> NEW
 <<<<<<< OLD 1
 If still BLOCK, escalate per the
@@ -2156,7 +2188,7 @@ Do not run tests until the verdict is not BLOCK, or a settle prompt's **Proceed*
 <<<<<<< OLD 1
 For each finding, verify its claimed consequence at the location it names; keep or dismiss; record every dismissal with a reason that disposes of that finding's own claim. Hand the fixer **survivors only**, and carry the dismissal list into this run's report.
 =======
-For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; raise a grade only by effect; and rule on each line of the review's `### Declined to judge`. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the BLOCK branch allows, one you chose at the first settle prompt, and step 8's review of the Phase 3.5 delta — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no fixer runs after it. At either of that reference's settle prompts, **Keep the verdict** means the review **stayed blocked** — the BLOCK branch's stop — **Cancel** stops the run through Phase 4.6, and **Proceed** continues to step 8 — or, after step 8's own delta review, to step 9.
+For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; raise a grade only by effect; and rule on each line of the review's `### Declined to judge`. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the BLOCK branch allows, one you chose at the first settle prompt, and step 8's review of the Phase 3.5 delta — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no survivor of it is handed to a fixer. At either of that reference's settle prompts, **Keep the verdict** means the review **stayed blocked** — the BLOCK branch's stop — **Cancel** stops the run through Phase 4.6, and **Proceed** continues to step 8 — or, after step 8's own delta review, to step 9.
 >>>>>>> NEW
 <<<<<<< OLD 1
 so the re-review reads the post-Phase-3.5 diff). If the reviewer WAS down-classified, skip the re-review.
@@ -2252,7 +2284,7 @@ Nine instructions in this file write test records here and the heading admits ev
 <<<<<<< OLD 1
 For each finding, verify its claimed consequence at the location it names; keep or dismiss; record every dismissal with a reason that disposes of that finding's own claim. Hand the fixer **survivors only**, and carry the dismissal list into this run's report.
 =======
-For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; raise a grade only by effect; and rule on each line of the review's `### Declined to judge`. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no fixer runs after it. At either of that reference's settle prompts, **Keep the verdict** means this component's review **stayed blocked** (below), and so does **Cancel**: this component stops, and the loop moves on to the next one.
+For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; raise a grade only by effect; and rule on each line of the review's `### Declined to judge`. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no survivor of it is handed to a fixer. At either of that reference's settle prompts, **Keep the verdict** means this component's review **stayed blocked** (below), and so does **Cancel**: this component stops, and the loop moves on to the next one.
 >>>>>>> NEW
 <<<<<<< OLD 1
 - If the second verdict is still `BLOCK`, stop and escalate; do not continue to tests
@@ -2324,7 +2356,7 @@ orchestrator-side stop on a review that stayed blocked. `{{VULNCMD}}` Step 3.9 h
 <<<<<<< OLD 1
 For each finding, verify its claimed consequence at the location it names; keep or dismiss; record every dismissal with a reason that disposes of that finding's own claim. Hand the fixer **survivors only**, and carry the dismissal list into this run's report.
 =======
-For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; raise a grade only by effect; and rule on each line of the review's `### Declined to judge`. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no fixer runs after it. At either of that reference's settle prompts, **Keep the verdict** means this CVE's review **stayed blocked** (below), and so does **Cancel**: this CVE stops, and the run moves on to the next one.
+For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; raise a grade only by effect; and rule on each line of the review's `### Declined to judge`. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled, and no survivor of it is handed to a fixer. At either of that reference's settle prompts, **Keep the verdict** means this CVE's review **stayed blocked** (below), and so does **Cancel**: this CVE stops, and the run moves on to the next one.
 >>>>>>> NEW
 <<<<<<< OLD 1
 If the second verdict is still `BLOCK`, stop and escalate; do not continue to tests.
@@ -2355,6 +2387,16 @@ returns a non-BLOCK verdict, or a `{{FT}}` settle prompt's **Proceed** settles i
 A CVE stopped at an unresolved review `BLOCK` or at `NEEDS HUMAN`
 =======
 A CVE stopped at a review that stayed blocked or at `NEEDS HUMAN`
+>>>>>>> NEW
+`````
+
+#### `edits/ie-rules-fixer.txt`
+
+`````text
+<<<<<<< OLD 1
+- `review-fixer` handles BLOCKER findings; only one `review-fixer` cycle per review
+=======
+- `review-fixer` handles surviving BLOCKER and MAJOR findings; at most one `review-fixer` cycle per reviewed artifact, and none after its re-review (`references/finding-triage.md` § On re-review)
 >>>>>>> NEW
 `````
 
@@ -2455,7 +2497,7 @@ A partly emptied set is not this case: where at least one finding survived, the 
 command's normal branch runs on the survivors.
 
 This section governs the first review. On a re-review, § On re-review settles the verdict instead —
-there, no fixer is dispatched whatever survives, and its own prompt carries no re-review arm. The
+there, no survivor is handed to a fixer, and its own prompt carries no re-review arm. The
 prompt above, in either form, and § On re-review's are this reference's **settle prompts**.
 >>>>>>> NEW
 <<<<<<< OLD 1
@@ -2487,11 +2529,13 @@ finding's own location is in that file.
 ## On re-review
 
 A **re-review** is any review a run dispatches over an artifact this run has already reviewed to a
-verdict, whatever that verdict was: the one re-review a caller's cap allows, a re-review the user
-chose at § When triage empties the survivor set, and `{{IMPL}}`'s review of its Phase 3.5 fix delta. A
-`### Re-classification` return is no verdict, so the review dispatched after the user overrides one is
-a first review. A re-review's findings are triaged by § The step, with one check first and three rules
-after.
+verdict, whatever that verdict was — for a caller that works unit by unit, the artifact is the unit's
+own change, never the working tree's cumulative diff: the one re-review a caller's cap allows, a
+re-review the user chose at § When triage empties the survivor set, and `{{IMPL}}`'s review of its
+Phase 3.5 fix delta. A `### Re-classification` return is no verdict: whether the review dispatched
+after the user overrides one is a re-review turns only on whether an earlier review reached a verdict
+over that artifact. A re-review's findings are triaged by § The step, with one check first and three
+rules after.
 
 **First, carry what this run already ruled.** A finding that names the same location as a row this
 run already logged — a code site or a document passage, whose line numbers may have moved with the
@@ -2505,9 +2549,9 @@ re-raised dismissed or unverified finding is verified afresh against the reviewe
 
 **Then:**
 
-1. **No survivor of a re-review is handed to a fixer** — a run makes at most one fix cycle, and only
-   before its first re-review. Each survivor is recorded in the triage line at its own
-   severity, and a second verdict that is not `BLOCK` gates nothing further.
+1. **No survivor of a re-review is handed to a fixer** — each artifact gets at most one fix cycle, and
+   only before its first re-review. Each survivor is recorded in the triage line at its own severity,
+   and a second verdict that is not `BLOCK` gates nothing further.
 2. **The caller's second-verdict stop or escalation acts on a `BLOCKER` surviving the re-review's
    triage — never on the verdict word.** A `BLOCKER` carried as dismissed or unverified is not one.
    A review **stayed blocked** where a `BLOCKER` survives its re-review's triage, or where the user
@@ -2580,7 +2624,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 **Update `workflows-core` to 1.11.0 with this release**: the commands below follow its `finding-triage` § On re-review and its patch gate's instruction-file clause.
 
 ### Changed
-- **`/document` triages its re-review** (`workflows-core:finding-triage` § On re-review) and escalates only on a review that **stayed blocked**.
+- **`/document` triages its re-review** (`workflows-core:finding-triage` § On re-review) and escalates only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — ending the run as Cancel does on a kept verdict that is not `BLOCK`; its triage line names unverified findings and raises.
 - **`/docs-init`, `/docs-brand` and `/docs-audit` report unverified findings and raises** beside survivors and dismissals, settle an emptied survivor set with a prompt that has no re-review arm — `/docs-init` and `/docs-brand` stop at their review gate on its Keep-the-verdict or Cancel, the report saying which, and `/docs-audit` takes its unresolved-BLOCKER stop, or its Cancel route on a kept verdict that is not `BLOCK` — and `/docs-init` and `/docs-brand` list unverified findings in their pull-request drafts and say what a Cancel at the review gate leaves behind; their direct edits honour the patch gate's instruction-file clause; `docs-audit-reviewer` no longer counts the reference's steps.
 `````
 
@@ -2605,7 +2649,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 
 ### Added
 - **`finding-triage` gains a third outcome, `unverified`.** A finding the orchestrator can neither confirm nor refute — the diff and the code around it leave the question open — is no longer dismissed as unsubstantiated: one that would be `MAJOR` or `BLOCKER` if true is recorded at that grade, marked `(unverified)`, with what would settle it, and reaches the user in the triage line; one that would be only `MINOR` or `NIT` is dismissed with the same note. It never reaches a fixer and changes nothing the verdict gates. Prompted by BMAD's `maybe-false` triage verdict (3433612d, b0d27c3c).
-- **`finding-triage` § On re-review.** The second review is now triaged too. A finding at the same location — a code site or a document passage — making the same claim as a row this run already logged, where the text there still reads as that row describes, keeps the row's outcome (`carried`): it is not verified again — except on a re-review the user chose to put the dispositions' reasons to the reviewer — and never patched again; no fixer runs after a re-review; and the caller's stop acts on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — never on the verdict word. A second `BLOCK` with no surviving `BLOCKER` is the user's to settle, at a prompt with no re-review arm, never promoted silently. Prompted by BMAD 7c3e5827 and 85d968fc.
+- **`finding-triage` § On re-review.** The second review is now triaged too. A finding at the same location — a code site or a document passage — making the same claim as a row this run already logged, where the text there still reads as that row describes, keeps the row's outcome (`carried`): it is not verified again — except on a re-review the user chose to put the dispositions' reasons to the reviewer — and never patched again; no survivor of a re-review is handed to a fixer; and the caller's stop acts on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — never on the verdict word. A second `BLOCK` with no surviving `BLOCKER` is the user's to settle, at a prompt with no re-review arm, never promoted silently. Prompted by BMAD 7c3e5827 and 85d968fc.
 - **Triage raises a grade by effect, to `MAJOR` at most, and never lowers one**, and rules on each line of a `code-review` `### Declined to judge` list — a line ruled a defect is recorded, never handed to a fixer. Prompted by superpowers 5bf4e780 (#2319).
 - **`escalation-rules`: `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`** — the heading five commands already cited (see Fixed).
 
@@ -2626,7 +2670,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 
 ### Added
 - **`finding-triage` gains a third outcome, `unverified`.** A finding the orchestrator can neither confirm nor refute — the diff and the code around it leave the question open — is no longer dismissed as unsubstantiated: one that would be `MAJOR` or `BLOCKER` if true is recorded at that grade, marked `(unverified)`, with what would settle it, and reaches the user in the triage line; one that would be only `MINOR` or `NIT` is dismissed with the same note. It never reaches a fixer and changes nothing the verdict gates. Prompted by BMAD's `maybe-false` triage verdict (3433612d, b0d27c3c).
-- **`finding-triage` § On re-review.** The second review is now triaged too: a finding at the same code site, making the same claim as a row this run already logged, where the code still reads as that row describes, keeps the row's outcome (`carried`) and is neither verified nor patched again; no fixer runs after a re-review; and `implement:`, `vuln:`, `upgrade:`, `document:` and `epics:` stop or escalate only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — never on the verdict word, and `document:` and `epics:` end the run as Cancel does on a kept verdict that is not `BLOCK`; a second `BLOCK` with no surviving `BLOCKER` goes to the user to settle, where it used to stop the run, and is never promoted silently. `implement:` Phase 3B step 8's review of the Phase 3.5 delta is triaged and acted on the same way — it had no verdict handling — and its early-stop list now names both settle prompts' Keep-the-verdict and Cancel arms; it also records in `### Deferred items` each behaviour `test-writer` names as untested. Prompted by BMAD 7c3e5827 and 85d968fc.
+- **`finding-triage` § On re-review.** The second review is now triaged too: a finding at the same code site, making the same claim as a row this run already logged, where the code still reads as that row describes, keeps the row's outcome (`carried`) and is neither verified nor patched again; no survivor of a re-review is handed to a fixer; and `implement:`, `vuln:`, `upgrade:`, `document:` and `epics:` stop or escalate only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — never on the verdict word, and `document:` and `epics:` end the run as Cancel does on a kept verdict that is not `BLOCK`; a second `BLOCK` with no surviving `BLOCKER` goes to the user to settle, where it used to stop the run, and is never promoted silently. `implement:` Phase 3B step 8's review of the Phase 3.5 delta is triaged and acted on the same way — it had no verdict handling — and its early-stop list now names both settle prompts' Keep-the-verdict and Cancel arms; it also records in `### Deferred items` each behaviour `test-writer` names as untested. Prompted by BMAD 7c3e5827 and 85d968fc.
 - **Severity by effect, and "Declined to judge."** `code-review` grades a finding no dimension fixes by what a reasonable person using the software meets if the change ships — the spec's silence on the triggering input is no permission — and returns `### Declined to judge`, every behaviour it set aside with the reason. Triage raises a grade by effect, to `MAJOR` at most, never lowers one, and rules on each set-aside line. Prompted by superpowers 5bf4e780 (#2319).
 - **`code-review` dimension 4 gains four checks** — implicit branches of a fixed value set, handle lifetime, call against declaration (tests included), removed contracts — prompted by BMAD 44e0f806; and **finds the repository's documented standards** before dimension 3 — `CLAUDE.md` and `AGENTS.md` at the root and on the path to each changed file, `CONTRIBUTING.md`, `CODING_STANDARDS.md`, `.github/copilot-instructions.md`, and the `.github/instructions/*.instructions.md` files whose `applyTo:` matches — prompted by BMAD 23f134e2 and mattpocock's code-review step 3.
 - **A plan's Review focus** — up to five input classes or failure modes the task implies and no step's tests exercise: `risk-planner` returns `### Review focus`, `implement:`'s Phase 2A plan carries it as item 9, `test-writer` writes a test for each line or names why it cannot, and `code-review` checks each one. Prompted by superpowers 5bf4e780.
@@ -2645,7 +2689,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 
 ### Added
 - **`finding-triage` gains a third outcome, `unverified`.** A finding the orchestrator can neither confirm nor refute — the diff and the code around it leave the question open — is no longer dismissed as unsubstantiated: one that would be `MAJOR` or `BLOCKER` if true is recorded at that grade, marked `(unverified)`, with what would settle it, and reaches the user in the triage line; one that would be only `MINOR` or `NIT` is dismissed with the same note. It never reaches a fixer and changes nothing the verdict gates. Prompted by BMAD's `maybe-false` triage verdict (3433612d, b0d27c3c).
-- **`finding-triage` § On re-review.** The second review is now triaged too: a finding at the same code site, making the same claim as a row this run already logged, where the code still reads as that row describes, keeps the row's outcome (`carried`) and is neither verified nor patched again; no fixer runs after a re-review; and `/implement`, `/vuln`, `/upgrade`, `/document` and `/epics` stop or escalate only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — never on the verdict word, and `/document` and `/epics` end the run as Cancel does on a kept verdict that is not `BLOCK`; a second `BLOCK` with no surviving `BLOCKER` goes to the user to settle, where it used to stop the run, and is never promoted silently. `/implement` Phase 3B step 8's review of the Phase 3.5 delta is triaged and acted on the same way — it had no verdict handling — and its early-stop list now names both settle prompts' Keep-the-verdict and Cancel arms; it also records in `### Deferred items` each behaviour `test-writer` names as untested. Prompted by BMAD 7c3e5827 and 85d968fc.
+- **`finding-triage` § On re-review.** The second review is now triaged too: a finding at the same code site, making the same claim as a row this run already logged, where the code still reads as that row describes, keeps the row's outcome (`carried`) and is neither verified nor patched again; no survivor of a re-review is handed to a fixer; and `/implement`, `/vuln`, `/upgrade`, `/document` and `/epics` stop or escalate only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — never on the verdict word, and `/document` and `/epics` end the run as Cancel does on a kept verdict that is not `BLOCK`; a second `BLOCK` with no surviving `BLOCKER` goes to the user to settle, where it used to stop the run, and is never promoted silently. `/implement` Phase 3B step 8's review of the Phase 3.5 delta is triaged and acted on the same way — it had no verdict handling — and its early-stop list now names both settle prompts' Keep-the-verdict and Cancel arms; it also records in `### Deferred items` each behaviour `test-writer` names as untested. Prompted by BMAD 7c3e5827 and 85d968fc.
 - **Severity by effect, and "Declined to judge."** `code-review` grades a finding no dimension fixes by what a reasonable person using the software meets if the change ships — the spec's silence on the triggering input is no permission — and returns `### Declined to judge`, every behaviour it set aside with the reason. Triage raises a grade by effect, to `MAJOR` at most, never lowers one, and rules on each set-aside line. Prompted by superpowers 5bf4e780 (#2319).
 - **`code-review` dimension 4 gains four checks** — implicit branches of a fixed value set, handle lifetime, call against declaration (tests included), removed contracts — prompted by BMAD 44e0f806; and **finds the repository's documented standards** before dimension 3 — `CLAUDE.md` and `AGENTS.md` at the root and on the path to each changed file, `CONTRIBUTING.md`, `CODING_STANDARDS.md`, and the `.claude/rules/` files whose `paths:` match — prompted by BMAD 23f134e2 and mattpocock's code-review step 3.
 - **A plan's Review focus** — up to five input classes or failure modes the task implies and no step's tests exercise: `risk-planner` returns `### Review focus`, `/implement`'s Phase 2A plan carries it as item 9, `test-writer` writes a test for each line or names why it cannot, and `code-review` checks each one. Prompted by superpowers 5bf4e780.
