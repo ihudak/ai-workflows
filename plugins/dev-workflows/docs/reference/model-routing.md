@@ -24,11 +24,11 @@ All five commands in this plugin load the `model-routing` skill, run this classi
 - **`/vuln`** is a third: it runs the same Opus `code-review` gate, triage, and `review-fixer` cycle at `SIGNIFICANT`/`HIGH-RISK`, but dispatches no `risk-planner` and has no frontmatter-pinned authoring reviewer of its own.
 - **`/design` adds a further, stricter gate:** at `SIGNIFICANT`/`HIGH-RISK` it will not author against a weaker model — it requires the session itself to already be running on an Opus-tier model, because its authoring happens inline rather than through a delegated sub-agent. If it isn't, the run stops and offers to relaunch on Opus, with an explicit override to proceed anyway that gets logged in the final report (except under `--enforce-model`, which does not fire this gate at all; see below) — unless no Opus tier is reachable at all, in which case the stop stands but the relaunch offer does not, there being nothing to relaunch onto: the choice is then to proceed on the Sonnet floor or cancel. The companion `product-workflows` plugin's `/create-ard` gates the same classification on the same condition, the session's own current model, and its `/specify` and `/create-prd` don't gate this way at all; they degrade to the best available model and record the degradation instead of stopping.
 
-## What floors a classification
+## What floors or raises a classification
 
 `/implement` has one classification floor beyond the ordinary triggers: **multi-source input**. Handing it more than one code repository, or any directory input (a saved file folder, or a spec/design folder), floors the run at `SIGNIFICANT` even if nothing else about the change looks that size — a large multi-source brief is cross-cutting by nature, and it also triggers a parallel per-repo scan fan-out documented in the full policy below. The floor is overridable at plan approval if you judge the work genuinely smaller than its input footprint suggests.
 
-`/implement`'s class can also rise after Phase 1.5, before any file is written: Phase 2A re-tests it against the ordinary triggers once its plan names the steps and files the change touches, and again after every revision of that plan.
+`/implement`'s class can also rise after Phase 1.5, before any file is written: Phase 2A re-tests it against the ordinary triggers once its plan names the steps and files the change touches, and again after every revision of that plan — save after a down-classification you accepted at plan approval, which the re-test never undoes. A raise is overridable at plan approval exactly as the floor is.
 
 ## The fallback chain
 
