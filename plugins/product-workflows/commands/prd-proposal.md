@@ -563,19 +563,24 @@ file describes the archived revision and not this one.
 
 3. **Triage before anything is edited.** Invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")`
    and follow it over the reviewer's findings — **the orchestrator runs the triage, never a fixer**.
-   Verify each finding's claimed consequence at the location it names, keep or dismiss it, and record
-   every dismissal with a reason that disposes of that finding's own claim. There is no silent-drop
-   disposition. Fix the surviving BLOCKERs inline (the orchestrator edits both artifacts — there is no
-   delegated writer) and re-review **once**; if still `BLOCK`, escalate per the
-   `Review verdict BLOCK` rule in
-   `Skill(skill: "workflows-core:reference", args: "escalation-rules")`.
-   `PASS` / `PASS WITH RECOMMENDATIONS` → proceed. Cap: one fix cycle plus one re-review. Where triage
-   empties the survivor set, do not dispatch a fix cycle with nothing to apply and do not silently
-   promote the verdict — the user settles a verdict its own findings no longer support.
+   Verify each finding's claimed consequence at the location it names; keep it, mark it unverified, or
+   dismiss it; record every dismissal with a reason that disposes of that finding's own claim and every
+   unverified finding with what would settle it; and raise a grade only by effect. There is no
+   silent-drop disposition. Fix the surviving BLOCKERs inline (the orchestrator edits both artifacts —
+   there is no delegated writer) and re-review **once**, triaging the re-review under that reference's
+   § On re-review. If the review **stayed blocked** — a BLOCKER survives that triage, or you keep the
+   verdict at that section's prompt — escalate per the
+   `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` rule in
+   `Skill(skill: "workflows-core:reference", args: "escalation-rules")`; on that prompt's **Proceed**,
+   proceed as after a verdict that is not `BLOCK`. `PASS` / `PASS WITH RECOMMENDATIONS` → proceed.
+   Cap: one fix cycle plus one re-review. Where triage empties the survivor set, do not dispatch a fix
+   cycle with nothing to apply and do not silently promote the verdict — the user settles a verdict
+   its own findings no longer support.
 
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
 
-Report findings reviewed, survivors, and every dismissal with its reason: a triage that reports only
+Report the triage per `workflows-core:finding-triage` § Reporting — one line per review pass, naming
+the survivors, the unverified findings and every dismissal with its reason: a triage that reports only
 survivors is indistinguishable from a reviewer that found less.
 
 ---
@@ -755,7 +760,7 @@ newly written proposal, that it describes the archived revision and not this one
 a revision, the archived paths, and whether `--redo` discarded the anchor; the `--baseline` path where
 one was given, cited as the operator gave it; the profile's `engagement_model` and whether the profile
 was read back, corrected or re-grilled; the pre-lint findings; the `proposal-reviewer` verdict with
-the triage line — findings reviewed, survivors, and every dismissal with its reason; resolved model
+the triage line per `workflows-core:finding-triage` § Reporting — survivors, unverified findings, and every dismissal with its reason; resolved model
 routing (+ any Opus gate or degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10 — no gate or degradation applies); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line), follow-up and cost paths (or, under `--skip-costs`, the `Session cost: …` line), with the cost line
 labelled as **model spend in USD, a different quantity from the hours above**; the
 `Phase handoff:` outcome line from `handoff-to-main` (`workflows-core:phase-handoff` §4.1); the
