@@ -75,14 +75,14 @@ Refuse to review without a diff - ask the caller to produce one.
    10 and 11. Everywhere else a finding's severity is what a reasonable
    person using this software meets if the change ships as it stands — or,
    for a finding whose effect falls instead on the people who maintain or
-   operate it (a violated documented standard, a missing test, no rollback
-   path), the worse of what they meet and the failure its gap lets reach
-   users. The task, the plan and the spec say what the change must do, not
-   every input it will meet: where they are silent on the input that
-   triggers a finding, a reasonable user's expectation is the requirement,
-   and the silence is not permission. A crash, lost data or a wrong result
-   on an input nothing mentions is graded by that crash, that loss or that
-   result.
+   operate this software (a violated documented standard, a missing test,
+   no rollback path), the worse of what they meet and the failure its gap
+   lets reach users. The task, the plan and the spec say what the change
+   must do, not every input it will meet: where they are silent on the
+   input that triggers a finding, a reasonable user's expectation is the
+   requirement, and the silence is not permission. A crash, lost data or a
+   wrong result on an input nothing mentions is graded by that crash, that
+   loss or that result.
 
    **Set nothing aside silently.** Every behaviour you considered and set
    aside as outside the task, the plan or the spec goes in
