@@ -354,7 +354,7 @@ Dispatch `design-reviewer` (Opus):
   > Classification:     [the Phase 1.5 classification]
   > applicable_ard:     [the ARD invariants resolved in Phase 2.5, or omit if none]"
 
-**Act on the verdict** (mirrors `/specify`):
+**Act on the verdict** (mirrors `/specify`, save the escalation rule it cites):
 - **`BLOCK`** — fix the BLOCKER findings (the orchestrator/grill edits `design.md` inline — no delegated
   writer) and re-review once. **Any unresolved `design.md` `- [ ]` is a BLOCKER by policy** — resolve it
   or push it onto the spec (Phase 5) before handoff. If still `BLOCK`, escalate per the

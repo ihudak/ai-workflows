@@ -567,9 +567,9 @@ that file describes the archived revision and not this one.
    silent-drop disposition. Fix the surviving BLOCKERs inline (the orchestrator edits both artifacts —
    there is no delegated writer) and re-review **once**, triaging that re-review — and one you chose
    at the first settle prompt — under that reference's § On re-review. If the review **stayed
-   blocked** — a BLOCKER survives that triage, or you keep the verdict at that section's prompt —
+   blocked** — a BLOCKER survives that triage, or you keep the verdict at either settle prompt —
    escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`
-   rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`; on that section's
+   rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`; on § On re-review's
    **Proceed**, proceed as after a verdict that is not `BLOCK`. `PASS` / `PASS WITH RECOMMENDATIONS`
    → proceed. Cap: one fix cycle plus one re-review. Where triage empties the survivor set, do not
    dispatch a fix cycle with nothing to apply and do not silently promote the verdict — the user
@@ -750,8 +750,8 @@ the anchor; the profile's `engagement_model`, whether the profile was read back,
 re-grilled, and any correction that moved a field the included slices were priced under, with the
 slices it affects; the pre-lint findings; the `proposal-reviewer` verdict with the triage line per
 `workflows-core:finding-triage` § Reporting — survivors, unverified findings, and every dismissal
-with its reason — and every survivor whose location
-was a slice document rather than the umbrella; resolved model routing (+ any Opus gate or
+with its reason — and every survivor whose location was a slice document rather than the umbrella;
+resolved model routing (+ any Opus gate or
 degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10 — no gate or degradation applies); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line), follow-up and cost paths (or, under `--skip-costs`, the `Session cost: …` line), with the cost line labelled as **model spend in
 USD, a different quantity from the hours above**; the `Phase handoff:` outcome line from
 `handoff-to-main` (`workflows-core:phase-handoff` §4.1); the `Specs repo:` outcome line from

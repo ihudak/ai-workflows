@@ -19,7 +19,7 @@ Wherever an **Opus reviewer's reasoned findings feed a fixer**:
 | `proposal-reviewer` → the orchestrator itself (`/prd-proposal`, `/brd-proposal`) | yes |
 | a style checker → `doc-fixer` (`/document` direct mode, and the style-fix cycles inside `/document` keyed mode and `/epics`) | **no** |
 
-**Where there is no fixer, the orchestrator is the fixer, and triage still runs.** `docs-scaffold-reviewer`, `docs-audit-reviewer` and `proposal-reviewer` are Opus-pinned and their findings are reasoned claims, but none has a dedicated fixer agent behind it: `/docs-init` and a standalone `/docs-brand` apply the survivors themselves, by direct edit, because the scaffold diff has none (docs-workflows design D25); `/docs-audit` applies them to `docs-backlog.yml` itself, on the same design decision and for the same reason — the file it wrote is the artefact under review and a fixer would add nothing between the finding and the edit; and `/prd-proposal` and `/brd-proposal` fix surviving BLOCKERs inline, editing both proposal artifacts themselves, because a proposal has no delegated writer. **The three group two and one on re-review, so a new caller states which group it follows rather than leaving it to the nearest neighbour.** For `/docs-init`, a standalone `/docs-brand` and `/docs-audit`, which run no re-review at all, that makes the station argument above *stronger*, not moot — the dismissal and the edit sit in one place, so nothing downstream would catch a finding dropped without a reason. `/prd-proposal` and `/brd-proposal` do re-review once after their inline fix, and § On re-review carries a finding triage already dropped forward at its recorded outcome rather than deciding it again — so that re-review is no second chance for a dismissal, which still has to carry its own reason. The three that run no re-review settle an emptied set with a prompt that has no re-review arm (§ When triage empties the survivor set). Everything below applies unchanged with "the fixer" read as "the orchestrator's own edit": survivors only, the patch gate binds that edit, and an emptied survivor set is settled by the user rather than silently promoted. An `--inline` `/docs-brand` run dispatches no review of its own; its diff is triaged inside `/docs-init`'s.
+**Where there is no fixer, the orchestrator is the fixer, and triage still runs.** `docs-scaffold-reviewer`, `docs-audit-reviewer` and `proposal-reviewer` are Opus-pinned and their findings are reasoned claims, but none has a dedicated fixer agent behind it: `/docs-init` and a standalone `/docs-brand` apply the survivors themselves, by direct edit, because the scaffold diff has none (docs-workflows design D25); `/docs-audit` applies them to `docs-backlog.yml` itself, on the same design decision and for the same reason — the file it wrote is the artefact under review and a fixer would add nothing between the finding and the edit; and `/prd-proposal` and `/brd-proposal` fix surviving BLOCKERs inline, editing both proposal artifacts themselves, because a proposal has no delegated writer. **The three group two and one on re-review, so a new caller states which group it follows rather than leaving it to the nearest neighbour.** For `/docs-init`, a standalone `/docs-brand` and `/docs-audit`, which run no re-review at all, that makes the station argument above *stronger*, not moot — the dismissal and the edit sit in one place, so nothing downstream would catch a finding dropped without a reason. `/prd-proposal` and `/brd-proposal` do re-review once after their inline fix, and § On re-review carries a finding triage already dropped forward at its recorded outcome rather than deciding it again — so that re-review is no second chance for a dismissal, which still has to carry its own reason. `/docs-init`, a standalone `/docs-brand` and `/docs-audit`, which run no re-review, settle an emptied set with a prompt that has no re-review arm (§ When triage empties the survivor set). Everything below applies unchanged with "the fixer" read as "the orchestrator's own edit": survivors only, the patch gate binds that edit, and an emptied survivor set is settled by the user rather than silently promoted. An `--inline` `/docs-brand` run dispatches no review of its own; its diff is triaged inside `/docs-init`'s.
 
 The seam is **reasoned-claim producer vs deterministic producer**, not code vs docs. A reviewer finding
 is a claim about consequence and can be checked against the thing it names. A linter violation is not —
@@ -78,15 +78,15 @@ Only survivors are handed to the fixer — never an unverified finding, never a 
 Triage disposes of findings; it does not restate the verdict. Where no finding behind a non-`PASS`
 verdict survives, every one of them dismissed or unverified, the verdict is left standing on nothing —
 and because the **verdict**, not the survivor set, is what gates every downstream branch, the run would
-otherwise dispatch a fixer with no findings to apply, or escalate a `BLOCKER` triage has already
-refuted. The disposition, in order:
+otherwise dispatch a fixer with no findings to apply, or escalate a `BLOCKER` that did not survive
+triage. The disposition, in order:
 
 1. **Never dispatch the fixer with an empty survivor list.** It has nothing to apply, and the Fix
    Report a later re-review would falsify has nothing to be falsified against. Skip the dispatch.
-2. **Never run the unresolved-`BLOCKER` escalation on a refuted `BLOCKER`** — unless the user keeps
-   the verdict at step 3's prompt. That escalation exists for a `BLOCKER` that survived a fix cycle,
-   not for one that never survived triage; a user who keeps the verdict says the review stayed blocked
-   (§ On re-review), at their own word.
+2. **Never run the unresolved-`BLOCKER` escalation on a `BLOCKER` that did not survive triage** —
+   unless the user keeps the verdict at step 3's prompt. That escalation exists for a `BLOCKER` that
+   survived a fix cycle, not for one that never survived triage; a user who keeps the verdict says the
+   review stayed blocked (§ On re-review), at their own word.
 3. **Surface it and let the user settle the verdict.** Report the verdict, the fact that nothing
    survived, every dismissal with its reason and every unverified finding with what would settle it,
    then ask:
@@ -136,10 +136,10 @@ finding's own location is in that file.
 
 ## On re-review
 
-A **re-review** is any review a run dispatches after a fix cycle or an orchestrator edit over the same
-artifact: the one re-review a caller's cap allows, a re-review the user chose at § When triage empties
-the survivor set, and `/implement`'s review of its Phase 3.5 fix delta. Its findings are triaged by
-§ The step, with one check first and three rules after.
+A **re-review** is any review a run dispatches after its first over the same artifact: the one
+re-review a caller's cap allows, a re-review the user chose at § When triage empties the survivor
+set, and `/implement`'s review of its Phase 3.5 fix delta. Its findings are triaged by § The step, with
+one check first and three rules after.
 
 **First, carry what this run already ruled.** A finding that names the same location as a row this
 run already logged — a code site or a document passage, whose line numbers may have moved with the
@@ -153,13 +153,13 @@ re-raised dismissed or unverified finding is verified afresh against the reviewe
 
 **Then:**
 
-1. **No survivor of a re-review is handed to a fixer** — a re-review is the last review the run
-   makes, so a fix after it would go out unreviewed. Each survivor is recorded in the triage line at
-   its own severity, and a second verdict that is not `BLOCK` gates nothing further.
+1. **No survivor of a re-review is handed to a fixer** — a re-review closes the review cycle, and no
+   caller's cap allows a second fix cycle. Each survivor is recorded in the triage line at its own
+   severity, and a second verdict that is not `BLOCK` gates nothing further.
 2. **The caller's second-verdict stop or escalation acts on a `BLOCKER` surviving the re-review's
    triage — never on the verdict word.** A `BLOCKER` carried as dismissed or unverified is not one.
    A review **stayed blocked** where a `BLOCKER` survives its re-review's triage, or where the user
-   keeps the verdict at either settle prompt — the name every caller gives this stop, at this extent;
+   keeps the verdict at either settle prompt — the name every caller that re-reviews gives this stop;
    a caller that works unit by unit may count a settle prompt's **Cancel** as one too, and says so.
 3. **Where the second verdict is `BLOCK` and no `BLOCKER` survives**, the verdict is one its own
    findings no longer support. Never promote it silently: report the verdict, each carried row with
