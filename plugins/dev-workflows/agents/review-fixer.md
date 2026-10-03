@@ -60,9 +60,10 @@ The caller passes:
    - Apply the **patch gate** (`Skill(skill: "workflows-core:reference", args: "finding-triage")`): the fix must add no
      public surface, **guard no state the finding did not demonstrate**, and edit no instruction file the
      gate names (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, a file under
-     `.claude/rules/` or `.github/instructions/`, `CONTRIBUTING.md`, `CODING_STANDARDS.md`) that the
-     change under review did not itself edit. If the smallest correct fix would add such a guard or make
-     such an edit, defer it as `DEFERRED — needs human decision` with that as the reason, rather than
+     `.claude/rules/` or `.github/instructions/`, `CONTRIBUTING.md`, `CODING_STANDARDS.md`) other than
+     at the finding's own location — you are not handed the diff, and a finding located in such a file
+     is one the review raised against that file's own text. If the smallest correct fix would add such
+     a guard or make such an edit, defer it as `DEFERRED — needs human decision` with that as the reason, rather than
      adding speculative defence.
    - Do not refactor surrounding code or fix unrelated issues.
    - If multiple findings touch the same location, apply them in order;

@@ -11,7 +11,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Changed
 - **`/document` triages its re-review** (`workflows-core:finding-triage` § On re-review) and escalates only on a review that **stayed blocked**.
-- **`/docs-init`, `/docs-brand` and `/docs-audit` report unverified findings** beside survivors and dismissals, and their direct edits honour the patch gate's instruction-file clause; `docs-audit-reviewer` no longer counts the reference's steps.
+- **`/docs-init`, `/docs-brand` and `/docs-audit` report unverified findings and raises** beside survivors and dismissals, and their direct edits honour the patch gate's instruction-file clause; `docs-audit-reviewer` no longer counts the reference's steps.
 
 ## [1.4.6] — 2026-10-02
 

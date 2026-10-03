@@ -14,7 +14,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`escalation-rules`: `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`** — the heading five commands already cited (see Fixed).
 
 ### Changed
-- **The patch gate never edits an instruction or contributor file the change did not itself edit** — `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, a file under `.claude/rules/` or `.github/instructions/`, `CONTRIBUTING.md`, `CODING_STANDARDS.md`: such a fix is surfaced for a human decision. `doc-fixer` applies the clause. `code-review` now reads those files as the repository's standards, which makes "edit the file to agree with the code" the likeliest wrong fix.
+- **The patch gate never edits an instruction or contributor file the change did not itself edit** — `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, a file under `.claude/rules/` or `.github/instructions/`, `CONTRIBUTING.md`, `CODING_STANDARDS.md`: such a fix is surfaced for a human decision. `doc-fixer` applies the clause by the finding's location, since it is not handed the diff. `code-review` now reads those files as the repository's standards, which makes "edit the file to agree with the code" the likeliest wrong fix.
 - **The triage line is one per review pass**, and survived + unverified + dismissed must sum to the findings reviewed.
 - **`model-routing/classification` §6**: a disposition may be an unverified record, and item 4 names the four edge-case checks `code-review` dimension 4 gained.
 

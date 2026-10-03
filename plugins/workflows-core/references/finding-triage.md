@@ -19,7 +19,7 @@ Wherever an **Opus reviewer's reasoned findings feed a fixer**:
 | `proposal-reviewer` → the orchestrator itself (`/prd-proposal`, `/brd-proposal`) | yes |
 | a style checker → `doc-fixer` (`/document` direct mode, and the style-fix cycles inside `/document` keyed mode and `/epics`) | **no** |
 
-**Where there is no fixer, the orchestrator is the fixer, and triage still runs.** `docs-scaffold-reviewer`, `docs-audit-reviewer` and `proposal-reviewer` are Opus-pinned and their findings are reasoned claims, but none has a dedicated fixer agent behind it: `/docs-init` and a standalone `/docs-brand` apply the survivors themselves, by direct edit, because the scaffold diff has none (docs-workflows design D25); `/docs-audit` applies them to `docs-backlog.yml` itself, on the same design decision and for the same reason — the file it wrote is the artefact under review and a fixer would add nothing between the finding and the edit; and `/prd-proposal` and `/brd-proposal` fix surviving BLOCKERs inline, editing both proposal artifacts themselves, because a proposal has no delegated writer. **The three group two and one on re-review, so a new caller states which group it follows rather than leaving it to the nearest neighbour.** For `/docs-init`, a standalone `/docs-brand` and `/docs-audit`, which run no re-review at all, that makes the station argument above *stronger*, not moot — the dismissal and the edit sit in one place, so nothing downstream would catch a finding dropped without a reason. `/prd-proposal` and `/brd-proposal` do re-review once after their inline fix, and § On re-review carries a finding triage already dropped forward at its recorded outcome rather than deciding it again — but only a run that had a surviving BLOCKER to fix reaches that re-review, so a dismissal there still has to carry its own reason. Everything below applies unchanged with "the fixer" read as "the orchestrator's own edit": survivors only, the patch gate binds that edit, and an emptied survivor set is settled by the user rather than silently promoted. An `--inline` `/docs-brand` run dispatches no review of its own; its diff is triaged inside `/docs-init`'s.
+**Where there is no fixer, the orchestrator is the fixer, and triage still runs.** `docs-scaffold-reviewer`, `docs-audit-reviewer` and `proposal-reviewer` are Opus-pinned and their findings are reasoned claims, but none has a dedicated fixer agent behind it: `/docs-init` and a standalone `/docs-brand` apply the survivors themselves, by direct edit, because the scaffold diff has none (docs-workflows design D25); `/docs-audit` applies them to `docs-backlog.yml` itself, on the same design decision and for the same reason — the file it wrote is the artefact under review and a fixer would add nothing between the finding and the edit; and `/prd-proposal` and `/brd-proposal` fix surviving BLOCKERs inline, editing both proposal artifacts themselves, because a proposal has no delegated writer. **The three group two and one on re-review, so a new caller states which group it follows rather than leaving it to the nearest neighbour.** For `/docs-init`, a standalone `/docs-brand` and `/docs-audit`, which run no re-review at all, that makes the station argument above *stronger*, not moot — the dismissal and the edit sit in one place, so nothing downstream would catch a finding dropped without a reason. `/prd-proposal` and `/brd-proposal` do re-review once after their inline fix, and § On re-review carries a finding triage already dropped forward at its recorded outcome rather than deciding it again — so that re-review is no second chance for a dismissal, which still has to carry its own reason. Everything below applies unchanged with "the fixer" read as "the orchestrator's own edit": survivors only, the patch gate binds that edit, and an emptied survivor set is settled by the user rather than silently promoted. An `--inline` `/docs-brand` run dispatches no review of its own; its diff is triaged inside `/docs-init`'s.
 
 The seam is **reasoned-claim producer vs deterministic producer**, not code vs docs. A reviewer finding
 is a claim about consequence and can be checked against the thing it names. A linter violation is not —
@@ -48,23 +48,28 @@ For each finding, **before any grouping or deduplication**:
      verification could not settle.
    - **Mark unverified** a finding verification could not settle — the diff and the code around it leave
      open whether its consequence occurs. Use this only where they leave the question open; where they
-     are enough to decide, keep the finding or dismiss it. One that would be `MAJOR` or `BLOCKER` if
-     true is recorded at that grade, marked `(unverified)`, with what would settle it — the file to
-     read, the input to trace, the run that would show it. One that would be only `MINOR` or `NIT` if
-     true is dismissed, with that grade and what would settle it as its reason. An unverified finding
-     changes nothing the verdict gates; it reaches the user through § Reporting.
+     are enough to decide, keep the finding or dismiss it. Its grade if true is the reviewer's, raised by
+     effect as step 4 says. One whose grade if true is `MAJOR` or `BLOCKER` is recorded at that grade,
+     marked `(unverified)`, with what would settle it — the file to read, the input to trace, the run
+     that would show it. One whose grade if true is only `MINOR` or `NIT` is dismissed, with that grade
+     and what would settle it as its reason. An unverified finding changes nothing the verdict gates;
+     it reaches the user through § Reporting.
 3. **Record every dismissal and every unverified finding with its reason.** Never drop a finding
    silently. There is no "reject and say nothing" disposition and none may be added.
 4. **Raise a grade by effect, never lower one.** Where a survivor's grade reflects the spec's, the
    plan's or the task's silence on the input that triggers it, rather than what the people the change
    serves meet if it ships as it stands — users of the software, readers of the document — raise
    it, to `MAJOR` at most: a `BLOCKER` changes the verdict, and the verdict is not triage's to
-   restate (§ When triage empties the survivor set). An unverified finding is recorded at the
-   reviewer's grade raised by the same rule. Record every raise with its reason.
+   restate (§ When triage empties the survivor set). Step 2 grades an unverified finding by this rule
+   too. Record every raise with its reason.
 5. **Rule on what the reviewer set aside.** Where the review carries a `### Declined to judge` list
    (`code-review` returns one), rule on each line: it **stands** — record why — or it is a **defect**,
    recorded with its grade by effect and what shows it. A line ruled a defect is never handed to the
    fixer: no finding of the review carries it, and the verdict was taken without it.
+
+**A reviewer with two grades** — one filing only `BLOCKER` and `RECOMMENDATION` — maps onto steps 2
+and 4 with `RECOMMENDATION` below `MAJOR`: an unverified `RECOMMENDATION` is dismissed with its note,
+and step 4 raises nothing, since the grade above it is `BLOCKER`.
 
 Only survivors are handed to the fixer — never an unverified finding, never a dismissed one.
 
@@ -84,7 +89,7 @@ refuted. The disposition, in order:
    survived, every dismissal with its reason and every unverified finding with what would settle it,
    then ask:
    ```
-   choices: ["Proceed as if the verdict were PASS — the dismissals are recorded (Recommended)", "Re-review, supplying the dismissal reasons", "Keep the verdict and stop for a human decision", "Cancel"]
+   choices: ["Proceed as if the verdict were PASS — every disposition is recorded (Recommended)", "Re-review, supplying every disposition's reason", "Keep the verdict and stop for a human decision", "Cancel"]
    ```
    **Never** promote a non-`PASS` verdict to `PASS` silently. The orchestrator's authority under this
    reference is over *findings*; a verdict its own findings no longer support is the user's to settle.
@@ -114,7 +119,8 @@ The instruction-file clause exists because `code-review` reads those files as th
 documented standards: a finding that the change contradicts one of them is the likeliest kind to reach
 the fixer, and editing the file to agree with the code makes such a finding disappear without settling
 it. Where the change under review itself edited the file, a finding on it is a finding on the change,
-and the clause does not apply.
+and the clause does not apply. A fixer agent is not handed the diff, so it applies the clause by the
+finding's location: it edits such a file only where the finding's own location is in that file.
 
 ## On re-review
 
@@ -123,12 +129,15 @@ artifact: the one re-review a caller's cap allows, a re-review the user chose at
 the survivor set, and `/implement`'s review of its Phase 3.5 fix delta. Its findings are triaged by
 § The step, with one check first and three rules after.
 
-**First, carry what this run already ruled.** A finding that names the same code site as a row this
-run already logged — line numbers may have moved with the fix — and makes the same claim, where the
-code there still reads as the row describes, keeps that row's outcome. It is marked **carried**, is not
-verified again, and is never handed to a fixer again. A row whose fix changed the code no longer
-matches: verify that finding afresh. A carried survivor is a fix that did not take, and counts as a
-survivor below.
+**First, carry what this run already ruled.** A finding that names the same location as a row this
+run already logged — a code site or a document passage, whose line numbers may have moved with the
+fix — and makes the same claim, where the text there still reads as the row describes, keeps that
+row's outcome. It is marked **carried**, is not verified again, and is never handed to a fixer again.
+A row whose fix changed the text there no longer matches: verify that finding afresh. A carried
+survivor is a fix that did not take, and counts as a survivor below. **The one exception** is a
+re-review the user chose at § When triage empties the survivor set, which exists to put the
+dismissal reasons to the reviewer: there, a re-raised dismissal is verified afresh against the
+reviewer's answer.
 
 **Then:**
 

@@ -158,7 +158,8 @@ _or_ "none — checked"
   must do, not every input it will meet, and its silence on one is not
   permission for that input to break the program. `code-review` checks
   each line, and where the command dispatches `test-writer` it writes a
-  test for each, so every line is acted on. `none — checked` means you
+  test for each or names in its `### Notes` why one cannot be written, so
+  every line is acted on. `none — checked` means you
   looked and found none, never that you skipped the look.
 - **Flag blockers early.** If a prerequisite is missing (missing tests, unclear
   requirement, incompatible runtime), return a plan whose first step is "ask
