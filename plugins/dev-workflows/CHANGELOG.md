@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.7.0] — 2026-10-03
+
+### Added
+- **`/implement` looks before it asks.** Phase 1 tries to settle each candidate ambiguity from what the run can read — the inputs, the code, the repository's own `CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md` and `README.md`, and `git log` — and asks only a decision: a question the evidence leaves open and whose answer changes what the user would notice in the result. An open question the user would not notice is settled by the run and listed in the plan's Assumptions; nothing that changes the result is assumed. The mid-implementation stop in Phase 3A and Phase 3B applies the same test. Prompted by BMAD 7e571784.
+- **`/implement` re-classifies upward.** Phase 2A writes its exploration to `summary_file` and re-tests the class against `workflows-core:model-routing/classification` §1.1 with the file map — where the file count and the areas a change touches are first knowable — raising a run a trigger now applies to and continuing at Phase 2B without a second exploration. A `SIMPLE`/`MODERATE` run that meets, while implementing, a §1.1 trigger its approved plan did not state stops editing and re-plans once with `risk-planner`, which reads the diff so far through a new `Work so far` input; once the user approves, the run continues at Phase 3B under its review gate, without re-branching or re-capturing the baseline, and a Cancel there commits the work through Phase 4.6 with `clean_finish: false`. The class used to move only down, and such a run shipped with no review. Prompted by BMAD 124ea1af and 2c10d5ba.
+- **The code pull-request body** (`code-handoff` §2.7) holds four sections, with no preamble: a Summary; Evidence, a before and an after only as the run observed them; Merge danger, a one-way or two-way door — one-way where the run cannot tell — and the blast radius; and the Review. Where the repository carries a pull-request template, resolved against a fixed set of paths, the body is that template, filled, its sections and checkboxes kept. `/implement`, `/vuln` and `/upgrade` supply the facts. Prompted by mattpocock `pr`.
+
 ## [4.6.0] — 2026-10-03
 
 **Update `workflows-core` to 1.11.0 with this release**: the review cycles below follow its `finding-triage` § On re-review, and `/design` cites its new `— commands that fix inline` escalation heading.
