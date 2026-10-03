@@ -100,10 +100,10 @@ triage. The disposition, in order:
    ```
    **Keep the verdict** means the review stayed blocked: the caller takes its stop or escalation over
    the `BLOCKER`s the reviewer raised. Where the kept verdict is not `BLOCK` the reviewer raised none,
-   and a caller whose stop for a review that stayed blocked is an escalation stops the run instead, as
-   its own Cancel does. **Cancel** is the caller's own cancel. **Never** promote a non-`PASS` verdict
-   to `PASS` silently. The orchestrator's authority under this reference is over *findings*; a verdict
-   its own findings no longer support is the user's to settle.
+   and a caller whose stop for a review that stayed blocked is an escalation ends the run instead — or,
+   working unit by unit, the unit — as its own Cancel does. **Cancel** is the caller's own cancel.
+   **Never** promote a non-`PASS` verdict to `PASS` silently. The orchestrator's authority under this
+   reference is over *findings*; a verdict its own findings no longer support is the user's to settle.
 
 A partly emptied set is not this case: where at least one finding survived, the verdict stands and the
 command's normal branch runs on the survivors.
@@ -136,10 +136,11 @@ finding's own location is in that file.
 
 ## On re-review
 
-A **re-review** is any review a run dispatches after its first over the same artifact: the one
-re-review a caller's cap allows, a re-review the user chose at § When triage empties the survivor
-set, and `/implement`'s review of its Phase 3.5 fix delta. Its findings are triaged by § The step, with
-one check first and three rules after.
+A **re-review** is any review a run dispatches over an artifact whose earlier review this run has
+already triaged: the one re-review a caller's cap allows, a re-review the user chose at § When triage
+empties the survivor set, and `/implement`'s review of its Phase 3.5 fix delta. A review that returned no
+findings to triage — a re-classification the user overrode, say — leaves the next one a first review.
+Its findings are triaged by § The step, with one check first and three rules after.
 
 **First, carry what this run already ruled.** A finding that names the same location as a row this
 run already logged — a code site or a document passage, whose line numbers may have moved with the
@@ -153,8 +154,8 @@ re-raised dismissed or unverified finding is verified afresh against the reviewe
 
 **Then:**
 
-1. **No survivor of a re-review is handed to a fixer** — a re-review closes the review cycle, and no
-   caller's cap allows a second fix cycle. Each survivor is recorded in the triage line at its own
+1. **No survivor of a re-review is handed to a fixer** — the cap's one re-review is spent, and a fix
+   after it could not be reviewed. Each survivor is recorded in the triage line at its own
    severity, and a second verdict that is not `BLOCK` gates nothing further.
 2. **The caller's second-verdict stop or escalation acts on a `BLOCKER` surviving the re-review's
    triage — never on the verdict word.** A `BLOCKER` carried as dismissed or unverified is not one.

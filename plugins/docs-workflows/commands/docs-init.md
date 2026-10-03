@@ -202,7 +202,7 @@ The scaffold **is code** — two build configs, a CI workflow, `.vale.ini`, a ge
 choices: ["Describe the fix yourself — I'll apply it", "Defer — note it in the report, run continues", "Override — accept the finding as-is", "Cancel this run"]
 ```
 
-**Cancel, at the settle prompt or this one, ends the run here, before Phase 8.** The scaffold this run wrote stays on disk on its branch, uncommitted, and the stop names the review as cancelled rather than as passed.
+**Cancel, at the settle prompt or this one, ends the run here**: skip Phase 8 and go straight to Phase 8.5's report, which states plainly that the review was cancelled. The scaffold this run wrote stays on disk on its branch, uncommitted, and the emitter tail (Phases 9–11) still runs, so this run's cost and any feedback are still recorded.
 
 A **BLOCKER** left deferred — neither fixed nor overridden — stops the run before Phase 8: `DOCS_INIT_UNRESOLVED_BLOCKER: a BLOCKER finding from docs-scaffold-reviewer was neither fixed nor overridden — resolve it and re-run.` A BLOCKER that is fixed, or explicitly overridden by the operator, proceeds. MAJOR survivors are applied the same way; MINOR and NIT are deferred to the report without a prompt. **There is no re-review cycle** — with no fixer there is no second pass to gate against: the orchestrator's direct edit is the fix, applied against the same finding it answers.
 

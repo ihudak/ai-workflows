@@ -230,7 +230,7 @@ Dispatch `docs-scaffold-reviewer` — pinned to Opus by its own frontmatter, per
 "docs-scaffold-reviewer flagged <finding> as <SEVERITY>, and the fix isn't a safe mechanical patch: <why>. How should I proceed?"
 choices: ["Describe the fix yourself — I'll apply it", "Defer — note it in the report, run continues", "Override — accept the finding as-is", "Cancel this run"]
 ```
-**Cancel, at the settle prompt or this one, ends the run here, before Phase 10.** The branding Phase 8 applied stays on disk on its branch, uncommitted, and the stop names the review as cancelled rather than as passed.
+**Cancel, at the settle prompt or this one, ends the run here**: skip Phase 10 and go straight to Phase 11's report, which states plainly that the review was cancelled. The branding Phase 8 applied stays on disk on its branch, uncommitted, and the emitter tail (Phases 12–14) still runs, so this run's cost and any feedback are still recorded.
 
 A **BLOCKER** left deferred (neither fixed nor overridden) stops the run before Phase 10: `DOCS_BRAND_UNRESOLVED_BLOCKER: a BLOCKER finding from docs-scaffold-reviewer was neither fixed nor overridden — resolve it and re-run.` A BLOCKER that is fixed, or explicitly overridden by the operator, proceeds. MAJOR survivors are applied the same way; MINOR / NIT are deferred to the report without a prompt.
 
