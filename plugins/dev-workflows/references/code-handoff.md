@@ -148,7 +148,7 @@ Title: the commit subject of §2.3.
 
 Body: **written to a file** — `<body-path>`, a `command mktemp -t` path outside any repo tree — never passed inline, which would break on newlines and quoting. The same file is what §3.2 names when `gh` is unavailable, so the user pastes the identical body — banner included — into the web UI.
 
-**What the body holds.** Four sections, in this order, rendered from `body_facts`, with no preamble: on a `clean_finish: false` run §2.9's banner is the body's **first line**, and otherwise its first heading is — save where a template resolves (below), which keeps its own opening under the banner.
+**What the body holds.** Four sections, in this order, rendered from `body_facts`, with no preamble: on a `clean_finish: false` run §2.9's banner is the body's **first line**, and otherwise its first heading is — save where a template resolves (below), which keeps its own opening first, under the banner where there is one.
 
 1. `## Summary` — what changed, one line per notable item, and the files changed.
 2. `## Evidence` — a **Before** and an **After**, each taken only from what the run observed: the caller's baseline against its verification, and on a bug fix the failing reproduction against the passing test. Where the run has no before or no after — tests the operator skipped, a verification that could not run — the section says which, and why. "Tests pass" alone is a claim, not a before and an after.
@@ -157,7 +157,7 @@ Body: **written to a file** — `<body-path>`, a `command mktemp -t` path outsid
    - **Blast radius** — a short phrase naming what breaks if the change is wrong: an API's consumers, a data store, a screen, the build.
 4. `## Review` — the run's classification; the reviewer verdict and triage summary where the caller has them, or, where no review ran, that none did and why; and every review finding the caller did not apply, with its severity.
 
-**The repository's own template wins.** Resolve it against a fixed set of paths, never by searching for one: list the committed tree's candidates with `git -C "<repo>" ls-tree -r --name-only HEAD | grep -i -E '^(\.github/|docs/)?pull_request_template(\.md|/[^/]+\.md)$|^\.gitlab/merge_request_templates/default\.md$'` — no output is no template — and stop at the first rung below that a listed path matches, comparing without regard to case —
+**The repository's own template wins.** Resolve it against a fixed set of paths, never by searching for one: list the committed tree's candidates with `git -C "<repo>" ls-tree -r -z --name-only HEAD | tr '\0' '\n' | grep -i -E '^(\.github/|docs/)?pull_request_template(\.md|/[^/]+\.md)$|^\.gitlab/merge_request_templates/default\.md$'` — `-z` because, without it, git quotes a name holding a non-ASCII byte and the anchor never matches it; no output is no template — and stop at the first rung below that a listed path matches, comparing without regard to case —
 
 1. `.github/pull_request_template.md`, then `pull_request_template.md` at the root, then `docs/pull_request_template.md`;
 2. the first of `.github/PULL_REQUEST_TEMPLATE/`, `PULL_REQUEST_TEMPLATE/` and `docs/PULL_REQUEST_TEMPLATE/` that holds a `.md` file directly: where it holds exactly one, that file; where it holds several, none — a directory of templates names no default, so the body is written as above and its last line says the repository offers several templates, naming the directory;
