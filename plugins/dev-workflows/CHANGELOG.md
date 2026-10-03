@@ -17,7 +17,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed
 - **`/implement` Phase 3B step 7's `### Re-classification` prompt offered a Cancel that no text defined**, and Phase 4.6's "Every run" list left it out, so a reviewed implementation could stop uncommitted on its branch. It now stops through Phase 4.6, like every other stop after files are written.
-- **`/vuln`'s and `/upgrade`'s pull-request titles differed from their commit subjects**, which `code-handoff` §2.7 says a title is: `/vuln`'s is now the subject its commit template yields, version included, and `/upgrade`'s the subject of its one component's commit or, for a batch, typed the same way; §2.7 names the caller's title on a terminal call that commits nothing.
+- **`/vuln`'s and `/upgrade`'s pull-request titles differed from their commit subjects**, which `code-handoff` §2.7 says a title is: `/vuln`'s is now the subject its commit template yields, version included, and `/upgrade`'s the subject of its one committed component or, where it committed several, a subject over those alone, typed the same way; §2.7 names the caller's title on a terminal call that commits nothing.
 - **`code-handoff`'s `repo` is the work tree's top level.** A caller holding a subdirectory of the repository staged §2.2's enumerated paths against the wrong root — porcelain paths are relative to the top level, and `git add` rejected them — so the commit carve-out for a dirty tree failed there; `repo` is now resolved with `git rev-parse --show-toplevel`.
 
 ## [4.6.0] — 2026-10-03
