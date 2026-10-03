@@ -13,7 +13,7 @@ Invoked from `/implement` at Phase 3.5 (SIMPLE / MODERATE, after Phase 3A implem
 The caller passes a structured brief:
 
 - **Task description** — what was implemented, verbatim from the user where possible
-- **Plan** — the approved plan from Phase 2A (standard) or the risk-planner plan from Phase 2B (Opus)
+- **Plan** — the approved plan from Phase 2A (standard) or the risk-planner plan from Phase 2B (Opus) — or, where `/implement` re-planned mid-implementation (its Phase 3A step 5), both, under two headings, the re-plan governing wherever they differ
 - **Diff** — `git add -N . && git diff` output so new files are included. MANDATORY. Both **Plan** and **Diff** may be given inline or as an absolute file path — `Read` the file first when given a path
   On a read failure, follow the **read-failure contract** in
   `${CLAUDE_PLUGIN_ROOT}/references/context-management.md` — **Diff** is *evidence*: hard stop, return
