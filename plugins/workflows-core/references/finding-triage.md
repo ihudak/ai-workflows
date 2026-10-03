@@ -136,11 +136,12 @@ finding's own location is in that file.
 
 ## On re-review
 
-A **re-review** is any review a run dispatches over an artifact whose earlier review this run has
-already triaged: the one re-review a caller's cap allows, a re-review the user chose at § When triage
-empties the survivor set, and `/implement`'s review of its Phase 3.5 fix delta. A review that returned no
-findings to triage — a re-classification the user overrode, say — leaves the next one a first review.
-Its findings are triaged by § The step, with one check first and three rules after.
+A **re-review** is any review a run dispatches over an artifact this run has already reviewed to a
+verdict, whatever that verdict was: the one re-review a caller's cap allows, a re-review the user
+chose at § When triage empties the survivor set, and `/implement`'s review of its Phase 3.5 fix delta. A
+`### Re-classification` return is no verdict, so the review dispatched after the user overrides one is
+a first review. A re-review's findings are triaged by § The step, with one check first and three rules
+after.
 
 **First, carry what this run already ruled.** A finding that names the same location as a row this
 run already logged — a code site or a document passage, whose line numbers may have moved with the
@@ -154,8 +155,8 @@ re-raised dismissed or unverified finding is verified afresh against the reviewe
 
 **Then:**
 
-1. **No survivor of a re-review is handed to a fixer** — the cap's one re-review is spent, and a fix
-   after it could not be reviewed. Each survivor is recorded in the triage line at its own
+1. **No survivor of a re-review is handed to a fixer** — a run makes at most one fix cycle, and only
+   before its first re-review. Each survivor is recorded in the triage line at its own
    severity, and a second verdict that is not `BLOCK` gates nothing further.
 2. **The caller's second-verdict stop or escalation acts on a `BLOCKER` surviving the re-review's
    triage — never on the verdict word.** A `BLOCKER` carried as dismissed or unverified is not one.

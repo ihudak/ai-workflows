@@ -223,14 +223,14 @@ Dispatch `docs-scaffold-reviewer` — pinned to Opus by its own frontmatter, per
   > docs_tree: [Glob ** under each docs_dir Phase 0 step 3 recorded]
   > profile: [the resolved .dev-workflows/docs-profile.yml, or 'absent — this repo carries no profile; images.policy/root/max_bytes defaults assumed (in-repo, docs/assets, 307200)' when none exists]"
 
-**Triage before applying anything** — invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it: for each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it — a dismissal with a reason that disposes of that finding's own claim, an unverified finding with what would settle it; raise a grade only by effect; carry survivors only into the next step, and every dismissal, every unverified finding and every raise into the Phase 11 report, per that reference's § Reporting. Where triage empties the survivor set on a non-PASS verdict, follow that reference's own disposition: surface it and let the operator settle the verdict with the prompt it gives a caller that runs no re-review, never silently promoting it to PASS. **Keep the verdict** there takes the `DOCS_BRAND_UNRESOLVED_BLOCKER` stop below — or, on a kept verdict that is not `BLOCK`, which raised no BLOCKER, ends the run as Cancel does — and **Cancel** ends the run as this phase's *Cancel this run* does.
+**Triage before applying anything** — invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it: for each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it — a dismissal with a reason that disposes of that finding's own claim, an unverified finding with what would settle it; raise a grade only by effect; carry survivors only into the next step, and every dismissal, every unverified finding and every raise into the Phase 11 report, per that reference's § Reporting. Where triage empties the survivor set on a non-PASS verdict, follow that reference's own disposition: surface it and let the operator settle the verdict with the prompt it gives a caller that runs no re-review, never silently promoting it to PASS. **Keep the verdict** and **Cancel** there both stop the run at this gate, by the route below.
 
 **There is no dedicated fixer for this diff (D17, D25) — the orchestrator applies survivors itself**, editing the named file directly, bound by `finding-triage.md`'s patch gate: fix only a defect a finding actually demonstrated, never guard state it did not show, and never edit an instruction file the gate names that this run did not itself write. A survivor whose fix is not a safe mechanical patch is surfaced rather than guessed at:
 ```
 "docs-scaffold-reviewer flagged <finding> as <SEVERITY>, and the fix isn't a safe mechanical patch: <why>. How should I proceed?"
 choices: ["Describe the fix yourself — I'll apply it", "Defer — note it in the report, run continues", "Override — accept the finding as-is", "Cancel this run"]
 ```
-**Cancel, at the settle prompt or this one, ends the run here**: skip Phase 10 and go straight to Phase 11's report, which states plainly that the review was cancelled. The branding Phase 8 applied stays on disk on its branch, uncommitted, and the emitter tail (Phases 12–14) still runs, so this run's cost and any feedback are still recorded.
+**A stop at this gate — Cancel at the settle prompt or this one, or Keep the verdict at the settle prompt — ends the run here**: skip Phase 10 and go straight to Phase 11's report, which names the stop — the review cancelled, or its verdict kept for a human decision. The branding Phase 8 applied stays on disk on its branch, uncommitted, and the emitter tail (Phases 12–14) still runs, so this run's cost and any feedback are still recorded.
 
 A **BLOCKER** left deferred (neither fixed nor overridden) stops the run before Phase 10: `DOCS_BRAND_UNRESOLVED_BLOCKER: a BLOCKER finding from docs-scaffold-reviewer was neither fixed nor overridden — resolve it and re-run.` A BLOCKER that is fixed, or explicitly overridden by the operator, proceeds. MAJOR survivors are applied the same way; MINOR / NIT are deferred to the report without a prompt.
 
@@ -240,7 +240,7 @@ There is no re-review cycle — with no fixer, there is no second pass to gate a
 
 ## Phase 10 — Finish
 
-**`--inline` returns here instead of running any of this** — or, where it stopped or was cancelled earlier, returned already with `no branding applied: <reason>` under the `--inline` failure contract above. Its diff (Phase 8) and its contrast finding (Phase 6) are returned to the caller — `/docs-workflows:docs-init` branched at its Phase 2.5 before any of this ran, and its Phase 8 commits and drafts the single pull request for the whole scaffold, this diff included. Nothing below runs on `--inline`: no commit, no PR, and — see Phases 12–14 — no emitter tail. **A standalone run that cancelled at Phase 7 never reaches this phase either** — see Phase 7's cancel path, which jumps straight to Phase 11.
+**`--inline` returns here instead of running any of this** — or, where it stopped or was cancelled earlier, returned already with `no branding applied: <reason>` under the `--inline` failure contract above. Its diff (Phase 8) and its contrast finding (Phase 6) are returned to the caller — `/docs-workflows:docs-init` branched at its Phase 2.5 before any of this ran, and its Phase 8 commits and drafts the single pull request for the whole scaffold, this diff included. Nothing below runs on `--inline`: no commit, no PR, and — see Phases 12–14 — no emitter tail. **A standalone run that cancelled at Phase 7, or stopped at Phase 9's review gate, never reaches this phase either** — see Phase 7's cancel path, which jumps straight to Phase 11.
 
 **Standalone** commits what Phase 7's branch and Phase 8's writes produced, then drafts a PR message — **never push, never merge**:
 
@@ -286,11 +286,11 @@ Docs repo: <resolved path>  (resolved via: <which resolve-docs-repo rung answere
 (When colour branding was skipped — "logo only" — this section reads instead: "no colour applied — nothing to check.")
 
 ### Review
-Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelled at Phase 7, never reached">
+Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelled at Phase 7, never reached" | "<the verdict> — stopped at the review gate: cancelled, or kept for a human decision">
 Findings: <N reviewed — M survived triage, U unverified, X dismissed; K applied, J deferred or overridden with reason — every dismissal, unverified finding and raise listed per `workflows-core:finding-triage` § Reporting | "N/A">
 
 ### Branch
-<branch name — N commit(s), NOT pushed and NOT merged | "cancelled at Phase 7 — no branch created, nothing written or committed">
+<branch name — N commit(s), NOT pushed and NOT merged | "cancelled at Phase 7 — no branch created, nothing written or committed" | "<branch name> — stopped at the review gate: nothing committed, the written files left on it uncommitted">
 Left uncommitted: <"none" | <path> — ignored by .gitignore:<N> `<line>`; config key removed: <key> — the committed config differs from the reviewed one by exactly that key>
 
 ### PR draft (copy-paste)
@@ -298,10 +298,10 @@ Left uncommitted: <"none" | <path> — ignored by .gitignore:<N> `<line>`; confi
 
 <body>
 
-(When Phase 7 was cancelled, this whole section reads instead: "none — no branch exists to open a pull request against.")
+(When Phase 7 was cancelled, this whole section reads instead: "none — no branch exists to open a pull request against." When the run stopped at the review gate, it reads: "none — nothing was committed to open a pull request from.")
 
 ### Next step
-[per `workflows-core:next-phase-offer` — guidance only, never auto-invoked. **When a branch and a drafted PR exist:** once the drafted pull request above is pushed and merged, `/docs-workflows:docs-serve` previews the branded site. This offer carries no `<merge-clause>` — the pull request this run drafted targets the docs repo, not `$SPECS_PATH`, and this family creates no `$SPECS_PATH` branch of its own and runs neither `handoff-to-main` nor `require-on-main` against a docs-repo PR, so there is no downstream gate to name a clause against — the same reasoning `/docs-workflows:docs-serve`'s own closing section gives for the same omission. **When Phase 7 was cancelled (no branch, no PR):** state that plainly — nothing to preview or merge — and stop there.]
+[per `workflows-core:next-phase-offer` — guidance only, never auto-invoked. **After a stop at the review gate:** name the findings left to settle, and re-run once they are. **When a branch and a drafted PR exist:** once the drafted pull request above is pushed and merged, `/docs-workflows:docs-serve` previews the branded site. This offer carries no `<merge-clause>` — the pull request this run drafted targets the docs repo, not `$SPECS_PATH`, and this family creates no `$SPECS_PATH` branch of its own and runs neither `handoff-to-main` nor `require-on-main` against a docs-repo PR, so there is no downstream gate to name a clause against — the same reasoning `/docs-workflows:docs-serve`'s own closing section gives for the same omission. **When Phase 7 was cancelled (no branch, no PR):** state that plainly — nothing to preview or merge — and stop there.]
 ```
 
 ---
@@ -322,7 +322,7 @@ Terminal phase — runs AFTER the Phase 11 report; NEVER interrupts an earlier p
    > - What was done: [one-paragraph summary — colour/logo extracted from <code-repo>, applied to <docs-repo>, contrast passed or applied over a finding, or cancelled at Phase 7 with nothing written]
    > - Key events: [a failing contrast confirmed anyway, a defaulted accent, a manually entered value, a deferred or overridden review finding, a Phase 7 cancellation — or 'none']
    > - Workarounds used: [manual steps not automated by the workflow — or 'none']
-   > - Review verdict: [PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | N/A — cancelled before Phase 9]
+   > - Review verdict: [PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | N/A — cancelled before Phase 9 | <the verdict> — stopped at the review gate]
    > - Test result: N/A (no tests in /docs-brand)
    > - Project root: [the resolved docs repo root]"
 2. **Persist plugin feedback (automatic).** Invoke `Skill(skill: "workflows-core:reference", args: "feedback-emission emit-auto")` and call its `emit-auto` entry point (§6), passing the Lessons Learned report, `command: /docs-brand`, `key: null` (this run resolves no PRD/Epic key), `source: none`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). With no PRD dir to match, `feedback-emission.md` §2 tier 2's **documentation branch** — which names this command's standalone path explicitly — applies: the entry lands at `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/feedback/<date>.md` — `<docs-repo-slug>` being the one-segment name `workflows-core:specs-repo-git` §2.1 defines — filed against the docs repo rather than unfiled at the top of `$SPECS_PATH`, because that repository is this family's unit of attribution (design D19). Under `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.1) it is not written there: the entry stays in the run's output.

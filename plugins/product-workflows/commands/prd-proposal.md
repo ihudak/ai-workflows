@@ -583,8 +583,7 @@ file describes the archived revision and not this one.
 
 Report the triage per `workflows-core:finding-triage` § Reporting — one line per review pass, naming
 the counts, the survivors, the unverified findings and every dismissal with its reason: a triage that
-reports only
-survivors is indistinguishable from a reviewer that found less.
+reports only survivors is indistinguishable from a reviewer that found less.
 
 ---
 

@@ -983,6 +983,11 @@ _or_ "none — checked"
    - **Flag as `### Skipped (pre-existing untested code)`**: files that clearly pre-existed and remain untested — this agent never retrofits tests for unchanged code.
    - **Review focus**: where the **Plan** carries a Review focus section, each line names an input class or failure mode this change must handle and the behaviour expected of it — map each line to the behaviour it covers and write the test that pins it, under step 5's rules. A line you cannot test in isolation goes in `### Notes` with the reason; never drop one silently.
 >>>>>>> NEW
+<<<<<<< OLD 1
+Write against the conventions of the test files that command already runs, and where you can find none, write nothing and say so in `### Notes` rather than inventing a framework.
+=======
+Write against the conventions of the test files that command already runs, and where you can find none, write nothing and name in `### Notes`, as untested, each behaviour step 3 maps to that suite, rather than inventing a framework.
+>>>>>>> NEW
 `````
 
 #### `edits/aw-agents-triage.txt`
@@ -1033,8 +1038,7 @@ survivors is indistinguishable from a reviewer that found less.
 =======
 Report the triage per `workflows-core:finding-triage` § Reporting — one line per review pass, naming
 the counts, the survivors, the unverified findings and every dismissal with its reason: a triage that
-reports only
-survivors is indistinguishable from a reviewer that found less.
+reports only survivors is indistinguishable from a reviewer that found less.
 >>>>>>> NEW
 <<<<<<< OLD 1
 slices it affects; the pre-lint findings; the `proposal-reviewer` verdict with the triage line —
@@ -1245,7 +1249,7 @@ Findings: <N reviewed — M survived triage, U unverified, X dismissed; K applie
 <<<<<<< OLD 1
 Where triage empties the survivor set entirely on a non-PASS verdict, follow the reference's own disposition — surface it and let the operator settle the verdict; never silently promote it to PASS.
 =======
-Where triage empties the survivor set on a non-PASS verdict, follow that reference's own disposition: surface it and let the operator settle the verdict with the prompt it gives a caller that runs no re-review, never silently promoting it to PASS. **Keep the verdict** there takes the `DOCS_BRAND_UNRESOLVED_BLOCKER` stop below — or, on a kept verdict that is not `BLOCK`, which raised no BLOCKER, ends the run as Cancel does — and **Cancel** ends the run as this phase's *Cancel this run* does.
+Where triage empties the survivor set on a non-PASS verdict, follow that reference's own disposition: surface it and let the operator settle the verdict with the prompt it gives a caller that runs no re-review, never silently promoting it to PASS. **Keep the verdict** and **Cancel** there both stop the run at this gate, by the route below.
 >>>>>>> NEW
 <<<<<<< OLD 1
 the review verdict and every applied or dismissed finding (Phase 9),
@@ -1255,9 +1259,39 @@ the review verdict and every applied, dismissed or unverified finding (Phase 9),
 <<<<<<< OLD 1
 A **BLOCKER** left deferred (neither fixed nor overridden) stops the run before Phase 10:
 =======
-**Cancel, at the settle prompt or this one, ends the run here**: skip Phase 10 and go straight to Phase 11's report, which states plainly that the review was cancelled. The branding Phase 8 applied stays on disk on its branch, uncommitted, and the emitter tail (Phases 12–14) still runs, so this run's cost and any feedback are still recorded.
+**A stop at this gate — Cancel at the settle prompt or this one, or Keep the verdict at the settle prompt — ends the run here**: skip Phase 10 and go straight to Phase 11's report, which names the stop — the review cancelled, or its verdict kept for a human decision. The branding Phase 8 applied stays on disk on its branch, uncommitted, and the emitter tail (Phases 12–14) still runs, so this run's cost and any feedback are still recorded.
 
 A **BLOCKER** left deferred (neither fixed nor overridden) stops the run before Phase 10:
+>>>>>>> NEW
+<<<<<<< OLD 1
+Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelled at Phase 7, never reached">
+=======
+Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelled at Phase 7, never reached" | "<the verdict> — stopped at the review gate: cancelled, or kept for a human decision">
+>>>>>>> NEW
+<<<<<<< OLD 1
+<branch name — N commit(s), NOT pushed and NOT merged | "cancelled at Phase 7 — no branch created, nothing written or committed">
+=======
+<branch name — N commit(s), NOT pushed and NOT merged | "cancelled at Phase 7 — no branch created, nothing written or committed" | "<branch name> — stopped at the review gate: nothing committed, the written files left on it uncommitted">
+>>>>>>> NEW
+<<<<<<< OLD 1
+(When Phase 7 was cancelled, this whole section reads instead: "none — no branch exists to open a pull request against.")
+=======
+(When Phase 7 was cancelled, this whole section reads instead: "none — no branch exists to open a pull request against." When the run stopped at the review gate, it reads: "none — nothing was committed to open a pull request from.")
+>>>>>>> NEW
+<<<<<<< OLD 1
+guidance only, never auto-invoked. **When a branch and a drafted PR exist:**
+=======
+guidance only, never auto-invoked. **After a stop at the review gate:** name the findings left to settle, and re-run once they are. **When a branch and a drafted PR exist:**
+>>>>>>> NEW
+<<<<<<< OLD 1
+BLOCK, resolved | N/A — cancelled before Phase 9]
+=======
+BLOCK, resolved | N/A — cancelled before Phase 9 | <the verdict> — stopped at the review gate]
+>>>>>>> NEW
+<<<<<<< OLD 1
+**A standalone run that cancelled at Phase 7 never reaches this phase either**
+=======
+**A standalone run that cancelled at Phase 7, or stopped at Phase 9's review gate, never reaches this phase either**
 >>>>>>> NEW
 `````
 
@@ -1282,7 +1316,7 @@ Findings: <N reviewed — M survived triage, U unverified, X dismissed; K applie
 <<<<<<< OLD 1
 Where triage empties the survivor set on a non-PASS verdict, follow that reference's own disposition: surface it and let the operator settle the verdict, never silently promote it to PASS.
 =======
-Where triage empties the survivor set on a non-PASS verdict, follow that reference's own disposition: surface it and let the operator settle the verdict with the prompt it gives a caller that runs no re-review, never silently promoting it to PASS. **Keep the verdict** there takes the `DOCS_INIT_UNRESOLVED_BLOCKER` stop below — or, on a kept verdict that is not `BLOCK`, which raised no BLOCKER, ends the run as Cancel does — and **Cancel** ends the run as this phase's *Cancel this run* does.
+Where triage empties the survivor set on a non-PASS verdict, follow that reference's own disposition: surface it and let the operator settle the verdict with the prompt it gives a caller that runs no re-review, never silently promoting it to PASS. **Keep the verdict** and **Cancel** there both stop the run at this gate, by the route below.
 >>>>>>> NEW
 <<<<<<< OLD 1
 the review verdict with every applied and every dismissed finding,
@@ -1292,9 +1326,34 @@ the review verdict with every applied, every dismissed and every unverified find
 <<<<<<< OLD 1
 A **BLOCKER** left deferred — neither fixed nor overridden — stops the run before Phase 8:
 =======
-**Cancel, at the settle prompt or this one, ends the run here**: skip Phase 8 and go straight to Phase 8.5's report, which states plainly that the review was cancelled. The scaffold this run wrote stays on disk on its branch, uncommitted, and the emitter tail (Phases 9–11) still runs, so this run's cost and any feedback are still recorded.
+**A stop at this gate — Cancel at the settle prompt or this one, or Keep the verdict at the settle prompt — ends the run here**: skip Phase 8 and go straight to Phase 8.5's report, which names the stop — the review cancelled, or its verdict kept for a human decision. The scaffold this run wrote stays on disk on its branch, uncommitted, and the emitter tail (Phases 9–11) still runs, so this run's cost and any feedback are still recorded.
 
 A **BLOCKER** left deferred — neither fixed nor overridden — stops the run before Phase 8:
+>>>>>>> NEW
+<<<<<<< OLD 1
+Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelled at Phase 2.5, never reached">
+=======
+Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelled at Phase 2.5, never reached" | "<the verdict> — stopped at the review gate: cancelled, or kept for a human decision">
+>>>>>>> NEW
+<<<<<<< OLD 1
+<branch name — 1 commit, NOT pushed and NOT merged | "cancelled at Phase 2.5 — no branch created, nothing written or committed">
+=======
+<branch name — 1 commit, NOT pushed and NOT merged | "cancelled at Phase 2.5 — no branch created, nothing written or committed" | "<branch name> — stopped at the review gate: nothing committed, the written files left on it uncommitted">
+>>>>>>> NEW
+<<<<<<< OLD 1
+(When Phase 2.5 was cancelled, this whole section reads instead: "none — no branch exists to open a pull request against.")
+=======
+(When Phase 2.5 was cancelled, this whole section reads instead: "none — no branch exists to open a pull request against." When the run stopped at the review gate, it reads: "none — nothing was committed to open a pull request from.")
+>>>>>>> NEW
+<<<<<<< OLD 1
+guidance only, never auto-invoked. On a completed run:
+=======
+guidance only, never auto-invoked. After a stop at the review gate: name the findings left to settle, and re-run once they are. On a completed run:
+>>>>>>> NEW
+<<<<<<< OLD 1
+BLOCK, resolved | N/A — cancelled before Phase 7.5]
+=======
+BLOCK, resolved | N/A — cancelled before Phase 7.5 | <the verdict> — stopped at the review gate]
 >>>>>>> NEW
 `````
 
@@ -1551,8 +1610,7 @@ survivors is indistinguishable from a reviewer that found less.
 =======
 Report the triage per `workflows-core:finding-triage` § Reporting — one line per review pass, naming
 the counts, the survivors, the unverified findings and every dismissal with its reason: a triage that
-reports only
-survivors is indistinguishable from a reviewer that found less.
+reports only survivors is indistinguishable from a reviewer that found less.
 >>>>>>> NEW
 <<<<<<< OLD 1
 the triage line — findings reviewed, survivors, and every dismissal with its reason; resolved model
@@ -1612,7 +1670,7 @@ What the section is about is wider than those exceptions, though:
 <<<<<<< OLD 1
 **writes nothing** — the one kind with no test at all;
 =======
-**writes nothing** — the one state with no test at all;
+**writes nothing**;
 >>>>>>> NEW
 <<<<<<< OLD 1
 The first clause is not made unqualified: that would have to remove **both** escapes a user can choose — that option and Pre-Phase 3.5's *"Skip tests for this run"*;
@@ -2428,11 +2486,12 @@ finding's own location is in that file.
 
 ## On re-review
 
-A **re-review** is any review a run dispatches over an artifact whose earlier review this run has
-already triaged: the one re-review a caller's cap allows, a re-review the user chose at § When triage
-empties the survivor set, and `{{IMPL}}`'s review of its Phase 3.5 fix delta. A review that returned no
-findings to triage — a re-classification the user overrode, say — leaves the next one a first review.
-Its findings are triaged by § The step, with one check first and three rules after.
+A **re-review** is any review a run dispatches over an artifact this run has already reviewed to a
+verdict, whatever that verdict was: the one re-review a caller's cap allows, a re-review the user
+chose at § When triage empties the survivor set, and `{{IMPL}}`'s review of its Phase 3.5 fix delta. A
+`### Re-classification` return is no verdict, so the review dispatched after the user overrides one is
+a first review. A re-review's findings are triaged by § The step, with one check first and three rules
+after.
 
 **First, carry what this run already ruled.** A finding that names the same location as a row this
 run already logged — a code site or a document passage, whose line numbers may have moved with the
@@ -2446,8 +2505,8 @@ re-raised dismissed or unverified finding is verified afresh against the reviewe
 
 **Then:**
 
-1. **No survivor of a re-review is handed to a fixer** — the cap's one re-review is spent, and a fix
-   after it could not be reviewed. Each survivor is recorded in the triage line at its own
+1. **No survivor of a re-review is handed to a fixer** — a run makes at most one fix cycle, and only
+   before its first re-review. Each survivor is recorded in the triage line at its own
    severity, and a second verdict that is not `BLOCK` gates nothing further.
 2. **The caller's second-verdict stop or escalation acts on a `BLOCKER` surviving the re-review's
    triage — never on the verdict word.** A `BLOCKER` carried as dismissed or unverified is not one.
@@ -2522,7 +2581,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 
 ### Changed
 - **`/document` triages its re-review** (`workflows-core:finding-triage` § On re-review) and escalates only on a review that **stayed blocked**.
-- **`/docs-init`, `/docs-brand` and `/docs-audit` report unverified findings and raises** beside survivors and dismissals, settle an emptied survivor set with a prompt that has no re-review arm — its Keep-the-verdict taking each command's unresolved-BLOCKER stop — and `/docs-init` and `/docs-brand` list unverified findings in their pull-request drafts and say what a Cancel at the review gate leaves behind; their direct edits honour the patch gate's instruction-file clause; `docs-audit-reviewer` no longer counts the reference's steps.
+- **`/docs-init`, `/docs-brand` and `/docs-audit` report unverified findings and raises** beside survivors and dismissals, settle an emptied survivor set with a prompt that has no re-review arm — `/docs-init` and `/docs-brand` stop at their review gate on its Keep-the-verdict or Cancel, the report saying which, and `/docs-audit` takes its unresolved-BLOCKER stop, or its Cancel route on a kept verdict that is not `BLOCK` — and `/docs-init` and `/docs-brand` list unverified findings in their pull-request drafts and say what a Cancel at the review gate leaves behind; their direct edits honour the patch gate's instruction-file clause; `docs-audit-reviewer` no longer counts the reference's steps.
 `````
 
 #### `cl/aw-product-workflows.md`
@@ -2533,7 +2592,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 **Update `workflows-core` to 1.11.0 with this release**: the commands below cite its new escalation heading and its `finding-triage` § On re-review.
 
 ### Changed
-- **`/epics`, `/prd-proposal` and `/brd-proposal` triage their re-review** (`workflows-core:finding-triage` § On re-review) and escalate only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt; their triage reports unverified findings, and `proposal-reviewer` describes the three outcomes.
+- **`/epics`, `/prd-proposal` and `/brd-proposal` triage their re-review** (`workflows-core:finding-triage` § On re-review) and escalate only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — ending the run instead, as Cancel does, on a kept verdict that is not `BLOCK`; their triage reports unverified findings, and `proposal-reviewer` describes the three outcomes.
 
 ### Fixed
 - **`/create-prd`, `/update-prd`, `/create-ard`, `/prd-proposal` and `/brd-proposal` escalated per a `Review verdict BLOCK` rule `escalation-rules` did not have.** They now cite `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`, and `/create-prd`'s inline copy of its choices matches that heading word for word.
@@ -2567,7 +2626,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 
 ### Added
 - **`finding-triage` gains a third outcome, `unverified`.** A finding the orchestrator can neither confirm nor refute — the diff and the code around it leave the question open — is no longer dismissed as unsubstantiated: one that would be `MAJOR` or `BLOCKER` if true is recorded at that grade, marked `(unverified)`, with what would settle it, and reaches the user in the triage line; one that would be only `MINOR` or `NIT` is dismissed with the same note. It never reaches a fixer and changes nothing the verdict gates. Prompted by BMAD's `maybe-false` triage verdict (3433612d, b0d27c3c).
-- **`finding-triage` § On re-review.** The second review is now triaged too: a finding at the same code site, making the same claim as a row this run already logged, where the code still reads as that row describes, keeps the row's outcome (`carried`) and is neither verified nor patched again; no fixer runs after a re-review; and `implement:`, `vuln:`, `upgrade:`, `document:` and `epics:` stop or escalate only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — never on the verdict word; a second `BLOCK` with no surviving `BLOCKER` goes to the user to settle, where it used to stop the run, and is never promoted silently. `implement:` Phase 3B step 8's review of the Phase 3.5 delta is triaged and acted on the same way — it had no verdict handling — and its early-stop list now names both settle prompts' Keep-the-verdict and Cancel arms; it also records in `### Deferred items` each behaviour `test-writer` names as untested. Prompted by BMAD 7c3e5827 and 85d968fc.
+- **`finding-triage` § On re-review.** The second review is now triaged too: a finding at the same code site, making the same claim as a row this run already logged, where the code still reads as that row describes, keeps the row's outcome (`carried`) and is neither verified nor patched again; no fixer runs after a re-review; and `implement:`, `vuln:`, `upgrade:`, `document:` and `epics:` stop or escalate only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — never on the verdict word, and `document:` and `epics:` end the run as Cancel does on a kept verdict that is not `BLOCK`; a second `BLOCK` with no surviving `BLOCKER` goes to the user to settle, where it used to stop the run, and is never promoted silently. `implement:` Phase 3B step 8's review of the Phase 3.5 delta is triaged and acted on the same way — it had no verdict handling — and its early-stop list now names both settle prompts' Keep-the-verdict and Cancel arms; it also records in `### Deferred items` each behaviour `test-writer` names as untested. Prompted by BMAD 7c3e5827 and 85d968fc.
 - **Severity by effect, and "Declined to judge."** `code-review` grades a finding no dimension fixes by what a reasonable person using the software meets if the change ships — the spec's silence on the triggering input is no permission — and returns `### Declined to judge`, every behaviour it set aside with the reason. Triage raises a grade by effect, to `MAJOR` at most, never lowers one, and rules on each set-aside line. Prompted by superpowers 5bf4e780 (#2319).
 - **`code-review` dimension 4 gains four checks** — implicit branches of a fixed value set, handle lifetime, call against declaration (tests included), removed contracts — prompted by BMAD 44e0f806; and **finds the repository's documented standards** before dimension 3 — `CLAUDE.md` and `AGENTS.md` at the root and on the path to each changed file, `CONTRIBUTING.md`, `CODING_STANDARDS.md`, `.github/copilot-instructions.md`, and the `.github/instructions/*.instructions.md` files whose `applyTo:` matches — prompted by BMAD 23f134e2 and mattpocock's code-review step 3.
 - **A plan's Review focus** — up to five input classes or failure modes the task implies and no step's tests exercise: `risk-planner` returns `### Review focus`, `implement:`'s Phase 2A plan carries it as item 9, `test-writer` writes a test for each line or names why it cannot, and `code-review` checks each one. Prompted by superpowers 5bf4e780.
@@ -2586,7 +2645,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 
 ### Added
 - **`finding-triage` gains a third outcome, `unverified`.** A finding the orchestrator can neither confirm nor refute — the diff and the code around it leave the question open — is no longer dismissed as unsubstantiated: one that would be `MAJOR` or `BLOCKER` if true is recorded at that grade, marked `(unverified)`, with what would settle it, and reaches the user in the triage line; one that would be only `MINOR` or `NIT` is dismissed with the same note. It never reaches a fixer and changes nothing the verdict gates. Prompted by BMAD's `maybe-false` triage verdict (3433612d, b0d27c3c).
-- **`finding-triage` § On re-review.** The second review is now triaged too: a finding at the same code site, making the same claim as a row this run already logged, where the code still reads as that row describes, keeps the row's outcome (`carried`) and is neither verified nor patched again; no fixer runs after a re-review; and `/implement`, `/vuln`, `/upgrade`, `/document` and `/epics` stop or escalate only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — never on the verdict word; a second `BLOCK` with no surviving `BLOCKER` goes to the user to settle, where it used to stop the run, and is never promoted silently. `/implement` Phase 3B step 8's review of the Phase 3.5 delta is triaged and acted on the same way — it had no verdict handling — and its early-stop list now names both settle prompts' Keep-the-verdict and Cancel arms; it also records in `### Deferred items` each behaviour `test-writer` names as untested. Prompted by BMAD 7c3e5827 and 85d968fc.
+- **`finding-triage` § On re-review.** The second review is now triaged too: a finding at the same code site, making the same claim as a row this run already logged, where the code still reads as that row describes, keeps the row's outcome (`carried`) and is neither verified nor patched again; no fixer runs after a re-review; and `/implement`, `/vuln`, `/upgrade`, `/document` and `/epics` stop or escalate only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — never on the verdict word, and `/document` and `/epics` end the run as Cancel does on a kept verdict that is not `BLOCK`; a second `BLOCK` with no surviving `BLOCKER` goes to the user to settle, where it used to stop the run, and is never promoted silently. `/implement` Phase 3B step 8's review of the Phase 3.5 delta is triaged and acted on the same way — it had no verdict handling — and its early-stop list now names both settle prompts' Keep-the-verdict and Cancel arms; it also records in `### Deferred items` each behaviour `test-writer` names as untested. Prompted by BMAD 7c3e5827 and 85d968fc.
 - **Severity by effect, and "Declined to judge."** `code-review` grades a finding no dimension fixes by what a reasonable person using the software meets if the change ships — the spec's silence on the triggering input is no permission — and returns `### Declined to judge`, every behaviour it set aside with the reason. Triage raises a grade by effect, to `MAJOR` at most, never lowers one, and rules on each set-aside line. Prompted by superpowers 5bf4e780 (#2319).
 - **`code-review` dimension 4 gains four checks** — implicit branches of a fixed value set, handle lifetime, call against declaration (tests included), removed contracts — prompted by BMAD 44e0f806; and **finds the repository's documented standards** before dimension 3 — `CLAUDE.md` and `AGENTS.md` at the root and on the path to each changed file, `CONTRIBUTING.md`, `CODING_STANDARDS.md`, and the `.claude/rules/` files whose `paths:` match — prompted by BMAD 23f134e2 and mattpocock's code-review step 3.
 - **A plan's Review focus** — up to five input classes or failure modes the task implies and no step's tests exercise: `risk-planner` returns `### Review focus`, `/implement`'s Phase 2A plan carries it as item 9, `test-writer` writes a test for each line or names why it cannot, and `code-review` checks each one. Prompted by superpowers 5bf4e780.
