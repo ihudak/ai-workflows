@@ -147,7 +147,7 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 - `workflows-core:prose-formatting` — output line-wrapping: never hard-wrap prose → `workflows-core.md`
 - `workflows-core:implementation-format` — the append-only `implementation.md` record, the `[<key>]` commit convention, the two-source read → `workflows-core.md`
 - `workflows-core:doc-structure-conventions` — traceability boundary, callout scope and adjacency, component-pattern fidelity → `workflows-core.md`
-- `workflows-core:finding-triage` — the orchestrator's verify-and-dismiss step between a reviewer's findings and a fixer, and the patch gate → `workflows-core.md`
+- `workflows-core:finding-triage` — the orchestrator's step between a reviewer's findings and a fixer (keep, mark unverified or dismiss), its re-review rules, and the patch gate → `workflows-core.md`
 - `workflows-core:specs-repo-git` — `specs-preflight`, `commit-artifacts`, the bounded write authority, the specs-repo git hard rules → `workflows-core-git.md`
 - `workflows-core:phase-handoff` — `handoff-to-main`, `require-on-main`, the eight-prefix branch authority, the handoff consent choice → `workflows-core-git.md`
 - `workflows-core:read-only-repos` — read-only mount detection, write-free ref reading, the `prep` output contract → `workflows-core-git.md`

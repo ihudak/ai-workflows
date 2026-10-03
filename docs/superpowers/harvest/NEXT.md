@@ -395,7 +395,7 @@ Both are deliberate. Do not "resync" either one without a fresh decision.
 presets, SDD ledger / 5-round fix-breaker, generic lens engine, git-push-blocking hook, PRD-coach
 "never recommend an answer", batch-grill-me denser rounds. (See INDEX.md "Deliberately NOT adopting".)
 
-## Harvest round 4 — surveyed 2026-10-02; Round 1 SHIPPED (2026-10-02)
+## Harvest round 4 — surveyed 2026-10-02; Rounds 1–2 SHIPPED (2026-10-02)
 Survey of the four upstreams against the round-2 baseline: superpowers `b36e0829`..`8ca22dba` (v6.3.0 → v6.4.2), mattpocock/skills `5b15a47`..`d81f3a1` (v1.3, unreleased changesets), BMAD-METHOD `67d876f1`..`4f61d4e7` (v6.12.0 + Unreleased), spec-kit `27f50f7e`..`4a339209` (1.0.1 → 1.0.13). 21 portable items; the six that were **defects in text all three editions shipped** went first, as Round 1. Spec (with an "Amended during review" section per review round) + plan: `docs/superpowers/specs/2026-10-02-harvest-round-4-defects-design.md` and `docs/superpowers/plans/2026-10-02-harvest-round-4-defects.md`.
 
 **Round 1 — what shipped.** This repository: `workflows-core` 1.10.0, `dev-workflows` 4.5.0, `product-workflows` 3.11.3, `docs-workflows` 1.4.6 (merged with this entry). The internal edition: `dev-workflows` 2.66.0, merge `f689511`. The Copilot edition: `dev-workflows` 2.35.0, merge `83f2bf3`.
@@ -413,13 +413,33 @@ Survey of the four upstreams against the round-2 baseline: superpowers `b36e0829
 
 **Seven whole-branch review rounds**, one fresh Opus reviewer per edition per round, every finding fixed (minors and nits included): round 1 found 6 Important, round 2 two, rounds 3–4 a handful each — most in text the previous round's fix had just written — and round 7 returned zero findings in all three editions. **The lesson worth keeping:** every Important from round 2 on came from a *new rule* written to close the previous round's finding; where a fix needs a new mechanism, look first for a principle the authority already states (§4's double-report rule gave `--no-merges`; "a candidate qualifies by its subject" replaced three patches to Strategy 3).
 
+**Round 2 — what shipped** (the review pipeline, items 7–12, plus item 13 found while reading). This repository: `workflows-core` 1.11.0, `dev-workflows` 4.6.0, `product-workflows` 3.12.0, `docs-workflows` 1.5.0 (merged with this entry). The internal edition: `dev-workflows` 2.67.0, merge `6412900`. The Copilot edition: `dev-workflows` 2.36.0, merge `911b4f4`. Spec (with "Amended during planning" and "Amended during review") + plan: `docs/superpowers/specs/2026-10-02-harvest-round-4-review-pipeline-design.md`, `docs/superpowers/plans/2026-10-02-harvest-round-4-review-pipeline.md`.
+7. `finding-triage` dismissed a claim it "could not substantiate", so a serious-if-true `BLOCKER` vanished; a third outcome, `unverified`, records one that would be `MAJOR`+ if true with what would settle it, is never handed to a fixer, and changes nothing the verdict gates. The patch gate never edits an instruction or contributor file the change did not edit; the triage line is one per review pass and sums survived + unverified + dismissed (BMAD 3433612d, b0d27c3c).
+8. The re-review was not triaged, and every caller stopped on the second verdict's word — even on a `BLOCKER` that had not survived triage. § On re-review carries a logged row's outcome forward over the same artifact (`carried`), hands no survivor of a re-review to a fixer, stops only when the review **stayed blocked**, and lets the user settle a `BLOCK` no surviving `BLOCKER` supports (BMAD 7c3e5827, 85d968fc).
+9. `code-review` grades by effect where no dimension fixes the grade — a maintainer-facing finding by the worse of what its people meet and the failure its gap lets reach users (approved during review) — and lists what it declined to judge; triage raises a grade by effect, to `MAJOR` at most, and rules on each declined line (superpowers 5bf4e780 #2319).
+10. Plans carry a Review focus — `risk-planner`'s `### Review focus`, `/implement` Phase 2A item 9 — which `test-writer` tests and `code-review` checks (superpowers 5bf4e780).
+11. `code-review` dimension 4: implicit branches, handle lifetime, call against declaration, removed contracts (BMAD 44e0f806).
+12. `code-review` finds the repository's documented standards before dimension 3, from the project root down to each changed file's own directory (BMAD 23f134e2; mattpocock code-review step 3).
+13. Five commands escalated per a `Review verdict BLOCK` rule `escalation-rules` did not have, and `/design` cited the `/epics` one, whose "Defer" writes into a draft its handoff then refuses; the new heading `… — commands that fix inline` is theirs. `/specify` keeps the `/epics` rule on purpose.
+
+**Found while planning — keep these:** the stop is reached two ways, so it has one name, *stayed blocked*; `/implement`'s first-review settle prompt's Keep-the-verdict and Cancel arms were stops after files were written that no early-stop list named, so neither committed the work; every edit file was dry-run against all three trees and the whole round applied to throwaway copies (gates and checks green) before the plan was written, which found four gaps the population sweep had missed.
+
+**38 whole-branch review rounds** (25 here, 7 in the internal edition, 6 in the Copilot edition), one fresh Opus reviewer per round, every finding fixed, minors and nits included; no `MAJOR` after this repository's round 5. Findings worth keeping:
+- **A narrowed claim survives in its summaries.** Round 7 narrowed the carry rule to rows logged over the same artifact; the old extent survived in a changelog, the rules summary, a docs page and the Copilot summary until round 15 — the changelogs and summaries are copies too, swept by subject.
+- **From round 13 on, nearly every finding was in text the previous round's fix had written** — a dangling "its", an ordinal a new first condition shifted ("the third is …"), a list that lost its "directory" noun, a clause that pointed at the wrong half of a two-item list. Re-read each fix from where it lands before the next round, not only its own sentence.
+- **"Grade by effect" read literally graded a missing test or a violated standard by what a user meets on ship day** — nothing. The user approved one sentence folding the maintainer-facing case into the general rule.
+- **Edition-specific text by placeholder, never by a second edit file.** `gen.py` placeholders (`EITHERFORM`, `TWOGRADE`, `OTHER`, line breaks) carried the two ports' differences; each wave rebuilt this repository's files from `origin/main` and confirmed them byte-identical.
+- **Measure a length-capped file before adopting a reviewer's wording.** The Copilot shared instructions stand at 19,998 of 20,000 characters; a suggested clause measured 20,013.
+- **The port reviews found what this repository's could not:** the two other editions' `clean_finish` row returned `true` on most early stops its own "Every run" paragraph sends with `false`, a `§2.8` pointer that meant `§2.9`, and a Review-triage lead-in that said one line per unit beside a template that said one per review pass.
+- **`git check-ignore -v` prints a negated `!` pattern that re-includes a path**; two readers took every printed line as a match, and the user-facing advice now uses the plain form.
+
 **Backlog — surveyed, not yet built** (items 7–21; each applies to all three editions unless noted):
-7. Triage: "couldn't verify" is not "refuted" — defer a serious-if-true unsubstantiated finding with what would settle it; defer fixes to agent-instruction files; row count equals findings (BMAD 3433612d, b0d27c3c). M.
-8. Re-review keeps prior triage dispositions; the second review is triaged (BMAD 7c3e5827, 85d968fc). M.
-9. Effect-based severity where the spec is silent, and a reviewer's declined-to-judge list (superpowers 5bf4e780 #2319). S–M.
-10. A plan "Review focus" section — implied inputs no test exercises — tested by `test-writer`, checked by `code-review` (superpowers 5bf4e780 #2319). M.
-11. `code-review` edge-case checks: handle lifetime, call vs declaration (BMAD 44e0f806), implicit enum branch at code altitude, removed code whose contract nothing replaced. S.
-12. `code-review` finds the repo's documented standards — CLAUDE.md, AGENTS.md, copilot-instructions, CONTRIBUTING, CODING_STANDARDS (BMAD 23f134e2; mattpocock code-review step 3). S.
+7. Triage: "couldn't verify" is not "refuted" — defer a serious-if-true unsubstantiated finding with what would settle it; defer fixes to agent-instruction files; row count equals findings (BMAD 3433612d, b0d27c3c). M. — shipped in Round 2
+8. Re-review keeps prior triage dispositions; the second review is triaged (BMAD 7c3e5827, 85d968fc). M. — shipped in Round 2
+9. Effect-based severity where the spec is silent, and a reviewer's declined-to-judge list (superpowers 5bf4e780 #2319). S–M. — shipped in Round 2
+10. A plan "Review focus" section — implied inputs no test exercises — tested by `test-writer`, checked by `code-review` (superpowers 5bf4e780 #2319). M. — shipped in Round 2
+11. `code-review` edge-case checks: handle lifetime, call vs declaration (BMAD 44e0f806), implicit enum branch at code altitude, removed code whose contract nothing replaced. S. — shipped in Round 2
+12. `code-review` finds the repo's documented standards — CLAUDE.md, AGENTS.md, copilot-instructions, CONTRIBUTING, CODING_STANDARDS (BMAD 23f134e2; mattpocock code-review step 3). S. — shipped in Round 2
 13. `/implement` looks before asking, and can re-classify upward after exploring (BMAD 7e571784, 124ea1af, 2c10d5ba). M.
 14. Design contracts: owning side, behavioural obligations, provider-side conformance (spec-kit aaa8fa92). S.
 15. PR body: merge danger (one-way/two-way door, blast radius), before/after evidence, honour a repo's PR template (mattpocock `pr`). M.
@@ -433,6 +453,9 @@ Survey of the four upstreams against the round-2 baseline: superpowers `b36e0829
 **Rejected again** (reasons unchanged): superpowers' native executing-plans / SDD ledger, verify-a-fix-by-test instead of re-review, nested mid-tier orchestrator; mattpocock `implement-spec`, `retro` as its own command, `pr`'s picture menu and Mermaid; BMAD's user-pinned review depth (bypasses the classification gate), finding floors scaled by diff size, the ticket store and walkthrough; spec-kit's extension and catalog machinery, `taskstoissues` (a tracker), the constitution sync report.
 
 **Recorded divergences** — decisions, not gaps:
+- **BMAD's severity reset is not ported.** Its reviewers lack the context ours carry — Opus with the plan, the diff and the code — so reviewer grades stand, raised only by effect.
+- **BMAD's follow-up-review recommendation is not ported.** Our re-review after a `BLOCK` fix cycle is already automatic and capped.
+- **`/specify` keeps the `/epics` escalation rule.** It defines its own "Defer" to mirror `/epics`' Epic-refinement note.
 - **Grilling rhythm.** The internal and Copilot editions ask relentless callers' questions in rounds; this repository stays one question at a time, because `/brd-split`'s ledger walk forbids batching.
 - **"design tree" vs "decision tree".** mattpocock renamed it "decision tree" (`3bb587f`) and then back (`a4b2009`); we keep "decision tree" for our own reason — "design tree" collides with `design.md`.
 

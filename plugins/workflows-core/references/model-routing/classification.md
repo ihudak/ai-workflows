@@ -289,7 +289,10 @@ The post-implementation Opus review MUST explicitly comment on each of:
 3. **Architectural consistency** — boundaries respected, abstractions intact,
    no leaking concerns, idiomatic for the codebase.
 4. **Missed edge cases** — empty/null/zero/negative/very-large inputs, partial
-   failures, concurrent access, time-zone / DST / locale, off-by-one, retries.
+   failures, concurrent access, time-zone / DST / locale, off-by-one, retries;
+   the unnamed members of a fixed value set the change special-cases, a
+   re-check of something already held, a call that disagrees with its
+   callee's declaration, and removed code whose contract nothing replaced.
 5. **Migration risks** — schema changes, data backfills, feature flags, ordering
    between deploy and migration, forward/backward compatibility windows.
 6. **Dependency risks** — new transitive deps, license changes, abandoned
@@ -302,8 +305,9 @@ The post-implementation Opus review MUST explicitly comment on each of:
 The review output MUST include a verdict per item: `OK` / `CONCERN` / `BLOCKER`,
 plus a free-text comment for any non-`OK` finding. Before proceeding to tests the
 orchestrator MUST **dispose of** every `BLOCKER` — and document the disposition of
-each `CONCERN` — where a disposition is either a fix or a dismissal recorded with a
-reason that disposes of that finding's own claim, per
+each `CONCERN` — where a disposition is a fix, a dismissal recorded with a reason
+that disposes of that finding's own claim, or — for a finding triage could not
+settle — an unverified record with what would settle it, per
 `${CLAUDE_PLUGIN_ROOT}/references/finding-triage.md`. Only survivors are handed to
 the fixer; no `BLOCKER` may be left undisposed, and none may be dropped silently.
 

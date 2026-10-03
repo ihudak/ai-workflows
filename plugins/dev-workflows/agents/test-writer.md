@@ -34,7 +34,7 @@ Refuse to write tests without a diff and a baseline — ask the caller to supply
 
    For a JS/TS framework, inspect `devDependencies` for `jest`, `vitest`, `mocha`, `playwright` to pick the conventions to write against — that is a question about *how* to write a test, not about which suite is the project's.
 
-   **A framework reading `hinted` or `declared` names a command, not a runner `test-baseliner` has a row for** — one the operator supplied, or one the repository declares for itself in its CI file or its contributing guide. Write against the conventions of the test files that command already runs, and where you can find none, write nothing and say so in `### Notes` rather than inventing a framework. Such a suite is often recorded by its exit status alone, one identifier standing for every test, so a test you write there is verified only as part of that one result — say that in `### Notes` too.
+   **A framework reading `hinted` or `declared` names a command, not a runner `test-baseliner` has a row for** — one the operator supplied, or one the repository declares for itself in its CI file or its contributing guide. Write against the conventions of the test files that command already runs, and where you can find none, write no test against that suite — name in `### Notes`, as untested, each behaviour step 3 finds in a changed file no other suite's tests live alongside (every one, where this is the baseline's only suite) — rather than inventing a framework. Such a suite is often recorded by its exit status alone, one identifier standing for every test, so a test you write there is verified only as part of that one result — say that in `### Notes` too.
 
 2. **If `Framework: not detected`: return the "not detected" report immediately** (see Output shape below). Do NOT attempt to write generic tests. The caller settled this where the baseline was captured, before any file was edited, and applies that decision rather than asking again — which is why this report carries no question.
 
@@ -42,6 +42,7 @@ Refuse to write tests without a diff and a baseline — ask the caller to supply
    - **Include**: new public functions, new exported types, new branches in existing control flow, new API surfaces (routes, CLI flags, config keys), new error paths that can be observed.
    - **Skip**: renames with no behavior change, comment-only edits, formatting-only changes, pure internal refactors that don't alter observable behavior.
    - **Flag as `### Skipped (pre-existing untested code)`**: files that clearly pre-existed and remain untested — this agent never retrofits tests for unchanged code.
+   - **Review focus**: where the **Plan** carries a Review focus section, each line names an input class or failure mode this change must handle and the behaviour expected of it — map each line to the behaviour it covers and write the test that pins it, under step 5's rules. A line you cannot test in isolation goes in `### Notes` with the reason; never drop one silently.
 
 4. **Discover test patterns.** Read 2–3 representative test files from the project's conventional test location, **once per suite you are writing against** (e.g. `src/test/java/`, `tests/`, `__tests__/`, `spec/`) — two suites have two sets of conventions and neither is evidence about the other. Note:
    - File naming (`*Test.java` vs `test_*.py` vs `*.test.ts` etc.)

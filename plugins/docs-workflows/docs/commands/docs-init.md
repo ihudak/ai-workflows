@@ -54,7 +54,7 @@ The Vale step passes or fails by **the same exit criterion the scaffold's CI wor
 
 Its build-parity item reads an itemisation, not key-level identity: the two configs are *required* to share `docs_dir`, `markdown_extensions`, the theme block, `extra_css`, `validation` and the navigation-generation rule, and are *allowed* to differ in `exclude_docs`, `site_name`, `site_dir` and the generated navigation itself. An internal config with an empty `exclude_docs`, or one missing `site_dir: site-internal`, is the defect — not the difference.
 
-Findings are triaged by the orchestrator before anything is applied: each is verified at the location it names, every dismissal is recorded with a reason, and only survivors are acted on. There is no dedicated fixer for this diff — the orchestrator applies survivors itself, and surfaces one whose fix is not a safe mechanical patch rather than guessing at it.
+Findings are triaged by the orchestrator before anything is applied: each is verified at the location it names, every dismissal and every unverified finding is recorded with a reason, and only survivors are acted on. There is no dedicated fixer for this diff — the orchestrator applies survivors itself, and surfaces one whose fix is not a safe mechanical patch rather than guessing at it.
 
 ## Outputs
 
@@ -71,6 +71,7 @@ Findings are triaged by the orchestrator before anything is applied: each is ver
 - `DOCS_INIT_EXISTING_DOCS_REPO` — the target already carries at least one documentation signal. Run [`/docs-profile`](docs-profile.md) to describe what is there, or [`/docs-brand`](docs-brand.md) to brand it.
 - `DOCS_INIT_TOOLCHAIN_INCOMPLETE` — a required tool is missing and the operator cancelled at the preflight prompt. Proceeding anyway is allowed; Phase 7 then reports the affected step as unrun rather than as passed.
 - `DOCS_INIT_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-scaffold-reviewer` was neither fixed nor explicitly overridden.
+- A Cancel at the review gate, or keeping the review's verdict after triage left no finding behind it standing (every one dismissed or unverified), stops the run there: the scaffold stays uncommitted on its branch, no pull request is drafted, and the cost entry is still recorded. Settle the findings, check each written path with `git check-ignore <path>` and leave any it prints unstaged, after removing every config reference to it, then commit by hand — a re-run would refuse the scaffolded tree.
 - A cancelled Phase 2.5 is not a failure: nothing is written, no branch is created, and the report says so. The cost entry is still recorded.
 - A branding phase that cannot brand is not a failure either. Whatever stopped `/docs-brand` — no MkDocs Material config, no code repository, nothing to apply (routine for an API or CLI product with no frontend), or a Cancel at one of its prompts — comes back as `no branding applied: <reason>`, and the scaffold carries on as if `--no-brand` had been passed, with the reason in the pull-request draft and the report.
 

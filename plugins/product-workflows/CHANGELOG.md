@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.12.0] — 2026-10-03
+
+**Update `workflows-core` to 1.11.0 with this release**: the commands below cite its new escalation heading and its `finding-triage` § On re-review.
+
+### Changed
+- **`/epics`, `/prd-proposal` and `/brd-proposal` triage their re-review** (`workflows-core:finding-triage` § On re-review) and escalate only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — ending the run instead, as Cancel does, on a kept verdict that is not `BLOCK`; their triage reports unverified findings, raises, any settle prompt's answer and, on a re-review, how many findings it carried and every survivor, and `proposal-reviewer` describes the three outcomes.
+
+### Fixed
+- **`/create-prd`, `/update-prd`, `/create-ard`, `/prd-proposal` and `/brd-proposal` escalated per a `Review verdict BLOCK` rule `escalation-rules` did not have.** They now cite `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`, and `/create-prd`'s inline copy of its choices matches that heading word for word.
+
 ## [3.11.3] — 2026-10-02
 
 **Update `workflows-core` to 1.10.0 with this release**: the grilling callers below now clear that version's confirmation gate.

@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.5.0] — 2026-10-03
+
+**Update `workflows-core` to 1.11.0 with this release**: the commands below follow its `finding-triage` § On re-review and its patch gate's instruction-file clause.
+
+### Changed
+- **`/document` triages its re-review** (`workflows-core:finding-triage` § On re-review) and escalates only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — ending the run as Cancel does on a kept verdict that is not `BLOCK`; its triage line names unverified findings, raises, any settle prompt's answer and, on a re-review, how many findings it carried and every survivor.
+- **`/docs-init`, `/docs-brand` and `/docs-audit` report unverified findings, raises and any settle prompt's answer** beside survivors and dismissals, a verdict the user settled marked as such, settle an emptied survivor set with a prompt that has no re-review arm — `/docs-init` and `/docs-brand` stop at their review gate on its Keep-the-verdict or Cancel, the report saying which, and `/docs-audit` takes its unresolved-BLOCKER stop, or its Cancel route on a kept verdict that is not `BLOCK` — and `/docs-init` and `/docs-brand` list unverified findings in their pull-request drafts and say what a Cancel at the review gate leaves behind; their direct edits honour the patch gate's instruction-file clause; `docs-audit-reviewer` no longer counts the reference's steps.
+
+### Fixed
+- **`scaffold-tree.md` §7's and `/docs-audit`'s ignore test read every line `git check-ignore -v` prints as a match**, though it also prints a negated `!` pattern that re-includes the path; the scaffold left such a path unstaged and removed its config references, and `/docs-audit` reported its backlog as ignored. A `!` line is now no match.
+
 ## [1.4.6] — 2026-10-02
 
 **Update `workflows-core` to 1.10.0 with this release**: `/document` and `/release-notes` rely on its commit scan taking no merge commit.

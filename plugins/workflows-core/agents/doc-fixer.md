@@ -47,7 +47,11 @@ Refuse to run without a reviewer or style-checker output, and without severities
      add no content or structure the finding did not demonstrate is missing. If the smallest correct
      fix would add speculative content or structure the finding did not demonstrate is missing,
      defer it as `DEFERRED — needs human decision` with that as the reason, rather than adding
-     speculative content.
+     speculative content. A fix that would edit an instruction file the gate names (`CLAUDE.md`,
+     `AGENTS.md`, `.github/copilot-instructions.md`, a file under `.claude/rules/` or
+     `.github/instructions/`, `CONTRIBUTING.md`, `CODING_STANDARDS.md`) is deferred the same way unless
+     the finding's own location is in that file — you are not handed the diff, and a finding located in
+     such a file is one the review raised against that file's own text.
    - Do NOT refactor surrounding prose, restructure sections, or fix unrelated issues.
    - Preserve existing YAML frontmatter exactly; when a finding says "update the `changelog:` field", edit only that field.
    - Preserve existing `[[wikilinks]]` and relative-path links on pages you touch; never rewrite a working link as a side effect.

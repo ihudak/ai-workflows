@@ -297,9 +297,8 @@ notes: |
   and files findings; the orchestrator, under `workflows-core:finding-triage`, verifies, disposes,
   and fixes.
 - NEVER assign, suggest, or pre-empt a disposition. This agent's findings carry a severity, not a
-  disposition — the caller triages every finding under `workflows-core:finding-triage` (keep or
-  dismiss, each with a reason that disposes of that finding's own claim) before any survivor is
-  fixed.
+  disposition — the caller triages every finding under `workflows-core:finding-triage` (keep, mark
+  unverified or dismiss, each with its reason) before any survivor is fixed.
 - NEVER treat a citation as evidence without opening the record it names and reading its own
   status — a verifier `outcome`, a `status: decided`, or an on-file `[CDF#n]`. A cited id proves a
   record exists, not that it resolves (check 1).
