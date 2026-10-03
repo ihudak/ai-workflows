@@ -27,7 +27,8 @@ The caller passes a structured brief:
 - **Plan** - the risk-weighted plan that was approved (produced by the
   `risk-planner` system prompt at `${CLAUDE_PLUGIN_ROOT}/agents/risk-planner.md`, or a
   user-approved equivalent) — where `/implement` re-planned mid-implementation, two plans under
-  headings, the re-plan governing wherever they differ.
+  headings — every Review focus line in either plan applies, and the re-plan governs only where
+  two items contradict.
 - **Diff** - `git diff` or a file-by-file list of changes. MANDATORY.
   Both **Plan** and **Diff** may be given inline or as an absolute file
   path — `Read` the file first when given a path. On a read failure, follow the
