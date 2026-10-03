@@ -110,7 +110,8 @@ command's normal branch runs on the survivors.
 
 This section governs the first review. On a re-review, § On re-review settles the verdict instead —
 there, no survivor is handed to a fixer, and its own prompt carries no re-review arm. The prompt
-above, in either form, and § On re-review's are this reference's **settle prompts**.
+above, in either form, is the **first settle prompt**, since it settles the first review; it and
+§ On re-review's are this reference's **settle prompts**.
 
 ## The patch gate
 

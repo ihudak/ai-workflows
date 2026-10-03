@@ -20,7 +20,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`model-routing/classification` §6**: a disposition may be an unverified record, and item 4 names the four edge-case checks `code-review` dimension 4 gained.
 
 ### Fixed
-- **Five commands escalated per a `Review verdict BLOCK` rule this reference did not have** (`/create-prd`, `/update-prd`, `/create-ard`, `/prd-proposal`, `/brd-proposal`) — only the `— /document` and `— /epics` variants existed — and `/design` cited the `— /epics` one, whose "Defer" appends a refinement note to the draft that `/design`'s own handoff then refuses. The new heading is the one all six cite (`product-workflows` 3.12.0, `dev-workflows` 4.6.0). `/specify` keeps the `— /epics` rule on purpose: it defines its own "Defer" to mirror it.
+- **Five commands escalated per a `Review verdict BLOCK` rule `escalation-rules` did not have** (`/create-prd`, `/update-prd`, `/create-ard`, `/prd-proposal`, `/brd-proposal`) — only the `— /document` and `— /epics` variants existed — and `/design` cited the `— /epics` one, whose "Defer" appends a refinement note to the draft that `/design`'s own handoff then refuses. The new heading is the one all six cite (`product-workflows` 3.12.0, `dev-workflows` 4.6.0). `/specify` keeps the `— /epics` rule on purpose: it defines its own "Defer" to mirror it.
 
 ## [1.10.0] — 2026-10-02
 
