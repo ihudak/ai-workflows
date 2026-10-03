@@ -188,4 +188,6 @@ The orchestrator's run report carries one triage line per review pass, and the l
   a reviewer that found less;
 - every unverified finding with its grade if true and what would settle it;
 - every raise, with the grade it moved from and to and the effect that moved it;
-- where the review carried a `### Declined to judge` list, each line with its ruling.
+- where the review carried a `### Declined to judge` list, each line with its ruling;
+- where a settle prompt was asked, its answer: a verdict the user settled is reported as settled by
+  the user, never bare.

@@ -992,7 +992,7 @@ _or_ "none — checked"
 <<<<<<< OLD 1
 Write against the conventions of the test files that command already runs, and where you can find none, write nothing and say so in `### Notes` rather than inventing a framework.
 =======
-Write against the conventions of the test files that command already runs, and where you can find none, write no test against that suite — after step 3, name in `### Notes`, as untested, each behaviour it maps to that suite — rather than inventing a framework.
+Write against the conventions of the test files that command already runs, and where you can find none, write no test against that suite — name in `### Notes`, as untested, each behaviour step 3 finds in a changed file this suite covers (the second paragraph above) — rather than inventing a framework.
 >>>>>>> NEW
 `````
 
@@ -1121,7 +1121,12 @@ every dismissal is recorded with a reason that disposes of that finding's own cl
 - `DOCS_BRAND_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-scaffold-reviewer` was neither fixed nor overridden.
 =======
 - `DOCS_BRAND_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-scaffold-reviewer` was neither fixed nor overridden.
-- A Cancel at the review gate, or keeping the review's verdict after triage dismissed every finding behind it, stops a standalone run there: the branding stays uncommitted on its branch, no pull request is drafted, and the cost entry is still recorded. Settle the findings, run the commit-time ignore test, and commit by hand.
+- A Cancel at the review gate, or keeping the review's verdict after triage left no finding behind it standing (every one dismissed or unverified), stops a standalone run there: the branding stays uncommitted on its branch, no pull request is drafted, and the cost entry is still recorded. Settle the findings, check each written path with `git check-ignore -v <path>` — leave any it reports unstaged, after removing every config reference to it — and commit by hand.
+>>>>>>> NEW
+<<<<<<< OLD 1
+all but `DOCS_BRAND_UNRESOLVED_BLOCKER`, which belongs to the standalone review gate an `--inline` run skips
+=======
+all but `DOCS_BRAND_UNRESOLVED_BLOCKER` and a stop at the review gate, both of which belong to the standalone review gate an `--inline` run skips
 >>>>>>> NEW
 `````
 
@@ -1132,7 +1137,7 @@ every dismissal is recorded with a reason that disposes of that finding's own cl
 - `DOCS_INIT_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-scaffold-reviewer` was neither fixed nor explicitly overridden.
 =======
 - `DOCS_INIT_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-scaffold-reviewer` was neither fixed nor explicitly overridden.
-- A Cancel at the review gate, or keeping the review's verdict after triage dismissed every finding behind it, stops the run there: the scaffold stays uncommitted on its branch, no pull request is drafted, and the cost entry is still recorded. Settle the findings, run the commit-time ignore test, and commit by hand — a re-run would refuse the scaffolded tree.
+- A Cancel at the review gate, or keeping the review's verdict after triage left no finding behind it standing (every one dismissed or unverified), stops the run there: the scaffold stays uncommitted on its branch, no pull request is drafted, and the cost entry is still recorded. Settle the findings, check each written path with `git check-ignore -v <path>` — leave any it reports unstaged, after removing every config reference to it — and commit by hand — a re-run would refuse the scaffolded tree.
 >>>>>>> NEW
 `````
 
@@ -1299,7 +1304,7 @@ A **BLOCKER** left deferred (neither fixed nor overridden) stops the run before 
 <<<<<<< OLD 1
 Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelled at Phase 7, never reached">
 =======
-Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelled at Phase 7, never reached" | "<the verdict> — stopped at the review gate: cancelled, or kept for a human decision">
+Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelled at Phase 7, never reached" | "<the verdict> — stopped at the review gate: cancelled, or kept for a human decision" | "<the verdict> — settled by the user at the settle prompt">
 >>>>>>> NEW
 <<<<<<< OLD 1
 <branch name — N commit(s), NOT pushed and NOT merged | "cancelled at Phase 7 — no branch created, nothing written or committed">
@@ -1314,7 +1319,7 @@ Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelle
 <<<<<<< OLD 1
 guidance only, never auto-invoked. **When a branch and a drafted PR exist:**
 =======
-guidance only, never auto-invoked. **After a stop at the review gate:** name the findings left to settle and the branch holding the uncommitted branding; settle them there, run `scaffold-tree.md` §7's commit-time ignore test, and commit by hand — a re-run would find the tree dirty and offer to stash that work. **When a branch and a drafted PR exist:**
+guidance only, never auto-invoked. **After a stop at the review gate:** name the findings left to settle and the branch holding the uncommitted branding; settle them there, check each written path with `git check-ignore -v <path>` — leave any path it reports unstaged, after removing every config reference to it (`scaffold-tree.md` §7 lists them) — and commit by hand — a re-run would find the tree dirty and offer to stash that work. **When a branch and a drafted PR exist:**
 >>>>>>> NEW
 <<<<<<< OLD 1
 BLOCK, resolved | N/A — cancelled before Phase 9]
@@ -1376,7 +1381,7 @@ A **BLOCKER** left deferred — neither fixed nor overridden — stops the run b
 <<<<<<< OLD 1
 Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelled at Phase 2.5, never reached">
 =======
-Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelled at Phase 2.5, never reached" | "<the verdict> — stopped at the review gate: cancelled, or kept for a human decision">
+Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelled at Phase 2.5, never reached" | "<the verdict> — stopped at the review gate: cancelled, or kept for a human decision" | "<the verdict> — settled by the user at the settle prompt">
 >>>>>>> NEW
 <<<<<<< OLD 1
 <branch name — 1 commit, NOT pushed and NOT merged | "cancelled at Phase 2.5 — no branch created, nothing written or committed">
@@ -1391,7 +1396,7 @@ Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelle
 <<<<<<< OLD 1
 guidance only, never auto-invoked. On a completed run:
 =======
-guidance only, never auto-invoked. After a stop at the review gate: name the findings left to settle and the branch holding the uncommitted scaffold; settle them there, run `scaffold-tree.md` §7's commit-time ignore test, and commit by hand — a re-run would refuse the tree, whose `mkdocs.yml`, `.vale.ini` and `docs-profile.yml` Phase 0 reads as an existing docs repository. On a completed run:
+guidance only, never auto-invoked. After a stop at the review gate: name the findings left to settle and the branch holding the uncommitted scaffold; settle them there, check each written path with `git check-ignore -v <path>` — leave any path it reports unstaged, after removing every config reference to it (`scaffold-tree.md` §7 lists them) — and commit by hand — a re-run would refuse the tree, whose `mkdocs.yml`, `.vale.ini` and `docs-profile.yml` Phase 0 reads as an existing docs repository. On a completed run:
 >>>>>>> NEW
 <<<<<<< OLD 1
 BLOCK, resolved | N/A — cancelled before Phase 7.5]
@@ -1421,7 +1426,7 @@ Triage the re-review under `workflows-core:finding-triage` § On re-review (the 
 <<<<<<< OLD 1
 - **Review triage:** [N findings reviewed, M survived] — dismissals: [one line per dismissal, `finding — reason`; or "none"]
 =======
-- **Review triage:** [one line per review pass, per `workflows-core:finding-triage` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"]
+- **Review triage:** [one line per review pass, per `workflows-core:finding-triage` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — settled: [the answer given at a settle prompt, or "not asked"]
 >>>>>>> NEW
 <<<<<<< OLD 1
 which names this entry point alongside the second-BLOCK one.
@@ -1451,7 +1456,7 @@ Triage the re-review under `workflows-core:finding-triage` § On re-review (the 
 <<<<<<< OLD 1
 - **Review triage:** [N findings reviewed, M survived] — dismissals: [one line per dismissal, `finding — reason`; or "none"]
 =======
-- **Review triage:** [one line per review pass, per `workflows-core:finding-triage` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"]
+- **Review triage:** [one line per review pass, per `workflows-core:finding-triage` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — settled: [the answer given at a settle prompt, or "not asked"]
 >>>>>>> NEW
 <<<<<<< OLD 1
 which names this entry point alongside the second-BLOCK one.
@@ -1557,7 +1562,7 @@ when the review stayed blocked
 <<<<<<< OLD 1
 - **Review triage:** [N findings reviewed, M survived] — dismissals: [one line per dismissal, `finding — reason`; or "none"] — or "N/A (SIMPLE / MODERATE, no Opus review)"
 =======
-- **Review triage:** [one line per review pass, per `workflows-core:finding-triage` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"] — or "N/A (SIMPLE / MODERATE, no Opus review)"
+- **Review triage:** [one line per review pass, per `workflows-core:finding-triage` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"] — settled: [the answer given at a settle prompt, or "not asked"] — or "N/A (SIMPLE / MODERATE, no Opus review)"
 >>>>>>> NEW
 <<<<<<< OLD 1
 If review is still BLOCK, resolve that first.]
@@ -1803,7 +1808,7 @@ the `review-fixer` `NEEDS HUMAN` stop, a review
 <<<<<<< OLD 1
 Append a `### Review triage` section with one line per SIGNIFICANT/HIGH-RISK component that went through Opus review: - **Review triage:** [N findings reviewed, M survived] — dismissals: [one line per dismissal, `finding — reason`; or "none"]
 =======
-Append a `### Review triage` section with one line per review pass of each SIGNIFICANT/HIGH-RISK component that went through Opus review (`workflows-core:finding-triage` § Reporting): - **Review triage:** [N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"]
+Append a `### Review triage` section with one line per review pass of each SIGNIFICANT/HIGH-RISK component that went through Opus review (`workflows-core:finding-triage` § Reporting): - **Review triage:** [N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"] — settled: [the answer given at a settle prompt, or "not asked"]
 >>>>>>> NEW
 <<<<<<< OLD 1
 or with a review still `BLOCK` — it is committed
@@ -1860,7 +1865,7 @@ review that stayed blocked, each of which
 <<<<<<< OLD 1
 Append a `### Review triage` section with one line per CVE that went through Opus review: - **Review triage:** [N findings reviewed, M survived] — dismissals: [one line per dismissal, `finding — reason`; or "none"]
 =======
-Append a `### Review triage` section with one line per review pass of each CVE that went through Opus review (`workflows-core:finding-triage` § Reporting): - **Review triage:** [N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"]
+Append a `### Review triage` section with one line per review pass of each CVE that went through Opus review (`workflows-core:finding-triage` § Reporting): - **Review triage:** [N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"] — settled: [the answer given at a settle prompt, or "not asked"]
 >>>>>>> NEW
 <<<<<<< OLD 1
 returns a non-BLOCK verdict
@@ -2116,7 +2121,7 @@ Triage the re-review under `{{FT}}` § On re-review (the triage sub-step above);
 <<<<<<< OLD 1
 - **Review triage:** [N findings reviewed, M survived] — dismissals: [one line per dismissal, `finding — reason`; or "none"]
 =======
-- **Review triage:** [one line per review pass, per `{{FT}}` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"]
+- **Review triage:** [one line per review pass, per `{{FT}}` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — settled: [the answer given at a settle prompt, or "not asked"]
 >>>>>>> NEW
 <<<<<<< OLD 1
 which names this entry point alongside the second-BLOCK one.
@@ -2151,7 +2156,7 @@ Triage the re-review under `{{FT}}` § On re-review (the triage sub-step above);
 <<<<<<< OLD 1
 - **Review triage:** [N findings reviewed, M survived] — dismissals: [one line per dismissal, `finding — reason`; or "none"]
 =======
-- **Review triage:** [one line per review pass, per `{{FT}}` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"]
+- **Review triage:** [one line per review pass, per `{{FT}}` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — settled: [the answer given at a settle prompt, or "not asked"]
 >>>>>>> NEW
 <<<<<<< OLD 1
 which names this entry point alongside the second-BLOCK one.
@@ -2248,7 +2253,7 @@ review stayed blocked after its one fix cycle plus re-review,
 <<<<<<< OLD 1
 - **Review triage:** [N findings reviewed, M survived] — dismissals: [one line per dismissal, `finding — reason`; or "none"]
 =======
-- **Review triage:** [one line per review pass, per `{{FT}}` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"]
+- **Review triage:** [one line per review pass, per `{{FT}}` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"] — settled: [the answer given at a settle prompt, or "not asked"]
 >>>>>>> NEW
 <<<<<<< OLD 1
 If review is still BLOCK, resolve that first.]
@@ -2349,7 +2354,7 @@ or with a review that stayed blocked — it is committed
 <<<<<<< OLD 1
 - **Review triage:** [N findings reviewed, M survived] — dismissals: [one line per dismissal, `finding — reason`; or "none"]
 =======
-- **Review triage:** [one line per review pass of each component, per `{{FT}}` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"]
+- **Review triage:** [one line per review pass of each component, per `{{FT}}` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"] — settled: [the answer given at a settle prompt, or "not asked"]
 >>>>>>> NEW
 <<<<<<< OLD 1
 or with a review still `BLOCK`, or with kept regressions
@@ -2413,7 +2418,7 @@ when its review stayed blocked,
 <<<<<<< OLD 1
 - **Review triage:** [N findings reviewed, M survived] — dismissals: [one line per dismissal, `finding — reason`; or "none"]
 =======
-- **Review triage:** [one line per review pass of each CVE, per `{{FT}}` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"]
+- **Review triage:** [one line per review pass of each CVE, per `{{FT}}` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"] — settled: [the answer given at a settle prompt, or "not asked"]
 >>>>>>> NEW
 <<<<<<< OLD 1
 returns a non-BLOCK verdict
@@ -2629,7 +2634,9 @@ The orchestrator's run report carries one triage line per review pass, and the l
   a reviewer that found less;
 - every unverified finding with its grade if true and what would settle it;
 - every raise, with the grade it moved from and to and the effect that moved it;
-- where the review carried a `### Declined to judge` list, each line with its ruling.
+- where the review carried a `### Declined to judge` list, each line with its ruling;
+- where a settle prompt was asked, its answer: a verdict the user settled is reported as settled by
+  the user, never bare.
 >>>>>>> NEW
 `````
 
@@ -2698,7 +2705,7 @@ Extracted by Task 0 Step 2 into `$S/cl`; `release.py` inserts each above its plu
 
 ### Changed
 - **The patch gate never edits an instruction or contributor file the change did not itself edit** — `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, a file under `.claude/rules/` or `.github/instructions/`, `CONTRIBUTING.md`, `CODING_STANDARDS.md`: such a fix is surfaced for a human decision. `doc-fixer` applies the clause by the finding's location, since it is not handed the diff. `code-review` now reads those files as the repository's standards, which makes "edit the file to agree with the code" the likeliest wrong fix.
-- **The triage line is one per review pass**, and survived + unverified + dismissed must sum to the findings reviewed.
+- **The triage line is one per review pass**, survived + unverified + dismissed must sum to the findings reviewed, and where a settle prompt was asked the line carries its answer — a verdict the user settled is never reported bare.
 - **The first settle prompt** — the one an emptied survivor set raises — now says every disposition is recorded and puts every disposition's reason to a re-review, and a caller that runs no re-review asks it without that arm. A reviewer with two grades (`BLOCKER` and `RECOMMENDATION`) maps onto the unverified and raise rules with `RECOMMENDATION` below `MAJOR`.
 - **`model-routing/classification` §6**: a disposition may be an unverified record, and item 4 names the four edge-case checks `code-review` dimension 4 gained.
 

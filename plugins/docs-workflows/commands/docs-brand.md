@@ -286,7 +286,7 @@ Docs repo: <resolved path>  (resolved via: <which resolve-docs-repo rung answere
 (When colour branding was skipped — "logo only" — this section reads instead: "no colour applied — nothing to check.")
 
 ### Review
-Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelled at Phase 7, never reached" | "<the verdict> — stopped at the review gate: cancelled, or kept for a human decision">
+Verdict: <PASS | PASS WITH RECOMMENDATIONS | BLOCK, resolved | "N/A — cancelled at Phase 7, never reached" | "<the verdict> — stopped at the review gate: cancelled, or kept for a human decision" | "<the verdict> — settled by the user at the settle prompt">
 Findings: <N reviewed — M survived triage, U unverified, X dismissed; K applied, J deferred or overridden with reason — every dismissal, unverified finding and raise listed per `workflows-core:finding-triage` § Reporting | "N/A">
 
 ### Branch
@@ -301,7 +301,7 @@ Left uncommitted: <"none" | "N/A — stopped at the review gate; Phase 10 never 
 (When Phase 7 was cancelled, this whole section reads instead: "none — no branch exists to open a pull request against." When the run stopped at the review gate, it reads: "none — nothing was committed to open a pull request from.")
 
 ### Next step
-[per `workflows-core:next-phase-offer` — guidance only, never auto-invoked. **After a stop at the review gate:** name the findings left to settle and the branch holding the uncommitted branding; settle them there, run `scaffold-tree.md` §7's commit-time ignore test, and commit by hand — a re-run would find the tree dirty and offer to stash that work. **When a branch and a drafted PR exist:** once the drafted pull request above is pushed and merged, `/docs-workflows:docs-serve` previews the branded site. This offer carries no `<merge-clause>` — the pull request this run drafted targets the docs repo, not `$SPECS_PATH`, and this family creates no `$SPECS_PATH` branch of its own and runs neither `handoff-to-main` nor `require-on-main` against a docs-repo PR, so there is no downstream gate to name a clause against — the same reasoning `/docs-workflows:docs-serve`'s own closing section gives for the same omission. **When Phase 7 was cancelled (no branch, no PR):** state that plainly — nothing to preview or merge — and stop there.]
+[per `workflows-core:next-phase-offer` — guidance only, never auto-invoked. **After a stop at the review gate:** name the findings left to settle and the branch holding the uncommitted branding; settle them there, check each written path with `git check-ignore -v <path>` — leave any path it reports unstaged, after removing every config reference to it (`scaffold-tree.md` §7 lists them) — and commit by hand — a re-run would find the tree dirty and offer to stash that work. **When a branch and a drafted PR exist:** once the drafted pull request above is pushed and merged, `/docs-workflows:docs-serve` previews the branded site. This offer carries no `<merge-clause>` — the pull request this run drafted targets the docs repo, not `$SPECS_PATH`, and this family creates no `$SPECS_PATH` branch of its own and runs neither `handoff-to-main` nor `require-on-main` against a docs-repo PR, so there is no downstream gate to name a clause against — the same reasoning `/docs-workflows:docs-serve`'s own closing section gives for the same omission. **When Phase 7 was cancelled (no branch, no PR):** state that plainly — nothing to preview or merge — and stop there.]
 ```
 
 ---

@@ -852,7 +852,7 @@ Output a structured report — do NOT ask any closing confirmation:
 [Verdict and 1-line summary — naming the enforced id it ran on wherever `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10) — or "N/A (SIMPLE / MODERATE)"]
 
 ### Review triage
-- **Review triage:** [one line per review pass, per `workflows-core:finding-triage` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"] — or "N/A (SIMPLE / MODERATE, no Opus review)"
+- **Review triage:** [one line per review pass, per `workflows-core:finding-triage` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"] — settled: [the answer given at a settle prompt, or "not asked"] — or "N/A (SIMPLE / MODERATE, no Opus review)"
 
 ### Spec/design conformance (if a spec/design was in scope)
 [coverage summary from code-review's dimension; list any missing/partial/contradicts/exceeds, and the already-present count — or "N/A"; if Phase 4.5 escalated notes, add the `Phase handoff:` outcome line from `handoff-to-main` (`workflows-core:phase-handoff` §4.1)]

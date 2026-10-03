@@ -15,7 +15,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Changed
 - **The patch gate never edits an instruction or contributor file the change did not itself edit** — `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, a file under `.claude/rules/` or `.github/instructions/`, `CONTRIBUTING.md`, `CODING_STANDARDS.md`: such a fix is surfaced for a human decision. `doc-fixer` applies the clause by the finding's location, since it is not handed the diff. `code-review` now reads those files as the repository's standards, which makes "edit the file to agree with the code" the likeliest wrong fix.
-- **The triage line is one per review pass**, and survived + unverified + dismissed must sum to the findings reviewed.
+- **The triage line is one per review pass**, survived + unverified + dismissed must sum to the findings reviewed, and where a settle prompt was asked the line carries its answer — a verdict the user settled is never reported bare.
 - **The first settle prompt** — the one an emptied survivor set raises — now says every disposition is recorded and puts every disposition's reason to a re-review, and a caller that runs no re-review asks it without that arm. A reviewer with two grades (`BLOCKER` and `RECOMMENDATION`) maps onto the unverified and raise rules with `RECOMMENDATION` below `MAJOR`.
 - **`model-routing/classification` §6**: a disposition may be an unverified record, and item 4 names the four edge-case checks `code-review` dimension 4 gained.
 
