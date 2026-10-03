@@ -71,6 +71,7 @@ Findings are triaged by the orchestrator before anything is applied: each is ver
 - `DOCS_INIT_EXISTING_DOCS_REPO` — the target already carries at least one documentation signal. Run [`/docs-profile`](docs-profile.md) to describe what is there, or [`/docs-brand`](docs-brand.md) to brand it.
 - `DOCS_INIT_TOOLCHAIN_INCOMPLETE` — a required tool is missing and the operator cancelled at the preflight prompt. Proceeding anyway is allowed; Phase 7 then reports the affected step as unrun rather than as passed.
 - `DOCS_INIT_UNRESOLVED_BLOCKER` — a BLOCKER finding from `docs-scaffold-reviewer` was neither fixed nor explicitly overridden.
+- A Cancel at the review gate, or keeping the review's verdict after triage dismissed every finding behind it, stops the run there: the scaffold stays uncommitted on its branch, no pull request is drafted, and the cost entry is still recorded. Settle the findings, run the commit-time ignore test, and commit by hand — a re-run would refuse the scaffolded tree.
 - A cancelled Phase 2.5 is not a failure: nothing is written, no branch is created, and the report says so. The cost entry is still recorded.
 - A branding phase that cannot brand is not a failure either. Whatever stopped `/docs-brand` — no MkDocs Material config, no code repository, nothing to apply (routine for an API or CLI product with no frontend), or a Cancel at one of its prompts — comes back as `no branding applied: <reason>`, and the scaffold carries on as if `--no-brand` had been passed, with the reason in the pull-request draft and the report.
 

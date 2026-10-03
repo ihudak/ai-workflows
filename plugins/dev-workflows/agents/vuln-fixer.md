@@ -122,8 +122,8 @@ reconstruct it.
    standing invariant for every code-writing command, and it is what makes the branch exist on the
    paths where this agent never reaches its own end — an `AWAITING_REVIEW` return, or an
    orchestrator-side stop on a review that stayed blocked. `/vuln` Step 3.9 has a branch to commit
-   onto in every one of those cases precisely because this step ran first. Report the branch name in the
-   output record.
+   onto in every one of those cases precisely because this step ran first. Report the branch name in
+   the output record.
 
    Leave everything **uncommitted** on it. Do not commit, do not push, do not open a pull request:
    Step 3.9 does all three through `finish-code-branch`

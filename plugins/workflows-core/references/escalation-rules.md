@@ -376,4 +376,6 @@ Escalate per unresolved BLOCKER individually.
 Used in `/epics` Phase 7 at either of two points: when `doc-fixer` returns `Stop condition flag: NEEDS HUMAN` — it deferred a BLOCKER as needing a human decision, so no re-review runs — or when the review stayed blocked (`finding-triage.md` § On re-review).
 Escalate per unresolved BLOCKER individually. "Defer" means the finding goes
 into an Epic-refinement note in the draft itself (appended as a
-`## Refinement notes` section) in addition to the Phase 9 report. `/specify` cites this entry on purpose and defines its own "Defer" to mirror it — a `## Refinement notes` section in `specification.md`.
+`## Refinement notes` section) in addition to the Phase 9 report.
+`/specify` cites this entry on purpose and defines its own "Defer" to mirror it —
+a `## Refinement notes` section in `specification.md`.

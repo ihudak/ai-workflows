@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [4.6.0] — 2026-10-03
 
-**Update `workflows-core` to 1.11.0 with this release**: the review cycles below follow its `finding-triage` § On re-review.
+**Update `workflows-core` to 1.11.0 with this release**: the review cycles below follow its `finding-triage` § On re-review, and `/design` cites its new `— commands that fix inline` escalation heading.
 
 ### Added
 - **`code-review` grades by effect** where no dimension fixes the grade — what a reasonable person using the software meets if the change ships, the spec's silence on the triggering input being no permission — and returns `### Declined to judge`: every behaviour it set aside, with the reason, for the orchestrator to rule on. Prompted by superpowers 5bf4e780 (#2319).

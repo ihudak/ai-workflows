@@ -109,8 +109,8 @@ A partly emptied set is not this case: where at least one finding survived, the 
 command's normal branch runs on the survivors.
 
 This section governs the first review. On a re-review, § On re-review settles the verdict instead —
-there, no survivor is handed to a fixer, and its own prompt carries no re-review arm. The
-prompt above, in either form, and § On re-review's are this reference's **settle prompts**.
+there, no survivor is handed to a fixer, and its own prompt carries no re-review arm. The prompt
+above, in either form, and § On re-review's are this reference's **settle prompts**.
 
 ## The patch gate
 
@@ -137,23 +137,24 @@ finding's own location is in that file.
 ## On re-review
 
 A **re-review** is any review a run dispatches over an artifact this run has already reviewed to a
-verdict, whatever that verdict was — for a caller that works unit by unit, the artifact is the unit's
-own change, never the working tree's cumulative diff: the one re-review a caller's cap allows, a
-re-review the user chose at § When triage empties the survivor set, and `/implement`'s review of its
-Phase 3.5 fix delta. A `### Re-classification` return is no verdict: whether the review dispatched
-after the user overrides one is a re-review turns only on whether an earlier review reached a verdict
-over that artifact. A re-review's findings are triaged by § The step, with one check first and three
+verdict, whatever that verdict was: the one re-review a caller's cap allows, a re-review the user
+chose at § When triage empties the survivor set, and `/implement`'s review of its Phase 3.5 fix delta.
+For a caller that works unit by unit, the artifact is the unit's own change, never the working tree's
+cumulative diff. A `### Re-classification` return is no verdict: whether the review dispatched after
+the user overrides one is a re-review turns only on whether an earlier review reached a verdict over
+that artifact. A re-review's findings are triaged by § The step, with one check first and three
 rules after.
 
 **First, carry what this run already ruled.** A finding that names the same location as a row this
-run already logged — a code site or a document passage, whose line numbers may have moved with the
-fix — and makes the same claim, where the text there still reads as the row describes, keeps that
-row's outcome. It is marked **carried**, is not verified again, and is never handed to a fixer again.
-A row whose fix changed the text there no longer matches: verify that finding afresh. A carried
-survivor is a finding this run has not fixed — a fix that did not take, or one no fixer was handed —
-and counts as a survivor below. **The one exception** is a re-review the user chose at § When triage
-empties the survivor set, which exists to put every disposition's reason to the reviewer: there, a
-re-raised dismissed or unverified finding is verified afresh against the reviewer's answer.
+run already logged over that artifact — a code site or a document passage, whose line numbers may
+have moved with the fix — and makes the same claim, where the text there still reads as the row
+describes, keeps that row's outcome. It is marked **carried**, is not verified again, and is never
+handed to a fixer again. A row whose fix changed the text there no longer matches: verify that
+finding afresh. A carried survivor is a finding this run has not fixed — a fix that did not take, or
+one no fixer was handed — and counts as a survivor below. **The one exception** is a re-review the
+user chose at § When triage empties the survivor set, which exists to put every disposition's reason
+to the reviewer: there, a re-raised dismissed or unverified finding is verified afresh against the
+reviewer's answer.
 
 **Then:**
 

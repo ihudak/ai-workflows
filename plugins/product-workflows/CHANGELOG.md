@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 **Update `workflows-core` to 1.11.0 with this release**: the commands below cite its new escalation heading and its `finding-triage` § On re-review.
 
 ### Changed
-- **`/epics`, `/prd-proposal` and `/brd-proposal` triage their re-review** (`workflows-core:finding-triage` § On re-review) and escalate only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — ending the run instead, as Cancel does, on a kept verdict that is not `BLOCK`; their triage reports unverified findings, and `proposal-reviewer` describes the three outcomes.
+- **`/epics`, `/prd-proposal` and `/brd-proposal` triage their re-review** (`workflows-core:finding-triage` § On re-review) and escalate only on a review that **stayed blocked** — a `BLOCKER` surviving that triage, or a verdict the user keeps at a settle prompt — ending the run instead, as Cancel does, on a kept verdict that is not `BLOCK`; their triage reports unverified findings and raises, and `proposal-reviewer` describes the three outcomes.
 
 ### Fixed
 - **`/create-prd`, `/update-prd`, `/create-ard`, `/prd-proposal` and `/brd-proposal` escalated per a `Review verdict BLOCK` rule `escalation-rules` did not have.** They now cite `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`, and `/create-prd`'s inline copy of its choices matches that heading word for word.
