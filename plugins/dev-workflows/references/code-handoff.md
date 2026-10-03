@@ -148,22 +148,22 @@ Title: the commit subject of §2.3.
 
 Body: **written to a file** — `<body-path>`, a `command mktemp -t` path outside any repo tree — never passed inline, which would break on newlines and quoting. The same file is what §3.2 names when `gh` is unavailable, so the user pastes the identical body — banner included — into the web UI.
 
-**What the body holds.** No preamble: on a `clean_finish: false` run §2.9's banner is its **first line**, and otherwise its first heading is. Then four sections, in this order, rendered from `body_facts`:
+**What the body holds.** Four sections, in this order, rendered from `body_facts`, with no preamble: on a `clean_finish: false` run §2.9's banner is the body's **first line**, and otherwise its first heading is — save where a template resolves (below), which keeps its own opening under the banner.
 
 1. `## Summary` — what changed, one line per notable item, and the files changed.
 2. `## Evidence` — a **Before** and an **After**, each taken only from what the run observed: the caller's baseline against its verification, and on a bug fix the failing reproduction against the passing test. Where the run has no before or no after — tests the operator skipped, a verification that could not run — the section says which, and why. "Tests pass" alone is a claim, not a before and an after.
-3. `## Merge danger` — the **door** and the **blast radius**, each with one line of why:
+3. `## Merge danger` — the **door**, with one line of why, and the **blast radius**, with one line of what breaking would look like:
    - **Door: one-way** where the change includes a step that reverting its commit does not undo — a migration that drops or rewrites data, removing a public contract that consumers outside the repository use, writing persisted data in a new format, or anything that ships outward (sends, publishes, deletes); **two-way** otherwise. **Where the run cannot tell, one-way**, with the reason: the door is the run grading its own change, and the uncertain case is the one a reader should slow down on.
    - **Blast radius** — a short phrase naming what breaks if the change is wrong: an API's consumers, a data store, a screen, the build.
 4. `## Review` — the run's classification; the reviewer verdict and triage summary where the caller has them, or, where no review ran, that none did and why; and every review finding the caller did not apply, with its severity.
 
-**The repository's own template wins.** Resolve it against a fixed set of paths, never by searching for one: list the committed tree with `git -C "<repo>" ls-tree -r --name-only HEAD`, compare each path with the rungs below without regard to case, and stop at the first rung that matches —
+**The repository's own template wins.** Resolve it against a fixed set of paths, never by searching for one: list the committed tree's candidates with `git -C "<repo>" ls-tree -r --name-only HEAD | grep -i -E '^(\.github/|docs/)?pull_request_template(\.md|/[^/]+\.md)$|^\.gitlab/merge_request_templates/default\.md$'` — no output is no template — and stop at the first rung below that a listed path matches, comparing without regard to case —
 
 1. `.github/pull_request_template.md`, then `pull_request_template.md` at the root, then `docs/pull_request_template.md`;
 2. the first of `.github/PULL_REQUEST_TEMPLATE/`, `PULL_REQUEST_TEMPLATE/` and `docs/PULL_REQUEST_TEMPLATE/` that holds a `.md` file directly: where it holds exactly one, that file; where it holds several, none — a directory of templates names no default, so the body is written as above and its last line says the repository offers several templates, naming the directory;
 3. `.gitlab/merge_request_templates/Default.md`.
 
-Where a template resolves, the body **is that template, filled**: its headings kept in their order, and each section answered from `body_facts`; a section the run has nothing for says so and why, and never keeps the template's placeholder text; a checkbox ticked only where the run can show what it claims, and never deleted; each of the four sections above placed in the template section that asks for it, and every one no template section asks for appended after the template, in the order above. The banner stays the first line. **The template wins because the body replaces it otherwise**: `gh pr create --body-file` replaces what the web UI would have prefilled, so writing this section's own shape deletes the template on the `gh` path, and on §3.2's path the pasted body lands beside the prefilled template.
+Where a template resolves, the body **is that template, filled**: its headings kept in their order, and each section answered from `body_facts`; a section the run has nothing for says so and why, and never keeps the template's placeholder text; a checkbox ticked only where the run can show what it claims, and never deleted; each of the four sections above placed in the template section that asks for it, and every one no template section asks for appended after the template, in the order above. A template with no headings is one section, answered in place. An HTML comment (`<!-- … -->`) in a template is its note to whoever fills it: follow it, then remove it with the placeholder text. The banner stays the first line. **The template wins because the body replaces it otherwise**: `gh pr create --body-file` replaces what the web UI would have prefilled, and §3.2 has the user paste the body in its place, so a body in this section's own shape would delete the template on either path.
 
 **Remove `<body-path>` once `gh pr create` has read it** — `command rm -f -- "<body-path>"`, as §2.3 removes the message file and for the same reason. **This file is this reference's one exception to that rule**, and §3.2 is why: where the fallback text names it, the user opens the pull request by hand afterwards, from that path, so the run leaves it and the report names it. It is kept on that path alone; where the run opened the pull request, or never reached §2.6 at all, nothing names the file again and it goes.
 
@@ -211,7 +211,7 @@ Never fatal (§1 rule 4). Every failure is reported, and no report may imply a s
 | `key` | the key of the unit the run implements (`workflows-core:implementation-format` §3) — the resolved folder's (`workflows-core:addressing` §4), save where `/implement` chose an Epic under a PRD address and passes that Epic's — or `null` |
 | `workitem_key` | that unit's folder's `workitem_key`, or `null` |
 | `title` | the commit subject and pull-request title |
-| `body_facts` | what §2.7 renders into the body file's four sections: what changed and the files changed; the before and the after the run observed; the facts its door and blast-radius calls rest on; and the review |
+| `body_facts` | what §2.7 renders into the body file's four sections: what changed and the files changed; the before and the after the run observed; the facts its door and blast-radius calls rest on; and the review — the classification, the verdict and triage, and every finding not applied |
 | `clean_finish` | `true` / `false` per §2.9 |
 | `commit_template` | the caller's own message template, or `null` |
 
@@ -267,7 +267,7 @@ On a `clean_finish: false` run the banner is the **first** line, above everythin
     The branch is pushed but no pull request was opened (<reason>).
     Open one from <branch> into <base> in the web UI — as a DRAFT if the banner above is present.
     Title: <title>
-    The body is at <body-path>.
+    The body is at <body-path> — paste it in place of any description the web UI prefills.
 
 For a GitHub remote where `gh` is merely absent, append the command the user may run once it is installed — carrying `--draft` whenever the banner is present, or the fallback silently produces the mergeable pull request §2.9 exists to prevent:
 
