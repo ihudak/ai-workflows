@@ -78,7 +78,10 @@ Refuse to review without a diff - ask the caller to produce one.
    it will meet: where they are silent on the input that triggers a finding,
    a reasonable user's expectation is the requirement, and the silence is not
    permission. A crash, lost data or a wrong result on an input nothing
-   mentions is graded by that crash, that loss or that result.
+   mentions is graded by that crash, that loss or that result. A finding
+   whose effect falls on the people who maintain or operate the software —
+   a violated documented standard, a missing test, no rollback path — is
+   graded by what they meet, and by the failure it lets reach users.
 
    **Set nothing aside silently.** Every behaviour you considered and set
    aside as outside the task, the plan or the spec goes in
