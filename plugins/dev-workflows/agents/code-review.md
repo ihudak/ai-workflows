@@ -125,7 +125,7 @@ full review.
    boundaries, uses the right abstraction layer, avoids duplicate
    implementations, and honours the repository's **documented standards**.
    Find them before judging this dimension: `CLAUDE.md` and `AGENTS.md` at
-   the project root and in every directory between it and a changed file;
+   the project root and in every directory on a changed file's path;
    `CONTRIBUTING.md` at the root, in `.github/` or in `docs/`;
    `CODING_STANDARDS.md` at the root; and every file under `.claude/rules/`
    whose `paths:` frontmatter matches a changed file, or which has no
