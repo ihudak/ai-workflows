@@ -1,6 +1,6 @@
 # Components (embedded — shared reference)
 
-Single source of truth for what a **component** is, how a repository's components are proposed, when a PRD is **multi-component**, the **ride-along** rule, and the `multi-component-prereqs` check. `/create-ard`, `/epics`, `/specify`, `/design`, `/ready` and `/implement` cite this file, as do `epic-writer`, `ard-reviewer`, and the `ard-format`, `design-format`, `workflow-states`, `ard-resolution`, `pre-lint`, `grilling-technique`, `epic-picker` and `next-phase-offer` references; none of them keeps a copy of a rule stated here. `epic-reviewer`, `design-reviewer` and `readiness-reviewer` carry no `Skill` tool and so never load it: each states, from its brief, the checks it makes against §1 and §4.
+Single source of truth for what a **component** is, how a repository's components are proposed, when a PRD is **multi-component**, the **ride-along** rule, and the `multi-component-prereqs` check. `/create-ard`, `/epics`, `/specify`, `/design`, `/ready` and `/implement` cite this file, as do `epic-writer`, `ard-reviewer`, and the `ard-format`, `design-format`, `workflow-states`, `ard-resolution`, `pre-lint`, `grilling-technique`, `epic-picker`, `next-phase-offer` and `implementation-format` references; several restate a rule here where they apply it — the code-component threshold (§3), the ride-along limits (§4) — and those copies answer to the section they restate, so a change to either is swept across every citer. `epic-reviewer`, `design-reviewer` and `readiness-reviewer` carry no `Skill` tool and so never load it: each states, from its brief, the checks it makes against §1 and §4.
 
 **Why it exists.** `/implement` changes code in one repository per run, so an Epic that spans two repositories is half a companion change before any code is written. A PRD that changes a client and a server, or several modules of one repository, is therefore split into one Epic per component, and the interfaces between the components are fixed in the PRD-level ARD's `## Contracts` section (`product-workflows:ard-format`) so that the Epics on either side fit together after each is implemented on its own.
 
@@ -119,7 +119,7 @@ coverage_gaps: [{kind: unknown_ad | consumed_unproduced | produced_off_target | 
 - `epic_target` `missing` or `outside_set` → `/product-workflows:epics <EPIC>`, whose refine mode re-drafts the Epic with a target from the set;
 - a `not_on_default` row → landing that artifact on the default branch — merging the branch or pull request that carries it;
 - an `unverified` row → settling `$SPECS_PATH`'s default branch, which the row's reason names;
-- with every row `present`, a coverage gap → `/product-workflows:epics <PRD>`.
+- with every row `present`, a coverage gap → `/product-workflows:epics <the gap's epic>`, whose refine mode re-drafts that Epic's `## Contract` and `## Dependencies` — save `consumed_unproduced`, whose fix is on the producer's side: `/product-workflows:epics <the Epic targeting the row's producer>` where one exists, else `/product-workflows:epics <PRD>`, whose drafting gives the producer side an Epic of its own.
 
 ## Consumers (informative)
 

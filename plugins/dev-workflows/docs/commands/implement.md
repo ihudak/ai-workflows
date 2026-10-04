@@ -45,7 +45,7 @@ Seven named subagents are dispatched: `workflows-core:code-scanner` (Phase 1.7, 
 
 ### Multi-component PRDs
 
-On a keyed run for an Epic of a PRD with two or more code components, Phase 1 checks that the Epic's target is in this repository; that the ARD's `## Contracts`, the PRD-level specification, and the Epic's own specification and design are on the specs repo's default branch; and that every interface the Epic consumes is produced by some Epic. A gap asks whether to stop and run the missing step first (recommended) or to continue, and continuing names the gap under the pull request's *Merge danger*. Addressed by its PRD, a multi-component PRD's flat specification is offered as a slice to implement only where the PRD has no Epic yet, and then not as the recommended choice.
+On a keyed run for an Epic of a PRD with two or more code components, Phase 1 checks that the Epic's target is in this repository; that the ARD's `## Contracts`, the PRD-level specification, and the Epic's own specification and design are on the specs repo's default branch; that the Epic carries a target from the PRD's set; and that its `## Contract` agrees with the ARD — every interface it consumes is produced by some Epic, every one it produces is its target's, every `[AD#N]` it cites is an interface, and it depends on each producer. A gap asks whether to stop and run the missing step first (recommended) or to continue, and continuing names the gap under the pull request's *Merge danger*. Addressed by its PRD, a multi-component PRD's flat specification is offered as a slice to implement only where the PRD has no Epic yet, and then not as the recommended choice.
 
 ## What it needs
 

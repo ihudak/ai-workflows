@@ -8,7 +8,7 @@ The shared corpus every plugin in this family reads — the addressing grammar, 
 
 The canonical structure each artifact type is authored and reviewed against, plus the shared conventions every authoring command applies while writing one.
 
-- `design-format.md` — canonical structure and per-section rules for an engineering design — **design.md** — plus its `kind:`/`key:` frontmatter; `/design` authors against it, `design-reviewer` reviews against it, `interface-designer` reads its `## Seams` categories, and `/ready` reads its repos header. A targeted Epic's design also names its `Target` in the header, and its `## Interfaces / contracts` names the ARD interfaces it produces and consumes. The PRD-ladder formats one altitude up — the PRD, ARD, specification, and idea brief this design's own specification descends from — ship in the companion `product-workflows` plugin now.
+- `design-format.md` — canonical structure and per-section rules for an engineering design — **design.md** — plus its `kind:`/`key:` frontmatter; `/design` authors against it, `design-reviewer` reviews against it, `interface-designer` reads its `## Seams` categories, and `/ready` reads its repos header. A targeted Epic's design also names its `Target` in the header, and, on a multi-component PRD, its `## Interfaces / contracts` names the ARD interfaces it produces and consumes. The PRD-ladder formats one altitude up — the PRD, ARD, specification, and idea brief this design's own specification descends from — ship in the companion `product-workflows` plugin now.
 
 ## Review and triage
 

@@ -84,7 +84,7 @@ target: <one component id from the handoff's `components` — omit this line whe
 
 ## Contract
 - Produces: [AD#N] — <what this Epic implements of that interface>
-- Consumes: [AD#N] — <the stub this Epic's Independent Test runs against, or "built by <the contract Epic's key>">
+- Consumes: [AD#N] — <the stub this Epic's Independent Test runs against, "built by <the contract Epic's key>", or "exists — used as it runs">
 
 ## Covers
 - <PRD requirement IDs this Epic satisfies, bracketed — e.g. [US#2], [AC#4], [AC#5], [SM#1]>
@@ -169,9 +169,9 @@ _source: native | derived_
 The rules are `workflows-core:components`'; what follows is how they shape a draft.
 
 - **One target per Epic.** Write exactly one `target:`, an `id` from `components`, never one outside it. A capability that lands in two or more components becomes one Epic per component, each linked to the others it needs by key in `## Dependencies` — in `contracts.landing_order` where the handoff carries `contracts`.
-- **Ride-along** (§4). Where an Epic's target needs a change in a `kind: deploy` component **of the same repository** that exists only to deploy or configure the target, write it under `### In scope` as `- Also touches: <component id> — <why>`, and do not split it out. A change in a `kind: code` component, or in a component of another repository, is a second target: split it.
+- **Ride-along** (§4). Where an Epic's target needs a change in a `kind: deploy` component **of the same repository** that exists only to deploy or configure the target, write it under `### In scope` as `- Also touches: <component id> — <why>`, naming a component of `components`, and do not split it out. A change in a `kind: code` component, or in a component of another repository, is a second target: split it.
 - **`## Contract`** — only where `multi_component` is true and the handoff carries `contracts`; omit the section otherwise. One line per interface row the Epic implements (`- Produces:`) or calls (`- Consumes:`), each citing the row's `[AD#N]`. An Epic produces only rows whose producer is its own target. A consumer's `## Independent Test` runs against a stub of each `new` or `changed` interface it consumes whose `artifact` is null, named there; one whose artifact a contract Epic produces is used as built, since that Epic lands first. Its `## Dependencies` names the Epic that produces each interface it consumes.
-- **A contract Epic** exists only where a row's `artifact` is not null — the contract is a code file (an OpenAPI or `.proto` file, a shared entity module, a generated client). It targets the row's producer, produces that row, and comes first: every consumer of the row depends on it. A row whose artifact is null gets no Epic of its own; its producer's ordinary Epic produces it.
+- **A contract Epic** exists only where a row's `artifact` is not null — the contract is a code file (an OpenAPI or `.proto` file, a shared entity module, a generated client) — and its `status` is `new` or `changed`: a row that `exists` is already built, so its consumers use it as it runs and depend on no Epic for it. It targets the row's producer, produces that row, and comes first: every consumer of the row depends on it. A row whose artifact is null gets no Epic of its own; its producer's ordinary Epic produces it.
 - **Multi-component without `contracts`** (the `/epics` prerequisites stop's override): still one target per Epic and still linked through `## Dependencies`, with no `## Contract` section.
 - A capability you cannot place in one component of `components` is a `[NEEDS CLARIFICATION]` marker in the affected Epic's Scope, under the cap of three — never a guessed target.
 

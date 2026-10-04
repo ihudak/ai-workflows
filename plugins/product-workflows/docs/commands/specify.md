@@ -18,7 +18,7 @@ The folder's prefix sets the altitude — an `EPIC-` folder specifies that Epic,
 
 Key distinction from [`/epics`](epics.md): `/epics` *splits* a PRD into Epic drafts; `/specify` *authors one specification* for a single item. **The PRD-level path is genuinely valid, not a fallback of last resort**: `/specify <PRD>` with no focus Epic stays in the PE lane and produces one broad `specification.md` at the PRD dir. What Phase 2 does with a bare PRD key depends on how many child Epics it has:
 
-- **A PRD with exactly 1 Epic** — no picker; that Epic auto-resolves as the focus, with a one-line notice.
+- **A PRD with exactly 1 Epic** — no picker; that Epic auto-resolves as the focus, with a one-line notice — save on a multi-component PRD with no PRD-level specification, where the run asks whether to author that broad spec first (recommended) or specify the Epic.
 - **A PRD with ≥2 Epics** — Phase 2 renders a progress-aware picker: one row per child Epic (marked ○ not started / ◐ in progress / ● done), plus an explicit **"Author one broad PRD-level spec instead"** choice.
 - **A PRD with 0 Epics and an authored `prd.md`** — offered `choices: ["Split into Epics first with /product-workflows:epics (Recommended)", "Author one broad PRD-level spec now", "Cancel"]`. Choosing the split stops `/specify` and points at `/epics`; it does not continue authoring a specification. Re-run `/specify` after the Epics exist. On a PRD with two or more code components the first two options swap and the broad spec is recommended, since it is what `/epics` splits across them. Without an authored PRD, the first option instead names the applicable PRD-authoring or BRD-allocation prerequisite, or is absent when none can be offered; the broad-spec and Cancel choices remain available.
 
@@ -38,7 +38,7 @@ flowchart TD
     p2 --> scope{"Resolved scope?"}
     scope -->|Epic — already selected| p25["Phase 2.5 — Resolve applicable ARD (optional)"]
     scope -->|PRD| d1{"Epic count for this PRD? (Phase 2 Step A)"}
-    d1 -- "exactly 1 child Epic → auto-resolved" --> p25
+    d1 -- "exactly 1 child Epic → auto-resolved (asked on a multi-component PRD without a PRD-level spec)" --> p25
     d1 -- "≥2 child Epics → pick one, or author one broad PRD-level spec" --> p25
     d1 -->|"0 child Epics"| noepics{"Broad spec or prerequisite first?"}
     noepics -->|"Author one broad PRD-level spec"| p25

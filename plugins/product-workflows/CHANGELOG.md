@@ -16,7 +16,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
   - **`epic-writer`** splits a capability that spans components into one Epic per component in landing order, writes a `## Contract` section citing the interfaces each Epic produces or consumes, tests a consumer against a stub of each interface it consumes, puts a code-artifact contract (an OpenAPI or `.proto` file, a shared entity module, a generated client) in its own Epic first — its consumers use it as built — and records a same-repository deploy change as an `- Also touches:` ride-along.
   - **`epic-reviewer`** gains *Single target* (a BLOCKER for no target, one outside the set, or scope spanning components) and *Contract citation*; *Epic independence* allows a consumer's dependency on its producer.
   - **`ard-reviewer`** gains *Contract completeness*.
-  - **`/specify`** narrows an Epic's scan to its target, at PRD level has cross-component acceptance criteria cite the interface they cross, and on a multi-component PRD with no Epics recommends the broad PRD-level spec over splitting first.
+  - **`/specify`** narrows an Epic's scan to its target, at PRD level has cross-component acceptance criteria cite the interface they cross, and on a multi-component PRD without a PRD-level spec recommends authoring it — over splitting first where there are no Epics, and over auto-selecting the one Epic where there is one.
 
 ### Changed
 - **`ard-format`**: the `components:` frontmatter and the `## Contracts` section (with no interface row, its versioning and ownership subsections read `_N/A — no interface_`); an interface row's `AD#N` meets the admission bar by being a cross-component interface.

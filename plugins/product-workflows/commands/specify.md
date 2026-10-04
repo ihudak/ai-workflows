@@ -554,13 +554,13 @@ is the only command that writes one at all.
     **Passing that command's container refusal is not enough to name it**, and it is the only one of
     its three refusals this run has cleared: on the BRD route the resolved folder is a slice with a
     gate set of its own, and a slice that is fully allocated with no `covered-here` row sends this
-    choice into `CREATE_PRD_BRD_NOT_ELIGIBLE`, the branch that names no command at all. Resolve the
-    first choice from the same table the `### Next step` uses
+    choice into `CREATE_PRD_BRD_NOT_ELIGIBLE`, the branch that names no command at all. Resolve that
+    choice from the same table the `### Next step` uses
     (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2, applied there) — the
     `/product-workflows:create-prd` option where the gate set clears both data tests, the corresponding
-    `/product-workflows:brd-split` where one fails and a command exists, and **no first choice at all**
-    where none does, leaving the two below it. A folder carrying no `brd-link.md` has no gate set and
-    takes `/product-workflows:create-prd <ADDRESS>` on the container test alone. The second and third
+    `/product-workflows:brd-split` where one fails and a command exists, and **no such choice at all**
+    where none does, leaving the other two. A folder carrying no `brd-link.md` has no gate set and
+    takes `/product-workflows:create-prd <ADDRESS>` on the container test alone. The other two
     choices are unchanged either way: a broad spec authored from the folder as it stands is still
     reachable, which is what keeps the array at two options in the worst case rather than one.
 
