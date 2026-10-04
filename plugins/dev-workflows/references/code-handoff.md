@@ -243,7 +243,7 @@ The split is what makes per-unit committing worth having: a batch that dies on c
 
 Exactly one per **full** call, prefixed `Code repo:`. A caller that finishes several branches in one run (a `/vuln` CVE loop) emits one line per branch. A §2.12 unit-level call emits none.
 
-`<what>` below is `<sha7> on <branch>` for a call that committed, and `<n> commit(s) on <branch>` for a terminal call whose own staging was empty, or skipped after a unit that did not land (§2.12), but whose branch carries commits from unit-level calls; `<who>` is `a <hook> hook`, or `git` where git itself failed to stage or write it (§2.2, §2.3); `<where>` is `staged`, or `in the working tree` where §2.2's `git add` failed.
+`<what>` below is `<sha7> on <branch>` for a call that committed, and `<n> commit(s) on <branch>` for a terminal call whose own staging was empty, or skipped after a unit that did not land (§2.12), but whose branch carries commits from unit-level calls; `<who>` is `a <hook> hook`, or `git` where git itself failed to stage or write it (§2.2, §2.3); `<where>` is `staged`, or `in the working tree` where §2.2's `git add` failed; and `<unit>` is the unit's name on a §2.12 split, `the commit` otherwise.
 
 | Case | Line |
 |---|---|
@@ -258,7 +258,7 @@ Exactly one per **full** call, prefixed `Code repo:`. A caller that finishes sev
 | Push declined | `Code repo: <what> — not pushed at your request.` |
 | No origin remote | `Code repo: <what> — no origin remote, nothing to push.` |
 | Nothing to commit, nothing to push | `Code repo: no changes to commit on <branch>.` |
-| Commit rejected | `Code repo: NOT committed — <n> unit(s) rejected by <who> (<reason>). The changes are <where>.` |
+| Commit rejected | `Code repo: NOT committed — <unit> rejected by <who> (<reason>). The changes are <where>.` |
 | Gate failed | `Code repo: NOT committed — <reason>. Your changes are still in the working tree.` |
 | Skipped under `--no-commit` | `Code repo: not committed — --no-commit. Your changes are in the working tree on <branch>.` |
 | A unit commit rejected (§2.12) | append `; <unit> NOT committed — rejected by <who> (<reason>); its changes are <where>.` |

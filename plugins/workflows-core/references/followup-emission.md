@@ -68,7 +68,7 @@ What survives is the **out-of-scope finding** — `/implement` naming work it de
 
 Pipelines re-run. Before inserting, READ the existing tasks in the target
 section and SKIP any whose stable key already appears. **Stable key** = the
-finding's identity: `key` + (file path | gap-id | signal-type). Report a
+finding's identity: `key` + (file path | gap-id | signal-type | other repository + change). Report a
 match as `SKIP — already exists` (mirrors `/wiki-tasks-extract` Step 5); never
 re-insert.
 
