@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.11.1] — 2026-10-04
 
-**Update `dev-workflows` to 4.7.0 with this release**: `implementation-format` §1, §3 and §4, `followup-emission` §6, `finding-triage`'s partly-emptied rule, `next-phase-offer`'s `/implement` row and rule 5, and `model-routing/classification` §1.1 and §8.1 describe its `/implement`, which changes code only in the repository it branches.
+**Update `dev-workflows` to 4.7.0 with this release**: `implementation-format` §1, §3 and §4, `followup-emission` §5 and §6, `finding-triage`'s partly-emptied rule and *stayed blocked*, `next-phase-offer`'s `/implement` row and rule 5, `phase-handoff`'s Phase 4.5 note, and `model-routing/classification` §1.1 and §8.1 describe its `/implement`, which changes code only in the repository it branches.
 
 ### Changed
 - **`implementation-format` records one code repository per `/implement` run.** Its §1 example showed one run writing two repositories, and §3 named a repository a multi-source run edited and never branched as a way a run ends uncommitted; from `dev-workflows` 4.7.0, `/implement` changes code only in the repository it branches, and a second code repository is a later run with a block of its own; §4 names the blocks appended before 4.7.0 as the only ones a note can cover partly.
@@ -20,7 +20,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`followup-emission` §8's caller contract, and `session-hygiene`'s resume-pointer location, named `followup-emission` §4 for resolving the write target**, which lists what no longer produces follow-ups; the ladder is §2.
 - **`phase-handoff`'s note on `/dev-workflows:implement`'s Phase 4.5** named every conformance note; only one in `$SPECS_PATH` reaches that phase.
 - **`finding-triage`'s partly-emptied rule now admits a caller's own case**: a first-review `BLOCK` whose survivors a caller keeps from the fixer, because their fix lies in another code repository, none of them a `BLOCKER`, and that leaves no `BLOCKER` or `MAJOR` for it, asks the first settle prompt.
-- **`next-phase-offer`'s routing graph and rule 5** name `/dev-workflows:implement`'s run from another repository, addressed to the Epic itself, before the remaining Epics, as the command's Next step does.
+- **`next-phase-offer`'s routing graph and rule 5** name `/dev-workflows:implement`'s run from another repository, addressed to the unit it implemented (the Epic itself where it was one), before the remaining Epics, as the command's Next step does.
 
 ## [1.11.0] — 2026-10-03
 

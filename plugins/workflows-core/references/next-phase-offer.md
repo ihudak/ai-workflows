@@ -16,7 +16,7 @@ commands so the routing graph and the offer rules live in ONE place (the same sh
 4. **Mode-aware** — the forward recommendation is a PIPELINE handoff. In a command's direct /
    ad-hoc mode (no PRD/Epic context — `/dev-workflows:implement` direct, `/docs-workflows:document` doc-edit) it is OMITTED,
    not invented.
-5. **Epic fan-out** — a command operating at **Epic scope** offers TWO branches (and `/dev-workflows:implement` names one more before them where it recorded a change another code repository needs: the run from that repository, addressed to the unit it implemented, the Epic itself where it was one):
+5. **Epic fan-out** — a command operating at **Epic scope** offers TWO branches (and `/dev-workflows:implement` names one more before them for each other code repository it recorded a change for: the run from that repository, addressed to the unit it implemented, the Epic itself where it was one):
    - **Depth** — the next command for the SAME Epic (`/dev-workflows:design <EPIC>` → `/dev-workflows:implement <EPIC>`).
    - **Breadth** — the SAME command for the NEXT Epic under the PRD (`/dev-workflows:design <EPIC-1>` →
      `/dev-workflows:design <EPIC-2>`).

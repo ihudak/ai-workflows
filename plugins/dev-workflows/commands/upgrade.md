@@ -86,7 +86,7 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
      prompt: "Task description: Upgrade [component] from [current] to [target] in the repository at [its top level, `git rev-parse --show-toplevel`].
      Classification: [SIGNIFICANT | HIGH-RISK] — reason: [routing trigger]
      Upgrade plan: read it from the file at [`plan_file`]
-     Current state: branch = [git branch], uncommitted = [`git -C <top level> status --short` summary]
+     Current state: branch = [git branch], uncommitted = [`git -C <top level> status --short --untracked-files=normal` summary]
 
      Before writing the plan, grep the repo for import sites and usage patterns of this component to understand blast radius, migration order, test coverage, and rollback."
    )
