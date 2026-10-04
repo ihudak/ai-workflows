@@ -199,7 +199,7 @@ array carries every option.
 
 **PA — architecture (optional)**
 
-- `/product-workflows:create-ard <PRD>` (PRD-level) → PE → `/product-workflows:epics <PRD>` (recommended) or `/product-workflows:specify <PRD>`.
+- `/product-workflows:create-ard <PRD>` (PRD-level) → PE → `/product-workflows:epics <PRD>` (recommended) or `/product-workflows:specify <PRD>` — the two swap where the ARD's `components:` holds two or more `kind: code` entries and the PRD has no Epics (`${CLAUDE_PLUGIN_ROOT}/references/components.md` §3), the PRD-level spec being what `/epics` splits.
   *(No `/dev-workflows:design` — no Epics yet.)*
 - `/product-workflows:create-ard <EPIC>` (Epic-level) → `/product-workflows:specify <EPIC>` (recommended) or Dev →
   `/dev-workflows:design <EPIC>`.

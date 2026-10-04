@@ -509,6 +509,7 @@ top-level Epic with no PRD above it, which used to have a branch of its own here
 the case itself (Phase 0 step 3): `/product-workflows:epics` writes every `EPIC-` folder under a PRD folder, and
 is the only command that writes one at all.
 
+- **PRD with exactly 1 Epic, on a multi-component PRD with no PRD-level `specification.md`** (`multi-component-test`, `Skill(skill: "workflows-core:reference", args: "components multi-component-test")`, §3) → no auto-selection: that spec is what `/epics` splits and what `/implement` asks for, so ask `choices: ["Author one broad PRD-level spec now (Recommended)", "Specify <EPIC-KEY> <title>"]` — the first leaves `focus_key` null and proceeds to Step B; the second takes the bullet below.
 - **PRD with exactly 1 Epic** → no picker; auto-select it. Set `focus_key` = that Epic and emit a
   one-line notice (e.g. `Single child Epic <EPIC> '<title>' — authoring its spec.`). Re-point the
   feature folder to that Epic's per-Epic subfolder (see *Re-pointing* below). Proceed to Step B.
@@ -539,6 +540,7 @@ is the only command that writes one at all.
     case). Step B then reads the whole PRD subtree.
 - **PRD with 0 Epics** → this PRD hasn't been split yet. Offer the without-Epics choices:
   `choices: ["Split into Epics first with /product-workflows:epics (Recommended)", "Author one broad PRD-level spec now", "Cancel"]`
+  **On a multi-component PRD** — `multi-component-test` (`Skill(skill: "workflows-core:reference", args: "components multi-component-test")`, §3) on the PRD folder, where with no Epic only an ARD can supply the set — the first two options swap and the marker moves with them: `choices: ["Author one broad PRD-level spec now (Recommended)", "Split into Epics first with /product-workflows:epics", "Cancel"]`. That spec is the requirements source `/epics` splits across the components, and `/epics` stops to ask for it where it is missing.
   `/specify` does not write Epic folders itself — on "Split…", stop and point at
   `/product-workflows:epics`, which writes them into this PRD folder where this command will see them. On
   "Author one broad PRD-level spec now", leave `focus_key` = null and proceed to Step B.
@@ -546,19 +548,19 @@ is the only command that writes one at all.
     That command accepts a folder holding a `prd.md` asserting `kind: prd` and refuses one that does not
     (`commands/epics.md` Phase 0 step 1b, `EPICS_NO_PRD`), so offering it on a folder with no PRD would
     name a run that stops on arrival. Where the folder holds none — the ordinary BRD-route state, and the
-    one the Phase 0 gate reported as `absent` — the first choice becomes
-    `"Author the PRD first — /product-workflows:create-prd <ADDRESS> (Recommended)"`, which is the run that
+    one the Phase 0 gate reported as `absent` — the `/epics` choice — the first, or the second on the multi-component array, which keeps its own marker on the broad-spec option — becomes
+    `"Author the PRD first — /product-workflows:create-prd <ADDRESS> (Recommended)"` (without `(Recommended)` on the multi-component array), which is the run that
     writes the PRD `/epics` then reads and takes the single address this run already resolved.
     **Passing that command's container refusal is not enough to name it**, and it is the only one of
     its three refusals this run has cleared: on the BRD route the resolved folder is a slice with a
     gate set of its own, and a slice that is fully allocated with no `covered-here` row sends this
-    choice into `CREATE_PRD_BRD_NOT_ELIGIBLE`, the branch that names no command at all. Resolve the
-    first choice from the same table the `### Next step` uses
+    choice into `CREATE_PRD_BRD_NOT_ELIGIBLE`, the branch that names no command at all. Resolve that
+    choice from the same table the `### Next step` uses
     (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2, applied there) — the
     `/product-workflows:create-prd` option where the gate set clears both data tests, the corresponding
-    `/product-workflows:brd-split` where one fails and a command exists, and **no first choice at all**
-    where none does, leaving the two below it. A folder carrying no `brd-link.md` has no gate set and
-    takes `/product-workflows:create-prd <ADDRESS>` on the container test alone. The second and third
+    `/product-workflows:brd-split` where one fails and a command exists, and **no such choice at all**
+    where none does, leaving the other two. A folder carrying no `brd-link.md` has no gate set and
+    takes `/product-workflows:create-prd <ADDRESS>` on the container test alone. The other two
     choices are unchanged either way: a broad spec authored from the folder as it stands is still
     reachable, which is what keeps the array at two options in the worst case rather than one.
 
@@ -716,13 +718,13 @@ derives its themes exactly as Step B always has.
 
 ## Phase 2.5 — Resolve applicable ARD (optional)
 
-Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:reference", args: "ard-resolution")` and running its resolution with `<PRD>`, `<EPIC>` (`focus_key`), and `$SPECS_PATH`. **On the BRD route the pair comes from `brd-link.md`'s `parent:`, never from a segment count**: the route resolves a slice and nothing else (Phase 0 step 0), so the `parent:` is always there — pass `prd: <parent-key>`, `epic: <SLICE-KEY>`. The second mapping needs no change to that reference — a slice folder sits inside its parent's exactly as an Epic subfolder sits inside a PRD dir, the layout its Epic-level branch already collects — and it is the same pair `/product-workflows:create-ard <SLICE-KEY>` writes into the ARD's own `prd:`/`epic:` frontmatter, so the two agree by construction rather than by coincidence. On `status: none`, **skip and proceed exactly as before**. On `status: unmerged`, **stop**, naming the returned `branch` and any `pr`. On `status: found`, keep the spec's user stories + scope consistent with the returned `invariants` + `guidance_summary` during the Phase 5 grill; record a necessary deviation under the spec's `### Open questions` (never edit the ARD). Pass the `invariants` to `spec-reviewer` in Phase 6 as `applicable_ard`.
+Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:reference", args: "ard-resolution")` and running its resolution with `<PRD>`, `<EPIC>` (`focus_key`), and `$SPECS_PATH`. **On the BRD route the pair comes from `brd-link.md`'s `parent:`, never from a segment count**: the route resolves a slice and nothing else (Phase 0 step 0), so the `parent:` is always there — pass `prd: <parent-key>`, `epic: <SLICE-KEY>`. The second mapping needs no change to that reference — a slice folder sits inside its parent's exactly as an Epic subfolder sits inside a PRD dir, the layout its Epic-level branch already collects — and it is the same pair `/product-workflows:create-ard <SLICE-KEY>` writes into the ARD's own `prd:`/`epic:` frontmatter, so the two agree by construction rather than by coincidence. On `status: none`, **skip and proceed exactly as before**. On `status: unmerged`, **stop**, naming the returned `branch` and any `pr`. On `status: found`, keep the spec's user stories + scope consistent with the returned `invariants` + `guidance_summary` during the Phase 5 grill; record a necessary deviation under the spec's `### Open questions` (never edit the ARD). Pass the `invariants` to `spec-reviewer` in Phase 6 as `applicable_ard`. Also carry the returned `components` into Phase 3 and `contracts` into Phase 5 (`workflows-core:components` §3, §6).
 
 ---
 
 ## Phase 3 — Derive repos + soft gate
 
-1. **Auto-derive candidate repos.** From the Phase 2 capability themes and any repositories the
+1. **Auto-derive candidate repos.** **An Epic with a target first:** where `focus_key` is set and the Epic's `epic.md` carries a `target:` (`Skill(skill: "workflows-core:reference", args: "components")` §1), the candidate list is that target's repository alone, and the rest of this step — the derivation below and its empty-list escalation — does not run: what the Epic needs from another component is the interface the PRD-level ARD's `contracts` fixes, read there and never by scanning its producer. Phase 4's scan of the repository passes the target's `paths` (the ARD's `components` entry for it, else the id's own path, or the whole repository for a bare slug) as `search_hints.paths`. Otherwise, from the Phase 2 capability themes and any repositories the
    `implementation.md` records in the folders Step B read name
    (`workflows-core:implementation-format` §1 — their `repo` entries; a record lives in the folder
    of the unit implemented, so that is the focus Epic's where `focus_key` is set, and the PRD
@@ -786,7 +788,7 @@ For each repo in the batch:
   >   [3–5 sentences: the item's goal, what the specification must ground]
   > search_hints:
   >   symbols:  [class/function names inferred from the item text, or []]
-  >   paths:    [directory globs inferred from themes, or []]
+  >   paths:    [the target's `paths` where Phase 3 narrowed to an Epic's target, else directory globs inferred from themes, or []]
   >   keywords: [grep keywords extracted from themes]
   > refresh:
   >   switch_to_default_branch: [true if Phase 1 chose 'fetch + pull default branch' (default) or 'fetch only'; false if 'no refresh']
@@ -823,6 +825,8 @@ Walk the stages in order, authoring `specification.md` live against `${CLAUDE_PL
 3. **User stories** (`[Uxx]`)
 4. **Acceptance criteria** (`[ACxx]`, EARS)
 5. **Test cases** (`[TCxx]`)
+
+**A multi-component PRD at PRD level** (`workflows-core:components` §3, with `focus_key` null): the ARD's interface rows carried from Phase 2.5 are grill ground truth. An acceptance criterion or test case that crosses components names, in its own text, the `[AD#N]` interface it crosses, so `/epics` can split it per side and each side's Epic can test against it; the grill's *Cross-component* gap category applies (`workflows-core:grilling-technique`). The specification format is unchanged.
 
 As each decision settles, append it to `_session.md`; capture a genuinely-ambiguous term in `_glossary.md`. Resolve open questions to zero where possible; leave genuinely unresolvable ones as `- [ ]` and keep the header **Open questions** count in sync. A repo gap surfacing here → escalate (describe the missing capability + why) and STOP; the run is resumable from `_session.md` after the user remounts and re-invokes.
 
@@ -1112,7 +1116,7 @@ was not, why.
 
 ### Next step
 
-End the report with a `### Next step` recommendation per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")` (guidance only — never auto-invoked): **Epic-level spec** (the address resolved an `EPIC-` folder) → hand to Dev → `/dev-workflows:design <EPIC>` `<merge-clause>`, which will not start until this spec is on the default branch — on every path, since `workflows-core:phase-handoff` §3.4's `/design` row is a stop even for a spec that reached no branch — and the **Epic fan-out** `/product-workflows:specify <SIBLING-EPIC>` for a sibling Epic (breadth), which waits on nothing this run produced and carries no clause; **PRD-level spec** (the address resolved a `PRD-` folder) → `/product-workflows:epics <PRD>` (PE) `<merge-clause>`, which stops rather than skipping wherever this spec reached a branch (§3.3 rows D/E) and skips exactly as it did before wherever it reached none (§3.4's `/epics` row). If the run BLOCKED or left open `- [ ]` items, recommend resolving those first.
+End the report with a `### Next step` recommendation per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")` (guidance only — never auto-invoked): **Epic-level spec** (the address resolved an `EPIC-` folder) → hand to Dev → `/dev-workflows:design <EPIC>` `<merge-clause>`, which will not start until this spec is on the default branch — on every path, since `workflows-core:phase-handoff` §3.4's `/design` row is a stop even for a spec that reached no branch — and the **Epic fan-out** `/product-workflows:specify <SIBLING-EPIC>` for a sibling Epic (breadth), which waits on nothing this run produced and carries no clause; **PRD-level spec** (the address resolved a `PRD-` folder) → `/product-workflows:epics <PRD>` (PE) `<merge-clause>`, which stops rather than skipping wherever this spec reached a branch (§3.3 rows D/E) and, wherever it reached none, skips exactly as it did before (§3.4's `/epics` row) — save on a multi-component PRD, where `/epics` Phase 2.7 asks for that spec instead, offering to split without it (`workflows-core:components` §6). If the run BLOCKED or left open `- [ ]` items, recommend resolving those first.
 
 **One precondition governs every `/product-workflows:epics` option above, on both routes.** `/epics` accepts
 a folder holding a `prd.md` that asserts `kind: prd` and refuses one that does not
@@ -1146,8 +1150,8 @@ resolve the recommendation from it:
 | No row `unallocated`, and at least one `covered-here` | `/product-workflows:create-prd <SLICE-KEY>` `<merge-clause>` — all three refusals cleared, and its Phase 0 step 7a gates the slice's `decisions.md`, which this run's handoff stages wherever it stamped `consumed_by: specification` on a register record, so the clause is required |
 | A row still `unallocated` | `/product-workflows:brd-split <SLICE-KEY>` instead: `/create-prd` would raise `CREATE_PRD_BRD_UNALLOCATED`, and that walk is what moves those rows (allocate-only on a slice). Its own Phase 0 gates on this slice's grounding findings carrying a verifier verdict, so say so beside the offer |
 | No row `covered-here`, gate set **empty** — `brd-link.md` claims nothing | `/product-workflows:brd-split <PARENT-KEY>` instead — the keep-or-remove run for a standing empty child, and not a no-op there — in the form the parent's own ledger decides, exactly as `/product-workflows:create-prd` Phase 0 step 7's empty-gate-set row decides it: where that ledger still holds an `unallocated` row, `/product-workflows:brd-split <PARENT-KEY> "<how to cut it>"`, since that run walks the row too and stops with `BRD_SPLIT_NEEDS_INSTRUCTION` without an instruction; where it holds none, the bare form; where it cannot be read, report it by path and name neither form |
-| No row `covered-here` and none `unallocated`, gate set **non-empty** | **Name neither `/create-prd` nor `/epics`.** `/create-prd` would raise `CREATE_PRD_BRD_NOT_ELIGIBLE`, whose non-empty branch names no command at all by design; say instead what the gate-set rows resolved to and that nothing in the plugin moves a terminal row back to `unallocated`. `/dev-workflows:design <ADDRESS>` is unaffected and is still recommended — it takes over the specification this run just wrote and needs no PRD |
-| No readable `coverage-ledger.md` beside the `brd-link.md` — absent, or present and unreadable — while that file claims rows | **Name neither `/create-prd` nor `/epics`**, and report `<slice-dir>/coverage-ledger.md` by path, as missing or as unreadable with the read error: this is not an empty gate set, and `coverage-ledger-format.md` §5.2 forbids resolving it to the empty row's `/brd-split <PARENT-KEY>`. `/dev-workflows:design <ADDRESS>` is unaffected and is still recommended |
+| No row `covered-here` and none `unallocated`, gate set **non-empty** | **Name neither `/create-prd` nor `/epics`.** `/create-prd` would raise `CREATE_PRD_BRD_NOT_ELIGIBLE`, whose non-empty branch names no command at all by design; say instead what the gate-set rows resolved to and that nothing in the plugin moves a terminal row back to `unallocated`. `/dev-workflows:design <ADDRESS>` is unaffected and is still recommended — it takes over the specification this run just wrote and needs no PRD, save on a multi-component slice with no Epic, where it designs that specification whole only as an override (`/dev-workflows:design` Phase 0) |
+| No readable `coverage-ledger.md` beside the `brd-link.md` — absent, or present and unreadable — while that file claims rows | **Name neither `/create-prd` nor `/epics`**, and report `<slice-dir>/coverage-ledger.md` by path, as missing or as unreadable with the read error: this is not an empty gate set, and `coverage-ledger-format.md` §5.2 forbids resolving it to the empty row's `/brd-split <PARENT-KEY>`. `/dev-workflows:design <ADDRESS>` is unaffected and is still recommended, save on a multi-component slice with no Epic (as the row above says) |
 
 **Dropping rather than annotating follows `commands/brd-reconcile.md` Phase 14**, which runs these
 same two data tests before offering `/product-workflows:create-prd <SLICE-KEY>` and drops the option on

@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.8.0] — 2026-10-04
+
+**Update `workflows-core` to 1.12.0 with this release**, which carries the `components` reference these commands load.
+
+### Added
+- **Multi-component PRDs** (see `product-workflows` 3.13.0).
+  - **`/implement`**: on a keyed run for an Epic carrying a `target:`, Phase 1 checks the target against this repository on any PRD, and on a multi-component PRD also the ARD's contract, the PRD-level spec and the Epic's own spec and design, and this Epic's contract coverage; a gap asks Stop (Recommended) or continue, and continuing names the gap under the pull request's *Merge danger*.
+  - **`/ready`**: a new Phase 3(d) builds Targets and Contract coverage tables, and the report gains a `Contract coverage` section; `readiness-reviewer` gains *Cross-Epic contract coverage*.
+  - **`design-reviewer`** gains *Target & contract*.
+
+### Changed
+- **`/design <PRD>` and `/implement <PRD>` on a multi-component PRD** do not take the flat PRD-level specification as one unit: they go to the Epic picker; with no specified Epic, `/design` stops for `/specify` or recommends `/epics`, and `/implement` recommends `/epics` at 0 Epics, each taking the specification whole only as an override at 0 Epics.
+- **`/design` keeps a targeted Epic in its target's repository**: adding a second repository asks whether to re-split the Epic (where the PRD-level ARD's set holds the repository) — `/epics <EPIC>`, naming the move at its plan approval — or record the component in the ARD first, and adding it anyway records a `Target span` risk.
+- **`design-format`**: a `Target` header line, and `## Interfaces / contracts` names the ARD interfaces a design produces and consumes.
+- **`workflow-states`**: on a multi-component PRD, *Ready for Implementation* expects the ARD with `## Contracts` and the PRD-level specification, and no PRD-level design, unless the 0-Epic override built the PRD whole.
+
 ## [4.7.0] — 2026-10-04
 
 **Update `workflows-core` to 1.11.1 with this release**: `/implement` Phase 4.7 writes the one-entry block its `implementation-format` §1 now defines, and Phase 6 files the follow-up kind its `followup-emission` §6 now names; its review and its Next step follow the new caller cases in `finding-triage` and `next-phase-offer`.

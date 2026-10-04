@@ -64,8 +64,8 @@ append-only — and the picker's ● marker, which reads the Epic's own folder, 
 taking the default cursor; `/ready` derives its phase from an Epic folder holding no record; and an
 Epic-level `/document` or `/release-notes` reads none of its refs. **Population: every Epic
 implemented under a PRD address before `dev-workflows` 4.1.2.** And where the PRD folder also holds
-a flat `specification.md`, a PRD-level `/ready` counts the block as the **broad PRD-level slice's
-own record**, the PRD folder's record being the slice's — which moves the slice to *In Progress*
+a flat `specification.md` on a PRD that is not multi-component, or one the 0-Epic override built whole, a PRD-level `/ready` counts the block as the **broad PRD-level slice's
+own record** (on a multi-component PRD, `${CLAUDE_PLUGIN_ROOT}/references/components.md` §3, a PRD-folder block is what marks the PRD as built whole by the 0-Epic override, so `/ready` reads the PRD as that slice and counts the block toward it — a leftover block for an Epic is therefore moved before a multi-component PRD's readiness is read), the PRD folder's record being the slice's — which moves the slice to *In Progress*
 only where the PRD folder also holds a `design.md`, since `/ready` Phase 3(0) takes the furthest
 rung whose expected artifacts all exist and the lower rung where they straddle
 (`dev-workflows:workflow-states`, the Epic ladder). **Population: every PRD folder holding both a
@@ -79,7 +79,7 @@ folder's key and slug. Append-only binds the commands that write this file, not 
 the move edits no block: it changes only the folder that attributes the block, which is the job
 this section gives the folder. **A move, not a copy**: a copy left in the PRD folder is harmless to
 the diff readers, since a read that takes both records counts the ref once (§4), but `/ready` still
-counts it toward the broad slice.
+counts it toward the broad slice where it carries one.
 
 **Which block is the Epic's is not written anywhere, so it is read off the code.** A block names no
 unit, and before `dev-workflows` 4.1.2 the commit it records carried the PRD's key in its subject

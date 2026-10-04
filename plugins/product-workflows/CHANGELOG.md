@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.13.0] — 2026-10-04
+
+**Update `workflows-core` to 1.12.0 with this release**, which carries the `components` reference these commands load.
+
+### Added
+- **Multi-component PRDs: one target per Epic, the contract in the ARD.** A PRD that changes more than one component — two repositories, or two modules of one repository — is split into one Epic per component, and the interfaces between them are fixed in the PRD-level ARD so the Epics fit together once each is implemented on its own.
+  - **`/create-ard`** proposes theme→component, reading each repository's module declarations; the architect confirms, corrects, adds or groups, and the list is written to the ARD's new `components:` frontmatter. With two or more code components (a deploy directory a module only rides along on does not count) the grill authors a new `## Contracts` section — an interface table (`AD#N`, producer, consumers, kind, status, artifact), schema ownership, versioning and compatibility, and landing order — and the next-step offer recommends a PRD-level `/specify` before `/epics`.
+  - **`/epics`** gives every Epic one `target:` from the known set: the ARD's components, or, with no ARD, the components a new Phase 5.5 proposes from the scan and from the targets existing Epics already carry (asked only where two or more are proposed); a focus run splits its Epic where the user names, at plan approval, work that moves to another component of the set, or where its scope already spans components. A new Phase 2.7 stops a multi-component PRD that lacks the ARD's contract or a PRD-level spec, recommending the earliest missing step, with "Split without them" recorded in the report's new `### Targets` section.
+  - **`epic-writer`** splits a capability that spans components into one Epic per component in landing order, writes a `## Contract` section citing the interfaces each Epic produces or consumes, tests a consumer against a stub of each new or changed interface it consumes (one that exists is used as it runs), puts a code-artifact contract (an OpenAPI or `.proto` file, a shared entity module, a generated client) in its own Epic first — its consumers use it as built — and records a same-repository deploy change as an `- Also touches:` ride-along.
+  - **`epic-reviewer`** gains *Single target* (a BLOCKER for no target, one outside the set, or scope spanning components) and *Contract citation*; *Epic independence* allows a consumer's dependency on its producer.
+  - **`ard-reviewer`** gains *Contract completeness*.
+  - **`/specify`** narrows an Epic's scan to its target, at PRD level has cross-component acceptance criteria cite the interface they cross, and on a multi-component PRD without a PRD-level spec recommends authoring it — over splitting first where there are no Epics, and over auto-selecting the one Epic where there is one.
+
+### Changed
+- **`ard-format`**: the `components:` frontmatter and the `## Contracts` section (with no interface row, its versioning and ownership subsections read `_N/A — no interface_`); an interface row's `AD#N` meets the admission bar by being a cross-component interface.
+
 ## [3.12.1] — 2026-10-04
 
 ### Fixed

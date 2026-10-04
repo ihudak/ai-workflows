@@ -39,6 +39,7 @@ convention live in ONE place.
    drain. Failing to parse it is silent in the worst way: the file still resolves `status: found`, but
    with an empty `invariants` list every consumer's ARD-conformance dimension is skipped exactly as if
    no ARD existed — a binding architecture document enforcing nothing, under a run that reports success.
+4. From the PRD-level ARD alone — the PRD folder's `ard.md`, or, where `epic` names a `PRD-` folder (a BRD-route slice, `addressing.md` §4.1), that slice's own `ard.md`, which `/create-ard <SLICE>` writes as the slice's PRD-level ARD; on an Epic-level resolution too, since an Epic's ARD carries neither (the ARD format's `components:` rule) — read the frontmatter `components:` list into `components`, and the `## Contracts` section into `contracts`: one row per line of its interface table (`| AD | Producer | Consumers | Kind | Status | Artifact |`, the `Consumers` cell split on commas, an `Artifact` of `—` read as null) and the ids of its `### Landing order` list, in order. Accept `[AD#N]` and the legacy dash form in the `AD` column exactly as step 3 does, emitting the `#` form. This step runs on `status: found` and `unmerged` alike — `/ready` reads both. An ARD with no `components:` key yields `components: []`; one with no `## Contracts` heading yields `contracts: null`.
 
 ## Output — the ARD context, or `none`
 
@@ -54,9 +55,22 @@ invariants:
     prevents: <text>
     rule: <testable statement>
 guidance_summary: <short prose: the ARD's non-AD#N architecture guidance the consumer should heed>
+components:          # the PRD-level ARD's `components:` (step 4), or []
+  - id: <component id>
+    kind: code | deploy
+    paths: [ <path>, ... ]
+contracts:           # the PRD-level ARD's `## Contracts` (step 4), or null
+  rows:
+    - ad: AD#N
+      producer: <component id>
+      consumers: [ <component id>, ... ]
+      kind: REST | message | shared schema | shared library | generated client
+      status: new | changed | exists
+      artifact: <path in the producer> | null
+  landing_order: [ <component id>, ... ]
 ```
 
-`status: none` when no ARD file resolves (the common case — `/create-ard` is optional).
+`status: none` when no ARD file resolves (the common case — `/create-ard` is optional), and `components` is then `[]` and `contracts` `null`.
 
 `status: unmerged` when an ARD file resolves but is **not on the specs repo's default branch** — verified via `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §3 (`require-on-main`), whose rows D and E find it on a plugin branch and return the carrying `branch` and any open `pr`. Both are passed through to the caller.
 
@@ -69,6 +83,8 @@ guidance_summary: <short prose: the ARD's non-AD#N architecture guidance the con
 A caller that gets `status: none` **MUST behave exactly as it did before this feature** — no prompt, no
 extra phase output, no reviewer dimension. The ARD steps are strictly additive and guarded on
 `status: found`.
+
+**One stated exception: a multi-component PRD.** Where `${CLAUDE_PLUGIN_ROOT}/references/components.md` §3 finds two or more `kind: code` components — from an ARD's `components:`, or, with `none` here, from an `/epics` run's confirmed set or the targets the PRD's Epics carry — an ARD without `## Contracts`, `none` included, leaves the Epics with no contract to fit together by. So `/epics` (Phases 2.7 and 5.5) and `/implement` (Phase 1) ask whether to stop and author it first (`components.md` §6), each offering to continue without it; `/design <PRD>` and `/implement <PRD>` take a flat PRD-level specification as a requirements source rather than a unit, save by their override; and `/ready` asks nothing and caps its verdict. Continuing without the ARD proceeds exactly as `none` does here: it is still never a prerequisite. **This rule binds the ARD's steps, not another input's**: what an Epic's `target:` drives — `/specify`'s and `/design`'s narrowing to it, `/design`'s re-split question, `/implement`'s target-repository question, `/ready`'s target repositories — runs on a one-component PRD with no ARD too, because the target, not the ARD, is its input.
 
 A caller that gets `status: unmerged` **stops**, naming the branch and any open pull request, except `/ready` — which is a read-only verifier and records it as a readiness finding capping the verdict at `PARTIAL`. The distinction matters: reporting a phase as complete while its ARD sits unmerged is exactly the claim `/ready` exists to check.
 
@@ -91,4 +107,6 @@ deviation record as *allowed-but-flagged* (the architect adjudicates), **without
 - `/epics` — PRD-level only (`epic: null` on a re-refine run as on a draft one, `prd` the PRD folder's key either way); `AD#N` = inherited invariants the drafted Epics must respect; deviations → a `- ARD deviation: …` line in the Epic draft + the Phase 9 report.
 - `/ready` — PRD-level + Epic-level `AD#N` = inherited invariants passed to `readiness-reviewer` as `applicable_ard`; read-only — it never authors a deviation record, only checks the artifacts it reads for an existing one.
 
-The other five pass `invariants` to their reviewer as `applicable_ard`; the reviewer's ARD-conformance dimension is skipped entirely when it is absent. `/create-ard` alone does not: it inherits PRD-level `AD#N` read-only straight into its own grill and drafting (Phase 4), and `ard-reviewer` checks non-contradiction directly against the drafted file, never via that field.
+`components` and `contracts` are read by `${CLAUDE_PLUGIN_ROOT}/references/components.md` §3 and §6, read directly by `/specify`, `/design` and `/ready`, and passed on by `/epics` to `epic-writer` and `epic-reviewer`; a caller that reads neither field behaves exactly as it did before they existed.
+
+The five consumers listed above other than `/create-ard` pass `invariants` to their reviewer as `applicable_ard`; the reviewer's ARD-conformance dimension is skipped entirely when it is absent. `/create-ard` alone does not: it inherits PRD-level `AD#N` read-only straight into its own grill and drafting (Phase 4), and `ard-reviewer` checks non-contradiction directly against the drafted file, never via that field.

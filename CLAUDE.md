@@ -129,7 +129,7 @@ The evidence behind the rules — measured cases, refused widenings, history —
 - **`workflows-core:addressing` §7's shared-fallback adoption is additive, and it keeps no totals.** Every command that addresses a folder reaches the tree through `resolve-address` (§3), and §5's legacy unprefixed fallback is tried ONLY where the prefixed glob already returned nothing — so a key whose folder carries its kind prefix resolves exactly as it did before, and a command that creates the folder it did not find creates it **prefixed** (§2). The fallback honours a legacy folder that exists; it never proposes one. **Re-derive the set with `grep -l resolve-address plugins/*/commands/*.md`; do not count it off §7's table**, which is a finding aid and not the set. ([why](docs/maintainers/rationale.md#addressing-fallback-totals))
 - **Any kind gate must test the artifact it actually cares about, never the folder's asserted kind** — a BRD-route slice is `PRD-`-prefixed yet asserts `kind: brd`; `.claude/rules/brd-route.md` states why, and how the existing gates apply the rule.
 - `/create-ard`, `/design`, `/implement`, `/specify`, `/epics`, `/ready` respect the applicable ARD via `workflows-core:ard-resolution`; an `AD#N` Rule violated without a recorded "ARD deviation" is a reviewer BLOCKER.
-- A phase is not finished until its artifact is on the specs repo's default branch — every producer offers branch + commit + push + PR, and every consumer executes `require-on-main` before expensive work; an absent optional input still delegates to the command's pre-existing behaviour and never becomes a prerequisite.
+- A phase is not finished until its artifact is on the specs repo's default branch — every producer offers branch + commit + push + PR, and every consumer executes `require-on-main` before expensive work; an absent optional input still delegates to the command's pre-existing behaviour and never becomes a prerequisite (multi-component PRDs: `workflows-core:ard-resolution`).
 
 ## Running the gates
 
@@ -169,9 +169,7 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 
 ## Updating installed plugins after editing
 
-After editing files in this repo and pushing, update the affected plugin on
-each machine so Claude Code picks up the new command, agent, hook, and
-reference content:
+After pushing an edit, update the affected plugin on each machine so Claude Code picks up the new content:
 
 ```bash
 claude plugin update dev-workflows@shipwright
@@ -191,8 +189,7 @@ claude plugin update workflows-core@shipwright
 
 ## Behavioral guardrails (Karpathy) — marketplace-specific notes
 
-These notes complement the user-scope Claude guidance. They add only the
-marketplace-specific behaviors that are easy to forget during workflow edits.
+These notes add to the user-scope Claude guidance only the marketplace-specific behaviors that are easy to forget during workflow edits.
 
 - **Goal-Driven Execution** maps directly onto the existing `test-baseliner` → implementation → `test-writer` → re-run flow enforced by `dev-workflows`. Frame each command invocation as a verifiable goal up front so the test gates have a concrete target to check.
 - **Surgical Changes** applies in both directions when you edit command docs, agent prompts, hook declarations, or `workflows-core:model-routing/classification`: if you remove a `model_routing` field, phase, or workflow edge, remove every cross-reference to it in the same change. Stale references between commands and agents silently break the workflow.

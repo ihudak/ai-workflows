@@ -26,7 +26,7 @@ For writing child Epic drafts from a PRD, use the pipeline plugin's `/product-wo
 
 ## How it runs
 
-`/document` has **34 `## Phase` headings — more than any other command in the family** (the pipeline plugin's `/product-workflows:epics`, the next-largest, has 20). Almost all of that comes from running two pipelines under one name: 23 phases belong to keyed mode, 11 to direct mode, each numbered from its own Phase 0. A 34-node diagram would not be a diagram, it would be the file, so the graph below shows the shape a reader actually navigates — the mode split, then each mode's own phases collapsed into the steps a reader experiences as one decision or one unit of work.
+`/document` has **34 `## Phase` headings — more than any other command in the family** (the pipeline plugin's `/product-workflows:epics`, the next-largest, has 22). Almost all of that comes from running two pipelines under one name: 23 phases belong to keyed mode, 11 to direct mode, each numbered from its own Phase 0. A 34-node diagram would not be a diagram, it would be the file, so the graph below shows the shape a reader actually navigates — the mode split, then each mode's own phases collapsed into the steps a reader experiences as one decision or one unit of work.
 
 ```mermaid
 flowchart TD

@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.5.3] — 2026-10-04
+
+### Fixed
+- **The `/document` page said `/product-workflows:epics` has 20 `## Phase` headings**: it has 22 since product-workflows 3.13.0 added Phase 2.7 and Phase 5.5.
+
 ## [1.5.2] — 2026-10-04
 
 ### Fixed

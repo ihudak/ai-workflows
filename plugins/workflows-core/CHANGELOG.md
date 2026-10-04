@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.12.0] — 2026-10-04
+
+**Update `product-workflows` to 3.13.0 and `dev-workflows` to 4.8.0 with this release**: their commands load `components`, which a `workflows-core` older than 1.12.0 does not carry.
+
+### Added
+- **`components`**, a new shared reference: a component is a repository or a set of paths inside one; `enumerate-components` proposes a repository's modules from what it declares (Gradle, Maven, npm/yarn/pnpm workspaces, Cargo, Go, top-level build files, deploy directories); the multi-component test reads the known set from the ARD's `components:`, from an `/epics` run's confirmed set, or from the Epics' `target:` values; the ride-along rule lets an Epic change a same-repository deploy directory that exists only to deploy its target; and `multi-component-prereqs` is the read-only check `/epics`, `/implement` and `/ready` share.
+- **`grilling-technique`'s gap taxonomy gains a Cross-component category**: an interface with no producer, a consumer with no stub, an unversioned shape, an unstated landing order, and contested schema ownership.
+
+### Changed
+- **`ard-resolution` returns the PRD-level ARD's `components` and `contracts`** beside its invariants, on Epic-level resolutions too; `status: none` returns them empty, and a caller that ignores them is unchanged.
+- **`pre-lint`'s ARD block requires `## Contracts` where `components:` has two or more `kind: code` entries**, and checks each interface row's `AD#N`, components and status.
+- **`ard-resolution`'s no-regression rule states its one exception**, a multi-component PRD, where `/epics` and `/implement` ask about a missing contract and `/design`, `/implement` and `/ready` treat a flat PRD-level specification as a requirements source.
+- **`epic-picker`**: `/implement`'s broad-slice option is withheld on a multi-component PRD, and `/specify` asks before auto-selecting a lone Epic there; **`next-phase-offer`**: after a multi-component PRD-level ARD with no Epics, the PRD-level spec is recommended before `/epics`.
+
 ## [1.11.1] — 2026-10-04
 
 **Update `dev-workflows` to 4.7.0 with this release**: `implementation-format` §1, §3 and §4, `followup-emission` §5 and §6, `finding-triage`'s partly-emptied rule and *stayed blocked*, `next-phase-offer`'s `/implement` row and rule 5, `phase-handoff`'s Phase 4.5 note, and `model-routing/classification` §1.1 and §8.1 describe its `/implement`, which changes code only in the repository it branches.
