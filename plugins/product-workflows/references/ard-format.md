@@ -13,6 +13,7 @@ Epic-level ARD goes deeper on that Epic's repos/areas.
 - **PRD-level** (`/create-ard <PRD-KEY>`) — cross-cutting invariants + broad-but-shallow grounding across the affected repos.
 - **Epic-level** (`/create-ard <EPIC-KEY>` — one address; the Epic's key encodes its ancestry, so the PRD is the folder above it and is never typed beside it, D4) — deeper grounding on the Epic's repos/areas; **inherits the PRD-level ARD's `AD#N` read-only** and must not contradict them.
 - **Per-area** — a big Epic spanning separable areas in one repo (e.g. backend `server/` + frontend `ui/`) may split into `ard-<area>.md` beside the folder's `ard.md` (grill-decided).
+- **Multi-component** — a PRD-level ARD whose `components:` lists two or more components (`workflows-core:components` §3) also carries `## Contracts`: the interfaces between those components, fixed here so that the one-component Epics on either side fit together once each is implemented on its own.
 
 ## Frontmatter
 
@@ -28,10 +29,16 @@ area: <name | null>
 status: draft | reviewed
 grounded_repos:
   - <repo-slug @ absolute path>
+components:                  # PRD level only — the components this PRD touches (workflows-core:components §5)
+  - id: <repo-slug> | <repo-slug>:<path>
+    kind: code | deploy      # optional; default code
+    paths: [<path>, ...]     # optional; default the id's own path, or the whole repository for a bare slug
 inherits: <path to the PRD folder's ard.md | null — on the BRD route, the parent BRD folder's ard.md>
 derived_from: <path to the PRD file, canonical prd.md — or, in a BRD folder that holds no PRD, that folder's ard-seed.md>
 ---
 ```
+
+**`components:` is the known set every Epic target is resolved against.** The architect confirms it in `/create-ard` Phase 3, and it lists the components this PRD touches, never every module a repository has. Every entry's repository is in `grounded_repos` or is named under `## Open questions`. It is written at PRD level only: an Epic-level ARD carries none, and the PRD-level ARD's set applies to its Epics. An ARD with no `components:` key — every ARD written before the key existed — supplies no set, and each consumer then behaves exactly as it did before (`workflows-core:components` §3).
 
 **Unknown frontmatter keys are preserved.** Every command that rewrites this file keeps fields it does not recognise, in place and unmodified — the same rule `workflows-core:prd-format` states for a PRD, and for the same reason: a user's own field must survive a run that did not author it. `workitem_key` is the documented example, and it is reserved rather than special-cased.
 
@@ -53,7 +60,14 @@ does not exist. No widening here reaches a **tracker** key — none of these fie
 - `## Context` — the problem/goal frame from the PRD (Epic-level adds the Epic's scope).
 - `## Grounding findings (architecture as-is)` — what exists today, each claim citing a real `file:line` in a `grounded_repos` entry. An unmounted/descoped repo appears only under Open questions — NEVER as an invented "as-is" claim.
 - `## Architecture decisions` — `### [AD#N]: <title>`, each with **Binds:** (what it constrains) · **Prevents:** (the divergence it stops) · **Rule:** (a single testable statement). Epic-level lists inherited PRD-level ADs read-only under "Inherited invariants".
-- `## Cross-repo / component approach` — the Capability→Architecture map (which capability lands in which repo/component).
+- `## Cross-repo / component approach` — the Capability→Architecture map (which capability lands in which repo/component). On a multi-component ARD each capability names the component ids it lands in, and one that lands in two or more is a capability `## Contracts` must give an interface row.
+- `## Contracts` — **PRD level, and only when `components:` has two or more entries.** An interface table, then three subsections:
+
+  | AD | Producer | Consumers | Kind | Status | Artifact |
+  |---|---|---|---|---|---|
+  | [AD#3] | bookstore:orders | bookstore:carts, bookstore:web | REST | new | — |
+
+  `AD` is the `[AD#N]` whose Rule states the interface; `Producer` is one component id and `Consumers` one or more, all from `components:`; `Kind` is `REST`, `message`, `shared schema`, `shared library` or `generated client`; `Status` is `new`, `changed`, or `exists` (already in the code, cited under Grounding findings); `Artifact` is the path in the producer where the contract is a code file — an OpenAPI or `.proto` file, an entity module, a generated client — else `—`. Then `### Schema ownership` (which component owns each shared shape), `### Versioning and compatibility` (how each interface changes without breaking the other side), and `### Landing order` (an ordered list of component ids; a producer whose `Artifact` is a code file comes before every one of its consumers). **With no interface row** — two components neither of which calls the other, such as a deploy component every change only rides along on — the table is empty and `### Schema ownership` and `### Versioning and compatibility` read `_N/A — no interface_`; `### Landing order` is still written. **The table is the one place producer, consumers and status are written**; each row's `AD#N` stays under `## Architecture decisions` with its Binds, Prevents and Rule, so the `AD#N` series stays single. An Epic-level ARD inherits these rows read-only, as it inherits PRD-level `AD#N`.
 - `## Stack & invariants` — pinned versions / conventions that must hold.
 - `## Edge cases & risks`.
 - `## Open questions` — incl. ungrounded/descoped repos.
@@ -63,7 +77,8 @@ does not exist. No widening here reaches a **tracker** key — none of these fie
 
 - Every "as-is" claim cites a grounded `file:line`; no fabricated/uncited architecture.
 - `AD#N` are **testable** and non-overlapping (Binds/Prevents/Rule each populated).
-- An `AD#N` earns its place only when the decision is **hard to reverse** AND **surprising without context** AND the result of a **real trade-off**; a decision missing any of the three is an ordinary implementation choice (leave it to `/design`), not an architecture decision.
+- An `AD#N` earns its place only when the decision is **hard to reverse** AND **surprising without context** AND the result of a **real trade-off**; a decision missing any of the three is an ordinary implementation choice (leave it to `/design`), not an architecture decision. **One stated case meets the bar by what it is:** an interface row's `AD#N` — an interface that crosses two components, which both sides ship against and so cannot reverse alone.
+- On a multi-component ARD, every capability the Capability→Architecture map lands in two or more components has an interface row, and every row's components are in `components:`.
 - **PRD-level carries NO per-repo detailed solutions** — that is `/design`'s job.
 - An Epic-level ARD may go deeper but stays architecture, not an implementation plan.
 - Grounding is **architect-driven** (repos confirmed by the architect), never derived from PRs (which do not exist at ARD time).
