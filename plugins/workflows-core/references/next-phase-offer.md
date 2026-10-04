@@ -16,7 +16,7 @@ commands so the routing graph and the offer rules live in ONE place (the same sh
 4. **Mode-aware** — the forward recommendation is a PIPELINE handoff. In a command's direct /
    ad-hoc mode (no PRD/Epic context — `/dev-workflows:implement` direct, `/docs-workflows:document` doc-edit) it is OMITTED,
    not invented.
-5. **Epic fan-out** — a command operating at **Epic scope** offers TWO branches:
+5. **Epic fan-out** — a command operating at **Epic scope** offers TWO branches (and `/dev-workflows:implement` names one more before them for each other code repository it recorded a change for: the run from that repository, addressed to the unit it implemented, the Epic itself where it was one):
    - **Depth** — the next command for the SAME Epic (`/dev-workflows:design <EPIC>` → `/dev-workflows:implement <EPIC>`).
    - **Breadth** — the SAME command for the NEXT Epic under the PRD (`/dev-workflows:design <EPIC-1>` →
      `/dev-workflows:design <EPIC-2>`).
@@ -233,7 +233,7 @@ array carries every option.
 - `/dev-workflows:ready <ADDRESS>` → **SUPPORTED** → `/dev-workflows:implement <ADDRESS>` (the same address); **PARTIAL / NOT-SUPPORTED**
   → resolve the named gaps, then re-run `/dev-workflows:ready`. *(Read-only verifier;
   not itself a linear pipeline node — an optional gate before build.)*
-- `/dev-workflows:implement <EPIC>` → finish remaining Epics (breadth); once ALL Epics implemented →
+- `/dev-workflows:implement <EPIC>` → first, where it recorded a change another code repository needs, the run from that repository, addressed to the unit the run implemented (the Epic itself, where it was one); then finish remaining Epics (breadth); once ALL Epics implemented →
   `/docs-workflows:document <PRD>` → `/docs-workflows:release-notes <PRD>`. *(Direct mode → no forward offer.)*
 - `/docs-workflows:document <PRD>` (PRD-level, after all Epics) → `/docs-workflows:release-notes <PRD>`. *(Doc-edit mode → no
   forward offer.)*

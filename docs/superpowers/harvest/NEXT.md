@@ -395,7 +395,7 @@ Both are deliberate. Do not "resync" either one without a fresh decision.
 presets, SDD ledger / 5-round fix-breaker, generic lens engine, git-push-blocking hook, PRD-coach
 "never recommend an answer", batch-grill-me denser rounds. (See INDEX.md "Deliberately NOT adopting".)
 
-## Harvest round 4 — surveyed 2026-10-02; Rounds 1–2 SHIPPED (2026-10-02)
+## Harvest round 4 — surveyed 2026-10-02; Rounds 1–3 SHIPPED (2026-10-02 – 2026-10-04)
 Survey of the four upstreams against the round-2 baseline: superpowers `b36e0829`..`8ca22dba` (v6.3.0 → v6.4.2), mattpocock/skills `5b15a47`..`d81f3a1` (v1.3, unreleased changesets), BMAD-METHOD `67d876f1`..`4f61d4e7` (v6.12.0 + Unreleased), spec-kit `27f50f7e`..`4a339209` (1.0.1 → 1.0.13). 21 portable items; the six that were **defects in text all three editions shipped** went first, as Round 1. Spec (with an "Amended during review" section per review round) + plan: `docs/superpowers/specs/2026-10-02-harvest-round-4-defects-design.md` and `docs/superpowers/plans/2026-10-02-harvest-round-4-defects.md`.
 
 **Round 1 — what shipped.** This repository: `workflows-core` 1.10.0, `dev-workflows` 4.5.0, `product-workflows` 3.11.3, `docs-workflows` 1.4.6 (merged with this entry). The internal edition: `dev-workflows` 2.66.0, merge `f689511`. The Copilot edition: `dev-workflows` 2.35.0, merge `83f2bf3`.
@@ -433,6 +433,22 @@ Survey of the four upstreams against the round-2 baseline: superpowers `b36e0829
 - **The port reviews found what this repository's could not:** the two other editions' `clean_finish` row returned `true` on most early stops its own "Every run" paragraph sends with `false`, a `§2.8` pointer that meant `§2.9`, and a Review-triage lead-in that said one line per unit beside a template that said one per review pass.
 - **`git check-ignore -v` prints a negated `!` pattern that re-includes a path**; two readers took every printed line as a match, and the user-facing advice now uses the plain form.
 
+**Round 3 — what shipped** (items 13 and 15, and what the user decided while it ran). This repository: `workflows-core` 1.11.1, `dev-workflows` 4.7.0, `product-workflows` 3.12.1, `docs-workflows` 1.5.1 (merged with this entry). The internal edition: `dev-workflows` 2.68.0, merge `0ea083b`. The Copilot edition: `dev-workflows` 2.37.0, merge `b063bf6`. Spec (with "Amended during planning" and "Amended during review") + plan: `docs/superpowers/specs/2026-10-03-harvest-round-4-implement-pr-design.md`, `docs/superpowers/plans/2026-10-03-harvest-round-4-implement-pr.md`.
+13. `/implement` looks before it asks. Phase 1 tries to settle each candidate ambiguity from what the run can read, the applicable ARD first on a keyed run, and asks only a decision: a question the evidence leaves open and the user would notice. Phase 2A writes its exploration down and re-tests the class on the plan it writes; Phase 3A step 5 re-plans upward with `risk-planner` (`Settled by the run`, `Work so far`) when the work meets a §1.1 trigger the approved plan did not state (BMAD 7e571784, 124ea1af, 2c10d5ba).
+15. The code pull-request body: Summary, Evidence (before and after, as observed), Merge danger (one-way or two-way door, blast radius), Review, and the repository's own template where it has one; the file list is read from git (mattpocock `pr`).
+
+**The user's decisions during the round — keep these:**
+- **One repository per run.** `/implement` changes code only in the repository it branches; a change another code repository needs is planned out of scope, named in the pull-request body as a companion change, and becomes a follow-up. A plan with no step in this repository asks *Stop here* or *Revise plan* at its approval gate.
+- **The ARD in Phase 1**, and **a unit-level commit that does not land ends `code-handoff` §2.12's split** (a hook's rejection, or git's own failure).
+- **Every root at the repository's top level**: the test baseline and every agent a command dispatches, a run started in a monorepo subdirectory included.
+- **How the review ended.** After rounds 15–29 stopped converging, findings in five areas whose fixes kept opening neighbouring edge cases went to the backlog below rather than another fix wave (the Stash answer, Phase 0's classification order, follow-up keys, subdirectory roots, and from round 41 the commit-and-staging mechanics); after round 43 the two other editions got one review round each, whose findings were fixed without a re-review.
+
+**43 whole-branch review rounds here, one in each other edition**, one fresh Opus reviewer per round. Round 14 returned zero findings on the round as designed; everything after it came from the user's decisions and the pre-existing behaviour they exposed. Findings worth keeping:
+- **A narrowing reaches every phase it crosses.** "One repository per run" took fifteen rounds: the record, the report, the follow-up route, the review triage, the routing graph, the classification floor and Phase 0's classification each carried a copy of the old extent.
+- **Prefer an existing exit to a new path.** A plan with no step in this repository went through an empty-diff exit, then an Approve that skipped phases, before the stop it now asks for; each new path reached phases whose text did not expect it.
+- **Measure git before writing a git rule.** Three fixes were regressions the next round measured: `--no-relative` needs git 2.28, `git diff HEAD` fails before a first commit, and the global `--literal-pathspecs` is inherited by every commit hook.
+- **Fixing pre-existing behaviour has a cost the branch pays.** Deletions hidden from review, a dirty-tree commit that swept in the user's staged change, and untracked files a Stash left behind were real and fixed; each fix opened a neighbouring edge case, which is why the user filed the areas rather than keep going.
+
 **Backlog — surveyed, not yet built** (items 7–21; each applies to all three editions unless noted):
 7. Triage: "couldn't verify" is not "refuted" — defer a serious-if-true unsubstantiated finding with what would settle it; defer fixes to agent-instruction files; row count equals findings (BMAD 3433612d, b0d27c3c). M. — shipped in Round 2
 8. Re-review keeps prior triage dispositions; the second review is triaged (BMAD 7c3e5827, 85d968fc). M. — shipped in Round 2
@@ -440,15 +456,38 @@ Survey of the four upstreams against the round-2 baseline: superpowers `b36e0829
 10. A plan "Review focus" section — implied inputs no test exercises — tested by `test-writer`, checked by `code-review` (superpowers 5bf4e780 #2319). M. — shipped in Round 2
 11. `code-review` edge-case checks: handle lifetime, call vs declaration (BMAD 44e0f806), implicit enum branch at code altitude, removed code whose contract nothing replaced. S. — shipped in Round 2
 12. `code-review` finds the repo's documented standards — CLAUDE.md, AGENTS.md, copilot-instructions, CONTRIBUTING, CODING_STANDARDS (BMAD 23f134e2; mattpocock code-review step 3). S. — shipped in Round 2
-13. `/implement` looks before asking, and can re-classify upward after exploring (BMAD 7e571784, 124ea1af, 2c10d5ba). M.
+13. `/implement` looks before asking, and can re-classify upward after exploring (BMAD 7e571784, 124ea1af, 2c10d5ba). M. — shipped in Round 3
 14. Design contracts: owning side, behavioural obligations, provider-side conformance (spec-kit aaa8fa92). S.
-15. PR body: merge danger (one-way/two-way door, blast radius), before/after evidence, honour a repo's PR template (mattpocock `pr`). M.
+15. PR body: merge danger (one-way/two-way door, blast radius), before/after evidence, honour a repo's PR template (mattpocock `pr`). M. — shipped in Round 3
 16. `bug-diagnosis.md` drift: performance branch, one-variable probes, minimise the repro, no-loop fallback, name the confirmed hypothesis (mattpocock diagnosing-bugs). S–M.
 17. `impl-maintenance`: sort each miss into "build a check" or "write a standard"; flag no-op instructions (mattpocock `retro`). S–M.
 18. `/epics` dependency checks: needs and owners, collisions, one home per shared decision, touched-unit coverage (BMAD f033e70a, ba252f1b). S–M.
 19. Acceptance-criteria wording tests: false before, true after; the rule, not an example; 3–8 (BMAD bmad-ticket). S; `specification-format.md` stays frozen.
 20. Redact secrets, emails, hosts and home paths before `/prompt` and feedback capture write user text (superpowers diagnosing-superpowers redaction policy). S.
 21. Low or deferred: a glossary input for `interface-designer` (mattpocock DESIGN-IT-TWICE); a transcript-based session-diagnosis command (superpowers diagnosing-superpowers) — L.
+
+**Follow-ups from Round 3:**
+- *Look before asking* for the other commands that carry "Ask, don't guess" (`/design`, `/specify`, `/epics`, `/document`, `/ready`, `/release-notes`, `/docs-profile`) — Round 3's non-goal.
+- The repository-template rule for `phase-handoff` §2.7's and `finish-and-handoff`'s pull-request bodies — Round 3's non-goal.
+- **Multi-repository features: one repository per Epic, the contract in the ARD** (the user agreed 2026-10-04). It follows from `/implement`'s one-repository rule. Proposed changes:
+  - `/epics` gives each Epic exactly one target repository, chosen from those it scans. A capability that spans repositories splits into one Epic per repository, linked through Dependencies. The client Epic's Independent Test runs against the ARD contract with a stub.
+  - `epic-reviewer` flags an Epic whose scope spans repositories.
+  - `/create-ard` prompts for a contract section on a multi-repository PRD: endpoints or messages, schema ownership, versioning and compatibility, and landing order. Every Epic on either side cites those `AD#N` rules.
+  - A contract Epic exists only where the contract is a code artifact (an OpenAPI or `.proto` file in a schema repository, or generated clients). It targets the owning repository and comes first in the dependency order.
+  - `/design` names one repository plus the contract it cites.
+  - `/ready` gains a cross-Epic contract-coverage check: every endpoint a client Epic consumes is produced by a server Epic or fixed in the ARD.
+  - No new command.
+- **Pre-existing areas the user chose to file rather than keep fixing** (2026-10-04, after review rounds 15–29 stopped converging); round 30 left these open:
+  - *The Stash answer:* `/implement`'s Stash excludes every `@path` input inside the repository, a code-directory search hint included, so the user's work there is not stashed and reaches the diffs and, where the run edits it, the commit. With the top level itself passed and spelled empty, `git stash push -- ':/' ':(top,exclude)'` stashes nothing and the Stash answer silently becomes Proceed anyway (measured, git 2.43). Fix direction: exclude spec inputs only, never the top level.
+  - *Phase 0's classification:* the working-directory stop sits after address resolution, so the specs preflight and the Epic picker can run before it; "Where such a top level" can be read as including the working directory, printing a false notice at a repository root holding `prompt.md`; `@.` from a spec folder below the top level is a spec folder by the row order and a code repository by the working-directory rule.
+  - *Follow-up keys:* followup-emission §6's "origin URL with scheme, host and .git dropped" is the simplified strip `code-handoff` §2.6 warns against (it leaves `user@` and scp forms), and the path fallback and the `(not mounted)` marker give one repository several keys, so the shared follow-ups file can hold duplicate tasks.
+- *Specs-repo commits (pre-existing on main, found in round 35):* `workflows-core:specs-repo-git`'s `commit-artifacts` and `phase-handoff`'s `handoff-to-main` commit the whole index, so a change the user had staged in the specs repository rides into the plugin's commit, contrary to G1's "safe beside unrelated dirt". The commit-by-pathspec form `code-handoff` §2.2 carve-out 1 now uses is the likely fix.
+- *Commit mechanics (filed by the user's decision after round 40; round 41 left these open):*
+  - `code-handoff` §2.2 carve-out 1 subtracts every pre-existing dirty path, then says a pre-existing path the run also edited is committed. Nothing says how the edited subset is known, and §3.1 has no row to list it. Pre-existing on main, but this branch widened who meets it: the Stash answer's recorded untracked leftovers, and Phase 4.5's in-repository note riding on the commit.
+  - §2.3's post-commit `restore --staged` covers only the enumerated paths, so a pre-commit hook that stages a file outside them still leaves the index out of step (measured: `D  gen.txt` plus `?? gen.txt`). Fix direction: restore over `git diff-tree --no-commit-id --name-only -r -z HEAD`.
+  - Wording: the `:(literal)` sentence omits the restore; `/upgrade` 7.5 says "stages"; §1 rule 3 bans `reset` by name while §2.3 runs its index-only form.
+  - `/implement`'s `title` input is documented as the commit subject, yet §2.3 takes the subject from the repository's `git log`, so on a conventional-commits log the two differ (`feat: …` against `<summary> [<key>]`). The same holds in both other editions; Round 3's title fix covered `/vuln` and `/upgrade` only (found by the port reviews).
+- *Port drift in the other editions, pre-existing on their `main` (found by the port reviews, 2026-10-04):* the internal edition's `run-flags` free-text strip still recognises a `--no-commit` token for `/implement`, and both editions' `code-handoff` §2.9 cites a "`--no-commit` precedent" of a §1 opt-out paragraph neither has. The Copilot edition's `vuln:` and `upgrade:` `code-review` dispatch says it is pinned to Opus where that edition's review tier is another chain, its `implement:` Phase 4.6 placement paragraph names `CLAUDE.md` and `.claude/memory/`, its `implement:` temp-file removal omits `review_file` and `claims_file`, and, in the Stash area, a stash pushed at Pre-Phase 3 step 1 followed by step 4's Cancel or a refused `git switch` stops before the branch exists, where nothing names `stash_ref`.
 
 **Rejected again** (reasons unchanged): superpowers' native executing-plans / SDD ledger, verify-a-fix-by-test instead of re-review, nested mid-tier orchestrator; mattpocock `implement-spec`, `retro` as its own command, `pr`'s picture menu and Mermaid; BMAD's user-pinned review depth (bypasses the classification gate), finding floors scaled by diff size, the ticket store and walkthrough; spec-kit's extension and catalog machinery, `taskstoissues` (a tracker), the constitution sync report.
 

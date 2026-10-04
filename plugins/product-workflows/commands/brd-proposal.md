@@ -699,7 +699,7 @@ either: that is the gate working. The one exception is a halt on a tool the ai-c
    recommended pricing or re-running, every slice excluded from the roll-up, and every de-duplication
    flag the operator left as two pieces of work against the run's own reading, each of which is work
    somebody has to do outside this run. Filter with the reference's §6 predicate, resolve the write
-   target via its §4 ladder, dedupe per §5, and preview + confirm per §7. ADDITIVE: the same items
+   target via its §2 ladder, dedupe per §5, and preview + confirm per §7. ADDITIVE: the same items
    also stay in the final report.
 4. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-proposal`, `phase: proposal`, `role: pm`, the run's `key`, `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or the report-only notice). **This entry records model spend in USD and has no relationship whatever to the human hours the artifacts contain.**
 5. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")`

@@ -51,7 +51,7 @@ same run, and `/frames` rebuilds an index, which is a repair rather than a step 
 pointer to a phase nobody resumes is a file that only goes stale, so state the exemption in the
 command rather than writing one.
 
-**Location** (mirror `followup-emission.md` §4 resolution):
+**Location** (mirror `followup-emission.md` §2 resolution):
 
 1. `$SPECS_PATH` resolvable + writable + the PRD dir exists → `<PRD-dir>/dev-workflows/resume.md`. *[primary]*
 2. `$SPECS_PATH` writable but no PRD dir matched → skip the file; rely on the printed `### Next step`.

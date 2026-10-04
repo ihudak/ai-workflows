@@ -590,7 +590,7 @@ invoking `Skill(skill: "workflows-core:reference", args: "followup-emission")` a
    ("paste this release-notes draft wherever your release notes are published")
    and any implementation-gap signals surfaced during the run.
 2. **Filter** them with the reference's §6 qualifying predicate.
-3. **Resolve** the write target via the §4 ladder using `key` and `source`;
+3. **Resolve** the write target via the §2 ladder using `key` and `source`;
    render + place tasks and verbose notes per §1–§3; dedupe per §5. The task
    references the draft file written in Phase 8 rather than duplicating it.
 4. **Preview + confirm** per §7 (`approve-all | select | cancel`), then write.

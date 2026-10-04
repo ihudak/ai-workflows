@@ -26,7 +26,9 @@ The caller passes a structured brief:
 - **Classification** - `SIGNIFICANT` or `HIGH-RISK` (with the reason).
 - **Plan** - the risk-weighted plan that was approved (produced by the
   `risk-planner` system prompt at `${CLAUDE_PLUGIN_ROOT}/agents/risk-planner.md`, or a
-  user-approved equivalent).
+  user-approved equivalent) — where the user approved `/implement`'s mid-implementation re-plan, two
+  plans under headings — the re-plan's Steps are the work remaining, every Review focus line in either plan
+  applies, and the re-plan governs only where two items contradict.
 - **Diff** - `git diff` or a file-by-file list of changes. MANDATORY.
   Both **Plan** and **Diff** may be given inline or as an absolute file
   path — `Read` the file first when given a path. On a read failure, follow the
@@ -37,6 +39,7 @@ The caller passes a structured brief:
   **Plan**, `applicable_ard`, and
   `applicable_spec` are *context* inputs (degrade to absent, and say so in the Summary).
 - **Project root** - absolute path so files can be opened.
+- **Deferred to another code repository** (optional, from `/implement`) — changes the run records as another code repository's work, never this diff's: each is an explicit deferral note, which dimension 10 honours where a spec is in scope. The deferred change's absence is never a defect of this diff; whether this diff is safe to merge and deploy before that change lands is still this review's to judge.
 
 Refuse to review without a diff - ask the caller to produce one.
 

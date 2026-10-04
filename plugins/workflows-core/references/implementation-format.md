@@ -12,7 +12,7 @@ convention is a separate thing with a wider writer set — all three of the comm
 
 ## 1. The block
 
-One `## <YYYY-MM-DD> — /implement` block per run, one entry per repository the run touched:
+One `## <YYYY-MM-DD> — /implement` block per run, with one entry: the code repository the run branched. A change another code repository needed is a later run from there, with a block of its own. A block appended before `dev-workflows` 4.7.0 may carry one entry per repository that run touched, and a reader takes every entry. For example:
 
 ```markdown
 # Implementation — ACME-77-01 order intake
@@ -23,6 +23,8 @@ One `## <YYYY-MM-DD> — /implement` block per run, one entry per repository the
   base:    main
   commit:  a3f91c2
   pushed:  true
+
+## 2026-09-02 — /implement
 - repo:    billing-api
   branch:  feat/ACME-77-01-order-intake
   base:    main
@@ -134,9 +136,7 @@ weaker than doing it, and a command that does not commit cannot write a commit s
 longer any command's situation: the commit is prompt-free (`code-handoff.md` §1 rule 5), so a run
 ends uncommitted only by choice — it typed `--no-commit` — or where no commit could be made — for example a failed
 gate or a hook rejection (`code-handoff.md` §2.1 and §2.3 respectively, each reported on a
-`NOT committed` line, §3.1),
-or, on a multi-source `/implement` run, a repository it edited and never branched, which that run
-reports as uncommitted rather than committing. The convention still needs to be
+`NOT committed` line, §3.1). The convention still needs to be
 written down, because the people whose commits the §4 scan has to find are mostly not running the
 plugin at all — which is what `docs/reference/commit-convention.md` is for.
 
@@ -307,7 +307,7 @@ is.
   read* holds per block, not per commit. It is chosen rather than inherited: a block is one
   `/implement` run's refs, and handing the writer a run with a hole in it is the worse failure.
   **Population: every `/release-notes` run with diff grounding on over a note that covered a block
-  only partly** — a block naming two repositories where the earlier run resolved one and not the
+  only partly** — a block appended before `dev-workflows` 4.7.0, when one run could record several repositories, naming two where the earlier run resolved one and not the
   other, or where one dispatch failed, since a commit that run could not read is no part of its
   read set (`docs-workflows:release-note-types` §1). **The run names the blocks it used**, which
   makes a wrong boundary visible rather than silent, but it names such a block as it names any

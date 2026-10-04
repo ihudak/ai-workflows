@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.12.1] — 2026-10-04
+
+### Fixed
+- **`/epics`, `/prd-proposal` and `/brd-proposal` sent the follow-up write target to `followup-emission` §4**, which lists what no longer produces follow-ups; the ladder is §2.
+- **The model-routing page called `/prd-ground`'s floor the same multi-source rule `/dev-workflows:implement` applies, and said the address is never a floor**: it is the rule's repository half, and in `/dev-workflows:implement` a resolved specs folder does floor the run.
+- **`/prd-ground`'s classification comment called its floor the multi-source rule**: it is that rule's repository half, as the model-routing page now says.
+
 ## [3.12.0] — 2026-10-03
 
 **Update `workflows-core` to 1.11.0 with this release**: the commands below cite its new escalation heading and its `finding-triage` § On re-review.

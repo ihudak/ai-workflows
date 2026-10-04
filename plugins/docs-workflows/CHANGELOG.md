@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.5.1] — 2026-10-04
+
+### Fixed
+- **`/document` and `/release-notes` sent the follow-up write target to `followup-emission` §4**, which lists what no longer produces follow-ups; the ladder is §2.
+
 ## [1.5.0] — 2026-10-03
 
 **Update `workflows-core` to 1.11.0 with this release**: the commands below follow its `finding-triage` § On re-review and its patch gate's instruction-file clause.

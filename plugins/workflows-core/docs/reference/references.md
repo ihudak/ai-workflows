@@ -24,7 +24,7 @@ The entry points that bound every write into the specs repo and every phase boun
 - `phase-handoff.md` — the two phase-boundary git entry points: a producer step that lands a phase's deliverable on the specs repo's default branch, and a consumer gate that requires the deliverable be there before expensive work starts.
 - `branch-naming.md` — how every command that creates a git branch decides the branch name: the target repo's own documented convention always wins, and this doc supplies one only when the repo documents none.
 - `read-only-repos.md` — how to detect a read-only repository mount, what to skip when one is found, and how to resolve a ref and read from it without ever attempting a write. Its resolution also names the default branch that the scanners and the docs-repository commands switch onto or cut a branch from — by its name (`main`) rather than the `origin/main` ref, since `git switch` refuses a remote-tracking ref.
-- `implementation-format.md` — the append-only implementation record a keyed run writes: one block per run, one entry per repository, holding refs and never a summary, kept in the folder of the unit implemented — an Epic's, or the PRD folder's for a broad slice. Its §3 owns the commit convention, and its §4 the two-source read a documenting run performs over that record plus a commit-message scan matching each key whole, with the boundary each consumer takes over both.
+- `implementation-format.md` — the append-only implementation record a keyed run writes: one block per run, with one entry — the code repository the run branched — holding refs and never a summary, kept in the folder of the unit implemented — an Epic's, or the PRD folder's for a broad slice. Its §3 owns the commit convention, and its §4 the two-source read a documenting run performs over that record plus a commit-message scan matching each key whole, with the boundary each consumer takes over both.
 - `next-phase-offer.md` — the family-wide contract for the next-phase offer every pipeline command surfaces at the end of its run, naming the natural next command(s), including the `<merge-clause>` placeholder and its overflow rule.
 
 ## Review, triage and escalation
@@ -51,7 +51,7 @@ The bookkeeping every long-running command emits around its actual work.
 - `cost-emission.md` — the session-cost subsystem: how a run's dollar cost is computed, attributed, and persisted, including the §7 attribution table and the §13 deferred-claim protocol for a command that cedes the session before it can write its own entry.
 - `cost-prices.yaml` — the default per-model token-price table session-cost reporting prices against; user-overridable via `$DEV_WORKFLOWS_COST_PRICES` or a repo-local file of the same shape.
 - `feedback-emission.md` — the session-feedback emitter every long-running command's automatic maintenance phase cites to capture friction about the plugin itself.
-- `followup-emission.md` — the follow-up task and journal emitter a terminal "Emit follow-up tasks" phase cites.
+- `followup-emission.md` — the follow-up task and verbose-note emitter a terminal "Emit follow-up tasks" phase cites.
 - `session-hygiene.md` — the family-wide contract for session-hygiene suggestions: flush resume-critical state to disk, then suggest the right context action, after a big command finishes or a long run checkpoints.
 
 ## Environment and routing

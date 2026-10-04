@@ -68,7 +68,7 @@ What survives is the **out-of-scope finding** — `/implement` naming work it de
 
 Pipelines re-run. Before inserting, READ the existing tasks in the target
 section and SKIP any whose stable key already appears. **Stable key** = the
-finding's identity: `key` + (file path | gap-id | signal-type). Report a
+finding's identity: `key` + (file path | gap-id | signal-type | other repository + unit). Report a
 match as `SKIP — already exists` (mirrors `/wiki-tasks-extract` Step 5); never
 re-insert.
 
@@ -77,6 +77,7 @@ re-insert.
 Emit a task ONLY for signals whose action lands OUTSIDE the current change or
 requires a MANUAL human step:
 
+- A change another code repository needs (`/dev-workflows:implement` changes code only in the repository it branches, and records one for a run from there); its stable-key identity is the other repository — named by its `origin` remote URL with the scheme, host and `.git` dropped (`team-a/api`), by its absolute top-level path where it has no `origin`, and, for one the run was never given, by the name the plan gives it, marked `(not mounted)` — and the unit the task addresses, both named in its task line. The task's action is one run from that repository, which plans that unit's changes there itself; the changes the task lists are what this run saw, never the whole of that work.
 - Files/pages owned by others (the owner was surfaced and the edit is theirs to make).
 - Implementation gaps (PRD vs source; the `<KEY>-implementation-gaps.md`
   draft) → the task links the draft; verbose context → a note (§3).
@@ -84,8 +85,7 @@ requires a MANUAL human step:
   "create these Epics in your tracker manually", open-the-PR-by-hand.
 - SPEC-VS-PRD ("update the PRD to match the spec").
 
-DO NOT emit tasks for in-scope items the report/draft already tracks: deferred
-review BLOCKERs, skipped tests, in-draft `<!-- TODO -->` markers. Those belong
+DO NOT emit tasks for in-scope items the report/draft already tracks: deferred review BLOCKERs (save one whose fix lies in another code repository, which the first bullet takes), skipped tests, in-draft `<!-- TODO -->` markers. Those belong
 to the current task and are already carried in the Final Report.
 
 **If no signal qualifies after this filter, the phase is a no-op:** resolve no
@@ -115,7 +115,7 @@ The calling phase provides:
   Report follow-up sections.
 - `key` — the run's resolved key, or `null`.
 
-The phase applies §6 (filter) → §4 (resolve target) → §1–§3 (render + place) →
+The phase applies §6 (filter) → §2 (resolve target) → §1–§3 (render + place) →
 §5 (dedupe) → §7 (confirm), then writes. It is ADDITIVE: the follow-ups always
 also remain in the Final Report, the phase NEVER commits, and it NEVER writes
 into a docs/code repo or the current working directory, where it is not the specs repository. Follow-ups written
