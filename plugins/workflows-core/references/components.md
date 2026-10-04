@@ -58,10 +58,11 @@ An Epic may change files of a `kind: deploy` component **in the same repository 
 
     - Also touches: <component id> — <why>
 
-Two limits, both enforced by `epic-reviewer` and `design-reviewer`:
+Three limits, enforced by `epic-reviewer` (all three) and `design-reviewer` (the first two):
 
 - **Same repository only.** A deploy component in another repository (a separate gitops repository) is never ridden along: `/implement` cannot change it in the same run, so it is its own Epic.
 - **`kind: deploy` only.** A `kind: code` component is never ridden along; a change there is a second target, and the Epic splits.
+- **A component of the known set.** The line names an id from the set (§3), so its kind and repository can be checked; a deploy directory the set lacks is added to it — in the ARD by `/create-ard`, in an `/epics` run at Phase 5.5 — before an Epic rides along on it.
 
 A deploy component is still a target in its own right — for an infrastructure-only PRD, or where a change there is the work rather than support for it.
 
