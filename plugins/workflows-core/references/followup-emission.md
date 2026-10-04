@@ -77,7 +77,7 @@ re-insert.
 Emit a task ONLY for signals whose action lands OUTSIDE the current change or
 requires a MANUAL human step:
 
-- A change another code repository needs (`/dev-workflows:implement` changes code only in the repository it branches, and records one for a run from there); its stable-key identity is the other repository, named by its `origin` remote's slug (its directory name where it has none), and the unit the task addresses. The task's action is one run from that repository, which plans that unit's changes there itself; the changes the task lists are what this run saw, never the whole of that work.
+- A change another code repository needs (`/dev-workflows:implement` changes code only in the repository it branches, and records one for a run from there); its stable-key identity is the other repository's directory name and the unit the task addresses, both named in its task line. The task's action is one run from that repository, which plans that unit's changes there itself; the changes the task lists are what this run saw, never the whole of that work.
 - Files/pages owned by others (the owner was surfaced and the edit is theirs to make).
 - Implementation gaps (PRD vs source; the `<KEY>-implementation-gaps.md`
   draft) → the task links the draft; verbose context → a note (§3).

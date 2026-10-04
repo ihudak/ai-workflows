@@ -25,11 +25,7 @@ Usage: `/implement <ADDRESS> | <prompt> [@file…] [@spec-folder] [@repo…] [--
 | **Specs folder** | a directory under `specifications/` that `resolve-address` resolves — its `kind:` and `key:` read off the folder's carrier (`workflows-core:addressing` §4) | hand to the folder read in Phase 1.7 |
 | **Code repo** | a directory where `git -C <path> rev-parse --is-inside-work-tree` succeeds (includes the cwd) | scan target in Phase 1.7 — or, where its top level (`git -C <path> rev-parse --show-toplevel`) is that of a code repository already classified here (the working directory's included), a search hint for that repository's scan and for Phase 2A/2B's exploration |
 
-Test the rows top to bottom for each `@path` token: the first that matches classifies it, so a spec or specs folder below a repository's top level is that folder, never a code repo. The working directory is always the Code repo row's. An `@path` that is its own work tree's top level (`git -C <path> rev-parse --show-prefix` prints nothing) and also matches the Spec folder row is the user's to classify:
-
-```
-choices: ["Code repository — scan it (Recommended)", "Spec folder — read it into the description"]
-```
+Test the rows top to bottom for each `@path` token: the first that matches classifies it, so a spec or specs folder below a repository's top level is that folder, never a code repo. The working directory, and an `@path` that is its own work tree's top level (`git -C <path> rev-parse --show-prefix` succeeds and prints nothing), are always the Code repo row's whatever else they hold: name a spec kept at a repository's top level by its file, which the Spec file row reads.
 
 **Address resolution.** Before the per-`@path` classification above, look for a **single positional
 address** in `$ARGUMENTS` — a `<KEY>`, or an `@<path>` naming a folder in the specs tree. Present →
@@ -395,13 +391,13 @@ Produce a written implementation plan:
 
 ```
 "This plan changes no file in this repository. What would you like to do?"
-choices: ["Stop here and name the follow-up runs (Recommended)", "Revise plan"]
+choices: ["Stop here, nothing written (Recommended)", "Revise plan"]
 ```
 
-- **Stop** → name one follow-up per other code repository — a `/dev-workflows:implement` run from there, addressed as Phase 3A/3B step 2 says, listing its changes — and stop as **Cancel** does, nothing having been written.
+- **Stop** → name one follow-up per other code repository the plan puts a change in, if any — a `/dev-workflows:implement` run from there, addressed as Phase 3A/3B step 2 says, listing its changes — and stop as **Cancel** does, nothing having been written.
 - **Revise** → as the approval question's **Revise** does, in Phase 2A or Phase 2B, whichever wrote the plan.
 
-Then ask:
+Otherwise, ask:
 ```
 "Implementation plan ready. What would you like to do?"
 choices: ["Approve & implement now (Recommended)", "Revise plan", "Cancel"]
@@ -442,7 +438,7 @@ When a `specification.md`/`design.md` is in scope, extract its **in-scope** `[Ux
 1. A full plan in the risk-weighted format (the normal case).
 2. A short `### Re-classification` section, if the planner decided on inspection that the task is actually `SIMPLE` or `MODERATE`.
 
-**If the return contains `### Re-classification`:** surface it to the user, ask for confirmation of the revised level with a `choices` prompt (`["Accept revised classification (Recommended)", "Override and stay SIGNIFICANT/HIGH-RISK", "Cancel"]`). If the user accepts, **fall back to Phase 2A** (standard plan) using the codebase context already captured above (the `summary_file` path) — whichever of Phase 1.7's **multi-source codebase summary**, Phase 2B's Explore output or Phase 2A's exploration this run wrote — and do not re-run exploration; the new plan honours every answer given at Phase 2A's **Revise** before a raise. Accepting here is the user exercising the **plan-approval override** — of the multi-source SIGNIFICANT floor (Phase 1.6), or of a raise; that is the sanctioned way to leave either, and Phase 2A's re-test then runs only on what a later **Revise** adds. Record the revised class and its reason in the `model_routing` block. If the user overrides, re-invoke risk-planner with an additional constraint stating the classification is intentional; do not down-classify again. If the user cancels, stop and summarize.
+**If the return contains `### Re-classification`:** surface it to the user, ask for confirmation of the revised level with a `choices` prompt (`["Accept revised classification (Recommended)", "Override and stay SIGNIFICANT/HIGH-RISK", "Cancel"]`). If the user accepts, **fall back to Phase 2A** (standard plan) using the codebase context already captured above (the `summary_file` path) — whichever of Phase 1.7's **multi-source codebase summary**, Phase 2B's Explore output or Phase 2A's exploration this run wrote — and do not re-run exploration; every answer given at a **Revise** so far (Phase 2A's before a raise, or this gate's own) binds the plan the run continues on — the new Phase 2A plan honours it, and on Phase 3A step 5's re-plan, where the run resumes on its approved plan, Phase 3A follows it as a constraint. Accepting here is the user exercising the **plan-approval override** — of the multi-source SIGNIFICANT floor (Phase 1.6), or of a raise; that is the sanctioned way to leave either, and Phase 2A's re-test then runs only on what a later **Revise** adds. Record the revised class and its reason in the `model_routing` block. If the user overrides, re-invoke risk-planner with an additional constraint stating the classification is intentional; do not down-classify again, and handle its return as above, every arm included. If the user cancels, stop and summarize.
 
 **If the return is a full plan whose `### Hypotheses (ranked)` section contains `Ranking withheld`:**
 the planner could not get a red-capable repro, so its hypotheses are absent by design and the rest of
@@ -455,7 +451,7 @@ verbatim and ask:
 choices: ["Help construct a repro (you'll be prompted for what to try)", "Proceed without a repro (recorded in the Phase 5 report)", "Cancel"]
 ```
 
-- **Help construct a repro** → take the user's suggestion, re-dispatch `risk-planner` with it carried in the brief, and re-enter this branch on the new return.
+- **Help construct a repro** → take the user's suggestion, re-dispatch `risk-planner` with it carried in the brief, and handle the new return as above, every arm included.
 - **Proceed without a repro** → record it in the Phase 5 report's `### Assumptions & limitations` as `No repro: <what the planner tried>` and continue to the normal full-plan gate below.
 - **Cancel** → stop.
 
@@ -482,9 +478,9 @@ Before writing any file:
    - Show the user what is dirty (paste the `git status --short` output).
    - Ask:
      ```
-     choices: ["Stash changes, untracked files included, and continue (Recommended)", "Proceed anyway — pre-existing changes will appear in the diff and review outputs", "Cancel"]
+     choices: ["Stash changes and continue (Recommended)", "Proceed anyway — pre-existing changes will appear in the diff and review outputs", "Cancel"]
      ```
-   - **Stash**: run `git stash push -u -m "pre-impl stash" -- ':/' ':(top,exclude)<path>'`, one exclusion per `@path` input inside this repository, relative to its top level (`-u`, so untracked files leave the tree too, save the run's own inputs), then continue. Record the resulting stash as `stash_ref` — Phase 4.6 names it in its outcome line and never drops it (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.2 carve-out 2). **Any stop from here on that does not reach Phase 4.6 names it in the stop message instead**, because no exit of this run may end without saying where the user's stashed work went — this phase's own step-4 Cancel and switch refusal, Pre-Phase 3.5's Cancel (the one post-branch exit Phase 4.6 excludes), and every stop between.
+   - **Stash**: run `git stash push -m "pre-impl stash"` (tracked changes only), and record every untracked path it leaves in the tree (`git status --porcelain -z --untracked-files=all`) as `pre_existing_dirty`, so `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.2's carve-out keeps them out of the commit (they still appear in the diffs the agents read, as on **Proceed anyway**), then continue. Record the resulting stash as `stash_ref`, where git made one (`No local changes to save` makes none) — Phase 4.6 names it in its outcome line and never drops it (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.2 carve-out 2). **Any stop from here on that does not reach Phase 4.6 names it in the stop message instead**, because no exit of this run may end without saying where the user's stashed work went — this phase's own step-4 Cancel and switch refusal, Pre-Phase 3.5's Cancel (the one post-branch exit Phase 4.6 excludes), and every stop between.
    - **Proceed**: note in the Phase 5 report that the working tree was dirty at implementation start, **and record the `git status --porcelain -z --untracked-files=all` paths as `pre_existing_dirty`**. Phase 4.6 needs them to avoid sweeping somebody else's uncommitted work into this run's commit (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.2 carve-out 1); a run that does not record them here cannot honour that carve-out later. **`-z` is what makes that subtraction work** — §2.2 enumerates in the same form, and without it a path carrying a space or a non-ASCII byte is recorded quoted here and read raw there, so it subtracts against nothing.
    - **Cancel**: stop and summarize what was planned.
 
@@ -800,9 +796,9 @@ into the code repo or the current working directory, where it is not the specs r
 
 ## Phase 4.5 — Escalation handoff (spec/design conformance notes)
 
-A **silent no-op** when step 7.5 (Phase 3B) wrote no `- [ ]` notes — which covers every SIMPLE/MODERATE run (no `code-review`, so step 7.5 never runs) and every run with no spec/design in scope, direct-prompt or otherwise.
+A **silent no-op** when step 7.5 (Phase 3B) wrote no `- [ ]` notes in `$SPECS_PATH` — a note it wrote in this repository rides on Phase 4.6's commit instead — which covers every SIMPLE/MODERATE run (no `code-review`, so step 7.5 never runs) and every run with no spec/design in scope, direct-prompt or otherwise.
 
-When step 7.5 did write one or more notes: `prefix` = `spec` when only `specification.md` was annotated, otherwise `design`; `feature_folder` = the directory the annotated file(s) live in (the same specs-repo folder Phase 0 resolved them from); `deliverable_paths` = the annotated file(s) themselves. Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and present its §4.3 consent choice verbatim — **two arrays, selected by the annotated set per §4.1's set rule, and the test is not the `prefix` test above.** Where `specification.md` is in the set (whether or not `design.md` is too), present §4.3's **gated — stopping** array (§4.1 bullet 1), because `/dev-workflows:design` stops on an un-landed `specification.md`:
+When step 7.5 did write one or more notes: `prefix` = `spec` when only `specification.md` was annotated, otherwise `design`; `feature_folder` = the directory the annotated file(s) live in (the same specs-repo folder Phase 0 resolved them from); `deliverable_paths` = the annotated file(s) in `$SPECS_PATH`. Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and present its §4.3 consent choice verbatim — **two arrays, selected by the annotated set per §4.1's set rule, and the test is not the `prefix` test above.** Where `specification.md` is in the set (whether or not `design.md` is too), present §4.3's **gated — stopping** array (§4.1 bullet 1), because `/dev-workflows:design` stops on an un-landed `specification.md`:
 
 `choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]`
 
@@ -1059,7 +1055,7 @@ directory, where it is not the specs repository; no user name is ever written (�
 - ALWAYS classify each `@path` input by inspection (Phase 0) — never by matching the path string
 - WHEN `fan_out` is true (more than one distinct code repository, or a specs or spec/design folder): floor classification at SIGNIFICANT (overridable at plan approval), run Phase 1.7, and feed its synthesized summary to the planner instead of the single Explore subagent
 - WHEN `fan_out` is true and a theme stays inconclusive: run round 2 (§8.5) when round 1 left an evidence anchor to seed it, and name every still-unresolved theme — including one that never entered round 2 for lack of an anchor — in the summary's `## Unresolved` section and the risk-planner brief's `Unresolved scan themes:` field; NEVER fold it in as an ordinary gap
-- WHEN a `specification.md`/`design.md` is in scope on a SIGNIFICANT / HIGH-RISK run: extract its in-scope IDs, pass `applicable_spec` to `code-review`, report conformance in Phase 5, and escalate unresolved `missing`/`contradicts` as `- [ ]` notes on the spec/design — never silently
+- WHEN a `specification.md`/`design.md` is in scope on a SIGNIFICANT / HIGH-RISK run: extract its in-scope IDs, pass `applicable_spec` to `code-review`, report conformance in Phase 5, and escalate unresolved `missing`/`contradicts` as `- [ ]` notes on the spec/design where it lies in `$SPECS_PATH` or this repository, and in the Phase 5 report where it lies elsewhere — never silently
 - WHEN `task_shape: bug` on a SIGNIFICANT / HIGH-RISK run: risk-planner follows `bug-diagnosis.md` (repro-first + ranked hypotheses), and all `[DEBUG-xxxx]` instrumentation is stripped before the Opus-review diff is captured
 - WHEN `task_shape: bug`: the ranked hypotheses MUST be backed by a repro `risk-planner` **actually ran** — its `### Hypotheses (ranked)` block carries the command, its redacted output, and the reproduction rate (`bug-diagnosis.md` step 1's completion criterion). If it returns "Ranking withheld — no red-capable repro", do NOT proceed to implementation on a guess: surface what it tried and ask `choices: ["Help construct a repro (you'll be prompted for what to try)", "Proceed without a repro (recorded in the Phase 5 report)", "Cancel"]`. Proceeding is the user's call to make explicitly, never the default.
 - ALWAYS fan out `code-scanner` one-per-repo in a single response, capped at 4 concurrent — never sequentially
