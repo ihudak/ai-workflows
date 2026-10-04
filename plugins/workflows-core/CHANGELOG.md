@@ -11,10 +11,11 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Changed
 - **`implementation-format` records one code repository per `/implement` run.** Its §1 example showed one run writing two repositories, and §3 named a repository a multi-source run edited and never branched as a way a run ends uncommitted; from `dev-workflows` 4.7.0, `/implement` changes code only in the repository it branches, and a second code repository is a later run with a block of its own; §4 names the blocks appended before 4.7.0 as the only ones a note can cover partly.
-- **`followup-emission` §6 names a change another code repository needs** among the signals whose action lands outside the current change: `/dev-workflows:implement` records one as a follow-up rather than editing that repository. Its exclusion of deferred review `BLOCKER`s spares one whose fix lies in another code repository, and §5's stable key admits that identity.
+- **`followup-emission` §6 names a change another code repository needs** among the signals whose action lands outside the current change: `/dev-workflows:implement` records one as a follow-up rather than editing that repository. Its exclusion of deferred review `BLOCKER`s spares one whose fix lies in another code repository, and §5's stable key admits that identity: the other repository, one task naming every change it needs.
 
 ### Fixed
-- **`model-routing/classification` §1.1's *Multi-source input* floored on any directory input**, so an `@path` inside the repository `/dev-workflows:implement` was started in raised the run to `SIGNIFICANT`; it now counts distinct repositories by top level, and names folder inputs.
+- **`model-routing/classification` §1.1's *Multi-source input* floored on any directory input**, so an `@path` inside the repository `/dev-workflows:implement` was started in raised the run to `SIGNIFICANT`; it now counts distinct repositories by top level, as §8.1's fan-out trigger does, and names folder inputs as Phase 0 of `/dev-workflows:implement` does.
+- **`finding-triage`'s *stayed blocked* now admits a caller's own member**: a first review's `BLOCKER` whose fix lies in another code repository, which `/dev-workflows:implement` keeps from the fixer.
 - **The references page called `followup-emission` a journal emitter**; it emits follow-up tasks and verbose notes.
 - **`followup-emission` §8's caller contract, and `session-hygiene`'s resume-pointer location, named `followup-emission` §4 for resolving the write target**, which lists what no longer produces follow-ups; the ladder is §2.
 

@@ -23,7 +23,7 @@ Usage: `/implement <ADDRESS> | <prompt> [@file…] [@spec-folder] [@repo…] [--
 | **Spec file** | a single `.md` file | read fully; use as the description/spec |
 | **Spec folder** | a directory containing `prompt.md` and/or a `*-design.md` | read all `.md` specs within; fold into the description |
 | **Specs folder** | a directory under `specifications/` that `resolve-address` resolves — its `kind:` and `key:` read off the folder's carrier (`workflows-core:addressing` §4) | hand to the folder read in Phase 1.7 |
-| **Code repo** | a directory where `git -C <path> rev-parse --is-inside-work-tree` succeeds (includes the cwd) | scan target in Phase 1.7 — or, inside a code repository already classified here (the working directory's included), a search hint for that repository's scan and for Phase 2A/2B's exploration |
+| **Code repo** | a directory where `git -C <path> rev-parse --is-inside-work-tree` succeeds (includes the cwd) | scan target in Phase 1.7 — or, where its top level (`git -C <path> rev-parse --show-toplevel`) is that of a code repository already classified here (the working directory's included), a search hint for that repository's scan and for Phase 2A/2B's exploration |
 
 **Address resolution.** Before the per-`@path` classification above, look for a **single positional
 address** in `$ARGUMENTS` — a `<KEY>`, or an `@<path>` naming a folder in the specs tree. Present →
@@ -46,7 +46,7 @@ naming what creates a folder this command reads: a `PRD-` folder comes from
 record to go.
 
 The classification table above still applies to every other `@path` token: a spec folder contributes
-to `specs`, a code repo is an `/implement`-only scan target (or, inside a code repository already classified here, a search hint, as the table says). Carry `mode` (`keyed | direct`), the
+to `specs`, a code repo is an `/implement`-only scan target (or, sharing the top level of one already classified here, a search hint, as the table says). Carry `mode` (`keyed | direct`), the
 resolved `path`, `kind` and `key`, and `specs` forward. On a keyed run `specs` is
 read out of the resolved folder only once the specs-repo preflight below has run.
 
@@ -380,7 +380,7 @@ Produce a written implementation plan:
 5. **Files to create/modify** — list with brief rationale
 6. **Tests** — what tests will be added or run
 7. **Assumptions** — each open question the run settled itself because the user would not notice the answer (Phase 1's test) — in Phase 1 or while writing this plan — with what was chosen (must be minimal)
-8. **Out of scope** — explicitly list what is NOT being done, a change another code repository needs included (this run changes code only in the repository it branches)
+8. **Out of scope** — explicitly list what is NOT being done, a change another code repository needs included (this run changes code only in the repository it branches); where that leaves the plan no step in this repository, say so above the approval prompt, so the user can weigh **Cancel** against a run that will change nothing here
 9. **Review focus** — up to five input classes or failure modes the task implies and no step's tests exercise, most likely to bite a user first, each with the behaviour a reasonable user would expect — or `none — checked`. `test-writer` writes a test for each line, or names in its `### Notes` why one cannot be written (Phase 3.5, or Phase 3B step 4a on a run whose re-plan the user approved)
 
 **Re-test the class against the plan** — before asking, and again after every **Revise**, save where this phase was entered from a `### Re-classification` the user accepted at Phase 2B: that acceptance is the plan-approval override, which a re-test would undo, so there it runs only after a **Revise**, and only on a trigger the revision added — one the plan before it did not state. Test the class as it stands — the `model_routing` block's — again against `workflows-core:model-routing/classification` §1.1, reading the plan's Steps and Files to create/modify and what the exploration found those files do. Where a §1.1 trigger now applies — more than 3–5 non-test files, authentication or authorization, a schema or migration, a public contract, concurrency, or any other item on that list — do not ask: raise the class to SIGNIFICANT (HIGH-RISK under §1.1's multiplier), announce `Re-classified upward at planning: <trigger> (<the path, or the paths, that show it>)`, record the new class and that reason in the `model_routing` block — resolving its `planning_model` and `review_model` where the block left them out — and continue at Phase 2B with `summary_file` as its codebase summary and every answer given at this phase's **Revise** on the brief's `Constraints:` line, with no second exploration; ask Phase 1.5's task-shape question first where it is genuinely ambiguous whether this is a defect fix or new work.
@@ -443,7 +443,7 @@ choices: ["Help construct a repro (you'll be prompted for what to try)", "Procee
 - **Proceed without a repro** → record it in the Phase 5 report's `### Assumptions & limitations` as `No repro: <what the planner tried>` and continue to the normal full-plan gate below.
 - **Cancel** → stop.
 
-**If the return is a full plan** (ranking present, or the user chose to proceed without a repro)**:** present it to the user verbatim and ask:
+**If the return is a full plan** (ranking present, or the user chose to proceed without a repro)**:** present it to the user verbatim — and, where its Steps change no file in this repository, every change lying under Out of scope for another code repository, say so above the prompt, so the user can weigh **Cancel** against a run that will change nothing here — and ask:
 
 ```
 "Opus-planned. What would you like to do?"
@@ -464,7 +464,7 @@ Before writing any file:
    - Show the user what is dirty (paste the `git status --short` output).
    - Ask:
      ```
-     choices: ["Stash changes and continue (Recommended)", "Proceed anyway — pre-existing changes will appear in the diff and review outputs", "Cancel"]
+     choices: ["Stash changes, untracked files included, and continue (Recommended)", "Proceed anyway — pre-existing changes will appear in the diff and review outputs", "Cancel"]
      ```
    - **Stash**: run `git stash push -u -m "pre-impl stash"` (`-u`, so untracked files leave the tree too), then continue. Record the resulting stash as `stash_ref` — Phase 4.6 names it in its outcome line and never drops it (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.2 carve-out 2). **Any stop from here on that does not reach Phase 4.6 names it in the stop message instead**, because no exit of this run may end without saying where the user's stashed work went — this phase's own step-4 Cancel and switch refusal, Pre-Phase 3.5's Cancel (the one post-branch exit Phase 4.6 excludes), and every stop between.
    - **Proceed**: note in the Phase 5 report that the working tree was dirty at implementation start, **and record the `git status --porcelain -z --untracked-files=all` paths as `pre_existing_dirty`**. Phase 4.6 needs them to avoid sweeping somebody else's uncommitted work into this run's commit (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.2 carve-out 1); a run that does not record them here cannot honour that carve-out later. **`-z` is what makes that subtraction work** — §2.2 enumerates in the same form, and without it a path carrying a space or a non-ASCII byte is recorded quoted here and read raw there, so it subtracts against nothing.
@@ -551,7 +551,7 @@ Store the returned `## Test Baseline` block verbatim — it will be passed to `t
 
 Runs after Phase 3A step 5 completes (all code changes written), before the outcome-verification step.
 
-1. **Invoke `test-writer` agent.** First, at the orchestrator, capture the diff for the dispatch: write `git add -N :/ && git diff` (so new files are included) to a temp file (`command mktemp -t dw-impl-diff-XXXXXX`, never inside a repo tree) and record its absolute path as `test_diff_file`. `test-writer` has no shell tool — it can only `Read` the path it is given. Then spawn:
+1. **Invoke `test-writer` agent.** **The empty-diff exit:** where the capture below is empty — the run changed no file in this repository, every change the plan names lying in another code repository — dispatch no `test-writer`, `code-review` or verify, and go to Phase 4. Phase 4.6 then reports §3.1's no-changes row, Phase 4.7 appends no block (there is no commit to record), and the companion changes reach the report and Phase 6 as on any run. First, at the orchestrator, capture the diff for the dispatch: write `git add -N :/ && git diff` (so new files are included) to a temp file (`command mktemp -t dw-impl-diff-XXXXXX`, never inside a repo tree) and record its absolute path as `test_diff_file`. `test-writer` has no shell tool — it can only `Read` the path it is given. Then spawn:
 
    → Agent (subagent_type: "dev-workflows:test-writer", model: `<detection_model — §2.1 Sonnet chain>`):
      > "Write tests for this brief:
@@ -614,7 +614,7 @@ At each checkpoint, also consider suggesting **`/compact`** to free context befo
 2. Make precise, surgical changes — do not modify unrelated code — and change code only in the repository Pre-Phase 3 branched: any other code repository, one this run was given included, is read-only context, and a change one needs goes into the Phase 5 report's `### Session learnings` as a follow-up for `/dev-workflows:implement` run from that repository, addressed to the unit this run implemented (the Epic itself, where it was one; no key on a direct run), which Phase 6 collects; an early stop names it beside its §3.1 line instead (Phase 4.6)
 3. Follow existing code style and LF line endings
 4. If something **new** emerges mid-implementation, look before stopping: **a decision** — Phase 1's test: nothing this run can read settles it, and its answer changes what the user would notice in the result → STOP, ask with choices (2–4 options; the harness supplies the free-text escape), resume after answer; **anything else** → look it up and continue — an open question the user would not notice is settled by the run and recorded in the Phase 5 report's `### Assumptions & limitations`.
-4a. **Invoke `test-writer` agent** (inserted before the review diff capture in step 5 so the Opus review sees code and tests together — test adequacy is already a review dimension in `code-review.md`). First, at the orchestrator, capture the diff for the dispatch: write `git add -N :/ && git diff` (so new files are included) to a temp file (`command mktemp -t dw-impl-diff-XXXXXX`, never inside a repo tree) and record its absolute path as `test_diff_file`. `test-writer` has no shell tool — it can only `Read` the path it is given. Then spawn:
+4a. **Invoke `test-writer` agent** (inserted before the review diff capture in step 5 so the Opus review sees code and tests together — test adequacy is already a review dimension in `code-review.md`). Where the capture below is empty, take Phase 3.5 step 1's empty-diff exit instead of this step and every later one in this phase. First, at the orchestrator, capture the diff for the dispatch: write `git add -N :/ && git diff` (so new files are included) to a temp file (`command mktemp -t dw-impl-diff-XXXXXX`, never inside a repo tree) and record its absolute path as `test_diff_file`. `test-writer` has no shell tool — it can only `Read` the path it is given. Then spawn:
 
    → Agent (subagent_type: "dev-workflows:test-writer", model: `<detection_model — §2.1 Sonnet chain>`):
      > "Write tests for this brief:

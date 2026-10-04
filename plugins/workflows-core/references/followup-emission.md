@@ -68,7 +68,7 @@ What survives is the **out-of-scope finding** — `/implement` naming work it de
 
 Pipelines re-run. Before inserting, READ the existing tasks in the target
 section and SKIP any whose stable key already appears. **Stable key** = the
-finding's identity: `key` + (file path | gap-id | signal-type | other repository + change). Report a
+finding's identity: `key` + (file path | gap-id | signal-type | other repository). Report a
 match as `SKIP — already exists` (mirrors `/wiki-tasks-extract` Step 5); never
 re-insert.
 
@@ -77,7 +77,7 @@ re-insert.
 Emit a task ONLY for signals whose action lands OUTSIDE the current change or
 requires a MANUAL human step:
 
-- A change another code repository needs (`/dev-workflows:implement` changes code only in the repository it branches, and records one for a run from there); its identity in the stable key is the other repository and the change it needs.
+- A change another code repository needs (`/dev-workflows:implement` changes code only in the repository it branches, and records one for a run from there); its stable-key identity is the other repository, and its one task names every change that repository needs.
 - Files/pages owned by others (the owner was surfaced and the edit is theirs to make).
 - Implementation gaps (PRD vs source; the `<KEY>-implementation-gaps.md`
   draft) → the task links the draft; verbose context → a note (§3).

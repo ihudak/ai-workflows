@@ -28,7 +28,7 @@ Every task MUST be classified into exactly one of:
 - Concurrency, caching, transactions, locking, retries, idempotency, async/queue processing.
 - Payment, billing, audit, compliance, PII, or other security-sensitive logic.
 - Changes touching **more than 3–5 non-test files**.
-- **Multi-source input** — `/implement` was given more than one distinct code repository (counted by top level, so an `@path` inside one already counted adds none), or any folder input (a saved file folder, or a spec/design folder). Large multi-source briefs are cross-cutting by nature; this floors the task at `SIGNIFICANT`. See §8 for the fan-out scan this triggers. The floor is overridable at plan approval if the user judges the work genuinely smaller than its input footprint.
+- **Multi-source input** — `/implement` was given more than one distinct code repository (counted by top level, so an `@path` inside one already counted adds none), or any folder input (a specs folder under `specifications/`, or a spec/design folder; a code-repository `@path` is never a folder input). Large multi-source briefs are cross-cutting by nature; this floors the task at `SIGNIFICANT`. See §8 for the fan-out scan this triggers. The floor is overridable at plan approval if the user judges the work genuinely smaller than its input footprint.
 - Unclear requirements, large unknowns, or otherwise high blast radius.
 
 `HIGH-RISK` is the same list with an additional severity multiplier — pick it
@@ -353,8 +353,8 @@ named in §8.5's *Opt-in* paragraph, which is the one list of them.
 
 Fan out when **any** of these structural facts hold for the invocation:
 
-- more than one code repository is referenced;
-- a saved file folder is supplied;
+- more than one distinct code repository is referenced (counted by top level);
+- a specs folder (under `specifications/`) is supplied;
 - a spec/design folder is supplied.
 
 Counting files or bytes is explicitly **not** used — the trigger is the shape
