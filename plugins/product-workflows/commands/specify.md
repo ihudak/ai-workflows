@@ -716,7 +716,7 @@ derives its themes exactly as Step B always has.
 
 ## Phase 2.5 — Resolve applicable ARD (optional)
 
-Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:reference", args: "ard-resolution")` and running its resolution with `<PRD>`, `<EPIC>` (`focus_key`), and `$SPECS_PATH`. **On the BRD route the pair comes from `brd-link.md`'s `parent:`, never from a segment count**: the route resolves a slice and nothing else (Phase 0 step 0), so the `parent:` is always there — pass `prd: <parent-key>`, `epic: <SLICE-KEY>`. The second mapping needs no change to that reference — a slice folder sits inside its parent's exactly as an Epic subfolder sits inside a PRD dir, the layout its Epic-level branch already collects — and it is the same pair `/product-workflows:create-ard <SLICE-KEY>` writes into the ARD's own `prd:`/`epic:` frontmatter, so the two agree by construction rather than by coincidence. On `status: none`, **skip and proceed exactly as before**. On `status: unmerged`, **stop**, naming the returned `branch` and any `pr`. On `status: found`, keep the spec's user stories + scope consistent with the returned `invariants` + `guidance_summary` during the Phase 5 grill; record a necessary deviation under the spec's `### Open questions` (never edit the ARD). Pass the `invariants` to `spec-reviewer` in Phase 6 as `applicable_ard`.
+Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:reference", args: "ard-resolution")` and running its resolution with `<PRD>`, `<EPIC>` (`focus_key`), and `$SPECS_PATH`. **On the BRD route the pair comes from `brd-link.md`'s `parent:`, never from a segment count**: the route resolves a slice and nothing else (Phase 0 step 0), so the `parent:` is always there — pass `prd: <parent-key>`, `epic: <SLICE-KEY>`. The second mapping needs no change to that reference — a slice folder sits inside its parent's exactly as an Epic subfolder sits inside a PRD dir, the layout its Epic-level branch already collects — and it is the same pair `/product-workflows:create-ard <SLICE-KEY>` writes into the ARD's own `prd:`/`epic:` frontmatter, so the two agree by construction rather than by coincidence. On `status: none`, **skip and proceed exactly as before**. On `status: unmerged`, **stop**, naming the returned `branch` and any `pr`. On `status: found`, keep the spec's user stories + scope consistent with the returned `invariants` + `guidance_summary` during the Phase 5 grill; record a necessary deviation under the spec's `### Open questions` (never edit the ARD). Pass the `invariants` to `spec-reviewer` in Phase 6 as `applicable_ard`. Also carry the returned `contracts` (`workflows-core:components` §3, §6) into Phase 5.
 
 ---
 
@@ -742,6 +742,8 @@ Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:referenc
    ```
    choices: ["List repos to scan manually", "Proceed without code scan", "Cancel"]
    ```
+
+**An Epic with a target.** Where `focus_key` is set and the Epic's `epic.md` carries a `target:` (`Skill(skill: "workflows-core:reference", args: "components")` §1), the candidate list is that target's repository alone, and the themes add no other: what the Epic needs from another component is the interface the PRD-level ARD's `contracts` fixes, read there and never by scanning its producer. Phase 4's scan of the repository passes the target's `paths` (the ARD's `components` entry for it, else the id's own path) as `search_hints.paths`.
 
 2. **Build the slug→clone map** (`/epics`-style). For each top-level directory under each entry of
    `$REPOS_PATH`, run `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, strip a trailing
@@ -786,7 +788,7 @@ For each repo in the batch:
   >   [3–5 sentences: the item's goal, what the specification must ground]
   > search_hints:
   >   symbols:  [class/function names inferred from the item text, or []]
-  >   paths:    [directory globs inferred from themes, or []]
+  >   paths:    [the target's `paths` where Phase 3 narrowed to an Epic's target, else directory globs inferred from themes, or []]
   >   keywords: [grep keywords extracted from themes]
   > refresh:
   >   switch_to_default_branch: [true if Phase 1 chose 'fetch + pull default branch' (default) or 'fetch only'; false if 'no refresh']
@@ -823,6 +825,8 @@ Walk the stages in order, authoring `specification.md` live against `${CLAUDE_PL
 3. **User stories** (`[Uxx]`)
 4. **Acceptance criteria** (`[ACxx]`, EARS)
 5. **Test cases** (`[TCxx]`)
+
+**A multi-component PRD at PRD level** (`workflows-core:components` §3, with `focus_key` null): the ARD's interface rows carried from Phase 2.5 are grill ground truth. An acceptance criterion or test case that crosses components names, in its own text, the `[AD#N]` interface it crosses, so `/epics` can split it per side and each side's Epic can test against it; the grill's *Cross-component* gap category applies (`workflows-core:grilling-technique`). The specification format is unchanged.
 
 As each decision settles, append it to `_session.md`; capture a genuinely-ambiguous term in `_glossary.md`. Resolve open questions to zero where possible; leave genuinely unresolvable ones as `- [ ]` and keep the header **Open questions** count in sync. A repo gap surfacing here → escalate (describe the missing capability + why) and STOP; the run is resumable from `_session.md` after the user remounts and re-invokes.
 

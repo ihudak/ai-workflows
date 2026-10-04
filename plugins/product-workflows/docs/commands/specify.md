@@ -57,6 +57,10 @@ flowchart TD
 
 Four subagents are dispatched: `workflows-core:docs-grounder` (Phase 4, read-only grounding on the shipped product docs — default ON when `$DOCS_PATH` resolves, advisory, never a gate), `workflows-core:code-scanner` (Phase 4, one instance per mounted candidate repo, up to 4 concurrent per batch — deliberately **light** relative to `/epics`' scan, grounding for feasibility rather than a full reuse audit), `spec-reviewer` (Phase 6, Opus-pinned), and `workflows-core:impl-maintenance` (Phase 8, session lessons-learned). The grill and the `specification.md` authoring itself run inline on `current_model` rather than through a delegated subagent.
 
+### Multi-component PRDs
+
+At PRD level on a PRD with two or more components, the ARD's interfaces are ground truth: an acceptance criterion or test case that crosses components names the `[AD#N]` it crosses, so `/epics` can split it per side. At Epic level, an Epic with a `target:` narrows the scan to its target's repository and paths; what it needs from another component is read from the ARD's `## Contracts`, not by scanning that component.
+
 ## What it needs
 
 - **An Epic or PRD address** — a prompt with no address is rejected outright (`SPECIFY_NEEDS_KEY`); `/specify` has no direct-prompt behaviour.
