@@ -45,7 +45,7 @@
     },
     {
       "name": "acli",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "description": "Atlassian CLI (acli) reference skill for Jira and Confluence: JQL search, work items, comments, links, attachments, watchers, projects, sprints, boards, filters, and Confluence spaces, pages and blog posts. Adds container-friendly authentication (token on stdin; --web OAuth cannot complete without a browser) and a destructive-operation policy that forbids the agent from adding --yes and requires a blast-radius count before any --jql/--filter mutation. Requires the acli binary on PATH.",
       "author": {
         "name": "Daniel Ziegenberg",
@@ -81,7 +81,7 @@
     },
     {
       "name": "docs-workflows",
-      "version": "1.5.1",
+      "version": "1.5.2",
       "description": "Commands for a product's documentation and release notes. /docs-init scaffolds a documentation repository from nothing: a Material for MkDocs skeleton, public and internal builds over one content root, Vale, CI and a docs-profile.yml. /docs-brand extracts a logo and colour pair from the product's code and applies them, WCAG contrast-checked. /docs-serve runs the site's dev server. /docs-audit turns the product's own code and specs tree into a coverage grid and a prioritised backlog of the pages it is missing, behind an Opus review gate. /document edits prose directly, or keyed to a PRD folder writes product docs from its implementation diffs behind an Opus review gate. /docs-profile refreshes a docs repository's machine-readable profile; /release-notes drafts a destination-shaped entry from the same folder. Depends on workflows-core and prose-style.",
       "author": {
         "name": "Ivan Gudak",

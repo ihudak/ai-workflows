@@ -39,9 +39,17 @@ Confluence content — using the `acli` CLI.
 
 ## Safety
 
-`acli` writes to live Jira and Confluence. Ask the user before running anything below, and never
-add `--yes`/`-y` on your own initiative — its only purpose is to skip the confirmation prompt that
-exists to protect the user.
+`acli` writes to live Jira and Confluence. **Every command that is not a read is a write** — reads
+are `view`, `list`, `search`, `status`, the `list-*` commands, `link type`, `comment visibility`,
+and the `--generate-json` templates (`auth` commands change only your local login). Ask the user
+before running any write, naming the command and what it will touch.
+
+**`--yes`/`-y` is the user's approval, never yours.** Commands that act on several items prompt for
+confirmation, and an agent's shell cannot answer that prompt — so the approval happens in the
+conversation first, and only then do you add `--yes` to run it. Never add it on your own initiative.
+Every `--yes` in the examples below stands for that approval having been given.
+
+The writes that matter most:
 
 **Irreversible:** `jira workitem delete`, `jira project delete`, `jira sprint delete`,
 `jira board delete`, `jira field delete`, `jira workitem comment delete`,
@@ -49,7 +57,13 @@ exists to protect the user.
 
 **Reversible but disruptive:** `jira workitem archive`, `jira project archive`,
 `confluence space archive`, bulk `jira workitem edit`, `jira workitem transition`,
-`jira workitem comment create` (posts immediately and notifies watchers).
+`jira workitem comment create` and `--edit-last` (post immediately and notify watchers),
+`jira sprint update --state closed`, `jira workitem link delete`.
+
+**Visible to others:** `jira workitem create` / `create-bulk`, `assign`, `clone`,
+`comment update`, `watcher remove`, `jira filter update` (shared filters change for everyone who
+uses them), `jira project` / `board` / `sprint` creates and updates, and Confluence `space` and
+`blog` creates and updates.
 
 The `--key`, `--jql` and `--filter` selectors can hit hundreds of items in one command. Before any
 mutating command driven by `--jql` or `--filter`, count the blast radius first and show the user
@@ -101,11 +115,11 @@ acli jira workitem create-bulk --from-csv issues.csv
 # Edit work items (accepts --key, --jql, or --filter selectors; see Selectors)
 acli jira workitem edit --key "<issue_id_1>,<issue_id_2>" --summary "New summary"
 acli jira workitem edit --jql "project = <project_key> AND status = Open" --assignee "@me"
-acli jira workitem edit --key "<issue_id>" --remove-assignee --yes
+acli jira workitem edit --key "<issue_id>" --remove-assignee --yes        # after approval
 
 # Transition (move to another status)
 acli jira workitem transition --key "<issue_id>" --status "In Progress"
-acli jira workitem transition --jql "project = <project_key>" --status "Done" --yes
+acli jira workitem transition --jql "project = <project_key>" --status "Done" --yes   # after approval
 
 # Assign (--assignee accepts @me, default, or an email/account ID)
 acli jira workitem assign --key "<issue_id>" --assignee "@me"
@@ -116,7 +130,7 @@ acli jira workitem assign --key "<issue_id>" --remove-assignee
 acli jira workitem clone --key "<issue_id>" --to-project "<project_key>"
 
 # Delete / archive / unarchive
-acli jira workitem delete --key "<issue_id_1>,<issue_id_2>" --yes
+acli jira workitem delete --key "<issue_id_1>,<issue_id_2>" --yes   # after approval
 acli jira workitem archive --jql "project = <project_key> AND status = Done"
 acli jira workitem unarchive --key "<issue_id>"
 ```
@@ -160,14 +174,15 @@ Most mutating work-item commands — `edit`, `transition`, `assign`, `comment cr
 acli jira workitem edit --jql "project = <project_key> AND status = Open" --assignee "@me"
 
 # Act on a saved filter's results
-acli jira workitem transition --filter <filter_id> --status "Done" --yes
+acli jira workitem transition --filter <filter_id> --status "Done" --yes   # after approval
 
 # Bulk via a file (one key per line, or comma/space separated)
-acli jira workitem delete --from-file issues.txt --yes
+acli jira workitem delete --from-file issues.txt --yes   # after approval
 ```
 
-These commands prompt for confirmation before acting on multiple items. Pass `--yes` (`-y`) to
-skip the prompt, and `--ignore-errors` to continue past failures when operating on many items.
+These commands prompt for confirmation before acting on multiple items. Add `--yes` (`-y`) only
+once the user has approved that exact set — see [Safety](#safety) — and `--ignore-errors` to continue
+past failures when operating on many items.
 
 JQL tips:
 - `currentUser()` — the authenticated user
@@ -236,7 +251,7 @@ acli jira sprint update --id 37 --name "Sprint 1 - Final"
 acli jira sprint update --id 37 --state closed
 
 # Delete one or more sprints
-acli jira sprint delete --id 37,42,55 --yes
+acli jira sprint delete --id 37,42,55 --yes   # after approval
 ```
 
 ## Boards
@@ -254,7 +269,7 @@ acli jira board list-projects --id 123
 
 # Create / delete
 acli jira board create --name "My Scrum Board" --type scrum --filter-id 10040 --location-type project --project "<project_key>"
-acli jira board delete --id 123,456 --yes
+acli jira board delete --id 123,456 --yes   # after approval
 ```
 
 ## Filters
@@ -324,7 +339,8 @@ acli confluence auth status
 - Use `--paginate` to fetch every page of a list; `--limit N` to cap a single page
 - `acli jira workitem view` takes the key as a positional argument: `acli jira workitem view <issue_id>`
 - `--assignee` accepts `@me`, `default`, an email, or an account ID
-- Mutating commands that act on multiple items prompt for confirmation — add `--yes` (`-y`) to skip
+- Mutating commands that act on multiple items prompt for confirmation — add `--yes` (`-y`) only after
+  the user has approved that exact set in the conversation ([Safety](#safety))
 - Reuse saved filters: `acli jira filter view --id <id>` to find a filter ID, then `acli jira workitem search --filter <id>`
 - `acli` covers Jira and Confluence as separate auth contexts: `acli jira ...` vs `acli confluence ...`
 - For Rovo Dev (Atlassian's AI coding agent) use `acli rovodev ...` — it has its own `acli rovodev auth login`
