@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.5.2] — 2026-10-04
+
+### Fixed
+- **The changelog guidelines' example table contradicted their own "Never on first publish" rule**, teaching "New page, split from earlier page…" as a correct entry and "Added a new page on…" as the rewrite of a thin one. Both rows now say a new page gets no entry, and a split is recorded on the page the content left.
+
 ## [1.5.1] — 2026-10-04
 
 ### Fixed
