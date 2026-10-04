@@ -131,3 +131,24 @@ Had the team kept an OpenAPI file in a third repository, `api-specs`, the rows w
 - **A pre-feature ARD or Epic.** An ARD with no `components:` means "no set", and every command then behaves as before. An Epic with no `target:` on a multi-component PRD is a `/ready` finding and an `/implement` prerequisite gap, never a crash.
 - **Over-splitting a monorepo.** Grouping (D5) and ride-along (D4) are the two reliefs. Example B is the check that they are enough.
 - **Size limits.** `CLAUDE.md`, two rules files here, and both Copilot instruction files are within 35 characters of a limit. D24 and D25 say where each edit goes.
+
+## Amended during planning
+
+Writing every edit against the tree, and applying the whole round to a trial copy (gates `EXIT=0`), turned up these. Each changes the decision it names, and the plan follows the amended form.
+
+1. **D14 — Phase 5.5 asks only where two or more components are proposed.** As written, it asked on every scan-on run without an ARD, so a one-component PRD would meet a question it never met before (Goal 4). One proposed component becomes the set silently.
+2. **D14 — the prerequisites stop is its own phase, 2.7**, between 2.6 and 3, and Phase 5.5 re-runs it once it has a set. The `/epics` docs page's phase count therefore moves from 20 to 22, and its diagram gains both phases.
+3. **D19 — no new `## Contract` section in `design.md`.** `design-format` already has `## Interfaces / contracts`, and on a multi-component PRD that section names the produced and consumed `[AD#N]`s. **"Add anyway" records a `- Target span:` risk** under `## Risks & mitigations` rather than an open question, because a `design.md` open question blocks handoff (`design-reviewer` BLOCKER). The reviewer treats a span with that line as allowed-but-flagged and one without it as a BLOCKER, mirroring the ARD-deviation convention.
+4. **D21 — the prerequisite test is read-only.** It uses `phase-handoff` §3.2's ref primitives, never `require-on-main`, whose row C repair offer is a prompt. The row states are `present`, `not_on_default`, `missing` and `unverified`. At `ready` scope it returns no prerequisite rows, because `workflow-states.md`'s rung (D20) already lists them for `/ready`'s Phase 3(b).
+5. **D22 — "plan approval shows the target" becomes one printed line** at Phase 1's check. Phase 2B presents `risk-planner`'s plan verbatim, so a target line in the plan would mean changing that agent's output.
+6. **D23 — `/ready` carries no broad-slice row on a multi-component PRD** (Phase 1 step 2): the flat spec is a requirements source and counts among the PRD row's own expected artifacts.
+7. **D25 — `CLAUDE.md` gets no Shared-authorities line.** `ard-resolution` and `addressing` are not listed there either, and the file sits 10 characters under its 36,000 warning. The authority paragraph lives in `.claude/rules/workflows-core.md`. `CLAUDE.md` does change: its hard constraint *"an absent optional input … never becomes a prerequisite"* gains a pointer to `components` §6, and two lines are tightened to pay for it (35,984 after).
+8. **`ard-resolution`'s no-regression rule gains its one stated exception.** *"A caller that gets `status: none` MUST behave exactly as it did before"* is falsified by the `/epics` and `/implement` questions on a multi-component PRD. The exception is stated there, with the reason, and the two callers cite it.
+9. **The three reviewers do not load `components`.** `epic-reviewer`, `design-reviewer` and `readiness-reviewer` carry no `Skill` tool, so each states its checks from its brief, and none cites a core reference. `workflow-states.md` does cite one, and so gains the core-references preamble (check 16).
+10. **The claim-expiry sweep found seven more sentences**, each rewritten:
+    - `create-ard`'s docs page, twice (*theme-to-repo*);
+    - `epic-picker`'s note on the broad slice;
+    - `/design`'s *taken first*, in the command and on its docs page;
+    - the `/ready` and `/implement` docs pages' slice sentences;
+    - `/epics`' *PRD-level `/specify` remains optional* and its Phase 2.5 *no prompt* line;
+    - `/ready`'s *a PRD-level spec is optional*.
