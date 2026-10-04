@@ -216,7 +216,7 @@ On a keyed run, first run Phase 1.8's ARD resolution — stopping as Phase 1.8 s
 
 - **`target_repo_matches: false`** → ask `choices: ["Stop — run /dev-workflows:implement <EPIC> in <the target's repository> (Recommended)", "Implement here anyway", "Cancel"]`. **Stop** and **Cancel** stop.
 - **`target_repo_matches: unknown`** → one line saying the target was not compared, this repository having no `origin`; no question.
-- **A prerequisite row that is not `present` — an Epic with no target, or one outside the ARD's set, among them (`epic_target`) — or a `coverage_gaps` entry naming this Epic** → ask once, naming each: `choices: ["Stop — <the earliest gap's remedy, §6> first (Recommended)", "Implement without them", "Cancel"]`. **Stop** and **Cancel** stop.
+- **A prerequisite row that is neither `present` nor `unmanaged` — an Epic with no target, or one outside the ARD's set, among them (`epic_target`) — or a `coverage_gaps` entry naming this Epic** → ask once, naming each: `choices: ["Stop — <the earliest gap's remedy, §6> first (Recommended)", "Implement without them", "Cancel"]`. **Stop** and **Cancel** stop.
 
 On **Implement here anyway** or **Implement without them**, carry what was overridden — the target mismatch, each missing artifact with its state, each coverage gap by `AD#N` — to the Phase 5 report's `### Assumptions & limitations` and to Phase 4.6's `body_facts`, which names it under the pull request's *Merge danger*.
 

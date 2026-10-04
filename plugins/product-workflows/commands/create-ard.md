@@ -222,7 +222,7 @@ this stage). Zero external calls.
    describe a search a verbatim path never performs.
 4. **Prior ARD.** If the target `ard.md` exists → Phase 1 offers refine-vs-fresh. The target is `ard.md` in the feature folder step 3 resolved, on every route — a `PRD-` slice folder is that folder on the BRD route, and the test is the same glob in the same place with no route branch.
 5. **Optionality advisory — one rule, gauged off everything the folder holds.** Gauge size and, for a small
-   single-repo item, note "an ARD may be optional here" and offer — never where `enumerate-components` (`workflows-core:components` §2) finds two or more code components in that one repository, since a PRD touching two of them is multi-component and `/epics` then stops to ask for this ARD —
+   single-repo item, note "an ARD may be optional here" and offer — adding, on a PRD-level run where `enumerate-components` (`workflows-core:components` §2) finds two or more code components in that one repository, that a PRD touching two of them is multi-component and `/epics` will then ask for this ARD —
    `choices: ["Author the ARD anyway", "Stop — no ARD needed"]`. The gauge is the **union** of what the
    resolved folder actually carries, not a per-route pair of gauges:
    - the authored `prd.md`'s user-story count and scope breadth, when the folder holds one;

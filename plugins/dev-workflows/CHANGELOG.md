@@ -19,7 +19,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`/design <PRD>` and `/implement <PRD>` on a multi-component PRD** do not take the flat PRD-level specification as one unit: they go to the Epic picker; with no specified Epic, `/design` stops for `/specify` or recommends `/epics`, and `/implement` recommends `/epics` at 0 Epics, each taking the specification whole only as an override at 0 Epics.
 - **`/design` keeps a targeted Epic in its target's repository**: adding a second repository asks whether to re-split the Epic (where the PRD-level ARD's set holds the repository) — `/epics <EPIC>`, naming the move at its plan approval — or record the component in the ARD first, and adding it anyway records a `Target span` risk.
 - **`design-format`**: a `Target` header line, and `## Interfaces / contracts` names the ARD interfaces a design produces and consumes.
-- **`workflow-states`**: on a multi-component PRD, *Ready for Implementation* expects the ARD with `## Contracts` and the PRD-level specification, and no PRD-level design.
+- **`workflow-states`**: on a multi-component PRD, *Ready for Implementation* expects the ARD with `## Contracts` and the PRD-level specification, and no PRD-level design, unless the 0-Epic override built the PRD whole.
 
 ## [4.7.0] — 2026-10-04
 

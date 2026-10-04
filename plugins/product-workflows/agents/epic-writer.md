@@ -161,7 +161,7 @@ _source: native | derived_
   `NOT READY` (gaps you judge fundamental). `P% = covered/total`.
 - **Focus mode:** when the handoff `scope` targets a single focus Epic, still
   recompute `_coverage.md` PRD-holistically (all existing Epics + the re-drafted
-  focus Epic + any net-new Epic a multi-component split drafts) — never a single-Epic view.
+  focus Epic + any net-new Epic a split drafts) — never a single-Epic view.
 - **Refinement mode:** refined targets appear in "Covered by" as `<KEY> (refined)`; net-new drafts as `<KEY> (new)`, under the key minted for them — every Epic here has one, so no row is identified by a slug; untouched existing Epics as `<KEY> (exist)`. Requirements no target covers are `❌ gap` rows — the leftover the `/epics` Phase 6.1 gate routes.
 
 ## Components and contracts (only when `components` is present)

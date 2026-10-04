@@ -5,7 +5,7 @@ model: opus
 tools: ["Read", "Glob", "Grep"]
 ---
 
-Read-only cross-artifact reviewer invoked from `/ready` Phase 4, **after** the phase has been derived (the PRD, each Epic, and the broad PRD-level slice where the PRD folder holds one and the PRD is not multi-component, or holds the override's PRD-level `design.md`). Uses the strongest available reasoning model (Claude Opus). Unlike
+Read-only cross-artifact reviewer invoked from `/ready` Phase 4, **after** the phase has been derived (the PRD, each Epic, and the broad PRD-level slice where the PRD folder holds one and the PRD is not multi-component, or was built whole by the 0-Epic override). Uses the strongest available reasoning model (Claude Opus). Unlike
 `prd-reviewer` / `ard-reviewer` / `epic-reviewer` / `spec-reviewer` / `design-reviewer`, each of which
 judges the quality of **one** artifact, `readiness-reviewer` is the only reviewer that **synthesises a
 verdict across** artifacts. Several of those reviewers do open a companion artifact — `design-reviewer`
@@ -31,7 +31,7 @@ The caller passes a structured brief:
 - **`multi_component`** (optional) — Phase 3(d)'s Targets and Contract coverage tables, present only on a multi-component PRD (two or more code components). When omitted, the *Cross-Epic contract coverage* dimension reports `N/A — one component`.
 - **Artifact texts** — the PRD, ARD (if any), each in-scope Epic, each `specification.md`, each
   `design.md` — with their absolute paths.
-- **Derived phases** — the PRD's phase and each Epic's, as derived from the artifacts present, each naming the artifacts that placed it there; and, on a PRD-level run whose PRD folder holds a flat `specification.md` and is not multi-component, or holds the override's PRD-level `design.md` (otherwise, on a multi-component PRD, that file is a requirements source, not a slice), the broad PRD-level slice's — a unit beside the Epics, derived on the Epic ladder from that folder's own `specification.md`, `design.md` and `implementation.md` as an Epic's is from its own. A phase asserted without the artifacts that placed it is a claim this review cannot check.
+- **Derived phases** — the PRD's phase and each Epic's, as derived from the artifacts present, each naming the artifacts that placed it there; and, on a PRD-level run whose PRD folder holds a flat `specification.md` and is not multi-component, or was built whole by the 0-Epic override (otherwise, on a multi-component PRD, that file is a requirements source, not a slice), the broad PRD-level slice's — a unit beside the Epics, derived on the Epic ladder from that folder's own `specification.md`, `design.md` and `implementation.md` as an Epic's is from its own. A phase asserted without the artifacts that placed it is a claim this review cannot check.
 - **`claimed_status`** (optional) — a phase the operator declared with `--claimed`. Present, compare it against the derived phase: a claim **above** the derived phase caps the verdict, a claim below is reported and does not cap. Absent, there is nothing to diverge from and the review judges the artifacts alone.
 - **`applicable_ard`** (optional) — the resolved ARD `AD#N` invariants. When omitted, dimension 4
   (ARD conformance) is skipped entirely (no-regression).
