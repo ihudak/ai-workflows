@@ -166,7 +166,7 @@ _source: native | derived_
 
 ## Components and contracts (only when `components` is present)
 
-The rules are `workflows-core:components`'; what follows is how they shape a draft.
+The rules are `workflows-core:components`'s; what follows is how they shape a draft.
 
 - **One target per Epic.** Write exactly one `target:`, an `id` from `components`, never one outside it. A capability that lands in two or more components becomes one Epic per component, each linked to the others it needs by key in `## Dependencies` — in `contracts.landing_order` where the handoff carries `contracts`.
 - **Ride-along** (§4). Where an Epic's target needs a change in a `kind: deploy` component **of the same repository** that exists only to deploy or configure the target, write it under `### In scope` as `- Also touches: <component id> — <why>` — a `kind: deploy` entry of `components`, or, where `components` does not list it, `<the target's repo-slug>:<the deploy directory>` (§4) — and do not split it out. Where the target is a module, a change to its repository's shared ground (`workflows-core:components` §2 — any path inside none of its modules and deploy directories) made for the target's sake stays in its In scope with no line of its own. A change in a `kind: code` component, or in a component of another repository, is a second target: split it.
