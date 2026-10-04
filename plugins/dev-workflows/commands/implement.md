@@ -474,7 +474,7 @@ Every stop from here to the end of the run names, beside whatever else it report
 
 Before writing any file:
 
-1. **Clean-tree check** — Run `git status --porcelain`. If the output is non-empty:
+1. **Clean-tree check** — Run `git status --porcelain -z --untracked-files=all`, which lists untracked files whatever the user's `status.showUntrackedFiles`. If the output is non-empty:
    - Show the user what is dirty (paste the `git status --short` output).
    - Ask:
      ```

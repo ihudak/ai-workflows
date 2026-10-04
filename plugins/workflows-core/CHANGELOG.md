@@ -19,6 +19,8 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **The references page called `followup-emission` a journal emitter**; it emits follow-up tasks and verbose notes.
 - **`followup-emission` §8's caller contract, and `session-hygiene`'s resume-pointer location, named `followup-emission` §4 for resolving the write target**, which lists what no longer produces follow-ups; the ladder is §2.
 - **`phase-handoff`'s note on `/dev-workflows:implement`'s Phase 4.5** named every conformance note; only one in `$SPECS_PATH` reaches that phase.
+- **`finding-triage`'s partly-emptied rule now admits a caller's own case**: a first review whose survivors a caller keeps from the fixer, because their fix lies in another code repository, leaving it nothing, asks the first settle prompt.
+- **`next-phase-offer`'s routing graph** names `/dev-workflows:implement`'s run from another repository before the remaining Epics, as the command's Next step does.
 
 ## [1.11.0] — 2026-10-03
 

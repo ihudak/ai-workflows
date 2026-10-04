@@ -105,8 +105,7 @@ triage. The disposition, in order:
    **Never** promote a non-`PASS` verdict to `PASS` silently. The orchestrator's authority under this
    reference is over *findings*; a verdict its own findings no longer support is the user's to settle.
 
-A partly emptied set is not this case: where at least one finding survived, the verdict stands and the
-command's normal branch runs on the survivors.
+A partly emptied set is not this case: where at least one finding survived, the verdict stands and the command's normal branch runs on the survivors — save where a caller's own rule keeps a first review's survivors from the fixer, because their fix lies in another code repository, and nothing is left for it: that caller asks this section's first settle prompt, and says so.
 
 This section governs the first review. On a re-review, § On re-review settles the verdict instead —
 there, no survivor is handed to a fixer, and its own prompt carries no re-review arm. The prompt

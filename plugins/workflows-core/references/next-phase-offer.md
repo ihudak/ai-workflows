@@ -233,7 +233,7 @@ array carries every option.
 - `/dev-workflows:ready <ADDRESS>` → **SUPPORTED** → `/dev-workflows:implement <ADDRESS>` (the same address); **PARTIAL / NOT-SUPPORTED**
   → resolve the named gaps, then re-run `/dev-workflows:ready`. *(Read-only verifier;
   not itself a linear pipeline node — an optional gate before build.)*
-- `/dev-workflows:implement <EPIC>` → finish remaining Epics (breadth); once ALL Epics implemented →
+- `/dev-workflows:implement <EPIC>` → first, where it recorded a change another code repository needs, `/dev-workflows:implement <EPIC>` run from that repository; then finish remaining Epics (breadth); once ALL Epics implemented →
   `/docs-workflows:document <PRD>` → `/docs-workflows:release-notes <PRD>`. *(Direct mode → no forward offer.)*
 - `/docs-workflows:document <PRD>` (PRD-level, after all Epics) → `/docs-workflows:release-notes <PRD>`. *(Doc-edit mode → no
   forward offer.)*
