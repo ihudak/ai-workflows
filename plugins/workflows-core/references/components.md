@@ -78,7 +78,7 @@ components:
     kind: deploy
 ```
 
-`kind` defaults to `code`; `paths` defaults to the id's own path, or the whole repository for a bare slug. **`paths` is how a confirmer groups**: two modules that always change together become one component, so they are never forced into two Epics. Grouping is recorded nowhere else, so it is `/create-ard`'s to make: an `/epics` run without an ARD keeps, drops and adds components but does not group them. A grouped component's id names one of its paths. Every entry's repository is in the ARD's `grounded_repos`, or is named under its `## Open questions`.
+`kind` defaults to `code`; `paths` defaults to the id's own path, or the whole repository for a bare slug. **`paths` is how a confirmer groups**: two modules that always change together become one component, so they are never forced into two Epics. A grouping, and a `kind` corrected from what §2 proposed, are recorded nowhere else, so both are `/create-ard`'s to make: an `/epics` run without an ARD keeps, drops and adds components, but neither groups them nor changes a kind — so every later command, reading `epic-targets` (§3), counts kinds exactly as that run did. A grouped component's id names one of its paths. Every entry's repository is in the ARD's `grounded_repos`, or is named under its `## Open questions`.
 
 ## 6. `multi-component-prereqs`
 
@@ -86,7 +86,7 @@ Inputs: the resolved PRD folder and its key, the Epic key (or null), and `scope`
 
 1. Run §3. Where `multi_component` is false, return `{multi_component: false}` and nothing else — the caller proceeds exactly as it did before this reference existed.
 2. **Prerequisites** (`epics` and `implement` scope; at `ready` scope the Ready rung of `dev-workflows:workflow-states` already lists them). Each row is `present` (on `<default-ref>`), `not_on_default` (not there, but in the `$SPECS_PATH` worktree or on a plugin branch) or `missing`, tested with `workflows-core:phase-handoff` §3.2's read-only primitives — the ref-existence test, `git -C "$SPECS_PATH" cat-file -e "<default-ref>:./<path>" 2>/dev/null`, and the plugin-branch scan — and never with `require-on-main`, whose repair offer is a prompt. Where `<default-ref>` itself does not exist, every row is `unverified` with that reason.
-   - `ard_contract` — the PRD folder's `ard.md`, **and** `ard-resolution`'s `contracts` not null. An ARD present without a `## Contracts` section is `missing`.
+   - `ard_contract` — the PRD folder's `ard.md`, **and** `ard-resolution`'s `contracts` not null. The file's state is read first: not on `<default-ref>` → `not_on_default` (or `missing` where it is nowhere); on it but without a `## Contracts` section → `missing`.
    - `prd_spec` — the PRD folder's flat `specification.md`.
    - `epic_target` (`implement` scope) — read from the Epic's `epic.md`, not tested on a ref: `present` where it carries a `target:` (in the set, where §3's source is `ard`), `missing` where it carries none, `outside_set` where the ARD's set does not hold it.
    - `epic_spec`, `epic_design` (`implement` scope) — the Epic folder's `specification.md` and `design.md`.
@@ -99,7 +99,7 @@ Inputs: the resolved PRD folder and its key, the Epic key (or null), and `scope`
    - `consumer_not_dependent` — a consumer's `## Dependencies` does not name, by key, the Epic that produces what it consumes;
    - `unproduced_row` (`ready` scope only) — a `new` or `changed` row no Epic produces.
 
-   At `implement` scope only gaps naming this Epic — as consumer or producer — are returned. A row with status `exists` is satisfied by the code, so consuming it is never a gap.
+   At `implement` scope only the gaps whose `epic` is this Epic are returned — a consumer's missing dependency is the consumer's to fix, never its producer's. A row with status `exists` is satisfied by the code, so consuming it is never a gap.
 
 Return shape:
 
@@ -115,7 +115,7 @@ coverage_gaps: [{kind: unknown_ad | consumed_unproduced | produced_off_target | 
 
 **The earliest gap's remedy**, which `/epics` and `/implement` recommend, is the remedy for the first row that is not `present`, in ladder order — `ard_contract`, `prd_spec`, `epic_target`, `epic_spec`, `epic_design`:
 
-- a `missing` row → the command that authors it: `ard_contract` → `/product-workflows:create-ard <PRD>`, `prd_spec` → `/product-workflows:specify <PRD>`, `epic_spec` → `/product-workflows:specify <EPIC>`, `epic_design` → `/dev-workflows:design <EPIC>`;
+- a `missing` row → the command that authors it: `ard_contract` → `/product-workflows:create-ard <PRD>`, `prd_spec` → `/product-workflows:specify <PRD>`, choosing its broad PRD-level spec, `epic_spec` → `/product-workflows:specify <EPIC>`, `epic_design` → `/dev-workflows:design <EPIC>`;
 - `epic_target` `missing` or `outside_set` → `/product-workflows:epics <EPIC>`, whose refine mode re-drafts the Epic with a target from the set;
 - a `not_on_default` row → landing that artifact on the default branch — merging the branch or pull request that carries it;
 - an `unverified` row → settling `$SPECS_PATH`'s default branch, which the row's reason names;

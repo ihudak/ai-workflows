@@ -388,7 +388,7 @@ Epic's — **`epic: null`** (PRD-level ARD only, on a re-refine run as on a draf
 `$SPECS_PATH`.
 
 - On `status: none` (including `$SPECS_PATH` unset/unresolvable) → **skip and
-  proceed exactly as before.** No prompt, no extra output — save Phases 2.7 and 5.5 on a multi-component PRD, the one exception `workflows-core:ard-resolution`'s no-regression rule states.
+  proceed exactly as before.** No prompt, no extra output — save Phase 5.5, which asks wherever two or more components are proposed, and Phase 2.7 on a multi-component PRD, the one exception `workflows-core:ard-resolution`'s no-regression rule states.
 - On `status: unmerged` → **stop**, naming the returned `branch` and any `pr` — an ARD that exists but has not landed on `<default>` is a weaker architectural basis than the one about to arrive, and Epics drafted against it would need re-doing once it does.
 - On `status: found` → carry `invariants` + `guidance_summary` forward: pass them
   to `epic-writer` (Phase 6 handoff, as `applicable_ard`) so drafts stay
@@ -616,7 +616,7 @@ Skip where Phase 2.5 supplied a known set.
    "This PRD touches <N> components. Each Epic will target exactly one of them."
    choices: ["Confirm these components (Recommended)", "Adjust the list (you'll be prompted)", "Cancel"]
    ```
-   **Adjust** → take free text to keep, drop or add components, or to correct a component's `kind` (§1), re-show the list, and ask again; grouping two modules into one component is recorded only in an ARD's `components:` (§5), so it is `/create-ard`'s to make. The confirmed list is the run's known set (§3, source `epics-run`). **Cancel** → stop.
+   **Adjust** → take free text to keep, drop or add components, re-show the list, and ask again; grouping two modules into one component, or correcting a component's `kind` — a gitops repository §2 proposed as `code`, say — is recorded only in an ARD's `components:` (§5), so it is `/create-ard`'s to make, and the Phase 2.7 stop it then meets recommends exactly that. The confirmed list is the run's known set (§3, source `epics-run`). **Cancel** → stop.
 4. **None proposed** (no evidence path falls in any component) → no known set; Phase 9 says why.
 5. Where the confirmed set is multi-component (§3), run Phase 2.7 now, exactly as written there; with no ARD, its `ard_contract` row is `missing`.
 

@@ -81,7 +81,7 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
    constraint, why it lost); otherwise the author names alternatives by hand. An "alternative" that was
    never plausible ("we considered not having an interface") is theatre — see `design-reviewer`.
 4. **## Interfaces / contracts** (core) — exact signatures, API shapes, schemas, events, config keys
-   the change introduces or alters. Concrete types, not prose promises. On a multi-component PRD (`workflows-core:components` §3), also name each interface the Epic's `## Contract` produces — its `[AD#N]`, and how this design meets that row's Rule — and each it consumes — its `[AD#N]`, and the stub or test double `## Test strategy` uses for it, or, where a contract Epic builds that interface as a code artifact (its ARD row's `Artifact`), that artifact as built.
+   the change introduces or alters. Concrete types, not prose promises. On a multi-component PRD (`workflows-core:components` §3), also name each interface the Epic's `## Contract` produces — its `[AD#N]`, and how this design meets that row's Rule — and each it consumes — its `[AD#N]`, and the stub or test double `## Test strategy` uses for it, or, where a contract Epic builds that interface as a code artifact (its ARD row's `Artifact`), that artifact as built, or, where the row's `Status` is `exists`, the interface as it already runs.
 5. **## Seams** (scaled) — where the change is exercised under test; prefer the **highest** seam that
    still isolates the change. Name the seam per component. Judge seam/module quality by: **deep module**
    (a small interface over substantial implementation — prefer depth over many shallow pass-throughs);

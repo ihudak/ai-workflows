@@ -509,6 +509,7 @@ top-level Epic with no PRD above it, which used to have a branch of its own here
 the case itself (Phase 0 step 3): `/product-workflows:epics` writes every `EPIC-` folder under a PRD folder, and
 is the only command that writes one at all.
 
+- **PRD with exactly 1 Epic, on a multi-component PRD with no PRD-level `specification.md`** (`multi-component-test`, `Skill(skill: "workflows-core:reference", args: "components multi-component-test")`, §3) → no auto-selection: that spec is what `/epics` splits and what `/implement` asks for, so ask `choices: ["Author one broad PRD-level spec now (Recommended)", "Specify <EPIC-KEY> <title>"]` — the first leaves `focus_key` null and proceeds to Step B; the second takes the bullet below.
 - **PRD with exactly 1 Epic** → no picker; auto-select it. Set `focus_key` = that Epic and emit a
   one-line notice (e.g. `Single child Epic <EPIC> '<title>' — authoring its spec.`). Re-point the
   feature folder to that Epic's per-Epic subfolder (see *Re-pointing* below). Proceed to Step B.
@@ -547,8 +548,8 @@ is the only command that writes one at all.
     That command accepts a folder holding a `prd.md` asserting `kind: prd` and refuses one that does not
     (`commands/epics.md` Phase 0 step 1b, `EPICS_NO_PRD`), so offering it on a folder with no PRD would
     name a run that stops on arrival. Where the folder holds none — the ordinary BRD-route state, and the
-    one the Phase 0 gate reported as `absent` — the first choice becomes
-    `"Author the PRD first — /product-workflows:create-prd <ADDRESS> (Recommended)"`, which is the run that
+    one the Phase 0 gate reported as `absent` — the `/epics` choice — the first, or the second on the multi-component array, which keeps its own marker on the broad-spec option — becomes
+    `"Author the PRD first — /product-workflows:create-prd <ADDRESS> (Recommended)"` (without `(Recommended)` on the multi-component array), which is the run that
     writes the PRD `/epics` then reads and takes the single address this run already resolved.
     **Passing that command's container refusal is not enough to name it**, and it is the only one of
     its three refusals this run has cleared: on the BRD route the resolved folder is a slice with a

@@ -269,7 +269,7 @@ key, never the run's own `key`**, which on an Epic-level run is the Epic's: the 
 (`workflows-core:ard-resolution`, *Resolution* steps 1–2).
 
 - **`status: none`** (including `$SPECS_PATH` unset/unresolvable) → the ARD dimension is **inactive** for
-  this run — no prompt, no extra output, `readiness-reviewer`'s ARD-conformance dimension is skipped
+  this run — no prompt, no extra output (on a multi-component PRD, Phase 3(b)'s ❌ for the missing contract and Phase 3(d)'s tables are the stated exception), `readiness-reviewer`'s ARD-conformance dimension is skipped
   entirely (no-regression, per `workflows-core:ard-resolution`).
 - **On `status: found` or `unmerged`**, also carry the returned `components` and `contracts` to Phase 3(d).
 - **`status: found`** → carry the returned `invariants` (`AD#N` list, PRD-level inherited +
@@ -751,7 +751,7 @@ a code or docs repository, or the current working directory, where it is not the
 - ALWAYS use `choices` arrays for decision points; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0)
 - ARD steps (Phase 2.5, the reviewer's `applicable_ard`, the report's ARD-conformance section) are
   ADDITIVE and guarded on `status: found` or `status: unmerged` — a run with no ARD (`status: none`) is
-  byte-identical to before, save on a multi-component PRD, the exception `workflows-core:ard-resolution`'s no-regression rule states (Phase 1 step 2, Phase 3(d), the `## Contract coverage` section)
+  byte-identical to before, save what an Epic's `target:` adds on any PRD (Phase 3(c)'s candidate repositories) and, on a multi-component PRD, the exception `workflows-core:ard-resolution`'s no-regression rule states (Phase 1 step 2, Phase 3(b) and 3(d), the `## Contract coverage` section)
 - ALL written claims trace to a resolved key or to artifact paths actually read; never
   invent content the sources don't contain
 - ALWAYS end with a `### Context hygiene` block per `workflows-core:session-hygiene` — prepare-first (the `resume.md` write — carrying the verdict as carry-forward — runs later, in the terminal cost phase, per `workflows-core:session-hygiene` §1 — this block prints the guidance only), then a same-role `/compact` suggestion + `/rename <PRD-ID>-<slug>-dev`; guidance only, never auto-run.

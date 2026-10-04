@@ -28,7 +28,7 @@ The caller passes a structured brief:
 - **`requirements[]`** — the PRD requirement inventory. The coverage ground truth.
 - **Phase 3 skeleton** — the coverage matrix, the status-expectation table, and the repo-availability
   result assembled before this reviewer runs.
-- **`multi_component`** (optional) — Phase 3(d)'s Targets and Contract coverage tables, present only on a PRD whose components are two or more. When omitted, the *Cross-Epic contract coverage* dimension reports `N/A — one component`.
+- **`multi_component`** (optional) — Phase 3(d)'s Targets and Contract coverage tables, present only on a multi-component PRD (two or more code components). When omitted, the *Cross-Epic contract coverage* dimension reports `N/A — one component`.
 - **Artifact texts** — the PRD, ARD (if any), each in-scope Epic, each `specification.md`, each
   `design.md` — with their absolute paths.
 - **Derived phases** — the PRD's phase and each Epic's, as derived from the artifacts present, each naming the artifacts that placed it there; and, on a PRD-level run whose PRD folder holds a flat `specification.md` and is not multi-component (there that file is a requirements source, not a slice), the broad PRD-level slice's — a unit beside the Epics, derived on the Epic ladder from that folder's own `specification.md`, `design.md` and `implementation.md` as an Epic's is from its own. A phase asserted without the artifacts that placed it is a claim this review cannot check.
