@@ -301,7 +301,7 @@ artifact does. A claim below is reported and does not cap: artifacts can legitim
 somebody's bookkeeping.
 
 
-Mechanically build three inputs for the reviewer — orchestrator-inline, no subagent, no user prompt.
+Mechanically build three inputs for the reviewer — four on a multi-component PRD, (d) below — orchestrator-inline, no subagent, no user prompt.
 
 **(a) Coverage map.** For each requirement in Phase 2's `requirements[]` (by `id`), grep its ID token
 across the in-scope Epic `.md` file(s) and any `specification.md`(s)/`design.md`(s) Phase 1 found locally

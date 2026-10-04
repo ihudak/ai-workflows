@@ -505,7 +505,7 @@ only that Epic's `epic.md` — save a split (Phase 6), whose net-new Epics it al
 set (`existing_epics`) is the *other* `EPIC-` folders under `prd_dir` — exclude the focus Epic so
 Phase 6 re-emits it rather than skipping it as a duplicate. When `focus_key` is null, behaviour
 is unchanged (draft the full partition of new Epics).
-When `focus_key` is set, `mode = refine` and `refinement_targets = [the focus Epic]` — Phase 6 iterates on that Epic's current `epic.md` (see `epic-writer` refinement mode) rather than regenerating from the PRD alone.
+When `focus_key` is set, `mode = refine` — `both`, on a focus run that splits (Phase 6) — and `refinement_targets = [the focus Epic]` — Phase 6 iterates on that Epic's current `epic.md` (see `epic-writer` refinement mode) rather than regenerating from the PRD alone.
 
 **Refinement candidates.** From those same `EPIC-` folders, read each `epic.md`'s `refinement_candidate` and `scope_hint` (emitted by the folder read at `prd-plus-epics`). Collect `refinement_candidates` = every linked Epic with `refinement_candidate: true`. These are near-empty Epic drafts left as placeholders — refinement *targets to fill in*, not non-duplication constraints. This set drives the Phase 3.5 gate.
 
@@ -515,7 +515,7 @@ When `focus_key` is set, `mode = refine` and `refinement_targets = [the focus Ep
 
 Runs only when `focus_key` is set OR `refinement_candidates` is non-empty. Otherwise skip silently — `mode = generate`, behaviour byte-identical to the legacy net-new flow.
 
-**Focus key set** → `mode = refine`, `refinement_targets = [focus Epic]`; skip the mode question (the PE named the target explicitly).
+**Focus key set** → `mode = refine` (Phase 6 makes it `both` on a focus run that splits), `refinement_targets = [focus Epic]`; skip the mode question (the PE named the target explicitly).
 
 **No focus key, `refinement_candidates` non-empty** → present the detected set as a CONFIRMABLE list (detection only *proposes*; the PE is the authority) and ask the mode:
 ```

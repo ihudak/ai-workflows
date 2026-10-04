@@ -22,7 +22,7 @@ All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_CO
 
 ## How it runs
 
-`/epics` has 22 `## Phase` headings — the most in this plugin. The diagram below collapses adjacent phases that form one user-visible step, and shows the one real fork that changes which phases run at all: whether code examination is on.
+`/epics` has 22 `## Phase` headings — the most in this plugin. The diagram below collapses adjacent phases that form one user-visible step, and shows the fork that most changes which phases run: whether code examination is on. Phases 2.7 and 5.5 are conditional as well — 2.7 only on a multi-component PRD, 5.5 only without an ARD set.
 
 ```mermaid
 flowchart TD

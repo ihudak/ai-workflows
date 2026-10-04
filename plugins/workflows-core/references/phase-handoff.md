@@ -208,7 +208,7 @@ Several consumers map `absent` to a hard stop, and every one of them is legitima
 | `/create-ard` | the PRD (`prd.md`) | read the resolved folder's own contents — **reported** rather than silent |
 | `/specify` | the PRD (`prd.md`) | the folder read is already the primary read path (the merged PRD is a grounding confirmation, not a new content source); on `absent` the confirmation is simply skipped — now **reported** rather than silent, the same shape as `/create-ard`'s row |
 | `/specify` `/design` `/implement` `/epics` `/ready` | the ARD | `status: none` and the no-regression rule of `ard-resolution.md` |
-| `/epics` | PRD-level `specification.md` | `vi_spec_present: false`, the existing silent skip |
+| `/epics` | PRD-level `specification.md` | `vi_spec_present: false`, the existing silent skip — save on a multi-component PRD, where Phase 2.7 asks for it, offering to split without it (`${CLAUDE_PLUGIN_ROOT}/references/components.md` §6) |
 | `/implement` | `specification.md` / `design.md` | only an **in-scope** spec is gated; a direct-prompt run resolves none |
 | `/design` | `specification.md` | **stops** — but that stop already exists; this reference only makes its test correct |
 | `/ready` | ARD / spec / design | records the artifact as missing in its coverage roll-up, as it does without this gate |

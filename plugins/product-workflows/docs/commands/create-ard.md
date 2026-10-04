@@ -4,7 +4,7 @@ Grounds on the mounted implementation repos it discovers and authors an Architec
 
 ## Who runs it
 
-`/create-ard` runs in the [pa](../roles-and-phases.md#pa--product-architecture) role, cost-attribution phase [architecture](../roles-and-phases.md#architecture) — an optional phase, since a simple single-repo PRD may genuinely not need an ARD at all — though in a repository of several modules the advisory adds that a PRD touching two of them is multi-component, and `/epics` will then ask for the ARD (Phase 0 step 5 offers an "optionality advisory" for exactly that case, and lets the architect proceed anyway).
+`/create-ard` runs in the [pa](../roles-and-phases.md#pa--product-architecture) role, cost-attribution phase [architecture](../roles-and-phases.md#architecture) — an optional phase, since a simple single-repo PRD may genuinely not need an ARD at all (Phase 0 step 5 offers an "optionality advisory" for exactly that case, and lets the architect proceed anyway) — though in a repository of several modules the advisory adds that a PRD touching two of them is multi-component, and `/epics` will then ask for the ARD.
 
 ## Synopsis
 
