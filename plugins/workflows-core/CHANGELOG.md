@@ -7,14 +7,14 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.11.1] — 2026-10-04
 
-**Update `dev-workflows` to 4.7.0 with this release**: `implementation-format` §1 and §3 and `followup-emission` §6 describe its `/implement`, which changes code only in the repository it branches.
+**Update `dev-workflows` to 4.7.0 with this release**: `implementation-format` §1, §3 and §4 and `followup-emission` §6 describe its `/implement`, which changes code only in the repository it branches.
 
 ### Changed
-- **`implementation-format` records one code repository per `/implement` run.** Its §1 example showed one run writing two repositories, and §3 named a repository a multi-source run edited and never branched as a way a run ends uncommitted; from `dev-workflows` 4.7.0, `/implement` changes code only in the repository it branches, and a second code repository is a later run with a block of its own.
+- **`implementation-format` records one code repository per `/implement` run.** Its §1 example showed one run writing two repositories, and §3 named a repository a multi-source run edited and never branched as a way a run ends uncommitted; from `dev-workflows` 4.7.0, `/implement` changes code only in the repository it branches, and a second code repository is a later run with a block of its own; §4 names the blocks appended before 4.7.0 as the only ones a note can cover partly.
 - **`followup-emission` §6 names a change another code repository needs** among the signals whose action lands outside the current change: `/dev-workflows:implement` records one as a follow-up rather than editing that repository.
 
 ### Fixed
-- **`followup-emission` §8's caller contract named §4 for resolving the write target**, which lists what no longer produces follow-ups; the ladder is §2.
+- **`followup-emission` §8's caller contract, and `session-hygiene`'s resume-pointer location, named `followup-emission` §4 for resolving the write target**, which lists what no longer produces follow-ups; the ladder is §2.
 
 ## [1.11.0] — 2026-10-03
 

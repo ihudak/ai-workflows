@@ -86,7 +86,7 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
      prompt: "Task description: Upgrade [component] from [current] to [target] in the repository at [its top level, `git rev-parse --show-toplevel`].
      Classification: [SIGNIFICANT | HIGH-RISK] — reason: [routing trigger]
      Upgrade plan: read it from the file at [`plan_file`]
-     Current state: branch = [git branch], uncommitted = [git status --short summary]
+     Current state: branch = [git branch], uncommitted = [`git -C <top level> status --short` summary]
 
      Before writing the plan, grep the repo for import sites and usage patterns of this component to understand blast radius, migration order, test coverage, and rollback."
    )
@@ -203,7 +203,7 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
 
    A component that reached the repository and ended `BLOCKED`, or whose review stayed blocked, **is** committed — unreviewed work that exists is recoverable, work that was never committed is not — and it sets `clean_finish: false` for step 7.5.
 
-   **A commit that does not land stops the run's loop, not only the component**, whether a hook rejected it or git failed to stage or write it (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.12, §2.3): record this component as not committed, with the hook's output or git's error, and every later component as not run, in step 7's table, then go to step 7.5, whose terminal call commits nothing in this component's place.
+   **A commit that does not land stops the run's loop, not only the component**, whether a hook rejected it or git failed to stage or write it (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.12, §2.2, §2.3): record this component as not committed, with the hook's output or git's error, and every later component as not run, in step 7's table, then go to step 7.5, whose terminal call commits nothing in this component's place.
 
    **"Stop and escalate" on a review that stayed blocked stops the component, not the run.** The loop continues with the next component; step 7.5 still runs at the end. A reading that stops the whole run would leave every earlier component committed but never pushed.
 

@@ -39,6 +39,7 @@ The caller passes a structured brief:
   **Plan**, `applicable_ard`, and
   `applicable_spec` are *context* inputs (degrade to absent, and say so in the Summary).
 - **Project root** - absolute path so files can be opened.
+- **Deferred to another code repository** (optional, from `/implement`) — changes the run records as another code repository's work, never this diff's: each is an explicit deferral note (dimension 10).
 
 Refuse to review without a diff - ask the caller to produce one.
 
