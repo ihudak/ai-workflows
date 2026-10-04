@@ -723,7 +723,8 @@ Invoke `epic-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no
   > requirements:        [paste the requirements[] array from Phase 3]
   > _coverage.md path:    [absolute path of the coverage file from Phase 6]
   > applicable_ard:       [the Phase 2.5 invariants, or omit if status was none]
-  > components:           [the known set, `multi_component`, and the ARD's `contracts` where present — or omit entirely where the run has no known set]"
+  > components:           [the known set, `multi_component`, and the ARD's `contracts` where present — or omit entirely where the run has no known set]
+  > repository_modules:   [for each repository a target names that is mounted, the module and deploy-directory paths `enumerate-components` (`workflows-core:components` §2) finds in it — or omit where none is]"
 
 When `mode` is `refine`/`both`, include `refinement_targets` in the `epic-reviewer` brief so its conditional refinement dimensions (completeness, partition integrity, inter-target dependency sanity) activate; omit it in `generate` mode so those dimensions report N/A.
 
