@@ -277,7 +277,7 @@ Then choose the branch:
 ## Phase 1.6 — Input scale assessment
 
 From the Phase 0 classification, compute:
-- `repo_count` = number of distinct code repositories (cwd + referenced git-repo dirs), counted by top level (`git -C <path> rev-parse --show-toplevel`), so an `@path` inside a repository already counted adds none
+- `repo_count` = number of distinct code repositories (cwd + referenced git-repo dirs), counted by top level (`git -C <path> rev-parse --show-toplevel`), so an `@path` whose top level is already counted adds none
 - `has_ticket_folder` = any specs folder present
 - `has_spec_folder` = any spec/design folder present
 
@@ -308,13 +308,13 @@ Runs after Phase 1.6 and replaces the single Phase 2B exploration subagent for m
 
 2. **Read spec/design folders inline.** Read each spec-folder `.md` and fold its content into the themes and primary description.
 
-3. **Fan out `code-scanner` — one per repo, single response, cap 4 concurrent.** Spawn all repo scanners in **one** message (batch in groups of 4 if there are more than 4 repos). For each distinct code repository (an `@path` inside one adds that path to its scanner's `search_hints`, never a second scanner):
+3. **Fan out `code-scanner` — one per repo, single response, cap 4 concurrent.** Spawn all repo scanners in **one** message (batch in groups of 4 if there are more than 4 repos). For each distinct code repository (an `@path` sharing its top level adds that path to its scanner's `search_hints`, never a second scanner):
 
    → Agent (subagent_type: "workflows-core:code-scanner", model: `<detection_model — §2.1 Sonnet chain>`):
      > "repo_path: <the repo's top level — `git -C <path> rev-parse --show-toplevel` of the path Phase 0 classified>
      >  capability_themes: <themes from steps 1–2 + the implementation spec>
      >  context: <3–5 sentences: the implementation goal and what the change must accomplish>
-     >  search_hints: <symbols/paths/keywords derived from the spec, plus every `@path` inside this repository and, for the working directory's repository, the working directory where it lies below the top level, each relative to that top level, if any>
+     >  search_hints: <symbols/paths/keywords derived from the spec, plus every `@path` sharing this repository's top level and, for the working directory's repository, the working directory where it lies below the top level, each relative to that top level, if any>
      >  refresh:      { switch_to_default_branch: false, pull: false }"
 
    **`refresh` is pinned off here, and it is the one input this dispatch must not omit.**
@@ -358,7 +358,7 @@ Only when the run resolved a key (PRD/Epic) — i.e. NOT direct-prompt mode — 
 **Codebase exploration** — Before writing the plan, spawn an exploration subagent to map the relevant parts of the codebase — save where this phase was entered from a `### Re-classification` the user accepted at Phase 2B, where `summary_file` already holds the exploration and nothing is dispatched:
 
 → Agent (subagent_type: "general-purpose", tools: Read/Glob/Grep only — no Bash, no Edit, model: `<detection_model — §2.1 Sonnet chain>`):
-  "Given this implementation description: [paste the full implementation description from Phase 0 or Phase 1 here], find in the repository at [its top level, `git rev-parse --show-toplevel`] (starting from [every `@path` the input named inside it, and the working directory where it lies below the top level, each relative to that top level — omit where neither]) and return:
+  "Given this implementation description: [paste the full implementation description from Phase 0 or Phase 1 here], find in the repository at [its top level, `git rev-parse --show-toplevel`] (starting from [every `@path` the input named that shares its top level, and the working directory where it lies below the top level, each relative to that top level — omit where neither]) and return:
    - Relevant source files and their primary responsibility
    - Existing patterns and conventions used in this codebase
    - Test file locations and test naming conventions
@@ -380,7 +380,7 @@ Produce a written implementation plan:
 5. **Files to create/modify** — list with brief rationale
 6. **Tests** — what tests will be added or run
 7. **Assumptions** — each open question the run settled itself because the user would not notice the answer (Phase 1's test) — in Phase 1 or while writing this plan — with what was chosen (must be minimal)
-8. **Out of scope** — explicitly list what is NOT being done, a change another code repository needs included (this run changes code only in the repository it branches); where that leaves the plan no step in this repository, say so above the approval prompt, so the user can weigh **Cancel** against a run that will change nothing here
+8. **Out of scope** — explicitly list what is NOT being done, a change another code repository needs included (this run changes code only in the repository it branches); where that leaves a plan approved before any edit no step in this repository, say so above the approval prompt — **Approve** then runs nothing from Pre-Phase 3 through Phase 4.7 (no branch, stash, baseline, edit or commit) and, once it has removed `summary_file` and any `plan_file` this run wrote, goes straight to Phase 5, whose report and Phase 6 carry each change another code repository needs, while **Revise** and **Cancel** act as ever
 9. **Review focus** — up to five input classes or failure modes the task implies and no step's tests exercise, most likely to bite a user first, each with the behaviour a reasonable user would expect — or `none — checked`. `test-writer` writes a test for each line, or names in its `### Notes` why one cannot be written (Phase 3.5, or Phase 3B step 4a on a run whose re-plan the user approved)
 
 **Re-test the class against the plan** — before asking, and again after every **Revise**, save where this phase was entered from a `### Re-classification` the user accepted at Phase 2B: that acceptance is the plan-approval override, which a re-test would undo, so there it runs only after a **Revise**, and only on a trigger the revision added — one the plan before it did not state. Test the class as it stands — the `model_routing` block's — again against `workflows-core:model-routing/classification` §1.1, reading the plan's Steps and Files to create/modify and what the exploration found those files do. Where a §1.1 trigger now applies — more than 3–5 non-test files, authentication or authorization, a schema or migration, a public contract, concurrency, or any other item on that list — do not ask: raise the class to SIGNIFICANT (HIGH-RISK under §1.1's multiplier), announce `Re-classified upward at planning: <trigger> (<the path, or the paths, that show it>)`, record the new class and that reason in the `model_routing` block — resolving its `planning_model` and `review_model` where the block left them out — and continue at Phase 2B with `summary_file` as its codebase summary and every answer given at this phase's **Revise** on the brief's `Constraints:` line, with no second exploration; ask Phase 1.5's task-shape question first where it is genuinely ambiguous whether this is a defect fix or new work.
@@ -443,7 +443,7 @@ choices: ["Help construct a repro (you'll be prompted for what to try)", "Procee
 - **Proceed without a repro** → record it in the Phase 5 report's `### Assumptions & limitations` as `No repro: <what the planner tried>` and continue to the normal full-plan gate below.
 - **Cancel** → stop.
 
-**If the return is a full plan** (ranking present, or the user chose to proceed without a repro)**:** present it to the user verbatim — and, where its Steps change no file in this repository, every change lying under Out of scope for another code repository, say so above the prompt, so the user can weigh **Cancel** against a run that will change nothing here — and ask:
+**If the return is a full plan** (ranking present, or the user chose to proceed without a repro)**:** present it to the user verbatim — and, on a plan approved before any edit (never Phase 3A step 5's re-plan) whose Steps change no file in this repository, say so above the prompt and take **Approve** as Phase 2A item 8 says — and ask:
 
 ```
 "Opus-planned. What would you like to do?"
@@ -551,7 +551,7 @@ Store the returned `## Test Baseline` block verbatim — it will be passed to `t
 
 Runs after Phase 3A step 5 completes (all code changes written), before the outcome-verification step.
 
-1. **Invoke `test-writer` agent.** **The empty-diff exit:** where the capture below is empty — the run changed no file in this repository, every change the plan names lying in another code repository — dispatch no `test-writer`, `code-review` or verify, and go to Phase 4. Phase 4.6 then reports §3.1's no-changes row, Phase 4.7 appends no block (there is no commit to record), and the companion changes reach the report and Phase 6 as on any run. First, at the orchestrator, capture the diff for the dispatch: write `git add -N :/ && git diff` (so new files are included) to a temp file (`command mktemp -t dw-impl-diff-XXXXXX`, never inside a repo tree) and record its absolute path as `test_diff_file`. `test-writer` has no shell tool — it can only `Read` the path it is given. Then spawn:
+1. **Invoke `test-writer` agent.** First, at the orchestrator, capture the diff for the dispatch: write `git add -N :/ && git diff` (so new files are included) to a temp file (`command mktemp -t dw-impl-diff-XXXXXX`, never inside a repo tree) and record its absolute path as `test_diff_file`. `test-writer` has no shell tool — it can only `Read` the path it is given. Then spawn:
 
    → Agent (subagent_type: "dev-workflows:test-writer", model: `<detection_model — §2.1 Sonnet chain>`):
      > "Write tests for this brief:
@@ -614,7 +614,7 @@ At each checkpoint, also consider suggesting **`/compact`** to free context befo
 2. Make precise, surgical changes — do not modify unrelated code — and change code only in the repository Pre-Phase 3 branched: any other code repository, one this run was given included, is read-only context, and a change one needs goes into the Phase 5 report's `### Session learnings` as a follow-up for `/dev-workflows:implement` run from that repository, addressed to the unit this run implemented (the Epic itself, where it was one; no key on a direct run), which Phase 6 collects; an early stop names it beside its §3.1 line instead (Phase 4.6)
 3. Follow existing code style and LF line endings
 4. If something **new** emerges mid-implementation, look before stopping: **a decision** — Phase 1's test: nothing this run can read settles it, and its answer changes what the user would notice in the result → STOP, ask with choices (2–4 options; the harness supplies the free-text escape), resume after answer; **anything else** → look it up and continue — an open question the user would not notice is settled by the run and recorded in the Phase 5 report's `### Assumptions & limitations`.
-4a. **Invoke `test-writer` agent** (inserted before the review diff capture in step 5 so the Opus review sees code and tests together — test adequacy is already a review dimension in `code-review.md`). Where the capture below is empty, take Phase 3.5 step 1's empty-diff exit instead of this step and every later one in this phase. First, at the orchestrator, capture the diff for the dispatch: write `git add -N :/ && git diff` (so new files are included) to a temp file (`command mktemp -t dw-impl-diff-XXXXXX`, never inside a repo tree) and record its absolute path as `test_diff_file`. `test-writer` has no shell tool — it can only `Read` the path it is given. Then spawn:
+4a. **Invoke `test-writer` agent** (inserted before the review diff capture in step 5 so the Opus review sees code and tests together — test adequacy is already a review dimension in `code-review.md`). First, at the orchestrator, capture the diff for the dispatch: write `git add -N :/ && git diff` (so new files are included) to a temp file (`command mktemp -t dw-impl-diff-XXXXXX`, never inside a repo tree) and record its absolute path as `test_diff_file`. `test-writer` has no shell tool — it can only `Read` the path it is given. Then spawn:
 
    → Agent (subagent_type: "dev-workflows:test-writer", model: `<detection_model — §2.1 Sonnet chain>`):
      > "Write tests for this brief:
@@ -704,7 +704,7 @@ Classification: [SIMPLE | MODERATE | SIGNIFICANT | HIGH-RISK]
 Files changed (from git diff --stat):
 <paste the git diff --stat output>
 Notable additions/removals: [new commands, APIs, config keys, dependencies — one line each; or "none"]
-Opus review verdict: [PASS | PASS WITH RECOMMENDATIONS | BLOCK — or "N/A (SIMPLE / MODERATE)"]
+Opus review verdict: [PASS | PASS WITH RECOMMENDATIONS | BLOCK — or "N/A (SIMPLE / MODERATE)", or "not run — the plan had no step in this repository (Phase 2A item 8)"]
 ```
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` in place of Agent 4 (`impl-maintenance`), with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in the Phase 5 `### Session learnings` line, in place of the persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
@@ -868,7 +868,7 @@ Output a structured report — do NOT ask any closing confirmation:
 [Under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` — every dispatched step (planner, reviewer, fixer, test agents, scanners) already carries the enforced id in place of its own chain, per `workflows-core:model-routing/classification` §10. The `model_routing` block's `opus_available` is unaffected by enforcement (§10: a property of the environment, never rewritten to agree with the enforced id) and, wherever this report states it, is stated exactly as it stands. Omit the line otherwise.]
 
 ### Branch
-[branch name created in Pre-Phase 3, e.g. feat/add-user-authentication]
+[branch name created in Pre-Phase 3, e.g. feat/add-user-authentication — or "none — the plan had no step in this repository (Phase 2A item 8)", with the two lines below omitted]
 [Pre-Phase 3 step 4's `Base branch unresolved …` line, verbatim, when it printed one; omit the line otherwise]
 [the Phase 4.6 `Code repo:` outcome line, verbatim (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §3.1)]
 
@@ -879,7 +879,7 @@ Output a structured report — do NOT ask any closing confirmation:
 - path/to/file.ext — [what changed]
 
 ### Opus review (if applicable; on the enforced id under §10)
-[Verdict and 1-line summary — naming the enforced id it ran on wherever `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10) — or "N/A (SIMPLE / MODERATE)"]
+[Verdict and 1-line summary — naming the enforced id it ran on wherever `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10) — or "N/A (SIMPLE / MODERATE)", or "not run — the plan had no step in this repository (Phase 2A item 8)"]
 
 ### Review triage
 - **Review triage:** [one line per review pass, per `workflows-core:finding-triage` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — survivors: [on a re-review, `finding — severity` per survivor, or "none"; "N/A (first review)" otherwise] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"] — settled: [the answer given at a settle prompt, or "not asked"] — or "N/A (SIMPLE / MODERATE, no Opus review)"
