@@ -99,8 +99,11 @@ it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), ca
    - **`<EPIC>` set** (a bare Epic key, whose folder step 1 placed as an Epic folder — there is no
      second positional key, the retired shared front-end having been what resolved one) → the Epic is chosen; the feature folder
      is its per-Epic home. Skip the picker; go to step 5.
+   - **`<EPIC>` null on a multi-component PRD.** First run `multi-component-test` (`Skill(skill: "workflows-core:reference", args: "components multi-component-test")`, §3) on the resolved PRD dir. Where it returns `multi_component: true`, a flat `specification.md` is a requirements source the PRD's Epics are designed from, never one unit designed whole (`${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`, *Ready for Implementation*): skip the flat-spec bullet below and take its Epic-subfolder bullet. Where no Epic subfolder holds a `specification.md` on `<default>`, ask instead:
+     `choices: ["Split into Epics first — /product-workflows:epics <PRD> (Recommended)", "Design across components anyway", "Cancel"]`
+     **Split** stops, naming that command; **Cancel** stops; **Design across components anyway** takes the flat-spec bullet below, and the Final report names the override. Where it returns `multi_component: false`, nothing here applies.
    - **`<EPIC>` null** → inspect the resolved PRD dir in the specs repo:
-     - it holds a **flat `specification.md`** (a broad PRD-level spec — the only shape that puts one at PRD level, now that a top-level `EPIC-` folder with no PRD above it is retired: `/product-workflows:epics` writes every `EPIC-` folder under a PRD folder and is the only command that writes one) → one design; the feature folder is the PRD dir itself. Skip the picker; go to step 5 (step 3's gate re-applies against this flat path). **This bullet is taken first, so a PRD folder holding a flat `specification.md` *and* Epic subfolders designs the slice and never reaches the picker** — `/design <PRD>` offers no Epic on that shape, and each Epic's own `design.md` is reached by addressing that Epic, `/dev-workflows:design <EPIC-KEY>`. That is the shape `references/workflow-states.md`'s *Ready for Implementation* row calls **both**, and its expected artifacts are each in-scope Epic *and* the slice carrying `specification.md` AND `design.md` — so a PRD of that shape reaches that rung through one `/design` per Epic plus this one, never through `/design <PRD>` alone.
+     - it holds a **flat `specification.md`** (a broad PRD-level spec — the only shape that puts one at PRD level, now that a top-level `EPIC-` folder with no PRD above it is retired: `/product-workflows:epics` writes every `EPIC-` folder under a PRD folder and is the only command that writes one) → one design; the feature folder is the PRD dir itself. Skip the picker; go to step 5 (step 3's gate re-applies against this flat path). **This bullet is taken first after the multi-component bullet above, so a single-component PRD folder holding a flat `specification.md` *and* Epic subfolders designs the slice and never reaches the picker** — `/design <PRD>` offers no Epic on that shape, and each Epic's own `design.md` is reached by addressing that Epic, `/dev-workflows:design <EPIC-KEY>`. That is the shape `references/workflow-states.md`'s *Ready for Implementation* row calls **both**, and its expected artifacts are each in-scope Epic *and* the slice carrying `specification.md` AND `design.md` — so a PRD of that shape reaches that rung through one `/design` per Epic plus this one, never through `/design <PRD>` alone.
      - it holds **Epic subfolders** → enumerate the **spec'd** ones using the ref test `git -C "$SPECS_PATH" cat-file -e "<default-ref>:./specifications/<PRD>-<vslug>/<epic-subfolder>/specification.md" 2>/dev/null`, `<epic-subfolder>` being each Epic subfolder's own name, since `<EPIC>` is still null here (exit 0 = present on `<default>`; the `2>/dev/null` is required — git writes `fatal:` to stderr on absence; the `./` reads the path from `$SPECS_PATH`, and `workflows-core:phase-handoff` §3.2 says why) — never a worktree file-existence check, which would list a branch-only Epic as designable for a user to select before step 3's gate stops on it. A subfolder that fails the test is excluded from the actionable set and counted in the excluded-count report, with the reason distinguished: *"N Epic(s) excluded — no specification.md; M excluded — specification.md not yet merged to `<default>`."* Then branch on count — this is the reusable **progress-aware Epic-picker pattern** in `workflows-core:epic-picker`, applied here with `/design`'s own done-predicate and enumerated from the specs repo, which is now the only place any command enumerates Epics from:
        - **exactly 1 spec'd Epic** → no picker; auto-select it; re-point the feature folder to its per-Epic subfolder; emit a one-line notice.
        - **≥2 spec'd Epics** → render the picker per `Skill(skill: "workflows-core:reference", args: "epic-picker")`, listing every spec'd Epic as prose and, **where more than four are spec'd**, letting the array carry at most three rows plus *"Another Epic from the list above — name its key"* (that file's *The cap* section — `/design` appends no option of its own, so the array is one row per Epic against `workflows-core:escalation-rules` §0's ceiling of four: four or fewer are carried in full with no remainder row, and **five** spec'd Epics are what overflow the prompt. `/specify` and `/implement` append an option of their own and so overflow at four — that is the difference, not a different cap. A typed key is resolved against the keys just listed, never parsed). Compute each Epic's state from `/design`'s **done-predicate** against that Epic's resolved folder:
@@ -189,19 +192,22 @@ or inherit them). **No PRD re-read** — the spec is the requirements source of 
 
 ## Phase 2.5 — Resolve applicable ARD (optional)
 
-Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:reference", args: "ard-resolution")` and running its resolution with `<PRD>`, `<EPIC>`, and `$SPECS_PATH`. On `status: none`, **skip the rest of this phase and proceed exactly as before** (no ARD in play). On `status: unmerged`, **stop**, naming the returned `branch` and any `pr`. On `status: found`, carry the returned `invariants` (PRD-level inherited + Epic-level `AD#N`) and `guidance_summary` into Phase 5 — the design is authored **within** them, and a necessary deviation is recorded in a `## ARD deviations` section of `design.md` + as a `- [ ]` open question (never edit the ARD). The `invariants` list is passed to `design-reviewer` in Phase 6 as `applicable_ard`.
+Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:reference", args: "ard-resolution")` and running its resolution with `<PRD>`, `<EPIC>`, and `$SPECS_PATH`. On `status: none`, **skip the rest of this phase and proceed exactly as before** (no ARD in play). On `status: unmerged`, **stop**, naming the returned `branch` and any `pr`. On `status: found`, carry the returned `invariants` (PRD-level inherited + Epic-level `AD#N`), `guidance_summary` and `contracts` into Phase 5 — the design is authored **within** them, and a necessary deviation is recorded in a `## ARD deviations` section of `design.md` + as a `- [ ]` open question (never edit the ARD). The `invariants` list is passed to `design-reviewer` in Phase 6 as `applicable_ard`.
 
 ---
 
 ## Phase 3 — Derive repos + STRICT gate
 
 1. **Auto-derive candidate repos** from the spec's themes / component mentions / any referenced code
-   paths. Build the slug→clone map (`/epics`-style): for each top-level dir under each `$REPOS_PATH`
+   paths — **or, where `<EPIC>` is set and its `epic.md` carries a `target:`** (`workflows-core:components` §1), the target's repository alone, the Epic's other needs being the interfaces the PRD-level ARD's `contracts` fixes. Build the slug→clone map (`/epics`-style): for each top-level dir under each `$REPOS_PATH`
    entry, `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, strip a trailing `.git`, take the
    URL's last path segment as the slug; skip dirs with no `.git` or a failing/timed-out call.
 2. **Confirm the complete set — the developer owns it.** Present the derived candidates and ask the
    developer to confirm the **complete** list of implementation repos this design must span:
    `choices: ["Confirm this set (Recommended)", "Add repos (you'll be prompted)", "Remove repos (you'll be prompted)", "Cancel"]`
+   **On an Epic with a target, "Add repos" asks first**, because a second repository makes the design span two components:
+   `choices: ["Re-split — /product-workflows:epics <EPIC> (Recommended)", "Add anyway (recorded as a target span)", "Cancel"]`
+   **Re-split** stops, naming that command, whose refine mode re-drafts this Epic; **Cancel** stops; **Add anyway** takes the added repositories, and Phase 5 records each under `## Risks & mitigations` as `- Target span: <component> — <why>`, which `design-reviewer` flags.
 3. **Resolve each confirmed repo against the map.** One match → use it. Ambiguous or zero matches
    escalate per the `Repo unresolved (zero matches) — /epics` rule in
    `workflows-core:escalation-rules`:
@@ -234,7 +240,7 @@ grill depth / sections / review scale by tier). Wait for each batch before the n
   >   [3–5 sentences: what the spec requires; what the design must ground — seams, interfaces, gaps]
   > search_hints:
   >   symbols:  [names inferred from the spec, or []]
-  >   paths:    [globs inferred from themes, or []]
+  >   paths:    [the target's `paths` where Phase 3 took an Epic's target, else globs inferred from themes, or []]
   >   keywords: [grep keywords from themes]
   > refresh:
   >   switch_to_default_branch: [true if Phase 1 chose 'fetch + pull default branch' or 'fetch only'; false if 'no refresh']
@@ -271,6 +277,7 @@ Run **two intertwined tracks**, authoring `design.md` live against
   & components, Interfaces / contracts, Seams, Data flow, Error handling & edge cases, Test strategy,
   Risks & mitigations, Migration / rollout / backward-compatibility, Out of scope. Omit a
   non-applicable section with a one-line `_N/A — why_`.
+- **Target and contract.** Where the Epic carries a `target:`, the header's `- **Target**:` names it. Where Phase 2.5 carried `contracts` and the Epic's `## Contract` cites rows, `## Interfaces / contracts` names each interface the Epic produces — its `[AD#N]`, and how the design meets that Rule — and each it consumes — its `[AD#N]`, and the stub or test double `## Test strategy` uses for it, or the code artifact a contract Epic builds for it (`${CLAUDE_PLUGIN_ROOT}/references/design-format.md`).
 
 As each decision settles, append it to `_design-session.md`. **For an interface decision, record each
 live candidate shape there as it arises** — not only the settled outcome — and strike a candidate when it
@@ -485,7 +492,7 @@ written (§10 privacy).
 
 Report: feature-folder path; classification + model-gate outcome (or `Model routing: bypassed — enforced <id> (flag|env)` in place of the model-gate outcome wherever `run_flags.enforced_model` is set — no gate fired, per `workflows-core:model-routing/classification` §10); `design.md` sections authored (and
 those `_N/A_`); spec challenges recorded (count of `## Engineering review` notes / new spec `- [ ]`);
-confirmed repo set (and any removed-from-scope); the `design-reviewer` verdict; the PR URL (if
+confirmed repo set (and any removed-from-scope), the Epic's target and any `Target span` added at Phase 3, and any multi-component override taken at Phase 0; the `design-reviewer` verdict; the PR URL (if
 opened); the `Specs repo:` outcome line from `commit-artifacts`
 (`workflows-core:specs-repo-git` §6), with any guard notice repeated in full;
 and the `### Next step` recommendation (below).

@@ -8,13 +8,13 @@ The shared corpus every plugin in this family reads — the addressing grammar, 
 
 The canonical structure each artifact type is authored and reviewed against, plus the shared conventions every authoring command applies while writing one.
 
-- `design-format.md` — canonical structure and per-section rules for an engineering design — **design.md** — plus its `kind:`/`key:` frontmatter; `/design` authors against it, `design-reviewer` reviews against it, `interface-designer` reads its `## Seams` categories, and `/ready` reads its repos header. The PRD-ladder formats one altitude up — the PRD, ARD, specification, and idea brief this design's own specification descends from — ship in the companion `product-workflows` plugin now.
+- `design-format.md` — canonical structure and per-section rules for an engineering design — **design.md** — plus its `kind:`/`key:` frontmatter; `/design` authors against it, `design-reviewer` reviews against it, `interface-designer` reads its `## Seams` categories, and `/ready` reads its repos header. A targeted Epic's design also names its `Target` in the header, and its `## Interfaces / contracts` names the ARD interfaces it produces and consumes. The PRD-ladder formats one altitude up — the PRD, ARD, specification, and idea brief this design's own specification descends from — ship in the companion `product-workflows` plugin now.
 
 ## Review and triage
 
 The gates a written artifact passes through before it counts as done. The triage discipline itself, and the escalation and pre-lint conventions the gates share, are `workflows-core`'s; the verification-gate ledger and the repo-checklist extractor are `docs-workflows`'s.
 
-- `workflow-states.md` — maps each workflow phase on the PRD and Epic ladders to its owning role, the command that drives the transition into it, and the artifacts expected to exist at that status; the rubric `readiness-reviewer` applies.
+- `workflow-states.md` — maps each workflow phase on the PRD and Epic ladders to its owning role, the command that drives the transition into it, and the artifacts expected to exist at that status; the rubric `readiness-reviewer` applies. On a multi-component PRD its *Ready for Implementation* rung expects the ARD with `## Contracts` and the PRD-level specification, and no PRD-level design.
 - `bug-diagnosis.md` — the bug-diagnosis discipline `/implement` follows for a bug-shaped task: a deterministic repro before hypothesizing, ranked falsifiable hypotheses, tagged and cleaned-up instrumentation, a regression test at a correct seam.
 
 ## Session artifacts
