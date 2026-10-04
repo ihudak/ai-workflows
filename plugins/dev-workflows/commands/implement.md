@@ -25,7 +25,11 @@ Usage: `/implement <ADDRESS> | <prompt> [@file…] [@spec-folder] [@repo…] [--
 | **Specs folder** | a directory under `specifications/` that `resolve-address` resolves — its `kind:` and `key:` read off the folder's carrier (`workflows-core:addressing` §4) | hand to the folder read in Phase 1.7 |
 | **Code repo** | a directory where `git -C <path> rev-parse --is-inside-work-tree` succeeds (includes the cwd) | scan target in Phase 1.7 — or, where its top level (`git -C <path> rev-parse --show-toplevel`) is that of a code repository already classified here (the working directory's included), a search hint for that repository's scan and for Phase 2A/2B's exploration |
 
-Test the rows top to bottom for each `@path` token: the first that matches classifies it, save that the working directory, and any directory that is its own work tree's top level (`git -C <path> rev-parse --show-toplevel` prints that directory), is the Code repo row's whatever else it holds — so a spec or specs folder below a repository's top level is that folder, never a code repo.
+Test the rows top to bottom for each `@path` token: the first that matches classifies it, so a spec or specs folder below a repository's top level is that folder, never a code repo. The working directory is always the Code repo row's. An `@path` that is its own work tree's top level (`git -C <path> rev-parse --show-prefix` prints nothing) and also matches the Spec folder row is the user's to classify:
+
+```
+choices: ["Code repository — scan it (Recommended)", "Spec folder — read it into the description"]
+```
 
 **Address resolution.** Before the per-`@path` classification above, look for a **single positional
 address** in `$ARGUMENTS` — a `<KEY>`, or an `@<path>` naming a folder in the specs tree. Present →
@@ -387,7 +391,15 @@ Produce a written implementation plan:
 
 **Re-test the class against the plan** — before asking, and again after every **Revise**, save where this phase was entered from a `### Re-classification` the user accepted at Phase 2B: that acceptance is the plan-approval override, which a re-test would undo, so there it runs only after a **Revise**, and only on a trigger the revision added — one the plan before it did not state. Test the class as it stands — the `model_routing` block's — again against `workflows-core:model-routing/classification` §1.1, reading the plan's Steps and Files to create/modify and what the exploration found those files do. Where a §1.1 trigger now applies — more than 3–5 non-test files, authentication or authorization, a schema or migration, a public contract, concurrency, or any other item on that list — do not ask: raise the class to SIGNIFICANT (HIGH-RISK under §1.1's multiplier), announce `Re-classified upward at planning: <trigger> (<the path, or the paths, that show it>)`, record the new class and that reason in the `model_routing` block — resolving its `planning_model` and `review_model` where the block left them out — and continue at Phase 2B with `summary_file` as its codebase summary and every answer given at this phase's **Revise** on the brief's `Constraints:` line, with no second exploration; ask Phase 1.5's task-shape question first where it is genuinely ambiguous whether this is a defect fix or new work.
 
-**A plan with no step in this repository.** Where a plan written before any edit — this one as first written or after any **Revise**, or Phase 2B's, never Phase 3A step 5's re-plan — changes no file in this repository (every change lying under Out of scope for another code repository, or none at all), there is nothing to implement here. Do not ask: present the plan, name each change as a follow-up for `/dev-workflows:implement` run from that repository (addressed as Phase 3A/3B step 2 says), and stop as **Cancel** does, nothing having been written.
+**A plan with no step in this repository.** Where a plan written before any edit — this one as first written or after any **Revise**, or Phase 2B's full plan at its approval gate, never Phase 3A step 5's re-plan — changes no file in this repository (every change lying under Out of scope for another code repository, or none at all), there is nothing to implement here, and approving it would cut an empty branch. Present the plan and ask this in place of the approval question:
+
+```
+"This plan changes no file in this repository. What would you like to do?"
+choices: ["Stop here and name the follow-up runs (Recommended)", "Revise plan"]
+```
+
+- **Stop** → name one follow-up per other code repository — a `/dev-workflows:implement` run from there, addressed as Phase 3A/3B step 2 says, listing its changes — and stop as **Cancel** does, nothing having been written.
+- **Revise** → as the approval question's **Revise** does, in Phase 2A or Phase 2B, whichever wrote the plan.
 
 Then ask:
 ```
@@ -396,7 +408,7 @@ choices: ["Approve & implement now (Recommended)", "Revise plan", "Cancel"]
 ```
 
 - **Approve** → write the approved plan to a temp file (`command mktemp -t dw-impl-plan-XXXXXX`, never inside a repo tree) and record its absolute path as `plan_file`; proceed to Phase 3A
-- **Revise** → ask what to change, update, re-test the class against the plan as above — continuing at Phase 2B where it raises the class — otherwise stop as *A plan with no step in this repository* says where the revision leaves no step here, and re-show and re-ask where it leaves one
+- **Revise** → ask what to change, update, re-test the class against the plan as above — continuing at Phase 2B where it raises the class — otherwise re-show and re-ask, through *A plan with no step in this repository* where the revision leaves no step here
 - **Cancel** → stop and summarize what was planned
 
 ---
@@ -430,9 +442,7 @@ When a `specification.md`/`design.md` is in scope, extract its **in-scope** `[Ux
 1. A full plan in the risk-weighted format (the normal case).
 2. A short `### Re-classification` section, if the planner decided on inspection that the task is actually `SIMPLE` or `MODERATE`.
 
-**If the return contains `### Re-classification`:** surface it to the user, ask for confirmation of the revised level with a `choices` prompt (`["Accept revised classification (Recommended)", "Override and stay SIGNIFICANT/HIGH-RISK", "Cancel"]`). If the user accepts, **fall back to Phase 2A** (standard plan) using the codebase context already captured above (the `summary_file` path) — whichever of Phase 1.7's **multi-source codebase summary**, Phase 2B's Explore output or Phase 2A's exploration this run wrote — and do not re-run exploration. Accepting here is the user exercising the **plan-approval override** — of the multi-source SIGNIFICANT floor (Phase 1.6), or of a raise; that is the sanctioned way to leave either, and Phase 2A's re-test then runs only on what a later **Revise** adds. Record the revised class and its reason in the `model_routing` block. If the user overrides, re-invoke risk-planner with an additional constraint stating the classification is intentional; do not down-classify again. If the user cancels, stop and summarize.
-
-**A full plan with no step in this repository** stops as Phase 2A's *A plan with no step in this repository* says, before either branch below — save on Phase 3A step 5's re-plan.
+**If the return contains `### Re-classification`:** surface it to the user, ask for confirmation of the revised level with a `choices` prompt (`["Accept revised classification (Recommended)", "Override and stay SIGNIFICANT/HIGH-RISK", "Cancel"]`). If the user accepts, **fall back to Phase 2A** (standard plan) using the codebase context already captured above (the `summary_file` path) — whichever of Phase 1.7's **multi-source codebase summary**, Phase 2B's Explore output or Phase 2A's exploration this run wrote — and do not re-run exploration; the new plan honours every answer given at Phase 2A's **Revise** before a raise. Accepting here is the user exercising the **plan-approval override** — of the multi-source SIGNIFICANT floor (Phase 1.6), or of a raise; that is the sanctioned way to leave either, and Phase 2A's re-test then runs only on what a later **Revise** adds. Record the revised class and its reason in the `model_routing` block. If the user overrides, re-invoke risk-planner with an additional constraint stating the classification is intentional; do not down-classify again. If the user cancels, stop and summarize.
 
 **If the return is a full plan whose `### Hypotheses (ranked)` section contains `Ranking withheld`:**
 the planner could not get a red-capable repro, so its hypotheses are absent by design and the rest of
@@ -449,7 +459,7 @@ choices: ["Help construct a repro (you'll be prompted for what to try)", "Procee
 - **Proceed without a repro** → record it in the Phase 5 report's `### Assumptions & limitations` as `No repro: <what the planner tried>` and continue to the normal full-plan gate below.
 - **Cancel** → stop.
 
-**If the return is a full plan** (ranking present, or the user chose to proceed without a repro)**:** present it to the user verbatim and ask:
+**If the return is a full plan** (ranking present, or the user chose to proceed without a repro)**:** present it to the user verbatim and ask — or, where it has no step in this repository (never on Phase 3A step 5's re-plan), ask Phase 2A's *A plan with no step in this repository* question in its place:
 
 ```
 "Opus-planned. What would you like to do?"
@@ -457,12 +467,14 @@ choices: ["Approve & implement now (Recommended)", "Revise plan", "Cancel"]
 ```
 
 - **Approve** → write the approved plan to a temp file (`command mktemp -t dw-impl-plan-XXXXXX`, never inside a repo tree) and record its absolute path as `plan_file`; proceed to Phase 3B
-- **Revise** → ask what to change, then re-invoke risk-planner with the **complete** brief plus the additional constraint merged in (never send just a delta — the planner refuses to plan without a full brief). Handle its return as above, from *A full plan with no step in this repository* on, and re-ask.
+- **Revise** → ask what to change, then re-invoke risk-planner with the **complete** brief plus the additional constraint merged in (never send just a delta — the planner refuses to plan without a full brief). Handle its return as above, every arm included.
 - **Cancel** → stop and summarize
 
 ---
 
 ## Pre-Phase 3 — Create feature branch
+
+Every stop from here to the end of the run names, beside whatever else it reports, each change another code repository needs that the run has found (the plan's Out of scope or Phase 3A/3B step 2), one line per repository.
 
 Before writing any file:
 
@@ -472,7 +484,7 @@ Before writing any file:
      ```
      choices: ["Stash changes, untracked files included, and continue (Recommended)", "Proceed anyway — pre-existing changes will appear in the diff and review outputs", "Cancel"]
      ```
-   - **Stash**: run `git stash push -u -m "pre-impl stash"` (`-u`, so untracked files leave the tree too), then continue. Record the resulting stash as `stash_ref` — Phase 4.6 names it in its outcome line and never drops it (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.2 carve-out 2). **Any stop from here on that does not reach Phase 4.6 names it in the stop message instead**, because no exit of this run may end without saying where the user's stashed work went — this phase's own step-4 Cancel and switch refusal, Pre-Phase 3.5's Cancel (the one post-branch exit Phase 4.6 excludes), and every stop between.
+   - **Stash**: run `git stash push -u -m "pre-impl stash" -- ':/' ':(top,exclude)<path>'`, one exclusion per `@path` input inside this repository, relative to its top level (`-u`, so untracked files leave the tree too, save the run's own inputs), then continue. Record the resulting stash as `stash_ref` — Phase 4.6 names it in its outcome line and never drops it (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.2 carve-out 2). **Any stop from here on that does not reach Phase 4.6 names it in the stop message instead**, because no exit of this run may end without saying where the user's stashed work went — this phase's own step-4 Cancel and switch refusal, Pre-Phase 3.5's Cancel (the one post-branch exit Phase 4.6 excludes), and every stop between.
    - **Proceed**: note in the Phase 5 report that the working tree was dirty at implementation start, **and record the `git status --porcelain -z --untracked-files=all` paths as `pre_existing_dirty`**. Phase 4.6 needs them to avoid sweeping somebody else's uncommitted work into this run's commit (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.2 carve-out 1); a run that does not record them here cannot honour that carve-out later. **`-z` is what makes that subtraction work** — §2.2 enumerates in the same form, and without it a path carrying a space or a non-ASCII byte is recorded quoted here and read raw there, so it subtracts against nothing.
    - **Cancel**: stop and summarize what was planned.
 
@@ -536,7 +548,7 @@ Store the returned `## Test Baseline` block verbatim — it will be passed to `t
 **Implement immediately. Do NOT ask "Should I implement?" or any variation.**
 
 1. Work through each step in order
-2. Make precise, surgical changes — do not modify unrelated code — and change code only in the repository Pre-Phase 3 branched: any other code repository, one this run was given included, is read-only context, and a change one needs goes into the Phase 5 report's `### Session learnings` as a follow-up for `/dev-workflows:implement` run from that repository, addressed to the unit this run implemented (the Epic itself, where it was one; no key on a direct run), which Phase 6 collects; an early stop names it beside its §3.1 line instead (Phase 4.6)
+2. Make precise, surgical changes — do not modify unrelated code — and change code only in the repository Pre-Phase 3 branched: any other code repository, one this run was given included, is read-only context, and a change one needs goes into the Phase 5 report's `### Session learnings`, on that repository's one follow-up line for `/dev-workflows:implement` run from there, addressed to the unit this run implemented (the Epic itself, where it was one; no key on a direct run), which Phase 6 collects; an early stop names it beside its §3.1 line instead (Phase 4.6)
 3. Follow existing code style and LF line endings
 4. Assume broad permissions; avoid unnecessary stops
 5. If something **new** emerges mid-implementation, look before stopping, and sort it:
@@ -617,7 +629,7 @@ offload parallel-safe (`[P]`) steps to subagents, or decompose — so the run do
 At each checkpoint, also consider suggesting **`/compact`** to free context before the next scope/Epic (per `workflows-core:session-hygiene` §3 — mid-command → `/compact` only, never `/clear`; guidance only).
 
 1. Work through each step in order
-2. Make precise, surgical changes — do not modify unrelated code — and change code only in the repository Pre-Phase 3 branched: any other code repository, one this run was given included, is read-only context, and a change one needs goes into the Phase 5 report's `### Session learnings` as a follow-up for `/dev-workflows:implement` run from that repository, addressed to the unit this run implemented (the Epic itself, where it was one; no key on a direct run), which Phase 6 collects; an early stop names it beside its §3.1 line instead (Phase 4.6)
+2. Make precise, surgical changes — do not modify unrelated code — and change code only in the repository Pre-Phase 3 branched: any other code repository, one this run was given included, is read-only context, and a change one needs goes into the Phase 5 report's `### Session learnings`, on that repository's one follow-up line for `/dev-workflows:implement` run from there, addressed to the unit this run implemented (the Epic itself, where it was one; no key on a direct run), which Phase 6 collects; an early stop names it beside its §3.1 line instead (Phase 4.6)
 3. Follow existing code style and LF line endings
 4. If something **new** emerges mid-implementation, look before stopping: **a decision** — Phase 1's test: nothing this run can read settles it, and its answer changes what the user would notice in the result → STOP, ask with choices (2–4 options; the harness supplies the free-text escape), resume after answer; **anything else** → look it up and continue — an open question the user would not notice is settled by the run and recorded in the Phase 5 report's `### Assumptions & limitations`.
 4a. **Invoke `test-writer` agent** (inserted before the review diff capture in step 5 so the Opus review sees code and tests together — test adequacy is already a review dimension in `code-review.md`). First, at the orchestrator, capture the diff for the dispatch: write `git add -N :/ && git diff` (so new files are included) to a temp file (`command mktemp -t dw-impl-diff-XXXXXX`, never inside a repo tree) and record its absolute path as `test_diff_file`. `test-writer` has no shell tool — it can only `Read` the path it is given. Then spawn:
@@ -675,7 +687,7 @@ At each checkpoint, also consider suggesting **`/compact`** to free context befo
 
    - If the fix report contains any `DEFERRED — plan-conflict` finding, surface it to the user **immediately** (do not wait for the review to stay blocked): show the finding beside the plan text it contradicts and ask `choices: ["Revise the plan (the finding governs)", "Apply the fix against the plan (the plan governs — logged in Phase 5)"]`. Act on the answer before re-running the review.
 
-7.5. **Spec/design conformance escalation.** For each unresolved `missing`/`contradicts` in-scope requirement from the code-review Spec/design-conformance dimension, write a `- [ ]` note back onto the source `specification.md`/`design.md` under an `## Engineering review` heading (the same escalation `/design` uses; annotate only — never mutate existing `[Uxx]`/`[ACxx]`/`[TCxx]` IDs). Never silently drop them, never invent new work. Record which of `specification.md`/`design.md` actually received a note — the handoff step needs to know whether only one, or both, were annotated. The notes are written here and handed off later — see the escalation handoff after Phase 4. **`exceeds` findings are never written here**: they report what this change added beyond the spec, which the Phase 5 report carries and the review cycle acts on — not a gap in the spec.
+7.5. **Spec/design conformance escalation.** For each unresolved `missing`/`contradicts` in-scope requirement from the code-review Spec/design-conformance dimension, write a `- [ ]` note back onto the source `specification.md`/`design.md` under an `## Engineering review` heading (the same escalation `/design` uses; annotate only — never mutate existing `[Uxx]`/`[ACxx]`/`[TCxx]` IDs). Only a `specification.md` or `design.md` in `$SPECS_PATH` or in this repository is annotated; one inside another code repository gets no note, the Phase 5 report carrying the gap instead (Phase 3A/3B step 2). Never silently drop them, never invent new work. Record which of `specification.md`/`design.md` actually received a note — the handoff step needs to know whether only one, or both, were annotated. The notes are written here and handed off later — see the escalation handoff after Phase 4. **`exceeds` findings are never written here**: they report what this change added beyond the spec, which the Phase 5 report carries and the review cycle acts on — not a gap in the spec.
 8. **Run Phase 3.5 (post-review).** After the review gate clears (a non-BLOCK verdict, or a settle prompt's **Proceed**), run the Phase 3.5 sequence — its steps 3–6 (lint/build, `test-baseliner` verify, the status branch, the fix loop) — **not before**. This preserves the invariant "NEVER run tests for SIGNIFICANT / HIGH-RISK before Opus review returns non-BLOCK, or a settle prompt's Proceed settles it as one". The fix loop inside Phase 3.5 applies fixes via the session model; if the fixes are non-trivial **and** the reviewer was NOT down-classified in step 7, re-invoke the Opus code review on the delta after Phase 3.5 completes (first overwrite `review_diff_file` with a fresh `git add -N :/ && git diff` so the re-review reads the post-Phase-3.5 diff). Triage it as a re-review (step 7's triage sub-step); if the review stayed blocked (`workflows-core:finding-triage` § On re-review), stop as step 7's BLOCK branch does after its re-review. If the reviewer WAS down-classified, skip the re-review.
 9. Verify the outcome matches the approved plan — on a run whose re-plan the user approved, both, as `plan_file`'s opening line reads them — and the review verdict.
 10. Proceed to Phase 4.

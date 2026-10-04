@@ -9,6 +9,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed
 - **`/epics`, `/prd-proposal` and `/brd-proposal` sent the follow-up write target to `followup-emission` §4**, which lists what no longer produces follow-ups; the ladder is §2.
+- **The model-routing page called `/prd-ground`'s floor the same multi-source rule `/dev-workflows:implement` applies, and said the address is never a floor**: it is the rule's repository half, and in `/dev-workflows:implement` a resolved specs folder does floor the run.
 
 ## [3.12.0] — 2026-10-03
 
