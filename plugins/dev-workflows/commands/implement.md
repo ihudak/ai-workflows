@@ -212,7 +212,7 @@ spec §6.4 records against `/ready --claimed`, not a second one.
 
 On a keyed run, first run Phase 1.8's ARD resolution — stopping as Phase 1.8 says on an `unmerged` result — so the look below can read the ARD's rules; Phase 1.8 acts on what it found.
 
-**Then, on a keyed run whose unit is an Epic (`focus_key` set), the multi-component check.** Run `multi-component-prereqs` (`Skill(skill: "workflows-core:reference", args: "components multi-component-prereqs")`, §6) at `implement` scope. On `multi_component: false`, say nothing: the run is unchanged. Otherwise — the one place a keyed run asks about an ARD that Phase 1.8 found `none`, the exception `workflows-core:ard-resolution`'s no-regression rule states — print one line naming the Epic's target, then:
+**Then, on a keyed run whose unit is an Epic (`focus_key` set), the multi-component check.** Run `multi-component-prereqs` (`Skill(skill: "workflows-core:reference", args: "components multi-component-prereqs")`, §6) at `implement` scope. On `multi_component: false`, only the `target_repo_matches: false` bullet below applies — a targeted Epic belongs to one repository whatever its PRD's set — and nothing else is said. Otherwise — the one place a keyed run asks about an ARD that Phase 1.8 found `none`, the exception `workflows-core:ard-resolution`'s no-regression rule states — print one line naming the Epic's target, then:
 
 - **`target_repo_matches: false`** → ask `choices: ["Stop — run /dev-workflows:implement <EPIC> in <the target's repository> (Recommended)", "Implement here anyway", "Cancel"]`. **Stop** and **Cancel** stop.
 - **`target_repo_matches: unknown`** → one line saying the target was not compared, this repository having no `origin`; no question.

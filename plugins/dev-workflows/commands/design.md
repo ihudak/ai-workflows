@@ -206,9 +206,9 @@ Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:referenc
 2. **Confirm the complete set — the developer owns it.** Present the derived candidates and ask the
    developer to confirm the **complete** list of implementation repos this design must span:
    `choices: ["Confirm this set (Recommended)", "Add repos (you'll be prompted)", "Remove repos (you'll be prompted)", "Cancel"]`
-   **On an Epic with a target, "Add repos" asks first**, because a second repository makes the design span two components:
+   **On an Epic with a target, "Add repos" takes the repositories, then asks**, because a second repository makes the design span two components:
    `choices: ["<Re-split — /product-workflows:epics <EPIC> | Add the component first — /product-workflows:create-ard <PRD>> (Recommended)", "Add anyway (recorded as a target span)", "Cancel"]`
-   — *Re-split* where the added repository holds a component of the ARD's set, or where there is no ARD set, since `/epics <EPIC>`'s refine mode can then re-draft this Epic against it (with no ARD, its Phase 5.5 can add the component); *Add the component first* where an ARD's set holds none, since `/epics` targets only that set (`workflows-core:components` §3).
+   — *Re-split* where every added repository holds a component of the PRD-level ARD's set, since `/epics <EPIC>` then splits this Epic across that set (its focus run on a multi-component PRD, Phase 6); *Add the component first* otherwise — no ARD, or an ARD whose set lacks one — since the PRD now spans a component no set records, and `/create-ard` is where it is recorded and its contract fixed (`workflows-core:components` §3).
    **The first option** stops, naming its command; **Cancel** stops; **Add anyway** takes the added repositories, and Phase 5 records each under `## Risks & mitigations` as `- Target span: <component> — <why>`, which `design-reviewer` flags.
 3. **Resolve each confirmed repo against the map.** One match → use it. Ambiguous or zero matches
    escalate per the `Repo unresolved (zero matches) — /epics` rule in
@@ -496,7 +496,7 @@ written (§10 privacy).
 
 Report: feature-folder path; classification + model-gate outcome (or `Model routing: bypassed — enforced <id> (flag|env)` in place of the model-gate outcome wherever `run_flags.enforced_model` is set — no gate fired, per `workflows-core:model-routing/classification` §10); `design.md` sections authored (and
 those `_N/A_`); spec challenges recorded (count of `## Engineering review` notes / new spec `- [ ]`);
-confirmed repo set (and any removed-from-scope), the Epic's target and any `Target span` added at Phase 3, and any multi-component override taken at Phase 0; the `design-reviewer` verdict; the PR URL (if
+confirmed repo set (and any removed-from-scope), the Epic's target and every `Target span` line, whether added at Phase 3 or recorded at Phase 5, and any multi-component override taken at Phase 0; the `design-reviewer` verdict; the PR URL (if
 opened); the `Specs repo:` outcome line from `commit-artifacts`
 (`workflows-core:specs-repo-git` §6), with any guard notice repeated in full;
 and the `### Next step` recommendation (below).

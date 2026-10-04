@@ -34,7 +34,7 @@ Proposes the components a repository **declares**. It reads these, and nothing e
 | Top-level build file | every top-level directory not already proposed holding `package.json`, `pom.xml`, `build.gradle`, `build.gradle.kts`, `Cargo.toml`, `go.mod` or `pyproject.toml` | that directory, `kind: code` |
 | Deploy or config | the top-level directories `k8s`, `helm`, `charts`, `terraform`, `deploy`, and `.github/workflows` | that directory, `kind: deploy` |
 
-Every build-system entry is `kind: code`. **A repository that declares no modules** — none of the build-system rows, Gradle to Go — **is itself a code component**, its id the bare slug and its paths the whole repository, proposed beside any top-level build-file or deploy directory it also holds; `component-of` (§1.1) then gives each path to the most specific of them. A repository that declares modules is an aggregator, and its root is not proposed.
+Every build-system entry is `kind: code`. **A repository that declares no modules** — none of the build-system rows, Gradle to Go — **is itself a code component**, its id the bare slug and its paths the whole repository, proposed beside any top-level build-file or deploy directory it also holds; `component-of` (§1.1) then gives each path to the most specific of them. A repository that declares modules is an aggregator, and its root is not proposed: its own top-level build files — `settings.gradle(.kts)`, the root `pom.xml` or `package.json`, `pnpm-workspace.yaml`, `go.work`, a version catalog — belong to no component, and an Epic or a design that changes them for its target's sake does not span a second component.
 
 **The output is a proposal, never a set.** The confirmer — the architect in `/create-ard`, the user in `/epics` Phase 5.5 — keeps, drops, adds and groups entries (§5). A directory the table does not name (a lambda folder with only scripts, a `database/` of init files) is not proposed; the confirmer adds it where a PRD touches it. That gap is the honest result of reading only what the repository declares, and a wider pattern is not the answer to it (`CLAUDE.md` § Editing discipline, *resolve an identifier against a known set*).
 
@@ -62,7 +62,7 @@ Three limits, enforced by `epic-reviewer` (all three) and `design-reviewer` (the
 
 - **Same repository only.** A deploy component in another repository (a separate gitops repository) is never ridden along: `/implement` cannot change it in the same run, so it is its own Epic.
 - **`kind: deploy` only.** A `kind: code` component is never ridden along; a change there is a second target, and the Epic splits.
-- **A component of the known set.** The line names an id from the set (§3), so its kind and repository can be checked; a deploy directory the set lacks is added to it — in the ARD by `/create-ard`, in an `/epics` run at Phase 5.5 — before an Epic rides along on it.
+- **A kind that can be checked.** The line names either a `kind: deploy` entry of the known set (§3), or, where the set does not list it — a one-module PRD whose scan touched only the module, say — `<the target's repo-slug>:<one of §2's deploy directories>`, whose path alone makes it `kind: deploy`. A ride-along never has to be added to the set first.
 
 A deploy component is still a target in its own right — for an infrastructure-only PRD, or where a change there is the work rather than support for it.
 
@@ -85,7 +85,7 @@ components:
 
 Inputs: the resolved PRD folder and its key, the Epic key (or null), and `scope` — `epics`, `implement` or `ready`. **It writes nothing, dispatches no agent, asks nothing and never stops**; each caller decides what a returned row means.
 
-1. Run §3. Where `multi_component` is false, return `{multi_component: false}` and nothing else — the caller proceeds exactly as it did before this reference existed.
+1. Run §3. Where `multi_component` is false, return `{multi_component: false}` and, at `implement` scope, step 3's `target` — a targeted Epic belongs to one repository whatever its PRD's set — and nothing else.
 2. **Prerequisites** (`epics` and `implement` scope; at `ready` scope the Ready rung of `dev-workflows:workflow-states` already lists them). Each row is `present` (on `<default-ref>`), `not_on_default` (not there, but in the `$SPECS_PATH` worktree or on a plugin branch) or `missing`, tested with `workflows-core:phase-handoff` §3.2's read-only primitives — the ref-existence test, `git -C "$SPECS_PATH" cat-file -e "<default-ref>:./<path>" 2>/dev/null`, and the plugin-branch scan — and never with `require-on-main`, whose repair offer is a prompt. Where `<default-ref>` itself does not exist, every row is `unverified` with that reason.
    - `ard_contract` — the PRD folder's `ard.md`, **and** `ard-resolution`'s `contracts` not null. The file's state is read first: not on `<default-ref>` → `not_on_default` (or `missing` where it is nowhere); on it but without a `## Contracts` section → `missing`.
    - `prd_spec` — the PRD folder's flat `specification.md`.

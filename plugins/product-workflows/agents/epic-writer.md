@@ -84,7 +84,7 @@ target: <one component id from the handoff's `components` — omit this line whe
 
 ## Contract
 - Produces: [AD#N] — <what this Epic implements of that interface>
-- Consumes: [AD#N] — <the stub this Epic's Independent Test runs against, "built by <the contract Epic's key>", or "exists — used as it runs">
+- Consumes: [AD#N] — <the stub this Epic's Independent Test runs against, "built by [[<the contract Epic's key>]]", or "exists — used as it runs">
 
 ## Covers
 - <PRD requirement IDs this Epic satisfies, bracketed — e.g. [US#2], [AC#4], [AC#5], [SM#1]>
@@ -133,7 +133,7 @@ When `mode` is `refine` or `both`, treat every entry in `refinement_targets[]` a
 - **Inter-target dependencies are expected.** When one refined Epic depends on another (e.g. a framework Epic that must land first), name the other Epic by key in `## Dependencies`. Such inter-target dependencies are legal (they encode build order) — do not suppress them.
 - **Undrawable boundaries** → a `[NEEDS CLARIFICATION]` marker in the affected Epic + a `clarifications_needed[]` entry (subject to the ≤3-per-Epic cap).
 
-In `mode: both`, also draft net-new Epics for scope no target covers — keyed and foldered exactly as the generate flow writes them. In `mode: generate` (or when `refinement_targets[]` is empty) behaviour is exactly as before.
+In `mode: both`, also draft net-new Epics for scope no target covers — keyed and foldered exactly as the generate flow writes them. In a focus run on a multi-component PRD (`/epics` Phase 6), that is the focus Epic's own scope landing outside its one target: one net-new Epic per other component, each targeting it. In `mode: generate` (or when `refinement_targets[]` is empty) behaviour is exactly as before.
 
 ## Coverage matrix (`_coverage.md`)
 
@@ -161,7 +161,7 @@ _source: native | derived_
   `NOT READY` (gaps you judge fundamental). `P% = covered/total`.
 - **Focus mode:** when the handoff `scope` targets a single focus Epic, still
   recompute `_coverage.md` PRD-holistically (all existing Epics + the re-drafted
-  focus Epic) — never a single-Epic view.
+  focus Epic + any net-new Epic a multi-component split drafts) — never a single-Epic view.
 - **Refinement mode:** refined targets appear in "Covered by" as `<KEY> (refined)`; net-new drafts as `<KEY> (new)`, under the key minted for them — every Epic here has one, so no row is identified by a slug; untouched existing Epics as `<KEY> (exist)`. Requirements no target covers are `❌ gap` rows — the leftover the `/epics` Phase 6.1 gate routes.
 
 ## Components and contracts (only when `components` is present)
@@ -169,8 +169,8 @@ _source: native | derived_
 The rules are `workflows-core:components`'; what follows is how they shape a draft.
 
 - **One target per Epic.** Write exactly one `target:`, an `id` from `components`, never one outside it. A capability that lands in two or more components becomes one Epic per component, each linked to the others it needs by key in `## Dependencies` — in `contracts.landing_order` where the handoff carries `contracts`.
-- **Ride-along** (§4). Where an Epic's target needs a change in a `kind: deploy` component **of the same repository** that exists only to deploy or configure the target, write it under `### In scope` as `- Also touches: <component id> — <why>`, naming a component of `components`, and do not split it out. A change in a `kind: code` component, or in a component of another repository, is a second target: split it.
-- **`## Contract`** — only where `multi_component` is true and the handoff carries `contracts`; omit the section otherwise. One line per interface row the Epic implements (`- Produces:`) or calls (`- Consumes:`), each citing the row's `[AD#N]`. An Epic produces only rows whose producer is its own target. A consumer's `## Independent Test` runs against a stub of each `new` or `changed` interface it consumes whose `artifact` is null, named there; one whose artifact a contract Epic produces is used as built, since that Epic lands first. Its `## Dependencies` names the Epic that produces each interface it consumes.
+- **Ride-along** (§4). Where an Epic's target needs a change in a `kind: deploy` component **of the same repository** that exists only to deploy or configure the target, write it under `### In scope` as `- Also touches: <component id> — <why>` — a `kind: deploy` entry of `components`, or, where `components` does not list it, `<the target's repo-slug>:<the deploy directory>` (§4) — and do not split it out. A change in a `kind: code` component, or in a component of another repository, is a second target: split it.
+- **`## Contract`** — only where `multi_component` is true and the handoff carries `contracts`; omit the section otherwise. One line per interface row the Epic implements (`- Produces:`) or calls (`- Consumes:`), each citing the row's `[AD#N]`. An Epic produces only rows whose producer is its own target. A consumer's `## Independent Test` runs against a stub of each `new` or `changed` interface it consumes whose `artifact` is null, named there; one whose artifact a contract Epic produces is used as built, since that Epic lands first. Its `## Dependencies` names the Epic that produces each `new` or `changed` interface it consumes.
 - **A contract Epic** exists only where a row's `artifact` is not null — the contract is a code file (an OpenAPI or `.proto` file, a shared entity module, a generated client) — and its `status` is `new` or `changed`: a row that `exists` is already built, so its consumers use it as it runs and depend on no Epic for it. It targets the row's producer, produces that row, and comes first: every consumer of the row depends on it. A row whose artifact is null gets no Epic of its own; its producer's ordinary Epic produces it.
 - **Multi-component without `contracts`** (the `/epics` prerequisites stop's override): still one target per Epic and still linked through `## Dependencies`, with no `## Contract` section.
 - A capability you cannot place in one component of `components` is a `[NEEDS CLARIFICATION]` marker in the affected Epic's Scope, under the cap of three — never a guessed target.

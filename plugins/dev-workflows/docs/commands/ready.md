@@ -44,7 +44,7 @@ Two named subagents are dispatched: `readiness-reviewer` (Phase 4, the sole judg
 
 ### Multi-component PRDs
 
-On a PRD with two or more code components, *Ready for Implementation* expects the ARD with `## Contracts`, the PRD-level specification, and a specification and design for every in-scope Epic — and no PRD-level design, because there the PRD-level specification is designed and implemented through its Epics. The report adds a `Contract coverage` section: each Epic's target, and every interface a consumer uses that no Epic produces, a new or changed interface no Epic produces, one produced by an Epic that does not target its producer, an Epic citing an `[AD#N]` that is no interface, and a consumer that does not depend on its producer.
+On a PRD with two or more code components, *Ready for Implementation* expects the ARD with `## Contracts`, the PRD-level specification, and a specification and design for every in-scope Epic — and no PRD-level design, because there the PRD-level specification is designed and implemented through its Epics. The report adds a `Contract coverage` section: each Epic's target, and every new or changed interface a consumer uses that no Epic produces, a new or changed interface no Epic produces at all, one produced by an Epic that does not target its producer, an Epic citing an `[AD#N]` that is no interface, and a consumer that does not depend on its producer.
 
 ## What it needs
 

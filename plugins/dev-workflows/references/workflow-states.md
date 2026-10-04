@@ -59,7 +59,7 @@ changes for it, and an Epic, which can hold an `epic.md`, is read from `Open` as
 > **Refine — two ways in, one mode.** `/epics` re-refines an Epic that already exists rather than
 > partitioning the PRD again, and it reaches that mode from either end. **Named:** address the
 > `EPIC-` folder itself (`/epics <EPIC-KEY>`) and the run re-grounds and sharpens that one Epic's
-> `epic.md` in place. **Detected:** run `/epics <PRD>` where Epics under that PRD carry
+> `epic.md` in place — or, on a multi-component PRD where that Epic's scope spans components, splits it into one Epic per component. **Detected:** run `/epics <PRD>` where Epics under that PRD carry
 > `refinement_candidate: true` — near-empty drafts left as placeholders — and the run offers
 > to fill them in and partition the PRD's scope across them, instead of drafting net-new; the offer
 > is confirmable, and declining it gives the ordinary net-new run. Either way it is the same
