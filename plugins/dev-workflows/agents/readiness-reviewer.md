@@ -28,6 +28,7 @@ The caller passes a structured brief:
 - **`requirements[]`** — the PRD requirement inventory. The coverage ground truth.
 - **Phase 3 skeleton** — the coverage matrix, the status-expectation table, and the repo-availability
   result assembled before this reviewer runs.
+- **`multi_component`** (optional) — Phase 3(d)'s Targets and Contract coverage tables, present only on a PRD whose components are two or more. When omitted, the *Cross-Epic contract coverage* dimension reports `N/A — one component`.
 - **Artifact texts** — the PRD, ARD (if any), each in-scope Epic, each `specification.md`, each
   `design.md` — with their absolute paths.
 - **Derived phases** — the PRD's phase and each Epic's, as derived from the artifacts present, each naming the artifacts that placed it there; and, on a PRD-level run whose PRD folder holds a flat `specification.md`, the broad PRD-level slice's — a unit beside the Epics, derived on the Epic ladder from that folder's own `specification.md`, `design.md` and `implementation.md` as an Epic's is from its own. A phase asserted without the artifacts that placed it is a claim this review cannot check.
@@ -64,6 +65,7 @@ Refuse to review without the derived phase and at least the requirement inventor
 | ARD conformance (conditional) | Only when `applicable_ard` is present: an artifact that violates an `AD#N` without a matching `- ARD deviation: … flag: architect` line = BLOCKER; with one = allowed-but-flagged. Absent `applicable_ard` → dimension skipped. |
 | Scope integrity | Spec or design items with no upstream PRD/Epic parent are scope creep — flag them. |
 | Identifier integrity | IDs (PRD/Epic keys, `Uxx`/`ACxx`, `AD#N`, etc.) are consistent and unique across the whole chain. The keyed artifacts (PRD, ARD, Epic) should carry their requirement IDs in bracketed `#` form — `[US#N]`, `[AC#N]`, `[SM#N]`, `[AD#N]`. A surviving dash-form ID, bracketed (`[AC-1]`) or bare (`AC-4`), is a **MINOR** — never a BLOCKER, and never on its own a reason to move the verdict off `SUPPORTED`. This reviewer reads artifacts it did not author, and the grammar change deliberately left pre-existing artifacts unconverted, to drain as `/update-prd` rewrites each one; a legacy ID reaching `/ready` is therefore inherited debt, not evidence that the chain fails to justify its status. Strictness belongs at the authoring gates — `prd-reviewer`, `ard-reviewer` and `epic-reviewer` BLOCK on the same token in a file their own command just wrote, so by the time `/ready` runs, anything freshly authored has already passed one of them and only legacy artifacts can still carry the dash form. Record it with `file:section` evidence and the fix ("convert via `/update-prd`"), and leave the spec/design numbered-ID namespace out of the rule; it is deliberately not part of this grammar. <!-- id-grammar-ok: the legacy form is named so the reviewer can report it --> |
+| Cross-Epic contract coverage (conditional) | Only when `multi_component` is provided. Every finding its tables carry stands, at no less than MAJOR: an Epic with no target or one outside the set; an interface a consumer uses that no Epic produces; one produced by an Epic that does not target its producer; a consumer whose Dependencies do not name its producer. Then what a table cannot see, each MAJOR: an Epic whose scope or spec plainly uses an interface its `## Contract` does not cite; a contract Epic (one producing a row whose artifact is a code file) that does not come before its consumers in the ARD's landing order; two Epics whose specs or designs describe one interface differently. |
 | Repo availability (best-effort) | The Phase 3 repo-availability result: a needed-but-unmounted repo = MAJOR (it hard-stops `/design`/`/implement`). A repo list that isn't derivable pre-implementation is reported, not treated as blocking. This dimension is complementary to, not a replacement for, `/design`'s and `/implement`'s own strict run-time gates. |
 
 ## Output
@@ -106,6 +108,9 @@ Return this exact shape (no preamble, no chatter):
 
 #### Identifier integrity
 - ...
+
+#### Cross-Epic contract coverage
+- _"N/A — one component"_ when `multi_component` was omitted, else findings.
 
 #### Repo availability
 - ...

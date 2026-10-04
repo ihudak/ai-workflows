@@ -136,7 +136,7 @@ best-effort-checks repos under `$REPOS_PATH`; cwd need not be inside either.
    `choices: ["Use <PRD dir> [+ <Epic subdir>] (Recommended)", "Use a different path (you'll be prompted)", "Cancel"]`
 
 2. **Artifact inventory (mechanical presence + handoff check — no content judgment yet).** By mode:
-   - **PRD-level** (`focus_key` null) — locate `<PRD-dir>/ard.md` (resolved via Phase 2.5, not here) and `<PRD-dir>/specification.md` (a PRD-level spec is optional per `workflow-states.md`). **Where that `specification.md` is present, the PRD folder is a broad PRD-level slice beside its Epics** — the unit `/dev-workflows:design` designs and `/dev-workflows:implement` implements as one — so locate `<PRD-dir>/design.md` too: the slice is one more row of the per-Epic inventory, judged as an Epic's row is (Phase 2), never a check of its own. Then enumerate **every** `EPIC-` folder directly under `<PRD-dir>` — a directory listing, the same Epic set Phase 2 judges, never a name matched against a key pattern — and for each locate `{ard.md, specification.md, design.md}` — this is per-Epic and plural, because a PRD's "Ready for Implementation" status requires **every in-scope Epic**, and the broad slice where one stands, to carry spec + design (`workflow-states.md`'s PRD row).
+   - **PRD-level** (`focus_key` null) — locate `<PRD-dir>/ard.md` (resolved via Phase 2.5, not here) and `<PRD-dir>/specification.md` (a PRD-level spec is optional per `workflow-states.md`, save on a multi-component PRD). **On a multi-component PRD** — `multi-component-test` (`Skill(skill: "workflows-core:reference", args: "components multi-component-test")`, §3) run on `<PRD-dir>` returns `multi_component: true` — that `specification.md` is a requirements source and never a slice (`${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`, *Ready for Implementation*): no `design.md` is located for it, Phase 2 carries no slice row for it, and it counts instead among the PRD row's own expected artifacts. Carry `multi_component: true` to Phase 3, whose (0) and (b) read *Ready for Implementation*'s multi-component clause. **Otherwise, where that `specification.md` is present, the PRD folder is a broad PRD-level slice beside its Epics** — the unit `/dev-workflows:design` designs and `/dev-workflows:implement` implements as one — so locate `<PRD-dir>/design.md` too: the slice is one more row of the per-Epic inventory, judged as an Epic's row is (Phase 2), never a check of its own. Then enumerate **every** `EPIC-` folder directly under `<PRD-dir>` — a directory listing, the same Epic set Phase 2 judges, never a name matched against a key pattern — and for each locate `{ard.md, specification.md, design.md}` — this is per-Epic and plural, because a PRD's "Ready for Implementation" status requires **every in-scope Epic**, and the broad slice where one stands, to carry spec + design (`workflow-states.md`'s PRD row).
    - **Epic-level** (`focus_key` set) — locate the PRD-level `<PRD-dir>/ard.md` (inherited invariants) plus the single focus Epic's `{ard.md, specification.md, design.md}` under `<PRD-dir>/EPIC-<EPIC>-<eslug>/`.
 
    For each `specification.md` and `design.md` path located above (the `ard.md` files are handled by Phase 2.5's `workflows-core:ard-resolution`, not here), execute `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against its path relative to `$SPECS_PATH` (§3.2 there) and map its §3.7 return value by `stopped` first, never by `on_main` alone — never a stop, per this command's defining trait: `stopped: false` with `on_main: pass`/`pass_amending` → **present** (with its absolute path); `stopped: false` with `on_main: absent` → **missing**, exactly as before this feature (§3.4's `/ready` row — this is row F only, never rows D/E, which also read not-on-ref against `<default-ref>` (`workflows-core:phase-handoff` §3.2) but return `stopped: true`); `stopped: false` with `on_main: unmanaged` → fall back to a raw filesystem presence check, exactly as before this feature (row H's own silent-skip contract); `stopped: true` → still never a stop for `/ready` — map the row to exactly one of four ⚠ reasons, never conflating them, because they are four different states, not one: rows D/E → ⚠ **authored only on `<branch>`, not merged** (naming the branch and any open PR); rows C′/C″, and row C where the repair it offered failed its one re-test or was declined (`Cancel`) → ⚠ **on `<default>` but your local checkout is stale or dirty, so it could not be confirmed** — C″ belongs here and not with G/I: it is a local divergence (an uncommitted edit, or since 3.21.0 a committed-but-unpushed one) on the default branch, which is the same *state* C′ and C describe and a different one from "no ref to verify against"; row C where it offered no repair — on a run carrying `specs_git: misrooted` (`workflows-core:phase-handoff` §3.3 row C), or on a read-only specs mount (§3.6 there) → ⚠ **on `<default>` but your checkout differs, and no repair was offered** (naming the files, and the flag or the read-only mount as the reason) — in both cases row C stops at once with no prompt and no retry. **The two row-C reasons split on whether a repair was offered**, never on how the offer ended: an accepted repair whose re-test fails and a declined one both had it put to the operator, while the flag and the mount never let it be, so every row-C stop lands in exactly one of the two, and neither is a ref problem. There are **seven** stopping rows and each must land in exactly one reason; mapping six left C″ with none, and the never-conflate rule forbids the obvious fallback; rows G/I (including the run's own `specs_git: blocked`) → ⚠ **could not be verified against any ref** (naming the returned `degraded` clause where present). Each is recorded verbatim as a readiness finding — `/ready` itself never asks a further question, retries, or stops on top of what came back: row C's own prompt-once-and-re-test-once (`workflows-core:phase-handoff` §3.3 row C and its prompt-once-then-re-test-once rule), a `Cancel` at that prompt included, or its immediate stop with no prompt where it offered no repair, and row C′'s own immediate stop naming the blocking files are `require-on-main`'s contract, already executed synchronously inside this very step; `/ready` only records whichever `stopped`/`degraded` state the call returned. Record each ARD as present (with its absolute path) or absent — its on-main state is Phase 2.5's job. Do not open/read file contents yet beyond what's needed for these checks — full reads happen in Phase 4 via the reviewer.
@@ -238,8 +238,7 @@ already is. Nothing is read out of the PRD's title for it, and no title is inven
 - The per-Epic artifact inventory: for each `EPIC-` folder, whether `specification.md` and
   `design.md` exist and whether its `implementation.md` holds at least one block — a file holding
   only its heading records nothing (`workflows-core:implementation-format` §1) — and, on a
-  PRD-level run whose PRD folder holds a flat `specification.md`, one more row for the **broad
-  PRD-level slice** (Phase 1 step 2), read the same way off the PRD folder's own
+  PRD-level run whose PRD folder holds a flat `specification.md`, one more row for the **broad PRD-level slice** (Phase 1 step 2 — never on a multi-component PRD), read the same way off the PRD folder's own
   `specification.md`, `design.md` and `implementation.md`. Phase 3(0) derives the slice's phase on
   the Epic ladder exactly as it derives an Epic's; the report names it `broad slice`. Its
   `implementation.md` is the PRD folder's record, so a block an earlier `/dev-workflows:implement`
@@ -272,6 +271,7 @@ key, never the run's own `key`**, which on an Epic-level run is the Epic's: the 
 - **`status: none`** (including `$SPECS_PATH` unset/unresolvable) → the ARD dimension is **inactive** for
   this run — no prompt, no extra output, `readiness-reviewer`'s ARD-conformance dimension is skipped
   entirely (no-regression, per `workflows-core:ard-resolution`).
+- **On `status: found` or `unmerged`**, also carry the returned `components` and `contracts` to Phase 3(d).
 - **`status: found`** → carry the returned `invariants` (`AD#N` list, PRD-level inherited +
   Epic-level when in scope) forward to Phase 4 as `applicable_ard`. `/ready` never edits the ARD and
   never authors a deviation record itself — it only checks whether one already exists in the artifacts
@@ -330,7 +330,7 @@ this run. This is the mechanical half of that dimension.
 
 **(c) Repo-availability presence-check (best-effort, presence only — never scanning).**
 
-1. Derive candidate repo names from: each in-scope Epic's `implementation.md` entries, and the
+1. Derive candidate repo names from: each in-scope Epic's `target:` repository (the id up to any `:`, `workflows-core:components` §1); each in-scope Epic's `implementation.md` entries, and the
    broad slice's where Phase 2 carried one, where one exists (each entry's
    own `repo:` field — that record carries no URL, per `workflows-core:implementation-format` §1); the confirmed-repos line of any `design.md`
    found (`design-format.md`'s header `- **Repos**: <the confirmed implementation repos this design
@@ -346,6 +346,11 @@ this run. This is the mechanical half of that dimension.
 4. If no repo names are derivable from any source (no PRs yet, no `design.md`, no ARD `grounded_repos`)
    → record `repos: not-yet-determinable` rather than an empty/false "all missing" result — this is the
    normal case pre-implementation and must not read as a gap.
+
+**(d) Targets and contract coverage (multi-component PRDs only).** Run `multi-component-prereqs` (`Skill(skill: "workflows-core:reference", args: "components multi-component-prereqs")`, §6) at `ready` scope. On `multi_component: false`, record `N/A — one component` and add nothing. Otherwise build two tables, orchestrator-inline:
+
+- **Targets** — one row per Epic: its target, or `none`, and whether it is in the set where the ARD supplied it. An Epic with no target, or one outside the set, is a finding at no less than MAJOR.
+- **Contract coverage** — one row per interface row of the ARD's `contracts` (its `AD#N`, producer, consumers and status) with the Epics that produce and consume it, then every `coverage_gaps` entry by `AD#N`, each a finding at no less than MAJOR. Where the ARD has no `## Contracts`, the table reads `no contract`: Phase 3(b) already marks that expected artifact ❌, and this table adds nothing to it.
 
 ---
 
@@ -364,6 +369,7 @@ and a pointer to the rubric.
   > coverage_map:            [paste Phase 3(a)]
   > status_expectation:      [paste Phase 3(b), plus the workflow-states.md rubric reference]
   > repo_availability:       [paste Phase 3(c)]
+  > multi_component:         [paste Phase 3(d)'s two tables — or omit this line entirely where it recorded N/A]
   > artifact paths:
   >   PRD:      [<PRD-dir>/prd.md if read, or a summary of it]
   >   ARD:     [absolute path(s), or 'none']
@@ -414,6 +420,9 @@ plugin-gap halt (see Invariants).
 
    ## Findings
    <the readiness-reviewer's Findings section, verbatim, by dimension>
+
+   ## Contract coverage
+   <Phase 3(d)'s two tables — omit this section where it recorded N/A>
 
    ## Repo availability
    <Phase 3(c) result>
@@ -471,6 +480,9 @@ plugin-gap halt (see Invariants).
 
    ### Findings
    [readiness-reviewer's Findings section, by dimension]
+
+   ### Contract coverage
+   [Phase 3(d)'s two tables] — _omit this whole section where Phase 3(d) recorded N/A_
 
    ### Repo availability
    [Phase 3(c) result]
