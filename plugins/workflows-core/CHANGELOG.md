@@ -14,6 +14,8 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`followup-emission` §6 names a change another code repository needs** among the signals whose action lands outside the current change: `/dev-workflows:implement` records one as a follow-up rather than editing that repository. Its exclusion of deferred review `BLOCKER`s spares one whose fix lies in another code repository, and §5's stable key admits that identity.
 
 ### Fixed
+- **`model-routing/classification` §1.1's *Multi-source input* floored on any directory input**, so an `@path` inside the repository `/dev-workflows:implement` was started in raised the run to `SIGNIFICANT`; it now counts distinct repositories by top level, and names folder inputs.
+- **The references page called `followup-emission` a journal emitter**; it emits follow-up tasks and verbose notes.
 - **`followup-emission` §8's caller contract, and `session-hygiene`'s resume-pointer location, named `followup-emission` §4 for resolving the write target**, which lists what no longer produces follow-ups; the ladder is §2.
 
 ## [1.11.0] — 2026-10-03

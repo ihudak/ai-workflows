@@ -51,7 +51,7 @@ The bookkeeping every long-running command emits around its actual work.
 - `cost-emission.md` — the session-cost subsystem: how a run's dollar cost is computed, attributed, and persisted, including the §7 attribution table and the §13 deferred-claim protocol for a command that cedes the session before it can write its own entry.
 - `cost-prices.yaml` — the default per-model token-price table session-cost reporting prices against; user-overridable via `$DEV_WORKFLOWS_COST_PRICES` or a repo-local file of the same shape.
 - `feedback-emission.md` — the session-feedback emitter every long-running command's automatic maintenance phase cites to capture friction about the plugin itself.
-- `followup-emission.md` — the follow-up task and journal emitter a terminal "Emit follow-up tasks" phase cites.
+- `followup-emission.md` — the follow-up task and verbose-note emitter a terminal "Emit follow-up tasks" phase cites.
 - `session-hygiene.md` — the family-wide contract for session-hygiene suggestions: flush resume-critical state to disk, then suggest the right context action, after a big command finishes or a long run checkpoints.
 
 ## Environment and routing
