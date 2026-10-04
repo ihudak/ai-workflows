@@ -9,6 +9,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed
 - **The changelog guidelines' example table contradicted their own "Never on first publish" rule**, teaching "New page, split from earlier page…" as a correct entry and "Added a new page on…" as the rewrite of a thin one. Both rows now say a new page gets no entry, and a split is recorded on the page the content left.
+- **`release-notes-writer` looked for sections a PRD does not have.** Its deprecation scan and its substance read named `## What`, "Current vs Target State", `## User Story` and `## Problem/Pain`, none of which `prd-format.md`'s spine uses. They now name the spine's `## Problem`, `## Goal`, `## User Stories`, `## Acceptance Criteria` and `## Scope`.
 
 ## [1.5.1] — 2026-10-04
 
