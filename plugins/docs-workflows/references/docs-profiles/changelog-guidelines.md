@@ -59,10 +59,11 @@ changelog:
 | Start/stop/restart the agent | Described how to start/stop/restart all agent services, not just the main service. | ✔️ Complete sentence; ends with a period. |
 | Synthetic events | Additional JavaScript event example on changing the user for each monitor execution | ✔️ Phrase; **no** period. |
 | Webhooks | Moved Webhooks documentation from the Notification section to the Developer section; links and content remain the same. | ✔️ Page-move with from/to; ends with a period; 117 characters. |
-| Managing labels | New page, split from earlier page on managing labels and templates | ✔️ New-page entry; phrase; **no** period. |
+| Managing labels and templates | Moved the section on managing templates to a page of its own | ✔️ A split, recorded on the page the content left; phrase; **no** period. |
+| Managing labels | New page, split from earlier page on managing labels and templates | ❌ A new page gets no entry — its published date covers it. Record the split on the page the content left. |
 | Install XYZ | Updated installation instructions. | ❌ To what effect? Rewrite highlighting the main changes. |
 | <Any topic> | Page hidden because of feature deprecation. | ❌ Don't expose "hiding". Rewrite as "Page retired because…". |
-| Credential vault | Created topic. | ❌ Too thin and wrong noun. Rewrite as "Added a new page on storing and using credentials in the credential vault." |
+| Credential vault | Created topic. | ❌ A new page gets no entry (see **Never on first publish**); its published date covers it. |
 | Uninstall <anything> | How to uninstall the application module | ❌ Don't reuse a section heading. Rewrite as "Added a section on uninstalling the application module." |
 
 ## Owners policy (self-hosted pages)
