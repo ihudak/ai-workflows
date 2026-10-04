@@ -388,7 +388,7 @@ Epic's — **`epic: null`** (PRD-level ARD only, on a re-refine run as on a draf
 `$SPECS_PATH`.
 
 - On `status: none` (including `$SPECS_PATH` unset/unresolvable) → **skip and
-  proceed exactly as before.** No prompt, no extra output.
+  proceed exactly as before.** No prompt, no extra output — save Phases 2.7 and 5.5 on a multi-component PRD, the one exception `workflows-core:ard-resolution`'s no-regression rule states.
 - On `status: unmerged` → **stop**, naming the returned `branch` and any `pr` — an ARD that exists but has not landed on `<default>` is a weaker architectural basis than the one about to arrive, and Epics drafted against it would need re-doing once it does.
 - On `status: found` → carry `invariants` + `guidance_summary` forward: pass them
   to `epic-writer` (Phase 6 handoff, as `applicable_ard`) so drafts stay
@@ -396,6 +396,7 @@ Epic's — **`epic: null`** (PRD-level ARD only, on a re-refine run as on a draf
   which then activates its ARD-conformance dimension. A necessary deviation is
   recorded by the writer in the Epic draft (`- ARD deviation: … flag: architect`)
   and surfaced in the Phase 9 report — never edit the ARD.
+- On `status: found`, also carry the returned `components` and `contracts`. Where `components` has entries, it is this run's **known set** (`Skill(skill: "workflows-core:reference", args: "components")` §3, source `ard`): Phase 4 scans its repositories, Phase 6 gives every Epic one `target:` from it, and Phase 5.5 does not run.
 
 ---
 
@@ -412,7 +413,7 @@ inventory. **Additive, zero-cost when absent** — the common case, since
    unset/unresolvable, or no PRD dir matches at either level → **skip** (set
    `vi_spec_present: false`) — the same skip a PRD with no PRD-level specification
    takes, unchanged.
-2. **Detect:** execute `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against `<PRD-dir>/specification.md`, mapping its §3.7 return value by `stopped` first, never by `on_main` alone. On any stopping state, stop per §4.4, naming `$SPECS_PATH` explicitly — a spec that exists but has not yet landed on `<default>` is a weaker grounding basis than the one about to arrive, and Epics drafted against it would need re-doing. Otherwise (`stopped: false`): on `pass`/`pass_amending`, proceed to step 3 (`pass_amending` prints §3.3's row-B message). On `unmanaged`, behave exactly as before this feature — **skip** (set `vi_spec_present: false`). On `absent`, **skip** (set `vi_spec_present: false`); the run proceeds byte-identically to today — this is the common case, and PRD-level `/specify` remains optional.
+2. **Detect:** execute `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against `<PRD-dir>/specification.md`, mapping its §3.7 return value by `stopped` first, never by `on_main` alone. On any stopping state, stop per §4.4, naming `$SPECS_PATH` explicitly — a spec that exists but has not yet landed on `<default>` is a weaker grounding basis than the one about to arrive, and Epics drafted against it would need re-doing. Otherwise (`stopped: false`): on `pass`/`pass_amending`, proceed to step 3 (`pass_amending` prints §3.3's row-B message). On `unmanaged`, behave exactly as before this feature — **skip** (set `vi_spec_present: false`). On `absent`, **skip** (set `vi_spec_present: false`); the run proceeds byte-identically to today — this is the common case, and PRD-level `/specify` remains optional — save on a multi-component PRD, where Phase 2.7 asks for it.
 3. **Parse** `<PRD-dir>/specification.md` directly (Read it — one file, a simple
    heading scan): extract its user stories `[Uxx]` and their nested acceptance
    criteria `[ACxx]` into `vi_spec_requirements[]`. **Skip `[TCxx]` test cases**
@@ -431,6 +432,23 @@ inventory. **Additive, zero-cost when absent** — the common case, since
 
    Set `vi_spec_present: true` and record the resolved `specification.md` path
    for the Phase 9 report.
+
+---
+
+## Phase 2.7 — Multi-component prerequisites (ARD set only)
+
+Runs only where Phase 2.5 supplied a known set; otherwise skip silently — Phase 5.5 takes this step once it has a set. Run `multi-component-prereqs` (`Skill(skill: "workflows-core:reference", args: "components multi-component-prereqs")`, §6) at `epics` scope. On `multi_component: false`, or where every prerequisite row is `present`, say nothing and continue.
+
+Otherwise the PRD spans two or more components without the artifacts that fix how they fit together — the ARD's `## Contracts` and a PRD-level `specification.md`. Ask once, naming each row that is not `present` with its state:
+
+```
+"This PRD spans <N> components, and <each missing artifact, with its state> is not on the specs repo's default branch. Epics split without them are designed in isolation and may not fit together after /implement."
+choices: ["Stop — run <the earliest missing command, §6> first (Recommended)", "Split without <the missing artifacts>", "Cancel"]
+```
+
+- **Stop** → stop, naming that command and every other missing artifact in ladder order.
+- **Split without** → record the override for Phase 9's `### Targets` and continue: every Epic still gets one target, and where `ard_contract` is not `present`, no Epic gets a `## Contract` section.
+- **Cancel** → stop.
 
 ---
 
@@ -531,7 +549,7 @@ If code scan is OFF, skip to Phase 6.
 If code scan is ON:
 
 1. Derive the repo list:
-   - **Auto-derived** (Phase 1 default) — walk the `EPIC-` folders under the PRD folder; for each `epic.md` (already read during Phase 3), collect repo names from the `implementation.md` beside it, where one exists. Dedupe. If the auto-derived list is empty, fall back to asking the user.
+   - **Auto-derived** (Phase 1 default) — walk the `EPIC-` folders under the PRD folder; for each `epic.md` (already read during Phase 3), collect repo names from the `implementation.md` beside it, where one exists. Dedupe. If the auto-derived list is empty, fall back to asking the user. **Where Phase 2.5 supplied a known set**, add its components' repositories to whichever list this step derived, deduped, so every component the ARD names is scanned, and carry each component's `paths` to that repository's Phase 5 brief.
    - **Manual list** — prompt for a free-text list of repo short names (one per line or space-separated). Resolve each against the `$REPOS_PATH` slug→clone map built in step 2 below.
 
 2. Build a slug→clone map. For each top-level directory under each entry of `$REPOS_PATH`, run `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, strip a trailing `.git`, and take the URL's last path segment as that clone's slug. Skip directories with no `.git` or whose `git remote` call fails/times out. Resolve each in-scope repo slug against the map: one match → use it; multiple matches → auto-prefer basename ending `-repo`, then `_repo`/`_fast`, then alphabetically last (show candidates at plan approval); zero matches → escalate per the `Repo unresolved (zero matches) — /epics` rule in `workflows-core:escalation-rules`:
@@ -565,7 +583,7 @@ For each repo in the batch:
   >   [3–5 sentences: PRD goal, what the Epic-set is meant to achieve]
   > search_hints:
   >   symbols:  [class/function names inferred from PRD/Epic descriptions, or []]
-  >   paths:    [directory globs inferred from themes, or []]
+  >   paths:    [the `paths` of this repository's known-set components where Phase 2.5 supplied a set, else directory globs inferred from themes, or []]
   >   keywords: [grep keywords extracted from themes]
   > refresh:
   >   switch_to_default_branch: [true if Phase 1 chose 'fetch + pull default branch' (default) or 'fetch only'; false if 'no refresh']
@@ -587,11 +605,28 @@ Handle per-repo status after the batch returns:
 
 ---
 
+## Phase 5.5 — Components (only without an ARD set)
+
+Skip where Phase 2.5 supplied a known set. Where code scan is OFF there is nothing to propose from: the run has **no known set**, Phase 6 writes no `target:`, and Phase 9's `### Targets` says so.
+
+1. For each repository Phase 5 scanned, run `enumerate-components` (`workflows-core:components` §2) and place each scanner evidence path with `component-of` (§1.1). Propose the components that evidence and the PRD themes touch — never every module a repository declares.
+2. **One component proposed** → it is the run's known set, and nothing is asked: a one-component PRD meets no question it did not meet before.
+3. **Two or more** → show each with the themes and evidence paths that placed it, and ask:
+   ```
+   "This PRD touches <N> components. Each Epic will target exactly one of them."
+   choices: ["Confirm these components (Recommended)", "Adjust the list (you'll be prompted)", "Cancel"]
+   ```
+   **Adjust** → take free text to keep, drop, add or group components (§5), re-show the list, and ask again. The confirmed list is the run's known set (§3, source `epics-run`). **Cancel** → stop.
+4. **None proposed** (no evidence path falls in any component) → no known set; Phase 9 says why.
+5. With two or more confirmed, run Phase 2.7 now, exactly as written there; with no ARD, its `ard_contract` row is `missing`.
+
+---
+
 ## Phase 6 — Write Epics
 
 The drafting is delegated to the **`epic-writer`** subagent (pinned to the §2.1 Sonnet detection chain for MODERATE; §2 Opus only if the run is SIGNIFICANT/HIGH-RISK — see `workflows-core:model-routing/classification` §9.2). The orchestrator prepares a handoff and dispatches; it does not write Epics itself, and **nothing commits in this phase** (still true — `/epics` never branches, and the Epic drafts it writes are never committed; git hygiene of the write target is the user's responsibility. The run commits only inside `$SPECS_PATH`, and only its bounded session-artifact paths, per `workflows-core:specs-repo-git` §2.1).
 
-1. **Write the handoff file.** Create a temp file (`command mktemp` — never a repo, never the specs tree) containing the `epic-writer` input contract: `folder_read`, `code_scanner_outputs` (empty if no scan), `scope` (Phase 2 in/out of scope), `existing_epics` (non-duplication), `prd_dir` (the resolved PRD folder), `vi_goal`, `key`, `requirements` + `requirements_source` (from Phase 3), `applicable_ard` (the Phase 2.5 invariants + guidance_summary, or omit when status was none), `existing_epic_themes` (themes of the already-linked Epics), `mode` (`generate` | `refine` | `both` — from Phase 3.5; `generate` when 3.5 skipped), `refinement_targets` (list of `{key, scope_hint, current_body_path}`, where `current_body_path = <prd_dir>/EPIC-<EPIC-KEY>-<eslug>/epic.md` — the keyed folder, keyless filename shape `epic-writer` writes and `workflows-core:addressing` §2/§4 define; empty in `generate` mode), and `docs_grounding` (the Phase 3.6 digest, or omit when OFF/EMPTY). Record its absolute path. When `focus_key` is set (the Phase 3 refinement target), set `scope` in-scope to just the focus Epic and `existing_epics` to the *other* linked Epics, so `epic-writer` re-drafts the single focus Epic's `epic.md`; the PRD folder is unchanged.
+1. **Write the handoff file.** Create a temp file (`command mktemp` — never a repo, never the specs tree) containing the `epic-writer` input contract: `folder_read`, `code_scanner_outputs` (empty if no scan), `scope` (Phase 2 in/out of scope), `existing_epics` (non-duplication), `prd_dir` (the resolved PRD folder), `vi_goal`, `key`, `requirements` + `requirements_source` (from Phase 3), `applicable_ard` (the Phase 2.5 invariants + guidance_summary, or omit when status was none), `existing_epic_themes` (themes of the already-linked Epics), `mode` (`generate` | `refine` | `both` — from Phase 3.5; `generate` when 3.5 skipped), `refinement_targets` (list of `{key, scope_hint, current_body_path}`, where `current_body_path = <prd_dir>/EPIC-<EPIC-KEY>-<eslug>/epic.md` — the keyed folder, keyless filename shape `epic-writer` writes and `workflows-core:addressing` §2/§4 define; empty in `generate` mode), `components`, `multi_component` and `contracts` (the known set from Phase 2.5 or 5.5, whether it has two or more entries, and the ARD's interface rows with their landing order — omit each where the run has none), and `docs_grounding` (the Phase 3.6 digest, or omit when OFF/EMPTY). Record its absolute path. When `focus_key` is set (the Phase 3 refinement target), set `scope` in-scope to just the focus Epic and `existing_epics` to the *other* linked Epics, so `epic-writer` re-drafts the single focus Epic's `epic.md`; the PRD folder is unchanged.
 
 2. **Dispatch the writer:**
 
@@ -687,7 +722,8 @@ Invoke `epic-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no
   > code-scanner output:  [paste array of per-repo scanner outputs from Phase 5, or 'N/A — code scan off']
   > requirements:        [paste the requirements[] array from Phase 3]
   > _coverage.md path:    [absolute path of the coverage file from Phase 6]
-  > applicable_ard:       [the Phase 2.5 invariants, or omit if status was none]"
+  > applicable_ard:       [the Phase 2.5 invariants, or omit if status was none]
+  > components:           [the known set, `multi_component`, and the ARD's `contracts` where present — or omit entirely where the run has no known set]"
 
 When `mode` is `refine`/`both`, include `refinement_targets` in the `epic-reviewer` brief so its conditional refinement dimensions (completeness, partition integrity, inter-target dependency sanity) activate; omit it in `generate` mode so those dimensions report N/A.
 
@@ -864,6 +900,12 @@ MODERATE — Epic drafting for a single PRD
 - ...
 - _or_ "N/A — code scan off"
 
+### Targets
+- Known set: [<N> components — from the ARD | confirmed at Phase 5.5] — _or_ "none — <no ARD set and code scan off | no component proposed>"
+- [<EPIC-KEY>] → <target> — produces [AD#…]; consumes [AD#…]
+- ...
+- Contract: [present | N/A — one component | split without <the missing artifacts> at the Phase 2.7 stop]
+
 ### Epic review verdict
 [PASS | PASS WITH RECOMMENDATIONS | BLOCK] — [1-line summary of findings applied / deferred]
 
@@ -1013,7 +1055,8 @@ user name is ever written (§10 privacy).
 - NEVER run `docs-style-checker` — Epic definitions are specs-tree content and not subject to product-docs prose linting. Prose style is checked via `prose-style-checker` in Phase 6.2 instead.
 - ALWAYS have `epic-writer` write `_coverage.md` to the PRD folder itself (PRD-holistic, even in focus mode); it is NOT an Epic definition and is never published
 - ALWAYS run the Phase 6.1 clarification gate when the writer returns clarifications; unresolved-by-choice markers become `epic-reviewer` BLOCKERs
-- ARD steps (Phase 2.5, writer/reviewer `applicable_ard`, the Phase 9 ARD section) are ADDITIVE and guarded on `status: found` — a run with no ARD is byte-identical to before
+- ARD steps (Phase 2.5, writer/reviewer `applicable_ard`, the Phase 9 ARD section) are ADDITIVE and guarded on `status: found` — a run with no ARD is byte-identical to before, save three things the components rules add: Phase 5.5, which asks only where a scan proposes two or more components; the `target:` a known set puts on each Epic; and Phase 9's `### Targets` section
+- ALWAYS give every Epic exactly one `target:` from the known set where the run has one (`workflows-core:components`), and NEVER a target outside it; a capability spanning components is split into one Epic per component
 - ALWAYS pass `requirements[]`, `existing_epics`, the `_coverage.md` path, and `applicable_ard` (when found) to `epic-reviewer`
 - ALWAYS treat linked Epics flagged `refinement_candidate: true` as fill-in targets (not non-duplication constraints) once the Phase 3.5 gate selects `refine`/`both`; the confirmed target set is the PE's, not the raw detection
 - ALWAYS write every Epic to `EPIC-<key>-<eslug>/epic.md`, refined and net-new alike — the folder carries the key, the filename carries the kind (never `<slug>.md`)

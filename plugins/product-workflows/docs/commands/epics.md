@@ -22,20 +22,21 @@ All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_CO
 
 ## How it runs
 
-`/epics` has 20 `## Phase` headings — the most in this plugin. The diagram below collapses adjacent phases that form one user-visible step, and shows the one real fork that changes which phases run at all: whether code examination is on.
+`/epics` has 22 `## Phase` headings — the most in this plugin. The diagram below collapses adjacent phases that form one user-visible step, and shows the one real fork that changes which phases run at all: whether code examination is on.
 
 ```mermaid
 flowchart TD
     p0["Phase 0 — Load"] --> p1["Phase 1 — Clarification"]
     p1 --> p15["Phase 1.5 — Classify"]
     p15 --> p2["Phase 2 — Plan + approval"]
-    p2 --> p2526["Phase 2.5 — Resolve applicable ARD (optional) / Phase 2.6 — PRD-level spec enrichment (optional)"]
+    p2 --> p2526["Phase 2.5 — Resolve applicable ARD (optional) / Phase 2.6 — PRD-level spec enrichment (optional) / Phase 2.7 — Multi-component prerequisites (ARD set only)"]
     p2526 --> p3["Phase 3 — Read the PRD folder"]
     p3 --> p3536["Phase 3.5 — Refinement-mode gate (conditional) / Phase 3.6 — Documentation grounding dispatch"]
     p3536 --> d1{"Code examination on/off? (Phase 1)"}
     d1 -- "on" --> p45["Phase 4 — Resolve repos (conditional) / Phase 5 — Parallel code scanning (conditional)"]
     d1 -- "off" --> p6["Phase 6 — Write Epics"]
-    p45 --> p6
+    p45 --> p55["Phase 5.5 — Components (only without an ARD set)"]
+    p55 --> p6
     p6 --> p616263["Phase 6.1 — Resolve clarifications / 6.2 — Prose style check / 6.3 — Structural pre-lint"]
     p616263 --> p7["Phase 7 — Epic review gate"]
     p7 --> p8["Phase 8 — Post-write maintenance"]
@@ -43,6 +44,10 @@ flowchart TD
 ```
 
 Seven subagents are dispatched: `workflows-core:docs-grounder` (Phase 3.6, read-only grounding on the shipped product docs — default ON when `$DOCS_PATH` resolves, advisory, never a gate), `workflows-core:code-scanner` (Phase 5, one instance per confirmed repo, up to 4 concurrent, only when code scan is ON), `epic-writer` (Phase 6, the sole author of the Epic drafts), `prose-style:prose-style-checker` (Phase 6.2, a non-gating quality pass on the Epic drafts), `workflows-core:doc-fixer` (Phases 6.2 and 7, fixing style violations and surviving BLOCKER/MAJOR review findings), `epic-reviewer` (Phase 7, Opus-pinned), and `workflows-core:impl-maintenance` (Phase 8, session lessons-learned). The detection-tier agents (and `epic-writer` when the run is `MODERATE`) run at `detection_model`; `epic-reviewer` keeps its frontmatter Opus pin (no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one).
+
+### Multi-component PRDs
+
+Every Epic gets one `target:` — the one component it changes — from the PRD-level ARD's `components:`, or, with no ARD, from the components you confirm after the code scan, which asks only when the scan finds two or more. A capability that spans components becomes one Epic per component, linked through `## Dependencies` in the ARD's landing order. With two or more components, each Epic's `## Contract` cites the ARD interfaces it produces or consumes, a consumer's Independent Test runs against a stub of each, and an interface whose contract is a code file gets its own Epic, first in order, whose artifact its consumers then use as built. A change to a deploy directory of the same repository that exists only to deploy the Epic's target rides along as an `- Also touches:` line instead of becoming an Epic. Before drafting, the run checks that the ARD's `## Contracts` and a PRD-level `specification.md` are on the specs repo's default branch and recommends running whichever is missing first; you can split without them, and the final report records that you did. `epic-reviewer` blocks an Epic with no target or one whose scope spans components.
 
 ## What it needs
 
