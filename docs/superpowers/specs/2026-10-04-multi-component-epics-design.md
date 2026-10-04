@@ -152,3 +152,28 @@ Writing every edit against the tree, and applying the whole round to a trial cop
     - the `/ready` and `/implement` docs pages' slice sentences;
     - `/epics`' *PRD-level `/specify` remains optional* and its Phase 2.5 *no prompt* line;
     - `/ready`'s *a PRD-level spec is optional*.
+
+## Amended during review
+
+Nine whole-branch review rounds in this repository (Important findings per round: 6, 3, 1, 2, 2, 2, 2, 1, 0; the user's rule after round 4 was to stop at the first round with none) changed these decisions. The ledger's `Ruling:` lines carry the full reasoning.
+
+1. **D3 — only code components count.** A PRD is multi-component when its set has two or more `kind: code` components. A deploy component that a module only rides along on, or deploys through in another repository, needs no contract (round 2).
+2. **D2 and D5 — enumeration and grouping.** A repository that declares no modules is itself a code component (round 1). A component's grouping and corrected `kind` are recorded only in the ARD (rounds 1 and 3). A module-declaring repository has **shared ground**: every path inside none of the modules and deploy directories `enumerate-components` finds. A module target's Epic or design may change it, and both reviewers receive that enumeration in their briefs (rounds 6–9).
+3. **D4 — ride-along.** A ride-along names a `kind: deploy` entry of the set or, where the set lacks one, a §2 deploy directory of the target's repository, identified by its path (round 5).
+4. **D14 — `/epics`.**
+   - Phase 5.5 is seeded from the targets existing Epics carry, and with code scan off those targets are its proposal (rounds 1 and 2).
+   - A focus run splits its Epic when the user names, at plan approval, work that moves to another component of the set, or when the Epic's scope already spans components (rounds 5 and 6).
+   - A move to a component outside an ARD's set is reported, never dropped (round 7).
+5. **D19 — `/design`.**
+   - "Design across components anyway" is offered only with no Epic folder and a flat spec — the shape `/implement` can reach (round 2).
+   - Re-split works within an ARD's set; otherwise `/create-ard` is recommended first (round 5).
+   - A span into another component is recorded as a `Target span` (rounds 2 and 9).
+6. **D21 — `multi-component-prereqs`.**
+   - The `epic_target` row was added (round 1).
+   - Each remedy is chosen by the row's state (rounds 1 and 4).
+   - A non-git `$SPECS_PATH` gives `unmanaged`, which asks nothing (round 7).
+   - The target-repository check runs on any targeted Epic (round 5).
+7. **D20 and D23 — the override.** A multi-component PRD built whole by the 0-Epic override — its folder holds a PRD-level `design.md` or an `implementation.md` with a block — is read by `/ready` as a single-component slice. Phase 1 sets that once, as a flag (rounds 6–8).
+8. **`ard-resolution`'s no-regression rule** states the multi-component exception and binds the ARD's own steps only. What an Epic's `target:` drives runs on its own input (rounds 1–3).
+9. **D26 — versions.** Other sessions released dev-workflows 2.69.0 and 2.38.0 while this round ran, so the ports ship as **2.70.0** and **2.39.0**. A stale `/epics` phase count on `docs-workflows`' `/document` page shipped as **docs-workflows 1.5.3**.
+10. **Process.** From round 4 on, every fix wave swept each fix's subject across the tree before its commit (CLAUDE.md refinements 6–8). Until then the sweep had been left to the next review round.
