@@ -24,6 +24,7 @@ The caller passes:
   `HIGH-RISK` design must cover them thoroughly). Never flag a section that `${CLAUDE_PLUGIN_ROOT}/references/design-format.md` says is
   legitimately omittable at this classification.
 
+- **Target paths** (optional) — the paths of the design's target component, as `/design` Phase 3 resolved them; absent where the design carries no `Target`.
 - **`applicable_ard`** (optional) — the resolved ARD `AD#N` invariants (`id`/`binds`/`prevents`/`rule`) when `/design` resolved an ARD (Phase 2.5); absent when no ARD exists. Enables the conditional ARD-conformance check below.
 
 ## Review method
@@ -79,7 +80,7 @@ The caller passes:
 
 - **ARD conformance (conditional — only when `applicable_ard` is provided; otherwise skip silently):** the design must honor every `AD#N` `rule`. A violation with **no** matching recorded `## ARD deviations` entry → `BLOCKER`; **with** a recorded deviation → `MINOR` flagged note (the architect adjudicates).
 
-- **Target & contract (conditional — only when the design's header carries `- **Target**:`; otherwise skip silently):** the design's implementation stays inside its target component — the repository the id names before any `:`, and within it the module path after it. Exempt: a change to deployment or configuration files of the same repository that exists only to deploy or configure the target — a ride-along, which the Epic names in an `- Also touches:` line. Implementation beyond the target with **no** matching `- Target span:` line under `## Risks & mitigations` → **BLOCKER**; with one → allowed-but-flagged (name it in the Summary). Where `## Interfaces / contracts` names a consumed `[AD#N]` with no stub or test double for it in `## Test strategy`, and does not name it as a code artifact a contract Epic builds → **MAJOR**. A produced interface that breaks its `AD#N` Rule is the ARD-conformance dimension's BLOCKER, not this one's.
+- **Target & contract (conditional — only when the design's header carries `- **Target**:`; otherwise skip silently):** the design's implementation stays inside its target component — the repository the id names before any `:`, and within it the brief's **Target paths** — else the module path after the `:`, or the whole repository for a bare slug. Exempt: a change to deployment or configuration files of the same repository that exists only to deploy or configure the target — a ride-along, which the Epic names in an `- Also touches:` line. Implementation beyond the target with **no** matching `- Target span:` line under `## Risks & mitigations` → **BLOCKER**; with one → allowed-but-flagged (name it in the Summary). Where `## Interfaces / contracts` names a consumed `[AD#N]` with no stub or test double for it in `## Test strategy`, and does not name it as a code artifact a contract Epic builds → **MAJOR**. A produced interface that breaks its `AD#N` Rule is the ARD-conformance dimension's BLOCKER, not this one's.
 
 ## Output contract
 

@@ -16,7 +16,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
   - **`design-reviewer`** gains *Target & contract*.
 
 ### Changed
-- **`/design <PRD>` and `/implement <PRD>` on a multi-component PRD** never take the flat PRD-level specification as one unit: they go to the Epic picker, and with no Epic recommend `/epics` first.
+- **`/design <PRD>` and `/implement <PRD>` on a multi-component PRD** do not take the flat PRD-level specification as one unit: they go to the Epic picker, and with no specified Epic recommend `/epics` or `/specify` first, taking it whole only as an override.
 - **`/design` keeps a targeted Epic in its target's repository**: adding a second repository asks whether to re-split, and adding it anyway records a `Target span` risk.
 - **`design-format`**: a `Target` header line, and `## Interfaces / contracts` names the ARD interfaces a design produces and consumes.
 - **`workflow-states`**: on a multi-component PRD, *Ready for Implementation* expects the ARD with `## Contracts` and the PRD-level specification, and no PRD-level design.

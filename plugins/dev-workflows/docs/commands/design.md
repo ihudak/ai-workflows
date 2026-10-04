@@ -49,7 +49,7 @@ Phase 5 conducts the design as a relentless, one-question-at-a-time interview ru
 
 ### Multi-component PRDs
 
-On a PRD with two or more components, `/design <PRD>` never designs the PRD-level specification as one unit: it goes to the Epic picker, and with no specified Epic it recommends `/epics` first. At Epic level the repository set starts from the Epic's `target:`; adding a second repository asks whether to re-split the Epic, and adding it anyway records a `Target span` risk that `design-reviewer` flags. The design header names the target, and `## Interfaces / contracts` names each interface the Epic produces or consumes, with the stub its test strategy uses for each one it consumes, save one a contract Epic builds as code, which it uses as built.
+On a PRD with two or more components, `/design <PRD>` does not design the PRD-level specification as one unit unless you choose to: it goes to the Epic picker, and with no specified Epic it recommends `/epics` (no Epics yet) or `/specify` (Epics not yet specified) first; designing it whole anyway is your override. At Epic level the repository set starts from the Epic's `target:`; adding a second repository asks whether to re-split the Epic, and adding it anyway records a `Target span` risk that `design-reviewer` flags. The design header names the target, and `## Interfaces / contracts` names each interface the Epic produces or consumes, with the stub its test strategy uses for each one it consumes, save one a contract Epic builds as code, which it uses as built.
 
 ## What it needs
 

@@ -539,6 +539,7 @@ is the only command that writes one at all.
     case). Step B then reads the whole PRD subtree.
 - **PRD with 0 Epics** → this PRD hasn't been split yet. Offer the without-Epics choices:
   `choices: ["Split into Epics first with /product-workflows:epics (Recommended)", "Author one broad PRD-level spec now", "Cancel"]`
+  **On a multi-component PRD** — `multi-component-test` (`Skill(skill: "workflows-core:reference", args: "components multi-component-test")`, §3) on the PRD folder, where with no Epic only an ARD can supply the set — the first two options swap and the marker moves with them: `choices: ["Author one broad PRD-level spec now (Recommended)", "Split into Epics first with /product-workflows:epics", "Cancel"]`. That spec is the requirements source `/epics` splits across the components, and `/epics` stops to ask for it where it is missing.
   `/specify` does not write Epic folders itself — on "Split…", stop and point at
   `/product-workflows:epics`, which writes them into this PRD folder where this command will see them. On
   "Author one broad PRD-level spec now", leave `focus_key` = null and proceed to Step B.
@@ -722,7 +723,7 @@ Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:referenc
 
 ## Phase 3 — Derive repos + soft gate
 
-1. **Auto-derive candidate repos.** From the Phase 2 capability themes and any repositories the
+1. **Auto-derive candidate repos.** **An Epic with a target first:** where `focus_key` is set and the Epic's `epic.md` carries a `target:` (`Skill(skill: "workflows-core:reference", args: "components")` §1), the candidate list is that target's repository alone, and the rest of this step — the derivation below and its empty-list escalation — does not run: what the Epic needs from another component is the interface the PRD-level ARD's `contracts` fixes, read there and never by scanning its producer. Phase 4's scan of the repository passes the target's `paths` (the ARD's `components` entry for it, else the id's own path, or the whole repository for a bare slug) as `search_hints.paths`. Otherwise, from the Phase 2 capability themes and any repositories the
    `implementation.md` records in the folders Step B read name
    (`workflows-core:implementation-format` §1 — their `repo` entries; a record lives in the folder
    of the unit implemented, so that is the focus Epic's where `focus_key` is set, and the PRD
@@ -742,8 +743,6 @@ Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:referenc
    ```
    choices: ["List repos to scan manually", "Proceed without code scan", "Cancel"]
    ```
-
-**An Epic with a target.** Where `focus_key` is set and the Epic's `epic.md` carries a `target:` (`Skill(skill: "workflows-core:reference", args: "components")` §1), the candidate list is that target's repository alone, and the themes add no other: what the Epic needs from another component is the interface the PRD-level ARD's `contracts` fixes, read there and never by scanning its producer. Phase 4's scan of the repository passes the target's `paths` (the ARD's `components` entry for it, else the id's own path) as `search_hints.paths`.
 
 2. **Build the slug→clone map** (`/epics`-style). For each top-level directory under each entry of
    `$REPOS_PATH`, run `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, strip a trailing

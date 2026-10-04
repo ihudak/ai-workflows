@@ -82,7 +82,7 @@ there.
 appends *"Author one broad PRD-level spec instead"* on every run — it is the command that authors
 the spec, so nothing can condition it — and its array carries at most **two** Epic rows plus that
 option plus the remainder option. `/implement` appends *"Implement one broad PRD-level slice
-instead"* **only where the PRD folder holds a flat `specification.md`**, the same condition its
+instead"* **only where the PRD folder holds a flat `specification.md` and the PRD is not multi-component** (`${CLAUDE_PLUGIN_ROOT}/references/components.md` §3), the same condition its
 one-Epic branch above carries, so its array carries at most **two** Epic rows where that file
 stands and at most **three** where it does not, the freed row going back to the Epics. The added
 option is never the one the **cap** drops: it is the alternative to picking any Epic at all, and a

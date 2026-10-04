@@ -437,16 +437,16 @@ inventory. **Additive, zero-cost when absent** — the common case, since
 
 ## Phase 2.7 — Multi-component prerequisites (ARD set only)
 
-Runs only where Phase 2.5 supplied a known set; otherwise skip silently — Phase 5.5 takes this step once it has a set. Run `multi-component-prereqs` (`Skill(skill: "workflows-core:reference", args: "components multi-component-prereqs")`, §6) at `epics` scope. On `multi_component: false`, or where every prerequisite row is `present`, say nothing and continue.
+Runs here only where Phase 2.5 supplied a known set; otherwise skip silently, and Phase 5.5 runs this phase once it has confirmed a set. Run `multi-component-prereqs` (`Skill(skill: "workflows-core:reference", args: "components multi-component-prereqs")`, §6) at `epics` scope. On `multi_component: false`, or where every prerequisite row is `present`, say nothing and continue.
 
 Otherwise the PRD spans two or more components without the artifacts that fix how they fit together — the ARD's `## Contracts` and a PRD-level `specification.md`. Ask once, naming each row that is not `present` with its state:
 
 ```
 "This PRD spans <N> components, and <each missing artifact, with its state> is not on the specs repo's default branch. Epics split without them are designed in isolation and may not fit together after /implement."
-choices: ["Stop — run <the earliest missing command, §6> first (Recommended)", "Split without <the missing artifacts>", "Cancel"]
+choices: ["Stop — <the earliest gap's remedy, §6> first (Recommended)", "Split without <the missing artifacts>", "Cancel"]
 ```
 
-- **Stop** → stop, naming that command and every other missing artifact in ladder order.
+- **Stop** → stop, naming that remedy and every other gap in ladder order.
 - **Split without** → record the override for Phase 9's `### Targets` and continue: every Epic still gets one target, and where `ard_contract` is not `present`, no Epic gets a `## Contract` section.
 - **Cancel** → stop.
 
@@ -544,7 +544,7 @@ This phase sits **before** the conditional repo-resolution and code-scanning pha
 
 ## Phase 4 — Resolve repos (conditional)
 
-If code scan is OFF, skip to Phase 6.
+If code scan is OFF, skip to Phase 5.5.
 
 If code scan is ON:
 
@@ -566,7 +566,7 @@ If code scan is ON:
 
 ## Phase 5 — Parallel code scanning (conditional)
 
-If code scan is OFF, skip to Phase 6.
+If code scan is OFF, skip to Phase 5.5.
 
 Spawn `code-scanner` instances in **batches of up to 4 concurrent agents** per Agent message. Wait for each batch before spawning the next.
 
@@ -607,16 +607,16 @@ Handle per-repo status after the batch returns:
 
 ## Phase 5.5 — Components (only without an ARD set)
 
-Skip where Phase 2.5 supplied a known set. Where code scan is OFF there is nothing to propose from: the run has **no known set**, Phase 6 writes no `target:`, and Phase 9's `### Targets` says so.
+Skip where Phase 2.5 supplied a known set.
 
-1. For each repository Phase 5 scanned, run `enumerate-components` (`workflows-core:components` §2) and place each scanner evidence path with `component-of` (§1.1). Propose the components that evidence and the PRD themes touch — never every module a repository declares.
+1. **The targets the PRD's existing Epics already carry** (`workflows-core:components` §3's `epic-targets` source) are proposed first, whatever the scan shows, so a re-run never drops a component an earlier run confirmed. Where code scan is ON, add to them: for each repository Phase 5 scanned, run `enumerate-components` (§2) and place each scanner evidence path with `component-of` (§1.1), proposing the components that evidence and the PRD themes touch — never every module a repository declares. Where code scan is OFF the existing targets are the whole proposal, and with none the run has **no known set**: Phase 6 writes no `target:`, and Phase 9's `### Targets` says so.
 2. **One component proposed** → it is the run's known set, and nothing is asked: a one-component PRD meets no question it did not meet before.
 3. **Two or more** → show each with the themes and evidence paths that placed it, and ask:
    ```
    "This PRD touches <N> components. Each Epic will target exactly one of them."
    choices: ["Confirm these components (Recommended)", "Adjust the list (you'll be prompted)", "Cancel"]
    ```
-   **Adjust** → take free text to keep, drop, add or group components (§5), re-show the list, and ask again. The confirmed list is the run's known set (§3, source `epics-run`). **Cancel** → stop.
+   **Adjust** → take free text to keep, drop or add components, re-show the list, and ask again; grouping two modules into one component is recorded only in an ARD's `components:` (§5), so it is `/create-ard`'s to make. The confirmed list is the run's known set (§3, source `epics-run`). **Cancel** → stop.
 4. **None proposed** (no evidence path falls in any component) → no known set; Phase 9 says why.
 5. With two or more confirmed, run Phase 2.7 now, exactly as written there; with no ARD, its `ard_contract` row is `missing`.
 
@@ -901,7 +901,7 @@ MODERATE — Epic drafting for a single PRD
 - _or_ "N/A — code scan off"
 
 ### Targets
-- Known set: [<N> components — from the ARD | confirmed at Phase 5.5] — _or_ "none — <no ARD set and code scan off | no component proposed>"
+- Known set: [<N> components — from the ARD | confirmed at Phase 5.5] — _or_ "none — <no ARD set, code scan off and no Epic carrying a target | no component proposed>"
 - [<EPIC-KEY>] → <target> — produces [AD#…]; consumes [AD#…]
 - ...
 - Contract: [present | N/A — one component | split without <the missing artifacts> at the Phase 2.7 stop]

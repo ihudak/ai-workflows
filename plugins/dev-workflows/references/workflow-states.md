@@ -26,12 +26,12 @@ stated cost of removing the mirror, not an oversight.
 | Open | PM | — | PRD stub |
 | Problem stated | PM | /idea, /create-prd | PRD with Problem/Goal |
 | Usecases defined | PM | /create-prd | PRD with user stories / use cases |
-| Ready for Implementation | PE→Dev | /epics, /specify, /design | Epics defined, or a broad PRD-level slice — the PRD folder holding a flat specification.md — or both; each in-scope Epic, and the slice where one stands, Refined+ with specification.md AND design.md; coverage complete; ARD (if any) respected; no cross-artifact contradictions. **On a multi-component PRD** (below): the ARD with `## Contracts`, the PRD-level specification.md, Epics defined, and each in-scope Epic Refined+ with specification.md AND design.md — no PRD-level design.md |
+| Ready for Implementation | PE→Dev | /epics, /specify, /design | Epics defined, or a broad PRD-level slice — the PRD folder holding a flat specification.md — or both; each in-scope Epic, and the slice where one stands, Refined+ with specification.md AND design.md; coverage complete; ARD (if any) respected; no cross-artifact contradictions. **On a multi-component PRD** (below): the ARD with `## Contracts`, the PRD-level specification.md, Epics defined, and each in-scope Epic Refined+ with specification.md AND design.md — no PRD-level design.md; coverage complete; ARD respected; no cross-artifact contradictions |
 | Implementation | Dev | /implement | code in progress (past the readiness gate) |
 | Release Preparation | Dev/PM | /document, /release-notes | docs + release notes |
 | Post GA | PM | — | shipped |
 
-**A multi-component PRD** (`workflows-core:components` §3 — its known set has two or more components) reads the *Ready for Implementation* row's second clause. There the flat `specification.md` is a **requirements source**: its end-to-end acceptance criteria are split across one-component Epics, each designed and implemented on its own, so the slice is never a unit of design or implementation and no PRD-level `design.md` is expected. The ARD's `## Contracts` is what makes those Epics fit together, which is why it is expected there rather than optional. A single-component PRD reads the first clause, unchanged.
+**A multi-component PRD** (`workflows-core:components` §3 — its known set has two or more components) reads the *Ready for Implementation* row's second clause. There the flat `specification.md` is a **requirements source**: its end-to-end acceptance criteria are split across one-component Epics, each designed and implemented on its own, so the slice is not a unit of design or implementation — save by `/design`'s and `/implement`'s override — and no PRD-level `design.md` is expected. The ARD's `## Contracts` is what makes those Epics fit together, which is why it is expected there rather than optional. A single-component PRD reads the first clause, unchanged.
 
 ## Epic status ladder
 
