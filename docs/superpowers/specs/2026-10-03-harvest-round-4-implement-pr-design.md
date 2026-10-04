@@ -113,3 +113,89 @@ Every edit file was dry-run against all three trees and the whole round applied 
 7. **Phase 2B's acceptance sentence** called accepting a down-classification the override *"of the multi-source SIGNIFICANT floor"* alone; reached from a raise, there is no floor, so it now names the floor or a raise.
 8. **Docs.** The body's shape is described once per edition, in `references.md`'s entry for the code handoff; the command pages say nothing the change makes false. The workflow maps in the rules tiers name neither the clarification step nor when the class is set, and are unchanged.
 9. **D17 resolved:** the population sweep found no statement of a changed claim outside `dev-workflows` in this repository, so only `dev-workflows` is bumped. The Copilot edition's instruction files are untouched (19,998 and 19,846 characters).
+
+## Amended during review
+
+Each whole-branch review round's findings were fixed before the next round; these change a decision above rather than its wording.
+
+1. **D4–D6: the re-test reads the written plan.** Phase 2A still writes its exploration to `summary_file` first, but the class is re-tested on the plan it then writes — its Steps and Files to create/modify, and what the exploration found those files do — before the approval prompt and again after every **Revise**, announcing `Re-classified upward at planning`. A re-test on the file map alone missed a trigger that enters through the plan: a file the change creates, or a migration the user asks for at Revise; on this reading every trigger an approved plan states has been tested, which is what Phase 3A step 5's "did not state" exemption assumes. Skipped, as before, where Phase 2A was entered from an accepted down-classification.
+2. **D2: what the run settles reaches the Phase 2B plan.** The `risk-planner` brief gains a `Settled by the run:` line, and `risk-planner` an input of that name: the facts the reading found, with where, and the open questions the run settled itself — in Phase 1, or at Phase 3A step 5 before a re-plan — the latter listed under `### Assumptions`. Phase 2A's plan cites the found facts under Approach. A question the run settles mid-implementation is recorded in the Phase 5 report's `### Assumptions & limitations`.
+3. **D7–D8, the re-plan.** Its trigger excludes §1.1's last item (*Unclear requirements, large unknowns, or otherwise high blast radius*), which is a decision, and *Multi-source input*, which is Phase 1.6's. Its brief also carries every answer given at step 5's decision arm and the `pre_existing_dirty` paths, whose earlier content the plan neither reverts nor counts as this change's. **Approve** writes both plans into `plan_file` rather than replacing the first — the re-plan governing only where the two contradict, every other item in either still standing, both plans' Review focus lines included — and `test-writer`'s and `code-review`'s Plan input say so; the re-plan reads the earlier plan too and keeps its Out of scope and Assumptions unless the trigger forces a change. **Accept revised classification** records the revised class, and the trigger and its §1.1 item then count as stated.
+4. **D8, a trigger after the one re-plan** is its own arm, not the decision arm, whose test it fails: announced, then `["Continue at the current class — this change ships without the review", "Stop here — the work so far is committed through Phase 4.6"]`. **Continue** records it, settles it as Accept does, and names it in the pull-request body as the reason no review ran; **Stop** is in Phase 4.6's `"Every run"` list and in Phase 4's cleanup.
+5. **D11 widened:** the Phase 5 report records every change of class after Phase 1.5 — the multi-source floor, at planning, during implementation, or a down-classification accepted at plan approval or at review — with, for a raise, its trigger and paths.
+6. **D12–D16, the body.** The Review section names the classification and, where no review ran, says so and why. The template ladder lists candidates through `git ls-tree -r -z | tr | grep`, so non-ASCII names are not lost; a template without headings is one section; an HTML comment is followed, then removed. §3.2 tells the user to paste the body in place of what the web UI prefills. `/vuln` and `/upgrade` bound their door facts to their research report or upgrade plan and the diff — "none of them shows it" is §2.7's one-way — and carry triage, unapplied findings and kept regressions. `/implement` keeps `plan_file` until Phase 4.6 has rendered the body from it.
+7. **The user's decision: one repository per run.** `/implement` changes code only in the repository Pre-Phase 3 branches, the working directory's. Another code repository a multi-source run is given is read-only context. A change one needs:
+   - is planned out of scope: Phase 2A's item 8, and the `risk-planner` brief's `Constraints:` line, which names the top level;
+   - is named in the pull-request body's Summary as a companion change and weighed in Merge danger;
+   - becomes a follow-up through the Phase 5 report's Session learnings, Phase 6 and the Next step, addressed to the unit itself;
+   - on an early stop, is named beside the stop's §3.1 line.
+
+   An invariant binds every writer to this, including Phase 3.5's fixes and `review-fixer`. `followup-emission` §6 and the follow-ups docs page name this kind of follow-up.
+
+   Phase 4.6's paragraph for a repository the run wrote and never branched is gone, and so is its Phase 5 report line. `workflows-core:implementation-format` records one repository per run. Per D17's sweep, `workflows-core` therefore takes a patch, 1.11.1, and each changelog tells the user to update the other plugin with it. Review had first tried capturing every repository's diff, but that broke `test-writer`'s, `code-review`'s and `review-fixer`'s single-repository contracts; it was reverted.
+8. **The user's decision: the ARD in Phase 1 (D1 widened).** On a keyed run, Phase 1 first runs Phase 1.8's ARD resolution, stopping on `unmerged`, and its look reads the ARD's rules. Phase 1.8 acts on the result, and resolves the ARD itself where Phase 1 did not.
+9. **The user's decision: a unit commit that does not land ends `code-handoff` §2.12's split.** "Does not land" covers three cases:
+   - a hook rejects the commit;
+   - git fails to write it, as on a signing failure;
+   - §2.2's `git add` is refused, as on a held lock, which leaves the changes in the working tree rather than staged.
+   - `/upgrade` step 6.5 stops its loop there, and later components do not run.
+   - The terminal call stages nothing at §2.2. It goes on at §2.4 where an earlier unit committed, and otherwise ends on the *Commit rejected by a hook* row.
+   - §2.9 lists the case, so any pull request is a draft.
+   - A §3.1 append row names the unit. The *Commit rejected* row, renamed from *Commit rejected by a hook*, says who rejected the commit and where the changes are.
+   - `/upgrade`'s pull-request body covers only the components that committed, as its title does.
+10. **D12, D16: the title.** §2.7's title is the commit subject, or on a §2.12 terminal call the caller's `title`:
+    - `/vuln`'s title is the subject §2.3 writes from the template, version included.
+    - `/upgrade`'s title is step 6.5's subject for one component, or `upgrade <first> and <N> more [<key>]` over the components it committed.
+
+    This fixes a contradiction older than this branch, in all three editions.
+11. **D12, Review.** The body's Review section and the Phase 5 report's Deferred items carry a `MAJOR` or `BLOCKER` that `review-fixer` deferred. Both had dropped it before this branch.
+12. **§2.11's `repo` is the work tree's top level**, resolved with `git rev-parse --show-toplevel`. §2.7's template listing takes `--full-tree`, and the blast-radius greps take the `:/` pathspec. Before this branch, a run from a subdirectory missed root files, and §2.2's carve-out failed on root-relative paths.
+13. **D10 widened:** the **Cancel** arm of Phase 3B step 7's re-classification prompt joins Phase 4.6's `"Every run"` list in all three editions. Before this branch, that stop was left undefined.
+14. **D8's capture and every root, at the top of the work tree.** Every diff this round's commands capture runs `git add -N :/ && git diff`; `/vuln`'s and `/upgrade`'s captures and `test-writer`'s input change the same way. Before this, `git add -N .` from a subdirectory marked only that directory's untracked files, so new files elsewhere never reached `test-writer` or `code-review`. By the user's decision, every root follows the diff: `/implement`'s test baseline, and every root that `/implement`, `/vuln` and `/upgrade` pass to an agent, is the repository's top level. Several things follow from it:
+    - the test-command prompts of all three commands say so;
+    - Phase 3.5 runs lint and build from the directory the exploration found them in, in a subshell by absolute path;
+    - the working directory, where it lies below the top level, is a place for exploration and the scan to start;
+    - `risk-planner` runs its commands from the top level;
+    - `code-scanner`, the explorer, Phase 4's agents and the maintenance handoffs take the top level too. A monorepo run started from one service's directory therefore baselines and verifies every suite.
+15. **D17 widened.** `workflows-core` 1.11.1 also fixes `followup-emission` §8. That section, `/implement`, `/ready`, `/epics`, `/prd-proposal`, `/brd-proposal`, `/document` and `/release-notes` named §4 for the follow-up target ladder, which is §2. So `product-workflows` takes a patch (3.12.1) and `docs-workflows` takes a patch (1.5.1). Every new changelog section is dated 2026-10-04, the day it reaches `main`.
+16. **The companion change reaches review.** `code-review`'s brief carries a `Deferred to another code repository` line, and `code-review` defines that input. A new paragraph in Phase 3B step 7, *Another code repository's findings*, runs after triage on every review and re-review. It records each survivor whose fix lies in another code repository as Phase 3B step 2 says, and no fixer receives it.
+    - Such a finding is a fourth class of unapplied finding, in the body and in Deferred items.
+    - A `BLOCKER` among those findings leaves the review blocked, whatever else survives. The stop names every other survivor, and a fifth unapplied class carries them: a survivor of a review that stopped before any fixer ran.
+    - On the first review, if nothing that needs a fix is left, no fixer is dispatched. A `PASS WITH RECOMMENDATIONS` continues. A `BLOCK` asks `finding-triage`'s first settle prompt.
+    - `followup-emission` §6's exclusion of deferred `BLOCKER`s spares such a finding.
+17. **Phase 1.6 counts distinct repositories, at every copy of the multi-source floor.** This covers `classification` §1.1, the docs and the rules tiers; they also name folder inputs rather than "any directory input". `repo_count` counts by top level, so an `@path` inside a repository already counted adds none. Before this, such a path set off the multi-source floor and a second scan of the same repository. Phase 1.7 now scans each repository once. An inner `@path` is a search hint, relative to the top level, for that scan and for the Phase 2A/2B explorer.
+18. **Pre-existing, fixed: the *Stash* answer at `/implement`'s and `/upgrade`'s dirty-tree prompt.**
+    - It stashes tracked changes, and `/implement` leaves the run's own `@path` inputs in place.
+    - It records every path it leaves dirty as `pre_existing_dirty`, which keeps that path out of the commit unless the run edits it.
+    - A stash git refuses stops the run before anything is branched. `stash_ref` is set only where git made a stash.
+    - Before this, untracked files stayed in the tree unrecorded, and the commit swept them in.
+    - The run's own files changed (the `--stat` paths, less any untouched pre-existing path) are defined once, at Phase 4 step a.
+19. **A plan with no step in this repository.** Such a plan is one written before any edit (Phase 2A's, or Phase 2B's at its full-plan gate after the repro branch; never the re-plan) whose Steps change no file in this repository.
+    - Its own question replaces the approval question: *Stop here, nothing written* (Recommended), or *Revise plan*. Every **Revise** and re-dispatch handles its return through every arm.
+    - **Stop** names one follow-up per other repository and stops as **Cancel** does, with nothing written.
+    - The follow-up for another repository is keyed by that repository, named by its origin slug, and by the unit. Its action is one run from there.
+    - Every stop after the plan names the companion changes.
+    - Step 7.5 annotates only a spec in `$SPECS_PATH` or in this repository. A note in this repository is committed with the code, and Phase 4.5 hands off only the notes in `$SPECS_PATH`.
+    - `finding-triage`'s *stayed blocked*, its rules-tier copy and `code-handoff` §2.9 admit a first review's `BLOCKER` whose fix lies in another code repository.
+20. **Phase 0's classification.** The rows are tested top to bottom, and the first match wins.
+    - The working directory, inside a work tree, and any directory at a work tree's top level are always code repositories.
+    - A working directory outside every work tree stops the run.
+    - A top-level spec folder read as a code repository is announced, with the remedy of naming its spec files directly.
+21. **The user's decision (2026-10-04) on finishing the review loop.** From round 30, a finding in the branch's own items or decisions is fixed. A finding in one of four pre-existing areas goes to the NEXT.md follow-up backlog, each one named:
+    - the *Stash* answer;
+    - Phase 0's classification order;
+    - follow-up dedupe keys;
+    - subdirectory roots.
+22. **Pre-existing, fixed: the code commit and the review diffs (rounds 32–40).**
+    - Every diff capture is `git add -N --ignore-removal :/ && git -c diff.relative=false diff --no-ext-diff --no-color <HEAD, or the empty tree before a first commit>`. Before, a deletion was staged out of the diff's sight, and a user's diff configuration could alter the capture.
+    - `code-handoff` §2.2's carve-out 1 commits its enumerated paths as one pathspec commit. It never stages the index first, so a user's staged change stays out.
+      - Each path is named `:(literal)<path>`, never through the global flag a commit hook would inherit.
+      - It drops an intent-to-add entry the run created and removed again.
+      - After the commit it brings the index back in step with `git restore --staged`.
+    - *Nothing to commit* is defined on both of §2.2's paths, and the commit never runs with an empty path list.
+    - The clean-tree test lists untracked files whatever the user's configuration. The prompt shows them with each directory on one line.
+    - §2.7 item 1 reads the pull request's file list from git, and names commits on the branch the run did not make.
+23. **`finding-triage` and `next-phase-offer` follow `/implement`'s other-repository rules.**
+    - `finding-triage`: on a first-review `BLOCK`, survivors kept from the fixer, none of them a `BLOCKER`, that leave no `BLOCKER` or `MAJOR` for it, ask the first settle prompt.
+    - `next-phase-offer`: the routing graph and its rule 5 name the run from another repository, addressed to the Epic itself, first.
+24. **The user's decision (2026-10-04, after round 40): the commit-and-staging area joins the filed areas.** From round 41, a finding there goes to the NEXT.md backlog.
