@@ -121,7 +121,7 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
    remote-but-owned seam tested without a port, or a true-external dependency tested without a mock
    adapter, is a mismatch `design-reviewer` flags.
 9. **## Risks & mitigations** (scaled) — engineering risks (performance, concurrency, data-loss, blast
-   radius) and the mitigation or explicit acceptance for each. A repository added to a targeted Epic's design at `/design` Phase 3 is recorded here as `- Target span: <component> — <why>`: `/implement` will plan its change as a companion change in that repository, and the line is what says so before it does.
+   radius) and the mitigation or explicit acceptance for each. A repository added to a targeted Epic's design at `/design` Phase 3, or another component of the target's own repository the design must change, is recorded here as `- Target span: <component> — <why>`: in another repository `/implement` will plan the change as a companion change, and in the same one it implements it beyond the Epic's target, and the line is what says so before it does.
 10. **## Migration / rollout / backward-compatibility** (scaled) — schema/data migration, feature
     flags, rollout order, compat guarantees. `_N/A — why_` when the change is additive and
     self-contained.

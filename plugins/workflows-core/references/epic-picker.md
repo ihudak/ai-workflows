@@ -83,12 +83,11 @@ appends *"Author one broad PRD-level spec instead"* on every run — it is the c
 the spec, so nothing can condition it — and its array carries at most **two** Epic rows plus that
 option plus the remainder option. `/implement` appends *"Implement one broad PRD-level slice
 instead"* **only where the PRD folder holds a flat `specification.md` and the PRD is not multi-component** (`${CLAUDE_PLUGIN_ROOT}/references/components.md` §3), the same condition its
-one-Epic branch above carries, so its array carries at most **two** Epic rows where that file
-stands and at most **three** where it does not, the freed row going back to the Epics. The added
+one-Epic branch above carries, so its array carries at most **two** Epic rows where it appends that option and at most **three** where it does not, the freed row going back to the Epics. The added
 option is never the one the **cap** drops: it is the alternative to picking any Epic at all, and a
 picker that hides it to fit forces a choice the command means to leave open. `/implement`
 withholding it is a different thing and not an exception to that — where no flat `specification.md`
-stands the slice is a unit nothing specified, so there is no choice there to leave open.
+stands the slice is a unit nothing specified, and on a multi-component PRD the flat file is a requirements source its Epics are built from rather than a unit, so in neither case is there a choice to leave open.
 
 **Reading the artifact rather than a declared status is the point, not an accident of the rewrite.**
 A status is a human's claim about the work and can lag it — which is why the version of this picker

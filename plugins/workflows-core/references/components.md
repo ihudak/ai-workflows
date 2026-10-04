@@ -1,6 +1,6 @@
 # Components (embedded — shared reference)
 
-Single source of truth for what a **component** is, how a repository's components are proposed, when a PRD is **multi-component**, the **ride-along** rule, and the `multi-component-prereqs` check. `/create-ard`, `/epics`, `/specify`, `/design`, `/ready` and `/implement` cite this file, as do `epic-writer`, `ard-reviewer`, and the `ard-format`, `design-format`, `workflow-states`, `ard-resolution`, `pre-lint`, `grilling-technique` and `epic-picker` references; none of them keeps a copy of a rule stated here. `epic-reviewer`, `design-reviewer` and `readiness-reviewer` carry no `Skill` tool and so never load it: each states, from its brief, the checks it makes against §1 and §4, and those checks are the only restatement.
+Single source of truth for what a **component** is, how a repository's components are proposed, when a PRD is **multi-component**, the **ride-along** rule, and the `multi-component-prereqs` check. `/create-ard`, `/epics`, `/specify`, `/design`, `/ready` and `/implement` cite this file, as do `epic-writer`, `ard-reviewer`, and the `ard-format`, `design-format`, `workflow-states`, `ard-resolution`, `pre-lint`, `grilling-technique`, `epic-picker` and `next-phase-offer` references; none of them keeps a copy of a rule stated here. `epic-reviewer`, `design-reviewer` and `readiness-reviewer` carry no `Skill` tool and so never load it: each states, from its brief, the checks it makes against §1 and §4.
 
 **Why it exists.** `/implement` changes code in one repository per run, so an Epic that spans two repositories is half a companion change before any code is written. A PRD that changes a client and a server, or several modules of one repository, is therefore split into one Epic per component, and the interfaces between the components are fixed in the PRD-level ARD's `## Contracts` section (`product-workflows:ard-format`) so that the Epics on either side fit together after each is implemented on its own.
 
@@ -48,7 +48,7 @@ Returns `{multi_component, set, set_source}`. The **known set** comes from the f
 2. **`epics-run`** — inside one `/epics` run with no ARD set, the set its Phase 5.5 confirmed.
 3. **`epic-targets`** — the distinct `target:` values of the `epic.md` in each `EPIC-` folder directly under the PRD folder.
 
-`multi_component` is true when the set has **two or more** entries. With no source, the set is empty and the PRD is not multi-component.
+`multi_component` is true when the set has **two or more `kind: code` components**. A deploy component counts for nothing here: a module that only rides along on it (§4), or deploys through it in another repository, needs no contract with it, so `orders` plus `k8s` is one code component and the PRD is not multi-component — though its Epics still take one target each. Under `epic-targets`, which carries no kind, an id whose path is one of §2's deploy directories counts as `kind: deploy`. With no source, the set is empty and the PRD is not multi-component.
 
 The third source is what keeps a PRD that `/epics` split without an ARD — its prerequisites stop's override (§6) — multi-component for `/design`, `/ready` and `/implement`, which have no ARD set to read. **A target is checked as being *in* the set where the source is `ard` or `epics-run`** — a set somebody confirmed; under `epic-targets` the set *is* the targets, so there is nothing to check. Outside an `/epics` run only `ard` and `epic-targets` occur.
 
@@ -92,7 +92,7 @@ Inputs: the resolved PRD folder and its key, the Epic key (or null), and `scope`
    - `epic_spec`, `epic_design` (`implement` scope) — the Epic folder's `specification.md` and `design.md`.
 3. **Target** (`implement` scope): the Epic's `target:`, or `none`; `in_set` where `set_source` is `ard`; and `target_repo_matches` — the target's `<repo-slug>` against the slug of the repository the run stands in (§1's derivation, from its top level): `true`, `false`, `unknown` where that repository has no `origin`, or `null` where the Epic has no target (the `epic_target` row reports that).
 4. **Targets** (`ready` scope): one row per `epic.md` in an `EPIC-` folder directly under the PRD folder — its key, its `target:` or `none`, and `in_set` where `set_source` is `ard`.
-5. **Contract coverage**, where `ard-resolution`'s `contracts` is not null. Read the `epic.md` in every `EPIC-` folder directly under the PRD folder for its `target:`, its `## Contract` lines (`- Produces: [AD#N] — …`, `- Consumes: [AD#N] — …`; every `[AD#N]` on such a line counts) and its `## Dependencies`. Then report each gap by `AD#N`:
+5. **Contract coverage** (`implement` and `ready` scope), where `ard-resolution`'s `contracts` is not null. Read the `epic.md` in every `EPIC-` folder directly under the PRD folder for its `target:`, its `## Contract` lines (`- Produces: [AD#N] — …`, `- Consumes: [AD#N] — …`; every `[AD#N]` on such a line counts) and its `## Dependencies`. Then report each gap by `AD#N`:
    - `unknown_ad` — an Epic cites an `[AD#N]` that is not an interface row;
    - `consumed_unproduced` — an Epic consumes a row whose status is `new` or `changed`, and no Epic whose target is the row's producer produces it;
    - `produced_off_target` — an Epic produces a row whose producer is not its target;
@@ -123,7 +123,7 @@ coverage_gaps: [{kind: unknown_ad | consumed_unproduced | produced_off_target | 
 
 ## Consumers (informative)
 
-- `/create-ard` — Phase 3 proposes theme→component with §2 and writes the confirmed list to `components:` (§5); Phase 4 authors `## Contracts` when there are two or more.
+- `/create-ard` — Phase 3 proposes theme→component with §2 and writes the confirmed list to `components:` (§5); Phase 4 authors `## Contracts` when two or more are `kind: code`.
 - `/epics` — §3 for the known set; Phase 5.5 with §2 and §1.1 where no ARD supplies one; §6 at `epics` scope for its prerequisites stop; §4 in `epic-writer`'s rules.
 - `/specify`, `/design` — the Epic's target narrows the repositories and the scan; §3 decides whether `/design <PRD>` designs a flat spec.
 - `/ready` — §6 at `ready` scope for its targets and contract-coverage tables.

@@ -15,7 +15,9 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Changed
 - **`ard-resolution` returns the PRD-level ARD's `components` and `contracts`** beside its invariants, on Epic-level resolutions too; `status: none` returns them empty, and a caller that ignores them is unchanged.
-- **`pre-lint`'s ARD block requires `## Contracts` where `components:` has two or more entries**, and checks each interface row's `AD#N`, components and status.
+- **`pre-lint`'s ARD block requires `## Contracts` where `components:` has two or more `kind: code` entries**, and checks each interface row's `AD#N`, components and status.
+- **`ard-resolution`'s no-regression rule states its one exception**, a multi-component PRD, where `/epics` and `/implement` ask about a missing contract and `/design`, `/implement` and `/ready` treat a flat PRD-level specification as a requirements source.
+- **`epic-picker`**: `/implement`'s broad-slice option is withheld on a multi-component PRD; **`next-phase-offer`**: after a multi-component PRD-level ARD with no Epics, the PRD-level spec is recommended before `/epics`.
 
 ## [1.11.1] — 2026-10-04
 

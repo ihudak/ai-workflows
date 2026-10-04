@@ -13,7 +13,7 @@ Epic-level ARD goes deeper on that Epic's repos/areas.
 - **PRD-level** (`/create-ard <PRD-KEY>`) — cross-cutting invariants + broad-but-shallow grounding across the affected repos.
 - **Epic-level** (`/create-ard <EPIC-KEY>` — one address; the Epic's key encodes its ancestry, so the PRD is the folder above it and is never typed beside it, D4) — deeper grounding on the Epic's repos/areas; **inherits the PRD-level ARD's `AD#N` read-only** and must not contradict them.
 - **Per-area** — a big Epic spanning separable areas in one repo (e.g. backend `server/` + frontend `ui/`) may split into `ard-<area>.md` beside the folder's `ard.md` (grill-decided).
-- **Multi-component** — a PRD-level ARD whose `components:` lists two or more components (`workflows-core:components` §3) also carries `## Contracts`: the interfaces between those components, fixed here so that the one-component Epics on either side fit together once each is implemented on its own.
+- **Multi-component** — a PRD-level ARD whose `components:` lists two or more `kind: code` components (`workflows-core:components` §3) also carries `## Contracts`: the interfaces between those components, fixed here so that the one-component Epics on either side fit together once each is implemented on its own.
 
 ## Frontmatter
 
@@ -38,7 +38,7 @@ derived_from: <path to the PRD file, canonical prd.md — or, in a BRD folder th
 ---
 ```
 
-**`components:` is the known set every Epic target is resolved against.** The architect confirms it in `/create-ard` Phase 3, and it lists the components this PRD touches, never every module a repository has. Every entry's repository is in `grounded_repos` or is named under `## Open questions`. It is written by a PRD-level run only — on the BRD route, a slice's own `/create-ard <SLICE>`, whose ARD carries `scope: epic` (above) yet is its slice's PRD-level ARD — and an Epic's ARD carries none; the PRD-level ARD's set applies to its Epics. An ARD with no `components:` key — every ARD written before the key existed — supplies no set, and each consumer then behaves exactly as it did before (`workflows-core:components` §3).
+**`components:` is the known set every Epic target is resolved against.** The architect confirms it in `/create-ard` Phase 3, and it lists the components this PRD touches, never every module a repository has. Every entry's repository is in `grounded_repos` or is named under `## Open questions`. It is written by a PRD-level run only — on the BRD route, a slice's own `/create-ard <SLICE>`, whose ARD carries `scope: epic` (below) yet is its slice's PRD-level ARD — and an Epic's ARD carries none; the PRD-level ARD's set applies to its Epics. An ARD with no `components:` key — every ARD written before the key existed — supplies no set, and each consumer then behaves exactly as it did before (`workflows-core:components` §3).
 
 **Unknown frontmatter keys are preserved.** Every command that rewrites this file keeps fields it does not recognise, in place and unmodified — the same rule `workflows-core:prd-format` states for a PRD, and for the same reason: a user's own field must survive a run that did not author it. `workitem_key` is the documented example, and it is reserved rather than special-cased.
 
@@ -61,7 +61,7 @@ does not exist. No widening here reaches a **tracker** key — none of these fie
 - `## Grounding findings (architecture as-is)` — what exists today, each claim citing a real `file:line` in a `grounded_repos` entry. An unmounted/descoped repo appears only under Open questions — NEVER as an invented "as-is" claim.
 - `## Architecture decisions` — `### [AD#N]: <title>`, each with **Binds:** (what it constrains) · **Prevents:** (the divergence it stops) · **Rule:** (a single testable statement). Epic-level lists inherited PRD-level ADs read-only under "Inherited invariants".
 - `## Cross-repo / component approach` — the Capability→Architecture map (which capability lands in which repo/component). On a multi-component ARD each capability names the component ids it lands in, and one that lands in two or more `kind: code` components is a capability `## Contracts` must give an interface row; a deploy component a capability only rides along on (`workflows-core:components` §4), or deploys through in another repository, adds none.
-- `## Contracts` — **PRD level, and only when `components:` has two or more entries.** An interface table, then three subsections:
+- `## Contracts` — **PRD level, and only when `components:` has two or more `kind: code` entries.** An interface table, then three subsections:
 
   | AD | Producer | Consumers | Kind | Status | Artifact |
   |---|---|---|---|---|---|
