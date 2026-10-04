@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.1.3 — 2026-10-04
+
+### Fixed
+
+- **Safety said never to add `--yes`, while seven examples and two tips added it.** The rule is now
+  stated as what it always meant: an agent's shell cannot answer `acli`'s confirmation prompt, so the
+  user approves the exact set in the conversation first, and `--yes` carries that approval. Every
+  `--yes` example is marked as running after approval, and the Selectors and Tips sections say the
+  same instead of "add `--yes` to skip".
+- **Safety listed some writes and left others out** — `create` and `create-bulk`, `comment update`
+  and `--edit-last`, `filter update`, `sprint update --state closed`, `link delete`, Confluence blog
+  creates. It now defines a write as every command that is not a read, names the reads, and groups
+  the writes that matter most by consequence.
+- **Multi-item examples that would stall.** Six `--jql` and multi-key examples, which `acli` confirms
+  before running, carried no `--yes`, so an agent copying them would hang on a prompt its shell
+  cannot answer; each now carries `--yes` marked as running after approval. The plugin description
+  said the policy "forbids the agent from adding --yes"; it now says `--yes` carries the user's
+  approval.
+
 ## 0.1.2 — 2026-09-24
 
 ### Changed — the marketplace is now `shipwright`, and the repository `ihudak/ai-workflows`

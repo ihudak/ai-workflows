@@ -61,14 +61,15 @@ When `docs_grounding` is present, use its `docs_references` for terminology and 
    raise a gap for it.
 
 3. **Detect deprecation.** Apply the §5 deprecation trigger: scan the PRD content
-   (`## What`, "Current vs Target State", explicit "deprecat*" wording). When triggered, the Summary
+   (`## Problem`, `## Goal`, `## Scope`, and explicit "deprecat*" wording). When triggered, the Summary
    must carry a deprecation note with a **required end-of-life date** and an **optional
    end-of-support date**. Never invent a date: when the required end-of-life date is not
    derivable, add a `gaps[]` entry (`field: deprecation_eol`, `recommended_action: "ask
    user"`) and use a `<!-- TODO: end-of-life date -->` placeholder in the prose.
 
-4. **Gather substance.** From the PRD/ticket file in the handoff, read the summary,
-   `## User Story`, `## Acceptance Criteria`, and `## Problem/Pain`. When
+4. **Gather substance.** From the PRD/ticket file in the handoff, read the summary and the
+   `prd-format.md` spine sections — `## Problem`, `## Goal`, `## User Stories`,
+   `## Acceptance Criteria`, and `## Scope`. When
    `diff_summaries` is present, use it only to confirm what actually shipped — never to
    add implementation detail that is not user-visible.
 
@@ -104,8 +105,8 @@ When `docs_grounding` is present, use its `docs_references` for terminology and 
      - **Editorial hierarchy.** Lead with the new default / recommended path. Demote a
        deprecated, legacy, or "manual-only" option out of the primary list into a
        trailing sentence or an optional `> Note:` line — do not present it as an equal
-       peer to the recommended choice. The folder read's "Current vs Target
-       State" / deprecation signals tell you which option to demote.
+       peer to the recommended choice. The PRD's `## Problem` (what is
+       insufficient today) and the deprecation signals tell you which option to demote.
      - **Markdown affordances** (use where they aid clarity, matching shipped
        feature-updates): **bold** for UI element / screen / field names, inline
        `code` for filenames, identifiers, flags, and config keys (e.g. `dynakube.yaml`),
