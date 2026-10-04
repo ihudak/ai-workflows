@@ -475,7 +475,7 @@ Every stop from here to the end of the run names, beside whatever else it report
 Before writing any file:
 
 1. **Clean-tree check** — Run `git status --porcelain -z --untracked-files=all`, which lists untracked files whatever the user's `status.showUntrackedFiles`. If the output is non-empty:
-   - Show the user what is dirty (paste the `git status --short --untracked-files=all` output).
+   - Show the user what is dirty (paste the `git status --short --untracked-files=normal` output, which shows untracked files whatever the user's `status.showUntrackedFiles` and an untracked directory as one line).
    - Ask:
      ```
      choices: ["Stash tracked changes and continue (Recommended)", "Proceed anyway — pre-existing changes will appear in the diff and review outputs", "Cancel"]
