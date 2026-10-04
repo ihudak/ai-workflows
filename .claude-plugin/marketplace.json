@@ -81,7 +81,7 @@
     },
     {
       "name": "docs-workflows",
-      "version": "1.5.2",
+      "version": "1.5.3",
       "description": "Commands for a product's documentation and release notes. /docs-init scaffolds a documentation repository from nothing: a Material for MkDocs skeleton, public and internal builds over one content root, Vale, CI and a docs-profile.yml. /docs-brand extracts a logo and colour pair from the product's code and applies them, WCAG contrast-checked. /docs-serve runs the site's dev server. /docs-audit turns the product's own code and specs tree into a coverage grid and a prioritised backlog of the pages it is missing, behind an Opus review gate. /document edits prose directly, or keyed to a PRD folder writes product docs from its implementation diffs behind an Opus review gate. /docs-profile refreshes a docs repository's machine-readable profile; /release-notes drafts a destination-shaped entry from the same folder. Depends on workflows-core and prose-style.",
       "author": {
         "name": "Ivan Gudak",

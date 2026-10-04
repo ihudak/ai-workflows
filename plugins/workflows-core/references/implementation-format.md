@@ -65,7 +65,7 @@ taking the default cursor; `/ready` derives its phase from an Epic folder holdin
 Epic-level `/document` or `/release-notes` reads none of its refs. **Population: every Epic
 implemented under a PRD address before `dev-workflows` 4.1.2.** And where the PRD folder also holds
 a flat `specification.md` on a PRD that is not multi-component, or one the 0-Epic override built whole, a PRD-level `/ready` counts the block as the **broad PRD-level slice's
-own record** (on any other multi-component PRD, `${CLAUDE_PLUGIN_ROOT}/references/components.md` §3, `/ready` carries no slice row, and such a block counts toward no unit until it is moved), the PRD folder's record being the slice's — which moves the slice to *In Progress*
+own record** (on a multi-component PRD, `${CLAUDE_PLUGIN_ROOT}/references/components.md` §3, a PRD-folder block is what marks the PRD as built whole by the 0-Epic override, so `/ready` reads the PRD as that slice and counts the block toward it — a leftover block for an Epic is therefore moved before a multi-component PRD's readiness is read), the PRD folder's record being the slice's — which moves the slice to *In Progress*
 only where the PRD folder also holds a `design.md`, since `/ready` Phase 3(0) takes the furthest
 rung whose expected artifacts all exist and the lower rung where they straddle
 (`dev-workflows:workflow-states`, the Epic ladder). **Population: every PRD folder holding both a

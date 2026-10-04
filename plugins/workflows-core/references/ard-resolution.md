@@ -109,4 +109,4 @@ deviation record as *allowed-but-flagged* (the architect adjudicates), **without
 
 `components` and `contracts` are read by `${CLAUDE_PLUGIN_ROOT}/references/components.md` §3 and §6, read directly by `/specify`, `/design` and `/ready`, and passed on by `/epics` to `epic-writer` and `epic-reviewer`; a caller that reads neither field behaves exactly as it did before they existed.
 
-The other five pass `invariants` to their reviewer as `applicable_ard`; the reviewer's ARD-conformance dimension is skipped entirely when it is absent. `/create-ard` alone does not: it inherits PRD-level `AD#N` read-only straight into its own grill and drafting (Phase 4), and `ard-reviewer` checks non-contradiction directly against the drafted file, never via that field.
+The five consumers listed above other than `/create-ard` pass `invariants` to their reviewer as `applicable_ard`; the reviewer's ARD-conformance dimension is skipped entirely when it is absent. `/create-ard` alone does not: it inherits PRD-level `AD#N` read-only straight into its own grill and drafting (Phase 4), and `ard-reviewer` checks non-contradiction directly against the drafted file, never via that field.
