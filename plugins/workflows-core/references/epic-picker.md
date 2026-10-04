@@ -32,7 +32,7 @@ Given a resolved `PRD-` folder (`references/addressing.md` §3) and no Epic in t
   which, so an auto-selection is never silent — save where the command's own policy asks instead:
   `/implement` puts that Epic and one broad PRD-level slice to the operator where the PRD folder
   also holds a flat `specification.md`, the broad slice `/design` designs as one unit (`/implement`
-  Phase 0).
+  Phase 0) — never on a multi-component PRD, where that file is a requirements source and no slice (`${CLAUDE_PLUGIN_ROOT}/references/components.md` §3).
 - **Two or more** → render the picker, one row per Epic: its marker, its `key` (read from the
   folder's frontmatter per §4, never parsed from the directory name) and its title — **capped at four
   options, see *The cap* below**.
