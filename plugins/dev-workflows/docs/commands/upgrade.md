@@ -45,7 +45,7 @@ flowchart TD
 
 ## What it produces
 
-Upgraded component version(s) applied on a freshly created feature branch, **each component committed on its own** as soon as its gates settle (step 6.5; a commit a hook rejects ends the batch there, leaving that component's changes staged, later components unrun and any pull request a draft) — so a batch that dies part-way still has the finished components committed on a branch that bisects — and the branch pushed once for the batch behind a three-option consent choice (push + PR recommended, push only, or neither) in step 7.5. `--no-commit` skips both steps and leaves everything in the working tree.
+Upgraded component version(s) applied on a freshly created feature branch, **each component committed on its own** as soon as its gates settle (step 6.5; a commit that does not land, because a hook rejects it or git fails to write it, ends the batch there, leaving that component's changes staged, later components unrun and any pull request a draft) — so a batch that dies part-way still has the finished components committed on a branch that bisects — and the branch pushed once for the batch behind a three-option consent choice (push + PR recommended, push only, or neither) in step 7.5. `--no-commit` skips both steps and leaves everything in the working tree.
 
 No cost entry is ever written (see [Who runs it](#who-runs-it) above), and no `resume.md` is written for `/upgrade` — its durable state is already the branch on disk, not a PRD-scoped artifact. The terminal `commit-artifacts` step still runs, committing only `$SPECS_PATH`'s bounded session-artifact paths — never the code repo `/upgrade` just changed.
 

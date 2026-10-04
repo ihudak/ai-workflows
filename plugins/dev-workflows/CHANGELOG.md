@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.7.0] — 2026-10-03
+## [4.7.0] — 2026-10-04
 
 **Update `workflows-core` to 1.11.1 with this release**: `/implement` Phase 4.7 writes the one-entry block its `implementation-format` §1 now defines, and Phase 6 files the follow-up kind its `followup-emission` §6 now names.
 
@@ -22,9 +22,10 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`/implement` Phase 3B step 7's `### Re-classification` prompt offered a Cancel that no text defined**, and Phase 4.6's "Every run" list left it out, so a reviewed implementation could stop uncommitted on its branch. It now stops through Phase 4.6, like every other stop after files are written.
 - **`/vuln`'s and `/upgrade`'s pull-request titles differed from their commit subjects**, which `code-handoff` §2.7 says a title is: `/vuln`'s is now the subject its commit template yields, version included, and `/upgrade`'s the subject of its one committed component or, where it committed several, a subject over those alone, typed the same way; §2.7 names the caller's title on a terminal call that commits nothing.
 - **`/implement`'s `### Deferred items` and pull-request body dropped a `MAJOR` finding `review-fixer` deferred** on a `PASS WITH RECOMMENDATIONS` verdict, which gets no re-review; both now list every review finding the run did not apply.
-- **`/upgrade` carried on after a hook rejected a component's commit**, so the next component's commit, or the terminal call, folded the rejected changes in under another subject. A rejected commit now ends the loop (`code-handoff` §2.12): the terminal call commits nothing in its place, and where earlier components committed, its outcome line names the uncommitted component and any pull request is a draft.
-- **A run started from a subdirectory of the repository left new files outside that directory out of every diff it captured**: `git add -N .` marks only the working directory's untracked files. `/implement`'s, `/vuln`'s and `/upgrade`'s captures, and `test-writer`'s input, now use `git add -N :/`, which marks the whole work tree.
+- **`/upgrade` carried on after a component's commit did not land**, rejected by a hook or not written by git, so the next component's commit, or the terminal call, folded the staged changes in under another subject. A commit that does not land now ends the loop (`code-handoff` §2.12): the terminal call commits nothing in its place, and where earlier components committed, its outcome line names the uncommitted component and any pull request is a draft.
+- **A run started from a subdirectory of the repository left new files outside that directory out of every diff it captured**: `git add -N .` marks only the working directory's untracked files. `/implement`'s, `/vuln`'s and `/upgrade`'s captures, and `test-writer`'s input, now use `git add -N :/`, which marks the whole work tree, and every agent those commands dispatch, and the test baseline, is rooted at the repository's top level, where the diffs' paths start. A run started in a monorepo's subdirectory therefore baselines and verifies every suite in the repository.
 - **`code-handoff`'s `repo` is the work tree's top level.** A caller holding a subdirectory of the repository staged §2.2's enumerated paths against the wrong root — porcelain paths are relative to the top level, and `git add` rejected them — so the commit carve-out for a dirty tree failed there; `repo` is now resolved with `git rev-parse --show-toplevel`.
+- **`/implement` Phase 6 and `/ready` sent the follow-up write target to `followup-emission` §4**, which lists what no longer produces follow-ups; the ladder is §2.
 
 ## [4.6.0] — 2026-10-03
 

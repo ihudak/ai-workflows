@@ -504,7 +504,7 @@ Invoke the `test-baseliner` agent in capture mode:
   > "Run the agent in the following mode:
   >
   > Mode: capture
-  > Project root: [absolute path of the current working directory]"
+  > Project root: [the repository's top level, `git rev-parse --show-toplevel` — every diff this run captures is relative to it]"
 
 Store the returned `## Test Baseline` block verbatim — it will be passed to `test-baseliner` again in verify mode at Phase 3.5 and to `test-writer` as the baseline snapshot. On a repository with more than one test suite the agent baselines **all** of them and the block's `### Suites` section names each; store it whole, unsummarized, since the verify call pairs against those rows.
 
@@ -531,7 +531,7 @@ Store the returned `## Test Baseline` block verbatim — it will be passed to `t
 **Implement immediately. Do NOT ask "Should I implement?" or any variation.**
 
 1. Work through each step in order
-2. Make precise, surgical changes — do not modify unrelated code — and change code only in the repository Pre-Phase 3 branched: another code repository this run was given is read-only context, and a change it needs goes into the Phase 5 report's `### Session learnings` as a follow-up for `/dev-workflows:implement` run from that repository, addressed to the unit this run implemented (the Epic itself, where it was one; no key on a direct run), which Phase 6 collects
+2. Make precise, surgical changes — do not modify unrelated code — and change code only in the repository Pre-Phase 3 branched: any other code repository, one this run was given included, is read-only context, and a change one needs goes into the Phase 5 report's `### Session learnings` as a follow-up for `/dev-workflows:implement` run from that repository, addressed to the unit this run implemented (the Epic itself, where it was one; no key on a direct run), which Phase 6 collects; an early stop names it beside its §3.1 line instead (Phase 4.6)
 3. Follow existing code style and LF line endings
 4. Assume broad permissions; avoid unnecessary stops
 5. If something **new** emerges mid-implementation, look before stopping, and sort it:
@@ -560,7 +560,7 @@ Runs after Phase 3A step 5 completes (all code changes written), before the outc
      > Task description: [substitute full description]
      > Plan: read it from the file at [the `plan_file` path recorded at Phase 2A approval]
      > Diff: read it from the file at [the `test_diff_file` path]
-     > Project root: [absolute path]
+     > Project root: [the repository's top level, `git rev-parse --show-toplevel` — every diff this run captures is relative to it]
      > Baseline: [paste the ## Test Baseline block captured in Pre-Phase 3.5]"
 
 2. **Handle a `test-writer` stop.** Check the report's first line before anything else. If it is `Diff: unreadable at <path>`, the orchestrator's own `test_diff_file` could not be read — this is an orchestrator bug, not a user choice: surface the unreadable path to the user and **stop the run**; do not offer to skip tests (skipping would silently proceed past evidence that could not be read). Otherwise, **where Pre-Phase 3.5 recorded a `test_decision`, apply it** rather than asking again — that question was put to the user before any file was edited. **Record in the Phase 5 `### Deferred items` section every behaviour — a Review focus line included — that the report's `### Notes` names as untested, with the reason it gives** (one it cannot test in isolation, or a `hinted` or `declared` command with no test of its own to follow): it is a test this run could not write. On `skip`, run step 3 (linters and builds) and skip **steps 4–6**, then proceed to Phase 3A step 7 (Verify outcome). **The skip is scoped to the tests because that is what was asked**: Pre-Phase 3.5's option reads *"Skip tests for this run"*, and the lint and build gate is neither a test nor something a missing baseline prevents — a run that skips it commits code that was never compiled, which nobody consented to. There is no second prompt here, and a command supplied here would not help: a capture taken after the edits is a test run, not a baseline. **The gate is the recorded decision, not the report's `Framework` field**: `Framework: not detected` is emitted only where the capture was `COMMAND_NOT_FOUND` (`dev-workflows:test-baseliner` capture step 4), while the other capture that asked — `RUN_FAILED` — names the suites it could not run, so `test-writer` writes against them and reading the field alone would drop the recorded skip — of either provenance — and re-prompt at step 5.
@@ -612,7 +612,7 @@ offload parallel-safe (`[P]`) steps to subagents, or decompose — so the run do
 At each checkpoint, also consider suggesting **`/compact`** to free context before the next scope/Epic (per `workflows-core:session-hygiene` §3 — mid-command → `/compact` only, never `/clear`; guidance only).
 
 1. Work through each step in order
-2. Make precise, surgical changes — do not modify unrelated code — and change code only in the repository Pre-Phase 3 branched: another code repository this run was given is read-only context, and a change it needs goes into the Phase 5 report's `### Session learnings` as a follow-up for `/dev-workflows:implement` run from that repository, addressed to the unit this run implemented (the Epic itself, where it was one; no key on a direct run), which Phase 6 collects
+2. Make precise, surgical changes — do not modify unrelated code — and change code only in the repository Pre-Phase 3 branched: any other code repository, one this run was given included, is read-only context, and a change one needs goes into the Phase 5 report's `### Session learnings` as a follow-up for `/dev-workflows:implement` run from that repository, addressed to the unit this run implemented (the Epic itself, where it was one; no key on a direct run), which Phase 6 collects; an early stop names it beside its §3.1 line instead (Phase 4.6)
 3. Follow existing code style and LF line endings
 4. If something **new** emerges mid-implementation, look before stopping: **a decision** — Phase 1's test: nothing this run can read settles it, and its answer changes what the user would notice in the result → STOP, ask with choices (2–4 options; the harness supplies the free-text escape), resume after answer; **anything else** → look it up and continue — an open question the user would not notice is settled by the run and recorded in the Phase 5 report's `### Assumptions & limitations`.
 4a. **Invoke `test-writer` agent** (inserted before the review diff capture in step 5 so the Opus review sees code and tests together — test adequacy is already a review dimension in `code-review.md`). First, at the orchestrator, capture the diff for the dispatch: write `git add -N :/ && git diff` (so new files are included) to a temp file (`command mktemp -t dw-impl-diff-XXXXXX`, never inside a repo tree) and record its absolute path as `test_diff_file`. `test-writer` has no shell tool — it can only `Read` the path it is given. Then spawn:
@@ -623,7 +623,7 @@ At each checkpoint, also consider suggesting **`/compact`** to free context befo
      > Task description: [substitute full description]
      > Plan: read it from the file at [the `plan_file` path]
      > Diff: read it from the file at [the `test_diff_file` path]
-     > Project root: [absolute path]
+     > Project root: [the repository's top level, `git rev-parse --show-toplevel` — every diff this run captures is relative to it]
      > Baseline: [paste the ## Test Baseline block captured in Pre-Phase 3.5]"
 
    Check the `test-writer` report's first line before invoking Opus review. If it is `Diff: unreadable at <path>`, the orchestrator's own `test_diff_file` could not be read — this is an orchestrator bug, not a user choice: surface the unreadable path to the user and **stop the run**; do not invoke Opus review. Otherwise, where Pre-Phase 3.5 recorded a `test_decision`, apply it and carry it into the Phase 5 report (mirrors the SIMPLE/MODERATE branch, gate included — the recorded decision, never the report's `Framework` field). On `skip`, step 8 below runs **only step 3 of the Phase 3.5 sequence — the lint and build — and none of steps 4–6**, exactly as the SIMPLE/MODERATE branch scopes it, and for the same reason: what was declined — or, on the run's own record, given up on — was the tests and not the build. There is no prompt here — asking after the edits would be asking for a baseline that can no longer be taken. As in Phase 3.5 step 2, record in the Phase 5 `### Deferred items` section every behaviour — a Review focus line included — that the report's `### Notes` names as untested, with the reason it gives.
@@ -638,7 +638,8 @@ At each checkpoint, also consider suggesting **`/compact`** to free context befo
      > Classification: [SIGNIFICANT | HIGH-RISK] — reason: [as the `model_routing` block records it — Phase 1.5's criterion, the multi-source floor, or a raise]
      > Plan: read it from the file at [the `plan_file` path]
      > Diff: read it from the file at [the `review_diff_file` path from step 5]
-     > Project root: [absolute path]
+     > Deferred to another code repository: [each change another code repository needs that Phase 3B step 2 recorded, as an explicit deferral note — omit where none]
+     > Project root: [the repository's top level, `git rev-parse --show-toplevel` — every diff this run captures is relative to it]
      > applicable_ard: [the ARD invariants from Phase 1.8, or omit if none / direct mode]
      > applicable_spec: [ { spec_paths: [...], in_scope_ids: [...] } when a spec/design is in scope, else omit ]
      > claims_file: [the `claims_file` path — pass it only when a `review-fixer` Fix Report exists for this run; omit otherwise]"
@@ -653,14 +654,14 @@ At each checkpoint, also consider suggesting **`/compact`** to free context befo
 
    **Triage sub-step** (before any fixer dispatch, and on every re-review): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; raise a grade only by effect; and rule on each line of the review's `### Declined to judge`. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the BLOCK branch allows, one you chose at the first settle prompt, and step 8's review of the Phase 3.5 delta — is triaged under that reference's § On re-review: it carries forward what this run already ruled — save, on a re-review you chose at the first settle prompt, the dismissed and unverified findings it re-verifies — and no survivor of it is handed to a fixer. At either of that reference's settle prompts, **Keep the verdict** means the review **stayed blocked** — the BLOCK branch's stop — **Cancel** stops the run through Phase 4.6, and **Proceed** continues to step 7.5 — or, after step 8's own delta review, to step 9.
 
-   **Review-fixer sub-step** (for BLOCK and PASS WITH RECOMMENDATIONS): first write the **triaged survivor list** from the sub-step above — the surviving findings only, each with its severity, location, observation, and suggestion — to a temp file (`command mktemp -t dw-impl-review-XXXXXX`, never inside a repo tree) and record its path as `review_file`. Dismissed and unverified findings NEVER enter that file; they go to the `### Review triage` report section instead.
+   **Review-fixer sub-step** (for BLOCK and PASS WITH RECOMMENDATIONS): first take out every survivor whose fix lies in another code repository and record it as Phase 3B step 2 says (the invariants), where it stands as a finding the run did not apply and the re-review's brief carries it as a deferral; then write the **triaged survivor list** from the sub-step above — the surviving findings only, each with its severity, location, observation, and suggestion — to a temp file (`command mktemp -t dw-impl-review-XXXXXX`, never inside a repo tree) and record its path as `review_file`. Dismissed and unverified findings NEVER enter that file; they go to the `### Review triage` report section instead.
 
    → Agent (subagent_type: "dev-workflows:review-fixer", model: `<fixes_model — = detection_model, §2.1 Sonnet chain>`):
      > "Fix the review findings for this brief:
      >
      > Task description: [substitute full description]
      > Review output: read it from the file at [the `review_file` path]
-     > Project root: [absolute path]
+     > Project root: [the repository's top level, `git rev-parse --show-toplevel` — every diff this run captures is relative to it]
      > Severities to fix: BLOCKER and MAJOR"
 
    Wait for the fix report. Re-capture the diff after the fixer completes, **overwriting `review_diff_file`** (write a fresh `git add -N :/ && git diff` to that same path) — so the one re-review at step 7 reads the post-fix diff, not the stale step-5 capture. Also write the fixer's full Fix Report to a temp file (`command mktemp -t dw-impl-claims-XXXXXX`, never inside a repo tree) and record its path as `claims_file` — the one re-review reads it as the deferred claims input, so the reviewer checks the fixer's account of its own work instead of assuming it.
@@ -755,7 +756,7 @@ Then spawn all four agents. They are independent and can run in any order — sp
 > - Workarounds used: [manual steps not automated by the workflow — or 'none']
 > - Review verdict: [PASS | PASS WITH RECOMMENDATIONS | BLOCK | N/A]
 > - Test result: [passed N tests, N regressions, not run — or actual result]
-> - Project root: [absolute path]"
+> - Project root: [the repository's top level, `git rev-parse --show-toplevel` — every diff this run captures is relative to it]"
 
 Collect all four summaries for the Phase 5 report.
 
@@ -822,7 +823,7 @@ Pass the §2.11 inputs:
 
 Emit the §3.1 `Code repo:` outcome line in the Phase 5 report's `### Branch` section — once, and verbatim. **Under `--no-commit`** the entry point is not called at all, and §3.1's `--no-commit` row is emitted in its place, so the report still says where the work ended up. Where `plan_file` is still on disk — every run but an ordinary `--no-commit` one, whose Phase 4 removed it — remove it now (`command rm -f -- "<plan_file>"`): the run kept it for this phase's `body_facts`, which read it.
 
-**No other code repository is written.** A multi-source run (Phase 1.7) may read several code repositories but changes code only in the one Pre-Phase 3 branched (Phase 3A and 3B step 2, and the invariants), so every code change it made is this phase's to commit; a change another code repository needs is a Phase 6 follow-up, never an uncommitted edit there.
+**No other code repository is written.** A multi-source run (Phase 1.7) may read several code repositories but changes code only in the one Pre-Phase 3 branched (Phase 3A and 3B step 2, and the invariants), so every code change it made is this phase's to commit; a change another code repository needs is a follow-up (Phase 6's, or named beside the stop's §3.1 line on an early stop), never an uncommitted edit there.
 
 Record what this phase actually did — the commit sha, and whether the push happened — as what Phase 4.7 writes into `implementation.md`; a declined or failed push is recorded as `pushed: false` rather than omitted.
 
@@ -947,7 +948,7 @@ follow-ups by invoking `Skill(skill: "workflows-core:reference", args: "followup
    explicitly excludes those as in-scope work already carried by the current
    task.
 2. **Filter** them with the reference's §6 qualifying predicate.
-3. **Resolve** the write target via the §4 ladder using `key` and `source`
+3. **Resolve** the write target via the §2 ladder using `key` and `source`
    (keyed runs carry a key; direct-prompt runs usually do not, so tasks
    are report-only);
    render + place tasks and verbose notes per §1–§3; dedupe per §5.

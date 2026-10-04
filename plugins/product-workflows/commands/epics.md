@@ -929,7 +929,7 @@ follow-ups by invoking `Skill(skill: "workflows-core:reference", args: "followup
    drafted Epics elsewhere manually" — the drafts are plain files
    tickets) and the Phase 9 `### Deferred items` that are out-of-scope refinement.
 2. **Filter** them with the reference's §6 qualifying predicate.
-3. **Resolve** the write target via the §4 ladder using `key` and `source`;
+3. **Resolve** the write target via the §2 ladder using `key` and `source`;
    render + place tasks and verbose notes per §1–§3; dedupe per §5.
 4. **Preview + confirm** per §7 (`approve-all | select | cancel`), then write.
 

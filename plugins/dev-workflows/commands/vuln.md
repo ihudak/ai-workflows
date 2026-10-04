@@ -39,7 +39,7 @@ Because the required fix is not known up front, start with a provisional `MODERA
 1. **Parse** — Extract the optional address and the CVE ID from each token. The address is a key resolved against `$SPECS_PATH` with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), never a tracker lookup; a token may carry none.
 2. **Determine the no-address placeholder** — Scan recent branch names and commit history for `NOISSUE` / `NOJIRA` / `NO-JIRA`; use whichever the project already writes when a token carries no address. <!-- vendor-token-ok: literals a repo's own branch/commit history may contain, matched rather than minted -->
 3. **Filter** — Skip non-CVE IDs (`CWE-*`, OWASP patterns) with a warning.
-4. **Snapshot repo context** — Note the repo path and, when obvious, the primary ecosystem so the research agent can disambiguate detection.
+4. **Snapshot repo context** — Note the repo path, its top level (`git rev-parse --show-toplevel`), and, when obvious, the primary ecosystem so the research agent can disambiguate detection.
 5. **Resolve the branch name per CVE** — Apply the "Git Workflow → Branch naming" section below now, once per CVE token, and record each result as that CVE's `branch`. This is the **only** place a branch name is produced: `vuln-fixer` creates the branch it is handed and never derives one, and Step 3.9 pushes the same value. A run that reaches the fixer without a `branch` in its prompt is a defect — the agent would invent a name, the orchestrator would push a different one, and `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.1 check 4 would fail the gate on the mismatch.
 
 ---
@@ -54,7 +54,7 @@ task(
   model: `<detection_model — §2.1 Sonnet chain>`,
   description: "Research CVE",
   prompt: "## Vuln Research Request
-  repo: [absolute repo path]
+  repo: [the repository's top level, `git rev-parse --show-toplevel`]
   cves:
     - id: [CVE-ID]
       address: [optional folder key]
@@ -102,7 +102,7 @@ Three rules make that switch safe:
 
 ### Capture the test baseline — once, before the first CVE is worked
 
-It runs after the base-branch switch above has settled, on the base tree — the tree every CVE branches from, so one capture is what every CVE's verify compares against and a second would measure the same tree again. Dispatch `test-baseliner` in `capture` mode with `model: <detection_model — §2.1 Sonnet chain>` and `Project root: [absolute repo path]` — the same path this Step sends every `vuln-fixer` dispatch as `repo:`, and the root `vuln-fixer` step 5's verify call names in turn, because `### Suites` records each marker as a path relative to whatever root a call scanned, so two roots make every marker path disagree between the calls (`dev-workflows:test-baseliner` capture step 1, measured there). **Keep the returned `## Test Baseline` block whole** — it is re-supplied as `baseline_block` on every dispatch below, because its `### Suites` rows are what let verify tell a suite that regressed from one that could not run at either end; `passing_count` and `passing_tests` are re-keyed from it, never in place of it.
+It runs after the base-branch switch above has settled, on the base tree — the tree every CVE branches from, so one capture is what every CVE's verify compares against and a second would measure the same tree again. Dispatch `test-baseliner` in `capture` mode with `model: <detection_model — §2.1 Sonnet chain>` and `Project root: [the repository's top level, `git rev-parse --show-toplevel`]` — the same path this Step sends every `vuln-fixer` dispatch as `repo:`, and the root `vuln-fixer` step 5's verify call names in turn, because `### Suites` records each marker as a path relative to whatever root a call scanned, so two roots make every marker path disagree between the calls (`dev-workflows:test-baseliner` capture step 1, measured there). **Keep the returned `## Test Baseline` block whole** — it is re-supplied as `baseline_block` on every dispatch below, because its `### Suites` rows are what let verify tell a suite that regressed from one that could not run at either end; `passing_count` and `passing_tests` are re-keyed from it, never in place of it.
 
 **This is the run's only test-baseline capture, and it is the orchestrator's on both paths.** `vuln-fixer` never takes one of its own: the question a failed capture raises is one only the orchestrator can put — subagents have no interactive tools — so a capture taken privately inside the agent is one the operator was never offered a say in. That is why `baseline_tests: run-fresh` is retired from the handoff rather than left standing as a second way in (`${CLAUDE_PLUGIN_ROOT}/references/handoff/vuln-fixer.md`), and why `BASELINE_FAILED` is retired with it: that status existed to report a capture this command no longer delegates.
 
@@ -136,7 +136,7 @@ task(
   model: `<detection_model — §2.1 Sonnet chain>`,
   description: "Fix CVE",
   prompt: "## Vuln Fix Request
-  repo: [absolute repo path]
+  repo: [the repository's top level, `git rev-parse --show-toplevel`]
   phase: full
   enforced_model: [run_flags.enforced_model, or omit]
   baseline_tests: provided
@@ -195,7 +195,7 @@ task(
   model: `<detection_model for SIGNIFICANT; planning_model (§2 Opus chain) only if HIGH-RISK>`,
   description: "Apply CVE fix before review",
   prompt: "## Vuln Fix Request
-  repo: [absolute repo path]
+  repo: [the repository's top level, `git rev-parse --show-toplevel`]
   phase: full
   enforced_model: [run_flags.enforced_model, or omit]
   baseline_tests: provided

@@ -637,7 +637,7 @@ the run's manual-step / out-of-scope follow-ups by invoking `Skill(skill: "workf
    reminder whenever the verdict is not a clean `SUPPORTED` at the derived phase.
 2. **Filter** them with the reference's §6 qualifying predicate — a `SUPPORTED` run with no gaps
    qualifies **nothing**; this phase is then a silent no-op (byte-identical to a run without it).
-3. **Resolve** the write target via the §4 ladder using `key` and `source`; render + place tasks
+3. **Resolve** the write target via the §2 ladder using `key` and `source`; render + place tasks
    and verbose notes per §1–§3; dedupe per §5.
 4. **Preview + confirm** per §7 (`approve-all | select | cancel`), then write.
 

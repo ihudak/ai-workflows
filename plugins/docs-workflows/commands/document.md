@@ -1842,7 +1842,7 @@ by invoking `Skill(skill: "workflows-core:reference", args: "followup-emission")
    (direct edits rarely produce out-of-scope work; this phase is usually a
    no-op).
 2. **Filter** them with the reference's §6 qualifying predicate.
-3. **Resolve** the write target via the §4 ladder. Direct mode usually has no
+3. **Resolve** the write target via the §2 ladder. Direct mode usually has no
    `key` (`source = none`), so the phase degrades to report-only.
 4. **Preview + confirm** per §7 (`approve-all | select | cancel`), then write.
 

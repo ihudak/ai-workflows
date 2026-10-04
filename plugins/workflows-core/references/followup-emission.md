@@ -77,7 +77,7 @@ re-insert.
 Emit a task ONLY for signals whose action lands OUTSIDE the current change or
 requires a MANUAL human step:
 
-- A change another code repository needs (`/dev-workflows:implement` changes code only in the repository it branches, and records one for a run from there).
+- A change another code repository needs (`/dev-workflows:implement` changes code only in the repository it branches, and records one for a run from there); its identity in the stable key is the other repository and the change it needs.
 - Files/pages owned by others (the owner was surfaced and the edit is theirs to make).
 - Implementation gaps (PRD vs source; the `<KEY>-implementation-gaps.md`
   draft) → the task links the draft; verbose context → a note (§3).
@@ -116,7 +116,7 @@ The calling phase provides:
   Report follow-up sections.
 - `key` — the run's resolved key, or `null`.
 
-The phase applies §6 (filter) → §4 (resolve target) → §1–§3 (render + place) →
+The phase applies §6 (filter) → §2 (resolve target) → §1–§3 (render + place) →
 §5 (dedupe) → §7 (confirm), then writes. It is ADDITIVE: the follow-ups always
 also remain in the Final Report, the phase NEVER commits, and it NEVER writes
 into a docs/code repo or the current working directory, where it is not the specs repository. Follow-ups written
