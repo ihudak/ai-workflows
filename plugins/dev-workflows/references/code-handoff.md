@@ -56,7 +56,7 @@ A failed gate is reported through §3.1's `NOT committed` line and the run conti
 
 ### 2.2 What gets staged
 
-**After a §2.12 unit-level commit that did not land, this step stages nothing** — its changes stay staged and uncommitted — and the call goes straight on to §2.4 where the branch carries a commit this run's unit-level calls made, and otherwise ends on §3.1's *Commit rejected* row (§2.12).
+**After a §2.12 unit-level commit that did not land, this step stages nothing** — its changes stay uncommitted — and the call goes straight on to §2.4 where the branch carries a commit this run's unit-level calls made, and otherwise ends on §3.1's *Commit rejected* row (§2.12).
 
 **The precondition.** The caller is responsible for establishing, before its first file edit, that the tree held nothing it did not put there — `/implement` at Pre-Phase 3 step 1 and `/upgrade` at Phase 2 prep step 1 do it with an explicit dirty-tree prompt, and `/vuln` does it by capturing the porcelain set at the top of Step 3 and passing it as `pre_existing_dirty` (it never prompts, so on `/vuln` a non-empty set always takes carve-out 1 below rather than the `add -A` path). Where the tree was established clean, everything uncommitted in the repo now **is** this run's work — the same reasoning `docs-workflows:finish-and-handoff` §2 applies to the docs repo — and staging is `git -C "<repo>" add -A`.
 
@@ -71,6 +71,8 @@ Three carve-outs:
 2. **A stash the caller pushed.** Never restored here and never dropped. It stays where it is and §3.1's line names it, because a stash nobody mentions is a stash nobody remembers.
 
 3. **Temp files are already out of reach.** Every caller writes its diffs, claims files, and scan summaries to `mktemp -t …` outside any repo tree specifically so `add -A` cannot pick them up. This step does not re-verify that; a caller that writes a temp file inside the tree breaks this step's staging, which is why the rule sits in the callers.
+
+**A `git add` git refuses** (a held `index.lock`, a full disk) is a unit that did not land too: what §2.3 and §2.12 say of a rejected commit holds for it, save that its changes are in the working tree, perhaps partly staged, rather than staged.
 
 **Nothing staged.** Do **not** emit a line here — §3.1 allows exactly one per call, and this path continues. If the branch carries commits this run made earlier (the §2.12 split form), proceed to §2.4 and report the run's outcome from the pushing rows. If it carries none, the call ends and §3.1's `no changes to commit` row is the line. An `/upgrade` component already at its target version, or a re-run that changed nothing, both land here legitimately.
 
@@ -94,7 +96,7 @@ Everything the convention leaves open comes from the repository, never from habi
 
 Never `--amend` (§1 rule 3): an amend rewrites a commit that may already be pushed, and this step is reachable more than once per run.
 
-**A rejected commit is a reported failure, never a silent one.** A `pre-commit` / `commit-msg` hook can reject the commit; the changes then stay staged. So does a commit git itself fails to write (a held `index.lock`, a signing failure, a full disk), and everything this paragraph and §2.12 say of a rejected commit holds for it, with git's error in place of the hook's output. Do not retry, do not bypass with `--no-verify`, and do not proceed to the next unit as though the commit landed — a later unit's `add -A` would fold this unit's diff into that unit's commit under the wrong message. Record the failure and the hook's output or git's error; in the §2.12 split form the caller reports it in its own per-unit results table, and the terminal call's §3.1 line names the unit that failed to commit where an earlier unit committed, and is otherwise the *Commit rejected* row (§2.12).
+**A rejected commit is a reported failure, never a silent one.** A `pre-commit` / `commit-msg` hook can reject the commit; the changes then stay staged. So does a commit git itself fails to write (a signing failure, an unset author identity), and everything this paragraph and §2.12 say of a rejected commit holds for it, with git's error in place of the hook's output. Do not retry, do not bypass with `--no-verify`, and do not proceed to the next unit as though the commit landed — a later unit's `add -A` would fold this unit's diff into that unit's commit under the wrong message. Record the failure and the hook's output or git's error; in the §2.12 split form the caller reports it in its own per-unit results table, and the terminal call's §3.1 line names the unit that failed to commit where an earlier unit committed, and is otherwise the *Commit rejected* row (§2.12).
 
 ### 2.4 The consent choice
 
@@ -192,7 +194,7 @@ An exhausted ladder (or no `origin`) means no pull request can be opened: report
 
   **That second exclusion is the operator's answer, never the bare token.** `test_decision: skip` has a *second* provenance: `/implement` records it **itself** after two `command_hint` attempts that also failed to capture (Pre-Phase 3.5's *"Ask at most twice in a run; after that record `test_decision: skip`"*). Nothing was typed and nothing was declined there — the operator asked twice for a working command and the run gave up — so that state matches this bullet's own predicate word for word and **does** flip the flag. A caller must therefore pass which provenance it holds and never the token alone; `/implement` does, in its Phase 4.6 `clean_finish` list. The distinction is worth stating because the token is what a reader reaches for: the exclusion above was written as "a typed decision", and the run can type nothing and record the same value.
 
-- a §2.12 unit-level commit that did not land — the pull request carries fewer units than the run was asked for, and that unit's changes sit staged and uncommitted in the work tree.
+- a §2.12 unit-level commit that did not land — the pull request carries fewer units than the run was asked for, and that unit's changes sit uncommitted in the local repository, staged or in the working tree.
 
 **The commit runs exactly as it would on a clean finish, and the push is still *offered* under §2.4's choice.** Unreviewed work that exists is recoverable; work that was never committed is not, and a failed gate is the case where losing it hurts most. *Offered* rather than guaranteed, because this flag is §2.4's own first re-ask trigger: where it differs from the flag the recorded answer was given under, that choice is put again and can be answered *"Neither"*. What the flag itself changes is only the pull request:
 
@@ -229,7 +231,7 @@ The split is what makes per-unit committing worth having: a batch that dies on c
 
 **Where each unit gets its own branch there is no split.** `/vuln` is that case: a unit-level call that only committed would leave that CVE's branch unpushed forever, since the terminal call can push only the branch it is standing on. Each CVE runs the **full** entry point, and §2.4's once-per-run caching keeps that from asking N times.
 
-**A unit-level commit that does not land ends the split**, whether a hook rejected it or git failed to write it (§2.3). §2.3 leaves its changes staged and forbids carrying on as though it landed, so the caller works no later unit — a later unit's §2.2 would fold the rejected changes into that unit's commit — and goes to its terminal call, which then stages and commits nothing: it runs §2.1, then, where the branch carries a commit this run's unit-level calls made, §2.4 onward for those commits, its §3.1 line carrying the *A unit commit rejected* append; the caller sets `clean_finish: false` (§2.9). Where the branch carries no such commit, its line is the *Commit rejected* row.
+**A unit-level commit that does not land ends the split**, whether a hook rejected it or git failed to stage or write it (§2.2, §2.3). Its changes stay behind uncommitted, and §2.3 forbids carrying on as though it landed, so the caller works no later unit — a later unit's §2.2 would fold the rejected changes into that unit's commit — and goes to its terminal call, which then stages and commits nothing: it runs §2.1, then, where the branch carries a commit this run's unit-level calls made, §2.4 onward for those commits, its §3.1 line carrying the *A unit commit rejected* append; the caller sets `clean_finish: false` (§2.9). Where the branch carries no such commit, its line is the *Commit rejected* row.
 
 **A unit-level call emits no §3.1 line** (§3.1 allows one per *full* call), but it is not silent: it returns its outcome — commit sha, `nothing staged`, or a commit failure with its reason — to the caller, which records it in its own per-unit results table. §2.10's "every failure is reported" is satisfied there, not by a `Code repo:` line.
 
@@ -241,7 +243,7 @@ The split is what makes per-unit committing worth having: a batch that dies on c
 
 Exactly one per **full** call, prefixed `Code repo:`. A caller that finishes several branches in one run (a `/vuln` CVE loop) emits one line per branch. A §2.12 unit-level call emits none.
 
-`<what>` below is `<sha7> on <branch>` for a call that committed, and `<n> commit(s) on <branch>` for a terminal call whose own staging was empty, or skipped after a unit that did not land (§2.12), but whose branch carries commits from unit-level calls; `<who>` is `a <hook> hook`, or `git` where git itself failed to write the commit (§2.3).
+`<what>` below is `<sha7> on <branch>` for a call that committed, and `<n> commit(s) on <branch>` for a terminal call whose own staging was empty, or skipped after a unit that did not land (§2.12), but whose branch carries commits from unit-level calls; `<who>` is `a <hook> hook`, or `git` where git itself failed to stage or write it (§2.2, §2.3); `<where>` is `staged`, or `in the working tree` where §2.2's `git add` failed.
 
 | Case | Line |
 |---|---|
@@ -256,10 +258,10 @@ Exactly one per **full** call, prefixed `Code repo:`. A caller that finishes sev
 | Push declined | `Code repo: <what> — not pushed at your request.` |
 | No origin remote | `Code repo: <what> — no origin remote, nothing to push.` |
 | Nothing to commit, nothing to push | `Code repo: no changes to commit on <branch>.` |
-| Commit rejected | `Code repo: NOT committed — <n> unit(s) rejected by <who> (<reason>). The changes are staged.` |
+| Commit rejected | `Code repo: NOT committed — <n> unit(s) rejected by <who> (<reason>). The changes are <where>.` |
 | Gate failed | `Code repo: NOT committed — <reason>. Your changes are still in the working tree.` |
 | Skipped under `--no-commit` | `Code repo: not committed — --no-commit. Your changes are in the working tree on <branch>.` |
-| A unit commit rejected (§2.12) | append `; <unit> NOT committed — rejected by <who> (<reason>); its changes are staged.` |
+| A unit commit rejected (§2.12) | append `; <unit> NOT committed — rejected by <who> (<reason>); its changes are <where>.` |
 | Pre-existing dirty paths skipped | append `; <n> pre-existing dirty path(s) were left uncommitted.` |
 | A stash is outstanding | append `; a stash from this run's branch step is still on the stack (<stash_ref>).` |
 

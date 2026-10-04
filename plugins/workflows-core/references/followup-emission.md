@@ -85,8 +85,7 @@ requires a MANUAL human step:
   "create these Epics in your tracker manually", open-the-PR-by-hand.
 - SPEC-VS-PRD ("update the PRD to match the spec").
 
-DO NOT emit tasks for in-scope items the report/draft already tracks: deferred
-review BLOCKERs, skipped tests, in-draft `<!-- TODO -->` markers. Those belong
+DO NOT emit tasks for in-scope items the report/draft already tracks: deferred review BLOCKERs (save one whose fix lies in another code repository, which the first bullet takes), skipped tests, in-draft `<!-- TODO -->` markers. Those belong
 to the current task and are already carried in the Final Report.
 
 **If no signal qualifies after this filter, the phase is a no-op:** resolve no
