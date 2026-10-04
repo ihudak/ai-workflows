@@ -133,7 +133,7 @@ When `mode` is `refine` or `both`, treat every entry in `refinement_targets[]` a
 - **Inter-target dependencies are expected.** When one refined Epic depends on another (e.g. a framework Epic that must land first), name the other Epic by key in `## Dependencies`. Such inter-target dependencies are legal (they encode build order) — do not suppress them.
 - **Undrawable boundaries** → a `[NEEDS CLARIFICATION]` marker in the affected Epic + a `clarifications_needed[]` entry (subject to the ≤3-per-Epic cap).
 
-In `mode: both`, also draft net-new Epics for scope no target covers — keyed and foldered exactly as the generate flow writes them. In a focus run on a multi-component PRD (`/epics` Phase 6), that is the focus Epic's own scope landing outside its one target: one net-new Epic per other component, each targeting it. In `mode: generate` (or when `refinement_targets[]` is empty) behaviour is exactly as before.
+In `mode: both`, also draft net-new Epics for scope no target covers — keyed and foldered exactly as the generate flow writes them. In a focus run that splits (`/epics` Phase 6) — the user named work that moves to another component, or the focus Epic's scope already lands in more than one — that is the focus Epic's own scope landing outside its one target: one net-new Epic per other component, each targeting it. In `mode: generate` (or when `refinement_targets[]` is empty) behaviour is exactly as before.
 
 ## Coverage matrix (`_coverage.md`)
 

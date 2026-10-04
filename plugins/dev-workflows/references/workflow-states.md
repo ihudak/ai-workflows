@@ -26,12 +26,12 @@ stated cost of removing the mirror, not an oversight.
 | Open | PM | — | PRD stub |
 | Problem stated | PM | /idea, /create-prd | PRD with Problem/Goal |
 | Usecases defined | PM | /create-prd | PRD with user stories / use cases |
-| Ready for Implementation | PE→Dev | /epics, /specify, /design | Epics defined, or a broad PRD-level slice — the PRD folder holding a flat specification.md — or both; each in-scope Epic, and the slice where one stands, Refined+ with specification.md AND design.md; coverage complete; ARD (if any) respected; no cross-artifact contradictions. **On a multi-component PRD** (below): the ARD with `## Contracts`, the PRD-level specification.md, Epics defined, and each in-scope Epic Refined+ with specification.md AND design.md — no PRD-level design.md; coverage complete; ARD respected; no cross-artifact contradictions |
+| Ready for Implementation | PE→Dev | /epics, /specify, /design | Epics defined, or a broad PRD-level slice — the PRD folder holding a flat specification.md — or both; each in-scope Epic, and the slice where one stands, Refined+ with specification.md AND design.md; coverage complete; ARD (if any) respected; no cross-artifact contradictions. **On a multi-component PRD** (below): the ARD with `## Contracts`, the PRD-level specification.md, Epics defined, and each in-scope Epic Refined+ with specification.md AND design.md — no PRD-level design.md (where one stands, the 0-Epic override built the PRD whole, and the first clause applies); coverage complete; ARD respected; no cross-artifact contradictions |
 | Implementation | Dev | /implement | code in progress (past the readiness gate) |
 | Release Preparation | Dev/PM | /document, /release-notes | docs + release notes |
 | Post GA | PM | — | shipped |
 
-**A multi-component PRD** (`workflows-core:components` §3 — its known set has two or more `kind: code` components) reads the *Ready for Implementation* row's second clause. There the flat `specification.md` is a **requirements source**: its end-to-end acceptance criteria are split across one-component Epics, each designed and implemented on its own, so the slice is not a unit of design or implementation — save by `/design`'s and `/implement`'s override — and no PRD-level `design.md` is expected. The ARD's `## Contracts` is what makes those Epics fit together, which is why it is expected there rather than optional. A single-component PRD reads the first clause, unchanged.
+**A multi-component PRD** (`workflows-core:components` §3 — its known set has two or more `kind: code` components) reads the *Ready for Implementation* row's second clause. There the flat `specification.md` is a **requirements source**: its end-to-end acceptance criteria are split across one-component Epics, each designed and implemented on its own, so the slice is not a unit of design or implementation — save by `/design`'s and `/implement`'s override — and no PRD-level `design.md` is expected. The ARD's `## Contracts` is what makes those Epics fit together, which is why it is expected there rather than optional. A single-component PRD reads the first clause, unchanged, and so does a multi-component PRD whose folder holds a PRD-level `design.md` — the override taken, the PRD built whole as a slice.
 
 ## Epic status ladder
 
@@ -59,7 +59,7 @@ changes for it, and an Epic, which can hold an `epic.md`, is read from `Open` as
 > **Refine — two ways in, one mode.** `/epics` re-refines an Epic that already exists rather than
 > partitioning the PRD again, and it reaches that mode from either end. **Named:** address the
 > `EPIC-` folder itself (`/epics <EPIC-KEY>`) and the run re-grounds and sharpens that one Epic's
-> `epic.md` in place — or, on a multi-component PRD where that Epic's scope spans components, splits it into one Epic per component. **Detected:** run `/epics <PRD>` where Epics under that PRD carry
+> `epic.md` in place — or, where the user names work that moves to another component at its plan approval, or the Epic's scope already spans components, splits it into one Epic per component. **Detected:** run `/epics <PRD>` where Epics under that PRD carry
 > `refinement_candidate: true` — near-empty drafts left as placeholders — and the run offers
 > to fill them in and partition the PRD's scope across them, instead of drafting net-new; the offer
 > is confirmable, and declining it gives the ordinary net-new run. Either way it is the same

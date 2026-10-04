@@ -207,8 +207,8 @@ Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:referenc
    developer to confirm the **complete** list of implementation repos this design must span:
    `choices: ["Confirm this set (Recommended)", "Add repos (you'll be prompted)", "Remove repos (you'll be prompted)", "Cancel"]`
    **On an Epic with a target, "Add repos" takes the repositories, then asks**, because a second repository makes the design span two components:
-   `choices: ["<Re-split — /product-workflows:epics <EPIC> | Add the component first — /product-workflows:create-ard <PRD>> (Recommended)", "Add anyway (recorded as a target span)", "Cancel"]`
-   — *Re-split* where every added repository holds a component of the PRD-level ARD's set, since `/epics <EPIC>` then splits this Epic across that set (its focus run on a multi-component PRD, Phase 6); *Add the component first* otherwise — no ARD, or an ARD whose set lacks one — since the PRD now spans a component no set records, and `/create-ard` is where it is recorded and its contract fixed (`workflows-core:components` §3).
+   `choices: ["<Re-split — /product-workflows:epics <EPIC> | Add the component first — /product-workflows:create-ard <PRD>> (Recommended)", "Add anyway (recorded as a Target span)", "Cancel"]`
+   — *Re-split* where every added repository holds a component of the PRD-level ARD's set: stop, telling the user to run `/epics <EPIC>` and, at its plan approval, choose *Revise* and name the work that moves and the component it moves to, which makes that focus run split this Epic (`/epics` Phase 2 and Phase 6); *Add the component first* otherwise — no ARD, or an ARD whose set lacks one — since the PRD now spans a component no set records, and `/create-ard` is where it is recorded and its contract fixed (`workflows-core:components` §3).
    **The first option** stops, naming its command; **Cancel** stops; **Add anyway** takes the added repositories, and Phase 5 records each under `## Risks & mitigations` as `- Target span: <component> — <why>`, which `design-reviewer` flags.
 3. **Resolve each confirmed repo against the map.** One match → use it. Ambiguous or zero matches
    escalate per the `Repo unresolved (zero matches) — /epics` rule in
@@ -363,7 +363,8 @@ Dispatch `design-reviewer` (Opus):
   > Classification:     [the Phase 1.5 classification]
   > applicable_ard:     [the ARD invariants resolved in Phase 2.5, or omit if none]
   > Target paths:       [the target's paths (Phase 3), or omit where the Epic carries no target]
-  > Contract lines:     [the Epic's `## Contract` lines, verbatim, or omit where it has none]"
+  > Contract lines:     [the Epic's `## Contract` lines, verbatim, or omit where it has none]
+  > Ride-along lines:   [the Epic's `- Also touches:` lines, verbatim, or omit where it has none]"
 
 **Act on the verdict** (mirrors `/specify`, save the escalation rule it cites):
 - **`BLOCK`** — fix the BLOCKER findings (the orchestrator/grill edits `design.md` inline — no delegated

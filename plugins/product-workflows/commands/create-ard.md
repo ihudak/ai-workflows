@@ -222,7 +222,7 @@ this stage). Zero external calls.
    describe a search a verbatim path never performs.
 4. **Prior ARD.** If the target `ard.md` exists → Phase 1 offers refine-vs-fresh. The target is `ard.md` in the feature folder step 3 resolved, on every route — a `PRD-` slice folder is that folder on the BRD route, and the test is the same glob in the same place with no route branch.
 5. **Optionality advisory — one rule, gauged off everything the folder holds.** Gauge size and, for a small
-   single-repo item, note "an ARD may be optional here" and offer — never where that one repository declares modules (`workflows-core:components` §2's build-system rows), since a PRD touching two of them is multi-component and `/epics` then stops to ask for this ARD —
+   single-repo item, note "an ARD may be optional here" and offer — never where `enumerate-components` (`workflows-core:components` §2) finds two or more code components in that one repository, since a PRD touching two of them is multi-component and `/epics` then stops to ask for this ARD —
    `choices: ["Author the ARD anyway", "Stop — no ARD needed"]`. The gauge is the **union** of what the
    resolved folder actually carries, not a per-route pair of gauges:
    - the authored `prd.md`'s user-story count and scope breadth, when the folder holds one;
@@ -562,7 +562,7 @@ There are no PRs at ARD time, so repos are **architect-driven**, not PR-derived:
 
 Author the ARD live against `${CLAUDE_PLUGIN_ROOT}/references/ard-format.md`, applying the no-hard-wrap prose convention in `Skill(skill: "workflows-core:reference", args: "prose-formatting")`, at the resolved altitude: Context → Grounding findings (cite `file:line`) → Architecture decisions (`AD#N`: Binds/Prevents/Rule) → Cross-repo/component approach → Contracts (PRD level, two or more code components) → Stack & invariants → Edge cases & risks → Open questions → Deferred. At Epic level, list inherited PRD-level ADs read-only and never contradict them; PRD level stays at invariants/frame (no per-repo detailed solutions).
 
-**Components and contracts.** On a PRD-level run, write `components:` as Phase 3 confirmed it (`workflows-core:components` §5). Where it has two or more `kind: code` entries, author `## Contracts` (`${CLAUDE_PLUGIN_ROOT}/references/ard-format.md` § Sections): for every capability the Capability→Architecture map lands in two or more `kind: code` components, settle the interface — its kind, producer, consumers, schema owner, versioning and compatibility, and whether the contract is a code artifact and where — and write it as an `AD#N` whose Rule states it, with its row in the interface table; then the landing order. The grill's *Cross-component* gap category (`workflows-core:grilling-technique`) applies here. An Epic-level ARD carries no `components:`, and its inherited interface rows are read-only, like its inherited `AD#N`.
+**Components and contracts.** On a PRD-level run, write `components:` as Phase 3 confirmed it (`workflows-core:components` §5). Where it has two or more `kind: code` entries, author `## Contracts` (`${CLAUDE_PLUGIN_ROOT}/references/ard-format.md` § Sections): for every capability the Capability→Architecture map lands in two or more `kind: code` components, settle the interface — its kind, producer, consumers, schema owner, versioning and compatibility, and whether the contract is a code artifact and where — and write it as an `AD#N` whose Rule states it, with its row in the interface table; then the landing order. The grill's *Cross-component* gap category (`workflows-core:grilling-technique`) applies here. The ARD of an `EPIC-` folder (an Epic-level run) carries no `components:`, and its inherited interface rows are read-only, like its inherited `AD#N`; a BRD-route slice's ARD is a PRD-level run's, whatever its `scope:` reads, and carries them.
 
 ### the BRD route — the seed fills the sections, and the grill is restricted to gaps
 
@@ -637,6 +637,7 @@ already holds and none of them asked of the user:
   exist.
 - `grounded_repos:` unchanged — the repos Phase 3 confirmed, which is what every `file:line` in the
   ARD must cite into.
+- `components:` as on any PRD-level run — the components Phase 3 confirmed (`workflows-core:components` §5).
 
 **Per-area split.** If (Epic level) the confirmed grounding spans separable areas in one repo (e.g. `server/` backend + `ui/` frontend), grill: `choices: ["One combined ARD (Recommended)", "One ARD per area (backend / frontend / …)"]`. On per-area, author one `ard-<area>.md` per area (each with its own `area:` frontmatter).
 
