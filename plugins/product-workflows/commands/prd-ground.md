@@ -666,7 +666,7 @@ Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-rout
 ```yaml
 model_routing:
   classification: MODERATE        # floors at SIGNIFICANT when Phase 1 resolved >1 repository —
-                                   # the multi-source rule in model-routing/classification.md §1.1
+                                   # the repository half of the multi-source rule (classification.md §1.1)
   reason: <one-line>
   current_model: <the model this orchestrator is running under>
   enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed

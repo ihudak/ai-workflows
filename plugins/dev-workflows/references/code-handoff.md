@@ -64,7 +64,7 @@ Enumerate before staging regardless: `git -C "<repo>" status --porcelain -z --un
 
 Three carve-outs:
 
-1. **`pre_existing_dirty` is non-empty.** The precondition does not hold, and `add -A` would sweep somebody else's uncommitted work into this run's commit. Stage by enumeration instead: the current porcelain set **minus** the recorded paths. **A path that was already dirty and that this run also edited is staged**, because the run's edit is inside that file and cannot be separated from what was there before; list those paths in the §3.1 line rather than deciding them silently.
+1. **`pre_existing_dirty` is non-empty.** The precondition does not hold, and `add -A` would sweep somebody else's uncommitted work into this run's commit. Commit by enumeration instead: the current porcelain set **minus** the recorded paths, taken whole — a rename or copy record (`R` or `C` in either column) carries two NUL-terminated paths, the new one then the original, and both belong to the set — and committed as pathspecs (§2.3's `-- <paths>` form), never staged into the index first: an index commit would also carry whatever else the index holds, somebody else's staged change included, and a per-path `git add` of a deleted or moved path exits 128. A new file in the set is made known to git first, `git -C "<repo>" add -N -- <path>`. **A path that was already dirty and that this run also edited is committed**, because the run's edit is inside that file and cannot be separated from what was there before; list those paths in the §3.1 line rather than deciding them silently.
 
    This is a **rule, not a prompt.** An earlier draft asked the user to choose between enumeration, whole-tree staging, and skipping the commit; that reintroduced exactly the "prompt that can be answered no" §1 rule 5 exists to remove, offered a skip option that contradicts the unconditional commit, and fired once per unit in a loop. The subtraction is the safe answer in every case, so it is taken without asking, and the §3.1 line reports how many pre-existing paths were left alone.
 
@@ -89,6 +89,8 @@ Everything the convention leaves open comes from the repository, never from habi
 **Write the whole message to a file and commit with `-F`:**
 
     git -C "<repo>" commit -F <msg-path>
+
+Under §2.2's carve-out 1, append `-- <each enumerated path>`: git then commits those paths' work-tree state and nothing else the index holds.
 
 `<msg-path>` is a `command mktemp -t` path **outside any repo tree** (§5). This is `workflows-core:phase-handoff` §2.7's rule applied to the commit message, and it is not stylistic: `-m "…"` inside a double-quoted shell string command-substitutes `$(…)` and backticks before git ever sees the text, and `/vuln`'s template interpolates an NVD CVE description — free text, routinely containing shell metacharacters and version expressions — straight into it. `/upgrade` interpolates component names and `/implement` a free-text summary, with the same exposure. `-F` also preserves the multi-line body and trailer that `-m` would mangle.
 
