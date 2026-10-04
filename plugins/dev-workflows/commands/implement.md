@@ -25,6 +25,8 @@ Usage: `/implement <ADDRESS> | <prompt> [@file…] [@spec-folder] [@repo…] [--
 | **Specs folder** | a directory under `specifications/` that `resolve-address` resolves — its `kind:` and `key:` read off the folder's carrier (`workflows-core:addressing` §4) | hand to the folder read in Phase 1.7 |
 | **Code repo** | a directory where `git -C <path> rev-parse --is-inside-work-tree` succeeds (includes the cwd) | scan target in Phase 1.7 — or, where its top level (`git -C <path> rev-parse --show-toplevel`) is that of a code repository already classified here (the working directory's included), a search hint for that repository's scan and for Phase 2A/2B's exploration |
 
+Test the rows top to bottom: the first that matches classifies the token, so a spec or specs folder inside a code repository is that folder, never a code repo.
+
 **Address resolution.** Before the per-`@path` classification above, look for a **single positional
 address** in `$ARGUMENTS` — a `<KEY>`, or an `@<path>` naming a folder in the specs tree. Present →
 resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3) and the run
@@ -380,10 +382,12 @@ Produce a written implementation plan:
 5. **Files to create/modify** — list with brief rationale
 6. **Tests** — what tests will be added or run
 7. **Assumptions** — each open question the run settled itself because the user would not notice the answer (Phase 1's test) — in Phase 1 or while writing this plan — with what was chosen (must be minimal)
-8. **Out of scope** — explicitly list what is NOT being done, a change another code repository needs included (this run changes code only in the repository it branches); where that leaves no step in this repository on a plan approved before any edit, say so above the approval prompt — **Approve** then runs nothing from Pre-Phase 3 through Phase 4.7 (no branch, stash, baseline, edit or commit) and, once it has removed `summary_file` and any `plan_file` this run wrote, goes straight to Phase 5, whose report and Phase 6 carry each change another code repository needs, while **Revise** and **Cancel** act as ever
+8. **Out of scope** — explicitly list what is NOT being done, a change another code repository needs included (this run changes code only in the repository it branches)
 9. **Review focus** — up to five input classes or failure modes the task implies and no step's tests exercise, most likely to bite a user first, each with the behaviour a reasonable user would expect — or `none — checked`. `test-writer` writes a test for each line, or names in its `### Notes` why one cannot be written (Phase 3.5, or Phase 3B step 4a on a run whose re-plan the user approved)
 
 **Re-test the class against the plan** — before asking, and again after every **Revise**, save where this phase was entered from a `### Re-classification` the user accepted at Phase 2B: that acceptance is the plan-approval override, which a re-test would undo, so there it runs only after a **Revise**, and only on a trigger the revision added — one the plan before it did not state. Test the class as it stands — the `model_routing` block's — again against `workflows-core:model-routing/classification` §1.1, reading the plan's Steps and Files to create/modify and what the exploration found those files do. Where a §1.1 trigger now applies — more than 3–5 non-test files, authentication or authorization, a schema or migration, a public contract, concurrency, or any other item on that list — do not ask: raise the class to SIGNIFICANT (HIGH-RISK under §1.1's multiplier), announce `Re-classified upward at planning: <trigger> (<the path, or the paths, that show it>)`, record the new class and that reason in the `model_routing` block — resolving its `planning_model` and `review_model` where the block left them out — and continue at Phase 2B with `summary_file` as its codebase summary and every answer given at this phase's **Revise** on the brief's `Constraints:` line, with no second exploration; ask Phase 1.5's task-shape question first where it is genuinely ambiguous whether this is a defect fix or new work.
+
+**A plan with no step in this repository.** Where a plan written before any edit — this one, or Phase 2B's full plan, never Phase 3A step 5's re-plan — changes no file in this repository, every change lying under Out of scope for another code repository, there is nothing to implement here. Do not ask: present the plan, name each change as a follow-up for `/dev-workflows:implement` run from that repository (addressed as Phase 3A/3B step 2 says), and stop as **Cancel** does, nothing having been written.
 
 Then ask:
 ```
@@ -443,7 +447,7 @@ choices: ["Help construct a repro (you'll be prompted for what to try)", "Procee
 - **Proceed without a repro** → record it in the Phase 5 report's `### Assumptions & limitations` as `No repro: <what the planner tried>` and continue to the normal full-plan gate below.
 - **Cancel** → stop.
 
-**If the return is a full plan** (ranking present, or the user chose to proceed without a repro)**:** present it to the user verbatim — and, on a plan approved before any edit (never Phase 3A step 5's re-plan) whose Steps change no file in this repository, say so above the prompt and take **Approve** as Phase 2A item 8 says — and ask:
+**If the return is a full plan** (ranking present, or the user chose to proceed without a repro)**:** present it to the user verbatim and ask, save that a plan with no step in this repository stops as Phase 2A's *A plan with no step in this repository* says:
 
 ```
 "Opus-planned. What would you like to do?"
@@ -704,7 +708,7 @@ Classification: [SIMPLE | MODERATE | SIGNIFICANT | HIGH-RISK]
 Files changed (from git diff --stat):
 <paste the git diff --stat output>
 Notable additions/removals: [new commands, APIs, config keys, dependencies — one line each; or "none"]
-Opus review verdict: [PASS | PASS WITH RECOMMENDATIONS | BLOCK — or "N/A (SIMPLE / MODERATE)", or "not run — the plan had no step in this repository (Phase 2A item 8)"]
+Opus review verdict: [PASS | PASS WITH RECOMMENDATIONS | BLOCK — or "N/A (SIMPLE / MODERATE)"]
 ```
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` in place of Agent 4 (`impl-maintenance`), with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in the Phase 5 `### Session learnings` line, in place of the persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
@@ -868,7 +872,7 @@ Output a structured report — do NOT ask any closing confirmation:
 [Under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` — every dispatched step (planner, reviewer, fixer, test agents, scanners) already carries the enforced id in place of its own chain, per `workflows-core:model-routing/classification` §10. The `model_routing` block's `opus_available` is unaffected by enforcement (§10: a property of the environment, never rewritten to agree with the enforced id) and, wherever this report states it, is stated exactly as it stands. Omit the line otherwise.]
 
 ### Branch
-[branch name created in Pre-Phase 3, e.g. feat/add-user-authentication — or "none — the plan had no step in this repository (Phase 2A item 8)", with the two lines below omitted]
+[branch name created in Pre-Phase 3, e.g. feat/add-user-authentication]
 [Pre-Phase 3 step 4's `Base branch unresolved …` line, verbatim, when it printed one; omit the line otherwise]
 [the Phase 4.6 `Code repo:` outcome line, verbatim (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §3.1)]
 
@@ -879,7 +883,7 @@ Output a structured report — do NOT ask any closing confirmation:
 - path/to/file.ext — [what changed]
 
 ### Opus review (if applicable; on the enforced id under §10)
-[Verdict and 1-line summary — naming the enforced id it ran on wherever `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10) — or "N/A (SIMPLE / MODERATE)", or "not run — the plan had no step in this repository (Phase 2A item 8)"]
+[Verdict and 1-line summary — naming the enforced id it ran on wherever `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10) — or "N/A (SIMPLE / MODERATE)"]
 
 ### Review triage
 - **Review triage:** [one line per review pass, per `workflows-core:finding-triage` § Reporting — N findings reviewed: M survived, U unverified, X dismissed (C carried, on a re-review)] — survivors: [on a re-review, `finding — severity` per survivor, or "none"; "N/A (first review)" otherwise] — dismissals: [`finding — reason`, or "none"] — unverified: [`finding — if-true severity — what would settle it`, or "none"] — raised: [`finding — from → to — effect`, or "none"] — set aside by the reviewer: [`behaviour — ruling`, or "none"] — settled: [the answer given at a settle prompt, or "not asked"] — or "N/A (SIMPLE / MODERATE, no Opus review)"
