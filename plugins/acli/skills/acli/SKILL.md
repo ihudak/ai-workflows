@@ -113,8 +113,8 @@ acli jira workitem create-bulk --from-json issues.json
 acli jira workitem create-bulk --from-csv issues.csv
 
 # Edit work items (accepts --key, --jql, or --filter selectors; see Selectors)
-acli jira workitem edit --key "<issue_id_1>,<issue_id_2>" --summary "New summary"
-acli jira workitem edit --jql "project = <project_key> AND status = Open" --assignee "@me"
+acli jira workitem edit --key "<issue_id_1>,<issue_id_2>" --summary "New summary" --yes   # after approval
+acli jira workitem edit --jql "project = <project_key> AND status = Open" --assignee "@me" --yes   # after approval
 acli jira workitem edit --key "<issue_id>" --remove-assignee --yes        # after approval
 
 # Transition (move to another status)
@@ -123,7 +123,7 @@ acli jira workitem transition --jql "project = <project_key>" --status "Done" --
 
 # Assign (--assignee accepts @me, default, or an email/account ID)
 acli jira workitem assign --key "<issue_id>" --assignee "@me"
-acli jira workitem assign --jql "project = <project_key>" --assignee "user@atlassian.com"
+acli jira workitem assign --jql "project = <project_key>" --assignee "user@atlassian.com" --yes   # after approval
 acli jira workitem assign --key "<issue_id>" --remove-assignee
 
 # Clone within the same site, or to another project/site
@@ -131,7 +131,7 @@ acli jira workitem clone --key "<issue_id>" --to-project "<project_key>"
 
 # Delete / archive / unarchive
 acli jira workitem delete --key "<issue_id_1>,<issue_id_2>" --yes   # after approval
-acli jira workitem archive --jql "project = <project_key> AND status = Done"
+acli jira workitem archive --jql "project = <project_key> AND status = Done" --yes   # after approval
 acli jira workitem unarchive --key "<issue_id>"
 ```
 
@@ -140,7 +140,7 @@ acli jira workitem unarchive --key "<issue_id>"
 ```bash
 # Add a comment (posted immediately, notifies watchers)
 acli jira workitem comment create --key "<issue_id>" --body "This is a comment"
-acli jira workitem comment create --jql "project = <project_key>" --body-file comment.txt
+acli jira workitem comment create --jql "project = <project_key>" --body-file comment.txt --yes   # after approval
 acli jira workitem comment create --key "<issue_id>" --body "Updated" --edit-last   # amend your last comment
 acli jira workitem comment create --key "<issue_id>" --editor                       # open $EDITOR
 
@@ -171,7 +171,7 @@ Most mutating work-item commands — `edit`, `transition`, `assign`, `comment cr
 
 ```bash
 # Same edit applied to everything matching a JQL query
-acli jira workitem edit --jql "project = <project_key> AND status = Open" --assignee "@me"
+acli jira workitem edit --jql "project = <project_key> AND status = Open" --assignee "@me" --yes   # after approval
 
 # Act on a saved filter's results
 acli jira workitem transition --filter <filter_id> --status "Done" --yes   # after approval
