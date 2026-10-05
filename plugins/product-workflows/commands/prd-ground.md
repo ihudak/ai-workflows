@@ -631,8 +631,7 @@ the manual path:
    line or space-separated.
 2. **Build a slug→clone map**, exactly as `/epics` Phase 4 does: for each top-level directory
    under each entry of `$REPOS_PATH`, run `timeout 5 git -C <dir> remote get-url origin
-   2>/dev/null`, strip a trailing `.git`, and take the URL's last path segment as that clone's
-   slug. Skip directories with no `.git` or whose `git remote` call fails/times out. **Never
+   2>/dev/null`, strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git` or whose `git remote` call fails/times out. **Never
    assume a `<base>/<slug>` directory name** — resolution is always by remote slug.
 3. Resolve each named repo against the map: one match → use it; multiple matches → auto-prefer
    basename ending `-repo`, then `_repo`/`_fast`, then alphabetically last (show candidates before

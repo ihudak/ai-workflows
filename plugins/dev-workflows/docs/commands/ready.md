@@ -12,7 +12,7 @@ Verifies whether the ARD, specification, and design artifacts on record actually
 /ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
-**`--claimed "<status>"`** (optional) — a workflow phase you declare, typically pasted from whatever tracker you keep. The run compares it against the phase it derives from the artifacts and reports any divergence; a claim **above** the derived phase caps the verdict, a claim below is reported and does not.
+**`--claimed "<status>"`** (optional) — a workflow phase you declare, typically pasted from whatever tracker you keep. The run compares it against the phase it derives from the artifacts and reports any divergence; a claim **above** the derived phase caps the verdict, a claim below is reported and does not. The flag may come before or after the address: it is set aside with the status after it before the address is read.
 
 **Without it, the run cannot catch a wrong claim** — a derived phase cannot contradict itself, so `/ready` reports what the artifacts show and nothing more. That is the cost of having no mirror to check against, and the flag is how anyone who does keep a tracker gets the check back, whichever tracker it is.
 

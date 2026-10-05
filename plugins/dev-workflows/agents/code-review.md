@@ -44,7 +44,7 @@ The caller passes a structured brief:
 Refuse to review without a diff - ask the caller to produce one.
 
 - **`applicable_ard`** (optional) — the resolved ARD `AD#N` invariants, passed only by `/implement` (keyed mode) when an ARD exists. Absent for `/vuln`, `/upgrade`, `/implement` direct mode, and when no ARD exists — in which case the conditional ARD-conformance dimension (below) does not apply and is not mentioned.
-- **`applicable_spec`** (optional) — the in-scope specification/design context, passed only by `/implement` (keyed mode) when a `specification.md`/`design.md` is in scope: `spec_paths` (absolute paths) + `in_scope_ids` (the in-scope `[Uxx]`/`[ACxx]`/`[TCxx]` list). Absent for `/vuln`, `/upgrade`, `/implement` direct mode, and when no spec/design exists — in which case the conditional Spec/design-conformance dimension (below) does not apply and is not mentioned.
+- **`applicable_spec`** (optional) — the in-scope specification/design context, passed only by `/implement` (keyed mode) when a `specification.md`/`design.md` is in scope: `spec_paths` (absolute paths) + `in_scope_ids` (the in-scope `[Uxx]`/`[ACxx]`/`[TCxx]` list). Absent for `/vuln`, `/upgrade`, `/implement` direct mode, an `/implement` companion run (whose Epic's requirements are implemented in another repository), and when no spec/design exists — in which case the conditional Spec/design-conformance dimension (below) does not apply and is not mentioned.
 - **`claims_file`** (optional) — an absolute path to the change's own narrative: an agent's account
   of what it changed (a `review-fixer` Fix Report at re-review, a `vuln-fixer` or `upgrade-executor`
   report at first review). **DO NOT read this file when you read the brief.** It is read once, in the

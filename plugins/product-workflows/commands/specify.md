@@ -746,8 +746,7 @@ Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:referenc
    ```
 
 2. **Build the slug→clone map** (`/epics`-style). For each top-level directory under each entry of
-   `$REPOS_PATH`, run `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, strip a trailing
-   `.git`, and take the URL's last path segment as that clone's slug. Skip directories with no `.git`
+   `$REPOS_PATH`, run `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git`
    or whose `git remote` call fails/times out.
 
 3. **Resolve each candidate against the map.** One match → use it. An ambiguous slug (multiple

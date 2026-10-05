@@ -13,6 +13,14 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`/harvest-decisions` keeps the team's architecture decisions where the next ARD finds them.** It turns every `[AD#N]` in the ARDs on the specs repository's default branch into a record under `$SPECS_PATH/architecture/` — with the decision's Binds, Prevents, Rule and Alternatives, its status, the designs that apply it and every recorded deviation. Re-runs reconcile: superseded and withdrawn decisions change status, nothing is deleted, and an unchanged branch changes nothing. The work is a bundled, deterministic script (`scripts/architecture-harvest.py --layout prd`, self-tested in CI); the result is handed off on a `kb/harvest-<date>` branch with a pull request, and an earlier harvest left unmerged stops the next one.
 - **`**Supersedes:**` in the ARD.** A later ARD departs from a team record of another PRD with `**Supersedes:** [<record id> <title>](<link>) — <why>`; `ard-reviewer` checks the link, and the next harvest marks the record superseded. `/create-ard` confirms team records as binding, offers the harvest at the end of every run, and writes an Epic ARD's inherited decisions as bullets under `### Inherited invariants`.
 
+## [3.16.1] — 2026-10-05
+
+**Update `workflows-core` to 1.15.2 with this release**: `code-scanner` compares a repository's slug as `/epics`, `/prd-ground` and `/specify` now derive it.
+
+### Fixed
+- **`/create-prd` resolved and read its `--from-prd` seed before checking `$SPECS_PATH` and running the specs-repo preflight**, so a seed key was searched for with no specs tree, or read off a branch the preflight would have switched away from. The seed is now read once step 2b has run and the PRD's own folder has resolved past its refusals — and, where that folder already holds a PRD, only on Phase 1's *Overwrite* answer — a path where it sits, a key through `resolve-address` — and a seed that names no readable PRD stops the run with `CREATE_PRD_SEED_NOT_FOUND` instead of going unread. The idea ladder's note on `unmanaged` no longer says `$SPECS_PATH` is validated after it.
+- **`/epics`', `/prd-ground`'s and `/specify`'s slug→clone maps** take `workflows-core:components` §1's derivation, so a `git@server:api.git` remote or a URL ending in `/` is `api`; `/create-ard` derives the slug it hands `code-scanner` the same way, as `/idea` derives the one it shows, where both said only "(slug)".
+
 ## [3.16.0] — 2026-10-05
 
 **Update `workflows-core` to 1.15.0 with this release**: the commands cite its `untrusted-content` reference.
