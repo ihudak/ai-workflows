@@ -322,7 +322,8 @@ take, labelled **A**, **B**, and **C** in that order; those are the labels the F
   > constraint: [A — Minimise the interface | B — Maximise flexibility | C — Optimise for the most common caller]
   > problem_frame: [what the interface is for, the constraints any proposal must satisfy, the seam it sits at]
   > code_context: [the Phase 4 code-scanner findings for the relevant repo(s) — inline, or an absolute path]
-  > dependency_category: [the seam's category if already settled, else omit]"
+  > dependency_category: [the seam's category if already settled, else omit]
+  > glossary: [absolute paths of the feature folder's `_glossary.md` and `_design-glossary.md`, whichever exist, else omit]"
 
 **Handle a take that stops.** A take returning `status: BLOCKED` could not read its `code_context` (the
 read-failure contract in `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`). Name the unreadable path, and do

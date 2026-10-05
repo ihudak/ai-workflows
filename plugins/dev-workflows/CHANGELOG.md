@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.13.0] — 2026-10-05
+
+### Added
+- **`interface-designer` takes the project's glossary.** `/design` Phase 5 now hands each take of the interface fan-out the feature folder's term records, `/specify`'s `_glossary.md` and `/design`'s own `_design-glossary.md`, whichever exist. Each take names the interface's types, operations and parameters in the terms they define, keeps the code's name where the code already names a concept differently, and says so. The glossary is a context input: a file a take cannot read is skipped and named in its proposal. Adapted from mattpocock's DESIGN-IT-TWICE, whose briefs carry the project's glossary so that parallel takes name things consistently.
+
 ## [4.12.0] — 2026-10-05
 
 ### Changed
