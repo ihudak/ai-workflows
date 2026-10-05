@@ -39,6 +39,18 @@ Return `status: BLOCKED` with the specific gap when: the handoff file is missing
    already validated; split only at a genuine risk or feedback-loop boundary.
    Order the Epics so that none depends on a later one (supports the reviewer's
    independence check).
+3. **Needs and shared decisions** (the reviewer's *Cross-Epic dependencies*
+   dimension).
+   - **Needs.** For each Epic, list what it needs before it can start or before
+     its Independent Test can run — code, a schema, setup, test tooling,
+     fixtures, an entry point, a decision. Build each in that Epic's In scope, or
+     name in its `## Dependencies` what provides it: the applicable ARD's
+     `[AD#N]`, a repo, team or external system, code that already exists, or
+     another Epic — which *Epic independence* judges.
+   - **Shared decisions.** A decision more than one Epic of this batch adopts (an
+     interface, a message or data format, a shared value list) is stated the same
+     way in each, and where the applicable ARD settles it, each cites its
+     `[AD#N]`.
 
 ## Write mechanics
 
@@ -73,13 +85,13 @@ target: <one component id from the handoff's `components` — omit this line whe
 
 ## Acceptance criteria
 - Given <context>, when <action>, then <observable result>.
-- ...
+- ... (each false before this Epic and true after it through this Epic's work alone; the rule, not an example — "rejects any quantity over stock on hand", not "rejects quantity 999", with a literal only where the value is the requirement, such as a limit, a rounding rule or exact text; usually three to eight; past eight, consolidate criteria that state the same rule — an Epic is never split for a count)
 
 ## Independent Test
 <one line: this Epic is verifiable standalone by <observable test> and delivers <value> without any not-yet-built Epic>
 
 ## Dependencies
-- <other Epics under this PRD or elsewhere, repos, teams, external systems — named>
+- <other Epics under this PRD or elsewhere, repos, teams, external systems — named, each with what this Epic needs from it>
 - ...
 
 ## Contract

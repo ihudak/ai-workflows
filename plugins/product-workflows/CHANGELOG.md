@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.18.0] — 2026-10-05
+
+### Changed
+- **`/epics` checks cross-Epic dependencies.** `epic-writer`'s pre-flight and a new `epic-reviewer` dimension (*Cross-Epic dependencies*) check two things, within the family's Epic-independence model:
+  - **Needs:** what an Epic needs before it can start or before its Independent Test can run is built in its own scope, or named in `## Dependencies` with what provides it. A need neither built nor named is MAJOR. Whether a named Epic is a legal dependency stays with *Epic independence*.
+  - **Shared decisions:** a decision several Epics adopt is stated the same way in each, and cites the ARD's `[AD#N]` where the ARD settles it.
+
+  The upstream collision check was not ported: *Suggested stories* already catches overlapping work between sibling Epics, and with a dependency between new Epics legal only under *Epic independence*'s exceptions, its remedies had no compliant draft in some runs. Touched-unit coverage needed no new check where the run has a known set, as *Single target* confines each Epic's work to its target.
+- **Acceptance-criteria wording.** An Epic's criteria, and `prd-reviewer`'s check of a PRD story's criteria, now take three rules:
+  - **False before, true after:** each criterion is false before the unit and true after it, through that unit's work alone.
+  - **The rule, not an example:** "rejects any quantity over stock on hand", not "rejects quantity 999", with a literal only where the value is the requirement.
+  - **Enough, no more:** usually three to eight per Epic, and past eight it consolidates criteria that state the same rule, as an Epic is never split for a count; past eight on a PRD story, split the story.
+
+  `epic-reviewer` and `prd-reviewer` grade a criterion that is not false before and true after, and an example where the rule is meant, as MINOR. `epic-reviewer` also grades more than eight criteria where two state the same rule, and `prd-reviewer` more than eight on one story. Too few is not graded beyond pre-lint's zero-criteria check. `specification-format.md` stays frozen.
+
 ## [3.17.4] — 2026-10-05
 
 ### Fixed
