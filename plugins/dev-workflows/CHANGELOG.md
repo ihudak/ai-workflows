@@ -5,11 +5,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.10.5] — 2026-10-05
+## [4.11.0] — 2026-10-05
+
+### Changed
+- **`bug-diagnosis` brought up to date with the upstream diagnosing discipline it was adapted from.**
+  - **Minimise:** a red repro is minimised one cut at a time. `risk-planner` writes no file while doing it: it varies only the command's arguments and standard input.
+  - **Performance:** on a performance regression the repro is a measurement. Bisecting between a good and a bad state is a plan step the caller runs from a clean tree, ending in `git bisect reset`, and is omitted where the run already has edits.
+  - **Probes:** each changes one variable and names the hypothesis, or the pair, its result decides.
+  - **No loop:** where no loop can be built, `risk-planner`'s `Needs:` line says what would let one be built, and `/implement` surfaces it beside `Tried:`.
+  - **Confirmed cause:** a new step 6 names the cause the fix acted on, a ranked hypothesis or none of them, and what showed it. This applies only where the plan carried a ranked list and the fix was verified, and it appears in `/implement`'s Phase 5 report and the pull request's `## Evidence` (`code-handoff` §2.7).
+## [4.10.6] — 2026-10-05
 
 ### Fixed
-- **Every agent carries the amended untrusted-content block (workflows-core 1.16.4):** the instruction files the harness gives an agent for the session's directory and its user are followed, every other instruction file is data, and a content line that starts `Untrusted-content notice:` is never copied as it stands.
-- **Getting started says where to run the plugin.** An AI container is strongly recommended; on a host, the plugin runs the commands a repository declares — tests, build, linter, and the install scripts of upgraded dependencies — with your permissions, so point it only at repositories you would build yourself.
+- **Every agent carries the amended untrusted-content block (workflows-core 1.17.1):** every instruction file is content — its conventions and limits are followed as values, but it never adds a task or changes a verdict — and a content line that starts `Untrusted-content notice:` is never copied into a reply as it stands.
+- **Getting started says where to run the plugin.** An AI container is strongly recommended: a command run there can reach only what is mounted and the network allowed. On a host, the plugin runs the commands a repository declares — tests, build, linter, and the install scripts of upgraded dependencies — with your permissions, so point it only at repositories you would build yourself.
+
+## [4.10.5] — 2026-10-05
+
+### Changed
+- **The session-feedback page says what is redacted** before an entry is written: secrets, email addresses, non-public hosts and home paths, per `workflows-core` 1.17.0's `feedback-emission` §1.1.
 
 ## [4.10.4] — 2026-10-05
 

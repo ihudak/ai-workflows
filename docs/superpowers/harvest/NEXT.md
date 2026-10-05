@@ -459,11 +459,11 @@ Survey of the four upstreams against the round-2 baseline: superpowers `b36e0829
 13. `/implement` looks before asking, and can re-classify upward after exploring (BMAD 7e571784, 124ea1af, 2c10d5ba). M. — shipped in Round 3
 14. Design contracts: owning side, behavioural obligations, provider-side conformance (spec-kit aaa8fa92). S.
 15. PR body: merge danger (one-way/two-way door, blast radius), before/after evidence, honour a repo's PR template (mattpocock `pr`). M. — shipped in Round 3
-16. `bug-diagnosis.md` drift: performance branch, one-variable probes, minimise the repro, no-loop fallback, name the confirmed hypothesis (mattpocock diagnosing-bugs). S–M.
-17. `impl-maintenance`: sort each miss into "build a check" or "write a standard"; flag no-op instructions (mattpocock `retro`). S–M.
+16. `bug-diagnosis.md` drift: performance branch, one-variable probes, minimise the repro, no-loop fallback, name the confirmed hypothesis (mattpocock diagnosing-bugs). S–M. — shipped 2026-10-05 (`dev-workflows` 4.11.0 here; 2.76.0 and 2.45.0 in the other two editions); the re-run of the unminimised scenario and the instrumentation-permission ask were dropped in review, as nothing carried them
+17. `impl-maintenance`: sort each miss into "build a check" or "write a standard"; flag no-op instructions (mattpocock `retro`). S–M. — shipped 2026-10-05 (`workflows-core` 1.18.0 here; 2.76.0 and 2.45.0 in the other two editions); a no-op is flagged only where a key event shows it failed
 18. `/epics` dependency checks: needs and owners, collisions, one home per shared decision, touched-unit coverage (BMAD f033e70a, ba252f1b). S–M.
 19. Acceptance-criteria wording tests: false before, true after; the rule, not an example; 3–8 (BMAD bmad-ticket). S; `specification-format.md` stays frozen.
-20. Redact secrets, emails, hosts and home paths before `/prompt` and feedback capture write user text (superpowers diagnosing-superpowers redaction policy). S.
+20. Redact secrets, emails, hosts and home paths before `/prompt` and feedback capture write user text (superpowers diagnosing-superpowers redaction policy). S. — shipped 2026-10-05 (`workflows-core` 1.17.0 here; 2.75.0 and 2.44.0 in the other two editions): every feedback entry point redacts while rendering, `feedback-emission` §1.1; three review rounds, the third's fixes not re-reviewed
 21. Low or deferred: a glossary input for `interface-designer` (mattpocock DESIGN-IT-TWICE); a transcript-based session-diagnosis command (superpowers diagnosing-superpowers) — L.
 
 **Follow-ups from Round 3:**
