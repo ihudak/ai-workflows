@@ -1,6 +1,6 @@
 ---
 name: prompt-brainstorm
-description: Log a corrective interaction as plugin feedback, then hand off to superpowers:brainstorming to redesign the correction together. Captures the friction, your verbatim prompt (secrets and private hosts redacted), and the resolution to the specs repo for the maintainer.
+description: Log a corrective interaction as plugin feedback, then hand off to superpowers:brainstorming to redesign the correction together. Captures the friction, your verbatim prompt (secrets, email addresses, non-public hosts and home paths redacted), and the resolution to the specs repo for the maintainer.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 ---
 

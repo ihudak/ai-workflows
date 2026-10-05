@@ -1,6 +1,6 @@
 ---
 name: prompt
-description: Log a corrective interaction — a command produced something wrong and you're fixing it — as plugin feedback, then act on your correction directly. Captures the friction, your verbatim prompt (secrets and private hosts redacted), and the resolution to the specs repo for the maintainer.
+description: Log a corrective interaction — a command produced something wrong and you're fixing it — as plugin feedback, then act on your correction directly. Captures the friction, your verbatim prompt (secrets, email addresses, non-public hosts and home paths redacted), and the resolution to the specs repo for the maintainer.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 ---
 
@@ -13,7 +13,7 @@ performs the correction. `origin: prompt`.
 
 Captured (per `${CLAUDE_PLUGIN_ROOT}/references/feedback-emission.md` §1):
 1. **Friction** — what the command produced that was wrong.
-2. **User prompt** — your corrective request, **verbatim** (`$ARGUMENTS`), save the secrets, email addresses, internal hosts and home paths §1.1 of that reference redacts.
+2. **User prompt** — your corrective request, **verbatim** (`$ARGUMENTS`), save the secrets, home paths, non-public hosts and IP addresses, and email addresses §1.1 of that reference redacts.
 3. **Resolution** — what the AI actually did.
 
 Usage: `/prompt <corrective request> [--skip-costs]`

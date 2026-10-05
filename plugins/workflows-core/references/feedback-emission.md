@@ -83,22 +83,26 @@ back in review because the two products differ here.
 - `id` — stable: `<KEY>-<command>-<short-slug>` (drop the leading `/` from the
   command; use `manual` / `prompt` when `command` is `n/a`).
 
-### 1.1 Redaction — before any entry is written
+### 1.1 Redaction — while the entry is rendered
 
-Every entry point (§6) redacts an entry before it writes it. The entry is committed and pushed to the specs repository (§2), where everyone with access to that repository reads it alongside the maintainer, so a value the user typed, or the session saw, must not travel with it. Redact every prose block — the **User prompt** included — and the short slug of `id`. Never redact `author`, which is the attribution §3 asks for, or the fields the plugin fills from its own vocabulary and records (`date`, `command`, `plugin_version`, `origin`, `category`, `impact`).
+Every entry point (§6) redacts an entry **while it renders it**, before §3 compares its `id` with the ids already in the file and before it writes anything. The entry is committed and pushed to the specs repository (§2), where everyone with access to that repository reads it alongside the maintainer, so a value the user typed, or the session saw, must not travel with it. Redact every prose block, the **User prompt** included. Never redact `author`, which is the attribution §3 asks for, or the fields the plugin fills from its own vocabulary and records (`date`, `command`, `plugin_version`, `origin`, `category`, `impact`).
 
-| Category | Replace with | What to catch |
-|---|---|---|
-| Secrets | `<SECRET-n>` | A private-key block, from its `-----BEGIN … PRIVATE KEY-----` line through its `END` line. A token of a known shape: `ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_`, `github_pat_`, `glpat-`, `xoxb-` and the other `xox?-` tokens, `AKIA`/`ASIA` access-key ids, `sk-` keys (`sk-ant-`, `sk-proj-` included), `AIza` keys, `npm_` tokens, and a JWT (`eyJ….eyJ….…`). The password in a URL (`scheme://user:<SECRET-n>@host`). A bearer or basic `Authorization` value. Any value assigned to a name like `*_KEY`, `*_TOKEN`, `*_SECRET`, `PASSWORD` or `PASSWD`. |
-| Email addresses | `<EMAIL-n>` | Anything shaped like an email address. |
-| Hosts and addresses | `<HOST-n>` | An IPv4 or IPv6 address other than a loopback one. A hostname, or the host part of a URL, that is not a public service's: keep `github.com`, `gitlab.com`, a public package registry and a public product's documentation domain, and redact an internal, corporate or private one. When unsure, redact. In a URL, replace the host and keep the scheme and path. |
-| Home paths | `~` | An absolute path under a home directory — `/home/<user>/…`, `/Users/<user>/…`, `C:\Users\<user>\…`, `/root/…` — becomes `~/…`, dropping the account name. |
+**The `id`'s short slug is derived from the redacted Friction, and carries neither a caught value nor a placeholder.** Name the slug after what went wrong (`registry-timeout`), never after the host, path or token involved. A slug is kebab-case, so a value in it no longer looks like what it is: one run would catch it and another would not, and §3's dedupe would then compare two different ids for one signal and log it twice.
 
-- **The same value takes the same placeholder** throughout one entry, and numbering starts at 1 in each entry.
+Apply the rows in this order. A value one row has replaced is not matched again by a later row.
+
+| Category | Replace with | What to catch | What to keep |
+|---|---|---|---|
+| Secrets | `[SECRET-n]` | A private-key block, from its `-----BEGIN … PRIVATE KEY-----` line through its `END` line. A token of a known shape: one of the prefixes `ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_`, `github_pat_`, `glpat-`, `xox` plus one letter and `-`, `AKIA`, `ASIA`, `sk-` (`sk-ant-` and `sk-proj-` included), `AIza` or `npm_`, at the start of a word and followed by at least 20 letters, digits, `_` or `-`; or a JWT (`eyJ….eyJ….…`). The password in a URL (`scheme://user:[SECRET-n]@host`). A bearer or basic `Authorization` value. A literal value assigned (`=` or `:`) to a name ending `_KEY`, `_TOKEN` or `_SECRET`, or named `PASSWORD` or `PASSWD`. | A word that merely contains a prefix (`risk-planner`, `npm_config_cache`). A reference to an environment variable rather than its value (a `$` followed by the variable's name), or a placeholder such as `<your-token>`. The family's own `workitem_key`. |
+| Home paths | `~` | An absolute path under a home directory — `/home/<user>/…`, `/Users/<user>/…`, `C:\Users\<user>\…`, `/root/…` — becomes `~/…`, dropping the account name. | The rest of the path, so a plugin file stays recognisable (`~/.claude/plugins/cache/…`). |
+| Hosts and addresses | `[HOST-n]` | A host in a private or corporate domain: a single-label name, or a name under `.internal`, `.local`, `.lan`, `.corp`, `.intranet` or an organisation's own internal domain. A private-range IP address (`10.`, `172.16.`–`172.31.`, `192.168.`, `fc00::/7`), and any other routable IP address. When a hostname could be either, redact it. In a URL, replace the host and keep the scheme, port and path. | `localhost`, loopback (`127.0.0.0/8`, `::1`), unspecified (`0.0.0.0`, `::`) and link-local (`169.254.`, `fe80::`) addresses, `host.docker.internal` and `host.containers.internal`, and the domain of a publicly reachable service — a code host, a package registry, a public API, a public documentation site (`github.com`, `api.github.com`, `pypi.org`, `registry.npmjs.org`, `services.nvd.nist.gov`). |
+| Email addresses | `[EMAIL-n]` | Anything shaped like `local@domain.tld` that the rows above left in place. | A git remote such as `git@github.com:owner/repo.git`, which is a host, not an address; the user part of a URL; and a `name@<version>` package specifier. |
+
+- **Number each category separately**, in order of first appearance in the entry: `[SECRET-1]`, `[SECRET-2]`, `[HOST-1]`. The same value takes the same placeholder throughout one entry, and numbering starts again in the next entry. Placeholders use square brackets, not angle brackets: `<SECRET-1>` is an HTML tag to a Markdown renderer, which would show nothing at all.
 - **A placeholder replaces the value and nothing else.** The words around it stay exactly as written, so a redacted **User prompt** is still verbatim in every other character.
-- **Keep what the maintainer needs in order to act:** command and agent names, plugin file paths (a home path becomes `~/…`, not a placeholder), flags, versions, line numbers, and error messages with only their values redacted.
+- **Keep what the maintainer needs in order to act:** command and agent names, plugin file paths (a home path becomes `~/…`, not a placeholder), flags, versions, line numbers, ports, and error messages with only their values redacted.
 - **What is already in the file is never rewritten** (§3, append-only). Redaction applies to what this run appends.
-- **Report it.** Beside the persisted path it returns, the entry point reports what it redacted, by category and count: `redacted <N> value(s): <category> ×<n>[, …]`. It reports nothing when nothing was redacted. A report-only run (§2 tier 4) writes nothing, so it redacts nothing: the user sees their own text in their own terminal.
+- **Report it.** The entry point returns, beside the persisted path, what it redacted, by category and count: `redacted <N> value(s): <category> ×<n>[, …]`, or nothing when nothing was redacted. The caller appends that clause to whichever feedback line it prints: the persisted path, or under `--skip-feedback` the bugs-only line (`workflows-core:run-flags` §4). A report-only run (§2 tier 4) writes nothing, so it redacts nothing: the user sees their own text in their own terminal.
 
 ## 2. Persistence ladder (specs-first; never cwd)
 
@@ -209,7 +213,7 @@ signal the maintainer needs.
 
 Five named entry points: `emit-auto`, `emit-manual`, `emit-prompt`, `emit-block`, and `emit-bugs`. Every caller supplies `plugin_version` (§3) and lets
 this reference resolve the target (§2), dedupe/append (§3), and format the
-entry (§1). Every entry point redacts the entry per §1.1 before it writes it. None of them commits; none writes into a docs/code repo or the
+entry (§1). Every entry point redacts the entry per §1.1 while it renders it, before §3's dedupe compares ids. None of them commits; none writes into a docs/code repo or the
 current working directory, where it is not the specs repository. The artifacts are committed later, once, by the
 run's terminal `commit-artifacts` step
 (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §4).

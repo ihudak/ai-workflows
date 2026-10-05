@@ -16,13 +16,13 @@ Logs a corrective interaction — a command anywhere in the plugin family produc
 
 `--skip-costs` (or `$WORKFLOWS_SKIP_COSTS`, [`environment.md`](../reference/environment.md)) skips this run's session-cost entry, still advancing the checkpoint, and drops any deferred cost record a ceded [`/prompt-brainstorm`](prompt-brainstorm.md) or [`/prompt-grill-me`](prompt-grill-me.md) left pending in this session — naming each dropped record in its output rather than writing its entry (`references/run-flags.md` §5 step 3); it is the only run flag this command applies — `--skip-feedback` and `--enforce-model` are reported ignored, since `/prompt` dispatches no `impl-maintenance` and invokes no model routing.
 
-`$ARGUMENTS`, once the run flag above is stripped, is the corrective request itself, captured **verbatim** as the User prompt block — never paraphrased — save that secrets, email addresses, internal hosts and home-directory paths are replaced by placeholders before it is written ([Session feedback](../reference/session-feedback.md#what-is-redacted)). Phase 1 infers which command's output you're correcting from recent context, asking only if genuinely ambiguous; if none applies, it records `n/a`.
+`$ARGUMENTS`, once the run flag above is stripped, is the corrective request itself, captured **verbatim** as the User prompt block — never paraphrased — save that secrets, home-directory paths, non-public hosts and email addresses are replaced before it is written ([Session feedback](../reference/session-feedback.md#what-is-redacted)). Phase 1 infers which command's output you're correcting from recent context, asking only if genuinely ambiguous; if none applies, it records `n/a`.
 
 Write the flag before or after the request, never inside it: a leading run of flag tokens and a trailing run of flag tokens are stripped, so a `--skip-costs` written in the middle of the request text itself is kept as part of the verbatim request, not read as a flag.
 
 ## What it needs
 
-- **`$ARGUMENTS` itself, verbatim** — the correction to apply, and the corrective-triple's User prompt block.
+- **`$ARGUMENTS` itself, verbatim** — the correction to apply, and the corrective-triple's User prompt block, verbatim save the redactions above.
 - **Recent session context**, to infer the target `command` (or ask once if ambiguous).
 - **`$SPECS_PATH`** — for the feedback entry, the session-cost entry, and the specs-preflight/commit-artifacts bookkeeping; the correction itself is applied to your target files directly, wherever they are, never to the specs repo.
 
