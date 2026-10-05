@@ -327,7 +327,7 @@ Runs after Phase 1.6 and replaces the single Phase 2B exploration subagent for m
 
    Read each folder in turn. Collect the themes; there are no PR references until `implementation.md` exists.
 
-      **On a companion run (Phase 1)**, collect the themes from the changes the tasks it answers name, and from nothing else: the folder read is the context they are read in, and the Epic's own change, which its target's repository holds, is no theme of this scan.
+   **On a companion run (Phase 1)**, collect the themes from the changes the tasks it answers name, and from nothing else: the folder read is the context they are read in, and the Epic's own change, which its target's repository holds, is no theme of this scan.
 
    When `focus_key` is set, scope the collected result to that `EPIC-` folder and what it holds,
    and drop every sibling `EPIC-` folder before folding themes into the plan. There is no Story /
