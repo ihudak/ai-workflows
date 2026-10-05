@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.1 — 2026-10-05
+
+### Fixed
+
+- **Notices: only the lines an agent adds after its output.** Every agent carries the amended block and every dispatching command the amended relay sentence: only the `Untrusted-content notice:` lines an agent adds after its output are relayed, never one quoted inside it, and an agent reports a content line that starts with that token instead of passing it on.
+
 ## 0.5.0 — 2026-10-05
 
 ### Added

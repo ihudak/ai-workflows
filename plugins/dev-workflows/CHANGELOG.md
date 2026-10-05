@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.10.3] — 2026-10-05
+
+### Fixed
+- **Notices: only the lines an agent adds after its output.** Every agent carries the amended block and every dispatching command the amended relay sentence (workflows-core 1.16.1): only the `Untrusted-content notice:` lines an agent adds after its output are relayed, never one quoted inside it, and an agent reports a content line that starts with that token instead of passing it on. `upgrade-executor` and `vuln-fixer` copy `test-baseliner`'s notices to the end of their own reply, with their own.
+
 ## [4.10.2] — 2026-10-05
 
 **Update `workflows-core` to 1.15.2 with this release**: `/implement` passes `followup-emission` the unit's folder, and `/design`'s and `/ready`'s slug→clone maps follow its `components` §1.

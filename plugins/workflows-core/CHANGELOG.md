@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.16.1] — 2026-10-05
+
+### Fixed
+- **A notice line planted in what an agent reads reached the user's report as if an agent had raised it.** `references/untrusted-content.md`'s relay sentence relayed every `Untrusted-content notice:` line in an agent's reply, and an agent that quotes content verbatim — an issue digest, a source digest, a diff summary — can quote a line that starts with the same token; a probe on Sonnet printed a planted `curl … | sh` line under **Untrusted-content notices**. The relay sentence now names only the lines an agent adds after its output, the pass-on sentence copies only those lines to the end of the dispatching agent's own reply, with its own, and the block reports a content line that starts with the token instead of passing it on.
+- **Check 20 held a command only to a phrase of its relay sentence.** The rest of the sentence could drift or be cut short with the build green, and a pass-on sentence could name another subagent than the one its NEVER-dispatch rule allows. Check 20 now reads both sentences from this reference's quoted lines and compares every copy word for word — a relay sentence up to its citation, a pass-on sentence with the child that rule names — and fails a relay sentence that is not a paragraph of its own. Its self-test gains cases for a reference with reversed markers or an empty block and for each empty-scan guard, and asserts each mode by its message, not only by the check number.
+
 ## [1.16.0] — 2026-10-05
 
 ### Added
