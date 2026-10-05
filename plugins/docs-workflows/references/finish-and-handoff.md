@@ -27,18 +27,23 @@ directory — so every path it names is relative to that top level.
 ## 2. Squash (always)
 
 Stage the run's uncommitted docs-repo edits first — Phase 8 Agent 1 (doc index /
-cross-links) may have edited without committing; the Phase 6.2 clean-tree
-precondition means anything uncommitted is this run's work.
+cross-links) may have edited without committing — and only those: under the
+Phase 6.2 *Proceed anyway* answer the tree also holds somebody else's changes,
+which stay out of the squash.
 Then squash:
 - squash base = `profile_commit` (C0) when recorded — keeps the profile-config
   commit as a distinct first commit; otherwise
   `git -C <docs_repo_path> merge-base <base_branch> HEAD`.
 - mechanics: `git -C <docs_repo_path> add -- <each path under docs_repo_path the run wrote or edited>`
   → `git -C <docs_repo_path> reset --soft <squash-base>`
-  → one `git -C <docs_repo_path> commit -F <msg-path>`, the message written first to a
+  → one `git -C <docs_repo_path> commit -F <msg-path> -- ':(literal)<path>' …` **by pathspec**,
+  over the paths the squashed commits carry, `git -C <docs_repo_path> diff --name-only -z --no-renames <squash-base> HEAD`
+  read before the reset, together with those just staged — never a plain commit, which would
+  also carry a change somebody else had staged — and then the index brought back in step as
+  `workflows-core:specs-repo-git` §4 step 4 does; the message written first to a
   `command mktemp -t dw-docs-msg-XXXXXX` file outside any repository and removed with
   `command rm -f -- "<msg-path>"` once the commit has been made or has failed: the summary is
-  free text, whose backticks and `$(…)` a double-quoted `-m` would command-substitute. Never a path outside the docs
+  free text, whose backticks and `$(…)` a double-quoted `-m` would command-substitute. Never `add` a path outside the docs
   repository — the implementation-gaps draft in the resolved PRD folder, a screenshot staged under
   `screenshot_staging_dir`, or Phase 8's feedback file under `$SPECS_PATH` — which git refuses
   (`fatal: … is outside repository`) along with every other path in the same `add`.

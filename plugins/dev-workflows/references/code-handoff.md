@@ -316,7 +316,7 @@ For a GitHub remote where `gh` is merely absent, append the command the user may
 Four obligations. Omitting any one is a defect, not a style choice.
 
 1. **Call it after the last in-repo write, not before.** Post-implementation maintenance edits files inside the repo; a call placed ahead of them commits a partial run.
-2. **Record `pre_existing_dirty` and `stash_ref` at branch time.** A caller that does not cannot honour §2.2's first two carve-outs, and will either sweep up somebody else's work or forget a stash.
+2. **Record `pre_existing_dirty`, each path with its §2.2 fingerprint, and `stash_ref` before the first edit.** A caller that does not cannot honour §2.2's first two carve-outs, and will either sweep up somebody else's work or forget a stash.
 3. **Emit §3.1's line exactly once per *full* call**, in the run's own report. A §2.12 unit-level call emits none — it returns its outcome to the caller instead (§2.12), which records it in that command's own results table.
 4. **Never restate this reference's rules** — cite the section number. A rule copied into a command is a rule that goes stale.
 

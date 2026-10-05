@@ -569,6 +569,11 @@ to state.
    nothing where none is left. Never over the commit's whole list: a path the
    commit deleted is in neither `HEAD` nor the index, and one pathspec that
    matches nothing fails the whole `restore`, which then restores nothing.
+
+   Nothing in this commit-and-restore form is particular to the specs
+   repository: `phase-handoff.md` §2.4 and the `docs-workflows` commands that
+   commit into a docs repository run it against their own, with their own
+   paths and message.
 5. **Push** to the current branch's upstream. If the branch has no upstream:
    `git -C "$SPECS_PATH" push -u origin <branch>`.
 6. **Failure at any step is reported, never fatal.**
@@ -589,7 +594,7 @@ to state.
 
 ### 4.1 Where the commit lands
 
-- **A command that opened a specs-repo branch at handoff** (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/implement`, `/ready`, `/frames`, `/prd-ground`, `/prd-proposal`, and every `/brd-*` command — seventeen total, matching `phase-handoff.md`'s producer count) — on that `idea|prd|ard|spec|design|ready|brd|frames/*` branch, so the push updates the pull request already open. Two commits on one branch: the deliverable, then the artifacts. Every `/brd-*` command opens on the shared `brd` prefix (`phase-handoff.md` §2.9); `/prd-ground` opens on that same shared `brd` prefix on the BRD route, or on the shared `prd` prefix (with `/create-prd`, `/update-prd` and `/prd-proposal`) on the idea route — it left the `/brd-*` glob the day its own rename shipped, but not the prefix sharing, which is why it is named here rather than folded into "every `/brd-*` command". A later `/brd-*` run — or `/prd-ground`, on the BRD route — that reuses the branch a prior phase of the same BRD opened lands there rather than on the default branch.
+- **A command that opened a specs-repo branch at handoff** (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/implement`, `/ready`, `/frames`, `/prd-ground`, `/prd-proposal`, and every `/brd-*` command — seventeen total, matching `phase-handoff.md`'s producer count) — on that `idea|prd|ard|spec|design|ready|brd|frames/*` branch, so the push updates the pull request already open. Two commits on one branch: the deliverable, then the artifacts — save where the deliverable's commit failed (`phase-handoff.md` §4.1's *Commit failed*), when the artifacts' commit alone lands on that branch and its push opens no pull request. Every `/brd-*` command opens on the shared `brd` prefix (`phase-handoff.md` §2.9); `/prd-ground` opens on that same shared `brd` prefix on the BRD route, or on the shared `prd` prefix (with `/create-prd`, `/update-prd` and `/prd-proposal`) on the idea route — it left the `/brd-*` glob the day its own rename shipped, but not the prefix sharing, which is why it is named here rather than folded into "every `/brd-*` command". A later `/brd-*` run — or `/prd-ground`, on the BRD route — that reuses the branch a prior phase of the same BRD opened lands there rather than on the default branch.
 - **The same command when the user declined git at handoff** ("just write the
   files — I'll handle git") — the repo is still on the default branch and the
   deliverable is uncommitted there. `commit-artifacts` still runs and commits
