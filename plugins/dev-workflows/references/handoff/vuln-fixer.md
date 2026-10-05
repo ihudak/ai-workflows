@@ -61,6 +61,8 @@ no_address_placeholder: NOISSUE   # the literal the repo already writes; omit if
 regression_decision: keep-anyway   # keep-anyway | revert — REQUIRED on phase: regression-resume only;
                                     # the orchestrator obtains this from the user (subagents cannot
                                     # prompt the user directly — see /vuln "Handling Test Failures")
+allow_install_scripts: [fast-hash]   # optional — the names the user gave the command's --allow-install-scripts
+                                    # (install-time-code.md): run, after the install, for each one it skipped
 model_routing:                     # optional; set by orchestrator for SIGNIFICANT / HIGH-RISK
   classification: SIGNIFICANT
   gate_tests_on_review: true       # if true: stop after Build, return AWAITING_REVIEW
@@ -106,6 +108,12 @@ branch: fix/PROJ-2423-CVE-2023-46604
 tests_before: 47
 tests_after: 47
 regressions: 0
+skipped_install_scripts: []   # every return — packages this install placed on disk whose install-time code it
+                              # skipped, each with the command that would run (install-time-code.md),
+                              # e.g. - "sharp@0.34.1 (npm: install: node install/check.js)"
+                              #      - "vcsdep (pip: source build, git+https://example.com/vcsdep.git@v2)"
+                              #      - "project:packages/web:prepare (npm: prepare: lerna bootstrap)"
+                              #      - "sharp@0.33.5 (npm: install: node install/check.js) — restored unbuilt: npm rebuild sharp"
 reverted:               # BUILD_FAILED and REVERTED only — every path the §6.2 revert removed or
   - pom.xml             # restored (references/code-handoff.md), so the orchestrator can name them
 reverted_from: 7a1f0e2b5c9d4e8f6a3b2c1d0e9f8a7b6c5d4e3f   # BUILD_FAILED and REVERTED only — the

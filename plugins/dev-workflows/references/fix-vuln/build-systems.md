@@ -89,6 +89,8 @@ Edit the version in the appropriate `pom.xml`. Prefer updating `<properties>` to
 
 ## npm / yarn / pnpm
 
+**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below — npm, yarn, pnpm, pip, pipenv — skips the scripts and source builds a new release ships, and the agent names what it skipped.
+
 ### Detect library
 
 ```bash
@@ -99,16 +101,16 @@ Also check `package-lock.json` or `yarn.lock` for transitive dependencies.
 
 ### Distinguish direct vs. transitive
 
-- **Direct** (in `package.json` `dependencies`/`devDependencies`): update `package.json` version constraint and run `npm install`.
+- **Direct** (in `package.json` `dependencies`/`devDependencies`): update `package.json` version constraint and run `npm install --ignore-scripts` (pnpm, yarn: `install-time-code.md`).
 - **Transitive only**: use `overrides` (npm 8.3+) or `resolutions` (yarn) in `package.json`.
 
 ### Update direct dependency
 
 ```bash
-npm install <package>@<safe-version>
+npm install --ignore-scripts <package>@<safe-version>
 ```
 
-Or edit `package.json` manually and run `npm install`.
+Or edit `package.json` manually and run `npm install --ignore-scripts`.
 
 ### Override transitive dependency
 
@@ -118,6 +120,8 @@ Or edit `package.json` manually and run `npm install`.
   "<package>": "<safe-version>"
 }
 ```
+
+Then run `npm install --ignore-scripts` (yarn: `resolutions`, then the install `install-time-code.md` gives).
 
 ### Verify
 
@@ -148,6 +152,8 @@ CI=true npm test
 
 ## Python (pip)
 
+**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below — npm, yarn, pnpm, pip, pipenv — skips the scripts and source builds a new release ships, and the agent names what it skipped.
+
 ### Detect library
 
 ```bash
@@ -157,13 +163,13 @@ grep -ri "requests" requirements.txt Pipfile pyproject.toml
 ### Update
 
 - **`requirements.txt`**: change `requests==2.28.0` to `requests==<safe-version>` (use `==` for pinned, `>=` for minimum).
-- **`Pipfile`**: edit `[packages]` section and run `pipenv install`.
-- **`pyproject.toml`**: edit `[project.dependencies]` or `[tool.poetry.dependencies]`.
+- **`Pipfile`**: edit `[packages]` section and run `PIP_ONLY_BINARY=:all: pipenv install`.
+- **`pyproject.toml`**: edit `[project.dependencies]` or `[tool.poetry.dependencies]`, then install it — with pip, `pip install --only-binary=:all: -e .`; with Poetry, uv, PDM or Hatch, by its own command, unchanged (`install-time-code.md` says why).
 
 ### Verify
 
 ```bash
-pip install -r requirements.txt
+pip install --only-binary=:all: -r requirements.txt
 pytest                     # or python -m pytest
 ```
 

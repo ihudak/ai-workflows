@@ -117,10 +117,19 @@ reconstruct it.
    (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.1): it is what "Build failure" reverts to, and
    without it the only revert left would discard the user's own changes in any file this fix touches.
 
-   **On a collision, stop — do not improvise.** If `git checkout -b` fails because the branch
-   already exists (the ordinary case on a re-run after an earlier `BUILD_FAILED`, which leaves the
-   branch in place and empty), do **not** fall back to a suffixed name and do **not** proceed on the
-   current HEAD: return `status: BLOCKED` naming the collision. Proceeding would edit files while
+   **A rerun is the one exception.** When the branch already exists and points at HEAD itself
+   (`git rev-parse <branch>` prints what `git rev-parse HEAD` prints) — an earlier run's `BUILD_FAILED`
+   left it in place and empty, and a rerun with `--allow-install-scripts` is the ordinary way back — run
+   `git switch <branch>` in place of `git checkout -b`. A switch that fails returns `status: BLOCKED`
+   with git's error, and changes nothing else.
+
+   **On a collision, stop — do not improvise.** If the branch already exists and points anywhere
+   else — it holds commits HEAD lacks, or it is an empty one left behind HEAD because the base moved on
+   since the run that left it — do **not** fall back to a suffixed name and do **not** proceed on the
+   current HEAD: return `status: BLOCKED` naming the collision — and where the branch holds
+   nothing HEAD lacks (`git rev-list --count HEAD..<branch>` prints 0), name `git branch -d <branch>` as
+   the user's way back: it refuses a branch holding anything unmerged, and a rerun then creates the
+   branch afresh on the current base. Proceeding would edit files while
    HEAD is on the base branch, which this agent's invariants forbid and which `/vuln` Step 3.9 would
    then refuse to commit. This is deliberately ahead of the edit, not after it: it is the plugin's
    standing invariant for every code-writing command, and it is what makes the branch exist on the
@@ -136,6 +145,9 @@ reconstruct it.
 
 3. **Apply fix** — Update the version pin(s) listed in the research report's `files` array.
    Use the ecosystem-appropriate update command (see `${CLAUDE_PLUGIN_ROOT}/references/fix-vuln/build-systems.md`).
+   It installs without the new release's install-time code (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): record what it skipped in
+   `skipped_install_scripts:`, and where the request carries `allow_install_scripts:`, run that file's allow
+   step for exactly those packages before step 4.
 
 4. **Build** — Run the project build (compile only, no tests). On failure see "Build failure" below.
 
@@ -191,9 +203,13 @@ reconstruct it.
 
 ## Build failure
 
-1. Read the full error; attempt an obvious automatic fix (wrong API, missing plugin).
+1. Read the full error; attempt an obvious automatic fix (wrong API, missing plugin). Running a
+   dependency's install-time code by any route — dropping `--ignore-scripts` or `--only-binary=:all:`, a
+   rebuild, a `--no-binary` install, a configuration that enables scripts — is never one: a failure
+   after such an install is what `skipped_install_scripts:` names for the user (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A package pip refused for want of a
+   wheel is a build failure here, with that package in the list.
 2. If unfixable in one attempt: revert by running `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md`
-   §6.2's script from the request's `pre_edit_tree:`, set `status: BUILD_FAILED`, report clearly, and
+   §6.2's script from the request's `pre_edit_tree:`, then restore `node_modules` as `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`'s "After a revert" says, set `status: BUILD_FAILED`, report clearly, and
    return what §6.2 says to return.
 
 ## Test regression
@@ -202,7 +218,8 @@ Subagents have no access to interactive tools — `AskUserQuestion` is unavailab
 granted, so this agent can never ask the user directly. The orchestrator owns that decision.
 
 1. Inspect failures — are they caused by the version bump (API change, renamed class)?
-2. If fixable automatically (import rename, trivial API migration): fix and note in output, then proceed to step 6 (Output).
+2. If fixable automatically (import rename, trivial API migration — never by running a dependency's
+   install-time code, `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): fix and note in output, then proceed to step 6 (Output).
 3. If not fixable: **stop here.** Return `status: TEST_REGRESSION` with the full list of
    newly-failing tests and a one-line diagnosis of the likely cause. The branch already exists
    (step 2) and the fix is on it, uncommitted — leave it that way; the orchestrator decides.
@@ -212,7 +229,7 @@ granted, so this agent can never ask the user directly. The orchestrator owns th
    - `keep-anyway` → proceed to step 6, recording the failures in `notes`; the orchestrator carries
      them into Step 3.9's `body_facts` and sets `clean_finish: false`.
    - `revert` → revert by running `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2's script
-     from the request's `pre_edit_tree:` — every edit since this CVE's first dispatch, `review-fixer`'s
+     from the request's `pre_edit_tree:` — then restore `node_modules` as `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`'s "After a revert" says — every edit since this CVE's first dispatch, `review-fixer`'s
      and any test fix of step 2 included, and nothing older — set `status: REVERTED`, and return what
      §6.2 says to return. A call that carries no `pre_edit_tree:` returns `status: BLOCKED` naming
      it, and changes nothing. The branch created in step 2 is left in place and empty — this agent

@@ -53,6 +53,8 @@ baseline:                    # The orchestrator (commands/upgrade.md Phase 2 pre
                              # single-suite repositories included.
     - "[Maven] com.example.OrderTest#testCreate"
     - "[Maven] com.example.UserTest#testLogin"
+allow_install_scripts: [fast-hash]   # optional — the names the user gave the command's --allow-install-scripts
+                                    # (install-time-code.md): run, after the install, for each one it skipped
 model_routing:               # optional; set by orchestrator for SIGNIFICANT / HIGH-RISK
   classification: SIGNIFICANT
   gate_tests_on_review: true # if true: stop after Build, return AWAITING_REVIEW
@@ -96,6 +98,12 @@ related_applied:
 tests_before: 142
 tests_after: 142
 regressions: 0
+skipped_install_scripts: []   # every return — packages this install placed on disk whose install-time code it
+                              # skipped, each with the command that would run (install-time-code.md),
+                              # e.g. - "sharp@0.34.1 (npm: install: node install/check.js)"
+                              #      - "vcsdep (pip: source build, git+https://example.com/vcsdep.git@v2)"
+                              #      - "project:packages/web:prepare (npm: prepare: lerna bootstrap)"
+                              #      - "sharp@0.33.5 (npm: install: node install/check.js) — restored unbuilt: npm rebuild sharp"
 reverted:               # BUILD_FAILED and TEST_REGRESSION_REVERTED only — every path the §6.2
   - pom.xml             # revert removed or restored (references/code-handoff.md)
 reverted_from: 7a1f0e2b5c9d4e8f6a3b2c1d0e9f8a7b6c5d4e3f   # the same two statuses only — the tree

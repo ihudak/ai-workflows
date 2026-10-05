@@ -46,6 +46,9 @@ reconstruct it.
    Then update every file listed in the plan's `files` array.
    For each related upgrade in `related`, apply those version changes too.
    Use ecosystem-appropriate commands (see `${CLAUDE_PLUGIN_ROOT}/references/upgrade/ecosystems.md`).
+   They install without the new release's install-time code (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): record what was skipped in
+   `skipped_install_scripts:`, and where the request carries `allow_install_scripts:`, run that file's allow
+   step for exactly those packages before step 2.
 
 2. **Build** — Run the project build (compile only). On failure see "Build failure" below.
 
@@ -103,8 +106,13 @@ reconstruct it.
 ## Build failure
 
 1. Read the full error; attempt one automatic fix (wrong plugin version, incompatible config, removed API).
+   Running a dependency's install-time code by any route — dropping `--ignore-scripts` or
+   `--only-binary=:all:`, a rebuild, a `--no-binary` install, a configuration that enables scripts — is
+   never one: a failure after such an install is what `skipped_install_scripts:` names for the user
+   (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A package pip refused for want
+   of a wheel is a build failure here, with that package in the list.
 2. If still failing: revert all changes for this component by running
-   `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2's script from the request's `pre_edit_tree:`,
+   `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2's script from the request's `pre_edit_tree:`, then restore `node_modules` as `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`'s "After a revert" says,
    set `status: BUILD_FAILED`, and return what §6.2 says to return.
 
 ## Test regression
@@ -113,7 +121,8 @@ Subagents have no access to interactive tools — `AskUserQuestion` is unavailab
 granted, so this agent can never ask the user directly. The orchestrator owns that decision.
 
 1. Determine whether failures are caused by the upgraded component (API rename, removed annotation, changed behaviour).
-2. **Auto-fix** if straightforward: rename imports, update assertion syntax, adjust config. Explain every change in the output, then proceed to step 4 (Output).
+2. **Auto-fix** if straightforward: rename imports, update assertion syntax, adjust config — never by
+   running a dependency's install-time code (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). Explain every change in the output, then proceed to step 4 (Output).
 3. If not auto-fixable: **stop here.** Return `status: TEST_REGRESSION` with the full list of
    newly-failing tests and a one-line diagnosis of the likely cause. The orchestrator asks the
    user (see `/upgrade` "Handling Test Failures") and re-invokes this agent with
@@ -123,7 +132,7 @@ granted, so this agent can never ask the user directly. The orchestrator owns th
      tests documented in `notes` for the user to fix.
    - `revert` → revert all changes for this component by running
      `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2's script from the request's `pre_edit_tree:`
-     — every edit since this component's first dispatch, `review-fixer`'s and any test fix of step 2
+     — then restore `node_modules` as `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`'s "After a revert" says — every edit since this component's first dispatch, `review-fixer`'s and any test fix of step 2
      included, and nothing older, so an earlier component's work stays — set
      `status: TEST_REGRESSION_REVERTED`, and return what §6.2 says to return. A call that carries no `pre_edit_tree:` returns `status: BLOCKED` naming it, and changes
      nothing.
