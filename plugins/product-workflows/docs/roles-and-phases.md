@@ -46,7 +46,7 @@ This plugin's spine ends at `specification.md`, landed on the specs repo's defau
 
 ## Cost-attribution phases
 
-Every cost-emitting command tags its cost line with a `phase` and a `role`. Seven phases are reached by this plugin's fourteen commands; each entry below names the command that emits it and what being in that phase means. Six more lifecycle phases exist for the companion `dev-workflows` and `docs-workflows` plugins' own commands — three and three respectively — and are documented on their own pages, not restated here; `workflows-core:cost-emission` §7 is the table that fixes every command's pair. Each of the seven below can also be reached **by inheritance**: the companion `workflows-core` plugin's `/workflows-core:prompt`, `/workflows-core:feedback`, `/workflows-core:prompt-brainstorm` and `/workflows-core:prompt-grill-me` adopt the phase and role of whatever they are correcting, so a correction to a `/specify` output is a second entry in `specification`.
+Every cost-emitting command tags its cost line with a `phase` and a `role`. Seven phases are reached by this plugin's fourteen cost-emitting commands; each entry below names the command that emits it and what being in that phase means. Six more lifecycle phases exist for the companion `dev-workflows` and `docs-workflows` plugins' own commands — three and three respectively — and are documented on their own pages, not restated here; `workflows-core:cost-emission` §7 is the table that fixes every command's pair. Each of the seven below can also be reached **by inheritance**: the companion `workflows-core` plugin's `/workflows-core:prompt`, `/workflows-core:feedback`, `/workflows-core:prompt-brainstorm` and `/workflows-core:prompt-grill-me` adopt the phase and role of whatever they are correcting, so a correction to a `/specify` output is a second entry in `specification`.
 
 ### prd-creation
 
@@ -78,4 +78,4 @@ Emitted by `/epics`, role `pe`. Being in this phase means a PRD is being broken 
 
 ---
 
-**Plugin feedback** (`plugin-feedback`, role `n/a`) is the fallback phase for a `/workflows-core:prompt`/`/workflows-core:feedback`/`/workflows-core:prompt-brainstorm`/`/workflows-core:prompt-grill-me` run with no target command to inherit from, and the phase every `/workflows-core:diagnose-session` run is charged to — documented in full on the companion `workflows-core` plugin's own Roles and phases page, since none of this plugin's fourteen commands emits it directly.
+**Plugin feedback** (`plugin-feedback`, role `n/a`) is the fallback phase for a `/workflows-core:prompt`/`/workflows-core:feedback`/`/workflows-core:prompt-brainstorm`/`/workflows-core:prompt-grill-me` run with no target command to inherit from, and the phase every `/workflows-core:diagnose-session` run is charged to — documented in full on the companion `workflows-core` plugin's own Roles and phases page, since none of this plugin's fifteen commands emits it directly.

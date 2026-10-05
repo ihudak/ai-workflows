@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.13.1] — 2026-10-05
+
+### Fixed
+- **The session-cost page's list of commands that emit no cost entry is complete.** Its account of why a ceded run is matched by name, not by position, named `/vuln`, `/upgrade`, `/workflows-core:statusline` and `/docs-workflows:docs-profile`; it now names `/docs-workflows:docs-serve` and `/product-workflows:harvest-decisions` too, as `workflows-core:cost-emission` §13.3 does.
+
 ## [4.13.0] — 2026-10-05
 
 ### Added

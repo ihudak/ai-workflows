@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [3.19.1] — 2026-10-05
 
 ### Fixed
-- **The session-cost page no longer says every command in this plugin emits a cost entry.** It spoke of "the fourteen commands *in this plugin*" and said all of them emit one; the plugin has fifteen, and `/harvest-decisions` emits none, since it runs across every ARD at once and so has no one PRD to attribute spend to.
+- **The docs no longer say this plugin has fourteen commands.** It has had fifteen since `/harvest-decisions` shipped in 3.17.0, and that one runs a bundled script: it emits no cost entry, loads no `model-routing`, dispatches no `impl-maintenance` and writes no resume pointer. Pages that said all fourteen commands do one of those things now name the fourteen that do and the one that does not — `session-cost.md`, `model-routing.md`, `session-feedback.md`, `agents.md`, `resume-and-checkpoints.md` and `roles-and-phases.md` — and `workflow.md`, `environment.md` and the repository README now say fifteen. The cost page gives `workflows-core:cost-emission` §7's reason for the exception: the command writes the team architecture knowledge base rather than advancing a PRD- or BRD-scoped artifact.
 
 ## [3.19.0] — 2026-10-05
 

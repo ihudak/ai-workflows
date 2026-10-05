@@ -9,7 +9,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed
 - **The session-cost selftest now covers `main()`'s shared message-id map.** Its unit checks passed one map to `scan_main` and `read_subagents` by hand, so deleting `main()`'s own `by_id=by_id` argument left the selftest green while a fork's copy of a main-transcript record was counted twice. A run through the CLI now checks that a subagent file repeating a main-transcript id adds nothing to the totals, while the file's own new id still counts.
-- **`/harvest-decisions` is listed among the commands that emit no cost entry and that no run flag applies to.** `cost-emission` §7's no-row bullet and §13.3's list of commands that leave a boundary no claim matches named `/vuln`, `/upgrade`, `/docs-profile`, `/docs-serve` and `/statusline`, and `run-flags` §3's list of commands in none of the three sets named the last two; each now names `/harvest-decisions` too.
+- **`/harvest-decisions` is listed among the commands that emit no cost entry and that no run flag applies to.** `cost-emission` §7's paragraph on why commands emit no cost entry named `/vuln`, `/upgrade`, `/docs-profile` and `/docs-serve`, and now names `/harvest-decisions` with its reason: a decision harvest writes the team architecture knowledge base and advances no PRD- or BRD-scoped artifact. §7's no-row bullet, §13.3's list of commands that leave a boundary no claim matches, and `session-cost.py`'s `match_claims` docstring name it too. `run-flags` §3 now says it runs no `strip-run-flags` at all: it never reads a run-flag variable, and an explicit run flag reaches its own argument parse, which refuses any argument but `--dry-run`.
 
 ## [1.22.0] — 2026-10-05
 

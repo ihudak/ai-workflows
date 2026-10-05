@@ -1,6 +1,6 @@
 # Resume and checkpoints
 
-A long-running command ends by doing two separate things: it flushes a small pointer file to disk recording exactly where things stand, then it suggests — never performs — the right context action for what comes next, `/compact`, `/clear`, or a session `/rename`. Both are guidance only; the plugin never invokes any of those three itself. The point is to stop relying on you to remember to ask "am I ready to compact or clear" — the pipeline does the disk-flush itself and hands you the choice already framed. The mechanism itself is shared across the whole family; this page describes what `product-workflows`'s own fourteen commands do with it.
+A long-running command ends by doing two separate things: it flushes a small pointer file to disk recording exactly where things stand, then it suggests — never performs — the right context action for what comes next, `/compact`, `/clear`, or a session `/rename`. Both are guidance only; the plugin never invokes any of those three itself. The point is to stop relying on you to remember to ask "am I ready to compact or clear" — the pipeline does the disk-flush itself and hands you the choice already framed. The mechanism itself is shared across the whole family; this page describes what `product-workflows`'s own commands do with it — fourteen of its fifteen, since `/harvest-decisions` runs a bundled script and writes no pointer file.
 
 ## What `resume.md` is for
 
@@ -41,7 +41,7 @@ The commands that print a suggested `/rename <KEY>-<slug>-<role>` line are the P
 
 ## Mid-phase checkpoints
 
-None of `product-workflows`'s fourteen commands is long enough to carry its own mid-phase checkpoint the way the companion plugin's `/dev-workflows:implement` does — each authoring or grounding run finishes in one pass and reaches the end-of-run write described above.
+None of `product-workflows`'s fifteen commands is long enough to carry its own mid-phase checkpoint the way the companion plugin's `/dev-workflows:implement` does — each authoring or grounding run finishes in one pass and reaches the end-of-run write described above.
 
 ## The contract
 

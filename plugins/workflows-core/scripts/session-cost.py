@@ -1361,8 +1361,8 @@ def match_claims(claim_names, boundaries):
 
     Matching is BY NAME, scanning forward, never by position. A window routinely
     contains boundaries no claim corresponds to -- `/vuln`, `/upgrade`,
-    `/statusline`, `/docs-profile`, `/docs-serve` and the two guideline reviewers emit no cost
-    entry at all, and any run the user interrupted leaves a boundary behind too.
+    `/statusline`, `/docs-profile`, `/docs-serve`, `/harvest-decisions` and the two guideline
+    reviewers emit no cost entry at all, and any run the user interrupted leaves a boundary behind too.
     Pairing the k-th claim with the k-th boundary therefore skews the moment one
     of those sits in the window, and files one command's spend under another
     command's lifecycle labels.
