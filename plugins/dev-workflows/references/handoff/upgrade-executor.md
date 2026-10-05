@@ -18,6 +18,12 @@ enforced_model: <model id or family>  # optional; run_flags.enforced_model (clas
                             # orchestrator's run has one set. When present, pass it as `model:` on
                             # the agent's own test-baseliner dispatch in place of the Sonnet detection
                             # chain — the nested-dispatch rule §10 states for this agent.
+pre_edit_tree: 5e8f2c…   # REQUIRED on phase: full and phase:
+                            # regression-resume. The tree id the orchestrator recorded before this
+                            # component's first dispatch (references/code-handoff.md §6.1), the same
+                            # value on every call of the component. Every revert this agent makes
+                            # restores it (§6.2), never HEAD, so a file the user had changed before the
+                            # run keeps their changes. Absent where needed => BLOCKED.
 regression_decision: keep-anyway  # keep-anyway | revert — REQUIRED on phase: regression-resume only;
                             # the orchestrator obtains this from the user (subagents cannot prompt
                             # the user directly — see /upgrade "Handling Test Failures")
@@ -90,6 +96,10 @@ related_applied:
 tests_before: 142
 tests_after: 142
 regressions: 0
+reverted:               # BUILD_FAILED and TEST_REGRESSION_REVERTED only — every path the §6.2
+  - pom.xml             # revert removed or restored (references/code-handoff.md)
+reverted_from: 9c1d…    # the same two statuses only — the tree the revert started from; a file it
+                        # undid is brought back with `git restore --source=<id> --worktree`
 notes: "Updated 2 test files: renamed @RunWith to @ExtendWith"   # it also carries, verbatim,
                          # every `CAVEAT: ` line the test-baseliner verify marked — on EVERY
                          # status this agent returns, `OK` included (the agent's step 3), since
@@ -112,7 +122,8 @@ model_routing:           # echoed back when present in input
 - `OK` — all changes applied, all previously-green tests still green. A `PARTIAL`
   verify is still `OK`: every suite the baseline covered is green, and `notes`
   names the ones it does not cover
-- `BUILD_FAILED` — build failed, all changes reverted for this component
+- `BUILD_FAILED` — build failed, all changes for this component reverted to `pre_edit_tree` (§6.2),
+  every path named in `reverted:`
 - `SKIPPED` — component was NOT_FOUND or user chose to skip
 - `TEST_REGRESSION` — regressions present, not auto-fixable, awaiting a user
   decision. This agent cannot ask the user (subagents have no interactive
@@ -121,7 +132,8 @@ model_routing:           # echoed back when present in input
   Failures"), then re-invokes this agent with `phase: regression-resume` +
   `regression_decision: keep-anyway | revert`.
 - `TEST_REGRESSION_KEPT` — the `regression-resume` call's `regression_decision` was `keep-anyway`
-- `TEST_REGRESSION_REVERTED` — the `regression-resume` call's `regression_decision` was `revert`
+- `TEST_REGRESSION_REVERTED` — the `regression-resume` call's `regression_decision` was `revert`; the
+  tree is back at `pre_edit_tree` (§6.2), every path named in `reverted:`
 - `TESTS_NOT_RUN` — `test-baseliner` verify returned `RUN_FAILED` or
   `COMMAND_NOT_FOUND`: no comparison was possible, so nothing is known about
   this component's tests either way. The changes are applied and **not**

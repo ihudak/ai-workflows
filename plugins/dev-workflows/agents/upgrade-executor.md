@@ -38,7 +38,12 @@ reconstruct it.
 > jump straight to "Test regression" step 4 below, honoring the
 > `regression_decision: keep-anyway | revert` supplied by the orchestrator.
 
-1. **Apply changes** — Update every file listed in the plan's `files` array.
+1. **Apply changes** — First check the request carries `pre_edit_tree:`, the snapshot the orchestrator
+   took before this component's first dispatch (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.1).
+   A missing one is an orchestrator bug: return `status: BLOCKED` naming it, and change nothing — it is
+   what "Build failure" reverts to, and without it the only revert left would discard the user's own
+   changes in any file this upgrade touches.
+   Then update every file listed in the plan's `files` array.
    For each related upgrade in `related`, apply those version changes too.
    Use ecosystem-appropriate commands (see `${CLAUDE_PLUGIN_ROOT}/references/upgrade/ecosystems.md`).
 
@@ -98,7 +103,9 @@ reconstruct it.
 ## Build failure
 
 1. Read the full error; attempt one automatic fix (wrong plugin version, incompatible config, removed API).
-2. If still failing: revert all changes for this component, set `status: BUILD_FAILED`.
+2. If still failing: revert all changes for this component per `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md`
+   §6.2, from the request's `pre_edit_tree:`, set `status: BUILD_FAILED`, and return `reverted:` and
+   `reverted_from:` with it.
 
 ## Test regression
 
@@ -114,13 +121,19 @@ granted, so this agent can never ask the user directly. The orchestrator owns th
 4. **On `phase: regression-resume`:** honor `regression_decision`:
    - `keep-anyway` → set `status: TEST_REGRESSION_KEPT`, proceed to Output, leaving the failing
      tests documented in `notes` for the user to fix.
-   - `revert` → revert all changes for this component, set `status: TEST_REGRESSION_REVERTED`, return.
+   - `revert` → revert all changes for this component per `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md`
+     §6.2, from the request's `pre_edit_tree:` — every edit since this component's first dispatch,
+     `review-fixer`'s and any test fix of step 2 included, and nothing older, so an earlier component's
+     work stays — set `status: TEST_REGRESSION_REVERTED`, and return `reverted:` and `reverted_from:`
+     with it. A call that carries no `pre_edit_tree:` returns `status: BLOCKED` naming it, and changes
+     nothing.
    Record the outcome in the output record.
 
 ## Invariants
 
 - **Never commit, never push, never open a pull request.** Leave the changes in the working tree and return. This is a division of labour, not a policy that the work goes uncommitted: the orchestrator commits this component in `/upgrade` step 6.5 as soon as its gates settle, and pushes the branch once in step 7.5 (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.12). Committing here would strand the commit message outside the run's own report and, on a `gate_tests_on_review: true` call, commit work the Opus review has not seen.
 - Process one component per invocation.
+- Revert only by `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2, from `pre_edit_tree` — never by `git checkout --`, a `git restore` without `--source`, `git stash`, or by hand. The tree may hold the user's uncommitted work and, under `--no-commit`, earlier components' work, and each of those either discards it in a file this upgrade touched, moves it onto the stash stack, or misses what the build or the package manager wrote beside the edit.
 - The baseline provided by the orchestrator is authoritative; do not re-run it.
 - NEVER dispatch any subagent other than `test-baseliner`. That one dispatch is your entire `Task` authority. Pin it with `model: <Sonnet detection chain — claude-sonnet-5-5, fallback claude-sonnet-5 / 4-6 / 4-5>` — running a test suite is mechanical, so the tier is pinned here rather than left to inherit — or, when the caller's prompt carries `enforced_model` (classification.md §10), that value — either one passed in classification.md §5's dispatch form: the id itself where the `Task` tool's `model` parameter accepts ids, its family name (`sonnet`, `opus`, …) where it enumerates only family names. **Never dispatch a reviewer of your own.** Review is the caller's to schedule, not yours. Your caller deliberately runs no reviewer on some paths — a SIMPLE / MODERATE run is classified out of the Opus `code-review` gate on purpose — so a reviewer you spawn silently overrides the caller's own gate policy. Its verdict has no standing either: the caller never sees it, and you cannot act on it without exceeding your brief.
 

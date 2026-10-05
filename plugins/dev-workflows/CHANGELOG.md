@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.9.2] — 2026-10-05
+
+### Fixed
+- **A revert no longer discards your own uncommitted changes.** `vuln-fixer` and `upgrade-executor` undid a build they could not repair, or a regression the user chose to revert, by an unspecified mechanism: on a tree that was dirty before the run, restoring a file from `HEAD` took the user's own changes in it along with the fix, and a lockfile the build wrote could be left behind. `code-handoff.md` §6 now defines both halves. `/vuln` and `/upgrade` snapshot the whole working tree — untracked files included, the index untouched — immediately before each CVE's or component's first dispatch, and pass it as `pre_edit_tree`. The agents' revert removes what the unit created, restores everything else it changed from that snapshot, and names each path in `reverted:`, with a `reverted_from:` tree that brings any of them back. The snapshot is taken per unit, so under `/upgrade --no-commit` an earlier component's uncommitted work survives a later one's revert. A dispatch that lacks it returns `BLOCKED` and changes nothing.
+- **`/implement`'s Stash stashes the user's work again.** It excluded every `@path` input inside the repository, so a code directory named as a search hint kept its changes out of the stash, and an `@path` that was the repository's top level, spelled as an empty exclusion, made git stash nothing at all: the answer silently became *Proceed anyway* (measured, git 2.43). It now excludes only the spec inputs the run reads, never a path of the Code repo row, and matches each one literally — as a pattern, excluding `sp*c.md` also excluded `spec.md` — and says which dirty paths the exclusions kept out.
+- **A stash is named on every exit.** `/upgrade` stashed at Phase 2 prep, then stopped without naming the stash on the branch-start question's Cancel, on a refused switch and on the baseline's *Cancel this run*. Under `--no-commit`, `/implement` and `/upgrade` emit `code-handoff.md` §3.1's `--no-commit` row, which no append reached. `/upgrade` now names `stash_ref` in each such stop, and §3.1 makes the `--no-commit` row carry *A stash is outstanding*.
+
 ## [4.9.1] — 2026-10-05
 
 ### Fixed

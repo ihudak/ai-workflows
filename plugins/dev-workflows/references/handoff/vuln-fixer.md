@@ -17,6 +17,12 @@ branch: fix/PROJ-2423-CVE-2023-46604   # REQUIRED on phase: full. The orchestrat
                                     # (/vuln Step 1 step 5, per its "Git Workflow → Branch naming");
                                     # vuln-fixer creates exactly this branch and never derives one,
                                     # because /vuln Step 3.9 pushes the same value. Absent => BLOCKED.
+pre_edit_tree: 5e8f2c…   # REQUIRED on phase: full and phase:
+                                    # regression-resume. The tree id the orchestrator recorded before
+                                    # this CVE's first dispatch (references/code-handoff.md §6.1), the
+                                    # same value on every call of the CVE. Every revert this agent makes
+                                    # restores it (§6.2), never HEAD, so a file the user had changed
+                                    # before the run keeps their changes. Absent where needed => BLOCKED.
 phase: full                        # full (default) | verify-resume | regression-resume — see "Phase" below
 enforced_model: <model id or family>    # optional; run_flags.enforced_model (classification.md §10) when the
                                     # orchestrator's run has one set. When present, pass it as `model:` on
@@ -100,6 +106,10 @@ branch: fix/PROJ-2423-CVE-2023-46604
 tests_before: 47
 tests_after: 47
 regressions: 0
+reverted:               # BUILD_FAILED and REVERTED only — every path the §6.2 revert removed or
+  - pom.xml             # restored (references/code-handoff.md), so the orchestrator can name them
+reverted_from: 9c1d…    # BUILD_FAILED and REVERTED only — the tree the revert started from; a file
+                        # it undid is brought back with `git restore --source=<id> --worktree`
 notes: null             # or description of any auto-fixed test changes. It also carries,
                         # verbatim, every `CAVEAT: ` line the test-baseliner capture or verify
                         # marked — on EVERY status this agent returns, `SUCCESS` included
@@ -122,7 +132,8 @@ model_routing:           # echoed back when present in input
 - `SUCCESS` — fix applied, no regression found, branch created with the change on it,
   uncommitted. A `PARTIAL` verify is still `SUCCESS`: every suite the baseline
   covered is green, and `notes` names the ones it does not cover
-- `BUILD_FAILED` — build failed after fix, changes reverted
+- `BUILD_FAILED` — build failed after fix, changes reverted to `pre_edit_tree` (§6.2), every path
+  named in `reverted:`
 - `TEST_REGRESSION` — previously-green tests failed and were not auto-fixable;
   the fix is applied and built on the fix branch, uncommitted. This
   agent cannot ask the user (subagents have no interactive tools), so it
@@ -146,7 +157,8 @@ model_routing:           # echoed back when present in input
   (`/vuln` Step 3). A run the operator chooses to have applied unverified
   reaches `TESTS_NOT_RUN` through verify, which refuses a baseline covering no
   suite; a `PARTIAL` capture was never this and still is not
-- `REVERTED` — the `regression-resume` call's `regression_decision` was `revert`
+- `REVERTED` — the `regression-resume` call's `regression_decision` was `revert`; the tree is back at
+  `pre_edit_tree` (§6.2), every path named in `reverted:`
 - `SKIPPED_BY_USER` — user chose to skip (set by the orchestrator; this agent
   is not re-invoked in that case)
 - `AWAITING_REVIEW` — `gate_tests_on_review: true` was set; the branch exists and
