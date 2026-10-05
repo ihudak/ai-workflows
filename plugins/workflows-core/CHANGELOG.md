@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.21.2] — 2026-10-05
+
+### Fixed
+- **Session cost counted most API calls two or three times.** Claude Code writes one API response as several assistant records sharing one message id, each repeating the usage: a streaming partial first, then the final record. `session-cost.py` summed every record, so a call's input and cache reads were counted once per record, and its output once per record as well. On one long session the output tokens summed per record came to about two and a half times those of the session's unique messages. Each message id now counts once, at its final usage, in the main transcript and in every subagent transcript. Cost entries written before this release overstate their tokens and dollars by about that much.
+
 ## [1.21.1] — 2026-10-05
 
 ### Changed

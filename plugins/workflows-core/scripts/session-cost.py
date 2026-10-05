@@ -4,7 +4,8 @@
 Pure computation, Python standard library only (json, argparse, glob, os,
 datetime). Given a chained checkpoint (or none) it reads the current session's
 main transcript from a line offset forward plus the session's subagent
-transcripts within a timestamp window, accumulates token usage per model,
+transcripts within a timestamp window, accumulates token usage per model
+(each API message id once -- see keep_once),
 applies a price table (USD per MILLION tokens), and prints a structured JSON
 result to stdout. It NEVER writes the specs repo and NEVER writes the checkpoint
 back — the caller (references/cost-emission.md) persists ``new_checkpoint``,
@@ -122,6 +123,35 @@ def extract_usage(obj):
     if not isinstance(model, str):
         model = "unknown" if model is None else repr(model)
     return (model or "unknown"), usage
+
+
+def _message_id(obj):
+    """The API message id an assistant record belongs to, or None."""
+    msg = obj.get("message") if isinstance(obj, dict) else None
+    mid = msg.get("id") if isinstance(msg, dict) else None
+    return mid if isinstance(mid, str) and mid else None
+
+
+def keep_once(records, by_id, mid, ts, model, usage):
+    """Append (ts, model, usage) unless its message id is already kept.
+
+    One API response is written as several assistant records sharing one message id,
+    each repeating the usage: a streaming partial first, the final record later.
+    Summing per record counted one call's input and cache reads two to three times.
+    A repeated id is folded into the record already kept -- its first timestamp, the
+    usage with the most output tokens, which is the final one -- so each call counts
+    once. A record with no id is kept as it is."""
+    if mid is None:
+        records.append((ts, model, usage))
+        return
+    i = by_id.get(mid)
+    if i is None:
+        by_id[mid] = len(records)
+        records.append((ts, model, usage))
+        return
+    old_ts, _old_model, old_usage = records[i]
+    if _num(usage.get("output_tokens")) >= _num(old_usage.get("output_tokens")):
+        records[i] = (old_ts, model, usage)
 
 
 STANDARD_SPEED = "standard"
@@ -417,11 +447,12 @@ def scan_main(path, line_offset, ns_map):
     Buffers each usage record with its timestamp instead of accumulating
     immediately, so the window can be cut into segments afterwards without
     re-reading. Returns (new_total_line_count, earliest_ts, boundaries, records)
-    where records is a list of (ts, model, usage)."""
+    where records is a list of (ts, model, usage), one per API message id."""
     count = line_offset
     first_ts = None
     boundaries = []
     records = []
+    by_id = {}
     if not path or not os.path.isfile(path):
         return count, first_ts, boundaries, records
     try:
@@ -469,7 +500,7 @@ def scan_main(path, line_offset, ns_map):
                 first_ts = ts
             model, usage = extract_usage(obj)
             if usage is not None:
-                records.append((ts, model, usage))
+                keep_once(records, by_id, _message_id(obj), ts, model, usage)
     return count, first_ts, boundaries, records
 
 
@@ -478,10 +509,11 @@ def read_subagents(subdir, last_dt, now_dt, records):
     (last_dt, now_dt]  (all <= now_dt when last_dt is None), appending
     (ts, model, usage) to records so they are segmented exactly as the main
     transcript's are -- the two must agree at a boundary or a subagent's tokens
-    land in both slices or neither.
+    land in both slices or neither. Each API message id counts once (keep_once).
 
     Returns the earliest in-window entry timestamp, or None."""
     first_ts = None
+    by_id = {}
     if not subdir or not os.path.isdir(subdir):
         return first_ts
     for fp in sorted(glob.glob(os.path.join(subdir, "agent-*.jsonl"))):
@@ -507,7 +539,7 @@ def read_subagents(subdir, last_dt, now_dt, records):
                     continue
                 model, usage = extract_usage(obj)
                 if usage is not None:
-                    records.append((ts, model, usage))
+                    keep_once(records, by_id, _message_id(obj), ts, model, usage)
                     if first_ts is None or ts < first_ts:
                         first_ts = ts
     return first_ts
@@ -926,6 +958,43 @@ def _selftest_body(tmp):
               "shipped cost-prices.yaml keys %s at its own rates (1M in + 1M cache read = $%s)"
               % (_mid, _want))
 
+
+    # One API response is written as SEVERAL assistant records sharing one message id,
+    # each repeating the usage -- a streaming partial first (output_tokens a few, no
+    # speed) and the final record later. Summing per record counted one call's input and
+    # cache reads two to three times over. Each message id counts once, at its final usage.
+    def _rec(mid, ts, out, extra=None):
+        u = {"input_tokens": 3, "output_tokens": out, "cache_read_input_tokens": 1000,
+             "cache_creation_input_tokens": 500}
+        u.update(extra or {})
+        return {"type": "assistant", "timestamp": ts,
+                "message": {"id": mid, "role": "assistant", "model": "claude-opus-5-5",
+                            "usage": u}}
+    _dd = os.path.join(tmp, "dedup.jsonl")
+    with open(_dd, "w", encoding="utf-8") as fh:
+        for r in (_rec("msg_A", "2026-09-01T10:00:01.000Z", 8),
+                  _rec("msg_A", "2026-09-01T10:00:02.000Z", 251, {"speed": "standard"}),
+                  _rec("msg_A", "2026-09-01T10:00:02.500Z", 251, {"speed": "standard"}),
+                  _rec("msg_B", "2026-09-01T10:00:03.000Z", 40),
+                  {"type": "assistant", "timestamp": "2026-09-01T10:00:04.000Z",
+                   "message": {"role": "assistant", "model": "claude-opus-5-5",
+                               "usage": {"input_tokens": 1, "output_tokens": 1}}}):
+            fh.write(json.dumps(r) + "\n")
+    _, _, _, _drecs = scan_main(_dd, 0, {})
+    check(len(_drecs) == 3,
+          "scan_main counts each message id once (3 calls, 5 records) -- got %d" % len(_drecs))
+    check(sorted(r[2].get("output_tokens") for r in _drecs) == [1, 40, 251],
+          "a repeated message id keeps its final usage (251 output tokens, not the partial 8)")
+    _ddir = os.path.join(tmp, "dedup-subagents")
+    os.makedirs(_ddir)
+    with open(os.path.join(_ddir, "agent-x.jsonl"), "w", encoding="utf-8") as fh:
+        for r in (_rec("msg_C", "2026-09-01T10:00:05.000Z", 8),
+                  _rec("msg_C", "2026-09-01T10:00:06.000Z", 275, {"speed": "standard"})):
+            fh.write(json.dumps(r) + "\n")
+    _srecs = []
+    read_subagents(_ddir, None, None, _srecs)
+    check(len(_srecs) == 1 and _srecs[0][2].get("output_tokens") == 275,
+          "read_subagents counts a subagent's repeated message id once, at its final usage")
 
     tpath = os.path.join(tmp, "t.jsonl")
     with open(tpath, "w", encoding="utf-8") as fh:
