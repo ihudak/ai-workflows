@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.17.0] — 2026-10-05
+
+### Added
+- **Feedback entries are redacted before they are written** (`feedback-emission` §1.1). An entry is committed and pushed to the specs repository, so a secret pasted into `/prompt`, or an internal host or home path the session saw, used to travel with it verbatim. Every entry point (`emit-auto`, `emit-manual`, `emit-prompt`, `emit-block`, `emit-bugs`) now replaces secrets (private keys, tokens of a known shape, URL passwords, `Authorization` values, literals assigned to a name or flag ending in key, token, secret or password, in any case style) with `[SECRET-n]`, home-directory paths with `~/…`, non-public hosts and private or routable IP addresses with `[HOST-n]` (local addresses and public services' domains stay), and email addresses with `[EMAIL-n]`. It redacts every prose block while rendering, before the dedupe compares ids, and derives `id`'s slug from the redacted text with no value in it, so a re-run still dedupes. It never redacts `author` or the plugin's own fields, and the caller's feedback line reports what was redacted, by category and count. A `/prompt*` User prompt is still verbatim in every other character. `/prompt`, `/prompt-brainstorm`, `/prompt-grill-me`, their docs pages and the session-feedback page say so.
+
+### Fixed
+- **A run that refused before its preflight, on a detached HEAD with nothing to commit, printed G0's "will not be committed" notice anyway** (1.16.2's `commit-artifacts` step 1 test). Under `--skip-costs` such a run writes nothing, so the notice warned about artifacts it never wrote and told the user to create a rescue branch for nothing. Step 1 now takes G0's outcome only where step 2 would stage an ARTIFACT path, and otherwise lets step 3's `nothing to commit` line stand.
+
 ## [1.16.3] — 2026-10-05
 
 ### Fixed
