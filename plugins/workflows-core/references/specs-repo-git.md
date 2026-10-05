@@ -584,11 +584,11 @@ to state.
    repository: `phase-handoff.md` §2.4 and the `docs-workflows` commands that
    commit into a docs repository run it against their own, with their own
    paths and message.
-5. **Push — only this reference's own commits, and only to a branch it may
-   push.** Push only where all three conditions below hold, tested in order.
-   Where one fails, no push is attempted and the commit stays local: step 7
-   emits §6's *not pushed* line for the first condition that failed, and step 6
-   has nothing to report.
+5. **Push — only session-file commits, and only to a branch it may push.**
+   Push only where all three conditions below hold, tested in order. Where one
+   fails, no push is attempted and the commit stays local: step 7 emits §6's
+   *not pushed* line for the first condition that failed, and step 6 has
+   nothing to report.
    - **The branch is the default branch or a plugin branch (§2.2)** — the
      default branch as §3.2 names it, resolved here the same way on a run that
      ran no preflight. Any other named branch is its owner's to push — the one
@@ -599,10 +599,13 @@ to state.
    - **There is somewhere to push.** The branch has a remote upstream where
      `git -C "$SPECS_PATH" for-each-ref --format='%(upstream:remotename)' refs/heads/<branch>`
      prints a name other than `.`, which marks an upstream in this same
-     repository; the remote is that name, else `origin`, which must exist:
+     repository, and `git -C "$SPECS_PATH" config branch.<branch>.merge` prints
+     `refs/heads/<branch>`; an upstream under another branch's name, which a
+     branch cut from the default branch can inherit, counts as none. The
+     remote is the upstream's, else `origin`, which must exist:
      `git -C "$SPECS_PATH" remote get-url origin` exits 0.
-   - **`push-scope`: every commit the push would publish is this reference's
-     own.** First the base the push is measured against: on a branch with a
+   - **`push-scope`: every commit the push would publish is a session-file
+     commit.** First the base the push is measured against: on a branch with a
      remote upstream, that upstream,
      `git -C "$SPECS_PATH" for-each-ref --format='%(upstream)' refs/heads/<branch>`,
      where `git -C "$SPECS_PATH" show-ref --verify -q <ref>` finds it; else
@@ -621,29 +624,20 @@ to state.
      (`git -C "$SPECS_PATH" rev-list --parents -n 1 <sha>` prints at most two
      shas: the commit and its one parent) whose every path,
      `git -C "$SPECS_PATH" diff-tree --no-commit-id --name-only -r -z --root --no-renames <sha>`,
-     is an ARTIFACT path (§2.1), or, in a commit this run made in step 4 or in
-     §3.4's flush, a path step 2's enumeration for that commit did not list.
-     The parent count is what refuses a merge, since `diff-tree` lists no path
-     for one. The second form is for a `pre-commit` hook, which can put paths
-     into this reference's own commit (step 4): a file the hook generated was
-     clean when step 2 enumerated, so it passes, while a change somebody else
-     had pending — a G1 path, a draft, a deliverable the user kept uncommitted
-     — was listed there and is refused, however the hook swept it in. Keep
-     each commit's sha and step 2's list as you make it, since nothing prints
-     them (§3.4's flush prints no line). An earlier run's commit gets no such
-     pass, so one a hook added a generated file to is refused like any other.
-     This reference makes no merge commit (§3.5) and commits nothing but
-     ARTIFACT paths of its own, so a commit that fails the test is somebody
-     else's, or carries somebody else's change — the user's own, or a
-     deliverable whose push at handoff failed — and whether it goes out is
-     theirs to decide.
+     is an ARTIFACT path (§2.1). The parent count is what refuses a merge,
+     since `diff-tree` lists no path for one. This reference makes no merge
+     commit (§3.5) and stages nothing but ARTIFACT paths, so a commit that
+     fails the test is somebody else's — the user's own, or a deliverable whose
+     push at handoff failed — or one of this reference's own into which a
+     `pre-commit` hook put another path (step 4): a file the hook generated, or
+     a change somebody else had pending that it swept in. Either way, whether
+     that path goes out is not this reference's to decide, and §6's line names
+     it.
 
-   Where all three hold, push this branch alone. On a branch with a remote
-   upstream, `git -C "$SPECS_PATH" push <remote> "HEAD:<merge>"`, `<merge>`
-   being what `git -C "$SPECS_PATH" config branch.<branch>.merge` prints;
-   otherwise `git -C "$SPECS_PATH" push -u origin <branch>`, without `-u` where
-   the branch tracks a branch in this repository (`.`), so that setting
-   stands. Never a bare `git push`: under `push.default=matching`, or a
+   Where all three hold, push this branch alone:
+   `git -C "$SPECS_PATH" push -u <remote> <branch>`, without `-u` where the
+   branch tracks a branch in this repository (`.`), so that setting stands.
+   Never a bare `git push`: under `push.default=matching`, or a
    `remote.<name>.push` refspec, it pushes other branches too, whose commits
    this step never measured.
 6. **Failure at any step is reported, never fatal.**
@@ -773,8 +767,8 @@ report was composed earlier.
 | Committed and pushed | `Specs repo: committed <sha7> (<N> files) on <branch> — pushed` |
 | Committed, not pushed — not a branch this plugin pushes (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: this plugin pushes only the default branch and the branches it creates, so <branch> is yours to push; the artifacts reach the maintainer when you push or merge it` |
 | Committed, not pushed — no remote to push to (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: this specs repo has no origin remote` |
-| Committed, not pushed — the push would publish other commits (§4 step 5 `push-scope`) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: the push would also publish commits that are not this plugin's session-file commits, the oldest <sha7> <subject>; push <branch> once they are ready to go, and the artifacts go with them` |
-| Committed, push failed | `Specs repo: committed <sha7> (<N> files) on <branch> — push FAILED (<reason>); the commit is local and the next run retries it` — or, where §4 step 5 passed a path of this run's commit only because a `pre-commit` hook generated it, which no later run passes, `…; the commit is local, and as a pre-commit hook added <path> to it, no later run retries it: push <branch> yourself` |
+| Committed, not pushed — the push would publish other commits (§4 step 5 `push-scope`) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: the push would also publish commits that are not this plugin's session-file commits, the oldest <sha7> <subject>, which carries <path>; push <branch> once they are ready to go, and the artifacts go with them` — or, where that oldest commit is this run's own, `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: a pre-commit hook added <path>[, and <M-1> more] to this commit, so it carries more than this plugin's session files; check what the hook added before you push <branch>` |
+| Committed, push failed | `Specs repo: committed <sha7> (<N> files) on <branch> — push FAILED (<reason>); the commit is local and the next run retries it` |
 | Nothing to commit | `Specs repo: no session artifacts to commit` |
 | Locked | `Specs repo: skipped — another session holds the repo (index.lock); the next run picks the artifacts up` |
 | Commit failed | `Specs repo: NOT COMMITTED — the commit failed (<the first line of git's error or the hook's output>); the artifacts stay staged, and a later run commits them once git accepts the commit (a merge concluded, a hook satisfied)` |
@@ -783,7 +777,10 @@ report was composed earlier.
 | Gate failed on environment, on a run carrying neither flag | *(no line at all — silent no-op)* |
 
 When a guard fired at §3.3 G1 or G2, the outcome line is followed by that
-guard's §5 block, repeated verbatim.
+guard's §5 block, repeated verbatim. Where the *push-scope* line's hook variant
+fired, a path it names may be one that block, or the append below, calls
+uncommitted, since the hook swept it into this run's commit: follow them with
+`Specs repo: <path>[, …] is now committed in <sha7>, put there by a pre-commit hook, and not pushed`.
 
 When the deliverable is still uncommitted because the user declined git at
 handoff (§4.1), append to the line:
