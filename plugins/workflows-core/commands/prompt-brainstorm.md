@@ -88,7 +88,7 @@ figure here**, because the spend this record stands for has not happened yet.
 because the brainstorming skill takes over the session there. It stages ONLY the
 §2.1 bounded artifact paths inside `$SPECS_PATH`, commits `<KEY> Add
 dev-workflows session artifacts (/prompt-brainstorm)` — or `NOISSUE …` when no
-`key` resolved — and pushes. It NEVER touches a code/docs repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and
+`key` resolved — and pushes per §4 step 5. It NEVER touches a code/docs repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and
 skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Print its §6 outcome line here, prefixed `Specs repo:`, with any
 guard notice repeated in full. Repeat the `Run flags: …` line here too, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — this is the run's last printed output before the Phase 3 hand-off cedes the session.
 

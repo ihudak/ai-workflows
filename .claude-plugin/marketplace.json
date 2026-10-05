@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "dev-workflows",
-      "version": "4.10.3",
+      "version": "4.10.4",
       "description": "Five slash commands for the implementation half of the product lifecycle: `/design` turns a specification into a design, with Opus review and an optional three-take fan-out on a contested interface. `/implement` builds it, gated by Opus plan critique and code review before tests. `/ready` verifies an ARD/spec/design chain's readiness, read-only, no tracker read. `/upgrade` plans and executes dependency upgrades; `/vuln` researches and fixes a CVE. Twelve subagents, one hook, fifteen reference files, no bundled skill. Every code-changing command commits before the run ends; push and PR sit behind one consent choice. Depends on the companion `workflows-core` plugin for its shared foundation. The product-definition ladder, `/epics`, and the BRD-to-PRD route now ship in `product-workflows`; documentation commands ship in `docs-workflows`. Neither is a dependency.",
       "author": {
         "name": "Ivan Gudak",
@@ -69,7 +69,7 @@
     },
     {
       "name": "workflows-core",
-      "version": "1.16.1",
+      "version": "1.16.2",
       "description": "Shared foundation for the dev-workflows plugin family: the addressing grammar and specs-repo git entry points, phase handoff, model routing, escalation and finding-triage rules, documentation and architecture grounding, cost/feedback/follow-up emission, and the reference loader skill that lets a dependent plugin read them. Also carries the family-meta utility commands — /feedback, /prompt, /prompt-brainstorm, /prompt-grill-me, /statusline — and /frames for indexing design frame sets.",
       "author": {
         "name": "Ivan Gudak",
@@ -81,7 +81,7 @@
     },
     {
       "name": "docs-workflows",
-      "version": "1.7.2",
+      "version": "1.7.3",
       "description": "Commands for a product's documentation and release notes. /docs-init scaffolds a documentation repository from nothing: a Material for MkDocs skeleton, public and internal builds over one content root, Vale, CI and a docs-profile.yml. /docs-brand extracts a logo and colour pair from the product's code and applies them, WCAG contrast-checked. /docs-serve runs the site's dev server. /docs-audit turns the product's own code and specs tree into a coverage grid and a prioritised backlog of the pages it is missing, behind an Opus review gate. /document edits prose directly, or keyed to a PRD folder writes product docs from its implementation diffs behind an Opus review gate. /docs-profile refreshes a docs repository's machine-readable profile; /release-notes drafts a destination-shaped entry from the same folder. Depends on workflows-core and prose-style.",
       "author": {
         "name": "Ivan Gudak",
@@ -93,7 +93,7 @@
     },
     {
       "name": "product-workflows",
-      "version": "3.17.1",
+      "version": "3.17.2",
       "description": "Fifteen slash commands for defining a product — its requirements, architecture and specification: a six-command BRD-to-PRD route (/brd-intake → /brd-split → /prd-ground → /brd-split → /brd-interview → /brd-package → /brd-reconcile) that grounds a customer's requirements document, settles it with them, and seeds the PRD, ARD and specification; the idea→PRD→ARD→specification ladder (/idea → /create-prd → /update-prd → /create-ard → /specify), with /prd-ground optionally grounding the PRD itself; /epics, deriving Epics from a PRD; /harvest-decisions, keeping merged ARD decisions as team records; and /prd-proposal and /brd-proposal, pricing a graded requirement set in human hours, never money. Fourteen agents carry the grounding, figure transcription, reconciliation, review and Epic writing. Twelve reference pages define the artifact formats and the link walk these commands share.",
       "author": {
         "name": "Ivan Gudak",

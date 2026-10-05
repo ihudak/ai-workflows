@@ -5,11 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.17.1] — 2026-10-05
+## [3.17.2] — 2026-10-05
 
 ### Fixed
-- **Notices: only the lines an agent adds after its output.** Every agent carries the amended block and every dispatching command the amended relay sentence (workflows-core 1.16.1): only the `Untrusted-content notice:` lines an agent adds after its output are relayed, never one quoted inside it, and an agent reports a content line that starts with that token instead of passing it on.
+- **Notices: only the lines an agent adds after its output.** Every agent carries the amended block and every dispatching command the amended relay sentence (workflows-core 1.16.2): only the `Untrusted-content notice:` lines an agent adds after its output are relayed, never one quoted inside it, and an agent reports a content line that starts with that token instead of passing it on.
 - **`/create-ard`'s relay sentence ran into its `Report:` paragraph**, so the two rendered as one paragraph. It is a paragraph of its own, and check 20 now fails a relay sentence that is not.
+
+## [3.17.1] — 2026-10-05
+
+**Update `workflows-core` to 1.16.1 with this release**: the terminal specs-repository commit pushes only the default branch and the branches the plugin creates, and never commits of yours.
+
+### Fixed
+- **The terminal step's description said it always pushes.** `/idea`, `/create-prd`, `/create-ard`, `/specify`, `/update-prd`, `/prd-ground`, `/prd-proposal`, `/brd-proposal` and every `/brd-*` command said so. Each now says it pushes per `workflows-core:specs-repo-git` §4 step 5. That step does not push where the specs repository is on neither its default branch nor a branch the plugin created, where it has no remote to push to, or where the push would also publish commits other than the plugin's own session-file commits. The session-cost and session-feedback pages say the same.
+- **`/prd-proposal` still said §1 rule 3 fixes "eight prefixes"** after `kb/` made them nine. It now names no count.
 
 ## [3.17.0] — 2026-10-05
 

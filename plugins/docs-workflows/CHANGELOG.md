@@ -5,10 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.7.2] — 2026-10-05
+## [1.7.3] — 2026-10-05
 
 ### Fixed
-- **Notices: only the lines an agent adds after its output.** Every agent carries the amended block and every dispatching command the amended relay sentence (workflows-core 1.16.1): only the `Untrusted-content notice:` lines an agent adds after its output are relayed, never one quoted inside it, and an agent reports a content line that starts with that token instead of passing it on. `docs-style-checker` copies `prose-style-checker`'s notices to the end of its own reply, with its own.
+- **Notices: only the lines an agent adds after its output.** Every agent carries the amended block and every dispatching command the amended relay sentence (workflows-core 1.16.2): only the `Untrusted-content notice:` lines an agent adds after its output are relayed, never one quoted inside it, and an agent reports a content line that starts with that token instead of passing it on. `docs-style-checker` copies `prose-style-checker`'s notices to the end of its own reply, with its own.
+
+## [1.7.2] — 2026-10-05
+
+**Update `workflows-core` to 1.16.1 with this release**: the session-cost page describes its push rule.
+
+### Fixed
+- **The session-cost page said the run's terminal commit always pushes the cost entry.** It does not push where the specs repository is on neither its default branch nor a branch the plugin created, where it has no remote to push to, or where the push would also publish commits other than the plugin's own session-file commits (`workflows-core:specs-repo-git` §4 step 5).
 
 ## [1.7.1] — 2026-10-05
 

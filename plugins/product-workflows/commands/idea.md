@@ -763,7 +763,7 @@ and no label because the ideation phase is short (§4). Guidance only, never aut
    **advances the chained checkpoint** (§3); surface the persisted path (or the report-only notice).
 4. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It stages
    ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows
-   session artifacts (/idea)` — the key is mandatory here, so `NOISSUE` never applies — and pushes. It NEVER
+   session artifacts (/idea)` — the key is mandatory here, so `NOISSUE` never applies — and pushes per §4 step 5. It NEVER
    touches a code/docs repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER
    fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the Final report.
 
