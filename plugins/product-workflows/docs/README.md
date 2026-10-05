@@ -46,7 +46,7 @@ Four pages orient you before you touch a command: [Getting started](getting-star
 
 - [Agents](reference/agents.md) — the subagent inventory: what each helper agent does and which command calls it.
 - [References](reference/references.md) — the reference-doc inventory under `references/`, grouped by concern.
-- Skills — this plugin ships 0 bundled skills of its own. The `model-routing` skill every command here loads at its classification step ships in `workflows-core`, alongside the classification reference it resolves.
+- Skills — this plugin ships 0 bundled skills of its own. The `model-routing` skill every command here but `/harvest-decisions` loads at its classification step ships in `workflows-core`, alongside the classification reference it resolves.
 - [Environment](reference/environment.md) — every environment variable the plugin reads, and what it configures.
 - [Hooks](reference/hooks.md) — the bundled hook and what it does.
 - [Model routing](reference/model-routing.md) — the task-complexity classification and model fallback chain commands apply before acting.

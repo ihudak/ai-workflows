@@ -1072,7 +1072,7 @@ def _selftest_body(tmp):
                "--transcript", kw.get("transcript", tpath), "--prices", ppath,
                "--now-ts", "2026-09-01T10:05:00.000Z"]
         if kw.get("subagents", True):
-            cmd += ["--subagents-dir", sdir]
+            cmd += ["--subagents-dir", kw.get("subagents_dir", sdir)]
         # `namespaces=False` points the flag at a path that does not exist rather than
         # omitting it: omitting it now resolves the SHIPPED manifest beside this script,
         # and a fixture silently measured against real command names proves nothing.
@@ -1088,6 +1088,21 @@ def _selftest_body(tmp):
     def tokens(block):
         return sum(m["input_tokens"] + m["output_tokens"] + m["cache_read_tokens"]
                    + m["cache_write_tokens"] for m in block)
+
+    # main() must hand scan_main and read_subagents the SAME map; the unit check above
+    # passes one by hand, so only a run through the CLI shows main() doing it. A fork
+    # file repeating a main-transcript id adds nothing, while its own new id still counts.
+    _fork_only = os.path.join(tmp, "fork-only-subagents")
+    os.makedirs(_fork_only)
+    with open(os.path.join(_fork_only, "agent-fork.jsonl"), "w", encoding="utf-8") as fh:
+        for r in (_rec("msg_B", "2026-09-01T10:00:03.000Z", 40),
+                  _rec("msg_E", "2026-09-01T10:00:08.000Z", 7)):
+            fh.write(json.dumps(r) + "\n")
+    _solo = run(transcript=_dd, subagents=False)
+    _forked = run(transcript=_dd, subagents_dir=_fork_only)
+    check(_solo is not None and _forked is not None
+          and tokens(_forked["models"]) - tokens(_solo["models"]) == 3 + 7 + 1000 + 500,
+          "through the CLI, a main-transcript id a subagent file repeats counts once")
 
     whole = run()
     if whole is None:
@@ -1346,8 +1361,8 @@ def match_claims(claim_names, boundaries):
 
     Matching is BY NAME, scanning forward, never by position. A window routinely
     contains boundaries no claim corresponds to -- `/vuln`, `/upgrade`,
-    `/statusline`, `/docs-profile`, `/docs-serve` and the two guideline reviewers emit no cost
-    entry at all, and any run the user interrupted leaves a boundary behind too.
+    `/statusline`, `/docs-profile`, `/docs-serve`, `/harvest-decisions` and the two guideline
+    reviewers emit no cost entry at all, and any run the user interrupted leaves a boundary behind too.
     Pairing the k-th claim with the k-th boundary therefore skews the moment one
     of those sits in the window, and files one command's spend under another
     command's lifecycle labels.
