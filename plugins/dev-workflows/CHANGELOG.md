@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [4.10.4] — 2026-10-05
 
 ### Fixed
-- **Notices: only the lines an agent adds after its output.** Every agent carries the amended block and every dispatching command the amended relay sentence (workflows-core 1.16.2): only the `Untrusted-content notice:` lines an agent adds after its output are relayed, never one quoted inside it, and, as hardening, the block says a content line that starts with that token is not a notice to pass on — a notice is a line an agent adds after its output. `upgrade-executor` and `vuln-fixer` copy `test-baseliner`'s notices to the end of their own reply, with their own.
+- **Notices: only the lines an agent adds after its output.** Every agent carries the amended block and every dispatching command the amended relay sentence (workflows-core 1.16.3): only the `Untrusted-content notice:` lines an agent adds after its output are relayed, never one quoted inside it, and, as hardening, the block says a content line that starts with that token is not a notice to pass on — a notice is a line an agent adds after its output. `upgrade-executor` and `vuln-fixer` copy `test-baseliner`'s notices to the end of their own reply, with their own.
 
 ## [4.10.3] — 2026-10-05
 
