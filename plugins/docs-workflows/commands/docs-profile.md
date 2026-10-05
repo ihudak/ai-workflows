@@ -204,10 +204,7 @@ Produce a reviewable PR in the **target repo** (never the plugin). **Never push 
 
 4. **Format / lint.** If the repo has a formatter or linter (the `format`/`lint` commands captured in the profile), run it from `<repo-root>`, where every command the profile records runs, on the written files; fix anything it flags on those files. Skip silently if none is configured.
 
-5. **Commit.** `git -C <repo-root> add .dev-workflows/docs-profile.yml CLAUDE.md` (only the files this command wrote), then commit:
-   ```
-   git -C <repo-root> commit -m "docs: add/refresh .dev-workflows/docs-profile.yml"
-   ```
+5. **Commit.** `git -C <repo-root> add .dev-workflows/docs-profile.yml CLAUDE.md` (only the files this command wrote), then commit with the message `docs: add/refresh .dev-workflows/docs-profile.yml` **by pathspec**, the paths just staged that git still lists as staged, and bring the index back in step after it, both as `workflows-core:specs-repo-git` §4 step 4 does, run against `<repo-root>`: under the dirty-tree prompt's *Proceed anyway* the index can hold a change somebody else staged, which a plain `git commit` would carry.
 
 6. **Draft the PR message.** **Inline mode** (`--inline`): skip this step — control returns to `/document` (keyed mode), which owns the single PR draft (its Phase 8.5). **Standalone:** Detect the host (`git -C <repo-root> remote get-url origin`) and draft a copy-paste-ready PR title + body for Bitbucket or GitHub (whichever the remote indicates). Title e.g. `docs: bootstrap docs-profile for /document`; body summarising the profile (spaces, dev-servers, commands, tokens, branch-naming, images, prerequisites) and the CLAUDE.md additions. **Do not push, do not open the PR via any CLI** — present the branch name + the drafted message for the user to push and open themselves.
 

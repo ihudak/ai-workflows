@@ -14,7 +14,7 @@ The caller passes a structured brief:
 
 - **Task description** — what was implemented, verbatim from the user where possible
 - **Plan** — the approved plan from Phase 2A (standard) or the risk-planner plan from Phase 2B (Opus) — or, where the user approved `/implement`'s mid-implementation re-plan (its Phase 3A step 5), both, under two headings — the re-plan's Steps are the work remaining, every Review focus line in either plan applies, and the re-plan governs only where two items contradict
-- **Diff** — `git add -N --ignore-removal :/ && git -c diff.relative=false diff --no-ext-diff --no-color "$(git rev-parse -q --verify HEAD || git hash-object -t tree /dev/null)"` output so new files are included. MANDATORY. Both **Plan** and **Diff** may be given inline or as an absolute file path — `Read` the file first when given a path
+- **Diff** — `( i=$(command mktemp -t dw-index-XXXXXX) && trap 'command rm -f -- "$i"' EXIT && { cp -- "$(git rev-parse --git-path index)" "$i" 2>/dev/null || command rm -f -- "$i"; } && export GIT_INDEX_FILE="$i" && git add -N --ignore-removal :/ && git -c diff.relative=false diff --no-ext-diff --no-color "$(git rev-parse -q --verify HEAD || git hash-object -t tree /dev/null)" )` output so new files are included. MANDATORY. Both **Plan** and **Diff** may be given inline or as an absolute file path — `Read` the file first when given a path
   On a read failure, follow the **read-failure contract** in
   `${CLAUDE_PLUGIN_ROOT}/references/context-management.md` — **Diff** is *evidence*: hard stop, return
   the `Diff: unreadable at <path>` shape below (see Output) — a distinct marker from

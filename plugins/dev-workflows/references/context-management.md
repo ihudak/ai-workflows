@@ -16,9 +16,12 @@ without degrading. Apply when the plan/step list is large or the run is nearing 
   diff, review package, prior-phase summary) to a file and hand the subagent the *path*, not the pasted
   content. Pasted dispatch content stays resident in the orchestrator's context and is re-read on every
   later turn; a file path costs one line. Always `command mktemp` the handoff file — **never inside a repo working
-  tree** (and never in the specs tree) — so a later `git add -N --ignore-removal :/ && git -c diff.relative=false diff --no-ext-diff --no-color "$(git rev-parse -q --verify HEAD || git hash-object -t tree /dev/null)"` never picks it up; `command`
+  tree** (and never in the specs tree) — so a later `( i=$(command mktemp -t dw-index-XXXXXX) && trap 'command rm -f -- "$i"' EXIT && { cp -- "$(git rev-parse --git-path index)" "$i" 2>/dev/null || command rm -f -- "$i"; } && export GIT_INDEX_FILE="$i" && git add -N --ignore-removal :/ && git -c diff.relative=false diff --no-ext-diff --no-color "$(git rev-parse -q --verify HEAD || git hash-object -t tree /dev/null)" )` never picks it up; `command`
   for the reason the removal below gives, since an alias or a shell function of that name would print its
-  own text into the path the run then writes to and hands on.
+  own text into the path the run then writes to and hands on. That diff capture runs its `git add -N`
+  against a copy of the index (`GIT_INDEX_FILE`), removed when the subshell exits: the intent-to-add
+  marks it needs to list new files would otherwise stay in the real index on the user's own untracked
+  files after the run, and a later `git commit -a` of theirs would commit those files.
 - **Remove every file so handed off, once no later step reads it** — and at the latest before the run
   ends, whichever way it ends: its final report, or any stop taken after the file was made. Remove it as
   `command rm -f -- "<path>"`: `command` because the Bash tool's shell carries the user's aliases and
