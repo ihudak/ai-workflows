@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.21.0] — 2026-10-05
+
+### Changed
+- **The grill's cross-component gaps take two more.** `grilling-technique`'s *Cross-component* category now also finds an interface stated as a shape alone, with nothing on what a caller gets on a failure or on whether a repeat repeats a side effect, and a producer with no test of its own side: a consumer's stub shows that the consumer copes, never that the producer conforms. `/create-ard`, `/specify` and `/design` scan for both on a multi-component run.
+
 ## [1.20.0] — 2026-10-05
 
 ### Added

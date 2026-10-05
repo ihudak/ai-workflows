@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.19.0] — 2026-10-05
+
+### Changed
+- **An ARD interface row states behaviour, not only a shape.** For a `new` or `changed` row of `## Contracts`, the `[AD#N]` Rule states what either side may rely on: the shape, and, wherever the interface has them, what a caller gets on a failure, whether a repeated request or a redelivered message repeats a side effect, and ordering. Each side's Epic is designed and built against the row alone, so a consumer's stub can model only what the row states. `ard-format` names the producer as the one component that owns the interface. `/create-ard` Phase 4 settles that behaviour with the rest of the interface, and `ard-reviewer`'s *Contract completeness* flags a `new` or `changed` row of any kind but `shared schema` whose Rule states a shape alone (MAJOR).
+
 ## [3.18.0] — 2026-10-05
 
 ### Changed

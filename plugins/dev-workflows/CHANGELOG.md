@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.12.0] — 2026-10-05
+
+### Changed
+- **`/design` states an interface's behaviour, and tests the provider's side.** Three rules in `design-format`, each checked by `design-reviewer`:
+  - **Behaviour beyond the shape:** an interface another component or an outside consumer calls, where the change introduces it or alters its behaviour, states what a caller gets on each failure, its side effects and, wherever they apply, whether a repeat repeats one, ordering and timeouts. A shape alone is MAJOR.
+  - **A provider-side test:** each interface the change provides has a test in `## Test strategy` that drives the real implementation through the interface, failure cases included. A consumer's stub shows that the consumer copes, never that the provider conforms, so none stands in for it (MAJOR). A consumed interface's stub models the stated failures too (MINOR where it does not).
+  - **The producer owns the contract:** on a multi-component PRD, a consumer whose repository is not the contract artifact's pins it as a package version or records its copy's source path and revision (MINOR where it does neither), and never edits the copy (MAJOR).
+
+  Phase 5 grills each boundary interface's behaviour and its provider-side test. Adapted from spec-kit's contract-driven development guide (aaa8fa92). The deviation convention is unchanged: a design that departs from an interface row still records an `## ARD deviations` entry for the architect.
+
 ## [4.11.1] — 2026-10-05
 
 ### Changed
