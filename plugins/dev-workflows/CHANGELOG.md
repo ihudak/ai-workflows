@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.10.2] — 2026-10-05
+
+**Update `workflows-core` to 1.15.2 with this release**: `/implement` passes `followup-emission` the unit's folder, and `/design`'s and `/ready`'s slug→clone maps follow its `components` §1.
+
+### Fixed
+- **`/implement` run from inside the specs repository branched and changed it.** The specs repository is a work tree, so it passed the working-directory check. A keyed run whose working directory lies in the repository whose top level `$SPECS_PATH` is now stops once its address resolves, before the specs-repo preflight, naming the address to run from the code repository (`IMPLEMENT_IN_SPECS_REPO`). A direct run there goes on, with one line saying it branches and changes the specs repository, and a specs tree inside a larger repository is left as it was.
+- **A follow-up for another repository sent you round in a loop on a targeted Epic.** It asks for the Epic to be run from the other repository, whose target check then recommended stopping and running it in the target's repository — the one that wrote the follow-up. The check now looks first for an open follow-up naming this repository and this Epic, and, finding one, recommends implementing that follow-up's change here as a companion run: the tasks are the run's description, the code review does not check the Epic's requirements, which were implemented in its target's repository, and the pull request names the change it completes.
+- **`/implement` wrote its follow-ups into the folder its address resolved**, so `/implement <PRD>` whose picker chose an Epic wrote them into the PRD folder and a later `/implement <EPIC>` wrote the same task into the Epic's. They now go where the implementation record goes, the unit's folder. A follow-up an earlier release wrote into the PRD folder is not compared there, so one re-run may add it once more in the Epic's folder; the target check above reads both folders.
+- **`/design` gave no disposition for an address that resolves to nothing or is not a key.** It now stops as `/ready` does, before the specs-repo preflight: `invalid` with `DESIGN_NEEDS_KEY` naming the token, `absent` with the key-not-found choice naming the commands that create the folder, `ambiguous` naming every match, and `misrooted` with `SPECS_PATH_INSIDE_TREE`.
+- **`/ready` parsed its address before setting `--claimed` aside**, so a `--claimed "<status>"` written before the address was read as the address. The flag and its value are now stripped first.
+- **`/design` and `/ready` said the specs-repo preflight runs before step 1 "takes any of its stops"**, which read literally includes the address stops on which a run runs none (`workflows-core:specs-repo-git` §3). They now say it runs before the stops the folder's placement leads to.
+- **`/design`'s and `/ready`'s slug→clone maps** take `workflows-core:components` §1's derivation, so a `git@server:api.git` remote or a URL ending in `/` is `api`.
+
 ## [4.10.1] — 2026-10-05
 
 **Update `workflows-core` to 1.15.1 with this release**: the follow-ups page and `/implement` Phase 6 now describe its `followup-emission` §6.

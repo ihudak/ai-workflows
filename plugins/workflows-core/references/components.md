@@ -11,7 +11,7 @@ A **component** is a repository, or a set of paths inside one repository, that a
 - `<repo-slug>` for a whole repository — `client-repo`;
 - `<repo-slug>:<path>` for a module inside one — `bookstore:orders`, `bookstore:k8s`, `bookstore:.github/workflows`.
 
-`<repo-slug>` is derived the way every slug→clone map in this family derives it: `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, a trailing `.git` stripped, the URL's last path segment. `<path>` is relative to the repository's top level, POSIX-separated, with no leading `./` and no trailing `/`.
+`<repo-slug>` is derived the way the slug→clone maps derive it: `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, any trailing `/` stripped and then a trailing `.git`, and the URL's last path segment taken — what follows its last `/` or `:`, as `sed -E 's#/+$##; s#\.git$##; s#.*[/:]##'` prints it — so `git@github.com:team-a/api.git`, `https://github.com/team-a/api/` and `git@server:api.git` are all `api`. `/docs-audit` is not one of those maps: it matches a clone to a docs profile's recorded `origin` as `<owner>/<repo>` (`docs-workflows`' `docs-profile-schema.md`, *Field rules*). `<path>` is relative to the repository's top level, POSIX-separated, with no leading `./` and no trailing `/`.
 
 A component also has a **kind** — `code` (the default) or `deploy` — and its **paths**: the id's own `<path>`, the whole repository for a bare slug, or the list a confirmer grouped under it (§5).
 
@@ -128,5 +128,5 @@ coverage_gaps: [{kind: unknown_ad | consumed_unproduced | produced_off_target | 
 - `/epics` — §3 for the known set; Phase 5.5 with §2 and §1.1 where no ARD supplies one; §6 at `epics` scope for its prerequisites stop; §4 in `epic-writer`'s rules.
 - `/specify`, `/design` — the Epic's target narrows the repositories and the scan; §3 decides whether `/design <PRD>` designs a flat spec and how `/specify`'s Phase 2 offers a PRD-level spec; `/design` passes §2's enumeration of the target's repository to `design-reviewer`.
 - `/ready` — §6 at `ready` scope for its targets and contract-coverage tables.
-- `/implement` — §3 in its picker; §6 at `implement` scope at the start of Phase 1; §1's `<repo-slug>` and §3's known set name another repository in its Phase 6 follow-ups (`followup-emission` §6).
+- `/implement` — §3 in its picker; §6 at `implement` scope at the start of Phase 1; §1's `<repo-slug>` and §3's known set name another repository in its Phase 6 follow-ups (`followup-emission` §6), and §1's names this one in a follow-up its Phase 1 target check finds open.
 - `epic-writer` — §1 to §5; `ard-reviewer` — §5. `epic-reviewer` and `design-reviewer` apply §1, §2 and §4 from their briefs, and `readiness-reviewer` reads §6's tables, none of them loading this file.

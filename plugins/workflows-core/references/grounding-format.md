@@ -365,7 +365,7 @@ git -C "<repo>" status --porcelain                  # any entry -> line-count co
    `baselines.md` — in the same write as the findings pinned to it, never before them, so a run that
    stops after this procedure and before its findings are written leaves the previously recorded
    pin standing (`product-workflows:prd-ground` Phase 3). **An entry names its repository by slug**:
-   the last path segment of the clone's `origin` remote URL, `.git` stripped — the identifier
+   the last path segment of the clone's `origin` remote URL — what follows its last `/` or `:`, once any trailing `/` and then a trailing `.git` are stripped — the identifier
    `product-workflows:prd-ground` Phase 1 resolves a named repository by — or, for a clone with no
    readable `origin`, which Phase 1 reaches only through its zero-match escalation's *Specify a
    different absolute path* option, the name the operator typed for it in Phase 1's repo prompt. Never a directory name or a path: a slug

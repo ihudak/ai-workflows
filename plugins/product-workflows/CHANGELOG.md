@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.16.1] — 2026-10-05
+
+**Update `workflows-core` to 1.15.2 with this release**: `code-scanner` compares a repository's slug as `/epics`, `/prd-ground` and `/specify` now derive it.
+
+### Fixed
+- **`/create-prd` resolved and read its `--from-prd` seed before checking `$SPECS_PATH` and running the specs-repo preflight**, so a seed key was searched for with no specs tree, or read off a branch the preflight would have switched away from. The seed is now resolved once step 2b has run and the PRD's own folder has resolved past its refusals, and a seed that names no readable PRD stops the run with `CREATE_PRD_SEED_NOT_FOUND` instead of going unread. The idea ladder's note on `unmanaged` no longer says `$SPECS_PATH` is validated after it.
+- **`/epics`', `/prd-ground`'s and `/specify`'s slug→clone maps** take `workflows-core:components` §1's derivation, so a `git@server:api.git` remote or a URL ending in `/` is `api`.
+
 ## [3.16.0] — 2026-10-05
 
 **Update `workflows-core` to 1.15.0 with this release**: the commands cite its `untrusted-content` reference.

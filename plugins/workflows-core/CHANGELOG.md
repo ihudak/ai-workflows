@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.15.2] — 2026-10-05
+
+### Fixed
+- **`components` §1's `<repo-slug>` was undefined for two `origin` forms.** "The URL's last path segment" left an scp remote with no `/` (`git@server:api.git`) as `git@server:api`, and a URL ending in `/` with an empty segment. §1 now strips any trailing `/` and then a trailing `.git` and takes what follows the last `/` or `:`, and gives the `sed` that prints it; `code-scanner`, `grounding-format` and `followup-emission` §6 restate it so. §1 no longer says every slug→clone map derives it: `/docs-audit` matches a clone to its docs profile's recorded `origin` as `<owner>/<repo>`.
+- **`followup-emission` wrote a unit's follow-ups wherever the run was addressed.** §2 now lets a caller name the folder of the unit its run worked on (`unit_folder`, §8), and `/dev-workflows:implement` does, so `/implement <PRD>` whose picker chose an Epic and a later `/implement <EPIC>` write into one `follow-ups.md`, and the second finds the first's task. §6 says the run a repository follow-up asks for reads it back, and `components` names that use among `/implement`'s.
+
 ## [1.15.1] — 2026-10-05
 
 ### Fixed

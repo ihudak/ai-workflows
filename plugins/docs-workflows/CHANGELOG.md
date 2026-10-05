@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.7.1] — 2026-10-05
+
+### Fixed
+- **`/release-notes` said the specs-repo preflight runs before step 1 "takes any of its named stops"**, which read literally includes the address stops on which a run runs none (`workflows-core:specs-repo-git` §3). It now says the preflight runs before the stops the folder's placement leads to, and that a run stopping on its address or on an unset `$SPECS_PATH` runs none.
+- **`/document`'s and `/release-notes`' slug→clone maps and `diff-summarizer`'s repository check** take `workflows-core:components` §1's derivation, so a `git@server:api.git` remote or a URL ending in `/` is `api`.
+- **`docs-profile-schema.md` said a recorded `origin` compares as `<owner>/<repo>` without saying how one is read** off an scp remote, a URL ending in `/`, or a remote with one path segment. It is now the last two segments of the URL's path — what follows `<host>:` or `<host>/` — once any trailing `/` and then `.git` are stripped, and a one-segment path compares as that segment.
+
 ## [1.7.0] — 2026-10-05
 
 **Update `workflows-core` to 1.15.0 with this release**: the commands cite its `untrusted-content` reference.

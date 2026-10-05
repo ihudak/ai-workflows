@@ -31,7 +31,7 @@ Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback]
 
 ## Phase 0 — Resolve input
 
-1. **Resolve the address.** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the **single positional address** from `$ARGUMENTS` — a `<KEY>`, or an `@<path>` naming a
+1. **Resolve the address.** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. **Strip `--claimed` next, together with the token after it** — its value, one token however many words a quoted status holds — before the address is parsed: unstripped, the flag is read as the positional address and its value as a second token. Step 1a reads the value set aside. Parse the **single positional address** from what is left — a `<KEY>`, or an `@<path>` naming a
    folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind`
    and `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `READY_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
 
@@ -79,7 +79,7 @@ Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback]
    `/ready` has no direct-prompt behavior. On `invalid` the message goes on, naming the token:
    ` — '<token>' is not a key (workflows-core:addressing §1).`
 
-1a. **`--claimed "<status>"` (optional).** Its value is a workflow phase the operator declares — a
+1a. **`--claimed "<status>"` (optional; stripped in step 1, before the address).** Its value is a workflow phase the operator declares — a
     status pasted from whatever tracker they keep, or typed from memory. When present, the run
     compares it against the phase Phase 3 derives and reports any divergence as a readiness finding.
     Validate it against `${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`'s ladder for the
@@ -100,7 +100,7 @@ Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback]
    variable.
 
 **Specs-repo preflight** — run at the end of step 1's address resolution, with the run key set step 1
-fixes, before step 1 places the folder or takes any of its stops. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run,
+fixes, before step 1 places the folder or takes any stop its placement leads to. A run that stops on its address — `invalid`, `ambiguous`, `misrooted` or `absent` — stops before this and runs none (`workflows-core:specs-repo-git` §3). Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run,
 retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
 `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.
@@ -337,8 +337,7 @@ this run. This is the mechanical half of that dimension. **On a multi-component 
    spans>`); and any ARD's `grounded_repos:` frontmatter list (`product-workflows:ard-format`). Dedupe.
 2. Build the slug→clone map **exactly as `epics.md` Phase 4 does**: for each top-level directory under
    each entry of `${REPOS_PATH:-/workspace}`, run
-   `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, strip a trailing `.git`, and take the
-   URL's last path segment as that clone's slug. Skip directories with no `.git` or whose `git remote`
+   `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git` or whose `git remote`
    call fails/times out.
 3. Match each derived candidate against the map: mounted (record the resolved path) or not-mounted.
    **Presence only — never dispatch `code-scanner`, never confirm/mount-gate like `/design`'s Phase 3**;

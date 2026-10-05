@@ -33,7 +33,7 @@ Usage: `/design <ADDRESS> [--design-twice] [--skip-costs] [--skip-feedback] [--e
    never an address.
 
    Parse the **single positional address** from the stripped `$ARGUMENTS` — a `<KEY>`, or an
-   `@<path>` naming a folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). Carry forward:
+   `@<path>` naming a folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind` and `key` forward; `ambiguous` → stop, naming every match and `@<path>` as the way through; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `DESIGN_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree, and designs only against a specification already in one. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command. Then carry forward:
    - `<PRD>` — the resolved **PRD folder's** `key`: the folder itself when the address named a
      `PRD-` folder, its parent when the address named an `EPIC-` folder.
    - `<EPIC>` — the resolved `EPIC-` folder's `key`, or `null` when the address named a `PRD-`
@@ -67,9 +67,10 @@ Usage: `/design <ADDRESS> [--design-twice] [--skip-costs] [--skip-feedback] [--e
    `brd-link.md` naming a `parent:`, as a `PRD-` folder. A folder none of these places is not
    guessed at — stop, naming the folder and what it carries — and, where it holds an `idea.md` and no `prd.md`, name `/product-workflows:create-prd <KEY>` too, whose `prd.md` places it (`workflows-core:addressing` §4.1).
 
-   With no positional address, stop with
+      With no positional address, or one `resolve-address` returns `invalid`, stop with
    `DESIGN_NEEDS_KEY: /design needs a PRD or Epic address — a key, or an @<path> to its folder.` —
-   `/design` has no direct-prompt behaviour. **Resolution supplies the address and nothing else:
+   `/design` has no direct-prompt behaviour. On `invalid` the message goes on, naming the token:
+   ` — '<token>' is not a key (workflows-core:addressing §1).` **Resolution supplies the address and nothing else:
    `/design` reads no document for content at this step — the requirements source of truth is the
    merged `specification.md` in the specs repo.**
 
@@ -80,7 +81,7 @@ Usage: `/design <ADDRESS> [--design-twice] [--skip-costs] [--skip-feedback] [--e
    ends with needs the variable.
 
 **Specs-repo preflight** — run at the end of step 1's address resolution, with the run key set step 1
-fixes, before step 1 places the folder or takes any of its stops. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier
+fixes, before step 1 places the folder or takes any stop its placement leads to. A run that stops on its address — `invalid`, `ambiguous`, `misrooted` or `absent` — stops before this and runs none (`workflows-core:specs-repo-git` §3). Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier
 run, retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if
 it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal
 `commit-artifacts` step skips on it.
@@ -201,8 +202,7 @@ Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:referenc
 
 1. **Auto-derive candidate repos** from the spec's themes / component mentions / any referenced code
    paths — **or, where `<EPIC>` is set and its `epic.md` carries a `target:`** (`workflows-core:components` §1), the target's repository alone, the Epic's other needs being the interfaces the PRD-level ARD's `contracts` fixes. The target's **paths** are those of its `components` entry (Phase 2.5), else the id's own path, or the whole repository for a bare slug; Phase 4's scan and Phase 6's brief carry them. Build the slug→clone map (`/epics`-style): for each top-level dir under each `$REPOS_PATH`
-   entry, `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, strip a trailing `.git`, take the
-   URL's last path segment as the slug; skip dirs with no `.git` or a failing/timed-out call.
+   entry, `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, strip any trailing `/` and then a trailing `.git`, take the URL's last path segment — what follows its last `/` or `:` — as the slug; skip dirs with no `.git` or a failing/timed-out call.
 2. **Confirm the complete set — the developer owns it.** Present the derived candidates and ask the
    developer to confirm the **complete** list of implementation repos this design must span:
    `choices: ["Confirm this set (Recommended)", "Add repos (you'll be prompted)", "Remove repos (you'll be prompted)", "Cancel"]`
