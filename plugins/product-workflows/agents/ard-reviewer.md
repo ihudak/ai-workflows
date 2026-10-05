@@ -18,7 +18,7 @@ runs a fix cycle and re-reviews once.
 
 - **ARD path** — absolute path to the ARD (`ard.md`, or an area-scoped `ard-<area>.md`). Required; if absent, stop and report.
 - **Scope** — `prd | epic`. Review at the stated altitude; for an Epic-level ARD also read the inherited PRD-level ARD named in `inherits:` (if any) to check for contradictions.
-- **Prior ARD** — absolute path to a copy of the ARD as it stood before this run — a refine, or a fresh start over an ARD already on the specs repo's default branch — or `none`. Optional; absent reads as `none`. Unreadable → say so in the output and review as `none`, since it only sharpens two checks below.
+- **Prior ARD** — absolute path to a copy of the ARD as it stood before this run — a refine, or a fresh start over an ARD already on the specs repo's default branch — or `none`. Optional; absent reads as `none`. Unreadable → say so in the output and review as `none`, since it only sharpens checks below: the Alternatives MINOR, Supersession, and Contract completeness's MINOR for a row it already held.
 
 ## Review method
 

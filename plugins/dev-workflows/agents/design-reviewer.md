@@ -56,7 +56,10 @@ The caller passes:
   promises → a vague interface = `MAJOR`. A **boundary interface** (`design-format.md` section 4 —
   one the change introduces or alters on the producing side, which another component or a consumer
   outside the system calls or receives the messages of; never one only code inside the same component
-  uses) stated as a shape alone — nothing, in section 4 or against it in section 7, on what a caller
+  uses. A component is a repository, or a module inside one that its build declares: a build-system
+  module, a workspace package, or a top-level directory with its own build file; where the brief
+  carries no **Repository modules**, each repository the design's `Repos` names is one component,
+  however its source directories are split) stated as a shape alone — nothing, in section 4 or against it in section 7, on what a caller
   gets on a failure where it can fail, or, where a request or message has a side effect, on whether a
   repeat repeats it → `MAJOR`. An altered one is judged on the behaviour the change touches.
 - **Seam / test-strategy soundness:** **Test strategy** keys to named seams; a testability claim with
