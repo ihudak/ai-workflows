@@ -107,11 +107,15 @@ reconstruct it.
      where a command ran; leave it. `/vuln`'s Step 4 table reads these off `notes` on every
      status this agent returns, and reads the same marks off its own capture besides.
 
-2. **Create the fix branch — before any file is touched** — `git checkout -b <the branch name the
+2. **Create the fix branch — before any file is touched** — first check the request carries `branch:`
+   and `pre_edit_tree:` (below), then run `git checkout -b <the branch name the
    orchestrator supplied>`. The name is **always** supplied in the input (`branch:`); never derive
    one yourself, because `/vuln` Step 3.9 pushes the name *it* resolved and a name you invented
    would fail that step's gate on the mismatch. A missing `branch:` is an orchestrator bug: return
-   `status: BLOCKED` naming it, and change nothing.
+   `status: BLOCKED` naming it, and change nothing — no branch either. So is a missing `pre_edit_tree:`,
+   the snapshot the orchestrator took before this CVE's first dispatch
+   (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.1): it is what "Build failure" reverts to, and
+   without it the only revert left would discard the user's own changes in any file this fix touches.
 
    **On a collision, stop — do not improvise.** If `git checkout -b` fails because the branch
    already exists (the ordinary case on a re-run after an earlier `BUILD_FAILED`, which leaves the
@@ -188,7 +192,9 @@ reconstruct it.
 ## Build failure
 
 1. Read the full error; attempt an obvious automatic fix (wrong API, missing plugin).
-2. If unfixable in one attempt: revert the change, set `status: BUILD_FAILED`, report clearly.
+2. If unfixable in one attempt: revert by running `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md`
+   §6.2's script from the request's `pre_edit_tree:`, set `status: BUILD_FAILED`, report clearly, and
+   return what §6.2 says to return.
 
 ## Test regression
 
@@ -205,15 +211,21 @@ granted, so this agent can never ask the user directly. The orchestrator owns th
 4. **On `phase: regression-resume`:** honor `regression_decision`:
    - `keep-anyway` → proceed to step 6, recording the failures in `notes`; the orchestrator carries
      them into Step 3.9's `body_facts` and sets `clean_finish: false`.
-   - `revert` → revert the fix, set `status: REVERTED`, return. The branch created in step 2 is left
-     in place and empty — this agent never deletes a branch
-     (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §1 rule 3 forbids `branch -D`).
+   - `revert` → revert by running `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2's script
+     from the request's `pre_edit_tree:` — every edit since this CVE's first dispatch, `review-fixer`'s
+     and any test fix of step 2 included, and nothing older — set `status: REVERTED`, and return what
+     §6.2 says to return. A call that carries no `pre_edit_tree:` returns `status: BLOCKED` naming
+     it, and changes nothing. The branch created in step 2 is left in place and empty — this agent
+     never deletes a branch (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §1 rule 3 forbids
+     `branch -D`).
    Record the outcome in the output record.
 
 ## Invariants
 
 - Process one CVE per invocation.
 - Never commit and never push — the orchestrator owns both (`/vuln` Step 3.9, via `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md`). Always create the dedicated fix branch **before** the first edit (step 2); never edit a file while HEAD is on `main`/`master`, and never delete a branch.
+- Revert only by running `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2's script from `pre_edit_tree` — never by `git checkout --`, a `git restore` without `--source`, `git stash`, or by hand. The tree may hold the user's uncommitted work (`/vuln` never stashes), and each of those either discards the user's own changes in a file the fix touched, moves them onto the stash stack, or misses what the build wrote beside the edit.
+- **Never stage** — no `git add`, `git mv` or `git rm`; move and delete files with `mv` and `rm`. The index is the user's, and `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2 restores the working tree only, so anything staged here would outlive a revert and go into the user's next commit.
 - Never write a commit message — the `Co-authored-by: Claude` trailer and the whole template belong to the orchestrator's Step 3.9 commit (see `/vuln` "Git Workflow").
 - NEVER dispatch any subagent other than `test-baseliner`. That one dispatch is your entire `Task` authority. Pin it with `model: <Sonnet detection chain — claude-sonnet-5-5, fallback claude-sonnet-5 / 4-6 / 4-5>` — running a test suite is mechanical, so the tier is pinned here rather than left to inherit — or, when the caller's prompt carries `enforced_model` (classification.md §10), that value — either one passed in classification.md §5's dispatch form: the id itself where the `Task` tool's `model` parameter accepts ids, its family name (`sonnet`, `opus`, …) where it enumerates only family names. **Never dispatch a reviewer of your own.** Review is the caller's to schedule, not yours. Your caller deliberately runs no reviewer on some paths — a SIMPLE / MODERATE run is classified out of the Opus `code-review` gate on purpose — so a reviewer you spawn silently overrides the caller's own gate policy. Its verdict has no standing either: the caller never sees it, and you cannot act on it without exceeding your brief.
 

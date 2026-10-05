@@ -34,7 +34,7 @@ Produce artifact content from a structured handoff. None of these run git.
 
 ## Fixers
 
-Apply changes the caller has already decided on, rather than deciding anything themselves. `review-fixer` patches findings a reviewer surfaced, and the caller re-runs the gate afterward (`doc-fixer` does the same for the docs domain, from `workflows-core`); `upgrade-executor` applies an upgrade plan and runs the build, and `vuln-fixer` applies the version change `vuln-research` resolved. Neither commits: the orchestrator does that, because the consent choice behind the push and the pull request is one a subagent cannot ask.
+Apply changes the caller has already decided on, rather than deciding anything themselves. `review-fixer` patches findings a reviewer surfaced, and the caller re-runs the gate afterward (`doc-fixer` does the same for the docs domain, from `workflows-core`); `upgrade-executor` applies an upgrade plan and runs the build, and `vuln-fixer` applies the version change `vuln-research` resolved. Neither commits: the orchestrator does that, because the consent choice behind the push and the pull request is one a subagent cannot ask. Where `upgrade-executor` or `vuln-fixer` undoes its work — a build it could not repair, or a regression you chose to revert — it restores the tree snapshot the orchestrator took before it started (`code-handoff.md` §6), never `HEAD`, so your own uncommitted changes survive.
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
