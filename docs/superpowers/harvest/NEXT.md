@@ -540,19 +540,22 @@ Survey of the four upstreams against the round-2 baseline: superpowers `b36e0829
   - **Findings worth keeping.**
     - *Measure a publish set against the branch's own remote ref.* "On no ref of the remote" passes commits that are published elsewhere but not on this branch, which is exactly a fast-forward of an unreviewed branch.
     - *An exemption for "our own" commits inherits whatever a hook puts into them.* By sha it pushes the user's swept-in work; by path it misses a rename's other half. A refused push that names the file is the cheaper failure.
-- **Found during the push-scope round and filed, not fixed** (2026-10-05; reported by its reviews and not yet verified):
-  - A refusal-tail run that ran no preflight never tests G0, so `commit-artifacts` can commit on a detached HEAD (§3.7's data-loss case).
-  - B1 never pulls: on a default branch behind `origin/<default>`, every artifact push is rejected non-fast-forward and retried forever.
-  - §2.1's ARTIFACT pattern also matches a customer's file of a session-file name copied under `brd/source/`.
-  - A fork layout (`origin` the user's fork, `main` tracking the canonical repository) sends step 5's push to the upstream while §3.2, §3.5 and `phase-handoff` use `origin`; `remote.pushDefault` and `branch.<b>.pushRemote` are ignored.
-  - A remote that renamed its default branch: with `origin/main` pruned, the push recreates `main` on the remote.
-  - A protected default branch rejects every artifact push server-side; "the next run retries it" repeats forever and local `main` accumulates commits.
-  - A flush commit left on a branch §3.5 B4 then switches away from is never retried or reported.
-  - A squash-merged plugin branch reads as unmerged (B2, `phase-handoff` §2.2 rule 3), so `push-scope` refuses its merged deliverable and the line asks the user to push a dead branch.
-  - `branch-naming` §2.3 counts remote names (`origin/…`) and can give a code branch in the specs repository a plugin prefix.
-  - On a direct `/implement` run started from a G2 branch, G2's notice names that branch, though the commit lands on the code branch the run cuts.
-  - The commands' ALWAYS lines and `CLAUDE.md` say `commit-artifacts` is "bounded … to plugin-created branches", which describes switching, not where it commits or what it pushes.
-  - A direct `/implement` run inside the specs repository with a spec `@path` and step-7.5 notes runs Phase 4.5's `handoff-to-main` against `$SPECS_PATH`, the repository the run is changing, before Phase 4.6 commits the code; not traced.
+- **The twelve findings the push-scope round filed — triaged 2026-10-05 against the reference text, with no reviewer; two fixed, ten closed.** The fix had one review (1 Important: the pull needed `--no-rebase`; 4 Minor), fixed without a re-review. The population for each was measured against the one specs repository in use: one `origin` remote and no push settings, pull requests landed as merge commits, and the plugin's session-file commits pushed straight to `main`.
+  - **Fixed** (`workflows-core` 1.16.2 here, with the other two editions):
+    - *B1 never pulls.* A checkout left on the default branch while a pull request merged on the remote, or a teammate pushed, committed on a stale base, and every push and retry after it was rejected as non-fast-forward. This is an ordinary setup: any run that leaves the checkout on the default branch, followed by any merge. §3.4 and `commit-artifacts` step 2 now fast-forward a default branch that is strictly behind (`--no-rebase`, so a `pull.rebase` setting cannot turn it into a rebase). A diverged one, including through a merge during a run, gets a line naming `pull --rebase --autostash` and the push.
+    - *The refusal tail never tested G0.* This is rare: it needs a detached specs checkout and an address refusal. It was fixed anyway because it is the data-loss guard and costs one clause: §4 step 1 now tests the state itself on a run that ran no preflight.
+  - **Closed**, each with its reason:
+    - *§2.1's pattern matching a customer file under `brd/source/`.* This needs a BRD bundle holding a file named exactly like a session file, and that file goes to the same specs repository the BRD's own branch does.
+    - *A fork layout and `pushRemote`/`pushDefault`.* No specs repository in use has a second remote or a push setting.
+    - *A remote that renamed its default branch.* This happens once in a repository's life, and the stray branch it recreates is visible and deletable; nothing is lost.
+    - *A protected default branch.* The repository in use accepts direct pushes to `main`. Reopen as a design question (where do session files go?) when one does not.
+    - *A flush commit on a branch B4 leaves.* This needs a flush whose push fails in the same run, and the commit sits on a named plugin branch and goes out with it.
+    - *A squash-merged plugin branch reading as unmerged.* The repository in use merges with merge commits. Reopen if a squash-merging team adopts the plugin.
+    - *`branch-naming` §2.3 counting remote names.* This reaches only a code branch cut inside the specs repository itself, a rare `/implement` target; the preflight's handling of such a branch is non-destructive (`branch -d` only).
+    - *G2's notice naming the starting branch on a direct `/implement` run.* The run must be in the same rare layout. The notice is advisory, and the commit lands safely on a named branch.
+    - *The ALWAYS lines' "bounded … to plugin-created branches".* The phrase cites §2.2, which is exactly that bound; the commit and push rules sit in §3.3 G2 and §4 step 5, which the line does not restate. No run behaves differently.
+    - *Phase 4.5's `handoff-to-main` on a direct `/implement` inside the specs repository.* It needs the same rare layout, it was never traced, and no run has reported it. Reopen on a report.
+  - **Process note.** The twelve came from review briefs that asked each reviewer for out-of-scope findings "for filing". Briefs now ask only for defects in the change. An older problem is filed only when it reaches an ordinary setup, and the entry states that population.
 **Rejected again** (reasons unchanged): superpowers' native executing-plans / SDD ledger, verify-a-fix-by-test instead of re-review, nested mid-tier orchestrator; mattpocock `implement-spec`, `retro` as its own command, `pr`'s picture menu and Mermaid; BMAD's user-pinned review depth (bypasses the classification gate), finding floors scaled by diff size, the ticket store and walkthrough; spec-kit's extension and catalog machinery, `taskstoissues` (a tracker), the constitution sync report.
 
 **Recorded divergences** — decisions, not gaps:
