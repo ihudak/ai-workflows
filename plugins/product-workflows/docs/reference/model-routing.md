@@ -1,6 +1,6 @@
 # Model routing reference
 
-Every command here classifies its own task before doing real work, and that classification decides how much grilling depth and authoring rigor the rest of the run applies — and, for three commands, whether the session itself must be running on Opus. This page covers the four things a user can observe or influence about that; the full policy — including the mechanics agents don't need restated here — lives in `workflows-core:model-routing/classification`, named again at the end.
+Every command here but `/harvest-decisions` classifies its own task before doing real work, and that classification decides how much grilling depth and authoring rigor the rest of the run applies — and, for three commands, whether the session itself must be running on Opus. This page covers the four things a user can observe or influence about that; the full policy — including the mechanics agents don't need restated here — lives in `workflows-core:model-routing/classification`, named again at the end.
 
 ## What gets classified
 
@@ -27,7 +27,7 @@ Fourteen of this plugin's fifteen commands load the `model-routing` skill, run t
 
 ## What floors a classification
 
-**Four of those fourteen commands floor their classification at `SIGNIFICANT`, and all four floor for the same kind of reason** — what the run *produces or changes*, never how much of it there was to read. Four out of fourteen sharing one reason is a pattern in this plugin, not an exception:
+**Four of the fourteen commands that classify floor their classification at `SIGNIFICANT`, and all four floor for the same kind of reason** — what the run *produces or changes*, never how much of it there was to read. Four out of fourteen sharing one reason is a pattern in this plugin, not an exception:
 
 - **`/prd-proposal` and `/brd-proposal`** — the run produces a number a customer will make a commercial decision on, and the format's own [residual-risk rule](proposal-format.md#the-risk-the-format-cannot-remove) states it plainly: a plausible number with a defensible-looking argument is more dangerous than an obviously rough one. An umbrella compounds it, because a reader checking one is checking a roll-up rather than a derivation.
 - **`/brd-package`** — the adversarial self-review's own output gates the run (a self-review that finds nothing is a rubber stamp), and the rendered prompt is the one artifact this plugin produces that an outside party pastes into an agent and runs, with nobody from the delivery team present to correct it.
