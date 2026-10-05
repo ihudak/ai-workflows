@@ -8,17 +8,16 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [3.18.0] — 2026-10-05
 
 ### Changed
-- **`/epics` checks cross-Epic dependencies.** `epic-writer`'s pre-flight and a new `epic-reviewer` dimension (*Cross-Epic dependencies*) apply four rules to the Epics a run writes:
-  - **Needs:** what an Epic needs before it can start or before its Independent Test can run is built in its own scope, or delivered by an Epic its `## Dependencies` names.
-  - **Collisions:** two Epics with no dependency between them share no code, configuration, schema or setup.
-  - **Shared setup:** setup more than one Epic needs is built by the earliest Epic that needs it.
-  - **Shared decisions:** a decision more than one Epic adopts has one home, the ARD's `[AD#N]` or the earliest Epic that needs it, and every adopter cites it.
+- **`/epics` checks cross-Epic dependencies.** `epic-writer`'s pre-flight and a new `epic-reviewer` dimension (*Cross-Epic dependencies*), within the family's Epic-independence model, check three things:
+  - **Needs:** what an Epic needs before it can start or before its Independent Test can run is built in its own scope, or named in `## Dependencies` as provided by an existing Epic, the ARD, a repo, team or external system, or code that already exists.
+  - **Collisions:** two Epics with no dependency path between them do not both change or build the same code, configuration, schema or setup, and they merge only where they share a target.
+  - **Shared decisions:** a decision several Epics adopt is stated the same way in each and cites one source, the ARD's `[AD#N]` or the PRD requirement, or carries a clarification marker.
 
-  Each breach is MAJOR. A dependency on an earlier Epic in the run's order is build order, not the forward dependency *Epic independence* flags. Touched-unit coverage needed no new check, as *Single target* already confines each Epic's work to its target.
+  Each breach is MAJOR. Touched-unit coverage needed no new check, as *Single target* already confines each Epic's work to its target.
 - **Acceptance-criteria wording.** An Epic's criteria, and `prd-reviewer`'s check of a PRD story's criteria, now take three rules:
   - **False before, true after:** each criterion is false before the unit and true after it, through that unit's work alone.
   - **The rule, not an example:** "rejects any quantity over stock on hand", not "rejects quantity 999", with a literal only where the value is the requirement.
-  - **Enough, no more:** usually three to eight per Epic; past eight on a PRD story, split the story.
+  - **Enough, no more:** usually three to eight per Epic, and past eight it consolidates to one criterion per rule, as an Epic is split only at a risk or feedback-loop boundary; past eight on a PRD story, split the story.
 
   `epic-reviewer` and `prd-reviewer` grade a breach MINOR. `specification-format.md` stays frozen.
 
