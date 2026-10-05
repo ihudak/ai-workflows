@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.9.3] — 2026-10-05
+
+### Fixed
+- **`/implement` started outside every git work tree stops before anything else.** The stop sat in the per-`@path` classification, after address resolution, so a run that was going to stop could first ask for `$SPECS_PATH`, run the specs-repo preflight — which can switch the specs checkout's branch and push a leftover artifact commit — and show the Epic picker. The working directory is now classified first, straight after the run flags are stripped.
+- **No false notice for a `prompt.md` at the repository root you run from.** The notice that a repository's top level is read as a code repository could be read as covering the working directory, so a run started at a root holding `prompt.md` printed it, and could stop on it, though no input named that folder. It is now printed only for an `@path` that names a top level, and a direct run with no description — no prose, spec file or spec folder — stops before the specs-repo preflight, naming the forms a description takes, rather than only where a top-level `@path` held a `prompt.md`.
+- **`@.` from a spec folder below the repository's top level reads that spec folder.** The row order read it as a spec folder and the working-directory rule as a code repository. The working-directory rule now covers only the directory the run starts in; a token naming it is classified like any other `@path`.
+
 ## [4.9.2] — 2026-10-05
 
 ### Fixed
