@@ -8,6 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.5.4] — 2026-10-05
 
 ### Fixed
+- `/document`'s commits — the Phase 6.3 commit and the Phase 8.5 squash (`finish-and-handoff.md` §2) — take their message from a file with `-F`. The squash used a double-quoted `-m` and the Phase 6.3 commit named no form, so a summary holding a backticked word or `$(…)` was command-substituted.
 - The `gh pr create` command `/document` offers for a GitHub docs repository quotes the title in single quotes. The title is free text, and inside the double quotes it used, a backticked word or `$(…)` in it was command-substituted when the command was run.
 
 ## [1.5.3] — 2026-10-04

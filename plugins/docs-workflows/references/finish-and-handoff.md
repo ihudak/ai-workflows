@@ -35,7 +35,10 @@ Then squash:
   `git -C <docs_repo_path> merge-base <base_branch> HEAD`.
 - mechanics: `git -C <docs_repo_path> add -- <each path under docs_repo_path the run wrote or edited>`
   → `git -C <docs_repo_path> reset --soft <squash-base>`
-  → one `git -C <docs_repo_path> commit -m "<message>"`. Never a path outside the docs
+  → one `git -C <docs_repo_path> commit -F <msg-path>`, the message written first to a
+  `command mktemp -t dw-docs-msg-XXXXXX` file outside any repository and removed with
+  `command rm -f -- "<msg-path>"` once the commit has been made or has failed: the summary is
+  free text, whose backticks and `$(…)` a double-quoted `-m` would command-substitute. Never a path outside the docs
   repository — the implementation-gaps draft in the resolved PRD folder, a screenshot staged under
   `screenshot_staging_dir`, or Phase 8's feedback file under `$SPECS_PATH` — which git refuses
   (`fatal: … is outside repository`) along with every other path in the same `add`.

@@ -306,7 +306,8 @@ notice, never a quiet line.
 Always runs when stage 1 matched nothing **and the run does not carry `specs_git: misrooted`** (§3.1). Under that flag it does not run at all, so there is no flush and no push retry, and the preflight goes on to §3.5, which switches nothing under the flag. A flush there would `git add` paths that porcelain prints relative to the repository's top level and that do not exist from `$SPECS_PATH`, which fails with exit 128 on every run. Where `$SPECS_PATH` is a correct root holding a stray folder, it would commit and push while the notice says the run wrote nothing.
 
 - **Dirty ARTIFACT paths exist** → commit them **onto the current branch** (they
-  belong to the run that wrote them) and push, per §4 steps 2–6.
+  belong to the run that wrote them) and push, per §4 steps 2–6, which print no
+  §6 line here: where step 4 finds nothing to commit, the flush ends silently.
 - **No dirty ARTIFACT path** → check whether the current branch is **ahead of
   the branch it would push to** and every ahead-commit touches only §2.1 artifact
   paths. If so, **retry the push**.
@@ -581,8 +582,8 @@ to state.
    - **The commit fails** — a `pre-commit` or `commit-msg` hook rejects it, a
      signature cannot be made, or a merge is in progress, during which git
      refuses a pathspec commit → report git's error or the hook's output; never
-     retry and never `--no-verify`. The artifacts stay staged, and the next
-     run's preflight flushes them (§3.4).
+     retry and never `--no-verify`. The artifacts stay staged, and a later
+     run's preflight flushes them (§3.4) once git accepts the commit.
 7. **Emit the §6 outcome line**, plus the full §5 notice repeated verbatim when
    a guard fired at §3.3.
 
@@ -694,7 +695,7 @@ report was composed earlier.
 | Committed, push failed | `Specs repo: committed <sha7> (<N> files) on <branch> — push FAILED (<reason>); the commit is local and the next run retries it` |
 | Nothing to commit | `Specs repo: no session artifacts to commit` |
 | Locked | `Specs repo: skipped — another session holds the repo (index.lock); the next run picks the artifacts up` |
-| Commit failed | `Specs repo: NOT COMMITTED — the commit failed (<the first line of git's error or the hook's output>); the artifacts stay staged and the next run picks them up` |
+| Commit failed | `Specs repo: NOT COMMITTED — the commit failed (<the first line of git's error or the hook's output>); the artifacts stay staged, and a later run commits them once git accepts the commit (a merge concluded, a hook satisfied)` |
 | Blocked (G0) | `Specs repo: NOT COMMITTED — see the notice below`, followed by the §5 G0 block verbatim |
 | Misrooted (§3.1), whether or not the environment conditions hold | `Specs repo: NOT COMMITTED — SPECS_PATH is misplaced; see the notice below`, followed by the §3.1 notice, or `specs-root-check`'s stop, verbatim |
 | Gate failed on environment, on a run carrying neither flag | *(no line at all — silent no-op)* |
