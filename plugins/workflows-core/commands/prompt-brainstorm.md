@@ -1,6 +1,6 @@
 ---
 name: prompt-brainstorm
-description: Log a corrective interaction as plugin feedback, then hand off to superpowers:brainstorming to redesign the correction together. Captures the friction, your verbatim prompt, and the resolution to the specs repo for the maintainer.
+description: Log a corrective interaction as plugin feedback, then hand off to superpowers:brainstorming to redesign the correction together. Captures the friction, your verbatim prompt (secrets, email addresses, non-public hosts, IP addresses and home paths redacted), and the resolution to the specs repo for the maintainer.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 ---
 
@@ -41,7 +41,7 @@ harness supplies the free-text escape). If no command applies, use `n/a`.
 Cite `${CLAUDE_PLUGIN_ROOT}/references/feedback-emission.md` and call its
 `emit-prompt` entry point (§6). Provide:
 - **Friction** — what the command produced that was wrong.
-- **User prompt** — `$ARGUMENTS`, **verbatim** (never paraphrased).
+- **User prompt** — `$ARGUMENTS`, **verbatim** (never paraphrased, and never redacted here: `emit-prompt` applies `feedback-emission.md` §1.1's redactions as it writes).
 - **Resolution** — `Handed off to superpowers:brainstorming to redesign the correction.`
 - `command` (Phase 1), an inferred `category` (§1 vocab, reuse-first), `impact`,
   `key` (or `null`), `source`.

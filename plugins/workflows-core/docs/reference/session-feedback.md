@@ -11,9 +11,13 @@ Two different signals, from two different sources:
 
 ### Why `/prompt*` is the more valuable of the two
 
-A `/feedback` note is a report. A `/prompt*` entry is a worked example: it carries the exact input, the exact wrong output, and the exact correction, which is what a later fix to a command's instructions can actually be tested against. Both are worth logging; only one of them can be replayed.
+A `/feedback` note is a report. A `/prompt*` entry is a worked example: it carries the exact input (with any sensitive value redacted, below), the exact wrong output, and the exact correction, which is what a later fix to a command's instructions can actually be tested against. Both are worth logging; only one of them can be replayed.
 
 Every long-running command in the family also emits session feedback automatically at the end of its run, so the channel is not fed by these four commands alone.
+
+## What is redacted
+
+Every entry is redacted before it is written, because it is committed and pushed to the specs repository, where everyone with access reads it. Secrets become `[SECRET-n]`: private keys, tokens of a known shape, a password in a URL, an `Authorization` value, and a literal assigned to a name or flag ending in key, token, secret or password (`DB_PASSWORD`, `apiKey`, `--password`). Home-directory paths become `~/…`. Private and routable IP addresses, and hosts that are not a publicly reachable service's, become `[HOST-n]`; `localhost`, loopback and other local addresses stay. Email addresses become `[EMAIL-n]`. Everything around a placeholder stays as written, so a `/prompt*` entry's User prompt is still verbatim in every other character. The `author` field keeps your git email, because it is the entry's attribution. The run reports what it redacted, by category and count, beside the path it wrote. `workflows-core:feedback-emission` §1.1 has the full list.
 
 ## Where files land
 

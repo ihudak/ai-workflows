@@ -498,8 +498,7 @@ is each member's own rather than a new condition here:
   run that did nothing, and what it replaced cannot be recovered.
 
 - **This step runs**, for the cost entry above (under `--skip-costs` there is none, and the gates below settle the step exactly as they would for any run with nothing new to stage). Where the refusal was `specs-root-check`'s stop, the run carries `specs_git: misrooted`, and step 1's gate skips the step with the stop repeated. Where the refusal came before
-  `$SPECS_PATH` was resolved, step 1's gate no-ops it silently; on a detached
-  HEAD, step 1 refuses it with G0's notice; where that
+  `$SPECS_PATH` was resolved, step 1's gate no-ops it silently; on a detached HEAD with something to stage, step 1 refuses it with G0's notice; where that
   entry is the only new path, step 4 commits it alone; where nothing is dirty,
   step 3's `nothing to commit` line stands.
 
@@ -528,10 +527,13 @@ to state.
    is set only behind a passing gate (§3.3 G0), so it never meets one. **A run
    that ran no preflight and carries neither flag tests G0's state here**, since
    nothing else did: a refusal taken before the preflight still reaches this
-   step (the tail above). Where §3.1's environment conditions hold and
-   `git -C "$SPECS_PATH" symbolic-ref -q HEAD` fails, HEAD is detached; the run
-   takes the `specs_git: blocked` outcome below, printing the notice for the
-   first time rather than again. A commit there would be reachable from no
+   step (the tail above). Where §3.1's environment conditions hold,
+   `git -C "$SPECS_PATH" symbolic-ref -q HEAD` fails, and step 2's enumeration
+   would stage at least one ARTIFACT path (§2.1), HEAD is detached with
+   something to commit; the run takes the `specs_git: blocked` outcome below,
+   printing the notice for the first time rather than again. With nothing to
+   stage it goes on, and step 3's `nothing to commit` line stands: the notice
+   would warn about artifacts this run never wrote. A commit there would be reachable from no
    ref, whichever way the run arrived (§3.7).
    - Carries `specs_git: blocked` → **not silent**: re-emit the §5 blocking
      notice. The repo *is* managed; the plugin is deliberately refusing to
