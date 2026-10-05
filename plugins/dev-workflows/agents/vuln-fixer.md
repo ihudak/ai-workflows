@@ -33,7 +33,8 @@ reconstruct it.
 > **Phase resume.** If the input includes `phase: verify-resume`, **skip
 > steps 1 through 4** — the baseline was captured (by the orchestrator), the
 > branch was created, the fix was applied, and the build was run on the prior
-> invocation. Resume at
+> invocation. A `verify-resume` carrying `allow_install_scripts:` first runs
+> `install-time-code.md`'s allow step for those packages. Resume at
 > step 5 (Verify) — **after re-reading the supplied block's `Status` as step 1 would**, because
 > step 1's `NO_TESTS` arm decides whether step 5 runs at all and this call does not execute step 1.
 > On a `NO_TESTS` block, skip step 5 here too and go straight to step 6. Step 5 hands `test-baseliner` the **whole** `baseline_block`
@@ -136,6 +137,9 @@ reconstruct it.
 
 3. **Apply fix** — Update the version pin(s) listed in the research report's `files` array.
    Use the ecosystem-appropriate update command (see `${CLAUDE_PLUGIN_ROOT}/references/fix-vuln/build-systems.md`).
+   It installs without the new release's install-time code (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): record what it skipped in
+   `skipped_install_scripts:`, and where the request carries `allow_install_scripts:`, run that file's allow
+   step for exactly those packages before step 4.
 
 4. **Build** — Run the project build (compile only, no tests). On failure see "Build failure" below.
 
@@ -191,7 +195,10 @@ reconstruct it.
 
 ## Build failure
 
-1. Read the full error; attempt an obvious automatic fix (wrong API, missing plugin).
+1. Read the full error; attempt an obvious automatic fix (wrong API, missing plugin). Dropping
+   `--ignore-scripts` or `--only-binary=:all:` is never one: a failure after such an install is what
+   `skipped_install_scripts:` names for the user (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A pip install refused for want of a
+   wheel is a build failure here, with that package in the list.
 2. If unfixable in one attempt: revert by running `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md`
    §6.2's script from the request's `pre_edit_tree:`, set `status: BUILD_FAILED`, report clearly, and
    return what §6.2 says to return.
@@ -211,6 +218,8 @@ granted, so this agent can never ask the user directly. The orchestrator owns th
 4. **On `phase: regression-resume`:** honor `regression_decision`:
    - `keep-anyway` → proceed to step 6, recording the failures in `notes`; the orchestrator carries
      them into Step 3.9's `body_facts` and sets `clean_finish: false`.
+   - `retry-with-install-scripts` → run `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`'s allow step for the request's
+     `allow_install_scripts:`, then steps 4 and 5 again, and return what they return.
    - `revert` → revert by running `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2's script
      from the request's `pre_edit_tree:` — every edit since this CVE's first dispatch, `review-fixer`'s
      and any test fix of step 2 included, and nothing older — set `status: REVERTED`, and return what

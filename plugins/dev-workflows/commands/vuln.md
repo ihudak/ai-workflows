@@ -130,7 +130,7 @@ Act on the returned `Status` before dispatching anything:
 
 Immediately before this CVE's first `vuln-fixer` dispatch, on either path — after the base-branch switch above and, on the first CVE, after the baseline capture — take the tree snapshot `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.1 defines and record it as this CVE's `pre_edit_tree`. Pass the same value on every `vuln-fixer` dispatch of this CVE: it is what the fixer restores on `BUILD_FAILED` and on a `revert` decision (§6.2), so a file the user had changed before the run gets their changes back rather than `HEAD`'s. Take a new one for each CVE, never reuse the last: each CVE's revert must leave in place whatever stood before that CVE. Where git cannot write it, do not dispatch — this CVE changed nothing: show git's error, record the CVE `BLOCKED` with that error in its `Notes` cell, and move to the next CVE.
 
-**After a revert, act on it before Step 3.9 reads the tree** — a `BUILD_FAILED` or `REVERTED` return, or a `regression-resume` carrying `revert` that returned `BLOCKED` instead: do what `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.3 says. Re-take the fingerprint of each `pre_existing_dirty` path the return names in `reverted:`, so Step 3.9's tree test does not take the user's own file for the fix; carry the reverted paths into Step 4; and where the agent could not carry out a `revert` decision, run §6.2's script yourself from this CVE's `pre_edit_tree`.
+**After a revert, act on it before Step 3.9 reads the tree** — a `BUILD_FAILED` or `REVERTED` return, or a `regression-resume` carrying `revert` that returned `BLOCKED` instead: do what `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.3 says. Re-take the fingerprint of each `pre_existing_dirty` path the return names in `reverted:`, so Step 3.9's tree test does not take the user's own file for the fix; carry the reverted paths into Step 4; and where the agent could not carry out a `revert` decision, run §6.2's script yourself from this CVE's `pre_edit_tree`. A `BUILD_FAILED` whose `skipped_install_scripts:` is not empty goes to "Skipped install scripts" below before Step 3.9.
 
 ### SIMPLE / MODERATE path
 
@@ -315,6 +315,8 @@ After all CVEs are processed, print a result table:
 
 Name each suite and its command, or leave the cell empty where the run verified everything it detected — never a bare "partial", which says a stack was missed without saying which. **Every `CAVEAT: ` line either source carried goes in this cell too, verbatim and whatever the status was.** That mark is the baseliner's own on a note whose harm the `Status`, the counts and the test lists do not show, so it is carried without being judged here, and it is what puts a CVE green at both ends into this cell at all — every other source named above needs a suite the run could not cover. An unmarked note records where a command ran and is not carried. **Every `NEW-FAILURE: ` line the fixer marked goes in this cell as well**, named test by test and taken from every return this CVE made rather than only its last: it is the one entry here that is not about coverage — the suite ran and something in it is red — and it is also the one that moved this CVE's `clean_finish` to `false`. **Where the run's own capture and the fixer's `notes` name the same uncovered suite, write it once**: on a `PARTIAL` baseline both sources carry it by design, the capture because it is the run's and the fixer because its own step 1 read the same block, and this cell is a report rather than a tally.
 
+**Every CVE's `skipped_install_scripts:` goes in its `Notes` cell, whatever its status** — each entry with the command that runs it later (`npm rebuild <names>`, `pnpm rebuild <names>`, `yarn rebuild <names>`, or the per-name `pip install --no-binary=<name>` line; `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A script nothing in the run exercised — a binary a package downloads for runtime only — reaches the user that way; the committed change is unaffected, since the lockfile and the manifest come out the same with or without the scripts.
+
 **Where the run recorded `baseline_unverified`, state it once above the table** — the capture failure that produced it, whether it was the operator's own answer or the run's own record after two failed `command_hint` attempts, and that every CVE below therefore finished unverified. That line is the flag's only reader and its whole purpose: `clean_finish` reaches `false` through `TESTS_NOT_RUN` without consulting it, so without this the run would have recorded a decision nothing ever surfaces, and the table would show a column of `TESTS_NOT_RUN` with no statement of why.
 
 Append a `### Model Routing` section summarising the per-CVE classification, why it was chosen, the models used, and any Opus review verdicts. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10), the per-CVE models-used line reads `Model routing: bypassed — enforced <id> (flag|env)` instead.
@@ -347,18 +349,37 @@ interactive tools, even when one is listed in their `tools:`. When it returns
   ```
   choices: ["Apply the fix anyway and flag the failures in the PR — for flaky tests", "Revert this fix and skip it", "Investigate further"]
   ```
+  Where the return's `skipped_install_scripts:` is not empty, add a fourth choice, `Run the install scripts of <names> and re-test` ("Skipped install scripts" below).
 - **"Investigate further"** → show more detail (the diff, full failure output) and re-ask
   the same choices — this loops here at the orchestrator until the user picks apply or revert.
-- Map the final choice to `regression_decision: keep-anyway | revert` and re-invoke
+- Map the final choice to `regression_decision: keep-anyway | revert | retry-with-install-scripts` and re-invoke
   `vuln-fixer` with `phase: regression-resume` (see Step 3).
 
 **`status: TESTS_NOT_RUN` is a different return and takes no `regression_decision`.** It means the
 verify call compared nothing — no failing tests to show, and nothing about this CVE's tests known either
 way. The fix stays on its branch. Report the reason the fixer recorded, mark the CVE unverified in the
 Step 4 table, and hand it off through Step 3.9 with `clean_finish: false`. Never map it onto `revert`:
-rolling a security fix back because a suite could not be started is a decision taken on no evidence at all.
+rolling a security fix back because a suite could not be started is a decision taken on no evidence at all. Where its `skipped_install_scripts:` is not empty, "Skipped install scripts" below asks first.
 
 ---
+
+## Skipped install scripts
+
+`vuln-fixer` installs a new dependency version without its install-time code (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`) and names every package it skipped in `skipped_install_scripts:`, each with the command that would run. Where that list is empty, nothing here applies. Where it is not, and this CVE has not been retried yet:
+
+- **`BUILD_FAILED`** — after acting on the revert (Step 3, "After a revert"), ask, showing every entry in full:
+  ```
+  choices: ["Retry with the install scripts of <names> — they run code those packages ship, with your permissions", "Leave this CVE failed"]
+  ```
+  On retry, snapshot the tree again (Step 3, "Snapshot the tree") and re-dispatch `vuln-fixer` exactly as the first call, with the new `pre_edit_tree:` and `allow_install_scripts: [<names>]`.
+- **`TEST_REGRESSION`** — "Handling Test Failures" offers `Run the install scripts of <names> and re-test` as a fourth choice; it maps to `regression_decision: retry-with-install-scripts` with `allow_install_scripts: [<names>]`.
+- **`TESTS_NOT_RUN`** — ask, showing every entry in full:
+  ```
+  choices: ["Run the install scripts of <names> and re-test — they run code those packages ship, with your permissions", "Leave this CVE unverified"]
+  ```
+  On run, re-invoke `vuln-fixer` with `phase: verify-resume`, the same inputs as the first call, and `allow_install_scripts: [<names>]`.
+
+A CVE is retried at most once: a non-empty list on the retried return goes into the Step 4 table's `Notes`, not into a second ask.
 
 ## Git Workflow
 

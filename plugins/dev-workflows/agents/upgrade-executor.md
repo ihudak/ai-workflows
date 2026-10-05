@@ -30,7 +30,8 @@ reconstruct it.
 
 > **Phase resume.** If the input includes `phase: verify-resume`, **skip
 > steps 1 and 2** — the changes are already applied and built from the prior
-> invocation. Resume at step 3 (Verify). Treat any `baseline` in the input
+> invocation. A `verify-resume` carrying `allow_install_scripts:` first runs
+> `install-time-code.md`'s allow step for those packages. Resume at step 3 (Verify). Treat any `baseline` in the input
 > as authoritative; do not re-baseline. Default phase (omitted or
 > `phase: full`) runs all steps.
 >
@@ -46,6 +47,9 @@ reconstruct it.
    Then update every file listed in the plan's `files` array.
    For each related upgrade in `related`, apply those version changes too.
    Use ecosystem-appropriate commands (see `${CLAUDE_PLUGIN_ROOT}/references/upgrade/ecosystems.md`).
+   They install without the new release's install-time code (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): record what was skipped in
+   `skipped_install_scripts:`, and where the request carries `allow_install_scripts:`, run that file's allow
+   step for exactly those packages before step 2.
 
 2. **Build** — Run the project build (compile only). On failure see "Build failure" below.
 
@@ -103,6 +107,9 @@ reconstruct it.
 ## Build failure
 
 1. Read the full error; attempt one automatic fix (wrong plugin version, incompatible config, removed API).
+   Dropping `--ignore-scripts` or `--only-binary=:all:` is never one: a failure after such an install is
+   what `skipped_install_scripts:` names for the user (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A pip install refused for want
+   of a wheel is a build failure here, with that package in the list.
 2. If still failing: revert all changes for this component by running
    `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2's script from the request's `pre_edit_tree:`,
    set `status: BUILD_FAILED`, and return what §6.2 says to return.
@@ -121,6 +128,8 @@ granted, so this agent can never ask the user directly. The orchestrator owns th
 4. **On `phase: regression-resume`:** honor `regression_decision`:
    - `keep-anyway` → set `status: TEST_REGRESSION_KEPT`, proceed to Output, leaving the failing
      tests documented in `notes` for the user to fix.
+   - `retry-with-install-scripts` → run `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`'s allow step for the request's
+     `allow_install_scripts:`, then steps 2 and 3 again, and return what they return.
    - `revert` → revert all changes for this component by running
      `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2's script from the request's `pre_edit_tree:`
      — every edit since this component's first dispatch, `review-fixer`'s and any test fix of step 2

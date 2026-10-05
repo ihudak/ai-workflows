@@ -119,9 +119,11 @@ npm ls <package> 2>/dev/null | head -5
 ### Upgrading
 
 ```bash
-npm install <package>@<version>           # direct dependency
-npm install                               # refresh lock file
+npm install --ignore-scripts <package>@<version>   # direct dependency
+npm install --ignore-scripts                       # refresh lock file
 ```
+
+**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below skips the scripts and source builds a new release ships, and the agent names what it skipped.
 
 For transitive overrides:
 ```json
@@ -175,9 +177,10 @@ grep -i "<package>" requirements.txt Pipfile pyproject.toml setup.cfg
 
 ### Upgrading
 
-- **requirements.txt**: edit the pinned version, then `pip install -r requirements.txt`
+- **requirements.txt**: edit the pinned version, then `pip install --only-binary=:all: -r requirements.txt`
 - **poetry**: `poetry add <package>@<version>` or edit `pyproject.toml` then `poetry lock --no-update` then `poetry install`
-- **pipenv**: `pipenv install <package>==<version>`
+- **pipenv**: `PIP_ONLY_BINARY=:all: pipenv install <package>==<version>`
+- **poetry** installs as written: `install-time-code.md` says why it is unchanged.
 
 ### Querying PyPI
 

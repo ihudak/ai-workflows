@@ -42,6 +42,8 @@ Apply changes the caller has already decided on, rather than deciding anything t
 | `upgrade-executor` | per routing | Read, Glob, Grep, Bash, Edit, Task, Skill | Applies one component's approved upgrade plan, runs the build, verifies tests via `test-baseliner`, and auto-fixes test-code breakage caused by the new version's API changes. | `/upgrade` |
 | `vuln-fixer` | per routing | Read, Glob, Grep, Bash, Edit, Task, Skill | Takes the orchestrator's baseline, creates the fix branch **before** the first edit, applies the version change `vuln-research` produced, rebuilds, and verifies tests — uncommitted, for Step 3.9. | `/vuln` |
 
+`vuln-fixer` and `upgrade-executor` install a new dependency version without its install scripts or source build and return what they skipped in `skipped_install_scripts`, each entry with the command that would run; a retry the user allowed passes `allow_install_scripts` with exactly those packages ([references](references.md)).
+
 Every one of the 12 agents above is dispatched by at least one command. There is no maintenance section here any more: the one agent that filled it, `impl-maintenance`, ships in `workflows-core`.
 
 ## What every agent does with what it reads

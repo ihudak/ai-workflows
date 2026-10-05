@@ -58,9 +58,12 @@ baseline:                          # required when "provided"; may also be sent 
     - "[Maven] com.example.FooTest#testCreate"
     - "[Maven] com.example.BarTest#testLogin"
 no_address_placeholder: NOISSUE   # the literal the repo already writes; omit if it uses none
-regression_decision: keep-anyway   # keep-anyway | revert — REQUIRED on phase: regression-resume only;
+regression_decision: keep-anyway   # keep-anyway | revert | retry-with-install-scripts — REQUIRED on phase: regression-resume only;
                                     # the orchestrator obtains this from the user (subagents cannot
                                     # prompt the user directly — see /vuln "Handling Test Failures")
+allow_install_scripts: [canary-dep]   # optional — the packages whose install-time code the user allowed
+                                    # (install-time-code.md); only ever on a retry after a
+                                    # return that named them in skipped_install_scripts
 model_routing:                     # optional; set by orchestrator for SIGNIFICANT / HIGH-RISK
   classification: SIGNIFICANT
   gate_tests_on_review: true       # if true: stop after Build, return AWAITING_REVIEW
@@ -91,7 +94,7 @@ files:
   decides whether step 5 runs at all, and this call does not execute step 1.
 - `regression-resume` — second-call protocol after the orchestrator asked the
   user about a `TEST_REGRESSION` return. Skip straight to "Test regression"
-  step 4; requires `regression_decision`.
+  step 4; requires `regression_decision`. `retry-with-install-scripts` also requires `allow_install_scripts`.
 
 ## Output (vuln-fixer → orchestrator)
 
@@ -106,6 +109,9 @@ branch: fix/PROJ-2423-CVE-2023-46604
 tests_before: 47
 tests_after: 47
 regressions: 0
+skipped_install_scripts: []   # every return — packages this install placed on disk whose install-time code it
+                              # skipped, each with the command that would run (install-time-code.md),
+                              # e.g. - "sharp@0.34.1 (npm: install: node install/check.js)"
 reverted:               # BUILD_FAILED and REVERTED only — every path the §6.2 revert removed or
   - pom.xml             # restored (references/code-handoff.md), so the orchestrator can name them
 reverted_from: 7a1f0e2b5c9d4e8f6a3b2c1d0e9f8a7b6c5d4e3f   # BUILD_FAILED and REVERTED only — the
@@ -143,7 +149,7 @@ model_routing:           # echoed back when present in input
   stops here — see `notes` for the failing-test list and diagnosis. The
   orchestrator asks the user (per `/vuln` "Handling Test Failures"), then
   re-invokes this agent with `phase: regression-resume` +
-  `regression_decision: keep-anyway | revert`.
+  `regression_decision: keep-anyway | revert | retry-with-install-scripts`.
 - `TESTS_NOT_RUN` — `test-baseliner` verify returned `RUN_FAILED` or
   `COMMAND_NOT_FOUND`: no comparison was possible, so nothing is known about
   this CVE's tests either way. The fix is applied and built on the fix branch,

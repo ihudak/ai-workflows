@@ -6,7 +6,7 @@
 # in the two restructures this one follows (a sibling plugin repo,
 # ai-containers#78).
 #
-# TWENTY checks, numbered 1-20 in the order their functions appear below. The number is
+# TWENTY-ONE checks, numbered 1-21 in the order their functions appear below. The number is
 # written here and nowhere else in this file, and nothing gates it -- re-derive it with
 # `grep -oE '\bfail [0-9]+ ' "$0" | awk '{print $2}' | sort -un` -- the numbers a fail() call
 # can actually report -- rather than trusting this sentence, and update it in the commit that
@@ -74,6 +74,9 @@ HANDOFF_PLUGIN_RELS="${HANDOFF_PLUGIN_RELS:-plugins/product-workflows}"  # copil
 # prose-style, which ships agents and dispatching commands but no docs/ tree. Declared, like
 # the lists above, never inferred from a directory listing.
 GUARD_PLUGIN_RELS="${GUARD_PLUGIN_RELS:-$PLUGIN_RELS plugins/prose-style}"   # copilot: n/a (one plugin)
+# Which plugin check 21 reads for the install references /vuln and /upgrade follow: the one
+# that ships those two commands. Declared, like the lists above.
+ITC_PLUGIN_REL="${ITC_PLUGIN_REL:-plugins/dev-workflows}"   # copilot: n/a ($PLUGIN_REL)
 
 # The plugin that holds the shared reference corpus. Checks 8, 9, 11 and 16 read a reference
 # from HERE and their call sites from $PLUGIN_REL -- the corpus now lives in its own plugin,
@@ -1185,6 +1188,10 @@ selftest() {
   # Check 20's population: the docs-gated fixture plugins plus one outside them, as the
   # edition's own default reaches prose-style beyond PLUGIN_RELS.
   export GUARD_PLUGIN_RELS="plugins/dev-workflows plugins/fixture-two plugins/fixture-guarded"
+  # Check 21 reads the plugin that ships /vuln and /upgrade. The fixture keeps its install references
+  # in fixture-guarded, outside the docs-gated plugins, so they move no count check 9 asserts and
+  # need no citation check 16 asks for.
+  export ITC_PLUGIN_REL="plugins/fixture-guarded"
   # Check 18's arming flag is neutralised here so each case controls it, and the two that need
   # it armed set it through expect_fail_env / expect_pass_after_env. Without this line the
   # selftest inherits the caller's value, and the one case that proves the gate STAYS QUIET off
@@ -2066,6 +2073,26 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "true" "is listed in GUARD_PLUGIN_RELS but does not exist"
   expect_fail_msg "a plugin shipping agents that GUARD_PLUGIN_RELS does not list is rejected" 20 "GUARD_PLUGIN_RELS does not list it" \
     "mkdir -p plugins/fixture-rogue/agents && cp plugins/fixture-guarded/agents/kappa.md plugins/fixture-rogue/agents/lambda.md"
+
+  # Check 21 -- install-time code. The fixture's three install references hold one green form
+  # of every allowed shape: npm/pnpm with --ignore-scripts, yarn berry with --mode=skip-build,
+  # pip with --only-binary=:all:, pipenv with PIP_ONLY_BINARY=:all:, and the allow path's named
+  # --no-binary install -- so the unmutated pass proves each green twin.
+  local itc="$ITC_PLUGIN_REL/$REF_DIR"
+  expect_fail_msg "an npm install without --ignore-scripts is rejected" 21 "without --ignore-scripts" \
+    "printf '\n\`\`\`bash\nnpm install <package>@<version>\n\`\`\`\n' >> $itc/fix-vuln/build-systems.md"
+  expect_fail_msg "a yarn add without --ignore-scripts is rejected" 21 "without --ignore-scripts" \
+    "printf '\n\`\`\`bash\nyarn add <package>@<version>\n\`\`\`\n' >> $itc/upgrade/ecosystems.md"
+  expect_fail_msg "an install named in prose is held too" 21 "without --ignore-scripts" \
+    "printf '\nEdit package.json and run \`npm install\`.\n' >> $itc/upgrade/ecosystems.md"
+  expect_fail_msg "a pip install without --only-binary is rejected" 21 "without --only-binary=:all:" \
+    "printf '\n\`\`\`bash\npip install -r requirements.txt\n\`\`\`\n' >> $itc/fix-vuln/build-systems.md"
+  expect_fail_msg "a pipenv install without PIP_ONLY_BINARY is rejected" 21 "without --only-binary=:all:" \
+    "printf '\n- **pipenv**: \`pipenv install <package>==<version>\`\n' >> $itc/upgrade/ecosystems.md"
+  expect_fail_msg "a missing install reference is rejected" 21 "does not exist" \
+    "rm $itc/install-time-code.md"
+  expect_fail_msg "install references with no install line trip the empty-scan guard" 21 "would examine nothing" \
+    "for f in $itc/fix-vuln/build-systems.md $itc/upgrade/ecosystems.md $itc/install-time-code.md; do grep -vE 'npm|pnpm|yarn|pip' \$f > c.tmp; mv c.tmp \$f; done"
 
   if [ "$rc" -eq 0 ]; then echo "SELFTEST PASS"; else echo "SELFTEST FAIL"; fi
   exit "$rc"
@@ -3011,6 +3038,37 @@ check_untrusted_content() {
     || fail 20 "no command under any GUARD_PLUGIN_RELS $CMD_DIR/ carries a dispatch token -- this check would examine nothing, which means the dispatch scan has drifted rather than no command dispatching"
 }
 
+# --------------------------------------------------------------- check 21
+# Install-time code. /vuln and /upgrade install new dependency versions with the commands
+# their install references give, and a release's install script, or a source distribution's
+# build, runs code it ships with the user's permissions -- in a container and on a host alike.
+# $ITC_PLUGIN_REL/$REF_DIR/install-time-code.md is the rule; this check holds every install line
+# in the three references to it: an npm / pnpm / yarn install, add or update carries
+# --ignore-scripts (yarn berry: --mode=skip-build), and a pip / pipenv install carries
+# --only-binary=:all: or PIP_ONLY_BINARY=:all:, or names one package to build with
+# --no-binary=<name> -- the allow path, run only for packages the user allowed. Every line
+# counts, prose too: an agent follows "run `npm install`" as readily as a fenced command.
+# VACUITY: no install line at all.
+ITC_FILES="fix-vuln/build-systems.md upgrade/ecosystems.md install-time-code.md"
+check_install_time_code() {
+  local root="$1" rel f hit n=0
+  for rel in $ITC_FILES; do
+    f="$root/$ITC_PLUGIN_REL/$REF_DIR/$rel"
+    [ -f "$f" ] || { fail 21 "$ITC_PLUGIN_REL/$REF_DIR/$rel does not exist -- it holds install commands /vuln or /upgrade run"; continue; }
+    while IFS= read -r hit; do
+      n=$((n + 1))
+      grep -qE -- '--ignore-scripts|--mode=skip-build' <<<"${hit#*:}" \
+        || fail 21 "$ITC_PLUGIN_REL/$REF_DIR/$rel:${hit%%:*} installs a Node.js dependency without --ignore-scripts (yarn berry: --mode=skip-build) -- a new release's install script would run with the user's permissions"
+    done < <(grep -nE '\b(npm|pnpm)[[:space:]]+(install|i|ci|add|update|up)\b|\byarn[[:space:]]+(install|add|upgrade|up)\b' "$f")
+    while IFS= read -r hit; do
+      n=$((n + 1))
+      grep -qE -- '--only-binary=:all:|PIP_ONLY_BINARY=:all:|--no-binary=' <<<"${hit#*:}" \
+        || fail 21 "$ITC_PLUGIN_REL/$REF_DIR/$rel:${hit%%:*} installs a Python dependency without --only-binary=:all: (or PIP_ONLY_BINARY=:all:) -- a source distribution's build would run its setup.py with the user's permissions"
+    done < <(grep -nE '\bpip3?[[:space:]]+install\b|\bpipenv[[:space:]]+install\b' "$f")
+  done
+  [ "$n" -gt 0 ] || fail 21 "no install line in $ITC_PLUGIN_REL/$REF_DIR's install references -- this check would examine nothing"
+}
+
 # ---------------------------------------------------------------------- main
 # selftest() runs before the dispatch loop below ever assigns PLUGIN_REL per iteration,
 # and its fixture mutations reference the bare (singular) $PLUGIN_REL directly -- so it
@@ -3079,6 +3137,7 @@ check_edition_forbidden   "$ROOT"
 # prose-style beyond the docs-gated PLUGIN_RELS, and its vacuity guard is a claim about
 # that whole set.
 check_untrusted_content   "$ROOT"
+check_install_time_code   "$ROOT"
 
 if [ "$FAILURES" -gt 0 ]; then
   echo "FAIL: $FAILURES problem(s) under $PLUGIN_RELS" >&2

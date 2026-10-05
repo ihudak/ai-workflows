@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.12.0] — 2026-10-05
+
+### Added
+- **`/vuln` and `/upgrade` install a new dependency version without the code it ships to run at install time.** An npm, yarn or pnpm package's `preinstall`, `install` or `postinstall` script, and the build of a Python source distribution, run code a release ships with the user's permissions — the supply-chain path these two commands open themselves, in a container and on a host alike. `vuln-fixer` and `upgrade-executor` now install with `--ignore-scripts` (yarn berry `--mode=skip-build`) or `--only-binary=:all:`, and name every package whose install-time code they skipped — measured against what was on disk before the install, so a never-installed clone lists every scripted package — each with the command that would run (`skipped_install_scripts:`). When the build fails, the tests regress or cannot start, the run asks once whether to run exactly those packages' scripts (`allow_install_scripts:`, a new `regression_decision: retry-with-install-scripts`); the summary lists them whatever the outcome, with the command to run them later. Dropping the flag is never an automatic fix. Bundler, Poetry, Go, Cargo, Maven and Gradle are unchanged; `install-time-code.md` holds the rules.
+- **Check 21** holds every install line in the two install references and `install-time-code.md` to that form — prose spans included — with seven self-test cases, each failing first.
+- **Probes (Sonnet, an offline npm fixture with a benign-looking `postinstall`):** today's text ran the script — and the agent's notes said it had not; the new text skipped and listed it with its command; `allow_install_scripts` ran exactly it; a never-installed clone listed both scripted packages; a build that needs the script failed as `BUILD_FAILED` with the flag kept and the package named.
+
 ## [4.11.0] — 2026-10-05
 
 ### Changed
