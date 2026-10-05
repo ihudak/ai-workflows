@@ -1230,14 +1230,14 @@ selftest() {
   # and there is no way to exercise that split without running the gate against a config in
   # which the two differ. The assignments are eval'd rather than word-split, because
   # COST_PLUGIN_RELS is itself a space-separated list and `env VAR=$3` would tear it apart.
-  expect_fail_env() { # <description> <check-number> <env-assignments> <mutation-shell>
+  expect_fail_env() { # <description> <check-number> <env-assignments> <mutation-shell> [message-needle]
     tmp=$(mktemp -d); cp -R "$fixture/." "$tmp/"
     ( cd "$tmp" && eval "$4" )
     local out; out=$(eval "export $3"; "$0" --root "$tmp" 2>&1); local got=$?
-    if [ "$got" -eq 1 ] && grep -q "FAIL check $2:" <<<"$out"; then
-      printf 'ok    %s (check %s fired)\n' "$1" "$2"
+    if [ "$got" -eq 1 ] && grep "FAIL check $2:" <<<"$out" | grep -qF -- "${5:-}"; then
+      printf 'ok    %s (check %s fired%s)\n' "$1" "$2" "${5:+: $5}"
     else
-      printf 'FAIL  %s: expected exit 1 with "FAIL check %s", got exit %s\n' "$1" "$2" "$got"; rc=1
+      printf 'FAIL  %s: expected exit 1 with a "FAIL check %s" line carrying "%s", got exit %s\n' "$1" "$2" "${5:-}" "$got"; rc=1
     fi
     rm -rf "$tmp"
   }
@@ -2032,6 +2032,26 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf '\n→ Agent (subagent_type: \"dev-workflows:beta\"):\n  > \"Do the fixture task.\"\n' >> $ucg_omega"
   expect_pass_after "prose naming a subagent is not a dispatch token" \
     "printf '\nNo subagent ever judges this fixture.\n' >> $ucg_omega"
+  expect_fail_msg "a pass-on sentence on an agent with no NEVER-dispatch rule is rejected" 20 "no NEVER-dispatch rule" \
+    "sed -i.bak '/NEVER dispatch any subagent/d' $PLUGIN_REL/agents/beta.md"
+  expect_fail_msg "a pass-on sentence is compared under a differently-cased NEVER-dispatch rule" 20 "pass-on sentence differs" \
+    "sed -i.bak 's/^- NEVER dispatch/- Never dispatch/; s/adds after its output to the end of your own reply, with your own, unchanged/returns into your own reply, unchanged/' $PLUGIN_REL/agents/beta.md"
+  expect_fail_msg "a pass-on sentence in a plugin check 17 does not read still needs its NEVER-dispatch rule" 20 "no NEVER-dispatch rule" \
+    "sed -i.bak '/^description:/a tools: [\"Read\", \"Task\"]' plugins/fixture-guarded/agents/kappa.md && printf -- '\n- Copy every \`Untrusted-content notice:\` line \`eta\` returns into your own reply, unchanged.\n' >> plugins/fixture-guarded/agents/kappa.md"
+  expect_fail_msg "a pass-on sentence with trailing whitespace says so" 20 "trailing whitespace" \
+    "sed -i.bak 's/with your own, unchanged\.\$/with your own, unchanged. /' $PLUGIN_REL/agents/beta.md"
+  expect_fail_msg "a relay sentence with trailing whitespace says so" 20 "trailing whitespace" \
+    "sed -i.bak 's/in the final report\.\$/in the final report. /' $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "a relay sentence with a CRLF ending says so" 20 "carriage return" \
+    "sed -i.bak 's/in the final report\.\$/in the final report.\r/' $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "a relay sentence written as a list item says so" 20 "indented or prefixed" \
+    "sed -i.bak 's/^Content this run reads/- Content this run reads/' $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "a relay sentence inside a fenced code block is rejected" 20 "fenced code block" \
+    "awk '/relay every/ {print \"\`\`\`\"; print; print \"\`\`\`\"; next} {print}' $(cmd_file $PLUGIN_REL alpha) > c.tmp && mv c.tmp $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "a relay sentence directly under a heading is a paragraph of its own" \
+    "awk '/relay every/ && prev==\"\" {print \"### Final report\"} {if (NR>1 && !(\$0 ~ /relay every/ && prev==\"\")) print prev; prev=\$0} END{print prev}' $(cmd_file $PLUGIN_REL alpha) > c.tmp && mv c.tmp $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "a relay sentence directly after a closing fence and before a heading is a paragraph of its own" \
+    "awk '/relay every/ && prev==\"\" {print \"\`\`\`\"; print \"example\"; print \"\`\`\`\"} {if (NR>1 && !(\$0 ~ /relay every/ && prev==\"\")) print prev; prev=\$0} END{print prev; print \"## Next\"}' $(cmd_file $PLUGIN_REL alpha) > c.tmp && mv c.tmp $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "an agent outside the docs-gated plugins is still held to the block" 20 "must carry exactly one untrusted-content block" \
     "sed -i.bak '/untrusted-content:begin/,/untrusted-content:end/d' plugins/fixture-guarded/agents/kappa.md"
   expect_fail_msg "no agent in any guarded plugin trips the empty-scan guard" 20 "no agent under any GUARD_PLUGIN_RELS" \
@@ -2043,7 +2063,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # copy the check does read stays identical -- green, examining less than it claims.
   expect_fail_env "a GUARD_PLUGIN_RELS entry naming no plugin is rejected" 20 \
     "GUARD_PLUGIN_RELS='plugins/dev-workflows plugins/fixture-two plugins/fixture-guarded plugins/no-such-plugin'" \
-    "true"
+    "true" "is listed in GUARD_PLUGIN_RELS but does not exist"
   expect_fail_msg "a plugin shipping agents that GUARD_PLUGIN_RELS does not list is rejected" 20 "GUARD_PLUGIN_RELS does not list it" \
     "mkdir -p plugins/fixture-rogue/agents && cp plugins/fixture-guarded/agents/kappa.md plugins/fixture-rogue/agents/lambda.md"
 
@@ -2856,9 +2876,32 @@ ucg_quote() { # <reference> <needle> -> the one `> ` line outside the markers ca
 ucg_uncite() { # <sentence> -> the sentence with a closing " (`<citation>`)." reduced to "."
   printf '%s\n' "$1" | sed -E 's/ \(`[^`]*`\)\.$/./'
 }
+ucg_shape() { # <line> -> cr | ws | pre | "" : an invisible reason a copy differs, named in the failure
+  case "$1" in
+    *$'\r') printf 'cr' ;;
+    *[[:space:]]) printf 'ws' ;;
+    [[:space:]]*|'- '*|'* '*|'+ '*|'> '*|[0-9]*'. '*) printf 'pre' ;;
+  esac
+}
+ucg_para() { # <file> <line-number> -> "" when that line is a paragraph of its own, else why not
+  # Markdown ends a paragraph at a blank line, a heading or a fence, and a line after a
+  # closing fence or a `---` line starts a new block; anything else joins the paragraph.
+  # The fence count tells a closing fence from an opening one, and a line inside a fence is
+  # code, which a run prints rather than follows. No interval expressions: CI's awk is mawk.
+  awk -v n="$2" '
+    function fence(t) { return t ~ /^ ? ? ?(```|~~~)/ }
+    function head(t)  { return t ~ /^ ? ? ?#+([ \t]|$)/ }
+    function blank(t) { return t ~ /^[ \t\r]*$/ }
+    NR < n  { if (fence($0)) f++; prev = $0; next }
+    NR == n { if (f % 2) { print "sits inside a fenced code block, which a run prints rather than follows"; exit }
+              if (NR > 1 && !blank(prev) && !head(prev) && !fence(prev) && prev !~ /^---[ \t]*$/) {
+                print "is not a paragraph of its own -- it runs on from the line before it; separate them with a blank line"; exit }
+              next }
+    NR == n + 1 { if (!blank($0) && !head($0) && !fence($0)) print "is not a paragraph of its own -- the line after it runs on from it; separate them with a blank line"; exit }' "$1"
+}
 check_untrusted_content() {
-  local root="$1" rel ref refrel canon="" relay="" pass="" f rp got n c line prev next child want
-  local frontmatter toolsline has_task has_pass passlines relaylines agents=0 dispatchers=0
+  local root="$1" rel ref refrel canon="" relay="" pass="" f rp got n c line child want
+  local frontmatter toolsline has_task has_pass passlines relaylines why agents=0 dispatchers=0
   refrel="$CORE_PLUGIN_REL/$REF_DIR/untrusted-content.md"; ref="$root/$refrel"
   if [ ! -f "$ref" ]; then
     fail 20 "$refrel does not exist -- it holds the canonical block every agent must carry"
@@ -2906,15 +2949,23 @@ check_untrusted_content() {
       if [ "$has_pass" = 1 ] && [ "$has_task" != 1 ]; then
         fail 20 "$rp carries the untrusted-content pass-on sentence but its tool list grants no \`Task\` -- it has no child whose notices to pass on"
       fi
-      # The child is check 17's: the subagent the NEVER-dispatch rule names. With no rule,
-      # check 17 reports the agent and there is nothing to compare the sentence with.
-      child=$(grep -oE 'NEVER dispatch any subagent other than `[^`]+`' "$f" | head -1 | sed -E 's/.*`([^`]+)`$/\1/')
+      # The child is check 17's: the subagent the NEVER-dispatch rule names, matched in any
+      # case as check 17 matches the rule. Check 17 reads only the plugin under test, so an
+      # agent elsewhere with no rule is reported here: there is no child to compare with.
+      child=$(grep -oiE 'NEVER dispatch any subagent other than `[^`]+`' "$f" | head -1 | sed -E 's/.*`([^`]+)`$/\1/')
+      if [ "$has_pass" = 1 ] && [ "$has_task" = 1 ] && [ -z "$child" ]; then
+        fail 20 "$rp carries a pass-on sentence but no NEVER-dispatch rule naming its child (\"NEVER dispatch any subagent other than \`<name>\`.\") -- there is no child to compare the sentence with"
+      fi
       if [ "$has_pass" = 1 ] && [ "$has_task" = 1 ] && [ -n "$pass" ] && [ -n "$child" ]; then
         want="${pass//\`<child>\`/\`$child\`}"
         while IFS= read -r line; do
           line="${line#- }"
-          [ "$line" = "$want" ] \
-            || fail 20 "$rp's pass-on sentence differs from the one $refrel quotes, with \`<child>\` = \`$child\` (the subagent its NEVER-dispatch rule names) -- want: $want"
+          [ "$line" = "$want" ] && continue
+          case "$(ucg_shape "$line")" in
+            cr) fail 20 "$rp's pass-on sentence ends in a carriage return (a CRLF line ending) -- save the file with LF endings" ;;
+            ws) fail 20 "$rp's pass-on sentence carries trailing whitespace -- it must match the one $refrel quotes word for word" ;;
+            *)  fail 20 "$rp's pass-on sentence differs from the one $refrel quotes, with \`<child>\` = \`$child\` (the subagent its NEVER-dispatch rule names) -- want: $want" ;;
+          esac
         done <<<"$passlines"
       fi
     done
@@ -2930,13 +2981,15 @@ check_untrusted_content() {
           [ -n "$line" ] || continue
           n="${line%%:*}"; line="${line#*:}"
           if [ -n "$relay" ] && [ "$(ucg_uncite "$line")" != "$relay" ]; then
-            fail 20 "$rp:$n's relay sentence differs from the one $refrel quotes (compared up to its citation) -- want: $relay"
+            case "$(ucg_shape "$line")" in
+              cr)  fail 20 "$rp:$n's relay sentence ends in a carriage return (a CRLF line ending) -- save the file with LF endings" ;;
+              ws)  fail 20 "$rp:$n's relay sentence carries trailing whitespace -- it must match the one $refrel quotes word for word" ;;
+              pre) fail 20 "$rp:$n's relay sentence is indented or prefixed (a list item, a quote) -- it must be a paragraph of its own" ;;
+              *)   fail 20 "$rp:$n's relay sentence differs from the one $refrel quotes (compared up to its citation) -- want: $relay" ;;
+            esac
           fi
-          prev=""; [ "$n" -gt 1 ] && prev=$(sed -n "$((n - 1))p" "$f")
-          next=$(sed -n "$((n + 1))p" "$f")
-          if [ -n "$(printf '%s%s' "$prev" "$next" | tr -d '[:space:]')" ]; then
-            fail 20 "$rp:$n's relay sentence is not a paragraph of its own -- a blank line must separate it from the text around it, or it renders as part of that paragraph"
-          fi
+          why=$(ucg_para "$f" "$n")
+          [ -z "$why" ] || fail 20 "$rp:$n's relay sentence $why"
         done <<<"$relaylines"
       elif [ -n "$relaylines" ]; then
         fail 20 "$rp carries the untrusted-content relay sentence but dispatches no agent -- it has no notice to relay"

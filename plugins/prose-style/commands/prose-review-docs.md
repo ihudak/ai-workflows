@@ -184,6 +184,9 @@ If `fix_mode` is `true`:
 4. After fixing, re-run `prose-style-checker` on the modified files to verify.
 5. Report the final state:
    "**Fixed:** N violations. **Remaining:** M violations (require manual review)."
+   Then print, under **Untrusted-content notices**, every notice line `prose-fixer` and the
+   re-run checker added after their output, as step 7's relay sentence says — the report
+   that sentence names has already been printed.
 
 If `fix_mode` is `false`, offer at the end:
 "Run `/prose-review-docs <same-paths> --fix` to auto-fix the safe violations."

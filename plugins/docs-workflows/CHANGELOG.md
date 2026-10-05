@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.7.3] — 2026-10-05
 
 ### Fixed
-- **Notices: only the lines an agent adds after its output.** Every agent carries the amended block and every dispatching command the amended relay sentence (workflows-core 1.16.2): only the `Untrusted-content notice:` lines an agent adds after its output are relayed, never one quoted inside it, and an agent reports a content line that starts with that token instead of passing it on. `docs-style-checker` copies `prose-style-checker`'s notices to the end of its own reply, with its own.
+- **Notices: only the lines an agent adds after its output.** Every agent carries the amended block and every dispatching command the amended relay sentence (workflows-core 1.16.2): only the `Untrusted-content notice:` lines an agent adds after its output are relayed, never one quoted inside it, and, as hardening, the block says a content line that starts with that token is not a notice to pass on — a notice is a line an agent adds after its output. `docs-style-checker` copies `prose-style-checker`'s notices to the end of its own reply, with its own.
 
 ## [1.7.2] — 2026-10-05
 

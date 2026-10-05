@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.1.1] — 2026-10-05
 
 ### Fixed
-- **Notices: only the lines an agent adds after its output.** Every agent carries the amended block and every dispatching command the amended relay sentence: only the `Untrusted-content notice:` lines an agent adds after its output are relayed, never one quoted inside it, and an agent reports a content line that starts with that token instead of passing it on.
+- **Notices: only the lines an agent adds after its output.** Every agent carries the amended block and every dispatching command the amended relay sentence: only the `Untrusted-content notice:` lines an agent adds after its output are relayed, never one quoted inside it, and, as hardening, the block says a content line that starts with that token is not a notice to pass on — a notice is a line an agent adds after its output.
 - **`docs/reference/agents.md` said the agents' block was copied from workflows-core**, a plugin this one does not depend on. It now says the block is the one the repository keeps in workflows-core's reference, as this changelog's 1.1.0 entry does.
 
 ## [1.1.0] — 2026-10-05

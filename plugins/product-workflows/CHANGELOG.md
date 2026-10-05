@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [3.17.2] — 2026-10-05
 
 ### Fixed
-- **Notices: only the lines an agent adds after its output.** Every agent carries the amended block and every dispatching command the amended relay sentence (workflows-core 1.16.2): only the `Untrusted-content notice:` lines an agent adds after its output are relayed, never one quoted inside it, and an agent reports a content line that starts with that token instead of passing it on.
+- **Notices: only the lines an agent adds after its output.** Every agent carries the amended block and every dispatching command the amended relay sentence (workflows-core 1.16.2): only the `Untrusted-content notice:` lines an agent adds after its output are relayed, never one quoted inside it, and, as hardening, the block says a content line that starts with that token is not a notice to pass on — a notice is a line an agent adds after its output.
 - **`/create-ard`'s relay sentence ran into its `Report:` paragraph**, so the two rendered as one paragraph. It is a paragraph of its own, and check 20 now fails a relay sentence that is not.
 
 ## [3.17.1] — 2026-10-05

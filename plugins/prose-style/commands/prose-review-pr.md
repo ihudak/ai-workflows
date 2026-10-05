@@ -274,7 +274,10 @@ After the report, ask:
 fixes (terminology, excluded words, formatting). Ambiguous cases will be skipped."
 
 If the user says yes, invoke the `prose-fixer` agent
-(`subagent_type: prose-style:prose-fixer`) with the violation list and the file paths.
+(`subagent_type: prose-style:prose-fixer`) with the violation list and the file paths. When it
+returns, report what it fixed and what it left, then print, under **Untrusted-content
+notices**, every notice line it added after its output, as step 8's relay sentence says — the
+report that sentence names has already been printed.
 
 ## Hard rules
 
