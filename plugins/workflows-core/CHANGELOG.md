@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.17.0] — 2026-10-05
+
+### Added
+- **Feedback entries are redacted before they are written** (`feedback-emission` §1.1). An entry is committed and pushed to the specs repository, so a secret pasted into `/prompt`, or an internal host or home path the session saw, used to travel with it verbatim. Every entry point (`emit-auto`, `emit-manual`, `emit-prompt`, `emit-block`, `emit-bugs`) now replaces secrets (private keys, tokens of a known shape, URL passwords, `Authorization` values, values assigned to `*_KEY`/`*_TOKEN`/`*_SECRET`/`PASSWORD` names) with `<SECRET-n>`, email addresses with `<EMAIL-n>`, non-public hosts and IP addresses with `<HOST-n>`, and home-directory paths with `~/…`. It does so in every prose block and in `id`'s slug, never in `author` or the plugin's own fields, and reports what it redacted by category and count. A `/prompt*` User prompt is still verbatim in every other character. `/prompt`, `/prompt-brainstorm`, `/prompt-grill-me`, their docs pages and the session-feedback page say so.
+
 ## [1.16.3] — 2026-10-05
 
 ### Fixed

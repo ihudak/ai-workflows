@@ -79,9 +79,26 @@ back in review because the two products differ here.
   `false-positive`, `docs-ux`, `environment-defect`, `other`.
 - **`origin: prompt` entries add two more prose blocks** after Friction /
   Suggested improvement: **User prompt** (the user's corrective request,
-  verbatim) and **Resolution** (what the AI actually did).
+  verbatim save §1.1's redactions) and **Resolution** (what the AI actually did).
 - `id` — stable: `<KEY>-<command>-<short-slug>` (drop the leading `/` from the
   command; use `manual` / `prompt` when `command` is `n/a`).
+
+### 1.1 Redaction — before any entry is written
+
+Every entry point (§6) redacts an entry before it writes it. The entry is committed and pushed to the specs repository (§2), where everyone with access to that repository reads it alongside the maintainer, so a value the user typed, or the session saw, must not travel with it. Redact every prose block — the **User prompt** included — and the short slug of `id`. Never redact `author`, which is the attribution §3 asks for, or the fields the plugin fills from its own vocabulary and records (`date`, `command`, `plugin_version`, `origin`, `category`, `impact`).
+
+| Category | Replace with | What to catch |
+|---|---|---|
+| Secrets | `<SECRET-n>` | A private-key block, from its `-----BEGIN … PRIVATE KEY-----` line through its `END` line. A token of a known shape: `ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_`, `github_pat_`, `glpat-`, `xoxb-` and the other `xox?-` tokens, `AKIA`/`ASIA` access-key ids, `sk-` keys (`sk-ant-`, `sk-proj-` included), `AIza` keys, `npm_` tokens, and a JWT (`eyJ….eyJ….…`). The password in a URL (`scheme://user:<SECRET-n>@host`). A bearer or basic `Authorization` value. Any value assigned to a name like `*_KEY`, `*_TOKEN`, `*_SECRET`, `PASSWORD` or `PASSWD`. |
+| Email addresses | `<EMAIL-n>` | Anything shaped like an email address. |
+| Hosts and addresses | `<HOST-n>` | An IPv4 or IPv6 address other than a loopback one. A hostname, or the host part of a URL, that is not a public service's: keep `github.com`, `gitlab.com`, a public package registry and a public product's documentation domain, and redact an internal, corporate or private one. When unsure, redact. In a URL, replace the host and keep the scheme and path. |
+| Home paths | `~` | An absolute path under a home directory — `/home/<user>/…`, `/Users/<user>/…`, `C:\Users\<user>\…`, `/root/…` — becomes `~/…`, dropping the account name. |
+
+- **The same value takes the same placeholder** throughout one entry, and numbering starts at 1 in each entry.
+- **A placeholder replaces the value and nothing else.** The words around it stay exactly as written, so a redacted **User prompt** is still verbatim in every other character.
+- **Keep what the maintainer needs in order to act:** command and agent names, plugin file paths (a home path becomes `~/…`, not a placeholder), flags, versions, line numbers, and error messages with only their values redacted.
+- **What is already in the file is never rewritten** (§3, append-only). Redaction applies to what this run appends.
+- **Report it.** Beside the persisted path it returns, the entry point reports what it redacted, by category and count: `redacted <N> value(s): <category> ×<n>[, …]`. It reports nothing when nothing was redacted. A report-only run (§2 tier 4) writes nothing, so it redacts nothing: the user sees their own text in their own terminal.
 
 ## 2. Persistence ladder (specs-first; never cwd)
 
@@ -192,7 +209,7 @@ signal the maintainer needs.
 
 Five named entry points: `emit-auto`, `emit-manual`, `emit-prompt`, `emit-block`, and `emit-bugs`. Every caller supplies `plugin_version` (§3) and lets
 this reference resolve the target (§2), dedupe/append (§3), and format the
-entry (§1). None of them commits; none writes into a docs/code repo or the
+entry (§1). Every entry point redacts the entry per §1.1 before it writes it. None of them commits; none writes into a docs/code repo or the
 current working directory, where it is not the specs repository. The artifacts are committed later, once, by the
 run's terminal `commit-artifacts` step
 (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §4).
@@ -222,11 +239,11 @@ the target (§2); write; surface the path + any degradation notice.
 ### `emit-prompt` — `/prompt`, `/prompt-brainstorm`, `/prompt-grill-me`
 
 Inputs: `command` (inferred from recent context, or `n/a`), the **corrective
-triple** — Friction, the **verbatim User prompt**, and the Resolution — a
+triple** — Friction, the **verbatim User prompt** (redacted here per §1.1, never by the caller), and the Resolution — a
 `category`, `impact`, `key` (or `null`), `source`.
 
 Behavior: `origin: prompt`; write the entry with the two extra prose blocks
-(User prompt verbatim + Resolution, §1); never silently skipped (§3); resolve
+(User prompt verbatim save §1.1's redactions + Resolution, §1); never silently skipped (§3); resolve
 the target (§2); write silently (§5); surface the path.
 
 ### `emit-block` — capture-at-block (a run halting on a plugin gap or on a tool the ai-containers image lacks)

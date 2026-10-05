@@ -16,7 +16,7 @@ Logs a corrective interaction — a command anywhere in the plugin family produc
 
 `--skip-costs` (or `$WORKFLOWS_SKIP_COSTS`, [`environment.md`](../reference/environment.md)) skips this run's session-cost entry, still advancing the checkpoint, and drops any deferred cost record a ceded [`/prompt-brainstorm`](prompt-brainstorm.md) or [`/prompt-grill-me`](prompt-grill-me.md) left pending in this session — naming each dropped record in its output rather than writing its entry (`references/run-flags.md` §5 step 3); it is the only run flag this command applies — `--skip-feedback` and `--enforce-model` are reported ignored, since `/prompt` dispatches no `impl-maintenance` and invokes no model routing.
 
-`$ARGUMENTS`, once the run flag above is stripped, is the corrective request itself, captured **verbatim** as the User prompt block — never paraphrased. Phase 1 infers which command's output you're correcting from recent context, asking only if genuinely ambiguous; if none applies, it records `n/a`.
+`$ARGUMENTS`, once the run flag above is stripped, is the corrective request itself, captured **verbatim** as the User prompt block — never paraphrased — save that secrets, email addresses, internal hosts and home-directory paths are replaced by placeholders before it is written ([Session feedback](../reference/session-feedback.md#what-is-redacted)). Phase 1 infers which command's output you're correcting from recent context, asking only if genuinely ambiguous; if none applies, it records `n/a`.
 
 Write the flag before or after the request, never inside it: a leading run of flag tokens and a trailing run of flag tokens are stripped, so a `--skip-costs` written in the middle of the request text itself is kept as part of the verbatim request, not read as a flag.
 
@@ -28,7 +28,7 @@ Write the flag before or after the request, never inside it: a leading run of fl
 
 ## What it produces
 
-Performs the correction directly against your target files — those edits are never staged or committed by this command. It then appends an `origin: prompt` entry (Friction, User prompt verbatim, Resolution — a one-line summary of the fix just applied) via the same specs-first ladder [Session feedback](../reference/session-feedback.md) describes, committed by the terminal `commit-artifacts` step, which pushes it unless the specs repository is on neither its default branch nor a branch the plugin created, has no remote to push to, or the push would also publish commits other than the plugin's own session-file commits.
+Performs the correction directly against your target files — those edits are never staged or committed by this command. It then appends an `origin: prompt` entry (Friction, User prompt verbatim with sensitive values redacted, Resolution — a one-line summary of the fix just applied) via the same specs-first ladder [Session feedback](../reference/session-feedback.md) describes, committed by the terminal `commit-artifacts` step, which pushes it unless the specs repository is on neither its default branch nor a branch the plugin created, has no remote to push to, or the push would also publish commits other than the plugin's own session-file commits.
 
 
 A **session-cost entry** too, since this command now reports its own spend: `phase`/`role` inherited from the target command, or [`plugin-feedback`](../roles-and-phases.md#plugin-feedback)/`n/a` when there is nothing to inherit. It lands beside the feedback entry under `$SPECS_PATH`, or in the keyless pending file — see [Session cost](../reference/session-cost.md).
@@ -42,7 +42,7 @@ No reviewer and no fix cycle — `/prompt` **is** the fix, applied once, directl
 /workflows-core:prompt "design.md skipped the Alternatives considered section — add it back, listing the constraint each declined take optimised for"
 ```
 
-The command applies the fix to `design.md` directly, confirms the inferred `command` (`/design`), and logs the corrective triple — Friction, your verbatim request, and the one-line Resolution — to the PRD's feedback file.
+The command applies the fix to `design.md` directly, confirms the inferred `command` (`/design`), and logs the corrective triple — Friction, your verbatim request with any sensitive value redacted, and the one-line Resolution — to the PRD's feedback file.
 
 ## See also
 

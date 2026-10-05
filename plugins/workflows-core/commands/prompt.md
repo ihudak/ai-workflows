@@ -1,6 +1,6 @@
 ---
 name: prompt
-description: Log a corrective interaction — a command produced something wrong and you're fixing it — as plugin feedback, then act on your correction directly. Captures the friction, your verbatim prompt, and the resolution to the specs repo for the maintainer.
+description: Log a corrective interaction — a command produced something wrong and you're fixing it — as plugin feedback, then act on your correction directly. Captures the friction, your verbatim prompt (secrets and private hosts redacted), and the resolution to the specs repo for the maintainer.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 ---
 
@@ -13,7 +13,7 @@ performs the correction. `origin: prompt`.
 
 Captured (per `${CLAUDE_PLUGIN_ROOT}/references/feedback-emission.md` §1):
 1. **Friction** — what the command produced that was wrong.
-2. **User prompt** — your corrective request, **verbatim** (`$ARGUMENTS`).
+2. **User prompt** — your corrective request, **verbatim** (`$ARGUMENTS`), save the secrets, email addresses, internal hosts and home paths §1.1 of that reference redacts.
 3. **Resolution** — what the AI actually did.
 
 Usage: `/prompt <corrective request> [--skip-costs]`
@@ -55,7 +55,7 @@ Keep a one-line summary of what you did — this becomes the **Resolution** bloc
 Cite `${CLAUDE_PLUGIN_ROOT}/references/feedback-emission.md` and call its
 `emit-prompt` entry point (§6). Provide:
 - **Friction** — what the command produced that was wrong.
-- **User prompt** — `$ARGUMENTS`, **verbatim** (never paraphrased).
+- **User prompt** — `$ARGUMENTS`, **verbatim** (never paraphrased, and never redacted here: `emit-prompt` applies `feedback-emission.md` §1.1's redactions as it writes).
 - **Resolution** — the one-line summary of the correction you just applied.
 - `command` (Phase 1), an inferred `category` (§1 vocab, reuse-first), `impact`,
   `key` (or `null`), `source`.
