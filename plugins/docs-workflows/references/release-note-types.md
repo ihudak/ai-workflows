@@ -4,10 +4,10 @@
 
 Consulted by `release-notes-writer` to decide **where a release note lands and what shape it must
 take**. This file is the single authority for the section map, the per-section draft shape,
-the per-section prose rules, the deprecation-note rule, and Change Type sourcing. The
-`/release-notes` command cites this file for its own invariants (§1/§3 for the draft shape, §4 for
-the documentation-link rule) but never re-derives the writer's decision; the agent applies it and returns a proposed
-destination plus any gaps.
+the per-section prose rules, the deprecation-note rule, the effective-version rule (§6), and Change
+Type sourcing. The `/release-notes` command cites this file for its own invariants (§1/§3 for the
+draft shape, §4 for the documentation-link rule, §6 for the effective version) but never re-derives
+the writer's decision; the agent applies it and returns a proposed destination plus any gaps.
 
 The Change Type is a **field on the PRD, inferred where the PRD does not carry a routable one, and confirmed where that inference is uncertain** (§7). It is never written into the draft
 and never collected as a field — the agent resolves it only to pick the destination and the shape.
@@ -88,7 +88,7 @@ The Change Type selects the **section** of that one file:
 |---|---|---|
 | `Breaking change` | `## Breaking changes` | plain **Category:** label + `### title` + prose |
 | `New technology support` | `## Feature updates` | plain **Category:** label + `### title` + prose |
-| `Bug fix` | `## Fixes` | one self-contained sentence — **no label, no title** |
+| `Bug fix` | `## Fixes` | one or two self-contained sentences — **no label, no title** |
 | `not applicable` | — | not routable: inferred as for an absent value (§7), and the draft lands in the section the inference picks |
 
 **The three-file model this replaced is gone, not merely renamed.** Drafts once landed in generated
@@ -144,8 +144,9 @@ Omit the category label entirely when the PRD carries no `release_notes_category
 
 ### `## Fixes`
 
-Render **one self-contained sentence** — no category label, no `###` title, and no key (the
-automation appends the key when it publishes). A shipped entry looks like:
+Render **one self-contained sentence**, or two when the conditions or the resolution need a second —
+no category label, no `###` title, and no key (the automation appends the key when it publishes). A
+shipped entry looks like:
 
 ```markdown
 Fixed an issue where the **GET account audits** endpoint of the Account Management API would return a `500` error instead of a `504` error in case of a timeout.
@@ -153,12 +154,31 @@ Fixed an issue where the **GET account audits** endpoint of the Account Manageme
 
 ## 4. Prose rules per section
 
+### Titled sections (`## Feature updates`, `## Breaking changes`)
+- **Title** — what changed, or the value it brings, in sentence case; no leading "New feature:", no
+  trailing period. Aim for **80 characters or fewer**: the command reports the count and never
+  blocks on it.
+- **First paragraph** — about two sentences, roughly 35 words: what changed and why it matters (a
+  breaking note's "Starting with …" clause, where §6 calls for one, comes on top).
+- **A second paragraph does exactly one job** — compatibility (what the change works with or
+  requires), scope (who or what it applies to, and what it excludes), or a required action. In a
+  breaking note the Action plan is that paragraph. Never "how it works" detail, and never a list of
+  every place the feature appears; that is the documentation's job.
+
 ### Breaking change
 - **Present tense.** State plainly what is breaking — the reader is scanning for impact, so do not
   bury it behind a benefit statement.
-- **Include directions or a link to remediate** (the Action plan). Mandatory whenever the customer
-  must act; omit only when no action is needed.
+- **Say when it takes effect where the heading does not** (§6) — a later release, or the end-of-life
+  date of a far-off deprecation.
+- **The Action plan.** Directions or a link to remediate, in their own paragraph that opens with the
+  literal bold label `**Action plan:**`. **Every breaking note carries one**: §2 defines a breaking
+  change as one that forces the customer to act, so a breaking note with nothing to do contradicts
+  its own section, and a fixed label is what a reader scanning the section looks for. Never invent the
+  remediation: when the source states none, the paragraph is `**Action plan:**
+  <!-- TODO: action plan -->` and the writer records a `field: prose` gap.
 - Voice: write "you"/"your"; start with verbs.
+- **An upcoming change is announced the same way.** A note that warns of a break in a later release
+  is still a breaking note: it names that later release (or date) and what to do before then.
 
 ### Feature update
 - Lead with **customer value**, present tense; mention a previous limitation only as a subordinate
@@ -179,7 +199,9 @@ Fixed an issue where the **GET account audits** endpoint of the Account Manageme
 - State the concrete benefit, not hedged prose.
 
 ### Fixes
-- **Past tense**, one sentence: symptom + resolution.
+- **Past tense**, one sentence (two at most): symptom + resolution. **Open with a past-tense verb**
+  — "Fixed", "Resolved", "Changed", "Removed", "Updated" — never an article or inline code, so every
+  entry in the section reads at a glance as a completed correction.
 - Include the conditions necessary for the problem to occur when they fit the sentence (what action,
   what environment, what input).
 - **No hedging** (`could`, `sometimes`, `might`) — except when describing a potential security
@@ -199,6 +221,11 @@ destination and the note always has room. Which titled destination is independen
 - The PRD deprecates a capability, or a new capability supersedes/deprecates an old one.
 - The whole PRD is a deprecation.
 
+**Not a trigger: a deprecation this change does not make.** "Deprecat*" wording is where to look,
+not the test. A deprecation the PRD puts out of scope (an out-of-scope list, a non-goal), leaves to
+later or other work, or mentions only as background — one announced earlier, or another product's —
+gives this note none.
+
 **When triggered**, the Summary carries a **deprecation note** — a trailing `> Note:` line or a short
 labeled sentence — stating:
 - what is deprecated,
@@ -215,12 +242,46 @@ does not already state.
 
 ## 6. General rules (all destinations)
 
-- **No release version in the prose, and exactly one Summary.** The version is the `#` heading the
-  draft is filed under (§1), and it is obvious to customers besides. Never write "Starting with
-  version 1.305…", "in 344", etc. Emit **one** Summary for the note — never one block per declared
+- **Exactly one Summary.** Emit **one** Summary for the note — never one block per declared
   release version.
+- **A release version only where the heading cannot say it.** The version is the `#` heading the
+  draft is filed under (§1). **Feature updates and fixes name no release version**, and a breaking
+  change that takes effect in the release it is filed under names none either: never "Starting with
+  version 1.305…", "in 344", etc. for that release. A breaking note that takes effect in a **later**
+  release must say when, because its heading names the release that announces the break, not the
+  one that makes it: it opens `Starting with <release>, …`, the release written as the PRD names it
+  (`version 3.0`). The exception is a deprecation far enough out that only its date is known (for
+  example, the end of 2028): its end-of-life date (§5) says when, and the note names no version.
+  **Never invent a version, and never take it from the heading.**
+
+  **For a breaking note, where it comes from — first match wins:**
+  1. **The PRD's body names the release the change takes effect in, and it is later than the release
+     the note is filed under** → that release. Under `# Unreleased`, the release that ships the
+     change is not yet known, so this rung fires only where the PRD itself says the named release
+     comes after the one that ships the change. Compare releases as versions, not as strings
+     (`1.24.0` is `version 1.24`), and never read the PRD's `release_versions` frontmatter, which
+     `/release-notes` does not read (`workflows-core:prd-format`).
+  2. **The break is itself a deprecation, and the PRD names no release** → its end-of-life date (§5)
+     says when; no release. While that date is unknown, the draft carries rung 3's placeholder and
+     gap as well, marked as one the end-of-life answer settles: a supplied date removes both, an
+     answer that leaves the end-of-life marker leaves this marker too, unasked — the open date is the
+     real question — and an answer that the change is no deprecation after all leaves the gap to be
+     asked.
+  3. **The PRD says the break comes in a later release and names none** — including a break beside a
+     deprecation the note also announces → a `Starting with <!-- TODO: effective version -->, …`
+     placeholder and a `field: effective_version` gap.
+  4. Anything else — the change takes effect in the release the note is filed under, or, under
+     `# Unreleased`, in whichever release ships it → no clause.
+- **Another component's versions are fine in any note** when the source states them — "agent
+  versions 1.241 and earlier".
 - **The Change Type never appears as text in the draft.** It selects the destination and the shape;
   the PM sets the field on the PRD.
+- **Link text names its target.** "Learn more", "here", "this page" and "click here" fail; write
+  "For details, see [Configure log ingestion](…)".
+- **No internal names.** Never a codename, a feature-flag name, an internal component, service or team
+  name, or a person's name — the customer sees none of them. Name the product and UI terms instead.
+- **No marketing superlatives** — "seamless", "powerful", "revolutionary", "best-in-class". State the
+  concrete benefit.
 - Translate the technical change into customer-value language (product and UI terms).
 - Assert only what the source supports; preserve the facts the source supports.
 - These rules complement, and do not duplicate, the prose-style checks run in the command's

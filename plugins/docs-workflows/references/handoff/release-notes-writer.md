@@ -8,6 +8,7 @@ diff_summaries:      <optional array of diff-summarizer outputs; one entry per r
 code_repos:          <optional array of {slug, path}; provided when diff-grounding is on — enables the code half of the writer's Source-truth check (8b); the acceptance-criteria half (8a) runs without it>
 change_type:            <change_type from the resolved PRD's frontmatter; null otherwise — nothing returns it from outside, so a value that is absent or not routable is inferred, and confirmed in the command's own grill where the inference is low-confidence>
 release_notes_category: <release_notes_category from the resolved PRD's frontmatter; null otherwise — used verbatim as the category label>
+filed_version:                   <the release this draft is filed under — the release Phase 3 resolved for `release_versions` (`--version`, else the one question); null when it files under `# Unreleased`. Read only to tell a breaking change that takes effect later from one that takes effect in this release (release-note-types.md §6)>
 run_phase:                       <"pm" | "dev" — inferred by the command from whether specification.md / design.md exist under the PRD's specs dir; gates the release-note-types.md §4 documentation-link rule only>
 model_routing:
   classification: MODERATE
@@ -33,12 +34,15 @@ release_notes_block:
   change_type:  <one of: "Breaking change" | "New technology support" | "Bug fix">   # selects the destination + shape; NEVER rendered as text
   destination:  <one of: "## Breaking changes" | "## Feature updates" | "## Fixes">  # a section of release-notes.md, per release-note-types.md §1
   category_label: <the PRD's release_notes_category verbatim, e.g. "Platform | Settings"; null when the PRD carries none — the label line is then omitted>
-  feature_title: <5–10 word headline; sentence case; no leading "New feature:"; no trailing period. null for the fixes destination.>
+  feature_title: <headline stating what changed or its value; sentence case; aim for 80 characters or fewer; no leading "New feature:"; no trailing period. null for the fixes destination.>
   prose: |
-    <shaped customer-facing body; no work-item IDs; no PR links; no release version. For the titled
-    destinations: a 2–4 sentence paragraph, or a short intro sentence + a bulleted list when the
-    feature enumerates discrete options. For the fixes destination: ONE self-contained past-tense
-    sentence. See release-note-types.md §3 (shape) and §4 (prose rules).>
+    <shaped customer-facing body; no work-item IDs; no PR links; a release version only where §6
+    allows it — a breaking note that takes effect in a later release opens with that release. For the
+    titled destinations: a first paragraph of about two sentences, or a short intro sentence + a
+    bulleted list when the feature enumerates discrete options; a breaking note's remediation opens
+    with "**Action plan:**". For the fixes destination: one self-contained past-tense sentence, two at
+    most, opening with a past-tense verb. See release-note-types.md §3 (shape), §4 (prose rules) and
+    §6 (general rules).>
   combined_rendered: |
     <the exact text the PM publishes wherever release notes are published. For a titled destination:
     "**Category:** <category_label>", a blank line, "### <feature_title>", a blank line,
@@ -47,9 +51,10 @@ release_notes_block:
     or a "--- Summary ---" divider.>
 
 gaps:
-  - field:              <feature_title | prose | change_type | deprecation_eol>
+  - field:              <feature_title | prose | change_type | deprecation_eol | effective_version>
     kind:               <acceptance-criteria | source-truth; required for discrepancies from step 8, omitted for other gaps>
-    reason:             <why this is low-confidence or missing. For change_type: the destination was inferred and the source supports two destinations roughly equally; the proposed value is still set on release_notes_block. For deprecation_eol: a deprecation was detected but the required end-of-life date is not derivable from the source.>
+    reason:             <why this is low-confidence or missing. For change_type: the destination was inferred and the source supports two destinations roughly equally; the proposed value is still set on release_notes_block. For deprecation_eol: a deprecation was detected but the required end-of-life date is not derivable from the source. For effective_version: the PRD says a breaking change takes effect in a later release than the one the note is filed under and names none (release-note-types.md §6, rung 3), or the break is itself a deprecation whose end-of-life date is still open (rung 2). For prose: an unverifiable claim, or a breaking note whose PRD states no remediation — its Action plan carries the `<!-- TODO: action plan -->` marker.>
+    settled_by_eol:     <effective_version only — true when the gap was raised by §6 rung 2, so the command's answer to the deprecation_eol gap settles it — a supplied date drops it, a left end-of-life marker leaves it unasked, and only "not a deprecation" asks it; omitted otherwise>
     recommended_action: "ask user" | "mark TODO in draft" | "note in report"
     draft_phrasing:     <only for kind: acceptance-criteria — the draft's contradictory wording, verbatim>
     criteria_phrasing:  <only for kind: acceptance-criteria — the acceptance criterion, verbatim>
@@ -68,4 +73,4 @@ The two discrepancy kinds have disjoint evidence fields. An `acceptance-criteria
 | Status    | Meaning                                                              |
 |-----------|---------------------------------------------------------------------|
 | `OK`      | Draft rendered; the Summary has its prose and, when the PRD supplied one, its category label.|
-| `PARTIAL` | Draft rendered but at least one gap needs the user (low-confidence destination, missing end-of-life date, or an unverifiable claim). |
+| `PARTIAL` | Draft rendered but at least one gap needs the user (low-confidence destination, missing end-of-life date, missing effective release, missing Action plan, or an unverifiable claim). |
