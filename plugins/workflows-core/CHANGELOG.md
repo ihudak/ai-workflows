@@ -17,6 +17,11 @@ A section headed `— Unreleased` has not been published yet; where more than on
   The new `session-diagnosis` reference holds the rules: context safety (measure before reading, never print a record whole), locating a session (with Claude Code's store as observed starting points, a command's expanded body read from the transcript itself, and each API message's usage counted once), the case file, the dimensions, the findings shape and the report. Its one write into `$SPECS_PATH` is its own session-cost entry, between `specs-preflight` and `commit-artifacts`: it passes `target_command: n/a`, so `cost-emission` §7 charges it to `plugin-feedback`/`n/a`, and the analysts' spend stays out of the next command's entry. `--skip-costs` applies; `run-flags` lists it among the free-text commands. It never modifies a session file. Adapted from superpowers' diagnosing-superpowers. Its bundle export, issue filing and similar-session search were not taken.
 - **The `commit-artifacts` consumer count is re-derived** with a recipe that matches both phrasings a command executes it by, so `/harvest-decisions` is counted; the git rules' counts follow.
 
+## [1.21.2] — 2026-10-05
+
+### Fixed
+- **Session cost counted most API calls two or three times.** Claude Code writes one API response as several assistant records sharing one message id, each repeating the usage: a streaming partial first, then the final record. `session-cost.py` summed every record, so a call's input and cache reads were counted once per record. In the main transcript, where the repeats are identical, its output was counted once per record too. Measured on one long session, the main transcript's output tokens came to about 2.5 times the session's unique messages, and the session's dollar figure, subagents included, to about 1.9 times ($3,616 against $1,933). Within one measured window, each message id now counts once, at its final usage, across the main transcript and its subagent transcripts together, so a forked agent's copy of its parent's record is not counted again. Cost entries written before this release overstate their dollars by roughly that much; the ratio varies with how a session splits between the main transcript and its subagents.
+
 ## [1.21.1] — 2026-10-05
 
 ### Changed

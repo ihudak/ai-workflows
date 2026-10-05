@@ -34,7 +34,11 @@ maintainer — the plugin only ever appends immutable per-invocation measurement
 **Cost is computed, never read.** Claude Code stores no dollar figure in the
 transcript. Every assistant message carries `.message.usage` + `.message.model`;
 `${CLAUDE_PLUGIN_ROOT}/scripts/session-cost.py` sums tokens per model and multiplies by a price table
-(§4). Dollars are therefore an estimate that drifts from Claude Code's own figure
+(§4). One API response is written as several assistant records sharing one `.message.id`, each
+repeating the usage — a streaming partial first, the final record later — so within one measured
+window each message id is counted once, at its final usage, across the main transcript and its
+subagent transcripts together. A call whose records straddle two windows' edge is still counted in
+each. Dollars are therefore an estimate that drifts from Claude Code's own figure
 by the accuracy of the price table — an accepted trade (cost accuracy is
 explicitly secondary to code/doc quality).
 
