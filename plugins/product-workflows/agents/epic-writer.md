@@ -39,6 +39,20 @@ Return `status: BLOCKED` with the specific gap when: the handoff file is missing
    already validated; split only at a genuine risk or feedback-loop boundary.
    Order the Epics so that none depends on a later one (supports the reviewer's
    independence check).
+3. **Needs, shared setup and shared decisions** (the reviewer's *Cross-Epic
+   dependencies* dimension). For each Epic, list what it needs before it can
+   start or before its Independent Test can run — code, a schema, setup, test
+   tooling, fixtures, an entry point, a decision — and either build it in that
+   Epic's In scope or name, in its `## Dependencies`, the earlier Epic that
+   delivers it and what it delivers; that Epic's In scope says it delivers it.
+   Something more than one Epic needs (a test harness, a scaffold, a schema, a
+   shared component) is built by the earliest Epic that needs it, and the others
+   depend on that Epic. A decision more than one Epic must adopt (an interface, a
+   message or data format, a shared value list) has one home: the applicable
+   ARD's `[AD#N]` where one settles it, else the earliest Epic that needs it; every
+   adopting Epic cites that home. Two Epics with no dependency between them share
+   no code, configuration, schema or setup in their In scope; where they would,
+   one depends on the other or they merge.
 
 ## Write mechanics
 
@@ -73,13 +87,13 @@ target: <one component id from the handoff's `components` — omit this line whe
 
 ## Acceptance criteria
 - Given <context>, when <action>, then <observable result>.
-- ...
+- ... (each false before this Epic and true after it through this Epic's work alone; the rule, not an example — "rejects any quantity over stock on hand", not "rejects quantity 999", with a literal only where the value is the requirement, such as a limit, a rounding rule or exact text; usually three to eight — more means split the Epic, or the criteria became a test plan)
 
 ## Independent Test
 <one line: this Epic is verifiable standalone by <observable test> and delivers <value> without any not-yet-built Epic>
 
 ## Dependencies
-- <other Epics under this PRD or elsewhere, repos, teams, external systems — named>
+- <other Epics under this PRD or elsewhere, repos, teams, external systems — named, each with what this Epic needs from it>
 - ...
 
 ## Contract

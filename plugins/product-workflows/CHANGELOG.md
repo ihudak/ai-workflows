@@ -5,6 +5,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.18.0] — 2026-10-05
+
+### Changed
+- **`/epics` checks cross-Epic dependencies.** `epic-writer`'s pre-flight and a new `epic-reviewer` dimension (*Cross-Epic dependencies*) apply four rules to the Epics a run writes:
+  - **Needs:** what an Epic needs before it can start or before its Independent Test can run is built in its own scope, or delivered by an Epic its `## Dependencies` names.
+  - **Collisions:** two Epics with no dependency between them share no code, configuration, schema or setup.
+  - **Shared setup:** setup more than one Epic needs is built by the earliest Epic that needs it.
+  - **Shared decisions:** a decision more than one Epic adopts has one home, the ARD's `[AD#N]` or the earliest Epic that needs it, and every adopter cites it.
+
+  Each breach is MAJOR. A dependency on an earlier Epic in the run's order is build order, not the forward dependency *Epic independence* flags. Touched-unit coverage needed no new check, as *Single target* already confines each Epic's work to its target.
+- **Acceptance-criteria wording.** An Epic's criteria, and `prd-reviewer`'s check of a PRD story's criteria, now take three rules:
+  - **False before, true after:** each criterion is false before the unit and true after it, through that unit's work alone.
+  - **The rule, not an example:** "rejects any quantity over stock on hand", not "rejects quantity 999", with a literal only where the value is the requirement.
+  - **Enough, no more:** usually three to eight per Epic; past eight on a PRD story, split the story.
+
+  `epic-reviewer` and `prd-reviewer` grade a breach MINOR. `specification-format.md` stays frozen.
+
 ## [3.17.4] — 2026-10-05
 
 ### Fixed
