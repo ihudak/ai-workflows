@@ -6,11 +6,11 @@
 # in the two restructures this one follows (a sibling plugin repo,
 # ai-containers#78).
 #
-# NINETEEN checks, numbered 1-19 in the order their functions appear below. The number is
+# TWENTY checks, numbered 1-20 in the order their functions appear below. The number is
 # written here and nowhere else in this file, and nothing gates it -- re-derive it with
 # `grep -oE '\bfail [0-9]+ ' "$0" | awk '{print $2}' | sort -un` -- the numbers a fail() call
 # can actually report -- rather than trusting this sentence, and update it in the commit that
-# adds a check. Counting the banner comments instead gives 18: checks 1 and 2 share one.
+# adds a check. Counting the banner comments instead gives 19: checks 1 and 2 share one.
 #
 # --selftest mutates a copy of the passing fixture once per check and asserts the
 # gate rejects it. Without that, the fixtures are decorative: a gate that cannot
@@ -70,6 +70,10 @@ NS_MAP_REL="${NS_MAP_REL:-plugins/workflows-core/scripts/command-namespaces.json
 # trigger got both directions wrong at once (see those two functions).
 COST_PLUGIN_RELS="${COST_PLUGIN_RELS:-plugins/dev-workflows plugins/docs-workflows plugins/workflows-core plugins/product-workflows}"        # copilot: ""
 HANDOFF_PLUGIN_RELS="${HANDOFF_PLUGIN_RELS:-plugins/product-workflows}"  # copilot: ""
+# Which plugins check 20 holds to the untrusted-content guard: every docs-gated plugin plus
+# prose-style, which ships agents and dispatching commands but no docs/ tree. Declared, like
+# the lists above, never inferred from a directory listing.
+GUARD_PLUGIN_RELS="${GUARD_PLUGIN_RELS:-$PLUGIN_RELS plugins/prose-style}"   # copilot: n/a (one plugin)
 
 # The plugin that holds the shared reference corpus. Checks 8, 9, 11 and 16 read a reference
 # from HERE and their call sites from $PLUGIN_REL -- the corpus now lives in its own plugin,
@@ -1178,6 +1182,9 @@ selftest() {
   # green cases are worthless if anything outside the mutation can redden them.
   export NS_MAP_REL="plugins/dev-workflows/scripts/command-namespaces.json"
   export HANDOFF_PLUGIN_RELS="plugins/dev-workflows"
+  # Check 20's population: the docs-gated fixture plugins plus one outside them, as the
+  # edition's own default reaches prose-style beyond PLUGIN_RELS.
+  export GUARD_PLUGIN_RELS="plugins/dev-workflows plugins/fixture-two plugins/fixture-guarded"
   # Check 18's arming flag is neutralised here so each case controls it, and the two that need
   # it armed set it through expect_fail_env / expect_pass_after_env. Without this line the
   # selftest inherits the caller's value, and the one case that proves the gate STAYS QUIET off
@@ -1265,10 +1272,10 @@ selftest() {
     sed -E "s|ships [0-9]+ files|ships $left files|" "$idx" > rr.tmp && mv rr.tmp "$idx"
   }
   # ...and the unit the corpus actually moves in. CORE_PLUGIN_REL is ONE variable serving all
-  # three checks, so a case that relocated only the file it is about would leave the other two
-  # checks reporting a reference missing from the corpus plugin -- red, for a reason the case
+  # three checks -- four, with check 20's canonical block -- so a case that relocated only the file
+  # it is about would leave the others reporting a reference missing from the corpus plugin -- red, for a reason the case
   # was not making. That is the real shape too: the corpus is extracted as a whole.
-  relocate_corpus() { relocate_refs cost-emission.md next-phase-offer.md phase-handoff.md; }
+  relocate_corpus() { relocate_refs cost-emission.md next-phase-offer.md phase-handoff.md untrusted-content.md; }
 
   # Rebuilds the namespace manifest from the tree. The two fixture-GROWING cases below add real
   # commands, and check 4 asserts the manifest equals the tree in both directions -- so a case
@@ -1376,16 +1383,16 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   expect_fail "a compound count whose tail matches a shorter number word is rejected" 9 \
     "mkdir -p $(dirname $(cmd_file $PLUGIN_REL delta)) 2>/dev/null && printf -- '---\nname: delta\n---\n' > $(cmd_file $PLUGIN_REL delta) && printf -- '# /delta\n\nPage.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/delta.md && sed -i.bak 's|($DOC_CMD_DIR/alpha.md)|($DOC_CMD_DIR/alpha.md), [\`/delta\`]($DOC_CMD_DIR/delta.md)|' $PLUGIN_REL/docs/README.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL epsilon)) 2>/dev/null && printf -- '---\nname: epsilon\n---\n' > $(cmd_file $PLUGIN_REL epsilon) && printf -- '# /epsilon\n\nPage.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/epsilon.md && sed -i.bak 's|($DOC_CMD_DIR/alpha.md)|($DOC_CMD_DIR/alpha.md), [\`/epsilon\`]($DOC_CMD_DIR/epsilon.md)|' $PLUGIN_REL/docs/README.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL zeta)) 2>/dev/null && printf -- '---\nname: zeta\n---\n' > $(cmd_file $PLUGIN_REL zeta) && printf -- '# /zeta\n\nPage.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/zeta.md && sed -i.bak 's|($DOC_CMD_DIR/alpha.md)|($DOC_CMD_DIR/alpha.md), [\`/zeta\`]($DOC_CMD_DIR/zeta.md)|' $PLUGIN_REL/docs/README.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL eta)) 2>/dev/null && printf -- '---\nname: eta\n---\n' > $(cmd_file $PLUGIN_REL eta) && printf -- '# /eta\n\nPage.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/eta.md && sed -i.bak 's|($DOC_CMD_DIR/alpha.md)|($DOC_CMD_DIR/alpha.md), [\`/eta\`]($DOC_CMD_DIR/eta.md)|' $PLUGIN_REL/docs/README.md && sed -i.bak2 's|two slash commands|twenty-six slash commands|' $PLUGIN_REL/README.md"
   # Discriminates the word-boundary anchor on the reference-files alternation specifically: the
-  # fixture ships 8 reference files, so an unanchored "eight" matches the tail of "twenty-eight"
-  # and compares 8 against 8 -- a wrong claim passing on a coincidentally-correct numeral.
+  # fixture ships 9 reference files, so an unanchored "nine" matches the tail of "twenty-nine"
+  # and compares 9 against 9 -- a wrong claim passing on a coincidentally-correct numeral.
   # Anchored, nothing matches at a boundary and the count sentence reads as drifted away. Verified
   # red (this case FAILs) with the anchor stashed, green with it applied. The numerals track the
   # fixture: it shipped 6 reference files (and this case read "twenty-six") until check 11's
-  # route fixture added next-phase-offer.md and phase-handoff.md. The assertion is unchanged --
-  # a compound whose tail is a mapped word equal to the real count -- and "twenty-eight" is
-  # unmapped by _word2num for the same reason "twenty-six" was.
+  # route fixture added next-phase-offer.md and phase-handoff.md, and 8 ("twenty-eight") until
+  # check 20's fixture added untrusted-content.md. The assertion is unchanged -- a compound whose
+  # tail is a mapped word equal to the real count -- and "twenty-nine" is unmapped by _word2num.
   expect_fail "a compound reference-file count whose tail matches a shorter number word is rejected" 9 \
-    "sed -i.bak 's|ships 8 files|ships twenty-eight files|' $PLUGIN_REL/docs/reference/references.md"
+    "sed -i.bak 's|ships 9 files|ships twenty-nine files|' $PLUGIN_REL/docs/reference/references.md"
   # Proves _word2num and the commands alternation actually learned "seventeen" -- not merely
   # that an unrecognized word is rejected (every unmapped word already fails check 9 via "no
   # count sentence found", which would make a same-shaped expect_fail case pass whether or not
@@ -1421,7 +1428,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # found"; with _word2num's eleven mapped to 12 instead it FAILs "says eleven (12), tree has 11";
   # with both correct it passes. The new agents carry no `tools:` line, so check 17 is untouched.
   expect_pass_after "a correctly-worded eleven-agent count is accepted" \
-    "for i in 03 04 05 06 07 08 09 10 11; do printf -- '---\nname: ag%s\ndescription: A fixture agent.\n---\n\nA fixture agent body.\n' \$i > $PLUGIN_REL/agents/ag\$i.md; done && awk '{print} /^\| \`eta\` \| fixture \|\$/{for(i=3;i<=11;i++) printf \"| \`ag%02d\` | fixture |\n\", i}' $PLUGIN_REL/docs/reference/agents.md > ag.tmp && mv ag.tmp $PLUGIN_REL/docs/reference/agents.md && sed -i.bak 's|The fixture ships 2 agents.|The fixture ships eleven agents.|' $PLUGIN_REL/docs/reference/agents.md"
+    "for i in 03 04 05 06 07 08 09 10 11; do printf -- '---\nname: ag%s\ndescription: A fixture agent.\n---\n\nA fixture agent body.\n' \$i > $PLUGIN_REL/agents/ag\$i.md; sed -n '/untrusted-content:begin/,/untrusted-content:end/p' $PLUGIN_REL/agents/eta.md >> $PLUGIN_REL/agents/ag\$i.md; done && awk '{print} /^\| \`eta\` \| fixture \|\$/{for(i=3;i<=11;i++) printf \"| \`ag%02d\` | fixture |\n\", i}' $PLUGIN_REL/docs/reference/agents.md > ag.tmp && mv ag.tmp $PLUGIN_REL/docs/reference/agents.md && sed -i.bak 's|The fixture ships 2 agents.|The fixture ships eleven agents.|' $PLUGIN_REL/docs/reference/agents.md"
   expect_fail "a wrong non-ASCII anchor is rejected"           2 "printf '\n[bad](#uber-config)\n' >> $PLUGIN_REL/docs/$DOC_CMD_DIR/alpha.md"
   expect_fail "a wrong duplicate-heading index is rejected"    2 "printf '\n[bad](#notes-2)\n' >> $PLUGIN_REL/docs/$DOC_CMD_DIR/alpha.md"
   # Check 14 is asserted through the same decoder the check uses, so the fixture carries the
@@ -1770,9 +1777,10 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # The vacuity guard. The forward direction reads ONE syntax; a repo-wide rewording of it
   # would leave relations 1 and 4 examining nothing while every message stayed silent. The
   # preamble is the evidence that the syntax is still meant to be in use, so documenting it
-  # while calling it nowhere is the state that must be loud.
+  # while calling it nowhere is the state that must be loud. Both of omega's calls go: its
+  # phase-handoff load and its untrusted-content citation (check 20's fixture).
   expect_fail "a documented loader that is never actually invoked is rejected" 16 \
-    "sed '/args: \"phase-handoff\"/d' plugins/fixture-two/$CMD_DIR/omega$CMD_SUFFIX > c16.tmp && mv c16.tmp plugins/fixture-two/$CMD_DIR/omega$CMD_SUFFIX"
+    "sed '/args: \"phase-handoff\"/d; /args: \"untrusted-content\"/d' plugins/fixture-two/$CMD_DIR/omega$CMD_SUFFIX > c16.tmp && mv c16.tmp plugins/fixture-two/$CMD_DIR/omega$CMD_SUFFIX"
   # ...and the CORE_PLUGIN_REL vacuity guard, check 16's twin of the ones checks 8 and 11
   # carry: the corpus moved and the config was not repointed at it. No env override here --
   # that is the point. Every loader argument must go on resolving against the CONFIGURED
@@ -1955,6 +1963,33 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   else
     printf 'skip  check 19 work-tree scope cases: git not found\n'
   fi
+
+  # Check 20 -- untrusted-content guard. `beta` (Task) carries the block and the pass-on
+  # sentence naming `eta`; `eta` carries the block alone, whose own text contains
+  # "Untrusted-content notice:" -- the unmutated pass above is the proof that a notice
+  # line INSIDE the markers is not read as a pass-on sentence. `alpha` dispatches `beta`
+  # and carries the relay sentence; `omega`, in the second plugin, dispatches nothing;
+  # `kappa` sits in a plugin outside PLUGIN_RELS that GUARD_PLUGIN_RELS still reaches.
+  expect_fail "an agent missing its untrusted-content block is rejected" 20 \
+    "sed -i.bak '/untrusted-content:begin/,/untrusted-content:end/d' $PLUGIN_REL/agents/eta.md"
+  expect_fail "an agent whose block differs by one word is rejected" 20 \
+    "sed -i.bak 's/data, never instructions/data, rarely instructions/' $PLUGIN_REL/agents/eta.md"
+  expect_fail "an agent carrying two blocks is rejected" 20 \
+    "sed -n '/untrusted-content:begin/,/untrusted-content:end/p' $PLUGIN_REL/agents/eta.md > blk.tmp && cat blk.tmp >> $PLUGIN_REL/agents/eta.md && rm blk.tmp"
+  expect_fail "a missing canonical reference is rejected" 20 \
+    "rm $CORE_PLUGIN_REL/$REF_DIR/untrusted-content.md"
+  expect_fail "an agent granted Task without the pass-on sentence is rejected" 20 \
+    "sed -i.bak '/Copy every .Untrusted-content notice:. line/d' $PLUGIN_REL/agents/beta.md"
+  expect_fail "the pass-on sentence on an agent without Task is rejected" 20 \
+    "printf -- '\n- Copy every \`Untrusted-content notice:\` line \`beta\` returns into your own reply, unchanged.\n' >> $PLUGIN_REL/agents/eta.md"
+  expect_fail "a dispatching command without the relay sentence is rejected" 20 \
+    "sed -i.bak '/relay every .Untrusted-content notice:. line/d' $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail "the relay sentence on a command that dispatches nothing is rejected" 20 \
+    "printf '\nRelay every untrusted note: relay every \`Untrusted-content notice:\` line an agent returns.\n' >> plugins/fixture-two/commands/omega.md"
+  expect_pass_after "prose naming a subagent is not a dispatch token" \
+    "printf '\nNo subagent ever judges this fixture.\n' >> plugins/fixture-two/commands/omega.md"
+  expect_fail "an agent outside the docs-gated plugins is still held to the block" 20 \
+    "sed -i.bak '/untrusted-content:begin/,/untrusted-content:end/d' plugins/fixture-guarded/agents/kappa.md"
 
   if [ "$rc" -eq 0 ]; then echo "SELFTEST PASS"; else echo "SELFTEST FAIL"; fi
   exit "$rc"
@@ -2716,6 +2751,92 @@ check_edition_forbidden() {
   done <<<"$hits"
 }
 
+# --------------------------------------------------------------- check 20
+# Untrusted-content guard. Every agent reads material its author does not control -- an
+# issue export, a community post, a PR diff, a web page, a repository's own instruction
+# file -- and any of it can carry text aimed at the agent. The rule that makes such text
+# data lives in ONE place, $CORE_PLUGIN_REL/$REF_DIR/untrusted-content.md, between two
+# marker lines, and every agent carries a byte-identical copy at the end of its body,
+# because an agent's body is its system prompt: a pointer to the reference would depend on
+# a Read the agent may skip. This check holds the copies to the canonical one and the two
+# sentences around them in place, over every plugin GUARD_PLUGIN_RELS names:
+#   (a) the reference holds exactly one begin line and one end line, in that order, with
+#       text between them -- otherwise nothing is compared, and the failure says why;
+#   (b) every agent holds exactly one marker pair whose text equals the canonical text;
+#   (c) an agent granted Task carries the pass-on sentence OUTSIDE its markers (the block
+#       itself contains "Untrusted-content notice:", so only text outside them counts),
+#       and an agent carrying it without the grant is stale -- the shape check 17 has;
+#   (d) a command containing a dispatch token (`subagent_type`, or `agent_type`) carries
+#       the relay sentence, and a command carrying it dispatches;
+#   (e) VACUITY: no agent, or no dispatching command, means the scan stopped matching.
+UCG_BEGIN='<!-- untrusted-content:begin -->'
+UCG_END='<!-- untrusted-content:end -->'
+ucg_block() { # <file> -> the text between the markers; exit 1 unless exactly one ordered pair
+  awk -v b="$UCG_BEGIN" -v e="$UCG_END" '
+    $0==b { nb++; if (inb) bad=1; inb=1; next }
+    $0==e { ne++; if (!inb) bad=1; inb=0; next }
+    inb   { print }
+    END   { exit (nb==1 && ne==1 && !bad && !inb) ? 0 : 1 }' "$1"
+}
+ucg_outside() { # <file> -> the file without its marker pair and the text between
+  awk -v b="$UCG_BEGIN" -v e="$UCG_END" '$0==b{inb=1;next} $0==e{inb=0;next} !inb{print}' "$1"
+}
+check_untrusted_content() {
+  local root="$1" rel ref canon="" f rp got n c frontmatter toolsline has_task has_pass agents=0 dispatchers=0
+  local pass_anchor='Copy every `Untrusted-content notice:` line `[^`]+` returns into your own reply'
+  local relay_anchor='relay every `Untrusted-content notice:` line an agent returns'
+  ref="$root/$CORE_PLUGIN_REL/$REF_DIR/untrusted-content.md"
+  if [ ! -f "$ref" ]; then
+    fail 20 "$CORE_PLUGIN_REL/$REF_DIR/untrusted-content.md does not exist -- it holds the canonical block every agent must carry"
+  elif ! canon=$(ucg_block "$ref") || [ -z "$(printf '%s' "$canon" | tr -d '[:space:]')" ]; then
+    canon=""
+    fail 20 "$CORE_PLUGIN_REL/$REF_DIR/untrusted-content.md must hold exactly one '$UCG_BEGIN' line and one '$UCG_END' line, in that order, with the block between them"
+  fi
+  for rel in $GUARD_PLUGIN_RELS; do
+    for f in "$root/$rel/agents"/*.md; do
+      [ -e "$f" ] || continue
+      agents=$((agents + 1)); rp="${f#$root/}"
+      if [ -n "$canon" ]; then
+        if ! got=$(ucg_block "$f"); then
+          fail 20 "$rp must carry exactly one untrusted-content block between '$UCG_BEGIN' and '$UCG_END' -- the rule that what an agent reads is data, never instructions"
+        elif [ "$got" != "$canon" ]; then
+          n=$(diff <(printf '%s\n' "$canon") <(printf '%s\n' "$got") | sed -n '2p')
+          fail 20 "$rp's untrusted-content block differs from $CORE_PLUGIN_REL/$REF_DIR/untrusted-content.md's (canonical: $n) -- change the rule there and in every agent together"
+        fi
+      fi
+      frontmatter=$(awk 'NR==1 && $0=="---"{infm=1;next} infm && $0=="---"{exit} infm{print}' "$f")
+      toolsline=$(grep -E '^(tools|allowed-tools):' <<<"$frontmatter" | head -1)
+      has_task=0
+      case "$toolsline" in
+        *'"Task"'*|*'"task"'*) has_task=1 ;;
+        *) case ",$(printf '%s' "$toolsline" | tr -d '[:space:][]')," in *,[Tt]ask,*) has_task=1 ;; esac ;;
+      esac
+      has_pass=0
+      ucg_outside "$f" | grep -qE -- "$pass_anchor" && has_pass=1
+      if [ "$has_task" = 1 ] && [ "$has_pass" != 1 ]; then
+        fail 20 "$rp grants \`Task\` but carries no pass-on sentence outside its block (\"Copy every \`Untrusted-content notice:\` line \`<name>\` returns into your own reply, unchanged.\") -- its child's notices would stop at it"
+      fi
+      if [ "$has_pass" = 1 ] && [ "$has_task" != 1 ]; then
+        fail 20 "$rp carries the untrusted-content pass-on sentence but its tool list grants no \`Task\` -- it has no child whose notices to pass on"
+      fi
+    done
+    [ -d "$root/$rel/$CMD_DIR" ] || continue
+    while IFS= read -r c; do
+      f=$(cmd_file "$root/$rel" "$c"); rp="${f#$root/}"
+      if grep -qE -- 'subagent_type|agent_type' "$f"; then
+        dispatchers=$((dispatchers + 1))
+        grep -qF -- "$relay_anchor" "$f" \
+          || fail 20 "$rp dispatches an agent but carries no relay sentence (\"... relay every \`Untrusted-content notice:\` line an agent returns ...\") -- an agent's notice would stop in the run and never reach the user"
+      elif grep -qF -- "$relay_anchor" "$f"; then
+        fail 20 "$rp carries the untrusted-content relay sentence but dispatches no agent -- it has no notice to relay"
+      fi
+    done < <(cmd_names "$root/$rel")
+  done
+  [ "$agents" -gt 0 ] || fail 20 "no agent under any GUARD_PLUGIN_RELS agents/ -- this check would examine nothing"
+  [ "$dispatchers" -gt 0 ] \
+    || fail 20 "no command under any GUARD_PLUGIN_RELS $CMD_DIR/ carries a dispatch token -- this check would examine nothing, which means the dispatch scan has drifted rather than no command dispatching"
+}
+
 # ---------------------------------------------------------------------- main
 # selftest() runs before the dispatch loop below ever assigns PLUGIN_REL per iteration,
 # and its fixture mutations reference the bare (singular) $PLUGIN_REL directly -- so it
@@ -2779,6 +2900,11 @@ check_published_changelog "$ROOT"
 # per-plugin dispatch would report every hit once per plugin -- the repetition check 14 lives
 # with inside the loop.
 check_edition_forbidden   "$ROOT"
+
+# Check 20 sits outside the loop too: its population is GUARD_PLUGIN_RELS, which reaches
+# prose-style beyond the docs-gated PLUGIN_RELS, and its vacuity guard is a claim about
+# that whole set.
+check_untrusted_content   "$ROOT"
 
 if [ "$FAILURES" -gt 0 ]; then
   echo "FAIL: $FAILURES problem(s) under $PLUGIN_RELS" >&2
