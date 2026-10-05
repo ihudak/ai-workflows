@@ -17,7 +17,7 @@ branch: fix/PROJ-2423-CVE-2023-46604   # REQUIRED on phase: full. The orchestrat
                                     # (/vuln Step 1 step 5, per its "Git Workflow → Branch naming");
                                     # vuln-fixer creates exactly this branch and never derives one,
                                     # because /vuln Step 3.9 pushes the same value. Absent => BLOCKED.
-pre_edit_tree: 5e8f2c…   # REQUIRED on phase: full and phase:
+pre_edit_tree: 3c4e9cd789d88d8d89c1073707c3585e41b0e614   # REQUIRED on phase: full and phase:
                                     # regression-resume. The tree id the orchestrator recorded before
                                     # this CVE's first dispatch (references/code-handoff.md §6.1), the
                                     # same value on every call of the CVE. Every revert this agent makes
@@ -108,8 +108,11 @@ tests_after: 47
 regressions: 0
 reverted:               # BUILD_FAILED and REVERTED only — every path the §6.2 revert removed or
   - pom.xml             # restored (references/code-handoff.md), so the orchestrator can name them
-reverted_from: 9c1d…    # BUILD_FAILED and REVERTED only — the tree the revert started from; a file
-                        # it undid is brought back with `git restore --source=<id> --worktree`
+reverted_from: 7a1f0e2b5c9d4e8f6a3b2c1d0e9f8a7b6c5d4e3f   # BUILD_FAILED and REVERTED only — the
+                        # tree the revert started from; a file it undid is brought back with
+                        # `git restore --source=<id> --worktree`. A step of the revert that failed
+                        # is a `REVERT-FAILED: ` line in `notes` (code-handoff.md §6.2), which
+                        # /vuln Step 3.9 tests for to set clean_finish: false
 notes: null             # or description of any auto-fixed test changes. It also carries,
                         # verbatim, every `CAVEAT: ` line the test-baseliner capture or verify
                         # marked — on EVERY status this agent returns, `SUCCESS` included
@@ -168,11 +171,14 @@ model_routing:           # echoed back when present in input
   `phase: verify-resume` to run Verify. Because the branch already exists, an
   orchestrator-side stop here still has somewhere to commit the work
   (`/vuln` Step 3.9 with `clean_finish: false`).
-- `BLOCKED` — the research report could not be read at the path the orchestrator supplied;
-  nothing was changed. Per the read-failure contract
+- `BLOCKED` — this call could not use an input, and names it: the research report could not be
+  read at the path the orchestrator supplied, or the request lacked `branch:` (`phase: full`) or
+  `pre_edit_tree:` (`phase: full` and `phase: regression-resume`). This call changed nothing; on a
+  resume, the fix an earlier call applied is still on the branch. Per the read-failure contract
   (`${CLAUDE_PLUGIN_ROOT}/references/context-management.md`), the orchestrator must not
-  re-run vuln-research to reconstruct the report — surface the unreadable path to the user
-  and stop remediation for this CVE.
+  re-run vuln-research to reconstruct the report — surface what the agent names to the user
+  and stop remediation for this CVE; on a `revert` decision it runs the revert itself first
+  (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.3).
 
 ### AWAITING_REVIEW output shape
 
