@@ -63,6 +63,7 @@ flowchart TD
     subgraph ANY["Anytime"]
         frames["/frames"]:::core
         improve["/feedback · /prompt · /prompt-brainstorm · /prompt-grill-me"]:::core
+        diagnose["/diagnose-session"]:::core
         statusline["/workflows-core:statusline"]:::core
         maint["/vuln · /dev-workflows:upgrade"]:::dev
     end

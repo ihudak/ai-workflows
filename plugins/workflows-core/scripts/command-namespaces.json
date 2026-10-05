@@ -54,6 +54,7 @@
     "prose-style-refresh"
   ],
   "workflows-core": [
+    "diagnose-session",
     "feedback",
     "frames",
     "prompt",
