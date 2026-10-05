@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [4.13.0] — 2026-10-05
 
 ### Added
-- **`interface-designer` takes the project's glossary.** `/design` Phase 5 now hands each take of the interface fan-out the feature folder's term records, `/specify`'s `_glossary.md` and `/design`'s own `_design-glossary.md`, whichever exist. Each take names the interface's types, operations and parameters in the terms they define, keeps the code's name where the code already names a concept differently, and says so. The glossary is a context input: a file a take cannot read is skipped and named in its proposal. Adapted from mattpocock's DESIGN-IT-TWICE, whose briefs carry the project's glossary so that parallel takes name things consistently.
+- **`interface-designer` takes the glossary.** `/design` Phase 5 now hands each take of the interface fan-out the feature folder's term records, `/specify`'s `_glossary.md` and `/design`'s own `_design-glossary.md`, and, on a per-Epic design, the PRD folder's `_glossary.md`, whichever exist. Phase 5 writes each term to `_design-glossary.md` as it settles, so the fan-out sees every term settled before it. Each take names the interface's types, operations and parameters in the terms they define, keeps the code's name where the code already names a concept differently, and says so. The glossary is a context input: a file a take cannot read is skipped and named in its proposal. Adapted from mattpocock's DESIGN-IT-TWICE, whose briefs carry the project's glossary so that parallel takes name things consistently.
 
 ## [4.12.0] — 2026-10-05
 

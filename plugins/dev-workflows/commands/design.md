@@ -286,7 +286,7 @@ As each decision settles, append it to `_design-session.md`. **For an interface 
 live candidate shape there as it arises** — not only the settled outcome — and strike a candidate when it
 is eliminated: the fourth contested-interface signal in `${CLAUDE_PLUGIN_ROOT}/references/design-format.md` `## Seams`
 counts exactly those recorded, un-eliminated candidates, and a settled-only log leaves it nothing to
-count. Capture a genuinely-ambiguous term in `_design-glossary.md`. **Resolve `design.md` open questions to zero** — the design is the last gate
+count. Capture a genuinely-ambiguous term in `_design-glossary.md`, writing it to the file as it settles, so the interface fan-out below finds every term settled before it. **Resolve `design.md` open questions to zero** — the design is the last gate
 before code. A residual engineering unknown that truly cannot be resolved is either (a) pushed onto the
 `specification.md` as a spec-level `- [ ]` for the PM (and the design waits on it), or (b) kept as a
 `design.md` `- [ ]` that will **block handoff** (Phase 6/7). A repo gap surfacing here → hard-stop (the
@@ -323,7 +323,7 @@ take, labelled **A**, **B**, and **C** in that order; those are the labels the F
   > problem_frame: [what the interface is for, the constraints any proposal must satisfy, the seam it sits at]
   > code_context: [the Phase 4 code-scanner findings for the relevant repo(s) — inline, or an absolute path]
   > dependency_category: [the seam's category if already settled, else omit]
-  > glossary: [absolute paths of the feature folder's `_glossary.md` and `_design-glossary.md`, whichever exist, else omit]"
+  > glossary: [absolute paths of the feature folder's `_glossary.md` and `_design-glossary.md`, and, for a per-Epic design, the PRD folder's `_glossary.md` — whichever exist, else omit]"
 
 **Handle a take that stops.** A take returning `status: BLOCKED` could not read its `code_context` (the
 read-failure contract in `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`). Name the unreadable path, and do

@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.21.1] — 2026-10-05
 
 ### Changed
-- **`phase-handoff` §4.0 reclassifies the two term records.** `/specify`'s `_glossary.md` and `/design`'s `_design-glossary.md` move from *unread* to *advisory*: `/design`'s interface fan-out now reads both. No prompt changes, as both commands' handoff sets also hold a gated path.
+- **`phase-handoff` §4.0 reclassifies the two term records.** `/specify`'s `_glossary.md` and `/design`'s `_design-glossary.md` move from *unread* to *advisory*: `/design`'s interface fan-out now reads both. No handoff array or clause changes, as both commands' handoff sets also hold a gated path.
 
 ## [1.21.0] — 2026-10-05
 
