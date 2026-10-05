@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.11.0] — 2026-10-05
+
+### Changed
+- **`bug-diagnosis` brought up to date with the upstream diagnosing discipline it was adapted from.**
+  - **Minimise:** a red repro is minimised one cut at a time. `risk-planner` writes no file while doing it: it varies only the command's arguments and standard input.
+  - **Performance:** on a performance regression the repro is a measurement. Bisecting between a good and a bad state is a plan step the caller runs from a clean tree, ending in `git bisect reset`, and is omitted where the run already has edits.
+  - **Probes:** each changes one variable and names the hypothesis, or the pair, its result decides.
+  - **No loop:** where no loop can be built, `risk-planner`'s `Needs:` line says what would let one be built, and `/implement` surfaces it beside `Tried:`.
+  - **Confirmed cause:** a new step 6 names the cause the fix acted on, a ranked hypothesis or none of them, and what showed it. This applies only where the plan carried a ranked list and the fix was verified, and it appears in `/implement`'s Phase 5 report and the pull request's `## Evidence` (`code-handoff` §2.7).
 ## [4.10.6] — 2026-10-05
 
 ### Fixed

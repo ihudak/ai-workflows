@@ -186,7 +186,7 @@ When projecting an `impl-maintenance` report (§6 `emit-auto`), the plugin-facin
 slice is exactly its **Command workflow improvements**, **New agents / skills**,
 and **Reference docs** (paths under `${CLAUDE_PLUGIN_ROOT}`) sections, plus the
 **Key observations** that triggered them, plus any **Key observations** naming an ai-containers defect (§4), projected as `category: environment-defect`. Discard its **CLAUDE.md rules** and
-**Hooks** sections (target-project advice).
+**Hooks and checks** sections (target-project advice).
 
 ## 5. Interaction model — silent, high-recall
 

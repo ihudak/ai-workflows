@@ -50,8 +50,8 @@ The caller passes a structured brief:
   you, because you hold `Bash`: name one command you have **already run at least once**, and show the
   invocation and its redacted output in `### Hypotheses (ranked)` above the list. If you cannot get a
   red-capable command to run, **do not rank hypotheses** — return the `### Hypotheses (ranked)` section
-  containing only what you tried and why it did not reproduce, and say plainly that the ranking is
-  withheld for lack of a loop. A ranked list built without one is the failure the criterion exists to
+  containing only what you tried and why it did not reproduce, and what would let you build one, and
+  say plainly that the ranking is withheld for lack of a loop. A ranked list built without one is the failure the criterion exists to
   prevent, and it reads as confident work.
 
 Refuse to plan without a classification and a task description - ask the caller
@@ -85,7 +85,7 @@ Output: [its redacted output — enough to show it went red on this bug]
 Reproduction rate: [100%, or the rate achieved for a non-deterministic bug]
 1. [cause] — predicts [observation]; falsified by [cheapest test]
 2. ...
-_or_ "Ranking withheld — no red-capable repro. Tried: [what you tried, and what happened]."
+_or_ "Ranking withheld — no red-capable repro. Tried: [what you tried, and what happened]. Needs: [what would let you build one — an environment that reproduces it, or a redacted captured artifact]."
 
 ### Steps
 1. [concrete, minimal-scope step]
