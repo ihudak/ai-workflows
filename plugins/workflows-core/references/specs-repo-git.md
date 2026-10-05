@@ -28,7 +28,9 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
 3. **Bounded branches.** Only branches matching `^(idea|prd|ard|spec|design|ready|brd|frames)/`
    are the plugin's to switch away from or delete (§2.2).
 4. **Never destructive.** No `push --force`, no `push -f`, no `branch -D`, no
-   `merge`, no `rebase`, no `reset`, and never delete an `index.lock`.
+   `merge`, no `rebase`, no `reset`, and never delete an `index.lock`. §4 step
+   4's `restore --staged` is not a `reset`: it rewrites only index entries for
+   paths the commit just carried, moves no ref and touches no working-tree file.
 5. **Never fatal.** Every failure is reported and the run continues. The run
    never fails because of a git step here.
 6. **No `Co-Authored-By` trailer.** These are plugin-generated bookkeeping
@@ -304,7 +306,8 @@ notice, never a quiet line.
 Always runs when stage 1 matched nothing **and the run does not carry `specs_git: misrooted`** (§3.1). Under that flag it does not run at all, so there is no flush and no push retry, and the preflight goes on to §3.5, which switches nothing under the flag. A flush there would `git add` paths that porcelain prints relative to the repository's top level and that do not exist from `$SPECS_PATH`, which fails with exit 128 on every run. Where `$SPECS_PATH` is a correct root holding a stray folder, it would commit and push while the notice says the run wrote nothing.
 
 - **Dirty ARTIFACT paths exist** → commit them **onto the current branch** (they
-  belong to the run that wrote them) and push, per §4 steps 2–6.
+  belong to the run that wrote them) and push, per §4 steps 2–6, which print no
+  §6 line here: where step 4 finds nothing to commit, the flush ends silently.
 - **No dirty ARTIFACT path** → check whether the current branch is **ahead of
   the branch it would push to** and every ahead-commit touches only §2.1 artifact
   paths. If so, **retry the push**.
@@ -528,11 +531,49 @@ to state.
    commit; emit the §6 `nothing to commit` outcome line. This is distinct from
    step 1's silence — here the specs repo *is* managed and simply had nothing
    new.
-4. **Commit.** Message:
+4. **Commit — by pathspec, never the index.** Message:
    `<KEY> Add dev-workflows session artifacts (<command>)`, or
    `NOISSUE Add dev-workflows session artifacts (<command>)` when the run
    resolved no key. This matches the specs repo's own `<KEY|NOISSUE> <summary>`
    convention. **No `Co-Authored-By` trailer** (§1 rule 6).
+
+   Commit the paths step 2 staged that git still lists as staged, and
+   nothing else. List them with
+   `git -C "$SPECS_PATH" diff --cached --name-only -z --no-renames -- ':(literal)<path>' …`
+   over the paths step 2 staged: a path step 2 enumerated can be one git no
+   longer knows (staged as new by an earlier run whose commit failed, then
+   deleted), and one pathspec that matches nothing fails the whole commit.
+   Where it lists none, there is nothing to commit: emit step 3's outcome line
+   instead. Then read everything the index holds staged, the same command
+   with no path, which the restore below needs, and commit:
+   `git -C "$SPECS_PATH" commit -q -m "<message>" -- ':(literal)<path>' …`, one
+   `':(literal)<path>'` argument per listed path. A plain `git commit` takes
+   whatever the index holds, and §3.3 G1 lets this step run beside changes
+   that are not the plugin's, a change the user staged included, which that
+   commit would carry under this message. `:(literal)` because a porcelain
+   path can begin with `:`, which git otherwise reads as pathspec magic; never
+   the global `--literal-pathspecs`, which every commit hook would inherit.
+
+   **Then bring the index back in step with the new `HEAD`.** A pathspec
+   commit runs the `pre-commit` hook against a temporary index, so a file the
+   hook fixes and re-stages, adds, or removes is committed while the real
+   index keeps the old entry (measured on git 2.43: `MM`, `D ` beside `??`,
+   and `AD`). Once the commit lands, read the paths it carries,
+   `git -C "$SPECS_PATH" diff-tree --no-commit-id --name-only -r -z --root --no-renames HEAD`,
+   and the paths whose index entry now differs from `HEAD`,
+   `git -C "$SPECS_PATH" diff --cached --name-only -z --no-renames`. Over the
+   paths on both of those two lists, less every path the read before the
+   commit listed that the commit's own pathspecs do not name — a change
+   somebody else had staged, left as they staged it — run
+   `git -C "$SPECS_PATH" restore --staged -- ':(literal)<path>' …`, and run
+   nothing where none is left. Never over the commit's whole list: a path the
+   commit deleted is in neither `HEAD` nor the index, and one pathspec that
+   matches nothing fails the whole `restore`, which then restores nothing.
+
+   Nothing in this commit-and-restore form is particular to the specs
+   repository: `phase-handoff.md` §2.4 and the `docs-workflows` commands that
+   commit into a docs repository run it against their own, with their own
+   paths and message.
 5. **Push** to the current branch's upstream. If the branch has no upstream:
    `git -C "$SPECS_PATH" push -u origin <branch>`.
 6. **Failure at any step is reported, never fatal.**
@@ -543,12 +584,17 @@ to state.
    - **`index.lock` present** (a concurrent session holds the repo) → report and
      skip; **never delete a lock file**. The artifacts stay in the working tree
      and the next run's preflight flushes them.
+   - **The commit fails** — a `pre-commit` or `commit-msg` hook rejects it, a
+     signature cannot be made, or a merge is in progress, during which git
+     refuses a pathspec commit → report git's error or the hook's output; never
+     retry and never `--no-verify`. The artifacts stay staged, and a later
+     run's preflight flushes them (§3.4) once git accepts the commit.
 7. **Emit the §6 outcome line**, plus the full §5 notice repeated verbatim when
    a guard fired at §3.3.
 
 ### 4.1 Where the commit lands
 
-- **A command that opened a specs-repo branch at handoff** (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/implement`, `/ready`, `/frames`, `/prd-ground`, `/prd-proposal`, and every `/brd-*` command — seventeen total, matching `phase-handoff.md`'s producer count) — on that `idea|prd|ard|spec|design|ready|brd|frames/*` branch, so the push updates the pull request already open. Two commits on one branch: the deliverable, then the artifacts. Every `/brd-*` command opens on the shared `brd` prefix (`phase-handoff.md` §2.9); `/prd-ground` opens on that same shared `brd` prefix on the BRD route, or on the shared `prd` prefix (with `/create-prd`, `/update-prd` and `/prd-proposal`) on the idea route — it left the `/brd-*` glob the day its own rename shipped, but not the prefix sharing, which is why it is named here rather than folded into "every `/brd-*` command". A later `/brd-*` run — or `/prd-ground`, on the BRD route — that reuses the branch a prior phase of the same BRD opened lands there rather than on the default branch.
+- **A command that opened a specs-repo branch at handoff** (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/implement`, `/ready`, `/frames`, `/prd-ground`, `/prd-proposal`, and every `/brd-*` command — seventeen total, matching `phase-handoff.md`'s producer count) — on that `idea|prd|ard|spec|design|ready|brd|frames/*` branch, so the push updates the pull request already open. Two commits on one branch: the deliverable, then the artifacts — save where the deliverable's commit failed (`phase-handoff.md` §4.1's *Commit failed*), when the artifacts' commit alone lands on that branch and its push opens no pull request. Every `/brd-*` command opens on the shared `brd` prefix (`phase-handoff.md` §2.9); `/prd-ground` opens on that same shared `brd` prefix on the BRD route, or on the shared `prd` prefix (with `/create-prd`, `/update-prd` and `/prd-proposal`) on the idea route — it left the `/brd-*` glob the day its own rename shipped, but not the prefix sharing, which is why it is named here rather than folded into "every `/brd-*` command". A later `/brd-*` run — or `/prd-ground`, on the BRD route — that reuses the branch a prior phase of the same BRD opened lands there rather than on the default branch.
 - **The same command when the user declined git at handoff** ("just write the
   files — I'll handle git") — the repo is still on the default branch and the
   deliverable is uncommitted there. `commit-artifacts` still runs and commits
@@ -654,6 +700,7 @@ report was composed earlier.
 | Committed, push failed | `Specs repo: committed <sha7> (<N> files) on <branch> — push FAILED (<reason>); the commit is local and the next run retries it` |
 | Nothing to commit | `Specs repo: no session artifacts to commit` |
 | Locked | `Specs repo: skipped — another session holds the repo (index.lock); the next run picks the artifacts up` |
+| Commit failed | `Specs repo: NOT COMMITTED — the commit failed (<the first line of git's error or the hook's output>); the artifacts stay staged, and a later run commits them once git accepts the commit (a merge concluded, a hook satisfied)` |
 | Blocked (G0) | `Specs repo: NOT COMMITTED — see the notice below`, followed by the §5 G0 block verbatim |
 | Misrooted (§3.1), whether or not the environment conditions hold | `Specs repo: NOT COMMITTED — SPECS_PATH is misplaced; see the notice below`, followed by the §3.1 notice, or `specs-root-check`'s stop, verbatim |
 | Gate failed on environment, on a run carrying neither flag | *(no line at all — silent no-op)* |

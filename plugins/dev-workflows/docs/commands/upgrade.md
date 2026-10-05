@@ -41,7 +41,7 @@ flowchart TD
 - **One or more component tokens**, each with an optional version-resolution suffix — see the Synopsis grammar above.
 - **The target repo** — its build files, runtime version files, and CI YAML are inventoried against `../../references/upgrade/ecosystems.md` to detect current versions.
 - **`$SPECS_PATH`** — for the Phase 0 specs-repo preflight and the terminal artifact commit; this repo is never the one being upgraded, and the code repo is untouched by any specs-repo step.
-- **A confirmed plan before any file changes.** Phase 1 never modifies files, and Phase 2 never touches a file before the upgrade branch exists — a dirty working tree at that point is surfaced (stash, proceed, or cancel) rather than upgraded over silently.
+- **A confirmed plan before any file changes.** Phase 1 never modifies files, and Phase 2 never touches a file before the upgrade branch exists — a dirty working tree at that point is surfaced (stash, proceed, or cancel) rather than upgraded over silently, and a file of yours the upgrade then changes is committed whole, your earlier changes with it.
 
 ## What it produces
 

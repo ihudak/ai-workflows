@@ -18,6 +18,13 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`release-notes-writer`'s deprecation trigger fired on the word.** It scanned for "deprecat*" wording, so a deprecation the PRD put out of scope, left to later work or mentioned only as background gave the note a deprecation note and an end-of-life question it should never have had. §5 now says what is not a trigger: the test is what this change deprecates.
 - **`release-notes-writer` step 1 read "Otherwise, `change_type` → infer"** right after the authoritative case, which garbled the routing rule. It now says that a null `change_type` is inferred as well.
 
+## [1.5.4] — 2026-10-05
+
+### Fixed
+- **A docs-repository commit no longer carries a change somebody else had staged.** `/docs-profile`, `/docs-init`, `/docs-brand` and `/document` each offer *Proceed anyway* on a dirty tree, then staged only their own paths and ran a plain `git commit`, which takes the whole index, so a change the user had staged rode into the plugin's commit and its pull request. Each now commits by pathspec and brings the index back in step after a `pre-commit` hook, the form `workflows-core:specs-repo-git` §4 step 4 states; `finish-and-handoff.md` §2's squash commits the paths its squashed commits carry and those it just staged, and no longer claims that everything uncommitted is the run's.
+- `/document`'s commits — the Phase 6.3 commit and the Phase 8.5 squash (`finish-and-handoff.md` §2) — take their message from a file with `-F`. The squash used a double-quoted `-m` and the Phase 6.3 commit named no form, so a summary holding a backticked word or `$(…)` was command-substituted.
+- The `gh pr create` command `/document` offers for a GitHub docs repository quotes the title in single quotes. The title is free text, and inside the double quotes it used, a backticked word or `$(…)` in it was command-substituted when the command was run.
+
 ## [1.5.3] — 2026-10-04
 
 ### Fixed
