@@ -84,7 +84,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `docs-workflows.md` | `docs-workflows/**`; `product-workflows/`: `commands/epics.md`, `agents/epic-*.md`, `docs/commands/epics.md` | invariants, map, callers, three authorities |
 | `docs-serve.md` | `docs-workflows/`: `commands/docs-serve.md`, `docs/commands/docs-serve.md`, `references/docs-profiles/render-verification.md`, `references/toolchain-preflight.md` | `/docs-serve` |
 | `release-notes.md` | `docs-workflows/`: `commands/release-notes.md`, `agents/release-notes-writer.md`, `references/release-note-types.md`, `docs/commands/release-notes.md` | `/release-notes` and its authority |
-| `docs-grounding.md` | `workflows-core/`: `references/{docs,architecture}-grounding.md`, `agents/{docs,architecture}-grounder.md`; and 20 command files: the nine grounding consumers and eleven that resolve none | docs and architecture grounding |
+| `docs-grounding.md` | `workflows-core/`: `references/*-grounding.md`, `agents/*-grounder.md`; and 20 command files: the nine grounding consumers and eleven that resolve none | docs/architecture grounding |
 | `workflows-core.md` | `workflows-core/**`, `*/commands/*.md`, `*/agents/*.md` | plugin facts, model routing, authorities, map |
 | `workflows-core-git.md` | `workflows-core/references/`: `specs-repo-git.md`, `phase-handoff.md`, `read-only-repos.md`, `grounding-format.md`; `dev-workflows/references/code-handoff.md`; `*/commands/*.md`, `*/references/**`, `*/agents/*.md` | git authorities and invariants |
 
@@ -153,7 +153,7 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 - `workflows-core:read-only-repos` — read-only mount detection, write-free ref reading, the `prep` output contract → `workflows-core-git.md`
 - `workflows-core:docs-grounding` — `$DOCS_PATH` grounding: the resolution gate, `resolve-docs-grounding`, grill-rank / writer-attach → `docs-grounding.md`
 - `dev-workflows:bug-diagnosis` — repro first, ranked hypotheses, tagged instrumentation, a regression test at a seam → `dev-workflows.md`
-- `dev-workflows:code-handoff` — the code repo's `finish-code-branch`: commit, consent-gated push and pull request → `dev-workflows.md`
+- `dev-workflows:code-handoff` — the code repo's `finish-code-branch`: commit, consent-gated push and pull request; a fixer's per-unit revert (§6) → `dev-workflows.md`
 - `docs-workflows:release-note-types` — the release-note section map, per-section draft shape and prose rules, the deprecation note → `release-notes.md`
 - `docs-workflows:gate-ledger` — verification-gate accounting: the six outcomes and the `/document` gate registry → `docs-workflows.md`
 - `docs-workflows:repo-verification-gates` — a docs repo's own pre-PR checklist as `repo_verification_gates` → `docs-workflows.md`

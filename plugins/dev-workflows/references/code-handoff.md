@@ -2,7 +2,7 @@
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
-Single source of truth for the step that turns finished work in a **code repository** into a commit on its own branch, pushes that branch, and opens a pull request where the host allows one: the `finish-code-branch` entry point (§2). Consumed by `/implement`, `/vuln`, and `/upgrade` — the three commands that create a branch in a code repo and write into it.
+Single source of truth for the step that turns finished work in a **code repository** into a commit on its own branch, pushes that branch, and opens a pull request where the host allows one: the `finish-code-branch` entry point (§2). Consumed by `/implement`, `/vuln`, and `/upgrade` — the three commands that create a branch in a code repo and write into it. It also owns how one unit of that work is undone before it is committed (§6): the snapshot `/vuln` and `/upgrade` take before each unit's first edit, and the revert `vuln-fixer` and `upgrade-executor` run from it.
 
 **The principle.** Work that exists only in a working tree is one `git checkout` away from gone, and a command that created the branch it was written on owns getting it committed before the run ends. Committing is local and reversible, so it is not the user's to approve. Pushing and opening a pull request leave the machine, so they are.
 
@@ -25,7 +25,7 @@ This file never writes into `$SPECS_PATH` or a docs repo, and none of the others
 
 1. **`git -C "<repo>"` always; `cd` never.** The caller may be standing somewhere else entirely — `/implement` on a multi-source run reasons about several repos at once, and a `cd` would corrupt whichever one it left.
 2. **Never the default branch.** The commit lands on the run's own branch or it does not land. This entry point never commits to `main` / `master` / `develop`, and never pushes to one.
-3. **Never destructive.** No `push --force`, no `push -f`, no `branch -D`, no `merge`, no `rebase`, no `reset`, no `checkout --`, no `commit --amend`, and never delete an `index.lock`. The index-only `restore --staged` and `rm --cached` that §2.2 and §2.3 run are not a `reset`: they rewrite only index entries the run itself made or this call just committed, move no ref and touch no working-tree file. This entry point also never *drops* a stash: a stash the caller pushed at branch time is the user's, and §2.2 carve-out 2 says so.
+3. **Never destructive.** No `push --force`, no `push -f`, no `branch -D`, no `merge`, no `rebase`, no `reset`, no `checkout --`, no `commit --amend`, and never delete an `index.lock`. The index-only `restore --staged` and `rm --cached` that §2.2 and §2.3 run are not a `reset`: they rewrite only index entries the run itself made or this call just committed, move no ref and touch no working-tree file. §6.2's revert is not a `checkout --` either, though it does write the working tree: it touches only the paths that differ from the unit's own §6.1 snapshot, restoring each to what it held before the unit's first edit — never to `HEAD` — and removing one the unit created, so a change the user made before the run comes back with them. This entry point also never *drops* a stash: a stash the caller pushed at branch time is the user's, and §2.2 carve-out 2 says so.
 4. **Never fatal.** Every failure is reported and the run's remaining phases still execute — including the caller's terminal `commit-artifacts` step, which commits a different repository.
 5. **The commit is prompt-free; the push and the pull request are not.** This is the same rule as `workflows-core:phase-handoff` §1 rule 7, drawn one step later: there, nothing at all happens without consent because the deliverable is already safe on disk. Here the work is *not* safe until it is committed, and a prompt that can be answered "no" is exactly the failure mode this file was written to remove. So the commit runs unconditionally and §2.4's choice governs only what leaves the machine. **One prompt can come before it**: §2.2's secret scan, on a possible secret it cannot dismiss. That is the one thing a commit makes worse rather than safer — a secret committed is in the history, and taking it out again needs the rewrite rule 3 forbids — and the prompt fires only on a hit, so it does not become a question a user clicks through.
 
@@ -293,6 +293,8 @@ Exactly one per **full** call, prefixed `Code repo:`. A caller that finishes sev
 
 The `push FAILED` line states the surviving commit explicitly. A user reading "FAILED" needs to know in the same sentence that their work is not gone.
 
+**The `--no-commit` row is the caller's own.** It is emitted without calling §2, so no append reaches it unless the caller adds it, and the caller adds *A stash is outstanding* wherever it recorded a `stash_ref`: under `--no-commit` that line is the run's last word on the repository, and a stash pushed at branch time is still the user's work.
+
 ### 3.2 The no-`gh` fallback text
 
 On a `clean_finish: false` run the banner is the **first** line, above everything else, and it is also the first line of `<body-path>` (§2.7) so it survives the paste:
@@ -313,12 +315,13 @@ For a GitHub remote where `gh` is merely absent, append the command the user may
 
 ## 4. Caller contract
 
-Four obligations. Omitting any one is a defect, not a style choice.
+Five obligations. Omitting any one is a defect, not a style choice.
 
 1. **Call it after the last in-repo write, not before.** Post-implementation maintenance edits files inside the repo; a call placed ahead of them commits a partial run.
 2. **Record `pre_existing_dirty`, each path with its §2.2 fingerprint, and `stash_ref` before the first edit.** A caller that does not cannot honour §2.2's first two carve-outs, and will either sweep up somebody else's work or forget a stash.
 3. **Emit §3.1's line exactly once per *full* call**, in the run's own report. A §2.12 unit-level call emits none — it returns its outcome to the caller instead (§2.12), which records it in that command's own results table.
 4. **Never restate this reference's rules** — cite the section number. A rule copied into a command is a rule that goes stale.
+5. **Take §6.1's snapshot before each unit's first edit wherever an agent of that unit may revert it**, pass it on every dispatch of that unit — `/vuln` per CVE, `/upgrade` per component — and do what §6.3 says with every revert. `/implement` dispatches no agent that reverts. An agent dispatched without the snapshot returns `BLOCKED` rather than revert to `HEAD`, which would take the user's own changes with it.
 
 ## 5. What this entry point never does
 
@@ -327,3 +330,81 @@ Four obligations. Omitting any one is a defect, not a style choice.
 - Never calls a REST API over HTTPS. `git push` is git-protocol; `gh` wraps the API (§2.6).
 - Never writes a file into the repository it is committing. Everything it needs — the pull-request body included — is written outside the tree.
 - Never writes a possible secret's value into a commit message, a pull-request body, a report or an artifact — §2.2's masked preview is the most any of them carries. Committing a hit the user ruled not secret is the user's call (§2.2), not this rule's breach.
+
+## 6. Undoing a unit's edits before they are committed
+
+`vuln-fixer` and `upgrade-executor` undo their own work on two returns: a build they could not fix (`BUILD_FAILED`), and a regression the user chose to revert (`REVERTED`, `TEST_REGRESSION_REVERTED`). The tree they undo it in may hold the user's own uncommitted work — `/vuln` never stashes, and both of `/upgrade`'s continuing answers leave paths dirty — so a revert that restores a file from `HEAD` discards that work along with the fix. The revert restores the tree as it stood before the unit's first edit instead, and touches nothing that has not changed since. A **unit** is one CVE in `/vuln` and one component in `/upgrade`: everything from its first dispatch to its last return, `review-fixer`'s edits included. §1's rules 1, 3 and 4 bind this section as they bind §2. It needs git 2.26 or later.
+
+### 6.1 The snapshot — the caller's, before the unit's first dispatch
+
+Immediately before a unit's first dispatch, record the whole working tree as a git tree, untracked files included and the index untouched:
+
+    ( i=$(command mktemp -t dw-index-XXXXXX) && trap 'command rm -f -- "$i"' EXIT && { command cp -- "$(git -C "<repo>" rev-parse --absolute-git-dir)/index" "$i" 2>/dev/null || command rm -f -- "$i"; } && export GIT_INDEX_FILE="$i" && git -C "<repo>" add -A -- ':/' && git -C "<repo>" write-tree )
+
+It prints one tree id. Record it as `pre_edit_tree` and pass the same value on every dispatch of that unit. The `add` runs against a temporary copy of the index, so what the user has staged stays as it was.
+
+**What it holds, and what it does not.** Every tracked and untracked file git does not ignore. Three things are outside it: an ignored file, which §6.2 leaves in place; a submodule's contents and the commit checked out in it; and a path marked skip-worktree or assume-unchanged (`git ls-files -v` tags it `S` or with a lowercase letter), which `add` does not look at.
+
+**What it costs.** It reads every changed and untracked file each time it runs, a large untracked file and a build directory nobody ignored included, and writes their content into git's object store, where git's own `gc` prunes it once it is unreferenced and old enough. An LFS clean filter writes under `.git/lfs` instead, which `gc` never prunes.
+
+**Take it per unit, never once per run.** A unit's revert must keep everything that came before the unit, and an earlier unit's work is part of that. Where the earlier unit was committed, a snapshot from the run's start would put the working tree back behind `HEAD`; under `/upgrade --no-commit` it is still uncommitted, and the revert would discard it; and in `/vuln`, a path an earlier CVE's commit carried has left the tree, and the revert would bring the user's old copy of it back.
+
+**Where git cannot write it, do not dispatch.** A file git cannot read stops the `add` — the review diff's capture stops on it too — and the command prints no tree id. The unit has changed nothing yet, so the caller stops that unit with git's error as the reason. Never pass a partial snapshot: a file it lacks reads as one the unit created, and §6.2 would remove it.
+
+### 6.2 The revert — the agent's
+
+Wherever the agent's own text says to revert, run this script once, with `bash`, after replacing its two values: `<repo>` with the request's `repo:`, the repository's top level, and `<pre_edit_tree>` with its `pre_edit_tree:`.
+
+    repo='<repo>' pre='<pre_edit_tree>'
+    fail() { printf 'REVERT-FAILED: %s\n' "$*"; }
+    git -C "$repo" cat-file -e "$pre^{tree}" 2>/dev/null || { fail "pre_edit_tree $pre is not a tree in $repo; nothing reverted"; exit 1; }
+    now=$( ( i=$(command mktemp -t dw-index-XXXXXX) && trap 'command rm -f -- "$i"' EXIT && { command cp -- "$(git -C "$repo" rev-parse --absolute-git-dir)/index" "$i" 2>/dev/null || command rm -f -- "$i"; } && export GIT_INDEX_FILE="$i" && git -C "$repo" add -A -- ':/' && git -C "$repo" write-tree ) ) || { fail "could not record the tree as it stands now (git's error above); nothing reverted"; exit 1; }
+    printf 'reverted_from: %s\n' "$now"
+    for pass in ignore-files other; do
+      rm_list=(); rs_list=()
+      while IFS= read -r -d '' meta && IFS= read -r -d '' p; do
+        read -r om nm _ _ st <<<"$meta"; om=${om#:}
+        case "$pass/${p##*/}" in ignore-files/.gitignore|other/*) ;; *) continue ;; esac
+        [ "$pass/${p##*/}" = other/.gitignore ] && continue
+        if [ "$om" = 160000 ] || [ "$nm" = 160000 ]; then fail "not reverted, a submodule or nested repository: $p"; continue; fi
+        if [ "$st" = A ]; then
+          if [ "$pass" = other ] && printf '%s\0' "$p" | git -C "$repo" check-ignore --no-index -z --stdin >/dev/null; then
+            printf 'left in place, ignored before the unit: %s\n' "$p"; continue
+          fi
+          rm_list+=("$p")
+        else rs_list+=("$p"); fi
+      done < <(git -C "$repo" diff-tree -r -z --no-renames "$pre" "$now")
+      for p in "${rm_list[@]}"; do
+        if command rm -f -- "$repo/$p"; then printf 'reverted (removed): %s\n' "$p"; else fail "could not remove $p"; fi
+      done
+      if [ ${#rs_list[@]} -gt 0 ]; then
+        if printf '%s\0' "${rs_list[@]}" | env -u GIT_LFS_SKIP_SMUDGE git --literal-pathspecs -C "$repo" restore --source="$pre" --worktree --pathspec-from-file=- --pathspec-file-nul; then
+          printf 'reverted (restored): %s\n' "${rs_list[@]}"
+        else fail "git restore exited non-zero; check each of: ${rs_list[*]}"; fi
+      fi
+    done
+
+What it does, in order:
+
+1. It checks that `pre_edit_tree` is a tree in this repository, then records the tree as it stands now with §6.1's command. Either failing reverts nothing.
+2. It lists every path that differs between the two trees, and handles the `.gitignore` files among them first: it removes one the unit created and restores one it changed or deleted. From then on the snapshot's own ignore rules are in force.
+3. It removes every other path the unit created — one the snapshot lacks — except a path those rules ignore: the snapshot could not see it, so the revert leaves it alone as it leaves every ignored file, and a unit that loosened a `.gitignore` gets no file deleted that was ignored before it. Removal comes before restoring: a file created where the snapshot held a directory, or below a path where it held a file, must be gone first. A directory this leaves empty stays; git does not track one.
+4. It restores every other changed path in one `git restore --source=<pre_edit_tree> --worktree` call: content, mode and kind, so a symlink comes back a symlink. `--worktree` alone changes no index entry, and the unit has staged nothing to put back: both agents' invariants forbid staging.
+5. It refuses a submodule or a nested repository rather than reporting one as restored: `git restore` exits 0 on one without moving it.
+
+**Paths reach git only through variables and NUL-separated lists, never pasted into a command line.** A `$` in a file's name — a route file such as `users.$userId.tsx` — expands in a double-quoted command, so `rm` removes nothing or another file, and a `'` breaks a single-quoted pathspec.
+
+**What the agent returns.** The `reverted_from:` line, as `reverted_from:`; every path on a `reverted (removed):` or `reverted (restored):` line, as `reverted:`; and every `REVERT-FAILED: ` line, verbatim, into `notes`. The agent adds a `REVERT-FAILED: ` line of its own for a skip-worktree or assume-unchanged path it edited (§6.1), which no tree holds, and says in `notes` where the unit ran a package install into an ignored directory inside the repository (`node_modules`, `.venv`): a revert restores files, not an installed environment. It returns the status either way.
+
+**What the revert cannot tell apart.** An edit somebody else made while the unit ran looks like the unit's own, so the revert undoes it too. `git -C "<repo>" restore --source=<reverted_from> --worktree -- ':(literal)<path>'` brings such a file back while git still holds `<reverted_from>`'s objects.
+
+**Line-ending conversion.** A file that was dirty before the run comes back with the user's changes in it, byte for byte, unless a `.gitattributes` or `core.autocrlf` conversion applies to it: git stores such a file converted and checks it out converted, so one whose line endings did not already match the conversion comes back in the converted form, its content otherwise intact. §6.3 keeps that from reading as the run's work.
+
+**Never revert any other way.** Not `git checkout -- <path>`, not `git restore` without `--source`, not `git stash`, and not by hand: the first two restore from the index, which discards the user's unstaged changes; the third moves the user's work onto the stash stack; and an edit undone by hand misses whatever a build or a package manager wrote beside it.
+
+### 6.3 What the caller does with a revert
+
+- **Report it.** A `BUILD_FAILED`, `REVERTED` or `TEST_REGRESSION_REVERTED` return names its paths in `reverted:`. The caller gives the count in the unit's row and lists the paths, with `reverted_from:`, below its results table, where a long list does not swamp the row.
+- **Re-take each fingerprint the revert touched.** For every `pre_existing_dirty` path the return names in `reverted:`, take its §2.2 fingerprint again and use the new one from then on. What the revert left there is the user's file, and a line-ending conversion (§6.2) must not make §2.2's run set count it as the run's work.
+- **A revert that failed finishes unclean.** A `REVERT-FAILED: ` line in the `notes` of any return the unit made means part of the unit is still in the tree, and the caller's commit then carries it. Set `clean_finish: false` for that unit, as for a `NEW-FAILURE: ` line, so a pull request is a draft whose banner names the line. Test the prefix, not the prose.
+- **A revert decision the agent could not carry out is the caller's.** Where the `regression-resume` call that carried `regression_decision: revert` returns `BLOCKED` instead, the user's choice has not happened: run §6.2's script yourself from this unit's `pre_edit_tree`, then handle the return as the command says. Never let the caller's commit take a change the user chose to revert.
