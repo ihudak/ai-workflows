@@ -10,7 +10,7 @@ Five commands emit a cost entry here, unless `--skip-costs` ([below](#skipping-c
 
 ## How cost is computed
 
-`scripts/session-cost.py` reads the assistant-turn `usage` and `model` fields already present in the session's main transcript, plus every subagent transcript dispatched during the window being measured, sums token counts per model — each API message once, though Claude Code writes one response as several records that repeat its usage — and multiplies by the price table in effect for that run. Claude Code stores no dollar figure of its own in the transcript — cost is always **computed** from token usage against a price table, which makes it an estimate that drifts from Claude Code's own accounting by exactly the accuracy of that table.
+`scripts/session-cost.py` reads the assistant-turn `usage` and `model` fields already present in the session's main transcript, plus every subagent transcript dispatched during the window being measured, sums token counts per model — each API message once within the window, though Claude Code writes one response as several records that repeat its usage — and multiplies by the price table in effect for that run. Claude Code stores no dollar figure of its own in the transcript — cost is always **computed** from token usage against a price table, which makes it an estimate that drifts from Claude Code's own accounting by exactly the accuracy of that table.
 
 The price table lives at `${CLAUDE_PLUGIN_ROOT}/references/cost-prices.yaml`, keyed by model id. Override it with `$DEV_WORKFLOWS_COST_PRICES`; see [Environment](environment.md) for the resolution order. An unknown model is still recorded with its token counts, priced `cost_usd: null` and tagged `note: unpriced-model` — the run never fails on it.
 

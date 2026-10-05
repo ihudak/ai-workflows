@@ -441,18 +441,20 @@ def claimable_command(typed, ns_map):
     return None
 
 
-def scan_main(path, line_offset, ns_map):
+def scan_main(path, line_offset, ns_map, by_id=None):
     """Single pass over main-transcript lines [line_offset, EOF).
 
     Buffers each usage record with its timestamp instead of accumulating
     immediately, so the window can be cut into segments afterwards without
     re-reading. Returns (new_total_line_count, earliest_ts, boundaries, records)
-    where records is a list of (ts, model, usage), one per API message id."""
+    where records is a list of (ts, model, usage), one per API message id.
+    Pass the same by_id to read_subagents, appending to a list that starts with
+    these records, so an id a subagent file repeats is counted once."""
     count = line_offset
     first_ts = None
     boundaries = []
     records = []
-    by_id = {}
+    by_id = {} if by_id is None else by_id
     if not path or not os.path.isfile(path):
         return count, first_ts, boundaries, records
     try:
@@ -504,7 +506,7 @@ def scan_main(path, line_offset, ns_map):
     return count, first_ts, boundaries, records
 
 
-def read_subagents(subdir, last_dt, now_dt, records):
+def read_subagents(subdir, last_dt, now_dt, records, by_id=None):
     """Buffer usage from subagents/agent-*.jsonl entries whose timestamp is in
     (last_dt, now_dt]  (all <= now_dt when last_dt is None), appending
     (ts, model, usage) to records so they are segmented exactly as the main
@@ -513,7 +515,7 @@ def read_subagents(subdir, last_dt, now_dt, records):
 
     Returns the earliest in-window entry timestamp, or None."""
     first_ts = None
-    by_id = {}
+    by_id = {} if by_id is None else by_id
     if not subdir or not os.path.isdir(subdir):
         return first_ts
     for fp in sorted(glob.glob(os.path.join(subdir, "agent-*.jsonl"))):
@@ -995,6 +997,27 @@ def _selftest_body(tmp):
     read_subagents(_ddir, None, None, _srecs)
     check(len(_srecs) == 1 and _srecs[0][2].get("output_tokens") == 275,
           "read_subagents counts a subagent's repeated message id once, at its final usage")
+    _msg_a = [r for r in _drecs if r[2].get("output_tokens") == 251]
+    check(len(_msg_a) == 1 and _msg_a[0][0] == parse_ts("2026-09-01T10:00:01.000Z"),
+          "a repeated message id is placed at its FIRST record's timestamp, where the call began")
+    with open(os.path.join(_ddir, "agent-y.jsonl"), "w", encoding="utf-8") as fh:
+        fh.write(json.dumps(_rec("msg_D", "2026-09-01T10:00:07.000Z", 90)) + "\n")
+    with open(os.path.join(_ddir, "agent-z.jsonl"), "w", encoding="utf-8") as fh:
+        fh.write(json.dumps(_rec("msg_D", "2026-09-01T10:00:07.000Z", 90)) + "\n")
+    _srecs2 = []
+    read_subagents(_ddir, None, None, _srecs2)
+    check(len(_srecs2) == 2,
+          "a message id two subagent files share (a fork copies its parent's records) counts once")
+    # A fork of the MAIN session copies the main transcript's spawning record into its own
+    # file, under the same id: one map across both sources counts it once.
+    _shared = {}
+    _, _, _, _mrecs = scan_main(_dd, 0, {}, by_id=_shared)
+    with open(os.path.join(_ddir, "agent-fork.jsonl"), "w", encoding="utf-8") as fh:
+        fh.write(json.dumps(_rec("msg_B", "2026-09-01T10:00:03.000Z", 40)) + "\n")
+    _all = list(_mrecs)
+    read_subagents(_ddir, None, None, _all, by_id=_shared)
+    check(len(_all) == len(_mrecs) + 2,
+          "a main-transcript id a subagent file repeats counts once when the two share one map")
 
     tpath = os.path.join(tmp, "t.jsonl")
     with open(tpath, "w", encoding="utf-8") as fh:
@@ -1450,8 +1473,12 @@ def main():
     ns_map = load_namespace_map(args.namespaces)
 
     records = []
+    # One map across the main transcript and every subagent file: a fork copies its
+    # parent's records under the same ids. `records` is empty when main_records is
+    # appended below, so the map's indices stay valid in it.
+    by_id = {}
     new_line_offset, main_first_ts, boundaries, main_records = scan_main(
-        args.transcript, line_offset, ns_map
+        args.transcript, line_offset, ns_map, by_id=by_id
     )
     current_snapshot = read_snapshot_cost(args.snapshot)
     baseline_snapshot = checkpoint["last_snapshot_cost"]
@@ -1477,7 +1504,7 @@ def main():
 
     prices = load_prices(args.prices) if args.prices else {"models": {}}
     records.extend(main_records)
-    sub_first_ts = read_subagents(args.subagents_dir, last_dt, now_dt, records)
+    sub_first_ts = read_subagents(args.subagents_dir, last_dt, now_dt, records, by_id=by_id)
 
     matched, unmatched = match_claims(args.claim, boundaries)
 
