@@ -312,7 +312,7 @@ notice, never a quiet line.
 
 Always runs when stage 1 matched nothing **and the run does not carry `specs_git: misrooted`** (§3.1). Under that flag it does not run at all, so there is no flush and no push retry, and the preflight goes on to §3.5, which switches nothing under the flag. A flush there would `git add` paths that porcelain prints relative to the repository's top level and that do not exist from `$SPECS_PATH`, which fails with exit 128 on every run. Where `$SPECS_PATH` is a correct root holding a stray folder, it would commit and push while the notice says the run wrote nothing.
 
-**On the default branch, catch up first.** Where HEAD is on the default branch (§3.2), `<default-ref>` is `origin/<default>`, and HEAD is strictly behind it — `git -C "$SPECS_PATH" merge-base --is-ancestor HEAD <default-ref>` succeeds and `git -C "$SPECS_PATH" rev-parse HEAD` differs from `git -C "$SPECS_PATH" rev-parse <default-ref>` — run `git -C "$SPECS_PATH" pull --ff-only origin <default>` before either case below. It is silent where it succeeds; where it fails, report git's first error line and continue on the branch as it stands. Nothing else brings the default branch up to date while a run stands on it: §3.5's B1 does nothing, and only B2 and B4, which switch to it, pull. Without this, a run's commit would land on a stale base, and its push and every later run's retry would be rejected as non-fast-forward. A default branch holding commits the remote lacks is diverged, not behind; no fast-forward reaches it, and §4 step 6 says what does.
+**On the default branch, catch up first.** Where HEAD is on the default branch (§3.2), `<default-ref>` is `origin/<default>`, and HEAD is strictly behind it — `git -C "$SPECS_PATH" merge-base --is-ancestor HEAD <default-ref>` succeeds and `git -C "$SPECS_PATH" rev-parse HEAD` differs from `git -C "$SPECS_PATH" rev-parse <default-ref>` — run `git -C "$SPECS_PATH" pull --ff-only --no-rebase origin <default>` before either case below. `--no-rebase` is required: a `pull.rebase` setting would otherwise make the pull a rebase, which §1 rule 4 forbids and which refuses to run beside a modified artifact. The catch-up is silent where it succeeds; where it fails, report git's first error line and continue on the branch as it stands. §4 step 2 runs it again before staging, for a run whose preflight ended at a guard or never ran. Nothing else here brings the default branch up to date while a run stands on it — §3.5's B1 does nothing, and only B2 and B4, which switch to it, pull — so without it a run's commit would land on a stale base, and its push and every later retry would be rejected as non-fast-forward. A default branch holding commits the remote lacks is ahead or diverged, never behind, and no fast-forward applies to it; a diverged one is §4 step 6's case.
 
 - **Dirty ARTIFACT paths exist** → commit them **onto the current branch** (they
   belong to the run that wrote them) and push where §4 step 5 allows it, per §4
@@ -499,7 +499,7 @@ is each member's own rather than a new condition here:
 
 - **This step runs**, for the cost entry above (under `--skip-costs` there is none, and the gates below settle the step exactly as they would for any run with nothing new to stage). Where the refusal was `specs-root-check`'s stop, the run carries `specs_git: misrooted`, and step 1's gate skips the step with the stop repeated. Where the refusal came before
   `$SPECS_PATH` was resolved, step 1's gate no-ops it silently; on a detached
-  HEAD, step 1 refuses it with G0's notice, since no preflight tested that; where that
+  HEAD, step 1 refuses it with G0's notice; where that
   entry is the only new path, step 4 commits it alone; where nothing is dirty,
   step 3's `nothing to commit` line stands.
 
@@ -525,8 +525,8 @@ to state.
    signal, as on a `specifications/` directory bind-mounted on its own, and
    that entry point's stop sets it on a path no `rev-parse` reaches. Such a
    run takes the misrooted outcome, never the silent one. `specs_git: blocked`
-   is set only behind a passing gate (§3.3 G0, or the test below), so it never
-   meets one. **A run that ran no preflight tests G0's state here**, since
+   is set only behind a passing gate (§3.3 G0), so it never meets one. **A run
+   that ran no preflight and carries neither flag tests G0's state here**, since
    nothing else did: a refusal taken before the preflight still reaches this
    step (the tail above). Where §3.1's environment conditions hold and
    `git -C "$SPECS_PATH" symbolic-ref -q HEAD` fails, HEAD is detached; the run
@@ -546,7 +546,12 @@ to state.
    - Carries neither, and fails on path / repo / permission grounds →
      **silent no-op**, matching the emission ladders' silent-skip discipline.
      Nothing committed, nothing reported, run unaffected.
-2. **Enumerate and stage** per §2.1. OTHER paths are never staged.
+2. **Enumerate and stage** per §2.1. OTHER paths are never staged. On the
+   default branch, run §3.4's catch-up first. A run whose preflight ended at a
+   guard (§3.3) or never ran has not had it; where the preflight already caught
+   up, it finds nothing to do. Its test reads the ref last fetched, so a merge
+   that lands on the remote during the run goes unseen; that run's push is
+   rejected, and step 6 says what to run.
 3. **Nothing staged** (the gate passed but no artifact path is dirty) → no
    commit; emit the §6 `nothing to commit` outcome line. This is distinct from
    step 1's silence — here the specs repo *is* managed and simply had nothing
@@ -657,7 +662,10 @@ to state.
      auto-rebase mid-run. The commit stays local, and no later run's retry
      succeeds until the user takes in the remote's commits: the branch has
      diverged, a fast-forward cannot reach it, and this reference never
-     rebases. §6's line names the two commands that do it.
+     rebases. Name the commands that do it wherever this step runs: at the
+     end of a run, in §6's *push rejected* line; inside §3.4's flush or retry,
+     which print no §6 line, as
+     `Specs preflight: <branch> not pushed — <remote>'s <branch> has commits it lacks; run git -C "<SPECS_PATH>" pull --rebase --autostash <remote> <branch>, then git -C "<SPECS_PATH>" push <remote> <branch>`.
    - **`index.lock` present** (a concurrent session holds the repo) → report and
      skip; **never delete a lock file**. The artifacts stay in the working tree
      and the next run's preflight flushes them.
@@ -781,7 +789,7 @@ report was composed earlier.
 | Committed, not pushed — not a branch this plugin pushes (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: this plugin pushes only the default branch and the branches it creates, so <branch> is yours to push; the artifacts reach the maintainer when you push or merge it` |
 | Committed, not pushed — no remote to push to (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: this specs repo has no origin remote` |
 | Committed, not pushed — the push would publish other commits (§4 step 5 `push-scope`) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: the push would also publish commits that are not this plugin's session-file commits, the oldest <sha7> <subject>, which carries <path>; push <branch> once they are ready to go, and the artifacts go with them` — or, where that oldest commit is this run's own, `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: a pre-commit hook added <path>[, and <M-1> more] to this commit, so it carries more than this plugin's session files; check what the hook added before you push <branch>` |
-| Committed, push rejected as non-fast-forward (§4 step 6) | `Specs repo: committed <sha7> (<N> files) on <branch> — push REJECTED: <remote>'s <branch> has commits this one lacks, and no run takes them in for you; run git -C "<SPECS_PATH>" pull --rebase <remote> <branch>, then git -C "<SPECS_PATH>" push <remote> <branch>` |
+| Committed, push rejected as non-fast-forward (§4 step 6) | `Specs repo: committed <sha7> (<N> files) on <branch> — push REJECTED: <remote>'s <branch> has commits this one lacks, and no run takes them in for you; run git -C "<SPECS_PATH>" pull --rebase --autostash <remote> <branch>, then git -C "<SPECS_PATH>" push <remote> <branch>` |
 | Committed, push failed for any other reason | `Specs repo: committed <sha7> (<N> files) on <branch> — push FAILED (<reason>); the commit is local and the next run retries it` |
 | Nothing to commit | `Specs repo: no session artifacts to commit` |
 | Locked | `Specs repo: skipped — another session holds the repo (index.lock); the next run picks the artifacts up` |
