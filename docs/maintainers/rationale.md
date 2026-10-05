@@ -96,6 +96,12 @@ Each changelog's header says a section headed `— Unreleased` *"has not been pu
 
 The organisation's name and its internal repositories were named by the design archive and its neighbouring records across more than a hundred files until they were swept out on 2026-09-23. The denylist is encoded because a clear-text denylist would be the one violation of its own rule.
 
+Where the root is the work tree's top level it reads `git ls-files -co --exclude-standard`, so an untracked page is still examined while an ignored `.worktrees/` copy on an older branch is not; otherwise it walks the directory. Its selftest sets a fixture token of its own, so the suite asserts the same thing in every edition, and carries the red case (a docs page) with its green twin (the same token in a `CHANGELOG.md`), the empty-config pass, the undecodable-value vacuity guard, and the untracked/ignored pair.
+
+## check-20
+
+Every agent reads material its author does not control, and until 2026-10-05 only `architecture-grounder`'s prompt said such material is data. The rule now sits in each agent's own body rather than in a reference the agent is pointed to, because an agent's body is its system prompt: it is in force before the agent reads anything, while a pointer depends on a Read the agent may skip. Every copy is byte-identical to `workflows-core`'s `references/untrusted-content.md` because a rule edited in some agents and not in others is how such a rule decays; the check turns a partial edit into a red build. The rule says content supplies values, never tasks, because agents legitimately act on what a repository declares — `test-baseliner` runs its test command, `upgrade-executor` and `vuln-fixer` its build, `docs-style-checker` the linter it configures — and every writer follows the conventions it documents; a rule making every file inert would break them. Notices are relayed and advisory: an agent's reply ends in the orchestrating run, so a notice no command printed would reach no one, and a notice that stopped a run would let any planted comment stop one. `GUARD_PLUGIN_RELS` reaches `prose-style`, which ships agents and dispatching commands but no `docs/` tree and so sits outside `PLUGIN_RELS`.
+
 ## mermaid-gate
 
 The rule exists because GitHub draws each ```` ```mermaid ```` block as a diagram and shows *"Unable to render rich display"* where it does not parse.

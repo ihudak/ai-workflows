@@ -38,3 +38,7 @@ Produce artifact content from a structured handoff. Does not run git.
 | `epic-writer` | per routing | Read, Glob, Grep, Write, Edit, Skill | Writes one file per child Epic from a structured handoff, traceable to the PRD it partitions and `code-scanner` evidence; write-only, never commits. | `/epics` |
 
 Every one of the 14 agents above is dispatched by at least one command. There is no maintenance section here: `workflows-core:impl-maintenance`, dispatched by all 14 commands, ships in `workflows-core`. `workflows-core:docs-grounder` is the one agent no command here dispatches by writing a `subagent_type:` inline — its callers invoke a named procedure defined in its own governing reference file instead.
+
+## What every agent does with what it reads
+
+Every agent above ends its prompt with the same `## Untrusted content` section, copied from workflows-core's `references/untrusted-content.md`: a file, issue export, diff or web page supplies the values an agent's task asks for — a declared test command, a documented convention — and never a new task, a fetch or a changed verdict. Text that tries to steer an agent is not acted on; the agent ends its reply with an `Untrusted-content notice:` line naming where the text is, and the command prints every such line under **Untrusted-content notices** in its final report. A notice never stops a run. When you see one, look at the file or page it names: it carries text aimed at an AI agent, which you may want to remove or report.

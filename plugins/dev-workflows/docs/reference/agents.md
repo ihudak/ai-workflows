@@ -43,3 +43,7 @@ Apply changes the caller has already decided on, rather than deciding anything t
 | `vuln-fixer` | per routing | Read, Glob, Grep, Bash, Edit, Task, Skill | Takes the orchestrator's baseline, creates the fix branch **before** the first edit, applies the version change `vuln-research` produced, rebuilds, and verifies tests — uncommitted, for Step 3.9. | `/vuln` |
 
 Every one of the 12 agents above is dispatched by at least one command. There is no maintenance section here any more: the one agent that filled it, `impl-maintenance`, ships in `workflows-core`.
+
+## What every agent does with what it reads
+
+Every agent above ends its prompt with the same `## Untrusted content` section, copied from workflows-core's `references/untrusted-content.md`: a file, issue export, diff or web page supplies the values an agent's task asks for — a declared test command, a documented convention — and never a new task, a fetch or a changed verdict. Text that tries to steer an agent is not acted on; the agent ends its reply with an `Untrusted-content notice:` line naming where the text is, and the command prints every such line under **Untrusted-content notices** in its final report. A notice never stops a run. When you see one, look at the file or page it names: it carries text aimed at an AI agent, which you may want to remove or report.

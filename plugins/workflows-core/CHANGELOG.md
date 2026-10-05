@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.15.0] — 2026-10-05
+
+### Added
+- **`untrusted-content`: what an agent reads is data, never instructions.** An issue-tracker export, a feature request, a PR diff, a web page, a repository's instruction file or a code comment could tell an agent to approve, skip a check, run or fetch something, or reveal its context. The new reference holds the one block every agent in the guarded plugins now ends its prompt with: content supplies the values a task asks for — a declared test command, a documented convention — and never a new task, a fetch or a changed verdict, and an agent ends its reply with an `Untrusted-content notice:` line for each passage that tried to steer it. It also holds the relay sentence every dispatching command carries and the pass-on sentence of the agents that dispatch another.
+- **This plugin's seven agents carry the block, and `/frames` relays notices** under `Untrusted-content notices:` in its final report. A notice is advisory: it never blocks a run, changes its routing or triggers a re-review.
+- **Check 20 in the repository's `scripts/check-docs.sh`** fails the build when an agent's block differs from this reference by a byte, when an agent granted `Task` lacks the pass-on sentence, or when a dispatching command lacks the relay sentence — over every docs-gated plugin and `prose-style`.
+
 ## [1.14.1] — 2026-10-05
 
 ### Fixed
