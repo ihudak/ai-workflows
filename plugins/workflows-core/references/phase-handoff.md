@@ -10,7 +10,7 @@ Single source of truth for the two entry points that move a **phase deliverable*
 
 ## 1. Hard rules
 
-Inherited from `specs-repo-git.md` — the first three unchanged, and the fourth **widened** where it says so:
+Inherited from `specs-repo-git.md` — the first three unchanged for every call against `$SPECS_PATH` (rule 1 adds only §2.7.1's two template reads, which run in the repository its caller names), and the fourth **widened** where it says so:
 
 1. **`git -C` always; `cd` never.** Every invocation is `git -C "$SPECS_PATH" …`, save §2.7.1's two template reads, which run in the repository its caller names — `$SPECS_PATH` only for this file's own §2.7. Most callers are running inside a *different* repository; a `cd` would corrupt their git state. The `gh` calls in §2.6 and §3.5 name the repository with `-R` for the same reason.
 2. **Bounded paths.** Only the calling command's own declared deliverable paths are staged, by enumeration (§2.3). `git add -A` is never issued at repository scope.
@@ -25,7 +25,7 @@ Where this reference **differs** — each difference is deliberate, and a reader
 
 ## 2. `handoff-to-main` — the producer entry point
 
-Called from a producing command's Handoff phase, and **only** when the user picked the branch-and-PR choice of §4.3. **One step of it runs earlier, and it is read-only:** §2.1's push-target probe, which §4.3 runs before it presents the choice, because the probe's result decides what that section prints above the array.
+Called from a producing command's Handoff phase, and **only** when the user picked the branch-and-PR choice of §4.3. §2.7.1 is the exception: `dev-workflows:code-handoff` §2.7 and `docs-workflows:finish-and-handoff` §5 also run it, under their own consent. **One step of it runs earlier, and it is read-only:** §2.1's push-target probe, which §4.3 runs before it presents the choice, because the probe's result decides what that section prints above the array.
 
 ### 2.1 Gate
 
