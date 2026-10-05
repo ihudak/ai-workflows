@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.8.0] — 2026-10-05
 
 ### Added
-- **`/document`'s pull-request draft fills the docs repository's own template** where it has one, per `workflows-core:phase-handoff` §2.7.1, with the DO-NOT-MERGE banner as its first line. Until now `finish-and-handoff` §5 wrote its own body, and a user who pasted it into the web UI replaced the repository's template.
+- **`/document`'s pull-request draft fills the docs repository's own template** (workflows-core 1.20.0) where it has one, per `workflows-core:phase-handoff` §2.7.1, with the DO-NOT-MERGE banner as its first line. Until now `finish-and-handoff` §5 wrote its own body, and a user who pasted it into the web UI replaced the repository's template.
 
 ## [1.7.4] — 2026-10-05
 

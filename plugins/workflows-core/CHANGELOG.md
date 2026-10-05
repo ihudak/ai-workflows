@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.20.0] — 2026-10-05
 
 ### Added
-- **A phase's pull request fills the specs repository's own template.** `phase-handoff` §2.7.1 is now the family's one statement of the repository-template rule:
+- **A phase's pull request fills the specs repository's own template.** `phase-handoff` §2.7.1 is now the one statement of the repository-template rule, followed by the specs-repository handoff, the code-repository handoff and `/document`'s keyed pull-request draft:
   - **Finding the template:** it is resolved against a fixed set of paths in the committed tree.
   - **Reading it:** it is read with `git show HEAD:<path>`.
   - **Filling it:** headings are kept, each section is answered from the caller's facts, placeholders and HTML-comment notes are removed, and checkboxes are ticked only where the run can show the claim.
