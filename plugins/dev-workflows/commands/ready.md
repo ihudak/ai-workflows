@@ -100,7 +100,7 @@ Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback]
    variable.
 
 **Specs-repo preflight** — run at the end of step 1's address resolution, with the run key set step 1
-fixes, before step 1 places the folder or takes any stop its placement leads to. A run that stops on its address — `invalid`, `ambiguous`, `misrooted` or `absent` — stops before this and runs none (`workflows-core:specs-repo-git` §3). Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run,
+fixes, before step 1 places the folder or takes any stop its placement leads to. A run that stops on its address — none given, `invalid`, `ambiguous`, `misrooted` or `absent` — stops before this and runs none (`workflows-core:specs-repo-git` §3). Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run,
 retry an artifact commit that failed to push, and settle the branch. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
 `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts`
 step skips on it.

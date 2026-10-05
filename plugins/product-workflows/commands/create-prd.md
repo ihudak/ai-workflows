@@ -55,7 +55,9 @@ Usage: `/create-prd <ADDRESS> [@idea.md] [--from-prd <PRD-KEY|path>] [--lean|--h
     run and step 5 has resolved this run's own address with neither of its refusals (5a, 5b) taken**:
     a key is found only by searching the specs tree, which step 2b requires, and the preflight there
     settles the branch the read sees, so a seed read earlier could be read off a stale plugin branch,
-    or resolved with no tree at all. Then read it: a seed naming an existing file or directory, with or without a leading `@`,
+    or resolved with no tree at all. **Where the feature folder already holds a `prd.md` — step 6's test — read the seed only once
+    Phase 1's existing-PRD question is answered *Overwrite*:** its other answers leave the seed unread, and a
+    seed that would stop the run must not stop it before they are offered. Then read it: a seed naming an existing file or directory, with or without a leading `@`,
     is read where it sits — a file directly, a directory's `prd.md`; any other seed is a key, resolved
     with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), and that folder's `prd.md` is read.
     **A seed the run cannot read stops it**, before step 3's ladder: `ambiguous` names every match and
