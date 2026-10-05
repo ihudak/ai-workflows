@@ -286,6 +286,9 @@ The post-implementation Opus review MUST explicitly comment on each of:
    listed acceptance criteria and edge cases?
 2. **Security impact** — new attack surface, authn/authz changes, secret
    handling, input validation, deserialization, injection vectors, supply chain.
+   A credential or key material in an added line — a token, a private key, a
+   password literal, a URL carrying credentials, an added `.env` or keystore —
+   is a `BLOCKER` unless it is plainly a placeholder or a test fixture.
 3. **Architectural consistency** — boundaries respected, abstractions intact,
    no leaking concerns, idiomatic for the codebase.
 4. **Missed edge cases** — empty/null/zero/negative/very-large inputs, partial

@@ -33,6 +33,9 @@ convention live in ONE place.
 3. Parse each file's `## Architecture decisions` into `AD#N {id, binds, prevents, rule, source}` where
    `source` ∈ `prd | epic | area`. PRD-level `AD#N` are the inherited base; Epic/area `AD#N` layer on top
    (Epic/area wins on any conflict — contradictions were already blocked by `ard-reviewer` at authoring).
+   **Skip a decision carrying `**Superseded by:**` or `**Withdrawn:**`** — it binds nothing (`product-workflows`'
+   `ard-format.md` § Superseding a decision), and emitting it would have consumers enforce a rule the ARD itself
+   replaced or dropped. A replacement is a decision of its own and is emitted as one.
    Accept **both** `### [AD#N]:` and the legacy `### [AD-N]:`, and ALWAYS emit the `#` form in `id`. <!-- id-grammar-ok: legacy reader tolerance -->
    This resolver is a **reader**, and an ARD has no `/update-ard` to convert it the way `/update-prd`
    converts a PRD, so a dash-form ARD authored by a pre-2.53.0 install on another machine would never

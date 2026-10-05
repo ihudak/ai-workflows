@@ -59,7 +59,7 @@ does not exist. No widening here reaches a **tracker** key — none of these fie
 
 - `## Context` — the problem/goal frame from the PRD (Epic-level adds the Epic's scope).
 - `## Grounding findings (architecture as-is)` — what exists today, each claim citing a real `file:line` in a `grounded_repos` entry. An unmounted/descoped repo appears only under Open questions — NEVER as an invented "as-is" claim.
-- `## Architecture decisions` — `### [AD#N]: <title>`, each with **Binds:** (what it constrains) · **Prevents:** (the divergence it stops) · **Rule:** (a single testable statement). Epic-level lists inherited PRD-level ADs read-only under "Inherited invariants".
+- `## Architecture decisions` — `### [AD#N]: <title>`, each with **Binds:** (what it constrains) · **Prevents:** (the divergence it stops) · **Rule:** (a single testable statement) · **Alternatives:** (each other option weighed, one line each, with the reason it lost). A decision a later one replaced also carries **Superseded by:** `[AD#M] — <why>`, and one made moot with no replacement **Withdrawn:** `<why>` (§ Superseding a decision). Epic-level lists inherited PRD-level ADs read-only under "Inherited invariants" — the live ones only.
 - `## Cross-repo / component approach` — the Capability→Architecture map (which capability lands in which repo/component). On a multi-component ARD each capability names the component ids it lands in, and one that lands in two or more `kind: code` components is a capability `## Contracts` must give an interface row; a deploy component a capability only rides along on (`workflows-core:components` §4), or deploys through in another repository, adds none.
 - `## Contracts` — **PRD level, and only when `components:` has two or more `kind: code` entries.** An interface table, then three subsections:
 
@@ -76,9 +76,18 @@ does not exist. No widening here reaches a **tracker** key — none of these fie
 ## Quality rules
 
 - Every "as-is" claim cites a grounded `file:line`; no fabricated/uncited architecture.
-- `AD#N` are **testable** and non-overlapping (Binds/Prevents/Rule each populated).
-- An `AD#N` earns its place only when the decision is **hard to reverse** AND **surprising without context** AND the result of a **real trade-off**; a decision missing any of the three is an ordinary implementation choice (leave it to `/design`), not an architecture decision. **One stated case meets the bar by what it is:** an interface row's `AD#N` — an interface that crosses two components, which both sides ship against and so cannot reverse alone.
+- `AD#N` are **testable** and non-overlapping (Binds/Prevents/Rule each populated, and Alternatives on every live decision).
+- An `AD#N` earns its place only when the decision is **hard to reverse** AND **surprising without context** AND the result of a **real trade-off**; a decision missing any of the three is an ordinary implementation choice (leave it to `/design`), not an architecture decision. **One stated case meets the bar by what it is:** an interface row's `AD#N` — an interface that crosses two components, which both sides ship against and so cannot reverse alone. **Alternatives** is the record of that trade-off: a decision that beat no other option was not one — save an interface row's `AD#N`, whose Alternatives names the other interface shapes weighed or reads `none weighed`. An ARD written before the field existed still resolves as before; its decisions gain the field when a refine touches the ARD.
 - On a multi-component ARD, every capability the Capability→Architecture map lands in two or more `kind: code` components has an interface row, and every row's components are in `components:`.
 - **PRD-level carries NO per-repo detailed solutions** — that is `/design`'s job.
 - An Epic-level ARD may go deeper but stays architecture, not an implementation plan.
 - Grounding is **architect-driven** (repos confirmed by the architect), never derived from PRs (which do not exist at ARD time).
+
+## Superseding a decision
+
+- **A refine never changes what an existing `[AD#N]` requires** — nor does starting fresh over an ARD already on the specs repo's default branch, the only place downstream commands read one from. `design.md`, deviation records (`ard-resolution.md`), Epic drafts and readiness verdicts cite a decision by its ID, and a Rule rewritten in place silently changes what each of those citations means. A changed decision is a new `[AD#M]`; the old one keeps its heading, ID and text and gains `**Superseded by:** [AD#M] — <why>`. Wording that leaves the Rule's meaning unchanged is not a change.
+- **A decision made moot with no replacement** — a scope cut, a dropped requirement — keeps its place the same way and gains `**Withdrawn:** <why>` instead.
+- **A superseded or withdrawn decision binds nothing.** `ard-resolution.md` leaves it out of `invariants`, so no consumer enforces it, and an Epic-level ARD neither lists it under "Inherited invariants" nor is held to it. A reader of the ARD's own text treats it the same way. An Epic-level ARD's "Inherited invariants" list is a snapshot: a PRD-level decision superseded after it was written binds nothing from then on, because `ard-resolution.md` reads the PRD-level ARD itself, and the next refine of the Epic-level ARD drops it from the list.
+- **`Superseded by` names a live `[AD#M]` in the same ARD.** An Epic-level ARD never supersedes or withdraws a PRD-level decision — a change there is a refine of the PRD-level ARD.
+- IDs stay contiguous over live, superseded and withdrawn decisions alike; none is ever deleted or renumbered.
+- **An interface row in `## Contracts` names a live `AD#N`.** When its decision is superseded, the row's `AD` cell moves to the replacement; when it is withdrawn, the row goes with it.

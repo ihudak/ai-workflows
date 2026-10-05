@@ -124,3 +124,11 @@ jobs:
             exit 1
           fi
           python3 "${hits[0]}" --selftest
+
+      - name: Self-test the secret scan
+        # code-handoff.md runs it before every code commit. Its failure mode is silent: a
+        # rule that stopped matching reports a clean diff, and a mask that stopped masking
+        # prints the secret it found. Its fixtures are assembled at run time in a temporary
+        # repository, so no token-shaped literal sits in this repo for push protection to
+        # trip on.
+        run: python3 plugins/dev-workflows/scripts/secret-scan.py --selftest
