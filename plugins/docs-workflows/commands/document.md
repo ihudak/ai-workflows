@@ -1536,21 +1536,26 @@ either mode, so it runs for Mode B exactly as it does for Mode A, and any `specs
 
 **Rule: Ask, don't guess. This rule is absolute.**
 
-Before producing a plan, analyze the description for:
+Before producing a plan, list the candidate ambiguities in the description:
 - Ambiguous scope or unclear boundaries (which file? which section? extend or replace?)
 - Conflicting style guidance in the repo vs. the user's wording
 - Multiple valid placements for new content
 - Undefined target audience (end-user vs developer vs operator)
 - Missing acceptance criteria (what makes this "done"?)
 
-If **any** ambiguity exists, ask the user. Rules:
+**Look before asking.** Try to settle each candidate from what this run can read: the description and any file Phase 0 step 1 loaded, the target Phase 0 step 3 resolved and the pages around it, the docs repository's own guidance files — the style guide, `CONTRIBUTING.md`, `README.md`, `CLAUDE.md` and `AGENTS.md`, the same files step 3's `Prerequisites` and step 4's checklist came from — and `git -C <repo_root> log` for the target's history. Look only as far as each candidate needs. Then sort each candidate:
+- **Settled by the reading** — missing evidence, not a decision: ask nothing, and carry it into the plan with where it was found (an existing page that already covers the topic, the section a similar page uses, the audience the surrounding pages address).
+- **Left open, and its answer changes what a reader of the documentation would notice** — what the page says, where it lives, who it addresses, whether it replaces existing text: a **decision**. Ask it.
+- **Left open, and a reader would not notice the answer** — settle it yourself and list it in the plan's assumptions.
+
+Ask every decision. Rules:
 - Use `choices` arrays for every question — never plain text questions
 - Every `choices` array carries 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0), which is what allows free-text
 - When a clearly superior default exists, make it the first choice and label it `"(Recommended)"`
 - Group related decisions into a single question (minimize total questions)
 - Do **not** proceed until all questions are answered
 
-If **nothing** is ambiguous, skip directly to Phase 1.5.
+If no candidate is left a decision, skip directly to Phase 1.5.
 
 ---
 
