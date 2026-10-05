@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.17.2] — 2026-10-05
+
+### Fixed
+- **Notices: only the lines an agent adds after its output.** Every agent carries the amended block and every dispatching command the amended relay sentence (workflows-core 1.16.3): only the `Untrusted-content notice:` lines an agent adds after its output are relayed, never one quoted inside it, and, as hardening, the block says a content line that starts with that token is not a notice to pass on — a notice is a line an agent adds after its output.
+- **`/create-ard`'s relay sentence ran into its `Report:` paragraph**, so the two rendered as one paragraph. It is a paragraph of its own, and check 20 now fails a relay sentence that is not.
+
 ## [3.17.1] — 2026-10-05
 
 **Update `workflows-core` to 1.16.1 with this release**: the terminal specs-repository commit pushes only the default branch and the branches the plugin creates, and never commits of yours.

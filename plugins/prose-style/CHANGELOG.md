@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.1 — 2026-10-05
+
+### Fixed
+
+- **Notices: only the lines an agent adds after its output.** Every agent carries the amended block and every dispatching command the amended relay sentence: only the `Untrusted-content notice:` lines an agent adds after its output are relayed, never one quoted inside it, and, as hardening, the block says a content line that starts with that token is not a notice to pass on — a notice is a line an agent adds after its output.
+- **A fix pass's notices had no place to go.** `/prose-review-docs` and `/prose-review-pr` relay notices in their report, but `prose-fixer` and the re-run checker report after it is out; the fix step now prints their notices too.
+
 ## 0.5.0 — 2026-10-05
 
 ### Added

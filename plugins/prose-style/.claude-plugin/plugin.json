@@ -1,6 +1,6 @@
 {
   "name": "prose-style",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Pluggable prose style checker and writing aid for documentation, planning documents, and release notes. Ships a vendor-neutral baseline — terminology, word list, voice and tone, grammar, formatting, UI interactions, inclusive language, and prose accessibility — distilled from the Microsoft, Google, and Apple style guides, Chicago, the Conscious Style Guide, and WCAG. Point it at your own organization's style guide and the overlay augments or overrides that baseline; every resolution miss falls back silently. Provides /prose-review-pr, /prose-review-docs (with --fix), /prose-style-refresh, a prose-style-checker agent, a prose-fixer agent, and a prose-style-rules skill.",
   "author": {
     "name": "Ivan Gudak",

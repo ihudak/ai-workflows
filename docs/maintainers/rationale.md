@@ -96,7 +96,7 @@ Each changelog's header says a section headed `— Unreleased` *"has not been pu
 
 The organisation's name and its internal repositories were named by the design archive and its neighbouring records across more than a hundred files until they were swept out on 2026-09-23. The denylist is encoded because a clear-text denylist would be the one violation of its own rule.
 
-Where the root is the work tree's top level it reads `git ls-files -co --exclude-standard`, so an untracked page is still examined while an ignored `.worktrees/` copy on an older branch is not; otherwise it walks the directory. Its selftest sets a fixture token of its own, so the suite asserts the same thing in every edition, and carries the red case (a docs page) with its green twin (the same token in a `CHANGELOG.md`), the empty-config pass, the undecodable-value vacuity guard, and the untracked/ignored pair.
+Its selftest sets a fixture token of its own, so the suite asserts the same thing in every edition, and carries the red case (a docs page) with its green twin (the same token in a `CHANGELOG.md`), the empty-config pass, the undecodable-value vacuity guard, and the untracked/ignored pair.
 
 ## check-20
 
