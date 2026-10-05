@@ -39,27 +39,18 @@ Return `status: BLOCKED` with the specific gap when: the handoff file is missing
    already validated; split only at a genuine risk or feedback-loop boundary.
    Order the Epics so that none depends on a later one (supports the reviewer's
    independence check).
-3. **Needs, collisions and shared decisions** (the reviewer's *Cross-Epic
-   dependencies* dimension).
+3. **Needs and shared decisions** (the reviewer's *Cross-Epic dependencies*
+   dimension).
    - **Needs.** For each Epic, list what it needs before it can start or before
      its Independent Test can run — code, a schema, setup, test tooling,
      fixtures, an entry point, a decision. Build each in that Epic's In scope, or
-     name in its `## Dependencies` what provides it: an Epic that already exists,
-     the applicable ARD's `[AD#N]`, a repo, team or external system, or code that
-     already exists. A need only another Epic of this batch would meet is a
-     dependency *Epic independence* allows only under its exceptions; otherwise
-     build it here.
-   - **Collisions.** Two Epics of this batch, neither depending on the other
-     directly or through another Epic, change or build no common code,
-     configuration, schema or setup (a test harness, a scaffold). Where they
-     would, re-cut them so only one does — merging them only where they share a
-     `target:`.
-   - **Shared decisions.** A decision more than one Epic must adopt (an
+     name in its `## Dependencies` what provides it: the applicable ARD's
+     `[AD#N]`, a repo, team or external system, code that already exists, or
+     another Epic — which *Epic independence* judges.
+   - **Shared decisions.** A decision more than one Epic of this batch adopts (an
      interface, a message or data format, a shared value list) is stated the same
-     way in each and cites one source: the applicable ARD's `[AD#N]`, or the PRD
-     requirement it follows from. Where no source settles it, write a `[NEEDS
-     CLARIFICATION]` marker in each adopting Epic, with its `clarifications_needed[]`
-     entry (the per-Epic cap applies), so `/epics` Phase 6.1 puts it to the user.
+     way in each, and where the applicable ARD settles it, each cites its
+     `[AD#N]`.
 
 ## Write mechanics
 
