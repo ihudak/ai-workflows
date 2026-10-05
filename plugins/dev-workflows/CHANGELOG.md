@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.9.0] — 2026-10-05
+
+### Added
+- **Every code commit is scanned for secrets first.** `code-handoff.md` §2.2 now runs a bundled `scripts/secret-scan.py` over the lines the commit is about to add — the staged diff, or under carve-out 1 the enumerated paths against `HEAD` — just before §2.3, so `/implement`, `/vuln` and `/upgrade` all pass through it on every class of run, not only the ones an Opus review gates. It looks for private-key blocks; AWS, GitHub, GitLab, Slack, Stripe, Google, npm and LLM-vendor token formats; three-part JWTs; credentials inside a URL; a credential-named key assigned a literal — type annotations, `.npmrc`'s scoped keys and compose list entries included; and an added `.env`, keystore or credentials file. Placeholders, documentation keys, environment-variable references and `gitleaks:allow` / `pragma: allowlist secret` lines are dismissed and counted, never dropped silently. A hit prints as path, line, rule and a masked preview — a token's public four-character prefix and its length, a password's length alone — and no output of the run carries the value. A hit it cannot dismiss is the one question before a commit (§1 rule 5 now says so): stop and leave the work uncommitted — a commit that did not land, the existing *Commit rejected* row with the scan as rejector, what it staged unstaged so a later plain `git commit` cannot take the copy holding the secret — or commit it as not secret, which the `Code repo:` line then says; on `/upgrade`, whose per-component commits print no line of their own, the terminal line carries it for every component. A secret committed is in the history, and taking it out needs the rewrite §1 rule 3 forbids. A scan that cannot run, or fails in any way, is reported and the commit goes ahead. On `/vuln`, a CVE the scan stopped ends the CVE loop through the existing tree check between CVEs, each later CVE reported `SKIP`. The script carries a `--selftest`, run in CI, whose fixtures are assembled at run time so no token-shaped literal sits in the repository.
+
+### Changed
+- **`code-review`'s security dimension names a committed credential**: a token, private key, password literal, credentialed URL or added `.env` or keystore in an added line is a `BLOCKER`, unless it is plainly a placeholder or test fixture — matching `workflows-core` 1.13.0's checklist.
+- **`readiness-reviewer`** treats a decision its ARD marks `**Superseded by:**` or `**Withdrawn:**` as binding nothing, as `applicable_ard` already omits it (`product-workflows` 3.14.0).
 ## [4.8.0] — 2026-10-04
 
 **Update `workflows-core` to 1.12.0 with this release**, which carries the `components` reference these commands load.

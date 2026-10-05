@@ -27,7 +27,7 @@ This file never writes into `$SPECS_PATH` or a docs repo, and none of the others
 2. **Never the default branch.** The commit lands on the run's own branch or it does not land. This entry point never commits to `main` / `master` / `develop`, and never pushes to one.
 3. **Never destructive.** No `push --force`, no `push -f`, no `branch -D`, no `merge`, no `rebase`, no `reset`, no `checkout --`, no `commit --amend`, and never delete an `index.lock`. It also never *drops* a stash: a stash the caller pushed at branch time is the user's, and §2.2 carve-out 2 says so.
 4. **Never fatal.** Every failure is reported and the run's remaining phases still execute — including the caller's terminal `commit-artifacts` step, which commits a different repository.
-5. **The commit is prompt-free; the push and the pull request are not.** This is the same rule as `workflows-core:phase-handoff` §1 rule 7, drawn one step later: there, nothing at all happens without consent because the deliverable is already safe on disk. Here the work is *not* safe until it is committed, and a prompt that can be answered "no" is exactly the failure mode this file was written to remove. So the commit runs unconditionally and §2.4's choice governs only what leaves the machine.
+5. **The commit is prompt-free; the push and the pull request are not.** This is the same rule as `workflows-core:phase-handoff` §1 rule 7, drawn one step later: there, nothing at all happens without consent because the deliverable is already safe on disk. Here the work is *not* safe until it is committed, and a prompt that can be answered "no" is exactly the failure mode this file was written to remove. So the commit runs unconditionally and §2.4's choice governs only what leaves the machine. **One prompt can come before it**: §2.2's secret scan, on a possible secret it cannot dismiss. That is the one thing a commit makes worse rather than safer — a secret committed is in the history, and taking it out again needs the rewrite rule 3 forbids — and the prompt fires only on a hit, so it does not become a question a user clicks through.
 
 **The one opt-out, and it is typed rather than clicked.** `/implement` and `/upgrade` take `--no-commit`, which skips this entry point entirely and leaves the work in the tree. That does not contradict rule 5: the rule is about a prompt a tired operator clicks past at the end of a long run, not about someone who deliberately asked. A caller running under it says once, in its report, what the choice costs — the work is recoverable only on this machine, and `/document` and `/release-notes` will not find it later (`workflows-core:implementation-format` §4) — and does not argue it twice. `/vuln` has no such flag.
 
@@ -75,6 +75,18 @@ Three carve-outs:
 **A `git add` git refuses** (a held `index.lock`, a full disk) is a unit that did not land too: what §2.3 and §2.12 say of a rejected commit holds for it, save that its changes are in the working tree, perhaps partly staged, rather than staged, as after an `add -A`.
 
 **Nothing to commit** — on the `add -A` path, the index holds nothing to commit after it (`git -C "<repo>" diff --cached --quiet` exits 0), a change the run staged itself with `git mv` or `git rm` included; under carve-out 1, the enumerated set is empty. Never run §2.3 with an empty `--` list: `git commit --` with no path commits whatever the index holds, somebody else's staged change included, or fails with `no changes added to commit`. Do **not** emit a line here — §3.1 allows exactly one per call, and this path continues. If the branch carries commits this run made earlier (the §2.12 split form), proceed to §2.4 and report the run's outcome from the pushing rows. If it carries none, the call ends and §3.1's `no changes to commit` row is the line. An `/upgrade` component already at its target version, or a re-run that changed nothing, both land here legitimately.
+
+**The secret scan — last, just before §2.3.** Once the call has something to commit, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/secret-scan.py" --repo "<repo>"` on the `add -A` path, which reads the staged diff, or, under carve-out 1, the same with `-- <path> …` appended, one argument per enumerated path, after the `add -N` above, which reads those paths against `HEAD`. It reads only the lines the commit adds and the names of the files it adds or changes, so a secret already in the history is not reported again. Each possible secret prints as path, line, rule and a masked preview — a token's first four characters, its public format prefix, and its length; a password's or a URL's credentials' length alone; never the value — after it has dismissed and counted placeholders, environment-variable references and lines carrying a `gitleaks:allow` or `pragma: allowlist secret` marker. It looks for private-key blocks, cloud and SaaS token formats, three-part JWTs, credentials inside a URL, a credential-named key assigned a literal, and an added `.env`, keystore or credentials file.
+
+- **Exit 0** — no hit: go on to §2.3.
+- **Exit 1** — show its output verbatim, then ask:
+
+      choices: ["Stop — leave it uncommitted so I can remove it (Recommended)", "Not a secret — commit it"]
+
+  *Stop* is a commit that did not land — §3.1's `<who>` is `the secret scan, at your request`, and its `<reason>` the hits' paths and lines — so §2.3's rejected-commit rules, §2.12's for a split and the caller's own for a loop all hold for it as for a hook's rejection. On the `add -A` path, first unstage everything this call staged — `git -C "<repo>" restore --staged -- :/` (`git -C "<repo>" rm --cached -r -q -- :/` on a branch with no commit yet), safe because the precondition made everything in the index this run's own — so the staged copy that still holds the secret is not what a plain `git commit` takes once the user has edited the file, and no half of a rename is left staged without the other; the work stays in the working tree. *Not a secret* goes on to §2.3, and §3.1's line carries the *Possible secrets committed* append. Ask on every call that finds a hit — each unit's hits are new ones — never caching the answer as §2.4 caches its choice.
+- **Exit 2, or no `python3`** — the scan did not run. §2.3 goes ahead (§1 rule 4), and §3.1's line carries the *Secret scan not run* append.
+
+A hit's value is never written anywhere — not into the commit message, the pull-request body, the run's report or a specs-repository artifact. The masked preview is the most any of them carries.
 
 ### 2.3 Commit
 
@@ -233,9 +245,9 @@ The split is what makes per-unit committing worth having: a batch that dies on c
 
 **Where each unit gets its own branch there is no split.** `/vuln` is that case: a unit-level call that only committed would leave that CVE's branch unpushed forever, since the terminal call can push only the branch it is standing on. Each CVE runs the **full** entry point, and §2.4's once-per-run caching keeps that from asking N times.
 
-**A unit-level commit that does not land ends the split**, whether a hook rejected it or git failed to stage or write it (§2.2, §2.3). Its changes stay behind uncommitted, and §2.3 forbids carrying on as though it landed, so the caller works no later unit — a later unit's §2.2 would fold the rejected changes into that unit's commit — and goes to its terminal call, which then stages and commits nothing: it runs §2.1, then, where the branch carries a commit this run's unit-level calls made, §2.4 onward for those commits, its §3.1 line carrying the *A unit commit rejected* append; the caller sets `clean_finish: false` (§2.9). Where the branch carries no such commit, its line is the *Commit rejected* row.
+**A unit-level commit that does not land ends the split**, whether a hook rejected it, git failed to stage or write it, or you stopped it at the secret scan (§2.2, §2.3). Its changes stay behind uncommitted, and §2.3 forbids carrying on as though it landed, so the caller works no later unit — a later unit's §2.2 would fold the rejected changes into that unit's commit — and goes to its terminal call, which then stages and commits nothing: it runs §2.1, then, where the branch carries a commit this run's unit-level calls made, §2.4 onward for those commits, its §3.1 line carrying the *A unit commit rejected* append; the caller sets `clean_finish: false` (§2.9). Where the branch carries no such commit, its line is the *Commit rejected* row.
 
-**A unit-level call emits no §3.1 line** (§3.1 allows one per *full* call), but it is not silent: it returns its outcome — commit sha, `nothing to commit`, or a commit failure with its reason — to the caller, which records it in its own per-unit results table. §2.10's "every failure is reported" is satisfied there, not by a `Code repo:` line.
+**A unit-level call emits no §3.1 line** (§3.1 allows one per *full* call), but it is not silent: it returns its outcome — commit sha, `nothing to commit`, or a commit failure with its reason, and, where §2.2's scan did not run or a hit was committed as not secret, that too — to the caller, which records it in its own per-unit results table. The terminal call's §3.1 line carries the *Possible secrets committed* and *Secret scan not run* appends for every unit that returned one, since the terminal call stages nothing and runs no scan of its own. §2.10's "every failure is reported" is satisfied there, not by a `Code repo:` line.
 
 ---
 
@@ -245,7 +257,7 @@ The split is what makes per-unit committing worth having: a batch that dies on c
 
 Exactly one per **full** call, prefixed `Code repo:`. A caller that finishes several branches in one run (a `/vuln` CVE loop) emits one line per branch. A §2.12 unit-level call emits none.
 
-`<what>` below is `<sha7> on <branch>` for a call that committed, and `<n> commit(s) on <branch>` for a terminal call whose own commit set was empty, or skipped after a unit that did not land (§2.12), but whose branch carries commits from unit-level calls; `<who>` is `a <hook> hook`, or `git` where git itself failed to stage or write it (§2.2, §2.3); `<where>` is `staged` after an `add -A` whose commit did not land, and `in the working tree` where §2.2's `git add` failed or a carve-out-1 commit did not land; and `<unit>` is the unit's name on a §2.12 split, `the commit` otherwise.
+`<what>` below is `<sha7> on <branch>` for a call that committed, and `<n> commit(s) on <branch>` for a terminal call whose own commit set was empty, or skipped after a unit that did not land (§2.12), but whose branch carries commits from unit-level calls; `<who>` is `a <hook> hook`, `git` where git itself failed to stage or write it (§2.2, §2.3), or `the secret scan, at your request` where §2.2's scan stopped it; `<where>` is `staged` after an `add -A` whose commit a hook or git rejected, and `in the working tree` where §2.2's `git add` failed, the secret scan stopped the commit, or a carve-out-1 commit did not land; and `<unit>` is the unit's name on a §2.12 split, `the commit` otherwise.
 
 | Case | Line |
 |---|---|
@@ -266,6 +278,8 @@ Exactly one per **full** call, prefixed `Code repo:`. A caller that finishes sev
 | A unit commit rejected (§2.12) | append `; <unit> NOT committed — rejected by <who> (<reason>); its changes are <where>.` |
 | Pre-existing dirty paths skipped | append `; <n> pre-existing dirty path(s) were left uncommitted.` |
 | A stash is outstanding | append `; a stash from this run's branch step is still on the stack (<stash_ref>).` |
+| Possible secrets committed (§2.2) | append `; <n> possible secret(s) the scan flagged were committed as not secret, at your request (<unit>, …).` |
+| Secret scan not run (§2.2) | append `; the secret scan did not run (<unit>: <reason>; …).` |
 
 The `push FAILED` line states the surviving commit explicitly. A user reading "FAILED" needs to know in the same sentence that their work is not gone.
 
@@ -302,3 +316,4 @@ Four obligations. Omitting any one is a defect, not a style choice.
 - Never merges a pull request, and never approves one.
 - Never calls a REST API over HTTPS. `git push` is git-protocol; `gh` wraps the API (§2.6).
 - Never writes a file into the repository it is committing. Everything it needs — the pull-request body included — is written outside the tree.
+- Never writes a possible secret's value into a commit message, a pull-request body, a report or an artifact — §2.2's masked preview is the most any of them carries. Committing a hit the user ruled not secret is the user's call (§2.2), not this rule's breach.

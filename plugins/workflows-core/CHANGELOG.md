@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.13.0] — 2026-10-05
+
+### Changed
+- **`ard-resolution` skips a superseded or withdrawn decision.** A `### [AD#N]` carrying `**Superseded by:**` or `**Withdrawn:**` binds nothing (`product-workflows` 3.14.0's `ard-format.md` § Superseding a decision) and is left out of `invariants`, so no consumer enforces a rule the ARD itself replaced.
+- **`pre-lint`'s ARD block** checks `**Alternatives:**` on every live decision — MAJOR, or MINOR on one the prior ARD already held without it — that every `**Superseded by:**` names a live decision, and that every `**Withdrawn:**` gives a reason.
+- **The code-review checklist names a committed credential.** `model-routing/classification.md` §6's security item makes a token, private key, password literal, credentialed URL or added `.env` or keystore in an added line a `BLOCKER`, unless it is plainly a placeholder or test fixture.
 ## [1.12.0] — 2026-10-04
 
 **Update `product-workflows` to 3.13.0 and `dev-workflows` to 4.8.0 with this release**: their commands load `components`, which a `workflows-core` older than 1.12.0 does not carry.

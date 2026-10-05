@@ -123,7 +123,10 @@ full review.
 2. **Security impact** - authentication, authorization, input validation,
    injection (SQL / command / XSS / template), secret handling, crypto
    choices, CSRF / SSRF, dependency CVEs. Flag anything that touches
-   trust boundaries.
+   trust boundaries. A credential or key material in an added line — a
+   token, a private key, a password literal, a URL carrying credentials,
+   an added `.env` or keystore — is a `BLOCKER` unless it is plainly a
+   placeholder or a test fixture; name its file and line, never its value.
 3. **Architectural consistency** - follows existing patterns, respects module
    boundaries, uses the right abstraction layer, avoids duplicate
    implementations, and honours the repository's **documented standards**.
