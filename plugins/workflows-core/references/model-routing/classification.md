@@ -180,8 +180,8 @@ The orchestrator MUST execute these steps in order:
 
 Every orchestrator MUST record its routing decision and pass it to every
 sub-agent that reads one — the list below. An agent whose handoff file declares
-no `model_routing:` input is not sent one; its tier is pinned by the dispatch's
-own `model:` argument. Format:
+no `model_routing:` input is not sent one; its tier is pinned by its own frontmatter
+`model:` or by the dispatch's `model:` argument. Format:
 
 ```yaml
 model_routing:
