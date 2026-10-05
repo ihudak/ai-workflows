@@ -318,7 +318,7 @@ collect it.
 whose proposals are all unmerged should be one stop naming six, not six runs each naming one. Emit one
 stop at the end of the sweep, carrying §4.4's four parts for **every** slice that stopped: a slice on
 rows D/E names the concrete branch and pull-request state the gate reported for it, and the slices
-that came back row F — the proposal is on no ref the eight prefixes name — collect into:
+that came back row F — the proposal is on no ref the nine prefixes name — collect into:
 
 ```
 BRD_PROPOSAL_SLICE_NOT_HANDED_OFF: these included slices have a proposal.md on disk that is on no ref — <keys> — so the umbrella would roll up numbers no later reader can reproduce.
@@ -610,7 +610,7 @@ Nothing runs `require-on-main` on an umbrella's `proposal.md` — §3.4's `/brd-
 `deliverable_paths` set spanning classes takes the strongest class in it, and here that is advisory.
 
 On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with `prefix: brd`
-(§2.9's table — the shared prefix every `/brd-*` command uses; the eight prefixes §1 rule 3 fixes are
+(§2.9's table — the shared prefix every `/brd-*` command uses; the nine prefixes §1 rule 3 fixes are
 not extended, and nothing about an umbrella makes it a ninth phase), `feature_folder` as resolved in
 Phase 0, `deliverable_paths` = `proposal.md`, `proposal-brief.md` where this run rendered one, and, on
 a revision, the archived prior under `revisions/` at the name §2's first-free rule actually wrote —

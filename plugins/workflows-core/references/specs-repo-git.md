@@ -25,7 +25,7 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
    fire; a `cd` would corrupt their git state.
 2. **Bounded paths.** Only §2.1 paths are ever staged. `git add -A` is never
    issued at repository scope — always `git add -A -- <literal paths>`.
-3. **Bounded branches.** Only branches matching `^(idea|prd|ard|spec|design|ready|brd|frames)/`
+3. **Bounded branches.** Only branches matching `^(idea|prd|ard|spec|design|ready|brd|frames|kb)/`
    are the plugin's to switch away from or delete (§2.2).
 4. **Never destructive.** No `push --force`, no `push -f`, no `branch -D`, no
    `merge`, no `rebase`, no `reset`, and never delete an `index.lock`. §4 step
@@ -168,7 +168,7 @@ do not justify it by claiming plain `git add` cannot stage the deletion.
 ### 2.2 Branches
 
 **The plugin manages only branches it created.** A branch is plugin-owned when
-its name matches `^(idea|prd|ard|spec|design|ready|brd|frames)/`.
+its name matches `^(idea|prd|ard|spec|design|ready|brd|frames|kb)/`.
 
 Any other **named** branch — the user's own work, a hand-made branch — is left
 alone and never switched away from (§3.3 G2). The run's artifacts are still
@@ -302,7 +302,7 @@ notice, never a quiet line.
 |---|---|---|
 | G0 | **HEAD is detached** | **Hand off, and set `specs_git: blocked` for the whole run** — `commit-artifacts` (§4) must also skip. §5 notice at **blocking** severity. See §3.7. |
 | G1 | Any dirty **OTHER** path (§2.1) | **Hand off** — no commit, no branch switch, no push. §5 notice at **advisory** severity, listing the paths. Those files are not the plugin's, and switching branches would carry them. **This does NOT set `specs_git: blocked`**: the terminal `commit-artifacts` still runs, because it stages only artifact paths and is safe beside unrelated dirt. Losing the artifacts to protect files the step never touches would be the worse failure. |
-| G2 | On a **named** branch that is neither the default branch nor a match for `^(idea\|prd\|ard\|spec\|design\|ready\|brd\|frames)/` | **Leave it; stay on it.** §5 notice at **advisory** severity, naming the branch, so the user knows where this run's artifacts will land. The commit is safe — a named branch cannot be lost — so `commit-artifacts` proceeds. The plugin manages only branches it created (§2.2). |
+| G2 | On a **named** branch that is neither the default branch nor a match for `^(idea\|prd\|ard\|spec\|design\|ready\|brd\|frames\|kb)/` | **Leave it; stay on it.** §5 notice at **advisory** severity, naming the branch, so the user knows where this run's artifacts will land. The commit is safe — a named branch cannot be lost — so `commit-artifacts` proceeds. The plugin manages only branches it created (§2.2). |
 
 ### 3.4 Stage 2 — flush leftovers
 
@@ -346,8 +346,8 @@ First matching row applies.
 *against the run key set*, by testing the keys the run already holds. It is never
 extracted from the branch name as free text.
 
-1. Strip the `idea/`, `prd/`, `ard/`, `spec/`, `design/`, `ready/`, `brd/`, or
-   `frames/` prefix. Call the remainder `R`. No prefix matches → not a plugin
+1. Strip the `idea/`, `prd/`, `ard/`, `spec/`, `design/`, `ready/`, `brd/`, `frames/` or `kb/`
+   prefix (a `kb/harvest-<date>` name holds no key, so it resolves to B4). Call the remainder `R`. No prefix matches → not a plugin
    branch, and no row here applies (§3.3 G2 already kept the run on it).
 2. A key `K` in the run key set (§3.2) is a **candidate** when `R` is exactly `K`,
    or `R` begins with `K-` or `K_`. **The separator is required.** It is the same
@@ -597,7 +597,7 @@ to state.
 
 ### 4.1 Where the commit lands
 
-- **A command that opened a specs-repo branch at handoff** (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/implement`, `/ready`, `/frames`, `/prd-ground`, `/prd-proposal`, and every `/brd-*` command — seventeen total, matching `phase-handoff.md`'s producer count) — on that `idea|prd|ard|spec|design|ready|brd|frames/*` branch, so the push updates the pull request already open. Two commits on one branch: the deliverable, then the artifacts — save where the deliverable's commit failed (`phase-handoff.md` §4.1's *Commit failed*), when the artifacts' commit alone lands on that branch and its push opens no pull request. Every `/brd-*` command opens on the shared `brd` prefix (`phase-handoff.md` §2.9); `/prd-ground` opens on that same shared `brd` prefix on the BRD route, or on the shared `prd` prefix (with `/create-prd`, `/update-prd` and `/prd-proposal`) on the idea route — it left the `/brd-*` glob the day its own rename shipped, but not the prefix sharing, which is why it is named here rather than folded into "every `/brd-*` command". A later `/brd-*` run — or `/prd-ground`, on the BRD route — that reuses the branch a prior phase of the same BRD opened lands there rather than on the default branch.
+- **A command that opened a specs-repo branch at handoff** (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/implement`, `/ready`, `/frames`, `/prd-ground`, `/prd-proposal`, `/harvest-decisions`, and every `/brd-*` command — eighteen total, matching `phase-handoff.md`'s producer count) — on that `idea|prd|ard|spec|design|ready|brd|frames|kb/*` branch, so the push updates the pull request already open. Two commits on one branch: the deliverable, then the artifacts — save where the deliverable's commit failed (`phase-handoff.md` §4.1's *Commit failed*), when the artifacts' commit alone lands on that branch and its push opens no pull request. Every `/brd-*` command opens on the shared `brd` prefix (`phase-handoff.md` §2.9); `/prd-ground` opens on that same shared `brd` prefix on the BRD route, or on the shared `prd` prefix (with `/create-prd`, `/update-prd` and `/prd-proposal`) on the idea route — it left the `/brd-*` glob the day its own rename shipped, but not the prefix sharing, which is why it is named here rather than folded into "every `/brd-*` command". A later `/brd-*` run — or `/prd-ground`, on the BRD route — that reuses the branch a prior phase of the same BRD opened lands there rather than on the default branch.
 - **The same command when the user declined git at handoff** ("just write the
   files — I'll handle git") — the repo is still on the default branch and the
   deliverable is uncommitted there. `commit-artifacts` still runs and commits
