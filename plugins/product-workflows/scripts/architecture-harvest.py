@@ -40,6 +40,8 @@ LABELS = ("Binds", "Prevents", "Rule", "Alternatives", "Supersedes", "Superseded
 LABEL_RE = re.compile(r"\*\*(%s):\*\*" % "|".join(re.escape(x) for x in LABELS))
 HEADING_RE = re.compile(r"^###\s+\[AD[#-](\d+)\]:\s*(.*?)\s*$")
 HEADING_ANY_RE = re.compile(r"^###\s+\[AD")
+HEADING_NOCOLON_RE = re.compile(r"^###\s+\[AD[#-]\d+\](?!:)")
+HEADING_NOBRACKET_RE = re.compile(r"^###\s+AD[#-]\d+")
 SECTION_RE = re.compile(r"^##\s+(?:\d+\.\s*)?Architecture decisions\s*$", re.I)
 TOP_HEADING_RE = re.compile(r"^#{1,2}\s")
 CITE_RE = re.compile(r"\[AD[#-](\d+)\]")
@@ -271,6 +273,7 @@ def parse_fields(body):
     for i, m in enumerate(found):
         end = found[i + 1].start() if i + 1 < len(found) else len(body)
         value = re.sub(r"\s*·\s*$", "", body[m.end():end].strip()).strip()
+        value = re.sub(r"\n\s*[-*+]$", "", value).strip()  # the next field's bullet marker, in bullet-form fields
         if m.group(1) == "Supersedes":
             fields["Supersedes"].append(value)
         elif m.group(1) not in fields:
@@ -316,6 +319,10 @@ def parse_ard(text, path):
             m = HEADING_RE.match(ln)
             if m:
                 cur = {"n": int(m.group(1)), "title": m.group(2), "line": i, "body": []}
+            elif HEADING_NOCOLON_RE.match(ln):
+                problems.append(problem("unparseable", path, i, "a decision heading with no colon after its number — write `### [AD#N]: <title>`"))
+            elif HEADING_NOBRACKET_RE.match(ln):
+                problems.append(problem("unparseable", path, i, "a decision heading without brackets — write `### [AD#N]: <title>`"))
             elif HEADING_ANY_RE.match(ln):
                 problems.append(problem("unparseable", path, i, "a decision heading with no number"))
             continue
@@ -337,6 +344,10 @@ def parse_ard(text, path):
             continue
         f = parse_fields("\n".join(d["body"]))
         bad = validate(d["n"], f)
+        if not bad and f.get("Superseded by"):
+            m_ = int(CITE_RE.search(f["Superseded by"]).group(1))
+            if m_ not in counts:
+                bad = "[AD#%d]'s **Superseded by:** names [AD#%d], which this ARD does not hold" % (d["n"], m_)
         if bad:
             problems.append(problem("unparseable", path, d["line"], bad))
             continue
@@ -522,7 +533,9 @@ def harvest(root, ref, layout="vi", write=False):
     claims = {}
     for r in sorted(records.values(), key=lambda x: natural(x["id"])):
         for v in r["fields"]["Supersedes"]:
-            claims.setdefault(SUPERSEDES_RE.match(v).group(2), []).append(r)
+            carriers = claims.setdefault(SUPERSEDES_RE.match(v).group(2), [])
+            if r not in carriers:  # one decision naming a record twice is one claim
+                carriers.append(r)
     for target in sorted(claims, key=natural):
         live = []
         for r in claims[target]:
@@ -699,8 +712,9 @@ def selftest():
     def kinds(plan):
         return [p["kind"] for p in plan["problems"]]
 
-    def cli(*args):
-        return subprocess.run([sys.executable, me, *args], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    def cli(*args, env=None):
+        return subprocess.run([sys.executable, me, *args], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                              env=dict(os.environ, **(env or {})))
 
     # ---- the vi layout ---------------------------------------------------------------
     vi = "specifications/ACME-1-orders/"
@@ -741,9 +755,14 @@ def selftest():
         "specifications/ACME-8-bad/ACME-8_ARD.md": ard("Bad", [
             ad(1, "No rule", rule=False), ad(2, "Twice"), ad(2, "Twice again"),
             "### [AD#]: No number\n\n**Rule:** x.\n",
-            ad(3, "Bad link", extra=["**Supersedes:** [the outbox decision](x.md) — why.", ""])]),
+            ad(3, "Bad link", extra=["**Supersedes:** [the outbox decision](x.md) — why.", ""]),
+            ad(4, "Both", extra=["**Superseded by:** [AD#3] — x.", "", "**Withdrawn:** y.", ""]),
+            ad(5, "No target", extra=["**Superseded by:** the next one.", ""]),
+            ad(6, "Dangling", extra=["**Superseded by:** [AD#42] — gone.", ""]),
+            "### AD#9: No brackets\n\n**Rule:** x.\n",
+            "### [AD#7] No colon\n\n**Rule:** y.\n"]),
         "specifications/ACME-10-zahlungsauslösung/ACME-10_ARD.md": ard("Zahlung", [
-            ad(1, "A wins", extra=[sup("ACME-1-AD5", "Legacy form"), ""])]),
+            ad(1, "A wins", extra=[sup("ACME-1-AD5", "Legacy form"), ""]), ad(2, "Unruled", rule=False)]),
         "specifications/ACME-11-b/ACME-11_ARD.md": ard("B", [ad(1, "B wins", extra=[sup("ACME-1-AD5", "Legacy form"), ""])]),
         "specifications/ACME-12-a/ACME-12_ARD.md": ard("First", [ad(1, "First")]),
         "specifications/ACME-12-b/ACME-12_ARD.md": ard("Second", [ad(1, "Second")]),
@@ -754,6 +773,12 @@ def selftest():
             "## Architecture decisions", "## 3. Architecture Decisions"),
         "specifications/ACME-16-none/ACME-16_ARD.md": ard("None", [ad(1, "Lost")]).replace(
             "## Architecture decisions", "## Decisions"),
+        "specifications/ACME-17-twice/ACME-17_ARD.md": ard("Twice", [ad(1, "Says it twice", extra=[
+            sup("ACME-15-AD1", "Headings drift"), "", sup("ACME-15-AD1", "Headings drift"), ""])]),
+        "specifications/ACME-18-bullets/ACME-18_ARD.md": ard("Bullets", [
+            "### [AD#1]: Bulleted fields\n\n- **Binds:** the bulleted path.\n- **Prevents:** drift.\n"
+            "- **Rule:** Bullets hold.\n- **Alternatives:** prose — lost.\n"]),
+        "specifications/notes/ACME-19_ARD.md": ard("Loose", [ad(1, "Unfiled")]),
     }
     with tempfile.TemporaryDirectory() as tmp:
         init(tmp)
@@ -766,16 +791,34 @@ def selftest():
         expect = {"ACME-1-AD1", "ACME-1-AD2", "ACME-1-AD3", "ACME-1-AD4", "ACME-1-AD5", "ACME-2-AD1",
                   "ACME-2-ui-AD2", "ACME-2-ui-AD4", "ACME-2-api-AD4", "ACME-7-AD1", "ACME-7-AD2", "ACME-7-AD3",
                   "ACME-7-AD4", "ACME-7-AD5", "ACME-7-AD6", "ACME-10-AD1", "ACME-11-AD1", "ACME-13-AD1",
-                  "ACME-5-AD1", "ACME-6-AD1", "ACME-15-AD1"}
+                  "ACME-5-AD1", "ACME-6-AD1", "ACME-15-AD1", "ACME-17-AD1", "ACME-18-AD1"}
         check(set(p1["create"]) == expect, "first harvest creates exactly the parseable decisions: %s" % sorted(
             set(p1["create"]) ^ expect))
         check(not (p1["update"] or p1["supersede"] or p1["withdraw"] or p1["kept"]), "first harvest only creates")
-        check(p1["live"] == 17, "17 live records, got %s" % p1["live"])
+        check(p1["live"] == 18, "18 live records, got %s" % p1["live"])
+        check("superseded_by: ACME-17-AD1" in rec("ACME-15-AD1") and not any(
+            x["kind"] == "supersede-conflict" and "ACME-15-AD1" in x["detail"] for x in p1["problems"]),
+              "two identical Supersedes lines on one decision are one claim, not a conflict")
+        check("**Binds:** the bulleted path.\n\n**Prevents:**" in rec("ACME-18-AD1") and "\n-\n" not in rec("ACME-18-AD1"),
+              "bullet-form fields leave no stray bullet marker")
+        check(any(x["file"] == "specifications/notes/ACME-19_ARD.md" and x["kind"] == "unparseable" for x in p1["problems"]),
+              "an ARD outside a keyed folder is reported")
+        r = cli("--specs", tmp, "--ref", "HEAD", "--dry-run", env={"PYTHONIOENCODING": "ascii"})
+        try:
+            asc = json.loads(r.stdout.decode("ascii"))
+        except (ValueError, UnicodeDecodeError):
+            asc = {}
+        check("specifications/ACME-10-zahlungsauslösung/ACME-10_ARD.md" in json.dumps(asc, ensure_ascii=False),
+              "the plan is valid JSON on an ASCII-only stdout")
         check(any(x["file"].startswith("specifications/ACME-16-none/") and x["kind"] == "unparseable" for x in p1["problems"]),
               "an ARD with no Architecture decisions section is reported")
         bad8 = [p for p in p1["problems"] if p["file"].startswith("specifications/ACME-8-bad/")]
-        check([p["kind"] for p in bad8] == ["unparseable"] * 4,
-              "ACME-8: no Rule, a duplicate, no number, a bad Supersedes — got %s" % [p["detail"] for p in bad8])
+        check([p["kind"] for p in bad8] == ["unparseable"] * 9,
+              "ACME-8: no Rule, a duplicate, no number, a bad Supersedes, superseded and withdrawn, Superseded by "
+              "with no [AD#M] or naming one the ARD lacks, no brackets, no colon — got %s" % [p["detail"] for p in bad8])
+        details = " | ".join(p["detail"] for p in bad8)
+        check("brackets" in details and "colon" in details and "does not hold" in details,
+              "each heading form and a dangling Superseded by is named for what it is: %s" % details)
         for kind in ("key-conflict", "supersedes-missing-target", "supersedes-same-group",
                      "supersedes-target-not-accepted", "supersedes-carrier-not-live", "supersede-conflict",
                      "ambiguous-citation"):
@@ -817,6 +860,7 @@ def selftest():
         commit(tmp, {vi + "ACME-1_ARD.md": orders(third=True),
                      "specifications/ACME-7-billing/ACME-7_ARD.md": billing(third=True),
                      "specifications/ACME-13_gone/ACME-13_ARD.md": None,
+                     "specifications/ACME-5-csv-import/ACME-5_ARD.md": ard("CSV import", [ad(2, "Imports batch")]),
                      KB + "/decisions/ACME-2-AD1.md": a2}, "third")
         commit_free = "specifications/ACME-14-new/ACME-14_ARD.md"
         os.makedirs(os.path.join(tmp, os.path.dirname(commit_free)))
@@ -825,9 +869,10 @@ def selftest():
         p3 = harvest(tmp, "HEAD", "vi", write=True)
         check(p3["supersede"] == ["ACME-1-AD3"], "supersede: %s" % p3["supersede"])
         check(p3["withdraw"] == ["ACME-7-AD6"], "withdraw: %s" % p3["withdraw"])
-        check(p3["create"] == ["ACME-1-AD6"], "create: %s" % p3["create"])
+        check(p3["create"] == ["ACME-1-AD6", "ACME-5-AD2"], "create: %s" % p3["create"])
         check(p3["update"] == ["ACME-2-AD1"], "update: %s" % p3["update"])
-        check(p3["kept"] == ["ACME-13-AD1"] and "source-missing" in kinds(p3), "a vanished source keeps its record")
+        check(p3["kept"] == ["ACME-5-AD1", "ACME-13-AD1"] and "source-missing" in kinds(p3), "a vanished source keeps its record: %s" % p3["kept"])
+        check("decision-missing" in kinds(p3), "a decision gone from its ARD keeps its record and is reported")
         check(rec("ACME-13-AD1") == kept13, "a kept record is byte-identical")
         check("ACME-14" not in json.dumps(p3), "an uncommitted ARD is never read")
         check("promotion: proposed" in rec("ACME-2-AD1") and "Checkout uses idempotency keys holds." in rec("ACME-2-AD1")
@@ -939,13 +984,13 @@ def main():
         return 2
     try:
         if a.pending_kb:
-            print(json.dumps({"pending": pending_kb(a.specs, a.ref)}, indent=2, ensure_ascii=False))
+            print(json.dumps({"pending": pending_kb(a.specs, a.ref)}, indent=2))
             return 0
         plan = harvest(a.specs, a.ref, a.layout, write=not a.dry_run)
     except Exception as e:  # anything unexpected is "could not run", never a partial plan
         print("architecture-harvest: not run (%s: %s)" % (type(e).__name__, e), file=sys.stderr)
         return 2
-    print(json.dumps(plan, indent=2, ensure_ascii=False))
+    print(json.dumps(plan, indent=2))  # ASCII-escaped: valid JSON on any stdout encoding
     print(summary(plan), file=sys.stderr)
     return 0
 

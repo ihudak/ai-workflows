@@ -17,7 +17,7 @@ Ground an architecture document in the organisation's architecture repository an
 - `stack_facts` — `<technology> — <file:line>` entries (`<file>` alone where no line is known) read from the confirmed repositories' manifests and code scan, at most 20, or `[]`.
 - `components` — the confirmed component ids, or `[]`.
 
-Neither root set, or a set root unreadable → `status: ERROR`.
+No root readable → `status: ERROR`. A set root that is unreadable is skipped and the other is read; `layout` then names only what was read.
 
 ## Layouts
 
@@ -45,7 +45,7 @@ An artifact's **id** is its frontmatter `id:`, else the file stem; a radar entry
    - `contradicts-team-decision` — an `accepted` team record whose quoted Rule a stack fact or a sentence of `feature_summary` breaks, scoped as `contradicts-decision` is;
    - `radar-hold` / `radar-retire` — a stack fact, or a technology `feature_summary` proposes, whose radar entry is in that ring;
    - `radar-absent` — a technology `feature_summary` or `themes` propose that no radar entry matches. Never for a stack fact: code already using a technology is not a proposal.
-6. **Links.** Read `git -C <arch_root> remote get-url origin`. Normalise `git@<host>:<path>`, `ssh://git@<host>/<path>` and `https://<host>/<path>` to a host and a path without `.git`. A host of exactly `github.com` gives `https://github.com/<path>/blob/<full sha>/<prefix><artifact path>`; exactly `gitlab.com` gives `https://gitlab.com/<path>/-/blob/<full sha>/<prefix><artifact path>`, where `<prefix>` is `git -C <arch_root> rev-parse --show-prefix` (empty at a repository's root). Both only when `git -C <arch_root> branch -r --contains <full sha> --list 'origin/*'` prints something, since a commit `origin` lacks has no page there, and only when `git -C <arch_root> --no-optional-locks status --porcelain -- <artifact path>` prints nothing, since an edited or untracked file is not the text at that commit. Every other case — another host, an SSH alias, no remote, an unpushed commit, a file changed since it, not a git checkout — is `url: null`. A team record's `url` is always `null`, and its `path` is relative to the specs root (`architecture/decisions/<id>.md`).
+6. **Links.** For an organisation reference, read `git -C <arch_root> remote get-url origin`. Normalise `git@<host>:<path>`, `ssh://git@<host>/<path>` and `https://<host>/<path>` to a host and a path without `.git`. A host of exactly `github.com` gives `https://github.com/<path>/blob/<full sha>/<prefix><artifact path>`; exactly `gitlab.com` gives `https://gitlab.com/<path>/-/blob/<full sha>/<prefix><artifact path>`, where `<prefix>` is `git -C <arch_root> rev-parse --show-prefix` (empty at a repository's root). Both only when `git -C <arch_root> branch -r --contains <full sha> --list 'origin/*'` prints something, since a commit `origin` lacks has no page there, and only when `git -C <arch_root> --no-optional-locks status --porcelain -- <artifact path>` prints nothing, since an edited or untracked file is not the text at that commit. Every other case — another host, an SSH alias, no remote, an unpushed commit, a file changed since it, not a git checkout — is `url: null`. A team record's `url` is always `null`, and its `path` is relative to the specs root (`architecture/decisions/<id>.md`).
 7. **Rank and cap.** At most 12 references per root, most binding first: an `accepted` decision or `active` standard a stack fact or theme falls under, then the rest. At most 8 challenges: `contradicts-*`, then `radar-retire`, `radar-hold`, `radar-absent`.
 
 ## Output
@@ -62,7 +62,7 @@ arch_references:
     kind: standard | decision | principle | pattern | radar | reference-architecture
     root: organisation | team
     status: <as the artifact states it; a radar entry gives its ring>
-    path: <path relative to arch_root>
+    path: <path relative to arch_root; for a team record, to the specs root>
     url: <link, or null>
     rule: "<one sentence quoted as written>"
     applies_to: <the theme or stack fact it bears on>

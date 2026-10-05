@@ -30,7 +30,7 @@ Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/architecture-harvest.py" --specs "$S
 - **`create`, `update`, `supersede`, `withdraw` and `files` all empty** → report `Knowledge base up to date: <live> live records.` and every problem, then stop.
 - **`--dry-run`** → print the plan below and stop.
 
-**The plan, as printed:** one line per non-empty change kind with its count and ids (`create`, `update`, `supersede`, `withdraw`, then `kept`), the `live` count, then each problem as `<kind> — <file>:<line> — <detail>` followed by the fix `workflows-core:architecture-kb` §8 gives for that kind.
+**The plan, as printed:** one line per non-empty change kind with its count and ids (`create`, `update`, `supersede`, `withdraw`, then `kept`), every path in `files` — so a change to `index.yaml` or `README.md` alone is shown, never only asked about — the `live` count, then each problem as `<kind> — <file>:<line> — <detail>` followed by the fix `workflows-core:architecture-kb` §8 gives for that kind.
 
 ## Phase 2 — Apply
 

@@ -90,7 +90,7 @@ Problems never stop a harvest and never change its exit code; each leaves the re
 
 | Kind | Meaning | Fix |
 |---|---|---|
-| `unparseable` | an ARD with no `## Architecture decisions` section (the heading's case and a leading number are tolerated), a decision with no **Rule**, a duplicate number, a heading with no number, both **Superseded by** and **Withdrawn**, a **Superseded by** naming no `[AD#M]`, a **Supersedes** whose link text does not start with a record id, or an ARD outside a `PRD-` or `EPIC-` folder, or a frontmatter `key:` that is not a key | refine the ARD (`/product-workflows:create-ard`) |
+| `unparseable` | an ARD with no `## Architecture decisions` section (the heading's case and a leading number are tolerated), a decision with no **Rule**, a duplicate number, a heading with no number, no brackets or no colon (`### [AD#N]: <title>` is the form), both **Superseded by** and **Withdrawn**, a **Superseded by** naming no `[AD#M]` or one the ARD does not hold, a **Supersedes** whose link text does not start with a record id, or an ARD outside a `PRD-` or `EPIC-` folder, or a frontmatter `key:` that is not a key | refine the ARD (`/product-workflows:create-ard`) |
 | `key-conflict` | two ARD paths with one scope key | remove or rename one of the two |
 | `ambiguous-citation` | a cited number two area ARDs of one Epic both hold | cite it where only one ARD holds it |
 | `supersedes-carrier-not-live` | a `Supersedes` on a superseded or withdrawn decision | repeat it on the replacing decision, or drop it |
