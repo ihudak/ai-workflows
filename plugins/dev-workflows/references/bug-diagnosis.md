@@ -30,8 +30,14 @@ the evidence more convenient.
 ## Steps
 
 1. **Repro first.** Construct a **red-capable, deterministic, fast, agent-runnable** reproduction
-   command that fails *because of this bug* — before forming any hypothesis. Minimize it to the
-   smallest input/state that still fails. A bug you cannot reproduce on demand is not yet ready to fix.
+   command that fails *because of this bug* — before forming any hypothesis. A bug you cannot
+   reproduce on demand is not yet ready to fix.
+
+   **Minimise it once it is red.** Cut inputs, callers, configuration, data and steps **one at a
+   time**, re-running the command after each cut, and keep only what the failure needs. It is minimal
+   when removing any remaining element makes it go green. A minimal repro leaves fewer moving parts to
+   suspect at step 2, and it is the regression test step 4 lands. Re-run the original, unminimised
+   scenario at step 5 as well, because a minimised repro can lose the trigger the user actually hit.
 
    **Completion criterion — one command, already run.** Step 1 is not finished until you can name
    **one** command — a test invocation, a script path, a `curl` — that you have **already run at least
@@ -49,20 +55,38 @@ the evidence more convenient.
    half the time is debuggable; one that reproduces 1% of the time is not — raise the rate until it is,
    and state the rate you achieved.
 
-   **When you genuinely cannot build a loop**, stop and say so explicitly, listing what you tried.
+   **When you genuinely cannot build a loop**, stop and say so explicitly, listing what you tried,
+   and name what would let you build one: (a) access to an environment that reproduces it, (b) a
+   redacted captured artifact — a HAR file, a log dump, a core dump, a timestamped recording — or
+   (c) permission to add temporary instrumentation where it does reproduce. Whoever can ask the user
+   asks; an agent that cannot returns the list to its caller (`risk-planner` in its `Needs:` line).
+   Do not go on to step 2 without a loop.
    A 30-second flaky loop is barely better than no loop; a 2-second deterministic one is worth the
    effort it takes to get there.
 
 2. **Rank falsifiable hypotheses.** List **3–5** candidate causes, each stating (a) what it predicts
    you would observe and (b) the cheapest observation that would **falsify** it. Order by likelihood ×
    cheapness-to-test. A hypothesis you cannot falsify is not a hypothesis — drop it.
-3. **Instrument with tagged, removable probes.** Add temporary instrumentation tagged `[DEBUG-xxxx]`
-   (a short unique token per probe). Test the ranked hypotheses against the repro. Every `[DEBUG-xxxx]`
+3. **Instrument with tagged, removable probes.** Each probe tests **one** hypothesis's prediction
+   from step 2, and changes **one variable at a time**, so a result can be read back to the hypothesis
+   it decides. Prefer a debugger or REPL inspection where the environment allows it, then targeted
+   logs at the boundaries that tell two hypotheses apart; never log everything and grep. Tag every
+   temporary probe `[DEBUG-xxxx]` (a short unique token per probe). Every `[DEBUG-xxxx]`
    probe MUST be removed before the change is finalized (the `/implement` Phase 3B cleanup gate strips
    them before the review diff is captured).
+
+   **A performance regression takes a different branch.** Logs usually mislead about time. Establish
+   a baseline measurement first — a timing harness, a profiler, a query plan — at the state before the
+   regression and at the state after it; then bisect between the two, re-measuring at each step. Measure
+   first, fix second. The "repro" of step 1 is that measurement, and it is red when the time exceeds
+   the baseline by more than its own run-to-run spread.
 4. **Fix at the correct seam; regression-test there.** Land the fix and its regression test at the
    **correct seam** (see `${CLAUDE_PLUGIN_ROOT}/references/design-format.md` `## Seams` — prefer the
    highest seam that still isolates the behavior). If **no correct seam exists**, that is itself a
    finding — record it (the code needs a seam before it can be safely tested); do NOT bolt a test onto
    the wrong seam to manufacture green.
-5. **Evidence before the claim.** Never report the bug fixed until the repro from step 1 goes green.
+5. **Evidence before the claim.** Never report the bug fixed until the repro from step 1 goes green,
+   and the original scenario with it.
+6. **Name the confirmed hypothesis.** State which hypothesis from step 2 the fix acted on, and the
+   probe result that confirmed it, in the run's report and the pull-request body, so the next person
+   to debug this code learns what the cause was and not just that it was fixed.

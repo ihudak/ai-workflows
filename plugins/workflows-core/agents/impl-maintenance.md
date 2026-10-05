@@ -47,24 +47,45 @@ carrying an unverified claim is how the claim gets adopted.
 1. Read the session handoff.
 2. Read `CLAUDE.md` in the project root (if present) and `~/.claude/CLAUDE.md`
    (global) to understand what rules already exist — avoid suggesting duplicates.
-3. Read the relevant command file(s) from **the dispatching plugin's** `commands/`
+   Note any instruction there that is a **no-op**: it names no action an agent could
+   take or omit ("be careful", "write clean code"), or it restates what a hook, a
+   check or the harness already enforces. Propose each one's removal as its own line
+   item under `#### CLAUDE.md rules`, with those grounds; a no-op in a plugin
+   reference goes under `#### Reference docs` the same way. The user approves each
+   removal (`instruction-file-maintenance.md` §5).
+3. Read the project's own check commands — its build tool's lint, typecheck and
+   test scripts, its pre-commit hooks, its CI workflow — so you know which checks
+   already exist. A check that exists but is not wired in, or is silently broken,
+   is the finding, not a reason to propose a new one.
+4. Read the relevant command file(s) from **the dispatching plugin's** `commands/`
    (if accessible) to understand the workflow that was used — not
    `${CLAUDE_PLUGIN_ROOT}/commands/`, which resolves to this plugin and carries only
    the family-meta utility commands. Focus on the section most relevant to the
    session's events.
-4. Scan `${CLAUDE_PLUGIN_ROOT}/agents/` and the dispatching plugin's `hooks/`
+5. Scan `${CLAUDE_PLUGIN_ROOT}/agents/` and the dispatching plugin's `hooks/`
    and `agents/` (if accessible) to understand what tooling already exists.
-5. For each key event in the handoff, ask:
-   - Could a new **CLAUDE.md rule** have prevented this issue or misunderstanding?
+6. For each key event in the handoff, first sort the miss behind it:
+   - **Mechanical** — a fixed pattern a script could detect: a banned call or API, an
+     import shape, a file in the wrong place, a required step skipped that leaves a
+     detectable trace. It gets a **check** — a hook, a lint rule, a CI job or a gate
+     script, whichever the project's existing tooling makes cheapest — under
+     `#### Hooks and checks`, or under `#### Command workflow improvements` where the check
+     belongs in the plugin. Default to the check: a rule an agent must remember is
+     the weaker fix for a pattern a script can catch every time.
+   - **Judgement** — consistency across files, matching the surrounding style, a
+     trade-off: anything no script could decide. Only this kind gets a written rule.
+
+   Then ask:
+   - Could a new **CLAUDE.md rule** have prevented this judgement miss?
    - Could a new or updated **hook** automate a manual step?
    - Could a new or updated **reference doc** have provided needed information?
    - Could a new or updated **agent** make this task reusable?
    - Could the **command workflow** be improved to handle this class of event?
-6. Synthesise findings. Discard suggestions that are:
+7. Synthesise findings. Discard suggestions that are:
    - Already covered by existing rules/hooks/agents
    - Too vague to act on
    - Pure style preferences with no workflow impact
-7. Produce the structured report.
+8. Produce the structured report.
 
 ## Output
 
@@ -86,16 +107,20 @@ Return this exact shape (no preamble, no chatter):
 #### CLAUDE.md rules
 - **Rule**: [proposed rule text, ready to paste]
   **Rationale**: [why this would have helped]
+  **Why not a check**: [what makes this a judgement call no script could decide]
+  **Scope**: [project-level CLAUDE.md | global ~/.claude/CLAUDE.md]
+- **Remove**: [the no-op instruction, quoted]
+  **Grounds**: [names no action an agent could take or omit | already enforced by <the hook, check or harness behaviour>]
   **Scope**: [project-level CLAUDE.md | global ~/.claude/CLAUDE.md]
 - ...
 - _or_ "No new rules suggested"
 
-#### Hooks
-- **Hook**: [name and trigger (e.g. UserPromptSubmit, PostToolUse:Bash)]
+#### Hooks and checks
+- **Check**: [a hook with its trigger (e.g. UserPromptSubmit, PostToolUse:Bash), a lint rule, a CI job or a gate script]
   **Purpose**: [what it would do]
   **Rationale**: [why this would help]
 - ...
-- _or_ "No new hooks suggested"
+- _or_ "No new hooks or checks suggested"
 
 #### Reference docs
 - **File**: [path, e.g. ${CLAUDE_PLUGIN_ROOT}/references/session-hygiene.md]

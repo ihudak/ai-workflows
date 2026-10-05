@@ -46,16 +46,20 @@ Return this exact shape (no preamble, no chatter):
 #### CLAUDE.md rules
 - **Rule**: [proposed rule text, ready to paste]
   **Rationale**: [why this would have helped]
+  **Why not a check**: [what makes this a judgement call no script could decide]
+  **Scope**: [project-level CLAUDE.md | global ~/.claude/CLAUDE.md]
+- **Remove**: [the no-op instruction, quoted]
+  **Grounds**: [names no action an agent could take or omit | already enforced by <the hook, check or harness behaviour>]
   **Scope**: [project-level CLAUDE.md | global ~/.claude/CLAUDE.md]
 - ...
 - _or_ "No new rules suggested"
 
-#### Hooks
-- **Hook**: [name and trigger (e.g. UserPromptSubmit, PostToolUse:Bash)]
+#### Hooks and checks
+- **Check**: [a hook with its trigger (e.g. UserPromptSubmit, PostToolUse:Bash), a lint rule, a CI job or a gate script]
   **Purpose**: [what it would do]
   **Rationale**: [why this would help]
 - ...
-- _or_ "No new hooks suggested"
+- _or_ "No new hooks or checks suggested"
 
 #### Reference docs
 - **File**: [path, e.g. ${CLAUDE_PLUGIN_ROOT}/references/session-hygiene.md]
