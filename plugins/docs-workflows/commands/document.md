@@ -1534,7 +1534,7 @@ either mode, so it runs for Mode B exactly as it does for Mode A, and any `specs
 
 ## Phase 1 — Clarification
 
-**Rule: Ask, don't guess. This rule is absolute.**
+**Rule: Look, then ask; never guess.** The description is the starting intent — never ask the user to restate it.
 
 Before producing a plan, list the candidate ambiguities in the description:
 - Ambiguous scope or unclear boundaries (which file? which section? extend or replace?)
@@ -1543,10 +1543,10 @@ Before producing a plan, list the candidate ambiguities in the description:
 - Undefined target audience (end-user vs developer vs operator)
 - Missing acceptance criteria (what makes this "done"?)
 
-**Look before asking.** Try to settle each candidate from what this run can read: the description and any file Phase 0 step 1 loaded, the target Phase 0 step 3 resolved and the pages around it, the docs repository's own guidance files — the style guide, `CONTRIBUTING.md`, `README.md`, `CLAUDE.md` and `AGENTS.md`, the same files step 3's `Prerequisites` and step 4's checklist came from — and `git -C <repo_root> log` for the target's history. Look only as far as each candidate needs. Then sort each candidate:
-- **Settled by the reading** — missing evidence, not a decision: ask nothing, and carry it into the plan with where it was found (an existing page that already covers the topic, the section a similar page uses, the audience the surrounding pages address).
+**Look before asking.** Try to settle each candidate from what this run can read: the description and any file Phase 0 step 1 loaded, and the target Phase 0 step 3 resolved with the pages around it — and, only where step 3 resolved a `repo_root`, that repository's guidance files (its `README.md`, `CONTRIBUTING.md`, `CLAUDE.md`, `AGENTS.md` and any style guide it carries) and `git -C <repo_root> log` for the target's history. A target in no git tree has no repository to read beyond the target itself. Look only as far as each candidate needs. Then sort each candidate:
+- **Settled by the reading** — missing evidence, not a decision: ask nothing, and carry it into the plan's Approach with where it was found (an existing page that already covers the topic, the section a similar page uses, the audience the surrounding pages address).
 - **Left open, and its answer changes what a reader of the documentation would notice** — what the page says, where it lives, who it addresses, whether it replaces existing text: a **decision**. Ask it.
-- **Left open, and a reader would not notice the answer** — settle it yourself and list it in the plan's assumptions.
+- **Left open, and a reader would not notice the answer** — settle it yourself and list it in the plan's Assumptions.
 
 Ask every decision. Rules:
 - Use `choices` arrays for every question — never plain text questions
@@ -1595,7 +1595,7 @@ Produce a written plan with these sections:
 
 1. **Classification** — `SIMPLE` or `MODERATE` (with reason)
 2. **Goal** — one-sentence summary of the desired end state
-3. **Approach** — chosen edit strategy and why (extend existing page vs. create new vs. restructure)
+3. **Approach** — chosen edit strategy and why (extend existing page vs. create new vs. restructure), citing each fact Phase 1's reading settled, with where it was found
 4. **Steps** — numbered, concrete edits
 5. **Files to create/modify** — list with brief rationale for each
 6. **Validation** — spot-check steps to run after the edit. Replace the `/implement` "Tests" section with this. Typical checks:
@@ -1606,7 +1606,7 @@ Produce a written plan with these sections:
    - `changelog:` or equivalent field updated if the repo's convention requires one
    - No broken inline image references
    - Spell-check / grammar only if the repo has a configured linter (e.g. Vale, markdownlint); do not run any linter that isn't already configured
-7. **Assumptions** — decisions made without user input (must be minimal)
+7. **Assumptions** — each open question the run settled itself because a reader of the documentation would not notice the answer (Phase 1's test) — in Phase 1 or while writing this plan — with what was chosen (must be minimal)
 8. **Out of scope** — explicitly list what is NOT being done (e.g., "not renaming the file", "not updating sibling pages")
 
 Then ask:
