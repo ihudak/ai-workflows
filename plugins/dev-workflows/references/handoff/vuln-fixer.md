@@ -61,9 +61,8 @@ no_address_placeholder: NOISSUE   # the literal the repo already writes; omit if
 regression_decision: keep-anyway   # keep-anyway | revert | retry-with-install-scripts — REQUIRED on phase: regression-resume only;
                                     # the orchestrator obtains this from the user (subagents cannot
                                     # prompt the user directly — see /vuln "Handling Test Failures")
-allow_install_scripts: [canary-dep]   # optional — the packages whose install-time code the user allowed
-                                    # (install-time-code.md); only ever on a retry after a
-                                    # return that named them in skipped_install_scripts
+allow_install_scripts:              # optional — entries from an earlier return's skipped_install_scripts, exactly
+  - "fast-hash@2.3.1 (npm: postinstall: node scripts/build.js)"   # as written, that the user allowed (install-time-code.md)
 model_routing:                     # optional; set by orchestrator for SIGNIFICANT / HIGH-RISK
   classification: SIGNIFICANT
   gate_tests_on_review: true       # if true: stop after Build, return AWAITING_REVIEW
@@ -88,7 +87,7 @@ files:
 - `full` (or omitted) — read the supplied baseline → create the fix branch → apply → build → verify. Default. (The first step captures nothing; the orchestrator did.)
   The branch is created **before** the edit, so it exists on every path this agent can
   return from, including `AWAITING_REVIEW`.
-- `verify-resume` — second-call protocol after Opus review. Skip steps 1–4
+- `verify-resume` — second-call protocol after Opus review, or after the user allowed skipped install scripts (`allow_install_scripts`, whose allow step runs before the verify). Skip steps 1–4
   (branch, fix and build are already done); resume at step 5 (Verify), after
   re-reading the supplied block's `Status` as step 1 would — its `NO_TESTS` arm
   decides whether step 5 runs at all, and this call does not execute step 1.

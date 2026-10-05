@@ -2089,6 +2089,24 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf '\n\`\`\`bash\npip install -r requirements.txt\n\`\`\`\n' >> $itc/fix-vuln/build-systems.md"
   expect_fail_msg "a pipenv install without PIP_ONLY_BINARY is rejected" 21 "without --only-binary=:all:" \
     "printf '\n- **pipenv**: \`pipenv install <package>==<version>\`\n' >> $itc/upgrade/ecosystems.md"
+  expect_fail_msg "a pip install building everything from source is rejected" 21 "builds every package from source" \
+    "printf '\n\`\`\`bash\npip install --only-binary=:all: --no-binary=:all: -r requirements.txt\n\`\`\`\n' >> $itc/fix-vuln/build-systems.md"
+  expect_fail_msg "a pip install naming --no-binary without --only-binary is rejected" 21 "without --only-binary=:all:" \
+    "printf '\n- allow: \`pip install --no-binary=alpha alpha==1.0\`\n' >> $itc/install-time-code.md"
+  expect_fail_msg "a bare yarn is rejected" 21 "without --ignore-scripts" \
+    "printf '\nThen run \`yarn\` to refresh the lock.\n' >> $itc/upgrade/ecosystems.md"
+  expect_fail_msg "an npm audit fix is rejected" 21 "without --ignore-scripts" \
+    "printf '\n\`\`\`bash\nnpm audit fix\n\`\`\`\n' >> $itc/fix-vuln/build-systems.md"
+  expect_fail_msg "a pipenv sync is rejected" 21 "without --only-binary=:all:" \
+    "printf '\n- **pipenv**: \`pipenv sync\`\n' >> $itc/upgrade/ecosystems.md"
+  expect_fail_msg "a versioned pip install is rejected" 21 "without --only-binary=:all:" \
+    "printf '\n\`\`\`bash\npip3.12 install -r requirements.txt\n\`\`\`\n' >> $itc/fix-vuln/build-systems.md"
+  expect_fail_msg "a chained install is held command by command" 21 "without --ignore-scripts" \
+    "printf '\n\`\`\`bash\nnpm install --ignore-scripts x && npm ci\n\`\`\`\n' >> $itc/fix-vuln/build-systems.md"
+  expect_pass_after "a table cell naming npm and yarn is not an install" \
+    "printf '\n| `package.json` | Node.js / npm / yarn |\n' >> $itc/fix-vuln/build-systems.md"
+  expect_pass_after "yarn named in prose is not an install" \
+    "printf '\nyarn classic and yarn berry differ; see yarn.lock and \`yarn rebuild <names>\`.\n' >> $itc/upgrade/ecosystems.md"
   expect_fail_msg "a missing install reference is rejected" 21 "does not exist" \
     "rm $itc/install-time-code.md"
   expect_fail_msg "install references with no install line trip the empty-scan guard" 21 "would examine nothing" \
@@ -3042,31 +3060,46 @@ check_untrusted_content() {
 # Install-time code. /vuln and /upgrade install new dependency versions with the commands
 # their install references give, and a release's install script, or a source distribution's
 # build, runs code it ships with the user's permissions -- in a container and on a host alike.
-# $ITC_PLUGIN_REL/$REF_DIR/install-time-code.md is the rule; this check holds every install line
-# in the three references to it: an npm / pnpm / yarn install, add or update carries
-# --ignore-scripts (yarn berry: --mode=skip-build), and a pip / pipenv install carries
-# --only-binary=:all: or PIP_ONLY_BINARY=:all:, or names one package to build with
-# --no-binary=<name> -- the allow path, run only for packages the user allowed. Every line
-# counts, prose too: an agent follows "run `npm install`" as readily as a fenced command.
-# VACUITY: no install line at all.
+# $ITC_PLUGIN_REL/$REF_DIR/install-time-code.md is the rule; this check holds every install command in the
+# three references to it. Each line is split into commands at &&, ||, ; and | (a table cell is
+# a command of its own), and every command counts, prose too: an agent follows "run `npm
+# install`" as readily as a fenced command.
+#   - npm / pnpm install, i, ci, add, update, up, upgrade or audit fix, and yarn with install,
+#     add, upgrade or up -- or bare, at the start of a command or in backticks, never a mere
+#     mention such as "npm / yarn" -- carry --ignore-scripts (yarn berry: --mode=skip-build);
+#   - pip / pipN.M install and pipenv install, sync, update or upgrade carry --only-binary=:all:
+#     (or PIP_ONLY_BINARY=:all:), and never --no-binary=:all:, which builds every package from
+#     source -- a named --no-binary=<names> beside --only-binary=:all: is the allow path.
+# VACUITY: no install command at all.
 ITC_FILES="fix-vuln/build-systems.md upgrade/ecosystems.md install-time-code.md"
+ITC_NODE='(^|[^[:alnum:]_.-])(npm|pnpm)[[:space:]]+(install|i|ci|add|update|up|upgrade|audit[[:space:]]+fix)([^[:alnum:]_-]|$)|(^|[^[:alnum:]_.-])yarn[[:space:]]+(install|add|upgrade|up)([^[:alnum:]_-]|$)|(^[[:space:]]*|`)yarn([[:space:]]*$|[[:space:]]*`|[[:space:]]+-)'
+ITC_PY='(^|[^[:alnum:]_.-])pip[0-9.]*[[:space:]]+install([^[:alnum:]_-]|$)|(^|[^[:alnum:]_.-])pipenv[[:space:]]+(install|sync|update|upgrade)([^[:alnum:]_-]|$)'
 check_install_time_code() {
-  local root="$1" rel f hit n=0
+  local root="$1" rel f n=0 ln line seg
   for rel in $ITC_FILES; do
     f="$root/$ITC_PLUGIN_REL/$REF_DIR/$rel"
     [ -f "$f" ] || { fail 21 "$ITC_PLUGIN_REL/$REF_DIR/$rel does not exist -- it holds install commands /vuln or /upgrade run"; continue; }
-    while IFS= read -r hit; do
-      n=$((n + 1))
-      grep -qE -- '--ignore-scripts|--mode=skip-build' <<<"${hit#*:}" \
-        || fail 21 "$ITC_PLUGIN_REL/$REF_DIR/$rel:${hit%%:*} installs a Node.js dependency without --ignore-scripts (yarn berry: --mode=skip-build) -- a new release's install script would run with the user's permissions"
-    done < <(grep -nE '\b(npm|pnpm)[[:space:]]+(install|i|ci|add|update|up)\b|\byarn[[:space:]]+(install|add|upgrade|up)\b' "$f")
-    while IFS= read -r hit; do
-      n=$((n + 1))
-      grep -qE -- '--only-binary=:all:|PIP_ONLY_BINARY=:all:|--no-binary=' <<<"${hit#*:}" \
-        || fail 21 "$ITC_PLUGIN_REL/$REF_DIR/$rel:${hit%%:*} installs a Python dependency without --only-binary=:all: (or PIP_ONLY_BINARY=:all:) -- a source distribution's build would run its setup.py with the user's permissions"
-    done < <(grep -nE '\bpip3?[[:space:]]+install\b|\bpipenv[[:space:]]+install\b' "$f")
+    ln=0
+    while IFS= read -r line || [ -n "$line" ]; do
+      ln=$((ln + 1))
+      while IFS= read -r seg; do
+        if grep -qE -- "$ITC_NODE" <<<"$seg"; then
+          n=$((n + 1))
+          grep -qE -- '--ignore-scripts|--mode=skip-build' <<<"$seg" \
+            || fail 21 "$ITC_PLUGIN_REL/$REF_DIR/$rel:$ln installs a Node.js dependency without --ignore-scripts (yarn berry: --mode=skip-build) -- a new release's install script would run with the user's permissions"
+        fi
+        if grep -qE -- "$ITC_PY" <<<"$seg"; then
+          n=$((n + 1))
+          if grep -qE -- '--no-binary[= ]:all:' <<<"$seg"; then
+            fail 21 "$ITC_PLUGIN_REL/$REF_DIR/$rel:$ln builds every package from source (--no-binary=:all:) -- only the packages the user allowed may be named there"
+          elif ! grep -qE -- '--only-binary=:all:|PIP_ONLY_BINARY=:all:' <<<"$seg"; then
+            fail 21 "$ITC_PLUGIN_REL/$REF_DIR/$rel:$ln installs a Python dependency without --only-binary=:all: (or PIP_ONLY_BINARY=:all:) -- a source distribution's build would run its setup.py with the user's permissions"
+          fi
+        fi
+      done < <(printf '%s\n' "$line" | sed -E 's/(&&|\|\||;|\|)/\n/g')
+    done < "$f"
   done
-  [ "$n" -gt 0 ] || fail 21 "no install line in $ITC_PLUGIN_REL/$REF_DIR's install references -- this check would examine nothing"
+  [ "$n" -gt 0 ] || fail 21 "no install command in $ITC_PLUGIN_REL/$REF_DIR's install references -- this check would examine nothing"
 }
 
 # ---------------------------------------------------------------------- main

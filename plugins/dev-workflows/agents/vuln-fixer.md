@@ -49,7 +49,7 @@ reconstruct it.
 >
 > If the input includes `phase: regression-resume`, **skip steps 1-5** —
 > jump straight to "Test regression" step 4 below, honoring the
-> `regression_decision: keep-anyway | revert` supplied by the orchestrator.
+> `regression_decision: keep-anyway | revert | retry-with-install-scripts` supplied by the orchestrator.
 >
 > The orchestrator captures and passes the baseline on **every** call, whatever
 > `gate_tests_on_review` says (see `/vuln` command Step 3). That gate once marked
@@ -117,6 +117,10 @@ reconstruct it.
    the snapshot the orchestrator took before this CVE's first dispatch
    (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.1): it is what "Build failure" reverts to, and
    without it the only revert left would discard the user's own changes in any file this fix touches.
+
+   **A retry is the one exception.** A request carrying `allow_install_scripts:` follows this CVE's own
+   `BUILD_FAILED`, which left the branch in place and empty — nothing is committed on it before `/vuln`
+   Step 3.9 — so when the branch already exists, run `git switch <branch>` in place of `git checkout -b`.
 
    **On a collision, stop — do not improvise.** If `git checkout -b` fails because the branch
    already exists (the ordinary case on a re-run after an earlier `BUILD_FAILED`, which leaves the
@@ -195,9 +199,10 @@ reconstruct it.
 
 ## Build failure
 
-1. Read the full error; attempt an obvious automatic fix (wrong API, missing plugin). Dropping
-   `--ignore-scripts` or `--only-binary=:all:` is never one: a failure after such an install is what
-   `skipped_install_scripts:` names for the user (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A pip install refused for want of a
+1. Read the full error; attempt an obvious automatic fix (wrong API, missing plugin). Running a
+   dependency's install-time code by any route — dropping `--ignore-scripts` or `--only-binary=:all:`, a
+   rebuild, a `--no-binary` install, a configuration that enables scripts — is never one: a failure
+   after such an install is what `skipped_install_scripts:` names for the user (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A pip install refused for want of a
    wheel is a build failure here, with that package in the list.
 2. If unfixable in one attempt: revert by running `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md`
    §6.2's script from the request's `pre_edit_tree:`, set `status: BUILD_FAILED`, report clearly, and
@@ -209,7 +214,8 @@ Subagents have no access to interactive tools — `AskUserQuestion` is unavailab
 granted, so this agent can never ask the user directly. The orchestrator owns that decision.
 
 1. Inspect failures — are they caused by the version bump (API change, renamed class)?
-2. If fixable automatically (import rename, trivial API migration): fix and note in output, then proceed to step 6 (Output).
+2. If fixable automatically (import rename, trivial API migration — never by running a dependency's
+   install-time code, `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): fix and note in output, then proceed to step 6 (Output).
 3. If not fixable: **stop here.** Return `status: TEST_REGRESSION` with the full list of
    newly-failing tests and a one-line diagnosis of the likely cause. The branch already exists
    (step 2) and the fix is on it, uncommitted — leave it that way; the orchestrator decides.

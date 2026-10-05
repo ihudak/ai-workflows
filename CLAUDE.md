@@ -30,7 +30,7 @@ plugins/
 
 ## Active plugins: dev-workflows, product-workflows, docs-workflows, and their shared dependency workflows-core
 
-`plugins/dev-workflows/` provides five slash commands — `/design`, `/implement`, `/ready`, `/upgrade`, and `/vuln` — plus twelve reusable subagents, one hook, fifteen reference files, and no bundled skill. It depends only on `workflows-core`, and does not use `prose-style` at all.
+`plugins/dev-workflows/` provides five slash commands — `/design`, `/implement`, `/ready`, `/upgrade`, and `/vuln` — plus twelve reusable subagents, one hook, sixteen reference files, and no bundled skill. It depends only on `workflows-core`, and does not use `prose-style` at all.
 
 `plugins/product-workflows/` provides fifteen slash commands — the idea→PRD→ARD→specification ladder (`/idea` → `/create-prd` → `/update-prd` → `/create-ard` → `/specify`), `/epics`, `/harvest-decisions`, a six-command BRD-to-PRD route (`/brd-intake`, `/brd-split`, `/prd-ground`, `/brd-interview`, `/brd-package`, `/brd-reconcile`), and the effort proposals `/prd-proposal` and `/brd-proposal` — plus fourteen subagents, twelve reference files, one hook, no bundled skill, and three environment variables (`SPECS_PATH`, `REPOS_PATH`, `DOCS_PATH`). It depends on `workflows-core` and `prose-style`, with no absent case for the second (S12). `dev-workflows` does not depend on `product-workflows`.
 

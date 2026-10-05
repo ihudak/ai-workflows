@@ -1,3 +1,3 @@
 # Install-time code (fixture)
 
-Allow one package: `pip install --no-binary=<name> <name>==<version>`, then `npm rebuild <names>`.
+Allow named packages: `pip install --only-binary=:all: --no-binary=<names> -r requirements.txt`, then `npm rebuild <names>`.

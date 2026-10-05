@@ -52,8 +52,8 @@ The widening census lives only in `workflows-core:next-phase-offer`'s scope-para
 
 Check 12's parser is **bracket-matched and quote-aware, not a non-greedy regex**, and that is the whole point: `choices:\s*\[(.*?)\]` stops at a `]` inside an option string and silently skips that array, which is how the census that motivated the check missed three live arrays, two of them six-option.
 
-
 Check 12's selftest pairs each failure mode with a **green** case whose option text also contains brackets — a skipping parser passes the red case and the green one for the same wrong reason, so only the pair discriminates.
+
 ## stop-routing-no-check
 
 Matching the stop-ID condition suffix (`BRD_SPLIT_EMPTY_INVENTORY` → `PRD_GROUND_EMPTY_INVENTORY`) fires 7 times on content that is correct, because a stop legitimately names a command to warn against it (“do not run …, which stops on the same emptiness” — though both instances of exactly that wording, in `/brd-split`'s full-mode stop and `/brd-interview`'s, proved false on 2026-09-23, `/prd-ground` refusing each folder before it reads any inventory, which is the point about stop texts made again) or names it against a *different* key (`<PARENT-KEY>`); silencing those needs three hand-tuned filters, after which it fires on nothing and would have caught none of the eleven route defects that motivated it. “Names the emitting command itself” fires 11 times, all correct (`re-run '/product-workflows:brd-split <KEY>'` on a bad key). “Names no exit at all” fires 14 times, all correct (a dirty tree, a prompt leak, a schema boundary — the remedy is not a command). What the eleven actually shared is a claim about another command's *behaviour* in a state, which no file states.
@@ -86,8 +86,8 @@ Each of the three citation forms is load-bearing for a different file: the **bar
 
 No file outside core cites a core reference by path in either of the two forms that resolve to the reading plugin — the defect the loader exists to prevent, gated only over `commands/`, `agents/` and `references/` because widening it to the whole plugin fires once, on correct content, which is the result on which two earlier widenings were refused. **Scope is `commands/`, `agents/` and `references/`, measured rather than chosen**: within them the preamble relation is an **exact** match — every file that cites, carries — while a comparable number of files outside them cite a core reference and correctly carry none, so an unscoped implementation fires on every one of those on a clean tree. **All four of those figures live in `scripts/check-docs.sh`'s check-16 header and nowhere else, deliberately**: the `CLAUDE.md` sentence describing check 16 carried a second copy of them, both copies went stale, and the rule stated with check 11 — re-measure in one place, cite it everywhere else — is the one that would have prevented it — and admitting `docs/` as a *citation source* would make the reverse direction unfalsifiable, since core's own `docs/reference/references.md` enumerates every reference file by name.
 
-
 Admitting `docs/` as a *citation source* would make check 16's reverse direction unfalsifiable, since core's own `docs/reference/references.md` enumerates every reference file by name.
+
 ## check-17
 
 A ledger item (PS15) recorded a live defect: an agent self-disclosed dispatching a stray subagent mid-run, outside its own sanctioned set. Verifying *runtime* behaviour is impossible from a static script, and a check that merely asserted "the rule exists" would have passed on the very run that misbehaved: **measured first**, only 3 of the agents under `PLUGIN_RELS` carried `Task` in their tool list at all (`upgrade-executor`, `vuln-fixer`, `docs-style-checker`), and all three already carried a NEVER-dispatch rule naming their sanctioned subagent, in near-identical wording, when one of them still mis-dispatched. That is 3-for-3 today *(as of d5f3034b)* — green on the current tree — and it fires the moment a fourth agent gains `Task` without the rule, which is the realistic way this decays. **The reverse direction is asserted too**, the same call checks 8 and 11 already made for their own declared-vs-observed pairs: an agent carrying the rule but not `Task` declares a dispatch authority the harness would refuse, which is stale and misleading — verified green on the same three-file tree before it shipped.
@@ -116,8 +116,8 @@ Until `scripts/mermaid/check-mermaid.mjs` existed nothing in this repository par
 
 A failure is located by content because mermaid numbers its errors from text it has already rewritten, and a replay of those rewrites is never complete: the gate's second version tried one and pointed confidently at the wrong line after a decision node. The parser was calibrated against a real headless render of the repository's tree, where the two agreed block for block.
 
-
 The four constructs the hand-rolled fence scanner got wrong, each a selftest fixture: `red-blockquote`, `red-list-marker`, `red-after-code-span` and `green-indented-code`.
+
 ## choices-arity
 
 The plugin nonetheless shipped a convention saying the opposite of the harness schema (2–4 options, no authored Other), stated across the command files (*"last choice is always `"Other… (describe)"`"*), which authored duplicate options in bulk and pushed dozens of arrays past the cap — the measured figures are in `scripts/check-docs.sh`'s check-12 header, cited rather than restated in `CLAUDE.md` because two copies of one census is how they came to disagree while `workflows-core:escalation-rules` simultaneously required every array be presented verbatim — a rule the harness made unfollowable. **Two consequences outlive the cleanup** (both stated in `CLAUDE.md`). Six closed-vocabulary pickers used to protect themselves by omitting the free-text option.

@@ -57,7 +57,7 @@ A `TEST_REGRESSION` result on either path hands the decision to the orchestrator
 
 ## Install scripts
 
-`/upgrade` installs the new version of a dependency without the code that version ships to run at install time — an npm, yarn or pnpm package's install scripts, or the build of a Python source distribution — in a container and on a host alike. When something was skipped, the run names each package with the command that would run. If the build or the tests then fail, or the tests cannot start, it asks once whether to run those scripts for this component; whatever the outcome, the summary lists them, with the command to run them later. Bundler, Poetry, Go, Cargo, Maven and Gradle install as before. The rules are in [the references](../reference/references.md).
+`/upgrade` installs the new version of a dependency without the code that version ships to run at install time — an npm, yarn or pnpm package's install scripts, or the build of a Python source distribution — in a container and on a host alike. When something was skipped, the run names each package with the command that would run. If the build or the tests then fail, or the tests cannot start, it asks whether to run those scripts for this component; whatever the outcome, the summary lists them, with the command to run them later. Bundler, Poetry, uv, PDM, Hatch, Composer, NuGet, Go, Cargo, Maven and Gradle install as before. The rules are in [the references](../reference/references.md).
 
 ## Example
 

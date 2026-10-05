@@ -53,9 +53,8 @@ baseline:                    # The orchestrator (commands/upgrade.md Phase 2 pre
                              # single-suite repositories included.
     - "[Maven] com.example.OrderTest#testCreate"
     - "[Maven] com.example.UserTest#testLogin"
-allow_install_scripts: [canary-dep]   # optional — the packages whose install-time code the user allowed
-                                    # (install-time-code.md); only ever on a retry after a
-                                    # return that named them in skipped_install_scripts
+allow_install_scripts:              # optional — entries from an earlier return's skipped_install_scripts, exactly
+  - "fast-hash@2.3.1 (npm: postinstall: node scripts/build.js)"   # as written, that the user allowed (install-time-code.md)
 model_routing:               # optional; set by orchestrator for SIGNIFICANT / HIGH-RISK
   classification: SIGNIFICANT
   gate_tests_on_review: true # if true: stop after Build, return AWAITING_REVIEW
@@ -80,7 +79,7 @@ related:
 
 **phase values:**
 - `full` (or omitted) — apply changes, build, verify, output. Default.
-- `verify-resume` — second-call protocol after Opus review. Skip steps 1–2
+- `verify-resume` — second-call protocol after Opus review, or after the user allowed skipped install scripts (`allow_install_scripts`, whose allow step runs before the verify). Skip steps 1–2
   (changes are already applied and built); resume at step 3 (Verify).
 - `regression-resume` — second-call protocol after the orchestrator asked the
   user about a `TEST_REGRESSION` return. Skip straight to "Test regression"

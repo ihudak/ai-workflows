@@ -37,7 +37,7 @@ reconstruct it.
 >
 > If the input includes `phase: regression-resume`, **skip steps 1-3** —
 > jump straight to "Test regression" step 4 below, honoring the
-> `regression_decision: keep-anyway | revert` supplied by the orchestrator.
+> `regression_decision: keep-anyway | revert | retry-with-install-scripts` supplied by the orchestrator.
 
 1. **Apply changes** — First check the request carries `pre_edit_tree:`, the snapshot the orchestrator
    took before this component's first dispatch (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.1).
@@ -107,8 +107,10 @@ reconstruct it.
 ## Build failure
 
 1. Read the full error; attempt one automatic fix (wrong plugin version, incompatible config, removed API).
-   Dropping `--ignore-scripts` or `--only-binary=:all:` is never one: a failure after such an install is
-   what `skipped_install_scripts:` names for the user (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A pip install refused for want
+   Running a dependency's install-time code by any route — dropping `--ignore-scripts` or
+   `--only-binary=:all:`, a rebuild, a `--no-binary` install, a configuration that enables scripts — is
+   never one: a failure after such an install is what `skipped_install_scripts:` names for the user
+   (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A pip install refused for want
    of a wheel is a build failure here, with that package in the list.
 2. If still failing: revert all changes for this component by running
    `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2's script from the request's `pre_edit_tree:`,
@@ -120,7 +122,8 @@ Subagents have no access to interactive tools — `AskUserQuestion` is unavailab
 granted, so this agent can never ask the user directly. The orchestrator owns that decision.
 
 1. Determine whether failures are caused by the upgraded component (API rename, removed annotation, changed behaviour).
-2. **Auto-fix** if straightforward: rename imports, update assertion syntax, adjust config. Explain every change in the output, then proceed to step 4 (Output).
+2. **Auto-fix** if straightforward: rename imports, update assertion syntax, adjust config — never by
+   running a dependency's install-time code (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). Explain every change in the output, then proceed to step 4 (Output).
 3. If not auto-fixable: **stop here.** Return `status: TEST_REGRESSION` with the full list of
    newly-failing tests and a one-line diagnosis of the likely cause. The orchestrator asks the
    user (see `/upgrade` "Handling Test Failures") and re-invokes this agent with

@@ -89,6 +89,8 @@ Edit the version in the appropriate `pom.xml`. Prefer updating `<properties>` to
 
 ## npm / yarn / pnpm
 
+**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below skips the scripts and source builds a new release ships, and the agent names what it skipped.
+
 ### Detect library
 
 ```bash
@@ -109,7 +111,6 @@ npm install --ignore-scripts <package>@<safe-version>
 ```
 
 Or edit `package.json` manually and run `npm install --ignore-scripts`.
-**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below skips the scripts and source builds a new release ships, and the agent names what it skipped.
 
 
 ### Override transitive dependency
@@ -120,6 +121,8 @@ Or edit `package.json` manually and run `npm install --ignore-scripts`.
   "<package>": "<safe-version>"
 }
 ```
+
+Then run `npm install --ignore-scripts` (yarn: `resolutions`, then the install `install-time-code.md` gives).
 
 ### Verify
 
@@ -150,6 +153,8 @@ CI=true npm test
 
 ## Python (pip)
 
+**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below skips the scripts and source builds a new release ships, and the agent names what it skipped.
+
 ### Detect library
 
 ```bash
@@ -160,7 +165,7 @@ grep -ri "requests" requirements.txt Pipfile pyproject.toml
 
 - **`requirements.txt`**: change `requests==2.28.0` to `requests==<safe-version>` (use `==` for pinned, `>=` for minimum).
 - **`Pipfile`**: edit `[packages]` section and run `PIP_ONLY_BINARY=:all: pipenv install`.
-- **`pyproject.toml`**: edit `[project.dependencies]` or `[tool.poetry.dependencies]`.
+- **`pyproject.toml`**: edit `[project.dependencies]` or `[tool.poetry.dependencies]`, then install with the project's own tool — Poetry, uv, PDM and Hatch install unchanged (`install-time-code.md` says why).
 
 ### Verify
 
