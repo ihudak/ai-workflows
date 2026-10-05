@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.11.1] — 2026-10-05
+
+### Changed
+- **`code-handoff` §2.7 cites the repository-template rule instead of stating it** (workflows-core 1.20.0). The resolution and filling rules moved, unchanged, to `workflows-core:phase-handoff` §2.7.1, so the specs-repository handoff, the code-repository handoff and `/document`'s keyed draft follow one statement. The code pull request still fills the repository's own template. The four sections and the banner are its input, and the body still replaces the template on both `gh pr create` and the pasted fallback, which is why the template wins.
+
 ## [4.11.0] — 2026-10-05
 
 ### Changed

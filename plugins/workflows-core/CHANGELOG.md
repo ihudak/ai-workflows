@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.20.0] — 2026-10-05
+
+### Added
+- **A phase's pull request fills the specs repository's own template.** `phase-handoff` §2.7.1 is now the one statement of the repository-template rule, followed by the specs-repository handoff, the code-repository handoff and `/document`'s keyed pull-request draft:
+  - **Finding the template:** it is resolved against a fixed set of paths in the committed tree.
+  - **Reading it:** it is read with `git show HEAD:<path>`.
+  - **Filling it:** headings are kept, each section is answered from the caller's facts, placeholders and HTML-comment notes are removed, and checkboxes are ticked only where the run can show the claim.
+
+  §2.7 applies it to the specs repository's pull requests, which until now replaced a template with the plugin's own body. `dev-workflows:code-handoff` §2.7 and `docs-workflows:finish-and-handoff` §5 cite it.
+
 ## [1.19.0] — 2026-10-05
 
 ### Changed
