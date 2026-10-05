@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.17.1] — 2026-10-05
+
+**Update `workflows-core` to 1.16.1 with this release**: the terminal specs-repository commit pushes only the default branch and the branches the plugin creates, and never commits of yours.
+
+### Fixed
+- **The terminal step's description said it always pushes.** `/idea`, `/create-prd`, `/create-ard`, `/specify`, `/update-prd`, `/prd-ground`, `/prd-proposal`, `/brd-proposal` and every `/brd-*` command said so. Each now says it pushes per `workflows-core:specs-repo-git` §4 step 5. That step does not push where the specs repository is on neither its default branch nor a branch the plugin created, where it has no remote to push to, or where the push would also publish commits other than the plugin's own session-file commits. The session-cost and session-feedback pages say the same.
+- **`/prd-proposal` still said §1 rule 3 fixes "eight prefixes"** after `kb/` made them nine. It now names no count.
+
 ## [3.17.0] — 2026-10-05
 
 **Update `workflows-core` to 1.16.0 with this release**: `/create-ard` reads its team root and `/harvest-decisions` cites its `architecture-kb` reference.

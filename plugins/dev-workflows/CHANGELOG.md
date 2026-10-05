@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.10.3] — 2026-10-05
+
+**Update `workflows-core` to 1.16.1 with this release**: the closing specs-repository commit pushes only the default branch and the branches the plugin creates, and never commits of yours.
+
+### Fixed
+- **A direct `/implement` run from inside the specs repository pushed its code branch whatever you answered at the push choice.** The closing specs-repository commit pushed that branch (`-u origin`) along with the session files. It now pushes only the default branch and the branches the plugin creates (`workflows-core:specs-repo-git` §4 step 5). The run's notice now says that session files the code commit takes go out with it if you push it at the push choice, and that the rest stay local until you push the branch. Under `--no-commit`, which asks no push choice, it says they all stay local. Phase 4 says its feedback file rides on the code commit there, wherever Phase 4.6 makes one. `/design`'s terminal step now says it pushes per §4 step 5, and the session-cost and session-feedback pages now say when the plugin pushes their entries.
+
 ## [4.10.2] — 2026-10-05
 
 **Update `workflows-core` to 1.15.2 with this release**: `/implement` passes `followup-emission` the unit's folder, and `/design`'s and `/ready`'s slug→clone maps follow its `components` §1.

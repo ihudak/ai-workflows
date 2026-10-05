@@ -90,8 +90,7 @@ figure here**, because the spend this record stands for has not happened yet.
 `commit-artifacts` entry point (§4) inline — before the Phase 3 grill, which is
 interactive and may run long. It stages ONLY the §2.1 bounded artifact paths
 inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows session artifacts
-(/prompt-grill-me)` — or `NOISSUE …` when no `key` resolved — and pushes.
-It NEVER touches a code/docs repo, or the current working
+(/prompt-grill-me)` — or `NOISSUE …` when no `key` resolved — and pushes per §4 step 5. It NEVER touches a code/docs repo, or the current working
 directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when
 the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice.
 Print its §6 outcome line here, prefixed `Specs repo:`, with any guard notice

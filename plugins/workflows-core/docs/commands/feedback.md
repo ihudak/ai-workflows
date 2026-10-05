@@ -26,7 +26,7 @@ Write the flag before or after the note, never inside it: a leading run of flag 
 
 ## What it produces
 
-An `origin: manual` entry appended to the plugin's per-PRD feedback file — see [Session feedback](../reference/session-feedback.md) for the exact entry format and the specs-first ladder that resolves where the file lands; `/feedback` doesn't restate that logic here. The terminal `commit-artifacts` step then commits and pushes it, printed as a `Specs repo:` outcome line. This command never commits into a docs/code repo or the current working directory, where it is not the specs repository — only `$SPECS_PATH`'s bounded artifact paths.
+An `origin: manual` entry appended to the plugin's per-PRD feedback file — see [Session feedback](../reference/session-feedback.md) for the exact entry format and the specs-first ladder that resolves where the file lands; `/feedback` doesn't restate that logic here. The terminal `commit-artifacts` step then commits it, and pushes it unless the specs repository is on neither its default branch nor a branch the plugin created, has no remote to push to, or the push would also publish commits other than the plugin's own session-file commits, reporting either as a `Specs repo:` outcome line. This command never commits into a docs/code repo or the current working directory, where it is not the specs repository — only `$SPECS_PATH`'s bounded artifact paths.
 
 
 A **session-cost entry** too, since this command now reports its own spend: `phase`/`role` inherited from the target command, or [`plugin-feedback`](../roles-and-phases.md#plugin-feedback)/`n/a` when there is nothing to inherit. It lands beside the feedback entry under `$SPECS_PATH`, or in the keyless pending file — see [Session cost](../reference/session-cost.md).

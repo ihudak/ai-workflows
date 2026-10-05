@@ -63,7 +63,7 @@ The `dev-workflows` commands' lines of the family workflow map, and the caller l
 
 ### Key invariants for `/implement` specifically
 
-- A keyed run whose working directory is in the specs repository — `$SPECS_PATH` that repository's top level — stops before the preflight: the specs repository is no code repository. A direct run there runs on with a notice, and a specs tree inside a larger repository is left as it was
+- A keyed run whose working directory is in the specs repository — `$SPECS_PATH` that repository's top level — stops before the preflight: the specs repository is no code repository. A direct run there runs on with a notice, its session files committed on its code branch, which `commit-artifacts` does not push unless the branch's name carries a plugin prefix (`workflows-core:specs-repo-git` §4 step 5), and a specs tree inside a larger repository is left as it was
 - Phase 4.6 (`finish-code-branch`) runs **after** Phase 4, never before it — Phase 4's maintenance agents write `README.md`, `CHANGELOG.md`, `CLAUDE.md`, and in-repo memory files into the same repository, so a commit ahead of them ships a partial run. A multi-source run changes code only in the repository it branched; a change another code repository needs is a follow-up (Phase 6's, or named in the stop), never an uncommitted edit there
 - Test baseline captured **before** any source edits, using `test-baseliner`
 - The test-writing requirement — what `test-writer` must write, its one bound, and what a completion must name — is in `.claude/rules/dev-workflows-tests.md` § Test-writing requirement
