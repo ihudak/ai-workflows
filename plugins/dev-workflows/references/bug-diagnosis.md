@@ -45,7 +45,8 @@ the evidence more convenient.
    and it is red when the time exceeds the expected figure by more than its own run-to-run spread.
    Measure first, fix second. Finding where the time went in by bisecting between a good and a bad
    state moves `HEAD`, so it is a step of the plan the caller carries out from a clean tree, before the
-   run's first edit, ending in `git bisect reset` — never something `risk-planner` runs.
+   run's first edit, ending in `git bisect reset` — never something `risk-planner` runs. Where the tree
+   is not clean or the run already has edits, the plan omits the bisection and says why among its risks.
 
    **Completion criterion — one command, already run.** Step 1 is not finished until you can name
    **one** command — a test invocation, a script path, a `curl` — that you have **already run at least
@@ -74,9 +75,9 @@ the evidence more convenient.
 2. **Rank falsifiable hypotheses.** List **3–5** candidate causes, each stating (a) what it predicts
    you would observe and (b) the cheapest observation that would **falsify** it. Order by likelihood ×
    cheapness-to-test. A hypothesis you cannot falsify is not a hypothesis — drop it.
-3. **Instrument with tagged, removable probes.** Each probe tests **one** hypothesis's prediction
-   from step 2, and changes **one variable at a time**, so a result can be read back to the hypothesis
-   it decides. Prefer a debugger or REPL inspection where the environment allows it, then targeted
+3. **Instrument with tagged, removable probes.** Each probe changes **one variable at a time** and
+   names the hypothesis from step 2, or the pair of hypotheses, its result decides, so every result can
+   be read back to what it settled. Prefer a debugger or REPL inspection where the environment allows it, then targeted
    logs at the boundaries that tell two hypotheses apart; never log everything and grep. Tag every
    temporary probe `[DEBUG-xxxx]` (a short unique token per probe). Every `[DEBUG-xxxx]`
    probe MUST be removed before the change is finalized (the `/implement` Phase 3B cleanup gate strips
@@ -87,7 +88,8 @@ the evidence more convenient.
    finding — record it (the code needs a seam before it can be safely tested); do NOT bolt a test onto
    the wrong seam to manufacture green.
 5. **Evidence before the claim.** Never report the bug fixed until the repro from step 1 goes green.
-6. **Name the confirmed hypothesis.** Where step 2 produced a ranked list and the fix was verified,
+6. **Name the confirmed hypothesis.** Where step 2 produced a ranked list and the fix was verified —
+   the step-1 repro, or the regression test in the caller's verify run, ran green after the fix —
    state which hypothesis the fix acted on, or that it acted on none of them, and what showed it — a
    probe's result, or that the repro went green after a fix aimed at that hypothesis alone — in the
    run's report and the pull-request body, so the next person to debug this code learns what the
