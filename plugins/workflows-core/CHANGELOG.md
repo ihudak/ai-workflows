@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.14.1] — 2026-10-05
 
 ### Fixed
-- **`specs-repo-git` §3 and §7 named only an address stop as one that runs no preflight.** A run that stops earlier, on a check of its own inputs needing no specs-repo state — a run flag, the directory it runs from, an input it cannot read — runs none either, which every command's run-flag stop already did; read literally, the caller contract called that a defect. `/dev-workflows:implement` (dev-workflows 4.9.3) now makes all of its input checks before its preflight.
+- **`specs-repo-git` §3 and §7 named only an address stop as one that runs no preflight.** A run that stops before the preflight on a check of its own inputs needing no specs-repo state — a run flag, the directory it runs from, a path it reads where it sits rather than as an artifact of the specs tree — runs none either, whether the command resolves an address first or runs its preflight first; every command's run-flag stop already did, and read literally the caller contract called that a defect. `/dev-workflows:implement` (dev-workflows 4.9.3) now makes all of its input checks before its preflight.
 
 ## [1.14.0] — 2026-10-05
 

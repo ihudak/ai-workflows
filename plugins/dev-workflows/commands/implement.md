@@ -27,9 +27,9 @@ Usage: `/implement <ADDRESS> | <prompt> [@file…] [@spec-folder] [@repo…] [--
 | **Specs folder** | a directory under `specifications/` that `resolve-address` resolves — its `kind:` and `key:` read off the folder's carrier (`workflows-core:addressing` §4) | hand to the folder read in Phase 1.7 |
 | **Code repo** | a directory where `git -C <path> rev-parse --is-inside-work-tree` prints `true` (includes the cwd) | scan target in Phase 1.7 — or, where its top level (`git -C <path> rev-parse --show-toplevel`) is that of a code repository already classified here (the working directory's included), a search hint for that repository's scan and for Phase 2A/2B's exploration |
 
-Test the rows top to bottom for each `@path` token: the first that matches classifies it, so a spec or specs folder below a repository's top level is that folder, never a code repo. A token naming the working directory (`@.`, or any other path that resolves to it) is classified the same way, so below the top level a spec folder there is read as one; the repository it lies in is still the run's, by the working-directory rule above. An `@path` that is its own work tree's top level (`git -C <path> rev-parse --is-inside-work-tree` prints `true` and `git -C <path> rev-parse --show-prefix` prints nothing) is always the Code repo row's whatever else it holds. Where such an `@path` also matches the Spec folder row, print `<path> is a repository's top level and is read as a code repository — its prompt.md and *-design.md files are not read into the description; name them by file (@<path>/prompt.md, @<path>/<name>-design.md) to read them`.
+Test the rows top to bottom for each `@path` token: the first that matches classifies it, so a spec or specs folder below a repository's top level is that folder, never a code repo. A token naming the working directory (`@.`, or any other path that resolves to it) is classified the same way, so below the top level a spec folder there is read as one; the repository it lies in is still the run's, by the working-directory rule above. An `@path` that is its own work tree's top level (`git -C <path> rev-parse --is-inside-work-tree` prints `true` and `git -C <path> rev-parse --show-prefix` prints nothing) is always the Code repo row's whatever else it holds. Where such an `@path` also matches the Spec folder row, print `<path> is a repository's top level and is read as a code repository — its prompt.md and *-design.md files are not read into the description; name each by file (@<path>/<file>) to read it`.
 
-**Each token's own checks run as it is classified**, before the no-description stop below and before the specs-repo preflight. A token naming a directory that is missing, or one that is neither a recognized folder type nor a git repo, is surfaced by name — never silently skipped — and the run asks whether to continue without it or stop (`workflows-core:model-routing/classification` §8.4). A single `@file` that cannot be read stops the run, reporting the error. **A direct run with no description** — no prose, and no Spec file or Spec folder token left — then stops, still before the preflight: `/implement needs a description — prose, an @<file>.md, an @<folder> below a repository's top level holding prompt.md or a *-design.md, or a <KEY> or @<specs-folder> address`, followed by the notice's remedy where a token above printed it and, where the working directory holds a `prompt.md` or `*-design.md` file, a line naming each by file (`@prompt.md`) — listed, not read. A direct run that passes runs the design-doc open-question guard (Rules, below) next, before the preflight too: its input is a token, read where it sits.
+**Each token's own checks run as it is classified**, before the no-description stop below and before the specs-repo preflight. A token naming nothing on disk, or a directory that is neither a recognized folder type nor a git repo, is surfaced by name — never silently skipped — and the run asks whether to continue without it or stop (`workflows-core:model-routing/classification` §8.4); where `git -C <path> rev-parse --is-inside-work-tree` failed rather than printing `false`, show git's error beside it, since a repository git refuses to use (its ownership check) is not one of no kind. A single `@file` that exists but cannot be read stops the run, reporting the error. A token under `$SPECS_PATH` is no exception: it is read where it sits, out-of-contract, as the gate below says of a lone spec or design `@path`. **A direct run with no description** — no prose, and no Spec file or Spec folder token left — then stops, still before the preflight: `/implement needs a description — prose, an @<file>.md, an @<folder> that is not a repository's top level, holding prompt.md or a *-design.md, or a <KEY> or @<specs-folder> address`, followed by the notice's remedy where a token above printed it and, where the working directory holds a `prompt.md` or `*-design.md` file that no such notice named, a line naming each by file (`@prompt.md`) — listed, not read. The design-doc open-question guard (Rules, below) runs next, on either mode and still before the preflight: its input is always a token, read where it sits.
 
 **Address resolution.** After the working directory and before the per-`@path` classification above, look for a **single positional
 address** in `$ARGUMENTS` — a `<KEY>`, or an `@<path>` naming a folder in the specs tree. Present →
@@ -56,9 +56,9 @@ to `specs`, a code repo is an `/implement`-only scan target (or, sharing the top
 resolved `path`, `kind` and `key`, and `specs` forward. On a keyed run `specs` is
 read out of the resolved folder only once the specs-repo preflight below has run.
 
-**Specs-repo preflight** — run here, once address resolution, each token's checks and, on a direct
-run, the no-description stop and the design-doc guard are done (a run that stops on any of them runs
-none), and before the Epic-unit resolution below reads anything, with the run key set fixed from carrier frontmatter alone
+**Specs-repo preflight** — run here, once address resolution, each token's checks, the no-description
+stop on a direct run and the design-doc guard are done (a run that stops on any of them runs none),
+and before the Epic-unit resolution below reads anything, with the run key set fixed from carrier frontmatter alone
 (`key:`, `kind:`, read as `workflows-core:addressing` §4 does, whatever file that is, and testing no
 file's presence; `workflows-core:specs-repo-git` §3.2): on a keyed run the resolved `key` and, where
 §4.1 places the resolved folder at Epic level — an `EPIC-` prefix, or with no prefix a resolved
@@ -165,7 +165,7 @@ it means the resolved folder's.
 
 Rules:
 - The **primary description** is: the spec file if one was given → else the spec folder's design doc, or its `prompt.md` where it holds none → else the inline prose. Echo `📄 Reading prompt from <file>…` (or `from inline text`) and confirm `"Loaded prompt (N lines)."`.
-- **Design-doc open-question guard.** It runs on a direct run straight after the no-description stop, before the specs-repo preflight, and on a keyed run once its specs are read. If the primary description is a **design doc** — a file named
+- **Design-doc open-question guard.** It runs once each token is classified — on a direct run, after the no-description stop — and before the specs-repo preflight, on either mode: its input is a token. If the primary description is a **design doc** — a file named
   `design.md` or matching `*-design.md` (the `/design` output; distinct from a `specification.md`) —
   scan it for unresolved `- [ ]` open questions under its `## Open questions` heading. If any exist,
   **refuse to proceed**:
@@ -176,7 +176,7 @@ Rules:
   incorporate a spec that still carries them. "Override" is the only escape and is recorded in the
   Phase 5 report's `### Assumptions & limitations`.
 - Multiple inputs of the same kind are allowed.
-- A missing or unrecognized `@dir` and an unreadable `@file` are each token's own checks, made as it is classified (above), before the specs-repo preflight.
+- A token naming nothing on disk or an unrecognized directory, and an unreadable `@file`, are each token's own checks, made as it is classified (above), before the specs-repo preflight.
 - Note any embedded images as "referenced image: <path>".
 - **Specs are required for keyed runs.** When `mode: keyed` and the resolution found
   `specs: []`, do not plan blind — prompt:
