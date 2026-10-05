@@ -125,7 +125,30 @@ The expressions strip a scheme, a `user@`, and a host with an optional `:port` t
 
 Title: the commit subject of §2.4.
 
-Body: written to a file (never passed inline, which would break on newlines and quoting) containing what the phase produced; the artifact paths; the reviewer verdict where the caller has one; the count of open questions or `[NEEDS CLARIFICATION]` markers; and, **where the caller has one**, the next command in the chain together with the fact that it will not run until this pull request is merged — scoped exactly as the reviewer verdict beside it is, because a producer whose artifact has no §3.4 row has no next command to name and cannot render this sentence without inventing one.
+Body: written to a file (never passed inline, which would break on newlines and quoting) containing what the phase produced; the artifact paths; the reviewer verdict where the caller has one; the count of open questions or `[NEEDS CLARIFICATION]` markers; and, **where the caller has one**, the next command in the chain together with the fact that it will not run until this pull request is merged — scoped exactly as the reviewer verdict beside it is, because a producer whose artifact has no §3.4 row has no next command to name and cannot render this sentence without inventing one. Where `$SPECS_PATH`'s repository carries a pull-request template, the body is that template filled with these facts (§2.7.1).
+
+### 2.7.1 The repository's own pull-request template
+
+**Where the repository a pull request is opened in carries a template, the body is that template, filled.** This subsection is the one statement of that rule. This reference's §2.7 applies it in `$SPECS_PATH`, `dev-workflows:code-handoff` §2.7 in a code repository, and `docs-workflows:finish-and-handoff` §5 in a docs repository. Each caller supplies `<repo>`, its own body's sections in their order, and any line that must come first (a banner).
+
+**Resolve the template against a fixed set of paths, never by searching for one.** List the committed tree's candidates with `git -C "<repo>" ls-tree -r -z --full-tree --name-only HEAD | tr '\0' '\n' | grep -i -E '^(\.github/|docs/)?pull_request_template(\.md|/[^/]+\.md)$|^\.gitlab/merge_request_templates/default\.md$'`. Use `-z` because, without it, git quotes a name holding a non-ASCII byte and the anchor never matches it, and `--full-tree` so the listing is the whole tree wherever `<repo>` points. No output is no template. Otherwise stop at the first rung below that a listed path matches, comparing without regard to case:
+
+1. `.github/pull_request_template.md`, then `pull_request_template.md` at the root, then `docs/pull_request_template.md`;
+2. the first of `.github/PULL_REQUEST_TEMPLATE/`, `PULL_REQUEST_TEMPLATE/` and `docs/PULL_REQUEST_TEMPLATE/` that holds a `.md` file directly: where it holds exactly one, that file; where it holds several, none — a directory of templates names no default, so the body takes the caller's own shape and its last line says the repository offers several templates, naming the directory;
+3. `.gitlab/merge_request_templates/Default.md`.
+
+**Read the template with `git -C "<repo>" show HEAD:<path>`**, `<path>` spelled exactly as the listing printed it (git looks a path up case-sensitively). Read the committed file, never a working-tree copy, which may hold somebody else's edit.
+
+**Fill it:**
+- keep its headings in their order, and answer each section from the facts the caller's own body carries;
+- a section the run has nothing for says so and why, and never keeps the template's placeholder text;
+- tick a checkbox only where the run can show what it claims, and never delete one;
+- place each section of the caller's own body in the template section that asks for it, and append every one no template section asks for after the template, in the caller's order;
+- a template with no headings is one section, answered in place;
+- an HTML comment (`<!-- … -->`) in a template is its note to whoever fills it: follow it, then remove it with the placeholder text;
+- the caller's required first line stays the first line.
+
+**The template wins because the body replaces it otherwise.** `gh pr create --body-file` replaces what the web UI would have prefilled, and a body the user pastes by hand replaces it too, so a body in the caller's own shape would delete the template on either path.
 
 ### 2.8 Failure discipline
 

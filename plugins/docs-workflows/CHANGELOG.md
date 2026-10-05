@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.8.0] — 2026-10-05
+
+### Added
+- **`/document`'s pull-request draft fills the docs repository's own template** where it has one, per `workflows-core:phase-handoff` §2.7.1, with the DO-NOT-MERGE banner as its first line. Until now `finish-and-handoff` §5 wrote its own body, and a user who pasted it into the web UI replaced the repository's template.
+
 ## [1.7.4] — 2026-10-05
 
 ### Fixed
