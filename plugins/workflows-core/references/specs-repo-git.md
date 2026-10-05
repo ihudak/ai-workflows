@@ -172,7 +172,8 @@ do not justify it by claiming plain `git add` cannot stage the deletion.
 **The plugin manages only branches it created.** A branch is plugin-owned when
 its name matches `^(idea|prd|ard|spec|design|ready|brd|frames)/`.
 
-Any other **named** branch — the user's own work, a hand-made branch — is left
+Any other **named** branch save the default branch — the user's own work, a
+hand-made branch — is left
 alone and never switched away from (§3.3 G2). The run's artifacts are still
 committed there, because a named branch cannot be lost, but never pushed
 (§4 step 5): a push would publish whatever its owner has not pushed yet.
@@ -595,17 +596,19 @@ to state.
      `$SPECS_PATH` is the repository it runs from (§4.1) — and a push would
      publish whatever its owner has not pushed yet, a code commit their own
      push choice kept local included.
-   - **There is somewhere to push.** The remote is the upstream's,
-     `git -C "$SPECS_PATH" for-each-ref --format='%(upstream:remotename)' refs/heads/<branch>`,
-     where that prints a name, else `origin`, which must exist:
+   - **There is somewhere to push.** The branch has a remote upstream where
+     `git -C "$SPECS_PATH" for-each-ref --format='%(upstream:remotename)' refs/heads/<branch>`
+     prints a name other than `.`, which marks an upstream in this same
+     repository; the remote is that name, else `origin`, which must exist:
      `git -C "$SPECS_PATH" remote get-url origin` exits 0.
    - **`push-scope`: every commit the push would publish is this reference's
-     own.** First the base the push is measured against: the upstream,
+     own.** First the base the push is measured against: on a branch with a
+     remote upstream, that upstream,
      `git -C "$SPECS_PATH" for-each-ref --format='%(upstream)' refs/heads/<branch>`,
-     where that prints a ref `git -C "$SPECS_PATH" show-ref --verify -q <ref>`
-     finds; else `refs/remotes/<remote>/<branch>`, where `show-ref` finds that;
-     else none, as on the local-only branch a failed `push -u` leaves behind.
-     The commits the push would publish are
+     where `git -C "$SPECS_PATH" show-ref --verify -q <ref>` finds it; else
+     `refs/remotes/<remote>/<branch>`, where `show-ref` finds that; else none,
+     as on the local-only branch a failed `push -u` leaves behind, or one whose
+     remote ref was pruned. The commits the push would publish are
      `git -C "$SPECS_PATH" rev-list --reverse HEAD --not <base>`, or, with no
      base, `git -C "$SPECS_PATH" rev-list --reverse HEAD --not --remotes=<remote>`,
      every commit on no ref of that remote this repository has fetched. Never
@@ -614,22 +617,35 @@ to state.
      that branch's commits, which are on the remote but not on this branch
      there, and the push would land them, unreviewed, on the remote's default
      branch. Then, oldest first and stopping at the first that fails, each
-     commit must be one this run made in step 4 or in §3.4's flush, or a
-     non-merge commit (`git -C "$SPECS_PATH" rev-list --parents -n 1 <sha>`
-     prints at most two shas: the commit and its one parent) whose every path,
+     commit must be a non-merge commit
+     (`git -C "$SPECS_PATH" rev-list --parents -n 1 <sha>` prints at most two
+     shas: the commit and its one parent) whose every path,
      `git -C "$SPECS_PATH" diff-tree --no-commit-id --name-only -r -z --root --no-renames <sha>`,
-     is an ARTIFACT path (§2.1). The parent count is what refuses a merge,
-     since `diff-tree` lists no path for one. This run's own commits pass
-     whatever they hold, because a `pre-commit` hook can add a path to them
-     (step 4) and they are still this reference's; an earlier run's commit
-     gets no such pass, so one a hook added to is named by the §6 line, for the
-     user to push. This reference makes no merge commit (§3.5) and commits
-     nothing else, so any other commit that fails the test is somebody else's
-     — the user's own, or a deliverable whose push at handoff failed — and
-     whether it goes out is theirs to decide.
+     is an ARTIFACT path (§2.1), or, in a commit this run made in step 4 or in
+     §3.4's flush, a path step 2's enumeration for that commit did not list.
+     The parent count is what refuses a merge, since `diff-tree` lists no path
+     for one. The second form is for a `pre-commit` hook, which can put paths
+     into this reference's own commit (step 4): a file the hook generated was
+     clean when step 2 enumerated, so it passes, while a change somebody else
+     had pending — a G1 path, a draft, a deliverable the user kept uncommitted
+     — was listed there and is refused, however the hook swept it in. Keep
+     each commit's sha and step 2's list as you make it, since nothing prints
+     them (§3.4's flush prints no line). An earlier run's commit gets no such
+     pass, so one a hook added a generated file to is refused like any other.
+     This reference makes no merge commit (§3.5) and commits nothing but
+     ARTIFACT paths of its own, so a commit that fails the test is somebody
+     else's, or carries somebody else's change — the user's own, or a
+     deliverable whose push at handoff failed — and whether it goes out is
+     theirs to decide.
 
-   Where all three hold, push to the current branch's upstream, or, where the
-   branch has none, `git -C "$SPECS_PATH" push -u origin <branch>`.
+   Where all three hold, push this branch alone. On a branch with a remote
+   upstream, `git -C "$SPECS_PATH" push <remote> "HEAD:<merge>"`, `<merge>`
+   being what `git -C "$SPECS_PATH" config branch.<branch>.merge` prints;
+   otherwise `git -C "$SPECS_PATH" push -u origin <branch>`, without `-u` where
+   the branch tracks a branch in this repository (`.`), so that setting
+   stands. Never a bare `git push`: under `push.default=matching`, or a
+   `remote.<name>.push` refspec, it pushes other branches too, whose commits
+   this step never measured.
 6. **Failure at any step is reported, never fatal.**
    - An auth failure, or a remote that cannot be reached → report; the commit
      stays local. §3.4 retries the push on the next run.
@@ -758,7 +774,7 @@ report was composed earlier.
 | Committed, not pushed — not a branch this plugin pushes (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: this plugin pushes only the default branch and the branches it creates, so <branch> is yours to push; the artifacts reach the maintainer when you push or merge it` |
 | Committed, not pushed — no remote to push to (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: this specs repo has no origin remote` |
 | Committed, not pushed — the push would publish other commits (§4 step 5 `push-scope`) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: the push would also publish commits that are not this plugin's session-file commits, the oldest <sha7> <subject>; push <branch> once they are ready to go, and the artifacts go with them` |
-| Committed, push failed | `Specs repo: committed <sha7> (<N> files) on <branch> — push FAILED (<reason>); the commit is local and the next run retries it` |
+| Committed, push failed | `Specs repo: committed <sha7> (<N> files) on <branch> — push FAILED (<reason>); the commit is local and the next run retries it` — or, where §4 step 5 passed a path of this run's commit only because a `pre-commit` hook generated it, which no later run passes, `…; the commit is local, and as a pre-commit hook added <path> to it, no later run retries it: push <branch> yourself` |
 | Nothing to commit | `Specs repo: no session artifacts to commit` |
 | Locked | `Specs repo: skipped — another session holds the repo (index.lock); the next run picks the artifacts up` |
 | Commit failed | `Specs repo: NOT COMMITTED — the commit failed (<the first line of git's error or the hook's output>); the artifacts stay staged, and a later run commits them once git accepts the commit (a merge concluded, a hook satisfied)` |

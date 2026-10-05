@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 **Update `workflows-core` to 1.15.3 with this release**: the terminal specs-repository commit pushes only the default branch and the branches the plugin creates, and never commits of yours.
 
 ### Fixed
-- **The terminal step's description said it always pushes.** `/idea`, `/create-prd`, `/create-ard`, `/specify`, `/update-prd`, `/prd-ground`, `/prd-proposal`, `/brd-proposal` and every `/brd-*` command said so. Each now says it pushes per `workflows-core:specs-repo-git` §4 step 5. That step does not push where the specs repository is on neither its default branch nor a branch the plugin created, or where the push would also publish commits of yours. The session-cost and session-feedback pages say the same.
+- **The terminal step's description said it always pushes.** `/idea`, `/create-prd`, `/create-ard`, `/specify`, `/update-prd`, `/prd-ground`, `/prd-proposal`, `/brd-proposal` and every `/brd-*` command said so. Each now says it pushes per `workflows-core:specs-repo-git` §4 step 5. That step does not push where the specs repository is on neither its default branch nor a branch the plugin created, where it has no remote to push to, or where the push would also publish commits other than the plugin's own session-file commits. The session-cost and session-feedback pages say the same.
 
 ## [3.16.1] — 2026-10-05
 

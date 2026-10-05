@@ -19,7 +19,7 @@ The write target is resolved by a specs-first ladder, walked top-down, stopping 
 3. The run's source is a folder in the specs tree and `$SPECS_PATH` is unavailable → the file lands beside that directory.
 4. Nothing resolvable → **report-only**: the entry stays only in the run's printed output. The plugin never writes into your current working directory, where it is not the specs repository, since it may be a code repository.
 
-None of this touches git — the cost entry is committed later, once, by the run's terminal `commit-artifacts` step — and pushed by it, unless the specs repository is on neither its default branch nor a branch the plugin created, or the push would also publish commits of yours — the same as every other session artifact this plugin writes into `$SPECS_PATH`.
+None of this touches git — the cost entry is committed later, once, by the run's terminal `commit-artifacts` step — and pushed by it, unless the specs repository is on neither its default branch nor a branch the plugin created, has no remote to push to, or the push would also publish commits other than the plugin's own session-file commits — the same as every other session artifact this plugin writes into `$SPECS_PATH`.
 
 ## How cost is computed
 
