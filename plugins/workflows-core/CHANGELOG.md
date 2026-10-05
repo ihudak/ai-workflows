@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.15.3] — 2026-10-05
+
+### Fixed
+- **`specs-repo-git`'s `commit-artifacts` pushed whatever branch the specs repository stood on, with every unpushed commit on it.** On a branch the plugin did not create (§3.3 G2), the push carried its owner's own unpushed commits, although G2's notice said the artifacts would reach the maintainer when that branch was merged or pushed. On a direct `/dev-workflows:implement` run from inside the specs repository, it pushed the code branch, code commit included, whatever the user answered at the push choice. On the default branch, it published the user's own unpushed local commits along with the session files. §4 step 5 now pushes only the default branch or a plugin branch, and only while every commit the push would publish is a session-file commit (`push-scope`, the test §3.4's retry already applied, now read against the remote's refs rather than `@{u}`). Otherwise the commit stays local, and one of §6's two new *not pushed* lines says why. §3.4's retry applies the same test. `feedback-emission`'s header, the references page and the `/feedback` and `/prompt` pages now describe the push the same way. `/feedback`, `/frames` and the three `/prompt*` commands now say they push per §4 step 5. `phase-handoff` §3.4 no longer says a G2 run pushes.
+
 ## [1.15.2] — 2026-10-05
 
 ### Fixed

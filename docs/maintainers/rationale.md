@@ -329,3 +329,12 @@ A duplicate commit on another session's branch is theirs to resolve and, where t
 - *The comparison done inline by Phase 7.* Running controls and judging agreement would move to the session's model, which need not be Opus, and every result would land in the orchestrator's context.
 - *Continuing the same agent with the withheld fields.* Agent continuation is not available in every harness these commands run in.
 - *Checkpoint and resume across a Phase 7 stop.* With batching a lost pass is about 24 dispatches; an incomplete result is retried once in each verification pass and in each second opinion instead.
+
+## specs-push-scope
+
+**`commit-artifacts` pushes only its own commits, and only to a branch it may push (2026-10-05).** Until then step 5 pushed whatever branch the specs repository stood on, with `push -u origin` where it had no upstream. Three runs published something nobody had agreed to. On a branch the plugin did not create (§3.3 G2), the push carried the owner's own unpushed commits, while G2's notice said the artifacts would reach the maintainer "when that branch is merged or pushed", as if the plugin would not push it. On a direct `/implement` run from inside the specs repository, the code branch carried the code commit out whatever the user had answered at the push choice. And on the default branch, a user's own unpushed local commits went out with the session files. §3.4's retry had refused the last case all along: it pushed only where every commit ahead touched §2.1 artifact paths. Step 5 now applies that same test, `push-scope`, and both read the commits against the remote's refs rather than `@{u}`, which a failed `push -u` leaves unset.
+
+**Refused, with the reason:**
+
+- *Pushing a branch the plugin did not create where `push-scope` passes.* That still adds a commit to somebody else's remote branch, and to any pull request open from it. §2.2 manages only the branches the plugin created, so pushing someone else's branch is theirs to do.
+- *Exempting a deliverable commit whose own push failed at handoff.* Telling it from a user's commit means parsing commit messages, a pattern over free text rather than a lookup in a known set. The handoff's own outcome line already tells the user to push the branch, and §3.4's retry already refused to push it.
