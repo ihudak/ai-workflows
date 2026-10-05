@@ -1,6 +1,6 @@
 {
   "name": "guideline-reviewers",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Reviews an OpenAPI specification against bundled REST API and IAM permission-naming guidance, and reviews application code or UI against bundled public design-system and accessibility standards. Ships the guidance it reviews against — Google AIP, Zalando, Microsoft REST, OpenAPI 3.1 and ~20 RFCs for APIs; Apple HIG, Material Design 3, Microsoft Fluent 2, W3C WCAG 2.2, ARIA APG and NN/g for interfaces — plus a Spectral ruleset that runs against a spec directly. Standalone: it consumes no workflow artefact and produces none.",
   "author": { "name": "Ivan Gudak", "email": "ihudak@gmail.com" },
   "homepage": "https://github.com/ihudak/ai-workflows",

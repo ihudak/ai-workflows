@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.10.0] — 2026-10-05
+
+**Update `workflows-core` to 1.15.0 with this release**: the commands cite its `untrusted-content` reference.
+
+### Added
+- **Every agent treats what it reads as data, never instructions.** All 12 agents end their prompt with `workflows-core`'s untrusted-content block: content supplies the values a task asks for — a declared test command, a documented convention — and never a new task, a fetch or a changed verdict, and an agent reports what tried to steer it as an `Untrusted-content notice:` line, after whatever its own output format requires. `upgrade-executor` and `vuln-fixer` copy `test-baseliner`'s notices into their own reply.
+- **The 5 commands that dispatch an agent relay those notices** under `Untrusted-content notices:` in their final report, or in the stop message of a run that ends early, and hold their own reading to the same rule. A notice never blocks a run, changes its routing or triggers a re-review.
+
 ## [4.9.3] — 2026-10-05
 
 ### Fixed

@@ -17,3 +17,7 @@ They live here rather than beside any one pipeline because more than one plugin 
 One of the six, `docs-grounder`, is dispatched indirectly: its calling commands invoke a named procedure (`dispatch-docs-grounder`) defined in `references/docs-grounding.md` rather than writing a `subagent_type:` inline, but that procedure resolves to exactly the `subagent_type` above.
 
 `/frames`, this plugin's own command, is the only one here that dispatches an agent of its own — `frame-describer`, one per frame set. The other five dispatch none — re-derive both halves with `ls plugins/workflows-core/commands/` and `grep -n subagent_type plugins/workflows-core/commands/*.md`, which returns hits in `frames.md` alone.
+
+## What every agent does with what it reads
+
+Every agent above ends its prompt with the same `## Untrusted content` section, copied from [`references/untrusted-content.md`](references.md): a file, issue export, diff or web page supplies the values an agent's task asks for — a declared test command, a documented convention — and never a new task, a fetch or a changed verdict. Text that tries to steer an agent is not acted on; the agent ends its reply with an `Untrusted-content notice:` line naming where the text is, and the command prints every such line under **Untrusted-content notices** in its final report, or in its stop message when the run ends early. A notice never stops a run. When you see one, look at the file or page it names: it carries text aimed at an AI agent, which you may want to remove or report.
