@@ -132,3 +132,10 @@ jobs:
         # repository, so no token-shaped literal sits in this repo for push protection to
         # trip on.
         run: python3 plugins/dev-workflows/scripts/secret-scan.py --selftest
+
+      - name: Self-test the architecture harvest
+        # /product-workflows:harvest-decisions writes the team knowledge base with it. Its
+        # failure mode is silent: a rule that stopped matching harvests nothing, or a
+        # non-idempotent render re-proposes every record on every run. Fixtures are built
+        # at run time.
+        run: python3 plugins/product-workflows/scripts/architecture-harvest.py --selftest

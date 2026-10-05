@@ -25,6 +25,7 @@ flowchart TD
     end
     subgraph PA["PA — architecture (optional)"]
         createard["/create-ard"]:::prod
+        harvest["/harvest-decisions"]:::prod
     end
     subgraph PE["PE — breakdown & specification"]
         epics["/epics"]:::prod
@@ -40,6 +41,8 @@ flowchart TD
     end
 
     createvi -->|prd.md| createard
+    createard -.->|merged ARD| harvest
+    harvest -.->|team decisions| createard
     createvi -->|prd.md| epics
     createard -->|ard.md| epics
     epics -->|epic.md| specify

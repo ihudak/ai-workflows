@@ -5,12 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.16.2] — 2026-10-05
+## [3.17.1] — 2026-10-05
 
-**Update `workflows-core` to 1.15.3 with this release**: the terminal specs-repository commit pushes only the default branch and the branches the plugin creates, and never commits of yours.
+**Update `workflows-core` to 1.16.1 with this release**: the terminal specs-repository commit pushes only the default branch and the branches the plugin creates, and never commits of yours.
 
 ### Fixed
 - **The terminal step's description said it always pushes.** `/idea`, `/create-prd`, `/create-ard`, `/specify`, `/update-prd`, `/prd-ground`, `/prd-proposal`, `/brd-proposal` and every `/brd-*` command said so. Each now says it pushes per `workflows-core:specs-repo-git` §4 step 5. That step does not push where the specs repository is on neither its default branch nor a branch the plugin created, where it has no remote to push to, or where the push would also publish commits other than the plugin's own session-file commits. The session-cost and session-feedback pages say the same.
+- **`/prd-proposal` still said §1 rule 3 fixes "eight prefixes"** after `kb/` made them nine. It now names no count.
+
+## [3.17.0] — 2026-10-05
+
+**Update `workflows-core` to 1.16.0 with this release**: `/create-ard` reads its team root and `/harvest-decisions` cites its `architecture-kb` reference.
+
+### Added
+- **`/harvest-decisions` keeps the team's architecture decisions where the next ARD finds them.** It turns every `[AD#N]` in the ARDs on the specs repository's default branch into a record under `$SPECS_PATH/architecture/` — with the decision's Binds, Prevents, Rule and Alternatives, its status, the designs that apply it and every recorded deviation. Re-runs reconcile: superseded and withdrawn decisions change status, nothing is deleted, and an unchanged branch changes nothing. The work is a bundled, deterministic script (`scripts/architecture-harvest.py --layout prd`, self-tested in CI); the result is handed off on a `kb/harvest-<date>` branch with a pull request, and it runs only on the default branch and stops while an earlier harvest is unmerged (a squash- or rebase-merged one counts as merged). Drift is reported, never guessed: an ARD with no decisions section, a malformed decision heading, a `Superseded by` naming a decision the ARD lacks, or a frontmatter key that is not a key.
+- **`**Supersedes:**` in the ARD.** A later ARD departs from a team record of another PRD with `**Supersedes:** [<record id> <title>](<link>) — <why>`; `ard-reviewer` checks the link, and the next harvest marks the record superseded. `/create-ard` confirms team records as binding, offers the harvest at the end of every run, and writes an Epic ARD's inherited decisions as bullets under `### Inherited invariants`.
 
 ## [3.16.1] — 2026-10-05
 

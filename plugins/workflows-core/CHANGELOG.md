@@ -5,10 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.15.3] — 2026-10-05
+## [1.16.1] — 2026-10-05
 
 ### Fixed
 - **`specs-repo-git`'s `commit-artifacts` pushed whatever branch the specs repository stood on, with every unpushed commit on it.** On a branch the plugin did not create (§3.3 G2), the push carried its owner's own unpushed commits, although G2's notice said the artifacts would reach the maintainer when that branch was merged or pushed. On a direct `/dev-workflows:implement` run from inside the specs repository, it pushed the code branch, code commit included, whatever the user answered at the push choice. On the default branch, it published the user's own unpushed local commits along with the session files. §4 step 5 now pushes only the default branch or a plugin branch, only where there is a remote to push to, and only while every commit the push would publish is a session-file commit (`push-scope`). The commits are measured against the branch's own remote ref, as §3.4's retry already measured them, with the remote's refs as a whole used only where the branch has no remote ref. Otherwise the commit stays local, and one of §6's three new *not pushed* lines says why. A commit into which a `pre-commit` hook put anything other than session files is not pushed either, the plugin's own included, and the line names what the hook added: a hook that stages broadly would otherwise push your pending work with it. The push names its branch (`push -u <remote> <branch>`), so `push.default=matching` cannot carry other branches with it. An upstream inside the same repository (`.`), or one under another branch's name, counts as no remote upstream. §3.4's retry applies the same three conditions. G2's notice now says its commit is not pushed and reaches the maintainer when you push or merge that branch. `feedback-emission`'s header, the references page and the `/feedback` and `/prompt` pages now describe the push the same way. `/feedback`, `/frames` and the three `/prompt*` commands now say they push per §4 step 5. `phase-handoff` §3.4 no longer says a G2 run pushes.
+
+## [1.16.0] — 2026-10-05
+
+### Added
+- **`architecture-kb` — the team architecture knowledge base.** The format authority for `$SPECS_PATH/architecture/`: one record per `[AD#N]` of the ARDs on the specs default branch (`decisions/<KEY>-AD<N>.md`, an `index.yaml`, a `README.md`), its statuses (`accepted`, `superseded`, `withdrawn`), `Supersedes`, the *Applied in* and *Deviated in* citations, what the harvest owns, and every problem kind with its fix. `/product-workflows:harvest-decisions` writes it.
+- **Architecture grounding reads the team root.** `architecture-grounding` resolves `$SPECS_PATH/architecture` beside the organisation's repository and shows a `team decisions:` line (with a `differs from <default-ref>` clause when the run's branch is behind the latest harvest); one `architecture-grounder` dispatch reads both roots, tags every reference `root: organisation | team`, skips withdrawn records, caps references per root, and raises `contradicts-team-decision`.
+- **`kb/` branches.** `specs-repo-git` and `phase-handoff` own the keyless `kb/harvest-<date>` branch the harvest hands off on; `architecture/**` is an advisory deliverable class.
 
 ## [1.15.2] — 2026-10-05
 

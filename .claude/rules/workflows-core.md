@@ -13,7 +13,7 @@ Split out to keep this file under 20,000 characters: the git authorities (`specs
 
 ## Plugin facts
 
-`workflows-core` carries thirty-two reference files (`find plugins/workflows-core/references -type f | wc -l`), seven agents (`architecture-grounder`, `code-scanner`, `defect-reporter`, `doc-fixer`, `docs-grounder`, `frame-describer`, `impl-maintenance`; `ls plugins/workflows-core/agents | wc -l`), two bundled skills (`model-routing` and the `reference` loader), the cost and status-line scripts under `scripts/`, and the six family-meta commands `CLAUDE.md` § Active plugins names.
+`workflows-core` carries thirty-four reference files (`find plugins/workflows-core/references -type f | wc -l`), seven agents (`architecture-grounder`, `code-scanner`, `defect-reporter`, `doc-fixer`, `docs-grounder`, `frame-describer`, `impl-maintenance`; `ls plugins/workflows-core/agents | wc -l`), two bundled skills (`model-routing` and the `reference` loader), the cost and status-line scripts under `scripts/`, and the six family-meta commands `CLAUDE.md` § Active plugins names.
 
 It ships two hooks — `notify-done` and `test-notify`, both session-wide rather than command-scoped, which is why they live in `workflows-core`: every family plugin declares `workflows-core`, so one copy serves everyone.
 

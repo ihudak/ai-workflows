@@ -612,8 +612,7 @@ the **gated — stopping** array above is the one presented — named by its hal
 gated array", which since §4.1's split identifies two (§5 rule 4).
 
 On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with `prefix: prd`
-(§2.9's table — the proposal opens on the shared `prd` prefix rather than a ninth of its own; the eight
-prefixes §1 rule 3 fixes are not extended, and nothing about a proposal makes it a ninth phase),
+(§2.9's table — the proposal opens on the shared `prd` prefix rather than a prefix of its own; the prefixes §1 rule 3 fixes are not extended, and nothing about a proposal makes it a phase of its own),
 `feature_folder` as resolved in Phase 0, `deliverable_paths` = `proposal.md`, `proposal-brief.md` where
 this run rendered one, and, on a revision, the archived prior under `revisions/` at the name §2's
 first-free rule actually wrote — `<KEY>_proposal_<YYYYMMDD>.md`, or the first free `-2`, `-3` form
