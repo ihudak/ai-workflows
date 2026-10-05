@@ -67,7 +67,7 @@ Usage: `/design <ADDRESS> [--design-twice] [--skip-costs] [--skip-feedback] [--e
    `brd-link.md` naming a `parent:`, as a `PRD-` folder. A folder none of these places is not
    guessed at — stop, naming the folder and what it carries — and, where it holds an `idea.md` and no `prd.md`, name `/product-workflows:create-prd <KEY>` too, whose `prd.md` places it (`workflows-core:addressing` §4.1).
 
-      With no positional address, or one `resolve-address` returns `invalid`, stop with
+   With no positional address, or one `resolve-address` returns `invalid`, stop with
    `DESIGN_NEEDS_KEY: /design needs a PRD or Epic address — a key, or an @<path> to its folder.` —
    `/design` has no direct-prompt behaviour. On `invalid` the message goes on, naming the token:
    ` — '<token>' is not a key (workflows-core:addressing §1).` **Resolution supplies the address and nothing else:

@@ -92,7 +92,7 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
      re-enters step 1's address resolution with that slice's `@<path>`, which the listing already
      holds, so no key is searched for again and `$SPECS_PATH` is not needed for it.
      **Re-entering fixes the run key set afresh, for the slice** — its key, as *Mode detection* fixes it for
-     any address — **and runs the specs-repo preflight again with it before step 1's stops are
+     any address — **and runs the specs-repo preflight again with it before step 1's placement stops are
      tested.** The preflight is prompt-free and idempotent, and the container's key set is the wrong
      one for the slice: it can have kept the run on a plugin branch named for the container, which
      the slice's key set switches away from (`workflows-core:specs-repo-git` §3.5 B4), exactly as a

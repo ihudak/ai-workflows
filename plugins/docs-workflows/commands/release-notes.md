@@ -90,7 +90,7 @@ This command makes **zero external API calls** and **never writes into the docs 
      re-enters this step's address resolution with that slice's `@<path>`, which the listing already
      holds, so no key is searched for again and `$SPECS_PATH` is not needed for it.
      **Re-entering fixes the run key set afresh, for the slice** — its key, as step 1 fixes it for
-     any address — **and runs the specs-repo preflight again with it before step 1's stops are
+     any address — **and runs the specs-repo preflight again with it before step 1's placement stops are
      tested.** The preflight is prompt-free and idempotent, and the container's key set is the wrong
      one for the slice: it can have kept the run on a plugin branch named for the container, which
      the slice's key set switches away from (`workflows-core:specs-repo-git` §3.5 B4), exactly as a
@@ -164,7 +164,7 @@ This command makes **zero external API calls** and **never writes into the docs 
    ` — '<token>' is not a key (workflows-core:addressing §1).`
 
 **Specs-repo preflight** — run at the end of step 1's address resolution, with the run key set step 1
-fixes, before step 1 places the folder or takes any stop its placement leads to — the named stops above. A run that stops on its address — none given, `invalid`, `ambiguous`, `misrooted` or `absent` — or on an unset `$SPECS_PATH` stops before this and runs none (`workflows-core:specs-repo-git` §3). Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session
+fixes, before step 1 places the folder or takes any stop its placement leads to — `RELEASE_NOTES_BRD_NOT_SLICED`, `RELEASE_NOTES_FOLDER_NOT_PLACED`, `RELEASE_NOTES_PRD_NO_KEY` and `RELEASE_NOTES_NO_PRD`. A run that stops on its address — none given, `invalid`, `ambiguous`, `misrooted` or `absent` — or on an unset `$SPECS_PATH` stops before this and runs none (`workflows-core:specs-repo-git` §3). Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session
 artifacts from an earlier run, retry an artifact commit that failed to push,
 and settle the branch. This runs against `$SPECS_PATH` only — `git -C
 "$SPECS_PATH"`, never a `cd`, so the code/docs repo this run is working

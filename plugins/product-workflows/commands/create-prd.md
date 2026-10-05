@@ -55,12 +55,13 @@ Usage: `/create-prd <ADDRESS> [@idea.md] [--from-prd <PRD-KEY|path>] [--lean|--h
     run and step 5 has resolved this run's own address with neither of its refusals (5a, 5b) taken**:
     a key is found only by searching the specs tree, which step 2b requires, and the preflight there
     settles the branch the read sees, so a seed read earlier could be read off a stale plugin branch,
-    or resolved with no tree at all. Then resolve the seed via
-    `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3) and read that folder's
-    `prd.md` for a key, or read the given path directly. **A seed the run cannot read stops it**, before
-    step 3's ladder: `ambiguous` names every match and `@<path>` as the way through; `invalid`,
-    `absent`, a resolved folder holding no `prd.md`, and a `prd.md` or path that cannot be read each
-    name the seed and what was found —
+    or resolved with no tree at all. Then read it: a seed naming an existing file or directory, with or without a leading `@`,
+    is read where it sits — a file directly, a directory's `prd.md`; any other seed is a key, resolved
+    with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), and that folder's `prd.md` is read.
+    **A seed the run cannot read stops it**, before step 3's ladder: `ambiguous` names every match and
+    `@<path>` as the way through; `invalid` (neither an existing path nor a key), `absent`, a folder
+    holding no `prd.md`, and a `prd.md` or file that cannot be read each name the seed and what was
+    found —
     `CREATE_PRD_SEED_NOT_FOUND: --from-prd <seed> <names no PRD key | resolves to no folder | resolves to <path>, which holds no prd.md | cannot be read (<error>)> — name a PRD that exists, or drop --from-prd.`
     The seed is **grounding, not content** (Phase 3 adapts it; it is never copied wholesale).
 
