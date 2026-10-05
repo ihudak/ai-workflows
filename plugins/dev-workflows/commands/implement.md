@@ -16,7 +16,7 @@ Usage: `/implement <ADDRESS> | <prompt> [@file…] [@spec-folder] [@repo…] [--
 
 **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Because a direct run's `<prompt>` is free prose kept verbatim, that prose is protected per `workflows-core:run-flags` §3 step 1: a run-flag token before the prompt begins, or in a trailing run at the very end of `$ARGUMENTS`, is stripped, but one written inside the prompt itself is kept as prompt text, even where it looks like a flag. **Strip `--no-commit` next**, before any other parsing: it is the only command-specific flag this command takes, and an unstripped flag is read as free-text prose and lands in the task description. When present, Phase 4.6 is skipped entirely and the changes are left in the working tree. It is the one opt-out from a commit that is otherwise prompt-free (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §1 rule 5) — typed rather than clicked, which is the difference — and a run under it says once what it costs: the work is recoverable only on this machine, and `/document` and `/release-notes` will not find it later.
 
-**The working directory is classified first** — before address resolution and before any `@path` token is read, so a run that stops here has resolved no address, run no specs-repo preflight and shown no Epic picker. Run `git rev-parse --is-inside-work-tree` there. Unless it prints `true` — it fails outside every repository, and prints `false` inside a `.git` directory or a bare repository — stop: `/implement` branches the repository it runs from, so run it from inside a work tree. Where it prints `true`, the working directory is the Code repo row's (the table below) whatever it holds, and its repository, at its top level, is the one this run branches and changes. It is not an `@path` token: no other row is tested against it and no notice below is printed for it, so a `prompt.md` or `*-design.md` file in it is read only where a token names it.
+**The working directory is classified next**, straight after the run flags — before address resolution and before any `@path` token is read, so a run that stops here has resolved no address, run no specs-repo preflight and shown no Epic picker. Run `git rev-parse --is-inside-work-tree` there. Unless it prints `true`, stop: `/implement` branches the repository it runs from, so it runs only from inside a work tree. It prints `false` inside a `.git` directory or a bare repository; where it fails instead, show git's error beside that, since the error names the cause — no repository around the directory, or one git refuses to use, as its ownership check does. Where it prints `true`, the working directory is the Code repo row's (the table below) whatever it holds, and its repository, at its top level, is the one this run branches and changes. It is not an `@path` token: no other row is tested against it and no notice below is printed for it, so a `prompt.md` or `*-design.md` file in it is read only where a token names it.
 
 `$ARGUMENTS` may contain free-text prose plus **zero or more `@path` tokens** (today's single-`@file` form is a subset). Resolve each `@path` relative to the current working directory. Classify each `@path` **by inspection, not by matching the path string**:
 
@@ -27,7 +27,9 @@ Usage: `/implement <ADDRESS> | <prompt> [@file…] [@spec-folder] [@repo…] [--
 | **Specs folder** | a directory under `specifications/` that `resolve-address` resolves — its `kind:` and `key:` read off the folder's carrier (`workflows-core:addressing` §4) | hand to the folder read in Phase 1.7 |
 | **Code repo** | a directory where `git -C <path> rev-parse --is-inside-work-tree` prints `true` (includes the cwd) | scan target in Phase 1.7 — or, where its top level (`git -C <path> rev-parse --show-toplevel`) is that of a code repository already classified here (the working directory's included), a search hint for that repository's scan and for Phase 2A/2B's exploration |
 
-Test the rows top to bottom for each `@path` token: the first that matches classifies it, so a spec or specs folder below a repository's top level is that folder, never a code repo. A token naming the working directory (`@.`, or any other path that resolves to it) is classified the same way, so below the top level a spec folder there is read as one; the repository it lies in is still the run's, by the working-directory rule above. An `@path` that is its own work tree's top level (`--is-inside-work-tree` prints `true` there and `git -C <path> rev-parse --show-prefix` prints nothing) is always the Code repo row's whatever else it holds. Where such an `@path` also matches the Spec folder row, print `<path> is a repository's top level and is read as a code repository — its prompt.md and *-design.md files are not read into the description; name them by file (@<path>/prompt.md) to read them`. **A direct run with no description** — no prose, and no Spec file or Spec folder token — stops once the tokens are classified, before the specs-repo preflight: `/implement needs a description — prose, an @<file>.md, or an @<folder> holding prompt.md or a *-design.md`, followed by the notice's remedy where a token above printed it.
+Test the rows top to bottom for each `@path` token: the first that matches classifies it, so a spec or specs folder below a repository's top level is that folder, never a code repo. A token naming the working directory (`@.`, or any other path that resolves to it) is classified the same way, so below the top level a spec folder there is read as one; the repository it lies in is still the run's, by the working-directory rule above. An `@path` that is its own work tree's top level (`git -C <path> rev-parse --is-inside-work-tree` prints `true` and `git -C <path> rev-parse --show-prefix` prints nothing) is always the Code repo row's whatever else it holds. Where such an `@path` also matches the Spec folder row, print `<path> is a repository's top level and is read as a code repository — its prompt.md and *-design.md files are not read into the description; name them by file (@<path>/prompt.md, @<path>/<name>-design.md) to read them`.
+
+**Each token's own checks run as it is classified**, before the no-description stop below and before the specs-repo preflight. A token naming a directory that is missing, or one that is neither a recognized folder type nor a git repo, is surfaced by name — never silently skipped — and the run asks whether to continue without it or stop (`workflows-core:model-routing/classification` §8.4). A single `@file` that cannot be read stops the run, reporting the error. **A direct run with no description** — no prose, and no Spec file or Spec folder token left — then stops, still before the preflight: `/implement needs a description — prose, an @<file>.md, an @<folder> below a repository's top level holding prompt.md or a *-design.md, or a <KEY> or @<specs-folder> address`, followed by the notice's remedy where a token above printed it and, where the working directory holds a `prompt.md` or `*-design.md` file, a line naming each by file (`@prompt.md`) — listed, not read. A direct run that passes runs the design-doc open-question guard (Rules, below) next, before the preflight too: its input is a token, read where it sits.
 
 **Address resolution.** After the working directory and before the per-`@path` classification above, look for a **single positional
 address** in `$ARGUMENTS` — a `<KEY>`, or an `@<path>` naming a folder in the specs tree. Present →
@@ -54,8 +56,9 @@ to `specs`, a code repo is an `/implement`-only scan target (or, sharing the top
 resolved `path`, `kind` and `key`, and `specs` forward. On a keyed run `specs` is
 read out of the resolved folder only once the specs-repo preflight below has run.
 
-**Specs-repo preflight** — run here, once address resolution is done and before the Epic-unit
-resolution below reads anything, with the run key set fixed from carrier frontmatter alone
+**Specs-repo preflight** — run here, once address resolution, each token's checks and, on a direct
+run, the no-description stop and the design-doc guard are done (a run that stops on any of them runs
+none), and before the Epic-unit resolution below reads anything, with the run key set fixed from carrier frontmatter alone
 (`key:`, `kind:`, read as `workflows-core:addressing` §4 does, whatever file that is, and testing no
 file's presence; `workflows-core:specs-repo-git` §3.2): on a keyed run the resolved `key` and, where
 §4.1 places the resolved folder at Epic level — an `EPIC-` prefix, or with no prefix a resolved
@@ -161,8 +164,8 @@ Epic's, and the PRD folder's where they are the PRD's. Where any other step name
 it means the resolved folder's.
 
 Rules:
-- The **primary description** is: the spec file if one was given → else the spec-folder design doc → else the inline prose. Echo `📄 Reading prompt from <file>…` (or `from inline text`) and confirm `"Loaded prompt (N lines)."`.
-- **Design-doc open-question guard.** If the primary description is a **design doc** — a file named
+- The **primary description** is: the spec file if one was given → else the spec folder's design doc, or its `prompt.md` where it holds none → else the inline prose. Echo `📄 Reading prompt from <file>…` (or `from inline text`) and confirm `"Loaded prompt (N lines)."`.
+- **Design-doc open-question guard.** It runs on a direct run straight after the no-description stop, before the specs-repo preflight, and on a keyed run once its specs are read. If the primary description is a **design doc** — a file named
   `design.md` or matching `*-design.md` (the `/design` output; distinct from a `specification.md`) —
   scan it for unresolved `- [ ]` open questions under its `## Open questions` heading. If any exist,
   **refuse to proceed**:
@@ -173,9 +176,8 @@ Rules:
   incorporate a spec that still carries them. "Override" is the only escape and is recorded in the
   Phase 5 report's `### Assumptions & limitations`.
 - Multiple inputs of the same kind are allowed.
-- A referenced `@dir` that is missing, or is neither a recognized folder type nor a git repo, MUST be surfaced to the user immediately (do not silently skip) — then ask whether to continue without it or stop. This mirrors `workflows-core:model-routing/classification` §8.4.
+- A missing or unrecognized `@dir` and an unreadable `@file` are each token's own checks, made as it is classified (above), before the specs-repo preflight.
 - Note any embedded images as "referenced image: <path>".
-- If a single `@file` cannot be read, stop and report the error immediately.
 - **Specs are required for keyed runs.** When `mode: keyed` and the resolution found
   `specs: []`, do not plan blind — prompt:
   `choices: ["Point me at a specs directory (you'll provide the path)", "Proceed without specs — not recommended", "Cancel"]`
@@ -327,7 +329,7 @@ Runs after Phase 1.6 and replaces the single Phase 2B exploration subagent for m
      > "repo_path: <the repo's top level — `git -C <path> rev-parse --show-toplevel` of the path Phase 0 classified>
      >  capability_themes: <themes from steps 1–2 + the implementation spec>
      >  context: <3–5 sentences: the implementation goal and what the change must accomplish>
-     >  search_hints: <symbols/paths/keywords derived from the spec, plus every `@path` sharing this repository's top level and, for the working directory's repository, the working directory where it lies below the top level, each relative to that top level, if any>
+     >  search_hints: <symbols/paths/keywords derived from the spec, plus every `@path` sharing this repository's top level and, for the working directory's repository, the working directory where it lies below the top level, each relative to that top level and each once, if any>
      >  refresh:      { switch_to_default_branch: false, pull: false }"
 
    **`refresh` is pinned off here, and it is the one input this dispatch must not omit.**
@@ -371,7 +373,7 @@ Only when the run resolved a key (PRD/Epic) — i.e. NOT direct-prompt mode — 
 **Codebase exploration** — Before writing the plan, spawn an exploration subagent to map the relevant parts of the codebase — save where this phase was entered from a `### Re-classification` the user accepted at Phase 2B, where `summary_file` already holds the exploration and nothing is dispatched:
 
 → Agent (subagent_type: "general-purpose", tools: Read/Glob/Grep only — no Bash, no Edit, model: `<detection_model — §2.1 Sonnet chain>`):
-  "Given this implementation description: [paste the full implementation description from Phase 0 or Phase 1 here], find in the repository at [its top level, `git rev-parse --show-toplevel`] (starting from [every `@path` the input named that shares its top level, and the working directory where it lies below the top level, each relative to that top level — omit where neither]) and return:
+  "Given this implementation description: [paste the full implementation description from Phase 0 or Phase 1 here], find in the repository at [its top level, `git rev-parse --show-toplevel`] (starting from [every `@path` the input named that shares its top level, and the working directory where it lies below the top level, each relative to that top level and each once — omit where neither]) and return:
    - Relevant source files and their primary responsibility
    - Existing patterns and conventions used in this codebase
    - Test file locations and test naming conventions

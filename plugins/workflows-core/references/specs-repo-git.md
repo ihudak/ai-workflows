@@ -186,7 +186,9 @@ asserts), and runs this before any placement or refusal reads the resolved folde
 takes none, or whose key set is its validated argument keys as typed — `/dev-workflows:vuln`'s
 per-token keys among them, keyless where no token carries one — runs it as soon as `$SPECS_PATH`
 is known, and resolves afterwards. Where resolution comes first,
-a run that stops on its address — `invalid`, `ambiguous`, `misrooted` or `absent` — runs none. Prompt-free.
+a run that stops on its address — `invalid`, `ambiguous`, `misrooted` or `absent` — runs none; nor
+does any run that stops before this on a check of its own inputs needing no specs-repo state, such as
+a run flag, the directory it runs from, or an input it cannot read. Prompt-free.
 Silent when the repository is already clean and on the default branch and §3.1 finds
 `$SPECS_PATH` well placed; it emits a block only when it acts or when a guard fires, and a
 notice only where §3.1 reports a misconfigured `$SPECS_PATH`. That notice is one line, plus one more
@@ -719,7 +721,8 @@ Omitting any one of them is a defect, not a style choice.
 
 1. **Cite and execute `specs-preflight` (§3)** at run start, once the run key
    set is known, in whichever of §3's cases the command falls; a run that
-   stops on its address after resolution runs none. Phase 0 in most
+   stops on its address after resolution runs none, nor does one that stops
+   before it on a check of its own inputs needing no specs-repo state (§3). Phase 0 in most
    commands. Carry any returned `specs_git: blocked` or `specs_git: misrooted`
    flag for the whole run, and `specs_git: misrooted` from `workflows-core:addressing`
    §3 `specs-root-check` where its stop ended the run before any preflight.

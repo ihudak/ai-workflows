@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.14.1] — 2026-10-05
+
+### Fixed
+- **`specs-repo-git` §3 and §7 named only an address stop as one that runs no preflight.** A run that stops earlier, on a check of its own inputs needing no specs-repo state — a run flag, the directory it runs from, an input it cannot read — runs none either, which every command's run-flag stop already did; read literally, the caller contract called that a defect. `/dev-workflows:implement` (dev-workflows 4.9.3) now makes all of its input checks before its preflight.
+
 ## [1.14.0] — 2026-10-05
 
 ### Added
