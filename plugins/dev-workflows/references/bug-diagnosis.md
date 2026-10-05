@@ -37,15 +37,15 @@ the evidence more convenient.
    script — **one at a time**, re-running it after each cut, and keep only what the failure needs. It
    is minimal when removing any remaining element makes it go green. A minimal repro leaves fewer
    moving parts to suspect at step 2, and becomes the regression test step 4 lands where a correct seam
-   exists. Minimising never edits the code or the repository's configuration: an agent that may not
-   write (`risk-planner`) only varies what the command takes.
+   exists. `risk-planner` writes no file: it varies only the command's arguments and standard input,
+   and trimming a fixture or a script is a plan step for the caller.
 
    **A performance regression takes a different repro.** Logs usually mislead about time, so the
    repro is a **measurement** — a timing harness, a profiler, a query plan — run on the current code,
    and it is red when the time exceeds the expected figure by more than its own run-to-run spread.
    Measure first, fix second. Finding where the time went in by bisecting between a good and a bad
-   state moves `HEAD`, so it is a step of the plan the caller carries out on its own branch, never
-   something `risk-planner` runs.
+   state moves `HEAD`, so it is a step of the plan the caller carries out from a clean tree, before the
+   run's first edit, ending in `git bisect reset` — never something `risk-planner` runs.
 
    **Completion criterion — one command, already run.** Step 1 is not finished until you can name
    **one** command — a test invocation, a script path, a `curl` — that you have **already run at least
@@ -88,6 +88,8 @@ the evidence more convenient.
    the wrong seam to manufacture green.
 5. **Evidence before the claim.** Never report the bug fixed until the repro from step 1 goes green.
 6. **Name the confirmed hypothesis.** Where step 2 produced a ranked list and the fix was verified,
-   state which hypothesis the fix acted on and the probe result that confirmed it, in the run's report
-   and the pull-request body, so the next person to debug this code learns what the cause was and not
-   just that it was fixed. With no ranked list, there is nothing to name, and nothing is invented.
+   state which hypothesis the fix acted on, or that it acted on none of them, and what showed it — a
+   probe's result, or that the repro went green after a fix aimed at that hypothesis alone — in the
+   run's report and the pull-request body, so the next person to debug this code learns what the
+   cause was and not just that it was fixed. With no ranked list, there is nothing to name, and
+   nothing is invented.

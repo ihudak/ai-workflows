@@ -65,6 +65,9 @@ Return this exact shape (no preamble, no chatter):
 - **File**: [path, e.g. ${CLAUDE_PLUGIN_ROOT}/references/session-hygiene.md]
   **Change**: [what to add or update]
   **Rationale**: [what was missing that caused the workaround or ambiguity]
+- **Remove**: [the no-op instruction, quoted]
+  **File**: [path of the plugin reference that carries it]
+  **Grounds**: [the key event it failed to prevent, and that it names no action an agent could take or omit]
 - ...
 - _or_ "No reference doc gaps found"
 

@@ -69,14 +69,15 @@ carrying an unverified claim is how the claim gets adopted.
    - **Judgement** — consistency across files, matching the surrounding style, a
      trade-off: anything no script could decide. Only this kind gets a written rule.
 
-   Where an instruction you read already covers the event and the event happened
-   anyway because the instruction names no action an agent could take or omit ("be
+   Where an instruction you read addresses the event and the event happened anyway
+   because the instruction names no action an agent could take or omit ("be
    careful", "write clean code"), it is a **no-op**. Propose replacing it with the
    check or concrete rule the sort above calls for, and itemise the old text's
    removal as its own line (`**Remove**` under `#### CLAUDE.md rules`, or under
    `#### Reference docs` for a plugin reference), for the user to approve
-   (`instruction-file-maintenance.md` §5). Never flag an instruction no key event
-   touched.
+   (`instruction-file-maintenance.md` §5). A no-op in a command or agent file goes
+   under `#### Command workflow improvements` as a change to that file. Never flag
+   an instruction no key event touched.
 
    Then ask:
    - Could a new **CLAUDE.md rule** have prevented this judgement miss?
@@ -85,7 +86,9 @@ carrying an unverified claim is how the claim gets adopted.
    - Could a new or updated **agent** make this task reusable?
    - Could the **command workflow** be improved to handle this class of event?
 7. Synthesise findings. Discard suggestions that are:
-   - Already covered by existing rules/hooks/agents
+   - Already covered by existing rules/hooks/agents — except a step-6 no-op and a
+     step-3 check that exists but is unwired or broken, which are findings about
+     what exists, not duplicates of it
    - Too vague to act on
    - Pure style preferences with no workflow impact
 8. Produce the structured report.
@@ -129,6 +132,9 @@ Return this exact shape (no preamble, no chatter):
 - **File**: [path, e.g. ${CLAUDE_PLUGIN_ROOT}/references/session-hygiene.md]
   **Change**: [what to add or update]
   **Rationale**: [what was missing that caused the workaround or ambiguity]
+- **Remove**: [the no-op instruction, quoted]
+  **File**: [path of the plugin reference that carries it]
+  **Grounds**: [the key event it failed to prevent, and that it names no action an agent could take or omit]
 - ...
 - _or_ "No reference doc gaps found"
 
@@ -153,7 +159,7 @@ Return this exact shape (no preamble, no chatter):
 ## Hard rules
 
 - NEVER write, edit, or create any file. This agent is read-and-suggest only.
-- NEVER suggest changes already covered by the existing rules and files you read.
+- NEVER suggest changes already covered by the existing rules and files you read — a no-op instruction (step 6) and an unwired or broken check (step 3) are not covered: they are what the suggestion is about.
 - NEVER generate generic best-practice boilerplate. Every suggestion must
   trace back to a specific event in the session handoff.
 - NEVER return a report longer than is warranted. If the session was routine,
