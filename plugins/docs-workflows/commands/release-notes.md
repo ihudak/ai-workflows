@@ -12,7 +12,7 @@ Draft release notes for the resolved PRD: $ARGUMENTS
 Product Requirements Document (or any ticket) from the resolved PRD folder.
 It optionally grounds the prose in the diffs of the refs the implementation record and the commit scan name, renders the example-docs authored
 release-notes body — a plain **Category:** label + `### title` + prose for the `feature-updates` /
-`breaking-changes` destinations, or one bare past-tense sentence for `fixes` — with **no
+`breaking-changes` destinations, or one or two bare past-tense sentences for `fixes` — with **no
 `{{#internal-note}}`, no identifiers, no PR links** (the docs automation adds the metadata
 wrapper), runs a light style gate, and writes the draft to a persistent destination for the
 user to paste wherever their release notes are published.
@@ -21,7 +21,7 @@ Usage: `/release-notes <ADDRESS> [--version <v>] [--no-docs] [--docs <path>] [--
 `@<path>` naming a folder in the specs tree.
 
 - **`--version <v>`** (optional) — the release this note belongs to. Absent, the grill asks once;
-  declined, the draft omits it. Never invented.
+  declined, the draft files under `# Unreleased`. Never invented.
 
 For full feature documentation use `/document`; for Epic drafting use `/epics`.
 
@@ -346,7 +346,7 @@ was told explicitly *not* to read the authored PRD. Nothing returns them now, an
 place either can be authored (`workflows-core:prd-format`).
 
 **`release_versions` — `--version <v>`, else ask.** The flag takes the release this note belongs to.
-Absent, the grill asks once; declined, the draft omits it. **Never invent one.** It is not parsed
+Absent, the grill asks once; declined, the draft files under `# Unreleased`. **Never invent one.** It is not parsed
 from anything, and the PRD's `release_versions`, where `/create-prd` wrote one, is not read.
 
 ---
@@ -411,6 +411,7 @@ This is the same inference `emit-cost` already applies in Phase 11; do not add a
   > docs_grounding:      [the Phase 5.5 digest, or omit when OFF/EMPTY]
   > change_type:            [from Phase 3, else null]
   > release_notes_category: [from Phase 3, else null]
+  > filed_version:       [the release Phase 3 resolved for `release_versions` — the one this draft is filed under — or null where it files under `# Unreleased`]
   > run_phase:           [pm | dev — resolved immediately above, in this phase]
   > model_routing:       [the block from Phase 1.5]
   > code_repos:          [the Phase-4 resolved {slug, path} map when diff grounding is on; omit otherwise]"
@@ -429,17 +430,29 @@ State the inference, then ask:
 > `<destination>` — confirm that route below, or pick another.
 
 ```
-choices: ["Feature update — titled section with a docs link, under ## Feature updates", "Breaking change — titled section with remediation steps, under ## Breaking changes", "Fix — one self-contained sentence, under ## Fixes"]
+choices: ["Feature update — titled section with a docs link, under ## Feature updates", "Breaking change — titled section with remediation steps, under ## Breaking changes", "Fix — one or two self-contained sentences, under ## Fixes"]
 ```
 
-The array is presented as written — it carries the three routes once each, and the proposal is the
-one the question above it names, never a further option repeating it, so no run renders a duplicate
+**When the draft carries a deprecation note, present this array instead**, which offers no Fix: a
+deprecation never routes to `## Fixes` (`release-note-types.md` §2, third tie-breaker), so the writer
+would discard that choice and infer again.
+
+```
+choices: ["Feature update — titled section with a docs link, under ## Feature updates", "Breaking change — titled section with remediation steps, under ## Breaking changes"]
+```
+
+Either array is presented as written — it carries each route once, and the proposal is the one the
+question above it names, never a further option repeating it, so no run renders a duplicate
 (`workflows-core:escalation-rules`: there is no permitted adjustment; a recommendation the array does
-not carry belongs in the prose beside it, which is where this one is). Apply the choice to
-`release_notes_block.change_type` (Feature update → `New technology support`, Breaking change →
-`Breaking change`, Fix → `Bug fix`) + `destination` and **re-render** the draft in the chosen shape —
-switching between `fixes` and a titled destination changes the body structure, not just a label. The
-chosen value never becomes text in the draft.
+not carry belongs in the prose beside it, which is where this one is). When the user confirms the
+proposed route, keep the draft. When they choose another, **re-dispatch `release-notes-writer`** with
+the same inputs and `change_type` set to the choice (Feature update → `New technology support`,
+Breaking change → `Breaking change`, Fix → `Bug fix`), and replace the draft and its `gaps[]` with
+what it returns — never re-shape the draft here. A switch changes more than the body structure: a
+note that becomes breaking gains an Action plan and possibly a takes-effect clause and an
+`effective_version` gap, and one that stops being breaking loses all three, which only the writer's
+step 5 and `release-note-types.md` §4 get right. Resolve this gap before every other, since it can
+replace them all. The chosen value never becomes text in the draft.
 
 For a `field: deprecation_eol` gap (a deprecation was detected but the required
 end-of-life date is unclear), ask the user:
@@ -450,7 +463,24 @@ On a supplied date, replace the `<!-- TODO: end-of-life date -->` placeholder wi
 end-of-life date (and end-of-support date when given), formatted per the prose-style
 (e.g. `November 30, 2026`).
 
-**Acceptance-criteria discrepancies first.** For each `kind: acceptance-criteria` gap, show `draft_phrasing`, `criteria_phrasing` and `criteria_location` under those labels, then ask:
+For a `field: effective_version` gap (a breaking note takes effect in a later release the PRD does
+not name — `release-note-types.md` §6, rung 3 — or the break is a deprecation whose end-of-life date
+is still open — rung 2), resolve it **after** any `deprecation_eol` gap. Where the gap carries
+`settled_by_eol: true`, that answer decides it without a question: a supplied end-of-life date
+removes the `Starting with <!-- TODO: effective version -->, ` clause, capitalizes what follows, and
+drops the gap, since the date says when; leaving the end-of-life marker leaves this marker too.
+Only on "This isn't a deprecation — drop the note", or where the gap carries no `settled_by_eol`,
+state the version this draft is filed under, or that it files under `# Unreleased` — where "the
+release this note is filed under" below means whichever release ships the change — then ask:
+```
+choices: ["Enter the release it takes effect in (you'll be prompted)", "It takes effect in the release this note is filed under — drop the clause", "Leave the <!-- TODO: effective version --> marker in the draft"]
+```
+On a release, replace the placeholder with it as the note should read it (`version 3.0`); a release
+that is the one the draft is filed under is the second answer. On the second, remove the
+`Starting with <!-- TODO: effective version -->, ` clause and capitalize what follows. Never write a
+release the user did not supply.
+
+**Of the discrepancy gaps, acceptance-criteria ones first.** For each `kind: acceptance-criteria` gap, show `draft_phrasing`, `criteria_phrasing` and `criteria_location` under those labels, then ask:
 
 ```
 choices: ["Use the acceptance criteria (Recommended)", "Enter corrected wording", "Omit this claim"]
@@ -512,6 +542,10 @@ Outside that one case there is no question to ask and no option that replaces th
    - Appended to: <the resolved PRD folder>/release-notes.md, under <version | Unreleased> → <## Breaking changes | ## Feature updates | ## Fixes>
    - Shaped as: <Feature update | Breaking change | Fix>  (source: <PRD | inferred>)
    - Category label: <the value | none — omitted from the draft>
+   - Title: <N characters — over 80 is worth shortening (never blocking) | — (fixes)>
+   - Length: <first paragraph: N sentences, M words | fix: N sentences>
+   - Takes effect: <in the release it is filed under | the later release the prose names | the deprecation's end-of-life date | TODO marker left in the draft | — (not a breaking note)>
+   - Action plan: <from the PRD | supplied by you | TODO marker left in the draft | — (not a breaking note)>
    - Deprecation: <EOL <date> (end-of-support <date | —>) | none>
    - Diff grounding: <on (repos: …) | off>
    - Blocks used: <each block by its record and heading date | none>; dropped by §4's date fallback: <each block by its record and heading date, and each commit the date rule dropped by its own date, by SHA, date and subject — a commit dropped with a block recording it is accounted for by that block's listing | none> — on a run with diff grounding on
@@ -659,7 +693,7 @@ current working directory, where it is not the specs repository; no user name is
 - ZERO external API calls — this run has no forge URL to resolve in the first place: Phase 3 builds `refs[]` from `implementation.md` and the commit scan, and `diff-summarizer` takes a ref's diff with pure local `git`.
 - Every read of the specs tree is read-only.
 - The draft contains NO identifiers, NO PR links, and NO `{{#internal-note}}` block. The scope comment Phase 8 writes above it names a key and the commits the run read, and is not part of the draft (`${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §1).
-- The draft is EXACTLY one Summary, shaped by its destination per `${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §1/§3 — a plain **Category:** label + `### title` + prose for `breaking-changes` / `feature-updates`, or ONE bare past-tense sentence for `fixes`. It carries NO `Change type:` line and NO `Release-notes category:` line, and its **prose** names no release version — the version is the `#` heading the draft is filed under (Phase 1, `release-note-types.md` §1), which is the only thing that says which release a section belongs to now that the three destinations are three sections of one file. The prohibition survives for the body prose alone. When the change deprecates something the Summary carries a deprecation note (end-of-life date required, end-of-support optional).
+- The draft is EXACTLY one Summary, shaped by its destination per `${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §1/§3 — a plain **Category:** label + `### title` + prose for `breaking-changes` / `feature-updates`, or one or two bare past-tense sentences, opening with a past-tense verb, for `fixes`. It carries NO `Change type:` line and NO `Release-notes category:` line, and its **prose** names a release version only where the heading cannot say it — the version is the `#` heading the draft is filed under (Phase 1, `release-note-types.md` §1), which is the only thing that says which release a section belongs to now that the three destinations are three sections of one file. A breaking note that takes effect in a later release names that release, from the source or the user and never invented, or a far-off deprecation's end-of-life date (`release-note-types.md` §6), and every breaking note carries its remediation under a literal `**Action plan:**` label (§4). When the change deprecates something the Summary carries a deprecation note (end-of-life date required, end-of-support optional). A Change Type switch at the Phase 6 prompt re-dispatches the writer.
 - The category label IS the PRD's `release_notes_category`, used verbatim; when the PRD carries none the line is OMITTED. Change Type is sourced `change_type` → infer, and is confirmed with the user ONLY when it was inferred with low confidence — by shape and destination, never by enum label. Neither field is ever asked for by enum label.
 - The run has **no worthiness gate**: every PRD is relevant for release notes, so there is no content state in which this command refuses to draft. `relevant_for_release_notes` is retired (`workflows-core:prd-format`) and a value left in an existing PRD is read by nothing. Whether a note is drafted is the decision of whoever runs the command.
 - NEVER write into a docs repo. The draft's one destination is `release-notes.md` in the resolved PRD folder, which is persistent (never `/tmp`), and it is appended to, never overwritten: no earlier section is ever rewritten or removed (Phase 8). The style gate's scratch copy is removed in every case, with `command rm -f --` (Phase 7).

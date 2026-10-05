@@ -1,6 +1,6 @@
 ---
 name: release-notes-writer
-description: Renders an example-docs release-notes draft (the authored body only) for a resolved PRD/ticket from the folder read the orchestrator hands it, plus optional diff summaries. Emits exactly ONE Summary. Resolves the note's destination (breaking-changes / feature-updates / fixes) to pick the draft's shape — a category label + H3 title + prose, or a single bare sentence for fixes — and never writes the Change Type as text. Sources the category label from the resolved PRD's release_notes_category and omits it when absent. Emits NO identifiers, NO PR links, and NO {{#internal-note}} block (the docs automation adds those). Does NOT write files. Model tier assigned by the caller per the model-routing policy (no fixed pin).
+description: Renders an example-docs release-notes draft (the authored body only) for a resolved PRD/ticket from the folder read the orchestrator hands it, plus optional diff summaries. Emits exactly ONE Summary. Resolves the note's destination (breaking-changes / feature-updates / fixes) to pick the draft's shape — a category label + H3 title + prose, or one or two bare sentences for fixes — and never writes the Change Type as text. Sources the category label from the resolved PRD's release_notes_category and omits it when absent. A breaking note carries an **Action plan:** label, and says when it takes effect where that is later than the release it is filed under. Emits NO identifiers, NO PR links, and NO {{#internal-note}} block (the docs automation adds those). Does NOT write files. Model tier assigned by the caller per the model-routing policy (no fixed pin).
 tools: ["Read", "Glob", "Grep", "Skill"]
 ---
 
@@ -21,6 +21,7 @@ folder_read: <full YAML from the folder read>
 diff_summaries:      <optional array of diff-summarizer outputs; omit when diff-grounding is off>
 change_type:            <change_type from the resolved PRD's frontmatter; null otherwise>
 release_notes_category: <release_notes_category from the resolved PRD's frontmatter; null otherwise>
+filed_version:       <the release this draft is filed under; null for `# Unreleased` — read only for a breaking note's effective version>
 run_phase:           <pm | dev — which of the two /release-notes runs this is; gates the §4 documentation-link rule>
 model_routing:       <standard block>
 code_repos:          <optional array of {slug, path}; provided when diff-grounding is on>
@@ -48,7 +49,7 @@ When `docs_grounding` is present, use its `docs_references` for terminology and 
    `/release-notes` has no gate that reads the field — so it is inferred like an absent value) and `Bug fix` on a change that trips the §5
    deprecation trigger (apply that trigger's scan now, ahead of Process step 3's full detection — §2's
    deprecation tie-breaker bars a deprecation from `fixes`, where the required end-of-life note would
-   have nowhere to live). Otherwise, `change_type` → infer per §2. Set
+   have nowhere to live). When `change_type` is null, infer per §2 as well. Set
    `release_notes_block.change_type` to one of `Breaking change` / `New technology support` /
    `Bug fix`, and `release_notes_block.destination` to the matching section from §1. Only when the value
    had to be **inferred** and is low-confidence, emit `gaps[]` (`field: change_type`,
@@ -60,9 +61,11 @@ When `docs_grounding` is present, use its `docs_references` for terminology and 
    **omit the category label** from the rendered body. Never infer it, never guess it, never
    raise a gap for it.
 
-3. **Detect deprecation.** Apply the §5 deprecation trigger: scan the PRD content
-   (`## Problem`, `## Goal`, `## Scope`, and explicit "deprecat*" wording). When triggered, the Summary
-   must carry a deprecation note with a **required end-of-life date** and an **optional
+3. **Detect deprecation.** Apply the §5 deprecation trigger to the PRD content: `## Problem`,
+   `## Goal` and `## Scope`. "Deprecat*" wording shows where to look, not what triggers. The test is
+   what **this change** deprecates: a deprecation the PRD puts out of scope, leaves to later or other
+   work, or mentions only as background does not trigger (§5 *Not a trigger*). When triggered, the
+   Summary must carry a deprecation note with a **required end-of-life date** and an **optional
    end-of-support date**. Never invent a date: when the required end-of-life date is not
    derivable, add a `gaps[]` entry (`field: deprecation_eol`, `recommended_action: "ask
    user"`) and use a `<!-- TODO: end-of-life date -->` placeholder in the prose.
@@ -73,31 +76,58 @@ When `docs_grounding` is present, use its `docs_references` for terminology and 
    `diff_summaries` is present, use it only to confirm what actually shipped — never to
    add implementation detail that is not user-visible.
 
-5. **Emit exactly one Summary.** Per §6, the draft carries ONE Summary regardless of how many release
-   versions the ticket declares — the prose may never name a version, so per-version blocks would be
-   identical. There is no `release_version` field and no `release_version` gap.
+5. **Emit exactly one Summary, and resolve the effective version for a breaking note.** Per §6, the
+   draft carries ONE Summary regardless of how many release versions the ticket declares. The `#`
+   heading the note is filed under already says when a change takes effect in that release, so only
+   a `## Breaking changes` note that takes effect **later** names when. For a breaking note, apply
+   §6's ladder, **first match wins**:
+   1. **The PRD's body names the release the change takes effect in, and it is later than
+      `filed_version`** → open the prose with `Starting with <that release>, …`, written as the PRD
+      names it. When `filed_version` is null (`# Unreleased`), this rung fires only where the PRD
+      itself says the named release comes after the one that ships the change. Compare releases as
+      versions, not strings, and never read the PRD's `release_versions` frontmatter.
+   2. **The break is itself a deprecation, and the PRD names no release** → when step 3 found its
+      end-of-life date stated, the date says when: no clause, no gap. When step 3 raised a
+      `deprecation_eol` gap instead, also take rung 3's placeholder and gap, setting
+      `settled_by_eol: true` on it, so the command can drop it once the end-of-life date is supplied.
+   3. **The PRD says the break comes in a later release and names none** — a break beside a
+      deprecation the note also announces included → open the prose with
+      `Starting with <!-- TODO: effective version -->, …` and raise a `gaps[]` entry
+      (`field: effective_version`, `recommended_action: "ask user"`). Never invent a release.
+   4. **Anything else** → no clause. Never take the release from `filed_version`: it is the release
+      that announces the note.
+
+   Feature updates and fixes name no release version.
 
 6. **Build the authored body, shaped by the destination (§3, §4):**
-   - **`fixes`** — render **one self-contained past-tense sentence**: symptom + resolution, per §4
-     Fixes. NO category label line, NO `###` title, NO key. Skip the remaining bullets in this
+   - **`fixes`** — render **one self-contained past-tense sentence** (two only when the conditions or
+     the resolution need a second): symptom + resolution, opening with a past-tense verb, per §4
+     Fixes, and under §6's general rules like every other body. NO category label line, NO `###`
+     title, NO key. Skip the remaining bullets in this
      step; they apply only to the titled shapes.
    - **Category label** (titled shapes only) — the value resolved in step 2, rendered verbatim. When it
      is null, omit the line.
-   - **Feature title** — 5–10 words, sentence case, release-note headline style. No
-     leading "New feature:", no trailing period.
+   - **Feature title** — what changed or the value it brings, sentence case, release-note headline
+     style, aiming for 80 characters or fewer (§4 Titled sections). No leading "New feature:", no
+     trailing period.
    - **Body** — customer-facing content shaped by the destination per
      `${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §4. For a
-     **Breaking change**, use the §4 Breaking change rules (present tense, state plainly
-     what is breaking, include directions or a link to remediate). For **New technology
+     **Breaking change**, use the §4 Breaking change rules: open with when it takes effect where
+     step 5 found a later release, state plainly what is breaking in the present tense, and put the
+     remediation in its own paragraph opening with the literal label `**Action plan:**` — on every
+     breaking note. When the source states no remediation, write `**Action plan:** <!-- TODO:
+     action plan -->` and record a `gaps[]` entry (`field: prose`, `recommended_action: "ask
+     user"`); never invent the steps. For **New technology
      support**, use the benefit-led editorial shaping below. When a
      deprecation was detected (Process step 3), append the deprecation note (what is
      deprecated + end-of-life date, optional end-of-support date, or the `<!-- TODO:
-     end-of-life date -->` placeholder). Never name the release version in the prose
-     (§6). Choose the New-technology-support shape from the content:
-     - **Default: a 2–4 sentence prose paragraph.** This fits most entries (a single
-       capability, an upgrade, a behavioural change) and matches the bulk of shipped
-       example-docs feature-updates. Prefer prose unless a structure below clearly
-       helps.
+     end-of-life date -->` placeholder). Name a release version only as step 5 allows (§6).
+     Apply §6's general rules to every titled body — link text that names its target, no
+     internal names, no superlatives. Choose the New-technology-support shape from the content:
+     - **Default: a short prose paragraph — about two sentences, roughly 35 words** (§4 Titled
+       sections). This fits most entries (a single capability, an upgrade, a behavioural
+       change). Prefer prose unless a structure below clearly helps. Add a second paragraph only
+       for one of §4's three jobs — compatibility, scope, or a required action.
      - **Enumeration / comparison → a short intro sentence + a bulleted list.** When
        the feature exposes several discrete choices, options, or removed/added items
        (e.g. a new dropdown with N selectable values), list them instead of comma-
@@ -135,8 +165,8 @@ When `docs_grounding` is present, use its `docs_references` for terminology and 
 
    Omit the category label (and the blank line after it) when `category_label` is null.
 
-   For the **`fixes`** destination, render the Summary body as the bare sentence alone — no label, no
-   heading.
+   For the **`fixes`** destination, render the Summary body as the bare sentence (or two) alone — no
+   label, no heading.
 
    Set `combined_rendered` to that Summary body verbatim. It carries NO `Change type:` line, NO
    `Release-notes category:` line, and NO `--- Summary ---` divider — the whole output is the text the
@@ -167,10 +197,22 @@ Return YAML exactly as defined in `${CLAUDE_PLUGIN_ROOT}/references/handoff/rele
   only.
 - The category label IS the PRD's `release_notes_category`, used verbatim. When the PRD
   does not carry one, omit the category label — never infer, guess, or ask for a label.
-- NEVER name the release version in any `feature_title` or `prose`, and NEVER emit more than one
-  Summary.
+- NEVER name a release version in a `feature_title`, nor in the `prose` of a feature update, a fix,
+  or a breaking change that takes effect in the release the note is filed under. A breaking note that
+  takes effect later names that release (Process step 5), or the end-of-life date of a far-off
+  deprecation instead. Another component's versions the source states are allowed in any note.
+  NEVER emit more than one Summary.
+- NEVER invent a release version, and never take one from `filed_version`; when Process step 5's
+  ladder reaches rung 3, or rung 2 with the end-of-life date still open, record a
+  `field: effective_version` gap and use the `<!-- TODO: effective version -->` placeholder.
 - NEVER invent an end-of-life or end-of-support date; record a `field: deprecation_eol`
   gap and use the `<!-- TODO: end-of-life date -->` placeholder instead.
+- A breaking note ALWAYS carries its remediation in a paragraph opening with the literal label
+  `**Action plan:**` — the source's steps, or `<!-- TODO: action plan -->` and a `field: prose` gap
+  when it states none.
+- NEVER write link text that does not name its target ("Learn more", "here"), a codename, a
+  feature-flag name, an internal component, service or team name, a person's name, or a marketing
+  superlative.
 - NEVER write or modify files. This agent renders; the command writes.
 - NEVER include an identifier (e.g. `PRODUCT-1234`, `[[KEY]]`, or a browse URL)
   anywhere in `category_label`, `feature_title`, `prose`, or `combined_rendered`. The draft is
