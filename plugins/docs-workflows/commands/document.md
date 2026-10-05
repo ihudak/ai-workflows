@@ -1534,23 +1534,28 @@ either mode, so it runs for Mode B exactly as it does for Mode A, and any `specs
 
 ## Phase 1 — Clarification
 
-**Rule: Ask, don't guess. This rule is absolute.**
+**Rule: Look, then ask; never guess.** The description is the starting intent — never ask the user to restate it.
 
-Before producing a plan, analyze the description for:
+Before producing a plan, list the candidate ambiguities in the description:
 - Ambiguous scope or unclear boundaries (which file? which section? extend or replace?)
 - Conflicting style guidance in the repo vs. the user's wording
 - Multiple valid placements for new content
 - Undefined target audience (end-user vs developer vs operator)
 - Missing acceptance criteria (what makes this "done"?)
 
-If **any** ambiguity exists, ask the user. Rules:
+**Look before asking.** Try to settle each candidate from what this run can read: the description and any file Phase 0 step 1 loaded, and the target Phase 0 step 3 resolved with the pages around it — and, only where step 3 resolved a `repo_root`, that repository's guidance files (those `${CLAUDE_PLUGIN_ROOT}/references/repo-verification-gates.md` §2 lists, which Phase 0 step 4 read, plus `AGENTS.md`) and `git -C <repo_root> log -- <target>` for the target's history. A target in no git tree has no repository to read beyond the target itself. Look only as far as each candidate needs. Then sort each candidate:
+- **Settled by the reading** — missing evidence, not a decision: ask nothing, and carry it into the plan's Approach with where it was found (an existing page that already covers the topic, the section a similar page uses, the audience the surrounding pages address).
+- **Left open, and its answer changes what a reader of the documentation would notice** — what the page says, where it lives, who it addresses, whether it replaces existing text: a **decision**. Ask it.
+- **Left open, and a reader would not notice the answer** — settle it yourself and list it in the plan's Assumptions.
+
+Ask every decision. Rules:
 - Use `choices` arrays for every question — never plain text questions
 - Every `choices` array carries 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0), which is what allows free-text
 - When a clearly superior default exists, make it the first choice and label it `"(Recommended)"`
 - Group related decisions into a single question (minimize total questions)
 - Do **not** proceed until all questions are answered
 
-If **nothing** is ambiguous, skip directly to Phase 1.5.
+If no candidate is left a decision, skip directly to Phase 1.5.
 
 ---
 
@@ -1590,7 +1595,7 @@ Produce a written plan with these sections:
 
 1. **Classification** — `SIMPLE` or `MODERATE` (with reason)
 2. **Goal** — one-sentence summary of the desired end state
-3. **Approach** — chosen edit strategy and why (extend existing page vs. create new vs. restructure)
+3. **Approach** — chosen edit strategy and why (extend existing page vs. create new vs. restructure), citing each fact Phase 1's reading settled, with where it was found
 4. **Steps** — numbered, concrete edits
 5. **Files to create/modify** — list with brief rationale for each
 6. **Validation** — spot-check steps to run after the edit. Replace the `/implement` "Tests" section with this. Typical checks:
@@ -1601,7 +1606,7 @@ Produce a written plan with these sections:
    - `changelog:` or equivalent field updated if the repo's convention requires one
    - No broken inline image references
    - Spell-check / grammar only if the repo has a configured linter (e.g. Vale, markdownlint); do not run any linter that isn't already configured
-7. **Assumptions** — decisions made without user input (must be minimal)
+7. **Assumptions** — each open question the run settled itself because a reader of the documentation would not notice the answer (Phase 1's test) — in Phase 1 or while writing this plan — with what was chosen (must be minimal)
 8. **Out of scope** — explicitly list what is NOT being done (e.g., "not renaming the file", "not updating sibling pages")
 
 Then ask:
@@ -1623,7 +1628,7 @@ choices: ["Approve & implement now (Recommended)", "Revise plan", "Cancel"]
 1. Work through each edit in order
 2. Make precise, surgical changes — do not rewrite sections wholesale when a targeted edit is enough
 3. Follow the repo's detected style conventions from the Phase 2A exploration; LF line endings
-4. If a **new ambiguity** emerges mid-edit: STOP, ask with choices (2–4 options; the harness supplies the free-text escape), resume after answer
+4. If something **new** emerges mid-edit, look before stopping: **a decision** — Phase 1's test: nothing this run can read settles it, and its answer changes what a reader of the documentation would notice → STOP, ask with choices (2–4 options; the harness supplies the free-text escape), resume after answer; **anything else** → look it up and continue — an open question a reader would not notice is settled by the run and recorded in the Doc-edit Report's `### Assumptions & limitations`.
 5. After all edits: run the Validation checks from the plan's step 6. Fix any failures caused by your changes (broken links, unparseable frontmatter, bad heading hierarchy).
 6. **Do NOT run tests.** This command has no test phase — validation checks are all that's expected.
 7. **Do NOT create a branch, and do NOT commit the doc edits.** The user manages git manually for doc edits. (The run's terminal `commit-artifacts` step is a separate repository — it stages ONLY `$SPECS_PATH`'s bounded artifact paths, per `workflows-core:specs-repo-git` §2.1 — and never the files edited here.)
@@ -1906,7 +1911,7 @@ directory, where it is not the specs repository; no user name is ever written (�
 - NEVER invoke Opus (no planning agent, no review agent — docs edits are always SIMPLE or MODERATE), unless `run_flags.enforced_model` names one (§10)
 - NEVER commit the doc edits, or anything else in a docs/code repo or the current working directory, where it is not the specs repository — the user manages git manually there. The terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1).
 - ALWAYS run `specs-preflight` in the shared `## Mode detection` section, before dispatching to either mode — so it runs for Mode B as well as Mode A — and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`) — bounded to `$SPECS_PATH`'s artifact paths (§2.1) and to plugin-created branches (§2.2), always `git -C "$SPECS_PATH"` and never a `cd` (§1 rule 1), never force-pushing, and never failing the run
-- NEVER make assumptions that could have been asked — ask instead
+- NEVER assume what the evidence leaves open and a reader of the documentation would notice — look first, then ask (Phase 1); NEVER ask what the repository already answers
 - NEVER end implementation with "Should I implement?" — if approved, implement
 - NEVER rewrite sections wholesale when only a targeted edit is needed
 - NEVER skip Phase 4 — documentation, knowledge, instructions, and session-maintenance are mandatory after every successful doc edit; always collect all four agent summaries for Phase 5
