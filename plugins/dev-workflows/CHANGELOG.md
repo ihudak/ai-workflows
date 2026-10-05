@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.10.5] — 2026-10-05
+
+### Changed
+- **The session-feedback page says what is redacted** before an entry is written: secrets, email addresses, non-public hosts and home paths, per `workflows-core` 1.17.0's `feedback-emission` §1.1.
+
 ## [4.10.4] — 2026-10-05
 
 ### Fixed

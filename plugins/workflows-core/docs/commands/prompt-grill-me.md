@@ -14,20 +14,20 @@ Logs a corrective interaction, then grills the fix inline with a bounded (≤5-q
 
 `--skip-costs` (or `$WORKFLOWS_SKIP_COSTS`, [`environment.md`](../reference/environment.md)) writes the deferred record (`references/cost-emission.md` §13.1, described under What it produces below) with `"skip": true`, so the next cost-emitting run in the session still carves this segment out of its own window and then writes no entry for it; it is the only run flag this command applies — `--skip-feedback` and `--enforce-model` are reported ignored, since `/prompt-grill-me` dispatches no `impl-maintenance` and invokes no model routing.
 
-`$ARGUMENTS`, once the run flag above is stripped, is the corrective request, captured **verbatim** as the User prompt block. Phase 1 infers the target command from recent context, asking only if genuinely ambiguous; if none applies, it records `n/a`.
+`$ARGUMENTS`, once the run flag above is stripped, is the corrective request, captured **verbatim** as the User prompt block — save that secrets, home-directory paths, non-public hosts, IP addresses and email addresses are replaced before it is written ([Session feedback](../reference/session-feedback.md#what-is-redacted)). Phase 1 infers the target command from recent context, asking only if genuinely ambiguous; if none applies, it records `n/a`.
 
 Write the flag before or after the request, never inside it: a leading run of flag tokens and a trailing run of flag tokens are stripped, so a `--skip-costs` written in the middle of the request text itself is kept as part of the verbatim request, not read as a flag.
 
 ## What it needs
 
-- **`$ARGUMENTS` itself, verbatim** — the correction to interrogate, and the corrective-triple's User prompt block.
+- **`$ARGUMENTS` itself, verbatim** — the correction to interrogate, and the corrective-triple's User prompt block, verbatim save the redactions above.
 - **Recent session context**, to infer the target `command`.
 - **`$SPECS_PATH`** — for the specs-preflight/commit-artifacts bookkeeping only.
 - **No plugin dependency.** Unlike [`/prompt-brainstorm`](prompt-brainstorm.md), which hands off to the separate `superpowers` plugin's `brainstorming` skill, this command's grill runs entirely on the bundled `references/grilling-technique.md` — nothing outside `workflows-core` is required.
 
 ## What it produces
 
-An `origin: prompt` entry (Friction, User prompt verbatim, Resolution fixed at `Grilled the fix inline`), appended via the ladder [Session feedback](../reference/session-feedback.md) describes. **A deferred session-cost record too** — written in Phase 2 alongside the feedback entry, carrying the labels the cost entry will take. It is local and never committed; the next cost-emitting run in the session turns it into a real entry, attributed to the phase whose output you were correcting — unless `--skip-costs` applies, to this run (the record is marked `"skip": true` and no entry is written for it) or to that next run (which drops the record unreplayed). See [Session cost](../reference/session-cost.md#spend-a-command-cannot-measure-itself). **The terminal `commit-artifacts` step runs inside Phase 2, before the Phase 3 grill** — not after — because the grill is interactive and may run long, and a commit placed after it would never execute. Phase 3 then interrogates the correction directly: one question at a time, capped at 5 (the highest Impact×Uncertainty questions about the fix), with any leftover high-impact gaps recorded rather than pursued further.
+An `origin: prompt` entry (Friction, User prompt verbatim with sensitive values redacted, Resolution fixed at `Grilled the fix inline`), appended via the ladder [Session feedback](../reference/session-feedback.md) describes. **A deferred session-cost record too** — written in Phase 2 alongside the feedback entry, carrying the labels the cost entry will take. It is local and never committed; the next cost-emitting run in the session turns it into a real entry, attributed to the phase whose output you were correcting — unless `--skip-costs` applies, to this run (the record is marked `"skip": true` and no entry is written for it) or to that next run (which drops the record unreplayed). See [Session cost](../reference/session-cost.md#spend-a-command-cannot-measure-itself). **The terminal `commit-artifacts` step runs inside Phase 2, before the Phase 3 grill** — not after — because the grill is interactive and may run long, and a commit placed after it would never execute. Phase 3 then interrogates the correction directly: one question at a time, capped at 5 (the highest Impact×Uncertainty questions about the fix), with any leftover high-impact gaps recorded rather than pursued further.
 
 ## Gates
 
