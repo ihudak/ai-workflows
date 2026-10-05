@@ -68,7 +68,7 @@ What survives is the **out-of-scope finding** — `/implement` naming work it de
 
 Pipelines re-run. Before inserting, READ the existing tasks in the target
 section and SKIP any whose stable key already appears. **Stable key** = the
-finding's identity: `key` + (file path | gap-id | signal-type | other repository + unit). Report a
+finding's identity: `key` + (file path | gap-id | signal-type | other repository + unit, named as §6 names them). Report a
 match as `SKIP — already exists` (mirrors `/wiki-tasks-extract` Step 5); never
 re-insert.
 
@@ -77,7 +77,7 @@ re-insert.
 Emit a task ONLY for signals whose action lands OUTSIDE the current change or
 requires a MANUAL human step:
 
-- A change another code repository needs (`/dev-workflows:implement` changes code only in the repository it branches, and records one for a run from there); its stable-key identity is the other repository — named by its `origin` remote URL with the scheme, host and `.git` dropped (`team-a/api`), by its absolute top-level path where it has no `origin`, and, for one the run was never given, by the name the plan gives it, marked `(not mounted)` — and the unit the task addresses, both named in its task line. The task's action is one run from that repository, which plans that unit's changes there itself; the changes the task lists are what this run saw, never the whole of that work.
+- A change another code repository needs (`/dev-workflows:implement` changes code only in the repository it branches, and records one for a run from there); its stable-key identity is the other repository and the unit the task addresses, both named in its task line. **The repository is named by its `<repo-slug>`** (`workflows-core:components` §1) — the last path segment of its `origin` URL, `.git` stripped, so `git@github.com:team-a/api.git`, `https://user@github.com/team-a/api` and a fork's `git@github.com:me/api.git` are all `api`. One the run was never given is named by the `<repo-slug>` of the component the run's specification, design or Epic names for it, or, where none names one, by the name the plan gives it, and is marked `(not given)` either way; the marker is no part of the identity. One with no `origin` has no `<repo-slug>` and is named by its absolute top-level path. Two names still differ from run to run, so a re-run can add the task again: a plan's own name that is not the repository's `<repo-slug>`, and the path, which a run on another machine, or one not given the repository, does not share. The task's action is one run from that repository, which plans that unit's changes there itself; the changes the task lists are what this run saw, never the whole of that work.
 - Files/pages owned by others (the owner was surfaced and the edit is theirs to make).
 - Implementation gaps (PRD vs source; the `<KEY>-implementation-gaps.md`
   draft) → the task links the draft; verbose context → a note (§3).

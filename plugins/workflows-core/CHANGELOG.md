@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.14.2] — 2026-10-05
+
+### Fixed
+- **`followup-emission` gave one repository several follow-up keys, so a re-run could add the same task twice.** §6 named another code repository by its `origin` URL "with the scheme, host and `.git` dropped", which leaves a `user@` and the scp form `git@host:team-a/api` half-stripped, so an ssh clone and an https clone keyed the same repository differently; a repository the run was not given was keyed by the plan's name marked `(not mounted)`, so a later run given it keyed it again; and a fork's clone keyed it by the fork's owner. The repository is now named by its `<repo-slug>` (`components` §1) — the last segment of its `origin` URL, the name the family's clone maps and component ids already use — and one the run was not given by its component's `<repo-slug>` where its specification, design or Epic names one, marked `(not given)`, the marker being no part of the key. Two names can still differ between runs, so a re-run can add the task again there: a plan's own name that is not the repository's `<repo-slug>`, and the absolute path that still names a repository with no `origin`. A follow-up written by 1.11.1 to 1.14.1 names its repository by the owner path (`team-a/api`), so a re-run may add it once more under its `<repo-slug>`.
+
 ## [1.14.1] — 2026-10-05
 
 ### Fixed

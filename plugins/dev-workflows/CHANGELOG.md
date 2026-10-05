@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.9.4] — 2026-10-05
+
+### Fixed
+- **`/implement`'s follow-up for a change another code repository needs could be written twice** — once per way of naming the repository, by an ssh or an https clone, by a fork, or by a run that was not given it. It now names the repository by its `<repo-slug>`, the last segment of its `origin` URL, as `workflows-core:followup-emission` §6 says (workflows-core 1.14.2), and the follow-ups page says how a repository is named and the two cases where a re-run can still add a task again.
+
 ## [4.9.3] — 2026-10-05
 
 ### Fixed
