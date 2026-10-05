@@ -58,11 +58,11 @@ baseline:                          # required when "provided"; may also be sent 
     - "[Maven] com.example.FooTest#testCreate"
     - "[Maven] com.example.BarTest#testLogin"
 no_address_placeholder: NOISSUE   # the literal the repo already writes; omit if it uses none
-regression_decision: keep-anyway   # keep-anyway | revert | retry-with-install-scripts — REQUIRED on phase: regression-resume only;
+regression_decision: keep-anyway   # keep-anyway | revert — REQUIRED on phase: regression-resume only;
                                     # the orchestrator obtains this from the user (subagents cannot
                                     # prompt the user directly — see /vuln "Handling Test Failures")
-allow_install_scripts:              # optional — entries from an earlier return's skipped_install_scripts, exactly
-  - "fast-hash@2.3.1 (npm: postinstall: node scripts/build.js)"   # as written, that the user allowed (install-time-code.md)
+allow_install_scripts: [fast-hash]   # optional — the names the user gave the command's --allow-install-scripts
+                                    # (install-time-code.md): run, after the install, for each one it skipped
 model_routing:                     # optional; set by orchestrator for SIGNIFICANT / HIGH-RISK
   classification: SIGNIFICANT
   gate_tests_on_review: true       # if true: stop after Build, return AWAITING_REVIEW
@@ -87,13 +87,13 @@ files:
 - `full` (or omitted) — read the supplied baseline → create the fix branch → apply → build → verify. Default. (The first step captures nothing; the orchestrator did.)
   The branch is created **before** the edit, so it exists on every path this agent can
   return from, including `AWAITING_REVIEW`.
-- `verify-resume` — second-call protocol after Opus review, or after the user allowed skipped install scripts (`allow_install_scripts`, whose allow step runs before the verify). Skip steps 1–4
+- `verify-resume` — second-call protocol after Opus review. Skip steps 1–4
   (branch, fix and build are already done); resume at step 5 (Verify), after
   re-reading the supplied block's `Status` as step 1 would — its `NO_TESTS` arm
   decides whether step 5 runs at all, and this call does not execute step 1.
 - `regression-resume` — second-call protocol after the orchestrator asked the
   user about a `TEST_REGRESSION` return. Skip straight to "Test regression"
-  step 4; requires `regression_decision`. `retry-with-install-scripts` also requires `allow_install_scripts`.
+  step 4; requires `regression_decision`.
 
 ## Output (vuln-fixer → orchestrator)
 
@@ -148,7 +148,7 @@ model_routing:           # echoed back when present in input
   stops here — see `notes` for the failing-test list and diagnosis. The
   orchestrator asks the user (per `/vuln` "Handling Test Failures"), then
   re-invokes this agent with `phase: regression-resume` +
-  `regression_decision: keep-anyway | revert | retry-with-install-scripts`.
+  `regression_decision: keep-anyway | revert`.
 - `TESTS_NOT_RUN` — `test-baseliner` verify returned `RUN_FAILED` or
   `COMMAND_NOT_FOUND`: no comparison was possible, so nothing is known about
   this CVE's tests either way. The fix is applied and built on the fix branch,

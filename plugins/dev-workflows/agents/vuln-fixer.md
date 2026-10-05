@@ -33,8 +33,7 @@ reconstruct it.
 > **Phase resume.** If the input includes `phase: verify-resume`, **skip
 > steps 1 through 4** — the baseline was captured (by the orchestrator), the
 > branch was created, the fix was applied, and the build was run on the prior
-> invocation. A `verify-resume` carrying `allow_install_scripts:` first runs
-> `install-time-code.md`'s allow step for those packages. Resume at
+> invocation. Resume at
 > step 5 (Verify) — **after re-reading the supplied block's `Status` as step 1 would**, because
 > step 1's `NO_TESTS` arm decides whether step 5 runs at all and this call does not execute step 1.
 > On a `NO_TESTS` block, skip step 5 here too and go straight to step 6. Step 5 hands `test-baseliner` the **whole** `baseline_block`
@@ -49,7 +48,7 @@ reconstruct it.
 >
 > If the input includes `phase: regression-resume`, **skip steps 1-5** —
 > jump straight to "Test regression" step 4 below, honoring the
-> `regression_decision: keep-anyway | revert | retry-with-install-scripts` supplied by the orchestrator.
+> `regression_decision: keep-anyway | revert` supplied by the orchestrator.
 >
 > The orchestrator captures and passes the baseline on **every** call, whatever
 > `gate_tests_on_review` says (see `/vuln` command Step 3). That gate once marked
@@ -118,13 +117,13 @@ reconstruct it.
    (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.1): it is what "Build failure" reverts to, and
    without it the only revert left would discard the user's own changes in any file this fix touches.
 
-   **A retry is the one exception.** A request carrying `allow_install_scripts:` follows this CVE's own
-   `BUILD_FAILED`, which left the branch in place and empty — nothing is committed on it before `/vuln`
-   Step 3.9 — so when the branch already exists, run `git switch <branch>` in place of `git checkout -b`.
+   **A rerun is the one exception.** When the branch already exists and holds no commit HEAD lacks
+   (`git rev-list --count HEAD..<branch>` prints 0) — an earlier run's `BUILD_FAILED` left it in place and
+   empty, and a rerun with `--allow-install-scripts` is the ordinary way back — run `git switch <branch>`
+   in place of `git checkout -b`.
 
-   **On a collision, stop — do not improvise.** If `git checkout -b` fails because the branch
-   already exists (the ordinary case on a re-run after an earlier `BUILD_FAILED`, which leaves the
-   branch in place and empty), do **not** fall back to a suffixed name and do **not** proceed on the
+   **On a collision, stop — do not improvise.** If the branch already exists and holds commits
+   HEAD lacks, do **not** fall back to a suffixed name and do **not** proceed on the
    current HEAD: return `status: BLOCKED` naming the collision. Proceeding would edit files while
    HEAD is on the base branch, which this agent's invariants forbid and which `/vuln` Step 3.9 would
    then refuse to commit. This is deliberately ahead of the edit, not after it: it is the plugin's
@@ -205,7 +204,7 @@ reconstruct it.
    after such an install is what `skipped_install_scripts:` names for the user (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A pip install refused for want of a
    wheel is a build failure here, with that package in the list.
 2. If unfixable in one attempt: revert by running `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md`
-   §6.2's script from the request's `pre_edit_tree:`, set `status: BUILD_FAILED`, report clearly, and
+   §6.2's script from the request's `pre_edit_tree:`, then restore `node_modules` as `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`'s "After a revert" says, set `status: BUILD_FAILED`, report clearly, and
    return what §6.2 says to return.
 
 ## Test regression
@@ -224,10 +223,8 @@ granted, so this agent can never ask the user directly. The orchestrator owns th
 4. **On `phase: regression-resume`:** honor `regression_decision`:
    - `keep-anyway` → proceed to step 6, recording the failures in `notes`; the orchestrator carries
      them into Step 3.9's `body_facts` and sets `clean_finish: false`.
-   - `retry-with-install-scripts` → run `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`'s allow step for the request's
-     `allow_install_scripts:`, then steps 4 and 5 again, and return what they return.
    - `revert` → revert by running `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2's script
-     from the request's `pre_edit_tree:` — every edit since this CVE's first dispatch, `review-fixer`'s
+     from the request's `pre_edit_tree:` — then restore `node_modules` as `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`'s "After a revert" says — every edit since this CVE's first dispatch, `review-fixer`'s
      and any test fix of step 2 included, and nothing older — set `status: REVERTED`, and return what
      §6.2 says to return. A call that carries no `pre_edit_tree:` returns `status: BLOCKED` naming
      it, and changes nothing. The branch created in step 2 is left in place and empty — this agent

@@ -24,7 +24,7 @@ pre_edit_tree: 3c4e9cd789d88d8d89c1073707c3585e41b0e614   # REQUIRED on phase: f
                             # value on every call of the component. Every revert this agent makes
                             # restores it (§6.2), never HEAD, so a file the user had changed before the
                             # run keeps their changes. Absent where needed => BLOCKED.
-regression_decision: keep-anyway  # keep-anyway | revert | retry-with-install-scripts — REQUIRED on phase: regression-resume only;
+regression_decision: keep-anyway  # keep-anyway | revert — REQUIRED on phase: regression-resume only;
                             # the orchestrator obtains this from the user (subagents cannot prompt
                             # the user directly — see /upgrade "Handling Test Failures")
 command_hint: "./mvnw test -q"  # optional; present only where Phase 2 prep step 2 recorded a
@@ -53,8 +53,8 @@ baseline:                    # The orchestrator (commands/upgrade.md Phase 2 pre
                              # single-suite repositories included.
     - "[Maven] com.example.OrderTest#testCreate"
     - "[Maven] com.example.UserTest#testLogin"
-allow_install_scripts:              # optional — entries from an earlier return's skipped_install_scripts, exactly
-  - "fast-hash@2.3.1 (npm: postinstall: node scripts/build.js)"   # as written, that the user allowed (install-time-code.md)
+allow_install_scripts: [fast-hash]   # optional — the names the user gave the command's --allow-install-scripts
+                                    # (install-time-code.md): run, after the install, for each one it skipped
 model_routing:               # optional; set by orchestrator for SIGNIFICANT / HIGH-RISK
   classification: SIGNIFICANT
   gate_tests_on_review: true # if true: stop after Build, return AWAITING_REVIEW
@@ -79,11 +79,11 @@ related:
 
 **phase values:**
 - `full` (or omitted) — apply changes, build, verify, output. Default.
-- `verify-resume` — second-call protocol after Opus review, or after the user allowed skipped install scripts (`allow_install_scripts`, whose allow step runs before the verify). Skip steps 1–2
+- `verify-resume` — second-call protocol after Opus review. Skip steps 1–2
   (changes are already applied and built); resume at step 3 (Verify).
 - `regression-resume` — second-call protocol after the orchestrator asked the
   user about a `TEST_REGRESSION` return. Skip straight to "Test regression"
-  step 4; requires `regression_decision`. `retry-with-install-scripts` also requires `allow_install_scripts`.
+  step 4; requires `regression_decision`.
 
 ## Output (upgrade-executor → orchestrator)
 
@@ -138,7 +138,7 @@ model_routing:           # echoed back when present in input
   tools), so it stops here — see `notes` for the failing-test list and
   diagnosis. The orchestrator asks the user (per `/upgrade` "Handling Test
   Failures"), then re-invokes this agent with `phase: regression-resume` +
-  `regression_decision: keep-anyway | revert | retry-with-install-scripts`.
+  `regression_decision: keep-anyway | revert`.
 - `TEST_REGRESSION_KEPT` — the `regression-resume` call's `regression_decision` was `keep-anyway`
 - `TEST_REGRESSION_REVERTED` — the `regression-resume` call's `regression_decision` was `revert`; the
   tree is back at `pre_edit_tree` (§6.2), every path named in `reverted:`

@@ -124,7 +124,7 @@ Every `choices:` option in the `/brd-*` and `/prd-*` families — the families c
 
 ### Check 21
 
-**Check 21 gates install-time code**: every npm, pnpm or yarn install line in `ITC_PLUGIN_REL`'s three install references carries `--ignore-scripts` (yarn berry `--mode=skip-build`), every pip or pipenv one `--only-binary=:all:` or a named `--no-binary=`, prose included; none at all fails as vacuous.
+**Check 21 gates install-time code**: every install command in `ITC_PLUGIN_REL`'s three install references — each code span and each command of a chained line on its own, prose included — carries `--ignore-scripts` (yarn berry `--mode=skip-build`) if it is npm, pnpm or yarn, and `--only-binary=:all:`, never `:all:` for no-binary, if it is pip or pipenv; none at all fails as vacuous.
 
 ## `scripts/validate-catalog.py`
 

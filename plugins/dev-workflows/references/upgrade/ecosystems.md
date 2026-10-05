@@ -109,7 +109,7 @@ Or the `spring-boot.version` property if using the BOM without a parent.
 
 ## npm / yarn / pnpm (Node.js)
 
-**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below skips the scripts and source builds a new release ships, and the agent names what it skipped.
+**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below — npm, yarn, pnpm, pip, pipenv — skips the scripts and source builds a new release ships, and the agent names what it skipped.
 
 ### Detecting a package
 
@@ -170,7 +170,7 @@ CI=true npm test
 
 ## Python (pip / poetry / pipenv)
 
-**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below skips the scripts and source builds a new release ships, and the agent names what it skipped.
+**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below — npm, yarn, pnpm, pip, pipenv — skips the scripts and source builds a new release ships, and the agent names what it skipped.
 
 ### Detecting a package
 
@@ -181,7 +181,7 @@ grep -i "<package>" requirements.txt Pipfile pyproject.toml setup.cfg
 ### Upgrading
 
 - **requirements.txt**: edit the pinned version, then `pip install --only-binary=:all: -r requirements.txt`
-- **poetry**: `poetry add <package>@<version>` or edit `pyproject.toml` then `poetry lock --no-update` then `poetry install` — Poetry installs unchanged (`install-time-code.md` says why)
+- **poetry**: `poetry add <package>@<version>` or edit `pyproject.toml` then `poetry lock` (`poetry lock --no-update` on Poetry 1) then `poetry install` — Poetry installs unchanged (`install-time-code.md` says why)
 - **pipenv**: `PIP_ONLY_BINARY=:all: pipenv install <package>==<version>`
 
 ### Querying PyPI

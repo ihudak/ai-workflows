@@ -9,7 +9,7 @@ Researches CVEs via NVD, applies dependency and code fixes one at a time, and ve
 ## Synopsis
 
 ```
-/vuln <ADDRESS:CVE-ID | CVE-ID> [<ADDRESS:CVE-ID | CVE-ID>…] [--skip-feedback] [--enforce-model=<model>]
+/vuln <ADDRESS:CVE-ID | CVE-ID> [<ADDRESS:CVE-ID | CVE-ID>…] [--skip-feedback] [--enforce-model=<model>] [--allow-install-scripts <name>[,<name>…]]
 ```
 
 Each argument token is either `ADDRESS:CVE-ID` (e.g. `PROJ-2423:CVE-2023-46604`) or a bare `CVE-ID` (e.g. `CVE-2023-46604`) — multiple tokens fix multiple CVEs in one run. A non-CVE token (`CWE-*`, an OWASP pattern) is filtered out with a warning rather than passed through. Every token is parsed and every CVE researched **before** any fix is applied.
@@ -55,7 +55,7 @@ A `TEST_REGRESSION` result on either path hands the decision to the orchestrator
 
 ## Install scripts
 
-`/vuln` installs the new version of a dependency without the code that version ships to run at install time — an npm, yarn or pnpm package's install scripts, or the build of a Python source distribution — in a container and on a host alike. When something was skipped, the run names each package with the command that would run. If the build or the tests then fail, or the tests cannot start, it asks whether to run those scripts for this CVE; whatever the outcome, the summary lists them, with the command to run them later. Bundler, Poetry, uv, PDM, Hatch, Composer, NuGet, Go, Cargo, Maven and Gradle install as before. The rules are in [the references](../reference/references.md).
+`/vuln` installs the new version of a dependency without the code that version ships to run at install time — an npm, yarn or pnpm package's install scripts, or the build of a Python source distribution — in a container and on a host alike. The run names each package it skipped, with the command that would run, in the summary, whatever the outcome; it never runs that code itself and never asks about it mid-run. When a CVE fails because one of those scripts was needed, rerun with `--allow-install-scripts <name>[,<name>…]` (`project:<hook>` for one of the project's own scripts): the run then installs as before and runs exactly the named packages' install code. Bundler, Poetry, uv, PDM, Hatch, Composer, NuGet, Go, Cargo, Maven and Gradle install as before. The rules are in [the references](../reference/references.md).
 
 ## Example
 

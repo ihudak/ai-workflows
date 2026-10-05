@@ -9,7 +9,7 @@ Upgrades libraries, frameworks, runtimes, or build tools to specified or latest 
 ## Synopsis
 
 ```
-/upgrade <component[:exact|:minor|:latest|:lts]> [<component…>] [--no-commit] [--skip-feedback] [--enforce-model=<model>]
+/upgrade <component[:exact|:minor|:latest|:lts]> [<component…>] [--no-commit] [--skip-feedback] [--enforce-model=<model>] [--allow-install-scripts <name>[,<name>…]]
 ```
 
 Each token is a bare `component` (highest version compatible with everything else already in the repo) or `component:1.2.3` (exact), `component:minor` (latest patch on the current minor), `component:latest` (latest stable), or `component:lts` (latest LTS, resolved via `../../references/upgrade/lts-sources.md`; asked of the user on lookup failure). A component can be a library, a framework, a language runtime, a build tool, or a path like `.github/workflows`. Multiple components upgrade in one run, planned together so cross-component conflicts surface before anything is written.
@@ -57,7 +57,7 @@ A `TEST_REGRESSION` result on either path hands the decision to the orchestrator
 
 ## Install scripts
 
-`/upgrade` installs the new version of a dependency without the code that version ships to run at install time — an npm, yarn or pnpm package's install scripts, or the build of a Python source distribution — in a container and on a host alike. When something was skipped, the run names each package with the command that would run. If the build or the tests then fail, or the tests cannot start, it asks whether to run those scripts for this component; whatever the outcome, the summary lists them, with the command to run them later. Bundler, Poetry, uv, PDM, Hatch, Composer, NuGet, Go, Cargo, Maven and Gradle install as before. The rules are in [the references](../reference/references.md).
+`/upgrade` installs the new version of a dependency without the code that version ships to run at install time — an npm, yarn or pnpm package's install scripts, or the build of a Python source distribution — in a container and on a host alike. The run names each package it skipped, with the command that would run, in the summary, whatever the outcome; it never runs that code itself and never asks about it mid-run. When a component fails because one of those scripts was needed, rerun with `--allow-install-scripts <name>[,<name>…]` (`project:<hook>` for one of the project's own scripts): the run then installs as before and runs exactly the named packages' install code. Bundler, Poetry, uv, PDM, Hatch, Composer, NuGet, Go, Cargo, Maven and Gradle install as before. The rules are in [the references](../reference/references.md).
 
 ## Example
 

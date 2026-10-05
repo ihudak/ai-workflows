@@ -36,7 +36,7 @@ Because the required fix is not known up front, start with a provisional `MODERA
 
 ## Step 1 — Prepare
 
-1. **Parse** — Extract the optional address and the CVE ID from each token. The address is a key resolved against `$SPECS_PATH` with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), never a tracker lookup; a token may carry none.
+1. **Parse** — Take `--allow-install-scripts <name>[,<name>…]` out of the tokens first, where given ("Install scripts" below); then extract the optional address and the CVE ID from each remaining token. The address is a key resolved against `$SPECS_PATH` with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), never a tracker lookup; a token may carry none.
 2. **Determine the no-address placeholder** — Scan recent branch names and commit history for `NOISSUE` / `NOJIRA` / `NO-JIRA`; use whichever the project already writes when a token carries no address. <!-- vendor-token-ok: literals a repo's own branch/commit history may contain, matched rather than minted -->
 3. **Filter** — Skip non-CVE IDs (`CWE-*`, OWASP patterns) with a warning.
 4. **Snapshot repo context** — Note the repo path, its top level (`git rev-parse --show-toplevel`), and, when obvious, the primary ecosystem so the research agent can disambiguate detection.
@@ -130,7 +130,7 @@ Act on the returned `Status` before dispatching anything:
 
 Immediately before this CVE's first `vuln-fixer` dispatch, on either path — after the base-branch switch above and, on the first CVE, after the baseline capture — take the tree snapshot `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.1 defines and record it as this CVE's `pre_edit_tree`. Pass the same value on every `vuln-fixer` dispatch of this CVE: it is what the fixer restores on `BUILD_FAILED` and on a `revert` decision (§6.2), so a file the user had changed before the run gets their changes back rather than `HEAD`'s. Take a new one for each CVE, never reuse the last: each CVE's revert must leave in place whatever stood before that CVE. Where git cannot write it, do not dispatch — this CVE changed nothing: show git's error, record the CVE `BLOCKED` with that error in its `Notes` cell, and move to the next CVE.
 
-**After a revert, act on it before Step 3.9 reads the tree** — a `BUILD_FAILED` or `REVERTED` return, or a `regression-resume` carrying `revert` that returned `BLOCKED` instead: do what `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.3 says. Re-take the fingerprint of each `pre_existing_dirty` path the return names in `reverted:`, so Step 3.9's tree test does not take the user's own file for the fix; carry the reverted paths into Step 4; and where the agent could not carry out a `revert` decision, run §6.2's script yourself from this CVE's `pre_edit_tree`. A `BUILD_FAILED` whose `skipped_install_scripts:` is not empty goes to "Skipped install scripts" below before Step 3.9.
+**After a revert, act on it before Step 3.9 reads the tree** — a `BUILD_FAILED` or `REVERTED` return, or a `regression-resume` carrying `revert` that returned `BLOCKED` instead: do what `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.3 says. Re-take the fingerprint of each `pre_existing_dirty` path the return names in `reverted:`, so Step 3.9's tree test does not take the user's own file for the fix; carry the reverted paths into Step 4; and where the agent could not carry out a `revert` decision, run §6.2's script yourself from this CVE's `pre_edit_tree`.
 
 ### SIMPLE / MODERATE path
 
@@ -156,6 +156,7 @@ task(
   no_address_placeholder: [NOISSUE / NOJIRA as detected in Step 1, or omit]
   branch: [the branch name Step 1 resolved for this CVE]
   pre_edit_tree: [this CVE's snapshot, taken just before this dispatch — above]
+  allow_install_scripts: [the --allow-install-scripts names ("Install scripts" below), or omit]
   model_routing:
     classification: [MODERATE]
     reason: <one-line>
@@ -218,6 +219,7 @@ task(
   no_address_placeholder: [NOISSUE / NOJIRA as detected in Step 1, or omit]
   branch: [the branch name Step 1 resolved for this CVE]
   pre_edit_tree: [this CVE's snapshot, taken just before this dispatch — above]
+  allow_install_scripts: [the --allow-install-scripts names ("Install scripts" below), or omit]
   model_routing:
     classification: [SIGNIFICANT | HIGH-RISK]
     reason: <one-line>
@@ -235,7 +237,7 @@ task(
 )
 ```
 
-3. **Handle a `vuln-fixer` stop.** If the fixer returns `status: BLOCKED`, the research report at `research_file` could not be read, or the dispatch lacked an input the fixer names (`branch:`, `pre_edit_tree:`) — an orchestrator bug either way, not a user choice: report what it names to the user, mark this CVE `BLOCKED` in the Step 4 summary table, and stop working this CVE (do not retry with a fresh research pass, and do not proceed to Opus review). **Any other first-call return on this path stops this CVE short of the review, and is not run through it** — `BUILD_FAILED` is the reachable one, the fixer having reverted its own change at step 4 — so record the returned status in the Step 4 table, let Step 3.9 decide the handoff by its own tree test rather than by the label, and move to the next CVE — after "Skipped install scripts" below, where this CVE's list is not empty. **`AWAITING_REVIEW` is the only return this path's review dispatch fires on**, which is what makes that dispatch safe to write as a single arm; it is also why `vuln-fixer`'s step 1 must never let a baseline status end a gated call in some other state. Otherwise, if the fixer returns `AWAITING_REVIEW`, run Opus code review before tests:
+3. **Handle a `vuln-fixer` stop.** If the fixer returns `status: BLOCKED`, the research report at `research_file` could not be read, or the dispatch lacked an input the fixer names (`branch:`, `pre_edit_tree:`) — an orchestrator bug either way, not a user choice: report what it names to the user, mark this CVE `BLOCKED` in the Step 4 summary table, and stop working this CVE (do not retry with a fresh research pass, and do not proceed to Opus review). **Any other first-call return on this path stops this CVE short of the review, and is not run through it** — `BUILD_FAILED` is the reachable one, the fixer having reverted its own change at step 4 — so record the returned status in the Step 4 table, let Step 3.9 decide the handoff by its own tree test rather than by the label, and move to the next CVE. **`AWAITING_REVIEW` is the only return this path's review dispatch fires on**, which is what makes that dispatch safe to write as a single arm; it is also why `vuln-fixer`'s step 1 must never let a baseline status end a gated call in some other state. Otherwise, if the fixer returns `AWAITING_REVIEW`, run Opus code review before tests:
    - Capture the diff to a temp file: write `( i=$(command mktemp -t dw-index-XXXXXX) && trap 'command rm -f -- "$i"' EXIT && { command cp -- "$(git rev-parse --git-path index)" "$i" 2>/dev/null || command rm -f -- "$i"; } && export GIT_INDEX_FILE="$i" && git add -N --ignore-removal :/ && git -c diff.relative=false diff --no-ext-diff --no-color "$(git rev-parse -q --verify HEAD || git hash-object -t tree /dev/null)" )` to `command mktemp -t dw-vuln-diff-XXXXXX` (never inside a repo tree) and record its path as `review_diff_file`
    - Write the fixer output to a temp file (`command mktemp -t dw-vuln-claims-XXXXXX`, never inside a repo tree) and record its path as `claims_file`. Invoke `code-review` with the CVE summary, the research handoff (from `research_file`), the diff (from `review_diff_file`), the project root (the repository's top level, `git rev-parse --show-toplevel`), `claims_file: [the path]`, and `model: <review_model — §2 Opus chain, equal to code-review's frontmatter pin; under §10, run_flags.enforced_model>` (frontmatter-pinned to Opus; recorded as `review_model` above, no override unless §10 enforces a model)
    - **Check the review's first line before acting on the verdict.** If it is `Diff: unreadable at <path>`, the orchestrator's own `review_diff_file` could not be read — an orchestrator bug, not a user choice: surface the unreadable path to the user and stop working this CVE, marking it `BLOCKED` in the Step 4 summary table. Do NOT triage the finding and do NOT dispatch `review-fixer`: the finding names a capture failure no fixer can act on, and running the cycle would spend a fix dispatch and a re-review to arrive back here.
@@ -315,7 +317,7 @@ After all CVEs are processed, print a result table:
 
 Name each suite and its command, or leave the cell empty where the run verified everything it detected — never a bare "partial", which says a stack was missed without saying which. **Every `CAVEAT: ` line either source carried goes in this cell too, verbatim and whatever the status was.** That mark is the baseliner's own on a note whose harm the `Status`, the counts and the test lists do not show, so it is carried without being judged here, and it is what puts a CVE green at both ends into this cell at all — every other source named above needs a suite the run could not cover. An unmarked note records where a command ran and is not carried. **Every `NEW-FAILURE: ` line the fixer marked goes in this cell as well**, named test by test and taken from every return this CVE made rather than only its last: it is the one entry here that is not about coverage — the suite ran and something in it is red — and it is also the one that moved this CVE's `clean_finish` to `false`. **Where the run's own capture and the fixer's `notes` name the same uncovered suite, write it once**: on a `PARTIAL` baseline both sources carry it by design, the capture because it is the run's and the fixer because its own step 1 read the same block, and this cell is a report rather than a tally.
 
-**Every CVE's list — the union "Skipped install scripts" defines — goes in its `Notes` cell, whatever its status** — each entry with the command that runs it later (`npm rebuild <names>`, `pnpm rebuild <names>`, `yarn rebuild <names>`, or the per-name `pip install --no-binary=<name>` line; `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A script nothing in the run exercised — a binary a package downloads for runtime only — reaches the user that way; the committed change is unaffected, since the lockfile and the manifest come out the same with or without the scripts.
+**Every CVE's list — the union "Install scripts" defines — goes in its `Notes` cell, whatever its status**, each entry with what runs it later: a rerun with `--allow-install-scripts <names>` ("Install scripts" below). A script nothing in the run exercised — a binary a package downloads for runtime only — reaches the user that way; the committed change is unaffected, since the lockfile and the manifest come out the same with or without the scripts.
 
 **Where the run recorded `baseline_unverified`, state it once above the table** — the capture failure that produced it, whether it was the operator's own answer or the run's own record after two failed `command_hint` attempts, and that every CVE below therefore finished unverified. That line is the flag's only reader and its whole purpose: `clean_finish` reaches `false` through `TESTS_NOT_RUN` without consulting it, so without this the run would have recorded a decision nothing ever surfaces, and the table would show a column of `TESTS_NOT_RUN` with no statement of why.
 
@@ -349,37 +351,24 @@ interactive tools, even when one is listed in their `tools:`. When it returns
   ```
   choices: ["Apply the fix anyway and flag the failures in the PR — for flaky tests", "Revert this fix and skip it", "Investigate further"]
   ```
-  Where this CVE's list ("Skipped install scripts" below) names a package not asked about yet, add a fourth choice, `Run the install scripts of <names> and re-test`.
 - **"Investigate further"** → show more detail (the diff, full failure output) and re-ask
   the same choices — this loops here at the orchestrator until the user picks another one.
-- Map the final choice to `regression_decision: keep-anyway | revert | retry-with-install-scripts` and re-invoke
+- Map the final choice to `regression_decision: keep-anyway | revert` and re-invoke
   `vuln-fixer` with `phase: regression-resume` (see Step 3).
 
 **`status: TESTS_NOT_RUN` is a different return and takes no `regression_decision`.** It means the
 verify call compared nothing — no failing tests to show, and nothing about this CVE's tests known either
 way. The fix stays on its branch. Report the reason the fixer recorded, mark the CVE unverified in the
 Step 4 table, and hand it off through Step 3.9 with `clean_finish: false`. Never map it onto `revert`:
-rolling a security fix back because a suite could not be started is a decision taken on no evidence at all. Where its `skipped_install_scripts:` is not empty, "Skipped install scripts" below asks first.
+rolling a security fix back because a suite could not be started is a decision taken on no evidence at all.
 
 ---
 
-## Skipped install scripts
+## Install scripts
 
-`vuln-fixer` installs a new dependency version without its install-time code (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`) and names every package it skipped in `skipped_install_scripts:`, each entry with the command that would run. **This CVE's list is the union of that field across every return of the CVE** — on the SIGNIFICANT / HIGH-RISK path the install happens on the call that returns `AWAITING_REVIEW`, and a later `verify-resume` installs nothing — less the entries a later return ran. Where the list is empty, nothing here applies. Where it is not:
+`vuln-fixer` installs a new dependency version without its install-time code (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`) and names every package it skipped in `skipped_install_scripts:`, each entry with the command that would run. **This CVE's list is the union of that field across every return of the CVE** — on the SIGNIFICANT / HIGH-RISK path the install happens on the call that returns `AWAITING_REVIEW`. The run never runs that code itself and never asks about it mid-run: the Step 4 table's `Notes` names every entry, whatever the CVE's status, and where the CVE failed — `BUILD_FAILED`, a test regression, tests that could not run — it adds that a rerun of `/vuln` with `--allow-install-scripts <names>` runs exactly those packages' install code after the install (`project:<hook>` for a project script).
 
-- **`BUILD_FAILED`** — after acting on the revert (Step 3, "After a revert"), ask, showing every entry in full:
-  ```
-  choices: ["Retry with the install scripts of <names> — they run code those packages ship, with your permissions", "Leave this CVE failed"]
-  ```
-  On retry, snapshot the tree again (Step 3, "Snapshot the tree") and re-dispatch `vuln-fixer` as the first call — the same `branch:`, which the agent switches to, with the new `pre_edit_tree:` and `allow_install_scripts:` set to the entries exactly as returned.
-- **`TEST_REGRESSION`** — "Handling Test Failures" offers `Run the install scripts of <names> and re-test` as a fourth choice; it maps to `regression_decision: retry-with-install-scripts` with `allow_install_scripts:` set to the entries.
-- **`TESTS_NOT_RUN`** — unless the run recorded `baseline_unverified`, or the agent's reason is the baseline's own, which no re-test can change, ask, showing every entry in full:
-  ```
-  choices: ["Run the install scripts of <names> and re-test — they run code those packages ship, with your permissions", "Leave this CVE unverified"]
-  ```
-  On run, re-invoke `vuln-fixer` with `phase: verify-resume`, the same inputs as the first call, and `allow_install_scripts:` set to the entries.
-
-**Ask again only about a package not asked about before in this CVE.** pip names one refused package at a time, so a retry can surface the next; a return that names only packages already asked about goes into the Step 4 table's `Notes`, not into a second ask.
+`--allow-install-scripts <name>[,<name>…]`, taken out of the arguments in Step 1, is passed to every `vuln-fixer` dispatch as `allow_install_scripts: [<names>]`.
 
 ## Git Workflow
 

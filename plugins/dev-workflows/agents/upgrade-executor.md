@@ -30,14 +30,13 @@ reconstruct it.
 
 > **Phase resume.** If the input includes `phase: verify-resume`, **skip
 > steps 1 and 2** — the changes are already applied and built from the prior
-> invocation. A `verify-resume` carrying `allow_install_scripts:` first runs
-> `install-time-code.md`'s allow step for those packages. Resume at step 3 (Verify). Treat any `baseline` in the input
+> invocation. Resume at step 3 (Verify). Treat any `baseline` in the input
 > as authoritative; do not re-baseline. Default phase (omitted or
 > `phase: full`) runs all steps.
 >
 > If the input includes `phase: regression-resume`, **skip steps 1-3** —
 > jump straight to "Test regression" step 4 below, honoring the
-> `regression_decision: keep-anyway | revert | retry-with-install-scripts` supplied by the orchestrator.
+> `regression_decision: keep-anyway | revert` supplied by the orchestrator.
 
 1. **Apply changes** — First check the request carries `pre_edit_tree:`, the snapshot the orchestrator
    took before this component's first dispatch (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.1).
@@ -113,7 +112,7 @@ reconstruct it.
    (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A pip install refused for want
    of a wheel is a build failure here, with that package in the list.
 2. If still failing: revert all changes for this component by running
-   `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2's script from the request's `pre_edit_tree:`,
+   `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2's script from the request's `pre_edit_tree:`, then restore `node_modules` as `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`'s "After a revert" says,
    set `status: BUILD_FAILED`, and return what §6.2 says to return.
 
 ## Test regression
@@ -131,11 +130,9 @@ granted, so this agent can never ask the user directly. The orchestrator owns th
 4. **On `phase: regression-resume`:** honor `regression_decision`:
    - `keep-anyway` → set `status: TEST_REGRESSION_KEPT`, proceed to Output, leaving the failing
      tests documented in `notes` for the user to fix.
-   - `retry-with-install-scripts` → run `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`'s allow step for the request's
-     `allow_install_scripts:`, then steps 2 and 3 again, and return what they return.
    - `revert` → revert all changes for this component by running
      `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2's script from the request's `pre_edit_tree:`
-     — every edit since this component's first dispatch, `review-fixer`'s and any test fix of step 2
+     — then restore `node_modules` as `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`'s "After a revert" says — every edit since this component's first dispatch, `review-fixer`'s and any test fix of step 2
      included, and nothing older, so an earlier component's work stays — set
      `status: TEST_REGRESSION_REVERTED`, and return what §6.2 says to return. A call that carries no `pre_edit_tree:` returns `status: BLOCKED` naming it, and changes
      nothing.

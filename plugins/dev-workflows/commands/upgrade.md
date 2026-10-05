@@ -32,7 +32,7 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
 
 1. **Inventory** — Detect all components and their current versions from build files, runtime version files, and CI YAML. Use `${CLAUDE_PLUGIN_ROOT}/references/upgrade/ecosystems.md`.
 
-2. **Resolve requested targets** — Apply the `Version Resolution` section below to each requested token.
+2. **Resolve requested targets** — Take `--allow-install-scripts <name>[,<name>…]` out of the tokens first, where given ("Install scripts" below); then apply the `Version Resolution` section below to each remaining token.
 
 3. **Delegate planning in parallel** — Spawn one planner task per requested component. Use a single agent message for the whole batch. Per-component classification does not happen until step 5 (`upgrade-planner.md` says so in its own words), so the `model_routing` block this dispatch carries is **provisional**: start at `MODERATE`, the rung `/vuln` Step 0 takes for the same reason, and let step 5's classification be the run's.
 
@@ -148,7 +148,7 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
 
    **Immediately before this component's first dispatch, snapshot the tree** per `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.1 and record it as this component's `pre_edit_tree`; pass the same value on every executor dispatch of this component. It is what the executor restores on `BUILD_FAILED` and on a `revert` decision (§6.2), so a file the user had changed before the run gets their changes back rather than `HEAD`'s, and — under `--no-commit` — an earlier component's uncommitted work stays. Take a new one per component, never reuse the last. Where git cannot write it, do not dispatch: show git's error and handle the component as step 3a's `BLOCKED`, with that error as the reason — the executor never ran, so nothing changed.
 
-   **After a revert, act on it before step 6.5 reads the tree** — a `BUILD_FAILED` or `TEST_REGRESSION_REVERTED` return, or a `regression-resume` carrying `revert` that returned `BLOCKED` instead: do what `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.3 says. Re-take the fingerprint of each `pre_existing_dirty` path the return names in `reverted:`, so 6.5 does not take the user's own file for this component's work; carry the reverted paths into step 7; and where the executor could not carry out a `revert` decision, run §6.2's script yourself from this component's `pre_edit_tree`. A `BUILD_FAILED` whose `skipped_install_scripts:` is not empty goes to "Skipped install scripts" below before step 6.5.
+   **After a revert, act on it before step 6.5 reads the tree** — a `BUILD_FAILED` or `TEST_REGRESSION_REVERTED` return, or a `regression-resume` carrying `revert` that returned `BLOCKED` instead: do what `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.3 says. Re-take the fingerprint of each `pre_existing_dirty` path the return names in `reverted:`, so 6.5 does not take the user's own file for this component's work; carry the reverted paths into step 7; and where the executor could not carry out a `revert` decision, run §6.2's script yourself from this component's `pre_edit_tree`.
 
    ```
    task(
@@ -159,6 +159,7 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
      repo: [the repository's top level, `git rev-parse --show-toplevel`]
      phase: full
      pre_edit_tree: [this component's snapshot, taken just before this dispatch — above]
+     allow_install_scripts: [the --allow-install-scripts names ("Install scripts" below), or omit]
      enforced_model: [run_flags.enforced_model, or omit]
      command_hint: [the recorded `test_command_hint` — include this line only where Phase 2 prep step 2 recorded one; it must reach step 3's verify call]
      baseline_block: |
@@ -212,7 +213,7 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
 
    **"Stop and escalate" on a review that stayed blocked stops the component, not the run.** The loop continues with the next component; step 7.5 still runs at the end. A reading that stops the whole run would leave every earlier component committed but never pushed.
 
-7. **Collect results** — Accumulate one summary row per component. Carry each component's skipped list — the union "Skipped install scripts" defines — into its row. Preserve what step 6.5's unit-level call returned — the commit, and a secret scan that did not run, a hit committed as not secret, a path dirty before the run that the commit carried whole, or a deletion the user had staged that it kept out, which step 7.5's `Code repo:` line then carries (§2.12); drop each such path from `pre_existing_dirty` before the next component, since `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.2 retires a path a commit of this run has carried, and keep each fingerprint a revert re-took (step 3's *After a revert*) — the classification, review verdict, related upgrades applied, any regression notes, how many paths a `BUILD_FAILED` or `TEST_REGRESSION_REVERTED` return put back, with the paths themselves and its `reverted_from:` tree listed below the results table (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.3), every `REVERT-FAILED: ` line, every `CAVEAT: ` line and every `NEW-FAILURE: ` line this component's executor copied into the `notes` of **any** return it made — not only its last, since a `regression-resume` runs no verify of its own (`upgrade-executor`'s Phase resume note), so a New failure met at the first verify is absent from the `TEST_REGRESSION_KEPT` or `TEST_REGRESSION_REVERTED` that ends the component (`${CLAUDE_PLUGIN_ROOT}/references/handoff/upgrade-executor.md`) — which its `status` does not gate, so read them on `OK` as on any other value — and this component's commit sha (or "no changes").
+7. **Collect results** — Accumulate one summary row per component. Carry each component's skipped list — the union "Install scripts" defines — into its row. Preserve what step 6.5's unit-level call returned — the commit, and a secret scan that did not run, a hit committed as not secret, a path dirty before the run that the commit carried whole, or a deletion the user had staged that it kept out, which step 7.5's `Code repo:` line then carries (§2.12); drop each such path from `pre_existing_dirty` before the next component, since `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.2 retires a path a commit of this run has carried, and keep each fingerprint a revert re-took (step 3's *After a revert*) — the classification, review verdict, related upgrades applied, any regression notes, how many paths a `BUILD_FAILED` or `TEST_REGRESSION_REVERTED` return put back, with the paths themselves and its `reverted_from:` tree listed below the results table (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.3), every `REVERT-FAILED: ` line, every `CAVEAT: ` line and every `NEW-FAILURE: ` line this component's executor copied into the `notes` of **any** return it made — not only its last, since a `regression-resume` runs no verify of its own (`upgrade-executor`'s Phase resume note), so a New failure met at the first verify is absent from the `TEST_REGRESSION_KEPT` or `TEST_REGRESSION_REVERTED` that ends the component (`${CLAUDE_PLUGIN_ROOT}/references/handoff/upgrade-executor.md`) — which its `status` does not gate, so read them on `OK` as on any other value — and this component's commit sha (or "no changes").
 
 7.5. **Code-repo handoff (push + PR, once for the batch)** — After the loop, cite `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` and execute the full `finish-code-branch` entry point (§2) inline. §2.2 and §2.12 say what, if anything, this terminal call commits and where it goes, after a step 6.5 commit that did not land included. Skipped under `--no-commit`.
 
@@ -270,7 +271,7 @@ Not verified: Jest/npm (`CI=true npm test`, frontend/package.json) — baseline 
 Caveats: none
 ```
 
-**Every component's list — the union "Skipped install scripts" defines — goes in its `Notes` cell, whatever its status** — each entry with the command that runs it later (`npm rebuild <names>`, `pnpm rebuild <names>`, `yarn rebuild <names>`, or the per-name `pip install --no-binary=<name>` line; `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A script nothing in the run exercised — a binary a package downloads for runtime only — reaches the user that way; the committed change is unaffected, since the lockfile and the manifest come out the same with or without the scripts.
+**Every component's list — the union "Install scripts" defines — goes in its `Notes` cell, whatever its status**, each entry with what runs it later: a rerun with `--allow-install-scripts <names>` ("Install scripts" below). A script nothing in the run exercised — a binary a package downloads for runtime only — reaches the user that way; the committed change is unaffected, since the lockfile and the manifest come out the same with or without the scripts.
 
 **`Not verified:` is the batch-level slot**, and the per-component `Notes` column is not a substitute for it: the baseline is captured once for the whole batch (Phase 2 prep), so a suite it could not cover is missed for **every** component and belongs on a line of its own. Fill it from the Phase 2 prep baseline's `### Suites` — each suite that row does not mark `OK` or `NO_TESTS`, with its command and its marker path — and write `none` where the baseline covered everything it detected. **Where the baseline covered nothing at all — a `RUN_FAILED` or `COMMAND_NOT_FOUND` capture the operator chose to upgrade past — `none` is the one thing this line must not say**, and the two get there differently. On `COMMAND_NOT_FOUND` there are no `### Suites` rows at all, so the fill rule enumerates nothing and the `none` predicate is **vacuously** satisfied — full coverage reported on the run that verified least. On `RUN_FAILED` the suites were detected and every one of them aborted, so each has a row and the fill rule enumerates them all, which is right. Say that nothing was verified, and why. A component whose own verify left something uncovered is the `Notes` column's, not this line's.
 
@@ -298,10 +299,9 @@ interactive tools, even when one is listed in their `tools:`. When it returns
   ```
   choices: ["Keep the upgrade and leave the failing tests for you to fix", "Revert this upgrade and skip it", "Investigate further before deciding"]
   ```
-  Where this component's list ("Skipped install scripts" below) names a package not asked about yet, add a fourth choice, `Run the install scripts of <names> and re-test`.
 - **"Investigate further"** → show more detail (the diff, full failure output) and re-ask
   the same choices — this loops here at the orchestrator until the user picks another one.
-- Map the final choice to `regression_decision: keep-anyway | revert | retry-with-install-scripts` and re-invoke
+- Map the final choice to `regression_decision: keep-anyway | revert` and re-invoke
   `upgrade-executor` with `phase: regression-resume` (see Phase 2 step 6).
 
 **`status: TESTS_NOT_RUN` is a different return and takes no `regression_decision`.** It means the
@@ -309,28 +309,15 @@ verify call compared nothing — no failing tests to show, and nothing about thi
 either way. The changes stay applied. Report the reason the executor recorded, carry the component into
 the Upgrade Summary as unverified, and set `clean_finish: false` for the batch (step 7). Never map it
 onto `revert`: rolling an upgrade back because a suite could not be started is a decision taken on no
-evidence at all. Where its `skipped_install_scripts:` is not empty, "Skipped install scripts" below
-asks first.
+evidence at all.
 
 ---
 
-## Skipped install scripts
+## Install scripts
 
-`upgrade-executor` installs a new dependency version without its install-time code (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`) and names every package it skipped in `skipped_install_scripts:`, each entry with the command that would run. **This component's list is the union of that field across every return of the component** — on the SIGNIFICANT / HIGH-RISK path the install happens on the call that returns `AWAITING_REVIEW`, and a later `verify-resume` installs nothing — less the entries a later return ran. Where the list is empty, nothing here applies. Where it is not:
+`upgrade-executor` installs a new dependency version without its install-time code (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`) and names every package it skipped in `skipped_install_scripts:`, each entry with the command that would run. **This component's list is the union of that field across every return of the component** — on the SIGNIFICANT / HIGH-RISK path the install happens on the call that returns `AWAITING_REVIEW`. The run never runs that code itself and never asks about it mid-run: the Upgrade Summary's `Notes` names every entry, whatever the component's status, and where the component failed — `BUILD_FAILED`, a test regression, tests that could not run — it adds that a rerun of `/upgrade` with `--allow-install-scripts <names>` runs exactly those packages' install code after the install (`project:<hook>` for a project script).
 
-- **`BUILD_FAILED`** — after acting on the revert (Phase 2 step 3, "After a revert"), ask, showing every entry in full:
-  ```
-  choices: ["Retry with the install scripts of <names> — they run code those packages ship, with your permissions", "Leave this component failed"]
-  ```
-  On retry, snapshot the tree again (Phase 2 step 3's snapshot) and re-dispatch `upgrade-executor` as the first call, with the new `pre_edit_tree:` and `allow_install_scripts:` set to the entries exactly as returned.
-- **`TEST_REGRESSION`** — "Handling Test Failures" offers `Run the install scripts of <names> and re-test` as a fourth choice; it maps to `regression_decision: retry-with-install-scripts` with `allow_install_scripts:` set to the entries.
-- **`TESTS_NOT_RUN`** — unless the run recorded `baseline_unverified`, or the agent's reason is the baseline's own, which no re-test can change, ask, showing every entry in full:
-  ```
-  choices: ["Run the install scripts of <names> and re-test — they run code those packages ship, with your permissions", "Leave this component unverified"]
-  ```
-  On run, re-invoke `upgrade-executor` with `phase: verify-resume`, the same inputs as the first call, and `allow_install_scripts:` set to the entries.
-
-**Ask again only about a package not asked about before in this component.** pip names one refused package at a time, so a retry can surface the next; a return that names only packages already asked about goes into the Upgrade Summary's `Notes`, not into a second ask.
+`--allow-install-scripts <name>[,<name>…]`, taken out of the arguments in Phase 1 step 2, is passed to every `upgrade-executor` dispatch as `allow_install_scripts: [<names>]`.
 
 ## Invariants (always enforced)
 

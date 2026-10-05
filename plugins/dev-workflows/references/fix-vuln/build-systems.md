@@ -89,7 +89,7 @@ Edit the version in the appropriate `pom.xml`. Prefer updating `<properties>` to
 
 ## npm / yarn / pnpm
 
-**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below skips the scripts and source builds a new release ships, and the agent names what it skipped.
+**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below — npm, yarn, pnpm, pip, pipenv — skips the scripts and source builds a new release ships, and the agent names what it skipped.
 
 ### Detect library
 
@@ -153,7 +153,7 @@ CI=true npm test
 
 ## Python (pip)
 
-**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below skips the scripts and source builds a new release ships, and the agent names what it skipped.
+**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below — npm, yarn, pnpm, pip, pipenv — skips the scripts and source builds a new release ships, and the agent names what it skipped.
 
 ### Detect library
 
@@ -165,7 +165,7 @@ grep -ri "requests" requirements.txt Pipfile pyproject.toml
 
 - **`requirements.txt`**: change `requests==2.28.0` to `requests==<safe-version>` (use `==` for pinned, `>=` for minimum).
 - **`Pipfile`**: edit `[packages]` section and run `PIP_ONLY_BINARY=:all: pipenv install`.
-- **`pyproject.toml`**: edit `[project.dependencies]` or `[tool.poetry.dependencies]`, then install with the project's own tool — Poetry, uv, PDM and Hatch install unchanged (`install-time-code.md` says why).
+- **`pyproject.toml`**: edit `[project.dependencies]` or `[tool.poetry.dependencies]`, then install it — with pip, `pip install --only-binary=:all: -e .`; with Poetry, uv, PDM or Hatch, by its own command, unchanged (`install-time-code.md` says why).
 
 ### Verify
 
