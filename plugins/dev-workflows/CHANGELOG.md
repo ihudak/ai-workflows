@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 **Update `workflows-core` to 1.14.2 with this release**: the follow-ups page and `/implement` Phase 6 now describe its `followup-emission` §6.
 
 ### Fixed
-- **`/implement`'s follow-up for a change another code repository needs could be written twice** — once per way of naming the repository, by an ssh or an https clone, by a fork, or by a run that was not given it. It now names the repository by its `<repo-slug>`, the last segment of its `origin` URL, as `workflows-core:followup-emission` §6 says, and Phase 6 collects one follow-up per repository so named. The follow-ups page says how a repository is named and where a re-run can still add a task again.
+- **`/implement`'s follow-up for a change another code repository needs could be written twice** — once per way of naming the repository, by an ssh or an https clone, by a fork, or by a run that was not given it. It now names the repository by its `<repo-slug>`, the last segment of its `origin` URL, as `workflows-core:followup-emission` §6 says, and Phase 6 collects one follow-up per repository so named, two repositories it names alike sharing one line that lists each one's changes under its path. The follow-ups page says how a repository is named and where a re-run can still add a task again.
 
 ## [4.9.3] — 2026-10-05
 
