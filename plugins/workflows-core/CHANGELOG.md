@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.19.0] — 2026-10-05
+
+### Changed
+- **`prd-format`'s acceptance criteria take three wording rules:**
+  - **False before, true after:** each is false before its story ships and true after it, through that story alone.
+  - **The rule, not an example:** with a literal only where the value is the requirement — a limit, a rounding rule, exact text.
+  - **Enough, no more:** enough that building the wrong thing cannot pass; past eight on one story, split the story.
+
 ## [1.18.0] — 2026-10-05
 
 ### Changed
