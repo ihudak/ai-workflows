@@ -52,10 +52,10 @@ The caller passes:
 - **Decision-completeness (BLOCKER):** any unresolved `- [ ]` open question in `design.md`. The design
   is the last gate before code.
 - **Interface concreteness:** **Interfaces / contracts** gives real signatures/schemas, not prose
-  promises → a vague interface = `MAJOR`. An interface another component or an outside consumer
-  calls, which the change introduces or whose behaviour it alters, stated as a shape alone — nothing on
-  what a caller gets on a failure, or, where a request or message has a side effect, on whether a
-  repeat repeats it → `MAJOR`.
+  promises → a vague interface = `MAJOR`. A **boundary interface** (`design-format.md` section 4 —
+  one another component or an outside consumer calls, whose behaviour the change implements) stated
+  as a shape alone — nothing on what a caller gets on a failure where it can fail, or, where a request
+  or message has a side effect, on whether a repeat repeats it → `MAJOR`.
 - **Seam / test-strategy soundness:** **Test strategy** keys to named seams; a testability claim with
   no seam → `MAJOR`. Missing test strategy on a `MODERATE`+ design → `BLOCKER`.
   A **shallow module** (interface nearly as large as its implementation) or a **speculative seam** (a
@@ -67,11 +67,13 @@ The caller passes:
   `## Seams`), and the test strategy matches it — a `remote-but-owned` seam tested without a port, or a
   `true-external` dependency tested without a mock adapter, → `MAJOR`. A seam with no category on a
   `MODERATE`+ design → `MINOR`.
-  An interface the change provides to another component or an outside consumer with no
-  **provider-side test** in **Test strategy** — one driving the real implementation through the
-  interface, its failure cases included — → `MAJOR`; a consumer's stub never stands in for one. A stub
-  for a consumed interface that models only the success shape, where `## Interfaces / contracts`
-  states failures for it → `MINOR`.
+  A boundary interface with no **provider-side test** in **Test strategy** — one driving the real
+  implementation through the interface, its failure cases included — → `MAJOR`; a consumer's stub
+  never stands in for one. A design that only builds a contract artifact has no provider-side test to
+  give and is held instead to a check of the artifact itself (it parses or compiles; a `changed` row
+  stays compatible with the version its consumers use) — missing → `MINOR`. A stub for a consumed
+  interface that models only the success shape, where its `[AD#N]` Rule in `applicable_ard` or
+  `## Interfaces / contracts` states failures for it → `MINOR`.
 - **Architecture coherence:** components and data flow are consistent; an interface referenced by no
   component (or vice-versa) → `MAJOR`.
   **Alternatives considered** is present and **substantive**: at least one genuinely plausible
@@ -91,7 +93,7 @@ The caller passes:
 
 - **ARD conformance (conditional — only when `applicable_ard` is provided; otherwise skip silently):** the design must honor every `AD#N` `rule`. A violation with **no** matching recorded `## ARD deviations` entry → `BLOCKER`; **with** a recorded deviation → `MINOR` flagged note (the architect adjudicates).
 
-- **Target & contract (conditional — only when the design's header carries `- **Target**:`; otherwise skip silently):** the design's implementation stays inside its target component — the repository the id names before any `:`, and within it the brief's **Target paths** — else the module path after the `:`, or the whole repository for a bare slug. Exempt: a change to deployment or configuration files of the same repository that exists only to deploy or configure the target — a ride-along, which the brief's **Ride-along lines** name — and, where the target is a module and the brief's **Repository modules** lists its repository's modules and deploy directories, a change made for the target's sake to that repository's shared ground — any path inside none of them. Work inside one of them other than the target is beyond the target; a bare-slug target's paths are its whole repository. Implementation beyond the target with **no** matching `- Target span:` line under `## Risks & mitigations` → **BLOCKER**; with one → allowed-but-flagged (name it in the Summary). Where `## Interfaces / contracts` names a consumed `[AD#N]` with no stub or test double for it in `## Test strategy`, and names it neither as a code artifact a contract Epic builds nor as an interface that already exists → **MAJOR**. Where the brief carries **Contract lines**, an `[AD#N]` one of them names that `## Interfaces / contracts` does not → **MAJOR**: the design dropped an interface its Epic produces or consumes. A consumed code artifact from another repository that the design neither pins as a package version nor records as a copy with its source path and revision → **MINOR**; a design that edits such a copy → **MAJOR**, since the producer owns the interface. A produced interface that breaks its `AD#N` Rule is the ARD-conformance dimension's BLOCKER, not this one's.
+- **Target & contract (conditional — only when the design's header carries `- **Target**:`; otherwise skip silently):** the design's implementation stays inside its target component — the repository the id names before any `:`, and within it the brief's **Target paths** — else the module path after the `:`, or the whole repository for a bare slug. Exempt: a change to deployment or configuration files of the same repository that exists only to deploy or configure the target — a ride-along, which the brief's **Ride-along lines** name — and, where the target is a module and the brief's **Repository modules** lists its repository's modules and deploy directories, a change made for the target's sake to that repository's shared ground — any path inside none of them. Work inside one of them other than the target is beyond the target; a bare-slug target's paths are its whole repository. Implementation beyond the target with **no** matching `- Target span:` line under `## Risks & mitigations` → **BLOCKER**; with one → allowed-but-flagged (name it in the Summary). Where `## Interfaces / contracts` names a consumed `[AD#N]` with no stub or test double for it in `## Test strategy`, and names it neither as a code artifact a contract Epic builds nor as an interface that already exists → **MAJOR**. Where the brief carries **Contract lines**, an `[AD#N]` one of them names that `## Interfaces / contracts` does not → **MAJOR**: the design dropped an interface its Epic produces or consumes. A consumer whose repository is not a consumed code artifact's, and whose design names neither a package pinned to a version nor a copy recording its source path and revision as the way it gets the artifact → **MINOR**; a design that edits such a copy in place, rather than taking it again from its source → **MAJOR**. A produced interface that breaks its `AD#N` Rule is the ARD-conformance dimension's BLOCKER, not this one's.
 
 ## Output contract
 

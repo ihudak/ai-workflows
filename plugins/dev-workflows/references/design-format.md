@@ -81,7 +81,7 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
    constraint, why it lost); otherwise the author names alternatives by hand. An "alternative" that was
    never plausible ("we considered not having an interface") is theatre — see `design-reviewer`.
 4. **## Interfaces / contracts** (core) — exact signatures, API shapes, schemas, events, config keys
-   the change introduces or alters. Concrete types, not prose promises. **An interface another component or an outside consumer calls**, where the change introduces it or alters its behaviour, also states the behaviour a schema does not carry, as concretely as the types: what a caller gets on each failure and what state the failure leaves, its side effects, and, wherever they apply, whether a repeated request or a redelivered message repeats a side effect, ordering, and timeouts. The shape of an order request does not say whether retrying it creates a second order. On a multi-component PRD (`workflows-core:components` §3), also name each interface the Epic's `## Contract` produces — its `[AD#N]`, how this design meets that row's Rule, and its provider-side test in `## Test strategy` — and each it consumes — its `[AD#N]`, and the stub or test double `## Test strategy` uses for it, or, where a contract Epic builds that interface as a code artifact (its ARD row's `Artifact`), that artifact as built, or, where the row's `Status` is `exists`, the interface as it already runs. **A consumer whose repository is not the artifact's** names how it gets the artifact: a published package pinned to a version, or a copy that records its source path and revision. The copy is never edited here: the producer owns the interface, and a change to it is made where the producer defines it.
+   the change introduces or alters. Concrete types, not prose promises. **A boundary interface** — one another component or an outside consumer calls, whose behaviour the change implements, introducing it or altering what it does — also states the behaviour a schema does not carry, as concretely as the types: what a caller gets on each failure and what state the failure leaves, its side effects, and, wherever they apply, whether a repeated request or a redelivered message repeats a side effect, ordering, and timeouts. The shape of an order request does not say whether retrying it creates a second order. On a multi-component PRD (`workflows-core:components` §3), also name each interface the Epic's `## Contract` produces — its `[AD#N]`, how this design meets that row's Rule, and, where this design implements its behaviour, its provider-side test in `## Test strategy` — and each it consumes — its `[AD#N]`, and the stub or test double `## Test strategy` uses for it, or, where a contract Epic builds that interface as a code artifact (its ARD row's `Artifact`), that artifact as built, or, where the row's `Status` is `exists`, the interface as it already runs. **A consumer whose repository is not the artifact's** names how it gets the artifact: a published package pinned to a version, or a copy that records its source path and the revision it was taken at. The pin or the revision is recorded when the package is added or the copy taken, usually by `/implement`, since the artifact may not be built yet when this design is written. The copy is never edited in place: it changes only by being taken again from its source at a newer revision, which it records.
 5. **## Seams** (scaled) — where the change is exercised under test; prefer the **highest** seam that
    still isolates the change. Name the seam per component. Judge seam/module quality by: **deep module**
    (a small interface over substantial implementation — prefer depth over many shallow pass-throughs);
@@ -120,12 +120,15 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
    Key each seam's approach to the **dependency category** recorded for it in `## Seams` — a
    remote-but-owned seam tested without a port, or a true-external dependency tested without a mock
    adapter, is a mismatch `design-reviewer` flags.
-   **Each interface this change provides to another component or an outside consumer** has a
-   provider-side test: one that drives the real implementation through the interface and checks the
-   behaviour `## Interfaces / contracts` states for it, its failure cases included. A consumer's tests
-   against a stub show that the consumer handles the stated behaviour, never that the provider has it.
-   A stub or test double for a consumed interface models the stated failures as well as the success
-   shape.
+   **Each boundary interface** (section 4) has a provider-side test: one that drives the real
+   implementation through the interface and checks the behaviour section 4 states for it, its failure
+   cases included. A consumer's tests against a stub show that the consumer handles the stated
+   behaviour, never that the provider has it. A design that only builds a contract artifact — a
+   contract Epic's OpenAPI or `.proto` file, entity module or generated client — implements no
+   behaviour, so it has no provider-side test; its strategy checks the artifact itself: that it parses
+   or compiles, and, for a `changed` row, that it stays compatible with the version its consumers use.
+   A stub or test double for a consumed interface models the failures its `[AD#N]` Rule or section 4
+   states, as well as the success shape.
 9. **## Risks & mitigations** (scaled) — engineering risks (performance, concurrency, data-loss, blast
    radius) and the mitigation or explicit acceptance for each. A repository added to a targeted Epic's design at `/design` Phase 3, or another component of the target's own repository the design must change, is recorded here as `- Target span: <component> — <why>`: in another repository `/implement` will plan the change as a companion change, and in the same one it implements it beyond the Epic's target, and the line is what says so before it does.
 10. **## Migration / rollout / backward-compatibility** (scaled) — schema/data migration, feature
