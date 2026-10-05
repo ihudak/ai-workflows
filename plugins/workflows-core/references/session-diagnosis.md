@@ -21,7 +21,11 @@ One transcript line can exceed a megabyte, or embed a whole earlier history. Pri
 
 - **Main transcript:** `~/.claude/projects/<cwd-slug>/<session-id>.jsonl`, `<cwd-slug>` being the absolute working directory with every `/` and `.` replaced by `-`. **The current session** is the newest `*.jsonl` there **whose last records hold this run's own invocation** of `/diagnose-session`; the newest file alone is not enough, since another session may be running in the same directory.
 - **Subagent transcripts:** `~/.claude/projects/<cwd-slug>/<session-id>/subagents/agent-*.jsonl`, each beside an `agent-*.meta.json`. A tool result too large to keep inline may sit under `<session-id>/tool-results/`.
-- **Record meanings:** each line is one JSON record with a `type`. A `type: user` record whose `.message.content` is a string is typed text, which is the user's prompt, a command invocation (`<command-name>` tags), or harness-injected text (`isMeta: true`; a compaction summary carries `isCompactSummary: true`; a `<task-notification>` or `<local-command-caveat>` is the harness's, not the user's). A `type: user` record whose content is an array of `tool_result` blocks is tool output. A `type: assistant` record carries `.message.content` blocks (`text`, `thinking`, `tool_use`), `.message.model` and `.message.usage`. A `type: system` record's `subtype` names an event: `compact_boundary`, `turn_duration`, `stop_hook_summary`, `local_command`. Every record carries a `timestamp`.
+- **Record meanings:** each line is one JSON record with a `type`. A `type: user` record whose `.message.content` is a string is the user's prompt, a command invocation, or the harness's own text:
+  - **A command invocation** carries `<command-name>` tags, with the arguments the user typed in `<command-args>`. The record after it is `isMeta: true` and holds the command's body as the session expanded it — the exact text of the command at the version that ran.
+  - **The harness's own text** is any `isMeta: true` record (a compaction summary also carries `isCompactSummary: true`), and any string that opens with a harness tag — `<task-notification>`, `<local-command-caveat>`, `<local-command-stdout>`, `<bash-stdout>` and their kin. None of it is the user's words.
+
+  A `type: user` record whose content is an array of `tool_result` blocks is tool output. A `type: assistant` record carries `.message.content` blocks (`text`, `thinking`, `tool_use`), `.message.model` and `.message.usage`. A `type: system` record's `subtype` names an event: `compact_boundary`, `turn_duration`, `stop_hook_summary`, `local_command`. A `type: attachment` record carries what the harness attached to a turn, the output of the hooks that fired among it. Most records carry a `timestamp`; some bookkeeping records (`last-prompt`, `mode`, `permission-mode`, `ai-title`, `file-history-snapshot`) carry none, and a record without one has no time, never time zero.
 - **Usage counts once per API message.** One API response is written as several `type: assistant` records sharing one `.message.id`, each repeating `.message.usage`: in a subagent transcript the first is often a streaming partial with a few output tokens, and a later record carries the final usage. Count each message id once, at the record with the most output tokens. A record whose usage is missing is unknown, never zero.
 
 **Another harness** has its own store; GitHub Copilot CLI, for one, keeps a directory per session under `~/.copilot/session-state/`. Find it from the harness's own documentation, help or configuration, or by bounded inspection of the filesystem, and record what was found as the case file asks. Never assume one harness's format in another's files.
@@ -43,6 +47,13 @@ Created: <ISO timestamp>
 ## Problem statement
 
 <One paragraph, agreed with the user: the session, the turn range if known, what was expected, what happened, and the observable that matters — wall-clock, tokens, repeated actions, one specific action.>
+
+## Turn index
+
+| Turn | File | Line | Timestamp | Prompt (first 80 characters) |
+|---|---|---|---|---|
+
+One row per human prompt of the main transcript, numbered from 1. Every reader numbers turns from this table, a reader of one line range included.
 
 ## Sessions
 
@@ -76,13 +87,13 @@ Label every environment value with where it came from: a record in the session, 
 
 Each analyst works one dimension over the files the case file names, within a line range where the brief gives one, and reports only what the records show. A missing step is reported as missing; whether it was wrong is the reader's call.
 
-1. **Timeline.** One row per human prompt: its line, its time, and what ran in that turn — the family's commands (their invocation records), the agents dispatched (`subagent_type` on the dispatching `tool_use`), the skills invoked, including each `workflows-core:reference` load and its `args`, and the hooks that fired. Where a family command ran, read its text at the version the session ran (a skill or reference load records the install directory it read from) and report each step that text says runs at that point with no record of it.
+1. **Timeline.** One row per human prompt: its line, its time, and what ran in that turn — the family's commands (their invocation records), the agents dispatched (`subagent_type` on the dispatching `tool_use`), the skills invoked, including each `workflows-core:reference` load and its `args`, and the hooks that fired. Where a family command ran, read its text from the session itself — the record that follows its invocation holds the body as it ran (§2) — and report each step that text says runs at that point with no record of it.
 2. **Plan adherence.** Recover the agreed plan: a plan or design the user approved in the conversation, a plan or spec file written in the session, a todo list, or a numbered checklist in the assistant's text, each step quoted with its `path:line`. Map each step to what ran, and report steps skipped, run out of order, changed without saying so, or added with no step behind them, and any drift right after a compaction or a resume.
 3. **Repeated work.** Group the tool calls by tool and key — the path for a read, edit or write; the whole command for a shell call; the description and the first 80 characters of the prompt for a dispatch; the query for a search. Report a group at or over its threshold: 3 reads or searches, 2 edits, 2 shell commands (status checks and test runs exempt), 2 dispatches with one description. Say what came between the repetitions — a write to that file, a compaction, a correction from the user, or nothing — and report a conclusion the assistant reached twice, quoting both places.
 4. **Stumbles.** Every point where the run stopped going forward: a tool result marked as an error, a failed command, a retry of the same call in the same turn, an edit later undone, the assistant backtracking in its own words, a user correcting the step before, a permission denial, a hook failure, an API error or overload, an aborted turn, and a compaction mid-task. For each: its line, what failed, and what followed — recovered in the same turn, recovered later at line N, or never. Group identical repeated failures, with a count.
 5. **Claims and evidence.** Not a review of what the session built. Each test run with its result; each claim of *done*, *fixed*, *passing* or *verified* with no tool result in that turn that shows it; each commit whose message claims work no tool call did; each reviewer finding acknowledged and not acted on, or dismissed with no reason given.
 6. **Conflicting instructions.** Two of the user's instructions that cannot both hold; a user instruction against an instruction file the session loaded; an instruction to skip or override a step, a rule or a review, and what happened after. Quote both sides and report what the assistant did. Who was right is not this dimension's call.
-7. **Cost and time.** Tokens per turn and per subagent transcript, counted per §2's once-per-message rule, with the five largest turns; wall-clock per turn from the timestamps or the recorded turn durations, the five longest, and every gap over ten minutes; the ten largest tool results by size; each compaction, with what the run was doing when it fired; and each subagent with its tokens, its duration and the turn that dispatched it. Where the family's own cost entries cover the window, compare with them and say where they disagree.
+7. **Cost and time.** Tokens per turn and per subagent transcript, counted per §2's once-per-message rule, with the five largest turns; wall-clock per turn from the timestamps or the recorded turn durations, the five longest, and every gap over ten minutes; the ten largest tool results by size; each compaction, with what the run was doing when it fired; and each subagent with its tokens, its duration and the turn that dispatched it.
 
 ## 5. Findings
 
@@ -93,7 +104,7 @@ An analyst returns exactly this, and nothing else:
 
 - finding: <one sentence: what happened>
   evidence: <absolute path>:<line> — "<quote, at most 200 characters>"
-  turns: <first human turn>–<last>
+  turns: <first turn>–<last>, numbered from the case file's turn index
   confidence: high | medium | low
 
 Checked: <the files, line ranges and commands examined>

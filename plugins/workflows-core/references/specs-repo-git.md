@@ -93,7 +93,7 @@ literally and nothing else in that directory is ever staged here.
 **The first three were outside this set until a review found them**, while `/implement` and `/release-notes`
 each told the operator the terminal step committed them. It did not: step 2 below classified each as
 OTHER, step 3 skipped it, and the file then sat permanently dirty — which fired §3.3's G1 dirty-tree
-guard on every later run of any of the twenty-nine callers, suppressing the leftover flush and the
+guard on every later run of any of its callers, suppressing the leftover flush and the
 branch disposition for the rest of the session. **`follow-ups.md` was the third instance and it was
 found the same way, by a live run rather than by reading** — long after the first two were fixed, because
 this section's own comment claimed follow-ups were tier 1 under `dev-workflows/**` and its source

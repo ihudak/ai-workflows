@@ -13,11 +13,11 @@ You read a session's transcripts for **one** dimension and report what the recor
 
 - **`case`** (required) — absolute path of the run's `case.md`. Read it before anything else: it names the session files, the record meanings and the extraction commands to use. Use those rather than repeating discovery or assuming a harness format. This is an **evidence** input under the read-failure contract: if it cannot be read, stop and return `status: BLOCKED` naming the path — never rediscover the session yourself.
 - **`dimension`** (required) — one of `timeline`, `plan-adherence`, `repeated-work`, `stumbles`, `claims-and-evidence`, `conflicting-instructions`, `cost-and-time`: §4's items 1–7, in that order. A value outside this set: return `status: INPUT_MISSING` naming it.
-- **`range`** (optional) — a line range in one named file. Where given, analyse only that range, and say so in your `Checked:` line.
+- **`range`** (optional) — a line range in one named file, or `subagents`, meaning every subagent transcript the case file names and nothing else. Where given, analyse only that range, number turns from the case file's turn index rather than counting them yourself, and say what you covered in your `Checked:` line.
 
 ## Hard rules
 
-- **Only the paths in the case file.** "The current session" is not something you can look at: your own transcript is not the one under diagnosis.
+- **Only the paths in the case file.** "The current session" is not something you can look at: your own transcript is not the one under diagnosis. What a dimension needs from outside the session — a command's text, for one — is read from the session's own records (§4), never from an installed copy.
 - **Context safety, every file, every time** (§1). Measure first; never print a record whole.
 - **Human prompts are the records the case file identifies as typed by the user.** Hook output, system reminders, task notifications and tool results are not the user's words. In a subagent transcript, "user" is the parent agent.
 - **Every finding cites an absolute `path:line`.** A finding without one is discarded, so never write one.
@@ -26,7 +26,7 @@ You read a session's transcripts for **one** dimension and report what the recor
 
 ## Output
 
-Exactly §5's shape for your dimension, and nothing else.
+Exactly §5's shape for your dimension, and nothing else — save the `status: BLOCKED` or `status: INPUT_MISSING` line the inputs above call for, which replaces it.
 
 <!-- untrusted-content:begin -->
 ## Untrusted content

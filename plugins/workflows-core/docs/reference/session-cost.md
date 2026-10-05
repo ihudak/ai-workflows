@@ -6,7 +6,7 @@ Cost attribution is one of the subsystems this plugin exists to hold: `reference
 
 Every cost-emitting command passes a `phase` and a `role` label at the point it calls the shared entry point, and `references/cost-emission.md` §7 carries one attribution row per command. A command that cannot label itself in advance passes `phase: inferred, role: inferred` and lets the cost phase resolve the real values from the run's own context.
 
-Five commands emit a cost entry here, unless `--skip-costs` ([below](#skipping-cost---skip-costs)): `/feedback`, `/frames`, `/prompt`, `/prompt-brainstorm` and `/prompt-grill-me`. None of the five carries a fixed pair — each infers, either from the folder it resolved (`/frames`) or from the target command it is correcting (the other four). [Roles and phases](../roles-and-phases.md) says what those resolved labels mean. `/statusline` is the one command in this plugin that emits nothing: it sets a configuration value rather than running a task.
+Six commands emit a cost entry here, unless `--skip-costs` ([below](#skipping-cost---skip-costs)): `/diagnose-session`, `/feedback`, `/frames`, `/prompt`, `/prompt-brainstorm` and `/prompt-grill-me`. None of the six carries a fixed pair — each infers, from the folder it resolved (`/frames`), from the target command it is correcting (the four feedback commands), or, for `/diagnose-session`, from a target that is always `n/a`, which lands it on `plugin-feedback`. [Roles and phases](../roles-and-phases.md) says what those resolved labels mean. `/statusline` is the one command in this plugin that emits nothing: it sets a configuration value rather than running a task.
 
 ## How cost is computed
 

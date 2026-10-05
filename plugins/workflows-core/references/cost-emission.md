@@ -358,6 +358,7 @@ Fixed per-command labels, with six inferred exceptions:
 | `/feedback` | **inferred** | **inferred** |
 | `/prompt-brainstorm` | **inferred** | **inferred** |
 | `/prompt-grill-me` | **inferred** | **inferred** |
+| `/diagnose-session` | **inferred** | **inferred** |
 | `/docs-brand` | docs-scaffold | dev |
 | `/docs-init` | docs-scaffold | dev |
 | `/docs-audit` | docs-audit | dev |
@@ -397,6 +398,8 @@ and `/frames` refuses to run on an address that resolves to none of them. Indexi
 a frame set is real spend on a real artifact in the specs tree, which is why this
 command emits at all — the alternative is not "unmeasured" but *misattributed*, per
 §3's semantics rolling it into whatever command runs next.
+
+**`/diagnose-session` passes `target_command: n/a` on every run**, so the bullet below for a target of `n/a` charges it to `plugin-feedback`/`n/a`: a diagnosis is about the plugin itself, whichever command it reads, so it inherits nothing.
 
 **`/prompt`, `/feedback`, `/prompt-brainstorm` and `/prompt-grill-me` inference
 (inherit the corrected command's labels).**
@@ -603,8 +606,8 @@ Inputs:
     be re-derived from disk (it lives in the run's own context). It is passed in:
     directly by `/prompt` and `/feedback`, and out of the §13.1 record for the two
     that deferred.
-- `target_command` — **required for all four feedback commands** (supplied
-  directly by `/prompt` and `/feedback`; read out of the §13.1 record when a
+- `target_command` — **required for all four feedback commands and for `/diagnose-session`** (supplied
+  directly by `/prompt`, `/feedback` and `/diagnose-session`, which always passes `n/a`; read out of the §13.1 record when a
   replay builds the entry for `/prompt-brainstorm` or `/prompt-grill-me`). The
   §7 **row name** of the command whose output is being corrected or remarked on, or
   `n/a`. Note this is the bare row name (`/document`), not the mode-qualified form

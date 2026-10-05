@@ -45,7 +45,7 @@ These run outside any role pipeline, at any time:
 - **Setup.** `/statusline` installs the family's multi-line status line. It collides with a Claude Code built-in of the same name, so type the qualified `/workflows-core:statusline`.
 - **Specs-tree repair.** [`/frames`](commands/frames.md) (re)builds the frame-set index of any folder holding exported design frames — a BRD, PRD, or Epic folder alike — so a set somebody dropped in by hand becomes readable. It advances no phase and grounds nothing.
 
-None of the seven advances a pipeline phase. What five of them share with the pipeline is the cost ledger: each is charged to the phase of the command it is correcting or the folder it is acting on, while `/statusline` and `/diagnose-session` emit no cost entry at all — see [Roles and phases](roles-and-phases.md).
+None of the seven advances a pipeline phase. What six of them share with the pipeline is the cost ledger: five are charged to the phase of the command they are correcting or the folder they are acting on, `/diagnose-session` to `plugin-feedback`, while `/statusline` emits no cost entry at all — see [Roles and phases](roles-and-phases.md).
 
 For every command of the four plugins on one diagram — by role, coloured by plugin, with the deliverable each hands the next — see the [Family map](family-map.md).
 
