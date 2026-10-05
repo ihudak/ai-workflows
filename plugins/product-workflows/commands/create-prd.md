@@ -60,7 +60,7 @@ Usage: `/create-prd <ADDRESS> [@idea.md] [--from-prd <PRD-KEY|path>] [--lean|--h
     seed that would stop the run must not stop it before they are offered. Then read it: a seed naming an existing file or directory, with or without a leading `@`,
     is read where it sits — a file directly, a directory's `prd.md`; any other seed is a key, resolved
     with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), and that folder's `prd.md` is read.
-    **A seed the run cannot read stops it**, before step 3's ladder: `ambiguous` names every match and
+    **A seed the run cannot read stops it**, before step 3's ladder — or, where a `prd.md` already stands, once Phase 1's *Overwrite* is chosen: `ambiguous` names every match and
     `@<path>` as the way through; `invalid` (neither an existing path nor a key), `absent`, a folder
     holding no `prd.md`, and a `prd.md` or file that cannot be read each name the seed and what was
     found —
