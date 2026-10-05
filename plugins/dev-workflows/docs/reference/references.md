@@ -15,7 +15,7 @@ The canonical structure each artifact type is authored and reviewed against, plu
 The gates a written artifact passes through before it counts as done. The triage discipline itself, and the escalation and pre-lint conventions the gates share, are `workflows-core`'s; the verification-gate ledger and the repo-checklist extractor are `docs-workflows`'s.
 
 - `workflow-states.md` — maps each workflow phase on the PRD and Epic ladders to its owning role, the command that drives the transition into it, and the artifacts expected to exist at that status; the rubric `readiness-reviewer` applies. On a multi-component PRD its *Ready for Implementation* rung expects the ARD with `## Contracts` and the PRD-level specification, and no PRD-level design, unless the 0-Epic override built the PRD whole.
-- `bug-diagnosis.md` — the bug-diagnosis discipline `/implement` follows for a bug-shaped task: a deterministic, minimised repro before hypothesizing (a measured baseline on a performance regression), ranked falsifiable hypotheses, one-variable tagged and cleaned-up probes, a regression test at a correct seam, and the confirmed cause named in the report and the pull request.
+- `bug-diagnosis.md` — the bug-diagnosis discipline `/implement` follows for a bug-shaped task: a deterministic, minimised repro before hypothesizing (a measurement on a performance regression), ranked falsifiable hypotheses, one-variable tagged and cleaned-up probes, a regression test at a correct seam, and the confirmed cause named where there was a ranking.
 
 ## Session artifacts
 

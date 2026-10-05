@@ -85,7 +85,7 @@ Output: [its redacted output — enough to show it went red on this bug]
 Reproduction rate: [100%, or the rate achieved for a non-deterministic bug]
 1. [cause] — predicts [observation]; falsified by [cheapest test]
 2. ...
-_or_ "Ranking withheld — no red-capable repro. Tried: [what you tried, and what happened]. Needs: [what would let you build one — an environment that reproduces it, a redacted captured artifact, or permission for temporary instrumentation where it reproduces]."
+_or_ "Ranking withheld — no red-capable repro. Tried: [what you tried, and what happened]. Needs: [what would let you build one — an environment that reproduces it, or a redacted captured artifact]."
 
 ### Steps
 1. [concrete, minimal-scope step]

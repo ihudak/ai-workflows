@@ -49,7 +49,7 @@ Return this exact shape (no preamble, no chatter):
   **Why not a check**: [what makes this a judgement call no script could decide]
   **Scope**: [project-level CLAUDE.md | global ~/.claude/CLAUDE.md]
 - **Remove**: [the no-op instruction, quoted]
-  **Grounds**: [names no action an agent could take or omit | already enforced by <the hook, check or harness behaviour>]
+  **Grounds**: [the key event it failed to prevent, and that it names no action an agent could take or omit]
   **Scope**: [project-level CLAUDE.md | global ~/.claude/CLAUDE.md]
 - ...
 - _or_ "No new rules suggested"

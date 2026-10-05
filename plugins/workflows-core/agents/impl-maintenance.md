@@ -47,12 +47,6 @@ carrying an unverified claim is how the claim gets adopted.
 1. Read the session handoff.
 2. Read `CLAUDE.md` in the project root (if present) and `~/.claude/CLAUDE.md`
    (global) to understand what rules already exist — avoid suggesting duplicates.
-   Note any instruction there that is a **no-op**: it names no action an agent could
-   take or omit ("be careful", "write clean code"), or it restates what a hook, a
-   check or the harness already enforces. Propose each one's removal as its own line
-   item under `#### CLAUDE.md rules`, with those grounds; a no-op in a plugin
-   reference goes under `#### Reference docs` the same way. The user approves each
-   removal (`instruction-file-maintenance.md` §5).
 3. Read the project's own check commands — its build tool's lint, typecheck and
    test scripts, its pre-commit hooks, its CI workflow — so you know which checks
    already exist. A check that exists but is not wired in, or is silently broken,
@@ -74,6 +68,15 @@ carrying an unverified claim is how the claim gets adopted.
      the weaker fix for a pattern a script can catch every time.
    - **Judgement** — consistency across files, matching the surrounding style, a
      trade-off: anything no script could decide. Only this kind gets a written rule.
+
+   Where an instruction you read already covers the event and the event happened
+   anyway because the instruction names no action an agent could take or omit ("be
+   careful", "write clean code"), it is a **no-op**. Propose replacing it with the
+   check or concrete rule the sort above calls for, and itemise the old text's
+   removal as its own line (`**Remove**` under `#### CLAUDE.md rules`, or under
+   `#### Reference docs` for a plugin reference), for the user to approve
+   (`instruction-file-maintenance.md` §5). Never flag an instruction no key event
+   touched.
 
    Then ask:
    - Could a new **CLAUDE.md rule** have prevented this judgement miss?
@@ -110,7 +113,7 @@ Return this exact shape (no preamble, no chatter):
   **Why not a check**: [what makes this a judgement call no script could decide]
   **Scope**: [project-level CLAUDE.md | global ~/.claude/CLAUDE.md]
 - **Remove**: [the no-op instruction, quoted]
-  **Grounds**: [names no action an agent could take or omit | already enforced by <the hook, check or harness behaviour>]
+  **Grounds**: [the key event it failed to prevent, and that it names no action an agent could take or omit]
   **Scope**: [project-level CLAUDE.md | global ~/.claude/CLAUDE.md]
 - ...
 - _or_ "No new rules suggested"
