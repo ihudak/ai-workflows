@@ -13,7 +13,7 @@ Split out to keep this file under 20,000 characters: the git authorities (`specs
 
 ## Plugin facts
 
-`workflows-core` carries thirty-one reference files (`find plugins/workflows-core/references -type f | wc -l`), six agents (`code-scanner`, `defect-reporter`, `doc-fixer`, `docs-grounder`, `frame-describer`, `impl-maintenance`; `ls plugins/workflows-core/agents | wc -l`), two bundled skills (`model-routing` and the `reference` loader), the cost and status-line scripts under `scripts/`, and the six family-meta commands `CLAUDE.md` § Active plugins names.
+`workflows-core` carries thirty-two reference files (`find plugins/workflows-core/references -type f | wc -l`), seven agents (`architecture-grounder`, `code-scanner`, `defect-reporter`, `doc-fixer`, `docs-grounder`, `frame-describer`, `impl-maintenance`; `ls plugins/workflows-core/agents | wc -l`), two bundled skills (`model-routing` and the `reference` loader), the cost and status-line scripts under `scripts/`, and the six family-meta commands `CLAUDE.md` § Active plugins names.
 
 It ships two hooks — `notify-done` and `test-notify`, both session-wide rather than command-scoped, which is why they live in `workflows-core`: every family plugin declares `workflows-core`, so one copy serves everyone.
 
@@ -68,6 +68,7 @@ The `workflows-core` command's line of the family workflow map, the logging comm
                       └── code-scanner (workflows-core)         (used by /epics, /implement multi-source fan-out, /create-ard, /specify, /design, /idea, /docs-audit)
                       └── frame-describer (workflows-core)      (used by /frames)
                       └── docs-grounder (workflows-core)        (used by /idea, /create-prd, /update-prd, /create-ard, /specify, /epics, /release-notes, /brd-intake, /prd-ground)
+                      └── architecture-grounder (workflows-core) (used by /create-ard)
                       └── impl-maintenance (workflows-core)     (used by 25 of the 32 commands — `grep -l 'workflows-core:impl-maintenance' plugins/*/commands/*.md | wc -l` against `find plugins/dev-workflows/commands plugins/product-workflows/commands plugins/docs-workflows/commands plugins/workflows-core/commands -maxdepth 1 -name '*.md' | wc -l` — all but /docs-profile, /docs-serve, /statusline, /feedback, /prompt, /prompt-brainstorm and /prompt-grill-me — replaced by defect-reporter under --skip-feedback)
                       └── defect-reporter (workflows-core)      (used under --skip-feedback by the same commands as impl-maintenance)
 ```

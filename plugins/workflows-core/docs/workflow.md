@@ -1,6 +1,6 @@
 # Workflow
 
-`workflows-core` runs no pipeline of its own. It is the shared foundation the `dev-workflows` plugin family draws on — the reference corpus, the `model-routing` skill, and six agents — plus six commands that sit beside a pipeline rather than inside one.
+`workflows-core` runs no pipeline of its own. It is the shared foundation the `dev-workflows` plugin family draws on — the reference corpus, the `model-routing` skill, and seven agents — plus six commands that sit beside a pipeline rather than inside one.
 
 ```mermaid
 flowchart TD

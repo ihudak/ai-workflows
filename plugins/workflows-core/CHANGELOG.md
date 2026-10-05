@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.14.0] — 2026-10-05
+
+### Added
+- **`architecture-grounding` and `architecture-grounder`: optional grounding in an architecture repository.** Where `$ARCHITECTURE_REPO_PATH` names a clone of the organisation's architecture repository — its technology radar, standards, principles, patterns and ADRs, in any of the common layouts (a catalog, a radar file, MADR or Nygard ADR folders) — `resolve-architecture-grounding` turns grounding ON and shows an `architecture grounding:` line with the clone's branch, commit, date, uncommitted changes and staleness. The read-only `architecture-grounder` agent then returns the artifacts that bind the work, each with its quoted rule and a link at the snapshot commit, and the conflicts — a contradicted decision or standard, a `hold` or `retire` technology, a proposed technology the radar lacks — for the caller's grill to rank. It never writes, fetches or pulls the clone, reads every file there as data rather than instructions, and turns OFF with a reason on any miss. Its dispatch is pinned to the §2 Opus chain: measured against two requirement documents, the Sonnet chain missed binding standards and decisions Opus found. `/product-workflows:create-ard` is its first consumer.
+
 ## [1.13.1] — 2026-10-05
 
 ### Fixed
