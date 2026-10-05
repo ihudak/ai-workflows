@@ -101,6 +101,9 @@ regressions: 0
 skipped_install_scripts: []   # every return — packages this install placed on disk whose install-time code it
                               # skipped, each with the command that would run (install-time-code.md),
                               # e.g. - "sharp@0.34.1 (npm: install: node install/check.js)"
+                              #      - "vcsdep (pip: source build, git+https://example.com/vcsdep.git@v2)"
+                              #      - "project:packages/web:prepare (npm: prepare: lerna bootstrap)"
+                              #      - "sharp@0.33.5 (npm: install: node install/check.js) — restored unbuilt: npm rebuild sharp"
 reverted:               # BUILD_FAILED and TEST_REGRESSION_REVERTED only — every path the §6.2
   - pom.xml             # revert removed or restored (references/code-handoff.md)
 reverted_from: 7a1f0e2b5c9d4e8f6a3b2c1d0e9f8a7b6c5d4e3f   # the same two statuses only — the tree

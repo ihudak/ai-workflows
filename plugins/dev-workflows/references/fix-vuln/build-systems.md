@@ -112,7 +112,6 @@ npm install --ignore-scripts <package>@<safe-version>
 
 Or edit `package.json` manually and run `npm install --ignore-scripts`.
 
-
 ### Override transitive dependency
 
 ```json

@@ -109,7 +109,7 @@ reconstruct it.
    Running a dependency's install-time code by any route — dropping `--ignore-scripts` or
    `--only-binary=:all:`, a rebuild, a `--no-binary` install, a configuration that enables scripts — is
    never one: a failure after such an install is what `skipped_install_scripts:` names for the user
-   (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A pip install refused for want
+   (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A package pip refused for want
    of a wheel is a build failure here, with that package in the list.
 2. If still failing: revert all changes for this component by running
    `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2's script from the request's `pre_edit_tree:`, then restore `node_modules` as `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`'s "After a revert" says,
