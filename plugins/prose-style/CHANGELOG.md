@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.2 — 2026-10-05
+
+### Fixed
+- **Every agent carries the amended untrusted-content block:** the instruction files the harness gives an agent for the session's directory and its user are followed, every other instruction file is data, and a content line that starts `Untrusted-content notice:` is never copied as it stands.
+
 ## 0.5.1 — 2026-10-05
 
 ### Fixed

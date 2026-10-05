@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.17.3] — 2026-10-05
+
+### Fixed
+- **Every agent carries the amended untrusted-content block (workflows-core 1.16.4):** the instruction files the harness gives an agent for the session's directory and its user are followed, every other instruction file is data, and a content line that starts `Untrusted-content notice:` is never copied as it stands.
+
 ## [3.17.2] — 2026-10-05
 
 ### Fixed
