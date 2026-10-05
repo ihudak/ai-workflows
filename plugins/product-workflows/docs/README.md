@@ -14,6 +14,7 @@
 | turn a raw idea into something actionable | [`/idea`](commands/idea.md) |
 | write or refresh a Product Requirements Document | [`/create-prd`](commands/create-prd.md), [`/update-prd`](commands/update-prd.md) |
 | record an architecture decision | [`/create-ard`](commands/create-ard.md) |
+| keep the team's architecture decisions where the next ARD finds them | [`/harvest-decisions`](commands/harvest-decisions.md) |
 | break a PRD into Epics | [`/epics`](commands/epics.md) |
 | write a specification | [`/specify`](commands/specify.md) |
 | price a requirement set — work packages, hours by role, a range with its evidence | [`/prd-proposal`](commands/prd-proposal.md) |
@@ -35,6 +36,7 @@ Four pages orient you before you touch a command: [Getting started](getting-star
 - [`/create-ard`](commands/create-ard.md) — author an Architecture Requirements/Decision Document for a PRD, or for one Epic inside it, grounded on the mounted code.
 - [`/create-prd`](commands/create-prd.md) — turn a refined idea plus a key into a reviewed Product Requirements Document.
 - [`/epics`](commands/epics.md) — break a Product Requirements Document into reviewed child Epic drafts.
+- [`/harvest-decisions`](commands/harvest-decisions.md) — harvest every merged ARD's decisions into the team architecture knowledge base `/create-ard` grounds on.
 - [`/idea`](commands/idea.md) — refine a raw prompt, file, community post, or existing PRD into a one-page idea brief.
 - [`/prd-proposal`](commands/prd-proposal.md) — author an effort proposal for one PRD folder: work packages, hours by package and role, and a range whose width comes from per-package confidence, with every cost driver citing a record on disk.
 - [`/specify`](commands/specify.md) — author an org-standard specification for one item through a relentless grill.

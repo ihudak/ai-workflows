@@ -43,6 +43,7 @@
     "create-ard",
     "create-prd",
     "epics",
+    "harvest-decisions",
     "idea",
     "specify",
     "update-prd"

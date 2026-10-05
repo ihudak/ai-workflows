@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.16.0] — 2026-10-05
+
+### Added
+- **`architecture-kb` — the team architecture knowledge base.** The format authority for `$SPECS_PATH/architecture/`: one record per `[AD#N]` of the ARDs on the specs default branch (`decisions/<KEY>-AD<N>.md`, an `index.yaml`, a `README.md`), its statuses (`accepted`, `superseded`, `withdrawn`), `Supersedes`, the *Applied in* and *Deviated in* citations, what the harvest owns, and every problem kind with its fix. `/product-workflows:harvest-decisions` writes it.
+- **Architecture grounding reads the team root.** `architecture-grounding` resolves `$SPECS_PATH/architecture` beside the organisation's repository and shows a `team decisions:` line (with a `differs from <default-ref>` clause when the run's branch is behind the latest harvest); one `architecture-grounder` dispatch reads both roots, tags every reference `root: organisation | team`, skips withdrawn records, caps references per root, and raises `contradicts-team-decision`.
+- **`kb/` branches.** `specs-repo-git` and `phase-handoff` own the keyless `kb/harvest-<date>` branch the harvest hands off on; `architecture/**` is an advisory deliverable class.
+
 ## [1.15.1] — 2026-10-05
 
 ### Fixed
