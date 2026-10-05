@@ -49,8 +49,8 @@ Refuse to run without `repo_path` and at least one element in **`refs`**.
 **An empty range is never a resolution.** Where the range an element resolved to changes no file (`git -C "<repo_path>" diff --quiet <range>` exits 0), do not report it `local_ref` with `files_changed: 0`. It goes to the Key-commit fallback, and where that finds nothing, to `unresolved_prs` with the range named in its `reason`. A summary of nothing tells the caller the work changed nothing, and `/document` and `/release-notes` would write from it. The one exception is a single commit's own change — a one-parent commit's `<sha>^...<sha>` (step 3's read, or a scan element handed as `{<sha>, <sha>^}`), or a root commit's against the empty tree — where that change is empty: the commit's content *is* nothing, so report it `local_ref` with `files_changed: 0` and a `summary` saying it is an empty commit.
 
 When `repo_url_slug` is provided, before summarising run
-`git -C <repo_path> remote get-url origin`, strip a trailing `.git`, and compare
-the URL's last path segment to `repo_url_slug`. On mismatch, return
+`git -C <repo_path> remote get-url origin`, strip any trailing `/` and then a trailing `.git`, and compare
+the URL's last path segment — what follows its last `/` or `:` — to `repo_url_slug`. On mismatch, return
 `status: REPO_MISSING` with a note naming both slugs — do NOT summarise the wrong
 repository. When `repo_url_slug` is absent, trust `repo_path` as given.
 

@@ -12,7 +12,7 @@ convention is a separate thing with a wider writer set — all three of the comm
 
 ## 1. The block
 
-One `## <YYYY-MM-DD> — /implement` block per run, with one entry: the code repository the run branched. A change another code repository needed is a later run from there, with a block of its own. A block appended before `dev-workflows` 4.7.0 may carry one entry per repository that run touched, and a reader takes every entry. For example:
+One `## <YYYY-MM-DD> — /implement` block per run, with one entry: the code repository the run branched, its `repo:` that repository's `<repo-slug>` (`workflows-core:components` §1) — the name `/docs-workflows:document` and `/docs-workflows:release-notes` resolve against their slug→clone maps — or, where it has no `origin` and so no slug, its top-level directory's name, which no such map resolves. A change another code repository needed is a later run from there, with a block of its own. A block appended before `dev-workflows` 4.7.0 may carry one entry per repository that run touched, and a reader takes every entry. For example:
 
 ```markdown
 # Implementation — ACME-77-01 order intake

@@ -42,8 +42,8 @@ commit with no parent is read against the empty tree, or, in a shallow clone, wh
 the clone's boundary, comes back unresolved.
 
 When `repo_url_slug` is provided, before summarising run
-`git -C <repo_path> remote get-url origin`, strip a trailing `.git`, and compare
-the URL's last path segment to `repo_url_slug`. On mismatch, return
+`git -C <repo_path> remote get-url origin`, strip any trailing `/` and then a trailing `.git`, and compare
+the URL's last path segment — what follows its last `/` or `:` — to `repo_url_slug`. On mismatch, return
 `status: REPO_MISSING` with a note naming both slugs — do NOT summarise the wrong
 repository. When `repo_url_slug` is absent, trust `repo_path` as given.
 
