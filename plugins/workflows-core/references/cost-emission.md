@@ -1,7 +1,7 @@
 # Session Cost Emission — Shared Reference
 
-Single source of truth for the plugin family's session-cost subsystem. Twenty-five of
-the twenty-seven commands with an §7 row cite this file from their terminal
+Single source of truth for the plugin family's session-cost subsystem. Twenty-six of
+the twenty-eight commands with an §7 row cite this file from their terminal
 "Session cost" phase and execute its steps inline through the single `emit-cost`
 entry point (§11). The other two — `/prompt-brainstorm` and `/prompt-grill-me` —
 cede the session before such a phase could run, call `emit-cost` never, and
@@ -34,7 +34,11 @@ maintainer — the plugin only ever appends immutable per-invocation measurement
 **Cost is computed, never read.** Claude Code stores no dollar figure in the
 transcript. Every assistant message carries `.message.usage` + `.message.model`;
 `${CLAUDE_PLUGIN_ROOT}/scripts/session-cost.py` sums tokens per model and multiplies by a price table
-(§4). Dollars are therefore an estimate that drifts from Claude Code's own figure
+(§4). One API response is written as several assistant records sharing one `.message.id`, each
+repeating the usage — a streaming partial first, the final record later — so within one measured
+window each message id is counted once, at its final usage, across the main transcript and its
+subagent transcripts together. A call whose records straddle two windows' edge is still counted in
+each. Dollars are therefore an estimate that drifts from Claude Code's own figure
 by the accuracy of the price table — an accepted trade (cost accuracy is
 explicitly secondary to code/doc quality).
 
@@ -330,7 +334,7 @@ that model exactly as before).
 
 ## 7. Attribution (phase / role / keys)
 
-Fixed per-command labels, with six inferred exceptions:
+Fixed per-command labels, with seven inferred exceptions:
 
 | Command | phase | role |
 |---------|-------|------|
@@ -358,6 +362,7 @@ Fixed per-command labels, with six inferred exceptions:
 | `/feedback` | **inferred** | **inferred** |
 | `/prompt-brainstorm` | **inferred** | **inferred** |
 | `/prompt-grill-me` | **inferred** | **inferred** |
+| `/diagnose-session` | **inferred** | **inferred** |
 | `/docs-brand` | docs-scaffold | dev |
 | `/docs-init` | docs-scaffold | dev |
 | `/docs-audit` | docs-audit | dev |
@@ -398,6 +403,8 @@ a frame set is real spend on a real artifact in the specs tree, which is why thi
 command emits at all — the alternative is not "unmeasured" but *misattributed*, per
 §3's semantics rolling it into whatever command runs next.
 
+**`/diagnose-session` passes `target_command: n/a` on every run**, so the bullet below for a target of `n/a` charges it to `plugin-feedback`/`n/a`: a diagnosis is about the plugin itself, whichever command it reads, so it inherits nothing.
+
 **`/prompt`, `/feedback`, `/prompt-brainstorm` and `/prompt-grill-me` inference
 (inherit the corrected command's labels).**
 The discriminator is **`target_command`**, passed in by the caller per §11 — the
@@ -420,12 +427,13 @@ not attempt to infer it from anything else.
   Treat it as the `n/a` case below.
 - **Target is `n/a`, or a command with no row above -> `phase: plugin-feedback`,
   `role: n/a`.** The second case covers `/vuln`, `/upgrade`, `/docs-profile`,
-  `/docs-serve` and `/statusline`, none of which emits cost and so has nothing to inherit.
+  `/docs-serve`, `/statusline` and `/harvest-decisions`, none of which emits cost and so has
+  nothing to inherit.
 - **Target is `/frames` -> resolve ITS inference first**, then inherit the result,
   exactly as for `/release-notes`. One level only. Where no folder resolves — which
   for `/frames` means the run never started — treat it as the `n/a` case.
-- **Target is `/feedback`, `/prompt`, `/prompt-brainstorm` or `/prompt-grill-me` -> treat as `n/a`.**
-  A correction to a correction has no lifecycle phase of its own, and inheriting
+- **Target is `/feedback`, `/prompt`, `/prompt-brainstorm`, `/prompt-grill-me` or `/diagnose-session` -> treat as `n/a`.**
+  A correction to a correction, or to a diagnosis, has no lifecycle phase of its own, and inheriting
   from an inferred row would regress without a base case. This is the one rule the
   two deferring commands share with the two immediate ones: what a run inherits is
   decided by its `target_command`, never by which of the four is asking.
@@ -434,7 +442,7 @@ not attempt to infer it from anything else.
 than guessed, and aggregation should treat it as unattributed rather than folding
 it into `dev`.
 
-**`/vuln`, `/upgrade`, `/docs-profile` and `/docs-serve` emit no cost entry, and that is a decision about what the number is for.** A cost entry measures **AI investment in a product increment**, and the rule is: *a cost entry attaches to a run that advances a PRD- or BRD-scoped artifact — or builds the documentation repository a product is documented in, which is the `docs-workflows` family's unit of attribution and which §8 rung 2 files per docs repo.* That second clause is what `/docs-init` and a standalone `/docs-brand` satisfy, and why they have §7 rows. A CVE remediation, a library version bump, a docs-profile refresh and a dev-server start advance none — they are noise against a PRD, a BRD or a docs repository, and a metric that averages the two answers a question nobody asked.
+**`/vuln`, `/upgrade`, `/docs-profile`, `/docs-serve` and `/harvest-decisions` emit no cost entry, and that is a decision about what the number is for.** A cost entry measures **AI investment in a product increment**, and the rule is: *a cost entry attaches to a run that advances a PRD- or BRD-scoped artifact — or builds the documentation repository a product is documented in, which is the `docs-workflows` family's unit of attribution and which §8 rung 2 files per docs repo.* That second clause is what `/docs-init` and a standalone `/docs-brand` satisfy, and why they have §7 rows. A CVE remediation, a library version bump, a docs-profile refresh, a dev-server start and a decision harvest into the team architecture knowledge base advance none — they are noise against a PRD, a BRD or a docs repository, and a metric that averages the two answers a question nobody asked.
 
 **This is restated here because it lived only on the command pages.** `docs/commands/vuln.md` and
 `docs/commands/upgrade.md` have carried the reason all along — *"runs outside the PRD pipeline: no
@@ -554,7 +562,9 @@ entries into `<PRD-dir>/dev-workflows/cost/<sid8>.md`:
 
 - **Same-session `<sid8>` match is pre-selected** as the likely one -> the
   create-in-markdown -> keyed-command flow becomes
-  effectively one tap.
+  effectively one tap. **An entry charged to `plugin-feedback` is listed but never
+  pre-selected:** it is spend on the plugin itself, which a later keyed run in the
+  same session does not make that PRD's.
 - New-session pending files are listed for the user to pick.
 - No match -> leave for manual relocation, or accept the partial loss.
 - **Relocation moves, then DELETES.** On a confirmed relocation the pending
@@ -576,12 +586,12 @@ and acceptable.
 
 ## 11. Caller contract — `emit-cost`
 
-One entry point, called by the twenty-five commands that measure themselves (§1) and by
+One entry point, called by the twenty-six commands that measure themselves (§1) and by
 whichever of them replays a §13 record (never by the two that defer — they call
 nothing). Every caller supplies `command`, `phase`, `role` (or the
-`inferred` marker — `/release-notes`, `/frames` and the four feedback commands), `key` (or
-`null`), `source`, and `plugin_version`; the four feedback commands additionally
-supply `target_command` — `/prompt` and `/feedback` directly, `/prompt-brainstorm`
+`inferred` marker — `/release-notes`, `/frames`, the four feedback commands and
+`/diagnose-session`), `key` (or `null`), `source`, and `plugin_version`; the four
+feedback commands and `/diagnose-session` additionally supply `target_command` — `/prompt` and `/feedback` directly, `/prompt-brainstorm`
 and `/prompt-grill-me` through the §13 record a replay reads it from. `emit-cost` does the rest; it NEVER commits, NEVER writes
 into a docs/code repo or the current working directory, where it is not the specs repository, and NEVER fails the
 run. The cost entry is committed later, once, by the run's terminal
@@ -591,7 +601,7 @@ run. The cost entry is committed later, once, by the run's terminal
 Inputs:
 - `command` — the exact slash-command name (e.g. `/implement`,
   `/document (keyed mode)`, `/document (direct mode)`).
-- `phase`, `role` — the §7 labels, or the `inferred` marker for the six
+- `phase`, `role` — the §7 labels, or the `inferred` marker for the seven
   commands §7 resolves. They resolve from **different** data, and each must
   therefore be given it:
   - `/release-notes` — resolved from `specification.md` / `design.md` presence
@@ -603,8 +613,10 @@ Inputs:
     be re-derived from disk (it lives in the run's own context). It is passed in:
     directly by `/prompt` and `/feedback`, and out of the §13.1 record for the two
     that deferred.
-- `target_command` — **required for all four feedback commands** (supplied
-  directly by `/prompt` and `/feedback`; read out of the §13.1 record when a
+  - `/diagnose-session` — resolved from `target_command`, which it always passes as
+    `n/a`, so it lands on `plugin-feedback`/`n/a`.
+- `target_command` — **required for all four feedback commands and for `/diagnose-session`** (supplied
+  directly by `/prompt`, `/feedback` and `/diagnose-session`, which always passes `n/a`; read out of the §13.1 record when a
   replay builds the entry for `/prompt-brainstorm` or `/prompt-grill-me`). The
   §7 **row name** of the command whose output is being corrected or remarked on, or
   `n/a`. Note this is the bare row name (`/document`), not the mode-qualified form
@@ -762,7 +774,7 @@ exists to catch.
 
 ### 13.3 The replay
 
-`emit-cost` step 2 (§11). **No deferred file ⇒ nothing changes**; the twenty-five
+`emit-cost` step 2 (§11). **No deferred file ⇒ nothing changes**; the twenty-six
 commands that measure themselves (§1) never take this path.
 
 Otherwise the run passes one `--claim <command>` per deferred record, oldest
@@ -776,7 +788,8 @@ first, and the script partitions the window:
 
 **Matching by name is the whole point, and positional pairing is the trap.** A
 window routinely holds boundaries no claim corresponds to: `/vuln`, `/upgrade`,
-`/docs-profile`, `/docs-serve` and `/statusline` are real commands that emit no cost entry,
+`/docs-profile`, `/docs-serve`, `/statusline` and `/harvest-decisions` are real commands that
+emit no cost entry,
 and an interrupted run leaves a boundary too. Pair the
 k-th claim with the k-th boundary and a single `/vuln` in the window shifts every
 claim by one — filing a security run's spend under a PRD lifecycle phase, which

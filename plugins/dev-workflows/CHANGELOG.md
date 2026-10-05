@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.12.0] — 2026-10-05
+## [4.14.0] — 2026-10-05
 
 ### Added
 - **`/vuln` and `/upgrade` install a new dependency version without the code it ships to run at install time.** An npm, yarn or pnpm package's `preinstall`, `install` or `postinstall` script, and the build of a Python source distribution, run code a release ships with the user's permissions — the supply-chain path these two commands open themselves, in a container and on a host alike. `vuln-fixer` and `upgrade-executor` now install with `--ignore-scripts` (yarn berry `--mode=skip-build`) or `--only-binary=:all:` (pipenv `PIP_ONLY_BINARY=:all:`, its lock step included) and name every package whose install-time code they skipped — measured against what was on disk before the install, so a never-installed clone lists every scripted package — each with the command that would run. A version-control, URL or local-path Python requirement, which pip builds whatever the flags say, is found by reading the requirements as text, then left out and listed. Every summary lists them, whatever the outcome. Running that code by any route is never an automatic fix.
@@ -13,6 +13,26 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **The project's own install scripts** run like its build, each with npm and every package manager's scripts turned off in its environment, so its pre and post hooks, and any rebuild it calls, run no dependency's code. One that installs, rebuilds or bootstraps packages is listed and needs the option — allowed, it runs as written — and a project that turns scripts off itself is left that way. **After a revert**, the agent or the orchestrator restores the lockfile's versions in `node_modules` and lists each package it put back unbuilt, with the rebuild command for the user to run; a later unit's install that puts back a version an earlier one moved is marked the same way, and the test-failure question and the summary name every package the run has left unbuilt, since a later unit's tests may fail on one.
 - **Check 21** holds every install command in the two install references, `install-time-code.md`, the two agents and the two commands to that form — every code span and every command of a chained line on its own, flags before the subcommand, npm's install and ci aliases, dedupe, link, pip download, wheel and sync, pip-sync and pipenv lock included; `--ignore-scripts=false`, `:all:` anywhere in a no-binary value, `:none:` for only-binary, a flag written only in a trailing comment, and `setup.py install` refused — with forty-three self-test cases, each red one failing first.
 - Bundler, Poetry, uv, PDM, Hatch, Composer, NuGet, Go, Cargo, Maven and Gradle install unchanged; `install-time-code.md` holds the rules. **Probes (Sonnet, offline npm and pip fixtures with benign-looking install code):** today's text ran a dependency's script — and the agent's notes said it had not; the new text skipped and listed it, a never-installed clone listed every scripted package, a build that needs the script failed with the flag kept. Which commands run which hooks, what pip's flags leave building and pipenv's allow route were measured on npm 11, yarn 1.22, pnpm 10, pip and pipenv 2026.8; yarn 4's `run` under the scripts-off environment is the one route not measured. An earlier in-run ask-and-retry design was reviewed twice and replaced by the rerun option.
+
+## [4.13.1] — 2026-10-05
+
+### Fixed
+- **The session-cost page's list of commands that emit no cost entry is complete.** Its account of why a ceded run is matched by name, not by position, named `/vuln`, `/upgrade`, `/workflows-core:statusline` and `/docs-workflows:docs-profile`; it now names `/docs-workflows:docs-serve` and `/product-workflows:harvest-decisions` too, as `workflows-core:cost-emission` §13.3 does.
+
+## [4.13.0] — 2026-10-05
+
+### Added
+- **`interface-designer` takes the glossary.** `/design` Phase 5 now hands each take of the interface fan-out the feature folder's term records, `/specify`'s `_glossary.md` and `/design`'s own `_design-glossary.md`, and, on a per-Epic design, the PRD folder's `_glossary.md`, whichever exist. Phase 5 writes each term to `_design-glossary.md` as it settles, so the fan-out sees every term settled before it. Each take names the interface's types, operations and parameters in the terms they define, keeps the code's name where the code already names a concept differently, and says so. The glossary is a context input: a file a take cannot read is skipped and named in its proposal. Adapted from mattpocock's DESIGN-IT-TWICE, whose briefs carry the project's glossary so that parallel takes name things consistently.
+
+## [4.12.0] — 2026-10-05
+
+### Changed
+- **`/design` states an interface's behaviour, and tests the producer's side.** Three rules in `design-format`, each checked by `design-reviewer`:
+  - **Behaviour beyond the shape:** a boundary interface, one the change introduces or alters on the producing side that another component (a repository, or a module of one) or a consumer outside the system calls or receives the messages of, states what a caller gets on each failure, its side effects and, wherever they apply, whether a repeat repeats one, ordering and timeouts, in section 4 or against it in section 7. An altered one states the behaviour the change touches. A shape alone is MAJOR.
+  - **A producer-side test:** each boundary interface has a test in `## Test strategy` that drives the real implementation through the interface, failure cases included. A consumer's stub shows that the consumer copes, never that the producer conforms, so none stands in for it (MAJOR). A design that only builds a contract artifact checks the artifact instead: it parses or compiles, and one that changes an artifact consumers already use stays compatible (MINOR where the strategy has no such check). A consumed interface's stub models the failures its `[AD#N]` Rule or the design states (MINOR where it does not).
+  - **A contract copy is never edited in place:** on a multi-component PRD, a consumer whose repository is not the contract artifact's names how it gets it, a package pinned to a version or a copy recording its source path and revision, recorded when the copy is taken, usually by `/implement` (MINOR where it names neither). `design-reviewer` now receives the ARD interface rows the Epic's `## Contract` lines cite, to tell which artifacts come from another repository. The copy changes only by being taken again from its source (MAJOR where the design edits it).
+
+  Phase 5 grills each boundary interface's behaviour and its producer-side test. Adapted from spec-kit's contract-driven development guide (aaa8fa92). The deviation convention is unchanged: a design that departs from an interface row still records an `## ARD deviations` entry for the architect.
 
 ## [4.11.1] — 2026-10-05
 

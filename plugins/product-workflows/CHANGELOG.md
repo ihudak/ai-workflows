@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.19.1] — 2026-10-05
+
+### Fixed
+- **The docs no longer say this plugin has fourteen commands, or that every command here does what all but one does.** It has had fifteen since `/harvest-decisions` shipped in 3.17.0, and that one runs a bundled script: it emits no cost entry, loads no `model-routing`, dispatches no `impl-maintenance`, resolves no docs grounding, and uses none of the resume and context-hygiene mechanism. `model-routing.md`, `session-feedback.md`, `agents.md`, `resume-and-checkpoints.md`, the docs index and `environment.md`'s `$DOCS_PATH` entry now name it as the exception; `session-cost.md` and `roles-and-phases.md` count fourteen cost-emitting commands; `workflow.md`, `environment.md`'s `$SPECS_PATH` entry and the repository README say fifteen. The cost page gives `workflows-core:cost-emission` §7's reason for the exception: the command writes the team architecture knowledge base rather than advancing a PRD- or BRD-scoped artifact.
+
+## [3.19.0] — 2026-10-05
+
+### Changed
+- **An ARD interface row states behaviour, not only a shape.** For a `new` or `changed` row of `## Contracts`, the `[AD#N]` Rule states what either side may rely on: the shape, and, wherever the interface has them, what a caller gets on a failure, whether a repeated request or a redelivered message repeats a side effect, and ordering. Each side's Epic is designed and built against the row alone, so a consumer's stub can model only what the row states. `/create-ard` Phase 4 settles that behaviour with the rest of the interface, and `ard-reviewer`'s *Contract completeness* flags a `new` or `changed` row of any kind but `shared schema` whose Rule states a shape alone (MAJOR). A row whose decision an earlier version of the ARD already held keeps its Rule until a change supersedes it, since stating more changes what the decision requires; the reviewer flags it MINOR.
+
 ## [3.18.0] — 2026-10-05
 
 ### Changed

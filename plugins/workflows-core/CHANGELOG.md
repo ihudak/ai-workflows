@@ -5,6 +5,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.22.1] — 2026-10-05
+
+### Fixed
+- **The session-cost selftest now covers `main()`'s shared message-id map.** Its unit checks passed one map to `scan_main` and `read_subagents` by hand, so deleting `main()`'s own `by_id=by_id` argument left the selftest green while a fork's copy of a main-transcript record was counted twice. A run through the CLI now checks that a subagent file repeating a main-transcript id adds nothing to the totals, while the file's own new id still counts.
+- **`/harvest-decisions` is listed among the commands that emit no cost entry and that no run flag applies to.** `cost-emission` §7's paragraph on why commands emit no cost entry named `/vuln`, `/upgrade`, `/docs-profile` and `/docs-serve`, and now names `/harvest-decisions` with its reason: a decision harvest writes the team architecture knowledge base and advances no PRD- or BRD-scoped artifact. §7's no-row bullet, §13.3's list of commands that leave a boundary no claim matches, and `session-cost.py`'s `match_claims` docstring name it too. `run-flags` §3 now says it runs no `strip-run-flags` at all: it never reads a run-flag variable, and an explicit run flag reaches its own argument parse, which refuses any argument but `--dry-run`.
+
+## [1.22.0] — 2026-10-05
+
+### Added
+- **`/diagnose-session` reads a session's transcripts and reports why a run went wrong.** It works on the current session, or a past one named by id or path in its first argument; the rest of the argument is your description, kept verbatim:
+  - **Intake first.** It asks one question at a time until you agree a problem statement: the session, the turns, what you expected, what happened, and what you care about. It reads nothing before you answer.
+  - **Locate.** It finds the main transcript and every subagent transcript, confirms a past session by its first prompt and timestamp, and writes a case file to a new directory under `~/.claude/workflows-core/diagnoses/`, outside every repository.
+  - **Triage.** It dispatches the new `session-analyst` agent seven times in parallel, one per dimension: timeline, plan adherence, repeated work, stumbles, claims and evidence, conflicting instructions, and cost and time. Past 20,000 lines, three dimensions are split by line range, each with one more dispatch over the subagent transcripts, and every reader numbers turns from the case file's turn index. It discards every finding that cites no `path:line`.
+  - **Report.** Each verdict claim carries its citation, after the run checks that the cited line shows what the finding says. The report states whether the family was involved and where, and proposes no fix. Where the family was involved, it prints a ready-to-run `/workflows-core:feedback` line with a summary redacted as feedback is.
+
+  The new `session-diagnosis` reference holds the rules: context safety (measure before reading, never print a record whole), locating a session (with Claude Code's store as observed starting points, a command's expanded body read from the transcript itself, and each API message's usage counted once), the case file, the dimensions, the findings shape and the report. Its one write into `$SPECS_PATH` is its own session-cost entry, between `specs-preflight` and `commit-artifacts`: it passes `target_command: n/a`, so `cost-emission` §7 charges it to `plugin-feedback`/`n/a`, and the analysts' spend stays out of the next command's entry. `--skip-costs` applies; `run-flags` lists it among the free-text commands. It never modifies a session file. Adapted from superpowers' diagnosing-superpowers. Its bundle export, issue filing and similar-session search were not taken.
+- **A pending cost entry charged to `plugin-feedback` is no longer pre-selected** for relocation into the next keyed run's PRD (`cost-emission` §9): it is spend on the plugin itself. This covers keyless `/feedback` and `/prompt` entries with nothing to inherit, as well as every `/diagnose-session` entry.
+- **The `commit-artifacts` consumer count is re-derived** with a recipe that matches both phrasings a command executes it by, so `/harvest-decisions` is counted; the git rules' counts follow.
+
+## [1.21.2] — 2026-10-05
+
+### Fixed
+- **Session cost counted most API calls two or three times.** Claude Code writes one API response as several assistant records sharing one message id, each repeating the usage: a streaming partial first, then the final record. `session-cost.py` summed every record, so a call's input and cache reads were counted once per record. In the main transcript, where the repeats are identical, its output was counted once per record too. Measured on one long session, the main transcript's output tokens came to about 2.5 times the session's unique messages, and the session's dollar figure, subagents included, to about 1.9 times ($3,616 against $1,933). Within one measured window, each message id now counts once, at its final usage, across the main transcript and its subagent transcripts together, so a forked agent's copy of its parent's record is not counted again. Cost entries written before this release overstate their dollars by roughly that much; the ratio varies with how a session splits between the main transcript and its subagents.
+
+## [1.21.1] — 2026-10-05
+
+### Changed
+- **`phase-handoff` §4.0 reclassifies the two term records.** `/specify`'s `_glossary.md` and `/design`'s `_design-glossary.md` move from *unread* to *advisory*: `/design`'s interface fan-out now reads both. No handoff array or clause changes, as both commands' handoff sets also hold a gated path.
+
+## [1.21.0] — 2026-10-05
+
+### Changed
+- **The grill's cross-component gaps take two more.** `grilling-technique`'s *Cross-component* category now also finds, at `/create-ard` and `/design`, a new or changed interface stated as a shape alone, with nothing on what a caller gets on a failure or on whether a repeat repeats a side effect (at `/create-ard`, only a row the prior ARD does not already hold), and, at `/design`, which plans the tests, a producer with no test of its own side: a consumer's stub shows that the consumer copes, never that the producer conforms. Both apply on a multi-component run.
+
 ## [1.20.0] — 2026-10-05
 
 ### Added

@@ -1,6 +1,6 @@
 # Model routing reference
 
-Every command here classifies its own task before doing real work, and that classification decides how much grilling depth and authoring rigor the rest of the run applies — and, for three commands, whether the session itself must be running on Opus. This page covers the four things a user can observe or influence about that; the full policy — including the mechanics agents don't need restated here — lives in `workflows-core:model-routing/classification`, named again at the end.
+Every command here but `/harvest-decisions` classifies its own task before doing real work, and that classification decides how much grilling depth and authoring rigor the rest of the run applies — and, for three commands, whether the session itself must be running on Opus. This page covers the four things a user can observe or influence about that; the full policy — including the mechanics agents don't need restated here — lives in `workflows-core:model-routing/classification`, named again at the end.
 
 ## What gets classified
 
@@ -11,7 +11,7 @@ Every command here classifies its own task before doing real work, and that clas
 | `SIGNIFICANT` | Multi-repo, cross-cutting, or an unusually large requirement/slice count. |
 | `HIGH-RISK` | Security-, data-, or contract-sensitive — a mistake here misdirects the product itself. |
 
-All fourteen commands in this plugin load the `model-routing` skill, run this classification as an early step, and state their class plus a one-line reason: `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/epics`, `/brd-intake`, `/prd-ground`, `/brd-split`, `/brd-interview`, `/brd-package`, `/brd-reconcile`, `/prd-proposal`, and `/brd-proposal`. Each command has a typical class for its own kind of work (a Product Requirements Document authoring run is typically `MODERATE`; an unusually large BRD requirement count or slice fan-out is typically `SIGNIFICANT`) but escalates when the task in front of it warrants it.
+Fourteen of this plugin's fifteen commands load the `model-routing` skill, run this classification as an early step, and state their class plus a one-line reason: `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/epics`, `/brd-intake`, `/prd-ground`, `/brd-split`, `/brd-interview`, `/brd-package`, `/brd-reconcile`, `/prd-proposal`, and `/brd-proposal`. `/harvest-decisions` does not: it runs a bundled script with no model judgement, so there is no task to classify. Each command has a typical class for its own kind of work (a Product Requirements Document authoring run is typically `MODERATE`; an unusually large BRD requirement count or slice fan-out is typically `SIGNIFICANT`) but escalates when the task in front of it warrants it.
 
 ## What classification changes
 
@@ -27,7 +27,7 @@ All fourteen commands in this plugin load the `model-routing` skill, run this cl
 
 ## What floors a classification
 
-**Four of the fourteen commands here floor their classification at `SIGNIFICANT`, and all four floor for the same kind of reason** — what the run *produces or changes*, never how much of it there was to read. Four out of fourteen sharing one reason is a pattern in this plugin, not an exception:
+**Four of the fourteen commands that classify floor their classification at `SIGNIFICANT`, and all four floor for the same kind of reason** — what the run *produces or changes*, never how much of it there was to read. Four out of fourteen sharing one reason is a pattern in this plugin, not an exception:
 
 - **`/prd-proposal` and `/brd-proposal`** — the run produces a number a customer will make a commercial decision on, and the format's own [residual-risk rule](proposal-format.md#the-risk-the-format-cannot-remove) states it plainly: a plausible number with a defensible-looking argument is more dangerous than an obviously rough one. An umbrella compounds it, because a reader checking one is checking a roll-up rather than a derivation.
 - **`/brd-package`** — the adversarial self-review's own output gates the run (a self-review that finds nothing is a rubber stamp), and the rendered prompt is the one artifact this plugin produces that an outside party pastes into an agent and runs, with nobody from the delivery team present to correct it.

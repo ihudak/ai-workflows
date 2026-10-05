@@ -38,6 +38,15 @@ not spent here. Do not escalate it.
 - **`dependency_category`** (optional) — the seam's category if the caller already settled it (see
   `${CLAUDE_PLUGIN_ROOT}/references/design-format.md` `## Seams`). Absent ⇒ classify it yourself and say
   which you chose.
+- **`glossary`** (optional) — absolute paths of the term records: the feature folder's `_glossary.md`,
+  which `/specify` writes, and `_design-glossary.md`, which `/design` writes, and, for a per-Epic
+  design, the PRD folder's `_glossary.md` — whichever exist. Name the
+  interface's types, operations and parameters in the terms they define, each in the sense they give
+  it, so the three takes and the design speak the project's language rather than three of their own.
+  Where the code already names a concept differently, keep the code's name and say so. This is a
+  **context** input under the read-failure contract in
+  `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`: a file you cannot read is skipped, and
+  named in your proposal.
 
 ## Method
 
@@ -66,7 +75,8 @@ Return exactly this shape, no preamble:
 
 ### Interface
 [Signatures, and the facts a caller must know that a signature does not carry: invariants, ordering
-constraints, error modes, required configuration. Real names, real types.]
+constraints, error modes, required configuration. Real names, real types — in the `glossary`'s terms
+where one was given; any glossary file you could not read, named.]
 
 ### Usage example
 [How a caller actually uses it — the dominant case, in code.]
