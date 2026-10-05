@@ -969,7 +969,7 @@ Terminal phase — runs AFTER the Phase 5 Final Report is composed; NEVER
 interrupts an earlier phase. Persist the run's out-of-scope / manual-step
 follow-ups by invoking `Skill(skill: "workflows-core:reference", args: "followup-emission")` and executing its steps inline.
 
-1. **Collect** the qualifying follow-ups: one per other code repository a change is needed in (the plan's Out of scope or Phase 3A/3B step 2), listing each change this run found there, manual publish/config steps and
+1. **Collect** the qualifying follow-ups: one per other code repository a change is needed in (the plan's Out of scope or Phase 3A/3B step 2), each named as the reference's §6 names it and two it names alike taken as one, listing each change this run found there, manual publish/config steps and
    out-of-scope maintenance items surfaced in the Phase 5 `### Session
    learnings` section (e.g. an impl-maintenance suggestion that touches
    another repo or team, or a manual post-merge step). **Do NOT** collect the
