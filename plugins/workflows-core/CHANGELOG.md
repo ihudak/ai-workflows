@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.16.2] — 2026-10-05
+
+### Fixed
+- **A specs repository standing on its default branch was never brought up to date, so its artifact pushes were rejected for good.** `specs-repo-git` §3.5's B1 did nothing, and only B2 and B4 pulled after switching. A checkout left on the default branch while a pull request merged on the remote, or while a teammate pushed session files, committed on a stale base; the push was rejected as non-fast-forward, and §6 said the next run would retry it, which it did, with the same result, on every run. §3.4 now fast-forwards a default branch that is strictly behind `origin/<default>` before it flushes (`pull --ff-only origin <default>`, silent on success, reported on failure). A branch that has already diverged is still never rebased: §4 step 6 and a new §6 line say no retry will succeed and name `pull --rebase` and the push for the user to run.
+- **A run that refused before its preflight could commit on a detached HEAD.** G0's test lives in the preflight, which such a run skips, yet its tail still reaches `commit-artifacts`, which could commit the cost entry and any leftover session files onto a commit no ref reaches. §4 step 1 now tests that state itself on such a run and takes G0's blocked outcome.
+
 ## [1.16.1] — 2026-10-05
 
 ### Fixed
