@@ -314,21 +314,24 @@ Always runs when stage 1 matched nothing **and the run does not carry `specs_git
 - **Dirty ARTIFACT paths exist** → commit them **onto the current branch** (they
   belong to the run that wrote them) and push where §4 step 5 allows it, per §4
   steps 2–6, which print no §6 line here: where step 4 finds nothing to commit,
-  the flush ends silently.
+  or step 5 pushes nothing, the flush ends silently.
 - **No dirty ARTIFACT path** → where the current branch holds commits a push
-  would publish and §4 step 5's `push-scope` test passes on them, **retry the
-  push**. Stage 1 has already ended the preflight on every branch §4 step 5 does
-  not push (§3.3 G2), so that test is the whole condition here.
+  would publish and all three of §4 step 5's conditions hold, **retry the
+  push**; where one fails, nothing is retried and nothing is printed. Stage 1
+  has already ended the preflight on every branch step 5's first condition
+  refuses (§3.3 G2), so the other two decide here, and a specs repository with
+  nowhere to push never retries.
 
-  **`push-scope` reads the commits against the remote's refs, never `@{u}`.** A
-  failed `push -u` sets no upstream, so `git rev-parse --abbrev-ref '@{u}'` and
+  **`push-scope` never reads `@{u}` directly.** A failed `push -u` sets no
+  upstream, so `git rev-parse --abbrev-ref '@{u}'` and
   `git rev-list --count '@{u}..HEAD'` both exit 128 with `fatal: no upstream
   configured` — the condition is not false but *unevaluable*, and precisely in
   the state the retry exists for: the local-only branch a failed `push -u` leaves
-  behind, which strands an artifact commit with nothing to retry it. Without a
-  test that answers there, a push that failed in a previous run leaves a local
-  commit that nothing ever retries — the original defect, re-created one layer
-  up.
+  behind, which strands an artifact commit with nothing to retry it.
+  `for-each-ref` prints an empty upstream there instead, and step 5's base falls
+  through to the remote's refs. Without a test that answers there, a push that
+  failed in a previous run leaves a local commit that nothing ever retries — the
+  original defect, re-created one layer up.
 
 Either way, continue to stage 3 with a clean tree.
 
@@ -581,40 +584,55 @@ to state.
    commit into a docs repository run it against their own, with their own
    paths and message.
 5. **Push — only this reference's own commits, and only to a branch it may
-   push.** Push only where both of the conditions below hold. Where either
-   fails, the commit stays local: emit §6's matching *not pushed* line, and
-   go on to step 7, since no push was attempted for step 6 to report.
-   - **The branch is the default branch or a plugin branch (§2.2).** Any other
-     named branch is its owner's to push — the one §3.3 G2 stayed on, or the
-     code branch a direct `/dev-workflows:implement` run cut where `$SPECS_PATH` is the repository
-     it runs from (§4.1) — and a push would publish whatever its owner has not
-     pushed yet, a code commit their own push choice kept local included.
-   - **`push-scope`: every commit the push would publish is a session-file
-     commit.** The remote is the upstream's,
-     `git -C "$SPECS_PATH" config branch.<branch>.remote`, where the branch has
-     an upstream, else `origin`; where the branch has no upstream and
-     `git -C "$SPECS_PATH" remote get-url origin` fails, there is nowhere to
-     push, so report it as step 6's *no remote* failure and go on to step 7.
+   push.** Push only where all three conditions below hold, tested in order.
+   Where one fails, no push is attempted and the commit stays local: step 7
+   emits §6's *not pushed* line for the first condition that failed, and step 6
+   has nothing to report.
+   - **The branch is the default branch or a plugin branch (§2.2)** — the
+     default branch as §3.2 names it, resolved here the same way on a run that
+     ran no preflight. Any other named branch is its owner's to push — the one
+     §3.3 G2 stayed on, or the code branch a direct `/dev-workflows:implement` run cut where
+     `$SPECS_PATH` is the repository it runs from (§4.1) — and a push would
+     publish whatever its owner has not pushed yet, a code commit their own
+     push choice kept local included.
+   - **There is somewhere to push.** The remote is the upstream's,
+     `git -C "$SPECS_PATH" for-each-ref --format='%(upstream:remotename)' refs/heads/<branch>`,
+     where that prints a name, else `origin`, which must exist:
+     `git -C "$SPECS_PATH" remote get-url origin` exits 0.
+   - **`push-scope`: every commit the push would publish is this reference's
+     own.** First the base the push is measured against: the upstream,
+     `git -C "$SPECS_PATH" for-each-ref --format='%(upstream)' refs/heads/<branch>`,
+     where that prints a ref `git -C "$SPECS_PATH" show-ref --verify -q <ref>`
+     finds; else `refs/remotes/<remote>/<branch>`, where `show-ref` finds that;
+     else none, as on the local-only branch a failed `push -u` leaves behind.
      The commits the push would publish are
-     `git -C "$SPECS_PATH" rev-list HEAD --not --remotes=<remote>`, the ones on
-     no ref of that remote this repository has fetched, a test that needs no
-     upstream and so answers on the local-only branch a failed `push -u` leaves
-     behind. It passes when
-     `git -C "$SPECS_PATH" rev-list --merges HEAD --not --remotes=<remote>`
-     prints nothing, since `diff-tree` lists no path for a merge commit, and
-     every path of every commit listed,
+     `git -C "$SPECS_PATH" rev-list --reverse HEAD --not <base>`, or, with no
+     base, `git -C "$SPECS_PATH" rev-list --reverse HEAD --not --remotes=<remote>`,
+     every commit on no ref of that remote this repository has fetched. Never
+     measure against the remote as a whole where the branch has a base: a
+     default branch fast-forwarded locally onto a pushed `prd/` branch holds
+     that branch's commits, which are on the remote but not on this branch
+     there, and the push would land them, unreviewed, on the remote's default
+     branch. Then, oldest first and stopping at the first that fails, each
+     commit must be one this run made in step 4 or in §3.4's flush, or a
+     non-merge commit (`git -C "$SPECS_PATH" rev-list --parents -n 1 <sha>`
+     prints at most two shas: the commit and its one parent) whose every path,
      `git -C "$SPECS_PATH" diff-tree --no-commit-id --name-only -r -z --root --no-renames <sha>`,
-     is an ARTIFACT path (§2.1). This reference makes no merge commit (§3.5)
-     and commits nothing but ARTIFACT paths, so a commit that fails the test
-     is somebody else's — the user's own on the default branch, or a
-     deliverable whose push at handoff failed — and whether it goes out is
-     theirs to decide.
+     is an ARTIFACT path (§2.1). The parent count is what refuses a merge,
+     since `diff-tree` lists no path for one. This run's own commits pass
+     whatever they hold, because a `pre-commit` hook can add a path to them
+     (step 4) and they are still this reference's; an earlier run's commit
+     gets no such pass, so one a hook added to is named by the §6 line, for the
+     user to push. This reference makes no merge commit (§3.5) and commits
+     nothing else, so any other commit that fails the test is somebody else's
+     — the user's own, or a deliverable whose push at handoff failed — and
+     whether it goes out is theirs to decide.
 
-   Where both hold, push to the current branch's upstream, or, where the branch
-   has none, `git -C "$SPECS_PATH" push -u origin <branch>`.
+   Where all three hold, push to the current branch's upstream, or, where the
+   branch has none, `git -C "$SPECS_PATH" push -u origin <branch>`.
 6. **Failure at any step is reported, never fatal.**
-   - No remote / auth failure → report; the commit stays local. §3.4 retries the
-     push on the next run.
+   - An auth failure, or a remote that cannot be reached → report; the commit
+     stays local. §3.4 retries the push on the next run.
    - **Non-fast-forward rejection** → report; **never force-push**, never
      auto-rebase mid-run. The commit stays local; §3.4 retries.
    - **`index.lock` present** (a concurrent session holds the repo) → report and
@@ -644,7 +662,8 @@ to state.
   never switches.
 - **`/dev-workflows:implement` on a direct run from inside the specs repository** (its Phase 0),
   where the specs repository is the repository the run changes — on the code
-  branch the run cut there, which step 5 never pushes.
+  branch the run cut there, which step 5 does not push unless its name carries
+  one of §2.2's prefixes.
 
 ## 5. Notice contract — the guards must be impossible to overlook
 
@@ -737,7 +756,8 @@ report was composed earlier.
 |---|---|
 | Committed and pushed | `Specs repo: committed <sha7> (<N> files) on <branch> — pushed` |
 | Committed, not pushed — not a branch this plugin pushes (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: this plugin pushes only the default branch and the branches it creates, so <branch> is yours to push; the artifacts reach the maintainer when you push or merge it` |
-| Committed, not pushed — the push would publish other commits (§4 step 5 `push-scope`) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: the push would also publish <M> commit(s) that are not this plugin's session-file commits (<sha7> <subject>[, and <M-1> more]); push <branch> once they are ready to go, and the artifacts go with them` |
+| Committed, not pushed — no remote to push to (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: this specs repo has no origin remote` |
+| Committed, not pushed — the push would publish other commits (§4 step 5 `push-scope`) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: the push would also publish commits that are not this plugin's session-file commits, the oldest <sha7> <subject>; push <branch> once they are ready to go, and the artifacts go with them` |
 | Committed, push failed | `Specs repo: committed <sha7> (<N> files) on <branch> — push FAILED (<reason>); the commit is local and the next run retries it` |
 | Nothing to commit | `Specs repo: no session artifacts to commit` |
 | Locked | `Specs repo: skipped — another session holds the repo (index.lock); the next run picks the artifacts up` |

@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 **Update `workflows-core` to 1.15.3 with this release**: the session-cost page describes its push rule.
 
 ### Fixed
-- **The session-cost page said the run's terminal commit always pushes the cost entry.** It does not push on a branch the plugin did not create, or where the push would also publish commits of yours (`workflows-core:specs-repo-git` §4 step 5).
+- **The session-cost page said the run's terminal commit always pushes the cost entry.** It does not push where the specs repository is on neither its default branch nor a branch the plugin created, or where the push would also publish commits of yours (`workflows-core:specs-repo-git` §4 step 5).
 
 ## [1.7.1] — 2026-10-05
 

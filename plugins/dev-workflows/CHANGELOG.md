@@ -7,10 +7,10 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [4.10.3] — 2026-10-05
 
-**Update `workflows-core` to 1.15.3 with this release**: the closing specs-repository commit no longer pushes a branch the plugin did not create.
+**Update `workflows-core` to 1.15.3 with this release**: the closing specs-repository commit pushes only the default branch and the branches the plugin creates, and never commits of yours.
 
 ### Fixed
-- **A direct `/implement` run from inside the specs repository pushed its code branch whatever you answered at the push choice.** The closing specs-repository commit pushed that branch (`-u origin`) along with the session files. It no longer pushes a branch the plugin did not create (`workflows-core:specs-repo-git` §4 step 5). The run's notice now says that session files written before the push choice go out with the code if you push it then, and the rest stay local until you next push the branch. `/design`'s terminal step now says it pushes per §4 step 5, and the session-cost and session-feedback pages now say when the plugin pushes their entries.
+- **A direct `/implement` run from inside the specs repository pushed its code branch whatever you answered at the push choice.** The closing specs-repository commit pushed that branch (`-u origin`) along with the session files. It now pushes only the default branch and the branches the plugin creates (`workflows-core:specs-repo-git` §4 step 5). The run's notice now says that session files the code commit takes go out with it if you push it at the push choice, and that the rest stay local until you push the branch. Under `--no-commit`, which asks no push choice, it says they all stay local. Phase 4 says its feedback file rides on the code commit there. `/design`'s terminal step now says it pushes per §4 step 5, and the session-cost and session-feedback pages now say when the plugin pushes their entries.
 
 ## [4.10.2] — 2026-10-05
 

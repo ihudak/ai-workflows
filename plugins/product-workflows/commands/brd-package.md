@@ -1665,7 +1665,7 @@ operator's own ruling on the customer's words. The one exception is a halt on a 
    step below. Redact per §1. Silent.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. Stages ONLY the §2.1 bounded artifact paths inside
    `$SPECS_PATH`, commits `<BRD-KEY> Add dev-workflows session artifacts (/brd-package)` with no
-   `Co-Authored-By` trailer, and pushes the branch the handoff phase created where §4 step 5 allows. NEVER touches a code
+   `Co-Authored-By` trailer, and pushes the branch the handoff phase created per §4 step 5. NEVER touches a code
    repo, a docs repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the
    run; skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice.
    Hold its §6 outcome line for the final report.
