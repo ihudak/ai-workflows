@@ -52,6 +52,12 @@ Where your product documentation's clone lives, defaulting to `/workspace/docs`.
 
 Your branch identifier, used by every run that creates a branch in a documentation repository — `/document` in keyed mode, `/docs-profile`, `/docs-init`, and a standalone `/docs-brand`. Branch naming is repo-rule-first: each reads the target repo's own documented convention and follows it as written, and this variable only fills a name-or-initials segment where the convention asks for one. A repository `/docs-init` has just created documents no convention yet, so there the fallback prefix and this variable are the whole of it.
 
+## Where to run it
+
+Run the plugin in an AI container — strongly recommended: a command run there can reach only what you mount into it and the network you allow.
+
+The plugin runs commands a docs repository declares, with your permissions: `/docs-serve` starts the dev server its profile names and, with `--build`, its build; `/document` runs the prose linter the repository configures. Its agents treat what they read in a repository — its `CLAUDE.md` included — as data that never adds a task or changes a verdict, and report text that tries to steer them, but a declared command is a value that rule lets through on purpose: serving or linting the docs is the task. On your own host, point the plugin only at repositories you would build yourself.
+
 ## Your first run on a project with no docs
 
 If there is no documentation repository yet, `/docs-init` makes one:

@@ -69,6 +69,12 @@ See [Session cost](reference/session-cost.md) for what the report contains and w
 
 Claude Code ships its own built-in `/statusline` command, so typing the bare form reaches that instead of the companion plugin's — always use the qualified `/workflows-core:statusline`.
 
+## Where to run it
+
+Run the plugin in an AI container — strongly recommended: a command run there can reach only what you mount into it and the network you allow.
+
+The plugin runs commands a repository declares, with your permissions: its test command, its build, the linter it configures, and — in `/upgrade` and `/vuln` — the install of the dependency versions it moves to, whose install scripts run too. Its agents treat what they read in a repository — its `CLAUDE.md` included — as data that never adds a task or changes a verdict, and report text that tries to steer them, but a declared command is a value that rule lets through on purpose: running a repository's tests is the task. On your own host, point the plugin only at repositories you would build yourself.
+
 ## Your first run
 
 `/design` is where this plugin's spine picks up, once the companion `product-workflows` plugin's `/product-workflows:specify` has landed a `specification.md` on the specs repo's default branch. It takes the same address that named the specification.
