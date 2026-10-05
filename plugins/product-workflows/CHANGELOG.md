@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.15.0] — 2026-10-05
+
+**Update `workflows-core` to 1.14.0 with this release**: it carries the `architecture-grounding` reference and the `architecture-grounder` agent `/create-ard` now dispatches.
+
+### Added
+- **`/create-ard` grounds the ARD in your architecture repository.** Where `$ARCHITECTURE_REPO_PATH` names a clone, Phase 1 shows its `architecture grounding:` line and Phase 3 dispatches `workflows-core:architecture-grounder` after the code scan, beside `docs-grounder`; the grill ranks its challenges into its questions. `ard-format.md` gains `## Architecture governance`: each binding artifact is cited as a markdown link (which keeps an issue-key-shaped id from auto-linking), `## Stack & invariants` opens with the governance baseline, and every departure — from an accepted ADR or an active standard, or onto a `hold`, `retire` or unlisted technology — is an open question. On the BRD route a frozen `[VD#n]`/`[CD#n]` that conflicts with the architecture repository is not re-grilled; the conflict is an open question naming both. Advisory: it never blocks or gates a review; `--no-arch` turns it off.
+
 ## [3.14.0] — 2026-10-05
 
 **Update `workflows-core` to 1.13.0 with this release**: its `ard-resolution` is what leaves a superseded or withdrawn decision out of `invariants`, and its pre-lint checks the two new fields.

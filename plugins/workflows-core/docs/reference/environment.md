@@ -1,8 +1,8 @@
 # Environment reference
 
-[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first use of this plugin. This page says what each variable **is** — its default, what happens when it is unset, and what happens when it points somewhere unreadable. The plugin reads eight user-settable variables. The rest of the names its own inventory check encounters while scanning for `$VAR` reads are never user-settable and stay out of scope here: `CLAUDE_PLUGIN_ROOT` and `ARGUMENTS` are runtime plumbing Claude Code itself sets for every plugin invocation, and `OSTYPE`, `BASH_SOURCE`, `BASH_REMATCH`, `ROOT` and `OWNER_REPO` are shell built-ins or internal template names, not plugin configuration.
+[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first use of this plugin. This page says what each variable **is** — its default, what happens when it is unset, and what happens when it points somewhere unreadable. The plugin reads nine user-settable variables. The rest of the names its own inventory check encounters while scanning for `$VAR` reads are never user-settable and stay out of scope here: `CLAUDE_PLUGIN_ROOT` and `ARGUMENTS` are runtime plumbing Claude Code itself sets for every plugin invocation, and `OSTYPE`, `BASH_SOURCE`, `BASH_REMATCH`, `ROOT` and `OWNER_REPO` are shell built-ins or internal template names, not plugin configuration.
 
-Every one of the eight is read by a reference this plugin ships — the corpus is where the reads live, and the corpus is here — and for seven of the eight that is the only read anywhere in this plugin. `$SPECS_PATH` is the exception: `/frames` Phase 0 step 0 gates on it in the command's own body and stops the run on an unset one. Where any of this plugin's other commands names the variable, it is as the scope of the shared entry points they cite, which do the reading. The set is the union of what any downstream plugin needs, plus the price-table override and the three run-flag defaults that `workflows-core:run-flags` owns: `docs-workflows` reads all four of the others (`$GIT_USER_INITIALS` included, since it branches a docs repository); `dev-workflows` reads three of the four — it grounds nothing in documentation, so `$DOCS_PATH` is not among the variables its own commands or references read — `dev-workflows:code-handoff` names it only to say it never touches it — while `$GIT_USER_INITIALS` is, since it branches a code repository; `product-workflows` reads three of the four as well — it never creates a branch in a code or docs repo, so `$GIT_USER_INITIALS` is not among the variables its own commands or references touch.
+Every one of the nine is read by a reference this plugin ships — the corpus is where the reads live, and the corpus is here — and for eight of the nine that is the only read anywhere in this plugin. `$SPECS_PATH` is the exception: `/frames` Phase 0 step 0 gates on it in the command's own body and stops the run on an unset one. Where any of this plugin's other commands names the variable, it is as the scope of the shared entry points they cite, which do the reading. The set is the union of what any downstream plugin needs, plus the price-table override and the three run-flag defaults that `workflows-core:run-flags` owns: `docs-workflows` reads four of the five others — `$GIT_USER_INITIALS` included, since it branches a docs repository, and `$ARCHITECTURE_REPO_PATH` not, since it authors no ARD; `dev-workflows` reads three of the five — it grounds nothing in documentation, so `$DOCS_PATH` is not among the variables its own commands or references read — `dev-workflows:code-handoff` names it only to say it never touches it — while `$GIT_USER_INITIALS` is, since it branches a code repository; `product-workflows` reads four of the five — it never creates a branch in a code or docs repo, so `$GIT_USER_INITIALS` is not among the variables its own commands or references touch, and it is the only reader of `$ARCHITECTURE_REPO_PATH`, through `/create-ard`.
 
 ## `$SPECS_PATH`
 
@@ -36,6 +36,18 @@ Every one of the eight is read by a reference this plugin ships — the corpus i
 
 **When it points somewhere unreadable.** The same silent skip.
 
+## `$ARCHITECTURE_REPO_PATH`
+
+- **`$ARCHITECTURE_REPO_PATH`** — a local clone of your organisation's architecture repository (technology radar, standards, principles, patterns, ADRs). No default.
+
+**Resolution.** Per `workflows-core:architecture-grounding`: `--no-arch` forces architecture grounding off; otherwise the variable when set. A validity gate then has to pass: a readable directory holding a catalog (`index.yaml`, `index.json`, `catalog.yaml`), a radar file (`radar.{yaml,yml,json,csv}` at the root or under `radar/`), or an ADR folder with a markdown file. Nothing scans for a clone — no repository name is common enough to search for.
+
+**When unset.** Architecture grounding is `OFF` with a line naming this variable, and the run proceeds exactly as without it.
+
+**When it points somewhere invalid.** `OFF` with a reason naming the variable and what failed — never an error, never a gate or reviewer finding.
+
+**Directory layout.** The layouts `architecture-grounder` recognises — catalog, radar, decision, standards, principles, patterns and reference-architecture folders — are listed in that agent. Nothing writes, fetches, pulls or switches the clone; `/product-workflows:create-ard` reports its branch, commit, date, uncommitted changes and staleness instead.
+
 ## `$GIT_USER_INITIALS`
 
 - **`$GIT_USER_INITIALS`** — your branch identity string; no default, and nothing fails when it is absent.
@@ -52,7 +64,7 @@ Every one of the eight is read by a reference this plugin ships — the corpus i
 
 **Resolution.** First-found-wins, three tiers: `$DEV_WORKFLOWS_COST_PRICES` (a path) → a repo-local `cost-prices.yaml` → the bundled `${CLAUDE_PLUGIN_ROOT}/references/cost-prices.yaml`. Whichever file resolves must carry a top-level `models:` map keyed by model id — a file missing that wrapper, override or default, prices every model as `cost_usd: null` rather than raising an error.
 
-**When unset.** Resolution falls straight through to the repo-local file, then the bundled default. This is the variable of the eight most users never touch.
+**When unset.** Resolution falls straight through to the repo-local file, then the bundled default. This is the variable of the nine most users never touch.
 
 **When it points somewhere unreadable.** Treated the same as "not set at this tier" — resolution continues down the same chain rather than failing the run.
 

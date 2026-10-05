@@ -1,6 +1,6 @@
 # Environment reference
 
-[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first run. This page says what each variable **is** — its default, where that default comes from, what happens when it is unset, and what happens when it points somewhere the plugin cannot read or write. The plugin reads three user-settable variables. The rest of the names its own inventory check encounters while scanning for `$VAR` reads are never user-settable and stay out of scope here: `CLAUDE_PLUGIN_ROOT` and `ARGUMENTS` are runtime plumbing Claude Code itself sets for every plugin invocation.
+[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first run. This page says what each variable **is** — its default, where that default comes from, what happens when it is unset, and what happens when it points somewhere the plugin cannot read or write. The plugin reads four user-settable variables. The rest of the names its own inventory check encounters while scanning for `$VAR` reads are never user-settable and stay out of scope here: `CLAUDE_PLUGIN_ROOT` and `ARGUMENTS` are runtime plumbing Claude Code itself sets for every plugin invocation.
 
 ## `$SPECS_PATH`
 
@@ -23,6 +23,18 @@
 **When unset.** The `/workspace` default takes over silently — safe, because this is only ever a read/scan base, so a wrong or empty default finds nothing to scan rather than writing anywhere unexpected.
 
 **When it points somewhere unreadable or empty.** An unresolved repo slug or theme is escalated to the user rather than invented or silently dropped; a repo the user then declines is carried forward by name with its themes left unverified, never disappearing from the record. `/create-ard`'s discovery is mandatory rather than opt-in, so an empty `$REPOS_PATH` there surfaces as zero candidate directories to confirm, not as a stop.
+
+## `$ARCHITECTURE_REPO_PATH`
+
+- **`$ARCHITECTURE_REPO_PATH`** — a local clone of your organisation's architecture repository (technology radar, standards, principles, patterns, ADRs), read-only; no default.
+
+**Resolution.** Resolved per the shared `workflows-core:architecture-grounding` gate, consumed by `/create-ard` on both routes; `--no-arch` turns it off for a run.
+
+**When unset.** Architecture grounding reports `OFF` with a line naming the variable, and the run continues exactly as without it.
+
+**When it points somewhere invalid.** `OFF` with a reason naming the variable and what failed — never an error, never a gate or reviewer BLOCKER. `product-workflows` never writes, fetches or pulls the clone.
+
+**Directory layout.** Whatever the agent recognises: a catalog, a radar file, ADR folders, and standards, principles, patterns and reference-architecture folders (`workflows-core:architecture-grounding`).
 
 ## `$DOCS_PATH`
 

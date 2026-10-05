@@ -18,13 +18,13 @@ claude plugin update workflows-core@shipwright
 
 ## What this plugin is
 
-`workflows-core` is the shared foundation of the `dev-workflows` plugin family. Most of what it ships is not a command: it is the reference corpus the sibling plugins read — `dev-workflows`, `product-workflows`, and `docs-workflows` all declare it as a dependency — the `model-routing` skill every pipeline command loads at its classification step, and six agents any of them may dispatch. If you have installed a plugin from that family, you want this one installed too.
+`workflows-core` is the shared foundation of the `dev-workflows` plugin family. Most of what it ships is not a command: it is the reference corpus the sibling plugins read — `dev-workflows`, `product-workflows`, and `docs-workflows` all declare it as a dependency — the `model-routing` skill every pipeline command loads at its classification step, and seven agents any of them may dispatch. If you have installed a plugin from that family, you want this one installed too.
 
 It does ship six commands of its own, and one of them is worth running first — see below.
 
 ## What you set on your machine
 
-`workflows-core` reads eight environment variables, and every one of them is read by a reference this plugin ships — for seven of the eight, the only read anywhere in this plugin. `SPECS_PATH` is the exception: `/frames` gates on it in its own Phase 0 and refuses to run without it. One is required for anything in the family to have somewhere to write (`SPECS_PATH`); the rest are optional and each degrades to a documented default or a silent skip. [Environment](reference/environment.md) has the exact defaults and failure behaviour.
+`workflows-core` reads nine environment variables, and every one of them is read by a reference this plugin ships — for eight of the nine, the only read anywhere in this plugin. `SPECS_PATH` is the exception: `/frames` gates on it in its own Phase 0 and refuses to run without it. One is required for anything in the family to have somewhere to write (`SPECS_PATH`); the rest are optional and each degrades to a documented default or a silent skip. [Environment](reference/environment.md) has the exact defaults and failure behaviour.
 
 ### `SPECS_PATH`
 
@@ -38,13 +38,17 @@ Where your code clones live — one directory, or a colon-separated list of them
 
 A **read-only** clone of your shipped product documentation, used by `docs-grounder` to ground a draft against what is already published. Never written to as a grounding root — a `docs-workflows` command that resolves `$DOCS_PATH` as the documentation repository it edits writes into it, which is a different use of the same path; every grounding miss is a silent, non-blocking skip.
 
+### `ARCHITECTURE_REPO_PATH`
+
+A **read-only** clone of your organisation's architecture repository — its technology radar, standards, principles, patterns and ADRs — used by `architecture-grounder` to ground an ARD in what the organisation already requires. Never written, fetched or pulled; unset, the grounding is simply off.
+
 ### `GIT_USER_INITIALS`
 
 Your branch identifier. Branch naming is repo-rule-first: where the target repo's own documented convention has a name-or-initials segment, this fills it; where it does not, the variable is simply unused for that repo.
 
 ### `DEV_WORKFLOWS_COST_PRICES`
 
-An optional path to your own price table, overriding the bundled `references/cost-prices.yaml` that session-cost reporting prices tokens against. It is the variable of the eight you are least likely ever to set — the bundled defaults are used until you do. It keeps its original name so a setting already exported on a working machine is not silently ignored.
+An optional path to your own price table, overriding the bundled `references/cost-prices.yaml` that session-cost reporting prices tokens against. It is the variable of the nine you are least likely ever to set — the bundled defaults are used until you do. It keeps its original name so a setting already exported on a working machine is not silently ignored.
 
 ### `WORKFLOWS_SKIP_COSTS`
 

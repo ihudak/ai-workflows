@@ -83,6 +83,17 @@ does not exist. No widening here reaches a **tracker** key — none of these fie
 - An Epic-level ARD may go deeper but stays architecture, not an implementation plan.
 - Grounding is **architect-driven** (repos confirmed by the architect), never derived from PRs (which do not exist at ARD time).
 
+## Architecture governance
+
+Where `/create-ard` ran with architecture grounding ON (`workflows-core:architecture-grounding`), the ARD records what the architecture repository says about its decisions:
+
+- **Citation.** A governance artifact is cited only as a markdown link whose text is its id and title — `[ADR-0012 Use one message broker](<url>)` — in the **Rule** of the decision it settles or constrains, or in **Alternatives** where it is why an option lost. Every governance id of that shape matches a tracker's issue-key pattern, and the link is what keeps it from auto-linking (`workflows-core:pre-lint` § Auto-link collision); a bare id, or one in inline code, is a pre-lint finding. Where the digest gives no URL, the link target is the artifact's path relative to the architecture repository.
+- **Baseline.** `## Stack & invariants` opens with `Architecture governance: <repository name> @ <short-sha> (<date>)` — or `Architecture governance: <repository name> (not a git checkout)` — and lists, as links, the standards that bind the work. A relative link target resolves against the repository named there.
+- **Deviation.** Each of these is an `## Open questions` entry naming the governing artifact as a link, how the ARD departs from it, and that the departure needs an architecture review or a new ADR in the architecture repository superseding it: a decision that departs from an `accepted` ADR or an `active` standard; keeping or adopting a technology in the radar's `hold` or `retire` ring; adopting a technology the radar does not list. An entry about a technology the code already uses cites where it does — a `file:line` in a `grounded_repos` entry, as every as-is claim must.
+- **Not an as-is claim.** A governance citation states what the organisation requires, not what the code does, so it needs no `grounded_repos` entry; `## Grounding findings` keeps its rule that every claim there cites a `file:line` in one.
+
+Where grounding was OFF, nothing in this section is required.
+
 ## Superseding a decision
 
 - **A refine never changes what an existing `[AD#N]` requires** — nor does starting fresh over an ARD already on the specs repo's default branch, the only place downstream commands read one from. `design.md`, deviation records (`ard-resolution.md`), Epic drafts and readiness verdicts cite a decision by its ID, and a Rule rewritten in place silently changes what each of those citations means. A changed decision is a new `[AD#M]`; the old one keeps its heading, ID and text and gains `**Superseded by:** [AD#M] — <why>`. Wording that leaves the Rule's meaning unchanged is not a change.
