@@ -20,7 +20,7 @@ claude plugin update workflows-core@shipwright
 
 `workflows-core` is the shared foundation of the `dev-workflows` plugin family. Most of what it ships is not a command: it is the reference corpus the sibling plugins read — `dev-workflows`, `product-workflows`, and `docs-workflows` all declare it as a dependency — the `model-routing` skill every pipeline command loads at its classification step, and seven agents any of them may dispatch. If you have installed a plugin from that family, you want this one installed too.
 
-It does ship six commands of its own, and one of them is worth running first — see below.
+It does ship seven commands of its own, and one of them is worth running first — see below.
 
 ## What you set on your machine
 
@@ -76,8 +76,8 @@ The half you don't see is the **cost cross-check**: Claude Code's own reported c
 
 Claude Code ships its own built-in `/statusline` command, so typing the bare form reaches that instead of this plugin's — always use the qualified form.
 
-## The other five commands
+## The other six commands
 
-Four of them are how you tell the plugin family it got something wrong: [`/feedback`](commands/feedback.md) logs a note in your own words, while [`/prompt`](commands/prompt.md), [`/prompt-brainstorm`](commands/prompt-brainstorm.md) and [`/prompt-grill-me`](commands/prompt-grill-me.md) capture a correction you just made and then act on it — directly, by redesigning it, or by grilling it. The fifth, [`/frames`](commands/frames.md), rebuilds the index an exported design frame set must carry before anything else can read it.
+Four of them are how you tell the plugin family it got something wrong: [`/feedback`](commands/feedback.md) logs a note in your own words, while [`/prompt`](commands/prompt.md), [`/prompt-brainstorm`](commands/prompt-brainstorm.md) and [`/prompt-grill-me`](commands/prompt-grill-me.md) capture a correction you just made and then act on it — directly, by redesigning it, or by grilling it. The fifth, [`/frames`](commands/frames.md), rebuilds the index an exported design frame set must carry before anything else can read it. The sixth, [`/diagnose-session`](commands/diagnose-session.md), reads a session's transcripts and reports, with evidence, what happened in a run that went wrong.
 
 See the [documentation index](README.md) for everything else, including the [Workflow overview](workflow.md).

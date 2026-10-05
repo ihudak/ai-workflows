@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.22.0] — 2026-10-05
+
+### Added
+- **`/diagnose-session` reads a session's transcripts and reports why a run went wrong.** It works on the current session, or a past one named by id or path:
+  - **Intake first.** It asks one question at a time until you agree a problem statement: the session, the turns, what you expected, what happened, and what you care about. It reads nothing before you answer.
+  - **Locate.** It finds the main transcript and every subagent transcript, confirms a past session by its first prompt and timestamp, and writes a case file to a new directory under `~/.claude/workflows-core/diagnoses/`, outside every repository.
+  - **Triage.** It dispatches the new `session-analyst` agent seven times in parallel, one per dimension: timeline, plan adherence, repeated work, stumbles, claims and evidence, conflicting instructions, and cost and time. It discards every finding that cites no `path:line`.
+  - **Report.** Each verdict claim carries its citation, after the run checks that the cited line shows what the finding says. The report states whether the family was involved and where, and proposes no fix. Where the family was involved, it prints a ready-to-run `/workflows-core:feedback` line with a summary redacted as feedback is.
+
+  The new `session-diagnosis` reference holds the rules: context safety (measure before reading, never print a record whole), locating a session (with Claude Code's store as observed starting points, and each API message's usage counted once), the case file, the dimensions, the findings shape and the report. It writes nothing to `$SPECS_PATH`, emits no cost entry, and never modifies a session file. Adapted from superpowers' diagnosing-superpowers. Its bundle export, issue filing and similar-session search were not taken.
+
 ## [1.21.1] — 2026-10-05
 
 ### Changed

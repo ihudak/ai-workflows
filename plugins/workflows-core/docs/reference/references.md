@@ -1,6 +1,6 @@
 # References
 
-`workflows-core` bundles 34 files under `references/` — 30 top-level markdown files, `cost-prices.yaml`, one file under `model-routing/`, and one bundled subtree. This page enumerates every file except the two under `handoff/` (32 of the 34 — the 30 top-level files plus `cost-prices.yaml` plus `model-routing/classification.md`), grouped by concern below, then counts that one subtree rather than listing each file inside it. The arithmetic: 32 named individually, plus 2 markdown pages counted (not enumerated) in `handoff/` — 32 + 2 = 34, against 34 files on disk. `model-routing/` is not a subtree row: its single markdown file is inventoried above as an ordinary entry, because it is a reference page a reader opens rather than a bundled set counted in bulk.
+`workflows-core` bundles 35 files under `references/` — 31 top-level markdown files, `cost-prices.yaml`, one file under `model-routing/`, and one bundled subtree. This page enumerates every file except the two under `handoff/` (32 of the 34 — the 30 top-level files plus `cost-prices.yaml` plus `model-routing/classification.md`), grouped by concern below, then counts that one subtree rather than listing each file inside it. The arithmetic: 32 named individually, plus 2 markdown pages counted (not enumerated) in `handoff/` — 32 + 2 = 34, against 34 files on disk. `model-routing/` is not a subtree row: its single markdown file is inventoried above as an ordinary entry, because it is a reference page a reader opens rather than a bundled set counted in bulk.
 
 This is the corpus the whole `dev-workflows` plugin family reads. A sibling plugin cites a file here by name rather than copying it, which is the reason the corpus was extracted at all: one copy, one place a rule is stated, and every plugin bound by the same version of it.
 
@@ -56,6 +56,7 @@ The bookkeeping every long-running command emits around its actual work.
 - `cost-prices.yaml` — the default per-model token-price table session-cost reporting prices against; user-overridable via `$DEV_WORKFLOWS_COST_PRICES` or a repo-local file of the same shape.
 - `feedback-emission.md` — the session-feedback emitter every long-running command's automatic maintenance phase cites to capture friction about the plugin itself.
 - `followup-emission.md` — the follow-up task and verbose-note emitter a terminal "Emit follow-up tasks" phase cites.
+- `session-diagnosis.md` — the rules `/diagnose-session` and its `session-analyst` agents follow to read a session's transcripts on disk: context safety, locating a session, the case file, the seven dimensions, the findings shape, the report, and the family-involvement statement that names a location and proposes no fix.
 - `session-hygiene.md` — the family-wide contract for session-hygiene suggestions: flush resume-critical state to disk, then suggest the right context action, after a big command finishes or a long run checkpoints.
 
 ## Environment and routing

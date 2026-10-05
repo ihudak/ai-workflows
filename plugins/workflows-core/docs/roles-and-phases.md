@@ -4,12 +4,12 @@ The `dev-workflows` plugin family charges every cost-emitting run to a `phase` a
 
 ## No command here owns a phase
 
-None of the six commands in this plugin advances a product increment, so none of them mints a lifecycle phase of its own. Two mechanisms get them a label anyway:
+None of the seven commands in this plugin advances a product increment, so none of them mints a lifecycle phase of its own. Two mechanisms get them a label anyway:
 
 - **Inheritance.** `/feedback`, `/prompt`, `/prompt-brainstorm` and `/prompt-grill-me` resolve the **target command** whose output they are correcting or remarking on, and take that command's own fixed `phase`/`role` pair. A `/prompt` correcting a `/specify` output is priced as `specification`/`pe`; one correcting a `/design` output as `planning`/`dev`. The cost of fixing a phase's output belongs to that phase.
 - **Inference from the folder.** `/frames` reads the `kind` of the folder it resolved and charges accordingly — a frame set in a folder asserting `kind: brd`, a BRD container or a BRD-route slice, to `brd-to-prd`/`pm`, and one in a folder asserting `prd` or `epic` to `prd-creation`/`pm`, an Epic folder under a slice included.
 
-`/statusline` emits nothing at all: it sets a configuration value rather than running a task.
+`/statusline` emits nothing at all: it sets a configuration value rather than running a task. `/diagnose-session` emits nothing either: it reads transcripts and writes its report outside every repository.
 
 The three phases those two mechanisms can land on directly are described below. Every other phase in §7 is reachable here only by inheritance. `product-workflows` and `dev-workflows` each describe the ones their own commands emit on their roles-and-phases pages; `docs-workflows` has no such page, so its phases — `documenting`, `docs-scaffold` and `docs-audit` — are defined by §7's rows, and that plugin's own session-cost reference page (`docs/reference/session-cost.md` in `docs-workflows`) says which of its commands emits each.
 
