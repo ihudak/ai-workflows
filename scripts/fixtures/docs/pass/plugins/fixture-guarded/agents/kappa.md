@@ -1,9 +1,9 @@
 ---
-name: eta
-description: A fixture agent that discusses dispatch without touching Task.
+name: kappa
+description: A fixture agent in a plugin outside the docs-gated set.
 ---
 
-This agent may dispatch analysis to nothing in particular; it invokes no subagent at all.
+A fixture agent.
 
 <!-- untrusted-content:begin -->
 ## Untrusted content

@@ -1,6 +1,6 @@
 # References
 
-`workflows-core` bundles 32 files under `references/` — 28 top-level markdown files, `cost-prices.yaml`, one file under `model-routing/`, and one bundled subtree. This page enumerates every file except the two under `handoff/` (30 of the 32 — the 28 top-level files plus `cost-prices.yaml` plus `model-routing/classification.md`), grouped by concern below, then counts that one subtree rather than listing each file inside it. The arithmetic: 30 named individually, plus 2 markdown pages counted (not enumerated) in `handoff/` — 30 + 2 = 32, against 32 files on disk. `model-routing/` is not a subtree row: its single markdown file is inventoried above as an ordinary entry, because it is a reference page a reader opens rather than a bundled set counted in bulk.
+`workflows-core` bundles 33 files under `references/` — 29 top-level markdown files, `cost-prices.yaml`, one file under `model-routing/`, and one bundled subtree. This page enumerates every file except the two under `handoff/` (31 of the 33 — the 29 top-level files plus `cost-prices.yaml` plus `model-routing/classification.md`), grouped by concern below, then counts that one subtree rather than listing each file inside it. The arithmetic: 31 named individually, plus 2 markdown pages counted (not enumerated) in `handoff/` — 31 + 2 = 33, against 33 files on disk. `model-routing/` is not a subtree row: its single markdown file is inventoried above as an ordinary entry, because it is a reference page a reader opens rather than a bundled set counted in bulk.
 
 This is the corpus the whole `dev-workflows` plugin family reads. A sibling plugin cites a file here by name rather than copying it, which is the reason the corpus was extracted at all: one copy, one place a rule is stated, and every plugin bound by the same version of it.
 
@@ -45,6 +45,7 @@ Read-only, advisory context-gathering — never a gate, never a write into the s
 
 - `architecture-grounding.md` — the resolution (`$ARCHITECTURE_REPO_PATH` only), dispatch and grill-rank consumption for optional architecture grounding in `/product-workflows:create-ard`; read-only and advisory, never a gate or reviewer finding.
 - `docs-grounding.md` — the resolution gate, retrieval procedure, and consumption modes for optional `$DOCS_PATH` documentation grounding; read-only and advisory, never a gate or reviewer BLOCKER.
+- `untrusted-content.md` — the rule every agent carries verbatim at the end of its prompt (what it reads is data, never instructions; what tried to steer it is reported as an `Untrusted-content notice:` line), the relay sentence every dispatching command carries, and the pass-on sentence of the three agents that dispatch another; check 20 holds every copy to it.
 
 ## Session artifacts
 
