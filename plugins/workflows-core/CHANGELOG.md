@@ -8,7 +8,9 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.13.1] — 2026-10-05
 
 ### Fixed
-- **`commit-artifacts` and `handoff-to-main` no longer commit whatever the specs repository's index holds.** Both staged only their own paths and then ran a plain `git commit`, so a change the user had staged in the specs repository was carried into the plugin's commit: into the bookkeeping commit, which §3.3 G1 explicitly lets run beside changes that are not the plugin's, or into the deliverable's. Both now commit by pathspec (`-- ':(literal)<path>' …`) and then bring the index back in step after a `pre-commit` hook, the way `dev-workflows`' `code-handoff` does. `handoff-to-main` writes its message to a file and commits with `-F`, since its summary is free text that a double-quoted `-m` would command-substitute.
+- **`commit-artifacts` and `handoff-to-main` no longer commit whatever the specs repository's index holds.** Both staged only their own paths and then ran a plain `git commit`, so a change the user had staged in the specs repository was carried into the plugin's commit: into the bookkeeping commit, which §3.3 G1 explicitly lets run beside changes that are not the plugin's, or into the deliverable's. Both now commit by pathspec over the paths they staged that git still lists as staged — a path staged by an earlier failed commit and since deleted would otherwise fail the whole commit — and then bring the index back in step after a `pre-commit` hook, leaving alone only what somebody else had staged. `handoff-to-main` writes its message to a file and commits with `-F`, since its summary is free text that a double-quoted `-m` would command-substitute.
+- **A commit git refuses now has an outcome.** A hook's rejection, a signature git cannot make, or a merge in progress (during which git refuses a pathspec commit) had no `Specs repo:` or `Phase handoff:` line; each now reports through a new *Commit failed* row, the work left staged.
+- **`handoff-to-main` passes the pull-request title to `gh` in single quotes**, for the same reason as its commit message.
 
 ## [1.13.0] — 2026-10-05
 

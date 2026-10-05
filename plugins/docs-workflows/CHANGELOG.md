@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.5.4] — 2026-10-05
+
+### Fixed
+- The `gh pr create` command `/document` offers for a GitHub docs repository quotes the title in single quotes. The title is free text, and inside the double quotes it used, a backticked word or `$(…)` in it was command-substituted when the command was run.
+
 ## [1.5.3] — 2026-10-04
 
 ### Fixed

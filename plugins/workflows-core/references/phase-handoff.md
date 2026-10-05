@@ -81,7 +81,7 @@ Nothing staged → no commit. Emit the §4.1 `nothing to commit` line. This is n
 
 Message `<KEY> <summary>`, matching the specs repo's own `<KEY|NOISSUE> <summary>` convention. Carry `Co-Authored-By: <the session model's name> <noreply@anthropic.com>` (§1 rule 6).
 
-**Commit by pathspec, never the index** — the paths §2.3 step 3 staged and nothing else. A plain `git commit` takes whatever the index holds, and a change the user had staged in the specs repository rides §2.2's switch onto this branch and would land in the deliverable's commit. Write the message to a `command mktemp -t` file outside any repository, commit with `git -C "$SPECS_PATH" commit -q -F <msg-path> -- ':(literal)<path>' …`, one `':(literal)<path>'` argument per staged path, and remove the file once the commit has been made or has failed, with `command rm -f -- "<msg-path>"`. `-F` rather than `-m`, because `<summary>` is free text and a double-quoted `-m` command-substitutes its backticks and `$(…)` before git sees it. Then bring the index back in step exactly as `specs-repo-git.md` §4 step 4 does after its own pathspec commit, with §2.3's OTHER paths as the ones the restore leaves alone.
+**Commit by pathspec, never the index** — the paths §2.3 step 3 staged that git still lists as staged, and nothing else, listed, committed and followed by the index restore exactly as `specs-repo-git.md` §4 step 4 does, with this phase's message. A plain `git commit` takes whatever the index holds, and a change the user had staged in the specs repository rides §2.2's switch onto this branch and would land in the deliverable's commit; where the list is empty, there is nothing to commit, and §4.1's *Nothing to commit* row is the line. Write the message to a `command mktemp -t dw-handoff-msg-XXXXXX` file outside any repository and commit with `-F <msg-path>` rather than `-m`, because `<summary>` is free text and a double-quoted `-m` command-substitutes its backticks and `$(…)` before git sees it; remove the file once the commit has been made or has failed, with `command rm -f -- "<msg-path>"`. A commit git refuses — a hook's rejection, a signature it cannot make, a merge in progress — is reported through §4.1's *Commit failed* row, never retried and never run with `--no-verify`.
 
 ### 2.5 Push
 
@@ -107,7 +107,9 @@ Otherwise: derive the repository, run a cheap `gh auth status` pre-check purely 
     case "$host" in github.com) OWNER_REPO="$slug" ;; *) OWNER_REPO="$host/$slug" ;; esac
 
     gh pr create -R "$OWNER_REPO" --base <default> --head <branch> \
-                 --title "<title>" --body-file <body-path>
+                 --title '<title>' --body-file <body-path>
+
+**`<title>` is free text, so it goes in single quotes**, each `'` it holds written `'\''`: inside double quotes its backticks and `$(…)` would be command-substituted before `gh` saw it.
 
 **The host is kept, not stripped** — the same rule as `dev-workflows:code-handoff` §2.6, and for the same reason. `gh -R` accepts `[HOST/]OWNER/REPO`, and `gh auth status` succeeds whenever the user is authenticated to *any* host, so a bare `OWNER/REPO` derived from a GitHub Enterprise remote resolves against **github.com** — silently opening the phase's pull request on an unrelated public repository if one happens to sit at that path, with the capability probe catching nothing because the call succeeded. Only `github.com` may drop the host. Validate the slug against `^[^/]+/[^/]+$` before calling `gh`; anything else (a Bitbucket `scm/proj/repo`, a nested GitLab group) is not a `gh` target — skip to §4.2. §3.5's `gh pr list -R "$OWNER_REPO"` uses the same value and mistargets identically without this.
 
@@ -363,6 +365,7 @@ one, and two lines on a run whose reader expected one.
 | Push failed | `Phase handoff: committed <sha7> on <branch> — push FAILED (<reason>). The phase is NOT handed off.` |
 | No remote | `Phase handoff: committed <sha7> on <branch> — this specs repo has no origin remote, so nothing was pushed and no PR was opened. The phase is NOT handed off.` |
 | Nothing to commit | `Phase handoff: no deliverable changes to commit on <branch>` |
+| Commit failed | `Phase handoff: NOT handed off — the commit failed (<the first line of git's error or the hook's output>). The deliverable is staged on <branch>, not committed.` |
 | Branch name substituted | append `; branch name <intended> was taken, used <actual>` |
 | Declaration unaccounted for | append `; <path> was declared but staged by nothing — this run put nothing on <branch> for it` (§2.3 step 4), one clause per path |
 | Record unreadable | append `; a status record could not be read as a path (<record>) — nothing was staged for it` (§2.3 step 4), one clause per record |

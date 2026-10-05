@@ -536,24 +536,34 @@ to state.
    resolved no key. This matches the specs repo's own `<KEY|NOISSUE> <summary>`
    convention. **No `Co-Authored-By` trailer** (§1 rule 6).
 
-   Commit the paths step 2 staged and nothing else:
+   Commit the paths step 2 staged that git still lists as staged, and
+   nothing else. List them with
+   `git -C "$SPECS_PATH" diff --cached --name-only -z --no-renames -- ':(literal)<path>' …`
+   over the paths step 2 staged: a path step 2 enumerated can be one git no
+   longer knows (staged as new by an earlier run whose commit failed, then
+   deleted), and one pathspec that matches nothing fails the whole commit.
+   Where it lists none, there is nothing to commit: emit step 3's outcome line
+   instead. Then read everything the index holds staged, the same command
+   with no path, which the restore below needs, and commit:
    `git -C "$SPECS_PATH" commit -q -m "<message>" -- ':(literal)<path>' …`, one
-   `':(literal)<path>'` argument per path. A plain `git commit` takes whatever
-   the index holds, and §3.3 G1 lets this step run beside changes that are not
-   the plugin's, a change the user staged included, which that commit would
-   carry under this message. `:(literal)` because a porcelain path can begin
-   with `:`, which git otherwise reads as pathspec magic; never the global
-   `--literal-pathspecs`, which every commit hook would inherit.
+   `':(literal)<path>'` argument per listed path. A plain `git commit` takes
+   whatever the index holds, and §3.3 G1 lets this step run beside changes
+   that are not the plugin's, a change the user staged included, which that
+   commit would carry under this message. `:(literal)` because a porcelain
+   path can begin with `:`, which git otherwise reads as pathspec magic; never
+   the global `--literal-pathspecs`, which every commit hook would inherit.
 
-   **Once it lands, bring the index back in step with the new `HEAD`.** A
-   pathspec commit runs the `pre-commit` hook against a temporary index, so a
-   file the hook fixes and re-stages, adds, or removes is committed while the
-   real index keeps the old entry (measured on git 2.43: `MM`, `D ` beside `??`,
-   and `AD`). Read the paths the commit carries,
+   **Then bring the index back in step with the new `HEAD`.** A pathspec
+   commit runs the `pre-commit` hook against a temporary index, so a file the
+   hook fixes and re-stages, adds, or removes is committed while the real
+   index keeps the old entry (measured on git 2.43: `MM`, `D ` beside `??`,
+   and `AD`). Once the commit lands, read the paths it carries,
    `git -C "$SPECS_PATH" diff-tree --no-commit-id --name-only -r -z --root --no-renames HEAD`,
    and the paths whose index entry now differs from `HEAD`,
    `git -C "$SPECS_PATH" diff --cached --name-only -z --no-renames`. Over the
-   paths on both lists, less every OTHER path step 2 enumerated, run
+   paths on both of those two lists, less every path the read before the
+   commit listed that the commit's own pathspecs do not name — a change
+   somebody else had staged, left as they staged it — run
    `git -C "$SPECS_PATH" restore --staged -- ':(literal)<path>' …`, and run
    nothing where none is left. Never over the commit's whole list: a path the
    commit deleted is in neither `HEAD` nor the index, and one pathspec that
@@ -568,6 +578,11 @@ to state.
    - **`index.lock` present** (a concurrent session holds the repo) → report and
      skip; **never delete a lock file**. The artifacts stay in the working tree
      and the next run's preflight flushes them.
+   - **The commit fails** — a `pre-commit` or `commit-msg` hook rejects it, a
+     signature cannot be made, or a merge is in progress, during which git
+     refuses a pathspec commit → report git's error or the hook's output; never
+     retry and never `--no-verify`. The artifacts stay staged, and the next
+     run's preflight flushes them (§3.4).
 7. **Emit the §6 outcome line**, plus the full §5 notice repeated verbatim when
    a guard fired at §3.3.
 
@@ -679,6 +694,7 @@ report was composed earlier.
 | Committed, push failed | `Specs repo: committed <sha7> (<N> files) on <branch> — push FAILED (<reason>); the commit is local and the next run retries it` |
 | Nothing to commit | `Specs repo: no session artifacts to commit` |
 | Locked | `Specs repo: skipped — another session holds the repo (index.lock); the next run picks the artifacts up` |
+| Commit failed | `Specs repo: NOT COMMITTED — the commit failed (<the first line of git's error or the hook's output>); the artifacts stay staged and the next run picks them up` |
 | Blocked (G0) | `Specs repo: NOT COMMITTED — see the notice below`, followed by the §5 G0 block verbatim |
 | Misrooted (§3.1), whether or not the environment conditions hold | `Specs repo: NOT COMMITTED — SPECS_PATH is misplaced; see the notice below`, followed by the §3.1 notice, or `specs-root-check`'s stop, verbatim |
 | Gate failed on environment, on a run carrying neither flag | *(no line at all — silent no-op)* |

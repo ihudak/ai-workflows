@@ -79,7 +79,9 @@ Compose the draft and BOTH write and show it:
   - Bitbucket (Cloud / Server) → "Open a pull request in the web UI and paste
     the title + body above." (No API.)
   - GitHub → additionally offer a command the USER may run:
-    `gh pr create --title "<title>" --body-file <pr-draft path>`.
+    `gh pr create --title '<title>' --body-file <pr-draft path>`, the title in
+    single quotes with each `'` it holds written `'\''`, since inside double
+    quotes its backticks and `$(…)` would be command-substituted.
   - other → "Open a pull request in your host and paste the title + body above."
 
 For a Bitbucket-hosted docs repo there is no CLI to open the pull request with, so this flow writes the draft and the user opens it. This is a host capability limit, not a policy: the family does open one where a host offers a CLI (`workflows-core:phase-handoff` §2.6 in `$SPECS_PATH`, `dev-workflows:code-handoff` §2.6 in a code repo), and no command of this plugin opens one anywhere, this docs repo included.
