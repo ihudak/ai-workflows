@@ -2156,6 +2156,10 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf '\n| pipenv | \`only-binary = :all:\`, then \`PIP_CONFIG_FILE=<file> pipenv install\` |\n' >> $itc/install-time-code.md"
   expect_fail_msg "a pip configuration file alone is not the flag" 21 "without --only-binary=:all:" \
     "printf '\nRun \`PIP_CONFIG_FILE=<file> pipenv install\`.\n' >> $itc/install-time-code.md"
+  expect_fail_msg "a pip install under PIP_CONFIG_FILE is not pipenv's allow form" 21 "without --only-binary=:all:" \
+    "printf '\n| x | \`only-binary = :all:\`, then \`PIP_CONFIG_FILE=<file> pip install -r requirements.txt\` |\n' >> $itc/install-time-code.md"
+  expect_fail_msg "a configuration that builds everything is rejected" 21 "builds every package from source" \
+    "printf '\n| pipenv | \`only-binary = :all:\`, \`no-binary = :all:\`, then \`PIP_CONFIG_FILE=<file> pipenv install\` |\n' >> $itc/install-time-code.md"
   expect_fail_msg "an install in the fixer agent is held too" 21 "without --ignore-scripts" \
     "mkdir -p $itca; printf -- '---\nname: vuln-fixer\n---\nThen run \`npm install\`.\n' >> $itca/vuln-fixer.md"
   expect_fail_msg "a missing install reference is rejected" 21 "does not exist" \
@@ -3127,8 +3131,9 @@ check_untrusted_content() {
 #   - pip / pipN.M install, download, wheel or sync (uv pip's too), pip-sync, and pipenv install,
 #     sync, update, upgrade or lock (a plain lock builds a source distribution's metadata) carry
 #     --only-binary=:all: (or --only-binary :all:, or PIP_ONLY_BINARY=:all:) -- or, for pipenv's
-#     allow form, PIP_CONFIG_FILE with that file's `only-binary = :all:` written on the same line,
-#     since no flag can say it; never :none: for only-binary, which turns that off, and never
+#     allow form, PIP_CONFIG_FILE on a pipenv command with that file's `only-binary = :all:` written
+#     on the same line, since no flag can say it (never with `no-binary = :all:` there); never :none:
+#     for only-binary, which turns that off, and never
 #     :all: anywhere in a no-binary value, which builds every package from source -- a named
 #     --no-binary=<names> beside --only-binary=:all: is the allow path;
 #   - setup.py install or develop is refused whatever it carries: it runs a setup.py.
@@ -3165,10 +3170,13 @@ check_install_time_code() {
           n=$((n + 1))
           if grep -qE -- "--no-binary([= ]+)[\"']?[^[:space:]\"']*:all:|PIP_NO_BINARY=[\"']?[^[:space:]\"']*:all:" <<<"$cmd"; then
             fail 21 "$ITC_PLUGIN_REL/$rel:$ln builds every package from source (:all: for no-binary) -- only the packages the user allowed may be named there"
+          elif grep -qE -- 'PIP_CONFIG_FILE=' <<<"$cmd" && grep -qE -- 'no-binary = [^`]*:all:' <<<"$line"; then
+            fail 21 "$ITC_PLUGIN_REL/$rel:$ln builds every package from source (:all: for no-binary) -- only the packages the user allowed may be named there"
           elif grep -qE -- "--only-binary([= ]+)[\"']?[^[:space:]\"']*:none:|PIP_ONLY_BINARY=[\"']?[^[:space:]\"']*:none:" <<<"$cmd"; then
             fail 21 "$ITC_PLUGIN_REL/$rel:$ln turns --only-binary off (:none:) -- every source distribution would build again"
           elif ! grep -qE -- "--only-binary([= ]+)[\"']?:all:|PIP_ONLY_BINARY=[\"']?:all:" <<<"$cmd" \
-            && ! { grep -qE -- 'PIP_CONFIG_FILE=' <<<"$cmd" && grep -qF -- 'only-binary = :all:' <<<"$line"; }; then
+            && ! { grep -qE -- '(^|[^[:alnum:]_.-])pipenv[[:space:]]' <<<"$cmd" && grep -qE -- 'PIP_CONFIG_FILE=' <<<"$cmd" \
+                   && grep -qF -- 'only-binary = :all:' <<<"$line"; }; then
             fail 21 "$ITC_PLUGIN_REL/$rel:$ln installs a Python dependency without --only-binary=:all: (or PIP_ONLY_BINARY=:all:) -- a source distribution's build would run its setup.py with the user's permissions"
           fi
         fi
