@@ -51,6 +51,7 @@ Run only when `arch_grounding: ON` or `team_grounding: ON`, after the run's code
   > arch_root:       <root> | null
   > snapshot:        <branch> @ <full sha> (<date>)[, dirty][, unpushed] | not a git checkout | none
   > team_root:       <specs>/architecture | null
+  > own_key:         <the PRD key the run authors for>
   > feature_summary: <2–4 sentences: the goal + capability themes>
   > themes:          [confirmed themes]
   > stack_facts:     [<technology> — <file:line>, …]

@@ -69,7 +69,7 @@ A superseded or withdrawn record binds nothing, and `architecture-grounder` skip
 
 ## 5. Citations — Applied in, Deviated in
 
-The harvest reads every markdown file in the folder tree of the record's PRD, except the ARDs themselves, `revisions/`, `dev-workflows/`, `attachments/` and any `*-import/` folder — a tracker export, whose copies would count a deviation twice:
+The harvest reads every markdown file in the folder tree of the record's PRD, except the ARDs themselves, `revisions/`, `dev-workflows/`, `attachments/` and any `*-import/` folder carrying no key — a tracker export, whose copies would count a deviation twice; a feature or Epic folder whose slug merely ends in `-import` is read:
 
 - **Applied in** — each `design.md` that mentions the decision's `[AD#N]` outside a deviation line.
 - **Deviated in** — each `- ARD deviation: [AD#N] — <what> — <why> — flag: architect` line (`workflows-core:ard-resolution` § Deviation-record convention), in any of those files, with its what and why.
@@ -90,7 +90,7 @@ Problems never stop a harvest and never change its exit code; each leaves the re
 
 | Kind | Meaning | Fix |
 |---|---|---|
-| `unparseable` | a decision with no **Rule**, a duplicate number, a heading with no number, both **Superseded by** and **Withdrawn**, a **Superseded by** naming no `[AD#M]`, a **Supersedes** whose link text does not start with a record id, or an ARD outside a `PRD-` or `EPIC-` folder | refine the ARD (`/product-workflows:create-ard`) |
+| `unparseable` | an ARD with no `## Architecture decisions` section (the heading's case and a leading number are tolerated), a decision with no **Rule**, a duplicate number, a heading with no number, both **Superseded by** and **Withdrawn**, a **Superseded by** naming no `[AD#M]`, a **Supersedes** whose link text does not start with a record id, or an ARD outside a `PRD-` or `EPIC-` folder, or a frontmatter `key:` that is not a key | refine the ARD (`/product-workflows:create-ard`) |
 | `key-conflict` | two ARD paths with one scope key | remove or rename one of the two |
 | `ambiguous-citation` | a cited number two area ARDs of one Epic both hold | cite it where only one ARD holds it |
 | `supersedes-carrier-not-live` | a `Supersedes` on a superseded or withdrawn decision | repeat it on the replacing decision, or drop it |
@@ -103,6 +103,7 @@ Problems never stop a harvest and never change its exit code; each leaves the re
 
 ## Invariants
 
-- Only `/product-workflows:harvest-decisions` writes here, through `workflows-core:phase-handoff`'s `handoff-to-main` on a `kb/` branch; nothing is ever deleted.
+- Only `/product-workflows:harvest-decisions` writes here, through `workflows-core:phase-handoff`'s `handoff-to-main` on a `kb/` branch; nothing is ever deleted, and nothing is written outside this folder.
+- An unmerged `kb/` branch stops the next harvest. Unmerged means neither an ancestor of the default branch nor carrying an `architecture/` tree the default branch has held — a squash or rebase merge lands the tree without the ancestry — and the script's `--pending-kb` lists them.
 - Every input comes from the default ref; the working tree is only written.
 - The format here and the script change together; the script's `--selftest` pins every rule above.

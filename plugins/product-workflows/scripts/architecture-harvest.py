@@ -7,13 +7,16 @@ architecture-kb reference, and a change to either is a change to both. Python
 standard library only.
 
   architecture-harvest.py --specs <root> --ref <ref> [--layout vi|prd] [--dry-run]
+  architecture-harvest.py --specs <root> --ref <ref> --pending-kb
   architecture-harvest.py --selftest
 
 <root> is the specs repository's top level. Every input — the ARDs, the files that
 cite their decisions and the records already written — is read from <ref> with git,
 never from the working tree, so an uncommitted or unmerged ARD is never harvested.
 The plan prints as JSON; without --dry-run it is also written into
-<root>/architecture/ in the working tree. Nothing is ever deleted.
+<root>/architecture/ in the working tree, and never outside it. Nothing is ever deleted.
+--pending-kb lists the kb/ branches not yet on <ref> — neither its ancestors nor carrying an
+architecture/ tree it has held, which is what a squash or rebase merge leaves.
 
 Layouts: `vi` — <KEY>_ARD.md and <EPIC>-<area>_ARD.md under specifications/<VI>-<slug>/;
 `prd` — ard.md and ard-<area>.md in PRD-<KEY>-<slug>/ and EPIC-<KEY>-<slug>/ folders.
@@ -37,11 +40,12 @@ LABELS = ("Binds", "Prevents", "Rule", "Alternatives", "Supersedes", "Superseded
 LABEL_RE = re.compile(r"\*\*(%s):\*\*" % "|".join(re.escape(x) for x in LABELS))
 HEADING_RE = re.compile(r"^###\s+\[AD[#-](\d+)\]:\s*(.*?)\s*$")
 HEADING_ANY_RE = re.compile(r"^###\s+\[AD")
-SECTION_RE = re.compile(r"^##\s+Architecture decisions\s*$")
+SECTION_RE = re.compile(r"^##\s+(?:\d+\.\s*)?Architecture decisions\s*$", re.I)
 TOP_HEADING_RE = re.compile(r"^#{1,2}\s")
 CITE_RE = re.compile(r"\[AD[#-](\d+)\]")
 DEVIATION_RE = re.compile(r"^\s*[-*]\s*ARD deviation:\s*\[AD[#-](\d+)\]\s*(.*?)\s*$")
 KEY = r"[A-Z][A-Z0-9_]*(?:-\d+)+"
+KEY_RE = re.compile("^%s$" % KEY)
 RECORD_ID = KEY + r"(?:-[a-z0-9]+)*-AD\d+"
 SUPERSEDES_RE = re.compile(r"\[((%s)\b[^\]]*)\]\(([^)]*)\)" % RECORD_ID)
 VI_ARD_RE = re.compile(r"^([A-Z][A-Z0-9_]*-\d+)(?:-([a-z0-9][a-z0-9-]*))?_ARD\.md$")
@@ -98,7 +102,14 @@ def natural(s):
 
 
 def excluded(path):
-    return any(part in EXCLUDED_DIRS or part.endswith("-import") for part in path.split("/")[:-1])
+    """A folder never read: a reserved one, or a tracker export — an *-import/ folder carrying no key,
+    so a feature or Epic folder whose slug merely ends in -import is still read."""
+    for part in path.split("/")[:-1]:
+        if part in EXCLUDED_DIRS:
+            return True
+        if part.endswith("-import") and not VI_FOLDER_RE.match(part) and not KIND_FOLDER_RE.match(part):
+            return True
+    return False
 
 
 # --- frontmatter -------------------------------------------------------------------------
@@ -212,7 +223,7 @@ def folder_key(root, sha, folder, present):
     for name in ("prd.md", "ard.md"):
         if folder + "/" + name in present:
             k = own_key(root, sha, folder + "/" + name, None)
-            if k:
+            if k and KEY_RE.match(k):
                 return k
     return KIND_FOLDER_RE.match(folder.rsplit("/", 1)[-1]).group(2)
 
@@ -237,6 +248,9 @@ def discover_prd(root, sha, files, present):
             continue
         folder = "/".join(parts[:prd_i + 1])
         key = own_key(root, sha, p, km.group(2))
+        if not KEY_RE.match(key):
+            problems.append(problem("unparseable", p, 0, "its key: %s is not a key" % key))
+            continue
         area, kind = m.group(1), km.group(1)
         if area:
             scope, skey, epic = "area", "%s-%s" % (key, area), (key if kind == "EPIC" else None)
@@ -284,13 +298,14 @@ def parse_ard(text, path):
     title = fm_scalar(blocks, "title", strip_comment=False)
     if not title:
         title = next((ln[2:].strip() for ln in lines if ln.startswith("# ")), os.path.basename(path))
-    problems, raw, in_section, cur = [], [], False, None
+    problems, raw, in_section, cur, found = [], [], False, None, False
     for i, ln in enumerate(lines, offset + 1):
         if TOP_HEADING_RE.match(ln):
             if cur:
                 raw.append(cur)
                 cur = None
             in_section = bool(SECTION_RE.match(ln))
+            found = found or in_section
             continue
         if not in_section:
             continue
@@ -308,6 +323,8 @@ def parse_ard(text, path):
             cur["body"].append(ln)
     if cur:
         raw.append(cur)
+    if not found:
+        problems.append(problem("unparseable", path, 0, "no `## Architecture decisions` section"))
     counts = {}
     for d in raw:
         counts[d["n"]] = counts.get(d["n"], 0) + 1
@@ -582,12 +599,37 @@ def harvest(root, ref, layout="vi", write=False):
     plan["files"] = sorted(texts)
     plan["live"] = sum(1 for e in entries if e["status"] == "accepted")
     if write:
+        base = os.path.realpath(os.path.join(root, KB))
         for path in plan["files"]:
             full = os.path.join(root, path)
+            if not os.path.realpath(full).startswith(base + os.sep):
+                raise Abort("refusing to write %s: it resolves outside %s" % (path, base))
             os.makedirs(os.path.dirname(full), exist_ok=True)
             with open(full, "w", encoding="utf-8", newline="\n") as fh:
                 fh.write(texts[path])
     return plan
+
+
+def tree(root, rev):
+    r = subprocess.run(["git", "-C", root, "rev-parse", "--verify", "--quiet", "%s:%s" % (rev, KB)],
+                       stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    return r.stdout.decode().strip() if r.returncode == 0 else None
+
+
+def pending_kb(root, ref):
+    """The kb/ branches not yet on <ref>: neither an ancestor of it, nor carrying an architecture/ tree
+    some commit of <ref> has held — a squash or rebase merge lands the tree without the ancestry."""
+    sha = resolve(root, ref)
+    landed = {tree(root, c) for c in git(root, "log", "--format=%H", sha, "--", KB).split()}
+    pending = []
+    for b in git(root, "for-each-ref", "--format=%(refname:short)", "refs/heads/kb", "refs/remotes/origin/kb").split():
+        if subprocess.run(["git", "-C", root, "merge-base", "--is-ancestor", b, sha],
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
+            continue
+        t = tree(root, b)
+        if t is None or t not in landed:
+            pending.append(b)
+    return pending
 
 
 def summary(plan):
@@ -706,6 +748,12 @@ def selftest():
         "specifications/ACME-12-a/ACME-12_ARD.md": ard("First", [ad(1, "First")]),
         "specifications/ACME-12-b/ACME-12_ARD.md": ard("Second", [ad(1, "Second")]),
         "specifications/ACME-13_gone/ACME-13_ARD.md": ard("Gone", [ad(1, "Soon gone")]),
+        "specifications/ACME-5-csv-import/ACME-5_ARD.md": ard("CSV import", [ad(1, "Imports stream")]),
+        "specifications/ACME-5-csv-import/ACME-6-bulk-import/ACME-6_ARD.md": ard("Bulk", [ad(1, "Bulk imports batch")]),
+        "specifications/ACME-15-caps/ACME-15_ARD.md": ard("Caps", [ad(1, "Headings drift")]).replace(
+            "## Architecture decisions", "## 3. Architecture Decisions"),
+        "specifications/ACME-16-none/ACME-16_ARD.md": ard("None", [ad(1, "Lost")]).replace(
+            "## Architecture decisions", "## Decisions"),
     }
     with tempfile.TemporaryDirectory() as tmp:
         init(tmp)
@@ -717,11 +765,14 @@ def selftest():
         p1 = harvest(tmp, "HEAD", "vi", write=True)
         expect = {"ACME-1-AD1", "ACME-1-AD2", "ACME-1-AD3", "ACME-1-AD4", "ACME-1-AD5", "ACME-2-AD1",
                   "ACME-2-ui-AD2", "ACME-2-ui-AD4", "ACME-2-api-AD4", "ACME-7-AD1", "ACME-7-AD2", "ACME-7-AD3",
-                  "ACME-7-AD4", "ACME-7-AD5", "ACME-7-AD6", "ACME-10-AD1", "ACME-11-AD1", "ACME-13-AD1"}
+                  "ACME-7-AD4", "ACME-7-AD5", "ACME-7-AD6", "ACME-10-AD1", "ACME-11-AD1", "ACME-13-AD1",
+                  "ACME-5-AD1", "ACME-6-AD1", "ACME-15-AD1"}
         check(set(p1["create"]) == expect, "first harvest creates exactly the parseable decisions: %s" % sorted(
             set(p1["create"]) ^ expect))
         check(not (p1["update"] or p1["supersede"] or p1["withdraw"] or p1["kept"]), "first harvest only creates")
-        check(p1["live"] == 14, "14 live records, got %s" % p1["live"])
+        check(p1["live"] == 17, "17 live records, got %s" % p1["live"])
+        check(any(x["file"].startswith("specifications/ACME-16-none/") and x["kind"] == "unparseable" for x in p1["problems"]),
+              "an ARD with no Architecture decisions section is reported")
         bad8 = [p for p in p1["problems"] if p["file"].startswith("specifications/ACME-8-bad/")]
         check([p["kind"] for p in bad8] == ["unparseable"] * 4,
               "ACME-8: no Rule, a duplicate, no number, a bad Supersedes — got %s" % [p["detail"] for p in bad8])
@@ -793,6 +844,30 @@ def selftest():
     with tempfile.TemporaryDirectory() as tmp:
         check(cli("--specs", tmp, "--ref", "HEAD").returncode == 2, "outside a git repository exits 2")
 
+    # ---- unmerged kb/ branches: ancestry, a squash merge, a later harvest -----------------
+    with tempfile.TemporaryDirectory() as tmp:
+        init(tmp)
+        commit(tmp, {"README.md": "x\n"}, "base")
+        git(tmp, "branch", "-M", "main")
+        git(tmp, "checkout", "-q", "-b", "kb/harvest-a")
+        commit(tmp, {KB + "/a.md": "a\n"}, "a")
+        git(tmp, "checkout", "-q", "main")
+        git(tmp, "checkout", "-q", "-b", "kb/harvest-b")
+        commit(tmp, {KB + "/b.md": "b\n"}, "b")
+        git(tmp, "checkout", "-q", "main")
+        git(tmp, "merge", "-q", "--no-ff", "-m", "merge b", "kb/harvest-b")
+        git(tmp, "checkout", "-q", "-b", "kb/harvest-c")
+        commit(tmp, {KB + "/c.md": "c\n"}, "c")
+        git(tmp, "checkout", "-q", "main")
+        git(tmp, "merge", "-q", "--squash", "kb/harvest-c")
+        git(tmp, "commit", "-q", "-m", "squash c")
+        commit(tmp, {KB + "/d.md": "d\n"}, "a later harvest")
+        check(pending_kb(tmp, "main") == ["kb/harvest-a"],
+              "only the unmerged kb/ branch is pending — not one merged by ancestry or squash: %s" % pending_kb(tmp, "main"))
+        r = cli("--specs", tmp, "--ref", "main", "--pending-kb")
+        check(r.returncode == 0 and json.loads(r.stdout.decode("utf-8") or "{}").get("pending") == ["kb/harvest-a"],
+              "--pending-kb prints the pending branches")
+
     # ---- the prd layout -----------------------------------------------------------------
     with tempfile.TemporaryDirectory() as tmp:
         init(tmp)
@@ -805,6 +880,8 @@ def selftest():
             cart + "ard.md": ard("Cart", [ad(1, "Cart keeps sessions server-side")], "key: ACME-90-01\nkind: ard\n"),
             cart + "ard-ui.md": ard("Cart UI", [ad(1, "Cart UI is optimistic")], "key: ACME-90-01\nkind: ard\n"),
             cart + "design.md": "# Design\n\nPer [AD#1].\n",
+            "specifications/PRD-ACME-2-data-import/ard.md": ard("Data", [ad(1, "Data lands raw")], "key: ACME-2\nkind: ard\n"),
+            "specifications/PRD-ACME-3-evil/ard.md": ard("Evil", [ad(1, "Escapes")], "key: ../../../escape/pwn\nkind: ard\n"),
             "specifications/PRD-ACME-91-pay/ard.md": ard("Pay", [ad(
                 1, "Payments share the shop database", extra=[sup("ACME-90-AD1", "Shop uses one database"), ""])],
                 "key: ACME-91\nkind: ard\n"),
@@ -815,7 +892,10 @@ def selftest():
         except ValueError:
             dry = {"create": []}
         check(r.returncode == 0 and set(dry["create"]) == {"ACME-90-AD1", "ACME-90-01-AD1", "ACME-90-01-ui-AD1",
-                                                             "ACME-91-AD1"}, "prd layout dry run: %s" % dry["create"])
+                                                             "ACME-91-AD1", "ACME-2-AD1"}, "prd layout dry run: %s" % dry.get("create"))
+        check(all(".." not in f for f in dry.get("files", [])) and any(
+            x["file"].startswith("specifications/PRD-ACME-3-evil/") and x["kind"] == "unparseable" for x in dry.get("problems", [])),
+              "a frontmatter key that is not a key is unparseable, never a path")
         check(not os.path.exists(os.path.join(tmp, KB)), "--dry-run writes nothing")
         harvest(tmp, "HEAD", "prd", write=True)
 
@@ -845,6 +925,7 @@ def main():
     ap.add_argument("--ref", help="the ref to read: the specs repository's default branch, or a commit")
     ap.add_argument("--layout", choices=sorted(GROUP), default="vi", help="vi (<KEY>_ARD.md) or prd (ard.md)")
     ap.add_argument("--dry-run", action="store_true", help="print the plan and write nothing")
+    ap.add_argument("--pending-kb", action="store_true", help="print the kb/ branches not yet on --ref, and exit")
     ap.add_argument("--selftest", action="store_true", help="run the built-in fixtures and exit")
     a = ap.parse_args()
     try:
@@ -857,6 +938,9 @@ def main():
         print("architecture-harvest: --specs and --ref are required", file=sys.stderr)
         return 2
     try:
+        if a.pending_kb:
+            print(json.dumps({"pending": pending_kb(a.specs, a.ref)}, indent=2, ensure_ascii=False))
+            return 0
         plan = harvest(a.specs, a.ref, a.layout, write=not a.dry_run)
     except Exception as e:  # anything unexpected is "could not run", never a partial plan
         print("architecture-harvest: not run (%s: %s)" % (type(e).__name__, e), file=sys.stderr)
