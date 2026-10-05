@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.22.1] — 2026-10-05
+
+### Fixed
+- **The session-cost selftest now covers `main()`'s shared message-id map.** Its unit checks passed one map to `scan_main` and `read_subagents` by hand, so deleting `main()`'s own `by_id=by_id` argument left the selftest green while a fork's copy of a main-transcript record was counted twice. A run through the CLI now checks that a subagent file repeating a main-transcript id adds nothing to the totals, while the file's own new id still counts.
+- **`/harvest-decisions` is listed among the commands that emit no cost entry and that no run flag applies to.** `cost-emission` §7's no-row bullet and §13.3's list of commands that leave a boundary no claim matches named `/vuln`, `/upgrade`, `/docs-profile`, `/docs-serve` and `/statusline`, and `run-flags` §3's list of commands in none of the three sets named the last two; each now names `/harvest-decisions` too.
+
 ## [1.22.0] — 2026-10-05
 
 ### Added

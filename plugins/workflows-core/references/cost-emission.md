@@ -427,7 +427,8 @@ not attempt to infer it from anything else.
   Treat it as the `n/a` case below.
 - **Target is `n/a`, or a command with no row above -> `phase: plugin-feedback`,
   `role: n/a`.** The second case covers `/vuln`, `/upgrade`, `/docs-profile`,
-  `/docs-serve` and `/statusline`, none of which emits cost and so has nothing to inherit.
+  `/docs-serve`, `/statusline` and `/harvest-decisions`, none of which emits cost and so has
+  nothing to inherit.
 - **Target is `/frames` -> resolve ITS inference first**, then inherit the result,
   exactly as for `/release-notes`. One level only. Where no folder resolves — which
   for `/frames` means the run never started — treat it as the `n/a` case.
@@ -787,7 +788,8 @@ first, and the script partitions the window:
 
 **Matching by name is the whole point, and positional pairing is the trap.** A
 window routinely holds boundaries no claim corresponds to: `/vuln`, `/upgrade`,
-`/docs-profile`, `/docs-serve` and `/statusline` are real commands that emit no cost entry,
+`/docs-profile`, `/docs-serve`, `/statusline` and `/harvest-decisions` are real commands that
+emit no cost entry,
 and an interrupted run leaves a boundary too. Pair the
 k-th claim with the k-th boundary and a single `/vuln` in the window shifts every
 claim by one — filing a security run's spend under a PRD lifecycle phase, which

@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.19.1] — 2026-10-05
+
+### Fixed
+- **The session-cost page no longer says every command in this plugin emits a cost entry.** It spoke of "the fourteen commands *in this plugin*" and said all of them emit one; the plugin has fifteen, and `/harvest-decisions` emits none, since it runs across every ARD at once and so has no one PRD to attribute spend to.
+
 ## [3.19.0] — 2026-10-05
 
 ### Changed

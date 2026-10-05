@@ -1,10 +1,10 @@
 # Session cost
 
-Cost attribution is one of the subsystems the companion `workflows-core` plugin holds: its `cost-emission` reference and the price table beside it are what every plugin in the family reads, and its `session-cost.py` script does the arithmetic. This page documents the subsystem from the side that invokes it — what a command here declares, and what the fourteen commands *in this plugin* charge to.
+Cost attribution is one of the subsystems the companion `workflows-core` plugin holds: its `cost-emission` reference and the price table beside it are what every plugin in the family reads, and its `session-cost.py` script does the arithmetic. This page documents the subsystem from the side that invokes it — what a command here declares, and what each of the fourteen cost-emitting commands *in this plugin* charges to.
 
 ## What a command declares
 
-Every cost-emitting command passes a `phase` and a `role` label at the point it calls the shared entry point, and `workflows-core:cost-emission` §7 carries one attribution row per command. Fourteen commands emit a cost entry here, unless `--skip-costs` ([below](#skipping-cost---skip-costs)) — all of them, and all with a fixed pair rather than an inferred one:
+Every cost-emitting command passes a `phase` and a `role` label at the point it calls the shared entry point, and `workflows-core:cost-emission` §7 carries one attribution row per command. Fourteen commands emit a cost entry here, unless `--skip-costs` ([below](#skipping-cost---skip-costs)) — every command in this plugin but `/harvest-decisions`, which runs across every ARD at once and so has no one PRD to attribute spend to — and all with a fixed pair rather than an inferred one:
 
 | Command(s) | Phase | Role |
 |---|---|---|
