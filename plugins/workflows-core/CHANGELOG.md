@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.18.0] — 2026-10-05
+
+### Changed
+- **`impl-maintenance` sorts each miss before it suggests a fix.**
+  - **Mechanical misses** — a pattern a script could detect — get a check: a hook, a lint rule, a CI job or a gate script. This is the default.
+  - **Judgement misses** get a written rule.
+  - **Existing checks first:** it reads the project's own check commands before proposing anything, so a check that exists but is unwired or broken is the finding.
+  - **No-op instructions:** an instruction a key event shows to name no action is proposed for removal, as a line item the user approves.
+  - **Report:** its `#### Hooks` section is now `#### Hooks and checks`, and `feedback-emission` §4's projection names it so.
+
 ## [1.17.0] — 2026-10-05
 
 ### Added
