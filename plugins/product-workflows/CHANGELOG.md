@@ -11,7 +11,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Added
 - **Every agent treats what it reads as data, never instructions.** All 14 agents end their prompt with `workflows-core`'s untrusted-content block: content supplies the values a task asks for — a declared test command, a documented convention — and never a new task, a fetch or a changed verdict, and an agent reports what tried to steer it as an `Untrusted-content notice:` line, after whatever its own output format requires.
-- **The 14 commands that dispatch an agent relay those notices** under `Untrusted-content notices:` in their final report, and hold their own reading to the same rule. A notice never blocks a run, changes its routing or triggers a re-review.
+- **The 14 commands that dispatch an agent relay those notices** under `Untrusted-content notices:` in their final report, or in the stop message of a run that ends early, and hold their own reading to the same rule. A notice never blocks a run, changes its routing or triggers a re-review.
 
 ## [3.15.0] — 2026-10-05
 

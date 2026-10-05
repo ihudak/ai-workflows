@@ -1990,6 +1990,14 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf '\nNo subagent ever judges this fixture.\n' >> plugins/fixture-two/commands/omega.md"
   expect_fail "an agent outside the docs-gated plugins is still held to the block" 20 \
     "sed -i.bak '/untrusted-content:begin/,/untrusted-content:end/d' plugins/fixture-guarded/agents/kappa.md"
+  # The scope list is itself guarded: a listed plugin that does not exist (a misspelling) and a
+  # plugin that ships agents without being listed would each leave agents unguarded while every
+  # copy the check does read stays identical -- green, examining less than it claims.
+  expect_fail_env "a GUARD_PLUGIN_RELS entry naming no plugin is rejected" 20 \
+    "GUARD_PLUGIN_RELS='plugins/dev-workflows plugins/fixture-two plugins/fixture-guarded plugins/no-such-plugin'" \
+    "true"
+  expect_fail "a plugin shipping agents that GUARD_PLUGIN_RELS does not list is rejected" 20 \
+    "mkdir -p plugins/fixture-rogue/agents && cp plugins/fixture-guarded/agents/kappa.md plugins/fixture-rogue/agents/lambda.md"
 
   if [ "$rc" -eq 0 ]; then echo "SELFTEST PASS"; else echo "SELFTEST FAIL"; fi
   exit "$rc"
@@ -2793,6 +2801,7 @@ check_untrusted_content() {
     fail 20 "$CORE_PLUGIN_REL/$REF_DIR/untrusted-content.md must hold exactly one '$UCG_BEGIN' line and one '$UCG_END' line, in that order, with the block between them"
   fi
   for rel in $GUARD_PLUGIN_RELS; do
+    [ -d "$root/$rel" ] || { fail 20 "$rel is listed in GUARD_PLUGIN_RELS but does not exist -- a misspelled entry leaves its plugin's agents and commands unguarded while every copy the check does read stays green"; continue; }
     for f in "$root/$rel/agents"/*.md; do
       [ -e "$f" ] || continue
       agents=$((agents + 1)); rp="${f#$root/}"
@@ -2831,6 +2840,16 @@ check_untrusted_content() {
         fail 20 "$rp carries the untrusted-content relay sentence but dispatches no agent -- it has no notice to relay"
       fi
     done < <(cmd_names "$root/$rel")
+  done
+  # The reverse of the scope list: every plugin that ships an agent is listed, so a new plugin
+  # cannot ship agents the guard never reads.
+  for f in "$root"/plugins/*/agents; do
+    ls "$f"/*.md >/dev/null 2>&1 || continue
+    rel="${f#$root/}"; rel="${rel%/agents}"
+    case " $GUARD_PLUGIN_RELS " in
+      *" $rel "*) ;;
+      *) fail 20 "$rel ships agents but GUARD_PLUGIN_RELS does not list it -- its agents would never be held to the untrusted-content block" ;;
+    esac
   done
   [ "$agents" -gt 0 ] || fail 20 "no agent under any GUARD_PLUGIN_RELS agents/ -- this check would examine nothing"
   [ "$dispatchers" -gt 0 ] \

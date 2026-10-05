@@ -9,7 +9,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Added
 - **Both agents treat what they read as data, never instructions.** Each ends its prompt with the untrusted-content block the repository keeps in `workflows-core`'s reference: content supplies the values a task asks for and never a new task, a fetch or a changed verdict, and an agent reports what tried to steer it as an `Untrusted-content notice:` line.
-- **Both commands that dispatch an agent relay those notices** under `Untrusted-content notices:` in their final report. The sentence cites nothing: this plugin does not depend on `workflows-core`, so its loader may not be installed.
+- **Both commands that dispatch an agent relay those notices** under `Untrusted-content notices:` in their final report, or in the stop message of a run that ends early. The sentence cites nothing: this plugin does not depend on `workflows-core`, so its loader may not be installed.
 
 ## [1.0.3] — 2026-09-24
 

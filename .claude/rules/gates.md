@@ -120,7 +120,7 @@ Every `choices:` option in the `/brd-*` and `/prd-*` families — the families c
 
 ### Check 20
 
-**Check 20 gates the untrusted-content guard**: every agent in `GUARD_PLUGIN_RELS` — the docs-gated plugins plus `prose-style` — carries `workflows-core`'s `references/untrusted-content.md` block byte for byte, every `Task`-granted agent its pass-on sentence, every dispatching command its relay sentence, each also in reverse. ([why](../../docs/maintainers/rationale.md#check-20))
+**Check 20 gates the untrusted-content guard**: every agent in `GUARD_PLUGIN_RELS` — the docs-gated plugins plus `prose-style` — carries `workflows-core`'s `references/untrusted-content.md` block byte for byte, every `Task`-granted agent its pass-on sentence, every dispatching command its relay sentence, each also in reverse; a listed plugin that does not exist, or a plugin that ships agents without being listed, fails too. ([why](../../docs/maintainers/rationale.md#check-20))
 
 ## `scripts/validate-catalog.py`
 
