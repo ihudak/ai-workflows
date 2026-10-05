@@ -15,7 +15,7 @@ Inherited from `specs-repo-git.md` — the first three unchanged, and the fourth
 1. **`git -C` always; `cd` never.** Every invocation is `git -C "$SPECS_PATH" …`. Most callers are running inside a *different* repository; a `cd` would corrupt their git state. The `gh` calls in §2.6 and §3.5 name the repository with `-R` for the same reason.
 2. **Bounded paths.** Only the calling command's own declared deliverable paths are staged, by enumeration (§2.3). `git add -A` is never issued at repository scope.
 3. **Bounded branches.** Only branches matching `^(idea|prd|ard|spec|design|ready|brd|frames)/` are the plugin's (`specs-repo-git.md` §2.2).
-4. **Never destructive — and this one is WIDER than the rule it inherits, deliberately.** `specs-repo-git.md` §1 rule 4 forbids `push --force`, `push -f`, `branch -D`, `merge`, `rebase`, `reset`, and deleting an `index.lock`. This rule adds **`stash`** and **`checkout --`**, because a deliverable commit runs where the user's own work may be uncommitted and both of those discard it silently. Same repository, two rules — so the addition is declared here rather than left for a reader to notice. No `push --force`, no `push -f`, no `branch -D`, no `merge`, no `rebase`, no `reset`, no `stash`, no `checkout --`, and never delete an `index.lock`.
+4. **Never destructive — and this one is WIDER than the rule it inherits, deliberately.** `specs-repo-git.md` §1 rule 4 forbids `push --force`, `push -f`, `branch -D`, `merge`, `rebase`, `reset`, and deleting an `index.lock`. This rule adds **`stash`** and **`checkout --`**, because a deliverable commit runs where the user's own work may be uncommitted and both of those discard it silently. Same repository, two rules — so the addition is declared here rather than left for a reader to notice. No `push --force`, no `push -f`, no `branch -D`, no `merge`, no `rebase`, no `reset`, no `stash`, no `checkout --`, and never delete an `index.lock`. §2.4's `restore --staged` is not a `reset`, for the reason `specs-repo-git.md` §1 rule 4 gives.
 
 Where this reference **differs** — each difference is deliberate, and a reader who "corrects" one to match `specs-repo-git.md` breaks this contract:
 
@@ -80,6 +80,8 @@ Nothing staged → no commit. Emit the §4.1 `nothing to commit` line. This is n
 ### 2.4 Commit
 
 Message `<KEY> <summary>`, matching the specs repo's own `<KEY|NOISSUE> <summary>` convention. Carry `Co-Authored-By: <the session model's name> <noreply@anthropic.com>` (§1 rule 6).
+
+**Commit by pathspec, never the index** — the paths §2.3 step 3 staged and nothing else. A plain `git commit` takes whatever the index holds, and a change the user had staged in the specs repository rides §2.2's switch onto this branch and would land in the deliverable's commit. Write the message to a `command mktemp -t` file outside any repository, commit with `git -C "$SPECS_PATH" commit -q -F <msg-path> -- ':(literal)<path>' …`, one `':(literal)<path>'` argument per staged path, and remove the file once the commit has been made or has failed, with `command rm -f -- "<msg-path>"`. `-F` rather than `-m`, because `<summary>` is free text and a double-quoted `-m` command-substitutes its backticks and `$(…)` before git sees it. Then bring the index back in step exactly as `specs-repo-git.md` §4 step 4 does after its own pathspec commit, with §2.3's OTHER paths as the ones the restore leaves alone.
 
 ### 2.5 Push
 

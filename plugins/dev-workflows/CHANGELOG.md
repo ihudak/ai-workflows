@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.9.1] — 2026-10-05
+
+### Fixed
+- **A file that was dirty before the run and that the run then edited is now told apart from one it never touched.** `code-handoff.md` §2.2 promised to commit such a file whole and name it, but had no way to know which files those were, so carve-out 1 subtracted it like any other and the run's edit was left out of the commit. On `/vuln`, which never asks about a dirty tree, a fix confined to a manifest or lockfile that was already dirty was reported as nothing to commit, and its tree test then skipped the CVE. The callers now record a content fingerprint (`git hash-object`, one path per call) for each path dirty at capture. A path whose fingerprint has changed by commit time is committed whole and named by a new *Pre-existing dirty paths committed* append, which `/upgrade` carries to its terminal line for each component; `/vuln`'s tree check between CVEs and its hand-off test both count such a path as the run's.
+- **After a carve-out-1 commit, the index is back in step with what a `pre-commit` hook did.** The post-commit `restore --staged` covered only the enumerated paths, so a hook that added a file left a staged deletion beside an untracked copy, and one that removed a file left it staged. It now restores the paths that are both in the commit and out of step in the index, less those carve-out 1 left out. It never restores over the commit's whole list, because one deleted path fails the whole `restore`.
+- **`/implement`'s `title`** was documented as the commit subject but written `<summary> [<key>]`, while §2.3 shapes the subject to the repository's log; on a conventional-commits log the commit read `feat: …` and the pull request's title did not. It is now the subject §2.3 writes, as `/vuln` and `/upgrade` already pass it.
+- Wording: §1 rule 3 says why the index-only `restore --staged` and `rm --cached` are not the `reset` it bans; the `:(literal)` sentence names the restore; `/upgrade` step 7.5 says what its terminal call commits rather than what it stages.
+
 ## [4.9.0] — 2026-10-05
 
 ### Added

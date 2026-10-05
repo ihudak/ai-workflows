@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.13.1] — 2026-10-05
+
+### Fixed
+- **`commit-artifacts` and `handoff-to-main` no longer commit whatever the specs repository's index holds.** Both staged only their own paths and then ran a plain `git commit`, so a change the user had staged in the specs repository was carried into the plugin's commit: into the bookkeeping commit, which §3.3 G1 explicitly lets run beside changes that are not the plugin's, or into the deliverable's. Both now commit by pathspec (`-- ':(literal)<path>' …`) and then bring the index back in step after a `pre-commit` hook, the way `dev-workflows`' `code-handoff` does. `handoff-to-main` writes its message to a file and commits with `-F`, since its summary is free text that a double-quoted `-m` would command-substitute.
+
 ## [1.13.0] — 2026-10-05
 
 ### Changed

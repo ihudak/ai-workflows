@@ -28,7 +28,9 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
 3. **Bounded branches.** Only branches matching `^(idea|prd|ard|spec|design|ready|brd|frames)/`
    are the plugin's to switch away from or delete (§2.2).
 4. **Never destructive.** No `push --force`, no `push -f`, no `branch -D`, no
-   `merge`, no `rebase`, no `reset`, and never delete an `index.lock`.
+   `merge`, no `rebase`, no `reset`, and never delete an `index.lock`. §4 step
+   4's `restore --staged` is not a `reset`: it rewrites only index entries for
+   paths the commit just carried, moves no ref and touches no working-tree file.
 5. **Never fatal.** Every failure is reported and the run continues. The run
    never fails because of a git step here.
 6. **No `Co-Authored-By` trailer.** These are plugin-generated bookkeeping
@@ -528,11 +530,34 @@ to state.
    commit; emit the §6 `nothing to commit` outcome line. This is distinct from
    step 1's silence — here the specs repo *is* managed and simply had nothing
    new.
-4. **Commit.** Message:
+4. **Commit — by pathspec, never the index.** Message:
    `<KEY> Add dev-workflows session artifacts (<command>)`, or
    `NOISSUE Add dev-workflows session artifacts (<command>)` when the run
    resolved no key. This matches the specs repo's own `<KEY|NOISSUE> <summary>`
    convention. **No `Co-Authored-By` trailer** (§1 rule 6).
+
+   Commit the paths step 2 staged and nothing else:
+   `git -C "$SPECS_PATH" commit -q -m "<message>" -- ':(literal)<path>' …`, one
+   `':(literal)<path>'` argument per path. A plain `git commit` takes whatever
+   the index holds, and §3.3 G1 lets this step run beside changes that are not
+   the plugin's, a change the user staged included, which that commit would
+   carry under this message. `:(literal)` because a porcelain path can begin
+   with `:`, which git otherwise reads as pathspec magic; never the global
+   `--literal-pathspecs`, which every commit hook would inherit.
+
+   **Once it lands, bring the index back in step with the new `HEAD`.** A
+   pathspec commit runs the `pre-commit` hook against a temporary index, so a
+   file the hook fixes and re-stages, adds, or removes is committed while the
+   real index keeps the old entry (measured on git 2.43: `MM`, `D ` beside `??`,
+   and `AD`). Read the paths the commit carries,
+   `git -C "$SPECS_PATH" diff-tree --no-commit-id --name-only -r -z --root --no-renames HEAD`,
+   and the paths whose index entry now differs from `HEAD`,
+   `git -C "$SPECS_PATH" diff --cached --name-only -z --no-renames`. Over the
+   paths on both lists, less every OTHER path step 2 enumerated, run
+   `git -C "$SPECS_PATH" restore --staged -- ':(literal)<path>' …`, and run
+   nothing where none is left. Never over the commit's whole list: a path the
+   commit deleted is in neither `HEAD` nor the index, and one pathspec that
+   matches nothing fails the whole `restore`, which then restores nothing.
 5. **Push** to the current branch's upstream. If the branch has no upstream:
    `git -C "$SPECS_PATH" push -u origin <branch>`.
 6. **Failure at any step is reported, never fatal.**
