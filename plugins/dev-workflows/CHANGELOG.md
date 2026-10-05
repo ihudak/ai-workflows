@@ -14,6 +14,11 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **Check 21** holds every install command in the two install references and `install-time-code.md` to that form — every code span and every command of a chained line on its own, flags before the subcommand and npm's install aliases included, `--ignore-scripts=false` and `:all:` for no-binary refused — with twenty-six self-test cases, each red one failing first.
 - Bundler, Poetry, uv, PDM, Hatch, Composer, NuGet, Go, Cargo, Maven and Gradle install unchanged; `install-time-code.md` holds the rules. **Probes (Sonnet, offline npm and pip fixtures with benign-looking install code):** today's text ran a dependency's script — and the agent's notes said it had not; the new text skipped and listed it, a never-installed clone listed every scripted package, a build that needs the script failed with the flag kept. An earlier in-run ask-and-retry design was reviewed twice and replaced by the rerun option.
 
+## [4.11.1] — 2026-10-05
+
+### Changed
+- **`code-handoff` §2.7 cites the repository-template rule instead of stating it** (workflows-core 1.20.0). The resolution and filling rules moved, unchanged, to `workflows-core:phase-handoff` §2.7.1, so the specs-repository handoff, the code-repository handoff and `/document`'s keyed draft follow one statement. The code pull request still fills the repository's own template. The four sections and the banner are its input, and the body still replaces the template on both `gh pr create` and the pasted fallback, which is why the template wins.
+
 ## [4.11.0] — 2026-10-05
 
 ### Changed

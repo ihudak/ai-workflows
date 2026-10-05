@@ -80,6 +80,9 @@ Compose the draft and BOTH write and show it:
 - **title**: per `commit_convention` (e.g. `<KEY> <summary>`).
 - **body**: what was documented; the output files; the Phase 6.5
   render-verification summary; deferred style/review/render items; a link back to the PRD.
+  Where the docs repository carries a pull-request template, the body is that
+  template, filled with these facts, per `workflows-core:phase-handoff` §2.7.1,
+  with the DO-NOT-MERGE banner below, where there is one, as its required first line.
 - **DO-NOT-MERGE banner** at the very top WHEN Phase 5.8 recorded any
   `document-as-spec` / `skip-and-report` decision:
   `> ⚠ DO NOT MERGE until <KEY>-implementation-gaps.md is resolved.`

@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.9.0] — 2026-10-05
+
+### Changed
+- **`/document` direct mode looks before it asks.** Its Phase 1 used to ask about any ambiguity it listed, under "Ask, don't guess. This rule is absolute.", now "Look, then ask; never guess.". It now first tries to settle each one from what the run can read:
+  - the description and any loaded file;
+  - the resolved target and the pages around it;
+  - the docs repository's guidance files;
+  - the target's `git log`.
+
+  A candidate the reading settles is carried into the plan with where it was found. One left open that a reader of the documentation would notice is a decision, and is asked. One a reader would not notice is settled and listed under the plan's Assumptions. This ports `/dev-workflows:implement`'s Phase 1 rule. The family's other commands that carry "Ask, don't guess" ask configuration questions, or already look first (`/design` and `/specify` through the grilling technique's fact-vs-decision split, and `/docs-profile` through its detection), so they keep their clarification as it is.
+
+## [1.8.0] — 2026-10-05
+
+### Added
+- **`/document`'s pull-request draft fills the docs repository's own template** (workflows-core 1.20.0) where it has one, per `workflows-core:phase-handoff` §2.7.1, with the DO-NOT-MERGE banner as its first line. Until now `finish-and-handoff` §5 wrote its own body, and a user who pasted it into the web UI replaced the repository's template.
+
 ## [1.7.4] — 2026-10-05
 
 ### Fixed

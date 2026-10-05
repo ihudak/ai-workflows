@@ -6,13 +6,13 @@ Single source of truth for the two entry points that move a **phase deliverable*
 
 **Relationship to `specs-repo-git.md`.** That reference owns the *bookkeeping* paths (its §2.1) and the run-start/terminal steps for them. This one owns *deliverables*. It inherits four of that file's hard rules and deliberately differs on three; §1 states which.
 
-**Relationship to `code-handoff.md`.** That reference is this one's counterpart in the **code** repo: same shape (gate, stage, commit, push, `gh` probe, outcome line), different repository, and two deliberate inversions. The first is staging scope: §2.2 there stages at **repository** scope, which §1 rule 2 here and in `specs-repo-git.md` both forbid — sanctioned there because that run branched off a verified-clean tree and the whole diff *is* the deliverable, and a reader who carries it back into either sibling breaks theirs. The second is the prompt: its commit is prompt-free, because a deliverable is already safe on disk when this file's §4.3 choice is asked and a code change is not. Neither file's entry points ever run against the other's repository.
+**Relationship to `code-handoff.md`.** That reference is this one's counterpart in the **code** repo: same shape (gate, stage, commit, push, `gh` probe, outcome line), different repository, and two deliberate inversions. The first is staging scope: §2.2 there stages at **repository** scope, which §1 rule 2 here and in `specs-repo-git.md` both forbid — sanctioned there because that run branched off a verified-clean tree and the whole diff *is* the deliverable, and a reader who carries it back into either sibling breaks theirs. The second is the prompt: its commit is prompt-free, because a deliverable is already safe on disk when this file's §4.3 choice is asked and a code change is not. Neither file's entry points ever run against the other's repository; §2.7.1's template rule, which both cite, reads whichever repository its caller names.
 
 ## 1. Hard rules
 
-Inherited from `specs-repo-git.md` — the first three unchanged, and the fourth **widened** where it says so:
+Inherited from `specs-repo-git.md` — the first three unchanged for every call against `$SPECS_PATH` (rule 1 adds only §2.7.1's two template reads, which run in the repository its caller names), and the fourth **widened** where it says so:
 
-1. **`git -C` always; `cd` never.** Every invocation is `git -C "$SPECS_PATH" …`. Most callers are running inside a *different* repository; a `cd` would corrupt their git state. The `gh` calls in §2.6 and §3.5 name the repository with `-R` for the same reason.
+1. **`git -C` always; `cd` never.** Every invocation is `git -C "$SPECS_PATH" …`, save §2.7.1's two template reads, which run in the repository its caller names — `$SPECS_PATH` only for this file's own §2.7. Most callers are running inside a *different* repository; a `cd` would corrupt their git state. The `gh` calls in §2.6 and §3.5 name the repository with `-R` for the same reason.
 2. **Bounded paths.** Only the calling command's own declared deliverable paths are staged, by enumeration (§2.3). `git add -A` is never issued at repository scope.
 3. **Bounded branches.** Only branches matching `^(idea|prd|ard|spec|design|ready|brd|frames|kb)/` are the plugin's (`specs-repo-git.md` §2.2).
 4. **Never destructive — and this one is WIDER than the rule it inherits, deliberately.** `specs-repo-git.md` §1 rule 4 forbids `push --force`, `push -f`, `branch -D`, `merge`, `rebase`, `reset`, and deleting an `index.lock`. This rule adds **`stash`** and **`checkout --`**, because a deliverable commit runs where the user's own work may be uncommitted and both of those discard it silently. Same repository, two rules — so the addition is declared here rather than left for a reader to notice. No `push --force`, no `push -f`, no `branch -D`, no `merge`, no `rebase`, no `reset`, no `stash`, no `checkout --`, and never delete an `index.lock`. §2.4's `restore --staged` is not a `reset`, for the reason `specs-repo-git.md` §1 rule 4 gives.
@@ -25,7 +25,7 @@ Where this reference **differs** — each difference is deliberate, and a reader
 
 ## 2. `handoff-to-main` — the producer entry point
 
-Called from a producing command's Handoff phase, and **only** when the user picked the branch-and-PR choice of §4.3. **One step of it runs earlier, and it is read-only:** §2.1's push-target probe, which §4.3 runs before it presents the choice, because the probe's result decides what that section prints above the array.
+Called from a producing command's Handoff phase, and **only** when the user picked the branch-and-PR choice of §4.3. §2.7.1 is the exception: `dev-workflows:code-handoff` §2.7 and `docs-workflows:finish-and-handoff` §5 also run it, under their own consent. **One step of it runs earlier, and it is read-only:** §2.1's push-target probe, which §4.3 runs before it presents the choice, because the probe's result decides what that section prints above the array.
 
 ### 2.1 Gate
 
@@ -125,7 +125,30 @@ The expressions strip a scheme, a `user@`, and a host with an optional `:port` t
 
 Title: the commit subject of §2.4.
 
-Body: written to a file (never passed inline, which would break on newlines and quoting) containing what the phase produced; the artifact paths; the reviewer verdict where the caller has one; the count of open questions or `[NEEDS CLARIFICATION]` markers; and, **where the caller has one**, the next command in the chain together with the fact that it will not run until this pull request is merged — scoped exactly as the reviewer verdict beside it is, because a producer whose artifact has no §3.4 row has no next command to name and cannot render this sentence without inventing one.
+Body: written to a file (never passed inline, which would break on newlines and quoting) containing what the phase produced; the artifact paths; the reviewer verdict where the caller has one; the count of open questions or `[NEEDS CLARIFICATION]` markers; and, **where the caller has one**, the next command in the chain together with the fact that it will not run until this pull request is merged — scoped exactly as the reviewer verdict beside it is, because a producer whose artifact has no §3.4 row has no next command to name and cannot render this sentence without inventing one. Where `$SPECS_PATH`'s repository carries a pull-request template, the body is that template filled with these facts (§2.7.1).
+
+### 2.7.1 The repository's own pull-request template
+
+**Where the repository a pull request is opened in carries a template, the body is that template, filled.** This subsection is the one statement of that rule. This reference's §2.7 applies it in `$SPECS_PATH`, `dev-workflows:code-handoff` §2.7 in a code repository, and `docs-workflows:finish-and-handoff` §5 in a docs repository. Each caller supplies `<repo>`, its own body's sections in their order, and any line that must come first (a banner).
+
+**Resolve the template against a fixed set of paths, never by searching for one.** List the committed tree's candidates with `git -C "<repo>" ls-tree -r -z --full-tree --name-only HEAD | tr '\0' '\n' | grep -i -E '^(\.github/|docs/)?pull_request_template(\.md|/[^/]+\.md)$|^\.gitlab/merge_request_templates/default\.md$'`. Use `-z` because, without it, git quotes a name holding a non-ASCII byte and the anchor never matches it, and `--full-tree` so the listing is the whole tree wherever `<repo>` points. No output is no template. Otherwise stop at the first rung below that a listed path matches, comparing without regard to case:
+
+1. `.github/pull_request_template.md`, then `pull_request_template.md` at the root, then `docs/pull_request_template.md`;
+2. the first of `.github/PULL_REQUEST_TEMPLATE/`, `PULL_REQUEST_TEMPLATE/` and `docs/PULL_REQUEST_TEMPLATE/` that holds a `.md` file directly: where it holds exactly one, that file; where it holds several, none — a directory of templates names no default, so the body takes the caller's own shape and its last line says the repository offers several templates, naming the directory;
+3. `.gitlab/merge_request_templates/Default.md`.
+
+**Read the template with `git -C "<repo>" show HEAD:<path>`**, `<path>` spelled exactly as the listing printed it (git looks a path up case-sensitively). Read the committed file, never a working-tree copy, which may hold somebody else's edit.
+
+**Fill it:**
+- keep its headings in their order, and answer each section from the facts the caller's own body carries;
+- a section the run has nothing for says so and why, and never keeps the template's placeholder text;
+- tick a checkbox only where the run can show what it claims, and never delete one;
+- place each section of the caller's own body in the template section that asks for it, and append every one no template section asks for after the template, in the caller's order;
+- a template with no headings is one section, answered in place;
+- an HTML comment (`<!-- … -->`) in a template is its note to whoever fills it: follow it, then remove it with the placeholder text;
+- the caller's required first line stays the first line.
+
+**The template wins because the body replaces it otherwise.** `gh pr create --body-file` replaces what the web UI would have prefilled, and a body the user pastes by hand replaces it too, so a body in the caller's own shape would delete the template on either path.
 
 ### 2.8 Failure discipline
 
