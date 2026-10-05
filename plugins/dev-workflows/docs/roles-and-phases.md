@@ -46,7 +46,7 @@ Emitted by `/ready`, role `dev`. Being in this phase means the workflow phase is
 
 ### plugin-feedback
 
-The fallback phase (`plugin-feedback`, role `n/a`) for a `/workflows-core:prompt`/`/workflows-core:feedback`/`/workflows-core:prompt-brainstorm`/`/workflows-core:prompt-grill-me` run with no target command to inherit from — documented in full on the companion `workflows-core` plugin's own Roles and phases page, since none of this plugin's three cost-emitting commands emits it directly.
+The fallback phase (`plugin-feedback`, role `n/a`) for a `/workflows-core:prompt`/`/workflows-core:feedback`/`/workflows-core:prompt-brainstorm`/`/workflows-core:prompt-grill-me` run with no target command to inherit from, and the phase every `/workflows-core:diagnose-session` run is charged to — documented in full on the companion `workflows-core` plugin's own Roles and phases page, since none of this plugin's three cost-emitting commands emits it directly.
 
 ---
 

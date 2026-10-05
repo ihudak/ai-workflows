@@ -78,4 +78,4 @@ Emitted by `/epics`, role `pe`. Being in this phase means a PRD is being broken 
 
 ---
 
-**Plugin feedback** (`plugin-feedback`, role `n/a`) is the fallback phase for a `/workflows-core:prompt`/`/workflows-core:feedback`/`/workflows-core:prompt-brainstorm`/`/workflows-core:prompt-grill-me` run with no target command to inherit from — documented in full on the companion `workflows-core` plugin's own Roles and phases page, since none of this plugin's fourteen commands emits it directly.
+**Plugin feedback** (`plugin-feedback`, role `n/a`) is the fallback phase for a `/workflows-core:prompt`/`/workflows-core:feedback`/`/workflows-core:prompt-brainstorm`/`/workflows-core:prompt-grill-me` run with no target command to inherit from, and the phase every `/workflows-core:diagnose-session` run is charged to — documented in full on the companion `workflows-core` plugin's own Roles and phases page, since none of this plugin's fourteen commands emits it directly.

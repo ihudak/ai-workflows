@@ -1,7 +1,7 @@
 # Session Cost Emission — Shared Reference
 
-Single source of truth for the plugin family's session-cost subsystem. Twenty-five of
-the twenty-seven commands with an §7 row cite this file from their terminal
+Single source of truth for the plugin family's session-cost subsystem. Twenty-six of
+the twenty-eight commands with an §7 row cite this file from their terminal
 "Session cost" phase and execute its steps inline through the single `emit-cost`
 entry point (§11). The other two — `/prompt-brainstorm` and `/prompt-grill-me` —
 cede the session before such a phase could run, call `emit-cost` never, and
@@ -334,7 +334,7 @@ that model exactly as before).
 
 ## 7. Attribution (phase / role / keys)
 
-Fixed per-command labels, with six inferred exceptions:
+Fixed per-command labels, with seven inferred exceptions:
 
 | Command | phase | role |
 |---------|-------|------|
@@ -431,8 +431,8 @@ not attempt to infer it from anything else.
 - **Target is `/frames` -> resolve ITS inference first**, then inherit the result,
   exactly as for `/release-notes`. One level only. Where no folder resolves — which
   for `/frames` means the run never started — treat it as the `n/a` case.
-- **Target is `/feedback`, `/prompt`, `/prompt-brainstorm` or `/prompt-grill-me` -> treat as `n/a`.**
-  A correction to a correction has no lifecycle phase of its own, and inheriting
+- **Target is `/feedback`, `/prompt`, `/prompt-brainstorm`, `/prompt-grill-me` or `/diagnose-session` -> treat as `n/a`.**
+  A correction to a correction, or to a diagnosis, has no lifecycle phase of its own, and inheriting
   from an inferred row would regress without a base case. This is the one rule the
   two deferring commands share with the two immediate ones: what a run inherits is
   decided by its `target_command`, never by which of the four is asking.
@@ -561,7 +561,9 @@ entries into `<PRD-dir>/dev-workflows/cost/<sid8>.md`:
 
 - **Same-session `<sid8>` match is pre-selected** as the likely one -> the
   create-in-markdown -> keyed-command flow becomes
-  effectively one tap.
+  effectively one tap. **An entry charged to `plugin-feedback` is listed but never
+  pre-selected:** it is spend on the plugin itself, which a later keyed run in the
+  same session does not make that PRD's.
 - New-session pending files are listed for the user to pick.
 - No match -> leave for manual relocation, or accept the partial loss.
 - **Relocation moves, then DELETES.** On a confirmed relocation the pending
@@ -583,12 +585,12 @@ and acceptable.
 
 ## 11. Caller contract — `emit-cost`
 
-One entry point, called by the twenty-five commands that measure themselves (§1) and by
+One entry point, called by the twenty-six commands that measure themselves (§1) and by
 whichever of them replays a §13 record (never by the two that defer — they call
 nothing). Every caller supplies `command`, `phase`, `role` (or the
-`inferred` marker — `/release-notes`, `/frames` and the four feedback commands), `key` (or
-`null`), `source`, and `plugin_version`; the four feedback commands additionally
-supply `target_command` — `/prompt` and `/feedback` directly, `/prompt-brainstorm`
+`inferred` marker — `/release-notes`, `/frames`, the four feedback commands and
+`/diagnose-session`), `key` (or `null`), `source`, and `plugin_version`; the four
+feedback commands and `/diagnose-session` additionally supply `target_command` — `/prompt` and `/feedback` directly, `/prompt-brainstorm`
 and `/prompt-grill-me` through the §13 record a replay reads it from. `emit-cost` does the rest; it NEVER commits, NEVER writes
 into a docs/code repo or the current working directory, where it is not the specs repository, and NEVER fails the
 run. The cost entry is committed later, once, by the run's terminal
@@ -598,7 +600,7 @@ run. The cost entry is committed later, once, by the run's terminal
 Inputs:
 - `command` — the exact slash-command name (e.g. `/implement`,
   `/document (keyed mode)`, `/document (direct mode)`).
-- `phase`, `role` — the §7 labels, or the `inferred` marker for the six
+- `phase`, `role` — the §7 labels, or the `inferred` marker for the seven
   commands §7 resolves. They resolve from **different** data, and each must
   therefore be given it:
   - `/release-notes` — resolved from `specification.md` / `design.md` presence
@@ -610,6 +612,8 @@ Inputs:
     be re-derived from disk (it lives in the run's own context). It is passed in:
     directly by `/prompt` and `/feedback`, and out of the §13.1 record for the two
     that deferred.
+  - `/diagnose-session` — resolved from `target_command`, which it always passes as
+    `n/a`, so it lands on `plugin-feedback`/`n/a`.
 - `target_command` — **required for all four feedback commands and for `/diagnose-session`** (supplied
   directly by `/prompt`, `/feedback` and `/diagnose-session`, which always passes `n/a`; read out of the §13.1 record when a
   replay builds the entry for `/prompt-brainstorm` or `/prompt-grill-me`). The
@@ -769,7 +773,7 @@ exists to catch.
 
 ### 13.3 The replay
 
-`emit-cost` step 2 (§11). **No deferred file ⇒ nothing changes**; the twenty-five
+`emit-cost` step 2 (§11). **No deferred file ⇒ nothing changes**; the twenty-six
 commands that measure themselves (§1) never take this path.
 
 Otherwise the run passes one `--claim <command>` per deferred record, oldest

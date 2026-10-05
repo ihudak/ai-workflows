@@ -1,6 +1,6 @@
 # Roles and phases
 
-The `dev-workflows` plugin family charges every cost-emitting run to a `phase` and a `role`. The phases are the **lifecycle** phases carried as fixed pairs in `references/cost-emission.md` §7 — read them off its table; this page keeps no count of them, because a count here went stale each time a plugin added a phase — plus this plugin's own `plugin-feedback` fallback, which §7 has no row for because no command emits it by default. The lifecycle vocabulary belongs to the pipeline plugins whose commands own the lifecycle. A sibling page that counts lifecycle phases counts them without the fallback, which is not a disagreement: each treats the fallback apart from the lifecycle phases it lists. This page says only what `workflows-core`'s own seven commands do with it, because that is the part a reader of *these* commands needs.
+The `dev-workflows` plugin family charges every cost-emitting run to a `phase` and a `role`. The phases are the **lifecycle** phases carried as fixed pairs in `references/cost-emission.md` §7 — read them off its table; this page keeps no count of them, because a count here went stale each time a plugin added a phase — plus this plugin's own `plugin-feedback` phase, which §7 has no fixed row for: the feedback commands reach it only when there is nothing to inherit, and `/diagnose-session` through a target it always passes as `n/a`. The lifecycle vocabulary belongs to the pipeline plugins whose commands own the lifecycle. A sibling page that counts lifecycle phases counts them without the fallback, which is not a disagreement: each treats the fallback apart from the lifecycle phases it lists. This page says only what `workflows-core`'s own seven commands do with it, because that is the part a reader of *these* commands needs.
 
 ## No command here owns a phase
 
@@ -23,7 +23,7 @@ Role `pm`. Reached by `/frames` when the folder it resolved asserts `kind: brd` 
 
 ### plugin-feedback
 
-Role `n/a`. This is the fallback for `/feedback` and the three `/prompt*` commands, which reach it only after each first tries to inherit, and the fixed phase of `/diagnose-session`, which inherits nothing: a diagnosis is about the plugin itself, whichever command it reads. It applies where no target command resolves, where the target has no attribution row of its own, or where the target is itself one of these four. Being in this phase means the run was about **the plugin itself** rather than the product, and no lifecycle phase owns it. `n/a` is the absence of a role recorded rather than guessed; aggregation should treat it as unattributed rather than folding it into `dev`.
+Role `n/a`. This is the fallback for `/feedback` and the three `/prompt*` commands, which reach it only after each first tries to inherit, and the fixed phase of `/diagnose-session`, which inherits nothing: a diagnosis is about the plugin itself, whichever command it reads. For the four, it applies where no target command resolves, where the target has no attribution row of its own, or where the target is itself one of them or `/diagnose-session`. Being in this phase means the run was about **the plugin itself** rather than the product, and no lifecycle phase owns it. `n/a` is the absence of a role recorded rather than guessed; aggregation should treat it as unattributed rather than folding it into `dev`.
 
 ---
 

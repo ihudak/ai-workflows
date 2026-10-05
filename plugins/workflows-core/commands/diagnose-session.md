@@ -29,7 +29,7 @@ Then read the stripped arguments:
 
 Agree the problem before reading anything. Ask **one question at a time** until you can write a statement that names the session, the turn range if known, what you expected, what happened, and the observable that matters — wall-clock, tokens, repeated actions, or one specific action. *"It took too long"* is a complaint, not a statement: ask what it was doing then, and what it should have done.
 
-**An already-scoped request is its own statement**: one named event ("why did it run the review twice at the end?"), what a still-running session is doing now, or a named dimension of §4 to run. Answer it, then ask whether there is more.
+**An already-scoped request is its own statement**: one named event ("why did it run the review twice at the end?"), what a still-running session is doing now, or named dimensions of §4 to run. Take it as the statement and go on to Phase 2.
 
 **Nothing in Phases 2–5 starts until you have answered.** A statement reconstructed on your behalf is not an answer: if you are away, the questions stand and the run waits for you.
 
@@ -43,9 +43,9 @@ Create the case directory `~/.claude/workflows-core/diagnoses/<session-id>-<YYYY
 
 Read the region around the reported problem yourself first, per §1, so you know what the analysts' findings are about.
 
-Then dispatch the seven dimensions **in a single response**, one dispatch each, in §4's order:
+Then dispatch the dimensions **in a single response**, one dispatch each, in §4's order — all seven, or only those a request scoped to named dimensions asks for (Phase 1):
 
-→ Agent (subagent_type: "workflows-core:session-analyst") ×7:
+→ Agent (subagent_type: "workflows-core:session-analyst") ×N:
   > "Analyse one dimension of this session:
   >
   > case: [absolute path of case.md]
@@ -74,7 +74,7 @@ The run never invokes `/feedback` itself: you decide whether the note goes in, a
 
 **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`).
 
-**Otherwise, emit session cost.** Cite `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md` and call its `emit-cost` entry point with `command: /diagnose-session`, `phase: inferred`, `role: inferred`, `target_command: n/a`, `key: null`, the run's `source`, and `plugin_version` read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`. **`target_command` is always `n/a`**, which §7 resolves to `phase: plugin-feedback`, `role: n/a`: a diagnosis is about the plugin itself, whichever command it reads, so it inherits no phase; recording it here keeps the analysts' spend out of the next command's window, where the `/feedback` it suggests would otherwise charge it to the diagnosed command's phase. A keyless run lands in §9's pending file. Surface the persisted path, or the report-only notice.
+**Otherwise, emit session cost.** Cite `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md` and call its `emit-cost` entry point with `command: /diagnose-session`, `phase: inferred`, `role: inferred`, `target_command: n/a`, `key: null`, `source: specs` where `$SPECS_PATH` is set (else `none`), and `plugin_version` read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`. **`target_command` is always `n/a`**, which §7 resolves to `phase: plugin-feedback`, `role: n/a`: a diagnosis is about the plugin itself, whichever command it reads, so it inherits no phase; recording it here keeps the analysts' spend out of the next command's window, where the `/feedback` it suggests would otherwise charge it to the diagnosed command's phase. A keyless run lands in §9's pending file. Surface the persisted path, or the report-only notice.
 
 **Then commit session artifacts (terminal).** Cite `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` and execute its `commit-artifacts` entry point (§4) inline. It stages ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits `NOISSUE Add dev-workflows session artifacts (/diagnose-session)`, and pushes per §4 step 5. It NEVER touches a code or docs repository, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), re-emitting that notice. Hold its §6 outcome line for the final report.
 

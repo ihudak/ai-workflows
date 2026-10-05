@@ -18,7 +18,7 @@ Only the first token can name the session: an existing `.jsonl` file is its tran
 
 ## What it needs
 
-- **A problem statement you agree to.** Phase 1 asks one question at a time until it can name the session, the turn range if you know it, what you expected, what happened, and what you care about — wall-clock, tokens, repeated actions, or one specific action. *"It took too long"* is where that starts, not where it ends. A request already scoped to one event, or to what a running session is doing now, is its own statement. Nothing is read until you have answered.
+- **A problem statement you agree to.** Phase 1 asks one question at a time until it can name the session, the turn range if you know it, what you expected, what happened, and what you care about — wall-clock, tokens, repeated actions, or one specific action. *"It took too long"* is where that starts, not where it ends. A request already scoped to one event, to what a running session is doing now, or to named dimensions is its own statement. Nothing is read until you have answered.
 - **The session's transcripts**, readable on this machine. For Claude Code they are under `~/.claude/projects/<cwd-slug>/`, with each session's subagent transcripts beside it; the current session is the newest transcript there that holds this run's own invocation, so another session running in the same directory is not mistaken for it. A past session is confirmed by quoting its first prompt and timestamp, never by recency alone.
 
 ## What it produces
@@ -34,7 +34,7 @@ A **session-cost entry** too, under `plugin-feedback`/`n/a`: recording the analy
 
 ## Gates
 
-No reviewer. The safeguards are rules every reader follows: measure a transcript before reading it and never print a record whole, since one line can exceed a megabyte; read only the paths the case file names; drop any finding that cites no `path:line`; and, before the verdict leans on a finding, check that its cited line shows what it says. Phase 3 dispatches seven `session-analyst` agents in parallel, one per dimension; on a transcript past 20,000 lines, three of them are split by line range, with one more dispatch each over the subagent transcripts. A dimension whose analyst could not run is named in the report's coverage, never written by the orchestrator.
+No reviewer. The safeguards are rules every reader follows: measure a transcript before reading it and never print a record whole, since one line can exceed a megabyte; read only the paths the case file names; drop any finding that cites no `path:line`; and, before the verdict leans on a finding, check that its cited line shows what it says. Phase 3 dispatches seven `session-analyst` agents in parallel, one per dimension — or only the dimensions a request names, where it names some; on a transcript past 20,000 lines, three of them are split by line range, with one more dispatch each over the subagent transcripts. A dimension whose analyst could not run is named in the report's coverage, never written by the orchestrator.
 
 ## Example
 

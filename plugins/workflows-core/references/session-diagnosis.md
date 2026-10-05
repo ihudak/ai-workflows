@@ -22,7 +22,7 @@ One transcript line can exceed a megabyte, or embed a whole earlier history. Pri
 - **Main transcript:** `~/.claude/projects/<cwd-slug>/<session-id>.jsonl`, `<cwd-slug>` being the absolute working directory with every `/` and `.` replaced by `-`. **The current session** is the newest `*.jsonl` there **whose last records hold this run's own invocation** of `/diagnose-session`; the newest file alone is not enough, since another session may be running in the same directory.
 - **Subagent transcripts:** `~/.claude/projects/<cwd-slug>/<session-id>/subagents/agent-*.jsonl`, each beside an `agent-*.meta.json`. A tool result too large to keep inline may sit under `<session-id>/tool-results/`.
 - **Record meanings:** each line is one JSON record with a `type`. A `type: user` record whose `.message.content` is a string is the user's prompt, a command invocation, or the harness's own text:
-  - **A command invocation** carries `<command-name>` tags, with the arguments the user typed in `<command-args>`. The record after it is `isMeta: true` and holds the command's body as the session expanded it — the exact text of the command at the version that ran.
+  - **A command invocation** carries `<command-name>` tags, with the arguments the user typed in `<command-args>`. The record after it is `isMeta: true`, its content a string or an array of `text` blocks, and holds the command's body as the session expanded it — the exact text of the command at the version that ran.
   - **The harness's own text** is any `isMeta: true` record (a compaction summary also carries `isCompactSummary: true`), and any string that opens with a harness tag — `<task-notification>`, `<local-command-caveat>`, `<local-command-stdout>`, `<bash-stdout>` and their kin. None of it is the user's words.
 
   A `type: user` record whose content is an array of `tool_result` blocks is tool output. A `type: assistant` record carries `.message.content` blocks (`text`, `thinking`, `tool_use`), `.message.model` and `.message.usage`. A `type: system` record's `subtype` names an event: `compact_boundary`, `turn_duration`, `stop_hook_summary`, `local_command`. A `type: attachment` record carries what the harness attached to a turn, the output of the hooks that fired among it. Most records carry a `timestamp`; some bookkeeping records (`last-prompt`, `mode`, `permission-mode`, `ai-title`, `file-history-snapshot`) carry none, and a record without one has no time, never time zero.
@@ -57,8 +57,8 @@ One row per human prompt of the main transcript, numbered from 1. Every reader n
 
 ## Sessions
 
-| Role | Session id | Absolute path | Lines | Bytes | Longest line (bytes) | First prompt (first 120 characters) | First timestamp |
-|---|---|---|---|---|---|---|---|
+| Role | Session id | Absolute path | Lines | Bytes | Longest line (bytes) | First prompt (first 120 characters) | First timestamp | Dispatched at (line / turn) |
+|---|---|---|---|---|---|---|---|---|
 
 Rejected candidates: <id — path — why>, or "none".
 Still running when read: yes | no (<mtime>, <lines>)
@@ -121,7 +121,7 @@ A dimension with nothing to report returns `- none found` and its `Checked:` lin
 3. **Sessions examined** — the case file's table, without its first-prompt column.
 4. **Environment** — the case file's section, each value labelled with where it came from.
 5. **Timeline** — one row per human prompt: turn, line, time, the request in one line, and the events (commands, agents, compactions, errors, aborts).
-6. **Findings** — one subsection per dimension, in §4's order, each finding as §5 gives it, or `none found — checked: <what>`.
+6. **Findings** — one subsection per dimension, in §4's order, each finding as §5 gives it, or `none found — checked: <what>`, or, for a dimension a request scoped to others did not run, `not run — the request named other dimensions`.
 7. **Family involvement** — §7.
 8. **Coverage** — the ranges and files not read, and why; harness records that were unavailable; whether the session was still running; and what the user should check for themselves.
 
