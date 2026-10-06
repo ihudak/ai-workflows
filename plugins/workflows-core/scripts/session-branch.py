@@ -254,6 +254,14 @@ def align(root, old_tip, new_tip):
     return done
 
 
+def commit_tree(root, tree, parents, message):
+    """commit-tree reads no commit.gpgSign, so a user who signs their commits would push unsigned
+    session commits; sign them as git commit would."""
+    sign = ["-S"] if config(root, "commit.gpgSign", as_bool=True) == "true" else []
+    parent_args = [x for p in parents for x in ("-p", p)]
+    return text(git(root, "commit-tree", *sign, tree, *parent_args, "-m", message))
+
+
 def refuse_checked_out(root, branch):
     """The session branch is never stood on; moving it under a checkout would leave that checkout's
     index and files behind its HEAD. Refuse while any worktree has it checked out."""
@@ -313,7 +321,7 @@ def sync(root, branch, default_ref):
             continue
         if r.returncode != 0 or not lines:
             raise NotRun("merge-tree: %s" % r.stderr.decode("utf-8", "replace").strip()[:300])
-        merge = text(git(root, "commit-tree", lines[0], "-p", tip, "-p", c, "-m", "Merge %s into %s" % (name, branch)))
+        merge = commit_tree(root, lines[0], [tip, c], "Merge %s into %s" % (name, branch))
         git(root, "update-ref", ref, merge, tip)
         tip = merge
         result["merged"] = True
@@ -383,7 +391,7 @@ def commit(root, branch, default_ref, message, include_ahead=False):
                 data=("\0".join(entries) + "\0").encode("utf-8", "surrogateescape"), env=env)
             tree = text(git(root, "write-tree", env=env))
         if tree != text(git(root, "rev-parse", tip + "^{tree}")):
-            committed = text(git(root, "commit-tree", tree, "-p", tip, "-m", message))
+            committed = commit_tree(root, tree, [tip], message)
             git(root, "update-ref", ref, committed, tip)
             changed = nul_list(git(root, "diff-tree", "--no-commit-id", "--name-only", "-r", "-z", tip, committed))
     synced = sync(root, branch, default_ref)
@@ -824,6 +832,15 @@ def selftest():
                   "commit refuses, moving nothing, while the session branch is checked out (%r)" % got)
             got = a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
             check(got.get("_rc") == 2 and "checked out" in got.get("_err", ""), "…and so does put-back (%r)" % got)
+        # a user who signs commits gets signed session commits: commit-tree reads no commit.gpgSign
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.git("config", "commit.gpgSign", "true")
+            a.git("config", "gpg.program", "false")  # a signer that always fails, so an attempt is visible
+            a.write(FB, "## a1\n", append=True)
+            got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            check(got.get("_rc") == 2 and "commit-tree" in got.get("_err", ""),
+                  "commit.gpgSign makes the session commit a signed one, so a signer that fails stops it (%r)" % got)
         # a switch to a deliverable branch cut from an older main, with the overlay present
         with tempfile.TemporaryDirectory() as tmp:
             remote, a, b = world(tmp)
