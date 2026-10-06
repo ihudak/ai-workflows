@@ -86,7 +86,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `release-notes.md` | `docs-workflows/`: `commands/release-notes.md`, `agents/release-notes-writer.md`, `references/release-note-types.md`, `docs/commands/release-notes.md` | `/release-notes` and its authority |
 | `docs-grounding.md` | `workflows-core/`: `references/*-grounding.md`, `agents/*-grounder.md`; and 21 command files: the nine docs-grounding consumers, `/design` (architecture only) and eleven that resolve none | docs/architecture grounding |
 | `workflows-core.md` | `workflows-core/**`, `*/commands/*.md`, `*/agents/*.md` | plugin facts, model routing, authorities, map |
-| `workflows-core-git.md` | `workflows-core/references/`: `specs-repo-git.md`, `phase-handoff.md`, `read-only-repos.md`, `grounding-format.md`; `dev-workflows/references/code-handoff.md`; `*/commands/*.md`, `*/references/**`, `*/agents/*.md` | git authorities and invariants |
+| `workflows-core-git.md` | `workflows-core/scripts/session-branch.py`; `*/commands/*.md`, `*/references/**` (the five git references among them), `*/agents/*.md` | git authorities and invariants |
 
 The evidence behind the rules — measured cases, refused widenings, history — is in `docs/maintainers/rationale.md`, reached by each rule's `why` link. It is never auto-loaded; read a rule's section before proposing to change the rule.
 

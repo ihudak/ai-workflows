@@ -1016,6 +1016,22 @@ def selftest():
                   "lift restores a tracked deleted session file once its deletion is on the branch (%r)" % got)
             a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
             check(a.read(FB) is None, "…and put-back removes it again")
+        # a catch-up that brings a teammate's new file: put-back merges rather than defers, and keeps it
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            im = "specifications/PRD-A-1-x/implementation.md"
+            a.write(FB, "## a1\n", append=True)
+            a.run("commit", "--branch", "session/aa", *CM)
+            b.write(im, "## run b\n")
+            b.commit_all("team")
+            b.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
+            a.git("fetch", "-q", "origin")
+            a.run("lift", "--branch", "session/aa")
+            a.git("pull", "-q", "--ff-only", "--no-rebase", "origin", "main")
+            got = a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
+            check(got.get("sync", {}).get("merged") is True and not got["sync"].get("deferred")
+                  and a.read(im) == "## run b\n" and "## a1" in (a.read(FB) or ""),
+                  "put-back after a catch-up merges the new default branch and keeps a teammate's file (%r)" % got)
         # a hand-edited log keeps the branch's older entries first
         with tempfile.TemporaryDirectory() as tmp:
             remote, a, b = world(tmp)
