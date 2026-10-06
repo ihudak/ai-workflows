@@ -832,7 +832,7 @@ Walk the stages in order, authoring `specification.md` live against `${CLAUDE_PL
 
 **A multi-component PRD at PRD level** (`workflows-core:components` §3, with `focus_key` null): the ARD's interface rows carried from Phase 2.5 are grill ground truth. An acceptance criterion or test case that crosses components names, in its own text, the `[AD#N]` interface it crosses, so `/epics` can split it per side and each side's Epic can test against it; the grill's *Cross-component* gap category applies (`workflows-core:grilling-technique`). The specification format is unchanged.
 
-**Architecture grounding.** Where Phase 4 dispatched `architecture-grounder`, the grill consumes its digest per `workflows-core:architecture-grounding` § Consumption, and the specification records what that section says a specification records: a conflict the grill cannot settle, as an open question naming the governing decision, standard or team record.
+**Architecture grounding.** Where Phase 4 dispatched `architecture-grounder`, the grill consumes its digest per `workflows-core:architecture-grounding` § Consumption, and the specification records what that section says a specification records: a conflict the grill cannot settle, as an open question naming the governing decision, standard, radar entry or team record, or `radar: <technology> not listed`.
 
 As each decision settles, append it to `_session.md`; capture a genuinely-ambiguous term in `_glossary.md`. Resolve open questions to zero where possible; leave genuinely unresolvable ones as `- [ ]` and keep the header **Open questions** count in sync. A repo gap surfacing here → escalate (describe the missing capability + why) and STOP; the run is resumable from `_session.md` after the user remounts and re-invokes.
 
