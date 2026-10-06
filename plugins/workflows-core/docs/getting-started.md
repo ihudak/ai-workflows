@@ -18,7 +18,7 @@ claude plugin update workflows-core@shipwright
 
 ## What this plugin is
 
-`workflows-core` is the shared foundation of the `dev-workflows` plugin family. Most of what it ships is not a command: it is the reference corpus the sibling plugins read — `dev-workflows`, `product-workflows`, and `docs-workflows` all declare it as a dependency — the `model-routing` skill every pipeline command loads at its classification step, and eight agents any of them may dispatch. If you have installed a plugin from that family, you want this one installed too.
+`workflows-core` is the shared foundation of the `dev-workflows` plugin family. Most of what it ships is not a command: it is the reference corpus the sibling plugins read — `dev-workflows`, `product-workflows`, and `docs-workflows` all declare it as a dependency — the `model-routing` skill every pipeline command loads at its classification step, and ten agents any of them may dispatch. If you have installed a plugin from that family, you want this one installed too.
 
 It does ship seven commands of its own, and one of them is worth running first — see below.
 

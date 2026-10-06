@@ -41,14 +41,14 @@ flowchart TD
 
 ## What it needs
 
-- **A writable architecture repository**: the session's own project — one holding an ADR folder and a catalog or radar file — or `$ARCHITECTURE_REPO_PATH` where that clone is writable. Its checkout must be clean, on its default branch and not ahead of origin. The run returns it to that branch afterwards.
+- **A writable architecture repository**: the session's own project — one holding an ADR folder and a catalog or radar file — or `$ARCHITECTURE_REPO_PATH` where that clone is writable. Its checkout must be clean, on its default branch and not ahead of origin. A completed run returns it to that branch.
 - **`$SPECS_PATH`**, with `architecture/index.yaml` on its default branch, no uncommitted change under `architecture/`, and no unmerged `kb/` branch.
 - **`python3`** — the signals are product-workflows' bundled script `scripts/promotion-signals.py`, run with `--layout prd`. `uv` is optional: it runs the repository's decision tests from prebuilt wheels, which needs the network; without it the run says the tests did not run.
 - **`gh`** (optional): it opens both pull requests, and checks whether a pending promotion's pull request was closed.
 
 ## What it produces
 
-- **In the architecture repository:** one `proposed` ADR per pick, its `index.yaml` entry and its overview row, on a branch, with a pull request. No existing ADR is edited: a superseding proposal changes the old ADR only when a human accepts it.
+- **In the architecture repository:** one `proposed` ADR per pick, its catalog entry where it keeps one and its overview row, on a branch, with a pull request. No existing ADR is edited: a superseding proposal changes the old ADR only when a human accepts it.
 - **In the specs repository:** the promotion keys on each decided record, on a `kb/promote-<date>` pull request. The next harvest preserves them, and its README marks a record whose ADR was accepted.
 
 ## Gates
@@ -57,10 +57,9 @@ Each of these stops the run before anything is written:
 - the architecture repository is read-only, dirty, off its default branch, or ahead of origin;
 - the knowledge base is missing;
 - an earlier `kb/` branch is unmerged, or records under `architecture/` are uncommitted;
-- a non-Opus session, unless you override;
-- a mark the run would write that the script refuses — checked before anything is committed.
+- a non-Opus session, unless you override.
 
-A failing repository test stops it before the commit. No secret scanner ships with product-workflows, and the final report says so.
+A failing repository test, or a mark the script refuses, stops it before the commit, on the run's branch: the stop names it and how to go on. No secret scanner ships with product-workflows, and the final report says so.
 
 ## Example
 

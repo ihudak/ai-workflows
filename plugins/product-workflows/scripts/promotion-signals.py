@@ -51,7 +51,7 @@ KEYS = ("promotion", "promoted_to", "promotion_note")
 VALUES = ("proposed", "accepted", "rejected", "declined", "covered")
 NEEDS_ADR = ("proposed", "accepted", "rejected", "covered")
 NEEDS_NOTE = ("declined",)
-ART_ID = r"[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+"
+ART_ID = r"(?:[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+|\d+(?:-[a-z0-9]+)+)"  # ADR-0004, STD-API-001, or a numbered stem: 0005-use-outbox
 RECORD_ID_FULL = re.compile("^%s$" % H.RECORD_ID)
 PROMOTED_TO_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$")  # an ADR's or standard's id, or its file stem
 RECORD_IDS = re.compile(r"(?<![\w-])(%s)(?![\w-])" % H.RECORD_ID)
@@ -63,7 +63,7 @@ ITEM_RE = re.compile(r"^\s*[-*]\s")
 KEY_LINE_RE = re.compile(r"^([A-Za-z_][\w-]*):")
 ADR_DIRS = ("decisions/", "adr/", "adrs/", "docs/adr/", "docs/adrs/", "docs/decisions/", "docs/architecture/decisions/")
 ORIGIN_RE = re.compile(r"^\s*Origin:\s*team decisions\s+(.*)$")
-SUPERSEDE_RE = re.compile(r"^\s*Proposes to supersede:\s*([A-Za-z0-9][A-Za-z0-9._-]*)")
+SUPERSEDE_RE = re.compile(r"^\s*Proposes to supersede:\s*([A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)")
 STATUS_HEADING_RE = re.compile(r"^#{2,3}\s+Status\s*$", re.I)
 STATUS_LINE_RE = re.compile(r"^\s*(?:[-*]\s+)?(?:#{2,3}\s+)?Status\s*:\s*([A-Za-z]+)", re.I)
 EMPHASIS_RE = re.compile(r"[*_`]")
@@ -233,13 +233,12 @@ def reconcile(specs, ref, arch, arch_ref, specs_name=None):
             continue
         fm, body = H.split_frontmatter(H.read(arch, asha, p))
         _, b = H.fm_blocks(fm)
-        origin, origin_seen, supersedes = [], False, None
+        origin, supersedes = [], None
         for ln in body:
             m = ORIGIN_RE.match(ln)
-            if m and not origin_seen:
-                origin_seen = True
+            if m and not origin:  # the first Origin line that names this specs repository
                 ids, _, rest = m.group(1).partition(" — ")
-                if specs_name is None or (rest.split() or [""])[0] == specs_name:
+                if specs_name is None or (rest.split() or [""])[0].strip(".,;:") == specs_name:
                     origin = RECORD_IDS.findall(ids)
             m = SUPERSEDE_RE.match(ln)
             if m and supersedes is None:
@@ -247,15 +246,19 @@ def reconcile(specs, ref, arch, arch_ref, specs_name=None):
         if not origin and not supersedes:
             continue
         aid = artifact_id(b, base)
+        if not PROMOTED_TO_RE.fullmatch(aid):
+            problems.append(H.problem("invalid-id", p, 0, "its id %r is no artifact id (letters, digits, . _ -), so "
+                                      "it names nothing for this command" % aid))
+            continue
         status = adr_status(b, body)
+        if status not in STATUS_MAP:
+            problems.append(H.problem("unknown-status", p, 0, "status %r is none of %s, so the records it names "
+                                      "keep their keys" % (status, ", ".join(sorted(STATUS_MAP)))))
         if supersedes and STATUS_MAP.get(status) == "proposed":
             superseding.append({"adr": supersedes, "by": aid})
         if not origin:
             continue
         adrs.append({"id": aid, "file": p, "status": status, "origin": origin})
-        if status not in STATUS_MAP:
-            problems.append(H.problem("unknown-status", p, 0, "status %r is none of %s, so the records it names "
-                                      "keep their keys" % (status, ", ".join(sorted(STATUS_MAP)))))
         for rid in origin:
             named.setdefault(rid, []).append((aid, status, p))
     changes, unresolved = [], []
@@ -265,7 +268,7 @@ def reconcile(specs, ref, arch, arch_ref, specs_name=None):
         hits = named.get(rid)
         if not hits:
             if r["promotion"] == "proposed":
-                if isinstance(r["promoted_to"], str) and PROMOTED_TO_RE.match(r["promoted_to"]):
+                if isinstance(r["promoted_to"], str) and PROMOTED_TO_RE.fullmatch(r["promoted_to"]):
                     unresolved.append({"id": rid, "promoted_to": r["promoted_to"]})
                 else:
                     problems.append(H.problem("invalid-key", r["path"], 0, "promoted_to %r is no artifact id"
@@ -301,7 +304,7 @@ def check_keys(rid, keys):
     if v not in VALUES:
         raise Abort("%s: promotion must be one of %s" % (rid, ", ".join(VALUES)))
     adr = keys.get("promoted_to")
-    if v in NEEDS_ADR and not (isinstance(adr, str) and PROMOTED_TO_RE.match(adr)):
+    if v in NEEDS_ADR and not (isinstance(adr, str) and PROMOTED_TO_RE.fullmatch(adr)):
         raise Abort("%s: promotion %s needs promoted_to, an artifact id" % (rid, v))
     if v not in NEEDS_ADR and adr is not None:
         raise Abort("%s: promotion %s takes no promoted_to" % (rid, v))
@@ -346,7 +349,7 @@ def mark(root, plan_path, check=False):
     staged = []
     for rid in sorted(marks, key=H.natural):
         keys = marks[rid]
-        if not RECORD_ID_FULL.match(rid):
+        if not RECORD_ID_FULL.fullmatch(rid):
             raise Abort("%r is not a record id" % rid)
         path = os.path.join(root, DECISIONS + rid + ".md")
         if not os.path.realpath(path).startswith(base + os.sep) or not os.path.isfile(path):
@@ -451,6 +454,7 @@ def selftest():
                 "- Architecture deviation: %s — uses Kafka — throughput — flag: architect\n"
                 "- Architecture deviation: %s — local cache — latency — flag: architect\n"
                 "- Architecture deviation: radar: Kafka not listed — adopted — throughput — flag: architect\n"
+                "- Architecture deviation: [0005-use-outbox](https://example.invalid/0005-use-outbox.md) — polls — cost — flag: architect\n"
                 % (rec("ACME-1-AD1", outbox, 3), adr4, rec("ACME-1-AD2", "Shared cache", 3))),
             search + "revisions/old.md": "Old: %s.\n" % rec("ACME-1-AD1", outbox, 3),
         }, "fixtures")
@@ -476,10 +480,11 @@ def selftest():
         check(b1.get("superseded_others") == ["ACME-1-AD2"] and b1.get("candidate") is True,
               "a cross-VI Supersedes: %s" % b1)
         arts = {x["id"]: x for x in s["artifacts"]}
-        check(set(arts) == {"ADR-0004"}
+        check(set(arts) == {"ADR-0004", "0005-use-outbox"}
               and [e["kind"] for e in arts["ADR-0004"]["friction"]] == ["ard-open-question", "design-deviation"]
-              and arts["ADR-0004"]["folders"] == [billing, search],
-              "ADR friction from an ARD and a design; a radar line names no artifact: %s" % arts)
+              and arts["ADR-0004"]["folders"] == [billing, search]
+              and [e["kind"] for e in arts["0005-use-outbox"]["friction"]] == ["design-deviation"],
+              "ADR friction from an ARD and a design, a numbered ADR stem included; a radar line names no artifact: %s" % arts)
         check(s["candidates"] == 4, "the live records without keys are the candidates: %s" % s["candidates"])
 
         # ---- --mark ------------------------------------------------------------------
@@ -528,6 +533,8 @@ def selftest():
         check(r.returncode == 0, "an ADR id need not be upper-case: a numbered file stem is one")
         check(run_mark(tmp, {"ACME-7-AD3": {"promotion": "covered", "promoted_to": "$(id)"}}, "--check").returncode == 2,
               "an id holding shell syntax is refused")
+        check(run_mark(tmp, {"ACME-7-AD3": {"promotion": "covered", "promoted_to": "ADR-0004\n"}}, "--check").returncode == 2,
+              "an id with a trailing newline is refused")
         r = run_mark(tmp, {"ACME-7-AD3": {"promotion": "proposed", "promoted_to": "ADR-0009"}})
         check(r.returncode == 0 and "promoted_to: ADR-0009" in text(path3), "--mark proposed with its ADR")
         snapshot(tmp, "mark AD3")
@@ -556,7 +563,7 @@ def selftest():
                 "decisions/ADR-0002-billing-ledger.md": ("# ADR-0002: Billing ledger\n\n## Status\n\n**Rejected**\n\n"
                                                          "## Context\n\nOrigin: team decisions ACME-7-AD2, ACME-99-AD1 — specs\n"),
                 "decisions/ADR-0003-retries.md": ("---\nid: ADR-0003\nstatus: proposed   # proposed | accepted\n---\n"
-                                                  "## Context\n\nOrigin: team decisions ACME-7-AD1 — specs\n"),
+                                                  "## Context\n\nOrigin: team decisions ACME-7-AD1 — specs.\n"),
                 "standards/STD-API-001.md": "Origin: team decisions ACME-1-AD2 — not under an ADR folder.\n",
                 "decisions/ADR-0006-retries-again.md": ("# ADR-0006: Retries\n\n**Status:** Rejected\n\n## Context\n\n"
                                                         "Origin: team decisions ACME-7-AD1 — specs\n"),
@@ -567,7 +574,14 @@ def selftest():
                 "decisions/ADR-0011-pondering.md": ("---\nid: ADR-0011\nstatus: pondering\n---\n## Context\n\n"
                                                     "Origin: team decisions ACME-1-AD2 — specs\n"),
                 "decisions/ADR-0012-kafka.md": ("---\nid: ADR-0012\nstatus: proposed\n---\n## Context\n\n"
-                                                "Proposes to supersede: ADR-0004\n\nTwo VIs depart from it.\n"),
+                                                "Proposes to supersede: ADR-0004.\n\nTwo VIs depart from it.\n"),
+                "decisions/ADR-0013-shared.md": ("---\nid: ADR-0013\nstatus: rejected\n---\n## Context\n\n"
+                                                 "Origin: team decisions ACME-404-AD1 — other-specs\n"
+                                                 "Origin: team decisions ACME-1-AD1 — specs\n"),
+                "decisions/ADR-0014-musing.md": ("---\nid: ADR-0014\nstatus: musing\n---\n## Context\n\n"
+                                                 "Proposes to supersede: ADR-0005\n"),
+                "decisions/ADR-0060-spaced.md": ("---\nid: ADR 0060\nstatus: accepted\n---\n## Context\n\n"
+                                                 "Origin: team decisions ACME-1-AD2 — specs\n"),
             }, "adrs")
             try:
                 rc = reconcile(tmp, "HEAD", arch, "HEAD", specs_name="specs")
@@ -585,13 +599,20 @@ def selftest():
             check("ACME-1-AD2" not in ch, "an Origin line outside an ADR folder, or an ADR whose status is unreadable, changes nothing")
             check(rc["unresolved"] == [{"id": "ACME-7-AD3", "promoted_to": "ADR-0009"}],
                   "a proposed record whose ADR is on no Origin line: %s" % rc["unresolved"])
-            check(sorted(p["kind"] for p in rc["problems"]) == ["multiple-origins", "unknown-record", "unknown-status"]
+            check(sorted(p["kind"] for p in rc["problems"]) == ["invalid-id", "multiple-origins", "unknown-record",
+                                                                "unknown-status", "unknown-status"]
                   and all(not a["file"].endswith("README.md") for a in rc["adrs"]),
                   "a README is not an ADR; an unknown record, two live ADRs for one record, an unreadable status "
                   "are problems; a rejected ADR beside a live one and another specs repository's line are not: %s"
                   % rc["problems"])
             check(rc.get("superseding") == [{"adr": "ADR-0004", "by": "ADR-0012"}],
-                  "a proposed ADR that proposes to supersede another is listed: %s" % rc.get("superseding"))
+                  "a proposed ADR that proposes to supersede another is listed, a trailing full stop dropped: %s"
+                  % rc.get("superseding"))
+            origins = {a["id"]: a["origin"] for a in rc["adrs"]}
+            check(origins.get("ADR-0013") == ["ACME-1-AD1"] and origins.get("ADR-0003") == ["ACME-7-AD1"]
+                  and "ADR 0060" not in origins,
+                  "the Origin line naming this specs repository is read, wherever it stands and whatever ends it; "
+                  "an ADR whose id is no id names nothing: %s" % origins)
             rel3 = DECISIONS + "ACME-7-AD3.md"
             commit(tmp, {rel3: text(path3).replace("promoted_to: ADR-0009", "promoted_to: $(id)")}, "hand edit")
             try:

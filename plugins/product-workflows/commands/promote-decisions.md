@@ -1,6 +1,6 @@
 ---
 name: promote-decisions
-description: Promote team architecture decisions to organisation ADRs. A product architect runs it inside the architecture repository. It ranks the live records of $SPECS_PATH/architecture/ — decisions several teams made, cited across PRDs, rarely departed from — and the accepted ADRs teams keep departing from. It drafts the ADRs the architect picks (promotions and superseding proposals) with the repository's own scaffolder, and opens two pull requests — the drafts in the architecture repository, the outcome on the team records in the specs repository.
+description: Promote team architecture decisions to organisation ADRs. A product architect runs it inside the architecture repository. It ranks the live records of $SPECS_PATH/architecture/ — decisions several teams made, cited across PRDs, rarely departed from — and the accepted ADRs teams keep departing from. It drafts the ADRs the architect picks (promotions and superseding proposals) from the repository's own ADR template, and opens two pull requests — the drafts in the architecture repository, the outcome on the team records in the specs repository.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 ---
 

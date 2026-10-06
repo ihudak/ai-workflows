@@ -81,8 +81,8 @@ A record with `promotion: proposed`, `accepted` or `covered` is never a candidat
 Run `python3 "<scripts>/promotion-signals.py" --specs "$SPECS_PATH" --ref "<default-ref>" --arch "<root>" --arch-ref "<arch-ref>" --specs-name '<§2's specs repository name>' --layout prd --reconcile`. Exit 2 → stop with its stderr line.
 
 - **`changes`:** each is a key change the run will write (§11.2). An ADR's status is read from its frontmatter, a `## Status` section or a `Status:` label; `accepted`, `approved`, `deprecated` and `superseded` count as accepted, `proposed` and `draft` as proposed, `rejected` and `withdrawn` as rejected. A live ADR wins over a rejected one, so a record re-proposed under `--reconsider` follows its new ADR.
-- **`superseding`:** the proposed ADRs whose supersede line names an ADR. Add the ADRs an open pull request proposes to supersede, from the lines its body carries (§11.1 step 6): `gh pr list -R <owner/repo of origin> --state open --search '"Proposes to supersede" in:body' --json url,body`, where `gh` is available. Each named ADR has a successor pending, so §6 passes it to the scout and §7 never offers it again until that successor is decided.
-- **`unresolved`:** each is a record marked `proposed` whose ADR is on no Origin line on `<arch-ref>`. Its pull request decides what happens. Search with `gh pr list -R <owner/repo of origin> --state all --search '<promoted_to> in:title,body' --json number,state,mergedAt,url`:
+- **`superseding`:** the proposed ADRs whose supersede line names an ADR. Add the ADRs an open pull request proposes to supersede, from the lines its body carries (§11.1 step 6): `gh pr list -R <owner/repo of origin> --state open --search '"Proposes to supersede" in:body' --json url,body`, where `gh` is available; without it, report `open pull requests not checked for superseding proposals`. Each named ADR has a successor pending, so §6 passes it to the scout and §7 never offers it again until that successor is decided.
+- **`unresolved`:** each is a record marked `proposed` whose ADR is on no Origin line on `<arch-ref>`. Its pull request decides what happens. Search with `gh pr list -R <owner/repo of origin> --state all --search '<promoted_to> in:title,body' --json number,state,mergedAt,url,headRefName`. Where several come back, an open one decides, then a merged one, then a closed one; among equals, the one whose head branch is this command's (`…promote-<date>`):
   - **Closed and unmerged:** the key is cleared (`"<id>": null` in the mark plan), so the record can be proposed again.
   - **Open:** it stays `proposed`, reported as `pending — <url>`.
   - **Merged:** it stays `proposed`, reported as a problem: `<promoted_to>'s pull request merged, but no ADR on <arch-ref> names <id> in an Origin line — restore the line, and the next run records the ADR's status`.
@@ -138,22 +138,26 @@ Numbers run on across the lists. Then ask, in prose, because a pick list this lo
 `Reply with what to do, by number: draft <n,…>; decline <n> — <reason>; covered <n,…>. Anything you leave out is left as it is and may come back next run.`
 
 - **`draft`** applies to any numbered row.
-- **`decline`** and **`covered`** apply to a promotion or covered row only. A superseding row carries no key, so leaving it out is how it is declined.
+- **`decline`** applies to a promotion or covered row.
+- **`covered`** applies to a covered row, with the scout's `artifact.id`. On a promotion row it takes the artifact the architect names, `covered <n> — <artifact id>`, which must be the id §3's rule gives a file in `<root>`.
+- A superseding row carries no key, so leaving it out is how it is declined.
 
 Restate the answer as a table: number, id, action, title, reason.
-- **Overlapping picks merge.** Picks that share a record — two rows whose clusters overlap, or a promotion and a superseding row naming one record — are merged into one draft, shown once with every row it came from.
+- **Overlapping picks merge.** Picks that share a record — two rows whose clusters overlap, or a promotion and a superseding row naming one record — are merged into one draft, shown once with every row it came from. A merge holding a superseding row is a superseding draft: its records are every row's, and its title is the superseding row's.
 - **Title.** A draft's title is the record's title for one record, the rule a cluster shares in a few words, or `Supersede <ADR id> with <the replacement>` for a superseding pick; the architect corrects it with **Change it**. A title holds only letters, digits, spaces and `- , . ( ) /`: the template's frontmatter takes it unquoted, where `:`, ` #`, a quote or a leading `[`, `{`, `*`, `&`, `!`, `|`, `>`, `%` or `@` breaks or cuts the YAML.
 
-Then `choices: ["Go ahead", "Change it"]`. **Change it** asks again. An answer naming a number not shown, applying an action to a row it does not apply to, or declining without a reason, is asked again for that item only.
+Then `choices: ["Go ahead", "Change it"]`. **Change it** asks again. On **Go ahead**, before anything is written, check the marks the answer already fixes — §4's changes and clears, every decline and cover — with §11.1 step 2's `--check`: a refused decline or cover is asked again, and a refused change of §4's is reported as a problem and left out. An answer naming a number not shown, applying an action to a row it does not apply to, or declining without a reason, is asked again for that item only.
 
-- A **cluster** pick drafts one ADR naming every undecided record of the cluster in its Origin line. A member whose `promotion` is already `proposed`, `accepted` or `covered` is shown in the row's reasons and never named again: a record is on one live Origin line at a time, and §4 reports a second as `multiple-origins`.
+- A **cluster** pick drafts one ADR naming every undecided record of the cluster in its Origin line — one with no `promotion` key, or, under `--reconsider`, one `declined` or `rejected`. Any other member is shown in the row's reasons and never named: a record is on one live Origin line at a time, and §4 reports a second as `multiple-origins`.
 - A **superseding** pick drafts one ADR proposing to supersede that ADR, naming the conflicting records, where there are any (§2).
-- **Covered** marks the record `covered` with the scout's `artifact.id`.
+- **Covered** marks the record `covered` with that artifact id.
 - **Decline** marks it `declined` with the reason.
 
 ## 8. Scaffold — `promotion-scaffold`
 
-Only when the answer drafts at least one ADR. Before the first write, cut the branch §11.1 step 1 names. Then, for each draft in pick order, record every path and line this section writes for it:
+Only when the answer drafts at least one ADR. Before the first write, cut the branch §11.1 step 1 names.
+
+**A stop after the branch is cut** — §10's second failure, §11.1 steps 2 and 3 — leaves the clone on `<branch>` with the run's files uncommitted. The stop names the branch and those paths, and the two ways on: fix and commit them by hand, or discard them (`git -C <root> restore --staged --worktree -- <changed paths>`, `rm -f` each new file, `git -C <root> switch <default branch>`, `git -C <root> branch -D <branch>`). Then, for each draft in pick order, record every path and line this section writes for it:
 
 1. **Template:** the first that exists of `templates/ADR-template.md`, `docs/adr/template.md`, `docs/adr/adr-template.md` or `adr-template.md`, else the newest existing ADR's frontmatter keys and `##` headings.
 2. **Number, file and frontmatter:** the next number past the highest in the ADR folder, zero-padded as the existing files are, with a file name that follows their pattern (`ADR-NNNN-<slug>.md` where they look like that). Fill `id`, `title` (the title §7's table confirmed), `status: proposed` and `date` (today), and any section or category key the template carries, from the values the existing ADRs use.
@@ -178,9 +182,9 @@ One dispatch per draft, in sequence:
   > signals:    [<one line per record: applied_in, cited_by, deviated_elsewhere counts>, …]"
 ```
 
-A drafted ADR is checked against §2: given records, its Context opens with the Origin line; a superseding draft carries the supersede line; one given no records carries no Origin line. One that fails is re-dispatched once, then treated as an error.
+A drafted ADR is checked against §2: given records, its Context opens with the Origin line, naming exactly those records and `<specs_name>`; a superseding draft carries the supersede line, naming `supersedes.id`; one given no records carries no Origin line. One that fails is re-dispatched once, then treated as an error.
 
-`status: ERROR` or a failed dispatch → report that ADR as `not drafted — <error>` and take its scaffold back out: `rm -f` its new file, and delete from the catalog and the overview table exactly the entry and the row §8 recorded for it, by editing those lines out. Never `git checkout` those files: they hold every other draft's entries too. Its paths leave §11's list. When no draft is left, skip §10 and the rest of §11.1: switch back to the default branch and delete the branch (`git -C <root> switch <default branch>`, then `git -C <root> branch -d <branch>`, which holds no commit of the run's).
+`status: ERROR` or a failed dispatch → report that ADR as `not drafted — <error>` and take its scaffold back out: `rm -f` its new file, and delete from the catalog and the overview table exactly the entry and the row §8 recorded for it, by editing those lines out. Never `git checkout` those files: they hold every other draft's entries too. Its paths leave §11's list. When no draft is left, skip §10 and the rest of §11.1: restore every file the run changed (`git -C <root> restore -- <changed paths>`, and `rm -f` any new file still there), check that `git -C <root> status --porcelain` prints nothing, then switch back and delete the branch (`git -C <root> switch <default branch>`, then `git -C <root> branch -d <branch>`, which holds no commit of the run's).
 
 ## 10. Check — `promotion-check`
 
@@ -199,7 +203,7 @@ A drafted ADR is checked against §2: given records, its Context opens with the 
 ### 11.1 The architecture repository — `finish-architecture-branch`
 
 1. **Branch.** `workflows-core:branch-naming` resolves the name repo-rule-first and confirms it (§1.3). Its §3 slug for this command is `promote-<YYYY-MM-DD>`, which a convention such as `feat/adr-<slug>` turns into `feat/adr-promote-<YYYY-MM-DD>`; under a convention with no ADR marker of its own, the slug is `adr-promote-<YYYY-MM-DD>`. Its §2.4 fallback prefix is `feat/`, and a name that exists takes its §3 short-SHA suffix. Cut it with `git -C <root> switch -c <branch>` before §8 writes anything.
-2. **Check the marks.** Build §11.2's mark plan now, and run `python3 "<scripts>/promotion-signals.py" --specs "$SPECS_PATH" --layout prd --mark <file> --check`. Exit 2 → stop with its stderr line, before anything is committed: a plan refused after the push would leave the drafted records unmarked, and the next run would propose them again.
+2. **Check the marks.** Build §11.2's mark plan now, into the file §11.2 then writes from, and run `python3 "<scripts>/promotion-signals.py" --specs "$SPECS_PATH" --layout prd --mark <file> --check`. Exit 2 → stop with its stderr line, before anything is committed: a plan refused after the push would leave the drafted records unmarked, and the next run would propose them again.
 3. **Stage exactly what the run wrote.** `git -C <root> add -- <each path §8 and §9 wrote>`. `git -C <root> status --porcelain` must show nothing unstaged and nothing else staged; otherwise stop, naming the stray paths.
 4. **Scan.** No secret scanner ships with product-workflows; the final report says the scan did not run.
 5. **Commit.** `git -C <root> commit -F <file>`, the file holding `docs(adr): propose <n> ADR(s) from team decisions` (`propose ADR-NNNN …` for one). Where the repository documents a commit convention, it governs. No `Co-Authored-By` trailer is added that the repository's convention does not ask for.
@@ -208,6 +212,7 @@ A drafted ADR is checked against §2: given records, its Context opens with the 
    - `gh pr create -R <owner/repo> --head <branch> --title '<title>' --body-file <file>`, where `gh` is available and knows the remote's host; else print the compare URL, or, for a remote with no web host, the pushed branch and the body file's path.
    - The body lists each draft (id, title, kind), the records it came from with their signals, a `Proposes to supersede: <ADR id>` line for each superseding draft, and the decision-test line. Where the repository's own rules (its `AGENTS.md`, `CONTRIBUTING.md` or `CODEOWNERS`) route ADR changes to human review, the body ends by saying so.
    - Never force-push; never merge.
+   - **Keep the commit local** with a superseding draft that names no record: say that the next run offers `<ADR id>` again until this branch is pushed and its pull request is open — nothing else records that proposal.
 7. **Back to the default branch.** `git -C <root> switch <default branch>`, pushed or not: the commit stays on its branch, and the next run starts from the default branch §1.3 requires. The final report says to pull it once the pull request merges.
 
 ### 11.2 The specs repository
@@ -217,9 +222,9 @@ The mark plan:
 - one `proposed` per drafted ADR, for every record in its Origin line, whether or not its branch was pushed — §4 reports a pull request it cannot find;
 - one `declined` (with the reason) and one `covered` (with the scout's artifact id) per answer.
 
-Write it as `{"marks": {…}}` to `command mktemp -t dw-promotion-marks-XXXXXX.json`. Where no ADR was drafted, §11.1 did not run: check it here first with `--check`, exactly as §11.1 step 2 does. Then run `python3 "<scripts>/promotion-signals.py" --specs "$SPECS_PATH" --layout prd --mark <file>`. Exit 2 → stop with its stderr line; nothing was written.
+It is one file, `{"marks": {…}}` in `command mktemp -t dw-promotion-marks-XXXXXX.json`, the one §11.1 step 2 checked. Where no ADR was drafted, §11.1 did not run: write and check it here first with `--check`, exactly as that step does. Then run `python3 "<scripts>/promotion-signals.py" --specs "$SPECS_PATH" --layout prd --mark <file>`. Exit 2 → stop with its stderr line; nothing was written.
 
-Then `workflows-core:phase-handoff` §4.3's push-target probe and its **advisory** array, and `handoff-to-main` (§2):
+Then `workflows-core:phase-handoff` §4.3's push-target probe and its **gated — stopping** array — this command stops while records are uncommitted (§1.4) — and `handoff-to-main` (§2):
 - `prefix: kb`, no `feature_folder` (§2.2's keyless form names `kb/promote-<YYYY-MM-DD>`);
 - `deliverable_paths` = the `written` list;
 - `title: NOISSUE Record promotion of team decisions`;
