@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.9.3] — 2026-10-06
 
 ### Changed
-- **The maintenance phases of `/document` and `/release-notes` name the unfollowed-rules subsection** among what `emit-auto` persists (workflows-core 1.26.0).
+- **The maintenance phases of `/document` and `/release-notes` name the unfollowed-rules subsection** among what `emit-auto` persists (workflows-core 1.26.0), and any Key observation naming an ai-containers defect.
 
 ## [1.9.2] — 2026-10-06
 

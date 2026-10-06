@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [3.21.2] — 2026-10-06
 
 ### Changed
-- **The maintenance phases of `/epics` and `/specify` name the unfollowed-rules subsection** among what `emit-auto` persists (workflows-core 1.26.0), and the session-feedback page describes it.
+- **The maintenance phases of `/epics` and `/specify` name the unfollowed-rules subsection** among what `emit-auto` persists (workflows-core 1.26.0), and any Key observation naming an ai-containers defect, and the session-feedback page describes it.
 
 ## [3.21.1] — 2026-10-06
 

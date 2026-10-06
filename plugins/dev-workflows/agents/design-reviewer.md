@@ -130,7 +130,9 @@ If nothing is actionable, say so and state the classification you reviewed again
 ## Gotchas
 
 - A section shown as `_N/A — why_` at `SIMPLE`/`MODERATE` is **not** a defect — it is the format's
-  scaling rule. Only flag an omission the classification does not license.
+  scaling rule. Only flag an omission the classification does not license. The one exception is
+  **Observability & release verification** marked `_N/A_` on a change that runs in a deployed
+  system, which the Release-verification check grades at every classification.
 - Test-strategy / design steps may describe how the system is built or exercised — that is design
   intent, not a "describes implementation" defect (implementation detail is expected in a design doc,
   unlike a specification).
