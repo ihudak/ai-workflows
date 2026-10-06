@@ -761,10 +761,10 @@ defect:
   preceding claim the segment running to the next boundary of any kind, i.e. straight
   through it. Measured: a typed grill command followed by two prose-invoked runs, neither
   cutting the window, and the grill's claim absorbed both. Typed-only commands (flagged
-  `disable-model-invocation: true`) changed what reaches this path, not the path: a
-  flagged command never runs through the Skill tool, and a call the tool refused — its
-  result an error — cuts nothing; a command left unflagged still arrives this way, from a
-  caller or on a prose request. **The Skill half resolves against
+  `disable-model-invocation: true`) changed what reaches this path, not the path: the
+  Skill tool refuses a flagged command unless the user typed `/<name>` in that turn's
+  message, and a call the tool refused — its result an error — cuts nothing; a command
+  left unflagged still arrives this way, from a caller or on a prose request. **The Skill half resolves against
   the manifest where the typed half does not** — a deliberate asymmetry. The typed half
   is permissive because a user can only type a real command, so a name it cannot see
   is a swallowed boundary at no cost. A Skill call is different in kind: commands

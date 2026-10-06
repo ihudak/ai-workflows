@@ -317,10 +317,10 @@ def _skill_invocation(obj, ns_map):
     straight through it. Measured on a real session: a typed grill command was followed
     by two prose-invoked runs, neither of which cut the window, and the grill's claim
     absorbed both. Typed-only commands (flagged `disable-model-invocation: true`) changed
-    what reaches this path, not the path: a flagged command never runs through the Skill
-    tool, and a call the tool refused -- its result an error -- cuts nothing (scan_main
-    drops it); a command left unflagged still arrives this way, from a caller or on a
-    prose request.
+    what reaches this path, not the path: the Skill tool refuses a flagged command unless
+    the user typed `/<name>` in that turn's message, and a call the tool refused -- its
+    result an error -- cuts nothing (scan_main drops it); a command left unflagged still
+    arrives this way, from a caller or on a prose request.
 
     WHY THIS HALF RESOLVES WHERE command_envelope DOES NOT -- a deliberate
     asymmetry, and the one thing to get right here. command_envelope cuts on ANY
@@ -460,8 +460,8 @@ def scan_main(path, line_offset, ns_map, by_id=None):
     first_ts = None
     boundaries = []
     # A Skill-tool boundary waits on its call's result: a call the tool refused ran nothing
-    # (a typed-only command, flagged disable-model-invocation, is refused every time), so an
-    # error result drops it. Keyed by the tool_use id the result names.
+    # (a typed-only command, flagged disable-model-invocation, is refused unless the user
+    # typed `/<name>` in that turn's message), so an error result drops it. Keyed by the tool_use id the result names.
     by_call = {}
     records = []
     by_id = {} if by_id is None else by_id
@@ -1355,7 +1355,7 @@ def _selftest_body(tmp):
           == "product-workflows:update-prd",
           "the typed shape still resolves after the Skill shape was added")
     # A Skill call the tool refused ran nothing -- a typed-only command (flagged
-    # disable-model-invocation) is refused whenever the model reaches for it -- so it cuts
+    # disable-model-invocation) is refused unless the user typed `/<name>` that turn -- so it cuts
     # nothing: scan_main drops the boundary once the call's tool_result comes back an error.
     def _scan(result):
         path = os.path.join(tmp, "skill-refused.jsonl")

@@ -49,7 +49,7 @@ than once:
      something calls it. A command whose frontmatter sets
      ``disable-model-invocation: true`` is absent from the listing and refused by
      the Skill tool, though it still runs when typed; the 600-character budget
-     still left the family's entries at 20,997 characters against the 8,000 a
+     still left the family's descriptions at 20,997 characters against the 8,000 a
      200K window gives the listing. Every command carries the flag unless a file
      runs it through the Skill tool as ``skill: "<plugin>:<name>"`` or its plugin
      ships a skill of its name, and nothing flagged is run that way
