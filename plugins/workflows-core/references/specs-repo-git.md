@@ -929,7 +929,7 @@ merged.` The code commit carries only the session files it takes; the rest
 are committed after the run's push choice, by `commit-artifacts`, so pushing
 at that choice does not take them (`/dev-workflows:implement` Phase 0 says
 the same). In session-branch mode (§8) the code commit takes none: §8.3 lifts
-them before its branch and puts them back after its commit.
+them before its branch and again before its commit, and puts them back after it.
 
 ## 6. The outcome line
 
