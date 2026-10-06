@@ -18,7 +18,7 @@ claude plugin update workflows-core@shipwright
 
 ## What this plugin is
 
-`workflows-core` is the shared foundation of the `dev-workflows` plugin family. Most of what it ships is not a command: it is the reference corpus the sibling plugins read — `dev-workflows`, `product-workflows`, and `docs-workflows` all declare it as a dependency — the `model-routing` skill every pipeline command loads at its classification step, and eight agents any of them may dispatch. If you have installed a plugin from that family, you want this one installed too.
+`workflows-core` is the shared foundation of the `dev-workflows` plugin family. Most of what it ships is not a command: it is the reference corpus the sibling plugins read — `dev-workflows`, `product-workflows`, and `docs-workflows` all declare it as a dependency — the `model-routing` skill every pipeline command loads at its classification step, and ten agents any of them may dispatch. If you have installed a plugin from that family, you want this one installed too.
 
 It does ship seven commands of its own, and one of them is worth running first — see below.
 
@@ -40,7 +40,7 @@ A **read-only** clone of your shipped product documentation, used by `docs-groun
 
 ### `ARCHITECTURE_REPO_PATH`
 
-A **read-only** clone of your organisation's architecture repository — its technology radar, standards, principles, patterns and ADRs — used by `architecture-grounder` to ground an ARD, a specification or a design in what the organisation already requires. Never written, fetched or pulled; unset, the architecture-repository grounding is off, while the team's harvested decisions under `$SPECS_PATH/architecture/` are still read where they exist.
+A clone of your organisation's architecture repository — its technology radar, standards, principles, patterns and ADRs — used by `architecture-grounder` to ground an ARD, a specification or a design in what the organisation already requires. Grounding never writes, fetches or pulls it — only `/product-workflows:promote-decisions` writes an architecture repository, on a branch of its own; unset, the architecture-repository grounding is off, while the team's harvested decisions under `$SPECS_PATH/architecture/` are still read where they exist.
 
 ### `GIT_USER_INITIALS`
 

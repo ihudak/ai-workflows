@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.24.0] — 2026-10-06
+
+### Added
+- **`architecture-promotion`**, the procedure and key authority for `/product-workflows:promote-decisions`: guards, the Origin line, the promotion keys and their lifecycle, reconciliation, signals, both agents' dispatches, the shortlist, scaffolding from the repository's own template, the decision tests, and the architecture-repository branch.
+- **`promotion-scout`** (Opus, read-only), which compares candidate team decisions with the architecture repository and finds the ADRs teams keep departing from, and **`adr-drafter`** (Opus), which writes the body of one scaffolded ADR and edits nothing else.
+
+### Changed
+- **Architecture grounding skips a promoted record.** `architecture-grounder` no longer reads a team record whose `promotion` is `accepted` or `covered`: the organisation artifact it names binds instead. `architecture-kb` names the promotion keys as preserved keys `/product-workflows:promote-decisions` alone writes, and `phase-handoff`'s keyless `kb/` form covers it. `phase-handoff` classes `architecture/**` as gated — stopping: a consumer's own guard that stops on an uncommitted artifact counts, and `/product-workflows:promote-decisions` stops while records under it are uncommitted.
+
 ## [1.23.1] — 2026-10-06
 
 ### Fixed

@@ -139,3 +139,9 @@ jobs:
         # non-idempotent render re-proposes every record on every run. Fixtures are built
         # at run time.
         run: python3 plugins/product-workflows/scripts/architecture-harvest.py --selftest
+
+      - name: Self-test the promotion signals
+        # /product-workflows:promote-decisions reads its signals and writes the promotion keys with
+        # it. Its failure modes are silent: a missed citation shortlists the wrong records, and a
+        # --mark that moves a byte makes the next harvest rewrite every marked record.
+        run: python3 plugins/product-workflows/scripts/promotion-signals.py --selftest

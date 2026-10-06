@@ -427,7 +427,7 @@ not attempt to infer it from anything else.
   Treat it as the `n/a` case below.
 - **Target is `n/a`, or a command with no row above -> `phase: plugin-feedback`,
   `role: n/a`.** The second case covers `/vuln`, `/upgrade`, `/docs-profile`,
-  `/docs-serve`, `/statusline` and `/harvest-decisions`, none of which emits cost and so has
+  `/docs-serve`, `/statusline`, `/harvest-decisions` and `/promote-decisions`, none of which emits cost and so has
   nothing to inherit.
 - **Target is `/frames` -> resolve ITS inference first**, then inherit the result,
   exactly as for `/release-notes`. One level only. Where no folder resolves — which
@@ -442,7 +442,7 @@ not attempt to infer it from anything else.
 than guessed, and aggregation should treat it as unattributed rather than folding
 it into `dev`.
 
-**`/vuln`, `/upgrade`, `/docs-profile`, `/docs-serve` and `/harvest-decisions` emit no cost entry, and that is a decision about what the number is for.** A cost entry measures **AI investment in a product increment**, and the rule is: *a cost entry attaches to a run that advances a PRD- or BRD-scoped artifact — or builds the documentation repository a product is documented in, which is the `docs-workflows` family's unit of attribution and which §8 rung 2 files per docs repo.* That second clause is what `/docs-init` and a standalone `/docs-brand` satisfy, and why they have §7 rows. A CVE remediation, a library version bump, a docs-profile refresh, a dev-server start and a decision harvest into the team architecture knowledge base advance none — they are noise against a PRD, a BRD or a docs repository, and a metric that averages the two answers a question nobody asked.
+**`/vuln`, `/upgrade`, `/docs-profile`, `/docs-serve`, `/harvest-decisions` and `/promote-decisions` emit no cost entry, and that is a decision about what the number is for.** A cost entry measures **AI investment in a product increment**, and the rule is: *a cost entry attaches to a run that advances a PRD- or BRD-scoped artifact — or builds the documentation repository a product is documented in, which is the `docs-workflows` family's unit of attribution and which §8 rung 2 files per docs repo.* That second clause is what `/docs-init` and a standalone `/docs-brand` satisfy, and why they have §7 rows. A CVE remediation, a library version bump, a docs-profile refresh, a dev-server start and a decision harvest into the team architecture knowledge base, or the promotion of its records, advance none — they are noise against a PRD, a BRD or a docs repository, and a metric that averages the two answers a question nobody asked.
 
 **This is restated here because it lived only on the command pages.** `docs/commands/vuln.md` and
 `docs/commands/upgrade.md` have carried the reason all along — *"runs outside the PRD pipeline: no
@@ -788,7 +788,7 @@ first, and the script partitions the window:
 
 **Matching by name is the whole point, and positional pairing is the trap.** A
 window routinely holds boundaries no claim corresponds to: `/vuln`, `/upgrade`,
-`/docs-profile`, `/docs-serve`, `/statusline` and `/harvest-decisions` are real commands that
+`/docs-profile`, `/docs-serve`, `/statusline`, `/harvest-decisions` and `/promote-decisions` are real commands that
 emit no cost entry,
 and an interrupted run leaves a boundary too. Pair the
 k-th claim with the k-th boundary and a single `/vuln` in the window shifts every

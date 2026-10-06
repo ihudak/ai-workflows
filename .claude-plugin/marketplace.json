@@ -69,7 +69,7 @@
     },
     {
       "name": "workflows-core",
-      "version": "1.23.1",
+      "version": "1.24.0",
       "description": "Shared foundation for the dev-workflows plugin family: the addressing grammar and specs-repo git entry points, phase handoff, model routing, escalation and finding-triage rules, documentation and architecture grounding, cost/feedback/follow-up emission, and the reference loader skill that lets a dependent plugin read them. Also carries the family-meta utility commands — /feedback, /prompt, /prompt-brainstorm, /prompt-grill-me, /statusline — /frames for indexing design frame sets, and /diagnose-session for reading a session's transcripts to report, with evidence, why a run went wrong.",
       "author": {
         "name": "Ivan Gudak",
@@ -93,8 +93,8 @@
     },
     {
       "name": "product-workflows",
-      "version": "3.20.1",
-      "description": "Fifteen slash commands for defining a product — its requirements, architecture and specification: a six-command BRD-to-PRD route (/brd-intake → /brd-split → /prd-ground → /brd-split → /brd-interview → /brd-package → /brd-reconcile) that grounds a customer's requirements document, settles it with them, and seeds the PRD, ARD and specification; the idea→PRD→ARD→specification ladder (/idea → /create-prd → /update-prd → /create-ard → /specify), with /prd-ground optionally grounding the PRD itself; /epics, deriving Epics from a PRD; /harvest-decisions, keeping merged ARD decisions as team records; and /prd-proposal and /brd-proposal, pricing a graded requirement set in human hours, never money. Fourteen agents carry the grounding, figure transcription, reconciliation, review and Epic writing. Twelve reference pages define the artifact formats and the link walk these commands share.",
+      "version": "3.21.0",
+      "description": "Sixteen slash commands for defining a product — its requirements, architecture and specification: a six-command BRD-to-PRD route (/brd-intake → /brd-split → /prd-ground → /brd-split → /brd-interview → /brd-package → /brd-reconcile) that grounds a customer's requirements document, settles it with them and seeds the PRD, ARD and specification; the idea→PRD→ARD→specification ladder (/idea → /create-prd → /update-prd → /create-ard → /specify), with /prd-ground optionally grounding the PRD; /epics, deriving Epics; /harvest-decisions and /promote-decisions, keeping merged ARD decisions as team records and promoting them to organisation ADRs; and /prd-proposal and /brd-proposal, pricing graded requirements in human hours, never money. Fourteen agents carry the grounding, figure transcription, reconciliation, review and Epic writing. Twelve reference pages define their shared artifact formats.",
       "author": {
         "name": "Ivan Gudak",
         "email": "ihudak@gmail.com"

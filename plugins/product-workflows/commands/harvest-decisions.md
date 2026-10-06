@@ -38,9 +38,9 @@ Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/architecture-harvest.py" --specs "$S
 
 ## Phase 3 — Hand off
 
-Invoke Skill(skill: "workflows-core:reference", args: "phase-handoff") and run its §4.3 push-target probe, then present its **advisory** array verbatim — no command stops on the knowledge base; `/create-ard`, `/specify` and `/dev-workflows:design` read the working copy:
+Invoke Skill(skill: "workflows-core:reference", args: "phase-handoff") and run its §4.3 push-target probe, then present its **gated — stopping** array verbatim — `/promote-decisions` stops while the knowledge base has uncommitted changes (§4.0); `/create-ard`, `/specify` and `/dev-workflows:design` read the working copy:
 
-`choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (no command stops on this; what reads it reads your working copy)", "Cancel"]`
+`choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]`
 
 On the first choice, execute `handoff-to-main` (Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main"), §2) with `prefix: kb`; no `feature_folder` (§2.2's keyless form names the branch `kb/harvest-<YYYY-MM-DD>`); `deliverable_paths` = the plan's `files`; `title: NOISSUE Harvest ARD decisions into architecture/`; and `body_facts` = the counts per change kind, the live count, the problem count and the `sha` harvested. Emit its §4.1 outcome line in the final report.
 
