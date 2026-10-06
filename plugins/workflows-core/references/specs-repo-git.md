@@ -42,7 +42,7 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
    is silent unless it acts, a guard fires, or §3.1 reports a misconfigured
    `$SPECS_PATH`; `commit-artifacts` emits one outcome line (§6).
 8. **One configuration key of its own.** `branch.<branch>.workflowsPushRefused`,
-   which §4 step 6 records when a server hook refuses a push to that branch and
+   which §4 step 6 records when `origin` refuses a push to that branch and
    step 5 reads. No other key is written here; what git itself writes for the
    commands this reference runs is unchanged by it — the upstream a
    `push -u` sets, and the whole `branch.<branch>` section, this record
@@ -220,7 +220,7 @@ a run that stops on its address — `invalid`, `ambiguous`, `misrooted` or `abse
 either order, a run that stops before the preflight on a check of its own inputs needing no specs-repo
 state — a run flag, the directory it runs from, a path it reads where it sits rather than as an
 artifact of the specs tree — runs none either. Prompt-free.
-Silent when the repository is already clean and on the default branch, no other plugin branch holds a session-file commit §3.4 pushes, and §3.1 finds
+Silent when the repository is already clean and on the default branch, no other plugin branch holds a session-file commit §3.4 tries to push, and §3.1 finds
 `$SPECS_PATH` well placed; it emits a block only when it acts or when a guard fires, and a
 notice only where §3.1 reports a misconfigured `$SPECS_PATH`. That notice is one line, plus one more
 line naming anything a misrooted run left behind. On a run carrying `specs_git: misrooted`, §3.5 adds
@@ -388,7 +388,7 @@ First matching row applies.
 | # | State | Action |
 |---|---|---|
 | B1 | On the default branch | Nothing further. |
-| B2 | Plugin branch, and `branch-merged HEAD` (below) finds it merged | Switch to default, `git -C "$SPECS_PATH" pull --ff-only`, `git -C "$SPECS_PATH" branch -d <branch>`. If `-d` fails, report git's own message and skip — **never `-D`**. Where `branch-merged` answered by its second or third test, a rebase or a squash, git may not see the merge — `-d` deletes a branch merged into its upstream or into `HEAD`, and refuses one merged only by a rebase or a squash where neither holds it — so the report then adds the command for the user to run once they are sure: `Specs preflight: <branch> is merged into <default> by a rebase or a squash, which git branch -d cannot see — delete it with git -C "<SPECS_PATH>" branch -D <branch>`. If `pull --ff-only` fails (the local default branch has diverged), report and continue on default **without** pulling — never merge, rebase, or reset. |
+| B2 | Plugin branch, and `branch-merged HEAD` (below) finds it merged | Switch to default, `git -C "$SPECS_PATH" pull --ff-only`, `git -C "$SPECS_PATH" branch -d <branch>`. If `-d` fails, report git's own message and skip — **never `-D`**. Where `branch-merged` answered by its second or third test, a rebase or a squash, git may not see the merge — `-d` deletes a branch merged into its upstream, or into `HEAD` where it has none, and refuses one merged only by a rebase or a squash — so the report then adds the command for the user to run once they are sure: `Specs preflight: <branch> is merged into <default> by a rebase or a squash, which git branch -d cannot see — delete it with git -C "<SPECS_PATH>" branch -D <branch>`. If `pull --ff-only` fails (the local default branch has diverged), report and continue on default **without** pulling — never merge, rebase, or reset. |
 | B3 | Plugin branch, unmerged, `branch-key` (below) resolves the branch to **any** key in the run key set (§3.2) | **Stay on it.** See §3.6. |
 | B4 | Plugin branch, unmerged, `branch-key` resolves the branch to **no** key in the set, or the set is empty (keyless run) | Switch to default, `git -C "$SPECS_PATH" pull --ff-only`. **Leave the branch and its pull request alone.** Report the branch name, and, where it still holds commits a push would publish (§4 step 5's `push-scope` measure), how many: a later run's preflight retries them wherever §4 step 5 lets it push them (§3.4). |
 
@@ -692,7 +692,7 @@ to state.
        (step 6).
      - **The remote refused this branch before:**
        `git -C "$SPECS_PATH" config --get branch.<branch>.workflowsPushRefused`
-       prints the date step 6 recorded when the server refused a push to it.
+       prints the date step 6 recorded when `origin` refused a push to it.
    - **`push-scope`: every commit the push would publish is a session-file
      commit.** First the base the push is measured against:
      `refs/remotes/origin/<branch>`, the ref this push updates, where
@@ -736,23 +736,28 @@ to state.
    from git's own status for the ref in its `--porcelain` output — a line
    beginning `!`, then the refspec, then a bracketed summary — never from the
    server's message text.
-   - **A server hook refused the update** (`[remote rejected]`, and the
-     reason git prints after it, in parentheses, ends `hook declined` — the
-     wording git's own receive-pack gives a refusing hook, which is how branch
-     protection refuses a push on the common hosts): no push to this branch
-     will be taken. Record it,
+   - **`origin` refused the update** (`[remote rejected]`): a rule on the
+     server — branch protection, a ruleset, a policy or a hook — takes no push
+     of this branch. Every reason git prints after that status, in
+     parentheses, counts, save git's own words for a push that a concurrent
+     update or a server fault broke — `failed to update ref`, `failed to lock`,
+     `cannot lock ref`, `unpacker error`, `missing necessary objects` — which
+     is a push that failed for another reason (below) and is retried. The
+     hosts word their refusals differently (`… hook declined`, `push declined
+     due to repository rule violations`, a policy code), so the few transient
+     reasons are what is matched, and everything else is a refusal. Record it,
      `git -C "$SPECS_PATH" config branch.<branch>.workflowsPushRefused <YYYY-MM-DD>`,
      and report; the commit stays local, and step 5 pushes this branch no more
      until the record is removed. Retrying would be refused the same way on
      every run while the commits pile up on the local branch. Name what to do
      wherever this step runs: at the end of a run, §6's *push refused* line;
      inside §3.4's flush or retry, which print no §6 line, as
-     `Specs preflight: <branch> not pushed — a hook on origin refused it (<the reason in parentheses>), and this is recorded so no later run pushes it; <the remedy §6's push-refused line gives>`.
-     Any other `[remote rejected]` reason — `cannot lock ref`, `unpacker
-     error` and the like, which a concurrent push or a server fault gives — is
-     a push that failed for another reason, below, and is retried.
-   - An auth failure, a remote that cannot be reached, or any other failure
-     → report; the commit stays local. §3.4 retries the push on the next run.
+     `Specs preflight: <branch> not pushed — origin refused it (<the reason in parentheses>), and this is recorded so no later run pushes it; <the remedy §6's push-refused line gives>`.
+     A rule that refuses what a commit carries, rather than the branch it goes
+     to, refuses the branch that remedy names too; removing the record is then
+     how the user lets a later run try again.
+   - An auth failure, a remote that cannot be reached, a transient refusal
+     above, or any other failure → report; the commit stays local. §3.4 retries the push on the next run.
    - **Non-fast-forward rejection** (`[rejected]`) → report; **never force-push**, never
      auto-rebase mid-run. The commit stays local, and no later run's retry
      succeeds until the user takes in the remote's commits: the branch has
@@ -904,8 +909,8 @@ report was composed earlier.
 | Committed, not pushed — no remote to push to (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: this specs repo has no origin remote` |
 | Committed, not pushed — the user's git configuration pushes the branch elsewhere (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: your git configuration pushes <branch> to <remote>, not to origin, which is the remote this plugin reads; push it where it belongs yourself` |
 | Committed, not pushed — the remote deleted the branch (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: origin has no <branch> any more, so it was renamed or deleted there, and this step does not recreate it; the commit stays on local <branch>` — and, where `<branch>` is the default branch, `; if origin renamed it, git -C "<SPECS_PATH>" remote set-head origin --auto names the new one` |
-| Committed, not pushed — origin refused the branch before (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: a hook on origin refused pushes to <branch> on <date> (branch.<branch>.workflowsPushRefused), and every commit since stays on local <branch>; to land the commits on local <branch>, put them on a branch of their own and open a pull request from it — git -C "<SPECS_PATH>" branch session-files-<YYYY-MM-DD> <branch> && git -C "<SPECS_PATH>" push -u origin session-files-<YYYY-MM-DD> — then, standing on <branch>, git -C "<SPECS_PATH>" reset --keep origin/<branch>; once origin takes pushes to <branch> again, git -C "<SPECS_PATH>" config --unset branch.<branch>.workflowsPushRefused` |
-| Committed, push refused by a server hook (§4 step 6) | `Specs repo: committed <sha7> (<N> files) on <branch> — push REFUSED by a hook on origin (<the reason in parentheses>), as branch protection refuses a push, so this is recorded and no later run pushes <branch>; to land the commits on local <branch>, put them on a branch of their own and open a pull request from it — git -C "<SPECS_PATH>" branch session-files-<YYYY-MM-DD> <branch> && git -C "<SPECS_PATH>" push -u origin session-files-<YYYY-MM-DD> — then, standing on <branch>, git -C "<SPECS_PATH>" reset --keep origin/<branch>; once origin takes pushes to <branch> again, git -C "<SPECS_PATH>" config --unset branch.<branch>.workflowsPushRefused` |
+| Committed, not pushed — origin refused the branch before (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: origin refused pushes to <branch> on <date> (branch.<branch>.workflowsPushRefused), and every commit since stays on local <branch>; to land the commits on local <branch>, put them on a branch of their own and open a pull request from it — git -C "<SPECS_PATH>" branch session-files-<YYYY-MM-DD> <branch> && git -C "<SPECS_PATH>" push -u origin session-files-<YYYY-MM-DD> — then, standing on <branch>, git -C "<SPECS_PATH>" reset --keep origin/<branch>; once origin takes pushes to <branch> again, git -C "<SPECS_PATH>" config --unset branch.<branch>.workflowsPushRefused` |
+| Committed, push refused by origin (§4 step 6) | `Specs repo: committed <sha7> (<N> files) on <branch> — push REFUSED by origin (<the reason in parentheses>): a rule there takes no push of <branch>, so this is recorded and no later run pushes it; to land the commits on local <branch>, put them on a branch of their own and open a pull request from it — git -C "<SPECS_PATH>" branch session-files-<YYYY-MM-DD> <branch> && git -C "<SPECS_PATH>" push -u origin session-files-<YYYY-MM-DD> — then, standing on <branch>, git -C "<SPECS_PATH>" reset --keep origin/<branch>; once origin takes pushes to <branch> again, git -C "<SPECS_PATH>" config --unset branch.<branch>.workflowsPushRefused` |
 | Committed, not pushed — the push would publish other commits (§4 step 5 `push-scope`) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: the push would also publish commits that are not this plugin's session-file commits, the oldest <sha7> <subject>, which carries <path>; push <branch> once they are ready to go, and the artifacts go with them` — or, where that oldest commit is this run's own, `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: a pre-commit hook added <path>[, and <M-1> more] to this commit, so it carries more than this plugin's session files; check what the hook added before you push <branch>` |
 | Committed, push rejected as non-fast-forward (§4 step 6) | `Specs repo: committed <sha7> (<N> files) on <branch> — push REJECTED: origin's <branch> has commits this one lacks, and no run takes them in for you; run git -C "<SPECS_PATH>" pull --rebase --autostash origin <branch>, then git -C "<SPECS_PATH>" push origin <branch>` |
 | Committed, push failed for any other reason | `Specs repo: committed <sha7> (<N> files) on <branch> — push FAILED (<reason>); the commit is local and the next run retries it` |
