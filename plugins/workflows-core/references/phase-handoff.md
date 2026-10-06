@@ -361,7 +361,7 @@ count is per **offer**, not per execution of §2.
 **A run that never reaches an offer prints no line for it, and the absence of a row for that state
 is deliberate.** A producer may skip its handoff on a condition of its own — `/frames` writes no
 index and so has no deliverable to hand off, `/idea` on `status: draft` never hands off and does not
-ask, `/implement`'s Phase 4.5 is a silent no-op where step 7.5 wrote no conformance note in `$SPECS_PATH`, and
+ask, `/implement`'s Phase 4.5 is a silent no-op where step 7.5 wrote no conformance note in `$SPECS_PATH`, or where the run is a direct one from inside the specs repository and its notes ride on the code commit, and
 `/brd-proposal` writes nothing where its readiness walk ends on *Price the slice first* or *Re-price
 it first* — and there the *Declined by the user* row would assert a decision nobody was asked to
 make.

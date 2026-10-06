@@ -91,10 +91,10 @@ Same semantics as §2.1. Set once per repo, or globally with `git config --globa
 ```bash
 { git -C <repo_path> for-each-ref --format='%(refname:lstrip=2)' refs/heads
   git -C <repo_path> for-each-ref --format='%(refname:lstrip=3)' refs/remotes; } 2>/dev/null \
-  | grep -vx 'HEAD' | head -200
+  | grep -vx 'HEAD' | sort -u | head -200
 ```
 
-Local branches as they are, and remote ones with the remote's name taken off, so `origin/iv-gu/x` counts as `iv-gu/x`. `branch -a --format='%(refname:short)'`, which this listing replaced, printed `origin/…` for every remote branch and `origin` for the remote's `HEAD`, so a repository with many pushed branches adopted `origin` as an identity.
+Local branches as they are, and remote ones with the remote's name taken off, so `origin/iv-gu/x` counts as `iv-gu/x`, once — `sort -u` makes a branch that is both local and pushed one branch of the sample, not two. `branch -a --format='%(refname:short)'`, which this listing replaced, printed `origin/…` for every remote branch and `origin` for the remote's `HEAD`, so a repository with many pushed branches adopted `origin` as an identity.
 
 Scan for `<identity>/<rest>` where `<identity>` is **2–8 characters matching `[a-z0-9][a-z0-9-]*`** — so hyphenated forms (`iv-gu/`, `john-smith/`, `a-hue/`) count alongside unhyphenated ones (`ivgu/`, `jdoe/`, `mz23/`) and the generic prefixes (`feat/`, `docs/`, `fix/`, `chore/`, `feature/`, `bugfix/`, `hotfix/`, `release/`, `story/`).
 
@@ -178,7 +178,7 @@ fi
 if [ -z "$identity" ]; then
   identity="$( { git -C "<repo>" for-each-ref --format='%(refname:lstrip=2)' refs/heads
                  git -C "<repo>" for-each-ref --format='%(refname:lstrip=3)' refs/remotes; } 2>/dev/null \
-    | grep -vx 'HEAD' | head -200 \
+    | grep -vx 'HEAD' | sort -u | head -200 \
     | awk -F/ -v skip='^(feat|feature|fix|bugfix|hotfix|docs|chore|release|story|idea|prd|ard|spec|design|ready|brd|frames|kb)$' '
         { total++ }
         NF>=2 && length($1)>=2 && length($1)<=8 && $1 ~ /^[a-z0-9][a-z0-9-]*$/ && $1 !~ skip { n[$1]++ }
@@ -188,7 +188,7 @@ fi
 # Empty here → §2.4 fallback (prefix case only) AND the §2.5 escalation before branching.
 ```
 
-`skip` drops the generic prefixes, per §2.3's identity rule, and the plugin's nine, which are never a candidate. When resolving a §1.4 prefix rather than an identity, take the generic names out of `skip` and keep the nine. The `END` block is §2.3's threshold — at least 3 occurrences and at least 30 % of the sample — and the `sort` is its tie-break, the most frequent first and then alphabetical; a snippet that printed the most frequent name with no threshold adopted a name seen once.
+`skip` drops the generic prefixes, per §2.3's identity rule, and the plugin's nine, which are never a candidate. When resolving a §1.4 prefix rather than an identity, take the generic names out of `skip` and keep the nine. The `END` block is §2.3's threshold — at least 3 occurrences and at least 30 % of the sample — and the `sort` is §2.3's tie-break for an identity, the most frequent first and then alphabetical; a §1.4 prefix also takes §2.3's preference for a short non-generic candidate, which this snippet does not apply. A snippet that printed the most frequent name with no threshold adopted a name seen once.
 
 ---
 
