@@ -9,10 +9,10 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Changed
 - **`/implement` hands the bug it fixed to `impl-maintenance`.** Where the run confirmed a bug's cause (its `Confirmed cause:` line), the maintenance handoff's key events carry the bug and that cause as a miss the project's own checks let through, so the Lessons Learned report asks what check or rule would have caught it (`workflows-core` 1.26.0).
-- **`bug-diagnosis`: a probe never writes a secret's value.** A probe that checks a credential, token, key or connection string records only `SET` or `UNSET`, never the value and never a line that echoes it, as `env | grep` does: a probe's output lands in logs and CI output the redaction rule never reaches.
+- **`bug-diagnosis`: a probe never writes a secret's value.** A probe that checks a credential, token, key or connection string records only `SET`, `EMPTY` or `UNSET`, and a length where that tells hypotheses apart, never the value and never a line that echoes it, as `env | grep` does: a probe's output lands in logs and CI output the redaction rule never reaches.
 
 ### Fixed
-- **The workflow page said only `/upgrade` collides with a Claude Code built-in.** Claude Code's `/design`, which makes a Design artifact, is switched on for some accounts, and where it is on the bare `/design` can reach it; the page says so, and names the companion `/workflows-core:feedback` beside `/workflows-core:statusline`.
+- **The workflow page said only `/upgrade` collides with a Claude Code built-in.** Claude Code's `/design`, which makes a Design artifact, is switched on for some accounts, and where it is on the bare `/design` can reach it; the page says so, and names the companion `/workflows-core:feedback` beside `/workflows-core:statusline`. Getting-started's first run now types `/dev-workflows:design EPIC-98760`, with a line saying why.
 
 ## [4.16.0] — 2026-10-06
 

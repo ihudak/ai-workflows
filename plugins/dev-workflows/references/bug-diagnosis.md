@@ -82,8 +82,9 @@ the evidence more convenient.
    temporary probe `[DEBUG-xxxx]` (a short unique token per probe). Every `[DEBUG-xxxx]`
    probe MUST be removed before the change is finalized (the `/implement` Phase 3B cleanup gate strips
    them before the review diff is captured). **A probe never writes a secret's value**: one that checks
-   a credential, token, key or connection string records only whether it is set — `SET` or `UNSET`,
-   never the value and never a line that echoes it, as `env | grep` does — because what a probe writes
+   a credential, token, key or connection string records only whether it is set and whether it is empty —
+   `SET`, `EMPTY` or `UNSET`, and its length where that tells hypotheses apart — never the value and
+   never a line that echoes it, as `env | grep` does — because what a probe writes
    lands in logs and CI output that outlive the run, where the redaction above never reaches.
 4. **Fix at the correct seam; regression-test there.** Land the fix and its regression test at the
    **correct seam** (see `${CLAUDE_PLUGIN_ROOT}/references/design-format.md` `## Seams` — prefer the

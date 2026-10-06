@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [3.22.0] — 2026-10-06
 
 ### Fixed
-- **`/brd-intake` dropped every letter outside `a`–`z` from a new BRD's slug.** `Zahlungsauslösung` became `zahlungsausl-sung`, and a Cyrillic or Chinese title fell back to `brd`, against `workflows-core:specs-repo-git`, whose example is `PRD-ACME-1-zahlungsauslösung/`. The slug now keeps the letters and digits of any script, with their accents and vowel signs, and is cut at a character boundary to at most 80 bytes of UTF-8; a heading long enough to overflow a 255-byte file name no longer can.
+- **`/brd-intake` dropped every letter outside `a`–`z` from a new BRD's slug.** `Zahlungsauslösung` became `zahlungsausl-sung`, and a Cyrillic or Chinese title left nothing, falling back to the source filename's slug and, where that left nothing too, to `brd`, against `workflows-core:specs-repo-git`, whose example is `PRD-ACME-1-zahlungsauslösung/`. The slug now keeps the letters and digits of any script, with their accents and vowel signs, and is cut at a character boundary to at most 80 bytes of UTF-8; a heading long enough to overflow a 255-byte file name no longer can.
 
 ### Changed
 - **A guard criterion is allowed** (`workflows-core` 1.26.0's `prd-format`). `epic-writer` may write an acceptance criterion that keeps behaviour the Epic could break working as it does, worded as a guard, and `epic-reviewer` and `prd-reviewer` no longer grade one MINOR as "already true before".

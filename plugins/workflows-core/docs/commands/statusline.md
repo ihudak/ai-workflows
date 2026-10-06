@@ -41,4 +41,4 @@ Run this once, first, right after installing the plugin. It backs up any existin
 
 - [Workflow overview](../workflow.md) — where this command sits among the cross-cutting commands, and why its qualified form is the only one that reaches it.
 - [Session cost](../reference/session-cost.md) — the Option B cost snapshot this command enables.
-- `/release-notes`, in the `docs-workflows` plugin, and `/upgrade`, in `dev-workflows` — the other two commands whose bare form also reaches a Claude Code built-in.
+- [`/feedback`](feedback.md), in this plugin, `/release-notes`, in the `docs-workflows` plugin, and `/upgrade`, in `dev-workflows` — the other three commands whose bare form also reaches a Claude Code built-in; `/design`, in `dev-workflows`, does on the accounts Claude Code's own `/design` is switched on for.

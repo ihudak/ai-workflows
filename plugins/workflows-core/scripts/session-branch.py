@@ -19,7 +19,8 @@ pushes, or writes a working-tree path outside specs-repo-git §2.1's session-fil
 The session branch moves only by update-ref with its old value, so a concurrent run fails
 instead of overwriting. Output is one JSON object on stdout.
 Exit 0: it ran, whatever it found. Exit 2: it could not run (usage, not a repository's top
-level, an unexpected git failure); the caller reports it and the run continues.
+level, an unexpected git failure, any other exception), printing one "session-branch: not run
+(...)" line on stderr; the caller reports it and the run continues.
 """
 
 import argparse
@@ -1332,6 +1333,10 @@ def selftest():
             check(got.get("_rc") == 2 and got.get("_err", "").splitlines() ==
                   ["session-branch: not run (the following arguments are required: --default-ref, --message)"],
                   "a usage error exits 2 with one 'not run' line (%r)" % got)
+            r = subprocess.run([sys.executable, me, "mode", "--default", "main"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            check(r.returncode == 2 and r.stderr.decode().splitlines() ==
+                  ["session-branch: not run (--specs and a subcommand are required)"],
+                  "a call without --specs exits 2 with one 'not run' line (%r)" % r.stderr)
 
     try:
         scenarios()
@@ -1348,7 +1353,7 @@ def selftest():
 
 
 class Parser(argparse.ArgumentParser):
-    """A usage error is "not run" on one line, like any other: §6 quotes the first stderr line."""
+    """A usage error is one "not run" line, as every exit 2 is: §6 quotes the first stderr line."""
 
     def error(self, message):
         print("session-branch: not run (%s)" % message, file=sys.stderr)
@@ -1379,7 +1384,7 @@ def main():
     if a.selftest:
         return selftest()
     if not a.specs or not a.cmd:
-        print("session-branch: --specs and a subcommand are required", file=sys.stderr)
+        print("session-branch: not run (--specs and a subcommand are required)", file=sys.stderr)
         return 2
     try:
         top = text(git(a.specs, "rev-parse", "--show-toplevel"))

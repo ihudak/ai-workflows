@@ -793,7 +793,7 @@ Then spawn all four agents. They are independent and can run in any order — sp
 > Session handoff:
 > - Command run: /implement
 > - What was done: [one-paragraph summary of the implementation]
-> - Key events: [BLOCK reviews encountered and their reason, test regressions, workarounds, unexpected ambiguities, and — where the run confirmed a bug's cause, the `Confirmed cause:` line its Phase 5 report carries — the bug this run fixed and that cause, as a miss the project's own checks let through — or 'none']
+> - Key events: [BLOCK reviews encountered and their reason, test regressions, workarounds, unexpected ambiguities, and — where `${CLAUDE_PLUGIN_ROOT}/references/bug-diagnosis.md` step 6 names a cause (the plan carried a ranked list and the fix was verified) — the bug this run fixed and what step 6 names: the hypothesis the fix acted on or, where it acted on none of them, what the probes showed instead, as a miss the project's own checks let through — or 'none']
 > - Workarounds used: [manual steps not automated by the workflow — or 'none']
 > - Review verdict: [PASS | PASS WITH RECOMMENDATIONS | BLOCK | N/A]
 > - Test result: [passed N tests, N regressions, not run — or actual result]
