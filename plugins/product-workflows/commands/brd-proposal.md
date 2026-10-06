@@ -2,6 +2,7 @@
 name: brd-proposal
 description: "Writes the programme effort proposal for a BRD container by rolling up its slices' own proposals: walks each slice to a recommendation (price it, exclude and disclose it, re-run a stale one, include a current one), adds cross-slice effort no slice priced, flags work two slices priced from one finding, and takes peak concurrency from the schedule rather than summing FTE. Optional and ungated, BRD route only; carries no money for human hours, and nothing on the build ladder reads it."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
+disable-model-invocation: true
 ---
 
 Author the programme-level effort proposal for the resolved BRD container: $ARGUMENTS

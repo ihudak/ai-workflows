@@ -7,6 +7,7 @@ description: >
   if the repo has a Vale configuration file. Reports violations with file, line, severity, and
   suggested fix.
 allowed-tools: Read Bash Glob Grep Task
+disable-model-invocation: true
 ---
 
 # Review documentation changes from a pull request

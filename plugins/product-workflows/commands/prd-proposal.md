@@ -2,6 +2,7 @@
 name: prd-proposal
 description: "Writes a customer-facing effort proposal for one PRD- folder: grades it against four readiness tiers, derives work packages by delivery seam with hours by package and role and a bottom-up range, cites a verified finding, a frozen decision or a confirmed defect for every cost driver, and adds a defect-remediation package automatically. Writes proposal.md and proposal-brief.md, gated by the Opus proposal-reviewer. Optional and ungated on both routes; carries no money for human hours, and nothing on the build ladder reads it."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
+disable-model-invocation: true
 ---
 
 Author a customer-facing effort proposal for the resolved PRD folder: $ARGUMENTS

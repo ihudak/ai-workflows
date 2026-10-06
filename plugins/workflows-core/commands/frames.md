@@ -2,6 +2,7 @@
 name: frames
 description: "(Re)builds the frame-set index of one BRD, PRD or Epic folder: for each design/<frame-set>/ it lists the images, reads the index already there, describes the frames no row accounts for and writes the index grounding-format §6 requires. Use after dropping in a frame set exported by hand, which design-grounder otherwise refuses as NO_INDEX. Indexing only: no design grounding, no [DG#n]. On a completed handoff it opens a pull request for the indexes it wrote."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
+disable-model-invocation: true
 ---
 
 (Re)build the frame-set indexes of: $ARGUMENTS

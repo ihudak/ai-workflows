@@ -14,7 +14,7 @@
 # is already byte-identical across dev-workflows and docs-workflows (verified
 # by diff); this is the third copy, following established precedent rather
 # than a new design decision. Sharing it is not available: a hook runs as
-# `bash ${CLAUDE_PLUGIN_ROOT}/hooks/<script>`, and that variable resolves to
+# `bash "${CLAUDE_PLUGIN_ROOT}/hooks/<script>"`, and that variable resolves to
 # the reading plugin, so a hook cannot source a sibling plugin's file — a
 # dependency grants installation, never file access.
 #

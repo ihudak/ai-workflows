@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/preload-context.sh"
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/preload-context.sh\""
           }
         ]
       }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/changelog-owners-reminder.sh"
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/changelog-owners-reminder.sh\""
           }
         ]
       }

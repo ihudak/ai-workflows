@@ -20,7 +20,7 @@ claude plugin update workflows-core@shipwright
 
 `workflows-core` is the shared foundation of the `dev-workflows` plugin family. Most of what it ships is not a command: it is the reference corpus the sibling plugins read — `dev-workflows`, `product-workflows`, and `docs-workflows` all declare it as a dependency — the `model-routing` skill every pipeline command loads at its classification step, and ten agents any of them may dispatch. If you have installed a plugin from that family, you want this one installed too.
 
-It does ship seven commands of its own, and one of them is worth running first — see below.
+It does ship seven commands of its own, and one of them is worth running first — see below. Type them: each is typed-only (`disable-model-invocation: true`), which keeps it out of the list of skills the model picks from and that list inside Claude Code's budget, so asking in prose does not start one. The same holds for every command of `dev-workflows` and `product-workflows`, and for those of `docs-workflows` save `/docs-profile` and `/docs-brand`, which other commands run for you. Every getting-started page's *Claude Code's skill-listing budget* section says what to set so the list fits.
 
 ## What you set on your machine
 
@@ -61,6 +61,16 @@ Persistent default for the `--skip-feedback` run flag — narrows an applicable 
 ### `WORKFLOWS_ENFORCE_MODEL`
 
 Persistent default for the `--enforce-model` run flag — pins every subagent an applicable command dispatches to one model (an alias, a full model id, or `routing` for no enforcement), bypassing model-routing's own per-step selection. Where the agent tool selects models by family only, a version-specific value is honoured only for its family's newest model and runs as the family name; the harness picks the version. See `workflows-core:run-flags`.
+
+### Claude Code's skill-listing budget
+
+**Set this once, in `~/.claude/settings.json`, whichever plugins you install.** Claude Code shows the model one list of every installed plugin's skills and model-invocable commands, and gives that list 1% of the context window — 8,000 characters in a 200K-token session, and in every subagent on a 200K model. Past that it shortens every description in the list, and the model can no longer tell which skill fits a task. This marketplace's commands are typed-only and take no room in the list, but its skills do, and so does every other plugin, Claude Code's own skills and your personal ones: every plugin of the `shipwright` marketplace, installed together, takes about 5,600 characters. Add this top-level key to the settings file:
+
+```json
+"skillListingBudgetFraction": 0.025
+```
+
+That gives 20,000 characters at 200K and 100,000 at 1M; a session pays only for what is listed, never for the budget, and the change applies from the next session. **Check that it is enough**: start one session with `claude --debug`, then search `~/.claude/debug/latest` for `Skill listing over budget: <N> skills, <X> chars > <Y> budget`. If that line is there, the list still overflows: set the fraction to at least X ÷ 800,000 (for X = 32,000, `0.04`), or turn off skills you do not use with `/skills`. The `SLASH_COMMAND_TOOL_CHAR_BUDGET` environment variable sets a fixed number of characters instead, and overrides the setting.
 
 ## Install the status line
 

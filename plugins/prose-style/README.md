@@ -27,6 +27,10 @@ that has never heard of your style guide.
 | `/prose-review-docs` | command | Reviews markdown files at a path; supports `--fix` for auto-correction |
 | `/prose-style-refresh` | command | Regenerates your overlay from your configured style-guide source |
 
+The three commands are typed-only (`disable-model-invocation: true`): type them, since a
+request in prose does not start one. That keeps them out of the list of skills the model
+picks from, inside Claude Code's budget for it; the `prose-style-rules` skill stays in it.
+
 ---
 
 ## The overlay

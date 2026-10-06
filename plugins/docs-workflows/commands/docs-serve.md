@@ -2,6 +2,7 @@
 name: docs-serve
 description: Start, stop or check the documentation site's dev server for a profiled docs repo, and report a URL that actually opens from the host. Reads the profile's dev_servers block; never starts a second server on a port that already answers; where the server's command carries the {port} token, falls forward to the next free port on a collision and says so, and where it does not, reports what holds the port and leaves nothing running. --build runs the profile's build command and exits. Writes no documentation and no artefact.
 allowed-tools: Read Bash Glob Grep Skill
+disable-model-invocation: true
 ---
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.

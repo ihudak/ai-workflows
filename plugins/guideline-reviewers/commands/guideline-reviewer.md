@@ -2,6 +2,7 @@
 name: guideline-reviewer
 description: Review app code and UI for compliance with public UI design-system and accessibility standards. Checks app header, data table, filter field, connections, permissions, settings, dashboards, accessibility, and data naming.
 allowed-tools: Read Bash Glob Grep WebFetch
+disable-model-invocation: true
 ---
 
 Review app code and UI for compliance with public UI design-system and accessibility standards: $ARGUMENTS

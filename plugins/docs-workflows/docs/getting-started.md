@@ -52,6 +52,16 @@ Where your product documentation's clone lives, defaulting to `/workspace/docs`.
 
 Your branch identifier, used by every run that creates a branch in a documentation repository — `/document` in keyed mode, `/docs-profile`, `/docs-init`, and a standalone `/docs-brand`. Branch naming is repo-rule-first: each reads the target repo's own documented convention and follows it as written, and this variable only fills a name-or-initials segment where the convention asks for one. A repository `/docs-init` has just created documents no convention yet, so there the fallback prefix and this variable are the whole of it.
 
+### Claude Code's skill-listing budget
+
+**Set this once, in `~/.claude/settings.json`, whichever plugins you install.** Claude Code shows the model one list of every installed plugin's skills and model-invocable commands, and gives that list 1% of the context window — 8,000 characters in a 200K-token session, and in every subagent on a 200K model. Past that it shortens every description in the list, and the model can no longer tell which skill fits a task. This marketplace's commands are typed-only and take no room in the list, but its skills do, and so does every other plugin, Claude Code's own skills and your personal ones: every plugin of the `shipwright` marketplace, installed together, takes about 5,600 characters. Add this top-level key to the settings file:
+
+```json
+"skillListingBudgetFraction": 0.025
+```
+
+That gives 20,000 characters at 200K and 100,000 at 1M; a session pays only for what is listed, never for the budget, and the change applies from the next session. **Check that it is enough**: start one session with `claude --debug`, then search `~/.claude/debug/latest` for `Skill listing over budget: <N> skills, <X> chars > <Y> budget`. If that line is there, the list still overflows: set the fraction to at least X ÷ 800,000 (for X = 32,000, `0.04`), or turn off skills you do not use with `/skills`. The `SLASH_COMMAND_TOOL_CHAR_BUDGET` environment variable sets a fixed number of characters instead, and overrides the setting.
+
 ## Where to run it
 
 Run the plugin in an AI container — strongly recommended: a command run there can reach only what you mount into it and the network you allow.
@@ -66,7 +76,9 @@ If there is no documentation repository yet, `/docs-init` makes one:
 /docs-workflows:docs-init /workspace/docs
 ```
 
-It resolves the target (and refuses outright if that directory already looks like a documentation repository — pointing you at `/docs-profile` instead, which is the command for one that already exists), offers to `git init` an empty or absent directory outside every git work tree (a target below a work tree's top level, existing or not, stops the run), confirms which code repositories the portal will document, branches, then writes the page skeleton, both build configs, `.vale.ini` with a project vocabulary seeded with the product name and the few technical words the scaffold's own pages use (so the scaffold passes its own lint gate, locally and in CI alike), a CI workflow carrying the visibility gates, and `.dev-workflows/docs-profile.yml`. It runs `/docs-brand --inline` to pick up a logo and colours from the product's own code, verifies that both builds and the linter actually work, gates the whole diff on an Opus review, and leaves it on a branch with a drafted pull request. It never pushes and never merges.
+**Type the command.** A typed-only command (`disable-model-invocation: true`) stays out of the list of skills the model picks from, which keeps that list inside Claude Code's budget, so asking in prose does not start it. Every command in this plugin is typed-only except `/docs-profile` and `/docs-brand`, which `/document` and `/docs-init` run for you through the Skill tool and which must therefore stay where the model can reach them.
+
+`/docs-init` resolves the target (and refuses outright if that directory already looks like a documentation repository — pointing you at `/docs-profile` instead, which is the command for one that already exists), offers to `git init` an empty or absent directory outside every git work tree (a target below a work tree's top level, existing or not, stops the run), confirms which code repositories the portal will document, branches, then writes the page skeleton, both build configs, `.vale.ini` with a project vocabulary seeded with the product name and the few technical words the scaffold's own pages use (so the scaffold passes its own lint gate, locally and in CI alike), a CI workflow carrying the visibility gates, and `.dev-workflows/docs-profile.yml`. It runs `/docs-brand --inline` to pick up a logo and colours from the product's own code, verifies that both builds and the linter actually work, gates the whole diff on an Opus review, and leaves it on a branch with a drafted pull request. It never pushes and never merges.
 
 Then `/docs-workflows:docs-serve` serves the result and reports a URL you can open in your browser — it opens nothing itself — and `/document` starts filling it in. Skip straight to the next section if your documentation repository already exists.
 

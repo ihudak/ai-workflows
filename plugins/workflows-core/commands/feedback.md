@@ -2,6 +2,7 @@
 name: feedback
 description: Log a manual note about this plugin family itself — friction you hit or an improvement you want — to the per-PRD feedback file in the specs repo, for the plugin maintainer to aggregate. Tied to no command; run any time.
 allowed-tools: Read Edit Write Bash Glob Grep Skill
+disable-model-invocation: true
 ---
 
 Log session feedback about this plugin family: $ARGUMENTS

@@ -2,6 +2,7 @@
 name: brd-intake
 description: "Starts the BRD-to-PRD route: takes a customer's business requirements document (markdown only), walks its links read-only, asking before it captures anything outside the document's folder, copies the document and what it links into the specs repo byte for byte, transcribes its images, and extracts a [BR#n] requirement inventory whose defect candidates you confirm. Writes the BRD folder with an unallocated coverage ledger; --sort-existing migrates a hand-written package. Next: /brd-split."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
+disable-model-invocation: true
 ---
 
 Intake the customer-supplied business requirements document: $ARGUMENTS

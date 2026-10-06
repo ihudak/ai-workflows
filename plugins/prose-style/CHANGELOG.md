@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0 — 2026-10-06
+
+### Changed
+
+- **The three commands are typed-only** (`disable-model-invocation: true`): `/prose-review-pr`,
+  `/prose-review-docs` and `/prose-style-refresh` run when typed, and a request in prose no longer
+  starts one. It keeps them out of the skill listing Claude Code gives the model, which was over its
+  budget (`workflows-core` 1.29.0). The `prose-style-rules` skill stays in it. The README says so.
+
 ## 0.5.3 — 2026-10-06
 
 ### Fixed

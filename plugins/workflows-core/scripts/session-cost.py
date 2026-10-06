@@ -308,14 +308,19 @@ def _skill_invocation(obj, ns_map):
     THIS marketplace through the Skill tool, else None.
 
     WHY THIS SHAPE EXISTS. The `<command-name>` envelope is emitted when the user
-    TYPES the slash command. When the user asks in prose and the model reaches the
-    command through the **Skill tool**, the invocation appears only as an assistant
-    `tool_use` block named `Skill` whose `input.skill` is the command -- no user
-    message, no envelope -- so a detector reading user messages alone misses the
-    invocation entirely, and section 13.3 hands the preceding claim the segment
-    running to the next boundary of any kind, i.e. straight through it. Measured on
-    a real session: a typed grill command was followed by two prose-invoked runs,
-    neither of which cut the window, and the grill's claim absorbed both.
+    TYPES the slash command. When the model reaches the command through the
+    **Skill tool** -- on a prose request, or one command running another -- the
+    invocation appears only as an assistant `tool_use` block named `Skill` whose
+    `input.skill` is the command -- no user message, no envelope -- so a detector
+    reading user messages alone misses the invocation entirely, and section 13.3 hands
+    the preceding claim the segment running to the next boundary of any kind, i.e.
+    straight through it. Measured on a real session: a typed grill command was followed
+    by two prose-invoked runs, neither of which cut the window, and the grill's claim
+    absorbed both. Typed-only commands (flagged `disable-model-invocation: true`) changed
+    what reaches this path, not the path: the Skill tool refuses a flagged command unless
+    the user typed `/<name>` in that turn's message, and a call the tool refused -- its
+    result an error -- cuts nothing (scan_main drops it); a command left unflagged still
+    arrives this way, from a caller or on a prose request.
 
     WHY THIS HALF RESOLVES WHERE command_envelope DOES NOT -- a deliberate
     asymmetry, and the one thing to get right here. command_envelope cuts on ANY
@@ -454,6 +459,10 @@ def scan_main(path, line_offset, ns_map, by_id=None):
     count = line_offset
     first_ts = None
     boundaries = []
+    # A Skill-tool boundary waits on its call's result: a call the tool refused ran nothing
+    # (a typed-only command, flagged disable-model-invocation, is refused unless the user
+    # typed `/<name>` in that turn's message), so an error result drops it. Keyed by the tool_use id the result names.
+    by_call = {}
     records = []
     by_id = {} if by_id is None else by_id
     if not path or not os.path.isfile(path):
@@ -499,6 +508,27 @@ def scan_main(path, line_offset, ns_map, by_id=None):
                      "ts": obj.get("timestamp"),
                      "line_offset": i}
                 )
+                # Only the call that made this boundary may unmake it: the first Skill
+                # block naming a command of this marketplace, the one _skill_invocation
+                # resolved. A record can carry other Skill calls beside it (the
+                # model-routing skill, a second command), and their errors are not its.
+                if obj.get("type") == "assistant":
+                    for block in (obj.get("message") or {}).get("content") or []:
+                        if isinstance(block, dict) and block.get("type") == "tool_use" \
+                                and block.get("name") == "Skill" and block.get("id") \
+                                and isinstance(block.get("input"), dict) \
+                                and block["input"].get("skill") == typed:
+                            by_call[block["id"]] = boundaries[-1]
+                            break
+            elif by_call and isinstance(obj, dict) and obj.get("type") == "user" \
+                    and isinstance(obj.get("message"), dict):
+                content = obj["message"].get("content")
+                for block in content if isinstance(content, list) else []:
+                    if isinstance(block, dict) and block.get("type") == "tool_result" \
+                            and block.get("is_error") and block.get("tool_use_id") in by_call:
+                        dropped = by_call.pop(block["tool_use_id"])
+                        if dropped in boundaries:
+                            boundaries.remove(dropped)
             if ts is not None and (first_ts is None or ts < first_ts):
                 first_ts = ts
             model, usage = extract_usage(obj)
@@ -1300,9 +1330,10 @@ def _selftest_body(tmp):
         capture_output=True, text=True)
     check(noc.returncode != 0, "--advance-only without --checkpoint is refused")
 
-    # Skill-tool boundary detection. A command invoked in prose reaches the family
-    # through the Skill tool and leaves no <command-name> envelope, so reading user
-    # messages alone let the preceding claim run straight through the invocation.
+    # Skill-tool boundary detection. A command the model runs -- on a prose request, or
+    # from another command -- reaches the family through the Skill tool and leaves no
+    # <command-name> envelope, so reading user messages alone let the preceding claim run
+    # straight through the invocation.
     _ns = {"product-workflows": {"update-prd"}, "workflows-core": {"prompt"}}
     def _sk(skill):
         return {"type": "assistant", "timestamp": "2026-09-01T10:00:00.000Z",
@@ -1333,6 +1364,52 @@ def _selftest_body(tmp):
               "<command-name>/product-workflows:update-prd</command-name>"}}, _ns)
           == "product-workflows:update-prd",
           "the typed shape still resolves after the Skill shape was added")
+    # A Skill call the tool refused ran nothing -- a typed-only command (flagged
+    # disable-model-invocation) is refused unless the user typed `/<name>` that turn -- so it cuts
+    # nothing: scan_main drops the boundary once the call's tool_result comes back an error.
+    def _scan(result):
+        path = os.path.join(tmp, "skill-refused.jsonl")
+        sk = _sk("product-workflows:update-prd")
+        sk["message"]["content"][0]["id"] = "toolu_x"
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(json.dumps(sk) + "\n")
+            fh.write(json.dumps({"type": "user", "timestamp": "2026-09-01T10:00:01.000Z",
+                                 "message": {"content": [dict(result, type="tool_result",
+                                                              tool_use_id="toolu_x")]}}) + "\n")
+        return scan_main(path, 0, _ns)[2]
+    check(_scan({"is_error": True, "content": "cannot be used with Skill tool"}) == [],
+          "a Skill call the tool refused does not cut")
+    check(len(_scan({"content": "Launching skill: product-workflows:update-prd"})) == 1,
+          "a Skill call that ran still cuts")
+    # Only the call that made the boundary can unmake it. One assistant record may carry
+    # several Skill calls -- a command and the model-routing skill side by side -- and an
+    # error on the one that is no command must not drop the command's boundary, nor may two
+    # refusals in one record try to drop it twice.
+    def _scan_pair(results):
+        path = os.path.join(tmp, "skill-pair.jsonl")
+        sk = {"type": "assistant", "timestamp": "2026-09-01T10:00:00.000Z",
+              "message": {"content": [
+                  {"type": "tool_use", "name": "Skill", "id": "toolu_a",
+                   "input": {"skill": "product-workflows:update-prd"}},
+                  {"type": "tool_use", "name": "Skill", "id": "toolu_b",
+                   "input": {"skill": "workflows-core:model-routing"}},
+                  {"type": "tool_use", "name": "Skill", "id": "toolu_c",
+                   "input": {"skill": "workflows-core:prompt"}}]}}
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(json.dumps(sk) + "\n")
+            fh.write(json.dumps({"type": "user", "timestamp": "2026-09-01T10:00:01.000Z",
+                                 "message": {"content": [dict(r, type="tool_result")
+                                                         for r in results]}}) + "\n")
+        try:
+            return scan_main(path, 0, _ns)[2]
+        except ValueError as exc:
+            return "raised %s" % exc
+    check(len(_scan_pair([{"tool_use_id": "toolu_a", "content": "Launching skill"},
+                          {"tool_use_id": "toolu_b", "is_error": True, "content": "x"}])) == 1,
+          "an errored non-command Skill call beside a command's keeps the command's cut")
+    check(_scan_pair([{"tool_use_id": "toolu_a", "is_error": True, "content": "refused"},
+                      {"tool_use_id": "toolu_c", "is_error": True, "content": "refused"}]) == [],
+          "two refused command calls in one record drop its one cut once, without raising")
 
     if failures:
         print("SELFTEST FAIL (%d)" % len(failures))

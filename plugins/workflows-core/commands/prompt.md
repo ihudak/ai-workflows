@@ -2,6 +2,7 @@
 name: prompt
 description: Log a corrective interaction — a command produced something wrong and you're fixing it — as plugin feedback, then act on your correction directly. Captures the friction, your verbatim prompt (secrets, email addresses, non-public hosts, IP addresses and home paths redacted), and the resolution to the specs repo for the maintainer.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
+disable-model-invocation: true
 ---
 
 Log a corrective interaction and act on it: $ARGUMENTS

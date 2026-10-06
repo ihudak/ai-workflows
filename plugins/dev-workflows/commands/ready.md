@@ -2,6 +2,7 @@
 name: ready
 description: Artifact-anchored readiness gate. Derives the workflow phase of a PRD/Epic from its artifacts and verifies the ARD/spec/design artifacts justify it and the next transition; returns SUPPORTED / PARTIAL / NOT-SUPPORTED with a coverage roll-up. Never sets a status anywhere; never stops on an unmerged artifact (a readiness finding capping the verdict at PARTIAL) or a missing one (recorded as a coverage gap) — neither is a run-stopping gate. Commits its `_readiness.md` deliverable only via consent, never automatically. Gates on the Opus readiness-reviewer.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
+disable-model-invocation: true
 ---
 
 Verify readiness for AI-driven development: $ARGUMENTS

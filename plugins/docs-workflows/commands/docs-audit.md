@@ -2,6 +2,7 @@
 name: docs-audit
 description: "Finds what documentation a product is missing and writes a prioritised backlog: scans the profiled code repositories and the specs tree into documentation surfaces, crosses each with the page types it earns, ranks the units with a written reason, and proposes tutorial candidates for a human to pick. Use to plan documentation work; --refresh re-derives it against today's code and keeps every human-owned field. Writes .dev-workflows/docs-backlog.yml and nothing else in the docs repository — no pages, branch or commit there — gated on an Opus review."
 allowed-tools: Read Write Edit Bash Glob Grep Task Skill
+disable-model-invocation: true
 ---
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.

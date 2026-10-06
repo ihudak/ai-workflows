@@ -2,6 +2,7 @@
 name: prompt-brainstorm
 description: Log a corrective interaction as plugin feedback, then hand off to superpowers:brainstorming to redesign the correction together. Captures the friction, your verbatim prompt (secrets, email addresses, non-public hosts, IP addresses and home paths redacted), and the resolution to the specs repo for the maintainer.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
+disable-model-invocation: true
 ---
 
 Log a corrective interaction, then brainstorm the fix: $ARGUMENTS
