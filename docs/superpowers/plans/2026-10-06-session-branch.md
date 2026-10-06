@@ -1335,3 +1335,34 @@ git commit -m "docs(session-branch): pages, rules, rationale and the spec's plan
 ### Task 13: Land
 
 - [ ] **Step 1:** For each repository: fetch; where `origin/main` moved, merge it into the branch, resolve versions and CHANGELOGs above it, re-run the gates; merge `--no-ff` in a temporary worktree from `origin/main`; run the gate chain there with `ASSERT_PUBLISHED=1`; push (the Copilot edition to each of its remotes); remove the worktrees; delete the merged branches; fast-forward a clean local `main`; watch this repository's CI to its result.
+
+## Verification
+
+Written last, after review round 3's fixes, against `4b14ee0d` on git 2.43.0.
+
+**The selftest:** `python3 plugins/workflows-core/scripts/session-branch.py --selftest` → `session-branch selftest: PASS`.
+
+**The gate chain** (every `run:` step of `.github/workflows/validate-catalog.yml`, as one `&&` chain, `ASSERT_PUBLISHED=1` on check-docs): `EXIT=0`; `0 error(s), 0 warning(s) across 1 repo(s)`; `PASS: no dash-form requirement IDs`; `PASS: docs are consistent`; `PASS: all 35 mermaid blocks in 454 tracked markdown files parse`; session-cost, secret-scan, architecture-harvest and session-branch selftests `PASS`.
+
+**Walkthrough** — one run's git sequence by hand in a scratch repository: a bare remote whose `pre-receive` refuses `main`, clone `a` with `workflows.sessionBranch` set and `GIT_USER_INITIALS=iv-gu`, clone `b` as the teammate. Between steps 3 and 4 `b` pushes a PRD change and a feedback entry to `main` (with the hook's bypass) and `a` fetches. Each script call's JSON, abridged (empty fields and tips dropped):
+
+```text
+1 mode                             exit 0  {"mode": "on", "source": "config", "identity": "iv-gu", "identity_rung": "env", "branch": "session/iv-gu"}
+2 flush commit (run 1's file)      exit 0  {"committed": "e81ae61d3657a39cdc7db03957c259e08188f887", "files": 1, "paths": ["specifications/PRD-A-1-x/dev-workflows/A-1-feedback.md"], "created": true, "stranded": 0, "ahead_not_session": false, "sync": {}}
+3 push --porcelain -u              ['*\trefs/heads/session/iv-gu:refs/heads/session/iv-gu\t[new branch]']
+4 catch-up: lift                   exit 0  {"lifted": ["specifications/PRD-A-1-x/dev-workflows/A-1-feedback.md"], "unpreserved": []}
+5 catch-up: pull --ff-only         exit 0
+6 catch-up: put-back               exit 0  {"written": ["specifications/PRD-A-1-x/dev-workflows/A-1-feedback.md"], "removed": [], "merged": [], "skipped": [], "sync": {"merged": true}}
+7 handoff: lift                    exit 0  {"lifted": ["specifications/PRD-A-1-x/dev-workflows/A-1-feedback.md"], "unpreserved": []}
+8 handoff: switch -c prd/A-1-x     exit 0
+9 handoff: put-back                exit 0  {"written": ["specifications/PRD-A-1-x/dev-workflows/A-1-feedback.md"], "removed": [], "merged": [], "skipped": [], "sync": {}}
+10 terminal commit                 exit 0  {"committed": "d353c986b275602e6aea240b686d360b931de553", "files": 1, "paths": ["specifications/PRD-A-1-x/dev-workflows/A-1-feedback.md"], "created": false, "stranded": 0, "ahead_not_session": false, "sync": {}}
+11 push-scope (§8.4)               ['2 parents', '1 parents']; three-dot: ['specifications/PRD-A-1-x/dev-workflows/A-1-feedback.md']
+12 push --porcelain -u             [' \trefs/heads/session/iv-gu:refs/heads/session/iv-gu\te81ae61..d353c98']
+13 status --porcelain              M specifications/PRD-A-1-x/dev-workflows/A-1-feedback.md
+14 working copy of the feedback    ## e0 ## run1 ## teammate ## run2 
+15 the branch's feedback           ## e0 ## run1 ## teammate ## run2 
+16 F (files not on main)           1
+```
+
+Step 6 merged the moved default branch into the session branch and put the overlay back; step 11 is §8.4's `push-scope`: two commits to publish — the script's merge (two parents) and one session-file commit — and a three-dot diff of session files only; step 12 is a fast-forward; the checkout ends with the one overlay file modified, holding the same four entries as the branch.
