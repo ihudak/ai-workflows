@@ -130,7 +130,8 @@ When the run provides a spec, read the spec tree to establish the
 authoritative **intended** phrasing for each claim before verifying it against
 code. Read `specification.md` and `design.md` at either level — the PRD
 folder's and each `EPIC-*/` subfolder's — and each Epic's `epic.md`; read
-`prd.md` as the PRD, the corroborating side, not as spec; ignore `idea.md`,
+`prd.md` as the PRD, the corroborating side, not as spec, and only its live requirements — one marked
+`Superseded by` or `Withdrawn` is history (`prd-format.md` § Changing a requirement); ignore `idea.md`,
 `prompt.md`, and any rendered HTML mirrors.
 
 ```bash

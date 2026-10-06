@@ -1,6 +1,6 @@
 ---
 name: epics
-description: keyed Epic-writing workflow. Takes one address and accepts exactly two shapes — a PRD- folder holding its prd.md (draft new Epics) or an EPIC- folder that holds its epic.md and has a PRD above it (re-refine that Epic) — refusing everything else, among it a stand-alone EPIC- folder, an EPIC- folder holding no epic.md, a PRD- folder with no PRD authored yet and a BRD- container, since Epics come from a PRD only and this is the only command that creates an EPIC- folder. Reads the Product Requirements Document and existing Epics from the resolved folder in the specs tree, optionally scans code repos, drafts child Epic definitions, runs `prose-style-checker` unconditionally as a non-gating quality pass (`prose-style` is a declared dependency of this plugin), and gates on the Opus epic-reviewer.
+description: "Drafts the child Epics of a PRD (a PRD- folder holding prd.md) or re-refines one Epic (an EPIC- folder holding epic.md under a PRD), from the PRD, the existing Epics and an optional code scan, each Epic with testable acceptance criteria and, where the run has a component set, one target component. Runs prose-style-checker as a non-gating pass and gates on the Opus epic-reviewer. The only command that creates an EPIC- folder; refuses a BRD- container and a PRD- folder with no PRD yet."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
 ---
 
@@ -266,13 +266,13 @@ terminal `commit-artifacts` step skips on it.
 **Refuse a PRD that states no requirements**, once step 1b's table has accepted the run — so after
 the preflight, which step 1 ends with — and before Phase 1 asks anything. The `prd.md` that
 table accepted — the resolved folder's on a Draft row, the parent's on a Re-refine row — is the one
-tested. A `prd.md` that carries no `[US#n]`,
-`[AC#n]`, `[SM#n]`, `[UC#n]` or `[FR#n]` — the identifiers Phase 3 builds `requirements[]` from —
-states no requirements, and drafting against it would give an empty ground truth that every Epic
+tested. A `prd.md` that carries no live `[US#n]`,
+`[AC#n]`, `[SM#n]`, `[UC#n]` or `[FR#n]` — the identifiers Phase 3 builds `requirements[]` from, a
+superseded or withdrawn one not counted — states no requirements, and drafting against it would give an empty ground truth that every Epic
 passes vacuously. The key resolved and the PRD is there, so this is neither the `key dir not found`
 rule, whose re-enter cannot help, nor `EPICS_NO_PRD`, whose message says no PRD is there:
 ```
-EPICS_PRD_NO_REQUIREMENTS: <PRD-KEY>'s prd.md at <path> states no requirements — no [US#n], [AC#n], [SM#n], [UC#n] or [FR#n] — so there is nothing to partition. Add them with /product-workflows:update-prd <PRD-KEY>, then re-run /product-workflows:epics <KEY>.
+EPICS_PRD_NO_REQUIREMENTS: <PRD-KEY>'s prd.md at <path> states no requirements — no live [US#n], [AC#n], [SM#n], [UC#n] or [FR#n] — so there is nothing to partition. Add them with /product-workflows:update-prd <PRD-KEY>, then re-run /product-workflows:epics <KEY>.
 ```
 It is a user halt, so `emit-block` does not fire.
 
@@ -454,15 +454,16 @@ choices: ["Stop — <the earliest gap's remedy, §6> first (Recommended)", "Spli
 
 ## Phase 3 — Read the PRD folder
 
-**Read the PRD folder directly.** Read its `prd.md` for the product content, and list the `EPIC-`
+**Read the PRD folder directly.** Read its `prd.md` for the product content — its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement) — and list the `EPIC-`
 subfolders under it for the Epics that already exist — that listing *is* the linked-item hierarchy
 the retired reader used to return. Each Epic folder's `key` and title come from its own frontmatter
 (`workflows-core:addressing` §4), never from its directory name.
 
 **Build `requirements[]` here, from the PRD you just read.** It is the coverage ground truth Phases 6–7
 run on — `epic-writer` receives it, `epic-reviewer` checks Epic coverage against it, and `_coverage.md`
-is rendered from it — so nothing downstream works if this step leaves it unset. One row per requirement
-the PRD states: its `id` (`[US#n]` / `[AC#n]` / `[SM#n]` / `[UC#n]` / `[FR#n]`), its `type`
+is rendered from it — so nothing downstream works if this step leaves it unset. One row per live requirement
+the PRD states — never one marked `Superseded by` or `Withdrawn`, which binds nothing
+(`workflows-core:prd-format` § Changing a requirement): its `id` (`[US#n]` / `[AC#n]` / `[SM#n]` / `[UC#n]` / `[FR#n]`), its `type`
 (`story` / `criterion` / `metric` / `use-case` / `functional`), and its text. Set
 `requirements_source: prd` alongside it.
 

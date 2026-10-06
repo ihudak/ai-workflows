@@ -1,6 +1,6 @@
 ---
 name: frames
-description: (Re)builds the frame-set index of one resolved folder. For each design/<frame-set>/ subdirectory of a BRD, PRD or Epic folder it lists the images, reads the index already there, describes the frames no row accounts for, and writes the index that references/grounding-format.md §6.1 makes mandatory and §6.2 formats. This is the recovery path for a frame set a human exported and dropped in by hand, which design-grounder otherwise refuses on sight as NO_INDEX. Indexing only — it dispatches no design-grounder, produces no [DG#n], and reaches no verifier. Writes into the resolved folder; on a completed handoff it also opens a pull request for the indexes it wrote (`references/phase-handoff.md` §2); its session artifacts are committed by `commit-artifacts`.
+description: "(Re)builds the frame-set index of one BRD, PRD or Epic folder: for each design/<frame-set>/ it lists the images, reads the index already there, describes the frames no row accounts for and writes the index grounding-format §6 requires. Use after dropping in a frame set exported by hand, which design-grounder otherwise refuses as NO_INDEX. Indexing only: no design grounding, no [DG#n]. On a completed handoff it opens a pull request for the indexes it wrote."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 ---
 

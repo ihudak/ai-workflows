@@ -1,6 +1,6 @@
 ---
 name: docs-brand
-description: Extract a logo and a rough primary/accent colour pair from a product's own code and apply them to a documentation site's Material for MkDocs theme. Walks a fixed colour-source precedence (Tailwind config, CSS custom properties, a MUI theme, a web-app manifest, SCSS/LESS variables) and a fixed logo-search order, prints every extracted value with its file and line before applying anything, checks the pair against WCAG 2.2 contrast thresholds, and copies assets into docs/assets/ rather than linking back into the code repo. Runs standalone (branch, commit, drafted PR, never pushed) or --inline from /docs-init, which folds its diff and its contrast finding into that command's own review and PR — a rebrand should never require re-scaffolding the whole site.
+description: "Applies a product's own logo and primary/accent colours to its Material for MkDocs site: extracts them from the code by a fixed precedence, prints each value with its file and line before applying it, checks WCAG 2.2 contrast, and copies the assets into docs/assets/. Use to rebrand an existing site without re-scaffolding it. Runs standalone (branch, commit, a drafted pull request it never pushes) or --inline from /docs-init."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 ---
 

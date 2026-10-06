@@ -1,6 +1,6 @@
 ---
 name: specify
-description: Specification-authoring workflow (PE phase). Reads the resolved PRD or Epic folder, lightly grounds in code, and authors an org-standard specification.md through a relentless one-question-at-a-time grill; gates on the Opus spec-reviewer and lands the spec on the specs repo's main branch via branch + PR for the /design dev take-over. the BRD route seeds the run from a decided BRD slice instead of a resolved folder: it resolves the BRD-route PRD- slice folder (the folder carrying brd-link.md) and refuses a BRD- container outright, since a BRD is a container and holds no specification; it reads that slice folder's implementation-altitude spec-seed.md, the implementation decisions in decisions.md, the verified [CG#n]/[DG#n] findings and the derivation matrix /prd-ground appended to code-grounding.md, gates decisions.md on the specs default branch before reading it (an unmerged register stops the run), runs the same PRD gate and the same folder read as the idea route, freezes every [VD#n]/[CD#n] against the grill, and marks each consumed item consumed_by: specification.
+description: Authors a specification.md for a PRD or an Epic through a relentless one-question-at-a-time grill, lightly grounded in code, gated by the Opus spec-reviewer, and lands it on the specs repo's default branch by branch and pull request, ready for /dev-workflows:design. On the BRD route it seeds from the slice's spec-seed.md, its implementation decisions, the verified grounding findings and the derivation matrix, and refuses a BRD- container.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
 ---
 
@@ -482,7 +482,7 @@ Otherwise (`focus_key` is null), perform the **cheap** `prd-plus-epics` read —
 plus a listing of its `EPIC-` subfolders — to determine the item's type and enumerate its child Epics
 *without* opening every Epic folder's contents:
 
-**Read the PRD folder directly.** Read its `prd.md`, and list the `EPIC-` subfolders under it —
+**Read the PRD folder directly.** Read its `prd.md` — its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement) — and list the `EPIC-` subfolders under it —
 that listing is the Epic set this phase branches on, and each folder's `key` and title come from its
 own frontmatter (`workflows-core:addressing` §4).
 
@@ -589,8 +589,8 @@ folder does hold. Then:
 
 - **Epic-scope the read, against the tree.** The material is the PRD folder and what sits under it.
   When `focus_key` is set, read **that `EPIC-` folder** — its `epic.md`, and any `specification.md` or
-  `design.md` already in it — plus the PRD folder's own `prd.md` for the frame, and read no sibling
-  `EPIC-` folder at all. When `focus_key` is null (broad PRD-level spec), read the PRD folder and every
+  `design.md` already in it — plus the PRD folder's own `prd.md` for the frame, its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement), and read no sibling
+  `EPIC-` folder at all. When `focus_key` is null (broad PRD-level spec), read the PRD folder — its `prd.md`, its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement) — and every
   `EPIC-` folder under it. There is no `linked_items` list and no Story/Sub-task subtree to filter: those
   were fields of a tracker export that no command produces any more (Step A), and the `EPIC-` folders on
   disk are the hierarchy now. Everything below — themes and the Phase 5 raw material — derives

@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.19.0] — 2026-10-06
+
+### Changed
+- **`/ready` and `/implement` read a PRD's live requirements only** (`workflows-core` 1.28.0's `prd-format` § Changing a requirement): `/ready`'s coverage ground truth leaves out a requirement marked `Superseded by` or `Withdrawn`, so a withdrawn requirement is no longer a gap that keeps the verdict from `SUPPORTED`, and where none is live it prints `not assessed — PRD states no live requirements`; `/implement`'s plan reads none as product content; and `readiness-reviewer` judges cross-artifact alignment and scope integrity against live requirements, so a specification that follows a replacement is not a contradiction and a withdrawn requirement is no parent.
+
 ## [4.18.1] — 2026-10-06
 
 ### Changed

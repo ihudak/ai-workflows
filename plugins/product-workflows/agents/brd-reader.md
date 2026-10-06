@@ -1,6 +1,6 @@
 ---
 name: brd-reader
-description: Extracts a requirement inventory from a customer-supplied BRD — its document, every markdown file /brd-intake Phase 2 copied, and the transcriptions of every image /brd-intake Phase 2 copied — one [BR#n] row per requirement, with a source anchor and unconfirmed defect candidates. Splits a requirement carrying more than one obligation; raises an ambiguity on an obligation only an image states, and a conflict where an image and the prose cannot both hold. Read-only; never writes the source. Uses Claude Opus — its defect candidates are judgement over a long, contradictory document, and a conflict or obligation it misses reaches no human.
+description: Extracts a [BR#n] requirement inventory from a customer BRD — the document, the markdown /brd-intake copied, and its image transcriptions — one row per obligation, with a source anchor and unconfirmed defect candidates; raises an ambiguity on an obligation only an image states, and a conflict where an image and the prose cannot both hold. Read-only. Uses Claude Opus, since an obligation or conflict it misses reaches no human.
 model: opus
 tools: ["Read", "Glob", "Grep"]
 ---

@@ -208,7 +208,8 @@ against an identifier for looking unlike the plugin's own.
 For every requirement identifier cited in either artifact — most densely in §4 section 21's
 traceability table — trace it back to the source artifact it names (`prd.md`, `ard.md`,
 `specification.md`, or the customer's own document) and confirm the form matches what that source
-carries it in. An identifier converted in either direction between that source's form and the
+carries it in, and that a requirement id cited from `prd.md` is live there — one marked `Superseded by`
+or `Withdrawn` prices work nobody now asks for. An identifier converted in either direction between that source's form and the
 plugin's own bracketed form is a **BLOCKER**. `[WP#n]` and `[ED#n]` are the plugin's own minted
 namespaces (§3) and this direction test does not apply to them: either one rendered in any form but
 the bracketed one is a **BLOCKER** on its own, regardless of what any source artifact does.

@@ -1,6 +1,6 @@
 ---
 name: docs-init
-description: Scaffold a documentation repository for a project that has none — a product-shaped Material for MkDocs page skeleton with a stub in every section, two builds over one content root (public and internal), a generated nav, Vale with a seeded vocabulary, a CI workflow that runs both builds and the visibility gates, and a written docs-profile.yml that /docs-serve, /document and /docs-brand read. Refuses to scaffold over a repository that already carries a docs signal and points at /docs-profile instead. Branches before it writes, verifies the scaffold builds and lints, gates the result on an Opus scaffold review, and finishes on a drafted pull request it never pushes.
+description: "Scaffolds a documentation repository for a project that has none: a Material for MkDocs skeleton with a stub in every section, public and internal builds over one content root, a generated nav, Vale, a CI workflow, and the docs-profile.yml the other docs commands read. Use once, on a repository with no docs; where it has some, use /docs-profile instead. Verifies the scaffold builds and lints, gates it on an Opus review, and ends on a drafted pull request it never pushes."
 allowed-tools: Read Write Edit Bash Glob Grep Task Skill
 ---
 

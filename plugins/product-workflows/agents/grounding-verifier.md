@@ -1,6 +1,6 @@
 ---
 name: grounding-verifier
-description: Independently re-derives grounding findings in batches — [CG#n] from one pinned repository, [DG#n] from one exported frame set — in two dispatches its caller makes in order. In derive mode it is handed each finding's requirement premise and source and never the finding's answer, and refuses a dispatch that carries one; in compare mode it runs each original's positive control and returns agree / extend / contradict / unprovable against its own blind result, which it never revises, flagging a blind result whose own evidence does not establish its own verdict. It does NOT check citations. A finding is not evidence until this agent has re-derived it. Read-only. Uses Claude Opus.
+description: "Independently re-derives grounding findings — [CG#n] from one pinned repository, [DG#n] from one exported frame set — in two dispatches: derive mode, blind to each finding's answer (it refuses a dispatch that carries one), then compare mode, returning agree, extend, contradict or unprovable against its own blind result, which it never revises. A finding is not evidence until this agent has re-derived it. Does not check citations. Read-only. Uses Claude Opus."
 model: opus
 tools: ["Read", "Glob", "Grep", "Bash", "Skill"]
 ---

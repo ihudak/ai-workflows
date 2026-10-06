@@ -11,7 +11,7 @@ things — the **Universal checks**, then the **key-collision** check when the a
 ARD, or an Epic file, then its **artifact-specific block** — and surfaces the findings. Severities: **BLOCKER**
 (missing required section, duplicate ID, stray generic placeholder), **MAJOR** (a structural rule
 broken), **MINOR** (ID gap, informational count). Inline-fix only the mechanical (renumber a duplicate
-ID, delete a stray placeholder token); anything needing content goes back to the author/grill.
+ID this run introduced, never one the artifact already carried; delete a stray placeholder token); anything needing content goes back to the author/grill.
 
 ## Universal checks (every artifact)
 
@@ -48,7 +48,7 @@ drafts, which are. Catching it at the source is cheaper than catching it downstr
 
 - Required headings: `## Problem`, `## Goal`, `## Target audience`, `## User Stories`,
   `## Acceptance Criteria`, `## Scope`, `## Success Metrics`.
-- ID series: `[US#N]` (in `### [US#N]:` headings), `[AC#N]`, `[SM#N]` — each contiguous from 1.
+- ID series: `[US#N]` (in `### [US#N]:` headings), `[AC#N]`, `[SM#N]` — each contiguous from 1, superseded and withdrawn ids counted (`prd-format.md` § Changing a requirement). An id counts where it is defined — its `### [US#N]:` heading, or the id that opens its own line or list item — and one cited anywhere else (a `Superseded by` marker, an FR's *Implements:*, a cross-reference) is a reference, never a duplicate. A mechanical fix renumbers only a duplicate this run introduced, never an id the PRD already carried.
   Plus `[SMC#N]` (counter-metrics), `[UC#N]`, `[FR#N]` when those adapt-in clusters are present.
 - Report the count of `[NEEDS CLARIFICATION]` (a relentless-grilled PRD should converge to 0; >0 → MINOR).
 

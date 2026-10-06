@@ -1,14 +1,6 @@
 ---
 name: wiki-init
-description: >
-  Initialize or re-initialize vault integration for the LLM wiki pattern. Creates .raw/
-  inbox, bootstraps wiki/ with skeleton files (_index.md, _log.md,
-  _manifest.json, hot.md), syncs wiki-schema and task-creation-rules to .obsidian/copilot/,
-  bootstraps tag-index.md if absent, and merges wiki blocks into CLAUDE.md and
-  .github/copilot-instructions.md. Safe to re-run after plugin updates — existing wiki
-  pages are never touched, skeleton files are never overwritten.
-  Triggers on: wiki-init, initialize the wiki, set up the wiki, bootstrap the wiki,
-  init wiki, wiki setup, wiki initialize, set up obsidian-llm-wiki.
+description: "Initialize or re-initialize the vault for the LLM wiki pattern: creates the .raw/ inbox and the wiki/ skeleton files, syncs the wiki schema and task rules to .obsidian/copilot/, and merges wiki blocks into CLAUDE.md and .github/copilot-instructions.md. Safe to re-run: existing pages and skeleton files are never overwritten. Triggers on: wiki-init, initialize the wiki, set up the wiki, bootstrap the wiki, init wiki, wiki setup, wiki initialize, set up obsidian-llm-wiki."
 allowed-tools: Read Write Edit Glob Grep Bash
 ---
 

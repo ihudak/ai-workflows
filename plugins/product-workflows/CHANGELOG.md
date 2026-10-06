@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.23.0] — 2026-10-06
+
+### Added
+- **`/update-prd` and `/create-prd` keep every requirement id** (`workflows-core` 1.28.0's `prd-format` § Changing a requirement): a changed requirement gets a new id with the old one marked `Superseded by` it, and a dropped one is marked `Withdrawn` in place, so every Epic `## Covers` line, `_coverage.md` row and grounding finding still points at the requirement it cited. An Overwrite reads the archived PRD's ids before it writes the requirement sections. Both pass `prd-reviewer` the archived base, and an id the base carried that is now missing, renumbered or reused is MAJOR.
+- **Every command here that consumes a PRD reads its live requirements only** (`/create-prd` and `/update-prd` carry the marked rows forward, and `prd-reviewer` checks them), since a superseded or withdrawn one is history, not product content: `/epics` builds its coverage ground truth from them, so an Epic still covering a dead one is a stale reference `epic-reviewer` reports; `/prd-ground` grounds live rows only on the idea route, counts the marked rows it left out in its exclusion report, and its no-claims stop counts live ones; `/prd-proposal` prices, and `/specify`, `/create-ard` and `/epics` author from, live requirements only; `/create-prd --from-prd` adapts a seed's live ones; `proposal-reviewer` checks that a cited requirement id is live; and `idea-reader` digests a PRD source's live requirements only. A superseded requirement whose replacement is withdrawn is withdrawn too, so every marker names a live id.
+
+### Changed
+- **Shorter command and agent descriptions** — fourteen commands and three agents, `/brd-split`'s from 4,310 characters: what each does, when to use it and what it is not for, in about 500. `design-grounder`'s is now quoted, as a strict YAML parser read its colon as a key.
+
 ## [3.22.1] — 2026-10-06
 
 ### Fixed

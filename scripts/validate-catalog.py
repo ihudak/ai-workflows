@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Validate every plugin manifest and marketplace catalog in this repository.
 
-Guards the three defects that have actually shipped from this repo more than
-once:
+Guards the defects that have actually shipped from this repo, most of them more
+than once:
 
   1. An over-long plugin ``description``. GitHub Copilot CLI rejects a
      marketplace whose ``plugins[i].description`` exceeds 1024 characters, and
@@ -36,6 +36,14 @@ once:
      directory read as satisfied either way. A ``plugin.json`` copy-pasted
      from another plugin and never given its own ``name`` would collide
      invisibly, and nothing would catch it.
+
+  5. An over-long command, agent or skill ``description`` (frontmatter). Claude
+     Code gives every installed plugin's descriptions one listing, sized as a
+     share of the context window, and shortens all of them once it overflows;
+     ten of this family's command descriptions had passed 1,024 characters,
+     one 4,310, narrating procedure their bodies already carry. Fails above
+     1,024 (the Agent Skills ceiling), warns above 600
+     (docs/maintainers/rationale.md, "entry-descriptions").
 
 Note on what is deliberately NOT checked: the ``description`` in a catalog
 entry and in the matching ``plugin.json`` are not required to be identical.
@@ -86,6 +94,14 @@ DESCRIPTION_MAX = 1024
 # with enough headroom that trimming happens as routine maintenance instead of
 # as an outage.
 DESCRIPTION_WARN = 900
+
+# A command's, agent's or skill's own frontmatter `description`. 1024 is the Agent Skills
+# ceiling; Claude Code also gives the whole skill listing a slice of the context window
+# (1% by default) and shortens every plugin's descriptions once the listing outgrows it, so
+# a description that narrates its procedure costs every other plugin's too. 600 leaves room
+# for what it does, when to use it and what it is not for.
+ENTRY_DESC_MAX = 1024
+ENTRY_DESC_WARN = 600
 
 # The repo-root CLAUDE.md loads into every session and every non-fork subagent here. It
 # reached 189,969 characters by accretion before the 2026-09-23 split moved area rules to
@@ -333,6 +349,70 @@ def check_rules_paths(root: Path) -> tuple[int, int]:
     return errors, warnings
 
 
+def frontmatter_description(text: str) -> str | None:
+    """The `description` a file's YAML frontmatter holds, as YAML reads it, or None.
+
+    Enough YAML for the shapes this repository writes: a plain or quoted scalar on the
+    key's line, a plain scalar continued on indented lines, and a `>`/`|` block scalar
+    (folded lines joined by a space, literal ones by a newline). Nothing else is parsed.
+    """
+    lines = text.split("\n")
+    if not lines or lines[0].strip() != "---":
+        return None
+    end = next((i for i in range(1, len(lines)) if lines[i].strip() == "---"), None)
+    if end is None:
+        return None
+    body = lines[1:end]
+    for i, line in enumerate(body):
+        if not line.startswith("description:"):
+            continue
+        head = line[len("description:"):].strip()
+        more = []
+        for nxt in body[i + 1:]:
+            if nxt and not nxt[0].isspace():
+                break
+            more.append(nxt.strip())
+        while more and not more[-1]:
+            more.pop()
+        if head[:1] in (">", "|"):
+            return ("\n" if head[0] == "|" else " ").join(more)
+        value = " ".join([head] + [m for m in more if m])
+        if len(value) >= 2 and value[0] == value[-1] == '"':
+            try:  # YAML's double-quoted escapes include JSON's
+                return json.loads(value)
+            except json.JSONDecodeError:
+                return value[1:-1].replace('\\"', '"').replace("\\\\", "\\")
+        if len(value) >= 2 and value[0] == value[-1] == "'":
+            return value[1:-1].replace("''", "'")
+        return value
+    return None
+
+
+def check_entry_descriptions(root: Path) -> tuple[int, int]:
+    """Fail a command's, agent's or skill's description above ENTRY_DESC_MAX, warn above ENTRY_DESC_WARN."""
+    errors = warnings = 0
+    plugins = root / "plugins"
+    found = sorted(plugins.glob("*/commands/*.md")) + sorted(plugins.glob("*/agents/*.md")) \
+        + sorted(plugins.glob("*/skills/*/SKILL.md"))
+    for path in found:
+        description = frontmatter_description(path.read_text(encoding="utf-8"))
+        if description is None:
+            continue
+        rel = path.relative_to(root)
+        size = len(description)
+        if size > ENTRY_DESC_MAX:
+            print(f"  ERROR {rel}: description is {size} chars, limit is {ENTRY_DESC_MAX} -- say what it "
+                  f"does, when to use it and what it is not for, and move the procedure into the body "
+                  f"or its docs page")
+            errors += 1
+        elif size > ENTRY_DESC_WARN:
+            print(f"  WARN  {rel}: description is {size} chars, past {ENTRY_DESC_WARN} -- say what it "
+                  f"does, when to use it and what it is not for, and move the procedure into the body "
+                  f"or its docs page")
+            warnings += 1
+    return errors, warnings
+
+
 def validate_repo(root: Path) -> tuple[int, int]:
     print(f"\n=== {root}")
     errors = 0
@@ -432,6 +512,10 @@ def validate_repo(root: Path) -> tuple[int, int]:
             )
             errors += 1
 
+    e, w = check_entry_descriptions(root)
+    errors += e
+    warnings += w
+
     e, w = check_instruction_sizes(root)
     errors += e
     warnings += w
@@ -454,7 +538,7 @@ def _selftest() -> int:
               second_plugin_name: str | None = None,
               duplicate_at: str | None = None,
               claude_md: str | None = None, rules: dict[str, str] | None = None,
-              empty_dirs: tuple[str, ...] = ()) -> None:
+              empty_dirs: tuple[str, ...] = (), entries: dict[str, str] | None = None) -> None:
         plugin = root / "plugins" / "fixture" / ".claude-plugin"
         plugin.mkdir(parents=True)
         (plugin / "plugin.json").write_text(json.dumps(
@@ -505,6 +589,11 @@ def _selftest() -> int:
             (root / "CLAUDE.md").write_text(claude_md, encoding="utf-8")
         for rel in empty_dirs:
             root.joinpath(*rel.split("/")).mkdir(parents=True, exist_ok=True)
+        for rel, text in (entries or {}).items():
+            # A command, agent or skill file inside the fixture plugin, by its path there.
+            path = root / "plugins" / "fixture" / rel
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
         for rel, text in (rules or {}).items():
             path = root / ".claude" / "rules" / rel
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -542,6 +631,22 @@ def _selftest() -> int:
          description="x" * (DESCRIPTION_MAX + 1))
     case("a description past the warning threshold is reported", True, "WARN",
          description="x" * (DESCRIPTION_WARN + 1))
+    case("a command description within budget passes", True, "OK",
+         entries={"commands/c.md": "---\ndescription: " + "x" * ENTRY_DESC_WARN + "\n---\n"})
+    case("an over-long command description is rejected", False, "plugins/fixture/commands/c.md",
+         entries={"commands/c.md": "---\ndescription: " + "x" * (ENTRY_DESC_MAX + 1) + "\n---\n"})
+    case("an agent description past the entry warning threshold is reported", True,
+         "plugins/fixture/agents/a.md", entries={"agents/a.md": "---\nname: a\ndescription: \""
+                                                 + "x" * (ENTRY_DESC_WARN + 1) + "\"\n---\n"})
+    # A folded block scalar is measured as YAML reads it -- its lines joined -- not as its
+    # first line: many of this repository's descriptions are written that way.
+    case("a folded skill description is measured whole", True, "plugins/fixture/skills/s/SKILL.md",
+         entries={"skills/s/SKILL.md": "---\nname: s\ndescription: >\n  " + "x" * 300 + "\n  "
+                                       + "y" * 301 + "\nallowed-tools: Read\n---\n"})
+    # A double-quoted description is measured unescaped: `\"` is one character, as YAML reads it.
+    case("an escaped quote in a quoted description counts once", True, "OK",
+         entries={"commands/q.md": "---\ndescription: \"" + "x" * (ENTRY_DESC_WARN - 3)
+                                   + "\\\"y\\\"\"\n---\n"})
     case("a plugin.json with no catalog entry anywhere is rejected", False,
          "is not listed in any marketplace.json", ghost_manifest=True)
     case("two plugin.json files declaring the same name are rejected", False,

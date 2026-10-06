@@ -1,6 +1,6 @@
 ---
 name: docs-audit
-description: Enumerate what documentation a product is missing and write a prioritised backlog for it. Scans the code repositories the docs profile records, plus the specs tree, into a denominator of documentation surfaces, crosses each surface with the page types it actually earns, ranks the resulting units on four signals with a written reason on every one, and proposes the tutorial candidates the one quadrant that does not automate needs a human for. Writes .dev-workflows/docs-backlog.yml and prints the coverage grid; writes no documentation content, creates no branch and no commit in the docs repository. On --refresh it re-derives surfaces against today's code, reconciles existing pages back to their units, and preserves every field a human owns. Gated on an Opus backlog review whose findings are triaged before anything is applied.
+description: "Finds what documentation a product is missing and writes a prioritised backlog: scans the profiled code repositories and the specs tree into documentation surfaces, crosses each with the page types it earns, ranks the units with a written reason, and proposes tutorial candidates for a human to pick. Use to plan documentation work; --refresh re-derives it against today's code and keeps every human-owned field. Writes .dev-workflows/docs-backlog.yml and nothing else in the docs repository — no pages, branch or commit there — gated on an Opus review."
 allowed-tools: Read Write Edit Bash Glob Grep Task Skill
 ---
 

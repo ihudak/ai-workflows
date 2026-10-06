@@ -1,6 +1,6 @@
 ---
 name: prd-proposal
-description: Effort-proposal workflow (PM phase, optional and ungated on both routes) — author a customer-facing effort proposal for one PRD- folder. Grades the folder against four readiness tiers rather than gating on an ARD or a specification, and the tier caps how confident any work package may be. Derives work packages by delivery seam, hours by package and role, and a range computed bottom-up from per-package confidence; every cost driver cites a verified grounding finding, a frozen decision or a confirmed code defect, and a driver citing none of the three does not render. Creates a defect-remediation package automatically from three defect sources and never offers it as a scope lever. Writes proposal.md and a derived proposal-brief.md from one resolved data set, archives the prior revision, and gates on the Opus proposal-reviewer. Carries no money for human hours at any tier. Nothing on the build ladder reads a proposal or waits on one.
+description: "Writes a customer-facing effort proposal for one PRD- folder: grades it against four readiness tiers, derives work packages by delivery seam with hours by package and role and a bottom-up range, cites a verified finding, a frozen decision or a confirmed defect for every cost driver, and adds a defect-remediation package automatically. Writes proposal.md and proposal-brief.md, gated by the Opus proposal-reviewer. Optional and ungated on both routes; carries no money for human hours, and nothing on the build ladder reads it."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 ---
 
@@ -390,7 +390,7 @@ and §4's section 4 says so outright.
 ## Phase 4 — Derive the work packages
 
 Execute `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §7. Mint `[WP#n]` contiguously from the
-resolved folder's requirement set (§3), and record for each package the delivery seam §7 clusters on —
+resolved folder's requirement set (§3) — its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement) — and record for each package the delivery seam §7 clusters on —
 what can be built, tested and accepted independently.
 
 1. **The two fixed packages** — a discovery-and-design package first and a test/UAT/release package

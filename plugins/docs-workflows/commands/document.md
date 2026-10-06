@@ -404,7 +404,7 @@ choices: ["Approve & continue (Recommended)", "Revise plan", "Cancel"]
 ## Phase 3 — Read the PRD folder
 
 **Read the PRD folder directly** (Phase 0 step 1) — full depth: the PRD, its Epics, and every
-artifact present. Read its `prd.md` for the product content, and the `specs` files Phase 0 resolved
+artifact present. Read its `prd.md` for the product content — its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement) — and the `specs` files Phase 0 resolved
 alongside it.
 
 **Resolve the diff sources — two of them, merged.** Invoke `Skill(skill: "workflows-core:reference", args: "implementation-format")` and follow its §4. **Both steps below run inside a clone, so build the slug→clone map here, once** — the map Phase 4 step 3 resolves against, by the recipe stated there: for each top-level directory under each entry of `$REPOS_PATH`, `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, a directory with no `.git` or a failed or timed-out call skipped, any trailing `/` and then a trailing `.git` stripped, the URL's last path segment — what follows its last `/` or `:` — taken as that clone's slug. Step 2's `git log` runs in the clone, and so does the `git rev-parse` that resolves a block's abbreviated `commit:` before the merge below compares it — §4 requires that resolution of every comparison, the template writing the field abbreviated. Phase 4 takes this same map rather than rebuilding it, and is where the operator settles a slug it matches to no clone; until then such a slug is scanned in no repository and compared in none:

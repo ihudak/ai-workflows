@@ -1,6 +1,6 @@
 ---
 name: brd-proposal
-description: Programme effort-proposal workflow (PM phase, BRD-route only, optional and ungated) — author the umbrella proposal for a BRD- container by rolling up its slices' own proposals. Enumerates slices by the positive brd-link.md parent test, walks each to a computed recommendation (stop and price it, exclude and disclose it, re-run a stale one, or include a current one without asking), and gates on each included slice's proposal.md being on the default branch. The roll-up is not a sum: cross-slice effort that exists in no slice is added and named, work two slices priced from the same verified finding is flagged for the operator rather than counted twice, and peak concurrency is computed from the programme schedule instead of summing FTE. Computes coverage from the root coverage ledger and enumerates the remainder by identifier. Carries no money for human hours. Nothing on the build ladder reads a proposal or waits on one.
+description: "Writes the programme effort proposal for a BRD container by rolling up its slices' own proposals: walks each slice to a recommendation (price it, exclude and disclose it, re-run a stale one, include a current one), adds cross-slice effort no slice priced, flags work two slices priced from one finding, and takes peak concurrency from the schedule rather than summing FTE. Optional and ungated, BRD route only; carries no money for human hours, and nothing on the build ladder reads it."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 ---
 

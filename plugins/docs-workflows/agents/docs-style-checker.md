@@ -1,6 +1,6 @@
 ---
 name: docs-style-checker
-description: Runs the docs repo's project-configured prose linter (e.g. Vale) on files written by `/document` (keyed mode, or direct mode) AND also runs prose-style-checker — a complementary semantic / cross-page-consistency pass beside a primary linter, the FALLBACK where every detected linter failed, and the SOLE check on a repository that configures none. Merges and dedupes both finding sets into the doc-reviewer / doc-fixer schema. Detects tooling (Vale, project lint script, markdownlint, remark) from the repo; does not embed any specific style guide. Model tier assigned by the caller per the model-routing policy (no fixed pin).
+description: Runs the docs repository's own prose linter (Vale, a lint script, markdownlint or remark, detected from the repository) on the files /document wrote, plus prose-style-checker as a semantic, cross-page pass — the fallback where every linter failed and the only check where none is configured — and merges both finding sets into the doc-reviewer / doc-fixer schema. Embeds no style guide. Model tier assigned by the caller per the model-routing policy (no fixed pin).
 tools: ["Read", "Glob", "Grep", "Bash", "Task", "Skill"]
 ---
 

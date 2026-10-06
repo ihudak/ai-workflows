@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.9.4] — 2026-10-06
+
+### Changed
+- **`/release-notes` and `/document` read a PRD's live requirements only** (`workflows-core` 1.28.0's `prd-format` § Changing a requirement): a story or criterion marked `Superseded by` or `Withdrawn` is history, not product content, and `release-notes-writer` checks a draft's claims against the live acceptance criteria only, so a draft repeating a superseded criterion's old wording is caught; `doc-reviewer` reports a documentation claim resting on a marked requirement.
+- **Shorter descriptions** for `/docs-audit`, `/docs-brand`, `/docs-init`, `docs-style-checker` and `release-notes-writer`: what each does, when to use it and what it is not for, in about 500 characters (`workflows-core` 1.28.0).
+
 ## [1.9.3] — 2026-10-06
 
 ### Changed
