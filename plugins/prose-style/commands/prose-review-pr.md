@@ -54,15 +54,19 @@ the name from `git -C <repo_path> symbolic-ref --quiet --short refs/remotes/orig
 prints `origin/<name>`: the name is what follows `origin/`. Without `--short` the command prints
 `refs/remotes/origin/<name>`, which is not a name — put in `main`'s place in `origin/main`, it makes
 `origin/refs/remotes/origin/<name>`, a revision git rejects, and in the other two it turns a diff
-against the local branch into one against the remote. It counts only where
-`git -C <repo_path> rev-parse --verify --quiet origin/<name> >/dev/null` succeeds for that name: a
-remote that renamed its default branch, fetched with `--prune`, leaves `origin/HEAD` naming the
-branch it deleted, and every `origin/main`-form diff below would then name a ref git rejects. So
-resolve and probe the name after this step's fetch, just before the first diff that uses it — 2a's
-`git -C <repo_path> fetch --all --prune` is what deletes that branch. Where `symbolic-ref` prints
-nothing (`origin/HEAD` is unset), or a name that probe rejects, the name is `master` if
-`git -C <repo_path> rev-parse --verify --quiet origin/master >/dev/null` succeeds and the same
-probe of `origin/main` does not; otherwise it stays `main`.
+against the local branch into one against the remote.
+Resolve the name after 2a's or 2b's fetch, whichever runs, just before the first diff that uses it,
+and check it against the form it goes into. A remote that renamed its default branch, fetched with
+`--prune` as 2a does, leaves `origin/HEAD` naming the branch it deleted, while a clone made before
+the rename keeps that branch locally:
+- **In `origin/main`**, the name `symbolic-ref` printed counts only where
+  `git -C <repo_path> rev-parse --verify --quiet origin/<name> >/dev/null` succeeds. Where
+  `symbolic-ref` prints nothing (`origin/HEAD` is unset), or a name that probe rejects, the name is
+  `master` if the same probe of `origin/master` succeeds and that of `origin/main` does not;
+  otherwise it is `main`.
+- **In the two local forms**, it counts only where
+  `git -C <repo_path> rev-parse --verify --quiet refs/heads/<name> >/dev/null` finds the local branch,
+  and otherwise falls back the same way, probing `refs/heads/master` and `refs/heads/main`.
 
 #### 2a. If target is a PR number
 
