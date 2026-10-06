@@ -25,7 +25,7 @@ Usage: `/product-workflows:promote-decisions [--reconsider] [--max <n>] [--skip-
 2. `command -v python3` fails → stop: `/product-workflows:promote-decisions needs python3 — its signals are a bundled script.`
 3. Run `promotion-guards` (`architecture-promotion.md` §1); its step 4 runs **`specs-preflight`** (`workflows-core:specs-repo-git` §3, `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")`) as a keyless run. Keep `<root>`, `<arch-ref>` and the specs `<default-ref>`. Every stop there ends the run before any write.
 
-Show: `architecture repository: <root> (<branch> @ <short-sha>[, N behind origin])` and `team knowledge base: <SPECS_PATH>/architecture (<default-ref> @ <short-sha>)`.
+Show: `architecture repository: <root> (the session's repository | $ARCHITECTURE_REPO_PATH; <branch> @ <short-sha>[, N behind origin])` and `team knowledge base: <SPECS_PATH>/architecture (<default-ref> @ <short-sha>)`.
 
 ## Phase 1 — Classify + model gate
 
@@ -58,7 +58,7 @@ If it is false, there is nothing to relaunch onto, so §9.3 drops the relaunch o
 
 ## Phase 3 — Signals and comparison
 
-1. `promotion-signals` (§5). Nothing to promote → straight to Phase 6 with Phase 2's marks, or stop when there are none.
+1. `promotion-signals` (§5). Nothing to promote → straight to Phase 6's specs step with Phase 2's marks, or stop when there are none.
 2. `dispatch-promotion-scout` (§6) with the candidate ids. Wait for it. `ERROR` → stop.
 
 ## Phase 4 — Shortlist
@@ -67,13 +67,15 @@ Present §7's lists, take the architect's answer, restate it, and confirm. Nothi
 
 ## Phase 5 — Draft and check
 
+Only when the answer drafts at least one ADR; otherwise go to Phase 6's specs step.
+
 1. Cut the branch (§11.1 step 1).
 2. For each pick: `promotion-scaffold` (§8), then `dispatch-adr-drafter` (§9).
 3. `promotion-check` (§10).
 
 ## Phase 6 — Hand off
 
-1. **The architecture repository:** `finish-architecture-branch` (§11.1).
+1. **The architecture repository:** `finish-architecture-branch` (§11.1), when Phase 5 drafted at least one ADR. It checks the marks before committing, and ends back on the default branch.
 2. **The specs repository:** the marks and `handoff-to-main` (§11.2), with the architecture pull request's URL in its body facts. Emit its §4.1 outcome line in the final report.
 
 ## Phase 7 — Session maintenance & feedback
@@ -103,7 +105,7 @@ Report:
 - the two shortlists as shown, and the architect's answer;
 - each draft: id, title, kind, and the records it came from;
 - the decision-test line, and that no secret scan ran;
-- the architecture pull request's URL, or `committed locally on <branch>`;
+- the architecture pull request's URL, or `committed locally on <branch>`, and that the clone is back on its default branch — pull it once the pull request merges;
 - the specs `Phase handoff:` outcome line;
 - every problem the script reported;
 - the model routing (and any gate override, or `Model routing: bypassed — enforced <id> (flag|env)`);

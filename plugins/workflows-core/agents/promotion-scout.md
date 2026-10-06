@@ -12,12 +12,13 @@ Compare the team's decisions with the organisation's architecture, so a product 
 - `specs_root` — absolute path of the specs repository; the records are under `architecture/decisions/`.
 - `signals` — absolute path of the JSON `promotion-signals.py --signals` printed: `records` (each with `cited_by`, `deviated_elsewhere`, `superseded_others`) and `artifacts` (each with its `friction`).
 - `candidates` — the record ids to compare.
+- `pending_superseding` — ADR ids a proposed successor already proposes to supersede. Never a superseding entry.
 
 ## Method
 
 1. **Inventory the architecture repository.** Read its catalog (`index.yaml`, `index.json` or `catalog.yaml`) where one exists. Otherwise list the decision folders (`decisions/`, `adr/`, `adrs/`, `docs/adr/`, `docs/adrs/`, `docs/decisions/`, `docs/architecture/decisions/`) and `standards/`.
-   - An artifact's id is its frontmatter `id:`, else its file stem.
-   - Its status is its frontmatter `status:`, else the first word under its `## Status` heading, else a `Status:` line near its top.
+   - An artifact's id is its frontmatter `id:`, else its file stem's leading `<letters>-<digits>` (`ADR-0004`), else the whole stem.
+   - Its status is its frontmatter `status:`, else the first word under its `## Status` heading, else a `Status:` label near its top — emphasis (`**Accepted**`) ignored.
    - A folder's `README.md` or `index.md` is not an artifact.
 2. **Read each candidate record:** its **Binds**, **Prevents**, **Rule** and **Alternatives**.
 3. **Relation,** for each candidate:
@@ -27,9 +28,9 @@ Compare the team's decisions with the organisation's architecture, so a product 
 
    Search by the technologies, interfaces and constraints the Rule names. Read every artifact you cite.
 4. **Cluster.** Find the live records of *other* groups (`vi:` or `prd:`) that decide the same thing — the same technology, interface or constraint, read from Rule and Binds — whether or not they are candidates. Add one sentence on what they share. Two records that only share a word do not cluster.
-5. **Superseding.** Each `accepted` ADR qualifies that either:
-   - a `signals.artifacts` entry names, from two or more distinct `folders`; or
-   - two or more candidates from different groups conflict with.
+5. **Superseding.** An `accepted` ADR not in `pending_superseding` is a superseding candidate when either holds:
+   - a `signals.artifacts` entry names it with friction from two or more distinct `folders`;
+   - two or more candidates from different groups conflict with it.
 
    Give the evidence for each: the friction entries as `file:line`, and the conflicting record ids. Then name every other `accepted` ADR or `active` standard that already allows those departures — a narrower ADR, a second standard, a stated exception — in `allowed_by`, its rule quoted, so the architect can see whether a superseding ADR is needed at all.
 

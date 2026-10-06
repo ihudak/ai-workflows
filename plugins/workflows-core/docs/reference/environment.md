@@ -46,7 +46,7 @@ Every one of the nine is read by a reference this plugin ships — the corpus is
 
 **When it points somewhere invalid.** `OFF` with a reason naming the variable and what failed — never an error, never a gate or reviewer finding.
 
-**Directory layout.** The layouts `architecture-grounder` recognises — catalog, radar, decision, standards, principles, patterns and reference-architecture folders — are listed in that agent. Nothing writes, fetches, pulls or switches the clone; `/product-workflows:create-ard`, `/product-workflows:specify` and `/dev-workflows:design` report its branch, commit, date, uncommitted changes and staleness instead.
+**Directory layout.** The layouts `architecture-grounder` recognises — catalog, radar, decision, standards, principles, patterns and reference-architecture folders — are listed in that agent. Grounding never writes, fetches, pulls or switches the clone — only `/product-workflows:promote-decisions` writes an architecture repository, on a branch of its own; `/product-workflows:create-ard`, `/product-workflows:specify` and `/dev-workflows:design` report its branch, commit, date, uncommitted changes and staleness instead.
 
 ## `$GIT_USER_INITIALS`
 

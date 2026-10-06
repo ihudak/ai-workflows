@@ -2,8 +2,8 @@
 """promotion-signals.py — the deterministic half of the promote-decisions command.
 
   promotion-signals.py --specs <root> --ref <ref> [--layout vi|prd] --signals [--reconsider]
-  promotion-signals.py --specs <root> --ref <ref> --arch <root> --arch-ref <ref> --reconcile
-  promotion-signals.py --specs <root> --mark <plan.json>
+  promotion-signals.py --specs <root> --ref <ref> --arch <root> --arch-ref <ref> [--specs-name <name>] --reconcile
+  promotion-signals.py --specs <root> --mark <plan.json> [--check]
   promotion-signals.py --selftest
 
 --signals: for every record under <specs>/architecture/decisions/ at <ref>, its own counts, the feature
@@ -11,9 +11,10 @@ folders outside its own that link to it, the deviations recorded against it ther
 other groups it superseded, its promotion keys, and whether it is a candidate; and, for each
 organisation artifact the team side names in a deviation, every place that names it.
 --reconcile: the promotion keys each record should carry, given the `Origin: team decisions …` lines
-of the ADRs at <arch-ref>, and the records marked proposed whose ADR is on no such line.
+of the ADRs at <arch-ref> (only the lines naming <specs-name>, when it is given), the records marked
+proposed whose ADR is on no such line, and the proposed ADRs that propose to supersede another.
 --mark: writes or clears the promotion keys of the named records in the working tree, preserving
-every other byte, and writes nothing else.
+every other byte, and writes nothing else; with --check it validates the plan and writes nothing.
 
 The record format is the plugin's architecture-kb reference; the keys and their lifecycle are its
 architecture-promotion reference. Parsing is architecture-harvest.py's, loaded from beside this file,
@@ -52,7 +53,7 @@ NEEDS_ADR = ("proposed", "accepted", "rejected", "covered")
 NEEDS_NOTE = ("declined",)
 ART_ID = r"[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+"
 RECORD_ID_FULL = re.compile("^%s$" % H.RECORD_ID)
-ART_ID_FULL = re.compile("^%s$" % ART_ID)
+PROMOTED_TO_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$")  # an ADR's or standard's id, or its file stem
 RECORD_IDS = re.compile(r"(?<![\w-])(%s)(?![\w-])" % H.RECORD_ID)
 LINK_RE = re.compile(r"\]\(<?([^)\s>]*?)architecture/decisions/(%s)\.md>?\)" % H.RECORD_ID)
 ART_LINK_RE = re.compile(r"\[(%s|%s)(?![\w-])[^\]]*\]\(" % (H.RECORD_ID, ART_ID))
@@ -62,10 +63,13 @@ ITEM_RE = re.compile(r"^\s*[-*]\s")
 KEY_LINE_RE = re.compile(r"^([A-Za-z_][\w-]*):")
 ADR_DIRS = ("decisions/", "adr/", "adrs/", "docs/adr/", "docs/adrs/", "docs/decisions/", "docs/architecture/decisions/")
 ORIGIN_RE = re.compile(r"^\s*Origin:\s*team decisions\s+(.*)$")
+SUPERSEDE_RE = re.compile(r"^\s*Proposes to supersede:\s*([A-Za-z0-9][A-Za-z0-9._-]*)")
 STATUS_HEADING_RE = re.compile(r"^#{2,3}\s+Status\s*$", re.I)
-STATUS_LINE_RE = re.compile(r"^\s*(?:[*-]\s*)?Status:\s*([A-Za-z]+)", re.I)
-STATUS_MAP = {"accepted": "accepted", "rejected": "rejected", "proposed": "proposed",
-              "deprecated": "accepted", "superseded": "accepted"}
+STATUS_LINE_RE = re.compile(r"^\s*(?:[-*]\s+)?(?:#{2,3}\s+)?Status\s*:\s*([A-Za-z]+)", re.I)
+EMPHASIS_RE = re.compile(r"[*_`]")
+STATUS_MAP = {"accepted": "accepted", "approved": "accepted", "deprecated": "accepted", "superseded": "accepted",
+              "proposed": "proposed", "draft": "proposed", "rejected": "rejected", "withdrawn": "rejected"}
+RANK = {"accepted": 0, "proposed": 1, "rejected": 2}  # a live ADR before a rejected one: that one is history
 
 
 def folder_of(path, layout):
@@ -188,27 +192,40 @@ def signals(root, ref, layout="vi", reconsider=False):
             "candidates": sum(1 for r in records if r["candidate"])}
 
 
+def _status_word(text):
+    m = re.match(r"\s*([A-Za-z]+)", EMPHASIS_RE.sub("", text).lstrip("-* "))
+    return m.group(1).lower() if m else "unknown"
+
+
 def adr_status(blocks, body):
+    """An ADR's status word: frontmatter `status:`, else the first line under a `## Status` heading, else a
+    `Status:` label near the top (`## Status: X`, `**Status:** X`, `- **Status**: X`), emphasis ignored."""
     s = H.fm_scalar(blocks, "status")
     if s:
-        return s.split()[0].lower()
+        return _status_word(s)
     for i, ln in enumerate(body):
         if STATUS_HEADING_RE.match(ln):
             for nxt in body[i + 1:]:
                 if nxt.strip():
-                    return re.split(r"[\s.,;]", nxt.strip().lstrip("*-").strip(), maxsplit=1)[0].lower()
-    for ln in body[:20]:
-        m = STATUS_LINE_RE.match(ln)
+                    return _status_word(nxt)
+    for ln in body[:30]:
+        m = STATUS_LINE_RE.match(EMPHASIS_RE.sub("", ln))
         if m:
             return m.group(1).lower()
     return "unknown"
 
 
-def reconcile(specs, ref, arch, arch_ref):
+def artifact_id(blocks, base):
+    """An ADR's id: its frontmatter `id:`, else its file stem's leading `<letters>-<digits>`, else the stem."""
+    m = re.match(r"([A-Za-z]+-\d+)", base)
+    return H.fm_scalar(blocks, "id") or (m.group(1) if m else base[:-3])
+
+
+def reconcile(specs, ref, arch, arch_ref, specs_name=None):
     sha = H.resolve(specs, ref)
     recs = load_records(specs, sha, H.list_files(specs, sha))
     asha = H.resolve(arch, arch_ref)
-    adrs, named, problems = [], {}, []
+    adrs, named, problems, superseding = [], {}, [], []
     for p in sorted(H.list_files(arch, asha)):
         base = p.rsplit("/", 1)[-1]
         if (not p.endswith(".md") or base.lower() in ("readme.md", "index.md")
@@ -216,18 +233,29 @@ def reconcile(specs, ref, arch, arch_ref):
             continue
         fm, body = H.split_frontmatter(H.read(arch, asha, p))
         _, b = H.fm_blocks(fm)
-        origin = []
+        origin, origin_seen, supersedes = [], False, None
         for ln in body:
             m = ORIGIN_RE.match(ln)
-            if m:
-                origin = RECORD_IDS.findall(m.group(1).split(" — ")[0])
-                break
+            if m and not origin_seen:
+                origin_seen = True
+                ids, _, rest = m.group(1).partition(" — ")
+                if specs_name is None or (rest.split() or [""])[0] == specs_name:
+                    origin = RECORD_IDS.findall(ids)
+            m = SUPERSEDE_RE.match(ln)
+            if m and supersedes is None:
+                supersedes = m.group(1)
+        if not origin and not supersedes:
+            continue
+        aid = artifact_id(b, base)
+        status = adr_status(b, body)
+        if supersedes and STATUS_MAP.get(status) == "proposed":
+            superseding.append({"adr": supersedes, "by": aid})
         if not origin:
             continue
-        m = re.match(r"([A-Za-z]+-\d+)", base)
-        aid = H.fm_scalar(b, "id") or (m.group(1) if m else base[:-3])
-        status = adr_status(b, body)
         adrs.append({"id": aid, "file": p, "status": status, "origin": origin})
+        if status not in STATUS_MAP:
+            problems.append(H.problem("unknown-status", p, 0, "status %r is none of %s, so the records it names "
+                                      "keep their keys" % (status, ", ".join(sorted(STATUS_MAP)))))
         for rid in origin:
             named.setdefault(rid, []).append((aid, status, p))
     changes, unresolved = [], []
@@ -237,17 +265,25 @@ def reconcile(specs, ref, arch, arch_ref):
         hits = named.get(rid)
         if not hits:
             if r["promotion"] == "proposed":
-                unresolved.append({"id": rid, "promoted_to": r["promoted_to"]})
+                if isinstance(r["promoted_to"], str) and PROMOTED_TO_RE.match(r["promoted_to"]):
+                    unresolved.append({"id": rid, "promoted_to": r["promoted_to"]})
+                else:
+                    problems.append(H.problem("invalid-key", r["path"], 0, "promoted_to %r is no artifact id"
+                                              % r["promoted_to"]))
             continue
-        if len(hits) > 1:
+        known = [h for h in hits if h[1] in STATUS_MAP]
+        if not known:
+            continue
+        live = [h for h in known if STATUS_MAP[h[1]] != "rejected"]
+        if len(live) > 1:
             problems.append(H.problem("multiple-origins", r["path"], 0, "named by the Origin lines of %s"
-                                      % ", ".join(h[0] for h in hits)))
-        accepted = [h for h in hits if STATUS_MAP.get(h[1]) == "accepted"]
-        aid, status, _ = max(accepted or hits, key=lambda h: H.natural(h[0]))
-        want = {"promotion": STATUS_MAP.get(status, "proposed"), "promoted_to": aid}
+                                      % ", ".join(h[0] for h in live)))
+        best = min(RANK[STATUS_MAP[h[1]]] for h in known)
+        aid, status, _ = max((h for h in known if RANK[STATUS_MAP[h[1]]] == best), key=lambda h: H.natural(h[0]))
+        want = {"promotion": STATUS_MAP[status], "promoted_to": aid}
         if want["promotion"] == "rejected":
             want["promotion_note"] = (r["promotion_note"] if r["promotion"] == "rejected" and r["promotion_note"]
-                                      else "%s was rejected" % aid)
+                                      else "%s was %s" % (aid, status))
         if want != cur:
             changes.append({"id": rid, "from": cur, "to": want})
     for rid in sorted(named, key=H.natural):
@@ -255,7 +291,7 @@ def reconcile(specs, ref, arch, arch_ref):
             problems.append(H.problem("unknown-record", named[rid][0][2], 0,
                                       "its Origin line names %s, which is no record" % rid))
     return {"sha": sha, "arch_sha": asha, "adrs": adrs, "changes": changes, "unresolved": unresolved,
-            "problems": problems}
+            "superseding": superseding, "problems": problems}
 
 
 def check_keys(rid, keys):
@@ -265,7 +301,7 @@ def check_keys(rid, keys):
     if v not in VALUES:
         raise Abort("%s: promotion must be one of %s" % (rid, ", ".join(VALUES)))
     adr = keys.get("promoted_to")
-    if v in NEEDS_ADR and not (isinstance(adr, str) and ART_ID_FULL.match(adr)):
+    if v in NEEDS_ADR and not (isinstance(adr, str) and PROMOTED_TO_RE.match(adr)):
         raise Abort("%s: promotion %s needs promoted_to, an artifact id" % (rid, v))
     if v not in NEEDS_ADR and adr is not None:
         raise Abort("%s: promotion %s takes no promoted_to" % (rid, v))
@@ -299,7 +335,7 @@ def rewrite(text, keys, rid):
     return "\n".join([lines[0]] + kept + lines[end:])
 
 
-def mark(root, plan_path):
+def mark(root, plan_path, check=False):
     H.resolve(root, "HEAD")  # the specs repository's top level, or Abort
     with open(plan_path, encoding="utf-8") as fh:
         plan = json.load(fh)
@@ -320,6 +356,8 @@ def mark(root, plan_path):
         with open(path, encoding="utf-8", newline="") as fh:
             old = fh.read()
         staged.append((path, DECISIONS + rid + ".md", old, rewrite(old, keys, rid)))
+    if check:
+        return {"written": [], "would_write": [rel for _, rel, old, new in staged if new != old]}
     written = []
     for path, rel, old, new in staged:  # every entry validated before the first write
         if new != old:
@@ -368,12 +406,12 @@ def selftest():
     def cli(*args):
         return subprocess.run([sys.executable, me, *args], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    def run_mark(tmp, marks):
+    def run_mark(tmp, marks, *extra):
         fd, plan = tempfile.mkstemp(suffix=".json")
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             json.dump({"marks": marks}, fh)
         try:
-            return cli("--specs", tmp, "--mark", plan)
+            return cli("--specs", tmp, "--mark", plan, *extra)
         finally:
             os.remove(plan)
 
@@ -480,9 +518,32 @@ def selftest():
             check(r.returncode == 2, "--mark refuses %s (rc=%d)" % (why, r.returncode))
         check(text(path2) == after2 and text(path3) == before3, "a refused plan writes nothing, not even its valid entries")
 
+        r = run_mark(tmp, {"ACME-7-AD3": {"promotion": "proposed", "promoted_to": "ADR-0009"}}, "--check")
+        check(r.returncode == 0 and text(path3) == before3
+              and json.loads(r.stdout.decode("utf-8") or "{}").get("would_write") == [DECISIONS + "ACME-7-AD3.md"],
+              "--mark --check validates and writes nothing: rc=%d %s" % (r.returncode, r.stdout[-200:]))
+        check(run_mark(tmp, {"ACME-7-AD3": {"promotion": "maybe"}}, "--check").returncode == 2, "--mark --check refuses a bad plan")
+        check(cli("--specs", tmp, "--ref", "HEAD", "--signals", "--check").returncode == 2, "--check goes only with --mark")
+        r = run_mark(tmp, {"ACME-7-AD3": {"promotion": "covered", "promoted_to": "0005-use-outbox"}}, "--check")
+        check(r.returncode == 0, "an ADR id need not be upper-case: a numbered file stem is one")
+        check(run_mark(tmp, {"ACME-7-AD3": {"promotion": "covered", "promoted_to": "$(id)"}}, "--check").returncode == 2,
+              "an id holding shell syntax is refused")
         r = run_mark(tmp, {"ACME-7-AD3": {"promotion": "proposed", "promoted_to": "ADR-0009"}})
         check(r.returncode == 0 and "promoted_to: ADR-0009" in text(path3), "--mark proposed with its ADR")
         snapshot(tmp, "mark AD3")
+
+        # ---- the status forms an ADR is written in ---------------------------------------
+        for body, want in (("---\nstatus: Accepted   # a comment\n---\n# X\n", "accepted"),
+                           ("# X\n\n## Status\n\n**Accepted**\n", "accepted"),
+                           ("# X\n\n## Status\n\n_Superseded_ by ADR-0009\n", "superseded"),
+                           ("# X\n\n## Status: Rejected\n", "rejected"),
+                           ("# X\n\n**Status:** Accepted\n", "accepted"),
+                           ("# X\n\n- **Status**: Draft\n", "draft"),
+                           ("# X\n\nStatus: Proposed\n", "proposed"),
+                           ("# X\n\nNo status anywhere.\n", "unknown")):
+            fm, bd = H.split_frontmatter(body)
+            got = adr_status(H.fm_blocks(fm)[1], bd)
+            check(got == want, "ADR status %r read as %r, not %r" % (body[:30], got, want))
 
         # ---- --reconcile ---------------------------------------------------------------
         with tempfile.TemporaryDirectory() as arch:
@@ -492,16 +553,26 @@ def selftest():
                 "decisions/ADR-0001-outbox.md": ("---\nid: ADR-0001\ntitle: Outbox\nstatus: accepted\n---\n"
                                                  "# ADR-0001: Outbox\n\n## Context\n\n"
                                                  "Origin: team decisions ACME-1-AD1 — specs ACME-55-AD9 mirror\n"),
-                "decisions/ADR-0002-billing-ledger.md": ("# ADR-0002: Billing ledger\n\n## Status\n\nRejected\n\n"
+                "decisions/ADR-0002-billing-ledger.md": ("# ADR-0002: Billing ledger\n\n## Status\n\n**Rejected**\n\n"
                                                          "## Context\n\nOrigin: team decisions ACME-7-AD2, ACME-99-AD1 — specs\n"),
                 "decisions/ADR-0003-retries.md": ("---\nid: ADR-0003\nstatus: proposed   # proposed | accepted\n---\n"
                                                   "## Context\n\nOrigin: team decisions ACME-7-AD1 — specs\n"),
                 "standards/STD-API-001.md": "Origin: team decisions ACME-1-AD2 — not under an ADR folder.\n",
+                "decisions/ADR-0006-retries-again.md": ("# ADR-0006: Retries\n\n**Status:** Rejected\n\n## Context\n\n"
+                                                        "Origin: team decisions ACME-7-AD1 — specs\n"),
+                "decisions/ADR-0008-outbox-twice.md": ("# ADR-0008: Outbox again\n\n## Status: Proposed\n\n## Context\n\n"
+                                                       "Origin: team decisions ACME-1-AD1 — specs\n"),
+                "decisions/ADR-0010-theirs.md": ("---\nid: ADR-0010\nstatus: accepted\n---\n## Context\n\n"
+                                                 "Origin: team decisions ACME-404-AD1 — other-specs\n"),
+                "decisions/ADR-0011-pondering.md": ("---\nid: ADR-0011\nstatus: pondering\n---\n## Context\n\n"
+                                                    "Origin: team decisions ACME-1-AD2 — specs\n"),
+                "decisions/ADR-0012-kafka.md": ("---\nid: ADR-0012\nstatus: proposed\n---\n## Context\n\n"
+                                                "Proposes to supersede: ADR-0004\n\nTwo VIs depart from it.\n"),
             }, "adrs")
             try:
-                rc = reconcile(tmp, "HEAD", arch, "HEAD")
+                rc = reconcile(tmp, "HEAD", arch, "HEAD", specs_name="specs")
             except Exception as e:
-                rc = {"changes": [], "unresolved": [], "problems": [], "adrs": []}
+                rc = {"changes": [], "unresolved": [], "problems": [], "adrs": [], "superseding": []}
                 check(False, "--reconcile runs: %s" % e)
             ch = {c["id"]: c["to"] for c in rc["changes"]}
             check(ch.get("ACME-1-AD1") == {"promotion": "accepted", "promoted_to": "ADR-0001"},
@@ -511,12 +582,25 @@ def selftest():
                   "a rejected ADR, its status from a Status heading, its id from the file name: %s" % ch.get("ACME-7-AD2"))
             check(ch.get("ACME-7-AD1") == {"promotion": "proposed", "promoted_to": "ADR-0003"},
                   "a proposed ADR, its status comment stripped: %s" % ch.get("ACME-7-AD1"))
-            check("ACME-1-AD2" not in ch, "an Origin line outside an ADR folder counts for nothing")
+            check("ACME-1-AD2" not in ch, "an Origin line outside an ADR folder, or an ADR whose status is unreadable, changes nothing")
             check(rc["unresolved"] == [{"id": "ACME-7-AD3", "promoted_to": "ADR-0009"}],
                   "a proposed record whose ADR is on no Origin line: %s" % rc["unresolved"])
-            check([p["kind"] for p in rc["problems"]] == ["unknown-record"]
+            check(sorted(p["kind"] for p in rc["problems"]) == ["multiple-origins", "unknown-record", "unknown-status"]
                   and all(not a["file"].endswith("README.md") for a in rc["adrs"]),
-                  "a README is not an ADR; an Origin id that is no record is a problem: %s" % rc["problems"])
+                  "a README is not an ADR; an unknown record, two live ADRs for one record, an unreadable status "
+                  "are problems; a rejected ADR beside a live one and another specs repository's line are not: %s"
+                  % rc["problems"])
+            check(rc.get("superseding") == [{"adr": "ADR-0004", "by": "ADR-0012"}],
+                  "a proposed ADR that proposes to supersede another is listed: %s" % rc.get("superseding"))
+            rel3 = DECISIONS + "ACME-7-AD3.md"
+            commit(tmp, {rel3: text(path3).replace("promoted_to: ADR-0009", "promoted_to: $(id)")}, "hand edit")
+            try:
+                bad = reconcile(tmp, "HEAD", arch, "HEAD", specs_name="specs")
+            except Exception as e:
+                bad = {"unresolved": None, "problems": []}
+                check(False, "--reconcile on a hand-edited key runs: %s" % e)
+            check(bad["unresolved"] == [] and "invalid-key" in [p["kind"] for p in bad["problems"]],
+                  "a hand-edited promoted_to that is no id is a problem, never a search term: %s" % bad["problems"])
 
         # ---- the CLI -------------------------------------------------------------------
         check(cli("--signals").returncode == 2, "--specs is required")
@@ -570,6 +654,8 @@ def main():
     ap.add_argument("--arch", help="the architecture repository's top level")
     ap.add_argument("--arch-ref", help="the architecture ref to read: its default branch")
     ap.add_argument("--mark", metavar="PLAN", help="write the promotion keys a plan file names")
+    ap.add_argument("--check", action="store_true", help="with --mark: validate the plan and write nothing")
+    ap.add_argument("--specs-name", help="with --reconcile: count only the Origin lines naming this specs repository")
     ap.add_argument("--selftest", action="store_true", help="run the built-in fixtures and exit")
     a = ap.parse_args()
     try:
@@ -579,8 +665,9 @@ def main():
     if a.selftest:
         return selftest()
     modes = [m for m in ("signals", "reconcile", "mark") if getattr(a, m)]
-    if len(modes) != 1 or not a.specs:
-        print("promotion-signals: give --specs and exactly one of --signals, --reconcile, --mark", file=sys.stderr)
+    if len(modes) != 1 or not a.specs or (a.check and not a.mark):
+        print("promotion-signals: give --specs and exactly one of --signals, --reconcile, --mark "
+              "(--check only with --mark)", file=sys.stderr)
         return 2
     try:
         if a.signals:
@@ -590,9 +677,9 @@ def main():
         elif a.reconcile:
             if not (a.ref and a.arch and a.arch_ref):
                 raise Abort("--reconcile needs --ref, --arch and --arch-ref")
-            out = reconcile(a.specs, a.ref, a.arch, a.arch_ref)
+            out = reconcile(a.specs, a.ref, a.arch, a.arch_ref, a.specs_name)
         else:
-            out = mark(a.specs, a.mark)
+            out = mark(a.specs, a.mark, a.check)
     except Exception as e:  # anything unexpected is "could not run", never a partial result
         print("promotion-signals: not run (%s: %s)" % (type(e).__name__, e), file=sys.stderr)
         return 2

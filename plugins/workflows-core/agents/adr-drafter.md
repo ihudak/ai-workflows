@@ -27,7 +27,11 @@ Write the body of one proposed organisation ADR from the team decisions it promo
 
    `Origin: team decisions <id>[, <id>…] — <specs_name>`
 
-   It names every record in `records`. A superseding proposal with no records — its evidence only designs' and ARDs' departures — has no Origin line, since there is no record to name. Then two to five sentences:
+   It names every record in `records`. For `superseding`, the next line — the first, where there is no Origin line — is exactly:
+
+   `Proposes to supersede: <supersedes.id>`
+
+   A superseding proposal with no records — its evidence only designs' and ARDs' departures — has no Origin line, since there is no record to name. Then two to five sentences:
    - the problem the decision solves, from the records' **Binds** and their source ARDs' context, or, with no records, from the evidence;
    - how many teams decided it, from `signals`, or how many folders depart, from `evidence`;
    - for `superseding`: that this ADR proposes to supersede `<supersedes.id> <supersedes.title>`, and the evidence that teams depart from it, by count and kind.

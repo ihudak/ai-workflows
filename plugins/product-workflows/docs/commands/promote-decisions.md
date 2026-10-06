@@ -41,8 +41,8 @@ flowchart TD
 
 ## What it needs
 
-- **A writable architecture repository**: the session's own project, or `$ARCHITECTURE_REPO_PATH` where that clone is writable. Its checkout must be clean and on its default branch.
-- **`$SPECS_PATH`**, with `architecture/index.yaml` on its default branch, and no unmerged `kb/` branch.
+- **A writable architecture repository**: the session's own project — one holding an ADR folder and a catalog or radar file — or `$ARCHITECTURE_REPO_PATH` where that clone is writable. Its checkout must be clean, on its default branch and not ahead of origin. The run returns it to that branch afterwards.
+- **`$SPECS_PATH`**, with `architecture/index.yaml` on its default branch, no uncommitted change under `architecture/`, and no unmerged `kb/` branch.
 - **`python3`** — the signals are product-workflows' bundled script `scripts/promotion-signals.py`, run with `--layout prd`. `uv` is optional: it runs the repository's decision tests from prebuilt wheels, which needs the network; without it the run says the tests did not run.
 - **`gh`** (optional): it opens both pull requests, and checks whether a pending promotion's pull request was closed.
 
@@ -54,10 +54,11 @@ flowchart TD
 ## Gates
 
 Each of these stops the run before anything is written:
-- the architecture repository is read-only, dirty, or off its default branch;
+- the architecture repository is read-only, dirty, off its default branch, or ahead of origin;
 - the knowledge base is missing;
-- an earlier `kb/` branch is unmerged;
-- a non-Opus session, unless you override.
+- an earlier `kb/` branch is unmerged, or records under `architecture/` are uncommitted;
+- a non-Opus session, unless you override;
+- a mark the run would write that the script refuses — checked before anything is committed.
 
 A failing repository test stops it before the commit. No secret scanner ships with product-workflows, and the final report says so.
 
