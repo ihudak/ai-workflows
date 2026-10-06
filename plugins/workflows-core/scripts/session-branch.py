@@ -254,6 +254,17 @@ def align(root, old_tip, new_tip):
     return done
 
 
+def refuse_checked_out(root, branch):
+    """The session branch is never stood on; moving it under a checkout would leave that checkout's
+    index and files behind its HEAD. Refuse while any worktree has it checked out."""
+    where, want = None, "branch refs/heads/" + branch
+    for field in nul_list(git(root, "worktree", "list", "--porcelain", "-z")):
+        if field.startswith("worktree "):
+            where = field[len("worktree "):]
+        elif field == want:
+            raise NotRun("%s is checked out at %s; switch that checkout back to the default branch" % (branch, where))
+
+
 def is_ancestor(root, a, b):
     return git(root, "merge-base", "--is-ancestor", a, b, check=False).returncode == 0
 
@@ -262,6 +273,7 @@ def sync(root, branch, default_ref):
     """Bring <default-ref>, and the session branch's own copy on origin where one exists (pushed from
     another clone), into the session branch without a checkout: a fast-forward where the branch holds
     nothing of its own, else merge-tree -X ours with the union driver; then align the overlay."""
+    refuse_checked_out(root, branch)
     ensure_attributes(root)
     ref = "refs/heads/" + branch
     base = rev(root, default_ref)
@@ -339,6 +351,7 @@ def ahead_paths(root, default_ref):
 def commit(root, branch, default_ref, message, include_ahead=False):
     """Commit every dirty session file onto <branch> through a temporary index, then merge
     <default-ref> in and align the overlay. Never touches the checkout, the index or HEAD."""
+    refuse_checked_out(root, branch)
     ref = "refs/heads/" + branch
     created = False
     tip = rev(root, ref)
@@ -797,6 +810,20 @@ def selftest():
                   and b.git("rev-parse", "session/aa") == b.git("ls-remote", "origin", "refs/heads/session/aa").split()[0],
                   "…so its push is a fast-forward")
             check("## a1" in (b.read(FB) or ""), "…and the working copy holds the other clone's entry")
+        # a session branch someone checked out is never moved under that checkout
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.write(FB, "## a1\n", append=True)
+            a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            a.run("lift", "--branch", "session/aa")
+            a.git("switch", "-q", "session/aa")
+            tip = a.git("rev-parse", "session/aa")
+            a.write(FB, "## a2\n", append=True)
+            got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            check(got.get("_rc") == 2 and "checked out" in got.get("_err", "") and a.git("rev-parse", "session/aa") == tip,
+                  "commit refuses, moving nothing, while the session branch is checked out (%r)" % got)
+            got = a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
+            check(got.get("_rc") == 2 and "checked out" in got.get("_err", ""), "…and so does put-back (%r)" % got)
         # a switch to a deliverable branch cut from an older main, with the overlay present
         with tempfile.TemporaryDirectory() as tmp:
             remote, a, b = world(tmp)
