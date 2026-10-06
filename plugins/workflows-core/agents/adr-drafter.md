@@ -10,7 +10,7 @@ Write the body of one proposed organisation ADR from the team decisions it promo
 
 - `adr_path` — absolute path of the scaffolded ADR: the only file you may change.
 - `kind` — `promotion` or `superseding`.
-- `records` — absolute paths of the team records. A promotion has the records it promotes (one, or a cluster); a superseding proposal has the conflicting records.
+- `records` — absolute paths of the team records. A promotion has the records it promotes (one, or a cluster); a superseding proposal has the conflicting records, and any records a merged pick added.
 - `sources` — absolute paths of each record's source ARD, read for context only.
 - `supersedes` — `{ id, title, path, rule }` of the accepted ADR a superseding draft would replace, or `none`.
 - `evidence` — `file:line` entries of the departures from that ADR, or `none`.

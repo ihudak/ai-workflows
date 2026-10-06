@@ -12,7 +12,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`promotion-scout`** (Opus, read-only), which compares candidate team decisions with the architecture repository and finds the ADRs teams keep departing from, and **`adr-drafter`** (Opus), which writes the body of one scaffolded ADR and edits nothing else.
 
 ### Changed
-- **Architecture grounding skips a promoted record.** `architecture-grounder` no longer reads a team record whose `promotion` is `accepted` or `covered`: the organisation artifact it names binds instead. `architecture-kb` names the promotion keys as preserved keys `/product-workflows:promote-decisions` alone writes, and `phase-handoff`'s keyless `kb/` form covers it.
+- **Architecture grounding skips a promoted record.** `architecture-grounder` no longer reads a team record whose `promotion` is `accepted` or `covered`: the organisation artifact it names binds instead. `architecture-kb` names the promotion keys as preserved keys `/product-workflows:promote-decisions` alone writes, and `phase-handoff`'s keyless `kb/` form covers it. `phase-handoff` classes `architecture/**` as gated — stopping: a consumer's own guard that stops on an uncommitted artifact counts, and `/product-workflows:promote-decisions` stops while records under it are uncommitted.
 
 ## [1.23.1] — 2026-10-06
 

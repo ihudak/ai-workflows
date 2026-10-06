@@ -51,7 +51,7 @@ KEYS = ("promotion", "promoted_to", "promotion_note")
 VALUES = ("proposed", "accepted", "rejected", "declined", "covered")
 NEEDS_ADR = ("proposed", "accepted", "rejected", "covered")
 NEEDS_NOTE = ("declined",)
-ART_ID = r"(?:[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+|\d+(?:-[a-z0-9]+)+)"  # ADR-0004, STD-API-001, or a numbered stem: 0005-use-outbox
+ART_ID = r"(?:[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+|\d{3,}-[a-z][a-z0-9]*(?:-[a-z0-9]+)*)"  # ADR-0004, STD-API-001, 0005-use-outbox
 RECORD_ID_FULL = re.compile("^%s$" % H.RECORD_ID)
 PROMOTED_TO_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$")  # an ADR's or standard's id, or its file stem
 RECORD_IDS = re.compile(r"(?<![\w-])(%s)(?![\w-])" % H.RECORD_ID)
@@ -448,6 +448,8 @@ def selftest():
                    "**Supersedes:** [ACME-1-AD2 Shared cache](../../architecture/decisions/ACME-1-AD2.md) — one cache.\n\n"),
                 ad(2, "Billing ledger"), ad(3, "Billing retries")],
                 open_questions="- [ ] Departs from %s — billing uses Kafka.\n- [ ] Departs from %s — refunds skip it.\n"
+                "- [ ] See [2-phase commit](https://example.invalid/2pc), [12-factor config](https://example.invalid/12f), "
+                "[3-tier layout](https://example.invalid/3t) and [2024-05-01 sync notes](https://example.invalid/n).\n"
                 % (adr4, rec("ACME-1-AD1", outbox, 2))),
             search + "ACME-9-ui/design.md": (
                 "# Design\n\nFollows %s.\n\n## Risks & mitigations\n\n"
@@ -484,7 +486,8 @@ def selftest():
               and [e["kind"] for e in arts["ADR-0004"]["friction"]] == ["ard-open-question", "design-deviation"]
               and arts["ADR-0004"]["folders"] == [billing, search]
               and [e["kind"] for e in arts["0005-use-outbox"]["friction"]] == ["design-deviation"],
-              "ADR friction from an ARD and a design, a numbered ADR stem included; a radar line names no artifact: %s" % arts)
+              "ADR friction from an ARD and a design, a numbered ADR stem included; a radar line and link text that "
+              "only starts with a number name no artifact: %s" % arts)
         check(s["candidates"] == 4, "the live records without keys are the candidates: %s" % s["candidates"])
 
         # ---- --mark ------------------------------------------------------------------

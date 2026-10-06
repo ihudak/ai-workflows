@@ -12,6 +12,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Changed
 - **The harvest keeps the promotion keys, and its README marks an accepted promotion** as `<title> — promoted to <ADR>`. The keys are preserved like any other key the harvest does not own, so a harvest after `--mark` rewrites no record.
+- **The knowledge-base handoff warns that the next phase stops until it is on main.** `phase-handoff` classes `architecture/**` as gated — stopping, because `/promote-decisions` stops while records under it are uncommitted; `/harvest-decisions` and `/promote-decisions` present that consent array, where the harvest used to say no command stops on the knowledge base.
 
 ## [3.20.1] — 2026-10-06
 
