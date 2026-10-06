@@ -7,6 +7,10 @@
 - **`/prose-review-pr`'s diff context comes from the range that found the files.** A branch's diff
   context always came from `origin/<default>...origin/<branch>`, even where the files were found
   through the local-branch fallback, which then showed the wrong hunks or none. Step 2c records the range, and step 7 diffs against it.
+- **`/prose-review-pr` checks the default branch after its fetch.** The check that `origin/<name>`
+  exists said nothing about when to run it. Run before step 2a's `git fetch --all --prune` deleted a
+  renamed default branch, it passed, and every `origin/<default>` diff then failed. It now runs after
+  the step's fetch, just before the first diff that names the default branch.
 
 ## 0.5.2 — 2026-10-05
 

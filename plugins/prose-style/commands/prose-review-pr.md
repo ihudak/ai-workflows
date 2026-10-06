@@ -57,9 +57,10 @@ prints `origin/<name>`: the name is what follows `origin/`. Without `--short` th
 against the local branch into one against the remote. It counts only where
 `git -C <repo_path> rev-parse --verify --quiet origin/<name> >/dev/null` succeeds for that name: a
 remote that renamed its default branch, fetched with `--prune`, leaves `origin/HEAD` naming the
-branch it deleted, and each diff below that names the default branch would then name a ref git
-rejects. Where it prints nothing
-(`origin/HEAD` is unset), or a name that probe rejects, the name is `master` if
+branch it deleted, and every `origin/main`-form diff below would then name a ref git rejects. So
+resolve and probe the name after this step's fetch, just before the first diff that uses it — 2a's
+`git -C <repo_path> fetch --all --prune` is what deletes that branch. Where `symbolic-ref` prints
+nothing (`origin/HEAD` is unset), or a name that probe rejects, the name is `master` if
 `git -C <repo_path> rev-parse --verify --quiet origin/master >/dev/null` succeeds and the same
 probe of `origin/main` does not; otherwise it stays `main`.
 
