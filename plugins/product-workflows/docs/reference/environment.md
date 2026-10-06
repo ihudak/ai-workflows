@@ -30,7 +30,7 @@
 
 **Resolution.** Resolved per the shared `workflows-core:architecture-grounding` gate, consumed by `/create-ard` and `/specify` on both routes (and by `/dev-workflows:design`); `--no-arch` turns it off for a run.
 
-**When unset.** Architecture grounding reports `OFF` with a line naming the variable, and the run continues exactly as without it.
+**When unset.** Architecture grounding reports `OFF` with a line naming the variable, and the run continues exactly as without it; the team knowledge base under `$SPECS_PATH/architecture/` is resolved separately, and still read where it exists.
 
 **When it points somewhere invalid.** `OFF` with a reason naming the variable and what failed — never an error, never a gate or reviewer BLOCKER. `product-workflows` never writes, fetches or pulls the clone.
 

@@ -46,7 +46,7 @@
 
 **Resolution.** Resolved per the shared `workflows-core:architecture-grounding` gate, consumed here by `/design` (and by the companion plugin's `/product-workflows:create-ard` and `/product-workflows:specify`); `--no-arch` turns it off for a run.
 
-**When unset.** Architecture grounding reports `OFF` with a line naming the variable, and the run continues exactly as without it.
+**When unset.** Architecture grounding reports `OFF` with a line naming the variable, and the run continues exactly as without it; the team knowledge base under `$SPECS_PATH/architecture/` is resolved separately, and still read where it exists.
 
 **When it points somewhere invalid.** `OFF` with a reason naming the variable and what failed — never an error, never a gate or reviewer BLOCKER. `/design` never writes, fetches or pulls the clone, and scans it, where a theme resolves to it, with refresh off.
 

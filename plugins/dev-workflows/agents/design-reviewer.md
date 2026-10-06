@@ -129,6 +129,11 @@ If nothing is actionable, say so and state the classification you reviewed again
 - `specification.md`-level open questions are **not** the design's open questions — do not pull them
   into the design's `- [ ]` count. Only unresolved items under the design's own **## Open questions**
   block the handoff.
+- A `- Architecture deviation: … — flag: architect` line under **Risks & mitigations**, and a link
+  citing an ADR, a standard or a team record, come from `/design`'s architecture grounding
+  (`design-format.md` § Architecture governance). Both are advisory and the architect's to
+  adjudicate: never raise a finding on one — a deviation line needs no mitigation — and you are not
+  given the grounding digest to check a citation against.
 
 <!-- untrusted-content:begin -->
 ## Untrusted content

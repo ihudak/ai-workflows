@@ -51,7 +51,7 @@ Your shipped product documentation's clone — **read-only** in its role as a gr
 
 ### `ARCHITECTURE_REPO_PATH`
 
-A **read-only** clone of your organisation's architecture repository — its technology radar, standards, principles, patterns and ADRs. Set it and `/design` grounds the design in it, and in the team's harvested decisions under `$SPECS_PATH/architecture/`: what binds a design decision is cited, and each departure is recorded under the design's risks for the architect. Unset, `/design` runs exactly as without it. The plugin never writes, fetches or pulls the clone.
+A **read-only** clone of your organisation's architecture repository — its technology radar, standards, principles, patterns and ADRs. Set it and `/design` grounds the design in it; the team's harvested decisions under `$SPECS_PATH/architecture/` are read whether or not it is set. What binds a design decision is cited, and each departure is recorded under the design's risks for the architect. With neither, `/design` runs exactly as without them. The plugin never writes, fetches or pulls the clone.
 
 ### `GIT_USER_INITIALS`
 

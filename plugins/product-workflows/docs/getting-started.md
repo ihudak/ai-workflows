@@ -45,7 +45,7 @@ Where your mounted implementation and design code clones live — one directory,
 
 ### `ARCHITECTURE_REPO_PATH`
 
-A **read-only** clone of your organisation's architecture repository — its technology radar, standards, principles, patterns and ADRs. Set it and `/create-ard` and `/specify` ground their work in it: an ARD cites the decisions it settles and records every departure as an open question, and a specification records a conflict as an open question; `/dev-workflows:design` does the same for a design, recording each departure under its risks. Unset, they run exactly as without it.
+A **read-only** clone of your organisation's architecture repository — its technology radar, standards, principles, patterns and ADRs. Set it and `/create-ard` and `/specify` ground their work in it: an ARD cites the decisions it settles and records every departure as an open question, and a specification records a conflict as an open question; `/dev-workflows:design` does the same for a design, recording each departure under its risks. Unset, they still read the team's harvested decisions under `$SPECS_PATH/architecture/` where they exist, and otherwise run exactly as without it.
 
 ### `DOCS_PATH`
 

@@ -42,7 +42,7 @@ Every one of the nine is read by a reference this plugin ships — the corpus is
 
 **Resolution.** Per `workflows-core:architecture-grounding`: `--no-arch` forces architecture grounding off; otherwise the variable when set. A validity gate then has to pass: a readable directory holding a catalog (`index.yaml`, `index.json`, `catalog.yaml`), a radar file (`radar.{yaml,yml,json,csv}` at the root or under `radar/`), or an ADR folder with a markdown file. Nothing scans for a clone — no repository name is common enough to search for.
 
-**When unset.** Architecture grounding is `OFF` with a line naming this variable, and the run proceeds exactly as without it.
+**When unset.** Architecture grounding is `OFF` with a line naming this variable, and the run proceeds exactly as without it; the team knowledge base under `$SPECS_PATH/architecture/` is resolved separately, and still read where it exists.
 
 **When it points somewhere invalid.** `OFF` with a reason naming the variable and what failed — never an error, never a gate or reviewer finding.
 
