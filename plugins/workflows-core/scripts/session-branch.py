@@ -132,6 +132,52 @@ def dirty_session_paths(root):
     return sorted(paths)
 
 
+def config(root, key, as_bool=False):
+    """A configuration value, or None where it is unset or unreadable."""
+    r = git(root, "config", *(["--bool"] if as_bool else []), "--get", key, check=False)
+    return text(r) if r.returncode == 0 else None
+
+
+def valid_identity(root, ident):
+    """branch-naming §5: lowercase, [a-z0-9-], a letter or digit first; and a valid branch name."""
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", ident or ""):
+        return False
+    return git(root, "check-ref-format", "--branch", "session/" + ident, check=False).returncode == 0
+
+
+def inferred_identity(root):
+    """branch-naming §2.3: local branches, and remote ones without the remote's name, each once."""
+    heads = text(git(root, "for-each-ref", "--format=%(refname:lstrip=2)", "refs/heads")).splitlines()
+    remotes = text(git(root, "for-each-ref", "--format=%(refname:lstrip=3)", "refs/remotes")).splitlines()
+    sample = sorted({n for n in heads + remotes if n and n != "HEAD"})[:200]
+    counts = {}
+    for name in sample:
+        first, sep, _ = name.partition("/")
+        if sep and 2 <= len(first) <= 8 and re.fullmatch(r"[a-z0-9][a-z0-9-]*", first) and first not in IDENTITY_SKIP:
+            counts[first] = counts.get(first, 0) + 1
+    ranked = sorted((-n, c) for c, n in counts.items() if n >= 3 and n * 10 >= len(sample) * 3)
+    return ranked[0][1] if ranked else None
+
+
+def identity(root):
+    """branch-naming §2's first three rungs, in order; the first non-empty one decides, never the prompt."""
+    for rung, value in (("env", os.environ.get("GIT_USER_INITIALS", "")),
+                        ("config", config(root, "user.initials") or ""),
+                        ("inferred", inferred_identity(root) or "")):
+        if value:
+            return (value if valid_identity(root, value) else None), rung
+    return None, None
+
+
+def mode(root, default):
+    on = config(root, "workflows.sessionBranch", as_bool=True) == "true"
+    refused = config(root, "branch.%s.workflowsPushRefused" % default)
+    source = "config" if on else ("refused" if refused else None)
+    ident, rung = identity(root)
+    return {"mode": "on" if source else "off", "source": source, "identity": ident, "identity_rung": rung,
+            "branch": ("session/" + ident) if ident else None}
+
+
 def selftest():
     """Every rule this script carries, on repositories built at run time."""
     failures = []
@@ -263,6 +309,42 @@ def selftest():
         check(got == sorted([FB, "specifications/PRD-A-1-zahlungsauslösung/dev-workflows/cost/s 1.md"]),
               "dirty_session_paths lists modified and untracked session files, odd names included (%r)" % (got,))
 
+    # ---- mode and identity ---------------------------------------------------------------
+    with tempfile.TemporaryDirectory() as tmp:
+        remote, a, _ = world(tmp)
+        got = a.run("mode", "--default", "main")
+        check(got.get("mode") == "off" and got.get("source") is None, "mode is off by default (%r)" % got)
+        check(got.get("identity") is None and got.get("branch") is None, "no identity without a rung (%r)" % got)
+        a.git("config", "workflows.sessionBranch", "true")
+        got = a.run("mode", "--default", "main", env={"GIT_USER_INITIALS": "ab"})
+        check(got.get("mode") == "on" and got.get("source") == "config", "the opt-in key turns it on (%r)" % got)
+        check(got.get("branch") == "session/ab" and got.get("identity_rung") == "env", "the env rung names it (%r)" % got)
+        a.git("config", "--unset", "workflows.sessionBranch")
+        a.git("config", "branch.main.workflowsPushRefused", "2026-10-06")
+        a.git("config", "user.initials", "cd")
+        got = a.run("mode", "--default", "main")
+        check(got.get("mode") == "on" and got.get("source") == "refused", "a refusal record turns it on (%r)" % got)
+        check(got.get("branch") == "session/cd" and got.get("identity_rung") == "config", "user.initials names it (%r)" % got)
+        got = a.run("mode", "--default", "main", env={"GIT_USER_INITIALS": "Not Valid"})
+        check(got.get("identity") is None and got.get("identity_rung") == "env",
+              "an invalid first rung names nothing and does not fall through (%r)" % got)
+        a.git("config", "--unset", "user.initials")
+        for b in ("iv-gu/a", "iv-gu/b", "iv-gu/c", "prd/A-1-x", "spec/A-1-x", "session/zz", "session/yy"):
+            a.git("branch", b)
+        got = a.run("mode", "--default", "main")
+        check(got.get("identity") == "iv-gu" and got.get("identity_rung") == "inferred",
+              "the guess counts iv-gu and never prd, spec or session (%r)" % got)
+    with tempfile.TemporaryDirectory() as tmp:
+        remote, a, _ = world(tmp)
+        for b in ("prd/A-1-x", "prd/A-2-y", "prd/A-3-z", "session/a", "session/b", "session/c"):
+            a.git("branch", b)
+        got = a.run("mode", "--default", "main")
+        check(got.get("identity") is None, "plugin and session prefixes never become an identity (%r)" % got)
+    with open(BRANCH_NAMING, encoding="utf-8") as fh:
+        m = re.search(r"skip='\^\(([^)]*)\)\$'", fh.read())
+    check(m is not None and frozenset(m.group(1).split("|")) == IDENTITY_SKIP,
+          "IDENTITY_SKIP equals branch-naming §4's skip list (%r)" % (m.group(1) if m else None))
+
     if failures:
         print("session-branch selftest: FAIL")
         for f in failures:
@@ -311,6 +393,8 @@ def main():
 
 
 def dispatch(a):
+    if a.cmd == "mode":
+        return mode(a.specs, a.default)
     raise NotRun("subcommand %s is not implemented yet" % a.cmd)
 
 

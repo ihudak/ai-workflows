@@ -98,7 +98,7 @@ Local branches as they are, and remote ones with the remote's name taken off, so
 
 Scan for `<identity>/<rest>` where `<identity>` is **2–8 characters matching `[a-z0-9][a-z0-9-]*`** — so hyphenated forms (`iv-gu/`, `john-smith/`, `a-hue/`) count alongside unhyphenated ones (`ivgu/`, `jdoe/`, `mz23/`) and the generic prefixes (`feat/`, `docs/`, `fix/`, `chore/`, `feature/`, `bugfix/`, `hotfix/`, `release/`, `story/`).
 
-**The nine prefixes of the plugin's own specs-repository branches — `idea`, `prd`, `ard`, `spec`, `design`, `ready`, `brd`, `frames` and `kb` (`specs-repo-git.md` §2.2) — are never a candidate.** They name branches the plugin cuts for its deliverables, not a person or a team's convention. Counted, they gave a code branch cut inside the specs repository — a direct `/implement` run from there — one of those prefixes, and the plugin then treated the user's code branch as its own.
+**The nine prefixes of the plugin's own specs-repository branches — `idea`, `prd`, `ard`, `spec`, `design`, `ready`, `brd`, `frames` and `kb` (`specs-repo-git.md` §2.2) — and `session`, its session branches (`specs-repo-git.md` §8), are never a candidate.** They name branches the plugin cuts for its deliverables, not a person or a team's convention. Counted, they gave a code branch cut inside the specs repository — a direct `/implement` run from there — one of those prefixes, and the plugin then treated the user's code branch as its own.
 
 Adopt a candidate when it accounts for **≥ 30 %** of the sample **and** occurs **≥ 3** times.
 
@@ -179,7 +179,7 @@ if [ -z "$identity" ]; then
   identity="$( { git -C "<repo>" for-each-ref --format='%(refname:lstrip=2)' refs/heads
                  git -C "<repo>" for-each-ref --format='%(refname:lstrip=3)' refs/remotes; } 2>/dev/null \
     | grep -vx 'HEAD' | sort -u | head -200 \
-    | awk -F/ -v skip='^(feat|feature|fix|bugfix|hotfix|docs|chore|release|story|idea|prd|ard|spec|design|ready|brd|frames|kb)$' '
+    | awk -F/ -v skip='^(feat|feature|fix|bugfix|hotfix|docs|chore|release|story|idea|prd|ard|spec|design|ready|brd|frames|kb|session)$' '
         { total++ }
         NF>=2 && length($1)>=2 && length($1)<=8 && $1 ~ /^[a-z0-9][a-z0-9-]*$/ && $1 !~ skip { n[$1]++ }
         END { for (c in n) if (n[c] >= 3 && n[c] * 10 >= total * 3) print n[c], c }' \
@@ -188,7 +188,7 @@ fi
 # Empty here → §2.4 fallback (prefix case only) AND the §2.5 escalation before branching.
 ```
 
-`skip` drops the generic prefixes, per §2.3's identity rule, and the plugin's nine, which are never a candidate. When resolving a §1.4 prefix rather than an identity, take the generic names out of `skip` and keep the nine. The `END` block is §2.3's threshold — at least 3 occurrences and at least 30 % of the sample — and the `sort` is §2.3's tie-break for an identity, the most frequent first and then alphabetical; a §1.4 prefix also takes §2.3's preference for a short non-generic candidate, which this snippet does not apply. A snippet that printed the most frequent name with no threshold adopted a name seen once.
+`skip` drops the generic prefixes, per §2.3's identity rule, and the plugin's nine and `session`, which are never a candidate. When resolving a §1.4 prefix rather than an identity, take the generic names out of `skip` and keep the rest. The `END` block is §2.3's threshold — at least 3 occurrences and at least 30 % of the sample — and the `sort` is §2.3's tie-break for an identity, the most frequent first and then alphabetical; a §1.4 prefix also takes §2.3's preference for a short non-generic candidate, which this snippet does not apply. A snippet that printed the most frequent name with no threshold adopted a name seen once.
 
 ---
 
