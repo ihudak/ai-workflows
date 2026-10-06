@@ -8,6 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [4.20.0] — 2026-10-06
 
 ### Changed
+- **The getting-started page says what to set so Claude Code's skill listing fits**: `"skillListingBudgetFraction": 0.025` in `~/.claude/settings.json`, and how to check it with `claude --debug` (`workflows-core` 1.29.0).
 - **Every command is typed-only** (`disable-model-invocation: true`): `/design`, `/implement`, `/ready`, `/upgrade` and `/vuln` run when typed, and a request in prose no longer starts one. It keeps them out of the skill listing Claude Code gives the model, which was over its budget (`workflows-core` 1.29.0). The getting-started page says so.
 
 ### Fixed

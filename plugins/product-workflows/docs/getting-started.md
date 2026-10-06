@@ -51,6 +51,16 @@ A clone of your organisation's architecture repository — its technology radar,
 
 Your shipped product documentation's clone — **read-only** in its role as a grounding root, which is the only role this plugin gives it. Eight of this plugin's commands ground against what is already published, so a new draft does not contradict or duplicate an existing page: `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/epics`, `/brd-intake`, and `/prd-ground`. The plugin never writes to `DOCS_PATH`; every miss — unset, missing, or no markdown found — is a silent, non-blocking skip. Disable per-run with `--no-docs` — and, in `/prd-ground`, also with `--no-code` — or override the root with `--docs <path>`, which all eight parse.
 
+### Claude Code's skill-listing budget
+
+**Set this once, in `~/.claude/settings.json`, whichever plugins you install.** Claude Code shows the model one list of every installed plugin's skills and model-invocable commands, and gives that list 1% of the context window — 8,000 characters in a 200K-token session, and in every subagent on a 200K model. Past that it shortens every description in the list, and the model can no longer tell which skill fits a task. This marketplace's commands are typed-only and take no room in the list, but its skills do, and so does every other plugin, Claude Code's own skills and your personal ones: every plugin of the `shipwright` marketplace, installed together, takes about 5,600 characters. Add this top-level key to the settings file:
+
+```json
+"skillListingBudgetFraction": 0.025
+```
+
+That gives 20,000 characters at 200K and 100,000 at 1M; a session pays only for what is listed, never for the budget, and the change applies from the next session. **Check that it is enough**: start one session with `claude --debug`, then search `~/.claude/debug/latest` for `Skill listing over budget: <N> skills, <X> chars > <Y> budget`. If that line is there, the list still overflows: set the fraction to at least X ÷ 800,000 (for X = 32,000, `0.04`), or turn off skills you do not use with `/skills`. The `SLASH_COMMAND_TOOL_CHAR_BUDGET` environment variable sets a fixed number of characters instead, and overrides the setting.
+
 ## Your first run
 
 `/idea` is the pipeline's entry point. It takes **one argument you choose yourself** — the key that names the folder this idea will live in — because there is nowhere keyless to write: the brief lands in its final folder on the first write and is never moved afterwards. Point it at whatever you already have in mind: an inline prompt, or a markdown file with `@path`.
