@@ -815,7 +815,7 @@ the Phase 5 `### Session learnings` line. ADDITIVE — the impl-maintenance
 report still appears in the report; this step NEVER fails the run, NEVER
 commits (still true — this step only writes the feedback file; those writes
 are committed by the terminal `commit-artifacts` step in Phase 7, per
-`workflows-core:specs-repo-git` §4 — save on a direct run from inside the specs repository (Phase 0) whose Phase 4.6 commits, where that commit carries them), and NEVER writes
+`workflows-core:specs-repo-git` §4 — save on a direct run from inside the specs repository (Phase 0) whose Phase 4.6 commits, where that commit carries them, or, in session-branch mode (§8 there), that phase's own commit to the session branch does), and NEVER writes
 into the code repo or the current working directory, where it is not the specs repository.
 
 ---
@@ -1037,7 +1037,7 @@ guidance already appeared in the Phase 5 report.
 **Then commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It
 stages ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits
 `<KEY> Add dev-workflows session artifacts (/implement)`, and pushes per §4
-step 5. It NEVER writes into the code repo this run just changed — save on a direct run from inside the specs repository (Phase 0), where the two are one repository and what this step commits lands on the run's branch, which §4 step 5 does not push unless its name carries one of §2.2's prefixes — that repo's
+step 5. It NEVER writes into the code repo this run just changed — save on a direct run from inside the specs repository (Phase 0), where the two are one repository and what this step commits lands on the run's branch, which §4 step 5 does not push unless its name carries one of §2.2's prefixes — or, in session-branch mode (§8), on the session branch, which it does push — that repo's
 own commit was Phase 4.6's, as were whatever push and pull request §2.4's
 consent choice, §2.8's base-branch ladder and §2.6's `gh` capability probe
 allowed, through a different reference and against a different remote —
