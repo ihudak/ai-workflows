@@ -37,7 +37,7 @@ community post (a markdown file under a `Projects/Products/` path, or with a thr
 return `provenance: community-post` and additionally extract **demand signals** — requester
 names/handles, upvote/vote counts, recurring asks — into `signals`.
 
-**A source that is itself a Product Requirements Document is tagged `prd`.** Read the file's own
+**A source that is itself a Product Requirements Document is tagged `prd`**, and only its live requirements are digested: one marked `Superseded by` or `Withdrawn` is history, not product content. Read the file's own
 frontmatter: `kind: prd` (or a `prd.md` / `idea.md` under a `PRD-<KEY>-<slug>/` folder) means the operator
 handed over prior art rather than demand evidence, so return `provenance: prd` and fill `tracked` from
 that same frontmatter — `key` from `key:`, `status` from `status:`, `summary` from the document's own goal

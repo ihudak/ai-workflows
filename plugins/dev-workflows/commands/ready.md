@@ -210,7 +210,7 @@ already is. Nothing is read out of the PRD's title for it, and no title is inven
   `SUPPORTED`, which is the verdict `/implement` is offered on. A run that verified nothing would be
   reporting the strongest assurance this command can give.
 
-  So: where `requirements[]` is empty, print `not assessed — PRD states no requirements` in place of an
+  So: where `requirements[]` is empty, print `not assessed — PRD states no live requirements` in place of an
   `N/M covered (P%)` figure, and use that phrase at both stations. The Phase 5 template's existing
   alternative, `"derived (coarse) — PRD had no structured requirements"`, is for a PRD whose
   requirements were *derived* coarsely; nothing derives anything here, so reusing it would assert a
@@ -477,7 +477,7 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
    [SUPPORTED | PARTIAL | NOT-SUPPORTED]
 
    ### Requirement coverage
-   [N/M covered (P%); list each ❌ gap requirement ID] — _or_ "derived (coarse) — PRD had no structured requirements" — _or_ "not assessed — PRD states no requirements"
+   [N/M covered (P%); list each ❌ gap requirement ID] — _or_ "derived (coarse) — PRD had no structured requirements" — _or_ "not assessed — PRD states no live requirements"
 
    ### Findings
    [readiness-reviewer's Findings section, by dimension]

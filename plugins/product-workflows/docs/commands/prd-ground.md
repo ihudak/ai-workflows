@@ -305,7 +305,7 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   evidence about whether the metric is *instrumented*, a claim adjacent to the one the row states.
   The count and the excluded prefixes, and how many rows were left out as superseded or withdrawn,
   are reported before Phase 1's repo prompt and again in the Final report.
-- **At least one resulting claim.** A `--lean` PRD with no live `[AC#n]` and no live `[FR#n]` — and,
+- **At least one resulting claim.** A PRD with no live `[AC#n]` and no live `[FR#n]` — a `--lean` one, or one whose rows were withdrawn — and,
   by the `[US#n]` fallback above, no live `[US#n]` either — stops with `PRD_GROUND_NO_CLAIMS`, naming
   [`/update-prd`](update-prd.md) as the fix to add acceptance criteria and explicitly **not**
   `/create-prd`, which would rewrite the PRD rather than add to it. Writing an empty

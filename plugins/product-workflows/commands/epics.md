@@ -1,6 +1,6 @@
 ---
 name: epics
-description: "Drafts the child Epics of a PRD (a PRD- folder holding prd.md) or re-refines one Epic (an EPIC- folder holding epic.md under a PRD), from the PRD, the existing Epics and an optional code scan, each Epic with testable acceptance criteria and, where the PRD names components, one target component. Runs prose-style-checker as a non-gating pass and gates on the Opus epic-reviewer. The only command that creates an EPIC- folder; refuses a BRD- container and a PRD- folder with no PRD yet."
+description: "Drafts the child Epics of a PRD (a PRD- folder holding prd.md) or re-refines one Epic (an EPIC- folder holding epic.md under a PRD), from the PRD, the existing Epics and an optional code scan, each Epic with testable acceptance criteria and, where the run has a component set, one target component. Runs prose-style-checker as a non-gating pass and gates on the Opus epic-reviewer. The only command that creates an EPIC- folder; refuses a BRD- container and a PRD- folder with no PRD yet."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
 ---
 
@@ -454,7 +454,7 @@ choices: ["Stop — <the earliest gap's remedy, §6> first (Recommended)", "Spli
 
 ## Phase 3 — Read the PRD folder
 
-**Read the PRD folder directly.** Read its `prd.md` for the product content, and list the `EPIC-`
+**Read the PRD folder directly.** Read its `prd.md` for the product content — its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement) — and list the `EPIC-`
 subfolders under it for the Epics that already exist — that listing *is* the linked-item hierarchy
 the retired reader used to return. Each Epic folder's `key` and title come from its own frontmatter
 (`workflows-core:addressing` §4), never from its directory name.

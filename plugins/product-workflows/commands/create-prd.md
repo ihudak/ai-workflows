@@ -447,7 +447,7 @@ Optionally ground in the idea's cited sources and any strategy/vision docs the u
 **Text sources only — an image citation is carried, never opened here.** `## Signals & evidence` may cite images the idea's original source linked, because the `/idea` run read those for its own grill: its Phase 1.5 walks every link the source makes, asking the operator before reading past its older bounds, and `figure-reader` transcribes each image that walk takes (`commands/idea.md` Phase 1.5 and Phase 2). That walk, the operator's answer to it and its report of every exclusion belong to that run and do **not** travel with the file, so opening an image path found here would be a read nobody consented to and nothing reports. What those frames showed has already been put to the operator and survives in the idea's prose; treat the path as provenance and read the prose.
 
 If `--from-prd` was resolved (Phase 0 step 2a), also read the **seed PRD** (body + comments) as read-only
-grounding — structure, personas, scope shape, and metrics to *adapt* (never copy) to the new PRD.
+grounding — structure, personas, scope shape, and metrics to *adapt* (never copy) to the new PRD — the seed's live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement).
 
 If there is no idea (Phase 0 ladder exhausted), grill the PRD from scratch.
 

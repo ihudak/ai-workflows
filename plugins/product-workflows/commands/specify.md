@@ -589,8 +589,8 @@ folder does hold. Then:
 
 - **Epic-scope the read, against the tree.** The material is the PRD folder and what sits under it.
   When `focus_key` is set, read **that `EPIC-` folder** — its `epic.md`, and any `specification.md` or
-  `design.md` already in it — plus the PRD folder's own `prd.md` for the frame, and read no sibling
-  `EPIC-` folder at all. When `focus_key` is null (broad PRD-level spec), read the PRD folder and every
+  `design.md` already in it — plus the PRD folder's own `prd.md` for the frame, its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement), and read no sibling
+  `EPIC-` folder at all. When `focus_key` is null (broad PRD-level spec), read the PRD folder — its `prd.md`, its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement) — and every
   `EPIC-` folder under it. There is no `linked_items` list and no Story/Sub-task subtree to filter: those
   were fields of a tracker export that no command produces any more (Step A), and the `EPIC-` folders on
   disk are the hierarchy now. Everything below — themes and the Phase 5 raw material — derives

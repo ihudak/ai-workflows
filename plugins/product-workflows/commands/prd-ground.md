@@ -571,12 +571,12 @@ behaviour, not the behaviour.
     grounding ran when nothing was ever checked**, and it would hand `/product-workflows:create-ard`
     and `/product-workflows:specify` a folder whose grounding file exists and reads as *checked,
     nothing found* rather than *never run*. **The condition is narrower than it reads**: the
-    fallback rule above already routes every `[US#n]` into the claim list the moment its own story
-    carries no acceptance criterion, so a document with no `[AC#n]` at all still contributes a claim
+    fallback rule above already routes every live `[US#n]` into the claim list the moment its own story
+    carries no live acceptance criterion, so a document with no `[AC#n]` at all still contributes a claim
     for every story it holds — the list only comes up genuinely empty where the PRD *also* holds no
     live `[US#n]`: a document with no stories, which the spine's own "Contiguous IDs" convention
     (`workflows-core:prd-format`) makes degenerate rather than an ordinary `--lean` one, or one whose
-    every story has been withdrawn or superseded. The message still names only
+    every story has been withdrawn. The message still names only
     `[AC#n]` and `[FR#n]`, because those are the two rows the fix — adding acceptance criteria —
     actually adds; naming the empty `[US#n]` case too would not change what the operator is told to
     do. Stop, naming the fix that adds acceptance criteria and never the command that would

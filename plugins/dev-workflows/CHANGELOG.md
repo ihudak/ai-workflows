@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [4.19.0] — 2026-10-06
 
 ### Changed
-- **`/ready` and `/implement` read a PRD's live requirements only** (`workflows-core` 1.28.0's `prd-format` § Changing a requirement): `/ready`'s coverage ground truth leaves out a requirement marked `Superseded by` or `Withdrawn`, so a withdrawn requirement is no longer a gap that keeps the verdict from `SUPPORTED`, and `/implement`'s plan reads none as product content.
+- **`/ready` and `/implement` read a PRD's live requirements only** (`workflows-core` 1.28.0's `prd-format` § Changing a requirement): `/ready`'s coverage ground truth leaves out a requirement marked `Superseded by` or `Withdrawn`, so a withdrawn requirement is no longer a gap that keeps the verdict from `SUPPORTED`, and where none is live it prints `not assessed — PRD states no live requirements`; `/implement`'s plan reads none as product content.
 
 ## [4.18.0] — 2026-10-06
 
