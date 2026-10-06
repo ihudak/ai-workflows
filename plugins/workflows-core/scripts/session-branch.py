@@ -241,6 +241,40 @@ def write_from(root, commit, path):
         fh.write(data)
 
 
+def union_shaped(root, path):
+    """An appended shape: the attributes block gives it git's union driver."""
+    out = text(git(root, "check-attr", "-z", "merge", "--", path))
+    return out.split("\0")[2:3] == ["union"]
+
+
+def union_copy(root, path, tip):
+    """The three-way union of the working copy and the tip's version, in working-tree form, so an
+    entry only the branch holds survives a working copy that lost it (a manual lift, a hand edit).
+    The base is the version at merge-base HEAD <tip>, not HEAD's: HEAD can hold what the branch
+    never had (a stranded commit), and the tip would then read as deleting it. Union keeps both
+    sides of a conflicting hunk, so nothing is dropped, at the price of a stale line beside an
+    edited one."""
+    r = git(root, "merge-base", "HEAD", tip, check=False)
+    base = text(r) if r.returncode == 0 and text(r) else None
+    with tempfile.TemporaryDirectory() as td:
+        sides = {}
+        for name, commit in (("base", base), ("theirs", tip)):
+            sides[name] = os.path.join(td, name)
+            with open(sides[name], "wb") as fh:
+                if blob(root, commit, path) is not None:
+                    fh.write(git(root, "cat-file", "--filters", "%s:%s" % (commit, path)).stdout)
+        r = git(root, "merge-file", "-p", "--union", os.path.join(root, path), sides["base"], sides["theirs"],
+                check=False)
+        if r.returncode < 0 or r.returncode > 127:
+            raise NotRun("merge-file %s: %s" % (path, r.stderr.decode("utf-8", "replace").strip()[:300]))
+        return r.stdout
+
+
+def write_bytes(root, path, data):
+    with open(os.path.join(root, path), "wb") as fh:
+        fh.write(data)
+
+
 def align(root, old_tip, new_tip):
     """After the branch moved, bring each session file whose working copy still equals the old tip's
     version to the new tip's. A working copy that differs holds entries of its own and is left."""
@@ -360,6 +394,7 @@ def commit(root, branch, default_ref, message, include_ahead=False):
     """Commit every dirty session file onto <branch> through a temporary index, then merge
     <default-ref> in and align the overlay. Never touches the checkout, the index or HEAD."""
     refuse_checked_out(root, branch)
+    ensure_attributes(root)
     ref = "refs/heads/" + branch
     created = False
     tip = rev(root, ref)
@@ -382,6 +417,8 @@ def commit(root, branch, default_ref, message, include_ahead=False):
             for p in paths:
                 full = os.path.join(root, p)
                 if os.path.isfile(full) and not os.path.islink(full):
+                    if blob(root, tip, p) not in (None, worktree_blob(root, p)) and union_shaped(root, p):
+                        write_bytes(root, p, union_copy(root, p, tip))
                     sha = text(git(root, "hash-object", "-w", "--path", p, "--", p))
                     mode_bits = "100755" if os.stat(full).st_mode & stat.S_IXUSR else "100644"
                     entries.append("%s %s\t%s" % (mode_bits, sha, p))
@@ -422,10 +459,10 @@ def put_back(root, branch, default_ref):
     branch's version is left as it is and listed in skipped."""
     ref = "refs/heads/" + branch
     if rev(root, ref) is None:
-        return {"written": [], "removed": [], "skipped": [], "sync": None}
+        return {"written": [], "removed": [], "merged": [], "skipped": [], "sync": None}
     synced = sync(root, branch, default_ref)
     tip = rev(root, ref)
-    written, removed, skipped = [], [], []
+    written, removed, skipped, merged = [], [], [], []
     for p in nul_list(git(root, "diff", "--name-only", "-z", "--no-renames", "HEAD", tip)):
         if not classify(p):
             continue
@@ -433,11 +470,15 @@ def put_back(root, branch, default_ref):
         if have == want:
             continue
         if have != blob(root, "HEAD", p):
-            skipped.append(p)
+            if have is not None and want is not None and union_shaped(root, p):
+                write_bytes(root, p, union_copy(root, p, tip))
+                merged.append(p)
+            else:
+                skipped.append(p)
             continue
         write_from(root, tip, p)
         (removed if want is None else written).append(p)
-    return {"written": written, "removed": removed, "skipped": skipped, "sync": synced}
+    return {"written": written, "removed": removed, "merged": merged, "skipped": skipped, "sync": synced}
 
 
 def selftest():
@@ -865,8 +906,42 @@ def selftest():
             a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
             a.git("checkout", "--", FB)
             a.write(FB, "## typed by hand\n", append=True)
+            a.write("specifications/PRD-A-1-x/dev-workflows/resume.md", "pos: typed\n")
             got = a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
-            check(got.get("skipped") == [FB] and "## typed by hand" in a.read(FB), "put-back skips a foreign working copy (%r)" % got)
+            fb = a.read(FB) or ""
+            check(got.get("merged") == [FB] and "## typed by hand" in fb and "## a1" in fb,
+                  "put-back merges a foreign copy of an appended file with the branch's (%r, %r)" % (got, fb))
+            check(got.get("skipped") == [], "…and skips none of the appended shapes (%r)" % got)
+        # a hand edit after a manual lift never drops what only the branch holds
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            fu = "specifications/PRD-A-1-x/follow-ups.md"
+            a.write(fu, "- [ ] one\n")
+            a.commit_all("follow-ups on main")
+            a.write(fu, "- [ ] two\n", append=True)
+            a.write(FB, "## a1\n", append=True)
+            a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            a.run("lift", "--branch", "session/aa")
+            a.write(fu, "- [x] one\n")  # ticked by hand, on HEAD's version
+            os.remove(os.path.join(a.path, ".git", "info", "attributes"))  # as on a fresh clone
+            got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            on_branch = a.git("show", "session/aa:" + fu)
+            check("- [x] one" in on_branch and "- [ ] two" in on_branch,
+                  "commit unions a hand edit with what only the branch held, losing neither (%r)" % on_branch)
+            check(a.read(fu) == on_branch + "\n" and "## a1" in a.git("show", "session/aa:" + FB),
+                  "…writes the merged copy back, and keeps the other file (%r)" % a.read(fu))
+        # an overwritten shape is the working copy's, as before
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            rs = "specifications/PRD-A-1-x/dev-workflows/resume.md"
+            a.write(rs, "pos: one\n")
+            a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            a.run("lift", "--branch", "session/aa")
+            a.write(rs, "pos: two\n")
+            got = a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
+            check(got.get("skipped") == [rs] and a.read(rs) == "pos: two\n", "put-back leaves a foreign resume.md (%r)" % got)
+            a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            check(a.git("show", "session/aa:" + rs) == "pos: two", "commit takes an overwritten file as it stands")
         # line endings: an eol=crlf session file is preserved as its LF blob, and put back in CRLF
         with tempfile.TemporaryDirectory() as tmp:
             remote, a, b = world(tmp)
