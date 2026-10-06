@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.9.1] — 2026-10-06
+
+### Fixed
+- **The ALWAYS lines of `/document`, `/release-notes`, `/docs-init`, `/docs-brand` and `/docs-audit` describe where the session files go.** They said `commit-artifacts` was bounded "to plugin-created branches", which describes switching, not where it commits or what it pushes; they now say it switches only branches the plugin created and pushes only what `workflows-core:specs-repo-git` §4 step 5 allows.
+- **The session-cost page names every case in which the session files are not pushed**, now including a fork's push configuration, a branch the remote deleted, and a push the server refused (`workflows-core` 1.22.2).
+
 ## [1.9.0] — 2026-10-05
 
 ### Changed

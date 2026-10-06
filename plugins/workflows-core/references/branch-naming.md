@@ -89,10 +89,16 @@ Same semantics as §2.1. Set once per repo, or globally with `git config --globa
 ### 2.3 Inferred from existing branches
 
 ```bash
-git -C <repo_path> --no-pager branch -a --format='%(refname:short)' 2>/dev/null | head -200
+{ git -C <repo_path> for-each-ref --format='%(refname:lstrip=2)' refs/heads
+  git -C <repo_path> for-each-ref --format='%(refname:lstrip=3)' refs/remotes; } 2>/dev/null \
+  | grep -vx 'HEAD' | head -200
 ```
 
+Local branches as they are, and remote ones with the remote's name taken off, so `origin/iv-gu/x` counts as `iv-gu/x`. `branch -a --format='%(refname:short)'`, which this listing replaced, printed `origin/…` for every remote branch and `origin` for the remote's `HEAD`, so a repository with many pushed branches adopted `origin` as an identity.
+
 Scan for `<identity>/<rest>` where `<identity>` is **2–8 characters matching `[a-z0-9][a-z0-9-]*`** — so hyphenated forms (`iv-gu/`, `john-smith/`, `a-hue/`) count alongside unhyphenated ones (`ivgu/`, `jdoe/`, `mz23/`) and the generic prefixes (`feat/`, `docs/`, `fix/`, `chore/`, `feature/`, `bugfix/`, `hotfix/`, `release/`, `story/`).
+
+**The nine prefixes of the plugin's own specs-repository branches — `idea`, `prd`, `ard`, `spec`, `design`, `ready`, `brd`, `frames` and `kb` (`specs-repo-git.md` §2.2) — are never a candidate.** They name branches the plugin cuts for its deliverables, not a person or a team's convention. Counted, they gave a code branch cut inside the specs repository — a direct `/implement` run from there — one of those prefixes, and the plugin then treated the user's code branch as its own.
 
 Adopt a candidate when it accounts for **≥ 30 %** of the sample **and** occurs **≥ 3** times.
 
@@ -170,16 +176,19 @@ if [ -z "$identity" ]; then
   identity="$(git -C "<repo>" config --get user.initials 2>/dev/null || true)"
 fi
 if [ -z "$identity" ]; then
-  identity="$(git -C "<repo>" --no-pager branch -a --format='%(refname:short)' 2>/dev/null \
-    | head -200 \
-    | awk -F/ 'NF>=2 && length($1)>=2 && length($1)<=8 && $1 ~ /^[a-z0-9][a-z0-9-]*$/ {print $1}' \
-    | grep -Ev '^(feat|feature|fix|bugfix|hotfix|docs|chore|release|story)$' \
-    | sort | uniq -c | sort -rn | head -1 | awk '{print $2}')"
+  identity="$( { git -C "<repo>" for-each-ref --format='%(refname:lstrip=2)' refs/heads
+                 git -C "<repo>" for-each-ref --format='%(refname:lstrip=3)' refs/remotes; } 2>/dev/null \
+    | grep -vx 'HEAD' | head -200 \
+    | awk -F/ -v skip='^(feat|feature|fix|bugfix|hotfix|docs|chore|release|story|idea|prd|ard|spec|design|ready|brd|frames|kb)$' '
+        { total++ }
+        NF>=2 && length($1)>=2 && length($1)<=8 && $1 ~ /^[a-z0-9][a-z0-9-]*$/ && $1 !~ skip { n[$1]++ }
+        END { for (c in n) if (n[c] >= 3 && n[c] * 10 >= total * 3) print n[c], c }' \
+    | sort -k1,1nr -k2,2 | head -1 | awk '{print $2}')"
 fi
 # Empty here → §2.4 fallback (prefix case only) AND the §2.5 escalation before branching.
 ```
 
-The `grep -Ev` drops the generic prefixes, per §2.3's identity rule. Omit it when resolving a §1.4 prefix rather than an identity.
+`skip` drops the generic prefixes, per §2.3's identity rule, and the plugin's nine, which are never a candidate. When resolving a §1.4 prefix rather than an identity, take the generic names out of `skip` and keep the nine. The `END` block is §2.3's threshold — at least 3 occurrences and at least 30 % of the sample — and the `sort` is its tie-break, the most frequent first and then alphabetical; a snippet that printed the most frequent name with no threshold adopted a name seen once.
 
 ---
 

@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.14.1] — 2026-10-06
+
+### Fixed
+- **A direct `/implement` run from inside the specs repository commits its spec and design notes with the code.** `$SPECS_PATH` is the repository it changes there, so a note step 7.5 wrote was both in `$SPECS_PATH` and in this repository, and Phase 4.5 would have cut a specs branch in that repository before Phase 4.6 committed the code. Phase 4.5 now hands off nothing on that run; the command page says so too.
+- **The ALWAYS lines of `/implement`, `/ready`, `/upgrade` and `/vuln` describe where the session files go.** They said `commit-artifacts` was "bounded to plugin-created branches", which describes switching, not where it commits or what it pushes; they now say it switches only branches the plugin created and pushes only what `workflows-core:specs-repo-git` §4 step 5 allows.
+- **The session-cost and session-feedback pages name every case in which the session files are not pushed**, now including a fork's push configuration, a branch the remote deleted, and a push the server refused (`workflows-core` 1.22.2).
+
 ## [4.14.0] — 2026-10-05
 
 ### Added

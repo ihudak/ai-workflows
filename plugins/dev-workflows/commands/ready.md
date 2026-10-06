@@ -727,7 +727,7 @@ a code or docs repository, or the current working directory, where it is not the
   step 2, Phase 2.5) — `/ready` is the one caller these gates never stop: an artifact off `<default>`
   becomes a readiness finding ("authored, not handed off") that caps the verdict at `PARTIAL`; an absent
   artifact is recorded as missing in the coverage roll-up, exactly as before this feature
-- ALWAYS run `specs-preflight` at Phase 0 and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`) — bounded to `$SPECS_PATH`'s artifact paths (§2.1) and to plugin-created branches (§2.2), always `git -C "$SPECS_PATH"` and never a `cd` (§1 rule 1), never force-pushing, and never failing the run
+- ALWAYS run `specs-preflight` at Phase 0 and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`) — bounded to `$SPECS_PATH`'s artifact paths (§2.1), switching only branches the plugin created (§2.2) and pushing only what §4 step 5 allows, always `git -C "$SPECS_PATH"` and never a `cd` (§1 rule 1), never force-pushing, and never failing the run
 - doc-only — repo check is presence-only, no scanning (Phase 3c; never dispatches `code-scanner`)
 - ALWAYS end with a `### Next step` per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")` — guidance only, never
   auto-invoked
