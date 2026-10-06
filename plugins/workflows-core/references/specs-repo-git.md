@@ -739,13 +739,14 @@ to state.
    - **`origin` refused the update** (`[remote rejected]`): a rule on the
      server — branch protection, a ruleset, a policy or a hook — takes no push
      of this branch. Every reason git prints after that status, in
-     parentheses, counts, save git's own words for a push that a concurrent
-     update or a server fault broke — `failed to update ref`, `failed to lock`,
-     `cannot lock ref`, `unpacker error`, `missing necessary objects` — which
-     is a push that failed for another reason (below) and is retried. The
-     hosts word their refusals differently (`… hook declined`, `push declined
-     due to repository rule violations`, a policy code), so the few transient
-     reasons are what is matched, and everything else is a refusal. Record it,
+     parentheses, counts, save one that begins with the words git or a host
+     gives a push a concurrent update or a server fault broke —
+     `failed to update ref`, `failed to lock`, `cannot lock ref` (a host's form
+     of the first), `unpacker error`, `missing necessary objects` — which is a
+     push that failed for another reason (below) and is retried. The hosts word
+     their refusals differently (`… hook declined`, `push declined due to
+     repository rule violations`, a policy code), so the few transient reasons
+     are what is matched, and everything else is a refusal. Record it,
      `git -C "$SPECS_PATH" config branch.<branch>.workflowsPushRefused <YYYY-MM-DD>`,
      and report; the commit stays local, and step 5 pushes this branch no more
      until the record is removed. Retrying would be refused the same way on
