@@ -52,7 +52,7 @@ as `main`. Where the repository's is another, put its **name** in `main`'s place
 `origin/<name>...origin/<branch>`, `<name>...<branch>`, `<name>...remotes/origin/<branch>`. Take
 the name from `git -C <repo_path> symbolic-ref --quiet --short refs/remotes/origin/HEAD`, which
 prints `origin/<name>`: the name is what follows `origin/`. Without `--short` the command prints
-`refs/remotes/origin/<name>`, which is not a name — put in `main`'s place in `origin/main` it makes
+`refs/remotes/origin/<name>`, which is not a name — put in `main`'s place in `origin/main`, it makes
 `origin/refs/remotes/origin/<name>`, a revision git rejects, and in the other two it turns a diff
 against the local branch into one against the remote. It counts only where
 `git -C <repo_path> rev-parse --verify --quiet origin/<name> >/dev/null` succeeds for that name: a
