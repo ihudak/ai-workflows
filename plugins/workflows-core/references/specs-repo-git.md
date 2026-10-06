@@ -214,7 +214,9 @@ Any other **named** branch save the default branch — the user's own work, a
 hand-made branch — is left
 alone and never switched away from (§3.3 G2). The run's artifacts are still
 committed there, because a named branch cannot be lost, but never pushed
-(§4 step 5): a push would publish whatever its owner has not pushed yet.
+(§4 step 5): a push would publish whatever its owner has not pushed yet. In
+session-branch mode they go to the session branch instead, and are pushed
+(§8).
 
 A **detached HEAD** is not a branch. It is handled separately and far more
 strictly (§3.3 G0, §3.7): nothing is committed at all.
