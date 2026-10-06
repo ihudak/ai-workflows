@@ -79,6 +79,8 @@ round is), `dev-workflows/` is `references/specs-repo-git.md` §2.1's, `design/`
 `grounding-format.md` §6.1's — with §6.2 owning the index every set inside it must carry —
 `attachments/` is `idea-format.md`'s, and each other name is the owner cited beside it in the list
 above; a name added here without an authority to cite is a name two files will disagree about.
+`specs-repo-git.md` §2.1's classifier excludes every name in the list but `dev-workflows/`, so that
+a file a run copied in is never committed as a session file, and a name added here is added there too.
 
 **A user whose own key begins with a kind token gets `PRD-PRD-1234-…`.** That is a documented
 consequence of a documented convention, not a defect, and it is not hypothetical: a key like

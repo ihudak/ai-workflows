@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.20.1] — 2026-10-06
+
+### Fixed
+- **`/epics`' ALWAYS line describes where the session files go.** It said `commit-artifacts` was "bounded to plugin-created branches", which describes switching, not where it commits or what it pushes; it now says it switches only branches the plugin created and pushes only what `workflows-core:specs-repo-git` §4 step 5 allows.
+- **The session-cost and session-feedback pages name every case in which the session files are not pushed**, now including a fork's push configuration, a branch the remote deleted, and a push the server refused (`workflows-core` 1.23.1).
+
 ## [3.20.0] — 2026-10-06
 
 ### Added

@@ -27,8 +27,8 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
    issued at repository scope — always `git add -A -- <literal paths>`.
 3. **Bounded branches.** Only branches matching `^(idea|prd|ard|spec|design|ready|brd|frames|kb)/`
    are the plugin's to switch away from or delete (§2.2). They and the default
-   branch are the only branches it pushes, and only while the push would publish
-   nothing but its own session-file commits (§4 step 5).
+   branch are the only branches it pushes, only to `origin`, and only while the
+   push would publish nothing but its own session-file commits (§4 step 5).
 4. **Never destructive.** No `push --force`, no `push -f`, no `branch -D`, no
    `merge`, no `rebase`, no `reset`, and never delete an `index.lock`. §4 step
    4's `restore --staged` is not a `reset`: it rewrites only index entries for
@@ -41,6 +41,12 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
 7. **Prompt-free.** Neither entry point asks the user anything. `specs-preflight`
    is silent unless it acts, a guard fires, or §3.1 reports a misconfigured
    `$SPECS_PATH`; `commit-artifacts` emits one outcome line (§6).
+8. **One configuration key of its own.** `branch.<branch>.workflowsPushRefused`,
+   which §4 step 6 records when `origin` refuses a push to that branch and
+   step 5 reads. No other key is written here; what git itself writes for the
+   commands this reference runs is unchanged by it — the upstream a
+   `push -u` sets, and the whole `branch.<branch>` section, this record
+   included, that `branch -d` removes.
 
 ## 2. Bounded write authority
 
@@ -154,8 +160,28 @@ fragile to express and to review. The procedure is:
    `^(specs|specifications|vis)/.+/dev-workflows/` or
    `^documentation/[^/]+/dev-workflows/` or `^dev-workflows-feedback/`
    or `^dev-workflows-cost/` or
-   `^(specs|specifications|vis)/.+/(implementation|release-notes|follow-ups|pr-draft|[^/]+-implementation-gaps)\.md$`;
+   `^(specs|specifications|vis)/.+/(implementation|release-notes|follow-ups|pr-draft|[^/]+-implementation-gaps)\.md$`,
+   **and** it does not match
+   `^(specs|specifications|vis)/(.+/)?(brd|grounding|interview|design|attachments|revisions|bundle-[0-9]{8}|customer-sent-[0-9]{8}|Doc screenshots)/`;
    **OTHER** otherwise.
+
+   **The exclusion is `workflows-core:addressing` §2's register of reserved
+   subdirectory names, all but `dev-workflows/`, and it keeps a deliverable's
+   files out of this commit.** None of those subdirectories ever holds a
+   session file. They hold what a run copied in from outside — a customer's BRD
+   files under `brd/source/` and `brd/source-external/`, the pages `/idea`
+   vendors under `attachments/`, exported frames under `design/`, a package's
+   copies under `bundle-<YYYYMMDD>/` — each under whatever name it arrived
+   with, what it archived under `revisions/`, and what it wrote as a
+   deliverable under `grounding/` and `interview/`. A customer's
+   `implementation.md` or a vendored `release-notes.md` matched a single-file
+   shape, and a copied tree holding a `dev-workflows/` directory matched the
+   first, so this prompt-free commit took files that are `phase-handoff.md`'s
+   to commit behind its consent choice. A feature folder placed beneath a
+   directory with one of these names lies outside the layout `addressing` §2
+   defines, which reserves them for a feature folder's own subdirectories, and
+   its session files are classified OTHER. When the register gains a name, this
+   pattern gains it too.
 3. Stage the literal ARTIFACT paths only:
    `git -C "$SPECS_PATH" add -A -- <path> [<path>…]`.
 
@@ -194,7 +220,7 @@ a run that stops on its address — `invalid`, `ambiguous`, `misrooted` or `abse
 either order, a run that stops before the preflight on a check of its own inputs needing no specs-repo
 state — a run flag, the directory it runs from, a path it reads where it sits rather than as an
 artifact of the specs tree — runs none either. Prompt-free.
-Silent when the repository is already clean and on the default branch and §3.1 finds
+Silent when the repository is already clean and on the default branch, no other plugin branch holds a session-file commit §3.4 tries to push, and §3.1 finds
 `$SPECS_PATH` well placed; it emits a block only when it acts or when a guard fires, and a
 notice only where §3.1 reports a misconfigured `$SPECS_PATH`. That notice is one line, plus one more
 line naming anything a misrooted run left behind. On a run carrying `specs_git: misrooted`, §3.5 adds
@@ -306,7 +332,7 @@ notice, never a quiet line.
 |---|---|---|
 | G0 | **HEAD is detached** | **Hand off, and set `specs_git: blocked` for the whole run** — `commit-artifacts` (§4) must also skip. §5 notice at **blocking** severity. See §3.7. |
 | G1 | Any dirty **OTHER** path (§2.1) | **Hand off** — no commit, no branch switch, no push. §5 notice at **advisory** severity, listing the paths. Those files are not the plugin's, and switching branches would carry them. **This does NOT set `specs_git: blocked`**: the terminal `commit-artifacts` still runs, because it stages only artifact paths and is safe beside unrelated dirt. Losing the artifacts to protect files the step never touches would be the worse failure. |
-| G2 | On a **named** branch that is neither the default branch nor a match for `^(idea\|prd\|ard\|spec\|design\|ready\|brd\|frames\|kb)/` | **Leave it; stay on it.** §5 notice at **advisory** severity, naming the branch, so the user knows where this run's artifacts will land. The commit is safe — a named branch cannot be lost — so `commit-artifacts` proceeds, and leaves its commit unpushed (§4 step 5). The plugin manages only branches it created (§2.2). |
+| G2 | On a **named** branch that is neither the default branch nor a match for `^(idea\|prd\|ard\|spec\|design\|ready\|brd\|frames\|kb)/` | **Leave it; stay on it.** §5 notice at **advisory** severity, naming the branch, so the user knows where this run's artifacts will land — on that branch, or, on a direct `/dev-workflows:implement` run from inside the specs repository, on the code branch the run cuts (§5). The commit is safe — a named branch cannot be lost — so `commit-artifacts` proceeds, and leaves its commit unpushed (§4 step 5). The plugin manages only branches it created (§2.2). |
 
 ### 3.4 Stage 2 — flush leftovers
 
@@ -331,10 +357,28 @@ Always runs when stage 1 matched nothing **and the run does not carry `specs_git
   configured` — the condition is not false but *unevaluable*, and precisely in
   the state the retry exists for: the local-only branch a failed `push -u` leaves
   behind, which strands an artifact commit with nothing to retry it.
-  `for-each-ref` prints an empty upstream there instead, and step 5's base falls
-  through to the remote's refs. Without a test that answers there, a push that
+  Step 5's base reads no upstream at all: it tests
+  `refs/remotes/origin/<branch>`, which a failed `push -u` leaves absent, and
+  falls through to the remote's refs. Without a test that answers there, a push that
   failed in a previous run leaves a local commit that nothing ever retries — the
   original defect, re-created one layer up.
+
+**Then, either way, retry every other local plugin branch.** List them with
+`git -C "$SPECS_PATH" for-each-ref --format='%(refname:lstrip=2)' refs/heads/`
+and keep those §2.2's pattern matches, less the current branch. Test each in
+this order, stopping at the first that fails: it holds commits a push would
+publish (§4 step 5's `push-scope` measure, which on most branches finds none
+and ends the test there); `branch-merged` (§3.5) does not find it merged; and
+all three of step 5's conditions hold for it. Where all hold, push it as step 5
+does — a push names its branch, so it needs no switch — and print
+`Specs preflight: pushed <N> session-file commit(s) left on <branch>`. Where a
+test fails, nothing is pushed and nothing is printed. A push step 6 reports as
+failed prints step 6's line for it, which names the switch to `<branch>` its
+remedy needs, since the run is standing on another branch. Without this, a
+commit stranded on a branch the run is not standing on is never retried: B4
+below switches away from a plugin branch keyed to no key of the run right after
+the flush above committed on it, so a flush whose push failed leaves its commit
+there, and every later run starts somewhere else.
 
 Either way, continue to stage 3 with a clean tree.
 
@@ -345,11 +389,19 @@ First matching row applies.
 | # | State | Action |
 |---|---|---|
 | B1 | On the default branch | Nothing further. |
-| B2 | Plugin branch, and `git -C "$SPECS_PATH" merge-base --is-ancestor HEAD <default-ref>` succeeds (already merged upstream) | Switch to default, `git -C "$SPECS_PATH" pull --ff-only`, `git -C "$SPECS_PATH" branch -d <branch>`. If `-d` fails, report and skip — **never `-D`**. If `pull --ff-only` fails (the local default branch has diverged), report and continue on default **without** pulling — never merge, rebase, or reset. |
+| B2 | Plugin branch, and `branch-merged HEAD` (below) finds it merged | Switch to default, `git -C "$SPECS_PATH" pull --ff-only`, `git -C "$SPECS_PATH" branch -d <branch>`. If `-d` fails, report git's own message and skip — **never `-D`**. Where `branch-merged` answered by its second or third test, a rebase or a squash, git may not see the merge — `-d` deletes a branch merged into its upstream, or into `HEAD` where it has none, and refuses one merged only by a rebase or a squash — so the report then adds the command for the user to run once they are sure: `Specs preflight: <branch> is merged into <default> by a rebase or a squash, which git branch -d cannot see — delete it with git -C "<SPECS_PATH>" branch -D <branch>`. If `pull --ff-only` fails (the local default branch has diverged), report and continue on default **without** pulling — never merge, rebase, or reset. |
 | B3 | Plugin branch, unmerged, `branch-key` (below) resolves the branch to **any** key in the run key set (§3.2) | **Stay on it.** See §3.6. |
-| B4 | Plugin branch, unmerged, `branch-key` resolves the branch to **no** key in the set, or the set is empty (keyless run) | Switch to default, `git -C "$SPECS_PATH" pull --ff-only`. **Leave the branch and its pull request alone.** Report the branch name. |
+| B4 | Plugin branch, unmerged, `branch-key` resolves the branch to **no** key in the set, or the set is empty (keyless run) | Switch to default, `git -C "$SPECS_PATH" pull --ff-only`. **Leave the branch and its pull request alone.** Report the branch name, and, where it still holds commits a push would publish (§4 step 5's `push-scope` measure), how many: a later run's preflight retries them wherever §4 step 5 lets it push them (§3.4). |
 
-**Under `specs_git: misrooted` (§3.1) the table classifies and moves nothing.** Take the first matching row exactly as above: §3.2's fetch has already refreshed `<default-ref>` for B2's ancestry test, and `branch-key` below resolves B3 and B4 unchanged. Then act on that row without writing. B1 and B3 stay where they are, as they always do. B2 and B4 stay too, with no `switch`, no `pull --ff-only` and no `branch -d`. Each prints one line in place of its action: `Specs preflight: staying on <branch> — specs_git: misrooted, so no branch is switched (it would have <switched to <default> and deleted it, as it is merged | switched to <default>, as no key of this run names it>)`. A B3 here keeps the checkout on the caller's own branch exactly as it does on a correct `$SPECS_PATH`, so `workflows-core:phase-handoff` §3.3 row B still passes a resumed run. Where HEAD is on no plugin branch, no row applies here, as always.
+**Merged — `branch-merged <ref>`.** Whether the work on a branch is on the default branch, asked against `<default-ref>` (§3.2). B2 asks it of `HEAD`, `phase-handoff.md` §2.2 rule 3 of the ref it resolves, and §3.4's retry of each branch it lists. The first test that holds answers **merged**; none holding answers **unmerged**:
+
+1. **A merge or a fast-forward:** `git -C "$SPECS_PATH" merge-base --is-ancestor <ref> <default-ref> 2>/dev/null` exits 0.
+2. **A rebase merge:** `git -C "$SPECS_PATH" cherry <default-ref> <ref>` prints at least one line, every line it prints begins `-`, which marks a commit whose change the default branch already holds under another commit, and `git -C "$SPECS_PATH" rev-list --merges <default-ref>..<ref>` prints nothing. `cherry` passes over merge commits, so a branch whose only change of its own sat in a merge commit would otherwise read merged, and B2 would name `branch -D` on it.
+3. **A squash merge:** with `<base>` from `git -C "$SPECS_PATH" merge-base <ref> <default-ref>`, the patch id of the branch's whole change, the first field of `git -C "$SPECS_PATH" diff --no-renames <base> <ref> | git -C "$SPECS_PATH" patch-id --stable`, is the first field of a line of `git -C "$SPECS_PATH" log -p --no-renames --no-merges <base>..<default-ref> | git -C "$SPECS_PATH" patch-id --stable`, the default branch's own commits since. An empty change has no patch id and is never found merged this way.
+
+Ancestry alone was the test, and a pull request merged by squash or by rebase never passes it: the branch read unmerged forever, so B3 kept a resumed run on a branch whose pull request had closed, and the handoff reused it and called `gh pr create` on it. All three tests read the branch at its tip, so a commit made on it after its pull request merged makes it read unmerged again; §4 step 5's deleted-branch state then reports that commit's push rather than letting it recreate the branch.
+
+**Under `specs_git: misrooted` (§3.1) the table classifies and moves nothing.** Take the first matching row exactly as above: §3.2's fetch has already refreshed `<default-ref>` for B2's merge test, and `branch-key` below resolves B3 and B4 unchanged. Then act on that row without writing. B1 and B3 stay where they are, as they always do. B2 and B4 stay too, with no `switch`, no `pull --ff-only` and no `branch -d`. Each prints one line in place of its action: `Specs preflight: staying on <branch> — specs_git: misrooted, so no branch is switched (it would have <switched to <default> and deleted it, as it is merged | switched to <default>, as no key of this run names it>)`. A B3 here keeps the checkout on the caller's own branch exactly as it does on a correct `$SPECS_PATH`, so `workflows-core:phase-handoff` §3.3 row B still passes a resumed run. Where HEAD is on no plugin branch, no row applies here, as always.
 
 **Branch key resolution — `branch-key <branch>`.** The branch's key is resolved
 *against the run key set*, by testing the keys the run already holds. It is never
@@ -613,24 +665,45 @@ to state.
      `$SPECS_PATH` is the repository it runs from (§4.1) — and a push would
      publish whatever its owner has not pushed yet, a code commit their own
      push choice kept local included.
-   - **There is somewhere to push.** The branch has a remote upstream where
-     `git -C "$SPECS_PATH" for-each-ref --format='%(upstream:remotename)' refs/heads/<branch>`
-     prints a name other than `.`, which marks an upstream in this same
-     repository, and `git -C "$SPECS_PATH" config branch.<branch>.merge` prints
-     `refs/heads/<branch>`; an upstream under another branch's name, which a
-     branch cut from the default branch can inherit, counts as none. The
-     remote is the upstream's, else `origin`, which must exist:
-     `git -C "$SPECS_PATH" remote get-url origin` exits 0.
+   - **There is somewhere to push.** The remote is `origin`, the one every
+     other step of this reference and of `phase-handoff.md` reads (its §2.1
+     says why `origin` specifically), and it must exist:
+     `git -C "$SPECS_PATH" remote get-url origin` exits 0. Three more states
+     leave nowhere to push, each with its own §6 line:
+     - **The user's git configuration pushes this branch elsewhere:**
+       `git -C "$SPECS_PATH" config --get branch.<branch>.pushRemote`, or,
+       where that prints nothing, `git -C "$SPECS_PATH" config --get remote.pushDefault`,
+       prints a remote other than `origin` — a fork's checkout is the usual
+       case. A push to `origin` would override that configuration, and a push
+       to the other remote would publish to a repository nothing here reads,
+       so neither happens. The branch's upstream does not decide the remote:
+       it once did, and on a fork whose default branch tracked the parent
+       repository's, the push went to the parent while every other step read
+       `origin`.
+     - **The remote deleted the branch:** the branch's upstream is `origin`'s
+       branch of the same name —
+       `git -C "$SPECS_PATH" for-each-ref --format='%(upstream)' refs/heads/<branch>`
+       prints `refs/remotes/origin/<branch>` — and
+       `git -C "$SPECS_PATH" ls-remote --exit-code --heads origin refs/heads/<branch>`
+       exits 2, which says the remote holds no such branch. A remote that
+       renamed its default branch, and a pull request merged with *delete
+       branch on merge*, both leave this state, and a push would recreate the
+       branch the remote removed. Any other exit, an unreachable remote
+       included, does not count here; the push then reports its own failure
+       (step 6).
+     - **The remote refused this branch before:**
+       `git -C "$SPECS_PATH" config --get branch.<branch>.workflowsPushRefused`
+       prints the date step 6 recorded when `origin` refused a push to it.
    - **`push-scope`: every commit the push would publish is a session-file
-     commit.** First the base the push is measured against: on a branch with a
-     remote upstream, that upstream,
-     `git -C "$SPECS_PATH" for-each-ref --format='%(upstream)' refs/heads/<branch>`,
-     where `git -C "$SPECS_PATH" show-ref --verify -q <ref>` finds it; else
-     `refs/remotes/<remote>/<branch>`, where `show-ref` finds that; else none,
-     as on the local-only branch a failed `push -u` leaves behind, or one whose
-     remote ref was pruned. The commits the push would publish are
-     `git -C "$SPECS_PATH" rev-list --reverse HEAD --not <base>`, or, with no
-     base, `git -C "$SPECS_PATH" rev-list --reverse HEAD --not --remotes=<remote>`,
+     commit.** First the base the push is measured against:
+     `refs/remotes/origin/<branch>`, the ref this push updates, where
+     `git -C "$SPECS_PATH" show-ref --verify -q refs/remotes/origin/<branch>`
+     finds it; else none, as on the local-only branch a failed `push -u` leaves
+     behind, or one whose remote ref was pruned. The commits the push would
+     publish are
+     `git -C "$SPECS_PATH" rev-list --reverse refs/heads/<branch> --not <base>`,
+     or, with no base,
+     `git -C "$SPECS_PATH" rev-list --reverse refs/heads/<branch> --not --remotes=origin`,
      every commit on no ref of that remote this repository has fetched. Never
      measure against the remote as a whole where the branch has a base: a
      default branch fast-forwarded locally onto a pushed `prd/` branch holds
@@ -652,22 +725,52 @@ to state.
      it.
 
    Where all three hold, push this branch alone:
-   `git -C "$SPECS_PATH" push -u <remote> <branch>`, without `-u` where the
-   branch tracks a branch in this repository (`.`), so that setting stands.
-   Never a bare `git push`: under `push.default=matching`, or a
+   `git -C "$SPECS_PATH" push --porcelain -u origin <branch>`, with `-u` only
+   where the branch has no upstream, or one on a remote under another branch's
+   name, which a branch cut from the default branch can inherit; a same-name
+   upstream on any remote, and any upstream in this repository (`.`), stand as
+   they are.
+   `--porcelain` is what step 6 reads its outcome from. Never a bare `git push`: under `push.default=matching`, or a
    `remote.<name>.push` refspec, it pushes other branches too, whose commits
    this step never measured.
-6. **Failure at any step is reported, never fatal.**
-   - An auth failure, or a remote that cannot be reached → report; the commit
-     stays local. §3.4 retries the push on the next run.
-   - **Non-fast-forward rejection** → report; **never force-push**, never
+6. **Failure at any step is reported, never fatal.** A push's outcome is read
+   from git's own status for the ref in its `--porcelain` output — a line
+   beginning `!`, then the refspec, then a bracketed summary — never from the
+   server's message text.
+   - **`origin` refused the update** (`[remote rejected]`): a rule on the
+     server — branch protection, a ruleset, a policy or a hook — takes no push
+     of this branch. Every reason git prints after that status, in
+     parentheses, counts, save one that begins with the words git or a host
+     gives a push a concurrent update or a server fault broke —
+     `failed to update ref`, `failed to lock`, `cannot lock ref` (a host's form
+     of the first), `unpacker error`, `missing necessary objects` — which is a
+     push that failed for another reason (below) and is retried. The hosts word
+     their refusals differently (`… hook declined`, `push declined due to
+     repository rule violations`, a policy code), so the few transient reasons
+     are what is matched, and everything else is a refusal. Record it,
+     `git -C "$SPECS_PATH" config branch.<branch>.workflowsPushRefused <YYYY-MM-DD>`,
+     and report; the commit stays local, and step 5 pushes this branch no more
+     until the record is removed. Retrying would be refused the same way on
+     every run while the commits pile up on the local branch. Name what to do
+     wherever this step runs: at the end of a run, §6's *push refused* line;
+     inside §3.4's flush or retry, which print no §6 line, as
+     `Specs preflight: <branch> not pushed — origin refused it (<the reason in parentheses>), and this is recorded so no later run pushes it; <the remedy §6's push-refused line gives>`.
+     A rule that refuses what a commit carries, rather than the branch it goes
+     to, refuses the branch that remedy names too; removing the record is then
+     how the user lets a later run try again.
+   - An auth failure, a remote that cannot be reached, a transient refusal
+     above, or any other failure → report; the commit stays local. §3.4 retries the push on the next run.
+   - **Non-fast-forward rejection** (`[rejected]`) → report; **never force-push**, never
      auto-rebase mid-run. The commit stays local, and no later run's retry
      succeeds until the user takes in the remote's commits: the branch has
      diverged, a fast-forward cannot reach it, and this reference never
      rebases. Name the commands that do it wherever this step runs: at the
      end of a run, in §6's *push rejected* line; inside §3.4's flush or retry,
      which print no §6 line, as
-     `Specs preflight: <branch> not pushed — <remote>'s <branch> has commits it lacks; run git -C "<SPECS_PATH>" pull --rebase --autostash <remote> <branch>, then git -C "<SPECS_PATH>" push <remote> <branch>`.
+     `Specs preflight: <branch> not pushed — origin's <branch> has commits it lacks; run git -C "<SPECS_PATH>" switch <branch>, git -C "<SPECS_PATH>" pull --rebase --autostash origin <branch> and git -C "<SPECS_PATH>" push origin <branch>, then switch back to <the branch the run stands on>`.
+     The switch is not optional: §3.4's retry pushes branches the run is not
+     standing on, and a `pull` run from another branch merges `<branch>`'s
+     remote commits into that one instead.
    - **`index.lock` present** (a concurrent session holds the repo) → report and
      skip; **never delete a lock file**. The artifacts stay in the working tree
      and the next run's preflight flushes them.
@@ -768,7 +871,7 @@ If ignored: nothing is lost — your files stay uncommitted, and this run's
 
 Found:    <SPECS_PATH> is on branch `<branch>`, which is neither the default
           branch (`<default>`) nor a plugin branch (idea/ prd/ ard/ spec/
-          design/ ready/ brd/ frames/).
+          design/ ready/ brd/ frames/ kb/).
 Not done: the preflight did not switch away from it — the plugin manages only
           branches it created. This run's artifacts WILL be committed on
           `<branch>`, and not pushed.
@@ -777,6 +880,22 @@ Fix:      # only if that is the wrong place for them:
 If ignored: the artifacts land on `<branch>` and reach the maintainer when you
           push or merge that branch.
 ```
+
+**On a direct `/dev-workflows:implement` run from inside the specs repository**
+(§4.1) the run changes code here, so it cuts a branch of its own (its
+Pre-Phase 3), and the artifacts are committed on that branch, whose name the
+preflight does not know yet — or on `<branch>`, where the run stops before it
+cuts one. Its *Not done* line reads instead `the preflight did not switch away
+from it — the plugin manages only branches it created. This run changes code
+here, so its artifacts WILL be committed on the branch it cuts for that, or on
+<branch> if it stops first, and not pushed unless that branch's name carries one
+of this plugin's prefixes.`; its *Fix* line reads `# nothing to do here: they
+reach the maintainer when that branch is pushed or merged`; and its *If
+ignored* line reads `the artifacts stay on that branch until it is pushed or
+merged.` The code commit carries only the session files it takes; the rest
+are committed after the run's push choice, by `commit-artifacts`, so pushing
+at that choice does not take them (`/dev-workflows:implement` Phase 0 says
+the same).
 
 ## 6. The outcome line
 
@@ -790,8 +909,12 @@ report was composed earlier.
 | Committed and pushed | `Specs repo: committed <sha7> (<N> files) on <branch> — pushed` |
 | Committed, not pushed — not a branch this plugin pushes (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: this plugin pushes only the default branch and the branches it creates, so <branch> is yours to push; the artifacts reach the maintainer when you push or merge it` |
 | Committed, not pushed — no remote to push to (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: this specs repo has no origin remote` |
+| Committed, not pushed — the user's git configuration pushes the branch elsewhere (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: your git configuration pushes <branch> to <remote>, not to origin, which is the remote this plugin reads; push it where it belongs yourself` |
+| Committed, not pushed — the remote deleted the branch (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: origin has no <branch> any more, so it was renamed or deleted there, and this step does not recreate it; the commit stays on local <branch>` — and, where `<branch>` is the default branch, `; if origin renamed it, git -C "<SPECS_PATH>" remote set-head origin --auto names the new one` |
+| Committed, not pushed — origin refused the branch before (§4 step 5) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: origin refused pushes to <branch> on <date> (branch.<branch>.workflowsPushRefused), and every commit since stays on local <branch>; to land the commits on local <branch>, put them on a branch of their own and open a pull request from it — git -C "<SPECS_PATH>" branch session-files-<YYYY-MM-DD> <branch> && git -C "<SPECS_PATH>" push -u origin session-files-<YYYY-MM-DD> — then, standing on <branch>, git -C "<SPECS_PATH>" reset --keep origin/<branch>; once origin takes pushes to <branch> again, git -C "<SPECS_PATH>" config --unset branch.<branch>.workflowsPushRefused` |
+| Committed, push refused by origin (§4 step 6) | `Specs repo: committed <sha7> (<N> files) on <branch> — push REFUSED by origin (<the reason in parentheses>): a rule there takes no push of <branch>, so this is recorded and no later run pushes it; to land the commits on local <branch>, put them on a branch of their own and open a pull request from it — git -C "<SPECS_PATH>" branch session-files-<YYYY-MM-DD> <branch> && git -C "<SPECS_PATH>" push -u origin session-files-<YYYY-MM-DD> — then, standing on <branch>, git -C "<SPECS_PATH>" reset --keep origin/<branch>; once origin takes pushes to <branch> again, git -C "<SPECS_PATH>" config --unset branch.<branch>.workflowsPushRefused` |
 | Committed, not pushed — the push would publish other commits (§4 step 5 `push-scope`) | `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: the push would also publish commits that are not this plugin's session-file commits, the oldest <sha7> <subject>, which carries <path>; push <branch> once they are ready to go, and the artifacts go with them` — or, where that oldest commit is this run's own, `Specs repo: committed <sha7> (<N> files) on <branch> — not pushed: a pre-commit hook added <path>[, and <M-1> more] to this commit, so it carries more than this plugin's session files; check what the hook added before you push <branch>` |
-| Committed, push rejected as non-fast-forward (§4 step 6) | `Specs repo: committed <sha7> (<N> files) on <branch> — push REJECTED: <remote>'s <branch> has commits this one lacks, and no run takes them in for you; run git -C "<SPECS_PATH>" pull --rebase --autostash <remote> <branch>, then git -C "<SPECS_PATH>" push <remote> <branch>` |
+| Committed, push rejected as non-fast-forward (§4 step 6) | `Specs repo: committed <sha7> (<N> files) on <branch> — push REJECTED: origin's <branch> has commits this one lacks, and no run takes them in for you; run git -C "<SPECS_PATH>" pull --rebase --autostash origin <branch>, then git -C "<SPECS_PATH>" push origin <branch>` |
 | Committed, push failed for any other reason | `Specs repo: committed <sha7> (<N> files) on <branch> — push FAILED (<reason>); the commit is local and the next run retries it` |
 | Nothing to commit | `Specs repo: no session artifacts to commit` |
 | Locked | `Specs repo: skipped — another session holds the repo (index.lock); the next run picks the artifacts up` |
