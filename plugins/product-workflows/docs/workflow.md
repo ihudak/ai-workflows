@@ -43,6 +43,8 @@ flowchart TD
     createvi -->|prd.md| createard
     createard -.->|merged ARD| harvest
     harvest -.->|team decisions| createard
+    harvest -.->|team decisions| specify
+    harvest -.->|team decisions| design
     createvi -->|prd.md| epics
     createard -->|ard.md| epics
     epics -->|epic.md| specify

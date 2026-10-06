@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.22.2] — 2026-10-06
+## [1.23.1] — 2026-10-06
 
 ### Fixed
 Ten edge cases in the specs-repository git steps, closed on 2026-10-05 as outside the population then measured, are reopened: nine are fixed, and the tenth has an interim fix.
@@ -18,6 +18,11 @@ Ten edge cases in the specs-repository git steps, closed on 2026-10-05 as outsid
 - **`branch-naming` no longer adopts a remote's name or the plugin's prefixes.** §2.3 read `git branch -a`, which prints `origin/…` and `origin`, and it counted `prd/`, `spec/` and the other plugin prefixes, so a code branch cut inside the specs repository could get one. It now lists each branch once, with the remote's name taken off, and never counts those nine, and §4's snippet now applies §2.3's threshold, which it skipped.
 - **The `/feedback` and `/frames` pages say when the preflight is silent** — on a clean default branch only where no other plugin branch holds a session-file commit it tries to push, which it now does.
 - **G2's notice is true on a direct `/implement` run from inside the specs repository**, where the artifacts land on the code branch the run cuts, or on the branch it started from only where it stops before cutting one; its prefix list now names `kb/`.
+
+## [1.23.0] — 2026-10-06
+
+### Added
+- **`architecture-grounding` has two more consumers**, `/product-workflows:specify` and `/dev-workflows:design`, and its § Consumption says what each records: a specification only the conflicts its grill cannot settle, as open questions naming the governing artifact; a design a link citation where a binding artifact settles a decision and an advisory `Architecture deviation:` line for each departure (`dev-workflows:design-format`). On the BRD route a frozen `[VD#n]` or `[CD#n]` that conflicts with a reference is never re-grilled. `architecture-grounder` takes `own_sources` — the ARD files whose decisions the caller already holds — and skips exactly their records, so `/specify` and `/design` pass `own_key: null` and a sibling Epic's decisions still ground them; `/create-ard` keeps `own_key`. The OFF reason, § Consumption and the refresh invariant no longer speak only of ARDs and architects. `architecture-grounder`, `architecture-kb` and the docs name the three readers.
 
 ## [1.22.1] — 2026-10-05
 

@@ -5,11 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.19.2] — 2026-10-06
+## [3.20.1] — 2026-10-06
 
 ### Fixed
 - **`/epics`' ALWAYS line describes where the session files go.** It said `commit-artifacts` was "bounded to plugin-created branches", which describes switching, not where it commits or what it pushes; it now says it switches only branches the plugin created and pushes only what `workflows-core:specs-repo-git` §4 step 5 allows.
-- **The session-cost and session-feedback pages name every case in which the session files are not pushed**, now including a fork's push configuration, a branch the remote deleted, and a push the server refused (`workflows-core` 1.22.2).
+- **The session-cost and session-feedback pages name every case in which the session files are not pushed**, now including a fork's push configuration, a branch the remote deleted, and a push the server refused (`workflows-core` 1.23.1).
+
+## [3.20.0] — 2026-10-06
+
+### Added
+- **`/specify` grounds its work in the architecture repository and the team's harvested decisions**, as `/create-ard` does, on both routes. Phase 1 resolves architecture grounding once and shows the `architecture grounding:` and `team decisions:` lines; after the code scan, `workflows-core:architecture-grounder` (on the §2 Opus chain) returns what binds the work and what conflicts with it, and the grill consumes the digest by grill-rank — what binds is a confirmation that cites it, a challenge competes for an existing question slot. The grounder skips exactly the records of the ARDs Phase 2.5 already read — `own_sources`, passed with `own_key: null` — so on the BRD route too the slice's inherited decisions are not counted twice, while a sibling Epic's ground the run. `spec-reviewer` is told these open questions are advisory and never a finding, and the pull-request body carries the governance-conflict count. A conflict the grill cannot settle is an open question naming the governing artifact; on the BRD route a frozen `[VD#n]` or `[CD#n]` that conflicts with a reference is never re-grilled, the same rule `/create-ard` keeps. `--no-arch` turns it off. A repository at `arch_toplevel` is scanned with refresh off.
+- **`/harvest-decisions`, the knowledge base's generated `README.md` and the docs name all three commands that ground on the records** — `/create-ard`, `/specify` and `/dev-workflows:design`; the next harvest rewrites that README once, on a `kb/` branch like any other change.
+
+### Fixed
+- **An ARD deviation about a technology the radar does not list** names `radar: <technology> not listed` in place of a link (`ard-format.md` § Architecture governance), since the grounder returns no governing artifact for it; and the create-ard page says the grounder runs when either the architecture repository or the team's knowledge base resolves.
 
 ## [3.19.1] — 2026-10-05
 

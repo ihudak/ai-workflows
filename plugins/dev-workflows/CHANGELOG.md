@@ -5,13 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.14.1] — 2026-10-06
+## [4.15.1] — 2026-10-06
 
 ### Fixed
 - **A direct `/implement` run from inside the specs repository commits its spec and design notes with the code.** `$SPECS_PATH` is the repository it changes there, so a note step 7.5 wrote was both in `$SPECS_PATH` and in this repository, and Phase 4.5 would have cut a specs branch in that repository before Phase 4.6 committed the code. Phase 4.5 now hands off nothing on that run, and a stop after the review says the note was committed with the code rather than left uncommitted; the command page says so too.
-- **The environment page's list of specs-repository branch prefixes names `kb/`**, and says the identity guess from existing branches never counts those prefixes (`workflows-core` 1.22.2).
+- **The environment page's list of specs-repository branch prefixes names `kb/`**, and says the identity guess from existing branches never counts those prefixes (`workflows-core` 1.23.1).
 - **The ALWAYS lines of `/implement`, `/ready`, `/upgrade` and `/vuln` describe where the session files go.** They said `commit-artifacts` was "bounded to plugin-created branches", which describes switching, not where it commits or what it pushes; they now say it switches only branches the plugin created and pushes only what `workflows-core:specs-repo-git` §4 step 5 allows.
-- **The session-cost and session-feedback pages name every case in which the session files are not pushed**, now including a fork's push configuration, a branch the remote deleted, and a push the server refused (`workflows-core` 1.22.2).
+- **The session-cost and session-feedback pages name every case in which the session files are not pushed**, now including a fork's push configuration, a branch the remote deleted, and a push the server refused (`workflows-core` 1.23.1).
+
+## [4.15.0] — 2026-10-06
+
+### Added
+- **`/design` grounds its work in the architecture repository and the team's harvested decisions**, as `/product-workflows:create-ard` does. Phase 1 resolves architecture grounding once and shows the `architecture grounding:` and `team decisions:` lines; after the code scan, `workflows-core:architecture-grounder` (on the §2 Opus chain) returns what binds the work and what conflicts with it, and the grill consumes the digest by grill-rank. A design cites a binding artifact as a link and records each departure as an advisory `Architecture deviation:` line under `## Risks & mitigations` (`design-format.md` § Architecture governance), which never blocks handoff and is never a reviewer finding — `design-reviewer` is told so. The grounder skips exactly the records of the ARDs Phase 2.5 already read (`own_sources`, passed with `own_key: null`), and the pull-request body carries the governance-citation count and every deviation line verbatim. `--no-arch` turns it off; a repository at `arch_toplevel` is scanned with refresh off. The plugin now reads `$ARCHITECTURE_REPO_PATH`, documented on its environment page and in getting started.
 
 ## [4.14.0] — 2026-10-05
 

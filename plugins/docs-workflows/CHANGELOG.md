@@ -9,7 +9,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed
 - **The ALWAYS lines of `/document`, `/release-notes`, `/docs-init`, `/docs-brand` and `/docs-audit` describe where the session files go.** They said `commit-artifacts` was bounded "to plugin-created branches", which describes switching, not where it commits or what it pushes; they now say it switches only branches the plugin created and pushes only what `workflows-core:specs-repo-git` §4 step 5 allows.
-- **The session-cost page names every case in which the session files are not pushed**, now including a fork's push configuration, a branch the remote deleted, and a push the server refused (`workflows-core` 1.22.2).
+- **The session-cost page names every case in which the session files are not pushed**, now including a fork's push configuration, a branch the remote deleted, and a push the server refused (`workflows-core` 1.23.1).
 
 ## [1.9.0] — 2026-10-05
 

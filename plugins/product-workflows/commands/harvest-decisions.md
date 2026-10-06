@@ -1,12 +1,12 @@
 ---
 name: harvest-decisions
-description: Harvest the decisions of every ARD on the specs repository's default branch into the team architecture knowledge base at $SPECS_PATH/architecture/ — one record per [AD#N], reconciled on every run (superseded, withdrawn, applied in, deviated in), never deleted, handed off by pull request. Deterministic — a bundled script, no model judgment. /create-ard grounds on the live records.
+description: Harvest the decisions of every ARD on the specs repository's default branch into the team architecture knowledge base at $SPECS_PATH/architecture/ — one record per [AD#N], reconciled on every run (superseded, withdrawn, applied in, deviated in), never deleted, handed off by pull request. Deterministic — a bundled script, no model judgment. /create-ard, /specify and /design ground on the live records.
 allowed-tools: Read Bash Glob Grep Skill
 ---
 
 Harvest the ARDs' decisions into the team architecture knowledge base: $ARGUMENTS
 
-`/harvest-decisions` turns every `[AD#N]` in the ARDs on the specs repository's default branch into a record under `$SPECS_PATH/architecture/` — the folder `/create-ard`'s architecture grounding reads as its team root — and reconciles the records it wrote before: a decision its own ARD supersedes or withdraws, or that a later ARD names in `**Supersedes:**`, changes status; the designs and other artifacts citing it are listed on it; nothing is ever deleted. The format is `workflows-core:architecture-kb` (Skill(skill: "workflows-core:reference", args: "architecture-kb")). The work is the bundled script `${CLAUDE_PLUGIN_ROOT}/scripts/architecture-harvest.py`, which reads the default branch only, so a run on an unchanged branch changes nothing. This command dispatches no agent, routes no model and emits no cost or feedback entry.
+`/harvest-decisions` turns every `[AD#N]` in the ARDs on the specs repository's default branch into a record under `$SPECS_PATH/architecture/` — the folder the architecture grounding of `/create-ard`, `/specify` and `/dev-workflows:design` reads as its team root — and reconciles the records it wrote before: a decision its own ARD supersedes or withdraws, or that a later ARD names in `**Supersedes:**`, changes status; the designs and other artifacts citing it are listed on it; nothing is ever deleted. The format is `workflows-core:architecture-kb` (Skill(skill: "workflows-core:reference", args: "architecture-kb")). The work is the bundled script `${CLAUDE_PLUGIN_ROOT}/scripts/architecture-harvest.py`, which reads the default branch only, so a run on an unchanged branch changes nothing. This command dispatches no agent, routes no model and emits no cost or feedback entry.
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
@@ -38,7 +38,7 @@ Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/architecture-harvest.py" --specs "$S
 
 ## Phase 3 — Hand off
 
-Invoke Skill(skill: "workflows-core:reference", args: "phase-handoff") and run its §4.3 push-target probe, then present its **advisory** array verbatim — no command stops on the knowledge base; `/create-ard` reads the working copy:
+Invoke Skill(skill: "workflows-core:reference", args: "phase-handoff") and run its §4.3 push-target probe, then present its **advisory** array verbatim — no command stops on the knowledge base; `/create-ard`, `/specify` and `/dev-workflows:design` read the working copy:
 
 `choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (no command stops on this; what reads it reads your working copy)", "Cancel"]`
 
@@ -50,4 +50,4 @@ Execute `commit-artifacts` (Skill(skill: "workflows-core:reference", args: "spec
 
 ## Final report
 
-The plan's counts and ids; every problem with its fix; the `Phase handoff:` outcome line; the `Specs repo:` outcome line; then `The next /product-workflows:create-ard grounds on <live> live records once this is on <default-ref>.`
+The plan's counts and ids; every problem with its fix; the `Phase handoff:` outcome line; the `Specs repo:` outcome line; then `The next /product-workflows:create-ard, /product-workflows:specify or /dev-workflows:design grounds on <live> live records once this is on <default-ref>.`

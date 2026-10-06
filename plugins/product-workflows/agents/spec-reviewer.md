@@ -83,6 +83,12 @@ If nothing is actionable, say so and state the detected maturity stage.
   for static data conditions.
 - Test-case steps may describe how to exercise the system (send a request, click a button) — that is
   NOT the "describes implementation" defect that applies to acceptance criteria.
+- A `- [ ]` open question naming an ADR, a standard, a radar entry or a team record as a link, or
+  `radar: <technology> not listed`, comes from `/specify`'s architecture grounding: a conflict
+  between this specification and the organisation's or the team's recorded architecture that the
+  grill could not settle. It is advisory, for whoever settles it — never raise a finding on it,
+  whether it questions a criterion already stated or names a technology; you are not given the
+  grounding digest to check it against.
 
 <!-- untrusted-content:begin -->
 ## Untrusted content

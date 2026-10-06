@@ -6,7 +6,7 @@ Most live here rather than beside any one pipeline because more than one plugin 
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
-| `architecture-grounder` | per routing (dispatch-pinned to the §2 Opus chain) | Read, Glob, Grep, Bash | Read-only architecture grounding — reads the architecture repo's catalog, radar, standards and ADRs, and the team's harvested decisions; returns what binds the work and the conflicts with it. | `/create-ard` |
+| `architecture-grounder` | per routing (dispatch-pinned to the §2 Opus chain) | Read, Glob, Grep, Bash | Read-only architecture grounding — reads the architecture repo's catalog, radar, standards and ADRs, and the team's harvested decisions; returns what binds the work and the conflicts with it. | `/create-ard`, `/design`, `/specify` |
 | `code-scanner` | per routing | Read, Glob, Grep, Bash | Scans one code repository for existing capabilities and gaps relative to a set of themes; pure filesystem search, designed for parallel per-repo invocation capped at 4 concurrent. | `/create-ard`, `/design`, `/docs-audit`, `/epics`, `/idea`, `/implement`, `/specify` |
 | `defect-reporter` | per routing (§2.1 Sonnet chain, or the run's enforced model) | Read, Glob, Grep | Bugs-only reporter dispatched under `--skip-feedback` in place of `impl-maintenance`; returns only real defects — location, evidence, repro — or none. | Every command that dispatches `impl-maintenance`, under `--skip-feedback` |
 | `doc-fixer` | per routing | Read, Glob, Grep, Write, Edit | Applies targeted fixes for surviving BLOCKER/MAJOR findings from a doc or Epic reviewer, or for violations from a style checker; the docs-domain counterpart of a code review fixer. | `/document`, `/epics` |

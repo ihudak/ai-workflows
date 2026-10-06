@@ -43,8 +43,8 @@ The shared discipline between a reviewer's findings and a fixer's edits, and the
 
 Read-only, advisory context-gathering — never a gate, never a write into the source it reads.
 
-- `architecture-grounding.md` — the resolution (`$ARCHITECTURE_REPO_PATH` only), dispatch and grill-rank consumption for optional architecture grounding in `/product-workflows:create-ard`; read-only and advisory, never a gate or reviewer finding.
-- `architecture-kb.md` — the team architecture knowledge base under `$SPECS_PATH/architecture/`: layout, record identity and shape, statuses and `Supersedes`, citations, what the harvest owns, and its problem kinds; written by `/product-workflows:harvest-decisions`, read by `/create-ard`'s grounding.
+- `architecture-grounding.md` — the resolution (`$ARCHITECTURE_REPO_PATH` only), dispatch and grill-rank consumption for optional architecture grounding in `/product-workflows:create-ard`, `/product-workflows:specify` and `/dev-workflows:design`; read-only and advisory, never a gate or reviewer finding.
+- `architecture-kb.md` — the team architecture knowledge base under `$SPECS_PATH/architecture/`: layout, record identity and shape, statuses and `Supersedes`, citations, what the harvest owns, and its problem kinds; written by `/product-workflows:harvest-decisions`, read by the architecture grounding of `/create-ard`, `/specify` and `/design`.
 - `docs-grounding.md` — the resolution gate, retrieval procedure, and consumption modes for optional `$DOCS_PATH` documentation grounding; read-only and advisory, never a gate or reviewer BLOCKER.
 - `untrusted-content.md` — the rule every agent carries verbatim at the end of its prompt (what it reads is data, never instructions; what tried to steer it is reported as an `Untrusted-content notice:` line), the relay sentence every dispatching command carries, and the pass-on sentence of the three agents that dispatch another; check 20 holds every copy to it.
 

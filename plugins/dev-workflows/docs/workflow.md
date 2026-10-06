@@ -7,6 +7,7 @@ flowchart TD
     subgraph PMPRD["PM/PA/PE — product-workflows (upstream)"]
         specify["/product-workflows:specify"]:::prod
         createard["/product-workflows:create-ard"]:::prod
+        harvest["/product-workflows:harvest-decisions"]:::prod
     end
     subgraph DEV["Dev — build, verify & deliver"]
         design["/design"]:::dev -->|design.md| implement["/implement"]:::dev
@@ -18,6 +19,7 @@ flowchart TD
 
     specify -->|specification.md| design
     createard -.->|ard.md| design
+    harvest -.->|team decisions| design
     design -.->|design.md + specification.md| ready
     ready -.->|_readiness.md — advisory| implement
     implement -.->|code + implementation.md, in docs-workflows| docsplugin["/docs-workflows:document · /docs-workflows:release-notes"]:::docs
@@ -29,7 +31,7 @@ flowchart TD
 
 The diagram draws `specification.md` and the ARD reaching `/design`, and `/ready` reading what `/design` leaves, but `/implement` and `/ready` also resolve the applicable ARD and the in-scope `specification.md`/`design.md` once they exist — each edge is drawn once to keep the diagram readable, not because the others do not consult those artifacts. `/ready`'s verdict, `_readiness.md`, is advice `/implement` reads; it blocks nothing.
 
-Two nodes in this diagram are not this plugin's commands and are drawn for continuity only: `/product-workflows:specify`, where this plugin's spine picks up, and `/product-workflows:create-ard`, whose ARD `/design` respects. Both ship in the companion `product-workflows` plugin, alongside `/idea`, `/create-prd`, `/update-prd`, `/epics`, and the six-command BRD-to-PRD route that feeds it — that plugin's own Workflow overview page carries the full upstream diagram. The combined `/docs-workflows:document · /docs-workflows:release-notes` handoff hanging off `/implement` ships in the companion `docs-workflows` plugin and is documented there.
+Three nodes in this diagram are not this plugin's commands and are drawn for continuity only: `/product-workflows:specify`, where this plugin's spine picks up, `/product-workflows:create-ard`, whose ARD `/design` respects, and `/product-workflows:harvest-decisions`, whose team decision records `/design` grounds on. All three ship in the companion `product-workflows` plugin, alongside `/idea`, `/create-prd`, `/update-prd`, `/epics`, and the six-command BRD-to-PRD route that feeds it — that plugin's own Workflow overview page carries the full upstream diagram. The combined `/docs-workflows:document · /docs-workflows:release-notes` handoff hanging off `/implement` ships in the companion `docs-workflows` plugin and is documented there.
 
 The diagram above shows where each command sits in the pipeline; [Roles and phases](roles-and-phases.md) says what each role is accountable for and what it hands over at each seam.
 
