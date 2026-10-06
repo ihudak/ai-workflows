@@ -26,6 +26,7 @@ flowchart TD
     subgraph PA["PA — architecture (optional)"]
         createard["/create-ard"]:::prod
         harvest["/harvest-decisions"]:::prod
+        promote["/promote-decisions"]:::prod
     end
     subgraph PE["PE — breakdown & specification"]
         epics["/epics"]:::prod
@@ -44,6 +45,7 @@ flowchart TD
     createard -.->|merged ARD| harvest
     harvest -.->|team decisions| createard
     harvest -.->|team decisions| specify
+    harvest -.->|team records| promote
     harvest -.->|team decisions| design
     createvi -->|prd.md| epics
     createard -->|ard.md| epics
@@ -99,7 +101,7 @@ Five nodes in the diagram are not this plugin's commands and are drawn for conti
 
 The diagram above shows where each command sits in the pipeline; [Roles and phases](roles-and-phases.md) says what each role is accountable for and what it hands over at each seam.
 
-**None of this plugin's own fifteen commands is known to collide with a Claude Code built-in today**, so every one of them works either way, bare or `product-workflows:`-qualified. The one cross-plugin command this diagram draws for continuity that does collide, `/docs-workflows:release-notes`, is qualified for that reason; it ships in the companion `docs-workflows` plugin.
+**None of this plugin's own sixteen commands is known to collide with a Claude Code built-in today**, so every one of them works either way, bare or `product-workflows:`-qualified. The one cross-plugin command this diagram draws for continuity that does collide, `/docs-workflows:release-notes`, is qualified for that reason; it ships in the companion `docs-workflows` plugin.
 
 ## Parameters at the BRD-to-PRD handoff
 

@@ -4,7 +4,7 @@
 
 ## `$SPECS_PATH`
 
-- **`$SPECS_PATH`** — the shared, team-visible repository holding every PRD, ARD, specification, idea, and BRD folder these fifteen commands read and write, and the one place any of them commits its own session bookkeeping; required for every keyed run, with no built-in default.
+- **`$SPECS_PATH`** — the shared, team-visible repository holding every PRD, ARD, specification, idea, and BRD folder these sixteen commands read and write, and the one place any of them commits its own session bookkeeping; required for every keyed run, with no built-in default.
 
 **Resolution.** Read straight from the shell environment — there is no config file, CLI flag, or derived fallback that feeds it. Every git call against it is `git -C "$SPECS_PATH"`, never a `cd`, so your current working directory is untouched.
 

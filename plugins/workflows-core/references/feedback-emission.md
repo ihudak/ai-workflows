@@ -1,6 +1,6 @@
 # Session Feedback Emission — Shared Reference
 
-Single source of truth for the plugin family's session-feedback emitter. Every capture surface — the automatic maintenance phase of all twenty-five workflow commands, or, under `--skip-feedback`, its bugs-only replacement, and the `/feedback` and `/prompt*` commands — cites this file and executes its steps inline. The orchestrator owns every prompt; this reference owns the entry format, the persistence ladder, dedup/attribution, the plugin-facing predicate, and the caller contract.
+Single source of truth for the plugin family's session-feedback emitter. Every capture surface — the automatic maintenance phase of all twenty-six workflow commands, or, under `--skip-feedback`, its bugs-only replacement, and the `/feedback` and `/prompt*` commands — cites this file and executes its steps inline. The orchestrator owns every prompt; this reference owns the entry format, the persistence ladder, dedup/attribution, the plugin-facing predicate, and the caller contract.
 
 **Purpose.** Capture friction and improvement signals about the **plugin
 family itself**, and defects in the ai-containers environment the family runs in (§4), and persist them per-PRD into the **specs repo** so the plugin
@@ -217,7 +217,7 @@ current working directory, where it is not the specs repository. The artifacts a
 run's terminal `commit-artifacts` step
 (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §4).
 
-### `emit-auto` — automatic callers (the twenty-five commands' maintenance phases, §1)
+### `emit-auto` — automatic callers (the twenty-six commands' maintenance phases, §1)
 
 Inputs: the `impl-maintenance` **Lessons Learned report**, `command` (the exact
 slash-command name), `key` (or `null`), `source` (`specs | directory | none`).

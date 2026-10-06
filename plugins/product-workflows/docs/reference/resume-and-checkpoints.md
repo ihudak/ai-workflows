@@ -41,7 +41,7 @@ The commands that print a suggested `/rename <KEY>-<slug>-<role>` line are the P
 
 ## Mid-phase checkpoints
 
-None of `product-workflows`'s fifteen commands is long enough to carry its own mid-phase checkpoint the way the companion plugin's `/dev-workflows:implement` does — each authoring or grounding run finishes in one pass and reaches the end-of-run write described above.
+None of `product-workflows`'s sixteen commands is long enough to carry its own mid-phase checkpoint the way the companion plugin's `/dev-workflows:implement` does — each authoring or grounding run finishes in one pass and reaches the end-of-run write described above.
 
 ## The contract
 

@@ -6,7 +6,7 @@ Shared foundation for the `dev-workflows` plugin family: the addressing grammar 
 
 ## What it does
 
-Most of this plugin is not a command at all. It is the corpus a sibling plugin reads: 35 files under `references/`, reached through the `reference` loader skill, the `model-routing` skill that resolves the classification rules, and eight agents dispatched by name. The seven commands it does ship are the ones that belong to no single pipeline — they act on the plugin family itself, or on the specs tree rather than on a phase of it.
+Most of this plugin is not a command at all. It is the corpus a sibling plugin reads: 36 files under `references/`, reached through the `reference` loader skill, the `model-routing` skill that resolves the classification rules, and eight agents dispatched by name. The seven commands it does ship are the ones that belong to no single pipeline — they act on the plugin family itself, or on the specs tree rather than on a phase of it.
 
 | Group | Commands | What it does |
 |-------|----------|--------------|
@@ -25,7 +25,7 @@ Most of this plugin is not a command at all. It is the corpus a sibling plugin r
 | [Getting started](docs/getting-started.md) | Install, environment variables, and what this plugin is for. |
 | [Workflow overview](docs/workflow.md) | Where these seven commands sit relative to the pipeline they serve. |
 | [Roles and phases](docs/roles-and-phases.md) | The cost-attribution phases these commands reach, and how. |
-| [Agents](docs/reference/agents.md) | The eight agents this plugin bundles and who dispatches them. |
+| [Agents](docs/reference/agents.md) | The ten agents this plugin bundles and who dispatches them. |
 | [References](docs/reference/references.md) | The reference corpus under `references/`. |
 | [Environment](docs/reference/environment.md) | Every environment variable this plugin reads. |
 | [Hooks](docs/reference/hooks.md) | The two session-wide hooks this plugin bundles, and why they live here. |

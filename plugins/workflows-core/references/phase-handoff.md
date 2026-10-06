@@ -41,7 +41,7 @@ Gate fails on path / repo / permission grounds → report that the deliverable i
 
 Intended name: `<prefix>/<KEY>-<slug>`, where `<prefix>` is the caller's own (§2.9) and `<KEY>-<slug>` come from **the resolved feature folder the deliverable was written into** — never re-derived from the item title. Folder resolution already tolerates a human-adjusted slug and a stray `-`/`_` after the key, and re-deriving would produce a branch name that disagrees with the directory it commits.
 
-**The keyless form — `kb` only.** `/harvest-decisions` writes no feature folder, so its intended name is `kb/harvest-<YYYY-MM-DD>`, today's date. That command stops before writing anything while any `kb/` branch is unmerged into `<default-ref>` (its Phase 0) — a second harvest would re-propose what the first carries, and the two pull requests would collide on `index.yaml` — so a name that exists here is a merged one: rule 3's reuse never matches a `kb/` branch, and rule 4's lowest free suffix applies.
+**The keyless form — `kb` only.** `/harvest-decisions` and `/promote-decisions` write no feature folder, so their intended names are `kb/harvest-<YYYY-MM-DD>` and `kb/promote-<YYYY-MM-DD>`, today's date. Each stops before writing anything while any `kb/` branch is unmerged into `<default-ref>` (its Phase 0) — a second run would re-propose what the first carries, and the two pull requests would collide on the files both write — so a name that exists here is a merged one: rule 3's reuse never matches a `kb/` branch, and rule 4's lowest free suffix applies.
 
 Collision is normal, not exceptional: `_readiness.md` is overwritten on every `/ready` run, and a `/create-prd` re-run after its pull request merged wants the same name again. `gh pr create` fails on an already-merged branch, and force-pushing and `branch -D` are both forbidden (§1 rule 4). So:
 
@@ -316,7 +316,7 @@ The classes as the tree stands, each derived from the consumer rather than asser
 | `idea.md`, the PRD, the ARD, `specification.md`, `design.md`, `grounding/code-grounding.md`, `decisions.md`, `customer-review-prompt-<YYYYMMDD>.md` | gated | each is named in a §3.4 row |
 | `grounding/design-grounding.md` | gated | named in §3.4's conditional `/brd-split` row. **Conditionally gated is still gated for this table's purpose**: a producer cannot know whether the consuming BRD will have frame sets on disk when the consumer runs, so it takes the gated class and the array that goes with it. A class that varied per run would have the producer guessing at the consumer's future state |
 | `_readiness.md` | advisory | `/implement` Phase 0.5 reads a co-located copy and surfaces a one-line advisory on a `NOT-SUPPORTED`/`PARTIAL` verdict, explicitly never blocking. §3.4 names no gate on it |
-| `architecture/**` | advisory | `/create-ard`, `/specify` and `/design` read the working copy as architecture grounding's team root (`architecture-grounding.md`) and never gate on it. §3.4 names no gate on it |
+| `architecture/**` | advisory | `/create-ard`, `/specify`, `/design` and `/promote-decisions` read the working copy as architecture grounding's team root (`architecture-grounding.md`) and never gate on it. §3.4 names no gate on it |
 | `customer-sent-<YYYYMMDD>/`'s files | advisory | `/brd-reconcile` Phase 0 step 8 reads them on a `--sent` run, in place of the `bundle-<YYYYMMDD>/` manifest, so a returned quotation resolves against what was actually sent. §3.4 names no gate on them. **Handed off as one literal path per file, never as the directory** (§2.3) |
 | `customer-review-<YYYYMMDD>.md` | advisory | `/brd-reconcile` reads the copy it canonicalised, and a later run of it reads one already on file for its overwrite-refusal test. Neither is a gate, and §3.4's `/brd-reconcile` row targets the *prompt*, not the review |
 | `interview/round-<N>.md` | gated | `/brd-package` step 7 executes `require-on-main` on each round the register's records or the held `[C]` entries in `interview/customer-questions.md` name, before reading it, and stops on a round holding a deferred question |
@@ -446,7 +446,7 @@ No two of the four are interchangeable, and each wrong pick misleads in its own 
 
     choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase does not stop on this, but until this is on main it might not read your copy)", "Cancel"]
 
-**advisory** (§4.1 bullet 3) — nothing gates it, but a command reads it. `_readiness.md` is the case, and `/ready` the producer; `architecture/**`, and `/harvest-decisions`:
+**advisory** (§4.1 bullet 3) — nothing gates it, but a command reads it. `_readiness.md` is the case, and `/ready` the producer; `architecture/**`, and `/harvest-decisions` and `/promote-decisions`:
 
     choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (no command stops on this; what reads it reads your working copy)", "Cancel"]
 
