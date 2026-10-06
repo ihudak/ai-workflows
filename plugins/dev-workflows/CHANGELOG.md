@@ -5,14 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.17.0] — 2026-10-06
+## [4.18.0] — 2026-10-06
 
 ### Changed
-- **`/implement` hands the bug it fixed to `impl-maintenance`.** Where the run confirmed a bug's cause (its `Confirmed cause:` line), the maintenance handoff's key events carry the bug and that cause as a miss the project's own checks let through, so the Lessons Learned report asks what check or rule would have caught it (`workflows-core` 1.26.0).
+- **`/implement` hands the bug it fixed to `impl-maintenance`.** Where the run confirmed a bug's cause (its `Confirmed cause:` line), the maintenance handoff's key events carry the bug and that cause as a miss the project's own checks let through, so the Lessons Learned report asks what check or rule would have caught it (`workflows-core` 1.27.0).
 - **`bug-diagnosis`: a probe never writes a secret's value.** A probe that checks a credential, token, key or connection string records only `SET`, `EMPTY` or `UNSET`, and a length where that tells hypotheses apart, never the value and never a line that echoes it, as `env | grep` does: a probe's output lands in logs and CI output the redaction rule never reaches.
 
 ### Fixed
 - **The workflow page said only `/upgrade` collides with a Claude Code built-in.** Claude Code's `/design`, which makes a Design artifact, is switched on for some accounts, and where it is on the bare `/design` can reach it; the page says so, and names the companion `/workflows-core:feedback` beside `/workflows-core:statusline`. Getting-started's first run now types `/dev-workflows:design EPIC-98760`, with a line saying why.
+
+## [4.17.0] — 2026-10-06
+
+### Added
+- **`design.md` records how the team will know a change works once it is live.** A new `## Observability & release verification` section (`design-format.md` section 11) applies to a change to behaviour a deployed system runs: the signals that show it working or failing and whether each exists yet, their baseline and where it was read, the blast radius with the signal that would show each neighbour hurt, a post-release check for each delivered acceptance criterion, the alerts and service-level objectives it moves, and the threshold that triggers a rollback. An item that does not apply says why; any other change marks the section `_N/A_`. `/design`'s grill settles it before any code, and `design-reviewer` checks it — absent, or `_N/A_` on such a change, is MAJOR on a `MODERATE`+ design, and a rollback signal with no signal and threshold is MAJOR on a `SIGNIFICANT` or `HIGH-RISK` one.
+
+### Changed
+- **The maintenance phases of `/implement`, `/design`, `/vuln`, `/upgrade` and `/ready` name the unfollowed-rules subsection** among what `emit-auto` persists (workflows-core 1.26.0), and any Key observation naming an ai-containers defect, and the session-feedback page describes it.
 
 ## [4.16.0] — 2026-10-06
 

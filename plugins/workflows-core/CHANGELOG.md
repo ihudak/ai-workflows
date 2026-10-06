@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.26.0] — 2026-10-06
+## [1.27.0] — 2026-10-06
 
 ### Fixed
 - **A bare `/feedback` never reached this plugin's command.** Claude Code ships an always-on built-in `/feedback`, which sends feedback to Anthropic, and the built-in takes the bare name, which this release measured: with this plugin installed, a bare `/feedback` printed `Feedback / bug report submitted`. `next-phase-offer` rule 6, the `/feedback` and `/statusline` pages, the workflow page, the family map, the README and getting-started now name it among the collisions, and the `/feedback` page's synopsis reads `/workflows-core:feedback`. Claude Code's `/design`, which makes a Design artifact and is switched on for some accounts only, is named too, for `dev-workflows`' `/design`. `cost-emission`'s reason for namespaced cost boundaries, and its copy in `session-cost.py`, now name all four bare built-ins that collide, not `/upgrade` alone.
@@ -14,6 +14,15 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ### Changed
 - **`prd-format`: a guard criterion.** An acceptance criterion that keeps behaviour the story could break working as it does ("existing exports still open in version 1 readers") is a **guard**: true before and after, worded as one, and exempt from "false before its story ships". The rest of the rule — the rule, not an example; enough, no more — holds for it.
 - **`impl-maintenance` hears about the bug a run fixed.** Its handoff's key events now include a fixed bug and its confirmed cause, a miss the project's own checks let through, which step 6 sorts into a check or a written rule like any other.
+
+## [1.26.0] — 2026-10-06
+
+### Added
+- **`impl-maintenance` reports rules that existed but were not followed.** Where an instruction named a concrete action and the session broke it anyway, the agent never proposes the rule again: it finds why it was missed — not loaded, ambiguous, contradicted, or read but not applied — and proposes a fix for that cause (a check, a move or scope change, a rewrite, the pair fixed at the source), under a new `#### Rules that existed but were not followed` subsection. `emit-auto` persists a family plugin's own unfollowed rules as `category: unfollowed-rule`, a new value `/feedback` offers too; one in the target project stays in the in-session report.
+- **Pre-lint lists `## Observability & release verification`** among a design's scaled sections (dev-workflows 4.17.0).
+
+### Fixed
+- **The feedback projection tests a reference-doc gap against the plugin it is about.** §4's projection paragraph said "paths under `${CLAUDE_PLUGIN_ROOT}`", which in that file names `workflows-core`, contradicting §4's own reference-docs bullet; it now resolves the path as that bullet does.
 
 ## [1.25.0] — 2026-10-06
 

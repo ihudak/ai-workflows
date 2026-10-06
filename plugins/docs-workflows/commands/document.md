@@ -1175,9 +1175,9 @@ returns, project its plugin-facing slice into the specs repo by invoking `Skill(
 `command: /document (keyed mode)`, the run's `key` and `source`, and
 `plugin_version` (read from
 `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). `emit-auto` renders only
-the report's **Command workflow improvements**, **New agents / skills**, and
-plugin **Reference docs** sections plus the **Key observations** that
-triggered them (§4 plugin-facing predicate) — never target-project
+the report's **Command workflow improvements**, **New agents / skills**, plugin
+**Reference docs** and plugin **Rules that existed but were not followed** sections plus the **Key observations** that
+triggered them, and any naming an ai-containers defect (§4 plugin-facing predicate) — never target-project
 `CLAUDE.md`/hook advice — as `origin: auto` entries, dedupes by stable `id`
 (§3), resolves the target via the §2 specs-first ladder, and writes silently.
 List the persisted path (or "no plugin-facing signal — nothing persisted") in
@@ -1735,9 +1735,9 @@ returns, project its plugin-facing slice into the specs repo by invoking `Skill(
 `command: /document (direct mode)`, the run's `key` (usually `null` in
 direct mode) and `source`, and `plugin_version` (read from
 `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). `emit-auto` renders only
-the report's **Command workflow improvements**, **New agents / skills**, and
-plugin **Reference docs** sections plus the **Key observations** that
-triggered them (§4 plugin-facing predicate) — never target-project
+the report's **Command workflow improvements**, **New agents / skills**, plugin
+**Reference docs** and plugin **Rules that existed but were not followed** sections plus the **Key observations** that
+triggered them, and any naming an ai-containers defect (§4 plugin-facing predicate) — never target-project
 `CLAUDE.md`/hook advice — as `origin: auto` entries, dedupes by stable `id`
 (§3), resolves the target via the §2 specs-first ladder, and writes silently. A direct-mode run with no PRD folder takes that ladder's documentation branch (design D19): `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/feedback/<date>.md`, where `<docs-repo-slug>` is `workflows-core:specs-repo-git` §2.1's name for the write target Phase 0 step 3 resolved — filed against the repository this run edited, never left unfiled at the top of `$SPECS_PATH`. Under `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.1) it is not written there: the entry stays in the run's output.
 List the persisted path (or "no plugin-facing signal — nothing persisted") in

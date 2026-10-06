@@ -95,7 +95,8 @@ drafts, which are. Catching it at the source is cheaper than catching it downstr
   `## Architecture & components`, `## Interfaces / contracts`, `## Test strategy`, `## Out of scope`,
   `## Open questions`; header field `- **Open questions**:`.
 - Scaled sections `## Seams`, `## Data flow`, `## Error handling & edge cases`, `## Risks & mitigations`,
-  `## Migration / rollout / backward-compatibility` are present for MODERATE+ **or** replaced by a
+  `## Migration / rollout / backward-compatibility`, `## Observability & release verification` are
+  present for MODERATE+ **or** replaced by a
   one-line `_N/A — <why>_`; a MODERATE+ design missing `## Seams` with no `_N/A_` → MAJOR.
 - Report the `- [ ]` count under `## Open questions` (design-format requires 0 to hand off — the
   design-reviewer enforces the hard block; pre-lint only reports it).

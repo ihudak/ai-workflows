@@ -47,21 +47,26 @@ If no target is found, ask the user: "Please provide a PR number or source branc
 
 Run every git command with `git -C <repo_path>`.
 
-**The default branch.** Every diff below that names the default branch, and step 7's, writes it
+**The default branch.** Every diff below that names the default branch writes it
 as `main`. Where the repository's is another, put its **name** in `main`'s place:
 `origin/<name>...origin/<branch>`, `<name>...<branch>`, `<name>...remotes/origin/<branch>`. Take
 the name from `git -C <repo_path> symbolic-ref --quiet --short refs/remotes/origin/HEAD`, which
 prints `origin/<name>`: the name is what follows `origin/`. Without `--short` the command prints
-`refs/remotes/origin/<name>`, which is not a name — in `origin/main`'s place it makes
+`refs/remotes/origin/<name>`, which is not a name — put in `main`'s place in `origin/main`, it makes
 `origin/refs/remotes/origin/<name>`, a revision git rejects, and in the other two it turns a diff
-against the local branch into one against the remote. It counts only where
-`git -C <repo_path> rev-parse --verify --quiet origin/<name> >/dev/null` succeeds for that name: a
-remote that renamed its default branch, fetched with `--prune`, leaves `origin/HEAD` naming the
-branch it deleted, and each diff below that names the default branch would then name a ref git
-rejects. Where it prints nothing
-(`origin/HEAD` is unset), or a name that probe rejects, the name is `master` if
-`git -C <repo_path> rev-parse --verify --quiet origin/master >/dev/null` succeeds and the same
-probe of `origin/main` does not; otherwise it stays `main`.
+against the local branch into one against the remote.
+A remote that renamed its default branch, fetched with `--prune` as 2a does, leaves `origin/HEAD`
+naming the branch it deleted, while a clone made before the rename keeps that branch locally. So
+resolve the name after 2a's or 2b's fetch, whichever runs, just before the first diff that uses it,
+and check it against the form it goes into:
+- **In `origin/main`**, the name `symbolic-ref` printed counts only where
+  `git -C <repo_path> rev-parse --verify --quiet origin/<name> >/dev/null` succeeds. Where
+  `symbolic-ref` prints nothing (`origin/HEAD` is unset), or a name that probe rejects, the name is
+  `master` if the same probe of `origin/master` succeeds and that of `origin/main` does not;
+  otherwise it is `main`.
+- **In the two local forms**, the name `symbolic-ref` printed counts only where
+  `git -C <repo_path> rev-parse --verify --quiet refs/heads/<name> >/dev/null` finds the local branch,
+  and otherwise falls back the same way, probing `refs/heads/master` and `refs/heads/main`.
 
 #### 2a. If target is a PR number
 
@@ -103,6 +108,12 @@ git -C <repo_path> diff origin/main...origin/<branch> --name-only -- '*.md'
 If the diff is empty, also try `main...<branch>` (local branch) and
 `main...remotes/origin/<branch>`. Where the default branch is not `main`, each form takes its
 name instead (**The default branch**, above).
+
+#### 2c. Record the range
+
+Whichever of 2a and 2b found the files, record the diff range that found them as **range** —
+`<SHA>^..<SHA>`, or whichever `<base>...<head>` form returned them. Step 7 diffs against it, so a
+file's context never comes from a range other than the one that found it.
 
 ### 3. Filter to documentation files
 
@@ -217,11 +228,8 @@ prose-style-checker only."
 For each file with violations, get the actual diff hunks to show what changed:
 
 ```bash
-# For merged PRs:
-git -C <repo_path> diff <SHA>^..<SHA> -- <file>
-
-# For branches:
-git -C <repo_path> diff origin/main...origin/<branch> -- <file>
+# The range step 2c recorded:
+git -C <repo_path> diff <range> -- <file>
 ```
 
 This helps the user see violations in context of what was changed.
