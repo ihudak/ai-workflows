@@ -12,7 +12,9 @@
   renamed default branch, it passed, and every `origin/<default>` diff then failed; and a rejected
   name was replaced in the local forms too, where a pre-rename clone still has the branch. It now
   runs after 2a's or 2b's fetch, whichever runs, and checks the name against the form it goes into:
-  `origin/<name>` for the remote form, the local branch for the two local forms.
+  `origin/<name>` for the remote form, the local branch for the two local forms; otherwise a local
+  form now falls back by probing the local `master` and `main`, `origin/HEAD` unset included, where
+  0.5.2 probed origin's.
 
 ## 0.5.2 — 2026-10-05
 
