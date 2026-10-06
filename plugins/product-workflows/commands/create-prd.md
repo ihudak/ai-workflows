@@ -398,7 +398,7 @@ Use `choices` arrays; 2–4 options, and never author an "Other" option — the 
      ```
      choices: ["Stop; update the existing <KEY> with /product-workflows:update-prd <KEY> (seed ignored) (Recommended)", "Overwrite <KEY> as a new seeded PRD (archives the current one)", "Cancel"]
      ```
-   **The `/update-prd` option stops the run**, printing that command with this run's key for the user to type: `/update-prd` is typed-only (`disable-model-invocation`), so no run can start it.
+   **The `/update-prd` option stops the run**, printing that command with this run's key for the user to type: `/update-prd` is typed-only (`disable-model-invocation`), so this run cannot start it.
    **The archive every Overwrite option names is Phase 3's pre-write archive**, which copies the
    existing `prd.md` into `revisions/` immediately before this run's first write to it; nothing in
    this phase copies or moves it.
