@@ -13,6 +13,12 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ### Changed
 - **Shorter descriptions** for `/frames`, `architecture-grounder`, `code-scanner`, `docs-grounder` and the `model-routing` skill: what each does, when to use it and what it is not for, in about 500 characters. Claude Code shares one listing among every installed plugin's descriptions and shortens all of them once it overflows; the repository's `validate-catalog.py` now fails a description above 1,024 characters and warns above 600.
 
+## [1.27.1] — 2026-10-06
+
+### Changed
+- **The architecture grounder takes one skip input, `own_sources`.** `own_key` — every team record of the PRD the run authors for — was set by `/create-ard`, which skipped a sibling Epic's records with it and now passes `own_sources` instead (product-workflows 3.22.1); `/specify` and `/design`, which passed `own_key: null`, drop it. The digest now carries a team record's `prd:` and `source:` in each reference and `governing` block, so a caller can tell a decision of its own PRD from another's; § Consumption names this run's PRD on the BRD route as `prd_dir`'s key — the slice's — never the ARD's own `prd:`. A record whose `source:` is in `own_sources` is the caller's own decision or one it holds as an invariant, and is neither a reference nor a challenge.
+- **`architecture-kb.md`'s intro says `**Supersedes:**` replaces only a record of another PRD**; a record of the same PRD changes only by refining the ARD it came from.
+
 ## [1.27.0] — 2026-10-06
 
 ### Fixed
