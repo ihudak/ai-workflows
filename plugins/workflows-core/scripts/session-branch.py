@@ -227,9 +227,9 @@ def overlay_paths(root, tip):
 
 
 def placed_file(root):
-    """This worktree's record of the session files only the overlay holds that it has held: the
-    ones this script wrote or committed from it. Per worktree, since a second worktree of the same
-    repository never had them."""
+    """This worktree's record of the session files the overlay put in it: path -> the blob it last
+    wrote there or committed from there. Per worktree, since a second worktree of the same repository
+    holds a copy of its own, or none."""
     path = text(git(root, "rev-parse", "--git-path", "session-branch-placed.json"))
     return path if os.path.isabs(path) else os.path.join(root, path)
 
@@ -239,26 +239,39 @@ def read_placed(root):
         with open(placed_file(root), encoding="utf-8") as fh:
             value = json.load(fh)
     except (OSError, ValueError):
-        return set()
-    return set(value) if isinstance(value, list) else set()
+        return {}
+    return value if isinstance(value, dict) else {}
 
 
-def mark(root, add=(), drop=()):
-    placed = read_placed(root)
-    new = (placed | set(add)) - set(drop)
-    if new != placed:
+def mark(root, put=None, drop=(), clear=False):
+    placed = {} if clear else read_placed(root)
+    new = dict(placed)
+    new.update(put or {})
+    for p in drop:
+        new.pop(p, None)
+    if new != read_placed(root):
         path = placed_file(root)
         with open(path + ".tmp", "w", encoding="utf-8") as fh:
-            json.dump(sorted(new), fh)
+            json.dump(new, fh, sort_keys=True)
         os.replace(path + ".tmp", path)
 
 
-def not_in_place(w, h, path, placed):
-    """The working copy is HEAD's version, so the overlay simply is not in place here — a lift, a
-    second worktree, a switch back — and it holds nothing of the run's own. An absent file that HEAD
-    lacks counts only where this worktree never held it: one it held and lost is a run's deletion
-    (cost-emission §9 relocates a pending file, then deletes it)."""
-    return w == h and (w is not None or path not in placed)
+# The one session-file shape a run deletes: cost-emission §9 relocates a pending cost file into its
+# PRD's folder, then deletes it. Any other absent session file is an overlay not in place.
+RUN_DELETES = re.compile(r"^dev-workflows-cost/")
+
+
+def not_in_place(w, h, path, pv):
+    """True where the working copy holds nothing of the run's own: it is HEAD's version, or the
+    version this worktree was last given (pv) — the overlay is not in place here (a lift, a second
+    worktree, a switch back, a hand removal) or another worktree moved the branch on. An absent file
+    HEAD lacks is the run's own deletion only in RUN_DELETES' shape, and only where this worktree
+    held it."""
+    if w is not None:
+        return w == h or w == pv
+    if h is not None:
+        return False
+    return not (pv is not None and RUN_DELETES.search(path))
 
 
 def unpreserved(root, tip):
@@ -270,7 +283,7 @@ def unpreserved(root, tip):
     out = []
     for p in overlay_paths(root, tip):
         w, t = worktree_blob(root, p), blob(root, tip, p)
-        if w != t and not not_in_place(w, blob(root, "HEAD", p), p, placed):
+        if w != t and not not_in_place(w, blob(root, "HEAD", p), p, placed.get(p)):
             out.append(p)
     return out
 
@@ -325,16 +338,19 @@ def write_bytes(root, path, data):
 
 def align(root, old_tip, new_tip):
     """After the branch moved, bring each session file whose working copy still equals the old tip's
-    version to the new tip's. A working copy that differs holds entries of its own and is left."""
+    version, or the one this worktree was last given, to the new tip's. A working copy that differs
+    holds entries of its own and is left."""
     changed = [p for p in nul_list(git(root, "diff", "--name-only", "-z", "--no-renames", old_tip, new_tip))
                if classify(p)]
+    placed = read_placed(root)
     done = []
     for p in changed:
-        if worktree_blob(root, p) == blob(root, old_tip, p):
+        w = worktree_blob(root, p)
+        if w == blob(root, old_tip, p) or (w is not None and w == placed.get(p)):
+            new = blob(root, new_tip, p)
+            mark(root, put={p: new} if new else None, drop=() if new else [p])
             write_from(root, new_tip, p)
             done.append(p)
-    mark(root, add=[p for p in done if blob(root, new_tip, p) is not None],
-         drop=[p for p in done if blob(root, new_tip, p) is None])
     return done
 
 
@@ -461,10 +477,10 @@ def commit(root, branch, default_ref, message, include_ahead=False):
     kept = []
     for p in paths:
         w, t = worktree_blob(root, p), blob(root, tip, p)
-        if p in extra or (w != t and not not_in_place(w, blob(root, "HEAD", p), p, placed)):
+        if p in extra or (w != t and not not_in_place(w, blob(root, "HEAD", p), p, placed.get(p))):
             kept.append(p)
     paths = kept
-    added, dropped = [], []
+    added, dropped = {}, []
     committed, changed = None, []
     if paths:
         gitdir = text(git(root, "rev-parse", "--absolute-git-dir"))
@@ -480,7 +496,8 @@ def commit(root, branch, default_ref, message, include_ahead=False):
                     sha = text(git(root, "hash-object", "-w", "--path", p, "--", p))
                     mode_bits = "100755" if os.stat(full).st_mode & stat.S_IXUSR else "100644"
                     entries.append("%s %s\t%s" % (mode_bits, sha, p))
-                    added.append(p)
+                    if sha != blob(root, "HEAD", p):  # a stranded file HEAD holds is not the overlay's
+                        added[p] = sha
                 else:
                     entries.append("0 %s\t%s" % (ZERO, p))
                     dropped.append(p)
@@ -491,7 +508,7 @@ def commit(root, branch, default_ref, message, include_ahead=False):
             committed = commit_tree(root, tree, [tip], message)
             git(root, "update-ref", ref, committed, tip)
             changed = nul_list(git(root, "diff-tree", "--no-commit-id", "--name-only", "-r", "-z", tip, committed))
-        mark(root, add=added, drop=dropped)
+        mark(root, put=added, drop=dropped)
     try:
         synced = sync(root, branch, default_ref)
     except NotRun as e:  # the commit stands; the merge waits for a run that can make it
@@ -502,26 +519,32 @@ def commit(root, branch, default_ref, message, include_ahead=False):
 
 def lift(root, branch):
     """Return every dirty session file to HEAD, but only once each is preserved on <branch>: its
-    working copy is the tip's version. Otherwise list the ones that are not and discard nothing."""
+    working copy is the tip's version. Otherwise list the ones that are not and discard nothing.
+    The record of what this worktree holds is cleared first, so a lift that stops partway (a lock)
+    leaves no removed file that a later commit would read as a deletion; and every restore runs
+    before any removal."""
     tip = rev(root, "refs/heads/" + branch)
     held = unpreserved(root, tip)
     if held:
         return {"lifted": [], "unpreserved": held}
     dirty = dirty_session_paths(root)
+    mark(root, clear=True)
+    restore, remove = [], []
     for p in dirty:
         tracked = git(root, "ls-files", "--error-unmatch", "--", ":(literal)" + p, check=False).returncode == 0
-        if tracked or blob(root, "HEAD", p) is not None:
-            git(root, "restore", "--source=HEAD", "--staged", "--worktree", "--", ":(literal)" + p)
-        else:
-            os.remove(os.path.join(root, p))
-    mark(root, drop=dirty)
+        (restore if tracked or blob(root, "HEAD", p) is not None else remove).append(p)
+    for p in restore:
+        git(root, "restore", "--source=HEAD", "--staged", "--worktree", "--", ":(literal)" + p)
+    for p in remove:
+        os.remove(os.path.join(root, p))
     return {"lifted": dirty, "unpreserved": []}
 
 
 def put_back(root, branch, default_ref):
     """Merge <default-ref> into <branch>, then write each session file where the branch differs from
-    HEAD, or remove it where the branch lacks it. A working copy that is neither HEAD's nor the
-    branch's version is left as it is and listed in skipped."""
+    HEAD, or remove it where the branch lacks it, wherever the working copy is HEAD's version or the
+    one this worktree was last given. Any other working copy holds entries of its own: an appended
+    shape is union-merged with the branch's, any other is left and listed in skipped."""
     refuse_checked_out(root, branch)
     ref = "refs/heads/" + branch
     if rev(root, ref) is None:
@@ -533,25 +556,26 @@ def put_back(root, branch, default_ref):
     tip = rev(root, ref)
     placed = read_placed(root)
     written, removed, skipped, merged = [], [], [], []
-    for p in nul_list(git(root, "diff", "--name-only", "-z", "--no-renames", "HEAD", tip)):
+    paths = set(nul_list(git(root, "diff", "--name-only", "-z", "--no-renames", "HEAD", tip))) | set(placed)
+    for p in sorted(paths):  # the recorded ones too: a stale copy of a file neither HEAD nor the tip has
         if not classify(p):
             continue
-        want, have = blob(root, tip, p), worktree_blob(root, p)
+        want, have, head, pv = blob(root, tip, p), worktree_blob(root, p), blob(root, "HEAD", p), placed.get(p)
         if have == want:
             continue
-        if have is None and blob(root, "HEAD", p) is None and p in placed:
-            skipped.append(p)  # a file this worktree held and a run deleted: its commit records that
+        if have is None and head is None and pv is not None and RUN_DELETES.search(p):
+            skipped.append(p)  # a file this worktree held and a run deleted: §8.2's commit records that
             continue
-        if have != blob(root, "HEAD", p):
+        if have != head and not (have is not None and have == pv):
             if have is not None and want is not None and union_shaped(root, p):
                 write_bytes(root, p, union_copy(root, p, tip))
-                merged.append(p)
+                merged.append(p)  # unrecorded: it holds entries of its own for the next commit
             else:
                 skipped.append(p)
             continue
+        mark(root, put={p: want} if want else None, drop=() if want else [p])
         write_from(root, tip, p)
         (removed if want is None else written).append(p)
-    mark(root, add=written + merged, drop=removed)
     return {"written": written, "removed": removed, "merged": merged, "skipped": skipped, "sync": synced}
 
 
@@ -811,7 +835,7 @@ def selftest():
         # ---- commit ----------------------------------------------------------------------------
         with tempfile.TemporaryDirectory() as tmp:
             remote, a, b = world(tmp)
-            odd = "specifications/PRD-A-1-x/dev-workflows/cost/:odd name ü.md"
+            odd = "dev-workflows-cost/:odd pending ü.md"  # the shape a run deletes (cost-emission §9)
             a.write(FB, "## a1\nmine\n", append=True)
             a.write(odd, "cost\n")
             before = a.state()
@@ -967,6 +991,7 @@ def selftest():
             a.write(cost1, "cost one\n")
             a.write(rs, "pos: one\n")
             a.write(pr, "draft one\n")
+            a.write("dev-workflows-cost/pending-2026-10-06-00000001.md", "pending\n")
             a.run("commit", "--branch", "session/aa", *CM)
             tip = a.git("rev-parse", "session/aa")
             a.run("lift", "--branch", "session/aa")
@@ -976,12 +1001,15 @@ def selftest():
             a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
             check(a.read(cost1) == "cost one\n" and a.read(rs) == "pos: one\n" and a.read(pr) == "draft one\n"
                   and "## a1" in (a.read(FB) or ""), "…and put-back brings every file back")
-            os.remove(os.path.join(a.path, cost1))  # a run relocated it: a deletion of a file this worktree held
+            pend = "dev-workflows-cost/pending-2026-10-06-abcd1234.md"
+            a.write(pend, "pending\n")
+            a.run("commit", "--branch", "session/aa", *CM)
+            os.remove(os.path.join(a.path, pend))  # a run relocated it: a deletion of a file this worktree held
             got = a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
-            check(a.read(cost1) is None, "put-back never brings back a held file a run deleted (%r)" % got)
+            check(a.read(pend) is None, "put-back never brings back a held file a run deleted (%r)" % got)
             got = a.run("commit", "--branch", "session/aa", *CM)
-            check(cost1 in got.get("paths", []) and subprocess.run(["git", "-C", a.path, "cat-file", "-e",
-                  "session/aa:" + cost1], stderr=devnull).returncode != 0, "…and the next commit records it (%r)" % got)
+            check(pend in got.get("paths", []) and subprocess.run(["git", "-C", a.path, "cat-file", "-e",
+                  "session/aa:" + pend], stderr=devnull).returncode != 0, "…and the next commit records it (%r)" % got)
         with tempfile.TemporaryDirectory() as tmp:
             remote, a, b = world(tmp)
             a.write(FB, "## a1\n", append=True)
@@ -1016,6 +1044,78 @@ def selftest():
                   "lift restores a tracked deleted session file once its deletion is on the branch (%r)" % got)
             a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
             check(a.read(FB) is None, "…and put-back removes it again")
+        # a file a stranded commit added survives the remedy and a switch onto an older branch
+        s0 = "specifications/PRD-A-1-x/dev-workflows/cost/s0.md"
+        for how in ("remedy", "switch"):
+            with tempfile.TemporaryDirectory() as tmp:
+                remote, a, b = world(tmp)
+                a.git("branch", "prd/A-1-x")
+                a.write(s0, "cost zero\n")
+                a.commit_all("A-1 Add dev-workflows session artifacts (implement)")
+                a.run("commit", "--branch", "session/aa", *CM, "--include-ahead")
+                a.run("lift", "--branch", "session/aa")
+                if how == "remedy":
+                    a.git("reset", "-q", "--keep", "origin/main")
+                else:
+                    a.git("switch", "-q", "prd/A-1-x")
+                a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
+                a.run("commit", "--branch", "session/aa", *CM)
+                check(a.read(s0) == "cost zero\n" and a.git("show", "session/aa:" + s0) == "cost zero",
+                      "[%s] a file a stranded commit added stays on the branch and in the tree" % how)
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            sp = "dev-workflows-cost/pending-2026-10-05-00000002.md"
+            a.write(sp, "pending\n")
+            a.commit_all("NOISSUE Add dev-workflows session artifacts (feedback)")
+            a.run("commit", "--branch", "session/aa", *CM, "--include-ahead")
+            a.git("reset", "-q", "--keep", "origin/main")  # the remedy run without its lift
+            got = a.run("commit", "--branch", "session/aa", *CM)
+            check(a.git("show", "session/aa:" + sp) == "pending",
+                  "a stranded pending file the checkout dropped is never read as the run's relocation (%r)" % got)
+        # a lift a lock interrupts leaves nothing to be read as a deletion
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            pend = "dev-workflows-cost/pending-2026-10-06-abcd1234.md"
+            a.write(pend, "pending\n")
+            a.write(FB, "## a1\n", append=True)
+            a.run("commit", "--branch", "session/aa", *CM)
+            lock = os.path.join(a.path, ".git", "index.lock")
+            open(lock, "w").close()
+            got = a.run("lift", "--branch", "session/aa")
+            os.remove(lock)
+            a.run("commit", "--branch", "session/aa", *CM)
+            a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
+            check(got.get("_rc") == 2 and a.git("show", "session/aa:" + pend) == "pending" and a.read(pend) == "pending\n",
+                  "a lift a lock interrupts loses no file (%r)" % got)
+        # two worktrees holding the overlay: one's relocation is not undone by the other
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            pend = "dev-workflows-cost/pending-2026-10-06-abcd1234.md"
+            a.write(pend, "pending\n")
+            a.write(rs, "pos: a\n")
+            a.run("commit", "--branch", "session/aa", *CM)
+            w2 = Repo(os.path.join(tmp, "w2"))
+            a.git("worktree", "add", "-q", "-b", "prd/A-1-x", w2.path)
+            w2.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
+            os.remove(os.path.join(w2.path, pend))  # w2's run relocates the pending file
+            w2.write(rs, "pos: w2\n")
+            w2.run("commit", "--branch", "session/aa", *CM)
+            got = a.run("commit", "--branch", "session/aa", *CM)
+            check(subprocess.run(["git", "-C", a.path, "cat-file", "-e", "session/aa:" + pend], stderr=devnull).returncode != 0
+                  and a.git("show", "session/aa:" + rs) == "pos: w2",
+                  "another worktree's stale copies undo neither a relocation nor a newer resume.md (%r)" % got)
+            a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
+            check(a.read(pend) is None and a.read(rs) == "pos: w2\n", "…and put-back brings that worktree up to date")
+        # a session file removed by hand is put back, never deleted from the branch
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.write(cost1, "cost one\n")
+            a.run("commit", "--branch", "session/aa", *CM)
+            os.remove(os.path.join(a.path, cost1))  # rm, git clean, git stash -u
+            got = a.run("commit", "--branch", "session/aa", *CM)
+            a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
+            check(got.get("committed") is None and a.read(cost1) == "cost one\n",
+                  "a session file removed by hand is put back, not deleted from the branch (%r)" % got)
         # a catch-up that brings a teammate's new file: put-back merges rather than defers, and keeps it
         with tempfile.TemporaryDirectory() as tmp:
             remote, a, b = world(tmp)
