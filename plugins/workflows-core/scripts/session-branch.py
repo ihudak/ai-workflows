@@ -179,7 +179,7 @@ def mode(root, default):
 
 
 def ensure_attributes(root):
-    """Keep exactly one marked block of ATTRIBUTES in $GIT_DIR/info/attributes, other lines untouched."""
+    """Keep exactly one marked block of ATTRIBUTES in the repository's info/attributes, other lines untouched."""
     path = text(git(root, "rev-parse", "--git-path", "info/attributes"))
     if not os.path.isabs(path):
         path = os.path.join(root, path)
