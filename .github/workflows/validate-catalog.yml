@@ -145,3 +145,11 @@ jobs:
         # it. Its failure modes are silent: a missed citation shortlists the wrong records, and a
         # --mark that moves a byte makes the next harvest rewrite every marked record.
         run: python3 plugins/product-workflows/scripts/promotion-signals.py --selftest
+
+      - name: Self-test the session branch
+        # specs-repo-git §8 commits, merges and lifts session files with it on a specs
+        # repository whose default branch takes no push. Its failure mode loses entries: a
+        # merge that drops a teammate's appended line, or a lift that discards a file not
+        # yet on the session branch. Fixtures are built at run time, with a bare remote
+        # that refuses its default branch.
+        run: python3 plugins/workflows-core/scripts/session-branch.py --selftest
