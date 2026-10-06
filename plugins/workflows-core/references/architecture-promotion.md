@@ -81,7 +81,7 @@ A record with `promotion: proposed`, `accepted` or `covered` is never a candidat
 Run `python3 "<scripts>/promotion-signals.py" --specs "$SPECS_PATH" --ref "<default-ref>" --arch "<root>" --arch-ref "<arch-ref>" --specs-name '<§2's specs repository name>' --layout prd --reconcile`. Exit 2 → stop with its stderr line.
 
 - **`changes`:** each is a key change the run will write (§11.2). An ADR's status is read from its frontmatter, a `## Status` section or a `Status:` label; `accepted`, `approved`, `deprecated` and `superseded` count as accepted, `proposed` and `draft` as proposed, `rejected` and `withdrawn` as rejected. A live ADR wins over a rejected one, so a record re-proposed under `--reconsider` follows its new ADR.
-- **`superseding`:** the proposed ADRs whose supersede line names an ADR. Each named ADR has a successor pending, so §6 passes it to the scout and §7 never offers it again until that successor is decided.
+- **`superseding`:** the proposed ADRs whose supersede line names an ADR. Add the ADRs an open pull request proposes to supersede, from the lines its body carries (§11.1 step 6): `gh pr list -R <owner/repo of origin> --state open --search '"Proposes to supersede" in:body' --json url,body`, where `gh` is available. Each named ADR has a successor pending, so §6 passes it to the scout and §7 never offers it again until that successor is decided.
 - **`unresolved`:** each is a record marked `proposed` whose ADR is on no Origin line on `<arch-ref>`. Its pull request decides what happens. Search with `gh pr list -R <owner/repo of origin> --state all --search '<promoted_to> in:title,body' --json number,state,mergedAt,url`:
   - **Closed and unmerged:** the key is cleared (`"<id>": null` in the mark plan), so the record can be proposed again.
   - **Open:** it stays `proposed`, reported as `pending — <url>`.
@@ -206,7 +206,7 @@ A drafted ADR is checked against §2: given records, its Context opens with the 
 6. **Consent.** `choices: ["Push the branch and open a pull request (Recommended)", "Keep the commit local — I'll push it"]`. Then:
    - `git -C <root> push -u origin <branch>`;
    - `gh pr create -R <owner/repo> --head <branch> --title '<title>' --body-file <file>`, where `gh` is available and knows the remote's host; else print the compare URL, or, for a remote with no web host, the pushed branch and the body file's path.
-   - The body lists each draft (id, title, kind), the records it came from with their signals, each superseded ADR, and the decision-test line. Where the repository's own rules (its `AGENTS.md`, `CONTRIBUTING.md` or `CODEOWNERS`) route ADR changes to human review, the body ends by saying so.
+   - The body lists each draft (id, title, kind), the records it came from with their signals, a `Proposes to supersede: <ADR id>` line for each superseding draft, and the decision-test line. Where the repository's own rules (its `AGENTS.md`, `CONTRIBUTING.md` or `CODEOWNERS`) route ADR changes to human review, the body ends by saying so.
    - Never force-push; never merge.
 7. **Back to the default branch.** `git -C <root> switch <default branch>`, pushed or not: the commit stays on its branch, and the next run starts from the default branch §1.3 requires. The final report says to pull it once the pull request merges.
 
