@@ -40,7 +40,7 @@ A **read-only** clone of your shipped product documentation, used by `docs-groun
 
 ### `ARCHITECTURE_REPO_PATH`
 
-A **read-only** clone of your organisation's architecture repository — its technology radar, standards, principles, patterns and ADRs — used by `architecture-grounder` to ground an ARD, a specification or a design in what the organisation already requires. Never written, fetched or pulled; unset, the grounding is simply off.
+A **read-only** clone of your organisation's architecture repository — its technology radar, standards, principles, patterns and ADRs — used by `architecture-grounder` to ground an ARD, a specification or a design in what the organisation already requires. Never written, fetched or pulled; unset, the architecture-repository grounding is off, while the team's harvested decisions under `$SPECS_PATH/architecture/` are still read where they exist.
 
 ### `GIT_USER_INITIALS`
 
