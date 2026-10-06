@@ -221,7 +221,10 @@ def overlay_paths(root, tip):
 
 
 def unpreserved(root, tip):
-    """Overlay paths whose working copy (or its absence) is not the branch tip's version."""
+    """Overlay paths whose working copy (or its absence) is not the branch tip's version. With no
+    branch yet nothing is preserved: a deleted session file would otherwise compare equal to it."""
+    if tip is None:
+        return dirty_session_paths(root)
     return [p for p in overlay_paths(root, tip) if worktree_blob(root, p) != blob(root, tip, p)]
 
 
@@ -251,9 +254,14 @@ def align(root, old_tip, new_tip):
     return done
 
 
+def is_ancestor(root, a, b):
+    return git(root, "merge-base", "--is-ancestor", a, b, check=False).returncode == 0
+
+
 def sync(root, branch, default_ref):
-    """Bring <default-ref> into the session branch without a checkout: a fast-forward where the branch
-    holds nothing of its own, else merge-tree -X ours with the union driver; then align the overlay."""
+    """Bring <default-ref>, and the session branch's own copy on origin where one exists (pushed from
+    another clone), into the session branch without a checkout: a fast-forward where the branch holds
+    nothing of its own, else merge-tree -X ours with the union driver; then align the overlay."""
     ensure_attributes(root)
     ref = "refs/heads/" + branch
     base = rev(root, default_ref)
@@ -264,29 +272,42 @@ def sync(root, branch, default_ref):
               "deferred": [], "aligned": []}
     if tip is None:
         raise NotRun("no such branch: %s" % branch)
-    if git(root, "merge-base", "--is-ancestor", base, tip, check=False).returncode == 0:
+    sources = [(default_ref, base)]
+    upstream = rev(root, "refs/remotes/origin/" + branch)
+    if upstream is not None:
+        sources.append(("origin/" + branch, upstream))
+    if all(is_ancestor(root, c, tip) for _, c in sources):
         return result
     held = unpreserved(root, tip)
     if held:
         result["deferred"] = held
         return result
-    if git(root, "merge-base", "--is-ancestor", tip, base, check=False).returncode == 0:
-        git(root, "update-ref", ref, base, tip)
-        result.update(fast_forward=True, tip=base, aligned=align(root, tip, base))
-        return result
-    if not merge_tree_ok(root):
-        raise NotRun("this git cannot merge without a checkout (merge-tree --write-tree -X)")
-    r = git(root, "merge-tree", "--write-tree", "-X", "ours", tip, base, check=False)
-    lines = text(r).splitlines()
-    if r.returncode == 1:
-        result["conflict"] = sorted({ln.split("\t", 1)[1] for ln in lines[1:] if "\t" in ln})
-        return result
-    if r.returncode != 0 or not lines:
-        raise NotRun("merge-tree: %s" % r.stderr.decode("utf-8", "replace").strip()[:300])
-    merge = text(git(root, "commit-tree", lines[0], "-p", tip, "-p", base,
-                     "-m", "Merge %s into %s" % (default_ref, branch)))
-    git(root, "update-ref", ref, merge, tip)
-    result.update(merged=True, tip=merge, aligned=align(root, tip, merge))
+    start = tip
+    for name, c in sources:
+        if is_ancestor(root, c, tip):
+            continue
+        if is_ancestor(root, tip, c):
+            git(root, "update-ref", ref, c, tip)
+            tip = c
+            result["fast_forward"] = True
+            continue
+        if not merge_tree_ok(root):
+            raise NotRun("this git cannot merge without a checkout (merge-tree --write-tree -X)")
+        r = git(root, "merge-tree", "--write-tree", "-X", "ours", tip, c, check=False)
+        lines = text(r).splitlines()
+        if r.returncode == 1:
+            result["conflict"] = sorted(set(result["conflict"]) |
+                                        {ln.split("\t", 1)[1] for ln in lines[1:] if "\t" in ln})
+            continue
+        if r.returncode != 0 or not lines:
+            raise NotRun("merge-tree: %s" % r.stderr.decode("utf-8", "replace").strip()[:300])
+        merge = text(git(root, "commit-tree", lines[0], "-p", tip, "-p", c, "-m", "Merge %s into %s" % (name, branch)))
+        git(root, "update-ref", ref, merge, tip)
+        tip = merge
+        result["merged"] = True
+    result["tip"] = tip
+    if tip != start:
+        result["aligned"] = align(root, start, tip)
     return result
 
 
@@ -355,6 +376,47 @@ def commit(root, branch, default_ref, message, include_ahead=False):
     synced = sync(root, branch, default_ref)
     return {"committed": committed, "files": len(changed), "paths": changed, "created": created,
             "stranded": len(stranded), "ahead_not_session": not_session, "sync": synced}
+
+
+def lift(root, branch):
+    """Return every dirty session file to HEAD, but only once each is preserved on <branch>: its
+    working copy is the tip's version. Otherwise list the ones that are not and discard nothing."""
+    tip = rev(root, "refs/heads/" + branch)
+    held = unpreserved(root, tip)
+    if held:
+        return {"lifted": [], "unpreserved": held}
+    dirty = dirty_session_paths(root)
+    for p in dirty:
+        tracked = git(root, "ls-files", "--error-unmatch", "--", ":(literal)" + p, check=False).returncode == 0
+        if tracked or blob(root, "HEAD", p) is not None:
+            git(root, "restore", "--source=HEAD", "--staged", "--worktree", "--", ":(literal)" + p)
+        else:
+            os.remove(os.path.join(root, p))
+    return {"lifted": dirty, "unpreserved": []}
+
+
+def put_back(root, branch, default_ref):
+    """Merge <default-ref> into <branch>, then write each session file where the branch differs from
+    HEAD, or remove it where the branch lacks it. A working copy that is neither HEAD's nor the
+    branch's version is left as it is and listed in skipped."""
+    ref = "refs/heads/" + branch
+    if rev(root, ref) is None:
+        return {"written": [], "removed": [], "skipped": [], "sync": None}
+    synced = sync(root, branch, default_ref)
+    tip = rev(root, ref)
+    written, removed, skipped = [], [], []
+    for p in nul_list(git(root, "diff", "--name-only", "-z", "--no-renames", "HEAD", tip)):
+        if not classify(p):
+            continue
+        want, have = blob(root, tip, p), worktree_blob(root, p)
+        if have == want:
+            continue
+        if have != blob(root, "HEAD", p):
+            skipped.append(p)
+            continue
+        write_from(root, tip, p)
+        (removed if want is None else written).append(p)
+    return {"written": written, "removed": removed, "skipped": skipped, "sync": synced}
 
 
 def selftest():
@@ -456,213 +518,329 @@ def selftest():
             m.git("commit", "-q", "-m", "Squashed pull request")
         m.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
 
-    # ---- the classifier, and its parity with specs-repo-git §2.1 --------------------------
-    for path, want in [
-        ("specifications/PRD-A-1-x/dev-workflows/A-1-feedback.md", True),
-        ("specifications/PRD-A-1-x/EPIC-A-1-1-y/implementation.md", True),
-        ("specifications/PRD-A-1-x/follow-ups.md", True),
-        ("specifications/PRD-A-1-x/PRD-A-1-implementation-gaps.md", True),
-        ("documentation/acme-docs/dev-workflows/cost/s.md", True),
-        ("dev-workflows-cost/pending-2026-10-06-abcd1234.md", True),
-        ("specifications/BRD-B-1-y/brd/source/implementation.md", False),
-        ("specifications/PRD-A-1-x/attachments/release-notes.md", False),
-        ("specifications/PRD-A-1-x/Doc screenshots/release-notes.md", False),
-        ("specifications/PRD-A-1-x/prd.md", False),
-        ("README.md", False),
-    ]:
-        check(classify(path) == want, "classify(%r) should be %s" % (path, want))
-    with open(SPECS_REPO_GIT, encoding="utf-8") as fh:
-        ref_text = fh.read()
-    start = ref_text.index("2. Classify each reported path")
-    pats = re.findall(r"`(\^[^`]+)`", ref_text[start:ref_text.index("**OTHER** otherwise.", start)])
-    check(pats[:-1] == ARTIFACT, "the script's ARTIFACT patterns equal specs-repo-git §2.1's (%r)" % pats[:-1])
-    check(pats[-1:] == [EXCLUDED], "the script's EXCLUDED pattern equals specs-repo-git §2.1's (%r)" % pats[-1:])
+    def scenarios():
+        # ---- the classifier, and its parity with specs-repo-git §2.1 --------------------------
+        for path, want in [
+            ("specifications/PRD-A-1-x/dev-workflows/A-1-feedback.md", True),
+            ("specifications/PRD-A-1-x/EPIC-A-1-1-y/implementation.md", True),
+            ("specifications/PRD-A-1-x/follow-ups.md", True),
+            ("specifications/PRD-A-1-x/PRD-A-1-implementation-gaps.md", True),
+            ("documentation/acme-docs/dev-workflows/cost/s.md", True),
+            ("dev-workflows-cost/pending-2026-10-06-abcd1234.md", True),
+            ("specifications/BRD-B-1-y/brd/source/implementation.md", False),
+            ("specifications/PRD-A-1-x/attachments/release-notes.md", False),
+            ("specifications/PRD-A-1-x/Doc screenshots/release-notes.md", False),
+            ("specifications/PRD-A-1-x/prd.md", False),
+            ("README.md", False),
+        ]:
+            check(classify(path) == want, "classify(%r) should be %s" % (path, want))
+        with open(SPECS_REPO_GIT, encoding="utf-8") as fh:
+            ref_text = fh.read()
+        start = ref_text.index("2. Classify each reported path")
+        pats = re.findall(r"`(\^[^`]+)`", ref_text[start:ref_text.index("**OTHER** otherwise.", start)])
+        check(pats[:-1] == ARTIFACT, "the script's ARTIFACT patterns equal specs-repo-git §2.1's (%r)" % pats[:-1])
+        check(pats[-1:] == [EXCLUDED], "the script's EXCLUDED pattern equals specs-repo-git §2.1's (%r)" % pats[-1:])
 
-    # ---- dirty_session_paths -----------------------------------------------------------
-    with tempfile.TemporaryDirectory() as tmp:
-        remote, a, _ = world(tmp)
-        a.write(FB, "## a1\nmine\n", append=True)
-        a.write("specifications/PRD-A-1-zahlungsauslösung/dev-workflows/cost/s 1.md", "cost\n")
-        a.write("specifications/PRD-A-1-x/notes.md", "not a session file\n")
-        got = dirty_session_paths(a.path)
-        check(got == sorted([FB, "specifications/PRD-A-1-zahlungsauslösung/dev-workflows/cost/s 1.md"]),
-              "dirty_session_paths lists modified and untracked session files, odd names included (%r)" % (got,))
+        # ---- dirty_session_paths -----------------------------------------------------------
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, _ = world(tmp)
+            a.write(FB, "## a1\nmine\n", append=True)
+            a.write("specifications/PRD-A-1-zahlungsauslösung/dev-workflows/cost/s 1.md", "cost\n")
+            a.write("specifications/PRD-A-1-x/notes.md", "not a session file\n")
+            got = dirty_session_paths(a.path)
+            check(got == sorted([FB, "specifications/PRD-A-1-zahlungsauslösung/dev-workflows/cost/s 1.md"]),
+                  "dirty_session_paths lists modified and untracked session files, odd names included (%r)" % (got,))
 
-    # ---- mode and identity ---------------------------------------------------------------
-    with tempfile.TemporaryDirectory() as tmp:
-        remote, a, _ = world(tmp)
-        got = a.run("mode", "--default", "main")
-        check(got.get("mode") == "off" and got.get("source") is None, "mode is off by default (%r)" % got)
-        check(got.get("identity") is None and got.get("branch") is None, "no identity without a rung (%r)" % got)
-        a.git("config", "workflows.sessionBranch", "true")
-        got = a.run("mode", "--default", "main", env={"GIT_USER_INITIALS": "ab"})
-        check(got.get("mode") == "on" and got.get("source") == "config", "the opt-in key turns it on (%r)" % got)
-        check(got.get("branch") == "session/ab" and got.get("identity_rung") == "env", "the env rung names it (%r)" % got)
-        a.git("config", "--unset", "workflows.sessionBranch")
-        a.git("config", "branch.main.workflowsPushRefused", "2026-10-06")
-        a.git("config", "user.initials", "cd")
-        got = a.run("mode", "--default", "main")
-        check(got.get("mode") == "on" and got.get("source") == "refused", "a refusal record turns it on (%r)" % got)
-        check(got.get("branch") == "session/cd" and got.get("identity_rung") == "config", "user.initials names it (%r)" % got)
-        got = a.run("mode", "--default", "main", env={"GIT_USER_INITIALS": "Not Valid"})
-        check(got.get("identity") is None and got.get("identity_rung") == "env",
-              "an invalid first rung names nothing and does not fall through (%r)" % got)
-        a.git("config", "--unset", "user.initials")
-        for b in ("iv-gu/a", "iv-gu/b", "iv-gu/c", "prd/A-1-x", "spec/A-1-x", "session/zz", "session/yy"):
-            a.git("branch", b)
-        got = a.run("mode", "--default", "main")
-        check(got.get("identity") == "iv-gu" and got.get("identity_rung") == "inferred",
-              "the guess counts iv-gu and never prd, spec or session (%r)" % got)
-    with tempfile.TemporaryDirectory() as tmp:
-        remote, a, _ = world(tmp)
-        for b in ("prd/A-1-x", "prd/A-2-y", "prd/A-3-z", "session/a", "session/b", "session/c"):
-            a.git("branch", b)
-        got = a.run("mode", "--default", "main")
-        check(got.get("identity") is None, "plugin and session prefixes never become an identity (%r)" % got)
-    with open(BRANCH_NAMING, encoding="utf-8") as fh:
-        m = re.search(r"skip='\^\(([^)]*)\)\$'", fh.read())
-    check(m is not None and frozenset(m.group(1).split("|")) == IDENTITY_SKIP,
-          "IDENTITY_SKIP equals branch-naming §4's skip list (%r)" % (m.group(1) if m else None))
+        # ---- mode and identity ---------------------------------------------------------------
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, _ = world(tmp)
+            got = a.run("mode", "--default", "main")
+            check(got.get("mode") == "off" and got.get("source") is None, "mode is off by default (%r)" % got)
+            check(got.get("identity") is None and got.get("branch") is None, "no identity without a rung (%r)" % got)
+            a.git("config", "workflows.sessionBranch", "true")
+            got = a.run("mode", "--default", "main", env={"GIT_USER_INITIALS": "ab"})
+            check(got.get("mode") == "on" and got.get("source") == "config", "the opt-in key turns it on (%r)" % got)
+            check(got.get("branch") == "session/ab" and got.get("identity_rung") == "env", "the env rung names it (%r)" % got)
+            a.git("config", "--unset", "workflows.sessionBranch")
+            a.git("config", "branch.main.workflowsPushRefused", "2026-10-06")
+            a.git("config", "user.initials", "cd")
+            got = a.run("mode", "--default", "main")
+            check(got.get("mode") == "on" and got.get("source") == "refused", "a refusal record turns it on (%r)" % got)
+            check(got.get("branch") == "session/cd" and got.get("identity_rung") == "config", "user.initials names it (%r)" % got)
+            got = a.run("mode", "--default", "main", env={"GIT_USER_INITIALS": "Not Valid"})
+            check(got.get("identity") is None and got.get("identity_rung") == "env",
+                  "an invalid first rung names nothing and does not fall through (%r)" % got)
+            a.git("config", "--unset", "user.initials")
+            for b in ("iv-gu/a", "iv-gu/b", "iv-gu/c", "prd/A-1-x", "spec/A-1-x", "session/zz", "session/yy"):
+                a.git("branch", b)
+            got = a.run("mode", "--default", "main")
+            check(got.get("identity") == "iv-gu" and got.get("identity_rung") == "inferred",
+                  "the guess counts iv-gu and never prd, spec or session (%r)" % got)
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, _ = world(tmp)
+            for b in ("prd/A-1-x", "prd/A-2-y", "prd/A-3-z", "session/a", "session/b", "session/c"):
+                a.git("branch", b)
+            got = a.run("mode", "--default", "main")
+            check(got.get("identity") is None, "plugin and session prefixes never become an identity (%r)" % got)
+        with open(BRANCH_NAMING, encoding="utf-8") as fh:
+            m = re.search(r"skip='\^\(([^)]*)\)\$'", fh.read())
+        check(m is not None and frozenset(m.group(1).split("|")) == IDENTITY_SKIP,
+              "IDENTITY_SKIP equals branch-naming §4's skip list (%r)" % (m.group(1) if m else None))
 
-    # ---- sync ------------------------------------------------------------------------------
-    with tempfile.TemporaryDirectory() as tmp:
-        remote, a, b = world(tmp)
-        base = a.git("rev-parse", "HEAD")
-        a.git("branch", "session/aa", base)
-        # b moves main on the remote (a teammate's merged pull request)
-        b.write(FB, "## team\nfrom b\n", append=True)
-        b.write("specifications/PRD-A-1-x/dev-workflows/resume.md", "pos: team\n")
-        b.commit_all("team")
-        b.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
-        a.git("fetch", "-q", "origin")
-        got = a.run("sync", "--branch", "session/aa", "--default-ref", "origin/main")
-        check(got.get("fast_forward") is True and got.get("merged") is False,
-              "a branch with nothing of its own is fast-forwarded, not merged (%r)" % got)
-        check(a.git("rev-parse", "session/aa") == a.git("rev-parse", "origin/main"), "…to the default ref")
-        # a's own commit on the session branch, then the teammate moves main again
-        a.git("branch", "-f", "session/aa", "origin/main")
-        tmpidx = os.path.join(tmp, "idx")
-        env = {"GIT_INDEX_FILE": tmpidx}
-        a.git("read-tree", "session/aa", env=env)
-        mine = "---\nkey: A-1\n---\n\n## e0\nfirst\n## team\nfrom b\n## a1\nmine\n"
-        sha = subprocess.run(["git", "-C", a.path, "hash-object", "-w", "--stdin"], input=mine.encode(),
-                             stdout=subprocess.PIPE, check=True).stdout.decode().strip()
-        a.git("update-index", "--cacheinfo", "100644,%s,%s" % (sha, FB), env=env)
-        rsha = subprocess.run(["git", "-C", a.path, "hash-object", "-w", "--stdin"], input=b"pos: mine\n",
-                              stdout=subprocess.PIPE, check=True).stdout.decode().strip()
-        a.git("update-index", "--cacheinfo", "100644,%s,%s" % (rsha, "specifications/PRD-A-1-x/dev-workflows/resume.md"), env=env)
-        tree = a.git("write-tree", env=env)
-        c = a.git("commit-tree", tree, "-p", "session/aa", "-m", "mine")
-        a.git("update-ref", "refs/heads/session/aa", c)
-        a.write(FB, mine)  # the working copies a real commit leaves preserved
-        a.write("specifications/PRD-A-1-x/dev-workflows/resume.md", "pos: mine\n")
-        b.write(FB, "## team2\nagain\n", append=True)
-        b.write("specifications/PRD-A-1-x/dev-workflows/resume.md", "pos: team2\n")
-        b.commit_all("team2")
-        b.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
-        a.git("fetch", "-q", "origin")
-        before = a.state()
-        got = a.run("sync", "--branch", "session/aa", "--default-ref", "origin/main")
-        check(got.get("merged") is True and not got.get("conflict"), "a moved main is merged in (%r)" % got)
-        merged = a.git("show", "session/aa:" + FB)
-        check("## a1" in merged and "## team2" in merged and "## team\n" in merged,
-              "both sides' appended entries survive the union merge (%r)" % merged)
-        check(a.read(FB) == merged + "\n" and got.get("aligned") == [FB],
-              "the working copy that equalled the old tip now holds the merge (%r)" % got.get("aligned"))
-        check(a.git("show", "session/aa:specifications/PRD-A-1-x/dev-workflows/resume.md") == "pos: mine",
-              "an overwritten resume.md keeps the session side")
-        check(len(a.git("rev-list", "--parents", "-n", "1", "session/aa").split()) == 3, "the merge has two parents")
-        check(a.state() == before, "sync moves no checkout, index or HEAD")
-        attrs = a.read(".git/info/attributes")
-        check(attrs is not None and attrs.count(ATTR_BEGIN) == 1 and "**/dev-workflows/** merge=union" in attrs,
-              "the attributes block is written once (%r)" % attrs)
-        a.run("sync", "--branch", "session/aa", "--default-ref", "origin/main")
-        check(a.read(".git/info/attributes").count(ATTR_BEGIN) == 1, "and stays one block on a second sync")
-    with tempfile.TemporaryDirectory() as tmp:
-        remote, a, b = world(tmp)
-        a.git("branch", "session/aa")
-        a.write("specifications/PRD-A-1-x/follow-ups.md", "- [ ] x\n")  # dirty, and not on the branch
-        b.write(FB, "## team\n", append=True)
-        b.commit_all("team")
-        b.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
-        a.git("fetch", "-q", "origin")
-        tip = a.git("rev-parse", "session/aa")
-        got = a.run("sync", "--branch", "session/aa", "--default-ref", "origin/main")
-        check(got.get("deferred") == ["specifications/PRD-A-1-x/follow-ups.md"] and a.git("rev-parse", "session/aa") == tip,
-              "sync defers, moving nothing, while a dirty session file is not on the branch (%r)" % got)
-    with tempfile.TemporaryDirectory() as tmp:
-        remote, a, b = world(tmp)
-        a.git("branch", "session/aa")
-        env = {"GIT_INDEX_FILE": os.path.join(tmp, "i2")}
-        a.git("read-tree", "session/aa", env=env)
-        sha = subprocess.run(["git", "-C", a.path, "hash-object", "-w", "--stdin"], input=b"changed\n",
-                             stdout=subprocess.PIPE, check=True).stdout.decode().strip()
-        a.git("update-index", "--cacheinfo", "100644,%s,%s" % (sha, FB), env=env)
-        c = a.git("commit-tree", a.git("write-tree", env=env), "-p", "session/aa", "-m", "mod")
-        a.git("update-ref", "refs/heads/session/aa", c)
-        a.write(FB, "changed\n")
-        b.git("rm", "-q", FB)
-        b.git("commit", "-q", "-m", "delete feedback")
-        b.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
-        a.git("fetch", "-q", "origin")
-        got = a.run("sync", "--branch", "session/aa", "--default-ref", "origin/main")
-        check(got.get("conflict") == [FB] and a.git("rev-parse", "session/aa") == c,
-              "a modify/delete merge is reported and moves nothing (%r)" % got)
+        # ---- sync ------------------------------------------------------------------------------
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            base = a.git("rev-parse", "HEAD")
+            a.git("branch", "session/aa", base)
+            # b moves main on the remote (a teammate's merged pull request)
+            b.write(FB, "## team\nfrom b\n", append=True)
+            b.write("specifications/PRD-A-1-x/dev-workflows/resume.md", "pos: team\n")
+            b.commit_all("team")
+            b.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
+            a.git("fetch", "-q", "origin")
+            got = a.run("sync", "--branch", "session/aa", "--default-ref", "origin/main")
+            check(got.get("fast_forward") is True and got.get("merged") is False,
+                  "a branch with nothing of its own is fast-forwarded, not merged (%r)" % got)
+            check(a.git("rev-parse", "session/aa") == a.git("rev-parse", "origin/main"), "…to the default ref")
+            # a's own commit on the session branch, then the teammate moves main again
+            a.git("branch", "-f", "session/aa", "origin/main")
+            tmpidx = os.path.join(tmp, "idx")
+            env = {"GIT_INDEX_FILE": tmpidx}
+            a.git("read-tree", "session/aa", env=env)
+            mine = "---\nkey: A-1\n---\n\n## e0\nfirst\n## team\nfrom b\n## a1\nmine\n"
+            sha = subprocess.run(["git", "-C", a.path, "hash-object", "-w", "--stdin"], input=mine.encode(),
+                                 stdout=subprocess.PIPE, check=True).stdout.decode().strip()
+            a.git("update-index", "--cacheinfo", "100644,%s,%s" % (sha, FB), env=env)
+            rsha = subprocess.run(["git", "-C", a.path, "hash-object", "-w", "--stdin"], input=b"pos: mine\n",
+                                  stdout=subprocess.PIPE, check=True).stdout.decode().strip()
+            a.git("update-index", "--cacheinfo", "100644,%s,%s" % (rsha, "specifications/PRD-A-1-x/dev-workflows/resume.md"), env=env)
+            tree = a.git("write-tree", env=env)
+            c = a.git("commit-tree", tree, "-p", "session/aa", "-m", "mine")
+            a.git("update-ref", "refs/heads/session/aa", c)
+            a.write(FB, mine)  # the working copies a real commit leaves preserved
+            a.write("specifications/PRD-A-1-x/dev-workflows/resume.md", "pos: mine\n")
+            b.write(FB, "## team2\nagain\n", append=True)
+            b.write("specifications/PRD-A-1-x/dev-workflows/resume.md", "pos: team2\n")
+            b.commit_all("team2")
+            b.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
+            a.git("fetch", "-q", "origin")
+            before = a.state()
+            got = a.run("sync", "--branch", "session/aa", "--default-ref", "origin/main")
+            check(got.get("merged") is True and not got.get("conflict"), "a moved main is merged in (%r)" % got)
+            merged = a.git("show", "session/aa:" + FB)
+            check("## a1" in merged and "## team2" in merged and "## team\n" in merged,
+                  "both sides' appended entries survive the union merge (%r)" % merged)
+            check(a.read(FB) == merged + "\n" and got.get("aligned") == [FB],
+                  "the working copy that equalled the old tip now holds the merge (%r)" % got.get("aligned"))
+            check(a.git("show", "session/aa:specifications/PRD-A-1-x/dev-workflows/resume.md") == "pos: mine",
+                  "an overwritten resume.md keeps the session side")
+            check(len(a.git("rev-list", "--parents", "-n", "1", "session/aa").split()) == 3, "the merge has two parents")
+            check(a.state() == before, "sync moves no checkout, index or HEAD")
+            attrs = a.read(".git/info/attributes")
+            check(attrs is not None and attrs.count(ATTR_BEGIN) == 1 and "**/dev-workflows/** merge=union" in attrs,
+                  "the attributes block is written once (%r)" % attrs)
+            a.run("sync", "--branch", "session/aa", "--default-ref", "origin/main")
+            check(a.read(".git/info/attributes").count(ATTR_BEGIN) == 1, "and stays one block on a second sync")
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.git("branch", "session/aa")
+            a.write("specifications/PRD-A-1-x/follow-ups.md", "- [ ] x\n")  # dirty, and not on the branch
+            b.write(FB, "## team\n", append=True)
+            b.commit_all("team")
+            b.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
+            a.git("fetch", "-q", "origin")
+            tip = a.git("rev-parse", "session/aa")
+            got = a.run("sync", "--branch", "session/aa", "--default-ref", "origin/main")
+            check(got.get("deferred") == ["specifications/PRD-A-1-x/follow-ups.md"] and a.git("rev-parse", "session/aa") == tip,
+                  "sync defers, moving nothing, while a dirty session file is not on the branch (%r)" % got)
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.git("branch", "session/aa")
+            env = {"GIT_INDEX_FILE": os.path.join(tmp, "i2")}
+            a.git("read-tree", "session/aa", env=env)
+            sha = subprocess.run(["git", "-C", a.path, "hash-object", "-w", "--stdin"], input=b"changed\n",
+                                 stdout=subprocess.PIPE, check=True).stdout.decode().strip()
+            a.git("update-index", "--cacheinfo", "100644,%s,%s" % (sha, FB), env=env)
+            c = a.git("commit-tree", a.git("write-tree", env=env), "-p", "session/aa", "-m", "mod")
+            a.git("update-ref", "refs/heads/session/aa", c)
+            a.write(FB, "changed\n")
+            b.git("rm", "-q", FB)
+            b.git("commit", "-q", "-m", "delete feedback")
+            b.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
+            a.git("fetch", "-q", "origin")
+            got = a.run("sync", "--branch", "session/aa", "--default-ref", "origin/main")
+            check(got.get("conflict") == [FB] and a.git("rev-parse", "session/aa") == c,
+                  "a modify/delete merge is reported and moves nothing (%r)" % got)
 
-    # ---- commit ----------------------------------------------------------------------------
-    with tempfile.TemporaryDirectory() as tmp:
-        remote, a, b = world(tmp)
-        odd = "specifications/PRD-A-1-x/dev-workflows/cost/:odd name ü.md"
-        a.write(FB, "## a1\nmine\n", append=True)
-        a.write(odd, "cost\n")
-        before = a.state()
-        got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
-        check(got.get("created") is True and got.get("committed"), "the first commit creates the branch (%r)" % got)
-        check(sorted(got.get("paths", [])) == sorted([FB, odd]), "it carries both files (%r)" % got)
-        check(a.state() == before, "commit moves no checkout, index or HEAD")
-        check(a.git("show", "session/aa:" + FB).endswith("## a1\nmine"), "the branch holds the appended entry")
-        check(a.git("merge-base", "session/aa", "main") == a.git("rev-parse", "main"), "the branch starts from the checkout's base")
-        again = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
-        check(again.get("committed") is None and again.get("files") == 0, "an unchanged tree commits nothing (%r)" % again)
-        a.write(FB, "## a2\nmore\n", append=True)
-        tip = a.git("rev-parse", "session/aa")
-        got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
-        check(a.git("rev-parse", "session/aa^") == tip, "a second commit stacks on the first (%r)" % got)
-        os.remove(os.path.join(a.path, odd))  # an overlay-only file: never in the index, so git status forgets it
-        got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Remove pending")
-        check(odd in got.get("paths", []), "a removed overlay file is committed as a deletion (%r)" % got)
-        check(subprocess.run(["git", "-C", a.path, "cat-file", "-e", "session/aa:" + odd], stderr=devnull).returncode != 0,
-              "…and the branch no longer has it")
-    with tempfile.TemporaryDirectory() as tmp:
-        remote, a, b = world(tmp)
-        # main moves on the remote during the run, appending to the same file
-        a.write(FB, "## a1\nmine\n", append=True)
-        b.write(FB, "## team\nfrom b\n", append=True)
-        b.commit_all("team")
-        b.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
-        a.git("fetch", "-q", "origin")
-        got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
-        content = a.git("show", "session/aa:" + FB)
-        check("## a1" in content and "## team" in content and got["sync"].get("merged") is True,
-              "the commit is built first and main merged second, so no entry is lost (%r)" % content)
-        check("## team" in (a.read(FB) or ""), "the working copy is aligned to the merged version (%r)" % a.read(FB))
-    with tempfile.TemporaryDirectory() as tmp:
-        remote, a, b = world(tmp)
-        # the interim left a session-file commit on local main that origin refused
-        a.write(FB, "## stranded\nold\n", append=True)
-        a.commit_all("A-1 Add dev-workflows session artifacts (implement)")
-        head = a.git("rev-parse", "HEAD")
-        got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session",
-                    "--include-ahead")
-        check(got.get("stranded") == 1 and "## stranded" in a.git("show", "session/aa:" + FB),
-              "--include-ahead carries a stranded commit's files (%r)" % got)
-        check(a.git("rev-parse", "HEAD") == head, "…and never moves the local default branch")
-        a.write("specifications/PRD-A-1-x/prd.md", "# PRD changed\n")
-        a.commit_all("a deliverable commit of the user's own")
-        got = a.run("commit", "--branch", "session/bb", "--default-ref", "origin/main", "--message", "A-1 Add session",
-                    "--include-ahead")
-        check(got.get("stranded") == 0 and got.get("ahead_not_session") is True,
-              "commits ahead that are not all session-file commits are left alone (%r)" % got)
+        # ---- commit ----------------------------------------------------------------------------
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            odd = "specifications/PRD-A-1-x/dev-workflows/cost/:odd name ü.md"
+            a.write(FB, "## a1\nmine\n", append=True)
+            a.write(odd, "cost\n")
+            before = a.state()
+            got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            check(got.get("created") is True and got.get("committed"), "the first commit creates the branch (%r)" % got)
+            check(sorted(got.get("paths", [])) == sorted([FB, odd]), "it carries both files (%r)" % got)
+            check(a.state() == before, "commit moves no checkout, index or HEAD")
+            check(a.git("show", "session/aa:" + FB).endswith("## a1\nmine"), "the branch holds the appended entry")
+            check(a.git("merge-base", "session/aa", "main") == a.git("rev-parse", "main"), "the branch starts from the checkout's base")
+            again = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            check(again.get("committed") is None and again.get("files") == 0, "an unchanged tree commits nothing (%r)" % again)
+            a.write(FB, "## a2\nmore\n", append=True)
+            tip = a.git("rev-parse", "session/aa")
+            got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            check(a.git("rev-parse", "session/aa^") == tip, "a second commit stacks on the first (%r)" % got)
+            os.remove(os.path.join(a.path, odd))  # an overlay-only file: never in the index, so git status forgets it
+            got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Remove pending")
+            check(odd in got.get("paths", []), "a removed overlay file is committed as a deletion (%r)" % got)
+            check(subprocess.run(["git", "-C", a.path, "cat-file", "-e", "session/aa:" + odd], stderr=devnull).returncode != 0,
+                  "…and the branch no longer has it")
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            # main moves on the remote during the run, appending to the same file
+            a.write(FB, "## a1\nmine\n", append=True)
+            b.write(FB, "## team\nfrom b\n", append=True)
+            b.commit_all("team")
+            b.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
+            a.git("fetch", "-q", "origin")
+            got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            content = a.git("show", "session/aa:" + FB)
+            check("## a1" in content and "## team" in content and got["sync"].get("merged") is True,
+                  "the commit is built first and main merged second, so no entry is lost (%r)" % content)
+            check("## team" in (a.read(FB) or ""), "the working copy is aligned to the merged version (%r)" % a.read(FB))
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            # the interim left a session-file commit on local main that origin refused
+            a.write(FB, "## stranded\nold\n", append=True)
+            a.commit_all("A-1 Add dev-workflows session artifacts (implement)")
+            head = a.git("rev-parse", "HEAD")
+            got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session",
+                        "--include-ahead")
+            check(got.get("stranded") == 1 and "## stranded" in a.git("show", "session/aa:" + FB),
+                  "--include-ahead carries a stranded commit's files (%r)" % got)
+            check(a.git("rev-parse", "HEAD") == head, "…and never moves the local default branch")
+            a.write("specifications/PRD-A-1-x/prd.md", "# PRD changed\n")
+            a.commit_all("a deliverable commit of the user's own")
+            got = a.run("commit", "--branch", "session/bb", "--default-ref", "origin/main", "--message", "A-1 Add session",
+                        "--include-ahead")
+            check(got.get("stranded") == 0 and got.get("ahead_not_session") is True,
+                  "commits ahead that are not all session-file commits are left alone (%r)" % got)
+
+        # ---- lift and put-back -----------------------------------------------------------------
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            fu = "specifications/PRD-A-1-x/follow-ups.md"
+            a.write(FB, "## a1\nmine\n", append=True)
+            got = a.run("lift", "--branch", "session/aa")
+            check(got.get("unpreserved") == [FB] and not got.get("lifted") and "## a1" in a.read(FB),
+                  "lift refuses, and discards nothing, where a session file is not on the branch (%r)" % got)
+            a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            a.write(fu, "- [ ] task\n")
+            a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            got = a.run("lift", "--branch", "session/aa")
+            check(sorted(got.get("lifted", [])) == sorted([FB, fu]) and not got.get("unpreserved"),
+                  "lift returns preserved files to HEAD (%r)" % got)
+            check(a.read(fu) is None and "## a1" not in a.read(FB) and a.git("status", "--porcelain") == "",
+                  "an untracked one is removed and a tracked one restored: the checkout is clean")
+            got = a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
+            check(sorted(got.get("written", [])) == sorted([FB, fu]) and "## a1" in a.read(FB) and a.read(fu),
+                  "put-back writes the branch's versions back (%r)" % got)
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            os.remove(os.path.join(a.path, FB))  # a run deleted a tracked session file; no session branch yet
+            got = a.run("lift", "--branch", "session/aa")
+            check(got.get("unpreserved") == [FB] and a.read(FB) is None,
+                  "with no session branch, nothing dirty is preserved, a deletion included (%r)" % got)
+        # the whole loop: two users, a merged pull request, a catch-up through lift and put-back
+        for how in ("merge", "squash"):
+            with tempfile.TemporaryDirectory() as tmp:
+                remote, a, b = world(tmp)
+                a.write(FB, "## a1\nfrom a\n", append=True)
+                a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+                a.git("push", "-q", "-u", "origin", "session/aa")
+                merge_on_remote(tmp, remote, "session/aa", how)
+                b.write(FB, "## b1\nfrom b\n", append=True)
+                b.git("fetch", "-q", "origin")
+                got = b.run("lift", "--branch", "session/bb")
+                if got.get("unpreserved"):
+                    b.run("commit", "--branch", "session/bb", "--default-ref", "origin/main", "--message", "A-1 Add session")
+                    got = b.run("lift", "--branch", "session/bb")
+                check(not got.get("unpreserved"), "[%s] b lifts once its files are on its branch (%r)" % (how, got))
+                b.git("pull", "-q", "--ff-only", "--no-rebase", "origin", "main")
+                got = b.run("put-back", "--branch", "session/bb", "--default-ref", "origin/main")
+                fb = b.read(FB)
+                check("## a1" in fb and "## b1" in fb, "[%s] b's checkout holds a's merged entry and its own (%r)" % (how, fb))
+                on_branch = b.git("show", "session/bb:" + FB)
+                check("## a1" in on_branch and "## b1" in on_branch, "[%s] …and so does b's session branch" % how)
+                a.git("fetch", "-q", "origin")
+                got = a.run("lift", "--branch", "session/aa")
+                check(not got.get("unpreserved"), "[%s] a lifts (%r)" % (how, got))
+                a.git("pull", "-q", "--ff-only", "--no-rebase", "origin", "main")
+                got = a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
+                check(a.git("diff", "--name-only", "HEAD", "session/aa", "--", FB) == "",
+                      "[%s] once its pull request merged, a's branch holds nothing for that file main lacks (%r)" % (how, got))
+                check(a.git("status", "--porcelain", "--", FB) == "", "[%s] …so a's checkout shows it clean" % how)
+        # the same identity on a second clone: the session branch already on origin is merged in
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.write(FB, "## a1\nfrom clone a\n", append=True)
+            a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            a.git("push", "-q", "-u", "origin", "session/aa")
+            b.git("fetch", "-q", "origin")
+            b.write(FB, "## a2\nfrom clone b\n", append=True)
+            got = b.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            on_branch = b.git("show", "session/aa:" + FB)
+            check("## a1" in on_branch and "## a2" in on_branch and got["sync"].get("merged") is True,
+                  "a session branch already on origin is merged into the new local one (%r)" % on_branch)
+            check(b.git("push", "--porcelain", "origin", "session/aa", check=False).find("[rejected]") < 0
+                  and b.git("rev-parse", "session/aa") == b.git("ls-remote", "origin", "refs/heads/session/aa").split()[0],
+                  "…so its push is a fast-forward")
+            check("## a1" in (b.read(FB) or ""), "…and the working copy holds the other clone's entry")
+        # a switch to a deliverable branch cut from an older main, with the overlay present
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.git("branch", "prd/A-1-x")
+            b.write(FB, "## team\n", append=True)
+            b.commit_all("team")
+            b.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
+            a.git("pull", "-q", "--ff-only", "--no-rebase", "origin", "main")
+            a.write(FB, "## a1\n", append=True)
+            a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            check(subprocess.run(["git", "-C", a.path, "switch", "-q", "prd/A-1-x"], stdout=devnull,
+                                 stderr=devnull).returncode != 0, "git refuses the switch over the overlay (the reason for lift)")
+            a.run("lift", "--branch", "session/aa")
+            a.git("switch", "-q", "prd/A-1-x")
+            got = a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
+            fb = a.read(FB)
+            check(fb is not None and "## a1" in fb and "## team" in fb, "lift, switch, put-back: nothing lost (%r)" % fb)
+        # a working copy that is neither HEAD's nor the branch's is never overwritten
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.write(FB, "## a1\n", append=True)
+            a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            a.git("checkout", "--", FB)
+            a.write(FB, "## typed by hand\n", append=True)
+            got = a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
+            check(got.get("skipped") == [FB] and "## typed by hand" in a.read(FB), "put-back skips a foreign working copy (%r)" % got)
+        # line endings: an eol=crlf session file is preserved as its LF blob, and put back in CRLF
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.write(".gitattributes", "*.md text eol=crlf\n")
+            a.commit_all("crlf")
+            os.remove(os.path.join(a.path, FB))
+            a.git("checkout", "--", FB)  # checked out again, now in CRLF
+            a.write(FB, "## a1\r\n", append=True)
+            a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+            got = a.run("lift", "--branch", "session/aa")
+            check(not got.get("unpreserved"), "a CRLF working copy of an LF blob counts as preserved (%r)" % got)
+            a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
+            check("## a1\r\n" in (a.read(FB) or ""), "put-back writes the smudged, CRLF form")
+
+    try:
+        scenarios()
+    except Exception as e:  # a scenario that crashes must not hide the failures before it
+        failures.append("selftest crashed: %s: %s" % (type(e).__name__, str(e).strip()[:500]))
 
     if failures:
         print("session-branch selftest: FAIL")
@@ -718,7 +896,11 @@ def dispatch(a):
         return sync(a.specs, a.branch, a.default_ref)
     if a.cmd == "commit":
         return commit(a.specs, a.branch, a.default_ref, a.message, a.include_ahead)
-    raise NotRun("subcommand %s is not implemented yet" % a.cmd)
+    if a.cmd == "lift":
+        return lift(a.specs, a.branch)
+    if a.cmd == "put-back":
+        return put_back(a.specs, a.branch, a.default_ref)
+    raise NotRun("unknown subcommand %s" % a.cmd)
 
 
 if __name__ == "__main__":
