@@ -47,7 +47,7 @@ If no target is found, ask the user: "Please provide a PR number or source branc
 
 Run every git command with `git -C <repo_path>`.
 
-**The default branch.** Every diff below that names the default branch, and step 7's, writes it
+**The default branch.** Every diff below that names the default branch writes it
 as `main`. Where the repository's is another, put its **name** in `main`'s place:
 `origin/<name>...origin/<branch>`, `<name>...<branch>`, `<name>...remotes/origin/<branch>`. Take
 the name from `git -C <repo_path> symbolic-ref --quiet --short refs/remotes/origin/HEAD`, which
