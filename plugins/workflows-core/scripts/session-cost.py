@@ -316,9 +316,11 @@ def _skill_invocation(obj, ns_map):
     the preceding claim the segment running to the next boundary of any kind, i.e.
     straight through it. Measured on a real session: a typed grill command was followed
     by two prose-invoked runs, neither of which cut the window, and the grill's claim
-    absorbed both. That predates typed-only commands: every family command now carries
-    `disable-model-invocation: true` except one another command runs through the Skill
-    tool, so only those still arrive this way -- from their caller, or on a prose request.
+    absorbed both. Typed-only commands (flagged `disable-model-invocation: true`) changed
+    what reaches this path, not the path: a flagged command never runs through the Skill
+    tool, and a call the tool refused -- its result an error -- cuts nothing (scan_main
+    drops it); a command left unflagged still arrives this way, from a caller or on a
+    prose request.
 
     WHY THIS HALF RESOLVES WHERE command_envelope DOES NOT -- a deliberate
     asymmetry, and the one thing to get right here. command_envelope cuts on ANY
@@ -457,6 +459,10 @@ def scan_main(path, line_offset, ns_map, by_id=None):
     count = line_offset
     first_ts = None
     boundaries = []
+    # A Skill-tool boundary waits on its call's result: a call the tool refused ran nothing
+    # (a typed-only command, flagged disable-model-invocation, is refused every time), so an
+    # error result drops it. Keyed by the tool_use id the result names.
+    by_call = {}
     records = []
     by_id = {} if by_id is None else by_id
     if not path or not os.path.isfile(path):
@@ -502,6 +508,17 @@ def scan_main(path, line_offset, ns_map, by_id=None):
                      "ts": obj.get("timestamp"),
                      "line_offset": i}
                 )
+                if obj.get("type") == "assistant":
+                    for block in (obj.get("message") or {}).get("content") or []:
+                        if isinstance(block, dict) and block.get("name") == "Skill" and block.get("id"):
+                            by_call[block["id"]] = boundaries[-1]
+            elif by_call and isinstance(obj, dict) and obj.get("type") == "user" \
+                    and isinstance(obj.get("message"), dict):
+                content = obj["message"].get("content")
+                for block in content if isinstance(content, list) else []:
+                    if isinstance(block, dict) and block.get("type") == "tool_result" \
+                            and block.get("is_error") and block.get("tool_use_id") in by_call:
+                        boundaries.remove(by_call.pop(block["tool_use_id"]))
             if ts is not None and (first_ts is None or ts < first_ts):
                 first_ts = ts
             model, usage = extract_usage(obj)
@@ -1303,9 +1320,10 @@ def _selftest_body(tmp):
         capture_output=True, text=True)
     check(noc.returncode != 0, "--advance-only without --checkpoint is refused")
 
-    # Skill-tool boundary detection. A command invoked in prose reaches the family
-    # through the Skill tool and leaves no <command-name> envelope, so reading user
-    # messages alone let the preceding claim run straight through the invocation.
+    # Skill-tool boundary detection. A command the model runs -- on a prose request, or
+    # from another command -- reaches the family through the Skill tool and leaves no
+    # <command-name> envelope, so reading user messages alone let the preceding claim run
+    # straight through the invocation.
     _ns = {"product-workflows": {"update-prd"}, "workflows-core": {"prompt"}}
     def _sk(skill):
         return {"type": "assistant", "timestamp": "2026-09-01T10:00:00.000Z",
@@ -1336,6 +1354,23 @@ def _selftest_body(tmp):
               "<command-name>/product-workflows:update-prd</command-name>"}}, _ns)
           == "product-workflows:update-prd",
           "the typed shape still resolves after the Skill shape was added")
+    # A Skill call the tool refused ran nothing -- a typed-only command (flagged
+    # disable-model-invocation) is refused whenever the model reaches for it -- so it cuts
+    # nothing: scan_main drops the boundary once the call's tool_result comes back an error.
+    def _scan(result):
+        path = os.path.join(tmp, "skill-refused.jsonl")
+        sk = _sk("product-workflows:update-prd")
+        sk["message"]["content"][0]["id"] = "toolu_x"
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(json.dumps(sk) + "\n")
+            fh.write(json.dumps({"type": "user", "timestamp": "2026-09-01T10:00:01.000Z",
+                                 "message": {"content": [dict(result, type="tool_result",
+                                                              tool_use_id="toolu_x")]}}) + "\n")
+        return scan_main(path, 0, _ns)[2]
+    check(_scan({"is_error": True, "content": "cannot be used with Skill tool"}) == [],
+          "a Skill call the tool refused does not cut")
+    check(len(_scan({"content": "Launching skill: product-workflows:update-prd"})) == 1,
+          "a Skill call that ran still cuts")
 
     if failures:
         print("SELFTEST FAIL (%d)" % len(failures))

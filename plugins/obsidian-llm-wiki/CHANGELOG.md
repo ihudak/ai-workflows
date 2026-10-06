@@ -4,12 +4,6 @@ All notable changes to the **obsidian-llm-wiki** plugin are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 
-## [0.5.0] — 2026-10-06
-
-### Changed
-
-- **The ten commands are typed-only in Claude Code** (`disable-model-invocation: true`). Each has a skill of the same name carrying the same workflow, so a typed `/wiki-*` runs the command as before, a request in prose reaches the skill, and the skill listing Claude Code gives the model, which was over its budget, names each workflow once instead of twice. The README says so.
-
 ## [0.4.5] — 2026-10-06
 
 ### Changed

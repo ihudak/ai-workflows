@@ -165,10 +165,7 @@ git push
 ### Commands
 
 Both Copilot and Claude Code use the same `/wiki-*` slash commands with identical
-behaviour. In Claude Code each command is typed-only (`disable-model-invocation: true`)
-and a skill of the same name carries the same workflow, so a typed `/wiki-*` runs the
-command, a request in prose reaches the skill, and the model's skill listing names each
-workflow once.
+behaviour.
 
 | Command | Description |
 |---------|-------------|

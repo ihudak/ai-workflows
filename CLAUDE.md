@@ -162,7 +162,7 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 
 ## Command, agent, and skill taxonomy
 
-- **Commands** (`commands/`) are the user-facing slash commands: they own the end-to-end workflow, gather context, decide whether to branch, test, or review, and may dispatch helper agents via the `task` tool. Each is **typed-only** (`disable-model-invocation: true`) unless a file runs it as `skill: "<plugin>:<name>"`, and `scripts/validate-catalog.py` checks both ([why](docs/maintainers/rationale.md#typed-only-commands)).
+- **Commands** (`commands/`) are the user-facing slash commands: they own the end-to-end workflow, gather context, decide whether to branch, test, or review, and may dispatch helper agents via the `task` tool. Each is **typed-only** (`disable-model-invocation`) unless a file runs it as `skill: "<plugin>:<name>"` or a skill shares its name; `scripts/validate-catalog.py` checks ([why](docs/maintainers/rationale.md#typed-only-commands)).
 - **Agents** (`agents/`) are Claude Code sub-agent system prompts, not user entry points: each does one bounded job — planning, research, review, fixing, test writing, grounding, or maintenance — and returns its result to the invoking command.
 - **Skills** (`skills/`, optional) package durable instructions or domain knowledge that multiple commands or agents may consult; a skill is neither a command nor an agent. If a plugin has no `skills/`, keep shared runtime docs under `references/`.
 - **Working rule:** keep the three roles separate so workflows stay predictable.

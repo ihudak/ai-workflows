@@ -375,7 +375,7 @@ Use `choices` arrays; 2–4 options, and never author an "Other" option — the 
 1. **Confirm** the feature folder, the profile, and the resolved `idea.md` (or "none — grill from scratch"); on the BRD route, the resolved `PRD-` slice folder, the profile (`--full` unless a flag overrode it), and — instead of an idea — a `from BRD:` line naming `<SLICE-KEY>` and the `parent:` its `brd-link.md` records (always present — step 5a refuses the container), its `depends-on:` if any, how many of its gate-set rows (Phase 0 step 7) are `covered-here` out of how many, and whether `prd-seed.md` and `decisions.md` were found.
    - **Resolve documentation grounding here, then show its line.** Run `resolve-docs-grounding create-prd` per `Skill(skill: "workflows-core:reference", args: "docs-grounding resolve-docs-grounding")` — its step 3.5 index prompt included — and show the `docs grounding:` line from what it returns, in the form that reference fixes — `ON <root> (retrieval: …)` or `OFF (<reason>)` — verbatim, including any index-build, staleness, or shadowing clause it carries (off switch: --no-docs). It runs here, before any agent is dispatched, because step 3.5 asks its one-time index question before the run's real work; this is the run's one resolution (`workflows-core:docs-grounding`, *Invariants*), and Phase 2.5 dispatches on the state it returns without resolving again.
 2. **Existing-PRD handling** (only if Phase 0 step 6 found a PRD for `<KEY>`): **Where that `prd.md` cannot be read at all, stop here instead of offering a choice**: no option
-   below can succeed on it — the recommended one hands it to `/update-prd`, which must read it as its
+   below can succeed on it — the recommended one points at `/update-prd`, which must read it as its
    base, and Overwrite must copy it into `revisions/` before the first write — so stop before any
    grill or write:
    ```
@@ -388,16 +388,17 @@ Use `choices` arrays; 2–4 options, and never author an "Other" option — the 
      PRD already on disk, it does not re-read the seed. It resolves the **same folder** this run did,
      which is why one address serves both.
      ```
-     choices: ["Refresh the existing <SLICE-KEY> PRD — /product-workflows:update-prd <SLICE-KEY> (the BRD seed is not re-read) (Recommended)", "Overwrite <SLICE-KEY> as a fresh PRD authored from the BRD seed (archives the current one)", "Cancel"]
+     choices: ["Stop; refresh the existing <SLICE-KEY> PRD with /product-workflows:update-prd <SLICE-KEY> (the BRD seed is not re-read) (Recommended)", "Overwrite <SLICE-KEY> as a fresh PRD authored from the BRD seed (archives the current one)", "Cancel"]
      ```
    - **No `--from-prd`** → `/create-prd` is greenfield-only; **redirect**:
      ```
-     choices: ["Switch to /product-workflows:update-prd <KEY> to refresh it (Recommended)", "Overwrite as a fresh PRD (archives the current one)", "Cancel"]
+     choices: ["Stop; refresh it with /product-workflows:update-prd <KEY> (Recommended)", "Overwrite as a fresh PRD (archives the current one)", "Cancel"]
      ```
    - **`--from-prd` present** → "create new (seeded)" conflicts with "a PRD already exists here":
      ```
-     choices: ["Update the existing <KEY> instead — /product-workflows:update-prd <KEY> (seed ignored) (Recommended)", "Overwrite <KEY> as a new seeded PRD (archives the current one)", "Cancel"]
+     choices: ["Stop; update the existing <KEY> with /product-workflows:update-prd <KEY> (seed ignored) (Recommended)", "Overwrite <KEY> as a new seeded PRD (archives the current one)", "Cancel"]
      ```
+   **The `/update-prd` option stops the run**, printing that command with this run's key for the user to type: `/update-prd` is typed-only (`disable-model-invocation`), so no run can start it.
    **The archive every Overwrite option names is Phase 3's pre-write archive**, which copies the
    existing `prd.md` into `revisions/` immediately before this run's first write to it; nothing in
    this phase copies or moves it.

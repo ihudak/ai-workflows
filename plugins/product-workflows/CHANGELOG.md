@@ -9,6 +9,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Changed
 - **Every command is typed-only** (`disable-model-invocation: true`): all sixteen run when typed, and a request in prose no longer starts one. It keeps them out of the skill listing Claude Code gives the model, which was over its budget (`workflows-core` 1.29.0). The getting-started page says so.
+- **`/create-prd`'s existing-PRD pickers stop and name `/product-workflows:update-prd <KEY>`** for you to type, where the recommended option used to hand the run on to it: `/update-prd` is typed-only now, and the Skill tool refuses a typed-only command. `/update-prd` and both commands' pages say the same.
 
 ### Fixed
 - **The `preload-context` hook command quotes `${CLAUDE_PLUGIN_ROOT}`.** Unquoted, a plugin root whose path holds a space — under a home directory with one — split the command into several words and the hook failed to start; `claude plugin validate` reported each.
