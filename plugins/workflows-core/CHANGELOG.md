@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.27.1] — 2026-10-06
+
+### Changed
+- **The architecture grounder takes one skip input, `own_sources`.** `own_key` — every team record of the PRD the run authors for — had one caller, `/create-ard`, which skipped a sibling Epic's records with it and now passes `own_sources` instead (product-workflows 3.22.1). A record whose `source:` is in `own_sources` is the caller's own decision or one it holds as an invariant, and is neither a reference nor a challenge.
+
 ## [1.27.0] — 2026-10-06
 
 ### Fixed

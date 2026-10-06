@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.22.1] — 2026-10-06
+
+### Fixed
+- **An Epic-level ARD is grounded on a sibling Epic's decisions.** `/create-ard` passed the architecture grounder `own_key` = the PRD, which skipped every team record of the PRD — so an Epic-level ARD never saw the decisions a sibling Epic's ARD had already made, the gap `own_sources` closed for `/specify` and `/design` in 3.20.0. It now passes `own_sources`: the ARD files it may rewrite (`ard.md` and every `ard-<area>.md` in its resolved folder) and, on an Epic-level run, the PRD-level ARD it inherits read-only, `prd_dir`'s `ard.md`. A PRD-level run is grounded on its Epics' ARDs the same way. `own_key` had no other caller and is gone from the grounder's input.
+- **`/specify` no longer passes `own_key`**, which the grounder no longer takes (workflows-core 1.27.1).
+
 ## [3.22.0] — 2026-10-06
 
 ### Fixed

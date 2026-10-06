@@ -51,7 +51,6 @@ Run only when `arch_grounding: ON` or `team_grounding: ON`, after the run's code
   > arch_root:       <root> | null
   > snapshot:        <branch> @ <full sha> (<date>)[, dirty][, unpushed] | not a git checkout | none
   > team_root:       <specs>/architecture | null
-  > own_key:         <the PRD key the run authors for> | null
   > own_sources:     [<ARD paths, relative to the specs root, whose decisions the run already holds>, …]
   > feature_summary: <2–4 sentences: the goal + capability themes>
   > themes:          [confirmed themes]
@@ -59,7 +58,7 @@ Run only when `arch_grounding: ON` or `team_grounding: ON`, after the run's code
   > components:      [<component id>, …]"
 ```
 
-`/create-ard` passes `own_key` = the PRD it authors for and no `own_sources`: its own records change through its own ARD. `/specify` and `/design` pass `own_key: null` and `own_sources` = the `ard_paths` their ARD resolution returned, relative to `$SPECS_PATH` (`[]` where it found none): those decisions reach the run as ARD invariants, and every other team record — a sibling Epic's ARD included — grounds it like any other.
+`/create-ard` passes `own_sources` = the ARD files it may rewrite — `ard.md` and every `ard-<area>.md` in its resolved folder — and, on an Epic-level run, the PRD-level ARD it inherits read-only, `prd_dir`'s `ard.md`; relative to `$SPECS_PATH`, `[]` where none exists yet. `/specify` and `/design` pass `own_sources` = the `ard_paths` their ARD resolution returned, relative to `$SPECS_PATH` (`[]` where it found none). Either way those decisions reach the run as its own ARD or as ARD invariants, and every other team record — a sibling Epic's ARD included — grounds it like any other.
 
 **Pinned to the §2 Opus chain**, though the agent only finds and quotes: on 2026-10-05, run with identical input against a real architecture repository for two requirement documents, the §2.1 Sonnet chain missed binding standards and decisions Opus found on both — a schema-evolution standard, an accessibility standard and an ingest delivery-guarantee decision on one; an audit-events standard and a threat-model standard on the other. A missed decision the work contradicts is this agent's one costly failure, so recall decides the tier, not the task's shape. The agent carries no frontmatter pin; this dispatch sets it, and `--enforce-model` overrides it like any other.
 
