@@ -25,7 +25,9 @@ The caller passes a **compact session handoff**:
 - **What was done** — 1-paragraph summary (classification, component/CVE/task, scope)
 - **Key events** — things that went unexpectedly: BLOCK reviews, test regressions,
   missing reference docs, workarounds needed, ambiguities that required user
-  clarification, surprising compatibility issues
+  clarification, surprising compatibility issues — and, after a bug fix, the bug
+  and its confirmed cause, a miss the project's own checks let through, which
+  step 6 sorts like any other
 - **Workarounds used** — manual steps that the workflow could not automate
 - **Review verdict** — PASS / PASS WITH RECOMMENDATIONS / BLOCK (and what the
   BLOCK was, if applicable)

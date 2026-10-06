@@ -24,7 +24,9 @@ Exit 0: it ran — problems are listed in the JSON. Exit 2: it could not run.
 """
 
 import argparse
+import contextlib
 import importlib.util
+import io
 import json
 import os
 import re
@@ -658,6 +660,24 @@ def selftest():
         check(r.get("group") == "ACME-90" and r.get("cited_by") == [slice_, pay],
               "prd: the deepest PRD- folder groups a citation; an Epic of the same PRD is its own: %s" % r.get("cited_by"))
 
+    # ---- an exit 2 prints one line, however many lines git's error spans: callers quote that line
+    real, argv = globals()["signals"], sys.argv
+
+    def boom(*_args, **_kwargs):
+        raise Abort("git show x: error: one\nfatal: two")
+    globals()["signals"] = boom
+    sys.argv = [me, "--specs", "/nonexistent", "--signals", "--ref", "HEAD"]
+    err = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(err):
+            rc = main()
+    except BaseException as e:
+        rc = "raised %s" % type(e).__name__
+    finally:
+        globals()["signals"], sys.argv = real, argv
+    check(rc == 2 and err.getvalue().splitlines() == ["promotion-signals: not run (Abort: git show x: error: one fatal: two)"],
+          "a multi-line error is one 'not run' line (%r, %r)" % (rc, err.getvalue()))
+
     if failures:
         print("promotion-signals selftest: FAIL")
         for f in failures:
@@ -705,7 +725,7 @@ def main():
         else:
             out = mark(a.specs, a.mark, a.check)
     except Exception as e:  # anything unexpected is "could not run", never a partial result
-        print("promotion-signals: not run (%s: %s)" % (type(e).__name__, e), file=sys.stderr)
+        print("promotion-signals: not run (%s: %s)" % (type(e).__name__, " ".join(str(e).split())), file=sys.stderr)
         return 2
     print(json.dumps(out, indent=2))  # ASCII-escaped: valid JSON on any stdout encoding
     return 0

@@ -417,9 +417,10 @@ def claimable_command(typed, ns_map):
     WHERE A CLAIM MAY MATCH -- unlike command_envelope, a namespace is
     REQUIRED here, and that is a deliberate asymmetry with how a user thinks
     about these commands. Two facts force it. Claude Code's own built-ins are
-    always written bare, and one of them -- `/upgrade` -- collides with a
-    command name this marketplace also ships: accepting a bare name here would
-    let that subscription command masquerade as a claimable invocation of ours
+    always written bare, and several of them -- `/upgrade`, `/feedback`,
+    `/statusline` and `/release-notes` -- collide with command names this
+    marketplace also ships: accepting a bare name here would let such a
+    built-in masquerade as a claimable invocation of ours
     (it still CUTS -- command_envelope does not require a namespace -- only
     claimability is refused here). And a namespace is resolved, never
     discarded: stripping it would read another marketplace's

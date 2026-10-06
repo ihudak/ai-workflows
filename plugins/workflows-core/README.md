@@ -15,7 +15,7 @@ Most of this plugin is not a command at all. It is the corpus a sibling plugin r
 | Setup | [`/statusline`](docs/commands/statusline.md) | Install the plugin family's multi-line status line into your Claude Code settings. |
 | Specs-tree repair | [`/frames`](docs/commands/frames.md) | (Re)build the index every exported design frame set must carry before anything can read it. |
 
-`/statusline` collides with a Claude Code built-in of the same name, so type the qualified `/workflows-core:statusline`.
+`/statusline` and `/feedback` each collide with a Claude Code built-in of the same name, so type the qualified `/workflows-core:statusline` and `/workflows-core:feedback`.
 
 ## Documentation
 

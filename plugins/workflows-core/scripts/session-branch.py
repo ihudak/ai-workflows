@@ -19,10 +19,13 @@ pushes, or writes a working-tree path outside specs-repo-git §2.1's session-fil
 The session branch moves only by update-ref with its old value, so a concurrent run fails
 instead of overwriting. Output is one JSON object on stdout.
 Exit 0: it ran, whatever it found. Exit 2: it could not run (usage, not a repository's top
-level, an unexpected git failure); the caller reports it and the run continues.
+level, an unexpected git failure, any other exception), printing one "session-branch: not run
+(...)" line on stderr; the caller reports it and the run continues.
 """
 
 import argparse
+import contextlib
+import io
 import json
 import os
 import re
@@ -984,6 +987,8 @@ def selftest():
             got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
             check(got.get("_rc") == 2 and "commit-tree" in got.get("_err", ""),
                   "commit.gpgSign makes the session commit a signed one, so a signer that fails stops it (%r)" % got)
+            check(len(got.get("_err", "").splitlines()) == 1 and "gpg failed to sign" in got.get("_err", ""),
+                  "git's multi-line error is one 'not run' line, its whole reason on it (%r)" % got)
         # the overlay not in place: a commit never takes that for the run's own deletions or reverts
         CM = ("--default-ref", "origin/main", "--message", "A-1 Add session")
         cost1 = "specifications/PRD-A-1-x/dev-workflows/cost/s1.md"
@@ -1306,6 +1311,34 @@ def selftest():
             check(not got.get("unpreserved"), "a CRLF working copy of an LF blob counts as preserved (%r)" % got)
             a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
             check("## a1\r\n" in (a.read(FB) or ""), "put-back writes the smudged, CRLF form")
+        # an unexpected exception is "not run" on one line, exit 2: §6 quotes the first stderr line
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            real, argv = globals()["dispatch"], sys.argv
+
+            def boom(_args):
+                raise KeyError("sync")
+            globals()["dispatch"] = boom
+            sys.argv = [me, "--specs", a.path, "sync", "--branch", "session/aa", "--default-ref", "origin/main"]
+            err = io.StringIO()
+            try:
+                with contextlib.redirect_stderr(err):
+                    rc = main()
+            except BaseException as e:
+                rc = "raised %s" % type(e).__name__
+            finally:
+                globals()["dispatch"], sys.argv = real, argv
+            lines = err.getvalue().splitlines()
+            check(rc == 2 and lines == ["session-branch: not run (KeyError: 'sync')"],
+                  "an unexpected exception exits 2 with one 'not run' line (%r, %r)" % (rc, lines))
+            got = a.run("commit", "--branch", "session/aa")
+            check(got.get("_rc") == 2 and got.get("_err", "").splitlines() ==
+                  ["session-branch: not run (the following arguments are required: --default-ref, --message)"],
+                  "a usage error exits 2 with one 'not run' line (%r)" % got)
+            r = subprocess.run([sys.executable, me, "mode", "--default", "main"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            check(r.returncode == 2 and r.stderr.decode().splitlines() ==
+                  ["session-branch: not run (--specs and a subcommand are required)"],
+                  "a call without --specs exits 2 with one 'not run' line (%r)" % r.stderr)
 
     try:
         scenarios()
@@ -1321,8 +1354,16 @@ def selftest():
     return 0
 
 
+class Parser(argparse.ArgumentParser):
+    """A usage error is one "not run" line, as every exit 2 is: §6 quotes the first stderr line."""
+
+    def error(self, message):
+        print("session-branch: not run (%s)" % message, file=sys.stderr)
+        sys.exit(2)
+
+
 def main():
-    ap = argparse.ArgumentParser(description="Keep session files on a per-user session branch.")
+    ap = Parser(description="Keep session files on a per-user session branch.")
     ap.add_argument("--specs", help="the specs repository's top level")
     ap.add_argument("--selftest", action="store_true", help="run the built-in fixtures and exit")
     sub = ap.add_subparsers(dest="cmd")
@@ -1345,15 +1386,18 @@ def main():
     if a.selftest:
         return selftest()
     if not a.specs or not a.cmd:
-        print("session-branch: --specs and a subcommand are required", file=sys.stderr)
+        print("session-branch: not run (--specs and a subcommand are required)", file=sys.stderr)
         return 2
     try:
         top = text(git(a.specs, "rev-parse", "--show-toplevel"))
         if os.path.realpath(top) != os.path.realpath(a.specs):
             raise NotRun("%s is not its repository's top level (%s)" % (a.specs, top))
         result = dispatch(a)
-    except (NotRun, OSError) as e:
-        print("session-branch: not run (%s)" % e, file=sys.stderr)
+    except (NotRun, OSError) as e:  # git's stderr can span lines; §6 quotes the first one
+        print("session-branch: not run (%s)" % " ".join(str(e).split()), file=sys.stderr)
+        return 2
+    except Exception as e:  # anything unexpected is "not run" on one line, never a traceback
+        print("session-branch: not run (%s: %s)" % (type(e).__name__, " ".join(str(e).split())), file=sys.stderr)
         return 2
     print(json.dumps(result, indent=2))
     return 0

@@ -6,10 +6,12 @@ Logs a manual note about the plugin family itself — friction you hit, or an im
 
 `/feedback` runs outside the role pipeline, but it does report its cost: it passes `phase: inferred, role: inferred` and the cost phase **inherits the labels of the command the note is about** (`references/cost-emission.md` §7). A note untied to any command — the common case — resolves to [`plugin-feedback`](../roles-and-phases.md#plugin-feedback)/`n/a`. [Workflow overview](../workflow.md#cross-cutting-commands) groups it under Plugin improvement, alongside its three siblings — [`/prompt`](prompt.md), [`/prompt-brainstorm`](prompt-brainstorm.md), and [`/prompt-grill-me`](prompt-grill-me.md). It is tied to no other command and can be run any time, about any friction you hit or improvement you want. This is one of the four commands that make the plugin better over time — use it whenever something is off, not only when it's dramatic; a small annoyance logged now is easier for the maintainer to act on than one nobody ever wrote down.
 
+**Claude Code ships its own built-in `/feedback` command**, which sends feedback to Anthropic. The bare `/feedback` always resolves to that built-in, never to this one — **always type the qualified form, `/workflows-core:feedback`.**
+
 ## Synopsis
 
 ```
-/feedback [<note>] [--skip-costs]
+/workflows-core:feedback [<note>] [--skip-costs]
 ```
 
 `--skip-costs` (or `$WORKFLOWS_SKIP_COSTS`, [`environment.md`](../reference/environment.md)) skips this run's session-cost entry, still advancing the checkpoint, and drops any deferred cost record a ceded [`/prompt-brainstorm`](prompt-brainstorm.md) or [`/prompt-grill-me`](prompt-grill-me.md) left pending in this session — naming each dropped record in its output rather than writing its entry (`references/run-flags.md` §5 step 3); it is the only run flag this command applies — `--skip-feedback` and `--enforce-model` are reported ignored, since `/feedback` dispatches no `impl-maintenance` and invokes no model routing.

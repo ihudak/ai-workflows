@@ -28,8 +28,9 @@ commands so the routing graph and the offer rules live in ONE place (the same sh
    once after ALL Epics are implemented) and do NOT fan out.
 6. **Fully qualified when printed** — every command name the run PRINTS for the user to invoke is
    written `/<plugin>:<command>`, fully qualified with the plugin that ships it. A bare `/<command>` can resolve to a Claude Code built-in of
-   the same name — Claude Code's own `/release-notes`, `/upgrade`, and `/statusline` all collide
-   today, and the built-in wins — so the bare form is NEVER printed. Prose that describes the
+   the same name — Claude Code's own `/release-notes`, `/upgrade`, `/statusline` and `/feedback` all
+   collide today, and the built-in wins; its `/design`, which makes a Design artifact, collides on the
+   accounts it is switched on for — so the bare form is NEVER printed. Prose that describes the
    pipeline to a reader of the family's own source keeps the short form.
 7. **One address, never a pair** — every offer prints exactly ONE positional address, because every
    keyed command takes exactly one (D4: a key encodes its own ancestry, so an Epic address is all an
