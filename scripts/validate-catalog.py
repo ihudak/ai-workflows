@@ -377,8 +377,13 @@ def frontmatter_description(text: str) -> str | None:
         if head[:1] in (">", "|"):
             return ("\n" if head[0] == "|" else " ").join(more)
         value = " ".join([head] + [m for m in more if m])
-        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
-            value = value[1:-1]
+        if len(value) >= 2 and value[0] == value[-1] == '"':
+            try:  # YAML's double-quoted escapes include JSON's
+                return json.loads(value)
+            except json.JSONDecodeError:
+                return value[1:-1].replace('\\"', '"').replace("\\\\", "\\")
+        if len(value) >= 2 and value[0] == value[-1] == "'":
+            return value[1:-1].replace("''", "'")
         return value
     return None
 
@@ -638,6 +643,10 @@ def _selftest() -> int:
     case("a folded skill description is measured whole", True, "plugins/fixture/skills/s/SKILL.md",
          entries={"skills/s/SKILL.md": "---\nname: s\ndescription: >\n  " + "x" * 300 + "\n  "
                                        + "y" * 301 + "\nallowed-tools: Read\n---\n"})
+    # A double-quoted description is measured unescaped: `\"` is one character, as YAML reads it.
+    case("an escaped quote in a quoted description counts once", True, "OK",
+         entries={"commands/q.md": "---\ndescription: \"" + "x" * (ENTRY_DESC_WARN - 3)
+                                   + "\\\"y\\\"\"\n---\n"})
     case("a plugin.json with no catalog entry anywhere is rejected", False,
          "is not listed in any marketplace.json", ghost_manifest=True)
     case("two plugin.json files declaring the same name are rejected", False,
