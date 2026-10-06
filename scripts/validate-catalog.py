@@ -119,7 +119,9 @@ ENTRY_DESC_WARN = 600
 # command another file runs through the Skill tool -- written `skill: "<plugin>:<name>"` --
 # stays model-invocable (docs/maintainers/rationale.md, "typed-only-commands").
 TYPED_ONLY_KEY = "disable-model-invocation"
-SKILL_CALL = re.compile(r'skill:\s*"([a-z0-9-]+):([a-z0-9-]+)"')
+# The execution phrase, never the bare form: the Skill tool named just before the backticked
+# call, or `Skill(skill: ...)`. A sentence forbidding the call carries the bare form too.
+SKILL_CALL = re.compile(r'(?:\bSkill\(\s*|\b[Ss]kill tool[^\n`]{0,40}`)skill:\s*["\']([a-z0-9-]+):([a-z0-9-]+)["\']')
 
 # The repo-root CLAUDE.md loads into every session and every non-fork subagent here. It
 # reached 189,969 characters by accretion before the 2026-09-23 split moved area rules to
@@ -783,7 +785,20 @@ def _selftest() -> int:
     case("a call inside a fenced block is not a call", False,
          "plugins/fixture/commands/p.md: no `disable-model-invocation: true`",
          entries={"commands/p.md": "---\ndescription: d\n---\n",
-                  "commands/c.md": "---\ndescription: d\n" + TYPED + "---\n```\nskill: \"fixture:p\"\n```\n"})
+                  "commands/c.md": "---\ndescription: d\n" + TYPED + "---\n```\nRun it (Skill tool, "
+                                   "`skill: \"fixture:p\"`).\n```\n"})
+    # Only the execution phrase is a call -- the Skill tool named beside the backticked call, or
+    # `Skill(skill: ...)` -- never a bare mention of the form, which a sentence forbidding the
+    # call carries too (CLAUDE.md: match the execution phrase, not the bare name).
+    case("a mention of the call form that is no call is not one", True, "OK",
+         entries={"commands/p.md": "---\ndescription: d\n" + TYPED + "---\n",
+                  "commands/c.md": "---\ndescription: d\n" + TYPED + "---\nNever run it as "
+                                   "`skill: \"fixture:p\"`: it is typed-only.\n"})
+    case("a single-quoted call is a call", False,
+         "plugins/fixture/commands/c.md runs fixture:p through the Skill tool",
+         entries={"commands/p.md": "---\ndescription: d\n" + TYPED + "---\n",
+                  "commands/c.md": "---\ndescription: d\n" + TYPED + "---\nRun it (Skill tool, "
+                                   "`skill: 'fixture:p'`).\n"})
     # Where a command and a skill share a name, the listing holds one entry either way -- the
     # command's while it is unflagged (measured) -- so flagging it would only swap the entry.
     case("an unflagged command whose plugin ships a same-named skill passes", True, "OK",
