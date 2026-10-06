@@ -987,6 +987,8 @@ def selftest():
             got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
             check(got.get("_rc") == 2 and "commit-tree" in got.get("_err", ""),
                   "commit.gpgSign makes the session commit a signed one, so a signer that fails stops it (%r)" % got)
+            check(len(got.get("_err", "").splitlines()) == 1 and "gpg failed to sign" in got.get("_err", ""),
+                  "git's multi-line error is one 'not run' line, its whole reason on it (%r)" % got)
         # the overlay not in place: a commit never takes that for the run's own deletions or reverts
         CM = ("--default-ref", "origin/main", "--message", "A-1 Add session")
         cost1 = "specifications/PRD-A-1-x/dev-workflows/cost/s1.md"
@@ -1391,11 +1393,11 @@ def main():
         if os.path.realpath(top) != os.path.realpath(a.specs):
             raise NotRun("%s is not its repository's top level (%s)" % (a.specs, top))
         result = dispatch(a)
-    except (NotRun, OSError) as e:
-        print("session-branch: not run (%s)" % e, file=sys.stderr)
+    except (NotRun, OSError) as e:  # git's stderr can span lines; §6 quotes the first one
+        print("session-branch: not run (%s)" % " ".join(str(e).split()), file=sys.stderr)
         return 2
     except Exception as e:  # anything unexpected is "not run" on one line, never a traceback
-        print("session-branch: not run (%s: %s)" % (type(e).__name__, e), file=sys.stderr)
+        print("session-branch: not run (%s: %s)" % (type(e).__name__, " ".join(str(e).split())), file=sys.stderr)
         return 2
     print(json.dumps(result, indent=2))
     return 0
