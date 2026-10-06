@@ -22,6 +22,8 @@ claude plugin update workflows-core@shipwright
 
 It does ship seven commands of its own, and one of them is worth running first — see below. Type them: each is typed-only (`disable-model-invocation: true`), which keeps it out of the list of skills the model picks from and that list inside Claude Code's budget, so asking in prose does not start one. The same holds for every command of `dev-workflows` and `product-workflows`, and for those of `docs-workflows` save `/docs-profile` and `/docs-brand`, which other commands run for you.
 
+Other plugins can still crowd that list. Claude Code gives it 1% of the context window — 8,000 characters in a 200K session or subagent — and shortens every description once it overflows. To raise the ceiling, add `"skillListingBudgetFraction": 0.025` to `~/.claude/settings.json` (20,000 characters at 200K), or set the `SLASH_COMMAND_TOOL_CHAR_BUDGET` environment variable to a number of characters. A session pays only for what is listed, never for the ceiling.
+
 ## What you set on your machine
 
 `workflows-core` reads nine environment variables, and every one of them is read by a reference this plugin ships — for eight of the nine, the only read anywhere in this plugin. `SPECS_PATH` is the exception: `/frames` gates on it in its own Phase 0 and refuses to run without it. One is required for anything in the family to have somewhere to write (`SPECS_PATH`); the rest are optional and each degrades to a documented default or a silent skip. [Environment](reference/environment.md) has the exact defaults and failure behaviour.
