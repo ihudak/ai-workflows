@@ -1,6 +1,6 @@
 # /harvest-decisions
 
-Harvests the architecture decisions of every ARD on the specs repository's default branch into the team knowledge base at `$SPECS_PATH/architecture/` — the records `/create-ard` grounds on.
+Harvests the architecture decisions of every ARD on the specs repository's default branch into the team knowledge base at `$SPECS_PATH/architecture/` — the records `/create-ard`, `/specify` and `/dev-workflows:design` ground on.
 
 ## Who runs it
 
@@ -41,4 +41,5 @@ The first shows what would change and every problem (an unparseable decision, a 
 ## See also
 
 - [`/create-ard`](create-ard.md) — grounds on the live records, and writes the `Supersedes` the next harvest applies.
+- [`/specify`](specify.md), and `/dev-workflows:design` — ground on the live records too.
 - `workflows-core:architecture-kb` — the format: identity, statuses, citations and every problem kind with its fix.

@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.15.0] — 2026-10-06
+
+### Added
+- **`/design` grounds its work in the architecture repository and the team's harvested decisions**, as `/product-workflows:create-ard` does. Phase 1 resolves architecture grounding once and shows the `architecture grounding:` and `team decisions:` lines; after the code scan, `workflows-core:architecture-grounder` (on the §2 Opus chain) returns what binds the work and what conflicts with it, and the grill consumes the digest by grill-rank. A design cites a binding artifact as a link and records each departure as an advisory `Architecture deviation:` line under `## Risks & mitigations` (`design-format.md` § Architecture governance), which never blocks handoff and is never a reviewer finding. `--no-arch` turns it off; a repository at `arch_toplevel` is scanned with refresh off. The plugin now reads `$ARCHITECTURE_REPO_PATH`, documented on its environment page and in getting started.
+
 ## [4.14.0] — 2026-10-05
 
 ### Added

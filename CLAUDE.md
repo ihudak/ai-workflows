@@ -84,7 +84,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `docs-workflows.md` | `docs-workflows/**`; `product-workflows/`: `commands/epics.md`, `agents/epic-*.md`, `docs/commands/epics.md` | invariants, map, callers, three authorities |
 | `docs-serve.md` | `docs-workflows/`: `commands/docs-serve.md`, `docs/commands/docs-serve.md`, `references/docs-profiles/render-verification.md`, `references/toolchain-preflight.md` | `/docs-serve` |
 | `release-notes.md` | `docs-workflows/`: `commands/release-notes.md`, `agents/release-notes-writer.md`, `references/release-note-types.md`, `docs/commands/release-notes.md` | `/release-notes` and its authority |
-| `docs-grounding.md` | `workflows-core/`: `references/*-grounding.md`, `agents/*-grounder.md`; and 20 command files: the nine grounding consumers and eleven that resolve none | docs/architecture grounding |
+| `docs-grounding.md` | `workflows-core/`: `references/*-grounding.md`, `agents/*-grounder.md`; and 21 command files: the nine docs-grounding consumers, `/design` (architecture only) and eleven that resolve none | docs/architecture grounding |
 | `workflows-core.md` | `workflows-core/**`, `*/commands/*.md`, `*/agents/*.md` | plugin facts, model routing, authorities, map |
 | `workflows-core-git.md` | `workflows-core/references/`: `specs-repo-git.md`, `phase-handoff.md`, `read-only-repos.md`, `grounding-format.md`; `dev-workflows/references/code-handoff.md`; `*/commands/*.md`, `*/references/**`, `*/agents/*.md` | git authorities and invariants |
 

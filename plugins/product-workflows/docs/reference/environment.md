@@ -28,7 +28,7 @@
 
 - **`$ARCHITECTURE_REPO_PATH`** — a local clone of your organisation's architecture repository (technology radar, standards, principles, patterns, ADRs), read-only; no default.
 
-**Resolution.** Resolved per the shared `workflows-core:architecture-grounding` gate, consumed by `/create-ard` on both routes; `--no-arch` turns it off for a run.
+**Resolution.** Resolved per the shared `workflows-core:architecture-grounding` gate, consumed by `/create-ard` and `/specify` on both routes (and by `/dev-workflows:design`); `--no-arch` turns it off for a run.
 
 **When unset.** Architecture grounding reports `OFF` with a line naming the variable, and the run continues exactly as without it.
 

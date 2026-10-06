@@ -70,7 +70,7 @@ The `workflows-core` command's line of the family workflow map, the logging comm
                       └── frame-describer (workflows-core)      (used by /frames)
                       └── session-analyst (workflows-core)      (used by /diagnose-session)
                       └── docs-grounder (workflows-core)        (used by /idea, /create-prd, /update-prd, /create-ard, /specify, /epics, /release-notes, /brd-intake, /prd-ground)
-                      └── architecture-grounder (workflows-core) (used by /create-ard)
+                      └── architecture-grounder (workflows-core) (used by /create-ard, /specify, /design)
                       └── impl-maintenance (workflows-core)     (used by 25 of the 34 commands — `grep -l 'workflows-core:impl-maintenance' plugins/*/commands/*.md | wc -l` against `find plugins/dev-workflows/commands plugins/product-workflows/commands plugins/docs-workflows/commands plugins/workflows-core/commands -maxdepth 1 -name '*.md' | wc -l` — all but /docs-profile, /docs-serve, /harvest-decisions, /statusline, /feedback, /prompt, /prompt-brainstorm, /prompt-grill-me and /diagnose-session — replaced by defect-reporter under --skip-feedback)
                       └── defect-reporter (workflows-core)      (used under --skip-feedback by the same commands as impl-maintenance)
 ```

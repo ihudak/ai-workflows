@@ -35,7 +35,7 @@ claude plugin update dev-workflows@shipwright
 
 ## What you set on your machine
 
-`dev-workflows` reads four environment variables. One is required for the pipeline to have anywhere to write (`SPECS_PATH`); the rest are optional and each degrades to a documented default or a silent skip.
+`dev-workflows` reads five environment variables. One is required for the pipeline to have anywhere to write (`SPECS_PATH`); the rest are optional and each degrades to a documented default or a silent skip.
 
 ### `SPECS_PATH`
 
@@ -48,6 +48,10 @@ Where your code clones live — one directory, or a colon-separated list of them
 ### `DOCS_PATH`
 
 Your shipped product documentation's clone — **read-only** in its role as a grounding root. None of this plugin's own five commands grounds against it. Nine commands do, and every one of them ships from a companion plugin: eight from `product-workflows` (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/epics`, `/brd-intake` and `/prd-ground`) and `/docs-workflows:release-notes` from `docs-workflows`. Separately, `/docs-workflows:document` prefers this variable as a docs-repo discovery **hint** — a write target, not grounding. It is documented here only because [`code-handoff.md`](reference/references.md)'s git finish states plainly that it never touches this path either — a boundary statement, not a consumer. The plugin never writes to `DOCS_PATH`.
+
+### `ARCHITECTURE_REPO_PATH`
+
+A **read-only** clone of your organisation's architecture repository — its technology radar, standards, principles, patterns and ADRs. Set it and `/design` grounds the design in it, and in the team's harvested decisions under `$SPECS_PATH/architecture/`: what binds a design decision is cited, and each departure is recorded under the design's risks for the architect. Unset, `/design` runs exactly as without it. The plugin never writes, fetches or pulls the clone.
 
 ### `GIT_USER_INITIALS`
 

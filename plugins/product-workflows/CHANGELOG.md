@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.20.0] — 2026-10-06
+
+### Added
+- **`/specify` grounds its work in the architecture repository and the team's harvested decisions**, as `/create-ard` does, on both routes. Phase 1 resolves architecture grounding once and shows the `architecture grounding:` and `team decisions:` lines; after the code scan, `workflows-core:architecture-grounder` (on the §2 Opus chain) returns what binds the work and what conflicts with it, and the grill consumes the digest by grill-rank — what binds is a confirmation that cites it, a challenge competes for an existing question slot. `own_key` is the PRD key Phase 2.5 resolved the ARD with, since the PRD's own decisions arrive through that ARD. A conflict the grill cannot settle is an open question naming the governing artifact; on the BRD route a frozen `[VD#n]` or `[CD#n]` that conflicts with a reference is never re-grilled, the same rule `/create-ard` keeps. `--no-arch` turns it off. A repository at `arch_toplevel` is scanned with refresh off.
+- **`/harvest-decisions`, the knowledge base's generated `README.md` and the docs name all three commands that ground on the records** — `/create-ard`, `/specify` and `/dev-workflows:design`; the next harvest rewrites that README once, on a `kb/` branch like any other change.
+
 ## [3.19.1] — 2026-10-05
 
 ### Fixed
