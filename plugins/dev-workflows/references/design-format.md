@@ -135,9 +135,37 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
 10. **## Migration / rollout / backward-compatibility** (scaled) — schema/data migration, feature
     flags, rollout order, compat guarantees. `_N/A — why_` when the change is additive and
     self-contained.
-11. **## Out of scope** (core) — what this design deliberately does not cover (bounds the
+11. **## Observability & release verification** (scaled) — how the team will know, once the change
+    is live, that it works and that nothing around it broke. It is decided here, before the code,
+    because a signal the code does not emit cannot be checked after release. It applies to a change
+    that runs in a deployed system — a service, a job, an agent, a UI users reach — and is
+    `_N/A — why_` for one that never runs there: a build tool, a test-only change, a refactor with
+    no behaviour change. Each item below that does not apply reads `n/a — <reason>`, never left out:
+    - **Signals** — the metrics, logs, traces or events that show the change working, and those that
+      show it failing, each marked as existing today or added by this change. One the change adds is
+      part of the implementation, named in `## Architecture & components` like any other change.
+    - **Baseline** — each compared signal's current value, with where and over what window it was
+      read; where it cannot be read before release, how and when it is captured before the change
+      ships. Never an assumed value.
+    - **Blast radius** — the callers, dependencies and shared resources the change can affect, from
+      the code scan or the system's own topology, each with the signal that would show it hurt. A
+      risk this raises is recorded under `## Risks & mitigations`.
+    - **Post-release checks** — one for each acceptance criterion the change delivers (`[ACxx]`):
+      the signal, the threshold or the comparison with the baseline, and the window it is read over.
+      An acceptance criterion no runtime signal can show reads `n/a — <reason>` and rests on
+      `## Test strategy` alone. A check may carry the query that reads it, in the system's own monitoring tool,
+      written against the real names, never with placeholders.
+    - **Alert / SLO impact** — the existing alerts and service-level objectives the change moves,
+      and any it adds or retunes.
+    - **Rollback signal** — a named signal, a threshold against its baseline and the window that
+      together trigger rolling back or turning the feature flag off, and who acts on it. It pairs
+      with the rollout order in `## Migration / rollout / backward-compatibility`. "Roll back if
+      errors rise" names no threshold, and is not one.
+
+    A `SIMPLE` change may need no more than one check and its rollback signal.
+12. **## Out of scope** (core) — what this design deliberately does not cover (bounds the
     implementation).
-12. **## Open questions** (core; MUST be empty to hand off) — genuinely unresolved engineering items as
+13. **## Open questions** (core; MUST be empty to hand off) — genuinely unresolved engineering items as
     `- [ ]`. Any present blocks handoff; resolve them in the grill, or push a genuinely undecidable one
     onto the `specification.md` as a spec-level `- [ ]` for the PM (the design then waits on it).
 

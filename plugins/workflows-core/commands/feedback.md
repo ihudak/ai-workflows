@@ -55,7 +55,7 @@ supplies the free-text escape):
   `${CLAUDE_PLUGIN_ROOT}/references/feedback-emission.md` §1
   (`missing-capability`, `wrong-output`, `ambiguous-prompt`,
   `missing-reference-doc`, `model-routing`, `manual-workaround`,
-  `false-positive`, `docs-ux`, `environment-defect`, `other`); reuse an existing value when it fits.
+  `false-positive`, `docs-ux`, `environment-defect`, `unfollowed-rule`, `other`); reuse an existing value when it fits.
   Confirm.
 - **`impact`** — `blocker | friction | polish`.
 - **`author`** — `git config user.email` run in the specs repo (best-effort;

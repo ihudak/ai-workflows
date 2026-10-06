@@ -76,7 +76,7 @@ back in review because the two products differ here.
   value when it fits so clusters don't fragment):
   `missing-capability`, `wrong-output`, `ambiguous-prompt`,
   `missing-reference-doc`, `model-routing`, `manual-workaround`,
-  `false-positive`, `docs-ux`, `environment-defect`, `other`.
+  `false-positive`, `docs-ux`, `environment-defect`, `unfollowed-rule`, `other`.
 - **`origin: prompt` entries add two more prose blocks** after Friction /
   Suggested improvement: **User prompt** (the user's corrective request,
   verbatim save §1.1's redactions) and **Resolution** (what the AI actually did).
@@ -162,6 +162,10 @@ Persist **only** signals about **this plugin family** itself — `workflows-core
   `cloud|self-hosted` scoping case).
 - New agents / skills the plugin should offer.
 - Gaps in the reference docs of **whichever family plugin the signal is about** — `plugins/<that plugin>/references/**`, resolved from the running command's own plugin, and **not** `${CLAUDE_PLUGIN_ROOT}/references/**`. Written in this file that variable resolves to the plugin that *ships this reference* (`workflows-core`), so a `/prd-ground` run classifying a gap in `product-workflows`'s `brd-format.md` would test it against the wrong tree — the same hazard §3's `plugin_version` paragraph states, met one section later.
+- Family-plugin instructions that existed and were not followed — a rule in a family
+  plugin's command, agent or reference that a run missed, with why it was missed,
+  resolved to its plugin the way the reference-docs bullet above resolves a gap, as
+  `category: unfollowed-rule`.
 - Corrective interactions captured by `/prompt*` (any command output the user
   had to fix).
 - Defects in the ai-containers environment — a tool the ai-containers image is meant to provide and lacks, a wrong mount, a bad default — as `category: environment-defect`.
@@ -184,9 +188,12 @@ Excluded: friction, wishes, improvements, polish; user mistakes (wrong argument,
 
 When projecting an `impl-maintenance` report (§6 `emit-auto`), the plugin-facing
 slice is exactly its **Command workflow improvements**, **New agents / skills**,
-and **Reference docs** (paths under `${CLAUDE_PLUGIN_ROOT}`) sections, plus the
-**Key observations** that triggered them, plus any **Key observations** naming an ai-containers defect (§4), projected as `category: environment-defect`. Discard its **CLAUDE.md rules** and
-**Hooks and checks** sections (target-project advice).
+and **Reference docs** (paths in the family plugin the signal is about, resolved as §4's
+reference-docs bullet resolves them) sections, its **Rules that existed but were not
+followed** entries whose **Where** is a family plugin's file (as `category: unfollowed-rule`),
+plus the **Key observations** that triggered them, plus any **Key observations** naming an ai-containers defect (§4), projected as `category: environment-defect`. Discard its **CLAUDE.md rules** and
+**Hooks and checks** sections, and every unfollowed rule that lives in the target project or a
+global `CLAUDE.md` (target-project advice).
 
 ## 5. Interaction model — silent, high-recall
 
@@ -223,10 +230,12 @@ Inputs: the `impl-maintenance` **Lessons Learned report**, `command` (the exact
 slash-command name), `key` (or `null`), `source` (`specs | directory | none`).
 
 Behavior: project the plugin-facing slice per §4 (Command workflow improvements
-+ New agents / skills + plugin Reference docs + the triggering Key observations
-+ Key observations naming an ai-containers defect (§4), as `category: environment-defect`);
-render one `origin: auto` entry per distinct plugin-facing signal (Friction =
-the observation, Suggested improvement = the suggestion); dedupe by stable `id`
++ New agents / skills + plugin Reference docs + family-plugin unfollowed rules + the
+triggering Key observations + Key observations naming an ai-containers defect (§4), as
+`category: environment-defect`); render one `origin: auto` entry per distinct
+plugin-facing signal (Friction = the observation, Suggested improvement = the
+suggestion; for an unfollowed rule, Friction = the quoted rule with its **Where**, what
+happened and why it was missed, Suggested improvement = its **Fix**); dedupe by stable `id`
 (§3); resolve the target (§2); write silently (§5). Return the persisted path,
 or "no plugin-facing signal — nothing persisted" when the slice is empty.
 
