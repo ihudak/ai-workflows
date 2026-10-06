@@ -320,7 +320,7 @@ Runs after Phase 1.6 and replaces the single Phase 2B exploration subagent for m
 
 1. **Read each referenced specs folder** (read-only):
 
-   1. **Read the resolved folder.** Read its `prd.md` and the `specs` files resolved in Phase 0, plus —
+   1. **Read the resolved folder.** Read its `prd.md` — its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement) — and the `specs` files resolved in Phase 0, plus —
    for a PRD-level address — the `EPIC-` subfolders under it. This phase reads no PR URLs:
    `implementation.md` (Phase 4.7) is where this run records its own refs, and
    `workflows-core:implementation-format` §4 is how a later run reads them.

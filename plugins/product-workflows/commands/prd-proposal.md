@@ -390,7 +390,7 @@ and §4's section 4 says so outright.
 ## Phase 4 — Derive the work packages
 
 Execute `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §7. Mint `[WP#n]` contiguously from the
-resolved folder's requirement set (§3), and record for each package the delivery seam §7 clusters on —
+resolved folder's requirement set (§3) — its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement) — and record for each package the delivery seam §7 clusters on —
 what can be built, tested and accepted independently.
 
 1. **The two fixed packages** — a discovery-and-design package first and a test/UAT/release package

@@ -303,10 +303,10 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   plausible-but-adjacent finding hides most easily; `[SM#n]` and `[SMC#n]` — measurable,
   technology-agnostic outcomes that no commit satisfies or falsifies, so grounding one would return
   evidence about whether the metric is *instrumented*, a claim adjacent to the one the row states.
-  The count and the excluded prefixes are reported before Phase 1's repo prompt and again in the
-  Final report.
-- **At least one resulting claim.** A `--lean` PRD with no `[AC#n]` and no `[FR#n]` — and, by the
-  `[US#n]` fallback above, no `[US#n]` either — stops with `PRD_GROUND_NO_CLAIMS`, naming
+  The count and the excluded prefixes, and how many rows were left out as superseded or withdrawn,
+  are reported before Phase 1's repo prompt and again in the Final report.
+- **At least one resulting claim.** A `--lean` PRD with no live `[AC#n]` and no live `[FR#n]` — and,
+  by the `[US#n]` fallback above, no live `[US#n]` either — stops with `PRD_GROUND_NO_CLAIMS`, naming
   [`/update-prd`](update-prd.md) as the fix to add acceptance criteria and explicitly **not**
   `/create-prd`, which would rewrite the PRD rather than add to it. Writing an empty
   `grounding/code-grounding.md` instead would hand `/create-ard` and `/specify` a folder that reads

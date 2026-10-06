@@ -482,7 +482,7 @@ Otherwise (`focus_key` is null), perform the **cheap** `prd-plus-epics` read —
 plus a listing of its `EPIC-` subfolders — to determine the item's type and enumerate its child Epics
 *without* opening every Epic folder's contents:
 
-**Read the PRD folder directly.** Read its `prd.md`, and list the `EPIC-` subfolders under it —
+**Read the PRD folder directly.** Read its `prd.md` — its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement) — and list the `EPIC-` subfolders under it —
 that listing is the Epic set this phase branches on, and each folder's `key` and title come from its
 own frontmatter (`workflows-core:addressing` §4).
 

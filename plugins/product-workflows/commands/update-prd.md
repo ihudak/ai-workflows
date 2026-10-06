@@ -152,7 +152,7 @@ Dispatch `prd-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, n
   > "Review the Product Requirements Document:
   >
   > PRD path: [absolute path to the updated prd.md]
-  > Base: [absolute path to the archived copy of the base under revisions/]
+  > Base: [absolute path to the archived copy Phase 3's pre-write archive wrote under revisions/; omit where no write has happened yet, since `prd.md` is then the base itself]
   > Profile: [lean | hybrid | full — infer from the sections present]"
 
 Act on the verdict as `/create-prd` Phase 4 does: on `BLOCK`, fix the BLOCKER findings inline and re-review once; if still `BLOCK`, escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` rule in `workflows-core:escalation-rules`. Cap: one fix cycle + one re-review.

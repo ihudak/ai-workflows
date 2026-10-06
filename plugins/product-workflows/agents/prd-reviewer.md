@@ -17,6 +17,7 @@ runs a fix cycle and re-reviews once.
 ## Input contract
 
 - **PRD path** — absolute path to the PRD's `prd.md`. Required; if absent, stop and report.
+- **Base** — optional: absolute path to the archived copy of the PRD this one was updated or overwritten from. Where given, check the ids against it (Identifier integrity, below).
 - **Profile** — `lean | hybrid | full`. Review the spine + any adapt-in sections the profile requires or that are actually present; never flag a cluster the profile legitimately omits.
 
 ## Review method

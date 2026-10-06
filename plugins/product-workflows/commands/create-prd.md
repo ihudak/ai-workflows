@@ -542,7 +542,7 @@ the rule `/product-workflows:update-prd` Phase 3 fixes (*Archive the base before
 `<KEY>_<slug>_<YYYYMMDD>.md`, `<slug>` the resolved folder's own name less its `<KIND>-<KEY>-`
 prefix, or less `<KEY>-` on a legacy unprefixed folder, and `<KEY>_<YYYYMMDD>.md` where nothing
 remains, and where that name is taken by any file, the first free of that name with `-2`, `-3`, …
-inserted before `.md` — and report the archive path. **Where it archived a PRD, this run's requirement ids continue that PRD's** (`workflows-core:prd-format` § Changing a requirement): read the archived copy's ids before writing the requirement sections — a requirement this PRD keeps keeps its id, one whose meaning changes takes the next free id with the old one carried as `Superseded by` it, and one this PRD drops is carried as `Withdrawn` — so no Epic, coverage row or grounding finding that cites the old PRD is re-pointed. This is the archive Phase 1 step 2's Overwrite options name,
+inserted before `.md` — and report the archive path. **Where it archived a PRD, this run's requirement ids continue that PRD's** (`workflows-core:prd-format` § Changing a requirement): read the archived copy's ids before writing the requirement sections — a requirement this PRD keeps keeps its id, one whose meaning changes takes the next free id with the old one carried as `Superseded by` it, and one this PRD drops is carried as `Withdrawn` — so no Epic, coverage row or grounding finding that cites the old PRD is re-pointed. That archive is the one Phase 1 step 2's Overwrite options name,
 and it also covers a `prd.md` that appeared after Phase 0 step 6 looked. **It runs once per run**:
 where the file did not exist, nothing is archived and nothing later is, and every later write in
 this run — Phase 3.5's and 3.6's inline fixes, Phase 4's BLOCKER fixes, Phase 5 — is a write to this
@@ -744,7 +744,7 @@ Dispatch `prd-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, n
   > "Review the Product Requirements Document:
   >
   > PRD path: [absolute path to prd.md]
-  > Base: [on an Overwrite, absolute path to the archived copy under revisions/; omit otherwise]
+  > Base: [absolute path to the archived copy Phase 3's pre-write archive wrote under revisions/, where it wrote one; omit otherwise]
   > Profile: [lean | hybrid | full]"
 
 Act on the verdict (mirrors `/specify`, save the escalation rule it cites):

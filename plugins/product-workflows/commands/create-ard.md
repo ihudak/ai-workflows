@@ -369,7 +369,7 @@ PRD-level one, which softens the loss here where it does not in `/specify`.) Rou
 `scope: epic` frontmatter (Phase 4) is a statement about altitude and inheritance, not about this phase's
 run mode.
 
-Read the PRD from the folder `resolve-address <PRD>` returned (`workflows-core:addressing` §3) — its `prd.md`, whose frontmatter is `kind: prd`, when present (authored source).
+Read the PRD from the folder `resolve-address <PRD>` returned (`workflows-core:addressing` §3) — its `prd.md`, whose frontmatter is `kind: prd`, when present (authored source), its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement).
 
 **Read the resolved folder directly.** PRD-level → its `prd.md`. Epic-level → the Epic folder's own
 `specification.md` and `design.md` where present, plus the parent PRD folder's `prd.md` for the

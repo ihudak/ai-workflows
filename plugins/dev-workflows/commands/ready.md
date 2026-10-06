@@ -202,7 +202,7 @@ so where Phase 2 carries a slice row, its label is the literal `broad slice` and
 folder's own, taken from the folder's carrier (`workflows-core:addressing` §4) exactly as `<PRD>`
 already is. Nothing is read out of the PRD's title for it, and no title is invented. Carry forward:
 
-- `requirements[]` (+ `requirements_source`) — the coverage ground truth for Phase 3(a).
+- `requirements[]` (+ `requirements_source`) — the coverage ground truth for Phase 3(a): one row per requirement `prd.md` states, its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement).
 
   **An empty `requirements[]` makes coverage unassessable, and caps the verdict — it never stops the
   run.** Phase 3(a) greps one ID token per requirement and rolls the hits into a coverage figure, so

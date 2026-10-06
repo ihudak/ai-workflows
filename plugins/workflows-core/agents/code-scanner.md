@@ -1,6 +1,6 @@
 ---
 name: code-scanner
-description: "Scans one code repository for existing capabilities and gaps against a set of themes — from a PRD or Epic, an implementation spec, an item being specified, an idea, the documentation surface kinds, an engineering design or architect-driven discovery — broad-then-narrow where its caller asks (model-routing §8.5). Pure filesystem search, no network. Built for parallel dispatch: one instance per repository, at most four at once. Model tier assigned by the caller per the model-routing policy (no fixed pin)."
+description: "Scans one code repository for existing capabilities and gaps against a set of themes — from a PRD or Epic, an implementation spec, an item being specified, an idea, the documentation surface kinds, an engineering design or architect-driven discovery — broad-then-narrow where its caller asks (model-routing §8.5). Filesystem search on a clone it first fast-forwards (unless told not to); no web API. Built for parallel dispatch: one instance per repository, at most four at once. Model tier assigned by the caller per the model-routing policy (no fixed pin)."
 tools: ["Read", "Glob", "Grep", "Bash"]
 ---
 

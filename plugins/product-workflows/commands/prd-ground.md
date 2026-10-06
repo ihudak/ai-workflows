@@ -561,8 +561,9 @@ behaviour, not the behaviour.
       make and reporting it as evidence for the one it does.
 
     **Report the count and the excluded prefixes now, before Phase 1's repo prompt, and again in
-    the Final report** — "11 of 19 requirement rows ground; 8 excluded — 3 `[UC#n]`, 5
-    `[SM#n]`/`[SMC#n]`" or the like — so a later reader of either the transcript or the write-up
+    the Final report** — "11 of 21 requirement rows ground; 10 excluded — 3 `[UC#n]`, 5
+    `[SM#n]`/`[SMC#n]`, 2 superseded or withdrawn" or the like, the last count present wherever a
+    marked row was left out — so a later reader of either the transcript or the write-up
     cannot conclude from a clean run that the PRD was fully ground.
 
     **Zero resulting claims is a stop, not a quiet completion, for the same reason step 8 already
@@ -573,8 +574,9 @@ behaviour, not the behaviour.
     fallback rule above already routes every `[US#n]` into the claim list the moment its own story
     carries no acceptance criterion, so a document with no `[AC#n]` at all still contributes a claim
     for every story it holds — the list only comes up genuinely empty where the PRD *also* holds no
-    `[US#n]`, which the spine's own "Contiguous IDs" convention (`workflows-core:prd-format`) makes
-    a degenerate document rather than an ordinary `--lean` one. The message still names only
+    live `[US#n]`: a document with no stories, which the spine's own "Contiguous IDs" convention
+    (`workflows-core:prd-format`) makes degenerate rather than an ordinary `--lean` one, or one whose
+    every story has been withdrawn or superseded. The message still names only
     `[AC#n]` and `[FR#n]`, because those are the two rows the fix — adding acceptance criteria —
     actually adds; naming the empty `[US#n]` case too would not change what the operator is told to
     do. Stop, naming the fix that adds acceptance criteria and never the command that would
@@ -2055,8 +2057,8 @@ that superseded that `[CG#n]` and the run its note names as replacing it; the `d
 and the count of documentation divergences recorded (each named by the `[CG#n]` it diverges from —
 never by an identifier of its own, because it has none); whether the derivation matrix ran and why; any `design-grounder` class-4 gap deferred for want
 of a settling `[CG#n]`; **on `route: idea`, the claim-exclusion count and prefixes step 8i
-reported** — "11 of 19 requirement rows ground; 8 excluded — 3 `[UC#n]`, 5 `[SM#n]`/`[SMC#n]`" or
-the like, carried here verbatim so a reader of the write-up alone, without the transcript, still
+reported** — "11 of 21 requirement rows ground; 10 excluded — 3 `[UC#n]`, 5 `[SM#n]`/`[SMC#n]`, 2
+superseded or withdrawn" or the like, carried here verbatim so a reader of the write-up alone, without the transcript, still
 cannot conclude the PRD was fully ground; the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line) and cost path (or, under `--skip-costs`, the `Session cost: …` line); the `Phase handoff:` outcome line
 (`workflows-core:phase-handoff` §4.1); the `Specs repo:` outcome line (`workflows-core:specs-repo-git` §6); the next-step
 recommendation; and end with —

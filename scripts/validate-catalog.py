@@ -634,7 +634,7 @@ def _selftest() -> int:
          "plugins/fixture/agents/a.md", entries={"agents/a.md": "---\nname: a\ndescription: \""
                                                  + "x" * (ENTRY_DESC_WARN + 1) + "\"\n---\n"})
     # A folded block scalar is measured as YAML reads it -- its lines joined -- not as its
-    # first line: 21 of this repository's descriptions are written that way.
+    # first line: many of this repository's descriptions are written that way.
     case("a folded skill description is measured whole", True, "plugins/fixture/skills/s/SKILL.md",
          entries={"skills/s/SKILL.md": "---\nname: s\ndescription: >\n  " + "x" * 300 + "\n  "
                                        + "y" * 301 + "\nallowed-tools: Read\n---\n"})
