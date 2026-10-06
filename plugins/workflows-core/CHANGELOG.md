@@ -12,7 +12,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **Pre-lint lists `## Observability & release verification`** among a design's scaled sections (dev-workflows 4.17.0).
 
 ### Fixed
-- **The feedback projection tests a reference-doc gap against the plugin it is about.** §4's projection paragraph said "paths under `${CLAUDE_PLUGIN_ROOT}`", which in that file names `workflows-core`, contradicting §4's own reference-docs bullet two paragraphs above; it now resolves the path as that bullet does.
+- **The feedback projection tests a reference-doc gap against the plugin it is about.** §4's projection paragraph said "paths under `${CLAUDE_PLUGIN_ROOT}`", which in that file names `workflows-core`, contradicting §4's own reference-docs bullet; it now resolves the path as that bullet does.
 
 ## [1.25.0] — 2026-10-06
 
