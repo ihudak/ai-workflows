@@ -2,6 +2,7 @@
 name: idea
 description: "Refines one source — an inline prompt, a markdown file (its links and images walked, asking before it goes deep), a community post, or a saved file such as product feedback or an existing PRD — into a lean one-page idea.md through a bounded one-question-at-a-time grill (--deep for a relentless one). Copies the sources it read into the PRD folder and points idea.md's links at the copies; changes no code. Writes PRD-<KEY>-<slug>/idea.md. Next: /create-prd."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
+disable-model-invocation: true
 ---
 
 Refine an idea into `idea.md`: $ARGUMENTS

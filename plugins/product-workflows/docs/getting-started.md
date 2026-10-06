@@ -59,6 +59,8 @@ Your shipped product documentation's clone — **read-only** in its role as a gr
 /idea ACME-77 a lightweight way for on-call engineers to silence a noisy alert for one hour without editing the alerting rule
 ```
 
+**Type the command.** Every command in this plugin is typed-only (`disable-model-invocation: true`): it stays out of the list of skills the model picks from, which keeps that list inside Claude Code's budget, so asking in prose — "turn this idea into a brief" — does not start it.
+
 `ACME-77` is yours to invent — nothing looks it up, and no tracker is read. It only has to match `^[A-Z][A-Z0-9_]*(-\d+)+$`.
 
 Here is what to expect:

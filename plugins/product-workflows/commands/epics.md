@@ -2,6 +2,7 @@
 name: epics
 description: "Drafts the child Epics of a PRD (a PRD- folder holding prd.md) or re-refines one Epic (an EPIC- folder holding epic.md under a PRD), from the PRD, the existing Epics and an optional code scan, each Epic with testable acceptance criteria and, where the run has a component set, one target component. Runs prose-style-checker as a non-gating pass and gates on the Opus epic-reviewer. The only command that creates an EPIC- folder; refuses a BRD- container and a PRD- folder with no PRD yet."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
+disable-model-invocation: true
 ---
 
 Draft child Epics for the resolved Product Requirements Document: $ARGUMENTS

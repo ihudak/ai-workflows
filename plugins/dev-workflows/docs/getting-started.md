@@ -87,6 +87,8 @@ The plugin runs commands a repository declares, with your permissions: its test 
 /dev-workflows:design EPIC-98760
 ```
 
+**Type the command.** Every command in this plugin is typed-only (`disable-model-invocation: true`): it stays out of the list of skills the model picks from, which keeps that list inside Claude Code's budget, so asking in prose — "design EPIC-98760" — does not start it.
+
 Claude Code ships a `/design` of its own, which makes a Design artifact and is switched on for some accounts only; where it is on, the bare form can reach it instead of this plugin's, so the qualified `/dev-workflows:design` is the form that always works.
 
 `EPIC-98760` resolves the Epic within its PRD, the same key `/product-workflows:specify` used to land `specification.md`. Nothing looks it up beyond the specs tree, and no tracker is read.

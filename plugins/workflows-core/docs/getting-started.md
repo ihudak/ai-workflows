@@ -20,7 +20,7 @@ claude plugin update workflows-core@shipwright
 
 `workflows-core` is the shared foundation of the `dev-workflows` plugin family. Most of what it ships is not a command: it is the reference corpus the sibling plugins read — `dev-workflows`, `product-workflows`, and `docs-workflows` all declare it as a dependency — the `model-routing` skill every pipeline command loads at its classification step, and ten agents any of them may dispatch. If you have installed a plugin from that family, you want this one installed too.
 
-It does ship seven commands of its own, and one of them is worth running first — see below.
+It does ship seven commands of its own, and one of them is worth running first — see below. Type them: each is typed-only (`disable-model-invocation: true`), which keeps it out of the list of skills the model picks from and that list inside Claude Code's budget, so asking in prose does not start one. The same holds for every command of `dev-workflows` and `product-workflows`, and for those of `docs-workflows` save `/docs-profile` and `/docs-brand`, which other commands run for you.
 
 ## What you set on your machine
 

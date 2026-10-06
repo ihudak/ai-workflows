@@ -2,6 +2,7 @@
 name: brd-split
 description: "The BRD-to-PRD route's allocation step. On a BRD root it carves slices from an instruction you type after the key, keys each as a PRD- folder inside the BRD, and walks every unallocated coverage-ledger row to a slice, a deferral, a rejection or superseded; on a slice it allocates that slice's own rows. Rows are walked one at a time, and a uniform answer can be written across the rest in one confirmation. A re-run reconciles a child out of step and can re-cut a row to a sibling. Writes slices.md. Next: /prd-ground on each slice, or /brd-interview on a slice."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
+disable-model-invocation: true
 ---
 
 Split the grounded BRD into slices and allocate every requirement: $ARGUMENTS

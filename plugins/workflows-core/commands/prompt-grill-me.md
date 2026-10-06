@@ -2,6 +2,7 @@
 name: prompt-grill-me
 description: Log a corrective interaction as plugin feedback, then grill the fix inline — a bounded one-question-at-a-time interrogation (≤5 questions) of the correction following the embedded grilling technique. Self-contained; no plugin dependency.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
+disable-model-invocation: true
 ---
 
 Log a corrective interaction, then grill the fix: $ARGUMENTS

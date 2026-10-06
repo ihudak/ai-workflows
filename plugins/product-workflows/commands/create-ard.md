@@ -2,6 +2,7 @@
 name: create-ard
 description: Authors an architecture requirements and decision document (ard.md) for a PRD or an Epic (/create-ard <KEY>; an Epic-level ARD inherits the PRD-level one), grounded in the mounted code repositories and, optionally, the architecture repository, gated by the Opus ard-reviewer. Optional; product-architecture altitude, no code written. On the BRD route it seeds from the slice's ard-seed.md, decisions and verified grounding findings, and refuses a BRD- container. Writes ard.md into the resolved PRD- or EPIC- folder.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
+disable-model-invocation: true
 ---
 
 Author an Architecture Requirements/Decision Document for the resolved item: $ARGUMENTS

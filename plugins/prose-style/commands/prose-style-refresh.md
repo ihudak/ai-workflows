@@ -7,6 +7,7 @@ description: >
   your overlay directory. Never modifies the shipped vendor-neutral baseline, and
   carries no hardcoded style-guide URL.
 allowed-tools: Read Write Edit WebFetch Bash Glob Grep Skill
+disable-model-invocation: true
 ---
 
 # Refresh the prose style overlay

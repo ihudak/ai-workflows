@@ -2,6 +2,7 @@
 name: document
 description: keyed feature-documentation workflow. Phase 0 preflight-discovers the docs repo + profile (in-repo → built-in example-docs default → on-demand /docs-profile) and the PRD's specs dir under /workspace. Reads a Product Requirements Document hierarchy from its PRD folder in the specs tree — the folder the address resolves to, or the one above it for an Epic address — summarises the diffs its implementation record names in parallel, synthesises product documentation, and gates on style-check and Opus doc review.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
+disable-model-invocation: true
 ---
 
 Generate product documentation for the resolved Product Requirements Document: $ARGUMENTS

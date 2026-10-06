@@ -2,6 +2,7 @@
 name: update-prd
 description: "Updates an existing PRD through a relentless grill against workflows-core:prd-format, diffing against the current copy and drawing on the ARD, specification, transcripts and grounding findings, gated by the Opus prd-reviewer. Keeps every requirement id (a changed requirement gets a new one; a dropped one is withdrawn in place), archives the prior copy under revisions/, and marks each grounding finding it used consumed_by: PRD. Product altitude, no code scan. Use when a PRD exists; for a new one, use /create-prd."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
+disable-model-invocation: true
 ---
 
 Update the Product Requirements Document: $ARGUMENTS

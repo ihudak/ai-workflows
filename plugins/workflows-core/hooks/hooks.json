@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/notify-done.sh"
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/notify-done.sh\""
           }
         ]
       }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/test-notify.sh"
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/test-notify.sh\""
           }
         ]
       }

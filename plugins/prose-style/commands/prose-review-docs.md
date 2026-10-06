@@ -7,6 +7,7 @@ description: >
   prose-style-checker and optionally Vale. Supports --fix to auto-apply safe
   corrections via prose-fixer.
 allowed-tools: Read Bash Glob Grep Edit Task
+disable-model-invocation: true
 ---
 
 # Review documentation files against the prose style rules

@@ -2,6 +2,7 @@
 name: create-prd
 description: "Authors a Product Requirements Document (prd.md) from a refined idea.md and a key, through a relentless grill against workflows-core:prd-format (--lean, --hybrid or --full profile), gated by the Opus prd-reviewer; product altitude, no code scan. On the BRD route it seeds from a decided slice's prd-seed.md and decisions.md, refuses a BRD- container or a slice not yet fully allocated, and records the BRD provenance in the frontmatter. Writes PRD-<KEY>-<slug>/prd.md. Next: /create-ard or /release-notes."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
+disable-model-invocation: true
 ---
 
 Author a Product Requirements Document: $ARGUMENTS

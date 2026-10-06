@@ -2,6 +2,7 @@
 name: brd-package
 description: "The BRD-to-PRD route's customer-packaging step, once per slice after its interview round settles: runs an adversarial self-review and refuses to build while any [SR#n] finding is undisposed, then renders a self-contained customer prompt with the review schema inlined, a short delivery note and a plain-markdown bundle, and scans the prompt for anything plugin-internal. Gates on merged decisions and every question disposed or held for the customer. Next: send it, then /brd-reconcile."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
+disable-model-invocation: true
 ---
 
 Turn the decided BRD into a package a customer can actually review: $ARGUMENTS

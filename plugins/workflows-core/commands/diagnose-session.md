@@ -2,6 +2,7 @@
 name: diagnose-session
 description: Read a session's transcripts on disk and report what happened in a run of this plugin family that went wrong — repeated work, an ignored plan, stumbles, a step that did not fire, too slow or too expensive — with a `path:line` citation behind every finding. Agrees the problem with you first, triages it in seven parallel dimensions, and writes the report outside every repository. Reports; never changes a plugin, and never modifies a session file.
 allowed-tools: Read Write Bash Glob Grep Task Skill
+disable-model-invocation: true
 ---
 
 Diagnose a session: $ARGUMENTS

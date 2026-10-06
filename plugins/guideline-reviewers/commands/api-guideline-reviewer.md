@@ -2,6 +2,7 @@
 name: api-guideline-reviewer
 description: Review OpenAPI specification files against REST API and IAM permission-naming guidelines. Runs a deterministic Spectral lint first where a Spectral CLI is available, then reviews what a linter cannot express. Checks version consistency, naming conventions, IAM scope format, HTTP status codes, and schema composition.
 allowed-tools: Read Bash Glob Grep WebFetch
+disable-model-invocation: true
 ---
 
 Review OpenAPI specification files for compliance with REST API and IAM permission-naming guidelines: $ARGUMENTS

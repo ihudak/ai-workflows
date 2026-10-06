@@ -2,6 +2,7 @@
 name: brd-reconcile
 description: "The BRD-to-PRD route's last step: commits the customer's returned review into the BRD folder, reads it against the review schema or as free text (each free-text reading confirmed with you against its quotation), freezes the answers as [CD#n], closes the customer questions, applies the required corrections, updates the defect log and coverage ledger, and sweeps dependent BRDs and every artifact under the parent for changed ids. --sent admits a review of a package built outside /brd-package. Writes reconciliation-<YYYYMMDD>.md."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
+disable-model-invocation: true
 ---
 
 Turn the customer's returned review into frozen decisions, and leave nothing in the tree still

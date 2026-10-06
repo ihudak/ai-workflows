@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.24.0] — 2026-10-06
+
+### Changed
+- **Every command is typed-only** (`disable-model-invocation: true`): all sixteen run when typed, and a request in prose no longer starts one. It keeps them out of the skill listing Claude Code gives the model, which was over its budget (`workflows-core` 1.29.0). The getting-started page says so.
+
+### Fixed
+- **The `preload-context` hook command quotes `${CLAUDE_PLUGIN_ROOT}`.** Unquoted, a plugin root whose path holds a space — under a home directory with one — split the command into several words and the hook failed to start; `claude plugin validate` reported each.
+
 ## [3.23.0] — 2026-10-06
 
 ### Added

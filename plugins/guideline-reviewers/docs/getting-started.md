@@ -39,4 +39,4 @@ See [Environment](reference/environment.md) for the exact resolution order, the 
 /guideline-reviewers:guideline-reviewer app/src/pages/SettingsPage.tsx
 ```
 
-Both commands are standalone reviewers — neither reads nor writes `$SPECS_PATH`, opens a branch, or expects a prior workflow artifact; each prints its subagent's verdict directly. See the [documentation index](README.md) for everything else, including [Workflow overview](workflow.md).
+Type them: both are typed-only (`disable-model-invocation: true`), which keeps them out of the list of skills the model picks from, so asking in prose does not start them. Both commands are standalone reviewers — neither reads nor writes `$SPECS_PATH`, opens a branch, or expects a prior workflow artifact; each prints its subagent's verdict directly. See the [documentation index](README.md) for everything else, including [Workflow overview](workflow.md).

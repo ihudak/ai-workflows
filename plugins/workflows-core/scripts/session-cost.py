@@ -308,14 +308,17 @@ def _skill_invocation(obj, ns_map):
     THIS marketplace through the Skill tool, else None.
 
     WHY THIS SHAPE EXISTS. The `<command-name>` envelope is emitted when the user
-    TYPES the slash command. When the user asks in prose and the model reaches the
-    command through the **Skill tool**, the invocation appears only as an assistant
-    `tool_use` block named `Skill` whose `input.skill` is the command -- no user
-    message, no envelope -- so a detector reading user messages alone misses the
-    invocation entirely, and section 13.3 hands the preceding claim the segment
-    running to the next boundary of any kind, i.e. straight through it. Measured on
-    a real session: a typed grill command was followed by two prose-invoked runs,
-    neither of which cut the window, and the grill's claim absorbed both.
+    TYPES the slash command. When the model reaches the command through the
+    **Skill tool** -- on a prose request, or one command running another -- the
+    invocation appears only as an assistant `tool_use` block named `Skill` whose
+    `input.skill` is the command -- no user message, no envelope -- so a detector
+    reading user messages alone misses the invocation entirely, and section 13.3 hands
+    the preceding claim the segment running to the next boundary of any kind, i.e.
+    straight through it. Measured on a real session: a typed grill command was followed
+    by two prose-invoked runs, neither of which cut the window, and the grill's claim
+    absorbed both. That predates typed-only commands: every family command now carries
+    `disable-model-invocation: true` except one another command runs through the Skill
+    tool, so only those still arrive this way -- from their caller, or on a prose request.
 
     WHY THIS HALF RESOLVES WHERE command_envelope DOES NOT -- a deliberate
     asymmetry, and the one thing to get right here. command_envelope cuts on ANY

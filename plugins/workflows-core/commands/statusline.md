@@ -2,6 +2,7 @@
 name: statusline
 description: Install the plugin family's multi-line status line (session identity, git, context bar, cost, tokens, rate limits) into your Claude Code settings. Vendors the script to a stable per-user path, backs up anything it would overwrite, and enables the Option B cost snapshot used by session cost reporting.
 allowed-tools: Read Write Edit Bash Skill
+disable-model-invocation: true
 ---
 
 Install the plugin family's status line: $ARGUMENTS

@@ -2,6 +2,7 @@
 name: docs-init
 description: "Scaffolds a documentation repository for a project that has none: a Material for MkDocs skeleton with a stub in every section, public and internal builds over one content root, a generated nav, Vale, a CI workflow, and the docs-profile.yml the other docs commands read. Use once, on a repository with no docs; where it has some, use /docs-profile instead. Verifies the scaffold builds and lints, gates it on an Opus review, and ends on a drafted pull request it never pushes."
 allowed-tools: Read Write Edit Bash Glob Grep Task Skill
+disable-model-invocation: true
 ---
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
@@ -128,7 +129,7 @@ A `vale sync` that fails is **reported, not worked around** — it is Phase 7 st
 
 ## Phase 5 — Branding
 
-Unless `--no-brand`, run `/docs-workflows:docs-brand --inline` over the repository this run just scaffolded.
+Unless `--no-brand`, run `/docs-workflows:docs-brand --inline` over the repository this run just scaffolded, through the Skill tool (`skill: "docs-workflows:docs-brand"`, with the arguments below).
 
 **Pass the resolved docs-repo root as the positional token, explicitly.** That is `/docs-brand`'s own `--inline` contract: it becomes rung 1 of that command's `resolve-docs-repo` ladder, so the ladder never runs an independent search that could resolve somewhere other than the repository this run has open. Where Phase 2 confirmed **exactly one** code repository, pass it as `--from <path>` too, reusing what this run already resolved; where it confirmed several or none, omit `--from` and let that command's own rungs resolve it — its contract provides for exactly that. **This run's `run_flags` — resolved once, above — carry straight into that continuation**: `/docs-brand --inline` runs in this same session, on the record Phase 0 already stripped and resolved, and does not re-invoke `strip-run-flags` on its own arguments; a `run_flags.enforced_model` this run carries pins its dispatches too, on the same terms as this command's own.
 

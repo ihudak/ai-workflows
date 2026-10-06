@@ -2,6 +2,7 @@
 name: brd-interview
 description: "The BRD-to-PRD route's decision step, once per slice after /prd-ground and /brd-split: generates the round's questions and tags each [G] (answered from the grounding, never asked), [V] (asked of you one at a time, with argumentation) or [C] (held for the customer), then writes decisions.md ([VD#n], [AS#n]), the round record and the customer question set. Gates on merged, verified grounding and a fully allocated ledger; --round N resumes or re-opens a round. Next: /brd-package."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
+disable-model-invocation: true
 ---
 
 Turn the grounded BRD into a decided one, one round at a time: $ARGUMENTS

@@ -2,6 +2,7 @@
 name: design
 description: keyed engineering-design workflow (Dev phase). Takes over a merged specification.md from the specs repo's main branch, grounds strictly in the fully-mounted implementation code, and authors a reviewed engineering design.md through a relentless one-question-at-a-time grill that challenges the spec and designs the implementation; gates on the Opus design-reviewer and lands design.md + the spec's engineering-review edits on main via branch + PR for /implement. Optional --design-twice forces the Phase 5 interface fan-out even when no contested-interface signal fired.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
+disable-model-invocation: true
 ---
 
 Author an engineering design for the resolved item: $ARGUMENTS

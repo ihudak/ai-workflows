@@ -2,6 +2,7 @@
 name: release-notes
 description: Release-notes drafting. Reads the Product Requirements Document from its PRD folder in the specs tree — the folder the address resolves to, or the one above it for an Epic address — optionally grounds in the recorded refs' diffs, renders an example-docs release-notes body, runs a light prose-style-checker gate, and writes a persistent draft to publish wherever release notes are published.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
+disable-model-invocation: true
 ---
 
 Draft release notes for the resolved PRD: $ARGUMENTS

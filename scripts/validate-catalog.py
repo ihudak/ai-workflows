@@ -45,6 +45,15 @@ than once:
      1,024 (the Agent Skills ceiling), warns above 600
      (docs/maintainers/rationale.md, "entry-descriptions").
 
+  6. A command left in that listing for nothing, or flagged out of it while
+     something calls it. A command whose frontmatter sets
+     ``disable-model-invocation: true`` is absent from the listing and refused by
+     the Skill tool, though it still runs when typed; the 600-character budget
+     still left the family's listing three times its 8,000-character share of a
+     200K window. Every command carries the flag unless a file runs it through
+     the Skill tool as ``skill: "<plugin>:<name>"``, and nothing flagged is run
+     that way (docs/maintainers/rationale.md, "typed-only-commands").
+
 Note on what is deliberately NOT checked: the ``description`` in a catalog
 entry and in the matching ``plugin.json`` are not required to be identical.
 They are independently authored in practice -- Copilot's ``prose-style``
@@ -81,6 +90,7 @@ regression.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -102,6 +112,13 @@ DESCRIPTION_WARN = 900
 # for what it does, when to use it and what it is not for.
 ENTRY_DESC_MAX = 1024
 ENTRY_DESC_WARN = 600
+
+# A command the user types carries `disable-model-invocation: true`, which keeps it out of
+# that listing altogether (the Skill tool then refuses it; a typed command still runs). Only a
+# command another file runs through the Skill tool -- written `skill: "<plugin>:<name>"` --
+# stays model-invocable (docs/maintainers/rationale.md, "typed-only-commands").
+TYPED_ONLY_KEY = "disable-model-invocation"
+SKILL_CALL = re.compile(r'skill:\s*"([a-z0-9-]+):([a-z0-9-]+)"')
 
 # The repo-root CLAUDE.md loads into every session and every non-fork subagent here. It
 # reached 189,969 characters by accretion before the 2026-09-23 split moved area rules to
@@ -413,6 +430,54 @@ def check_entry_descriptions(root: Path) -> tuple[int, int]:
     return errors, warnings
 
 
+def frontmatter_flag(text: str, key: str) -> bool:
+    """True when the file's YAML frontmatter sets this top-level key to `true`."""
+    lines = text.split("\n")
+    if not lines or lines[0].strip() != "---":
+        return False
+    for line in lines[1:]:
+        if line.strip() == "---":
+            return False
+        if line.startswith(key + ":"):
+            return line[len(key) + 1:].strip().lower() == "true"
+    return False
+
+
+def check_typed_only(root: Path) -> tuple[int, int]:
+    """Every command is flagged typed-only unless another file runs it through the Skill tool.
+
+    The two directions: an unflagged command nothing calls costs the listing for nothing, and a
+    flagged command or skill something calls is refused by the Skill tool when it is called.
+    A command whose plugin also ships a skill of the same name is exempt from the second: the
+    Skill tool runs the skill.
+    """
+    errors = 0
+    plugins = root / "plugins"
+    called: dict[tuple[str, str], Path] = {}
+    for pattern in ("*/commands/*.md", "*/agents/*.md", "*/skills/*/SKILL.md", "*/references/**/*.md"):
+        for path in sorted(plugins.glob(pattern)):
+            for m in SKILL_CALL.finditer(path.read_text(encoding="utf-8")):
+                called.setdefault((m.group(1), m.group(2)), path)
+    entries = [(p.parent.parent.name, p.stem, p, True) for p in sorted(plugins.glob("*/commands/*.md"))] \
+        + [(p.parent.parent.parent.name, p.parent.name, p, False)
+           for p in sorted(plugins.glob("*/skills/*/SKILL.md"))]
+    for plugin, name, path, is_command in entries:
+        rel = path.relative_to(root)
+        flagged = frontmatter_flag(path.read_text(encoding="utf-8"), TYPED_ONLY_KEY)
+        caller = called.get((plugin, name))
+        twin = is_command and (plugins / plugin / "skills" / name / "SKILL.md").is_file()
+        if flagged and caller is not None and not twin:
+            print(f"  ERROR {rel}: flagged `{TYPED_ONLY_KEY}: true`, but {caller.relative_to(root)} runs "
+                  f"{plugin}:{name} through the Skill tool, which refuses a flagged entry -- drop the flag")
+            errors += 1
+        elif is_command and not flagged and caller is None:
+            print(f"  ERROR {rel}: no `{TYPED_ONLY_KEY}: true` -- a command the user types stays out of "
+                  f"the model's skill listing; only one another file runs through the Skill tool "
+                  f"(`skill: \"{plugin}:{name}\"`) is left in it")
+            errors += 1
+    return errors, 0
+
+
 def validate_repo(root: Path) -> tuple[int, int]:
     print(f"\n=== {root}")
     errors = 0
@@ -516,6 +581,10 @@ def validate_repo(root: Path) -> tuple[int, int]:
     errors += e
     warnings += w
 
+    e, w = check_typed_only(root)
+    errors += e
+    warnings += w
+
     e, w = check_instruction_sizes(root)
     errors += e
     warnings += w
@@ -600,6 +669,7 @@ def _selftest() -> int:
             path.write_text(text, encoding="utf-8")
 
     rc = 0
+    TYPED = "disable-model-invocation: true\n"
 
     def case(desc: str, want_ok: bool, needle: str, **kw) -> None:
         nonlocal rc
@@ -632,9 +702,10 @@ def _selftest() -> int:
     case("a description past the warning threshold is reported", True, "WARN",
          description="x" * (DESCRIPTION_WARN + 1))
     case("a command description within budget passes", True, "OK",
-         entries={"commands/c.md": "---\ndescription: " + "x" * ENTRY_DESC_WARN + "\n---\n"})
+         entries={"commands/c.md": "---\ndescription: " + "x" * ENTRY_DESC_WARN + "\n" + TYPED + "---\n"})
     case("an over-long command description is rejected", False, "plugins/fixture/commands/c.md",
-         entries={"commands/c.md": "---\ndescription: " + "x" * (ENTRY_DESC_MAX + 1) + "\n---\n"})
+         entries={"commands/c.md": "---\ndescription: " + "x" * (ENTRY_DESC_MAX + 1) + "\n" + TYPED
+                                   + "---\n"})
     case("an agent description past the entry warning threshold is reported", True,
          "plugins/fixture/agents/a.md", entries={"agents/a.md": "---\nname: a\ndescription: \""
                                                  + "x" * (ENTRY_DESC_WARN + 1) + "\"\n---\n"})
@@ -646,7 +717,37 @@ def _selftest() -> int:
     # A double-quoted description is measured unescaped: `\"` is one character, as YAML reads it.
     case("an escaped quote in a quoted description counts once", True, "OK",
          entries={"commands/q.md": "---\ndescription: \"" + "x" * (ENTRY_DESC_WARN - 3)
-                                   + "\\\"y\\\"\"\n---\n"})
+                                   + "\\\"y\\\"\"\n" + TYPED + "---\n"})
+
+    # Typed-only commands. A command the user types carries `disable-model-invocation: true`,
+    # which keeps it out of the model's skill listing; the Skill tool refuses a flagged command,
+    # so one another file runs that way (`skill: "<plugin>:<name>"`) must stay unflagged.
+    case("a command without disable-model-invocation is rejected", False,
+         "plugins/fixture/commands/c.md: no `disable-model-invocation: true`",
+         entries={"commands/c.md": "---\ndescription: d\n---\n"})
+    case("a flagged command passes", True, "OK",
+         entries={"commands/c.md": "---\ndescription: d\n" + TYPED + "---\n"})
+    case("an unflagged command another command runs through the Skill tool passes", True, "OK",
+         entries={"commands/p.md": "---\ndescription: d\n---\n",
+                  "commands/c.md": "---\ndescription: d\n" + TYPED + "---\nRun it (Skill tool, "
+                                   "`skill: \"fixture:p\"`).\n"})
+    case("a flagged command another command runs through the Skill tool is rejected", False,
+         "plugins/fixture/commands/c.md runs fixture:p through the Skill tool",
+         entries={"commands/p.md": "---\ndescription: d\n" + TYPED + "---\n",
+                  "commands/c.md": "---\ndescription: d\n" + TYPED + "---\nRun it (Skill tool, "
+                                   "`skill: \"fixture:p\"`).\n"})
+    # A command and a skill may share a name; the Skill tool then runs the skill (measured), so
+    # a flagged command whose skill twin is called is correct, and a flagged skill is not.
+    case("a flagged command whose same-named skill another file runs passes", True, "OK",
+         entries={"commands/w.md": "---\ndescription: d\n" + TYPED + "---\n",
+                  "skills/w/SKILL.md": "---\nname: w\ndescription: d\n---\n",
+                  "commands/c.md": "---\ndescription: d\n" + TYPED + "---\nRun it (Skill tool, "
+                                   "`skill: \"fixture:w\"`).\n"})
+    case("a flagged skill another file runs through the Skill tool is rejected", False,
+         "plugins/fixture/commands/c.md runs fixture:s through the Skill tool",
+         entries={"skills/s/SKILL.md": "---\nname: s\ndescription: d\n" + TYPED + "---\n",
+                  "commands/c.md": "---\ndescription: d\n" + TYPED + "---\nRun it (Skill tool, "
+                                   "`skill: \"fixture:s\"`).\n"})
     case("a plugin.json with no catalog entry anywhere is rejected", False,
          "is not listed in any marketplace.json", ghost_manifest=True)
     case("two plugin.json files declaring the same name are rejected", False,

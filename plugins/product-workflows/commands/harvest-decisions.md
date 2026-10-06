@@ -2,6 +2,7 @@
 name: harvest-decisions
 description: Harvest the decisions of every ARD on the specs repository's default branch into the team architecture knowledge base at $SPECS_PATH/architecture/ — one record per [AD#N], reconciled on every run (superseded, withdrawn, applied in, deviated in), never deleted, handed off by pull request. Deterministic — a bundled script, no model judgment. /create-ard, /specify and /design ground on the live records.
 allowed-tools: Read Bash Glob Grep Skill
+disable-model-invocation: true
 ---
 
 Harvest the ARDs' decisions into the team architecture knowledge base: $ARGUMENTS

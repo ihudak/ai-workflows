@@ -2,6 +2,7 @@
 name: specify
 description: Authors a specification.md for a PRD or an Epic through a relentless one-question-at-a-time grill, lightly grounded in code, gated by the Opus spec-reviewer, and lands it on the specs repo's default branch by branch and pull request, ready for /dev-workflows:design. On the BRD route it seeds from the slice's spec-seed.md, its implementation decisions, the verified grounding findings and the derivation matrix, and refuses a BRD- container.
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
+disable-model-invocation: true
 ---
 
 Author a product specification for the resolved item: $ARGUMENTS

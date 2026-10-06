@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.10.0] — 2026-10-06
+
+### Changed
+- **`/document`, `/release-notes`, `/docs-init`, `/docs-serve` and `/docs-audit` are typed-only** (`disable-model-invocation: true`): they run when typed, and a request in prose no longer starts one. It keeps them out of the skill listing Claude Code gives the model, which was over its budget (`workflows-core` 1.29.0). `/docs-profile` and `/docs-brand` stay model-invocable, because `/document` and `/docs-init` run them through the Skill tool, which refuses a flagged command. The getting-started page says so.
+- **`/docs-init`'s Phase 5 names its call to `/docs-brand` in the Skill-tool form** (`skill: "docs-workflows:docs-brand"`), the one form the catalog check reads as a call.
+
+### Fixed
+- **The `preload-context` and `changelog-owners-reminder` hook commands quote `${CLAUDE_PLUGIN_ROOT}`.** Unquoted, a plugin root whose path holds a space — under a home directory with one — split the command into several words and the hook failed to start; `claude plugin validate` reported each.
+
 ## [1.9.4] — 2026-10-06
 
 ### Changed

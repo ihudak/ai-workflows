@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.29.0] — 2026-10-06
+
+### Changed
+- **Every command is typed-only** (`disable-model-invocation: true`): `/feedback`, `/prompt`, `/prompt-brainstorm`, `/prompt-grill-me`, `/statusline`, `/frames` and `/diagnose-session` run when typed, and a request in prose no longer starts one. A flagged command leaves the skill listing Claude Code gives the model, which was over its budget (1% of the context window, 8,000 characters at 200K) and shortened every installed plugin's descriptions to fit; the family's share of it falls from 24,788 characters to 6,759. The `reference` and `model-routing` skills stay in it. Every command of `dev-workflows`, `product-workflows`, `prose-style`, `guideline-reviewers` and `obsidian-llm-wiki` is flagged too, and all of `docs-workflows`' but the two its commands run through the Skill tool.
+- **`cost-emission` §13's Skill-tool boundary**, and `session-cost.py`'s copy of it, says which commands still arrive that way: one another command runs through the Skill tool, from its caller or on a prose request.
+
+### Fixed
+- **The `notify-done` and `test-notify` hook commands quote `${CLAUDE_PLUGIN_ROOT}`.** Unquoted, a plugin root whose path holds a space — under a home directory with one — split the command into several words and the hook failed to start; `claude plugin validate` reported each.
+
 ## [1.28.0] — 2026-10-06
 
 ### Added
