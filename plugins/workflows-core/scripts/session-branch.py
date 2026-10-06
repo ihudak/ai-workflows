@@ -265,13 +265,13 @@ def not_in_place(w, h, path, pv):
     """True where the working copy holds nothing of the run's own: it is HEAD's version, or the
     version this worktree was last given (pv) — the overlay is not in place here (a lift, a second
     worktree, a switch back, a hand removal) or another worktree moved the branch on. An absent file
-    HEAD lacks is the run's own deletion only in RUN_DELETES' shape, and only where this worktree
-    held it."""
+    is the run's own deletion only in RUN_DELETES' shape, and only where HEAD holds it or this
+    worktree held it; any other absent session file is put back."""
     if w is not None:
         return w == h or w == pv
-    if h is not None:
-        return False
-    return not (pv is not None and RUN_DELETES.search(path))
+    if RUN_DELETES.search(path):
+        return h is None and pv is None
+    return True
 
 
 def unpreserved(root, tip):
@@ -520,23 +520,25 @@ def commit(root, branch, default_ref, message, include_ahead=False):
 def lift(root, branch):
     """Return every dirty session file to HEAD, but only once each is preserved on <branch>: its
     working copy is the tip's version. Otherwise list the ones that are not and discard nothing.
-    The record of what this worktree holds is cleared first, so a lift that stops partway (a lock)
-    leaves no removed file that a later commit would read as a deletion; and every restore runs
-    before any removal."""
+    Each path leaves the record just before it is touched, and the rest once all are done, so a
+    lift that stops partway (a lock) leaves no removed file recorded as held and every untouched one
+    still recorded; every restore runs before any removal."""
     tip = rev(root, "refs/heads/" + branch)
     held = unpreserved(root, tip)
     if held:
         return {"lifted": [], "unpreserved": held}
     dirty = dirty_session_paths(root)
-    mark(root, clear=True)
     restore, remove = [], []
     for p in dirty:
         tracked = git(root, "ls-files", "--error-unmatch", "--", ":(literal)" + p, check=False).returncode == 0
         (restore if tracked or blob(root, "HEAD", p) is not None else remove).append(p)
     for p in restore:
+        mark(root, drop=[p])
         git(root, "restore", "--source=HEAD", "--staged", "--worktree", "--", ":(literal)" + p)
     for p in remove:
+        mark(root, drop=[p])
         os.remove(os.path.join(root, p))
+    mark(root, clear=True)
     return {"lifted": dirty, "unpreserved": []}
 
 
@@ -562,11 +564,13 @@ def put_back(root, branch, default_ref):
             continue
         want, have, head, pv = blob(root, tip, p), worktree_blob(root, p), blob(root, "HEAD", p), placed.get(p)
         if have == want:
+            if want is not None and want != head and want != pv:
+                mark(root, put={p: want})  # in place already, so record it: a later relocation is then a deletion
             continue
-        if have is None and head is None and pv is not None and RUN_DELETES.search(p):
-            skipped.append(p)  # a file this worktree held and a run deleted: §8.2's commit records that
+        if have is None and not not_in_place(have, head, p, pv):
+            skipped.append(p)  # a pending cost file a run relocated: §8.2's commit records the deletion
             continue
-        if have != head and not (have is not None and have == pv):
+        if not not_in_place(have, head, p, pv):
             if have is not None and want is not None and union_shaped(root, p):
                 write_bytes(root, p, union_copy(root, p, tip))
                 merged.append(p)  # unrecorded: it holds entries of its own for the next commit
@@ -1037,13 +1041,18 @@ def selftest():
             check("## stranded" in (a.read(FB) or "") and a.read(cost1) == "cost one\n", "…and put-back restores both")
         with tempfile.TemporaryDirectory() as tmp:
             remote, a, b = world(tmp)
-            os.remove(os.path.join(a.path, FB))
+            tp = "dev-workflows-cost/pending-2026-10-04-00000003.md"
+            a.write(tp, "pending\n")
+            a.commit_all("on main")
+            a.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
+            a.git("fetch", "-q", "origin")
+            os.remove(os.path.join(a.path, tp))  # a run relocates a pending file main already holds
             a.run("commit", "--branch", "session/aa", *CM)
             got = a.run("lift", "--branch", "session/aa")
-            check(got.get("lifted") == [FB] and a.read(FB) is not None and a.git("status", "--porcelain") == "",
+            check(got.get("lifted") == [tp] and a.read(tp) is not None and a.git("status", "--porcelain") == "",
                   "lift restores a tracked deleted session file once its deletion is on the branch (%r)" % got)
             a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
-            check(a.read(FB) is None, "…and put-back removes it again")
+            check(a.read(tp) is None, "…and put-back removes it again")
         # a file a stranded commit added survives the remedy and a switch onto an older branch
         s0 = "specifications/PRD-A-1-x/dev-workflows/cost/s0.md"
         for how in ("remedy", "switch"):
@@ -1087,6 +1096,11 @@ def selftest():
             a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
             check(got.get("_rc") == 2 and a.git("show", "session/aa:" + pend) == "pending" and a.read(pend) == "pending\n",
                   "a lift a lock interrupts loses no file (%r)" % got)
+            os.remove(os.path.join(a.path, pend))  # a later run relocates it
+            a.run("commit", "--branch", "session/aa", *CM)
+            a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
+            check(a.read(pend) is None and subprocess.run(["git", "-C", a.path, "cat-file", "-e", "session/aa:" + pend],
+                  stderr=devnull).returncode != 0, "…and a relocation after it is recorded, never undone")
         # two worktrees holding the overlay: one's relocation is not undone by the other
         with tempfile.TemporaryDirectory() as tmp:
             remote, a, b = world(tmp)
@@ -1106,7 +1120,16 @@ def selftest():
                   "another worktree's stale copies undo neither a relocation nor a newer resume.md (%r)" % got)
             a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
             check(a.read(pend) is None and a.read(rs) == "pos: w2\n", "…and put-back brings that worktree up to date")
-        # a session file removed by hand is put back, never deleted from the branch
+        # a session file removed by hand is put back, never deleted from the branch — a tracked one too
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            a.write(FB, "## a1\n", append=True)
+            a.run("commit", "--branch", "session/aa", *CM)
+            os.remove(os.path.join(a.path, FB))
+            got = a.run("commit", "--branch", "session/aa", *CM)
+            a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
+            check(got.get("committed") is None and "## a1" in (a.read(FB) or "") and "## a1" in a.git("show", "session/aa:" + FB),
+                  "a tracked session file removed by hand is put back, not deleted (%r)" % got)
         with tempfile.TemporaryDirectory() as tmp:
             remote, a, b = world(tmp)
             a.write(cost1, "cost one\n")
