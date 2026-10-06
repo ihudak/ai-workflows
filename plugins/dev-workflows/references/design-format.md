@@ -150,7 +150,7 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
     - **Blast radius** — the callers, dependencies and shared resources the change can affect, from
       the code scan or the system's own topology, each with the signal that would show it hurt. A
       risk this raises is recorded under `## Risks & mitigations`.
-    - **Post-release checks** — one for each acceptance criterion the change delivers (`[ACxx]`):
+    - **Post-release checks** — one for each acceptance criterion the change delivers:
       the signal, the threshold or the comparison with the baseline, and the window it is read over.
       An acceptance criterion no runtime signal can show reads `n/a — <reason>` and rests on
       `## Test strategy` alone. A check may carry the query that reads it, in the system's own monitoring tool,

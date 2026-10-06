@@ -601,7 +601,7 @@ persists the plugin-facing slice of its report as session feedback.
    `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). `emit-auto` renders only
    the report's **Command workflow improvements**, **New agents / skills**, plugin
    **Reference docs** and plugin **Rules that existed but were not followed** sections plus the **Key observations** that
-   triggered them (§4) — never target-project `CLAUDE.md`/hook advice — as
+   triggered them, and any naming an ai-containers defect (§4) — never target-project `CLAUDE.md`/hook advice — as
    `origin: auto` entries, dedupes by stable `id` (§3), resolves the target via
    the §2 specs-first ladder, and writes silently.
 3. **Surface** the persisted path (or "no plugin-facing signal — nothing
