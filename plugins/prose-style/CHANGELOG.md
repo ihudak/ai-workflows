@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.3 — 2026-10-06
+
+### Fixed
+
+- **`/prose-review-pr`'s diff context comes from the range that found the files.** A branch's diff
+  context always came from `origin/main...origin/<branch>`, even where the files were found through
+  the local-branch fallback or the default branch is not `main`, which then showed the wrong hunks
+  or none. Step 2c records the range, and step 7 diffs against it.
+
 ## 0.5.2 — 2026-10-05
 
 ### Fixed

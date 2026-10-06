@@ -138,9 +138,9 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
 11. **## Observability & release verification** (scaled) — how the team will know, once the change
     is live, that it works and that nothing around it broke. It is decided here, before the code,
     because a signal the code does not emit cannot be checked after release. It applies to a change
-    that runs in a deployed system — a service, a job, an agent, a UI users reach — and is
-    `_N/A — why_` for one that never runs there: a build tool, a test-only change, a refactor with
-    no behaviour change. Each item below that does not apply reads `n/a — <reason>`, never left out:
+    to behaviour a deployed system runs — a service, a job, an agent, a UI users reach — and is
+    `_N/A — why_` for any other change: a build tool, a test-only change, a refactor that changes no
+    behaviour. Each item below that does not apply reads `n/a — <reason>`, never left out:
     - **Signals** — the metrics, logs, traces or events that show the change working, and those that
       show it failing, each marked as existing today or added by this change. One the change adds is
       part of the implementation, named in `## Architecture & components` like any other change.

@@ -104,6 +104,12 @@ If the diff is empty, also try `main...<branch>` (local branch) and
 `main...remotes/origin/<branch>`. Where the default branch is not `main`, each form takes its
 name instead (**The default branch**, above).
 
+#### 2c. Record the range
+
+Whichever of 2a and 2b found the files, record the diff range that found them as **range** —
+`<SHA>^..<SHA>`, or whichever `<base>...<head>` form returned them. Step 7 diffs against it, so a
+file's context never comes from a range other than the one that found it.
+
 ### 3. Filter to documentation files
 
 From the list of changed files, keep only `.md` files. Exclude:
@@ -217,11 +223,8 @@ prose-style-checker only."
 For each file with violations, get the actual diff hunks to show what changed:
 
 ```bash
-# For merged PRs:
-git -C <repo_path> diff <SHA>^..<SHA> -- <file>
-
-# For branches:
-git -C <repo_path> diff origin/main...origin/<branch> -- <file>
+# The range step 2c recorded:
+git -C <repo_path> diff <range> -- <file>
 ```
 
 This helps the user see violations in context of what was changed.

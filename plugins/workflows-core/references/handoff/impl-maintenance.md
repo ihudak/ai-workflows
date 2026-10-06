@@ -56,7 +56,7 @@ Return this exact shape (no preamble, no chatter):
 
 #### Rules that existed but were not followed
 - **Rule**: [the existing instruction, quoted]
-  **Where**: [file:line — a project or global CLAUDE.md, a rules file, or a family plugin's command, agent or reference]
+  **Where**: [file:line — a project or global CLAUDE.md, a rules file, or a family plugin's command, agent, skill or reference]
   **What happened**: [the key event that broke it]
   **Why missed**: [not loaded | ambiguous | contradicted by <file:line> | read but not applied | undetermined: <the candidates>]
   **Fix**: [the change and the file it touches — a check, a move or scope change, a rewrite, the pair fixed at the source — or "none: no check could catch it"]

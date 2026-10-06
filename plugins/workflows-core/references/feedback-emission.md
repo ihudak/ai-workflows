@@ -163,7 +163,7 @@ Persist **only** signals about **this plugin family** itself — `workflows-core
 - New agents / skills the plugin should offer.
 - Gaps in the reference docs of **whichever family plugin the signal is about** — `plugins/<that plugin>/references/**`, resolved from the running command's own plugin, and **not** `${CLAUDE_PLUGIN_ROOT}/references/**`. Written in this file that variable resolves to the plugin that *ships this reference* (`workflows-core`), so a `/prd-ground` run classifying a gap in `product-workflows`'s `brd-format.md` would test it against the wrong tree — the same hazard §3's `plugin_version` paragraph states, met one section later.
 - Family-plugin instructions that existed and were not followed — a rule in a family
-  plugin's command, agent or reference that a run missed, with why it was missed,
+  plugin's command, agent, skill or reference that a run missed, with why it was missed,
   resolved to its plugin the way the reference-docs bullet above resolves a gap, as
   `category: unfollowed-rule`.
 - Corrective interactions captured by `/prompt*` (any command output the user
