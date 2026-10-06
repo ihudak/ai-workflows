@@ -8,10 +8,17 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [4.16.0] — 2026-10-06
 
 ### Added
-- **`/implement` in session-branch mode** (`workflows-core` 1.24.0). A direct run from inside a specs repository whose default branch takes no push lifts the session files before its clean-tree check and again before its code commit, and puts them back afterwards, so the code commit carries none of them; its Phase 0 line says they go to your session branch.
+- **`/implement` in session-branch mode** (`workflows-core` 1.25.0). A direct run from inside a specs repository whose default branch takes no push lifts the session files before its clean-tree check and again before its code commit, and puts them back afterwards, so the code commit carries none of them; its Phase 0 line says they go to your session branch.
 
 ### Changed
 - The session-cost and session-feedback pages say where those files go on a specs repository whose default branch takes no push.
+
+## [4.15.2] — 2026-10-06
+
+### Fixed
+- **A yarn berry project's own install hooks run again.** `/vuln` and `/upgrade` ran them as `yarn run <hook>` in the scripts-off environment, whose `YARN_IGNORE_SCRIPTS=true` yarn 2 and later reject as an unrecognised setting — every yarn command then refused to start, so every such hook failed. The berry route keeps `npm_config_ignore_scripts=true YARN_ENABLE_SCRIPTS=false`, drops that variable, and runs a workspace member's hook from the member's own directory. Measured on yarn 4.9.2: `yarn run` starts exactly the hook it names and never a `pre` or `post` hook, and berry's install never runs `prepare`, so the agent runs it only when the user allows `project:prepare`.
+- **Allowing one package in a yarn berry project no longer builds every other unbuilt package.** The allow step ran `yarn rebuild <names>`, which also builds every other package an install left unbuilt — in a clone never installed here, every package with install scripts — and every workspace whose build is out of date, so allowing one package ran install code nobody allowed (since 4.14.0). With `nodeLinker: node-modules` the allow step is now `npm rebuild <names>`, which builds exactly those packages, minus any `dependenciesMeta` marks `built: false`. Under any other linker — Plug'n'Play, berry's default, included — no command builds one package alone: the agent runs nothing, keeps the package in the skipped list, and names `yarn rebuild` with everything it would build, for the user to decide. Measured on yarn 4.9.2.
+- **A workspace member's allowed project script runs in the member's directory.** `npm --prefix <member> exec` and `yarn exec` ran it from the repository root, where its relative paths resolved against the root's files; it is now `(cd <member> && npm exec …)`, or `(cd <member> && yarn exec …)` under yarn berry.
 
 ## [4.15.1] — 2026-10-06
 

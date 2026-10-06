@@ -4,7 +4,7 @@ Single source of truth for how a command that creates a git branch in a **code o
 
 **The repository's own documented convention always wins.** This doc's job is to find that convention, fill its placeholders, and supply a name only when the repo documents none.
 
-Commands that consume this: `/implement`, `/document` (keyed mode only — a direct-mode run creates no branch), `/docs-profile`, `/docs-init`, `/docs-brand` (standalone only — an `--inline` run writes on its caller's branch and creates none), `/upgrade`, and `/vuln` (applied by the orchestrator, once per CVE in its Step 1, per the `/vuln` "Git Workflow" spec — `vuln-fixer` creates the branch it is handed and never derives a name).
+Commands that consume this: `/implement`, `/document` (keyed mode only — a direct-mode run creates no branch), `/docs-profile`, `/docs-init`, `/docs-brand` (standalone only — an `--inline` run writes on its caller's branch and creates none), `/upgrade`, `/vuln` (applied by the orchestrator, once per CVE in its Step 1, per the `/vuln` "Git Workflow" spec — `vuln-fixer` creates the branch it is handed and never derives a name), and `/promote-decisions` (its branch in the architecture repository).
 
 ---
 
@@ -119,6 +119,7 @@ Tie-breaking:
 | `/docs-brand` (standalone) | `docs/` |
 | `/vuln` | `fix/` |
 | `/upgrade` | `chore/` |
+| `/promote-decisions` | `feat/` |
 
 A fallback is never valid for an **identity** placeholder — `feat/` is not a name. When §2.1–§2.3 yield nothing and an identity is required, go straight to §2.5.
 
@@ -160,6 +161,7 @@ Used for the description segment (§1.2) or the §1.4 `<slug>`:
 - `/docs-brand` (standalone) — `docs-brand`
 - `/vuln` — `<CVE-ID>`
 - `/upgrade` — `upgrade-<component>-to-<version>`, or `upgrade-<first>-and-<N>-more` for a batch
+- `/promote-decisions` — `promote-<YYYY-MM-DD>` where the pattern carries an ADR marker of its own (`feat/adr-<slug>`), else `adr-promote-<YYYY-MM-DD>`
 
 When the documented pattern has **no** issue-key segment but the run has a key, the commands that are keyed (`/document` keyed mode, `/implement` with a resolved key) prepend it to the slug — `<KEY>-<slug>` — matching their pre-existing behaviour. In the §1.4 no-convention case the same applies.
 

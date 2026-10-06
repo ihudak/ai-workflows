@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.24.0] — 2026-10-06
+## [1.25.0] — 2026-10-06
 
 ### Added
 - **Session-branch mode, for a specs repository whose default branch takes no push.** The first push `origin` refuses to the default branch turns it on for that clone, and `git config workflows.sessionBranch true` turns it on in advance. In the mode, every run's session files — feedback, cost, follow-ups, the implementation record, the release-notes draft and the resume pointer — go to a branch of your own, `session/<identity>` (your identity from `GIT_USER_INITIALS`, `git config user.initials` or your branches' shared prefix), which the plugin commits to without checking it out, keeps merged with the default branch (appended files are union-merged, so a teammate's entries and yours both survive), and pushes. You land the files by merging its pull request; the `Specs repo:` line gives the `gh pr create` command that opens it and counts the files not landed yet. Until it merges, your specs checkout shows those files as modified or untracked — that is where every command keeps reading and appending them — and the plugin lifts and puts them back around every switch or pull it makes. The environment page documents the key, the overlay and the two commands to run around a switch or pull of your own (`specs-repo-git` §8).
@@ -15,6 +15,15 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **A refused push of the default branch now switches the clone to session-branch mode**: its line says the next run carries the refused commits' files to your session branch, and that run's line gives the two commands that drop them from your local default branch once they are there.
 - `branch-naming`: `session` is never counted as an identity.
 - `phase-handoff`: the switch onto a deliverable branch and row C's repair are wrapped in the mode's lift and put-back, and row C′ does not count session files in the mode.
+
+## [1.24.0] — 2026-10-06
+
+### Added
+- **`architecture-promotion`**, the procedure and key authority for `/product-workflows:promote-decisions`: guards, the Origin line, the promotion keys and their lifecycle, reconciliation, signals, both agents' dispatches, the shortlist, scaffolding from the repository's own template, the decision tests, and the architecture-repository branch.
+- **`promotion-scout`** (Opus, read-only), which compares candidate team decisions with the architecture repository and finds the ADRs teams keep departing from, and **`adr-drafter`** (Opus), which writes the body of one scaffolded ADR and edits nothing else.
+
+### Changed
+- **Architecture grounding skips a promoted record.** `architecture-grounder` no longer reads a team record whose `promotion` is `accepted` or `covered`: the organisation artifact it names binds instead. `architecture-kb` names the promotion keys as preserved keys `/product-workflows:promote-decisions` alone writes, and `phase-handoff`'s keyless `kb/` form covers it. `phase-handoff` classes `architecture/**` as gated — stopping: a consumer's own guard that stops on an uncommitted artifact counts, and `/product-workflows:promote-decisions` stops while records under it are uncommitted.
 
 ## [1.23.1] — 2026-10-06
 

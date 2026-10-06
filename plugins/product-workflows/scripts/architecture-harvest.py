@@ -419,8 +419,10 @@ def render_readme(entries, group_word):
            "its ARD and harvest again; never edit a record by hand.", ""]
     if live:
         out += ["| Record | Title | %s |" % group_word, "|---|---|---|"]
-        out += ["| [%s](decisions/%s.md) | %s | %s |" % (e["id"], e["id"], e["title"].replace("|", "\\|"), e["group"])
-                for e in live]
+        out += ["| [%s](decisions/%s.md) | %s%s | %s |" % (
+            e["id"], e["id"], e["title"].replace("|", "\\|"),
+            " — promoted to %s" % e["promoted_to"] if e.get("promotion") == "accepted" and e.get("promoted_to") else "",
+            e["group"]) for e in live]
     else:
         out += ["No live records."]
     n = {s: sum(1 for e in entries if e["status"] == s) for s in ("accepted", "superseded", "withdrawn")}
@@ -573,10 +575,11 @@ def harvest(root, ref, layout="vi", write=False):
     texts, entries = {}, []
     for rid in sorted(records, key=natural):
         r, o = records[rid], old.get(rid)
-        preserved = []
+        preserved, promo = [], (None, None)
         if o is not None:
             order, blocks = fm_blocks(split_frontmatter(o)[0])
             preserved = [blocks[k] for k in order if k not in OWNED]
+            promo = (fm_scalar(blocks, "promotion"), fm_scalar(blocks, "promoted_to"))
         new = render_record(r, preserved, group_key)
         if o is None:
             kind = "create"
@@ -589,7 +592,8 @@ def harvest(root, ref, layout="vi", write=False):
         plan[kind].append(rid)
         if kind != "unchanged":
             texts[decisions_dir + rid + ".md"] = new
-        entries.append({"id": rid, "title": r["title"], "status": r["status"], "tags": r["tags"], "group": r["group"]})
+        entries.append({"id": rid, "title": r["title"], "status": r["status"], "tags": r["tags"], "group": r["group"],
+                        "promotion": promo[0], "promoted_to": promo[1]})
     for rid in sorted((k for k in old if k not in records), key=natural):
         plan["kept"].append(rid)
         _, b = fm_blocks(split_frontmatter(old[rid])[0])
@@ -602,7 +606,8 @@ def harvest(root, ref, layout="vi", write=False):
                                     "its decision is no longer in %s; the record is kept unchanged" % src))
         entries.append({"id": rid, "title": fm_scalar(b, "title", strip_comment=False) or rid,
                         "status": fm_scalar(b, "status") or "accepted", "tags": fm_list(b, "tags"),
-                        "group": fm_scalar(b, group_key) or ""})
+                        "group": fm_scalar(b, group_key) or "", "promotion": fm_scalar(b, "promotion"),
+                        "promoted_to": fm_scalar(b, "promoted_to")})
     entries.sort(key=lambda e: natural(e["id"]))
     if entries:
         for path, body in ((KB + "/index.yaml", render_index(entries)),
@@ -954,6 +959,22 @@ def selftest():
         check('components: ["shop"]' in prec("ACME-90-01-AD1"), "prd: components from the PRD-level ARD")
         check("scope: area" in prec("ACME-90-01-ui-AD1") and cart + "design.md" not in prec("ACME-90-01-ui-AD1"),
               "prd: an area record; the Epic ARD wins its citation")
+
+    # ---- promotion keys: preserved, and an accepted promotion marked in the README ------------
+    with tempfile.TemporaryDirectory() as tmp:
+        init(tmp)
+        commit(tmp, {"specifications/ACME-5-fleet/ACME-5_ARD.md": ard("Fleet", [ad(1, "Fleet tracks by GPS")])}, "ard")
+        harvest(tmp, "HEAD", "vi", write=True)
+        git(tmp, "add", "-A")
+        git(tmp, "commit", "-q", "-m", "harvest")
+        rel = KB + "/decisions/ACME-5-AD1.md"
+        body = text(tmp, rel).replace("\n---\n", "\npromotion: accepted\npromoted_to: ADR-0046\n---\n", 1)
+        commit(tmp, {rel: body}, "promoted")
+        p = harvest(tmp, "HEAD", "vi", write=True)
+        check("ACME-5-AD1" in p["unchanged"] and p["files"] == [KB + "/README.md"],
+              "promotion keys are preserved; only the README changes: %s" % p["files"])
+        check("| Fleet tracks by GPS — promoted to ADR-0046 |" in text(tmp, KB + "/README.md"),
+              "the README marks an accepted promotion")
 
     if failures:
         print("architecture-harvest selftest: FAIL")

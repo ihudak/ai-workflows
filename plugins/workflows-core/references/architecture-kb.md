@@ -1,8 +1,8 @@
 # Architecture knowledge base (shared reference)
 
-The team's architecture decisions, kept under `$SPECS_PATH/architecture/`: one record per `[AD#N]` of the ARDs on the specs repository's default branch. `/product-workflows:harvest-decisions` writes it with product-workflows' bundled script `scripts/architecture-harvest.py`, run with `--layout prd`; the architecture grounding of `/product-workflows:create-ard`, `/product-workflows:specify` and `/dev-workflows:design` reads it as its **team root** (`workflows-core:architecture-grounding`); a later ARD departs from a record only with `**Supersedes:**` (`product-workflows:ard-format` § Architecture governance). This file is the format authority. The script implements it, and a change here is a change to the script and its `--selftest` in the same commit.
+The team's architecture decisions, kept under `$SPECS_PATH/architecture/`: one record per `[AD#N]` of the ARDs on the specs repository's default branch. `/product-workflows:harvest-decisions` writes it with product-workflows' bundled script `scripts/architecture-harvest.py`, run with `--layout prd`; the architecture grounding of `/product-workflows:create-ard`, `/product-workflows:specify` and `/dev-workflows:design` reads it as its **team root** (`workflows-core:architecture-grounding`); `/product-workflows:promote-decisions` records on it what the organisation made of each decision (`workflows-core:architecture-promotion`); a later ARD departs from a record only with `**Supersedes:**` (`product-workflows:ard-format` § Architecture governance). This file is the format authority. The script implements it, and a change here is a change to the script and its `--selftest` in the same commit.
 
-Consumers: `/product-workflows:harvest-decisions` (the only writer), `/product-workflows:create-ard`, `/product-workflows:specify` and `/dev-workflows:design` through `architecture-grounding` and `architecture-grounder` (readers), `ard-reviewer` (checks that a `Supersedes` link resolves to a record).
+Consumers: `/product-workflows:harvest-decisions` (the only writer of everything but the promotion keys), `/product-workflows:promote-decisions` (the only writer of the promotion keys, `workflows-core:architecture-promotion` §3), `/product-workflows:create-ard`, `/product-workflows:specify` and `/dev-workflows:design` through `architecture-grounding` and `architecture-grounder` (readers), `ard-reviewer` (checks that a `Supersedes` link resolves to a record).
 
 ## 1. Layout
 
@@ -78,7 +78,7 @@ A cited number resolves the way `workflows-core:ard-resolution` layers ARDs: ins
 
 ## 6. What the harvest owns
 
-The body and every frontmatter key in §3, rewritten on every run. Any other frontmatter key is preserved verbatim, after the owned keys — the room a later command needs to record what it did with a record. Hand edits to owned content are overwritten; the generated comment and the README say so.
+The body and every frontmatter key in §3, rewritten on every run. Any other frontmatter key is preserved verbatim, after the owned keys — the room a later command needs to record what it did with a record. The promotion keys `promotion`, `promoted_to` and `promotion_note` are such keys: `/product-workflows:promote-decisions` writes them (`workflows-core:architecture-promotion` §3), and the generated README marks a record whose `promotion` is `accepted` — `<title> — promoted to <ADR>`. Hand edits to owned content are overwritten; the generated comment and the README say so.
 
 ## 7. Determinism
 
@@ -103,7 +103,7 @@ Problems never stop a harvest and never change its exit code; each leaves the re
 
 ## Invariants
 
-- Only `/product-workflows:harvest-decisions` writes here, through `workflows-core:phase-handoff`'s `handoff-to-main` on a `kb/` branch; nothing is ever deleted, and nothing is written outside this folder.
-- An unmerged `kb/` branch stops the next harvest. Unmerged means neither an ancestor of the default branch nor carrying an `architecture/` tree the default branch has held — a squash or rebase merge lands the tree without the ancestry — and the script's `--pending-kb` lists them.
+- Only `/product-workflows:harvest-decisions` and `/product-workflows:promote-decisions` write here, through `workflows-core:phase-handoff`'s `handoff-to-main` on a `kb/` branch — `/product-workflows:promote-decisions` only the promotion keys of records that exist; nothing is ever deleted, and nothing is written outside this folder.
+- An unmerged `kb/` branch stops the next harvest and the next promotion. Unmerged means neither an ancestor of the default branch nor carrying an `architecture/` tree the default branch has held — a squash or rebase merge lands the tree without the ancestry — and the script's `--pending-kb` lists them.
 - Every input comes from the default ref; the working tree is only written.
 - The format here and the script change together; the script's `--selftest` pins every rule above.

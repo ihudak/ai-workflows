@@ -1,6 +1,6 @@
 ---
 name: model-routing
-description: Load the plugin family's task-complexity classification rules and model fallback chain. Invoked at the classification step by the 26 pipeline commands (`/implement`, `/document`, `/epics`, `/release-notes`, `/vuln`, `/upgrade`, `/docs-profile`, `/docs-init`, `/docs-brand`, `/docs-audit`, `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/ready`, `/frames`, the effort-proposal pair `/prd-proposal` and `/brd-proposal`, and the BRD-to-PRD route's `/brd-intake`, `/brd-split`, `/prd-ground`, `/brd-interview`, `/brd-package` and `/brd-reconcile`), so every pipeline command across the family loads one copy of the rules from one named entry point, rather than each citing the file by its own path.
+description: Load the plugin family's task-complexity classification rules and model fallback chain. Invoked at the classification step by the 27 pipeline commands (`/implement`, `/document`, `/epics`, `/release-notes`, `/vuln`, `/upgrade`, `/docs-profile`, `/docs-init`, `/docs-brand`, `/docs-audit`, `/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/ready`, `/frames`, the effort-proposal pair `/prd-proposal` and `/brd-proposal`, and the BRD-to-PRD route's `/brd-intake`, `/brd-split`, `/prd-ground`, `/brd-interview`, `/brd-package` and `/brd-reconcile`, and `/promote-decisions`), so every pipeline command across the family loads one copy of the rules from one named entry point, rather than each citing the file by its own path.
 user-invocable: false
 allowed-tools: Read
 ---

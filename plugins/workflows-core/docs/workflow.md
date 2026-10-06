@@ -1,6 +1,6 @@
 # Workflow
 
-`workflows-core` runs no pipeline of its own. It is the shared foundation the `dev-workflows` plugin family draws on — the reference corpus, the `model-routing` skill, and eight agents — plus seven commands that sit beside a pipeline rather than inside one.
+`workflows-core` runs no pipeline of its own. It is the shared foundation the `dev-workflows` plugin family draws on — the reference corpus, the `model-routing` skill, and ten agents — plus seven commands that sit beside a pipeline rather than inside one.
 
 ```mermaid
 flowchart TD
@@ -8,7 +8,7 @@ flowchart TD
         refs["references/ — addressing, git + phase handoff, escalation, triage, emission"]:::core
         loader["skills/reference — the loader a sibling reads the corpus through"]:::core
         skill["skills/model-routing"]:::core
-        agents["agents/ — architecture-grounder · code-scanner · defect-reporter · doc-fixer · docs-grounder · frame-describer · impl-maintenance · session-analyst"]:::core
+        agents["agents/ — adr-drafter · architecture-grounder · code-scanner · defect-reporter · doc-fixer · docs-grounder · frame-describer · impl-maintenance · promotion-scout · session-analyst"]:::core
     end
     subgraph CROSS["Cross-cutting commands"]
         setup["/workflows-core:statusline — install the status line"]:::core

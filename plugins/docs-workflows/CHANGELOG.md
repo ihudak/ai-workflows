@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.9.2] — 2026-10-06
 
 ### Changed
-- The session-cost page says where cost entries go on a specs repository whose default branch takes no push (`workflows-core` 1.24.0's session-branch mode).
+- The session-cost page says where cost entries go on a specs repository whose default branch takes no push (`workflows-core` 1.25.0's session-branch mode).
 
 ## [1.9.1] — 2026-10-06
 
