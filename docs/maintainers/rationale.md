@@ -353,7 +353,7 @@ A duplicate commit on another session's branch is theirs to resolve and, where t
 
 ## specs-push-target
 
-**Where the session-file push goes, and what it never touches (2026-10-06).** The push-scope round filed twelve edge cases, fixed two and closed ten as outside the population it measured. At the user's request a later round reopened the ten: nine are fixed, and a protected default branch has an interim fix while its design gets a round of its own (below). These six are `workflows-core:specs-repo-git`'s:
+**Where the session-file push goes, and what it never touches (2026-10-06).** The push-scope round filed twelve edge cases, fixed two and closed ten as outside the population it measured. At the user's request a later round reopened the ten: nine are fixed, and a protected default branch had an interim fix until the next round designed it ([session-branch](#session-branch)). These six are `workflows-core:specs-repo-git`'s:
 
 - **`origin`, and only `origin`.** Step 5 pushed to the branch's upstream remote, else `origin`, while §3.2, §3.5 and `phase-handoff.md` read `origin` alone. On a fork whose default branch tracked the parent repository, the session files went to the parent. Now the push goes to `origin`, and where `branch.<branch>.pushRemote` or `remote.pushDefault` sends the branch elsewhere it does not push at all.
 - **The session-file push never goes to a branch the remote deleted.** A branch whose same-name upstream on `origin` is gone (`ls-remote` exits 2) is not pushed, since a push recreated a renamed default branch or a merged, deleted pull-request branch. `phase-handoff.md`'s own deliverable push is outside this rule: it pushes a branch its §2.2 rule 3 reused, which a deliverable may need.
