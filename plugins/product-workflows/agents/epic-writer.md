@@ -85,7 +85,7 @@ target: <one component id from the handoff's `components` — omit this line whe
 
 ## Acceptance criteria
 - Given <context>, when <action>, then <observable result>.
-- ... (each false before this Epic and true after it through this Epic's work alone; the rule, not an example — "rejects any quantity over stock on hand", not "rejects quantity 999", with a literal only where the value is the requirement, such as a limit, a rounding rule or exact text; usually three to eight; past eight, consolidate criteria that state the same rule — an Epic is never split for a count)
+- ... (each false before this Epic and true after it through this Epic's work alone, except a guard — a criterion that keeps behaviour this Epic could break working as it does, worded as a guard ("existing exports still open in version 1 readers"), true before and after; the rule, not an example — "rejects any quantity over stock on hand", not "rejects quantity 999", with a literal only where the value is the requirement, such as a limit, a rounding rule or exact text; usually three to eight; past eight, consolidate criteria that state the same rule — an Epic is never split for a count)
 
 ## Independent Test
 <one line: this Epic is verifiable standalone by <observable test> and delivers <value> without any not-yet-built Epic>

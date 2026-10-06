@@ -43,7 +43,7 @@ flowchart TD
         specify["/specify"]:::prod
     end
     subgraph DEV["Dev — build and verify"]
-        design["/design"]:::dev
+        design["/dev-workflows:design"]:::dev
         ready["/ready"]:::dev
         implement["/implement"]:::dev
     end
@@ -62,7 +62,7 @@ flowchart TD
     end
     subgraph ANY["Anytime"]
         frames["/frames"]:::core
-        improve["/feedback · /prompt · /prompt-brainstorm · /prompt-grill-me"]:::core
+        improve["/workflows-core:feedback · /prompt · /prompt-brainstorm · /prompt-grill-me"]:::core
         diagnose["/diagnose-session"]:::core
         statusline["/workflows-core:statusline"]:::core
         maint["/vuln · /dev-workflows:upgrade"]:::dev
@@ -140,7 +140,7 @@ flowchart TD
 - **`/prd-ground` is one command drawn separately for each route**, not a missing `/brd-ground`. A root BRD is split first, then each slice is grounded before its allocation walk and interview. An idea-route PRD may be grounded but never enters `/brd-split`. BRD authoring also reads the slice's findings after the decision handoff; those extra input edges are omitted here.
 - **The BRD route joins the PRD ladder at the slice folder**, not at an `idea.md`. The three authoring commands are alternatives, not a sequence, and each gates the slice's `decisions.md`. `/brd-reconcile` offers them once the customer's answers are frozen. `/brd-interview` offers them directly when every question was settled from the findings, so the slice needs no customer review — `/create-prd` there, as after a reconciliation, only where a row the slice claims is `covered-here`.
 - **`/update-prd` offers reruns for existing downstream artifacts** — architecture, specification, Epics and release notes — and recommends a rerun when the update invalidates one. These edges do not require creating artifacts that do not yet exist. The specification-to-Epics edge is optional enrichment from a PRD-level `specification.md`, not a requirement to specify before splitting.
-- **`/docs-workflows:release-notes` is drawn twice** to show PRD-driven drafts or refreshes and the post-implementation note. The final run reads nothing `/document` writes, so the two documentation commands are independent. This command, `/dev-workflows:upgrade` and `/workflows-core:statusline` use qualified names because their bare names collide with built-ins.
+- **`/docs-workflows:release-notes` is drawn twice** to show PRD-driven drafts or refreshes and the post-implementation note. The final run reads nothing `/document` writes, so the two documentation commands are independent. This command, `/dev-workflows:upgrade`, `/workflows-core:statusline` and `/workflows-core:feedback` use qualified names because their bare names collide with built-ins, and `/dev-workflows:design` because its bare name does on the accounts Claude Code's own `/design` is switched on for.
 - **The audit backlog has a manual implementation stage.** Select an actionable unit, write its page, maintain its `unit:` metadata and backlog `page_path` / `status`, verify its claims, and publish it. `/document` direct mode can help with a described prose edit, but it never reads the backlog or manages unit status; keyed mode remains the feature-documentation route. `/docs-write` is planned, not shipped. The `docs-workflows` documentation route page describes the manual procedure; `--refresh` re-audits coverage and does not replace verification.
 - **`/ready` sits beside the spine, not on it.** Its verdict is advice `/implement` reads; it blocks nothing.
 - **The Anytime lane hands no deliverable to the pipeline** except `/frames`' frame-set index, which `/prd-ground`'s design grounding needs. The portal lane prepares the documentation repository `/document` writes into, and `/docs-serve` only previews it.

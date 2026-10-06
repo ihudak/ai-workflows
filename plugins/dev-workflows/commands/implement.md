@@ -793,7 +793,7 @@ Then spawn all four agents. They are independent and can run in any order — sp
 > Session handoff:
 > - Command run: /implement
 > - What was done: [one-paragraph summary of the implementation]
-> - Key events: [BLOCK reviews encountered and their reason, test regressions, workarounds, unexpected ambiguities — or 'none']
+> - Key events: [BLOCK reviews encountered and their reason, test regressions, workarounds, unexpected ambiguities, and — where the run confirmed a bug's cause, the `Confirmed cause:` line its Phase 5 report carries — the bug this run fixed and that cause, as a miss the project's own checks let through — or 'none']
 > - Workarounds used: [manual steps not automated by the workflow — or 'none']
 > - Review verdict: [PASS | PASS WITH RECOMMENDATIONS | BLOCK | N/A]
 > - Test result: [passed N tests, N regressions, not run — or actual result]

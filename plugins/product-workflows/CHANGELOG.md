@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.22.0] — 2026-10-06
+
+### Fixed
+- **`/brd-intake` dropped every letter outside `a`–`z` from a new BRD's slug.** `Zahlungsauslösung` became `zahlungsausl-sung`, and a Cyrillic or Chinese title fell back to `brd`, against `workflows-core:specs-repo-git`, whose example is `PRD-ACME-1-zahlungsauslösung/`. The slug now keeps the letters and digits of any script, with their accents and vowel signs, and is cut at a character boundary to at most 80 bytes of UTF-8; a heading long enough to overflow a 255-byte file name no longer can.
+
+### Changed
+- **A guard criterion is allowed** (`workflows-core` 1.26.0's `prd-format`). `epic-writer` may write an acceptance criterion that keeps behaviour the Epic could break working as it does, worded as a guard, and `epic-reviewer` and `prd-reviewer` no longer grade one MINOR as "already true before".
+- The workflow page says `/dev-workflows:design` collides on the accounts Claude Code's own `/design` is switched on for.
+
 ## [3.21.1] — 2026-10-06
 
 ### Changed

@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.26.0] — 2026-10-06
+
+### Fixed
+- **A bare `/feedback` never reached this plugin's command.** Claude Code ships an always-on built-in `/feedback`, which sends feedback to Anthropic, and the built-in takes the bare name, which this release measured: with this plugin installed, a bare `/feedback` printed `Feedback / bug report submitted`. `next-phase-offer` rule 6, the `/feedback` and `/statusline` pages, the workflow page, the family map, the README and getting-started now name it among the collisions, and the `/feedback` page's synopsis reads `/workflows-core:feedback`. Claude Code's `/design`, which makes a Design artifact and is switched on for some accounts only, is named too, for `dev-workflows`' `/design`.
+- **`session-branch.py` reported an unexpected exception as a traceback.** It exited 1, outside the exit codes `specs-repo-git` §8 defines, and §6's *could not run* line would have quoted `Traceback (most recent call last):`. Any exception is now one `session-branch: not run (<Type>: <message>)` line and exit 2, as in the family's other scripts, and a usage error is one line too rather than argparse's usage block. Two selftests cover them.
+
+### Changed
+- **`prd-format`: a guard criterion.** An acceptance criterion that keeps behaviour the story could break working as it does ("existing exports still open in version 1 readers") is a **guard**: true before and after, worded as one, and exempt from "false before its story ships". The rest of the rule — the rule, not an example; enough, no more — holds for it.
+- **`impl-maintenance` hears about the bug a run fixed.** Its handoff's key events now include a fixed bug and its confirmed cause, a miss the project's own checks let through, which step 6 sorts into a check or a written rule like any other.
+
 ## [1.25.0] — 2026-10-06
 
 ### Added

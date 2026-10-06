@@ -23,6 +23,8 @@ level, an unexpected git failure); the caller reports it and the run continues.
 """
 
 import argparse
+import contextlib
+import io
 import json
 import os
 import re
@@ -1306,6 +1308,30 @@ def selftest():
             check(not got.get("unpreserved"), "a CRLF working copy of an LF blob counts as preserved (%r)" % got)
             a.run("put-back", "--branch", "session/aa", "--default-ref", "origin/main")
             check("## a1\r\n" in (a.read(FB) or ""), "put-back writes the smudged, CRLF form")
+        # an unexpected exception is "not run" on one line, exit 2: §6 quotes the first stderr line
+        with tempfile.TemporaryDirectory() as tmp:
+            remote, a, b = world(tmp)
+            real, argv = globals()["dispatch"], sys.argv
+
+            def boom(_args):
+                raise KeyError("sync")
+            globals()["dispatch"] = boom
+            sys.argv = [me, "--specs", a.path, "sync", "--branch", "session/aa", "--default-ref", "origin/main"]
+            err = io.StringIO()
+            try:
+                with contextlib.redirect_stderr(err):
+                    rc = main()
+            except BaseException as e:
+                rc = "raised %s" % type(e).__name__
+            finally:
+                globals()["dispatch"], sys.argv = real, argv
+            lines = err.getvalue().splitlines()
+            check(rc == 2 and lines == ["session-branch: not run (KeyError: 'sync')"],
+                  "an unexpected exception exits 2 with one 'not run' line (%r, %r)" % (rc, lines))
+            got = a.run("commit", "--branch", "session/aa")
+            check(got.get("_rc") == 2 and got.get("_err", "").splitlines() ==
+                  ["session-branch: not run (the following arguments are required: --default-ref, --message)"],
+                  "a usage error exits 2 with one 'not run' line (%r)" % got)
 
     try:
         scenarios()
@@ -1321,8 +1347,16 @@ def selftest():
     return 0
 
 
+class Parser(argparse.ArgumentParser):
+    """A usage error is "not run" on one line, like any other: §6 quotes the first stderr line."""
+
+    def error(self, message):
+        print("session-branch: not run (%s)" % message, file=sys.stderr)
+        sys.exit(2)
+
+
 def main():
-    ap = argparse.ArgumentParser(description="Keep session files on a per-user session branch.")
+    ap = Parser(description="Keep session files on a per-user session branch.")
     ap.add_argument("--specs", help="the specs repository's top level")
     ap.add_argument("--selftest", action="store_true", help="run the built-in fixtures and exit")
     sub = ap.add_subparsers(dest="cmd")
@@ -1354,6 +1388,9 @@ def main():
         result = dispatch(a)
     except (NotRun, OSError) as e:
         print("session-branch: not run (%s)" % e, file=sys.stderr)
+        return 2
+    except Exception as e:  # anything unexpected is "not run" on one line, never a traceback
+        print("session-branch: not run (%s: %s)" % (type(e).__name__, e), file=sys.stderr)
         return 2
     print(json.dumps(result, indent=2))
     return 0

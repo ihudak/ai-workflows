@@ -13,7 +13,7 @@ flowchart TD
     subgraph CROSS["Cross-cutting commands"]
         setup["/workflows-core:statusline — install the status line"]:::core
         repair["/frames — (re)build a design/ frame-set index"]:::core
-        improve["/feedback · /prompt · /prompt-brainstorm · /prompt-grill-me"]:::core
+        improve["/workflows-core:feedback · /prompt · /prompt-brainstorm · /prompt-grill-me"]:::core
         diagnose["/diagnose-session — why a run went wrong, with evidence"]:::core
     end
     pipeline["a sibling plugin's pipeline command"]:::other
@@ -40,7 +40,7 @@ The three dashed and solid edges into `a sibling plugin's pipeline command` are 
 
 These run outside any role pipeline, at any time:
 
-- **Plugin improvement.** `/feedback` logs a note about the plugin itself; `/prompt`, `/prompt-brainstorm`, and `/prompt-grill-me` turn a correction you just made into logged feedback plus a fix — applied directly, redesigned with `superpowers:brainstorming`, or grilled inline.
+- **Plugin improvement.** `/feedback` logs a note about the plugin itself — it collides with Claude Code's built-in `/feedback`, which sends feedback to Anthropic, so type the qualified `/workflows-core:feedback`; `/prompt`, `/prompt-brainstorm`, and `/prompt-grill-me` turn a correction you just made into logged feedback plus a fix — applied directly, redesigned with `superpowers:brainstorming`, or grilled inline.
 - **Session diagnosis.** [`/diagnose-session`](commands/diagnose-session.md) reads a session's transcripts — this one, or a past one — and reports what happened in a run that went wrong, a `path:line` behind every finding. It says whether the family was involved and where, proposes no fix, and leaves you a ready-to-run `/feedback` line when it was.
 - **Setup.** `/statusline` installs the family's multi-line status line. It collides with a Claude Code built-in of the same name, so type the qualified `/workflows-core:statusline`.
 - **Specs-tree repair.** [`/frames`](commands/frames.md) (re)builds the frame-set index of any folder holding exported design frames — a BRD, PRD, or Epic folder alike — so a set somebody dropped in by hand becomes readable. It advances no phase and grounds nothing.

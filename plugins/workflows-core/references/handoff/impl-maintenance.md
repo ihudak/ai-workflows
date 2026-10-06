@@ -8,7 +8,7 @@ The caller passes a **compact session handoff**:
 Session handoff:
 - Command run: /implement
 - What was done: [1-paragraph summary — classification, component/CVE/task, scope]
-- Key events: [BLOCK reviews, test regressions, missing reference docs, workarounds needed, ambiguities that required user clarification, surprising compatibility issues — or "none"]
+- Key events: [BLOCK reviews, test regressions, missing reference docs, workarounds needed, ambiguities that required user clarification, surprising compatibility issues, a fixed bug and its confirmed cause (a miss the project's own checks let through) — or "none"]
 - Workarounds used: [manual steps the workflow could not automate — or "none"]
 - Review verdict: [PASS | PASS WITH RECOMMENDATIONS | BLOCK (+ what the BLOCK was) | N/A]
 - Test result: [passed | regressions | not run]

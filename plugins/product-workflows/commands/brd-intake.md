@@ -111,11 +111,15 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
    already holds, which this command has not read and has no reason to, and a remedy naming a run
    that refuses the folder would be worse than none. Both are argument halts, so `emit-block` does
    not fire (Phase 9). Absent → this is a
-   brand-new BRD: derive `<slug>` from the source file's first heading — lowercase it, turn every run
-   of characters outside `[a-z0-9]` into one `-`, and trim `-` from both ends, so
-   `Acme reporting — business requirements` gives `acme-reporting-business-requirements` — falling
-   back to the same rule over the source filename less its extension where no heading is found or
-   the heading leaves nothing, and to `brd` where that leaves nothing too; then prepare to create
+   brand-new BRD: derive `<slug>` from the source file's first heading — lowercase it, keep every
+   letter and digit of any script together with the accents and vowel signs written on it (Unicode
+   letters, combining marks and decimal digits), turn every run of other characters into one `-`,
+   trim `-` from both ends, and cut what is left at a character boundary to at most 80 bytes of
+   UTF-8, trimming a `-` the cut leaves at the end, so `Acme reporting — business requirements`
+   gives `acme-reporting-business-requirements` and `Zahlungsauslösung — Anforderungen` gives
+   `zahlungsauslösung-anforderungen` — falling back to the same rule over the source filename less
+   its extension where no heading is found or the heading leaves nothing, and to `brd` where that
+   leaves nothing too; then prepare to create
    `specifications/BRD-<BRD-KEY>-<slug>/` — **the `BRD-` kind prefix is part of the name**
    (`workflows-core:addressing` §2), never optional and never derived from the
    key. The directory is not actually created until Phase 2's first write.
