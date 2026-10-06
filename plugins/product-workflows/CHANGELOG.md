@@ -5,10 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.21.2] — 2026-10-06
+
+### Changed
+- **The maintenance phases of `/epics` and `/specify` name the unfollowed-rules subsection** among what `emit-auto` persists (workflows-core 1.26.0), and the session-feedback page describes it.
+
 ## [3.21.1] — 2026-10-06
 
 ### Changed
-- **The maintenance phases of `/epics` and `/specify` name the unfollowed-rules subsection** among what `emit-auto` persists (workflows-core 1.25.0), and the session-feedback page describes it.
+- The session-cost and session-feedback pages say where those files go on a specs repository whose default branch takes no push (`workflows-core` 1.25.0's session-branch mode).
 
 ## [3.21.0] — 2026-10-06
 

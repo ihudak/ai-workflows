@@ -5,10 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.9.3] — 2026-10-06
+
+### Changed
+- **The maintenance phases of `/document` and `/release-notes` name the unfollowed-rules subsection** among what `emit-auto` persists (workflows-core 1.26.0).
+
 ## [1.9.2] — 2026-10-06
 
 ### Changed
-- **The maintenance phases of `/document` and `/release-notes` name the unfollowed-rules subsection** among what `emit-auto` persists (workflows-core 1.25.0).
+- The session-cost page says where cost entries go on a specs repository whose default branch takes no push (`workflows-core` 1.25.0's session-branch mode).
 
 ## [1.9.1] — 2026-10-06
 

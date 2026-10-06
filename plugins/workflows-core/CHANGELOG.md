@@ -5,14 +5,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.25.0] — 2026-10-06
+## [1.26.0] — 2026-10-06
 
 ### Added
 - **`impl-maintenance` reports rules that existed but were not followed.** Where an instruction named a concrete action and the session broke it anyway, the agent never proposes the rule again: it finds why it was missed — not loaded, ambiguous, contradicted, or read but not applied — and proposes a fix for that cause (a check, a move or scope change, a rewrite, the pair fixed at the source), under a new `#### Rules that existed but were not followed` subsection. `emit-auto` persists a family plugin's own unfollowed rules as `category: unfollowed-rule`, a new value `/feedback` offers too; one in the target project stays in the in-session report.
-- **Pre-lint lists `## Observability & release verification`** among a design's scaled sections (dev-workflows 4.16.0).
+- **Pre-lint lists `## Observability & release verification`** among a design's scaled sections (dev-workflows 4.17.0).
 
 ### Fixed
 - **The feedback projection tests a reference-doc gap against the plugin it is about.** §4's projection paragraph said "paths under `${CLAUDE_PLUGIN_ROOT}`", which in that file names `workflows-core`, contradicting §4's own reference-docs bullet two paragraphs above; it now resolves the path as that bullet does.
+
+## [1.25.0] — 2026-10-06
+
+### Added
+- **Session-branch mode, for a specs repository whose default branch takes no push.** The first push `origin` refuses to the default branch turns it on for that clone, and `git config workflows.sessionBranch true` turns it on in advance. In the mode, every run's session files — feedback, cost, follow-ups, the implementation record, the release-notes draft and the resume pointer — go to a branch of your own, `session/<identity>` (your identity from `GIT_USER_INITIALS`, `git config user.initials` or your branches' shared prefix), which the plugin commits to without checking it out, keeps merged with the default branch (appended files are union-merged, so a teammate's entries and yours both survive), and pushes. You land the files by merging its pull request; the `Specs repo:` line gives the `gh pr create` command that opens it and counts the files not landed yet. Until it merges, your specs checkout shows those files as modified or untracked — that is where every command keeps reading and appending them — and the plugin lifts and puts them back around every switch or pull it makes. The environment page documents the key, the overlay and the two commands to run around a switch or pull of your own (`specs-repo-git` §8).
+- **`scripts/session-branch.py`**, the mode's git plumbing, self-tested in CI against a remote that refuses its default branch: two clones, a merged and a squashed pull request, a deliverable switch, line endings, a second clone and a second worktree, a commit between a lift and its put-back, a hand edit after a manual lift, a branch moved by a concurrent session, and a git whose merge-tree cannot merge without a checkout.
+
+### Changed
+- **A refused push of the default branch now switches the clone to session-branch mode**: its line says the next run carries the refused commits' files to your session branch, and that run's line gives the two commands that drop them from your local default branch once they are there.
+- `branch-naming`: `session` is never counted as an identity.
+- `phase-handoff`: the switch onto a deliverable branch and row C's repair are wrapped in the mode's lift and put-back, and row C′ does not count session files in the mode.
 
 ## [1.24.0] — 2026-10-06
 
