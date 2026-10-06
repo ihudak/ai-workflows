@@ -23,7 +23,7 @@ The Product Architect, whenever ARDs have merged since the last harvest — [`/c
 
 ## What it produces
 
-`$SPECS_PATH/architecture/`: a `decisions/<id>.md` record per `[AD#N]` (id `<KEY>-AD<N>`), an `index.yaml` catalog and a `README.md`, in the format `workflows-core:architecture-kb` sets. Each record carries the decision's **Binds**, **Prevents**, **Rule** and **Alternatives** verbatim, its status (`accepted`, `superseded`, `withdrawn`), the designs that apply it and every `- ARD deviation:` line its own PRD's folder records against it. A later ARD departs from a record with `**Supersedes:**`, and the next harvest marks the record superseded. Records are generated: to change one, refine its ARD and harvest again. Nothing is ever deleted.
+`$SPECS_PATH/architecture/`: a `decisions/<id>.md` record per `[AD#N]` (id `<KEY>-AD<N>`), an `index.yaml` catalog and a `README.md`, in the format `workflows-core:architecture-kb` sets. Each record carries the decision's **Binds**, **Prevents**, **Rule** and **Alternatives** verbatim, its status (`accepted`, `superseded`, `withdrawn`), the designs that apply it and every `- ARD deviation:` line its own PRD's folder records against it. A later ARD of another PRD replaces a record with `**Supersedes:**`, and the next harvest marks the record superseded; a record of the same PRD changes only by refining the ARD it came from. Records are generated: to change one, refine its ARD and harvest again. Nothing is ever deleted.
 
 ## Gates
 

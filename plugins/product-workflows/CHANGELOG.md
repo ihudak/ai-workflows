@@ -10,6 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ### Fixed
 - **An Epic-level ARD is grounded on a sibling Epic's decisions.** `/create-ard` passed the architecture grounder `own_key` = the PRD, which skipped every team record of the PRD — so an Epic-level ARD never saw the decisions a sibling Epic's ARD had already made, the gap `own_sources` closed for `/specify` in 3.20.0 and `/dev-workflows:design` in dev-workflows 4.15.0. It now passes `own_sources`: the ARD files it may rewrite (`ard.md` and every `ard-<area>.md` in its resolved folder) and, on an Epic-level run, the PRD-level ARD it inherits read-only, `prd_dir`'s `ard.md`. A departure from a sibling Epic's record is an open question settled by refining that Epic's ARD, since `**Supersedes:**` crosses only between PRDs. A PRD-level run is grounded on its Epics' ARDs the same way. `own_key` is gone from the grounder's input (workflows-core 1.27.1), which now returns a team record's `prd:` and `source:`, so the run can tell a sibling Epic's record from another PRD's.
 - **`/specify` no longer passes `own_key`**, which the grounder no longer takes (workflows-core 1.27.1).
+- **The `/harvest-decisions` page and command say `**Supersedes:**` replaces only a record of another PRD**, and `ard-reviewer` and `/create-ard` name this run's PRD on the BRD route as the slice's key — the key the harvest groups a slice's records by — never the ARD's own `prd:`, which names the parent BRD there.
 
 ## [3.22.0] — 2026-10-06
 

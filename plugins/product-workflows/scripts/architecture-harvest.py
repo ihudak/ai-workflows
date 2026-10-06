@@ -964,6 +964,10 @@ def selftest():
         check('components: ["shop"]' in prec("ACME-90-01-AD1"), "prd: components from the PRD-level ARD")
         check("scope: area" in prec("ACME-90-01-ui-AD1") and cart + "design.md" not in prec("ACME-90-01-ui-AD1"),
               "prd: an area record; the Epic ARD wins its citation")
+        preadme = text(tmp, KB + "/README.md")
+        check("| Record | Title | PRD |" in preadme and "A later ARD of another PRD replaces one with `**Supersedes:**`; "
+              "a record of the same PRD changes only by refining the ARD it came from." in preadme,
+              "prd: the README names the PRD group and says Supersedes crosses only between PRDs")
 
     # ---- promotion keys: preserved, and an accepted promotion marked in the README ------------
     with tempfile.TemporaryDirectory() as tmp:

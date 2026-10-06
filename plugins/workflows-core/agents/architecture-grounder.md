@@ -32,7 +32,7 @@ Read whichever of these exist at `arch_root`:
 
 An artifact's **id** is its frontmatter `id:`, else the file stem; a radar entry's id and title are its name. Its **status** is its frontmatter `status:`, else the first word under its `## Status` heading (Nygard, MADR 3) or after a `Status:` line near its top (MADR 2's `* Status: …` bullet), else `unknown`. A folder's `README.md` or `index.md` is not an artifact.
 
-`team_root` always has the catalog-and-decisions layout: an `index.yaml` and `decisions/<id>.md` records whose frontmatter carries `id`, `status` (`accepted`, `superseded` or `withdrawn`) and `tags`, and whose body carries the decision's **Binds**, **Prevents**, **Rule** and **Alternatives**.
+`team_root` always has the catalog-and-decisions layout: an `index.yaml` and `decisions/<id>.md` records whose frontmatter carries `id`, `status` (`accepted`, `superseded` or `withdrawn`), `tags`, `prd:` and `source:` — and `promotion:` once the organisation has ruled on it — and whose body carries the decision's **Binds**, **Prevents**, **Rule** and **Alternatives**.
 
 ## Method
 
