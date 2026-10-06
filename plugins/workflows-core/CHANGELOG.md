@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.26.0] — 2026-10-06
+
+### Added
+- **`impl-maintenance` reports rules that existed but were not followed.** Where an instruction named a concrete action and the session broke it anyway, the agent never proposes the rule again: it finds why it was missed — not loaded, ambiguous, contradicted, or read but not applied — and proposes a fix for that cause (a check, a move or scope change, a rewrite, the pair fixed at the source), under a new `#### Rules that existed but were not followed` subsection. `emit-auto` persists a family plugin's own unfollowed rules as `category: unfollowed-rule`, a new value `/feedback` offers too; one in the target project stays in the in-session report.
+- **Pre-lint lists `## Observability & release verification`** among a design's scaled sections (dev-workflows 4.17.0).
+
+### Fixed
+- **The feedback projection tests a reference-doc gap against the plugin it is about.** §4's projection paragraph said "paths under `${CLAUDE_PLUGIN_ROOT}`", which in that file names `workflows-core`, contradicting §4's own reference-docs bullet; it now resolves the path as that bullet does.
+
 ## [1.25.0] — 2026-10-06
 
 ### Added

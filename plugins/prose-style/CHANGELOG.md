@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.5.3 — 2026-10-06
+
+### Fixed
+
+- **`/prose-review-pr`'s diff context comes from the range that found the files.** A branch's diff
+  context always came from `origin/<default>...origin/<branch>`, even where the files were found
+  through the local-branch fallback, which then showed the wrong hunks or none. Step 2c records the range, and step 7 diffs against it.
+- **`/prose-review-pr` checks the default branch after its fetch.** The check that `origin/<name>`
+  exists said nothing about when to run it. Run before step 2a's `git fetch --all --prune` deleted a
+  renamed default branch, it passed, and every `origin/<default>` diff then failed; and a rejected
+  name was replaced in the local forms too, where a pre-rename clone still has the branch. It now
+  runs after 2a's or 2b's fetch, whichever runs, and checks the name against the form it goes into:
+  `origin/<name>` for the remote form, the local branch for the two local forms; otherwise a local
+  form now falls back by probing the local `master` and `main`, `origin/HEAD` unset included, where
+  0.5.2 probed origin's.
+
 ## 0.5.2 — 2026-10-05
 
 ### Fixed

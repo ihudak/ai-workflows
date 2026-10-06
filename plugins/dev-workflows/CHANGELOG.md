@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.17.0] — 2026-10-06
+
+### Added
+- **`design.md` records how the team will know a change works once it is live.** A new `## Observability & release verification` section (`design-format.md` section 11) applies to a change to behaviour a deployed system runs: the signals that show it working or failing and whether each exists yet, their baseline and where it was read, the blast radius with the signal that would show each neighbour hurt, a post-release check for each delivered acceptance criterion, the alerts and service-level objectives it moves, and the threshold that triggers a rollback. An item that does not apply says why; any other change marks the section `_N/A_`. `/design`'s grill settles it before any code, and `design-reviewer` checks it — absent, or `_N/A_` on such a change, is MAJOR on a `MODERATE`+ design, and a rollback signal with no signal and threshold is MAJOR on a `SIGNIFICANT` or `HIGH-RISK` one.
+
+### Changed
+- **The maintenance phases of `/implement`, `/design`, `/vuln`, `/upgrade` and `/ready` name the unfollowed-rules subsection** among what `emit-auto` persists (workflows-core 1.26.0), and any Key observation naming an ai-containers defect, and the session-feedback page describes it.
+
 ## [4.16.0] — 2026-10-06
 
 ### Added

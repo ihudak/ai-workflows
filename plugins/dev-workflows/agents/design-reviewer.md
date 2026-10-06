@@ -90,6 +90,14 @@ The caller passes:
   fan-out ran, the losing takes should appear here named by constraint.
 - **Risk coverage (SIGNIFICANT/HIGH-RISK):** a risky dimension named in the spec/classification with no
   entry in **Risks & mitigations** → `MAJOR` (`SIGNIFICANT`) / `BLOCKER` (`HIGH-RISK`).
+- **Release verification:** for a change to behaviour a deployed system runs (`design-format.md`
+  section 11), **Observability & release verification** absent with no `_N/A — why_`, or marked
+  `_N/A_` → `MAJOR` (`MODERATE`+) / `MINOR` (`SIMPLE`).
+  Where it is present: a **rollback signal** that names no signal and threshold → `MAJOR`
+  (`SIGNIFICANT`/`HIGH-RISK`) / `MINOR` otherwise; a check or rollback signal resting on a signal the
+  design says does not exist yet, with no section adding it → `MAJOR`; a delivered acceptance
+  criterion with neither a post-release check nor `n/a — <reason>` → `MINOR`; a baseline given as a
+  bare value, with no source and no capture plan → `MINOR`.
 - **Verbatim duplication of the spec:** a design section restating a `specification.md` section verbatim
   instead of referencing it → `MINOR` (both docs live in the same folder; prefer a reference).
 - **Challenge coherence:** each challenge recorded in **Requirements coverage** cross-references a real
@@ -122,7 +130,9 @@ If nothing is actionable, say so and state the classification you reviewed again
 ## Gotchas
 
 - A section shown as `_N/A — why_` at `SIMPLE`/`MODERATE` is **not** a defect — it is the format's
-  scaling rule. Only flag an omission the classification does not license.
+  scaling rule. Only flag an omission the classification does not license. The one exception is
+  **Observability & release verification** marked `_N/A_` on a change to behaviour a deployed
+  system runs, which the Release-verification check grades at every classification.
 - Test-strategy / design steps may describe how the system is built or exercised — that is design
   intent, not a "describes implementation" defect (implementation detail is expected in a design doc,
   unlike a specification).

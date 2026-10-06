@@ -1034,8 +1034,8 @@ same way and commits under `NOISSUE` when there is none, per
    `command: /specify`, the run's `key` and `source`, and `plugin_version`
    (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). `emit-auto`
    renders only the report's **Command workflow improvements**, **New agents /
-   skills**, and plugin **Reference docs** sections plus the **Key observations**
-   that triggered them (§4) — never target-project `CLAUDE.md`/hook advice — as
+   skills**, plugin **Reference docs** and plugin **Rules that existed but were not followed** sections plus the **Key observations**
+   that triggered them, and any naming an ai-containers defect (§4) — never target-project `CLAUDE.md`/hook advice — as
    `origin: auto` entries, dedupes by stable `id` (§3), resolves the target via
    the §2 specs-first ladder, and writes silently.
 3. **Surface** the persisted path (or "no plugin-facing signal — nothing
