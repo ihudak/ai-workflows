@@ -66,15 +66,19 @@ arch_references:
     url: <link, or null>
     rule: "<one sentence quoted as written>"
     applies_to: <the theme or stack fact it bears on>
+    prd: <the record's `prd:` — a team record only; omit for an organisation artifact>
+    source: <the record's `source:` — a team record only; omit for an organisation artifact>
 arch_challenges:
   - kind: contradicts-decision | contradicts-standard | contradicts-team-decision | radar-hold | radar-retire | radar-absent
     subject: <technology or theme>
     evidence: <file:line from stack_facts, or a sentence of feature_summary quoted>
-    governing: { id: <id>, title: <title>, root: organisation | team, path: <path>, url: <link or null>, rule: "<quoted>" }   # null for radar-absent
+    governing: { id: <id>, title: <title>, root: organisation | team, path: <path>, url: <link or null>, rule: "<quoted>", prd: <team only>, source: <team only> }   # null for radar-absent
 error: <one line — ERROR only>
 ```
 
 `EMPTY` — the sources were read and nothing bears on the work; both lists are `[]`.
+
+A team record's `prd:` and `source:` are copied from its frontmatter as written: the caller tells by them whether a departure from the record takes **Supersedes** (another PRD's) or a refinement of the ARD `source:` names (its own PRD's).
 
 ## Hard rules
 
