@@ -508,17 +508,27 @@ def scan_main(path, line_offset, ns_map, by_id=None):
                      "ts": obj.get("timestamp"),
                      "line_offset": i}
                 )
+                # Only the call that made this boundary may unmake it: the first Skill
+                # block naming a command of this marketplace, the one _skill_invocation
+                # resolved. A record can carry other Skill calls beside it (the
+                # model-routing skill, a second command), and their errors are not its.
                 if obj.get("type") == "assistant":
                     for block in (obj.get("message") or {}).get("content") or []:
-                        if isinstance(block, dict) and block.get("name") == "Skill" and block.get("id"):
+                        if isinstance(block, dict) and block.get("type") == "tool_use" \
+                                and block.get("name") == "Skill" and block.get("id") \
+                                and isinstance(block.get("input"), dict) \
+                                and block["input"].get("skill") == typed:
                             by_call[block["id"]] = boundaries[-1]
+                            break
             elif by_call and isinstance(obj, dict) and obj.get("type") == "user" \
                     and isinstance(obj.get("message"), dict):
                 content = obj["message"].get("content")
                 for block in content if isinstance(content, list) else []:
                     if isinstance(block, dict) and block.get("type") == "tool_result" \
                             and block.get("is_error") and block.get("tool_use_id") in by_call:
-                        boundaries.remove(by_call.pop(block["tool_use_id"]))
+                        dropped = by_call.pop(block["tool_use_id"])
+                        if dropped in boundaries:
+                            boundaries.remove(dropped)
             if ts is not None and (first_ts is None or ts < first_ts):
                 first_ts = ts
             model, usage = extract_usage(obj)
@@ -1371,6 +1381,35 @@ def _selftest_body(tmp):
           "a Skill call the tool refused does not cut")
     check(len(_scan({"content": "Launching skill: product-workflows:update-prd"})) == 1,
           "a Skill call that ran still cuts")
+    # Only the call that made the boundary can unmake it. One assistant record may carry
+    # several Skill calls -- a command and the model-routing skill side by side -- and an
+    # error on the one that is no command must not drop the command's boundary, nor may two
+    # refusals in one record try to drop it twice.
+    def _scan_pair(results):
+        path = os.path.join(tmp, "skill-pair.jsonl")
+        sk = {"type": "assistant", "timestamp": "2026-09-01T10:00:00.000Z",
+              "message": {"content": [
+                  {"type": "tool_use", "name": "Skill", "id": "toolu_a",
+                   "input": {"skill": "product-workflows:update-prd"}},
+                  {"type": "tool_use", "name": "Skill", "id": "toolu_b",
+                   "input": {"skill": "workflows-core:model-routing"}},
+                  {"type": "tool_use", "name": "Skill", "id": "toolu_c",
+                   "input": {"skill": "workflows-core:prompt"}}]}}
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(json.dumps(sk) + "\n")
+            fh.write(json.dumps({"type": "user", "timestamp": "2026-09-01T10:00:01.000Z",
+                                 "message": {"content": [dict(r, type="tool_result")
+                                                         for r in results]}}) + "\n")
+        try:
+            return scan_main(path, 0, _ns)[2]
+        except ValueError as exc:
+            return "raised %s" % exc
+    check(len(_scan_pair([{"tool_use_id": "toolu_a", "content": "Launching skill"},
+                          {"tool_use_id": "toolu_b", "is_error": True, "content": "x"}])) == 1,
+          "an errored non-command Skill call beside a command's keeps the command's cut")
+    check(_scan_pair([{"tool_use_id": "toolu_a", "is_error": True, "content": "refused"},
+                      {"tool_use_id": "toolu_c", "is_error": True, "content": "refused"}]) == [],
+          "two refused command calls in one record drop its one cut once, without raising")
 
     if failures:
         print("SELFTEST FAIL (%d)" % len(failures))
