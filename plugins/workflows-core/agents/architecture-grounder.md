@@ -1,6 +1,6 @@
 ---
 name: architecture-grounder
-description: Read-only architecture grounding for /create-ard, /specify and /design. Given an architecture repository (technology radar, standards, principles, patterns, accepted ADRs) and/or the team's knowledge base of harvested ARD decisions, a feature summary, themes and the stack facts a code scan found, returns a bounded digest — arch_references (the artifacts that settle or constrain the work, each with its quoted rule and a link) and arch_challenges (a contradicted decision, standard or team decision, a hold or retire radar ring, a proposed technology the radar does not list). Never writes, fetches or pulls; advisory only. Model tier assigned by the caller per the model-routing policy (no fixed pin).
+description: "Read-only architecture grounding for /create-ard, /specify and /design. From an architecture repository (radar, standards, principles, patterns, accepted ADRs) and/or the team's harvested decisions, returns a bounded digest: arch_references (what settles or constrains the work, quoted and linked) and arch_challenges (a contradicted decision or standard, a hold or retire ring, an unlisted technology). Never writes, fetches or pulls; advisory only. Model tier assigned by the caller per the model-routing policy."
 tools: ["Read", "Glob", "Grep", "Bash"]
 ---
 

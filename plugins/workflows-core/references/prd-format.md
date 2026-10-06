@@ -135,7 +135,7 @@ readers. **Never invent one** — an unanswered field is omitted, not filled.
 - `## Problem` — who is affected and why the current situation is insufficient; why now. Solution-free; no implementation detail.
 - `## Goal` — a crisp 2–3 sentence statement of the outcome (feeds the folder read's goal extraction and every downstream consumer).
 - `## Target audience` — the personas/roles served (specific roles, not "everyone").
-- `## User Stories` — `### [US#N]: <title>`, `As a [role], I want [capability], so that [benefit].` Contiguous IDs.
+- `## User Stories` — `### [US#N]: <title>`, `As a [role], I want [capability], so that [benefit].` Contiguous IDs, never renumbered or reused (§ Changing a requirement).
 - `## Acceptance Criteria` — `[AC#N]` under each story; externally-observable pass/fail (no "be reliable"/"improve performance"). Each is false before its story ships and true after it, through that story alone — except a **guard**, a criterion that keeps behaviour the story could break working as it does ("existing exports still open in version 1 readers"), which is true before and after and is worded as a guard; every criterion, a guard included, states the rule, not an example ("rejects any quantity over stock on hand", not "rejects quantity 999"), with a literal only where the value is the requirement — a limit, a rounding rule, exact text; and there are enough that building the wrong thing cannot pass, no more — past eight on one story, split the story.
 - `## Scope` — **In scope** (concrete delivered behaviours) / **Out of scope** (concrete confusable exclusions; never "anything else"/"future work").
 - `## Success Metrics` — `[SM#N]`; measurable, technology-agnostic outcomes. Optionally add **counter-metrics** (`[SMC#1]`, `[SMC#2]`…) — a metric explicitly named as *not* to be optimized or gamed, counterbalancing a Primary SM (e.g. "throughput up, but `[SMC#1]` error-rate must not rise").
@@ -169,3 +169,14 @@ readers. **Never invent one** — an unanswered field is omitted, not filled.
 - Acceptance criteria and success metrics are **externally observable**.
 - Consolidate shared data dependencies rather than repeating them.
 - Detailed **Test Cases are NOT authored here** — they are `/specify`'s `specification.md` (`[TCxx]`).
+
+## Changing a requirement
+
+Epics' `## Covers`, `/epics`' `_coverage.md`, `/prd-ground`'s findings and the specifications and designs built from them cite a requirement by its id, so an id renumbered or reused silently re-points every one of them. These rules hold for every series this format defines — `[US#N]`, `[AC#N]`, `[SM#N]`, `[SMC#N]`, `[UC#N]`, `[FR#N]` — on an update, and on a fresh start over a PRD already written:
+
+- **An id is never renumbered, reused or deleted.** A new requirement takes the next free number in its series.
+- **A changed requirement is a new id.** One whose meaning changes gets the next free id; the old one keeps its place, id and text and gains `**Superseded by:** [AC#M] — <why>`, naming a live id of the same series. Wording that leaves the meaning unchanged is not a change.
+- **A requirement dropped with no replacement** keeps its place the same way and gains `**Withdrawn:** <why>`. A withdrawn `[US#N]` withdraws each `[AC#N]` under it, and each is marked so.
+- The marker sits on its own line under a `### [US#N]:` heading, and at the end of the line for any other id.
+- **A superseded or withdrawn requirement binds nothing.** Every reader of these ids reads the live ones only: `/epics` leaves it out of `requirements[]`, so an Epic still citing it is a stale reference; `/prd-ground` grounds no claim on it; no coverage counts it.
+- IDs stay contiguous over live, superseded and withdrawn requirements alike.

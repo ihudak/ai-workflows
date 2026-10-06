@@ -1,6 +1,6 @@
 ---
 name: prd-ground
-description: Grounding workflow serving both routes into a PRD, its route detected from the resolved folder and never declared — the BRD-to-PRD route's PA phase, run once per slice `/brd-split` carves and again when a re-cut gives a slice a new row; and, optionally and ungated, once after `/create-prd` on the idea route. Pins every mounted repository to a verified commit and grounds every claim in the resolved folder's own claim list — a BRD slice's [BR#n] rows on the BRD route, a PRD's [AC#n]/[FR#n] rows (plus a [US#n] whose story carries neither) on the idea route, excluding [UC#n]/[SM#n]/[SMC#n] on either — against code (code-grounder) and an exported design frame set (design-grounder), independently re-derives every live finding (grounding-verifier, Opus), and, on the BRD route, assigns each finding a current/will-change horizon against declared prerequisite BRDs (--depends-on; refused on the idea route, which has no decision register to freeze one against). Read-only against every repository. Grounds on the shipped product documentation when $DOCS_PATH resolves (off with --no-docs, and under --no-code) — as a lead and a divergence finding, NEVER as evidence for a [CG#n]. --no-code adds design grounding over an already-verified code grounding without re-deriving it; --derivation-matrix adds an implementation-altitude build list; --rebaseline re-runs against moved code, superseding findings by ID. Offers /brd-split on the BRD route; on the idea route, /create-ard and /specify, with /update-prd named first wherever a requirement claim came back CONFIRMED.
+description: "Grounds a folder's requirement claims against code and an exported design frame set at pinned commits, and has every finding independently re-derived by grounding-verifier (Opus): a BRD slice's [BR#n] rows on the BRD route, where findings also get a current/will-change horizon against --depends-on, or a PRD's [AC#n]/[FR#n]/[US#n] rows, optionally, on the idea route. Read-only against every repository; documentation is a lead, never evidence. --no-code, --derivation-matrix, --rebaseline. Next: /brd-split, or /create-ard and /specify."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 ---
 
@@ -536,12 +536,14 @@ behaviour, not the behaviour.
 8i. **On `route: idea`, read the claim list from `prd.md` instead, and report what is excluded from
     it.** From the gated `<PRD-dir>/prd.md` (step 6i), build the `claims` array every dispatch in
     Phase 5 draws from — unchanged in shape from the BRD route's (`id` and `text` per entry),
-    changed only in where the entries come from:
+    changed only in where the entries come from, and taking only live rows: a row marked
+    `Superseded by` or `Withdrawn` binds nothing and grounds nothing (`workflows-core:prd-format`
+    § Changing a requirement):
 
-    - every `[AC#n]` row under `## Acceptance Criteria`;
-    - every `[FR#n]` row under `## Functional requirements` (present only on a `--full`-profile
+    - every live `[AC#n]` row under `## Acceptance Criteria`;
+    - every live `[FR#n]` row under `## Functional requirements` (present only on a `--full`-profile
       PRD; absent on `--lean`/`--hybrid` contributes nothing here, which is ordinary);
-    - every `[US#n]` row under `## User Stories` **whose story carries no `[AC#n]` beneath it in
+    - every live `[US#n]` row under `## User Stories` **whose story carries no live `[AC#n]` beneath it in
       `## Acceptance Criteria`, and no others.** A story is reached through its own acceptance
       criteria wherever it has any, and grounding both would ground one capability twice — so a
       story with acceptance criteria contributes nothing of its own, and this rule is precisely what
@@ -577,7 +579,7 @@ behaviour, not the behaviour.
     actually adds; naming the empty `[US#n]` case too would not change what the operator is told to
     do. Stop, naming the fix that adds acceptance criteria and never the command that would
     rewrite the PRD instead of adding to it:
-      `PRD_GROUND_NO_CLAIMS: <KEY>'s prd.md holds no [AC#n] and no [FR#n] row, so there is no claim to ground. Add acceptance criteria with '/product-workflows:update-prd <KEY>' and re-run. Do not re-run /product-workflows:create-prd, which rewrites the PRD rather than adding to it.`
+      `PRD_GROUND_NO_CLAIMS: <KEY>'s prd.md holds no live [AC#n] and no live [FR#n] row, so there is no claim to ground. Add acceptance criteria with '/product-workflows:update-prd <KEY>' and re-run. Do not re-run /product-workflows:create-prd, which rewrites the PRD rather than adding to it.`
 9. **On `route: brd`, read `brd-link.md`, if present**, and carry **both** of its fields for the
    rest of the run:
    - `depends-on:` — any prerequisite already recorded by an earlier run. Phase 4 merges this run's

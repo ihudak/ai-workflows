@@ -4,6 +4,12 @@ All notable changes to the **obsidian-llm-wiki** plugin are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 
+## [0.4.5] — 2026-10-06
+
+### Changed
+
+- **`wiki-init`'s description is shorter** (613 characters to 473), keeping its trigger phrases: the marketplace's catalog check now warns on a skill description above 600 characters.
+
 ## [0.4.4] — 2026-09-30
 
 ### Fixed

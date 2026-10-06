@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.28.0] — 2026-10-06
+
+### Added
+- **`prd-format` § Changing a requirement: a PRD's requirement ids never move.** Every series — `[US#N]`, `[AC#N]`, `[SM#N]`, `[SMC#N]`, `[UC#N]`, `[FR#N]` — is never renumbered, reused or deleted, on an update and on a fresh start over a PRD already written: a requirement whose meaning changes gets the next free id and the old one keeps its place marked `Superseded by` it, and a dropped one is marked `Withdrawn` in place, as an ARD's decisions already were. A superseded or withdrawn requirement binds nothing: `/epics` leaves it out of the coverage ground truth and `/prd-ground` grounds no claim on it. `pre-lint` counts those ids toward contiguity, and its mechanical fix renumbers only a duplicate the run introduced.
+
+### Changed
+- **Shorter descriptions** for `/frames`, `architecture-grounder`, `code-scanner`, `docs-grounder` and the `model-routing` skill: what each does, when to use it and what it is not for, in about 500 characters. Claude Code shares one listing among every installed plugin's descriptions and shortens all of them once it overflows; the repository's `validate-catalog.py` now fails a description above 1,024 characters and warns above 600.
+
 ## [1.27.0] — 2026-10-06
 
 ### Fixed

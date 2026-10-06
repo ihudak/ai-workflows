@@ -1,6 +1,6 @@
 ---
 name: release-notes-writer
-description: Renders an example-docs release-notes draft (the authored body only) for a resolved PRD/ticket from the folder read the orchestrator hands it, plus optional diff summaries. Emits exactly ONE Summary. Resolves the note's destination (breaking-changes / feature-updates / fixes) to pick the draft's shape — a category label + H3 title + prose, or one or two bare sentences for fixes — and never writes the Change Type as text. Sources the category label from the resolved PRD's release_notes_category and omits it when absent. A breaking note carries an **Action plan:** label, and says when it takes effect where that is later than the release it is filed under. Emits NO identifiers, NO PR links, and NO {{#internal-note}} block (the docs automation adds those). Does NOT write files. Model tier assigned by the caller per the model-routing policy (no fixed pin).
+description: "Renders the authored body of a release-notes draft for a resolved PRD or ticket from the folder read and optional diff summaries: exactly one Summary, shaped by its destination (breaking-changes, feature-updates or fixes), the category label from release_notes_category when set, and an Action plan on a breaking note. Writes no identifiers, pull-request links or internal-note block, and writes no files. Model tier assigned by the caller per the model-routing policy (no fixed pin)."
 tools: ["Read", "Glob", "Grep", "Skill"]
 ---
 

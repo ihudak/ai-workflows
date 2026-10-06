@@ -1,6 +1,6 @@
 ---
 name: idea-reader
-description: Ingests one idea source (inline prompt, a markdown file with links/images, a community post, or a saved file) and returns a structured source digest for /idea. For a markdown source it reads exactly what its caller hands over — every page the caller's link walk took, and figure-reader's transcription of every image — maps the walk onto the digest's link arrays, captures community-post demand signals, and summarises each page read so the caller need not re-read it. Follows no link and opens no image itself. Read-only; never modifies files. Model tier assigned by the caller per the model-routing policy (no fixed pin).
+description: Turns one idea source (an inline prompt, a markdown file, a community post or a saved file) into a structured source digest for /idea. For markdown it reads exactly the pages and image transcriptions its caller hands over, maps them onto the digest's link arrays and summarises each page; for a community post it captures the demand signals. Follows no link and opens no image itself. Read-only. Model tier assigned by the caller per the model-routing policy (no fixed pin).
 tools: ["Read", "Glob", "Grep", "Skill"]
 ---
 

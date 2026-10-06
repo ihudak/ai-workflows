@@ -1,6 +1,6 @@
 ---
 name: create-prd
-description: PRD-creation workflow (PM phase, sub-project 2 of the PRD-creation flow). Turns a refined idea.md + a user-supplied address into a high-quality Product Requirements Document document (spine + adapt-in profiles --lean|--hybrid|--full), authored via a relentless grill against workflows-core:prd-format, gated by the Opus prd-reviewer, written as prd.md into $SPECS_PATH/specifications/PRD-<KEY>-<slug>/. Product-level (no code scan). the BRD route seeds the run from a decided BRD slice instead of an idea: it reads that BRD folder's product-altitude prd-seed.md and decisions.md, defaults the profile to --full, refuses a BRD- container outright, before any ledger row is read, because a BRD is never the folder a PRD is authored in, and on the PRD- slice folder a split produces refuses one whose coverage-ledger rows are not all allocated and one whose ledger holds no covered-here row (the rows read are that slice's own ledger rows, narrowed by its brd-link.md claims:), gates decisions.md on the specs default branch before reading it (an unmerged register stops the run), freezes every [VD#n]/[CD#n] against the grill, and writes brd_key, brd_parent (always present on this route, since the route now resolves a slice) and depends_on into the PRD frontmatter. Offers /release-notes and /create-ard as next steps.
+description: "Authors a Product Requirements Document (prd.md) from a refined idea.md and a key, through a relentless grill against workflows-core:prd-format (--lean, --hybrid or --full profile), gated by the Opus prd-reviewer; product altitude, no code scan. On the BRD route it seeds from a decided slice's prd-seed.md and decisions.md, refuses a BRD- container or a slice not yet fully allocated, and records the BRD provenance in the frontmatter. Writes PRD-<KEY>-<slug>/prd.md. Next: /create-ard or /release-notes."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill WebFetch
 ---
 
@@ -542,7 +542,7 @@ the rule `/product-workflows:update-prd` Phase 3 fixes (*Archive the base before
 `<KEY>_<slug>_<YYYYMMDD>.md`, `<slug>` the resolved folder's own name less its `<KIND>-<KEY>-`
 prefix, or less `<KEY>-` on a legacy unprefixed folder, and `<KEY>_<YYYYMMDD>.md` where nothing
 remains, and where that name is taken by any file, the first free of that name with `-2`, `-3`, …
-inserted before `.md` — and report the archive path. This is the archive Phase 1 step 2's Overwrite options name,
+inserted before `.md` — and report the archive path. **Where it archived a PRD, this run's requirement ids continue that PRD's** (`workflows-core:prd-format` § Changing a requirement): read the archived copy's ids before writing the requirement sections — a requirement this PRD keeps keeps its id, one whose meaning changes takes the next free id with the old one carried as `Superseded by` it, and one this PRD drops is carried as `Withdrawn` — so no Epic, coverage row or grounding finding that cites the old PRD is re-pointed. This is the archive Phase 1 step 2's Overwrite options name,
 and it also covers a `prd.md` that appeared after Phase 0 step 6 looked. **It runs once per run**:
 where the file did not exist, nothing is archived and nothing later is, and every later write in
 this run — Phase 3.5's and 3.6's inline fixes, Phase 4's BLOCKER fixes, Phase 5 — is a write to this
@@ -732,7 +732,7 @@ gate.
 Before the review gate, run the deterministic checks in `Skill(skill: "workflows-core:reference", args: "pre-lint")` against the drafted `prd.md`: the
 **Universal checks**, the **key-collision** check (run on the PRD body below the frontmatter),
 and the **PRD** block. Surface every finding; inline-fix the mechanical ones
-(renumber a duplicate `[US#N]`/`[AC#N]`/`[SM#N]`, delete a stray placeholder token); leave content gaps
+(renumber a duplicate `[US#N]`/`[AC#N]`/`[SM#N]` this run introduced — never, on an Overwrite, an id the archived PRD carried — and delete a stray placeholder token); leave content gaps
 (missing section, unresolved `[NEEDS CLARIFICATION]`) for the grill/author. **Advisory** — never blocks;
 proceed to Phase 4 once findings are surfaced. `prd-reviewer` remains the gate.
 
@@ -744,6 +744,7 @@ Dispatch `prd-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, n
   > "Review the Product Requirements Document:
   >
   > PRD path: [absolute path to prd.md]
+  > Base: [on an Overwrite, absolute path to the archived copy under revisions/; omit otherwise]
   > Profile: [lean | hybrid | full]"
 
 Act on the verdict (mirrors `/specify`, save the escalation rule it cites):

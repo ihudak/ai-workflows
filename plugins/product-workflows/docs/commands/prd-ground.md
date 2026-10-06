@@ -291,9 +291,10 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   but on no ref — produced, handoff declined — the run stops with `PRD_GROUND_PRD_NOT_HANDED_OFF`,
   naming committing and merging it as the fix and explicitly **not** re-running `/create-prd`, which
   would author a second PRD over the one already written.
-- **A claim list built from `prd.md`, not an inventory.** Every `[AC#n]` row under
+- **A claim list built from `prd.md`, not an inventory, and from live rows only** — a requirement
+  marked `Superseded by` or `Withdrawn` grounds nothing. Every `[AC#n]` row under
   `## Acceptance Criteria`, every `[FR#n]` row under `## Functional requirements` (present only on a
-  `--full`-profile PRD), and every `[US#n]` row **whose story carries no acceptance criterion of its
+  `--full`-profile PRD), and every `[US#n]` row **whose story carries no live acceptance criterion of its
   own** — a story is reached through its own acceptance criteria wherever it has any, so grounding
   both would ground one capability twice, and this fallback is what keeps a PRD that skipped
   acceptance criteria from contributing nothing at all.

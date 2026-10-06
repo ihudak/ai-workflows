@@ -1,6 +1,6 @@
 ---
 name: design-grounder
-description: Reconciles a requirement inventory (a BRD's [BR#n] rows, or a PRD's [AC#n]/[FR#n]/[US#n] rows) against an exported design frame set — one [DG#n] finding per divergence, in four classes: a frame shows a field no requirement asks for; a requirement asks for a field no frame shows; a frame contradicts the requirement text; a frame implies a capture the code cannot perform. Read-only. Uses Claude Opus — reconciling a frame against a requirement adjudicates, and its fourth class bridges to code.
+description: "Reconciles a requirement inventory (a BRD's [BR#n] rows, or a PRD's [AC#n]/[FR#n]/[US#n] rows) against an exported design frame set — one [DG#n] finding per divergence, in four classes: a frame shows a field no requirement asks for; a requirement asks for a field no frame shows; a frame contradicts the requirement text; a frame implies a capture the code cannot perform. Read-only. Uses Claude Opus — reconciling a frame against a requirement adjudicates, and its fourth class bridges to code."
 model: opus
 tools: ["Read", "Glob", "Grep", "Skill"]
 ---
