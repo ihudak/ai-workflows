@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.18.1] — 2026-10-06
+
+### Changed
+- **`/design` no longer passes `own_key`**, which the architecture grounder no longer takes (workflows-core 1.27.1).
+
 ## [4.18.0] — 2026-10-06
 
 ### Changed

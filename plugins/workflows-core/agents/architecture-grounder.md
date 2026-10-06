@@ -11,8 +11,7 @@ Ground an ARD, a specification or a design in the organisation's architecture re
 - `arch_root` — absolute path to the architecture repository, or `null`.
 - `snapshot` — `<branch> @ <full sha> (<date>)[, dirty][, unpushed]`, or `not a git checkout`, or `none` where `arch_root` is null. Echo it; never refresh it.
 - `team_root` — absolute path to the team's knowledge base (`<specs>/architecture`), or `null`. At least one of the two roots is set.
-- `own_key` — the key of the VI (or PRD) the run is authoring for, or `null`. A team record whose `vi:` or `prd:` is `own_key` is the run's own decision: it changes through the run's own ARD (**Superseded by**), never through grounding, so it is neither a reference nor a challenge.
-- `own_sources` — the ARD files whose decisions the caller already holds as ARD invariants, as paths relative to the specs root, or `[]` (also when absent). A team record whose `source:` is one of them is skipped like an `own_key` record: the caller has the decision's live text, and the harvested copy would count it twice. A team record from any other ARD — one of the same PRD's, a sibling Epic's, included — is read like any other.
+- `own_sources` — the ARD files whose decisions the caller already holds — the ARD it is authoring or refining, and the ARDs whose decisions reach it as invariants — as paths relative to the specs root, or `[]` (also when absent). A team record whose `source:` is one of them is neither a reference nor a challenge: the caller has the decision's live text, which changes only by refining the ARD it came from (**Superseded by**), never through grounding, and the harvested copy would count it twice. A team record from any other ARD — one of the same PRD's, a sibling Epic's, included — is read like any other.
 - `feature_summary` — 2–4 sentences: the goal and the capability themes.
 - `themes` — the confirmed capability themes, or `[]`.
 - `stack_facts` — `<technology> — <file:line>` entries (`<file>` alone where no line is known) read from the confirmed repositories' manifests and code scan, at most 20, or `[]`.
@@ -33,14 +32,14 @@ Read whichever of these exist at `arch_root`:
 
 An artifact's **id** is its frontmatter `id:`, else the file stem; a radar entry's id and title are its name. Its **status** is its frontmatter `status:`, else the first word under its `## Status` heading (Nygard, MADR 3) or after a `Status:` line near its top (MADR 2's `* Status: …` bullet), else `unknown`. A folder's `README.md` or `index.md` is not an artifact.
 
-`team_root` always has the catalog-and-decisions layout: an `index.yaml` and `decisions/<id>.md` records whose frontmatter carries `id`, `status` (`accepted`, `superseded` or `withdrawn`) and `tags`, and whose body carries the decision's **Binds**, **Prevents**, **Rule** and **Alternatives**.
+`team_root` always has the catalog-and-decisions layout: an `index.yaml` and `decisions/<id>.md` records whose frontmatter carries `id`, `status` (`accepted`, `superseded` or `withdrawn`), `tags`, `prd:` and `source:` — and `promotion:` and, except on `declined`, `promoted_to:` once `/product-workflows:promote-decisions` has marked it — and whose body carries the decision's **Binds**, **Prevents**, **Rule** and **Alternatives**.
 
 ## Method
 
 1. **Inventory.** For each root set, read the catalog where one exists — it indexes everything else. Otherwise list the recognised folders with Glob. Record the sources found as `layout`.
 2. **Radar lookup.** Against `arch_root` only — a team root has no radar — for each `stack_facts` technology, and each technology `feature_summary` or `themes` name, find radar entries by case-insensitive name: an exact match first, else a whole-word phrase match — one name occurs inside the other as whole words, so `Vault` matches `HashiCorp Vault` — never a single shared word (`Amazon SQS` is not `Amazon RDS`) and never part of a word (`Go` is not `Google Pub/Sub` or `MongoDB`). Keep every entry a technology matches. The product the work changes is the subject, not a technology choice — never look its name up.
 3. **Select.** Choose the artifacts whose tags, title or id bear on a theme, a stack fact or a radar match, **erring toward inclusion**: a reference the grill dismisses costs one question, while a missed decision the work contradicts is the failure that matters. Select a principle only when a theme or stack fact bears on it specifically — never as advice any feature could cite.
-4. **Read and filter.** Read each selected artifact. Skip `deprecated`, `superseded`, `withdrawn` and `rejected` ones, and every team record of `own_key` or whose `source:` is in `own_sources`, and every team record whose `promotion:` is `accepted` or `covered` — the organisation artifact its `promoted_to:` names binds instead. Keep a `proposed` one as a reference with its status, never as the source of a `contradicts-*` challenge.
+4. **Read and filter.** Read each selected artifact. Skip `deprecated`, `superseded`, `withdrawn` and `rejected` ones, and every team record whose `source:` is in `own_sources`, and every team record whose `promotion:` is `accepted` or `covered` — the organisation artifact its `promoted_to:` names binds instead. Keep a `proposed` one as a reference with its status, never as the source of a `contradicts-*` challenge.
 5. **Challenges.** Raise one only where the evidence shows it:
    - `contradicts-decision` / `contradicts-standard` — an `accepted` decision or an `active` standard whose quoted rule a stack fact or a sentence of `feature_summary` breaks. A rule scoped to new work — "for new workloads", "must not be introduced" — is broken only by what `feature_summary` proposes, never by a stack fact: code already using a technology is at most a radar challenge;
    - `contradicts-team-decision` — an `accepted` team record whose quoted Rule a stack fact or a sentence of `feature_summary` breaks, scoped as `contradicts-decision` is;
@@ -67,15 +66,19 @@ arch_references:
     url: <link, or null>
     rule: "<one sentence quoted as written>"
     applies_to: <the theme or stack fact it bears on>
+    prd: <the record's `prd:` — a team record only; omit for an organisation artifact>
+    source: <the record's `source:` — a team record only; omit for an organisation artifact>
 arch_challenges:
   - kind: contradicts-decision | contradicts-standard | contradicts-team-decision | radar-hold | radar-retire | radar-absent
     subject: <technology or theme>
     evidence: <file:line from stack_facts, or a sentence of feature_summary quoted>
-    governing: { id: <id>, title: <title>, root: organisation | team, path: <path>, url: <link or null>, rule: "<quoted>" }   # null for radar-absent
+    governing: { id: <id>, title: <title>, root: organisation | team, path: <path>, url: <link or null>, rule: "<quoted>", prd: <team only>, source: <team only> }   # null for radar-absent
 error: <one line — ERROR only>
 ```
 
 `EMPTY` — the sources were read and nothing bears on the work; both lists are `[]`.
+
+A team record's `prd:` and `source:` are copied from its frontmatter as written: the caller tells by them whether a departure from the record takes **Supersedes** (another PRD's) or a refinement of the ARD `source:` names (its own PRD's).
 
 ## Hard rules
 
