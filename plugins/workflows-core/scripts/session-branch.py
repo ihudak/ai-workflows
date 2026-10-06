@@ -290,6 +290,73 @@ def sync(root, branch, default_ref):
     return result
 
 
+def create_at(root, branch, default_ref):
+    """A new session branch starts where the checkout's files come from: merge-base HEAD <default-ref>."""
+    r = git(root, "merge-base", "HEAD", default_ref, check=False)
+    start = text(r) if r.returncode == 0 and text(r) else rev(root, default_ref)
+    if start is None:
+        raise NotRun("no commit to start %s from" % branch)
+    git(root, "update-ref", "refs/heads/" + branch, start, ZERO)
+    return start
+
+
+def ahead_paths(root, default_ref):
+    """The files of the commits HEAD holds and <default-ref> lacks, where every one of them is a
+    non-merge commit touching session files only (specs-repo-git §4 step 5's push-scope test)."""
+    commits = text(git(root, "rev-list", "--reverse", "HEAD", "--not", default_ref)).split()
+    paths = set()
+    for c in commits:
+        if len(text(git(root, "rev-list", "--parents", "-n", "1", c)).split()) != 2:
+            return [], commits, True
+        files = nul_list(git(root, "diff-tree", "--no-commit-id", "--name-only", "-r", "-z", "--root", "--no-renames", c))
+        if not files or not all(classify(f) for f in files):
+            return [], commits, True
+        paths.update(files)
+    return sorted(paths), commits, False
+
+
+def commit(root, branch, default_ref, message, include_ahead=False):
+    """Commit every dirty session file onto <branch> through a temporary index, then merge
+    <default-ref> in and align the overlay. Never touches the checkout, the index or HEAD."""
+    ref = "refs/heads/" + branch
+    created = False
+    tip = rev(root, ref)
+    if tip is None:
+        tip = create_at(root, branch, default_ref)
+        created = True
+    paths = overlay_paths(root, tip)
+    stranded, not_session = [], False
+    if include_ahead:
+        extra, ahead, not_session = ahead_paths(root, default_ref)
+        stranded = [] if not_session else ahead
+        paths = sorted(set(paths) | set(extra))
+    committed, changed = None, []
+    if paths:
+        gitdir = text(git(root, "rev-parse", "--absolute-git-dir"))
+        with tempfile.TemporaryDirectory(dir=gitdir, prefix="session-branch-") as td:
+            env = {"GIT_INDEX_FILE": os.path.join(td, "index")}
+            git(root, "read-tree", tip, env=env)
+            entries = []
+            for p in paths:
+                full = os.path.join(root, p)
+                if os.path.isfile(full) and not os.path.islink(full):
+                    sha = text(git(root, "hash-object", "-w", "--path", p, "--", p))
+                    mode_bits = "100755" if os.stat(full).st_mode & stat.S_IXUSR else "100644"
+                    entries.append("%s %s\t%s" % (mode_bits, sha, p))
+                else:
+                    entries.append("0 %s\t%s" % (ZERO, p))
+            git(root, "update-index", "-z", "--index-info",
+                data=("\0".join(entries) + "\0").encode("utf-8", "surrogateescape"), env=env)
+            tree = text(git(root, "write-tree", env=env))
+        if tree != text(git(root, "rev-parse", tip + "^{tree}")):
+            committed = text(git(root, "commit-tree", tree, "-p", tip, "-m", message))
+            git(root, "update-ref", ref, committed, tip)
+            changed = nul_list(git(root, "diff-tree", "--no-commit-id", "--name-only", "-r", "-z", tip, committed))
+    synced = sync(root, branch, default_ref)
+    return {"committed": committed, "files": len(changed), "paths": changed, "created": created,
+            "stranded": len(stranded), "ahead_not_session": not_session, "sync": synced}
+
+
 def selftest():
     """Every rule this script carries, on repositories built at run time."""
     failures = []
@@ -542,6 +609,61 @@ def selftest():
         check(got.get("conflict") == [FB] and a.git("rev-parse", "session/aa") == c,
               "a modify/delete merge is reported and moves nothing (%r)" % got)
 
+    # ---- commit ----------------------------------------------------------------------------
+    with tempfile.TemporaryDirectory() as tmp:
+        remote, a, b = world(tmp)
+        odd = "specifications/PRD-A-1-x/dev-workflows/cost/:odd name ü.md"
+        a.write(FB, "## a1\nmine\n", append=True)
+        a.write(odd, "cost\n")
+        before = a.state()
+        got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+        check(got.get("created") is True and got.get("committed"), "the first commit creates the branch (%r)" % got)
+        check(sorted(got.get("paths", [])) == sorted([FB, odd]), "it carries both files (%r)" % got)
+        check(a.state() == before, "commit moves no checkout, index or HEAD")
+        check(a.git("show", "session/aa:" + FB).endswith("## a1\nmine"), "the branch holds the appended entry")
+        check(a.git("merge-base", "session/aa", "main") == a.git("rev-parse", "main"), "the branch starts from the checkout's base")
+        again = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+        check(again.get("committed") is None and again.get("files") == 0, "an unchanged tree commits nothing (%r)" % again)
+        a.write(FB, "## a2\nmore\n", append=True)
+        tip = a.git("rev-parse", "session/aa")
+        got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+        check(a.git("rev-parse", "session/aa^") == tip, "a second commit stacks on the first (%r)" % got)
+        os.remove(os.path.join(a.path, odd))  # an overlay-only file: never in the index, so git status forgets it
+        got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Remove pending")
+        check(odd in got.get("paths", []), "a removed overlay file is committed as a deletion (%r)" % got)
+        check(subprocess.run(["git", "-C", a.path, "cat-file", "-e", "session/aa:" + odd], stderr=devnull).returncode != 0,
+              "…and the branch no longer has it")
+    with tempfile.TemporaryDirectory() as tmp:
+        remote, a, b = world(tmp)
+        # main moves on the remote during the run, appending to the same file
+        a.write(FB, "## a1\nmine\n", append=True)
+        b.write(FB, "## team\nfrom b\n", append=True)
+        b.commit_all("team")
+        b.git("push", "-q", "origin", "main", env={"ALLOW_MAIN": "1"})
+        a.git("fetch", "-q", "origin")
+        got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session")
+        content = a.git("show", "session/aa:" + FB)
+        check("## a1" in content and "## team" in content and got["sync"].get("merged") is True,
+              "the commit is built first and main merged second, so no entry is lost (%r)" % content)
+        check("## team" in (a.read(FB) or ""), "the working copy is aligned to the merged version (%r)" % a.read(FB))
+    with tempfile.TemporaryDirectory() as tmp:
+        remote, a, b = world(tmp)
+        # the interim left a session-file commit on local main that origin refused
+        a.write(FB, "## stranded\nold\n", append=True)
+        a.commit_all("A-1 Add dev-workflows session artifacts (implement)")
+        head = a.git("rev-parse", "HEAD")
+        got = a.run("commit", "--branch", "session/aa", "--default-ref", "origin/main", "--message", "A-1 Add session",
+                    "--include-ahead")
+        check(got.get("stranded") == 1 and "## stranded" in a.git("show", "session/aa:" + FB),
+              "--include-ahead carries a stranded commit's files (%r)" % got)
+        check(a.git("rev-parse", "HEAD") == head, "…and never moves the local default branch")
+        a.write("specifications/PRD-A-1-x/prd.md", "# PRD changed\n")
+        a.commit_all("a deliverable commit of the user's own")
+        got = a.run("commit", "--branch", "session/bb", "--default-ref", "origin/main", "--message", "A-1 Add session",
+                    "--include-ahead")
+        check(got.get("stranded") == 0 and got.get("ahead_not_session") is True,
+              "commits ahead that are not all session-file commits are left alone (%r)" % got)
+
     if failures:
         print("session-branch selftest: FAIL")
         for f in failures:
@@ -594,6 +716,8 @@ def dispatch(a):
         return mode(a.specs, a.default)
     if a.cmd == "sync":
         return sync(a.specs, a.branch, a.default_ref)
+    if a.cmd == "commit":
+        return commit(a.specs, a.branch, a.default_ref, a.message, a.include_ahead)
     raise NotRun("subcommand %s is not implemented yet" % a.cmd)
 
 
