@@ -1,6 +1,6 @@
 # Environment reference
 
-[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first run. This page says what each variable **is** — its default, where that default comes from, what happens when it is unset, what happens when it points somewhere the plugin cannot read or write, and the directory layout it expects underneath it. The plugin reads four user-settable variables. The rest of the names the plugin's own inventory check encounters while scanning for `$VAR` reads are never user-settable and stay out of scope here: `CLAUDE_PLUGIN_ROOT` and `ARGUMENTS` are runtime plumbing Claude Code itself sets for every plugin invocation, and `OSTYPE`, `BASH_SOURCE`, `BASH_REMATCH`, `ROOT`, and `OWNER_REPO` are shell built-ins or internal template/hook-local names, not plugin configuration.
+[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first run. This page says what each variable **is** — its default, where that default comes from, what happens when it is unset, what happens when it points somewhere the plugin cannot read or write, and the directory layout it expects underneath it. The plugin reads five user-settable variables. The rest of the names the plugin's own inventory check encounters while scanning for `$VAR` reads are never user-settable and stay out of scope here: `CLAUDE_PLUGIN_ROOT` and `ARGUMENTS` are runtime plumbing Claude Code itself sets for every plugin invocation, and `OSTYPE`, `BASH_SOURCE`, `BASH_REMATCH`, `ROOT`, and `OWNER_REPO` are shell built-ins or internal template/hook-local names, not plugin configuration.
 
 ## `$SPECS_PATH`
 
@@ -40,6 +40,18 @@
 
 **Directory layout.** Unlike `$SPECS_PATH`, the plugin imposes no expected substructure here — it searches whatever markdown it finds under the root (for example, a full documentation-site checkout).
 
+## `$ARCHITECTURE_REPO_PATH`
+
+- **`$ARCHITECTURE_REPO_PATH`** — a local clone of your organisation's architecture repository (technology radar, standards, principles, patterns, ADRs), read-only; no default.
+
+**Resolution.** Resolved per the shared `workflows-core:architecture-grounding` gate, consumed here by `/design` (and by the companion plugin's `/product-workflows:create-ard` and `/product-workflows:specify`); `--no-arch` turns it off for a run.
+
+**When unset.** Architecture grounding reports `OFF` with a line naming the variable, and the run continues exactly as without it; the team knowledge base under `$SPECS_PATH/architecture/` is resolved separately, and still read where it exists.
+
+**When it points somewhere invalid.** `OFF` with a reason naming the variable and what failed — never an error, never a gate or reviewer BLOCKER. `/design` never writes, fetches or pulls the clone, and scans it, where a theme resolves to it, with refresh off.
+
+**Directory layout.** Whatever the agent recognises: a catalog, a radar file, ADR folders, and standards, principles, patterns and reference-architecture folders (`workflows-core:architecture-grounding`).
+
 ## `$GIT_USER_INITIALS`
 
 - **`$GIT_USER_INITIALS`** — your branch identity string; no default, and the plugin never fails when it is absent.
@@ -54,7 +66,7 @@
 
 ## Directory layout
 
-The three directory-valued variables above expect this layout. `$GIT_USER_INITIALS` holds a string, not a path, so it does not appear here. `$DEV_WORKFLOWS_COST_PRICES`, the price-table override, is read by the `workflows-core` plugin that now ships the cost subsystem, and is documented on its environment page rather than this one.
+The four directory-valued variables above expect this layout. `$GIT_USER_INITIALS` holds a string, not a path, so it does not appear here. `$DEV_WORKFLOWS_COST_PRICES`, the price-table override, is read by the `workflows-core` plugin that now ships the cost subsystem, and is documented on its environment page rather than this one.
 
 ```
 
@@ -69,4 +81,7 @@ $REPOS_PATH/                        # code clones, one directory or a colon-sepa
 
 $DOCS_PATH/                         # optional: a product-docs clone, read-only for grounding (default /workspace/docs)
   ...                               # searched for grounding; the plugin never writes here
+
+$ARCHITECTURE_REPO_PATH/            # optional, read-only: the architecture repository (no default)
+  index.yaml | radar/ | decisions/  # any of the layouts architecture-grounder recognises; never written, fetched or pulled
 ```

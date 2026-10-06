@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.23.0] — 2026-10-06
+
+### Added
+- **`architecture-grounding` has two more consumers**, `/product-workflows:specify` and `/dev-workflows:design`, and its § Consumption says what each records: a specification only the conflicts its grill cannot settle, as open questions naming the governing artifact; a design a link citation where a binding artifact settles a decision and an advisory `Architecture deviation:` line for each departure (`dev-workflows:design-format`). On the BRD route a frozen `[VD#n]` or `[CD#n]` that conflicts with a reference is never re-grilled. `architecture-grounder` takes `own_sources` — the ARD files whose decisions the caller already holds — and skips exactly their records, so `/specify` and `/design` pass `own_key: null` and a sibling Epic's decisions still ground them; `/create-ard` keeps `own_key`. The OFF reason, § Consumption and the refresh invariant no longer speak only of ARDs and architects. `architecture-grounder`, `architecture-kb` and the docs name the three readers.
+
 ## [1.22.1] — 2026-10-05
 
 ### Fixed

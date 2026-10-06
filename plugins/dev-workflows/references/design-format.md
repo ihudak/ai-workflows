@@ -131,7 +131,7 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
    A stub or test double for a consumed interface models the failures its `[AD#N]` Rule or section 4
    states, as well as the success shape.
 9. **## Risks & mitigations** (scaled) — engineering risks (performance, concurrency, data-loss, blast
-   radius) and the mitigation or explicit acceptance for each. A repository added to a targeted Epic's design at `/design` Phase 3, or another component of the target's own repository the design must change, is recorded here as `- Target span: <component> — <why>`: in another repository `/implement` will plan the change as a companion change, and in the same one it implements it beyond the Epic's target, and the line is what says so before it does.
+   radius) and the mitigation or explicit acceptance for each. Each `Architecture deviation:` line (§ Architecture governance) is recorded here. A repository added to a targeted Epic's design at `/design` Phase 3, or another component of the target's own repository the design must change, is recorded here as `- Target span: <component> — <why>`: in another repository `/implement` will plan the change as a companion change, and in the same one it implements it beyond the Epic's target, and the line is what says so before it does.
 10. **## Migration / rollout / backward-compatibility** (scaled) — schema/data migration, feature
     flags, rollout order, compat guarantees. `_N/A — why_` when the change is additive and
     self-contained.
@@ -140,6 +140,18 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
 12. **## Open questions** (core; MUST be empty to hand off) — genuinely unresolved engineering items as
     `- [ ]`. Any present blocks handoff; resolve them in the grill, or push a genuinely undecidable one
     onto the `specification.md` as a spec-level `- [ ]` for the PM (the design then waits on it).
+
+## Architecture governance
+
+Where `/design` ran with architecture grounding ON (`workflows-core:architecture-grounding`), the design records what the architecture repository and the team's knowledge base (`workflows-core:architecture-kb`) say about its decisions:
+
+- **Citation.** An artifact that settles or constrains a design decision — an `accepted` ADR, an `active` standard, an `accepted` team record — is cited as a markdown link whose text is its id and title, `[ADR-0012 Use one message broker](<url>)`, in the section that makes the decision, or in `### Alternatives considered` where it is why an option lost. A team record's link target is relative from `design.md` to `architecture/decisions/<id>.md`. Where the digest gives an organisation artifact no URL, the target is its path relative to the architecture repository, and `## Architecture & components` opens with `Architecture governance: <repository name> @ <short-sha> (<date>)` — or `Architecture governance: <repository name> (not a git checkout)` — so the reader knows what it resolves against.
+- **Deviation.** One line under `## Risks & mitigations` for each departure: a decision that departs from an `accepted` ADR, an `active` standard or an `accepted` team record; keeping or adopting a technology in the radar's `hold` or `retire` ring; adopting a technology the radar does not list —
+  `- Architecture deviation: <governing artifact as a link, or "radar: <technology> not listed"> — <what deviates> — <why> — flag: architect`
+  A line about a technology the code already uses cites where it does, as a `file:line`. Like an ARD deviation (`workflows-core:ard-resolution` § Deviation-record convention), it is the architect's to adjudicate; unlike one, it is advisory: it is not an open question, it never blocks handoff, and `design-reviewer` raises no finding on it.
+- **Team records.** A design never supersedes a team record — only an ARD does, through `/product-workflows:create-ard`. A departure the team should adopt for everyone is recorded as a deviation and taken there.
+
+Where grounding was OFF, nothing in this section is required.
 
 ## Traceability & identifiers
 

@@ -20,15 +20,15 @@ Key distinction from `/specify`: `/specify` (PE) *authors* the requirements spec
 (soft repo gate); `/design` (Dev) *challenges* that spec and *designs* the implementation, and must see
 **all** implementation repos — its repo gate is **strict** (hard-stop on any unmounted repo).
 
-Flags: `--design-twice` forces the Phase 5 interface fan-out on the run's load-bearing interface, even when no contested-interface signal fired (`references/design-format.md` `## Seams`).
+Flags: `--design-twice` forces the Phase 5 interface fan-out on the run's load-bearing interface, even when no contested-interface signal fired (`references/design-format.md` `## Seams`); `--no-arch` turns off architecture grounding for the run — see Phase 1.
 
-Usage: `/design <ADDRESS> [--design-twice] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
+Usage: `/design <ADDRESS> [--design-twice] [--no-arch] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 ---
 
 ## Phase 0 — Resolve input
 
-1. **Resolve the address.** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. `--design-twice` is removed next, exactly as `/product-workflows:idea`'s Phase 1 strips its own: an
+1. **Resolve the address.** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. `--design-twice` and `--no-arch` are removed next, exactly as `/product-workflows:idea`'s Phase 1 strips its own: an
    unstripped flag is read as the positional token and resolution then fails on a token that was
    never an address.
 
@@ -137,6 +137,7 @@ scans repos under `$REPOS_PATH`; cwd need not be inside either.
    `choices: ["fetch + pull default branch (Recommended)", "fetch only", "no refresh"]`
 4. **Repos search base (`$REPOS_PATH`).** Read `${REPOS_PATH:-/workspace}` (may be colon-separated):
    `choices: ["Use $REPOS_PATH (default /workspace) (Recommended)", "Use a different path (you'll be prompted)", "Cancel"]`
+   - **Resolve architecture grounding next, then show its line.** Run `resolve-architecture-grounding design` per `Skill(skill: "workflows-core:reference", args: "architecture-grounding resolve-architecture-grounding")` and show the `architecture grounding:` and `team decisions:` lines from what it returns, verbatim, in the form that reference fixes (off switch: --no-arch). This is the run's one resolution; Phase 4 dispatches `architecture-grounder` on the state it returns without resolving again.
 
 Also display (context): resolved feature folder; resolved `<PRD>` / `<EPIC>` (or 'none — PRD-level');
 resolved `$SPECS_PATH`; resolved `$REPOS_PATH`.
@@ -158,7 +159,7 @@ model_routing:
   enforced_model: <run_flags.enforced_model, or omit>   # §10: when set, every dispatched-step *_model below equals it (inline authoring_model / implementation_model keep the session model) and routing: bypassed
   defect_model: <§2.1 Sonnet chain — only under --skip-feedback; under §10, run_flags.enforced_model>
   detection_model: <§2.1 Sonnet chain: claude-sonnet-5-5, fallback claude-sonnet-5/4-6/4-5>   # code-scanner, interface-designer, impl-maintenance
-  review_model:    <§2 Opus chain>     # design-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model)
+  review_model:    <§2 Opus chain>     # design-reviewer (frontmatter-pinned; recorded, no override unless §10 enforces a model); architecture-grounder (dispatched on it, no frontmatter pin)
   authoring_model: <= current_model>   # the interactive grill + design.md authoring (session model, not a delegated subagent)
   opus_available: <true if a §2 Opus model resolved, else false>
   notes: <any §2/§2.1 fallback or degradation>
@@ -202,7 +203,7 @@ Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:referenc
 
 1. **Auto-derive candidate repos** from the spec's themes / component mentions / any referenced code
    paths — **or, where `<EPIC>` is set and its `epic.md` carries a `target:`** (`workflows-core:components` §1), the target's repository alone, the Epic's other needs being the interfaces the PRD-level ARD's `contracts` fixes. The target's **paths** are those of its `components` entry (Phase 2.5), else the id's own path, or the whole repository for a bare slug; Phase 4's scan and Phase 6's brief carry them. Build the slug→clone map (`/epics`-style): for each top-level dir under each `$REPOS_PATH`
-   entry, `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, strip any trailing `/` and then a trailing `.git`, take the URL's last path segment — what follows its last `/` or `:` — as the slug; skip dirs with no `.git` or a failing/timed-out call.
+   entry, `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, strip any trailing `/` and then a trailing `.git`, take the URL's last path segment — what follows its last `/` or `:` — as the slug; skip dirs with no `.git` or a failing/timed-out call. Where `arch_grounding: ON`, mark the clone that is `arch_toplevel` `architecture repository — scanned without refresh`: Phase 4 scans it, where a theme resolves to it, with refresh off.
 2. **Confirm the complete set — the developer owns it.** Present the derived candidates and ask the
    developer to confirm the **complete** list of implementation repos this design must span:
    `choices: ["Confirm this set (Recommended)", "Add repos (you'll be prompted)", "Remove repos (you'll be prompted)", "Cancel"]`
@@ -248,6 +249,8 @@ grill depth / sections / review scale by tier). Wait for each batch before the n
   >   switch_to_default_branch: [true if Phase 1 chose 'fetch + pull default branch' or 'fetch only'; false if 'no refresh']
   >   pull: [true only if 'fetch + pull default branch'; false otherwise]"
 
+A repository Phase 3 marked `architecture repository — scanned without refresh` is dispatched with `refresh: { switch_to_default_branch: false, pull: false }` whatever Phase 1 chose: it is the repository the architecture snapshot describes, and it is never switched, pulled or stashed.
+
 Handle per-repo status after the batch returns:
 - `OK` / `PARTIAL` / `EMPTY` — store the capabilities / seams / interfaces / gaps output; this grounds
   Phase 5's design decisions.
@@ -258,6 +261,8 @@ Handle per-repo status after the batch returns:
 - `REFRESH_BLOCKED` — escalate per the `Refresh blocked` rule in
   `workflows-core:escalation-rules`.
 - `prep.read_only: true` — not a failure. The scan ran at `prep.scanned_ref`. Escalate per the `Read-only mount — ref stale or diverged` rule in `workflows-core:escalation-rules` **only** when `prep.ref_committed_at` is more than 14 days old or `prep.head_divergence.ahead > 0`; otherwise proceed silently and cite evidence at `prep.scanned_ref`.
+
+**Architecture grounding (optional).** Phase 1 resolved it and showed its line, and nothing here resolves it again. Where it resolved `arch_grounding: ON` or `team_grounding: ON`, once the scan's last batch has returned, build `stack_facts` as that reference's dispatch section says — from the scanned repositories' build and deploy manifests and the scan results, at most 20 — and `dispatch-architecture-grounder` (`workflows-core:architecture-grounding`) with `feature_summary` = the specification's goal + capability themes (2–4 sentences), `themes` = the capability themes the scan used, `components` = the Phase 2.5 ARD's `components` where it returned them, else the slugs of the repositories scanned (`[]` where none was), `arch_root` and `team_root` as resolved (`null` where that root is OFF), `own_key: null`, and `own_sources` = Phase 2.5's `ard_paths`, relative to `$SPECS_PATH` (`[]` where it resolved none) — those decisions reach this run as ARD invariants, so their harvested copies are skipped, while every other team record, a sibling Epic's ARD included, grounds the run like any other. Carry the digest into the Phase 5 grill with **grill-rank** consumption (that reference's § Consumption). On `status: ERROR` or a failed dispatch, architecture grounding is OFF from there on, and the final report says so in one line. Where it resolved OFF, dispatch nothing.
 
 ---
 
@@ -281,6 +286,7 @@ Run **two intertwined tracks**, authoring `design.md` live against
   non-applicable section with a one-line `_N/A — why_`.
 - **Target and contract.** Where the Epic carries a `target:`, the header's `- **Target**:` names it. Where the design must change files outside the target's paths that no ride-along covers and that are not its repository's shared ground (`workflows-core:components` §2) — another module of the same repository — record each under `## Risks & mitigations` as `- Target span: <component> — <why>`, the line Phase 3's *Add anyway* writes for a repository, which `design-reviewer` flags rather than blocks. Where Phase 2.5 carried `contracts` and the Epic's `## Contract` cites rows, `## Interfaces / contracts` names each interface the Epic produces — its `[AD#N]`, how the design meets that Rule, and, where the design implements its behaviour, its producer-side test — and each it consumes — its `[AD#N]`, and the stub or test double `## Test strategy` uses for it, the code artifact a contract Epic builds for it, or, for a row whose `Status` is `exists`, the interface as it already runs; a consumer in another repository than the artifact's names how it gets it — a package pinned to a version, or a copy recording its source path and revision — and never edits the copy in place (`${CLAUDE_PLUGIN_ROOT}/references/design-format.md`).
 - **Behaviour at a boundary.** For every boundary interface — one the change introduces or alters on the producing side, which another component or a consumer outside the system calls or receives the messages of — grill the behaviour a schema does not carry — what each failure returns, side effects, and whether a repeat repeats one; for an altered one, the behaviour the change touches — and settle the producer-side test that checks it (`${CLAUDE_PLUGIN_ROOT}/references/design-format.md` sections 4 and 8).
+- **Architecture governance.** Where Phase 4 dispatched `architecture-grounder`, the grill consumes its digest per `workflows-core:architecture-grounding` § Consumption — what binds a design decision is put as a confirmation that cites it, and a challenge competes for a question slot — and `design.md` records the outcome per `${CLAUDE_PLUGIN_ROOT}/references/design-format.md` § Architecture governance: a link citation where a binding artifact settles a decision, and an `Architecture deviation:` line under `## Risks & mitigations` for each departure.
 
 As each decision settles, append it to `_design-session.md`. **For an interface decision, record each
 live candidate shape there as it arises** — not only the settled outcome — and strike a candidate when it
@@ -395,7 +401,7 @@ Write the feature folder: `design.md` (flat, alongside `specification.md`), the 
 Then **offer** (commit-when-asked — never automatic), invoking `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and presenting its §4.3 choice array verbatim:
 `choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]`
 
-On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with `prefix: design`; `feature_folder` as resolved in Phase 0 — the per-Epic subfolder for a **per-Epic** design (`<EPIC>` set; every `EPIC-` folder sits under a PRD folder, so this is the only Epic-level shape), or the PRD dir for a **broad PRD-level** design (`<EPIC>` null); Epic keys are globally unique, so the per-Epic form needs no PRD prefix — §2.2 derives `design/<EPIC>-<eslug>` or `design/<PRD>-<vslug>` from it, both forms using hyphens; `deliverable_paths` = `design.md`, the amended `specification.md`, `_design-session.md`, and `_design-glossary.md`; `title: <EPIC|PRD> Add engineering design`; and `body_facts` = the `design.md` sections authored, the spec-challenge count (`## Engineering review` notes / new spec `- [ ]`), the confirmed repo set, and the `design-reviewer` verdict. **Merged-to-main = ready for `/implement`.** Emit its §4.1 outcome line in the Final report.
+On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with `prefix: design`; `feature_folder` as resolved in Phase 0 — the per-Epic subfolder for a **per-Epic** design (`<EPIC>` set; every `EPIC-` folder sits under a PRD folder, so this is the only Epic-level shape), or the PRD dir for a **broad PRD-level** design (`<EPIC>` null); Epic keys are globally unique, so the per-Epic form needs no PRD prefix — §2.2 derives `design/<EPIC>-<eslug>` or `design/<PRD>-<vslug>` from it, both forms using hyphens; `deliverable_paths` = `design.md`, the amended `specification.md`, `_design-session.md`, and `_design-glossary.md`; `title: <EPIC|PRD> Add engineering design`; and `body_facts` = the `design.md` sections authored, the spec-challenge count (`## Engineering review` notes / new spec `- [ ]`), the confirmed repo set, the `design-reviewer` verdict, and — where architecture grounding ran — the governance-citation count and every `Architecture deviation:` line verbatim, so the architect sees each one in the pull request. **Merged-to-main = ready for `/implement`.** Emit its §4.1 outcome line in the Final report.
 
 ### Next Epic (after a per-Epic design from a multi-Epic PRD)
 
@@ -431,7 +437,7 @@ same-role `/compact` suggestion + `/rename <PRD-ID>-<slug>-dev`. Guidance only, 
    > Session handoff:
    > - Command run: /design
    > - What was done: [one-paragraph summary of the engineering design authored]
-   > - Key events: [BLOCK reviews and their reason, STRICT repo-gate hard-stops, model-gate overrides, unresolved design open questions — or 'none']
+   > - Key events: [BLOCK reviews and their reason, STRICT repo-gate hard-stops, model-gate overrides, unresolved design open questions, an `architecture-grounder` ERROR or an OFF from a set-but-invalid `$ARCHITECTURE_REPO_PATH` — or 'none']
    > - Workarounds used: [manual steps not automated by the workflow — or 'none']
    > - Review verdict: [the design-reviewer verdict — PASS | PASS WITH RECOMMENDATIONS | BLOCK]
    > - Test result: N/A (no tests in /design)
@@ -503,7 +509,7 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
 
 Report: feature-folder path; classification + model-gate outcome (or `Model routing: bypassed — enforced <id> (flag|env)` in place of the model-gate outcome wherever `run_flags.enforced_model` is set — no gate fired, per `workflows-core:model-routing/classification` §10); `design.md` sections authored (and
 those `_N/A_`); spec challenges recorded (count of `## Engineering review` notes / new spec `- [ ]`);
-confirmed repo set (and any removed-from-scope), the Epic's target and every `Target span` line, whether added at Phase 3 or recorded at Phase 5, and any multi-component override taken at Phase 0; the `design-reviewer` verdict; the PR URL (if
+confirmed repo set (and any removed-from-scope), the Epic's target and every `Target span` line, whether added at Phase 3 or recorded at Phase 5, and any multi-component override taken at Phase 0; the `architecture grounding:` and `team decisions:` lines, then `N governance citations, M architecture deviations` or the OFF reason (an `architecture-grounder` ERROR or failed dispatch named in one line); the `design-reviewer` verdict; the PR URL (if
 opened); the `Specs repo:` outcome line from `commit-artifacts`
 (`workflows-core:specs-repo-git` §6), with any guard notice repeated in full;
 and the `### Next step` recommendation (below).
