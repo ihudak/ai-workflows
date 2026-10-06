@@ -737,7 +737,8 @@ per-session, transient, local, NEVER committed, and safe to delete.**
 
 The boundary is not guessed and is not recorded by the ceding run: it is read out
 of the transcript, which records every command invocation — a typed one as a
-`<command-name>` envelope, a prose-invoked one as a Skill `tool_use` block.
+`<command-name>` envelope, a model-invoked one (on a prose request, or one command
+running another) as a Skill `tool_use` block.
 `session-cost.py` reports them as `command_boundaries`, resolved against the §2
 manifest. Four disciplines make that safe, and each exists because its absence was a live
 defect:

@@ -1571,6 +1571,7 @@ If your reading of the task lands closer to SIGNIFICANT or HIGH-RISK (multi-repo
 ```
 choices: ["Re-run under /docs-workflows:document (keyed mode) (for PRD-sourced feature documentation) (Recommended)", "Re-run under /product-workflows:epics (for Epic drafting)", "Proceed under direct mode anyway — I accept the simplified flow", "Cancel"]
 ```
+Either **Re-run** option stops this run and prints that command for the user to type: both are typed-only (`disable-model-invocation`), so this run cannot start them.
 
 State the classification and a one-line reason, then proceed to Phase 2A.
 
