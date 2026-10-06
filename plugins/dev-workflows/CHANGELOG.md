@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.16.0] — 2026-10-06
+
+### Added
+- **`/implement` in session-branch mode** (`workflows-core` 1.24.0). A direct run from inside a specs repository whose default branch takes no push lifts the session files before its clean-tree check and again before its code commit, and puts them back afterwards, so the code commit carries none of them; its Phase 0 line says they go to your session branch.
+
+### Changed
+- The session-cost and session-feedback pages say where those files go on a specs repository whose default branch takes no push.
+
 ## [4.15.1] — 2026-10-06
 
 ### Fixed

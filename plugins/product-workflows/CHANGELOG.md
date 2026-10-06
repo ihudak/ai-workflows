@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.20.2] — 2026-10-06
+
+### Changed
+- The session-cost and session-feedback pages say where those files go on a specs repository whose default branch takes no push (`workflows-core` 1.24.0's session-branch mode).
+
 ## [3.20.1] — 2026-10-06
 
 ### Fixed

@@ -110,3 +110,24 @@ Then one end-to-end walkthrough of a whole run's git sequence by hand in a scrat
 - **Moving the user's default branch** to drop the interim's stranded commits: a `reset` the plugin never runs; the line names it.
 - **A session branch on every repository, pushable or not** ("always PR", for consistency with code and docs repositories, which always go through a branch and a pull request): considered twice and declined (2026-10-06). The machinery is the same size either way, since a protected repository needs it; what always-PR adds is a standing pull request per person on every team, `implementation.md` reaching a teammate's `/document` only after that merges, and the overlay running on every repository rather than the ones that need it. The specs repository's session files differ from code in the two ways that make the overlay necessary at all: every run writes them while the checkout stands on the default branch, and they are append logs the next run on the same machine reads. A team that wants the pull-request flow sets `workflows.sessionBranch`; making it the default later is a small change once the mode has proven itself.
 - **A fork whose `pushRemote` or `pushDefault` sends pushes elsewhere**: unchanged in either mode — the plugin pushes nothing against that configuration, and its line says so. `remote.pushDefault` covers the session branch too, so session mode commits there and leaves the push to the user.
+
+## Amended during planning and execution
+
+Planning (the plan's *Amended during planning*):
+
+1. `commit` builds on the tip the working copies came from and merges `<default-ref>` second; writing working copies over a merged tip deleted the entries the merge brought.
+2. A new session branch starts at `git merge-base HEAD <default-ref>`, where the checkout's files come from.
+3. `sync` defers while a dirty session file is not on the branch.
+4. The preflight ends with `put-back` in the mode, so an interrupted `lift` is undone by the next run.
+5. A branch that holds nothing of its own is fast-forwarded rather than merged.
+6. The overlay's paths include those where the branch differs from HEAD, so a deleted overlay-only file is committed as a deletion.
+
+Execution (each found by a test or a walk-through, fixed test-first; `docs/maintainers/rationale.md` § session-branch has the reasons):
+
+7. `sync` also merges `origin`'s copy of the session branch, refreshed by a second fetch, so a second clone under the same identity pushes a fast-forward.
+8. A remote that deleted the session branch (delete-on-merge) does not stop its push.
+9. `push-scope` on the session branch counts `<default-ref>` as published and checks `<default-ref>...<session>` for ARTIFACT paths only; the line counts session files not yet landed rather than commits.
+10. The stranded commits are dropped with `lift` then `reset --keep origin/<default>`, not `reset --keep` alone, which aborts over the overlay.
+11. A working copy of an appended shape that lost the branch's entries is union-merged (`merge-file --union`, base `merge-base HEAD <tip>`), never written over them.
+12. `commit` and `put-back` refuse while a worktree has the session branch checked out; session commits are signed where `commit.gpgSign` is set.
+13. `require-on-main`'s row C′ does not count session files in the mode; `/implement`'s direct run lifts again before its code commit; with no identity the moves run unwrapped; a preflight a guard ended still puts back.
