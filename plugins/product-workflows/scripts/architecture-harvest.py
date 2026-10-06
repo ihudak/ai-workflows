@@ -27,6 +27,8 @@ error). --selftest builds its fixtures in temporary repositories at run time.
 """
 
 import argparse
+import contextlib
+import io
 import json
 import os
 import re
@@ -976,6 +978,24 @@ def selftest():
         check("| Fleet tracks by GPS — promoted to ADR-0046 |" in text(tmp, KB + "/README.md"),
               "the README marks an accepted promotion")
 
+    # ---- an exit 2 prints one line, however many lines git's error spans: callers quote that line
+    real, argv = globals()["harvest"], sys.argv
+
+    def boom(*_args, **_kwargs):
+        raise Abort("git show x: error: one\nfatal: two")
+    globals()["harvest"] = boom
+    sys.argv = [me, "--specs", "/nonexistent", "--ref", "HEAD"]
+    err = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(err):
+            rc = main()
+    except BaseException as e:
+        rc = "raised %s" % type(e).__name__
+    finally:
+        globals()["harvest"], sys.argv = real, argv
+    check(rc == 2 and err.getvalue().splitlines() == ["architecture-harvest: not run (Abort: git show x: error: one fatal: two)"],
+          "a multi-line error is one 'not run' line (%r, %r)" % (rc, err.getvalue()))
+
     if failures:
         print("architecture-harvest selftest: FAIL")
         for f in failures:
@@ -1009,7 +1029,7 @@ def main():
             return 0
         plan = harvest(a.specs, a.ref, a.layout, write=not a.dry_run)
     except Exception as e:  # anything unexpected is "could not run", never a partial plan
-        print("architecture-harvest: not run (%s: %s)" % (type(e).__name__, e), file=sys.stderr)
+        print("architecture-harvest: not run (%s: %s)" % (type(e).__name__, " ".join(str(e).split())), file=sys.stderr)
         return 2
     print(json.dumps(plan, indent=2))  # ASCII-escaped: valid JSON on any stdout encoding
     print(summary(plan), file=sys.stderr)
