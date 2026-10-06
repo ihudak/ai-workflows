@@ -496,7 +496,7 @@ choices: ["Approve & implement now (Recommended)", "Revise plan", "Cancel"]
 
 ## Pre-Phase 3 — Create feature branch
 
-Every stop from here to the end of the run names, beside whatever else it reports, each change another code repository needs that the run has found (the plan's Out of scope or Phase 3A/3B step 2), one line per repository, and, once step 7.5 has run, every gap it reported without a note (a spec step 7.5 may not annotate) and every note it wrote into `$SPECS_PATH`, uncommitted there until handed off or removed.
+Every stop from here to the end of the run names, beside whatever else it reports, each change another code repository needs that the run has found (the plan's Out of scope or Phase 3A/3B step 2), one line per repository, and, once step 7.5 has run, every gap it reported without a note (a spec step 7.5 may not annotate) and every note it wrote into `$SPECS_PATH`, uncommitted there until handed off or removed — save on a direct run from inside the specs repository (Phase 0), where `$SPECS_PATH` is the repository this run changes and Phase 4.6 commits the note with the code at the stop.
 
 Before writing any file:
 
