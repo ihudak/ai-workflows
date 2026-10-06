@@ -332,7 +332,7 @@ notice, never a quiet line.
 |---|---|---|
 | G0 | **HEAD is detached** | **Hand off, and set `specs_git: blocked` for the whole run** — `commit-artifacts` (§4) must also skip. §5 notice at **blocking** severity. See §3.7. |
 | G1 | Any dirty **OTHER** path (§2.1) | **Hand off** — no commit, no branch switch, no push. §5 notice at **advisory** severity, listing the paths. Those files are not the plugin's, and switching branches would carry them. **This does NOT set `specs_git: blocked`**: the terminal `commit-artifacts` still runs, because it stages only artifact paths and is safe beside unrelated dirt. Losing the artifacts to protect files the step never touches would be the worse failure. |
-| G2 | On a **named** branch that is neither the default branch nor a match for `^(idea\|prd\|ard\|spec\|design\|ready\|brd\|frames\|kb)/` | **Leave it; stay on it.** §5 notice at **advisory** severity, naming the branch, so the user knows where this run's artifacts will land. The commit is safe — a named branch cannot be lost — so `commit-artifacts` proceeds, and leaves its commit unpushed (§4 step 5). The plugin manages only branches it created (§2.2). |
+| G2 | On a **named** branch that is neither the default branch nor a match for `^(idea\|prd\|ard\|spec\|design\|ready\|brd\|frames\|kb)/` | **Leave it; stay on it.** §5 notice at **advisory** severity, naming the branch, so the user knows where this run's artifacts will land — on that branch, or, on a direct `/dev-workflows:implement` run from inside the specs repository, on the code branch the run cuts (§5). The commit is safe — a named branch cannot be lost — so `commit-artifacts` proceeds, and leaves its commit unpushed (§4 step 5). The plugin manages only branches it created (§2.2). |
 
 ### 3.4 Stage 2 — flush leftovers
 
@@ -357,8 +357,9 @@ Always runs when stage 1 matched nothing **and the run does not carry `specs_git
   configured` — the condition is not false but *unevaluable*, and precisely in
   the state the retry exists for: the local-only branch a failed `push -u` leaves
   behind, which strands an artifact commit with nothing to retry it.
-  `for-each-ref` prints an empty upstream there instead, and step 5's base falls
-  through to the remote's refs. Without a test that answers there, a push that
+  Step 5's base reads no upstream at all: it tests
+  `refs/remotes/origin/<branch>`, which a failed `push -u` leaves absent, and
+  falls through to the remote's refs. Without a test that answers there, a push that
   failed in a previous run leaves a local commit that nothing ever retries — the
   original defect, re-created one layer up.
 
