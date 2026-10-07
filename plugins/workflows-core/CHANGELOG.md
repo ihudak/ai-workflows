@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.31.1] — 2026-10-07
+
+### Fixed
+- **A read-only checkout with uncommitted changes is read at its ref, not from its working tree.** `read-only-repos` §4 scanned the working tree wherever HEAD was at the ref, calling the content identical; a read-only mount still carries what the host left uncommitted, and those lines were cited as if the ref held them. The shortcut now also needs `git --no-optional-locks status --porcelain` to print nothing and exit 0 — an index the mount does not let git read makes it print nothing and exit 128 — and `code-scanner` step 3 follows. §7's direct-reader rule now says `scanned_ref` is released content only where it is the default ref.
+- **`scanned_ref` names what was read.** On a writable mount §6 defined it as the default branch's name even where the agent did not switch onto it, so a scan of a checked-out feature branch — `/idea`'s, which never refreshes — named the default branch. It is now the branch the prep left checked out, or HEAD's commit where HEAD is detached, in §6 and in `code-scanner`'s output and handoff.
+- **A caller that records a scan's ref records its commit.** A branch name moves, so a claim recorded against one cannot be checked a month later. §7 now has a recording caller take `rev-parse <scanned_ref>` when the agent returns, and, on a writable mount, mark `with uncommitted changes` where the tree it read carried any.
+
 ## [1.31.0] — 2026-10-07
 
 ### Added

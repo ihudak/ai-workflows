@@ -56,7 +56,7 @@ absent, trust `repo_path` as given.
    - Still under `refresh.switch_to_default_branch: true` — `git -C "<repo_path>" switch <default-branch>` — on failure, if the error contains `Read-only file system`, abandon the writable path and continue in read-only mode per `read-only-repos.md` §1, which does not run `git switch` at all; otherwise return `status: REFRESH_BLOCKED` with the one-line git error.
    - If `refresh.pull` is true: `git -C "<repo_path>" pull --ff-only`. On failure, if the error contains `Read-only file system`, abandon the writable path and continue in read-only mode per `read-only-repos.md` §1; on any other failure (non-fast-forward, network, auth, etc.) return `status: REFRESH_BLOCKED` with the one-line git error.
 
-3. **Scan.** On a writable mount, and on a read-only mount whose HEAD is already at `scanned_ref`, this is pure filesystem search with the native tools and no git commands beyond step 2. On a read-only mount whose HEAD is NOT at `scanned_ref`, run the same searches through the `read-only-repos.md` §4 ref primitives — `git -C "<repo_path>" grep -n <pattern> <ref> -- <pathspec>` to search, `git -C "<repo_path>" ls-tree -r --name-only <ref>` to enumerate, `git -C "<repo_path>" show <ref>:<path>` to read — so the evidence describes released content rather than an unmerged working tree. For each theme:
+3. **Scan.** On a writable mount, and on a read-only mount whose HEAD is already at `scanned_ref` with a clean working tree (`read-only-repos.md` §4: `git --no-optional-locks -C "<repo_path>" status --porcelain` prints nothing and exits 0), this is pure filesystem search with the native tools and no git commands beyond step 2 and that check. On a read-only mount whose HEAD is NOT at `scanned_ref`, or whose working tree is dirty, run the same searches through the `read-only-repos.md` §4 ref primitives — `git -C "<repo_path>" grep -n <pattern> <ref> -- <pathspec>` to search, `git -C "<repo_path>" ls-tree -r --name-only <ref>` to enumerate, `git -C "<repo_path>" show <ref>:<path>` to read — so the evidence describes released content rather than an unmerged working tree. For each theme:
    - Run `grep` / `glob` / file reads against `search_hints.keywords`, `search_hints.symbols`, and `search_hints.paths`.
    - Augment hints with conservative derivations from the theme text itself (tokenise the theme into 2–3 keywords if `search_hints.keywords` is thin).
    - Collect file paths and top-level symbols (class names, function names, exported identifiers) that match.
@@ -85,7 +85,7 @@ prep:
   refreshed:        true | false
   refresh_note:     <e.g. "switched to main, pulled 12 commits" | "read-only mount; scanned at origin/main" | "skipped per user">
   read_only:        true | false
-  scanned_ref:      <ref name, e.g. "origin/main"; the default branch name when writable>
+  scanned_ref:      <ref name, e.g. "origin/main"; on a writable mount, the branch the prep left checked out — the default branch where it switched onto it, else the one it found — or HEAD's commit where HEAD is detached>
   ref_committed_at: <ISO-8601 timestamp of the ref's newest commit>
   head_divergence:  { branch: <working-tree branch>, ahead: <n>, behind: <n> }
 capability_map:

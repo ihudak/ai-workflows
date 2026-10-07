@@ -140,8 +140,10 @@ and the two are not to be confused: a scan answers *what capability exists for t
 answers *is this claim true of this commit?* (`workflows-core:grounding-format` §1).
 
 The section opens with what its claims were true of: a single line naming every grounded repo as
-`<repo>@<scanned_ref>`, taken from `code-scanner`'s `prep.scanned_ref`. Code moves; a finding with no ref
-is unfalsifiable a month later.
+`<repo>@<scanned_ref> (<commit>)`, the name from `code-scanner`'s `prep.scanned_ref` and the short commit it
+resolved to when the scan returned, with `, with uncommitted changes` after it where the working tree read
+carried any (`workflows-core:read-only-repos` §7). Code moves, and so does a branch name: a finding with no
+commit is unfalsifiable a month later.
 
 Then up to three slots, each optional and each omitted when empty:
 

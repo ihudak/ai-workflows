@@ -99,7 +99,7 @@ prep:
   pulled:           true | false
   refresh_note:     <e.g. "fetched 3 new refs" | "read-only mount; resolved at origin/main" | "tree was dirty, refresh skipped">
   read_only:        true | false
-  scanned_ref:      <ref name, e.g. "origin/main"; the default branch name when writable>
+  scanned_ref:      <ref name, e.g. "origin/main"; on a writable mount, the branch the prep left checked out — the default branch where it switched onto it, else the one it found — or HEAD's commit where HEAD is detached; this agent reads no working tree, so on a writable mount the field says only where HEAD stood>
   ref_committed_at: <ISO-8601 timestamp of the ref's newest commit>
   head_divergence:  { branch: <working-tree branch>, ahead: <n>, behind: <n> }
 per_pr:                        # one entry per input element, the key-commit fallback included
