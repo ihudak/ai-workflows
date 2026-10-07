@@ -1081,7 +1081,7 @@ Act on the verdict:
     > Project root: [the resolved docs_repo_path (Phase 0)]
     > Severities to fix: BLOCKER and MAJOR"
 
-  MINOR / NIT findings are deferred to the Phase 9 report.
+  MINOR / NIT findings are deferred to the Phase 9 report. Write `doc-fixer`'s Fix Report to `claims_file` as the BLOCK path does: its edits answer a verdict that was not BLOCK, so the re-review the cap still holds is offered before Phase 8, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`, and, taken, is dispatched with that `claims_file` and triaged like the BLOCK path's re-review.
 
 - **PASS** — proceed to Phase 8.
 
@@ -1095,7 +1095,7 @@ Cap: one fix cycle + one re-review maximum.
 
 **First remove this run's temp files.** Nothing from here on reads one — Phase 6.3's `doc-writer`
 handoff file — one path, which a `BLOCKED` return has that phase rewrite in place — and, where
-Phase 7's BLOCK branch wrote one, its `claims_file`. Remove each as `command rm -f -- "<path>"`: `command`
+Phase 7's BLOCK or PASS WITH RECOMMENDATIONS branch wrote one, its `claims_file`. Remove each as `command rm -f -- "<path>"`: `command`
 because the Bash tool's shell carries the user's aliases and shell functions, and an `rm -i` or `rm -I`
 of theirs would ask before removing the file, be answered no from that shell's empty standard input,
 and leave it behind; `--` ends `rm`'s options. Nothing else removes one — they sit under the system's
@@ -1207,7 +1207,7 @@ Fold the run into clean history before handoff, every git call as `git -C <docs_
 ```
 choices: ["Push <branch> to origin now", "Skip — I'll push later", "Cancel"]
 ```
-- **Push** → `git -C <docs_repo_path> push -u origin <branch>`; report the result. (`git push` is git-protocol, not a REST API — the zero-external-API invariant is preserved.)
+- **Push** → `git -C <docs_repo_path> push -u origin <branch>`; report the result. (`git push` is git-protocol, not a REST API — the zero-external-API invariant is preserved.) Where git cannot write the repository's `.git/config` — a container that mounts it read-only — `-u` cannot record the upstream: git exits 0, prints `could not write config file` or `could not lock config file`, and records no upstream. That is not a failed push: the exit status and the `-> <branch>` line are the result, and nothing in this run reads the upstream.
 - **Skip** → "Branch `<branch>` ready with N commit(s). Push when ready."
 - **Cancel** → stop and summarise.
 

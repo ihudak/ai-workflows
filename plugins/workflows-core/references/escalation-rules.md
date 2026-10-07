@@ -348,18 +348,64 @@ through a resumed verify step, and `/upgrade`'s own results table carries a `Rev
 is behavioural: **a command records a review verdict, and anything it does afterwards can change what
 that verdict was about.**
 
-**This is deliberately a reporting rule and not another cycle.** Raising the cap trades one unreviewed
-version for a later one and has no fixed point, since each new review can find something the previous
-fix introduced. What actually costs the reader is not the unreviewed edit — a run has to stop
-somewhere — but believing the verdict covers it. Saying which version it covers costs nothing, cannot
-itself introduce a defect, and leaves the decision about the residue where it belongs. **Where no edit
-followed the verdict, say that too**, so a clean run reads as checked rather than as unreported.
+**Once the cap is spent, this is deliberately a reporting rule and not another cycle.** Raising the
+cap trades one unreviewed version for a later one and has no fixed point, since each new review can
+find something the previous fix introduced. What actually costs the reader is not the unreviewed
+edit — a run has to stop somewhere — but believing the verdict covers it. Saying which version it
+covers costs nothing, cannot itself introduce a defect, and leaves the decision about the residue
+where it belongs. **Where no edit followed the verdict, say that too**, so a clean run reads as
+checked rather than as unreported. A run whose verdict was not `BLOCK` has not spent the cap, and
+the next section offers it the re-review the cap still holds.
+
+## Edits after a verdict that is not BLOCK — the unspent re-review
+
+**A verdict that is not `BLOCK` spends neither half of the cap**, so the no-fixed-point argument
+above does not reach it. A run that edits the reviewed artifact in answer to such a verdict's
+findings — `MAJOR` findings the user chose to apply, or the fixer pass a command dispatches over
+them — still holds the cap's one re-review, and handing off without offering it ships edited text
+unreviewed for no reason the cap gives. A live `/create-prd` run is the case: `PASS WITH
+RECOMMENDATIONS` with four `MAJOR` findings, two of them acceptance criteria contradicting each
+other; the user applied every finding, criteria were merged and renumbered, and the text went to
+its pull request with only the version line above to say the verdict predated it.
+
+**So, before the step that follows the review gate, offer it once** — the handoff in most adopters,
+step 7.5 in `/implement`, whose tests still run on either answer:
+
+`choices: ["Re-review the edited <artifact> once (Recommended)", "Go on without it — the report says the verdict predates the edits"]`
+
+`<artifact>` names what was reviewed — `prd.md`, `ard.md`, `specification.md`, `design.md`,
+`proposal.md`, the Epic drafts, the pages written, the code change. The offer is made where all
+three hold: the verdict was not `BLOCK`, the run has not re-reviewed this artifact, and an edit
+answering the verdict's findings followed it. An edit of any other kind — a style
+pass, a resumed verify step — stays under the reporting rule above and makes no offer.
+
+- **Taken**, it is the cap's one re-review. Dispatch it as the command dispatches its re-review after
+  a `BLOCK` — with the fixer's report as `claims_file` where the command passes one there — and
+  triage it where the command triages its re-review (`finding-triage.md` § On re-review). A `BLOCK`,
+  or, where the command triages, a review that **stayed blocked**, is handled as the command handles
+  one after its fix cycle — its own `Review verdict BLOCK (unresolved after one fix cycle)` rule
+  below, or `/implement`'s stayed-blocked stop; any other verdict, or **Proceed** at a settle prompt,
+  goes on to the step that follows the review gate, as after the command's own re-review, and none
+  starts a fix cycle or offers to apply its findings. The version line then names the re-review's verdict, and
+  an edit after it falls back to the reporting rule above, the cap now spent.
+- **Declined**, the run goes on exactly as before, and the version line says the verdict predates
+  the edits.
+
+**It never raises the cap.** A run that went through a `BLOCK` spent its re-review there, and nothing
+here offers another. **Which commands it reaches is a behavioural test, as above: a command whose cap
+allows a re-review, whose verdict that is not `BLOCK` leads to the handoff without one, and which can
+edit the reviewed artifact on the way.** `/create-prd`, `/update-prd` and `/create-ard` offer to apply
+a `MAJOR` finding; `/epics` and `/document` dispatch `doc-fixer` over them, and `/implement`
+`review-fixer`; `/specify`, `/design`, `/prd-proposal` and `/brd-proposal` defer them, and edit only
+where the user asks. `/vuln` and `/upgrade` re-run their review after the `PASS WITH RECOMMENDATIONS`
+fixer pass, spending the re-review there, so the offer never arises; `/docs-init`, `/docs-brand` and
+`/docs-audit` cap at no re-review, so there is none to offer.
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline
 
 `choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding", "Cancel the whole run"]`
 
-Used by the commands that fix their own reviewer's findings inline, with no delegated writer, and define no "Defer" of their own — `/create-prd`, `/update-prd`, `/create-ard`, `/design`, `/prd-proposal` and `/brd-proposal` — when the one re-review still returns `BLOCK`; for `/prd-proposal` and `/brd-proposal`, which triage their re-review, when the review stayed blocked (`finding-triage.md` § On re-review).
+Used by the commands that fix their own reviewer's findings inline, with no delegated writer, and define no "Defer" of their own — `/create-prd`, `/update-prd`, `/create-ard`, `/design`, `/prd-proposal` and `/brd-proposal` — when the one re-review returns `BLOCK`, whether it followed a `BLOCK`'s fix cycle or was the unspent re-review offered after a verdict that was not (above); for `/prd-proposal` and `/brd-proposal`, which triage their re-review, when the review stayed blocked (`finding-triage.md` § On re-review).
 Escalate per unresolved BLOCKER individually. "Manual fix notes" → take free-text from the user and apply it inline in one bounded pass, with no further re-review. "Defer" → record the finding as deferred in the run's final report. "Override" → record it there with the user's rationale. "Cancel" aborts the run.
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — /document

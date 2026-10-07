@@ -210,7 +210,7 @@ A drafted ADR is checked against §2: given records, its Context opens with the 
 4. **Scan.** No secret scanner ships with product-workflows; the final report says the scan did not run.
 5. **Commit.** `git -C <root> commit -F <file>`, the file holding `docs(adr): propose <n> ADR(s) from team decisions` (`propose ADR-NNNN …` for one). Where the repository documents a commit convention, it governs. No `Co-Authored-By` trailer is added that the repository's convention does not ask for.
 6. **Consent.** `choices: ["Push the branch and open a pull request (Recommended)", "Keep the commit local — I'll push it"]`. Then:
-   - `git -C <root> push -u origin <branch>`;
+   - `git -C <root> push -u origin <branch>`; where git cannot write `<root>`'s `.git/config` — a container that mounts it read-only — `-u` cannot record the upstream, and the config error git prints after pushing is not a failed push: the exit status and the `-> <branch>` line decide, and nothing here reads the upstream;
    - `gh pr create -R <OWNER_REPO> --head <branch> --title '<title>' --body-file <file>`, where `gh` is available and authenticated to that host; else print the compare URL on that same resolved host, or, for a remote with no web host, the pushed branch and the body file's path.
    - The body lists each draft (id, title, kind), the records it came from with their signals, a `Proposes to supersede: <ADR id>` line for each superseding draft, and the decision-test line. Where the repository's own rules (its `AGENTS.md`, `CONTRIBUTING.md` or `CODEOWNERS`) route ADR changes to human review, the body ends by saying so.
    - Never force-push; never merge.

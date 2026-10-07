@@ -34,6 +34,8 @@ rules_path:   <optional absolute path to an overlay rules directory — override
 repo_root:    <optional absolute path to the repository whose rules apply — for a caller
                that checks a copy of a file kept outside its repository; replaces step 1b's
                derivation of <repo-root>>
+fixed_headings: [<optional heading texts, each as the file writes it after its `#` marks,
+               that a format the caller writes to requires verbatim — never checked (step 3)>]
 ```
 
 `doc_type` affects severity calibration (see step 5). Default: `general`.
@@ -139,6 +141,15 @@ rule identifier scheme below. Be thorough but avoid false positives — context 
 - "click" in `product-docs` `doc_type` is a violation (should be "select") — unless the
   active rule set allows it.
 - "click" inside a code example or an event name (`onClick`) is NOT a violation.
+
+**A heading named in `fixed_headings` is not checked.** Match its text exactly as the file
+writes it after the `#` marks. No rule raises a violation on such a heading — not its case,
+not its punctuation (an `&`, a `/`), not its wording — and no violation raised elsewhere
+suggests changing it: the caller's format requires that text verbatim, and its structural
+checks and later readers find the section by it, so a "fix" would break them. This holds
+whatever the active rule set says, an overlay's severity included. The prose under such a
+heading is checked as usual, and a heading the list does not name is checked like any
+other.
 
 ### 4. Attribute each violation
 

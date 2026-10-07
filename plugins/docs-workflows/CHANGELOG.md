@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.11.0] — 2026-10-07
+
+### Added
+- **`/document` offers the re-review the cap still holds after its `PASS WITH RECOMMENDATIONS` `doc-fixer` pass**, per `workflows-core` 1.30.0's *unspent re-review* rule: the fixer's report is written to `claims_file` for it, as on the `BLOCK` path, and removed in Phase 8. The fixed pages shipped unreviewed before.
+
+### Fixed
+- **A config error after `git push -u` is not a failed push.** `/document`'s push step and `finish-and-handoff` §3 say that where the docs repository's `.git/config` is mounted read-only, git pushes, exits 0 and prints `could not write config file`; the exit status and the `-> <branch>` line are the result.
+
 ## [1.10.1] — 2026-10-07
 
 ### Fixed

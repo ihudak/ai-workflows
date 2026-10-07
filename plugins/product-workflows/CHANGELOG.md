@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.25.0] — 2026-10-07
+
+### Added
+- **`/create-prd`, `/update-prd` and `/create-ard` say what happens to `MAJOR` findings under `PASS WITH RECOMMENDATIONS`**: on the first review's verdict the run offers to apply them before the handoff, putting a finding whose fix is a product or architectural decision to the user one question at a time. It said only "proceed", and a live run improvised the offer.
+- **Every review gate here that can edit after a verdict that is not `BLOCK` offers the re-review the cap still holds**, per `workflows-core` 1.30.0's *unspent re-review* rule: `/create-prd`, `/update-prd`, `/create-ard` after applied findings; `/epics` after its `PASS WITH RECOMMENDATIONS` `doc-fixer` pass, which now writes `claims_file` for that re-review and removes it in Phase 8; `/specify`, `/prd-proposal` and `/brd-proposal` where the user asks for a deferred finding to be applied. `/create-ard` keeps its prior-ARD copies until that re-review has returned.
+
+### Fixed
+- **The style check never renames a heading the format requires.** `/create-prd` and `/update-prd` pass `prd-format`'s Spine and Adapt-in headings as `fixed_headings`, and `/epics` the headings pre-lint's Epic block requires, so `## User Stories` or `## Independent Test` is never flagged; a finding that still names one, from a `prose-style` older than 0.7.0, is never applied, and `/create-prd` counts it as declined rather than outstanding.
+
 ## [3.24.4] — 2026-10-07
 
 ### Changed

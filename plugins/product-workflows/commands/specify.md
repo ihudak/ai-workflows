@@ -931,7 +931,7 @@ the grill/author. **Advisory** — never blocks; proceed to Phase 6 once finding
      report; no mandatory fix cycle.
    - **`PASS`** / **`PASS WITH RECOMMENDATIONS`** — proceed to Phase 7.
 
-Cap: one fix cycle + one re-review maximum.
+Cap: one fix cycle + one re-review maximum. Where the user asks for a deferred finding to be applied, that is an inline edit answering a verdict that was not `BLOCK`, and the re-review the cap still holds is offered before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`.
 
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
 

@@ -724,17 +724,25 @@ to state.
        it once did, and on a fork whose default branch tracked the parent
        repository's, the push went to the parent while every other step read
        `origin`.
-     - **The remote deleted the branch:** the branch's upstream is `origin`'s
-       branch of the same name —
+     - **The remote deleted the branch:** the branch was pushed to `origin`
+       under its own name, and `origin` no longer has it. Pushed is read from
+       its upstream —
        `git -C "$SPECS_PATH" for-each-ref --format='%(upstream)' refs/heads/<branch>`
-       prints `refs/remotes/origin/<branch>` — and
+       prints `refs/remotes/origin/<branch>` — or, where the branch has no
+       upstream at all, from the remote-tracking ref a push wrote:
+       `git -C "$SPECS_PATH" show-ref --verify -q refs/remotes/origin/<branch>`
+       finds it. A push from a repository whose `.git/config` git cannot write
+       records no upstream (`phase-handoff.md` §2.5), and a container that
+       mounts that file read-only would otherwise never see this state. Gone is
        `git -C "$SPECS_PATH" ls-remote --exit-code --heads origin refs/heads/<branch>`
-       exits 2, which says the remote holds no such branch. A remote that
+       exiting 2, which says the remote holds no such branch. A remote that
        renamed its default branch, and a pull request merged with *delete
-       branch on merge*, both leave this state, and a push would recreate the
-       branch the remote removed. Any other exit, an unreachable remote
-       included, does not count here; the push then reports its own failure
-       (step 6).
+       branch on merge* — while this run was still finishing included — both
+       leave this state, and a push would recreate the branch the remote
+       removed. A branch with no upstream whose remote-tracking ref was pruned
+       reads as never pushed, and is pushed. Any other exit, an unreachable
+       remote included, does not count here; the push then reports its own
+       failure (step 6).
      - **The remote refused this branch before:** its push-refusal record
        stands (§1 rule 8) — `test -f "<record>"`, or else
        `git -C "$SPECS_PATH" config --get branch.<branch>.workflowsPushRefused`
@@ -776,7 +784,9 @@ to state.
    where the branch has no upstream, or one on a remote under another branch's
    name, which a branch cut from the default branch can inherit; a same-name
    upstream on any remote, and any upstream in this repository (`.`), stand as
-   they are.
+   they are. Where git cannot write `.git/config`, `-u` records no upstream: git pushes,
+   then prints a config error (`phase-handoff.md` §2.5), which is not the push's
+   outcome — step 6 reads that from `--porcelain` alone.
    `--porcelain` is what step 6 reads its outcome from. Never a bare `git push`: under `push.default=matching`, or a
    `remote.<name>.push` refspec, it pushes other branches too, whose commits
    this step never measured.

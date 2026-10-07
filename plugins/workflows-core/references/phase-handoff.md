@@ -91,6 +91,8 @@ Message `<KEY> <summary>`, matching the specs repo's own `<KEY|NOISSUE> <summary
 
 `git -C "$SPECS_PATH" push -u origin <branch>`. Never force. A non-fast-forward rejection is reported, never resolved by rebasing or forcing mid-run.
 
+**A `.git/config` git cannot write costs `-u` its upstream, never the push.** A container that mounts the file read-only is the ordinary case. git pushes, exits 0, and then prints `error: could not write config file <path>: …` or `error: could not lock config file <path>: …` — on a read-only mount it may still announce that the branch is "set up to track" — and records no upstream. That is not a failed push and needs no investigation: the outcome is the push's exit status and its `-> <branch>` line, which §4.1's pushed rows report, and the run says nothing more about it. This reference reads no upstream; `specs-repo-git.md` §4 step 5 tests for one, and falls back to the remote-tracking ref the push wrote where there is none.
+
 **Skipped entirely where §2.1 set `remote: none`**, and §2.6 is skipped with it — a pull request needs a pushed head. The commit §2.4 made still stands; §4.1's *No remote* row reports it, and the phase is described as **not handed off** exactly as §2.8 requires of every other way the push can fail to land.
 
 ### 2.6 Open the pull request

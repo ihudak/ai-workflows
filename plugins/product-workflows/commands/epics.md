@@ -678,7 +678,10 @@ Invoke `prose-style-checker` on the files written in Phase 6. Unlike `/document`
   >
   > files:    [absolute paths of every Epic file written in Phase 6]
   > doc_type: epic
-  > emphasis: terminology and customer-facing captions, labels, messages, and text"
+  > emphasis: terminology and customer-facing captions, labels, messages, and text
+  > fixed_headings: [the text of every heading `workflows-core:pre-lint`'s Epic block requires per Epic file, verbatim]"
+
+Those headings are contract strings — pre-lint, `epic-reviewer` and every later reader find an Epic's sections by them, `## Independent Test` included — so the checker raises nothing on one, and a finding that still does, which a `prose-style` older than 0.7.0 returns, is never handed to `doc-fixer`, whatever its severity, and the Phase 9 report counts it as declined, not remaining.
 
 Act on the return:
 
@@ -689,7 +692,7 @@ Act on the return:
     > "Fix the style violations for this brief:
     >
     > Task description: [Epic drafting for <KEY>]
-    > Reviewer or style-checker output: [paste full prose-style-checker output]
+    > Reviewer or style-checker output: [paste the full prose-style-checker output, less any finding on a heading `fixed_headings` names]
     > Project root: [resolved project_root]
     > Severities to fix: MAJOR only"
 
@@ -755,7 +758,7 @@ Act on the verdict (same shape as `/document` keyed mode Phase 7):
     > Project root: [resolved project_root]
     > Severities to fix: BLOCKER and MAJOR"
 
-  MINOR / NIT findings are deferred to the Phase 9 report.
+  MINOR / NIT findings are deferred to the Phase 9 report. Write `doc-fixer`'s Fix Report to `claims_file` as the BLOCK path does: its edits answer a verdict that was not BLOCK, so the re-review the cap still holds is offered before Phase 8, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`, and, taken, is dispatched with that `claims_file` and triaged like the BLOCK path's re-review.
 
 - **PASS** — proceed to Phase 8.
 
@@ -768,7 +771,7 @@ Cap: one fix cycle + one re-review maximum.
 ## Phase 8 — Post-write maintenance
 
 **First remove this run's temp files.** Nothing from here on reads one — Phase 6's `epic-writer`
-handoff file and, where Phase 7's BLOCK branch wrote one, its `claims_file`. Remove each as
+handoff file and, where Phase 7's BLOCK or PASS WITH RECOMMENDATIONS branch wrote one, its `claims_file`. Remove each as
 `command rm -f -- "<path>"`: `command` because the Bash tool's shell carries the user's aliases and
 shell functions, and an `rm -i` or `rm -I` of theirs would ask before removing the file, be answered no
 from that shell's empty standard input, and leave it behind; `--` ends `rm`'s options. Nothing else
@@ -928,7 +931,7 @@ MODERATE — Epic drafting for a single PRD
 [verdict + any `- ARD deviation:` lines recorded] — _omit this whole section when Phase 2.5 status was none_
 
 ### Prose style check (Phase 6.2)
-[OK | VIOLATIONS_FOUND (N fixed, M remaining) | ERROR (reason)] — [1-line summary]
+[OK | VIOLATIONS_FOUND (N fixed, M remaining[, K declined — format headings]) | ERROR (reason)] — [1-line summary]
 
 ### Documentation (Agent 1)
 - [file updated] — [what was added/changed] OR "no update required (reason)"
