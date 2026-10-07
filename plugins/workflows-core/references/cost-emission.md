@@ -31,8 +31,9 @@ engineer and team. A PRD's cost is the sum of per-command cost lines contributed
 by every session that worked on it; summing is a read-time concern for the
 maintainer — the plugin only ever appends immutable per-invocation measurements.
 
-**Cost is computed, never read.** Claude Code stores no dollar figure in the
-transcript. Every assistant message carries `.message.usage` + `.message.model`;
+**Cost is computed, never read.** Claude Code's own running dollar total reaches
+the transcript only as an occasional `cost-state` record between sessions, never at
+a command's edges, so it cannot measure a command. Every assistant message carries `.message.usage` + `.message.model`;
 `${CLAUDE_PLUGIN_ROOT}/scripts/session-cost.py` sums tokens per model and multiplies by a price table
 (§4). One API response is written as several assistant records sharing one `.message.id`, each
 repeating the usage — a streaming partial first, the final record later — so within one measured
@@ -40,7 +41,8 @@ window each message id is counted once, at its final usage, across the main tran
 subagent transcripts together. A call whose records straddle two windows' edge is still counted in
 each. Dollars are therefore an estimate that drifts from Claude Code's own figure
 by the accuracy of the price table — an accepted trade (cost accuracy is
-explicitly secondary to code/doc quality).
+explicitly secondary to code/doc quality) — and by every compaction in the window,
+which Claude Code bills but writes no usage for (§2's `compactions`, §5).
 
 **Relationship to siblings.** Shares the `<PRD-dir>/dev-workflows/` per-PRD home
 with `feedback-emission.md` / `followup-emission.md` and the self-contained
@@ -97,10 +99,11 @@ re-parsing lines already processed by a prior command — plus every
   "cost_computed_usd": 0.0,
   "cost_statusline_usd": null,
   "duration_s": 0,
+  "compactions": 0,
   "command_boundaries": [{"command": "/x", "ts": "...Z", "line_offset": 0}],
   "claims": [
     {"command": "/x", "ts": "...Z", "models": [], "cost_computed_usd": 0.0,
-     "duration_s": 0}
+     "duration_s": 0, "compactions": 0}
   ],
   "unmatched_claims": [],
   "new_checkpoint": {"line_offset": 0, "last_ts": "...Z", "last_snapshot_cost": null}
@@ -110,15 +113,26 @@ re-parsing lines already processed by a prior command — plus every
 With no `--claim`, `claims` and `unmatched_claims` are empty and
 `models`/`cost_computed_usd` cover the whole window exactly as before. With
 claims, **the top-level block is the remainder** — this run's own spend — and each
-`claims[]` entry carries its own `models`, `cost_computed_usd` and `duration_s`,
-which is what §13.3 builds a replayed §6 entry from. `command_boundaries` is
+`claims[]` entry carries its own `models`, `cost_computed_usd`, `duration_s` and
+`compactions`, which is what §13.3 builds a replayed §6 entry from. `command_boundaries` is
 reported whenever the §2 manifest resolves, claim or no claim, and `namespaces`
 lists the plugin namespaces it was resolved against.
 
 An unknown model (absent from the table) is recorded with its tokens,
 `cost_usd: null`, and `note: unpriced-model` — the run never fails. `emit-cost`
-formats `models` + `cost_computed_usd` + `cost_statusline_usd` + `duration_s`
-into the entry (§6) and writes `new_checkpoint` back (§3).
+formats `models` + `cost_computed_usd` + `cost_statusline_usd` + `duration_s` +
+`compactions` into the entry (§6) and writes `new_checkpoint` back (§3).
+
+**`compactions` counts what the computed figure cannot price.** Claude Code bills
+the call that summarises a context on `/compact`, or on its own when the context
+fills, but writes no `usage` for it into the transcript — only a `system` record
+with `subtype: compact_boundary`. So `cost_computed_usd` leaves every compaction
+out, and nothing on disk says what one cost: the record's `preTokens` is the size
+of the context it summarised, not what was billed for it. The script counts these
+records where it counts usage — main-transcript lines from the checkpoint's
+offset, subagent records in `(last_ts, now]` — and splits them across claims as it
+splits usage, so a compaction inside a claimed segment is that claim's. It never
+estimates their price.
 
 ## 3. Chained-checkpoint model
 
@@ -232,8 +246,15 @@ installed (via `/workflows-core:statusline`):
   the **second and later** commands emit the delta against it.
 - **Boundary caveat:** B is authoritative on price but lags at the tail (the
   statusline renders *after* the final turn); A reads the per-turn transcript so
-  it is more complete at the boundary. The two differing by cents is the intended
-  calibration signal (drift => refresh the price table).
+  it is more complete at the boundary. **Over a window with no compaction**, the
+  two differing by cents is the intended calibration signal (drift => refresh
+  the price table).
+- **Compaction caveat:** B includes every compaction in the window and A
+  includes none (§2's `compactions`), so over a window that held one, B exceeds A
+  by roughly what the compactions cost — dollars, not cents, on a large context:
+  a live `/specify` window holding one manual `/compact` of a 675,221-token
+  context differed by $3.23. That gap is not price-table drift, and the entry's
+  `compactions:` field (§6) is what tells a reader so.
 - Pending a one-line implementation check that `.cost.total_cost_usd` is present
   on the statusline stdin in the target Claude Code version; if absent, B is
   simply unavailable and A stands alone.
@@ -274,6 +295,7 @@ plugin_version: 2.10.0
 duration_s: 1284
 cost_computed_usd: 3.4821
 cost_statusline_usd: 3.5102   # present only when the plugin statusline is installed
+compactions: 1               # present only when the window held a compaction (§2)
 models:
   - {model: claude-opus-5, cost_usd: 2.9114, input_tokens: 12043, output_tokens: 88210, cache_read_tokens: 2109887, cache_write_tokens: 145002}
   - {model: claude-sonnet-5, cost_usd: 0.5707, input_tokens: 45120, output_tokens: 210334, cache_read_tokens: 880122, cache_write_tokens: 42011}
@@ -282,7 +304,9 @@ models:
 
 Machine-friendly YAML so the maintainer can filter/sum with Claude Code. No prose
 block (unlike feedback). `cost_statusline_usd` is omitted when Option B is
-unavailable; a model priced `null` carries a `note:` saying why — `unpriced-model`
+unavailable; `compactions` is omitted when §2 returned 0, and otherwise says that
+`cost_computed_usd` leaves that many billed compactions out (§5's compaction
+caveat); a model priced `null` carries a `note:` saying why — `unpriced-model`
 (no key for the id), `unpriced-speed:<value>` (the record ran in a speed the model's
 entry has no rate block for), or `unpriced-inference-geo:<value>` (a residency the
 table has no multiplier for).

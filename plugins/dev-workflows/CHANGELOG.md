@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.22.0] — 2026-10-07
+
+### Changed
+- **`/design` reads every inline fix against what it overlaps before the re-review** — each interface, seam and test-strategy line it adds or changes against those that govern the same behaviour (`workflows-core:escalation-rules`, 1.32.0). Its "Act on the verdict" no longer says it differs from `/specify` in the escalation rule it cites; both cite the inline-fix entry. Like `/specify`, it now defers `MAJOR`/`MINOR`/`NIT` whatever verdict carried them, and reads an applied finding against what it overlaps.
+
+### Fixed
+- **The session-cost and getting-started pages called any computed-versus-status-line gap price-table drift.** A compaction is billed but leaves no usage in the transcript, so a window holding one runs the status-line figure ahead by what it cost; the entry's new `compactions:` field says so (`workflows-core` 1.32.0).
+
 ## [4.21.0] — 2026-10-07
 
 ### Added
