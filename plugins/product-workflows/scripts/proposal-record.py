@@ -2,7 +2,7 @@
 """proposal-record.py — which version of each input an effort proposal priced.
 
   proposal-record.py record --specs <root> --folder <folder> [--brd-key <KEY> [--excluded <dir>[,<dir>...]]]
-  proposal-record.py stamp --proposal <proposal.md> --record <file>
+  proposal-record.py stamp --proposal <proposal.md> --record <file> [--excluded <dir>[,<dir>...]]
   proposal-record.py check --specs <root> --proposal <proposal.md> [--brd-key <KEY>]
   proposal-record.py --selftest
 
@@ -10,10 +10,14 @@ record: prints the priced-against record of the inputs on disk now -- a slice's 
 --brd-key an umbrella's, over the slices whose brd-link.md names that key as its parent:; --excluded
 names the slice folders, by directory name, the umbrella excluded.
 stamp: makes the record block in <file> the last thing in <proposal.md>, replacing a record that
-already ends it and preserving every other byte; prints {"written": true} or {"written": false}.
+already ends it, removing any other record block (whole or damaged) so none hides the author's text,
+and preserving every other byte; --excluded re-marks which slices of an umbrella's record are
+excluded; prints {"written": true} or {"written": false}.
 check: parses the record <proposal.md> ends with and compares it with the inputs on disk; prints
-{"basis": "content", "current", "changed", "added", "removed"} (an umbrella's adding "included" and
-"excluded"), or {"basis": "none", "reason": "no-record"} or {"basis": "none", "reason":
+{"basis": "content", "current", "changed", "added", "removed"} -- an umbrella's adding "included",
+"excluded", "stale_slices" (each included slice whose own record reads stale, with why) and
+"unrecorded_slices" (included slices whose proposal carries no readable record), its "current" also
+false while any included slice is stale -- or {"basis": "none", "reason": "no-record"} or {"basis": "none", "reason":
 "unreadable", "detail"}.
 
 The input sets and the record's grammar are the plugin's proposal-format reference, section 15. The
@@ -43,7 +47,8 @@ ROUND_RE = re.compile(r"round-\d+\.md")
 SELF_REVIEW_RE = re.compile(r"self-review-\d{8}(?:-\d+)?\.md")
 LINE_RE = re.compile(r"(?P<path>.+) (?P<id>[0-9a-f]{40}|[0-9a-f]{64})(?P<excluded> excluded)?")
 BRD_LINK_RE = re.compile(r"[^/]+/brd-link\.md")
-PARENT_RE = re.compile(r"parent:\s*(['\"]?)([^'\"\s]+)\1\s*")
+PARENT_RE = re.compile(r"\s*parent:\s*(['\"]?)([^'\"\s#]+)\1\s*(?:#.*)?")
+LEGACY_PRD_RE = re.compile(r"[A-Z][A-Z0-9_]*(?:-\d+)+_[^/]*\.md")
 
 
 class Unrunnable(Exception):
@@ -199,7 +204,8 @@ def case_stamp_appends_when_text_follows_a_record(tmp):
     assert parse(tail, False)["status"] == "unreadable"
     assert stamp(prop, rec) == {"written": True}
     after = _read(prop)
-    assert after.startswith(tail) and parse(after, False)["status"] == "ok", after[-200:]
+    assert "A paragraph someone added after the record." in after and after.count(OPEN) == 1, after
+    assert parse(after, False)["status"] == "ok", after[-200:]
 
 
 def case_stamp_never_deletes_text_after_an_unclosed_open_line(tmp):
@@ -210,7 +216,32 @@ def case_stamp_never_deletes_text_after_an_unclosed_open_line(tmp):
     rec = os.path.join(tmp, "rec.txt")
     _put(rec, record(specs, folder, None, []))
     assert stamp(prop, rec) == {"written": True}
-    assert _read(prop).startswith(body) and check(specs, prop, None)["current"] is True
+    after = _read(prop)
+    assert after.startswith("# Proposal\n\n\nA section the author wrote after a stray line.\n"), repr(after[:120])
+    assert after.count(OPEN) == 1 and check(specs, prop, None)["current"] is True
+
+
+def case_stamp_unhides_author_text_a_damaged_record_swallowed(tmp):
+    specs, folder = _slice(tmp)
+    prop, rec = _stamped(tmp, specs, folder)
+    good = _read(prop)
+    damaged = good.replace("\n-->\n", "\n") + "\n## A section written after the record\n"
+    _put(prop, damaged)
+    assert stamp(prop, rec) == {"written": True}
+    after = _read(prop)
+    hidden = after[:after.index("## A section written after the record")]
+    assert OPEN not in hidden, "the author's section still sits inside an unclosed comment"
+    assert after.count(OPEN) == 1 and check(specs, prop, None)["current"] is True
+
+
+def case_stamp_moves_a_record_left_mid_file_to_the_end(tmp):
+    specs, folder = _slice(tmp)
+    prop, rec = _stamped(tmp, specs, folder)
+    _put(prop, _read(prop) + "\n## Appended later\n")
+    assert stamp(prop, rec) == {"written": True}
+    after = _read(prop)
+    assert after.count(OPEN) == 1 and after.index("## Appended later") < after.index(OPEN), after
+    assert check(specs, prop, None)["current"] is True and stamp(prop, rec) == {"written": False}
 
 
 def case_stamp_keeps_a_crlf_file_crlf(tmp):
@@ -432,6 +463,111 @@ def case_cli(tmp):
     assert r.returncode == 0 and got["current"] is True and got["excluded"] == ["PRD-1-02", "PRD-1-03"], r
 
 
+def case_stamp_sets_the_excluded_marks(tmp):
+    specs, brd = _brd(tmp)
+    prop, rec = _stamped(tmp, specs, brd, brd_key="BRD-1", excluded=["PRD-1-03"])
+    assert stamp(prop, rec, excluded=["PRD-1-02", "PRD-1-03"]) == {"written": True}
+    got = check(specs, prop, "BRD-1")
+    assert got["excluded"] == ["PRD-1-02", "PRD-1-03"] and got["included"] == ["PRD-1-01"], got
+    assert stamp(prop, rec, excluded=["PRD-1-02", "PRD-1-03"]) == {"written": False}
+    try:
+        stamp(prop, rec, excluded=["PRD-9-01"])
+    except Unrunnable as e:
+        assert "PRD-9-01" in str(e)
+    else:
+        raise AssertionError("an --excluded naming no slice of the record was accepted")
+
+
+def case_failures_exit_2_never_a_traceback(tmp):
+    import contextlib
+    import io
+    specs, folder = _slice(tmp)
+    prop = os.path.join(folder, "proposal.md")
+    rec = os.path.join(tmp, "rec.txt")
+    _put(rec, record(specs, folder, None, []))
+    real = globals()["_write_text"]
+
+    def refuse(path, text):
+        raise PermissionError(13, "Permission denied", path)
+
+    globals()["_write_text"] = refuse
+    err = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            code = main(["stamp", "--proposal", prop, "--record", rec])
+    finally:
+        globals()["_write_text"] = real
+    assert code == 2 and "proposal-record:" in err.getvalue(), (code, err.getvalue())
+    fd = os.open(os.path.join(folder, "grounding").encode() + b"/\xff.md", os.O_WRONLY | os.O_CREAT, 0o644)
+    os.close(fd)
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+        code = main(["record", "--specs", specs, "--folder", folder])
+    assert code == 2 and "proposal-record:" in err.getvalue(), (code, err.getvalue())
+
+
+def case_a_parent_with_a_comment_or_an_indent_is_still_the_parent(tmp):
+    specs, brd = _brd(tmp)
+    _put(os.path.join(brd, "PRD-1-04", "brd-link.md"), "---\nkind: brd\nparent: BRD-1   # carved 2026-10\n---\n")
+    _put(os.path.join(brd, "PRD-1-05", "brd-link.md"), "---\n  kind: brd\n  parent: 'BRD-1'\n---\n")
+    assert slices(brd, "BRD-1") == ["PRD-1-01", "PRD-1-02", "PRD-1-03", "PRD-1-04", "PRD-1-05"], slices(brd, "BRD-1")
+
+
+def case_a_legacy_named_prd_is_an_input(tmp):
+    specs, folder = _slice(tmp)
+    os.remove(os.path.join(folder, "prd.md"))
+    _put(os.path.join(folder, "PRD-1-01_orders.md"), "# PRD\n")
+    _put(os.path.join(folder, "revisions", "PRD-1-01_orders_20260901.md"), "old\n")
+    got = slice_inputs(specs, folder)
+    assert "PRD-1-01_orders.md" in got and not any(k.startswith("revisions/") for k in got), sorted(got)
+    _put(os.path.join(folder, "prd.md"), "# PRD\n")
+    assert "PRD-1-01_orders.md" not in slice_inputs(specs, folder)
+
+
+def case_umbrella_records_its_own_defect_sources(tmp):
+    specs, brd = _brd(tmp)
+    for rel in ("code-defect-log.md", "grounding/code-grounding.md", "self-review-20261001.md"):
+        _put(os.path.join(brd, rel), "x\n")
+    prop, _ = _stamped(tmp, specs, brd, brd_key="BRD-1")
+    entries = parse(_read(prop), True)["entries"]
+    for rel in ("code-defect-log.md", "grounding/code-grounding.md", "self-review-20261001.md"):
+        assert rel in entries, sorted(entries)
+    _put(os.path.join(brd, "grounding", "code-grounding.md"), "y\n")
+    assert check(specs, prop, "BRD-1")["changed"] == ["grounding/code-grounding.md"]
+
+
+def case_umbrella_reports_stale_and_unrecorded_included_slices(tmp):
+    specs, brd = _brd(tmp)
+    s1 = os.path.join(brd, "PRD-1-01")
+    _put(os.path.join(s1, "prd.md"), "# PRD\n")
+    _stamped(tmp, specs, s1)
+    prop, _ = _stamped(tmp, specs, brd, brd_key="BRD-1", excluded=["PRD-1-03"])
+    got = check(specs, prop, "BRD-1")
+    assert got["current"] is True and got["stale_slices"] == {} and got["unrecorded_slices"] == ["PRD-1-02"], got
+    _put(os.path.join(s1, "prd.md"), "# PRD, edited\n")
+    got = check(specs, prop, "BRD-1")
+    assert got["current"] is False and got["changed"] == [] and got["stale_slices"] == {"PRD-1-01": ["prd.md changed"]}, got
+
+
+def case_an_excluded_unpriced_slice_is_watched_through_its_own_inputs(tmp):
+    specs, brd = _brd(tmp)
+    s3 = os.path.join(brd, "PRD-1-03")
+    _put(os.path.join(s3, "prd.md"), "# PRD\n")
+    prop, rec = _stamped(tmp, specs, brd, brd_key="BRD-1", excluded=["PRD-1-02", "PRD-1-03"])
+    entries = parse(_read(prop), True)["entries"]
+    assert "PRD-1-03/prd.md" in entries and not any(k.startswith("PRD-1-02/") and k.endswith("prd.md") for k in entries), sorted(entries)
+    assert check(specs, prop, "BRD-1")["current"] is True
+    _put(os.path.join(s3, "grounding", "code-grounding.md"), "verified\n")
+    got = check(specs, prop, "BRD-1")
+    assert got["current"] is False and got["added"] == ["PRD-1-03/grounding/code-grounding.md"], got
+    try:
+        stamp(prop, rec, excluded=["PRD-1-02"])
+    except Unrunnable as e:
+        assert "PRD-1-03" in str(e)
+    else:
+        raise AssertionError("stamp re-marked a slice whose inputs the record holds instead of a proposal")
+
+
 def selftest():
     os.environ["GIT_CONFIG_GLOBAL"] = os.devnull
     os.environ["GIT_CONFIG_NOSYSTEM"] = "1"
@@ -472,13 +608,8 @@ def _add_profile(specs, out):
         out[PROFILE_TOKEN] = path
 
 
-def slice_inputs(specs, folder):
-    """A slice's input set (section 15.1): {record path: absolute path}, present files only."""
-    out = {}
-    for name in SLICE_FILES:
-        path = os.path.join(folder, name)
-        if _plain_file(path):
-            out[name] = path
+def _grounding_and_self_reviews(folder, out):
+    """Every file under grounding/ (no symlink, no dot-name) and every self-review-<date>.md."""
     grounding = os.path.join(folder, "grounding")
     if _plain_dir(grounding):
         for dirpath, dirnames, filenames in os.walk(grounding):
@@ -487,6 +618,26 @@ def slice_inputs(specs, folder):
                 path = os.path.join(dirpath, name)
                 if not name.startswith(".") and _plain_file(path):
                     out[os.path.relpath(path, folder).replace(os.sep, "/")] = path
+    for name in os.listdir(folder):
+        path = os.path.join(folder, name)
+        if SELF_REVIEW_RE.fullmatch(name) and _plain_file(path):
+            out[name] = path
+
+
+def slice_inputs(specs, folder):
+    """A slice's input set (section 15.1): {record path: absolute path}, present files only."""
+    out = {}
+    for name in SLICE_FILES:
+        path = os.path.join(folder, name)
+        if _plain_file(path):
+            out[name] = path
+    if "prd.md" not in out:
+        # addressing's legacy fallback: a <KEY>_<slug>.md PRD, which /prd-proposal prices when no prd.md exists
+        for name in os.listdir(folder):
+            path = os.path.join(folder, name)
+            if LEGACY_PRD_RE.fullmatch(name) and _plain_file(path):
+                out[name] = path
+    _grounding_and_self_reviews(folder, out)
     interview = os.path.join(folder, "interview")
     if _plain_dir(interview):
         for name in os.listdir(interview):
@@ -495,9 +646,7 @@ def slice_inputs(specs, folder):
                 out["interview/" + name] = path
     for name in os.listdir(folder):
         path = os.path.join(folder, name)
-        if SELF_REVIEW_RE.fullmatch(name) and _plain_file(path):
-            out[name] = path
-        elif name.startswith("EPIC-") and _plain_dir(path) and _plain_file(os.path.join(path, "epic.md")):
+        if name.startswith("EPIC-") and _plain_dir(path) and _plain_file(os.path.join(path, "epic.md")):
             out[name + "/epic.md"] = os.path.join(path, "epic.md")
     _add_profile(specs, out)
     return out
@@ -526,17 +675,26 @@ def slices(folder, brd_key):
                   and brd_link_parent(os.path.join(folder, name, "brd-link.md")) == brd_key)
 
 
-def umbrella_inputs(specs, folder, brd_key):
-    """An umbrella's input set (section 15.1): {record path: absolute path}, present files only."""
+def umbrella_inputs(specs, folder, brd_key, unpriced=()):
+    """An umbrella's input set (section 15.1): {record path: absolute path}, present files only.
+    unpriced names the slices it excluded holding no proposal.md: each one's own input set is
+    watched instead, under its folder, so a slice that becomes estimable is seen."""
     out = {}
     for name in slices(folder, brd_key):
+        if name in unpriced:
+            for key, path in slice_inputs(specs, os.path.join(folder, name)).items():
+                if key != PROFILE_TOKEN:
+                    out[name + "/" + key] = path
         out[name + "/brd-link.md"] = os.path.join(folder, name, "brd-link.md")
         proposal = os.path.join(folder, name, "proposal.md")
         if _plain_file(proposal):
             out[name + "/proposal.md"] = proposal
-    ledger = os.path.join(folder, "coverage-ledger.md")
-    if _plain_file(ledger):
-        out["coverage-ledger.md"] = ledger
+    for name in ("coverage-ledger.md", "code-defect-log.md"):
+        path = os.path.join(folder, name)
+        if _plain_file(path):
+            out[name] = path
+    # the container's own defect sources, which brd-proposal Phase 6 step 3 sweeps
+    _grounding_and_self_reviews(folder, out)
     _add_profile(specs, out)
     return out
 
@@ -546,6 +704,10 @@ def hash_ids(specs, inputs):
     for path in inputs:
         if len(path.splitlines()) != 1 or CLOSE in path:
             raise Unrunnable("cannot record %r: a path holding a line break or '-->' cannot sit in the record" % path)
+        try:
+            path.encode("utf-8")
+        except UnicodeEncodeError:
+            raise Unrunnable("cannot record %r: a file name that is not UTF-8 cannot sit in the record" % path)
     if not inputs:
         return {}
     keys = sorted(inputs)
@@ -623,25 +785,76 @@ def record(specs, folder, brd_key, excluded):
         stray = sorted(set(excluded) - set(slices(folder, brd_key)))
         if stray:
             raise Unrunnable("--excluded names a folder that is not a slice of %s: %s" % (brd_key, ", ".join(stray)))
-        inputs = umbrella_inputs(specs, folder, brd_key)
+        unpriced = [name for name in excluded if not _plain_file(os.path.join(folder, name, "proposal.md"))]
+        inputs = umbrella_inputs(specs, folder, brd_key, unpriced)
     else:
         inputs = slice_inputs(specs, folder)
     return render(hash_ids(specs, inputs), set(excluded))
 
 
-def stamp(proposal, record_file):
+def _remark(block, excluded):
+    """The block with exactly the named slices' brd-link.md lines marked excluded."""
+    lines, slices_held, priced, moved = [], set(), set(), set()
+    for line in block.split("\n"):
+        m = LINE_RE.fullmatch(line.rstrip())
+        if m and m.group("path").endswith("/proposal.md") and m.group("path").count("/") == 1:
+            priced.add(m.group("path").split("/", 1)[0])
+        if m and BRD_LINK_RE.fullmatch(m.group("path")):
+            name = m.group("path").split("/", 1)[0]
+            lines.append("%s %s%s" % (m.group("path"), m.group("id"), " excluded" if name in excluded else ""))
+            slices_held.add(name)
+            if bool(m.group("excluded")) != (name in excluded):
+                moved.add(name)
+        else:
+            lines.append(line)
+    stray = sorted(set(excluded) - slices_held)
+    if stray:
+        raise Unrunnable("--excluded names a folder that is not a slice this record holds: %s" % ", ".join(stray))
+    unpriced = sorted(moved - priced)
+    if unpriced:
+        raise Unrunnable("--excluded would re-mark a slice the record watches through its own inputs, not a "
+                         "proposal: %s -- an unpriced slice's exclusion is fixed when the record is taken" % ", ".join(unpriced))
+    return "\n".join(lines)
+
+
+def _without_record_blocks(text):
+    """The text less every record block in it: an OPEN line, the record lines after it, and the CLOSE
+    line where one directly follows them -- a damaged block's stray OPEN line included, since an
+    unclosed comment hides everything after it from a reader."""
+    lines = _lines(text)
+    kept, pos, i = [], 0, 0
+    while i < len(lines):
+        if lines[i][1].rstrip() != OPEN:
+            i += 1
+            continue
+        j = i + 1
+        while j < len(lines) and LINE_RE.fullmatch(lines[j][1].rstrip()):
+            j += 1
+        if j < len(lines) and lines[j][1].strip() == CLOSE:
+            j += 1
+        kept.append(text[pos:lines[i][0]])
+        pos = lines[j][0] if j < len(lines) else len(text)
+        i = j
+    kept.append(text[pos:])
+    return "".join(kept)
+
+
+def stamp(proposal, record_file, excluded=None):
     block = _read(record_file)
     own = parse(block, umbrella=True)
     if own["status"] != "ok" or own["start"] != 0:
         raise Unrunnable("%s does not hold one record block and nothing else" % record_file)
+    block = block.replace("\r\n", "\n").rstrip("\n")
+    if excluded is not None:
+        block = _remark(block, set(excluded))
     text = _read(proposal)
     newline = "\r\n" if "\r\n" in text else "\n"
-    block = block.replace("\r\n", "\n").rstrip("\n").replace("\n", newline) + newline
+    block = block.replace("\n", newline) + newline
     found = parse(text, umbrella=True)
     if found["status"] != "no-record" and found["trailing"]:
-        new = text[:found["start"]] + block
+        new = _without_record_blocks(text[:found["start"]]) + block
     else:
-        body = text
+        body = _without_record_blocks(text)
         if body and not body.endswith("\n"):
             body += newline
         new = body + (newline if body else "") + block
@@ -659,7 +872,12 @@ def check(specs, proposal, brd_key):
         return {"basis": "none", "reason": "unreadable", "detail": found["detail"]}
     folder = os.path.dirname(proposal)
     _under(specs, folder)
-    inputs = umbrella_inputs(specs, folder, brd_key) if brd_key else slice_inputs(specs, folder)
+    if brd_key:
+        flagged = [p.split("/", 1)[0] for p, entry in found["entries"].items() if BRD_LINK_RE.fullmatch(p) and entry[1]]
+        unpriced = [name for name in flagged if name + "/proposal.md" not in found["entries"]]
+        inputs = umbrella_inputs(specs, folder, brd_key, unpriced)
+    else:
+        inputs = slice_inputs(specs, folder)
     now = hash_ids(specs, inputs)
     then = {path: entry[0] for path, entry in found["entries"].items()}
     changed = sorted(p for p in then if p in now and now[p] != then[p])
@@ -671,6 +889,20 @@ def check(specs, proposal, brd_key):
         links = {p.split("/", 1)[0]: entry[1] for p, entry in found["entries"].items() if BRD_LINK_RE.fullmatch(p)}
         out["included"] = sorted(name for name, excluded in links.items() if not excluded)
         out["excluded"] = sorted(name for name, excluded in links.items() if excluded)
+        stale, unrecorded = {}, []
+        for name in out["included"]:
+            path = os.path.join(folder, name, "proposal.md")
+            if not _plain_file(path):
+                continue  # its proposal.md is listed as removed already
+            own = check(specs, path, None)
+            if own["basis"] == "none":
+                unrecorded.append(name)
+            elif not own["current"]:
+                stale[name] = (["%s changed" % p for p in own["changed"]] + ["%s added" % p for p in own["added"]]
+                               + ["%s removed" % p for p in own["removed"]])
+        out["stale_slices"] = stale
+        out["unrecorded_slices"] = unrecorded
+        out["current"] = out["current"] and not stale
     return out
 
 
@@ -699,6 +931,7 @@ def main(argv):
     stm = sub.add_parser("stamp")
     stm.add_argument("--proposal", required=True)
     stm.add_argument("--record", required=True)
+    stm.add_argument("--excluded")
     chk = sub.add_parser("check")
     chk.add_argument("--specs", required=True)
     chk.add_argument("--proposal", required=True)
@@ -709,12 +942,16 @@ def main(argv):
             excluded = [name.strip() for name in args.excluded.split(",") if name.strip()]
             sys.stdout.write(record(_dir(args.specs, "--specs"), _dir(args.folder, "--folder"), args.brd_key, excluded))
         elif args.command == "stamp":
-            print(json.dumps(stamp(_file(args.proposal, "--proposal"), _file(args.record, "--record"))))
+            excluded = None if args.excluded is None else [n.strip() for n in args.excluded.split(",") if n.strip()]
+            print(json.dumps(stamp(_file(args.proposal, "--proposal"), _file(args.record, "--record"), excluded)))
         else:
             print(json.dumps(check(_dir(args.specs, "--specs"), _file(args.proposal, "--proposal"), args.brd_key),
                              ensure_ascii=False))
     except Unrunnable as e:
         print("proposal-record: %s" % e, file=sys.stderr)
+        return 2
+    except (OSError, UnicodeError) as e:
+        print("proposal-record: %s: %s" % (type(e).__name__, e), file=sys.stderr)
         return 2
     return 0
 
