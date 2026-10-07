@@ -10,6 +10,8 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ### Fixed
 - **A refused push is recorded where a hardened container can write it.** `specs-repo-git` §4 step 6 recorded a push `origin` refused as `branch.<branch>.workflowsPushRefused` in `.git/config`; a container that mounts `.git/config` read-only (it can start programs) refused the write, so every later run pushed into the same refusal while its commits piled up locally, and session-branch mode never switched on. The record is now a file, `workflows/push-refused/<branch>` in the repository's common git directory, holding the date and standing wherever it exists (§1 rule 8); the old key is still read, so a clone that recorded a refusal before keeps it, and still written where the file cannot be. Where neither can be written, the outcome line says the refusal went unrecorded and the next run pushes again. `session-branch.py`'s `mode` reads both, with selftest cases. §3.5's B2 removes the record of a branch it deletes, as `branch -d` removed the key, and names it beside the `branch -D` it suggests; the outcome rows and the environment page name the file to remove once `origin` takes pushes again.
 
+- **`ard-resolution` says an ARD no plugin branch carries is not `unmerged`** — a declined handoff's, and one committed only on a branch of the person's own — where it said "on no ref at all" (`phase-handoff` §3.3 row F).
+
 ## [1.29.2] — 2026-10-07
 
 ### Fixed

@@ -77,7 +77,7 @@ contracts:           # the PRD-level ARD's `## Contracts` (step 4), or null
 
 `status: unmerged` when an ARD file resolves but is **not on the specs repo's default branch** — verified via `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §3 (`require-on-main`), whose rows D and E find it on a plugin branch and return the carrying `branch` and any open `pr`. Both are passed through to the caller.
 
-**An ARD file on no ref at all is not `unmerged`.** There `require-on-main` returns row F — `on_main: absent`, with no branch to pass through — which is the state a declined `/create-ard` handoff leaves, and it is `status: none`, exactly as `phase-handoff.md` §3.4's ARD row records it: the file is not read, and the no-regression rule below applies unchanged. Reading it as `unmerged` would stop every consumer but `/ready`, naming a branch that does not exist, on a decline §3.4 lets them proceed past.
+**An ARD file no plugin branch carries is not `unmerged`.** There `require-on-main` returns row F — `on_main: absent`, with no branch to pass through — which is the state a declined `/create-ard` handoff leaves, and an ARD committed only on a branch of the person's own, and it is `status: none`, exactly as `phase-handoff.md` §3.4's ARD row records it: the file is not read, and the no-regression rule below applies unchanged. Reading it as `unmerged` would stop every consumer but `/ready`, naming a branch that does not exist, on a decline §3.4 lets them proceed past.
 
 **`unmerged` is reachable only when an ARD file resolves.** An absent ARD is `none`, unchanged — see the no-regression rule below. This status does not make `/create-ard` a prerequisite for anything.
 
