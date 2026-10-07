@@ -59,7 +59,7 @@ Derive a short, descriptive Title Case title from the conversation topic.
 
 Check that no page with this filename already exists anywhere in the vault:
 ```bash
-find "${VAULT}" -name "${PROPOSED_TITLE}.md"  # substitute resolved vault path and title
+find "<the resolved vault path>" -name "<the proposed title>.md"
 ```
 
 If a conflict exists, propose a qualified name (e.g., `MCP Server (Acme).md`).

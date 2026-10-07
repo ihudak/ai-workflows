@@ -1,6 +1,6 @@
 {
   "name": "obsidian-llm-wiki",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "description": "LLM Wiki pattern for an active Obsidian vault. Ten slash commands (/wiki-init, /wiki-ingest, /wiki-scan, /wiki-query, /wiki-save, /wiki-lint, /wiki-hot, /wiki-tags-refresh, /wiki-task, /wiki-tasks-extract) compile knowledge from meetings, projects, daily notes, and raw sources into a persistent, cross-referenced wiki at wiki/, with integrated task management via Obsidian Tasks. Supports Claude Code and GitHub Copilot as first-class agents with session-continuity hooks.",
   "author": {
     "name": "Ivan Gudak",
