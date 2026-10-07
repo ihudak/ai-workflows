@@ -621,8 +621,9 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS
 
 `--excluded` names every slice this run excluded — in the walk, and in Phase 6 step 1 where a slice's
 figures could not be read — and is omitted where it excluded none: it sets the marks Phase 5
-recorded, so a slice Phase 6 excluded is not recorded as included. The record holds the ids Phase 5
-took, so where `check` lists any path `changed`, `added` or `removed`, an input moved while this run was rolling up — a slice re-priced, carved or removed, the
+recorded, so a slice Phase 6 excluded is not recorded as included.
+The record holds the ids Phase 5 took, so where `check` lists any path `changed`, `added` or `removed`,
+an input moved while this run was rolling up — a slice re-priced, carved or removed, the
 root ledger, a defect source or the profile changed: name each path in the final report, and say that
 the next run of this command will report the umbrella as not current until it is re-run. A slice
 under `stale_slices` is not such a move — the walk already showed it stale and it was included as it
