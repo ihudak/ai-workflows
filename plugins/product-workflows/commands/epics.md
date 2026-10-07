@@ -681,7 +681,7 @@ Invoke `prose-style-checker` on the files written in Phase 6. Unlike `/document`
   > emphasis: terminology and customer-facing captions, labels, messages, and text
   > fixed_headings: [the text of every heading `workflows-core:pre-lint`'s Epic block requires per Epic file, verbatim]"
 
-Those headings are contract strings — pre-lint, `epic-reviewer` and every later reader find an Epic's sections by them, `## Independent Test` included — so the checker raises nothing on one, and a finding that still does, which a `prose-style` older than 0.7.0 returns, is never handed to `doc-fixer`, whatever its severity.
+Those headings are contract strings — pre-lint, `epic-reviewer` and every later reader find an Epic's sections by them, `## Independent Test` included — so the checker raises nothing on one, and a finding that still does, which a `prose-style` older than 0.7.0 returns, is never handed to `doc-fixer`, whatever its severity, and the Phase 9 report counts it as declined, not remaining.
 
 Act on the return:
 
@@ -931,7 +931,7 @@ MODERATE — Epic drafting for a single PRD
 [verdict + any `- ARD deviation:` lines recorded] — _omit this whole section when Phase 2.5 status was none_
 
 ### Prose style check (Phase 6.2)
-[OK | VIOLATIONS_FOUND (N fixed, M remaining) | ERROR (reason)] — [1-line summary]
+[OK | VIOLATIONS_FOUND (N fixed, M remaining[, K declined — format headings]) | ERROR (reason)] — [1-line summary]
 
 ### Documentation (Agent 1)
 - [file updated] — [what was added/changed] OR "no update required (reason)"
