@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.12.2] — 2026-10-07
+
+### Fixed
+- **The session-cost page said the computed cost drifts from Claude Code's own accounting by exactly the price table's accuracy.** It drifts by every compaction in the window too, which Claude Code bills but records no usage for; the entry's new `compactions:` field counts them (`workflows-core` 1.32.0).
+
 ## [1.12.1] — 2026-10-07
 
 ### Fixed

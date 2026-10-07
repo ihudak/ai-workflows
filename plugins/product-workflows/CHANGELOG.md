@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.28.0] — 2026-10-07
+
+### Changed
+- **`/specify` Phase 6 cites the inline-fix `BLOCK` escalation entry**, whose array matches its own, instead of `/epics`' ("record in Phase 9 report", where `/specify`'s Phase 9 is its cost phase). Its "Defer" writes one plain bullet per finding into `## Refinement notes`, never a `- [ ]`: `pre-lint` counts every checkbox in the file against the `Open questions` header, the specification format only those under its Open questions sub-headings, so a deferred BLOCKER put the two at odds.
+- **`/specify`, `/create-prd`, `/update-prd`, `/create-ard`, `/prd-proposal` and `/brd-proposal` read every inline fix against what it overlaps before the re-review**, and manual fix notes before the handoff (`workflows-core:escalation-rules`, 1.32.0). Both of a live `/specify` re-review's BLOCKERs were contradictions its own fix cycle had written.
+- **`/specify`, `/create-prd`, `/update-prd` and `/create-ard` write a finding they leave open whose fix needs a decision into the artifact as an open question**, beside the final report, so `/epics` and `/design` see it. A live `/specify` run left four product-input gaps in its report alone, and its re-review flagged that the specification recorded none.
+
 ## [3.27.1] — 2026-10-07
 
 ### Fixed

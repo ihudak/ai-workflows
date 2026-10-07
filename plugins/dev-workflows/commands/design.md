@@ -379,9 +379,12 @@ Dispatch `design-reviewer` (Opus):
   > Ride-along lines:   [the Epic's `- Also touches:` lines, verbatim, or omit where it has none]
   > Repository modules: [the module and deploy-directory paths `enumerate-components` (`workflows-core:components` §2) finds in the target's repository, or omit for a bare-slug target]"
 
-**Act on the verdict** (mirrors `/specify`, save the escalation rule it cites):
+**Act on the verdict** (mirrors `/specify`, save `/specify`'s refinement-notes "Defer" and its open question for a finding left open — a design resolves its own open questions to zero):
 - **`BLOCK`** — fix the BLOCKER findings (the orchestrator/grill edits `design.md` inline — no delegated
-  writer) and re-review once. **Any unresolved `design.md` `- [ ]` is a BLOCKER by policy** — resolve it
+  writer), read the fix against what it overlaps — each interface, seam and test-strategy line it
+  adds or changes against those that govern the same behaviour, per the `An inline fix is read
+  against what it overlaps` rule in `workflows-core:escalation-rules`, and manual fix notes the same
+  way before the handoff — and re-review once. **Any unresolved `design.md` `- [ ]` is a BLOCKER by policy** — resolve it
   or push it onto the spec (Phase 5) before handoff. If still `BLOCK`, escalate per the
   `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` rule in
   `workflows-core:escalation-rules`, per unresolved BLOCKER individually:
