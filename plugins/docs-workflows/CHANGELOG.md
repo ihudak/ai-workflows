@@ -12,7 +12,8 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed
 - **`/docs-audit` keeps its dirty-tree prompt to Stash, Skip and Cancel**, reproduced with the reason: a coverage denominator is a claim about the product as it ships, so it never reads a working tree's uncommitted changes.
-- **A stash is never lost track of.** `/document` Phase 6.2, `/docs-profile` Phase 5, `/docs-init` Phase 2.5 and `/docs-brand` Phase 7 run `workflows-core` 1.31.0's *Stashing the user's changes*: a named stash, recorded by commit, never applied by the run, and named with its restore commands wherever the run ends.
+- **A stash is never lost track of.** `/document` Phase 6.2, `/docs-profile` Phase 5, `/docs-init` Phase 2.5 and `/docs-brand` Phase 7 run `workflows-core` 1.31.0's *Stashing the user's changes*: a named stash, recorded by commit, never applied by the run, and named with its restore commands wherever the run ends. An inline `/docs-profile` hands its stash back for `/document`'s report to name, and `/document` Phase 6.2 records the branch its changes were made on before its switch carried them away.
+
 ## [1.11.0] — 2026-10-07
 
 ### Added

@@ -12,6 +12,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed
 - **`/create-ard` holds every inline edit of its review phase to `ard-format`'s Quality rules**, and adds a counter-example search for a universal claim. A fix, an applied finding or a manual fix note that adds a claim about the code cites the `file:line` a search found. A live run's fix asserted, unsearched, that one service was an endpoint's only caller, and the re-review spent the cap on the BLOCKER that raised. The docs page says so.
+
 ## [3.25.0] — 2026-10-07
 
 ### Added
@@ -198,6 +199,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Added
 - **An `[AD#N]` records its alternatives, and a changed decision supersedes the old one.** `ard-format.md` adds `**Alternatives:**` to every live decision — each other option weighed and why it lost; a decision that beat none fails the existing real-trade-off test and belongs to `/design` — `**Superseded by:** [AD#M] — <why>` for a decision replaced, and `**Withdrawn:** <why>` for one made moot with no replacement. Neither a refine nor a fresh start over an ARD already on the specs repo's default branch rewrites what an existing decision requires, because `design.md`, deviation records, Epic drafts and readiness verdicts cite it by ID; the old decision stays in place, and `workflows-core:ard-resolution` (1.13.0) leaves it out of `invariants`, so nothing enforces it. `/create-ard` grills each decision's alternatives and, in both cases, hands pre-lint and `ard-reviewer` a copy of the ARD taken before the run, so a decision rewritten in place — or dropped — is a MAJOR finding; a missing Alternatives is MAJOR on a new decision and MINOR on one that predates the field, and an interface row's decision (3.13.0's `## Contracts`), which meets the trade-off test by what it is, may record `none weighed`; a superseded interface decision moves its row to the replacement. Older ARDs resolve as before.
+
 ## [3.13.0] — 2026-10-04
 
 **Update `workflows-core` to 1.12.0 with this release**, which carries the `components` reference these commands load.

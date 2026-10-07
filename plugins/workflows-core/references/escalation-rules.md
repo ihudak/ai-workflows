@@ -273,22 +273,31 @@ which option is right depends entirely on why the repo is absent.
 
 ## Stashing the user's changes
 
-**Every choice that stashes a user's uncommitted changes runs this procedure, and nothing else**:
-the Stash choice of § *Dirty working tree* below, and the "Stash … and continue" choices of the
-documentation commands that branch a repository they write into (`/document` Phase 6.2,
-`/docs-profile` Phase 5, `/docs-init` Phase 2.5 and `/docs-brand` Phase 7).
+**Six stash choices run this procedure**: the Stash choice of § *Dirty working tree* below, and the
+"Stash … and continue" choices of the documentation commands that branch a repository they write
+into (`/document` Phase 6.2's two, `/docs-profile` Phase 5, `/docs-init` Phase 2.5 and `/docs-brand`
+Phase 7). `/implement`, `/upgrade` and `/vuln` keep their own: each records a `stash_ref` that
+`dev-workflows:code-handoff` reads.
 
-1. **Stash under a name no other run shares**: `git -C "<repo>" stash push -u -m "<command> <KEY>: <why> <UTC timestamp>"`,
-   untracked files included, since `status --porcelain` counts them; `<KEY>` is the run's key, or
-   its command name alone where it has none. Never a bare `git stash`.
-2. **Record it at once**: its commit, `git -C "<repo>" rev-parse "stash@{0}"`, and where HEAD
-   stood — `git -C "<repo>" branch --show-current`, or, where that prints nothing (a detached
-   HEAD), `git -C "<repo>" rev-parse HEAD`.
+1. **Stash under a name no other run shares**, reading the stash ref on both sides of it:
+   `git -C "<repo>" rev-parse -q --verify refs/stash` (empty where there is none), then
+   `git -C "<repo>" stash push -u -m "<command> <KEY>: <why> <UTC timestamp>"`, untracked files
+   included, since `status --porcelain` counts them, then the same `rev-parse` again. `<KEY>` is the
+   run's key, or its command name alone where it has none. Never a bare `git stash`. **Where the
+   ref did not change, nothing was stashed** — git prints `No local changes to save` and exits 0 on
+   a clean tree — so record nothing, say so, and go on as the choice says. **Where the push exits
+   non-zero** (`You do not have the initial commit yet` on a repository with no commit), report
+   git's message and present the choice that led here again.
+2. **Record it at once**: its commit, the ref's new value, and where HEAD stood when the run
+   reached the choice — `git -C "<repo>" branch --show-current`, or, where that prints nothing (a
+   detached HEAD), `git -C "<repo>" rev-parse HEAD`. A caller that has already moved HEAD records
+   where it stood before the move, and passes that.
 3. **Never apply or pop it.** The run then moves HEAD — a switch, a pull, a new branch — and the
    changes belong where they were made.
 4. **Name it wherever the run ends** — its final report, or the stop message of a run that ends
-   early, a later repository's *Cancel* included — by its message, with the commands that restore
-   it: `git -C "<repo>" switch <branch>` (`switch --detach <commit>` where HEAD was detached), then
+   early, a later repository's *Cancel* included; a run inside another (`/docs-profile --inline`
+   inside `/document`) hands the record back, and the outer run names it — by its message, with the
+   commands that restore it: `git -C "<repo>" switch <branch>` (`switch --detach <commit>` where HEAD was detached), then
    `git -C "<repo>" stash apply <stash commit>`, and once the result is checked,
    `git -C "<repo>" stash drop <ref>`, `<ref>` being the `stash@{<n>}` that
    `git -C "<repo>" stash list --format='%gd %H'` pairs with that commit. **By commit, never by

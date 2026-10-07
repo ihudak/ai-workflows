@@ -11,8 +11,9 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`escalation-rules` § *Dirty working tree* offers "Use the checkout as it stands — no fetch, switch or pull"**: a re-dispatch with the agent's refresh off, which `code-scanner` and `diff-summarizer` already supported, as § *Refresh blocked* already offers for a blocked pull. It reaches `/create-ard`, `/design`, `/document`, `/epics`, `/release-notes` and `/specify`; `/docs-audit` reproduces a list without it, since its coverage is a claim about the product as it ships. A `code-scanner` read of a dirty tree is named in the final report — `<repo>: read as it stands at <branch> @ <sha>, with uncommitted changes` — and in the grounding section of any ARD, specification, design or Epic the run writes; a `diff-summarizer` read without a fetch is named too. The answer holds for a second scan round of the same repository. A live `/create-ard` run had to stash a code repository whose only changes were another plugin's session files.
 
 ### Fixed
-- **Every stash a run takes of the user's changes follows one procedure, § *Stashing the user's changes*.** No reference said what the *Stash* choices ran or what became of the stash — the dirty-tree prompt's, and the "Stash … and continue" choices of `/document`, `/docs-profile`, `/docs-init` and `/docs-brand`. A stash is now a uniquely named `stash push -u`, recorded by commit with where HEAD stood, never applied by the run, and named wherever the run ends with the commands that restore it — by commit, since the stash stack is shared and an index shifts with every later stash. § *Dirty working tree* also states that no choice commits, pushes or discards the user's changes; it and § *Refresh blocked* list `/docs-audit` among their citers and drop the claim that `/epics`' list is shorter.
-- **A config error after `branch -d` is not a failed deletion.** In a container that mounts `.git/config` read-only, `branch -d` deletes the branch, exits 0 and prints `could not write config file`; `specs-repo-git` §3.5 B2 and `architecture-promotion` §9 now report the deletion as done.
+- **Every stash a run takes of the user's changes follows one procedure, § *Stashing the user's changes*.** No reference said what the *Stash* choices ran or what became of the stash — the dirty-tree prompt's, and the "Stash … and continue" choices of `/document`, `/docs-profile`, `/docs-init` and `/docs-brand`. A stash is now a uniquely named `stash push -u` — one that saved nothing, on a clean tree, is recorded as none, never as an older stash — recorded by commit with where HEAD stood before the run moved it, never applied by the run, and named wherever the run ends with the commands that restore it — by commit, since the stash stack is shared and an index shifts with every later stash. § *Dirty working tree* also states that no choice commits, pushes or discards the user's changes; it and § *Refresh blocked* list `/docs-audit` among their citers and drop the claim that `/epics`' list is shorter.
+- **A config error after `branch -d` is not a failed deletion.** In a container that mounts `.git/config` read-only, `branch -d` deletes the branch, exits 0 and prints `could not write config file`; `specs-repo-git` §3.5 B2 and `architecture-promotion` §9 now report the deletion as done. Where B2's deletion leaves an upstream or an older refusal key behind, either of which would keep a later branch of the same name from being pushed, its report names the `config --remove-section` to run where the file is writable.
+
 ## [1.30.0] — 2026-10-07
 
 ### Added
@@ -186,6 +187,7 @@ Ten edge cases in the specs-repository git steps, closed on 2026-10-05 as outsid
   - **Existing checks first:** it reads the project's own check commands before proposing anything, so a check that exists but is unwired or broken is the finding.
   - **No-op instructions:** an instruction a key event shows to name no action is proposed for removal, as a line item the user approves.
   - **Report:** its `#### Hooks` section is now `#### Hooks and checks`, and `feedback-emission` §4's projection names it so.
+
 ## [1.17.1] — 2026-10-05
 
 ### Fixed
@@ -267,6 +269,7 @@ Ten edge cases in the specs-repository git steps, closed on 2026-10-05 as outsid
 - **`ard-resolution` skips a superseded or withdrawn decision.** A `### [AD#N]` carrying `**Superseded by:**` or `**Withdrawn:**` binds nothing (`product-workflows` 3.14.0's `ard-format.md` § Superseding a decision) and is left out of `invariants`, so no consumer enforces a rule the ARD itself replaced.
 - **`pre-lint`'s ARD block** checks `**Alternatives:**` on every live decision — MAJOR, or MINOR on one the prior ARD already held without it — that every `**Superseded by:**` names a live decision, and that every `**Withdrawn:**` gives a reason.
 - **The code-review checklist names a committed credential.** `model-routing/classification.md` §6's security item makes a token, private key, password literal, credentialed URL or added `.env` or keystore in an added line a `BLOCKER`, unless it is plainly a placeholder or test fixture.
+
 ## [1.12.0] — 2026-10-04
 
 **Update `product-workflows` to 3.13.0 and `dev-workflows` to 4.8.0 with this release**: their commands load `components`, which a `workflows-core` older than 1.12.0 does not carry.
