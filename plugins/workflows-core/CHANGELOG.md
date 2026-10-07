@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.33.0] — Unreleased
+
+### Added
+- **`implementation-format` §4 gains the pull-request layer, optional**: where a scanned clone is on GitHub and `gh` is installed and logged in, the scan's consumers also search the GitHub pull requests of the scanned clones' owners for the same tokens, keep one only where its title or body names a token whole, and take a merged one's landed commits into the scan's result — a landed commit whose own message names no token joining as one only the scan found, its tokens those its pull request named; an open, unmerged or out-of-clone pull request is reported, never read.
+
+### Changed
+- **§4's scan never covers the specs repository or the docs repository**, whose commits carry the tokens by the family's own conventions.
+
 ## [1.32.0] — 2026-10-07
 
 ### Added

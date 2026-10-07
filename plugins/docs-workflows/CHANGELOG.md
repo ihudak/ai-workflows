@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.13.0] — Unreleased
+
+### Added
+- **The commit scan finds pull requests too, where it can.** Where a scanned clone is on GitHub and `gh` is installed and logged in, `/document` (keyed mode) and `/release-notes` (with diff grounding on) also search the GitHub pull requests of every owner a clone belongs to for the run's tokens, keep one only where its title or body names a token whole — GitHub's own search matches loosely, even with each token quoted — and read a merged one through the commits it landed: the branch's own commits for a merge commit, the one commit for a squash, the rebased run for a rebase. A landed commit whose own message names no token joins the scan's commits as one only the scan found, reported as unrecorded work, its tokens those its pull request named — so `/release-notes`' read set and note boundary take it unchanged. Every other pull request found — open, closed unmerged, merged with its merge commit not in the clone, or in a repository outside the scanned set — is listed, never read. Without `gh`, nothing changes.
+- **`scripts/key-discovery.py`**, standard library only and self-tested in CI (32 cases, fake `gh` and `ssh` on a temporary `PATH`): the whole-key scan, its report-only probe (less the commits a found pull request accounts for), and the optional search — at most six tokens per query, an SSH host alias resolved as `workflows-core:phase-handoff` §2.6 resolves it. It fetches nothing and writes nothing; a batch that fills the search's 1000-hit limit or a rate limit is reported, and any failure exits 2.
+- **`references/key-discovery.md`** — how both commands run the script and use what it returns.
+
+### Changed
+- **The scan runs through the script.** The tokens, the repositories, the whole-key boundary, the reach report and the probe mean what `workflows-core:implementation-format` §4 says, as before; the script runs them, with the escaping and the boundary tested once instead of written by the model on every run.
+- **The specs repository and the docs repository are never scanned as code.** Where `implementation.md` names no repository the scan covered every clone under `$REPOS_PATH`, those two included, whose commits carry the run's tokens by the family's own conventions; both commands now pass them as `--exclude`, and a second clone of either is left out with them.
+- **What the commands say about `gh`**: no pull-request API is required; where a scanned clone is on GitHub and `gh` is installed and logged in, its read-only search and view are read, and `gh` wraps the API.
+
 ## [1.12.2] — 2026-10-07
 
 ### Fixed
