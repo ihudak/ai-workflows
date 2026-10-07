@@ -15,9 +15,15 @@ ID this run introduced, never one the artifact already carried; delete a stray p
 
 ## Universal checks (every artifact)
 
-1. **Placeholder scan** — `grep -nE '\b(TBD|TODO|FIXME|XXX)\b|<[a-z][a-z0-9 _./-]*>' <file>`. Any hit →
+1. **Placeholder scan** — `grep -nE "\b(TBD|TODO|FIXME|XXX)\b|<[a-z][a-z0-9 _./,'()-]*>" <file>`. Any hit →
    BLOCKER (a shipped artifact carries no placeholder). Does NOT flag `[NEEDS CLARIFICATION]` or
-   `- [ ]` open questions — those are counted per-artifact below.
+   `- [ ]` open questions — those are counted per-artifact below. The class takes an apostrophe, a
+   comma and parentheses because a placeholder written as a phrase — `<the service's dev port>`,
+   `<value, e.g. 30>`, `<port (dev)>` — is still one: without them, one reached three Epics of a live
+   run. **Do not widen it to "anything up to `>`".** That was measured on a live specs tree and caught
+   `<the ISBN>` in an API template — `?isbn=<the ISBN>`, the notation an ARD's Rule and an Epic's
+   criteria use for a request's parameter — which this pattern leaves alone, its class holding no
+   capital letter; the absent `:` keeps a markdown autolink (`<https://…>`) out as well.
 2. **Identifier integrity** — for each ID series the artifact uses (below), the numbers form a
    contiguous run from the scheme's base with no duplicates. A duplicate → BLOCKER; a gap → MINOR.
 3. **Required-section presence** — every mandatory heading listed for the artifact is present
@@ -31,7 +37,9 @@ An artifact whose body is pasted into a tracker must contain no token that track
 
 For the PRD, run against the body **below the frontmatter** — `/create-prd` pastes only that, and the
 frontmatter's `key:` / `ref:` / `seeded_from_prd:` / `revision_of:` legitimately carry keys.
-For the ARD, scan **below the frontmatter**. For Epic files, scan the entire file (the template has no frontmatter).
+For the ARD, scan **below the frontmatter**. For Epic files, scan **below the frontmatter** as well —
+`epic-writer` writes `kind:`, `key:` and `target:` there, and `key:` legitimately carries the Epic's
+key; scanning the whole file reported that line on every Epic of a live run.
 
 Discard a hit ONLY when it is a deliberate tracker reference: inside a wikilink (`[[KEY-123]]`), inside
 a markdown link (link text or URL), or inside a fenced code block. Inline code (`` `KEY-123` ``) is NOT excluded and IS flagged.
@@ -82,8 +90,10 @@ drafts, which are. Catching it at the source is cheaper than catching it downstr
 - Acceptance criteria are Given/When/Then bullets (`grep -nE '^- Given .*, when .*, then ' <file>`;
   a `## Acceptance criteria` section with zero G/W/T bullets → MAJOR).
 - `[NEEDS CLARIFICATION]` count ≤ 3 per Epic (epic-writer cap; >3 → MAJOR).
-- `## Covers` references parent-PRD IDs in bracketed form (`[US#N]`/`[AC#N]`/`[SM#N]`); Epics do not
-  mint their own criterion IDs.
+- `## Covers` references parent-PRD IDs in bracketed form — any series `prd-format.md` § Changing a
+  requirement lists (`[US#N]`, `[AC#N]`, `[SM#N]`, `[SMC#N]`, `[UC#N]`, `[FR#N]`), and, where `/epics`
+  folded in a PRD-level specification, its `[Uxx]` and `[Uxx/ACxx]` ids; Epics do not mint their own
+  criterion IDs.
 - A `_coverage.md` file is present in the output dir.
 - Refined Epic files (from `/epics` refinement mode — `EPIC-<EPIC-KEY>-<eslug>/epic.md`, the keyed
   folder and keyless filename `epic-writer` writes; never `<EPIC-KEY>.md`, which that agent forbids)

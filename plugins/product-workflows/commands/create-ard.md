@@ -320,6 +320,20 @@ them wherever `prd_dir` holds them, on either route, as that subsection says. `a
 `/brd-intake --sort-existing` migration, it is read as context rather than frozen, and its absence
 is the ordinary case. The PRD is gated above on every route.
 
+**Gate the Epic — on an Epic-level run, after the gates above.** Execute `require-on-main`
+(`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against the `epic.md` in the Epic folder step 3 resolved — never a path
+re-derived here — and map its §3.7 return value by `stopped` first, never by `on_main` alone. Any
+stopping state → stop per §4.4. An Epic on an unmerged `epics/` branch is the state this gate exists
+for: `/product-workflows:epics` hands its drafts off on that branch, and the preflight keeps a run
+whose key the branch carries on it (`workflows-core:specs-repo-git` §3.5 B3), so architecting there
+would cut this run's `ard/` branch from the Epic's own and carry its pull request's commits into this
+one. Otherwise (`stopped: false`): on `pass`/`pass_amending`, proceed; on `absent`, Phase 2 reads the
+Epic folder as it stands, exactly as it does without this gate — `epic.md` is read where one exists,
+and an Epic folder holding none is no stop — but report it: *"`<EPIC>`'s `epic.md` is on no branch —
+architecting from the Epic folder at `<path>` as it stands."*, or, where the folder holds no
+`epic.md`, *"No `epic.md` in `<path>` — architecting from what the Epic folder holds."*; on
+`unmanaged`, behave exactly as before this gate. A PRD-level run reads no Epic and gates none.
+
 ---
 
 ## Phase 1 — Configure
@@ -373,8 +387,13 @@ run mode.
 Read the PRD from the folder `resolve-address <PRD>` returned (`workflows-core:addressing` §3) — its `prd.md`, whose frontmatter is `kind: prd`, when present (authored source), its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement).
 
 **Read the resolved folder directly.** PRD-level → its `prd.md`. Epic-level → the Epic folder's own
-`specification.md` and `design.md` where present, plus the parent PRD folder's `prd.md` for the
-product frame this Epic sits in.
+`epic.md` where present — the Epic's goal, scope, acceptance criteria, `target:` and `## Contract`,
+which is what an Epic-level ARD architects — and its `specification.md` and `design.md` where present,
+plus the parent PRD folder's `prd.md` for the product frame this Epic sits in. **A `[NEEDS
+CLARIFICATION]` marker in that `epic.md` is a decision `/epics` left open** (`workflows-core:escalation-rules`,
+*A finding left open that needs a decision is recorded in the artifact*): the grill asks it where it
+is an architecture decision, and otherwise it stays the Epic's, for `/product-workflows:specify`
+to settle.
 
 **An absent `prd.md` is reported and never a stop, on either route.** Phase 0's gate has already
 returned `absent` and printed the line naming the folder this run architects from instead; this phase
@@ -385,7 +404,7 @@ supported, and it is the state the gate's row in
 the frame and themes below come from whatever else the folder carries — which on the BRD route is the
 seed, the register and the findings the section at the end of this phase reads.
 
-For an **Epic-level** run always dispatch the folder read this way (`depth: full`, scoped to `focus_key`) for the Epic's scope — the authored-PRD-file check above only applies PRD-level. Resolve any PRD-level ARD by invoking `Skill(skill: "workflows-core:reference", args: "ard-resolution")` and running its resolution with `prd: <PRD>`, `epic: null`, `$SPECS_PATH`. On `status: found`, load its `AD#N` invariants to **inherit read-only**. On `status: unmerged`, **stop**, naming the returned `branch` and any `pr`. On `status: none`, proceed unchanged — there is no PRD-level ARD to inherit.
+For an **Epic-level** run always read the Epic folder as *Read the resolved folder directly* above says, for the Epic's scope — the authored-PRD-file check above only applies PRD-level. Resolve any PRD-level ARD by invoking `Skill(skill: "workflows-core:reference", args: "ard-resolution")` and running its resolution with `prd: <PRD>`, `epic: null`, `$SPECS_PATH`. On `status: found`, load its `AD#N` invariants to **inherit read-only**. On `status: unmerged`, **stop**, naming the returned `branch` and any `pr`. On `status: none`, proceed unchanged — there is no PRD-level ARD to inherit.
 
 Extract the problem/goal/scope frame + capability themes — the raw material for grounding + the grill.
 

@@ -6,7 +6,7 @@ tools: ["Read", "Glob", "Grep", "Write", "Edit", "Skill"]
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
-Epic-definition writer for `/epics` Phase 6. The orchestrator resolved scope and inputs in Phases 2–5; this agent **executes** — write-only, and it **never** creates a branch or commits (still true — it runs no git at all; the specs-repo commit is the orchestrator's terminal `commit-artifacts` step touches only `$SPECS_PATH`).
+Epic-definition writer for `/epics` Phase 6. The orchestrator resolved scope and inputs in Phases 2–5; this agent **executes** — write-only, and it **never** creates a branch or commits (still true — it runs no git at all; the orchestrator hands the drafts off behind its own consent choice, and its terminal `commit-artifacts` step commits only the run's session files).
 
 ## Inputs
 
@@ -124,7 +124,11 @@ Traceability: every claim in each Epic must be traceable to the handoff `folder_
 
 Where you genuinely cannot infer a detail from the PRD or code-scanner sources,
 insert an inline `[NEEDS CLARIFICATION: <specific question>]` at that point in
-the draft INSTEAD of silently guessing. Rules:
+the draft INSTEAD of silently guessing — never an angle-bracket placeholder
+such as `<the service's dev port>`, which a shipped artifact never carries
+(`workflows-core:pre-lint` flags one as a BLOCKER) and which no gate asks
+anybody. A value the ARD leaves to design is a dependency on the Epic or the
+design that fixes it, named in `## Dependencies`, not a token. Rules:
 
 - **Cap 3 per Epic.** More than 3 genuine unknowns signals an under-specified
   Epic — say so in `notes` rather than over-marking.
@@ -134,6 +138,11 @@ the draft INSTEAD of silently guessing. Rules:
 - Record every marker in the return field `clarifications_needed[]` as
   `{epic, section, question, suggested_answer}` — always propose your best-guess
   `suggested_answer` so the orchestrator's clarification gate can offer it.
+  **A suggested answer is Epic text the moment the user takes it**, so it is held
+  to everything the draft is: consistent with every `[AD#N]` Rule it touches
+  (*ARD conformance* below) and with the PRD requirements it bears on, and
+  traceable like any other claim. Quote what those say rather than paraphrasing
+  it where the answer turns on their wording.
 
 ## Refinement mode (`mode: refine | both`)
 
@@ -144,6 +153,7 @@ When `mode` is `refine` or `both`, treat every entry in `refinement_targets[]` a
 - **Partition the PRD.** Distribute the PRD `requirements[]` across the refinement targets; each target's `## Covers` lists only its slice. Two targets must not silently claim the same requirement.
 - **Inter-target dependencies are expected.** When one refined Epic depends on another (e.g. a framework Epic that must land first), name the other Epic by key in `## Dependencies`. Such inter-target dependencies are legal (they encode build order) — do not suppress them.
 - **Undrawable boundaries** → a `[NEEDS CLARIFICATION]` marker in the affected Epic + a `clarifications_needed[]` entry (subject to the ≤3-per-Epic cap).
+- **A marker the current body already carries is an open question an earlier run left** — a decision its review found and nobody took (`workflows-core:escalation-rules`, *A finding left open that needs a decision is recorded in the artifact*). Keep it where it stands and record it in `clarifications_needed[]` like one you insert, with your best-guess `suggested_answer`, unless the handoff's sources now settle it, in which case write the answer in its place and say so in `notes`.
 
 In `mode: both`, also draft net-new Epics for scope no target covers — keyed and foldered exactly as the generate flow writes them. In a focus run that splits (`/epics` Phase 6) — the user named work that moves to another component, or the focus Epic's scope already lands in more than one — that is the focus Epic's own scope landing outside its one target: one net-new Epic per other component, each targeting it. In `mode: generate` (or when `refinement_targets[]` is empty) behaviour is exactly as before.
 
@@ -182,7 +192,7 @@ The rules are `workflows-core:components`'s; what follows is how they shape a dr
 
 - **One target per Epic.** Write exactly one `target:`, an `id` from `components`, never one outside it. A capability that lands in two or more components becomes one Epic per component, each linked to the others it needs by key in `## Dependencies` — in `contracts.landing_order` where the handoff carries `contracts`.
 - **Ride-along** (§4). Where an Epic's target needs a change in a `kind: deploy` component **of the same repository** that exists only to deploy or configure the target, write it under `### In scope` as `- Also touches: <component id> — <why>` — a `kind: deploy` entry of `components`, or, where `components` does not list it, `<the target's repo-slug>:<the deploy directory>` (§4) — and do not split it out. Where the target is a module, a change to its repository's shared ground (`workflows-core:components` §2 — any path inside none of its modules and deploy directories) made for the target's sake stays in its In scope with no line of its own. A change in a `kind: code` component, or in a component of another repository, is a second target: split it.
-- **`## Contract`** — only where `multi_component` is true and the handoff carries `contracts`; omit the section otherwise. One line per interface row the Epic implements (`- Produces:`) or calls (`- Consumes:`), each citing the row's `[AD#N]`. An Epic produces only rows whose producer is its own target. A consumer's `## Independent Test` runs against a stub of each `new` or `changed` interface it consumes whose `artifact` is null, named there; one whose artifact a contract Epic produces is used as built, since that Epic lands first. Its `## Dependencies` names the Epic that produces each `new` or `changed` interface it consumes.
+- **`## Contract`** — only where `multi_component` is true and the handoff carries `contracts`; omit the section otherwise. One line per interface row the Epic implements (`- Produces:`) or calls (`- Consumes:`), each citing the row's `[AD#N]`. An Epic produces only rows whose producer is its own target. A consumer's `## Independent Test` runs against a stub of each `new` or `changed` interface it consumes whose `artifact` is null, named there; one whose artifact a contract Epic produces is used as built, since that Epic lands first. Its `## Dependencies` names the Epic that produces each `new` or `changed` interface it consumes — and, where that interface's `artifact` is null, says the consumer does not wait for that Epic, since its Independent Test runs against the stub: the ARD's landing order binds only a producer whose artifact is a code file (`${CLAUDE_PLUGIN_ROOT}/references/ard-format.md`, `### Landing order`), so such a producer may land after its consumers, and a line read as "blocked by" would turn a legal order into a cycle.
 - **A contract Epic** exists only where a row's `artifact` is not null — the contract is a code file (an OpenAPI or `.proto` file, a shared entity module, a generated client) — and its `status` is `new` or `changed`: a row that `exists` is already built, so its consumers use it as it runs and depend on no Epic for it. It targets the row's producer, produces that row, and comes first: every consumer of the row depends on it. A row whose artifact is null gets no Epic of its own; its producer's ordinary Epic produces it.
 - **Multi-component without `contracts`** (the `/epics` prerequisites stop's override): still one target per Epic and still linked through `## Dependencies`, with no `## Contract` section.
 - A capability you cannot place in one component of `components` is a `[NEEDS CLARIFICATION]` marker in the affected Epic's Scope, under the cap of three — never a guessed target.

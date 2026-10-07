@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.34.0] — 2026-10-08
+
+### Added
+- **`phase-handoff` and `specs-repo-git` take a tenth plugin branch prefix, `epics`**, for `/product-workflows:epics`' new handoff (product-workflows 3.29.0): the bounded-branch pattern, `branch-key`'s strip list, the `prefix` input row, the plugin-branch scan, the G2 notice, `branch-naming`'s identity skip list and `scripts/session-branch.py`'s copy of it. It is plural so as not to claim a team's own `epic/` branches.
+- **`phase-handoff` §3.4 gates `epic.md` for `/create-ard` and `/specify` at Epic altitude**, falling back on `absent` to the Epic folder as it stands, so an Epic on an unmerged `epics/` branch now stops both instead of having their `ard/` or `spec/` branch cut on top of it. §4.0 classes `epic.md` *gated* and `_coverage.md` *unread*, and §4.1 and §4.3 name `epic.md` among the falling-back artifacts.
+- **`escalation-rules`' *A finding left open that needs a decision is recorded in the artifact* covers `epic.md`**: an inline `[NEEDS CLARIFICATION]` marker, the form an Epic keeps its open questions in, within the writer's cap of three per Epic.
+
+### Fixed
+- **`pre-lint`'s placeholder scan missed a placeholder written as a phrase** — `<alerts' dev port>` reached three Epics of a live run because the class took no apostrophe. It now takes `'`, `,` and parentheses, and stays without capitals, which a measured wider form would have flagged in `?isbn=<the ISBN>`, an API template.
+- **`pre-lint` scans an Epic below its frontmatter**, as it does a PRD and an ARD: the rule said the template had none, and `key:` was reported on every Epic of a live run.
+- **`pre-lint`'s Epic `## Covers` check named three requirement series**; it names every series `prd-format` lists, `[SMC#N]` among them, and a folded-in specification's ids.
+- **`specs-repo-git`'s G1 notice** named an Epic draft left by `/epics` as the usual cause of uncommitted files; it names a declined deliverable handoff, the state that remains.
+- **`/prompt`, `/prompt-brainstorm` and `/prompt-grill-me` passed no `plugin_version` to `emit-prompt`**, whose entry requires one, so a live run guessed; each now reads its own, as `/feedback` does, and `feedback-emission`'s `emit-prompt` inputs say so.
+- **`specs-repo-git` §4.1 cited a producer count `phase-handoff` never states**; it names the producers instead, `/epics` among them.
+- **`next-phase-offer`** names `/epics`' `### Next step` among the offers carrying `<merge-clause>`.
+
 ## [1.33.0] — 2026-10-07
 
 ### Added

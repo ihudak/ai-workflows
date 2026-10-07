@@ -124,7 +124,7 @@ The three edges leaving `/brd-reconcile` into the PRD pipeline, as each command'
 | **PM** | `/idea`, `/create-prd`, `/update-prd` (and an early `/docs-workflows:release-notes`); also `/brd-intake`, `/brd-split`, `/brd-interview`, `/brd-package`, `/brd-reconcile` | `idea.md`, then the PRD, in `$SPECS_PATH/specifications/PRD-<KEY>-<slug>/`; on the BRD route, the inventory, ledger, decision register, customer package and reconciliation record |
 | **PM** *(effort proposals — optional, gates nothing on the build ladder)* | `/prd-proposal`, `/brd-proposal` | `proposal.md` and its rationale brief: in the `PRD-` slice folder for one slice, and in the `BRD-` container above a set of priced slices for the programme umbrella |
 | **PA** | `/create-ard` (optional); also `/prd-ground` (PM-initiated, PA/Dev-executed, either route) | the ARD, in the same specs feature folder as the PRD; `[CG#n]`/`[DG#n]` grounding findings in the resolved folder — a BRD slice's on the BRD route, a PRD's on the idea route |
-| **PE** | `/epics`, `/specify` | `epic.md` per `EPIC-` folder under the PRD folder; `specification.md` on the specs repo's default branch |
+| **PE** | `/epics`, `/specify` | `epic.md` per `EPIC-` folder under the PRD folder, and `specification.md`, each on the specs repo's default branch |
 
 See [Roles and phases](roles-and-phases.md) for what each role owns, consumes, and hands off — this table only shows where the commands sit. The Dev role, downstream of this plugin's spine, is documented on the companion `dev-workflows` plugin's own Roles and phases page.
 

@@ -481,15 +481,15 @@ Used by the commands that fix inline — `/create-prd`, `/update-prd`, `/create-
 **The final report is read once, by whoever ran the command; the next phase reads the artifact.** A
 finding a run leaves open reaches its final report under every command, and where all its fix lacks
 is an edit, that is enough. Where its fix needs a decision the run did not take — a product decision
-in a specification or a PRD, an architecture decision in an ARD — it is not: the next phase builds
+in a specification, a PRD or an Epic, an architecture decision in an ARD — it is not: the next phase builds
 on the artifact without it. A live `/specify` run left four product-input gaps open, among them a
 bound on how many books a client may wait on and where an alert for a since-removed book links, and
 its re-review flagged that the specification recorded none of them; `/epics` would have split it
 without them. The `/create-ard` run before it left its architect-input gaps in its final report the
 same way.
 
-**So such a finding is also written into the artifact as an open question that names it**, in the
-section the artifact's own format keeps for open questions:
+**So such a finding is also written into the artifact as an open question that names it**, where
+the artifact's own format keeps its open questions:
 
 - `specification.md` — a `- [ ]` item under the `Open questions` sub-heading of the stage it
   concerns, at the depth `product-workflows:specification-format` fixes for that stage, with the
@@ -503,7 +503,11 @@ section the artifact's own format keeps for open questions:
   each such finding through its Phase 3 triage of a gap the grill cannot close, on any profile, so
   one only the customer can settle becomes an `[AS#n]` in `decisions.md` and reaches the customer
   through `/brd-package`, rather than stopping at a paragraph. `/update-prd` writes no decision
-  register on either route, so it records the PRD entry alone.
+  register on either route, so it records the PRD entry alone;
+- `epic.md` — an inline `[NEEDS CLARIFICATION: <question>]` marker at the point in the Epic it
+  concerns, which is the form an Epic keeps its open questions in (`product-workflows:epic-writer`,
+  *Uncertainty markers*), within that section's cap of three per Epic: a finding past the cap stays
+  in the final report, which names the Epic as under-specified, as the writer's notes would.
 
 **The question names the requirement it puts in doubt, where it puts one in doubt**, so the next
 run knows which requirement to revisit when it settles the question. **And it is written after the last
@@ -513,15 +517,18 @@ itself.
 
 It reaches findings of any severity the run leaves open — a `MAJOR`, `MINOR` or `NIT` it did not
 apply, a `BLOCKER` deferred at the escalation — and no others: one the user overrode is settled, and
-one whose fix is only an edit asks nobody anything. A `BLOCKER` `/specify`'s "Defer" writes into
-`## Refinement notes` is still written as an open question where its fix needs a decision: the note
-records the deferral, as a plain bullet that counts as no question, and the open question records
-the decision. A specification's open
-questions stop nothing downstream — `/design` reads them and may resolve or inherit them. Writing
+one whose fix is only an edit asks nobody anything. A `BLOCKER` that `/specify`'s or `/epics`'
+"Defer" writes into `## Refinement notes` is still written as an open question where its fix needs a
+decision: the note records the deferral, as a plain bullet that counts as no question, and the open
+question records the decision. A specification's open
+questions stop nothing downstream — `/design` reads them and may resolve or inherit them. An Epic's
+marker is asked again wherever the Epic is next read: `/specify`'s grill asks it, and a later
+`/epics` run on the Epic puts it through its clarification gate, where one left unresolved is an
+`epic-reviewer` `BLOCKER`, as every marker is. Writing
 one is an edit after the verdict, which the final report names under `A recorded verdict names the
 version it was taken against`; it answers no finding, so it makes no re-review offer.
 
-Used by `/create-prd`, `/update-prd`, `/create-ard` and `/specify`. `/design` is not among them: its
+Used by `/create-prd`, `/update-prd`, `/create-ard`, `/specify` and `/epics`. `/design` is not among them: its
 own open questions must be resolved before its gate passes, so a finding it leaves open stays in its
 final report.
 

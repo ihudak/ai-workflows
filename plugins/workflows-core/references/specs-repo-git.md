@@ -25,7 +25,7 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
    fire; a `cd` would corrupt their git state.
 2. **Bounded paths.** Only §2.1 paths are ever staged. `git add -A` is never
    issued at repository scope — always `git add -A -- <literal paths>`.
-3. **Bounded branches.** Only branches matching `^(idea|prd|ard|spec|design|ready|brd|frames|kb)/`
+3. **Bounded branches.** Only branches matching `^(idea|prd|ard|spec|epics|design|ready|brd|frames|kb)/`
    are the plugin's to switch away from or delete (§2.2). They, the default
    branch and §8's session branch are the only branches it pushes, only to
    `origin`, and only while the push would publish nothing but its own
@@ -135,8 +135,9 @@ a verified fact. **The two drafts were the fourth and fifth instances**, found b
 specs repo's status against this list after a keyed `/document` run: both came out OTHER beside a
 staged cost entry, and nothing else committed them. When an emission ladder changes shape, or a
 command starts writing a draft into the feature folder, re-derive this list against it rather than
-trusting either end. `/epics` is the deliberate contrast and stays as it is: it
-writes `epic.md` files this reference never stages, and says so in place.
+trusting either end. `/epics` is the contrast: the `epic.md` files and `_coverage.md` it
+writes are its deliverable, which this reference never stages and `phase-handoff.md` §2 hands off
+behind that command's consent choice, as it does every other producer's.
 
 **A screenshot `/document` stages for manual upload is not a shape, and `/document` keeps it out
 of `git status` instead.** Its staging directory is, by default, the resolved PRD folder's screenshot subfolder
@@ -222,7 +223,7 @@ do not justify it by claiming plain `git add` cannot stage the deletion.
 ### 2.2 Branches
 
 **The plugin manages only branches it created.** A branch is plugin-owned when
-its name matches `^(idea|prd|ard|spec|design|ready|brd|frames|kb)/`. The session
+its name matches `^(idea|prd|ard|spec|epics|design|ready|brd|frames|kb)/`. The session
 branch §8 creates is the plugin's too, for commit and push only (§1 rule 3).
 
 Any other **named** branch save the default branch — the user's own work, a
@@ -445,7 +446,7 @@ Ancestry alone was the test, and a pull request merged by squash or by rebase ne
 *against the run key set*, by testing the keys the run already holds. It is never
 extracted from the branch name as free text.
 
-1. Strip the `idea/`, `prd/`, `ard/`, `spec/`, `design/`, `ready/`, `brd/`, `frames/` or `kb/`
+1. Strip the `idea/`, `prd/`, `ard/`, `spec/`, `epics/`, `design/`, `ready/`, `brd/`, `frames/` or `kb/`
    prefix (a `kb/harvest-<date>` name holds no key, so it resolves to B4). Call the remainder `R`. No prefix matches → not a plugin
    branch, and no row here applies (§3.3 G2 already kept the run on it).
 2. A key `K` in the run key set (§3.2) is a **candidate** when `R` is exactly `K`,
@@ -849,7 +850,7 @@ to state.
 - **In session-branch mode** (§8) — on the session branch, whatever the
   checkout stands on, and a deliverable branch carries no session file. The
   bullets below hold outside the mode.
-- **A command that opened a specs-repo branch at handoff** (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/implement`, `/ready`, `/frames`, `/prd-ground`, `/prd-proposal`, `/harvest-decisions`, `/promote-decisions`, and every `/brd-*` command — nineteen total, matching `phase-handoff.md`'s producer count) — on that `idea|prd|ard|spec|design|ready|brd|frames|kb/*` branch, so the push updates the pull request already open. Two commits on one branch: the deliverable, then the artifacts — save where the deliverable's commit failed (`phase-handoff.md` §4.1's *Commit failed*), when the artifacts' commit alone lands on that branch and its push opens no pull request. Every `/brd-*` command opens on the shared `brd` prefix (`phase-handoff.md` §2.9); `/prd-ground` opens on that same shared `brd` prefix on the BRD route, or on the shared `prd` prefix (with `/create-prd`, `/update-prd` and `/prd-proposal`) on the idea route — it left the `/brd-*` glob the day its own rename shipped, but not the prefix sharing, which is why it is named here rather than folded into "every `/brd-*` command". A later `/brd-*` run — or `/prd-ground`, on the BRD route — that reuses the branch a prior phase of the same BRD opened lands there rather than on the default branch.
+- **A command that opened a specs-repo branch at handoff** (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/epics`, `/design`, `/implement`, `/ready`, `/frames`, `/prd-ground`, `/prd-proposal`, `/harvest-decisions`, `/promote-decisions`, and every `/brd-*` command — every command that offers `phase-handoff.md`'s `handoff-to-main`, `/promote-decisions` through `architecture-promotion.md` §11.2) — on that `idea|prd|ard|spec|epics|design|ready|brd|frames|kb/*` branch, so the push updates the pull request already open. Two commits on one branch: the deliverable, then the artifacts — save where the deliverable's commit failed (`phase-handoff.md` §4.1's *Commit failed*), when the artifacts' commit alone lands on that branch and its push opens no pull request. Every `/brd-*` command opens on the shared `brd` prefix (`phase-handoff.md` §2.9); `/prd-ground` opens on that same shared `brd` prefix on the BRD route, or on the shared `prd` prefix (with `/create-prd`, `/update-prd` and `/prd-proposal`) on the idea route — it left the `/brd-*` glob the day its own rename shipped, but not the prefix sharing, which is why it is named here rather than folded into "every `/brd-*` command". A later `/brd-*` run — or `/prd-ground`, on the BRD route — that reuses the branch a prior phase of the same BRD opened lands there rather than on the default branch.
 - **The same command when the user declined git at handoff** ("just write the
   files — I'll handle git") — the repo is still on the default branch and the
   deliverable is uncommitted there. `commit-artifacts` still runs and commits
@@ -925,8 +926,9 @@ If ignored: nothing is lost — your files stay uncommitted, and this run's
           artifacts are committed alongside them. But the preflight ends here
           on EVERY later run too, so the leftover flush and the branch
           settle (stages 2-3) stay skipped until these paths are committed
-          or removed. An Epic draft left in place by /epics is the usual
-          cause, and it is a supported state — this is what it costs.
+          or removed. A deliverable whose handoff was declined — "just
+          write the files" — is the usual cause, and it is a supported
+          state — this is what it costs.
 ```
 
 **G2 — advisory:**
@@ -936,7 +938,7 @@ If ignored: nothing is lost — your files stay uncommitted, and this run's
 
 Found:    <SPECS_PATH> is on branch `<branch>`, which is neither the default
           branch (`<default>`) nor a plugin branch (idea/ prd/ ard/ spec/
-          design/ ready/ brd/ frames/ kb/).
+          epics/ design/ ready/ brd/ frames/ kb/).
 Not done: the preflight did not switch away from it — the plugin manages only
           branches it created. This run's artifacts WILL be committed on
           `<branch>`, and not pushed.

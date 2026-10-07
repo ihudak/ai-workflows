@@ -252,7 +252,8 @@ the target (§2); write; surface the path + any degradation notice.
 
 Inputs: `command` (inferred from recent context, or `n/a`), the **corrective
 triple** — Friction, the **verbatim User prompt** (redacted here per §1.1, never by the caller), and the Resolution — a
-`category`, `impact`, `key` (or `null`), `source`.
+`category`, `impact`, `key` (or `null`), `source`, and `plugin_version` — the calling command's own (§3), which every
+caller of this entry point ships from `workflows-core`.
 
 Behavior: `origin: prompt`; write the entry with the two extra prose blocks
 (User prompt verbatim save §1.1's redactions + Resolution, §1); never silently skipped (§3); resolve

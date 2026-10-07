@@ -45,7 +45,9 @@ Cite `${CLAUDE_PLUGIN_ROOT}/references/feedback-emission.md` and call its
 - **User prompt** — `$ARGUMENTS`, **verbatim** (never paraphrased, and never redacted here: `emit-prompt` applies `feedback-emission.md` §1.1's redactions as it writes).
 - **Resolution** — `Handed off to superpowers:brainstorming to redesign the correction.`
 - `command` (Phase 1), an inferred `category` (§1 vocab, reuse-first), `impact`,
-  `key` (or `null`), `source`.
+  `key` (or `null`), `source`, and `plugin_version`, read from
+  `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` — this command's own plugin, as
+  `/feedback` reads it, since this is the command that ran (`feedback-emission.md` §3).
 
 `emit-prompt` resolves the write target via the §2 specs-first ladder, formats
 the entry with the two extra prose blocks (`origin: prompt`), appends per §3
