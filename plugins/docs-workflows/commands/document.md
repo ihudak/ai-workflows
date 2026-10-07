@@ -428,8 +428,9 @@ alongside it.
    once (that reference's §4).
 2. **The scan.** For each repository — those `implementation.md` names, or, when it names none, the
    repositories resolved from `$REPOS_PATH` — search commit messages for the identifiers this run
-   already holds, with the `git log` command `workflows-core:implementation-format` §4 gives: one
-   `--grep` per token, each matching only as a whole key. The tokens — keys and `workitem_key`s —
+   already holds, through `${CLAUDE_PLUGIN_ROOT}/scripts/key-discovery.py`, run as
+   `${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1 says — the `git log` `workflows-core:implementation-format`
+   §4 gives, one `--grep` per token, each matching only as a whole key. The tokens — keys and `workitem_key`s —
    are the ones §4 names for this run's scope — the focus Epic's where `focus_key` is set, and,
    where it is null, **the PRD folder's and every `EPIC-` folder's**, since a whole-key match on the
    PRD's key does not reach the Epic keys `/product-workflows:epics` mints by extending it, and
@@ -441,13 +442,15 @@ alongside it.
 **unrecorded work**, named as such with its commits listed: folding hand-made commits silently into
 the recorded set would make the record look more complete than it is.
 
-**Report the scan's own reach.** Say **how many commits it scanned** — the non-merge commits it walked,
-`git -C <repo> rev-list --no-merges --count HEAD` — **and how many matched**. Only a non-merge
+**Merged pull requests add commits** (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §4) — only where a scanned clone is on GitHub and `gh` is installed and logged in. A merged pull request naming a token contributes the commits it landed: one the scan already found is that commit, tagged with the pull request; one whose own message names no token joins the scan's commits as a commit only the scan found, reported as unrecorded work like any other and tagged with its pull request. Every other pull request found is listed in the report, never read.
+
+**Report the scan's own reach.** Say **how many commits it scanned** — the non-merge commits it walked, the script's `scanned`
+(`git -C <repo> rev-list --no-merges --count HEAD`) — **and how many matched** (`matched`). Only a non-merge
 commit whose message names the key is findable, and no convention compels a human to follow one — so
 a zero-match scan in a repository that has commits is a signal about the commit convention
 (`docs/reference/commit-convention.md`), not proof that no work happened.
 
-**On a repository the scan left at zero matches, run §4's report-only unanchored probe** and print
+**On a repository the scan left at zero matches, run §4's report-only unanchored probe** (the script's `probe` for it, less the commits a found pull request accounts for) and print
 what it matched, in the words that section gives — *"may name this key inside a branch name or in a
 merge commit — inspect by hand"*. Printing is the whole of it: none of those commits is handed to
 `diff-summarizer`, none joins the refs this phase builds, and none is reported as this run's
@@ -464,7 +467,7 @@ unresolved; and a commit only the scan found — the scan takes no merge commit
 its own change (a root commit's, against the empty tree; a shallow clone's boundary commit, merge or not, comes back unresolved). A squash of a recorded commit is read beside that commit's own element: the same
 change summarised twice, which costs less than missing either.
 `repo_path` is a top-level input of that agent, passed once at the Phase 5 dispatch and never
-repeated inside an element. No URL, no host classification, no `gh` requirement.
+repeated inside an element. No URL and no host classification reach it, and nothing here requires `gh`: a pull request reaches `diff-summarizer` only as the commits it landed (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §4).
 
 
 The PRD folder holds a readable `prd.md` here: Phase 0 step 1's `DOCUMENT_NO_PRD` has already stopped a run whose PRD folder holds none, or holds one it cannot read. Store the handoff for downstream phases.
@@ -485,7 +488,7 @@ is null, every phase uses the full hierarchy, as it does on a run with no Epic a
 
 From the **implementation record** — the `implementation.md` blocks Phase 3 read, only the focus Epic's own where `focus_key` is set (Phase 3's `focus_items`), plus the commit scan that complements them (`workflows-core:implementation-format` §4):
 
-1. Take every entry's `repo`, `branch`, `base` and `commit`. **There is no `pull_requests[]` to filter and no PR `status` to filter on** — nothing in this plugin reads a tracker or a pull-request API, so the record of what was implemented is `implementation.md` and the `git log --grep` scan beside it. An entry with `pushed: false` is still in scope: it is local to one machine, which the run reports rather than skipping.
+1. Take every entry's `repo`, `branch`, `base` and `commit`. **There is no `pull_requests[]` to filter and no PR `status` to filter on** — the record of what was implemented is `implementation.md` and the commit scan beside it, which a merged GitHub pull request's landed commits join (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §4); an open or unmerged one is listed, never read. An entry with `pushed: false` is still in scope: it is local to one machine, which the run reports rather than skipping.
 2. Group the entries by `repo` (short repo name).
 3. Take the slug→clone map Phase 3 built with the diff sources — for each top-level directory under each entry of `$REPOS_PATH`, `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, directories with no `.git` or whose `git remote` call fails or times out skipped, any trailing `/` and then a trailing `.git` stripped, the URL's last path segment — what follows its last `/` or `:` — taken as that clone's slug, giving `<slug> → [<absolute path>, ...]`. That step and this one run on every keyed run, so the map is always in hand here and is never built twice.
 4. Resolve each unique in-scope `repo` slug against the map:
@@ -1303,6 +1306,12 @@ SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 - <repo> — [each commit by SHA, date and subject — may name a key inside a branch name or in a merge commit, inspect by hand | matched nothing]
 - Nothing here was read: no commit above reached `diff-summarizer`, joined the refs, or is reported as unrecorded work.
 
+### Pull requests
+[`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §5.]
+- GitHub PR search: [ok — <owners>, <queries> queries, <n> kept, <dropped> loose matches dropped | <status> — <detail>]
+- Read through their landed commits: [each merged pull request by URL, with its commits' SHAs | none]
+- Found but not read: [each by URL and why — open, closed, merge commit not in the clone, or a repository no scanned clone holds | none]
+
 ### Output file(s)
 - [absolute path] — [kind: extend-existing | new-page-in-existing-section | new-section]
 - ...
@@ -1453,7 +1462,7 @@ name is ever written (§10 privacy).
 
 - ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation, and Mode A Phase 0 step 1's named stops on a folder that resolved — `DOCUMENT_BRD_NOT_SLICED`, `DOCUMENT_FOLDER_NOT_PLACED`, `DOCUMENT_PRD_NO_KEY` and `DOCUMENT_NO_PRD`, each reporting the operator's own tree). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 - ALWAYS run Phase 0 docs-repo detection; if 0 signals, require user confirmation before proceeding
-- NEVER call a forge's REST API directly over HTTPS, on any host. A keyed run has no forge URL to resolve in the first place: it passes `refs[]` only (Phase 4 step 6), and `diff-summarizer` takes a `refs` element's diff with pure local `git`. The one forge command this command names is the `gh pr create` Phase 8.5 offers the **user** for the run's own pull request, and `gh` wraps the API rather than calling it directly
+- NEVER call a forge's REST API directly over HTTPS, on any host. A keyed run has no forge URL to resolve in the first place: it passes `refs[]` only (Phase 4 step 6), and `diff-summarizer` takes a `refs` element's diff with pure local `git`. The forge commands this command names are key discovery's optional, read-only `gh search prs` and `gh pr view` (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md`) and the `gh pr create` Phase 8.5 offers the **user** for the run's own pull request, and `gh` wraps the API rather than calling it directly
 - NEVER write inside `_archive/` — that path is read-only by convention
 - NEVER write product documentation outside the resolved `docs_repo_path` (Phase 0). Outside the docs repository and its remote the run writes these and nothing else: the resolved PRD folder's two drafts, the `<KEY>-implementation-gaps.md` bug-report draft and `pr-draft.md`; a new image placed in the resolved PRD folder's `Doc screenshots/` (Phase 5.6), never its `attachments/`; screenshots staged under `<screenshot_staging_dir>`, and, for each one staged under `$SPECS_PATH`, one line in that repository's local exclude file (Phase 6.3); its session bookkeeping under `$SPECS_PATH`, with the commits, pushes and branch moves `specs-preflight` and `commit-artifacts` make there (`workflows-core:specs-repo-git`), and the session-cost checkpoint Phase 11 advances under `~/.claude/dev-workflows/cost-state/` (`workflows-core:cost-emission` §3); its temporary files, each made by `mktemp` — Phase 6.3's handoff file and Phase 7's claims file, removed at the top of Phase 8, and Phase 6.5's smoke logs, each removed as `render-verification.md` §2 step 5 removes one, save a log that step keeps because it could not show its server stopped, which the record naming it leaves in place; the refresh Phase 1 chose for the resolved code clones, in their own git state (Phase 5's `diff-summarizer`, its Refresh step); whatever the tools it invokes write of their own accord — the repository's own linter, build and server commands, which Phases 6.4 and 6.5 run, above all; and, only behind Phase 8.6's own consent, each accepted Agent 2 or Agent 3 proposal, written to the file that proposal names — which may lie outside every repository, `~/.claude/CLAUDE.md` or `~/.claude/memory/` among them.
 - ALWAYS escalate missing repos before proceeding — never silent skip
