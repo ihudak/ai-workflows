@@ -4,6 +4,11 @@ All notable changes to the **obsidian-llm-wiki** plugin are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 
+## [0.4.6] — 2026-10-07
+
+### Fixed
+- **`/wiki-init` could write at the filesystem root.** Step 1 set `VAULT` in one shell block, and Steps 2 and 3 and the schema sync used `${VAULT}` in later blocks; a block can run as a fresh shell, where `VAULT` is empty, so `mkdir -p "${VAULT}/.raw"` became `mkdir -p "/.raw"`. Every such block now resolves `VAULT` on its own first line, and the shared `vault-conventions` reference states the rule. `/wiki-save`'s duplicate-title check names the resolved path instead of a variable it never set.
+
 ## [0.4.5] — 2026-10-06
 
 ### Changed

@@ -4,7 +4,10 @@ Structural conventions for an Obsidian vault with integrated task and project ma
 Referenced by `/wiki-task`, `/wiki-tasks-extract`, and other skills that need to locate
 files or understand vault layout.
 
-All paths below are relative to the vault root (`$VAULT`).
+All paths below are relative to the vault root (`$VAULT`), resolved as
+`VAULT="${VAULT_PATH:-${HOME}/obsidian_vault}"`. **Resolve it in every shell block that needs it**: each SKILL.md
+bash block may run as a fresh shell invocation, so an assignment from an earlier step is not in
+scope, and a path a step hands to the Write tool is the resolved path written out.
 
 ---
 

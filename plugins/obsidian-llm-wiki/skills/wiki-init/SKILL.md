@@ -19,11 +19,17 @@ VAULT="${VAULT_PATH:-${HOME}/obsidian_vault}"
 echo "Vault: ${VAULT}"
 ```
 
+**Each shell block below resolves `VAULT` again on its first line.** A block may run as a fresh shell,
+where an assignment from an earlier step is gone and `${VAULT}` expands to nothing — `mkdir -p "/.raw"`
+at the filesystem root. A path a later step writes with the Write tool, `${VAULT}/…`, is the path this
+step printed, written out.
+
 ---
 
 ## Step 2 — Create .raw/ inbox
 
 ```bash
+VAULT="${VAULT_PATH:-${HOME}/obsidian_vault}"
 mkdir -p "${VAULT}/.raw"
 touch "${VAULT}/.raw/.gitkeep"
 ```
@@ -36,6 +42,7 @@ Create the wiki directory and all four skeleton files. Skip any file that alread
 never overwrite existing data.
 
 ```bash
+VAULT="${VAULT_PATH:-${HOME}/obsidian_vault}"
 mkdir -p "${VAULT}/wiki"
 ```
 
@@ -119,6 +126,7 @@ Read `skills/wiki-schema/SKILL.md` fully.
 
 Create the target directory if needed:
 ```bash
+VAULT="${VAULT_PATH:-${HOME}/obsidian_vault}"
 mkdir -p "${VAULT}/.obsidian/copilot"
 ```
 
