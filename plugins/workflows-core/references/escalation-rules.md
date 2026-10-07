@@ -285,7 +285,7 @@ Phase 7). `/implement`, `/upgrade` and `/vuln` keep their own: each records a `s
    included, since `status --porcelain` counts them, then the same `rev-parse` again. `<KEY>` is the
    run's key, or its command name alone where it has none. Never a bare `git stash`. **Where the
    ref did not change, nothing was stashed** — git prints `No local changes to save` and exits 0 on
-   a clean tree — so record nothing, say so, and go on as the choice says. **Where the push exits
+   a clean tree — so record nothing and say so. Where the choice was § *Dirty working tree*'s, present that choice again rather than re-dispatching: what stash cannot take (changed content inside a submodule) keeps the tree dirty, and a re-dispatch would only return `DIRTY_TREE` again. Anywhere else, go on as the choice says. **Where the push exits
    non-zero** (`You do not have the initial commit yet` on a repository with no commit), report
    git's message and present the choice that led here again.
 2. **Record it at once**: its commit, the ref's new value, and where HEAD stood when the run
@@ -318,7 +318,7 @@ about the product as it ships. A new citer that reproduces a list inline states 
 **The uncommitted changes are the user's, in a repository the run only reads, so no choice commits,
 pushes or discards them.** Each choice does exactly this, and **the answer holds for the rest of the
 run**: a later dispatch to the same repository — a second scan round — is made the way the answer
-left it, and asks nothing.
+left it, and asks nothing, save a Stash that stashed nothing (§ *Stashing the user's changes* step 1).
 
 - **Stash changes and retry this repo** — stash per § *Stashing the user's changes* above, then
   re-dispatch the agent for this repo unchanged.
