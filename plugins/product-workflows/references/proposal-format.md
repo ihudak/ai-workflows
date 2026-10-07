@@ -5,7 +5,7 @@
 The canonical shape of the two artifacts `/prd-proposal` and `/brd-proposal` write: the section set
 each carries, the two identifier namespaces they mint, the readiness tiers that cap confidence, the
 confidence grades that fix the range, the closed set of evidence classes a cost driver may cite, the
-rules a reviewer checks, and — in §14 — what an umbrella run adds over a slice's own proposal. Design authority:
+rules a reviewer checks, in §14 what an umbrella run adds over a slice's own proposal, and in §15 the record of which version of each input a proposal priced. Design authority:
 `docs/superpowers/specs/2026-09-08-proposal-commands-design.md` (removed from the tree 2026-09-23; `git show 62e791e8:docs/superpowers/specs/2026-09-08-proposal-commands-design.md` retrieves it).
 
 **Written by `commands/prd-proposal.md` and `commands/brd-proposal.md`; reviewed against by
@@ -16,7 +16,7 @@ the build ladder opens one at all. The other targeted readers open only their ow
 prior run of theirs left there — §8's stability anchor, read in Phase 6 and archived only in the
 `proposal.md`-authoring phase that follows it, **Phase 7 in `/prd-proposal` and Phase 8 in
 `/brd-proposal`** (the two do not share the number: `/prd-proposal`'s Phase 8 authors the *brief*),
-which is what lets §12's changelog name the cause of every figure that moved — and the reviewer
+which is what lets §12's changelog name the cause of every figure that moved, and `commands/brd-proposal.md` first reads its umbrella's `priced-against` record in Phase 2, to say whether it is still current (§15.5) — and the reviewer
 above opens the `proposal.md` it is handed and refuses without it. **That own-folder read is why an
 umbrella's `proposal.md` is classed `advisory` rather than `unread`** in
 `workflows-core:phase-handoff` §4.0: a later run of the command that wrote it is a reader like any
@@ -25,6 +25,9 @@ stale-cross-reference sweep scans every markdown file under a parent BRD as pros
 them, and never edits one it hits — the hit goes to *what still needs a human*, because a proposal
 has its own revision model: re-running the command that wrote it archives the prior revision and
 classifies each change it records as a correction or a re-estimate (§12).
+**One read is of the record alone**: `commands/prd-proposal.md`'s next-step offer reads a sibling
+slice's `priced-against` record (§15) — and nothing else of that sibling's proposal — to decide
+whether to offer pricing it, and stops nothing.
 
 ## 1. What this format governs, and the two quantities it must never conflate
 
@@ -45,9 +48,9 @@ proposal: none requires one, reads one, or behaves differently because one exist
 this file withholds permission to begin work. The one command that reads **another folder's**
 proposal as a proposal is `/brd-proposal`, which gates on a slice's in order to roll it into the
 umbrella — a second proposal rather than a phase of the build. **Every other such read is an
-own-folder one, and §0 above is the census** (with the one prose-only scan it names beside it): a
+own-folder one, and §0 above is the census** (with the one prose-only scan and the one record-only read it names beside it): a
 later run of either producing command, opening the `proposal.md` it left there as §8's stability
-anchor, and `agents/proposal-reviewer.md` inside the run that wrote it. Do not restate that census
+anchor (an umbrella's run first reading its `priced-against` record, in Phase 2), and `agents/proposal-reviewer.md` inside the run that wrote it. Do not restate that census
 here as "the one reader" — an unscoped form of this sentence stood on six surfaces against §0, and
 this is the sentence it was copied from. A proposal is a document a vendor sends a customer; it is
 not a phase and never a prerequisite for building anything.
@@ -74,6 +77,9 @@ file in `revisions/`**, whoever wrote it, the archive takes the first name not t
 `<KEY>_proposal_<YYYYMMDD>-2.md`, `-3`, and so on (the brief likewise), the suffix going before
 `.md`. The new canonical records `revision_of:` naming the archived snapshot as actually written,
 suffix included.
+
+**An archived revision keeps the `priced-against` record it ended with** (§15): archiving is a move,
+never a re-render, so each revision still says which inputs it priced.
 
 ## 3. Two identifier namespaces, and deliberately only two
 
@@ -119,6 +125,10 @@ tier, and a section with nothing to say says so rather than being omitted.
 | 21 | Traceability | requirement identifiers → `[WP#n]`, in the form §11 fixes |
 | 22 | Reconciliation to a prior estimate | **conditional** — renders only under `--baseline`; absent is not a gap and is never apologised for |
 | 23 | Changelog | **conditional** — renders only on a revision; §12 |
+
+**After the last section that renders comes the `priced-against` record (§15)** — on a slice's
+proposal and an umbrella's alike. It is machine data in an HTML comment, not a section: it is counted
+against neither this set nor §10's, carries no prose, and is never reviewed for content.
 
 ## 5. Readiness tiers, and the ceiling each puts on confidence
 
@@ -503,3 +513,135 @@ range does not cover) additionally carries the de-duplication limit above and ev
 condition that would move the programme band; §4 section 22 never renders, because `/brd-proposal`
 takes no `--baseline` — a prior estimate reconciles against the slice that was estimated, not against
 the umbrella over it.
+
+## 15. The `priced-against` record — which version of each input a proposal priced
+
+**Whether a proposal is current is decided by content, not by time.** Every `proposal.md` either
+command writes ends with one HTML comment recording the git blob id of every input the run priced,
+and a later reader compares those ids with the inputs on disk. A time — a commit's or a file's —
+records no version: an input edited locally is newer only than its own last commit, a squash merge
+can carry a proposal and the change it never priced in one commit, and a shallow clone gives every
+file one time. **A proposal written before this record existed carries none**, and
+`commands/brd-proposal.md` Phase 2 decides it by the times it always did, over `prd.md`,
+`decisions.md` and `grounding/` alone.
+
+### 15.1 The input sets
+
+**A slice's** — every input `commands/prd-proposal.md` reads to price the folder, paths relative to it:
+
+| Input | Why the pricing reads it |
+|---|---|
+| `prd.md` — or, where none exists, the `<KEY>_<slug>.md` PRD `workflows-core:addressing` §5's legacy fallback accepts | the requirement set the packages cluster |
+| `decisions.md` | tier 2's settled-register half; frozen decisions are driver evidence |
+| `ard.md` | tier 3 |
+| `specification.md` | tier 4; the authored test-case count sizes QA |
+| `code-defect-log.md` | defect source 1 (§7) |
+| every file under `grounding/`, recursively — regular files only, never a symlink, no name beginning with `.` | tier 2's verified-grounding half; driver evidence; defect source 2 |
+| every `interview/round-<N>.md`, and `interview/customer-questions.md` | the register's settledness; the open-items sweep's unanswered customer questions (§8) |
+| every `self-review-<YYYYMMDD>.md` | defect source 3 |
+| `epic.md` in every immediate `EPIC-*` subfolder | seeds the middle work packages (§7) |
+| `$SPECS_PATH/.dev-workflows/proposal-profile.yml` | productivity basis, roles, calendar, engagement model |
+
+**An umbrella's** — paths relative to the BRD folder:
+
+| Input | What a change to it means |
+|---|---|
+| `<slice>/brd-link.md`, for every slice `commands/brd-proposal.md` Phase 2 enumerates | a slice carved or removed since |
+| `<slice>/proposal.md`, for every slice holding one, included or excluded | a slice re-priced since, or one excluded then and priced since |
+| `coverage-ledger.md`, the root ledger | the coverage statement (§14) |
+| `code-defect-log.md`, every file under `grounding/` and every `self-review-<YYYYMMDD>.md` in the BRD folder itself, read as a slice's are | the container's own defect sources, which `commands/brd-proposal.md` Phase 6 step 3 sweeps |
+| for every slice the umbrella excluded that holds no `proposal.md`: that slice's own input set above, its paths under `<slice>/` (the profile once, for all) | an excluded unpriced slice whose inputs moved, so it may be estimable now; one excluded although estimable reads stale only when its inputs move |
+| `$SPECS_PATH/.dev-workflows/proposal-profile.yml` | team shape and calendar: peak concurrency and the schedule |
+
+**Not inputs:** `proposal.md` and `proposal-brief.md` (the output, and §8's stability anchor),
+`revisions/`, and — in a slice — `brd-link.md` and `coverage-ledger.md`, which `/prd-proposal` reads
+only to word a refusal. **An input absent when the run priced has no line**, so its later appearance
+is a change: `ard.md` landing after a tier-2 proposal makes it stale, which is the point — the umbrella
+above it takes the minimum of its slices' tiers (§14). **The profile is one file for the whole specs
+repository**, so correcting it makes every proposal priced under the old one stale — truthfully: a
+re-run would price each of them differently.
+
+### 15.2 The record
+
+```
+<!-- priced-against
+$SPECS_PATH/.dev-workflows/proposal-profile.yml <id>
+PRD-1234-01/brd-link.md <id>
+PRD-1234-01/proposal.md <id>
+PRD-1234-02/brd-link.md <id> excluded
+coverage-ledger.md <id>
+-->
+```
+
+That one is an umbrella's; a slice's has the same shape over its own set, and never an `excluded`.
+**The block is the last thing in the file** — only whitespace may follow it — and holds one line per
+input present when the run recorded: the path as §15.1 writes it, one space, and the id
+`git hash-object` gives the file's content — 40 lowercase hexadecimal characters, or 64 in a
+repository using SHA-256 objects — sorted by path in byte order. **In an umbrella's record an excluded
+slice's `brd-link.md` line ends ` excluded`**, which is how a later reader knows which slices the
+umbrella included; that word appears on no other line. The id is git's because inside a repository
+`hash-object` applies the clean filters a commit would — a CRLF and an LF checkout of one file hash
+alike — and outside one it still runs. The paths are folder-relative so a folder moved with `git mv`
+keeps its record; the profile, which sits outside every folder, keeps its literal `$SPECS_PATH/`
+prefix. **An HTML comment** because a proposal is a document a vendor sends a customer: it is
+invisible wherever the markdown renders, archived with the revision it belongs to (§2), and committed
+and gated with it.
+
+**A record that does not parse is no record** — not the last thing in the file, not closed, a line
+that is not `<path> <id>` (or an umbrella's `<slice>/brd-link.md <id> excluded`), an id of any other
+length, a path recorded twice. The reader falls back to the time rule and says the record is
+unreadable.
+
+### 15.3 The script, and who runs what
+
+**One bundled script computes, writes and compares the record, and nothing else does**:
+`${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py`, Python standard library only, self-tested in CI.
+Enumerating §15.1, hashing, sorting and parsing are exactly what a run re-deriving them from prose
+gets subtly wrong, so **no run computes, copies or edits an id itself**.
+
+| Subcommand | What it does | Run by |
+|---|---|---|
+| `record --specs <SPECS_PATH> --folder <folder>` | prints a slice's record for the inputs on disk now | `/prd-proposal`, end of Phase 2 |
+| `record … --brd-key <KEY> [--excluded <slice-dir>,…]` | prints an umbrella's, the excluded slices marked | `/brd-proposal`, end of Phase 5 |
+| `stamp --proposal <proposal.md> --record <file> [--excluded <slice-dir>,…]` | makes the block in `<file>` the last thing in the proposal, replacing a record already ending it and removing any other — a damaged one's stray opening line, which hides what follows it, included — and preserving every other byte; `--excluded` sets an umbrella's excluded marks; prints whether it wrote | the authoring phase, the pre-lint, and after the triage's last edit |
+| `check --specs <SPECS_PATH> --proposal <proposal.md> [--brd-key <KEY>]` | compares the record with the inputs on disk | the authoring phase; `/brd-proposal` Phase 2; `/prd-proposal` Phase 11 |
+
+`check` prints `basis: content` with `current` and the `changed`, `added` and `removed` paths — an
+umbrella's adding the `included` and `excluded` slices its record names, `stale_slices` (each included
+slice whose own record reads stale, with why — which also makes `current` false) and
+`unrecorded_slices` (each included slice whose proposal carries no readable record) — or `basis: none` with
+`reason: no-record`, or `reason: unreadable` and a `detail`. **Exit 0 whenever it ran**: a stale or
+recordless proposal is a result, not a failure. Exit 2 when it could not run, the cause on stderr.
+A caller treats any non-zero exit as could-not-run: a missing `python3` exits otherwise.
+
+### 15.4 When the ids are taken
+
+**Once, when pricing begins, and never again for the same proposal.** `record` writes the block to a
+temp file (`command mktemp`, never inside a repository) — `/prd-proposal` at the end of Phase 2, once
+the profile is settled and before Phase 3 reads the folder; `/brd-proposal` at the end of Phase 5,
+once the walk has settled which slices are excluded and the profile is settled, and before Phase 6
+reads a slice's figures. The authoring phase stamps that file's block and runs `check`: where an
+input moved while the run was pricing, the record still holds the ids the run began from, so the
+proposal reads as stale at once and the final report names each moved input. A record of later ids
+would claim the run priced content it may only partly have seen.
+
+### 15.5 What current means
+
+**A slice's proposal is current** where `check` returns `basis: content` and `current: true`, and
+**stale** where it returns `current: false`, each path it lists being why. The working-tree content
+counts, committed or not: a re-run prices what is on disk. Where `check` returns `basis: none`,
+`commands/brd-proposal.md` Phase 2's time rule decides.
+
+**An umbrella is current** where `check --brd-key` returns `current: true` — which the script already
+makes false while any included slice's own record reads stale, naming it under `stale_slices` — **and**
+every slice under `unrecorded_slices` is current by its times, one whose times cannot be ordered
+counting as not current. A slice whose own inputs moved needs re-pricing, and so does every umbrella
+that included it, which is why no included slice's `prd.md` sits in the umbrella's set; an excluded
+slice holding no proposal is the opposite case, watched through its own inputs (§15.1), because
+nothing else would show it becoming estimable. `commands/brd-proposal.md` Phase 2 runs this test before the walk and offers to
+stop where the umbrella is current.
+
+**The readers**: `commands/brd-proposal.md` — each slice's record in Phase 2, as the one command
+reading another folder's proposal, and its own umbrella's, as an own-folder read — and
+`commands/prd-proposal.md`'s next-step offer, which reads a sibling's record and nothing else of it
+(§0).

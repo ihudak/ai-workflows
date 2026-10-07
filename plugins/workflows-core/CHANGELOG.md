@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.31.3] — 2026-10-07
+
+### Fixed
+- **`phase-handoff` §4.0's umbrella row named two of a later `/brd-proposal` run's reads of its own umbrella and missed the third**: Phase 2 now reads the umbrella's `priced-against` record to say whether it is still current (product-workflows 3.27.0). The row's class, advisory, is unchanged.
+
 ## [1.31.2] — 2026-10-07
 
 ### Fixed

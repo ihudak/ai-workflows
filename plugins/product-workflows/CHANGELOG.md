@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.27.0] — 2026-10-07
+
+### Added
+- **Every effort proposal records which version of each input it priced, and its currency is decided by content.** `/prd-proposal` ends `proposal.md` with a `priced-against` record — an HTML comment, invisible wherever the markdown renders — holding the git blob id of every input it priced: `prd.md`, `decisions.md`, `ard.md`, `specification.md`, the code-defect log, every grounding file, the interview rounds and customer questions, the self-reviews, each Epic's `epic.md` and the shared proposal profile. `/brd-proposal`'s readiness walk, and `/prd-proposal`'s next-step offer through the same test, compare that record with the inputs on disk: a proposal is stale when any input changed, appeared or vanished since — so a tier-2 proposal no longer reads as current after its slice's `ard.md` lands, and a squash merge, a fresh clone or a local edit can no longer make a stale proposal look current. A proposal written before this release keeps the 3.26.1 time rule until it is re-priced. The record is computed, stamped and compared only by a new bundled script, `scripts/proposal-record.py` (Python standard library, self-tested in CI); a run that cannot run it stops with `PRD_PROPOSAL_RECORD_FAILED` or `BRD_PROPOSAL_RECORD_FAILED`.
+- **`/brd-proposal` says first whether the umbrella on disk is still current.** The umbrella records its own inputs — every slice's `brd-link.md` and `proposal.md`, the root coverage ledger, the container's own defect sources, the profile, which slices it excluded, and the inputs of each excluded slice not yet priced — and a later run reports, before the walk asks anything, every reason it is not current: a slice re-priced, carved, removed, or priced after being excluded; an included slice that is itself stale; an excluded, unpriced slice whose inputs moved, so it may be estimable now; the ledger, the defect sources or the profile changed. Where nothing moved, it offers to stop there and write nothing; `--redo` and `--profile` skip the question.
+
+### Fixed
+- **`/brd-interview` compared a round record's blob against a shell variable no later call could see.** For a round record written before its `generated against:` line existed, the run took the record's blob with `blob=$(git … hash-object …)` and compared each candidate commit's copy "to `$blob`" — an assignment that prints nothing, in a variable gone by the next tool call. No candidate could match, so the run read every grounding finding as unchanged and could leave a changed grounding without a new round. It now takes the id `hash-object` prints and compares each candidate with that.
+
 ## [3.26.2] — 2026-10-07
 
 ### Fixed

@@ -557,12 +557,13 @@ the round record*), and where the two disagree the dispositions win.
   happened. **A round record written before that line existed carries none**, and there the anchor
   is the **earliest commit on any ref that holds the record exactly as it stands on disk** — the
   record is append-only, so that commit is where its current content was first committed. Take the
-  record's blob with
-  `blob=$(git -C "$SPECS_PATH" hash-object -- <the record's path relative to $SPECS_PATH>)`, list
+  record's blob id with
+  `git -C "$SPECS_PATH" hash-object -- <the record's path relative to $SPECS_PATH>` —
+  note the id it prints, since a shell variable set in one tool call is gone in the next — list
   the candidates, newest first and never a parent before its children, with
   `git -C "$SPECS_PATH" log --all --date-order --format=%H -- <the record's path relative to $SPECS_PATH>`,
   and compare each candidate `<sha>`'s
-  `git -C "$SPECS_PATH" rev-parse <sha>:./<the record's path relative to $SPECS_PATH>` to `$blob`,
+  `git -C "$SPECS_PATH" rev-parse <sha>:./<the record's path relative to $SPECS_PATH>` with that id,
   a candidate at which the record is absent matching nothing — the relative path in all three,
   since the `<sha>:./` form resolves only a path relative to `$SPECS_PATH`, and an absolute one
   there matches no candidate at all. The anchor is the **last** matching candidate in that
