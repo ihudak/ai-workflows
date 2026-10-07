@@ -288,8 +288,9 @@ Phase 7). `/implement` and `/upgrade` keep their own: each records a `stash_ref`
    a clean tree — so record nothing and say so. Where the choice was § *Dirty working tree*'s, present that choice again rather than re-dispatching: what stash cannot take (changed content inside a submodule) keeps the tree dirty, and a re-dispatch would only return `DIRTY_TREE` again. Anywhere else, go on as the choice says. **Where the push exits
    non-zero** (`You do not have the initial commit yet` on a repository with no commit), report
    git's message and present the choice that led here again.
-2. **Record it at once**: its commit, the ref's new value, and where HEAD stood when the run
-   reached the choice — `git -C "<repo>" branch --show-current`, or, where that prints nothing (a
+2. **Record it at once**: its commit — the entry `git -C "<repo>" stash list --format='%H %gs'`
+   lists with this run's message, which no other run shares, where `stash@{0}` may already be
+   another session's — and where HEAD stood when the run reached the choice — `git -C "<repo>" branch --show-current`, or, where that prints nothing (a
    detached HEAD), `git -C "<repo>" rev-parse HEAD`. A caller that has already moved HEAD records
    where it stood before the move, and passes that.
 3. **Never apply or pop it.** The run then moves HEAD — a switch, a pull, a new branch — and the

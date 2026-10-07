@@ -70,7 +70,8 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
    Nothing else is written here; what git itself writes for the commands this
    reference runs is unchanged by it — the upstream a `push -u` sets, and the
    whole `branch.<branch>` section that `branch -d` removes; §3.5's B2 removes
-   the record of a branch it deletes. `workflows.sessionBranch` is the user's
+   the record of a branch it deletes — the configuration-key form only where `.git/config` can be
+   written, and its report names one it cannot remove. `workflows.sessionBranch` is the user's
    own key; this reference reads it and never writes it.
 
 ## 2. Bounded write authority
