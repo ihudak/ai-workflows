@@ -160,7 +160,7 @@ four-resolution one.
    `/brd-intake`'s ledger was on main before this BRD was ever grounded. Map the §3.7 return by
    `stopped` first: any stopping row → stop, naming the concrete branch/PR state it reports;
    `pass` → proceed; `pass_amending` → proceed, printing the §3.3 row-B message; `absent` (row F —
-   grounding findings are on no ref at all) → **split it before stopping, on a test row F cannot
+   grounding findings are on no branch the commands cut) → **split it before stopping, on a test row F cannot
    make**, the way `/brd-reconcile` splits its own row F. Row F covers three states here, and in
    the last two `/prd-ground` would stop rather than produce the findings this gate wants, so
    neither message may name it as the fix. Read

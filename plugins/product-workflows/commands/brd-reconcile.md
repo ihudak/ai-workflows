@@ -300,7 +300,7 @@ write would re-ask a question already answered.
    the §3.7 return by `stopped` first: any stopping row → stop, naming the concrete branch/PR state
    it reports; `pass` → proceed; `pass_amending` → proceed, printing the §3.3 row-B message;
    `unmanaged` → proceed as before this feature; `absent` (row F) → **split it before stopping**, on
-   a test row F cannot make. Row F means the prompt is on no ref at all, which covers two different
+   a test row F cannot make. Row F means the prompt is on no branch the commands cut, which covers two different
    states, and sending the wrong message for the second one walks the operator into a wall:
 
    - **No `customer-review-prompt-<YYYYMMDD>.md` in the folder at all** — no package was ever built.

@@ -238,7 +238,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
    round records, and each claim was false in the state it did not name. Map the §3.7 return by `stopped` first: any stopping row → stop, naming the
    concrete branch/PR state it reports; `pass` → proceed; `pass_amending` → proceed, printing the
    §3.3 row-B message; `unmanaged` → proceed as before this feature; `absent` (row F — the register
-   is on no ref at all) → **split it before stopping**, on a test row F cannot make, exactly as
+   is on no branch the commands cut) → **split it before stopping**, on a test row F cannot make, exactly as
    `/product-workflows:brd-reconcile` splits its own. Row F covers two states, and sending the second
    one back to `/brd-interview` walks the operator into a wall:
 

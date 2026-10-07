@@ -247,7 +247,7 @@ subagent is dispatched — every finding this command reads was already independ
   or given a fate the parent settled — kept none of its requirements, so it has nothing of its own to
   decide and stops with `BRD_INTERVIEW_ALL_DELEGATED`. That is a finished state, not a missing step —
   the same slice holds no PRD of its own either. Its inventory is empty too, but the empty-inventory
-  gate above counts inventory rows only where grounding is on no branch at all, so it does not see a
+  gate above counts inventory rows only where grounding is on no branch the commands cut, so it does not see a
   slice whose grounding is merged. The stop says what can and cannot change it: a
   [`/brd-split`](brd-split.md) run on the slice itself moves nothing, since it walks only
   `unallocated` rows and this ledger has none, while one on the parent resolves every child left

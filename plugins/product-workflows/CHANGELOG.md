@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.24.3] — 2026-10-07
+
+### Changed
+- **The roles-and-phases page says which branch stops the next command**: an unmerged branch the commands cut (`idea/`, `prd/`, `ard/` and the rest) stops it; an artifact no such branch carries — never committed, or only on a branch of your own — is treated as absent (`workflows-core` 1.29.3, `phase-handoff` §3.3 row F).
+
 ## [3.24.2] — 2026-10-07
 
 ### Fixed

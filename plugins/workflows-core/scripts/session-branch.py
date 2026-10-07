@@ -175,9 +175,28 @@ def identity(root):
     return None, None
 
 
+def refusal_record(root, branch):
+    """specs-repo-git §1 rule 8: the date §4 step 6 recorded when origin refused a push to this
+    branch -- a file in the common git directory, which a hardened container's read-only
+    .git/config does not stop, standing wherever it exists -- else the config key an older run, or
+    a run that could not write the file, recorded; else None. The directory is resolved as
+    placed_file resolves its own, so no git newer than the rest of this script needs is assumed."""
+    r = git(root, "rev-parse", "--git-common-dir", check=False)
+    if r.returncode == 0 and text(r):
+        common = text(r) if os.path.isabs(text(r)) else os.path.join(root, text(r))
+        path = os.path.join(common, "workflows", "push-refused", branch)
+        if os.path.isfile(path):
+            try:
+                with open(path, encoding="utf-8") as fh:
+                    return fh.read().strip() or "an earlier run"
+            except (OSError, ValueError):
+                return "an earlier run"
+    return config(root, "branch.%s.workflowsPushRefused" % branch)
+
+
 def mode(root, default):
     on = config(root, "workflows.sessionBranch", as_bool=True) == "true"
-    refused = config(root, "branch.%s.workflowsPushRefused" % default)
+    refused = refusal_record(root, default)
     source = "config" if on else ("refused" if refused else None)
     ident, rung = identity(root)
     state = "off"
@@ -737,6 +756,34 @@ def selftest():
             got = a.run("mode", "--default", "main", env={"GIT_USER_INITIALS": "Not Valid"})
             check(got.get("identity") is None and got.get("identity_rung") == "env",
                   "an invalid first rung names nothing and does not fall through (%r)" % got)
+            # The record is a file in the common git directory, so a clone whose .git/config is
+            # read-only (a hardened container) can still keep it; the config key above is read
+            # for clones that recorded a refusal before the file existed.
+            a.git("config", "--unset", "branch.main.workflowsPushRefused")
+            got = a.run("mode", "--default", "main")
+            check(got.get("mode") == "off", "with no record the mode is off again (%r)" % got)
+            records = os.path.join(a.path, a.git("rev-parse", "--git-common-dir"), "workflows", "push-refused")
+            os.makedirs(os.path.join(records, "session"))
+            with open(os.path.join(records, "session", "cd"), "w", encoding="utf-8") as fh:
+                fh.write("2026-10-07\n")
+            got = a.run("mode", "--default", "main")
+            check(got.get("mode") == "off", "a record for another branch does not turn it on (%r)" % got)
+            with open(os.path.join(records, "main"), "w", encoding="utf-8") as fh:
+                fh.write("2026-10-07\n")
+            got = a.run("mode", "--default", "main")
+            check(got.get("mode") == "on" and got.get("source") == "refused",
+                  "a refusal record file turns it on (%r)" % got)
+            # The record stands where the file exists, whatever it holds -- an empty or undecodable
+            # file too, which must never stop the run.
+            with open(os.path.join(records, "main"), "wb") as fh:
+                fh.write(b"\xff\xfe")
+            got = a.run("mode", "--default", "main")
+            check(got.get("mode") == "on" and got.get("source") == "refused",
+                  "an undecodable record file still turns it on (%r)" % got)
+            open(os.path.join(records, "main"), "w").close()
+            got = a.run("mode", "--default", "main")
+            check(got.get("mode") == "on" and got.get("source") == "refused",
+                  "an empty record file still turns it on (%r)" % got)
             a.git("config", "--unset", "user.initials")
             for b in ("iv-gu/a", "iv-gu/b", "iv-gu/c", "prd/A-1-x", "spec/A-1-x", "session/zz", "session/yy"):
                 a.git("branch", b)
