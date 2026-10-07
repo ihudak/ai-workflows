@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.26.2] — 2026-10-07
+
+### Fixed
+- **`/idea`'s `## Feasibility grounding` names the commit each claim was true of.** It headed the section `<repo>@<scanned_ref>`, a branch name that moves — and, until `workflows-core` 1.31.1, the default branch's name even where the scan read another branch. It now reads `<repo>@<scanned_ref> (<commit>)`, with `, with uncommitted changes` where the working tree read carried any; the final report names the commits too. `idea-format.md` says so.
+- **`code-grounder` reads its working tree only where HEAD sits at the pinned commit and the tree is clean**, by `workflows-core` 1.31.1's `read-only-repos` §4 test; otherwise it reads at the commit. It read natively on any writable mount, and on a read-only one sitting at the commit, so an untracked file `/prd-ground`'s baseline gate lets through could be cited as if the commit held it. `grounding-verifier` reads by the same rule, so its blind re-derivation cannot dispute a correct finding over a file the commit does not hold.
+
 ## [3.26.1] — 2026-10-07
 
 ### Fixed
