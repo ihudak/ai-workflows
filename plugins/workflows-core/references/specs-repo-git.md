@@ -51,16 +51,22 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
    `$SPECS_PATH`; `commit-artifacts` emits one outcome line (§6).
 8. **State of its own.** The **push-refusal record** of a branch, which §4
    step 6 writes when `origin` refuses a push to that branch and step 5 reads:
-   a file holding the date, `<record>` below —
-   `"$(git -C "$SPECS_PATH" rev-parse --path-format=absolute --git-common-dir)/workflows/push-refused/<branch>"`,
-   a `/` in the branch name a directory level, as git's own refs have it. It
-   is a file in the common git directory, not configuration, because a
-   hardened container mounts `.git/config` read-only while the rest of `.git`
-   stays writable, and a record that cannot be written has every later run
-   push into the same refusal. The older form, the configuration key
-   `branch.<branch>.workflowsPushRefused` that runs before this one wrote, is
-   read too and counts as the record. And §8.2's one marked block in the
-   repository's own `info/attributes` (`git rev-parse --git-path info/attributes`).
+   a file whose path, `<record>` below, is
+   `<common>/workflows/push-refused/<branch>` — `<common>` being what
+   `git -C "$SPECS_PATH" rev-parse --git-common-dir` prints, joined to
+   `$SPECS_PATH` where that is a relative path, and a `/` in the branch name a
+   directory level, as git's own refs have it. The record stands where that
+   file exists, whatever it holds; it holds the date. It is a file in the
+   common git directory, not configuration, because a hardened container
+   mounts `.git/config` read-only while the rest of `.git` stays writable, and
+   a record that cannot be written has every later run push into the same
+   refusal. The older form, the configuration key
+   `branch.<branch>.workflowsPushRefused` — which runs before this one wrote,
+   and which step 6 still writes where the file cannot be written — is read
+   too and counts as the record. And §8.2's one marked block in the
+   repository's own `info/attributes` (`git rev-parse --git-path info/attributes`),
+   and the per-worktree record `session-branch.py` keeps of the session files
+   §8.3's overlay placed (`git rev-parse --git-path session-branch-placed.json`).
    Nothing else is written here; what git itself writes for the commands this
    reference runs is unchanged by it — the upstream a `push -u` sets, and the
    whole `branch.<branch>` section that `branch -d` removes; §3.5's B2 removes
@@ -418,7 +424,7 @@ First matching row applies.
 | # | State | Action |
 |---|---|---|
 | B1 | On the default branch | Nothing further. |
-| B2 | Plugin branch, and `branch-merged HEAD` (below) finds it merged | Switch to default, `git -C "$SPECS_PATH" pull --ff-only`, `git -C "$SPECS_PATH" branch -d <branch>`, then remove `<branch>`'s push-refusal record where one stands (§1 rule 8). If `-d` fails, report git's own message and skip — **never `-D`**. Where `branch-merged` answered by its second or third test, a rebase or a squash, git may not see the merge — `-d` deletes a branch merged into its upstream, or into `HEAD` where it has none, and refuses one merged only by a rebase or a squash — so the report then adds the command for the user to run once they are sure: `Specs preflight: <branch> is merged into <default> by a rebase or a squash, which git branch -d cannot see — delete it with git -C "<SPECS_PATH>" branch -D <branch>`. If `pull --ff-only` fails (the local default branch has diverged), report and continue on default **without** pulling — never merge, rebase, or reset. |
+| B2 | Plugin branch, and `branch-merged HEAD` (below) finds it merged | Switch to default, `git -C "$SPECS_PATH" pull --ff-only`, `git -C "$SPECS_PATH" branch -d <branch>`, then remove `<branch>`'s push-refusal record where one stands (§1 rule 8). If `-d` fails, report git's own message and skip — **never `-D`**. Where `branch-merged` answered by its second or third test, a rebase or a squash, git may not see the merge — `-d` deletes a branch merged into its upstream, or into `HEAD` where it has none, and refuses one merged only by a rebase or a squash — so the report then adds the command for the user to run once they are sure: `Specs preflight: <branch> is merged into <default> by a rebase or a squash, which git branch -d cannot see — delete it with git -C "<SPECS_PATH>" branch -D <branch>`, and where `<branch>`'s push-refusal record stands (§1 rule 8), `rm -f "<record>"` after it, since `branch -D` no longer takes the record with it. If `pull --ff-only` fails (the local default branch has diverged), report and continue on default **without** pulling — never merge, rebase, or reset. |
 | B3 | Plugin branch, unmerged, `branch-key` (below) resolves the branch to **any** key in the run key set (§3.2) | **Stay on it.** See §3.6. |
 | B4 | Plugin branch, unmerged, `branch-key` resolves the branch to **no** key in the set, or the set is empty (keyless run) | Switch to default, `git -C "$SPECS_PATH" pull --ff-only`. **Leave the branch and its pull request alone.** Report the branch name, and, where it still holds commits a push would publish (§4 step 5's `push-scope` measure), how many: a later run's preflight retries them wherever §4 step 5 lets it push them (§3.4). |
 
@@ -730,9 +736,10 @@ to state.
        included, does not count here; the push then reports its own failure
        (step 6).
      - **The remote refused this branch before:** its push-refusal record
-       stands (§1 rule 8) —
-       `cat "<record>" 2>/dev/null || git -C "$SPECS_PATH" config --get branch.<branch>.workflowsPushRefused`
-       prints the date step 6 recorded when `origin` refused a push to it.
+       stands (§1 rule 8) — `test -f "<record>"`, or else
+       `git -C "$SPECS_PATH" config --get branch.<branch>.workflowsPushRefused`
+       prints a date. The date the rows name is the file's content, or the
+       key's; where the file is empty, `<date>` is `an earlier run`.
    - **`push-scope`: every commit the push would publish is a session-file
      commit.** First the base the push is measured against:
      `refs/remotes/origin/<branch>`, the ref this push updates, where
@@ -789,15 +796,16 @@ to state.
      repository rule violations`, a policy code), so the few transient reasons
      are what is matched, and everything else is a refusal. Write its
      push-refusal record (§1 rule 8),
-     `mkdir -p "$(dirname "<record>")" && date +%Y-%m-%d > "<record>"`,
-     and report; the commit stays local, and step 5 pushes this branch no more
-     until the record is removed. A record that cannot be written is reported
-     in the same line, `the refusal could not be recorded: <error>`, and the
-     run goes on. Retrying would be refused the same way on
+     `mkdir -p "$(dirname "<record>")" && date +%Y-%m-%d > "<record>"`, and
+     where that fails, the older key,
+     `git -C "$SPECS_PATH" config branch.<branch>.workflowsPushRefused "$(date +%Y-%m-%d)"`;
+     and report. The commit stays local, and step 5 pushes this branch no more
+     until the record is removed. Where neither can be written, the refusal is
+     unrecorded: §6's row says so, and the next run pushes the branch again. Retrying would be refused the same way on
      every run while the commits pile up on the local branch. Name what to do
      wherever this step runs: at the end of a run, §6's *push refused* line;
      inside §3.4's flush or retry, which print no §6 line, as
-     `Specs preflight: <branch> not pushed — origin refused it (<the reason in parentheses>), and this is recorded so no later run pushes it; <the remedy §6's push-refused line gives>`.
+     `Specs preflight: <branch> not pushed — origin refused it (<the reason in parentheses>), and this is recorded so no later run pushes it; <the remedy §6's push-refused line gives>` — or, where step 6 could record it neither way, `…, and this could not be recorded (<error>), so the next run pushes it again`.
      A rule that refuses what a commit carries, rather than the branch it goes
      to, refuses the branch that remedy names too; removing the record is then
      how the user lets a later run try again.
@@ -981,7 +989,7 @@ fired, a path it names may be one that block, or the append below, calls
 uncommitted, since the hook swept it into this run's commit: follow them with
 `Specs repo: <path>[, …] is now committed in <sha7>, put there by a pre-commit hook, and not pushed`.
 
-**`<record>` in the refused rows is the push-refusal record's absolute path** (§1 rule 8). Where the run found the record in the older configuration key instead, the row names `branch.<branch>.workflowsPushRefused` in its place and clears it with `git -C "<SPECS_PATH>" config --unset branch.<branch>.workflowsPushRefused`, which needs a writable `.git/config`.
+**`<record>` in the refused rows is the push-refusal record's path** (§1 rule 8). Where the record is the older configuration key instead — found there, or written there because the file could not be — the row names `branch.<branch>.workflowsPushRefused` in its place and clears it with `git -C "<SPECS_PATH>" config --unset branch.<branch>.workflowsPushRefused`, which needs a writable `.git/config`. **Where step 6 could write neither**, the *push refused* row says so in place of `so this is recorded and no later run pushes it`: `, and this could not be recorded (<error>), so the next run pushes <branch> again`; it names no `rm` or `config --unset`, and on the default branch no session-branch switch, since nothing turns the mode on.
 
 **In session-branch mode** (§8) the not-pushed rows name the session branch as `<branch>`, and the *push refused* and *refused before* rows, when they name it, read from `to land the commits` on instead `once origin takes pushes to session/<identity>, rm "<record>"`, `<record>` being `session/<identity>`'s — the session branch is never stood on, so no `reset` is named for it. Where `sync.conflict` is not empty, append `; merging <default> into session/<identity> left <path>[, …] unsettled — settle them in its pull request`, and where `sync.error` is set, `; the merge of <default> into session/<identity> could not run (<sync.error>), and the next run tries again`. Where §8.2 printed `stranded` above 0, append `; your local <default> still holds <K> commit(s) origin refused, whose files are on session/<identity> now — to drop them, standing on <default>, run python3 "<the script's path>" --specs "<SPECS_PATH>" lift --branch session/<identity> && git -C "<SPECS_PATH>" reset --keep origin/<default> && python3 "<the script's path>" --specs "<SPECS_PATH>" put-back --branch session/<identity> --default-ref origin/<default>`, `<K>` being `stranded`. The *push rejected* row reads `Specs repo: committed <sha7> (<N> files) on session/<identity> — push REJECTED: origin's session/<identity> has commits this clone lacks, pushed from another clone under the same identity; the next run takes them in and pushes`. Where `mode` printed `unsupported`, the run's line, whichever it is, appends `; session-branch mode is on for this clone, but this git's merge-tree cannot merge without a checkout (it needs --write-tree and -X), so these files stay on <branch> until git is upgraded`. And where a *push refused* line names the default branch, the run is the one that turns the mode on, so its remedy, from `to land the commits` on, reads instead `from the next run on, session files go to session/<identity>, a branch of your own whose pull request lands them (session-branch mode), and these commits' files go there too` — with `a session branch of your own, once GIT_USER_INITIALS names it` in place of `session/<identity>` where §8.1 resolves no identity.
 
