@@ -66,7 +66,9 @@ of theirs would otherwise run in its place and could print into what you read; g
 3. **Establish read/write posture.** Test whether `repo_path` and `repo_path/.git` are writable per
    `workflows-core:read-only-repos` §1. This agent never writes regardless of the mount — no branch switch, no
    pull, no fetch — so the only consequence of the posture is which read primitives it uses in step
-   4: native `Read`/`Glob`/`Grep` on a writable mount or one already sitting at `commit`, and the
+   4: native `Read`/`Glob`/`Grep` only where HEAD already sits at `commit` and the working tree is
+   clean by `workflows-core:read-only-repos` §4's test (`git --no-optional-locks -C "<repo_path>" status --porcelain`
+   prints nothing and exits 0), on either mount, and the
    `workflows-core:read-only-repos` §4 ref primitives (`git -C "<repo_path>" show <commit>:<path>`,
    `git -C "<repo_path>" grep -n <pattern> <commit>`, `git -C "<repo_path>" ls-tree -r --name-only
    <commit>`) otherwise, so every citation describes content at the pinned commit rather than an

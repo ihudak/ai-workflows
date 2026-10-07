@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.12.1] — 2026-10-07
 
 ### Fixed
-- **`/docs-audit` records the commit each repository was scanned at.** `backlog-format.md` §1 fixes `sources[].ref` as the commit a later `--refresh` measures drift from, but the run wrote `prep.scanned_ref`, a branch or remote-ref name that moves, so drift was measured from wherever the name pointed by then. It now records `rev-parse <prep.scanned_ref>`, read when the scan returns (`workflows-core` 1.31.1's `read-only-repos` §7). `diff-summarizer`'s `scanned_ref` follows the new definition.
+- **`/docs-audit` records the commit each repository was scanned at.** `backlog-format.md` §1 fixes `sources[].ref` as the commit a later `--refresh` measures drift from, but the run wrote `prep.scanned_ref`, a branch or remote-ref name that moves, so drift was measured from wherever the name pointed by then. It now records `rev-parse <prep.scanned_ref>`, read when the scan returns (`workflows-core` 1.31.1's `read-only-repos` §7). `docs-audit-reviewer` is now handed that commit beside `scanned_ref` and compares the backlog's `ref` with it, never with the name, which would have raised a false divergence on every repository. `diff-summarizer`'s `scanned_ref` follows the new definition, which says it reads no working tree.
 
 ## [1.12.0] — 2026-10-07
 

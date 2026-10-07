@@ -240,7 +240,7 @@ The backlog steers every page anybody later writes, so it is reviewed before any
   >
   > Task description: [/docs-audit run against <top> — <an initial run | a --refresh run>, --audience <value>, threshold <n>, <N> source repositories scanned]
   > backlog_path: [the absolute path of the .dev-workflows/docs-backlog.yml Phase 5 wrote]
-  > repos: [one entry per source this run's `sources[]` records — every scanned code repository, **and the specs tree** where Phase 2.5 read one — each carrying `repo` (the name used as `sources[].repo` and as every `evidence[].repo`), `repo_path` (where it is mounted on this machine) and `scanned_ref` (null for a specs tree that is no git work tree, which that reviewer reads as a source it cannot check rather than as a defect)]
+  > repos: [one entry per source this run's `sources[]` records — every scanned code repository, **and the specs tree** where Phase 2.5 read one — each carrying `repo` (the name used as `sources[].repo` and as every `evidence[].repo`), `repo_path` (where it is mounted on this machine), `scanned_ref` (null for a specs tree that is no git work tree, which that reviewer reads as a source it cannot check rather than as a defect) and `commit`, the commit this run recorded as that source's `sources[].ref` — the one the reviewer compares the file against]
   > profile: [the resolved docs-profile.yml, or an explicit statement that Phase 0 resolved none and why — that input degrades rather than refusing, and dimension 2's second half is then reported unchecked]
   > preserved_priority_reasons: [the unit ids Phase 5 step 2 preserved rather than rewrote. Empty on an initial run, where every reason is this run's own]"
 
