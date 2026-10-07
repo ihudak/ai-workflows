@@ -153,6 +153,13 @@ jobs:
         # Fixtures are built at run time.
         run: python3 plugins/product-workflows/scripts/proposal-record.py --selftest
 
+      - name: Self-test the key discovery
+        # /document and /release-notes run the whole-key commit scan, its probe and the optional
+        # GitHub pull-request search with it. A boundary that matches a longer key, or a search
+        # that keeps GitHub's loose hits, hands another key's work to the writer as this one's.
+        # Fixtures and a fake gh and ssh are built at run time.
+        run: python3 plugins/docs-workflows/scripts/key-discovery.py --selftest
+
       - name: Self-test the session branch
         # specs-repo-git §8 commits, merges and lifts session files with it on a specs
         # repository whose default branch takes no push. Its failure mode loses entries: a
