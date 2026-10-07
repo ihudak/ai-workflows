@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.31.2] — 2026-10-07
+
+### Fixed
+- **`architecture-grounding`'s dirty-tree tests count a non-zero exit as dirty.** Both read only whether `status --porcelain` printed anything, and an index the mount does not let git read makes it exit 128 with nothing printed, which read as a clean architecture repository or team knowledge base. The same test `read-only-repos` §4 got in 1.31.1 (found by the internal-edition port).
+
 ## [1.31.1] — 2026-10-07
 
 ### Fixed
