@@ -143,7 +143,7 @@ Classify what is left of `$ARGUMENTS` once **the Phase 0 key token and every rec
    existing `idea.md` passed back for re-refinement is detected here too).
 2. Otherwise → **prompt** (the argument text is the raw idea).
 
-**No idea at all is not a prompt.** Where nothing follows the key, or what follows is only unfilled placeholders such as `<idea>` or `<source>` copied from a synopsis, there is no idea to refine: ask for it in one question in prose — the idea as text, or a path to a markdown file — before anything else, and classify the answer by the precedence above. Never grill a placeholder as though it were the idea.
+**No idea at all is not a prompt.** Where nothing is left once the key and every recognised flag are removed, or what is left is only unfilled placeholders such as `<idea>` or `<source>` copied from a synopsis, there is no idea to refine: ask for it in one question in prose — the idea as text, or a path to a markdown file — before the source is classified, and classify the answer by the precedence above. Never grill a placeholder as though it were the idea.
 
 **There is no tracker-export source type, and there is no third classification.** A key used to
 resolve an export and be typed from a frontmatter field on it; nothing exports anything now, so an

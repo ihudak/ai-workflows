@@ -8,8 +8,8 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [3.24.2] — 2026-10-07
 
 ### Fixed
-- **`/idea` asks for the idea when none is given.** Nothing after the key, or only an unfilled placeholder such as `<idea>` copied from a synopsis, fell through to "the argument text is the raw idea"; the run now asks for the idea in one question before anything else. The command's page says so.
-- `/promote-decisions` names the architecture repository for `gh` as `workflows-core` 1.29.2's `phase-handoff` §2.6 does, so a remote behind an SSH host alias works.
+- **`/idea` asks for the idea when none is given.** Nothing left after the key and its flags, or only an unfilled placeholder such as `<idea>` copied from a synopsis, fell through to "the argument text is the raw idea"; the run now asks for the idea in one question before it classifies the source. The command's page says so.
+- `/promote-decisions` names the architecture repository for `gh`, and `/harvest-decisions` the specs repository, as `workflows-core` 1.29.2's `phase-handoff` §2.6 does, so a remote behind an SSH host alias works.
 
 ## [3.24.1] — 2026-10-07
 

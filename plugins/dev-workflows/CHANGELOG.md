@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [4.20.1] — 2026-10-07
 
 ### Fixed
-- **A code pull request opens on a remote that uses an SSH host alias** (`code-handoff` §2.6, used by `/implement`, `/ready`, `/vuln` and `/upgrade`): the host is resolved with `ssh -G` before it is kept, as `workflows-core` 1.29.2's `phase-handoff` §2.6 does. A remote such as `git@github-ig.com:owner/repo.git`, an alias for `github.com`, made every `gh` call fail after the push had succeeded.
+- **A code pull request opens on a remote that uses an SSH host alias** (`code-handoff` §2.6, used by `/implement`, `/vuln` and `/upgrade`): the host is resolved with `ssh -G` before it is kept, as `workflows-core` 1.29.2's `phase-handoff` §2.6 does. A remote such as `git@github-ig.com:owner/repo.git`, an alias for `github.com`, made every `gh` call fail after the push had succeeded.
 
 ## [4.20.0] — 2026-10-06
 

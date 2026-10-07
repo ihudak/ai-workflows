@@ -211,7 +211,7 @@ A drafted ADR is checked against §2: given records, its Context opens with the 
 5. **Commit.** `git -C <root> commit -F <file>`, the file holding `docs(adr): propose <n> ADR(s) from team decisions` (`propose ADR-NNNN …` for one). Where the repository documents a commit convention, it governs. No `Co-Authored-By` trailer is added that the repository's convention does not ask for.
 6. **Consent.** `choices: ["Push the branch and open a pull request (Recommended)", "Keep the commit local — I'll push it"]`. Then:
    - `git -C <root> push -u origin <branch>`;
-   - `gh pr create -R <OWNER_REPO> --head <branch> --title '<title>' --body-file <file>`, where `gh` is available and authenticated to that host; else print the compare URL, or, for a remote with no web host, the pushed branch and the body file's path.
+   - `gh pr create -R <OWNER_REPO> --head <branch> --title '<title>' --body-file <file>`, where `gh` is available and authenticated to that host; else print the compare URL on that same resolved host, or, for a remote with no web host, the pushed branch and the body file's path.
    - The body lists each draft (id, title, kind), the records it came from with their signals, a `Proposes to supersede: <ADR id>` line for each superseding draft, and the decision-test line. Where the repository's own rules (its `AGENTS.md`, `CONTRIBUTING.md` or `CODEOWNERS`) route ADR changes to human review, the body ends by saying so.
    - Never force-push; never merge.
    - **Keep the commit local** with a superseding draft that names no record: say that the next run offers `<ADR id>` again until this branch is pushed and its pull request is open — nothing else records that proposal.

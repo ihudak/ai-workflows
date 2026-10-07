@@ -19,7 +19,7 @@ The argument after the key is classified into one of **two** source forms (Phase
 
 There is no third classification and no tracker-export source form; a path that looks like one but resolves to no file is caught and put back to you rather than ingested as prose.
 
-With no source after the key — or only an unfilled placeholder such as `<idea>` — the run asks you for the idea before anything else, rather than grilling the placeholder.
+With no source after the key and its flags — or only an unfilled placeholder such as `<idea>` — the run asks you for the idea before it classifies the source, rather than grilling the placeholder.
 
 Four flags: `--deep` switches the grill from bounded (≤10 questions) to relentless (runs to convergence, no cap); `--ground-code` adds an optional code-grounding pass; `--no-docs` turns documentation grounding off; `--docs <path>` points documentation grounding at a specific docs root instead of the resolved default.
 

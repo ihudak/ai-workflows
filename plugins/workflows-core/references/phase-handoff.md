@@ -1,8 +1,8 @@
 # Phase handoff — Shared Reference
 
-Single source of truth for the two entry points that move a **phase deliverable** into `$SPECS_PATH`'s default branch and that refuse to start a phase whose input never got there: `handoff-to-main` (§2, producer) and `require-on-main` (§3, consumer).
+Single source of truth for the two entry points that move a **phase deliverable** into `$SPECS_PATH`'s default branch and that refuse to start a phase whose committed input never got there: `handoff-to-main` (§2, producer) and `require-on-main` (§3, consumer).
 
-**The principle.** A workflow phase is not finished until its artifact is on the default branch. A command that ends a phase commits, pushes, and opens a pull request. The command that starts the next phase does not run until the previous artifact is there, save where §3.4 records that it falls back to what it does without it. The gate applies even when the role does not change — it may be a different human of the same role, and even the same human should have to confirm the previous phase is done.
+**The principle.** A workflow phase is not finished until its artifact is on the default branch. A command that ends a phase commits, pushes, and opens a pull request. The command that starts the next phase does not run until the previous artifact is there — save, for an artifact that reached no branch at all, where §3.4 records that it falls back to what it does without it. The gate applies even when the role does not change — it may be a different human of the same role, and even the same human should have to confirm the previous phase is done.
 
 **Relationship to `specs-repo-git.md`.** That reference owns the *bookkeeping* paths (its §2.1) and the run-start/terminal steps for them. This one owns *deliverables*. It inherits four of that file's hard rules and deliberately differs on three; §1 states which.
 
@@ -111,8 +111,9 @@ Otherwise: derive the repository, run a cheap `gh auth status` pre-check purely 
     case "$url" in
       http://*|https://*) ;;
       *) case "$host" in
+           github.com) ;;
            [A-Za-z0-9]*) real=$(ssh -G "$host" 2>/dev/null | awk '$1=="hostname" {print $2; exit}')
-                         [ -n "$real" ] && host=$real ;;
+                         case "$real" in ssh.github.com) host=github.com ;; ?*) host=$real ;; esac ;;
          esac ;;
     esac
     case "$host" in github.com) OWNER_REPO="$slug" ;; *) OWNER_REPO="$host/$slug" ;; esac
@@ -122,7 +123,7 @@ Otherwise: derive the repository, run a cheap `gh auth status` pre-check purely 
 
 **`<title>` is free text, so it goes in single quotes**, each `'` it holds written `'\''`: inside double quotes its backticks and `$(…)` would be command-substituted before `gh` saw it.
 
-**An SSH host alias is resolved before the host is kept.** An scp-like or `ssh://` remote may name a `Host` alias from `~/.ssh/config` — `git@github-ig.com:owner/repo.git`, whose `HostName` is `github.com` — which only ssh knows: `gh` reads `-R` as a real host, so `github-ig.com/owner/repo` failed every `gh` call with `error connecting to github-ig.com` while the push over the same alias succeeded (measured). `ssh -G <host>` prints the configuration ssh would use and connects to nothing; its `hostname` line is the real host, and the host itself where no alias applies. An `http(s)://` remote names a real host and is left alone; only a plain hostname is passed to `ssh`, so the remote's text can never reach it as an option; and where `ssh` is absent or prints no `hostname`, the host stands as written.
+**An SSH host alias is resolved before the host is kept.** An scp-like or `ssh://` remote may name a `Host` alias from `~/.ssh/config` — `git@github-ig.com:owner/repo.git`, whose `HostName` is `github.com` — which only ssh knows: `gh` reads `-R` as a real host, so `github-ig.com/owner/repo` failed every `gh` call with `error connecting to github-ig.com` while the push over the same alias succeeded (measured). `ssh -G <host>` prints the configuration ssh would use and connects to nothing; its `hostname` line is the real host, and the host itself where no alias applies. An `http(s)://` remote names a real host and is left alone, and so is `github.com` itself, which GitHub's documented port-443 setup (`Host github.com` / `Hostname ssh.github.com`) would otherwise rename; a resolved `ssh.github.com` reads as `github.com`. Only a plain hostname is passed to `ssh`, so the remote's text can never reach it as an option; and where `ssh` is absent or prints no `hostname`, the host stands as written.
 
 **The host is kept, not stripped** — the same rule as `dev-workflows:code-handoff` §2.6, and for the same reason. `gh -R` accepts `[HOST/]OWNER/REPO`, and `gh auth status` succeeds whenever the user is authenticated to *any* host, so a bare `OWNER/REPO` derived from a GitHub Enterprise remote resolves against **github.com** — silently opening the phase's pull request on an unrelated public repository if one happens to sit at that path, with the capability probe catching nothing because the call succeeded. Only `github.com` may drop the host. Validate the slug against `^[^/]+/[^/]+$` before calling `gh`; anything else (a Bitbucket `scm/proj/repo`, a nested GitLab group) is not a `gh` target — skip to §4.2. §3.5's `gh pr list -R "$OWNER_REPO"` uses the same value and mistargets identically without this.
 
@@ -136,7 +137,7 @@ The expressions strip a scheme, a `user@`, and a host with an optional `:port` t
 
 Title: the commit subject of §2.4.
 
-Body: written to a file (never passed inline, which would break on newlines and quoting) containing what the phase produced; the artifact paths; the reviewer verdict where the caller has one; the count of open questions or `[NEEDS CLARIFICATION]` markers; and, **where the caller has one**, the next command in the chain together with what it does until this pull request is merged, by the class §4.1's `<next-phase-clause>` resolves for this run's deliverable set: for a **gated — stopping** set, that it will not run until then; for a **gated — falling back** one (`/idea`'s `idea.md` is one), that it runs anyway but falls back to what it does when the deliverable is missing, so it reads none of this until then. That sentence is scoped exactly as the reviewer verdict beside it is, because a producer whose artifact has no §3.4 row has no next command to name and cannot render this sentence without inventing one. Where `$SPECS_PATH`'s repository carries a pull-request template, the body is that template filled with these facts (§2.7.1).
+Body: written to a file (never passed inline, which would break on newlines and quoting) containing what the phase produced; the artifact paths; the reviewer verdict where the caller has one; the count of open questions or `[NEEDS CLARIFICATION]` markers; and, **where the caller has one**, the next command in the chain together with the fact that it will not run until this pull request is merged — scoped exactly as the reviewer verdict beside it is, because a producer whose artifact has no §3.4 row has no next command to name and cannot render this sentence without inventing one. Where `$SPECS_PATH`'s repository carries a pull-request template, the body is that template filled with these facts (§2.7.1).
 
 ### 2.7.1 The repository's own pull-request template
 

@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.10.1] — 2026-10-07
 
 ### Fixed
-- **`finish-and-handoff` §4 classifies a docs repository behind an SSH host alias by its real host**, as `workflows-core` 1.29.2's `phase-handoff` §2.6 resolves it, so a GitHub repository reached through an alias gets the GitHub footer and its `gh pr create` suggestion instead of the generic one.
+- **`finish-and-handoff` §4 classifies a docs repository behind an SSH host alias by its real host**, as `workflows-core` 1.29.2's `phase-handoff` §2.6 resolves it, so a GitHub repository reached through an alias gets the GitHub footer and its `gh pr create` suggestion instead of the generic one; `/document`, `/docs-profile`, `/docs-brand` and `/docs-init` detect the host through §4.
 
 ## [1.10.0] — 2026-10-06
 
