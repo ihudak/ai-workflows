@@ -269,6 +269,8 @@ listed under the PRD folder — and each `workitem_key` off the same folder. Not
 identifier out of a commit message, which is the rule `CLAUDE.md` states and the difference between
 resolving and guessing.
 
+**The pull-request layer, optional.** Where a scanned clone's `origin` is on github.com and `gh` is installed and logged in, the scan's consumers also search the GitHub pull requests of the scanned clones' owners for the same tokens, keep one only where its title or body names a token whole — by the boundary above — and take a merged one's landed commits into the scan's result: the branch's own commits for a merge commit, the one commit for a squash, the rebased run for a rebase, each read off the clone. A landed commit whose own message names no token joins the scan's commits as one only the scan found, its tokens those its pull request named; an open, unmerged or out-of-clone pull request is reported, never read. Like the scan, it searches for tokens the run already holds; a pull request's number, branches and merge commit come from `gh`'s JSON, never from parsed text. `docs-workflows` runs the scan, its probe and this layer through one script (its `references/key-discovery.md`).
+
 **Merged and deduped by SHA.** A ref two records name — the same repository and the same commit, as
 where an operator copied a block into its Epic's record rather than moving it (§1) — is one ref,
 counted once by a read that takes both. **Every comparison against a block's `commit:` resolves it
