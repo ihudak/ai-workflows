@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.29.4] — 2026-10-07
+
+### Changed
+- **The references page says what `require-on-main` does with a deliverable not yet on the default branch**: it stops while the deliverable sits on an unmerged branch the commands cut, and treats one no such branch carries as absent, falling back where `phase-handoff` §3.4 says. It said the gate required the deliverable be there, which is not true of a fallback (found by the internal-edition port review).
+
 ## [1.29.3] — 2026-10-07
 
 ### Fixed
