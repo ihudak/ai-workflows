@@ -707,7 +707,10 @@ that file describes the archived revision and not this one.
    dismiss it; record every dismissal with a reason that disposes of that finding's own claim and every
    unverified finding with what would settle it; and raise a grade only by effect. There is no
    silent-drop disposition. Fix the surviving BLOCKERs inline (the orchestrator edits both artifacts —
-   there is no delegated writer) and re-review **once**, triaging that re-review — and one you chose
+   there is no delegated writer), read the fix against what it overlaps — each figure it changes
+   against every total and brief line computed from it — per the `An inline fix is read against what
+   it overlaps` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`, and
+   re-review **once**, triaging that re-review — and one you chose
    at the first settle prompt — under that reference's § On re-review. If the review **stayed
    blocked** — a BLOCKER survives that triage, or you keep the verdict at either settle prompt —
    escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`

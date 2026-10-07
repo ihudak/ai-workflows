@@ -11,8 +11,10 @@ result to stdout. It NEVER writes the specs repo and NEVER writes the checkpoint
 back — the caller (references/cost-emission.md) persists ``new_checkpoint``,
 except under ``--advance-only``, which writes it itself (run-flags.md ``skip-cost``).
 
-Claude Code stores no dollar figure in the transcript; every assistant message
-carries ``.message.usage`` + ``.message.model``, so cost is computed, not read.
+Claude Code's own running dollar total reaches the transcript only as an occasional
+``cost-state`` record between sessions, never at a command's edges; every assistant
+message carries ``.message.usage`` + ``.message.model``, so cost is computed, not read.
+A compaction is billed but writes no usage, so it is counted, never priced.
 """
 
 import argparse
@@ -447,7 +449,15 @@ def claimable_command(typed, ns_map):
     return None
 
 
-def scan_main(path, line_offset, ns_map, by_id=None):
+def is_compaction(obj):
+    """A compaction's only trace in a transcript: Claude Code bills the summarising
+    call but records no usage for it, only this system record (cost-emission.md
+    section 5). Counted, never priced -- nothing on disk says what it cost."""
+    return isinstance(obj, dict) and obj.get("type") == "system" \
+        and obj.get("subtype") == "compact_boundary"
+
+
+def scan_main(path, line_offset, ns_map, by_id=None, compactions=None):
     """Single pass over main-transcript lines [line_offset, EOF).
 
     Buffers each usage record with its timestamp instead of accumulating
@@ -455,7 +465,9 @@ def scan_main(path, line_offset, ns_map, by_id=None):
     re-reading. Returns (new_total_line_count, earliest_ts, boundaries, records)
     where records is a list of (ts, model, usage), one per API message id.
     Pass the same by_id to read_subagents, appending to a list that starts with
-    these records, so an id a subagent file repeats is counted once."""
+    these records, so an id a subagent file repeats is counted once. Where a
+    compactions list is passed, each compaction's timestamp (None where it has
+    none) is appended to it, for main() to partition as it does the records."""
     count = line_offset
     first_ts = None
     boundaries = []
@@ -531,18 +543,21 @@ def scan_main(path, line_offset, ns_map, by_id=None):
                             boundaries.remove(dropped)
             if ts is not None and (first_ts is None or ts < first_ts):
                 first_ts = ts
+            if compactions is not None and is_compaction(obj):
+                compactions.append(ts)
             model, usage = extract_usage(obj)
             if usage is not None:
                 keep_once(records, by_id, _message_id(obj), ts, model, usage)
     return count, first_ts, boundaries, records
 
 
-def read_subagents(subdir, last_dt, now_dt, records, by_id=None):
+def read_subagents(subdir, last_dt, now_dt, records, by_id=None, compactions=None):
     """Buffer usage from subagents/agent-*.jsonl entries whose timestamp is in
     (last_dt, now_dt]  (all <= now_dt when last_dt is None), appending
     (ts, model, usage) to records so they are segmented exactly as the main
     transcript's are -- the two must agree at a boundary or a subagent's tokens
     land in both slices or neither. Each API message id counts once (keep_once).
+    An in-window compaction's timestamp is appended to compactions, as scan_main's.
 
     Returns the earliest in-window entry timestamp, or None."""
     first_ts = None
@@ -570,6 +585,8 @@ def read_subagents(subdir, last_dt, now_dt, records, by_id=None):
                     continue
                 if last_dt is not None and ts <= last_dt:
                     continue
+                if compactions is not None and is_compaction(obj):
+                    compactions.append(ts)
                 model, usage = extract_usage(obj)
                 if usage is not None:
                     keep_once(records, by_id, _message_id(obj), ts, model, usage)
@@ -1109,7 +1126,7 @@ def _selftest_body(tmp):
         # and a fixture silently measured against real command names proves nothing.
         cmd += ["--namespaces", nspath if kw.get("namespaces", True)
                 else os.path.join(tmp, "no-such-manifest.json")]
-        cmd += ["--snapshot", snap, "--checkpoint", ckpt] + list(extra)
+        cmd += ["--snapshot", snap, "--checkpoint", kw.get("checkpoint", ckpt)] + list(extra)
         out = subprocess.run(cmd, capture_output=True, text=True)
         if out.returncode != 0:
             bad("run failed: " + " ".join(extra) + " -> " + out.stderr.strip()[:200])
@@ -1411,6 +1428,55 @@ def _selftest_body(tmp):
                       {"tool_use_id": "toolu_c", "is_error": True, "content": "refused"}]) == [],
           "two refused command calls in one record drop its one cut once, without raising")
 
+    # Section 5's compaction count. A compaction is billed, yet the transcript records
+    # no usage for it -- only a system `compact_boundary` record -- so the computed
+    # figure leaves it out and the entry says how many it left out. It is counted
+    # where the window counts usage (main-transcript lines from line_offset on,
+    # subagent records in (last_ts, now]) and split by the same partition, so a
+    # compaction inside a claimed segment is that claim's and nobody else's.
+    def _cb(ts):
+        rec = {"type": "system", "subtype": "compact_boundary",
+               "compactMetadata": {"trigger": "manual", "preTokens": 600000}}
+        if ts:
+            rec["timestamp"] = ts
+        return rec
+    _cpath = os.path.join(tmp, "compactions.jsonl")
+    with open(_cpath, "w", encoding="utf-8") as fh:
+        for r in (_cb("2026-09-01T09:59:00.000Z"),      # line 0, before line_offset 1
+                  _st_asst("2026-09-01T10:00:00.000Z", 100),
+                  _cb("2026-09-01T10:00:10.000Z"),      # the remainder's
+                  _st_plugin_cmd("2026-09-01T10:02:00.000Z", "/workflows-core:prompt-grill-me"),
+                  _cb("2026-09-01T10:02:10.000Z"),      # the claim's
+                  _st_plugin_cmd("2026-09-01T10:04:00.000Z", "/dev-workflows:implement"),
+                  _cb(None),                            # no timestamp -> the remainder's
+                  _st_asst("2026-09-01T10:04:30.000Z", 100)):
+            fh.write(json.dumps(r) + "\n")
+    _csub = os.path.join(tmp, "compaction-subagents")
+    os.makedirs(_csub)
+    with open(os.path.join(_csub, "agent-c.jsonl"), "w", encoding="utf-8") as fh:
+        for r in (_cb("2026-09-01T09:00:00.000Z"),      # before last_ts
+                  _cb("2026-09-01T10:04:40.000Z"),      # the remainder's
+                  _cb("2026-09-01T10:06:00.000Z")):     # after now
+            fh.write(json.dumps(r) + "\n")
+    _cck = os.path.join(tmp, "ck-compactions.json")
+    with open(_cck, "w", encoding="utf-8") as fh:
+        json.dump({"line_offset": 1, "last_ts": "2026-09-01T09:30:00.000Z",
+                   "last_snapshot_cost": 9.0}, fh)
+    _cw = run(transcript=_cpath, subagents_dir=_csub, checkpoint=_cck)
+    check(_cw is not None and _cw.get("compactions") == 4,
+          "every compaction in the window is counted -- main and subagent, and a main one "
+          "with no timestamp -- and none before line_offset or outside (last_ts, now] "
+          "(got %r)" % ((_cw or {}).get("compactions"),))
+    _cs = run("--claim", "/prompt-grill-me", transcript=_cpath, subagents_dir=_csub,
+              checkpoint=_cck)
+    check(_cs is not None and _cs.get("compactions") == 3 and len(_cs["claims"]) == 1
+          and _cs["claims"][0].get("compactions") == 1,
+          "a compaction inside a claimed segment is the claim's, the rest the "
+          "remainder's (got %r / %r)" % ((_cs or {}).get("compactions"),
+                                        [c.get("compactions") for c in (_cs or {}).get("claims", [])]))
+    check(whole.get("compactions") == 0,
+          "a window with no compaction reports 0, so a caller never branches on absence")
+
     if failures:
         print("SELFTEST FAIL (%d)" % len(failures))
         return 1
@@ -1570,8 +1636,9 @@ def main():
     # parent's records under the same ids. `records` is empty when main_records is
     # appended below, so the map's indices stay valid in it.
     by_id = {}
+    compactions = []
     new_line_offset, main_first_ts, boundaries, main_records = scan_main(
-        args.transcript, line_offset, ns_map, by_id=by_id
+        args.transcript, line_offset, ns_map, by_id=by_id, compactions=compactions
     )
     current_snapshot = read_snapshot_cost(args.snapshot)
     baseline_snapshot = checkpoint["last_snapshot_cost"]
@@ -1597,7 +1664,8 @@ def main():
 
     prices = load_prices(args.prices) if args.prices else {"models": {}}
     records.extend(main_records)
-    sub_first_ts = read_subagents(args.subagents_dir, last_dt, now_dt, records, by_id=by_id)
+    sub_first_ts = read_subagents(args.subagents_dir, last_dt, now_dt, records, by_id=by_id,
+                                  compactions=compactions)
 
     matched, unmatched = match_claims(args.claim, boundaries)
 
@@ -1617,15 +1685,27 @@ def main():
     remainder = {}
     for m in matched:
         m["acc"] = {}
-    for ts, model, usage in records:
-        target = remainder
+        m["compactions"] = 0
+
+    def owner(ts):
         if ts is not None:
             for m in matched:
                 if m["start"] is not None and ts >= m["start"] \
                         and (m["end"] is None or ts < m["end"]):
-                    target = m["acc"]
-                    break
-        add_usage(target, model, usage)
+                    return m
+        return None
+
+    for ts, model, usage in records:
+        m = owner(ts)
+        add_usage(m["acc"] if m is not None else remainder, model, usage)
+    # A compaction goes where a usage record stamped at the same moment would.
+    remainder_compactions = 0
+    for ts in compactions:
+        m = owner(ts)
+        if m is not None:
+            m["compactions"] += 1
+        else:
+            remainder_compactions += 1
 
     models, cost_computed = price_block(remainder, prices)
 
@@ -1655,6 +1735,7 @@ def main():
             "cost_computed_usd": cc,
             "duration_s": int(max(0, (end_dt - m["start"]).total_seconds()))
             if m["start"] is not None else 0,
+            "compactions": m["compactions"],
         })
 
     result = {
@@ -1662,6 +1743,7 @@ def main():
         "cost_computed_usd": cost_computed,
         "cost_statusline_usd": cost_statusline,
         "duration_s": duration_s,
+        "compactions": remainder_compactions,
         "namespaces": sorted(ns_map) if ns_map else [],
         "notes": notes,
         "command_boundaries": boundaries,

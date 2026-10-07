@@ -78,7 +78,7 @@ That gives 20,000 characters at 200K and 100,000 at 1M; a session pays only for 
 
 The visible half is a permanent multi-line status line at the bottom of your terminal — session identity, git state, context usage, running cost, tokens, and rate limits — so you can see a long command spending your budget while it spends it.
 
-The half you don't see is the **cost cross-check**: Claude Code's own reported cost, captured per render, which the cost phase differences into a per-invocation delta. Where that disagrees with the computed figure, the gap is the signal that the bundled price table has drifted. See [Session cost](reference/session-cost.md).
+The half you don't see is the **cost cross-check**: Claude Code's own reported cost, captured per render, which the cost phase differences into a per-invocation delta. Where that disagrees with the computed figure over a window with no compaction, the gap is the signal that the bundled price table has drifted; a compaction is billed but leaves no token usage in the transcript, so a window holding one — its entry says `compactions:` — runs Claude Code's figure ahead by what it cost. See [Session cost](reference/session-cost.md).
 
 ```
 /workflows-core:statusline

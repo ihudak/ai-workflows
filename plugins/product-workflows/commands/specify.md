@@ -917,21 +917,30 @@ the grill/author. **Advisory** — never blocks; proceed to Phase 6 once finding
   > Detected maturity: test
   > applicable_ard: [the ARD invariants resolved in Phase 2.5, or omit if none]"
 
-2. **Act on the verdict** (mirrors `/epics` Phase 7):
+2. **Act on the verdict:**
    - **`BLOCK`** — fix the BLOCKER findings (the orchestrator/grill edits `specification.md` inline —
-     there is no delegated writer to re-dispatch) and re-review once. If still `BLOCK`, escalate per
-     the `Review verdict BLOCK (unresolved after one fix cycle) — /epics` rule in
+     there is no delegated writer to re-dispatch), read the fix against what it overlaps — every
+     criterion and test case it adds or changes against those whose trigger, precondition or state
+     overlaps it, per the `An inline fix is read against what it overlaps` rule in
+     `workflows-core:escalation-rules` — and re-review once. If still `BLOCK`, escalate per the
+     `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` rule in
      `workflows-core:escalation-rules` for each unresolved BLOCKER individually:
      ```
      choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding", "Cancel the whole run"]
      ```
-     "Defer" means appending a `## Refinement notes` section to `specification.md` with a `- [ ]` item
-     per deferred finding (mirrors `/epics`' Epic-refinement note), in addition to the final report.
-   - **`MAJOR` / `MINOR` / `NIT`** (surfaced under `PASS WITH RECOMMENDATIONS`) — defer to the final
-     report; no mandatory fix cycle.
+     Manual fix notes are read against what they overlap before the handoff, as the fix cycle was,
+     since no review follows them. "Defer" means appending a `## Refinement notes` section to
+     `specification.md` with one plain `- ` bullet per deferred finding (mirrors `/epics`'
+     Epic-refinement note), in addition to the final report — never a `- [ ]` item, which `pre-lint`
+     would count against the header's `Open questions` and the format would not. A deferred finding
+     whose fix needs a decision also gets an open question (below).
+   - **`MAJOR` / `MINOR` / `NIT`**, whatever verdict carried them — defer to the final report; no
+     mandatory fix cycle.
    - **`PASS`** / **`PASS WITH RECOMMENDATIONS`** — proceed to Phase 7.
 
-Cap: one fix cycle + one re-review maximum. Where the user asks for a deferred finding to be applied, that is an inline edit answering a verdict that was not `BLOCK`, and the re-review the cap still holds is offered before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`.
+Cap: one fix cycle + one re-review maximum. Where the user asks for a deferred finding to be applied, that is an inline edit answering a verdict that was not `BLOCK`: it is read against what it overlaps, as a fix is, and the re-review the cap still holds is offered before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`.
+
+**A finding left open that needs a decision is recorded in the spec.** Once the last review has returned — the re-review offer above settled — and immediately before the handoff, every finding the run leaves open whose fix needs a product decision it did not take, a deferred BLOCKER among them, is written into `specification.md` as a `- [ ]` open question that names it, and the requirement it puts in doubt where it puts one in doubt, under the `Open questions` sub-heading of the stage it concerns, with the header count updated — per the `A finding left open that needs a decision is recorded in the artifact` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. A finding the user overrode, or whose fix is only an edit, gets no open question.
 
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
 
