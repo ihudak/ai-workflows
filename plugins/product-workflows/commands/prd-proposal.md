@@ -36,7 +36,10 @@ every other targeted read is an own-folder one — **a later run of this command
 step 6), and `proposal-reviewer` inside the run that wrote it (Phase 9).
 `/product-workflows:brd-reconcile`'s stale cross-reference sweep also reads any proposal under the
 parent BRD, as ordinary prose, and never edits one — a stale reference in it goes to *what still
-needs a human*, fixed by re-running this command. Running this is optional at every tier, in the
+needs a human*, fixed by re-running this command. One read is of the `priced-against` record alone:
+a sibling slice's run of this command reads this proposal's record — and nothing else of it — at its
+next-step offer (Phase 11), to decide whether to offer pricing this slice
+(`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §15). Running this is optional at every tier, in the
 same sense `/prd-ground` is optional and ungated on the idea route. A proposal is a document a
 vendor sends a customer — not a phase, not a prerequisite, and never a reason implementation cannot
 start.
@@ -333,6 +336,21 @@ stops:
 (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §1). A profile carrying one is reported and
 the value is not read.
 
+**Record which version of each input this run prices — now**, once the profile is settled and before
+Phase 3 reads the folder (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §15.4):
+
+```bash
+rec=$(command mktemp -t proposal-record-XXXXXX)   # never inside a repository
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" record --specs "$SPECS_PATH" --folder "<the resolved folder>" > "$rec"
+```
+
+**Note the path `mktemp` printed, and write it out wherever a later phase says `$rec`** — a shell
+variable does not survive from one tool call to the next. Phase 7 stamps that file and Phase 9
+re-stamps it. **Never compute, copy or edit an id yourself** — the script enumerates §15.1's input set, hashes each file and sorts the block.
+Where it exits 2, or `python3` is not installed, stop with the script's stderr, or the shell's, after
+the colon:
+`PRD_PROPOSAL_RECORD_FAILED: <the cause> — a proposal that cannot record what it priced can never be told current or stale. Fix the cause and re-run.`
+
 ---
 
 ## Phase 3 — Grade the readiness tier
@@ -516,6 +534,20 @@ executes them:
 
 Write the whole file as prose that is never hard-wrapped (`workflows-core:prose-formatting`).
 
+**Then end it with the `priced-against` record, through the script and only through it** (§15.3):
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" stamp --proposal "<folder>/proposal.md" --record "$rec"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS_PATH" --proposal "<folder>/proposal.md"
+```
+
+The record holds the ids Phase 2 took, so `check` returning `current: false` means an input moved
+while this run was pricing: name each path it lists — changed, added or removed — in the final
+report, and say that the proposal will read as stale to `/product-workflows:brd-proposal` and to a
+sibling's next-step offer until it is re-run. That is the truthful state: this run priced what it
+read, and cannot say how much of the moved file it saw. Either call exiting 2 stops the run with
+`PRD_PROPOSAL_RECORD_FAILED` (Phase 2).
+
 ---
 
 ## Phase 8 — Author `proposal-brief.md`
@@ -550,7 +582,11 @@ file describes the archived revision and not this one.
    `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §11 records why the exclusion is deliberate
    rather than an oversight to be corrected. There is no artifact-specific pre-lint block for a
    proposal; §4 and §10 are what required-section presence is checked against. Advisory — surface
-   every finding, inline-fix the mechanical ones, and proceed; the reviewer is the gate.
+   every finding, inline-fix the mechanical ones, and proceed; the reviewer is the gate. **The
+   `priced-against` record is checked here too** (§15.3): re-run Phase 7's `stamp` with the same
+   `$rec`. `{"written": false}` passes; `{"written": true}` means the record was missing, altered or
+   no longer last — a pre-lint finding, already fixed by that run from Phase 2's ids, never from a
+   fresh hash.
 2. **The review gate.** Dispatch `proposal-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no override unless §10 enforces a model):
 
    → Agent (subagent_type: "product-workflows:proposal-reviewer", model: `<review_model — §2 Opus chain, equal to proposal-reviewer's frontmatter pin; under §10, run_flags.enforced_model>`):  # recorded in model_routing as review_model above, frontmatter-pinned, no override added unless §10 enforces a model
@@ -583,6 +619,10 @@ file describes the archived revision and not this one.
    prompts, **Keep the verdict** means the review stayed blocked — on a kept verdict that is not
    `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run.
 
+**After the last inline edit to `proposal.md` — a triage fix, or an edit a later prompt asked for —
+run Phase 7's `stamp` once more** with the same `$rec`, so no edit carries a damaged record into the
+handoff; `{"written": true}` there is reported beside the edit that caused it.
+
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
 
 Report the triage per `workflows-core:finding-triage` § Reporting — one line per review pass, naming
@@ -607,7 +647,9 @@ proposal* is the sibling umbrella `/product-workflows:brd-proposal`, which gates
 that array's parenthetical tells the operator. (A later run of **this** command reads the same file
 too, as §8's stability anchor, but that read is an own-folder one off the working tree and stops
 nothing, so it moves no class here; nor does `/product-workflows:brd-reconcile`'s stale
-cross-reference sweep, which reads it as prose, stops nothing and never edits it.)
+cross-reference sweep, which reads it as prose, stops nothing and never edits it; nor does a sibling
+slice's run of this command, which reads only its `priced-against` record at its next-step offer
+and stops nothing.)
 `proposal-brief.md` and the archived revisions are themselves classed **unread** in §4.0's own table
 — no later run reads either (`proposal-reviewer` reads the brief inside this run, which is no
 handoff read) — but they travel in the same `deliverable_paths` set, and §4.0's strongest-class rule
@@ -658,12 +700,18 @@ Read that as one predicate over the siblings, matching `workflows-core:next-phas
 (*"the next sibling holding no current proposal"*): the option stands wherever some sibling has no
 current proposal, a sibling that was never priced included. Read the other way — dropped unless a
 sibling holds a *stale* one — it would vanish in the commonest case there is. **Current** is
-`/product-workflows:brd-proposal` Phase 3's test, decided by presence and the times
-`/product-workflows:brd-proposal` Phase 2 records (a committed, unmodified path's last commit time,
-else its modification time): a sibling's `proposal.md` exists and is not older than that sibling's
-`prd.md`, `decisions.md` or `grounding/`, and a time that cannot be ordered (a tie, a shallow clone)
-counts as not current here, so the option stands for it. It never opens a sibling's proposal, so this is no read of another
-folder's proposal and the census at the top of this file stands. **Where
+`/product-workflows:brd-proposal` Phase 3's test, decided as `/product-workflows:brd-proposal`
+Phase 2 decides it (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §15.5): a sibling's
+`proposal.md` exists, and
+`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS_PATH" --proposal "<sibling>/proposal.md"`
+returns `basis: content` with `current: true` — or, where it returns `basis: none` (a proposal
+written before the record existed, or one whose record does not parse), the times
+`/product-workflows:brd-proposal` Phase 2 records show it is not older than that sibling's `prd.md`,
+`decisions.md` or `grounding/`. A time that cannot be ordered (a tie, a shallow clone), and a `check`
+that cannot run (exit 2), count as not current here, so the option stands for it — this phase never
+stops the run. **That reads the sibling's `priced-against` record and nothing else of its
+proposal** — no figure, no section — the one record-only read the census at the top of this file
+names. **Where
 dropping would leave fewer than two options, add** `"Re-derive it from scratch once the inputs move —
 /product-workflows:prd-proposal <KEY> --redo"`, which is available on every run, so the array never
 falls below the two options `AskUserQuestion` requires. Nothing is ever added beyond that, and no
@@ -707,7 +755,7 @@ gap, `emit-block` (per `workflows-core:feedback-emission`) fires at that halt **
 **None of this command's own stops qualifies**, and that is the point of naming them here:
 `PRD_PROPOSAL_NEEDS_KEY`, `PRD_PROPOSAL_NOT_FOUND`, `PRD_PROPOSAL_BRD_NOT_SLICED`,
 `PRD_PROPOSAL_EPIC_FOLDER`, `PRD_PROPOSAL_NEEDS_PRD`, `PRD_PROPOSAL_PRD_NOT_HANDED_OFF`,
-`PRD_PROPOSAL_BASELINE_UNREADABLE`, `PRD_PROPOSAL_NEEDS_PROFILE` and an unset `$SPECS_PATH` each
+`PRD_PROPOSAL_BASELINE_UNREADABLE`, `PRD_PROPOSAL_NEEDS_PROFILE`, `PRD_PROPOSAL_RECORD_FAILED` and an unset `$SPECS_PATH` each
 report the state of the operator's own argument list, tree or environment — not a capability this
 plugin lacks. A review BLOCK is not one either: that is the gate working. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
@@ -766,7 +814,7 @@ confirmed and every one rejected, by source; whether a naive baseline was comput
 what it came to; **whether a rationale brief was rendered and, when it was not, which of the two
 reasons applied** — the tier, or `--no-brief` — and, where a prior brief is left standing beside a
 newly written proposal, that it describes the archived revision and not this one; whether this run was
-a revision, the archived paths, and whether `--redo` discarded the anchor; the `--baseline` path where
+a revision, the archived paths, and whether `--redo` discarded the anchor; **the `priced-against` record** — stamped, and every input Phase 7's `check` found moved during the run, or that none did, and any pre-lint or post-triage re-stamp that wrote; the `--baseline` path where
 one was given, cited as the operator gave it; the profile's `engagement_model` and whether the profile
 was read back, corrected or re-grilled; the pre-lint findings; the `proposal-reviewer` verdict with
 the triage line per `workflows-core:finding-triage` § Reporting — the counts, survivors, unverified
@@ -782,6 +830,7 @@ waiting on this run; the one command that reads **another folder's** *as a propo
 umbrella, which is a second proposal rather than a phase of the build, and every other targeted read
 is an own-folder one — a later run of this command, and `proposal-reviewer` inside the run that
 wrote it; `/brd-reconcile`'s stale cross-reference sweep reads a proposal under its parent BRD only
-as prose, and never edits one. The residual risk
+as prose, and never edits one; a sibling slice's run of this command reads only its `priced-against`
+record. The residual risk
 `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §13 states is carried by the person who sends
 the document, and that person is the reader of this report.

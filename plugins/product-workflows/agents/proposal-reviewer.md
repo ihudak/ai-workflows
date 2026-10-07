@@ -319,6 +319,10 @@ notes: |
   `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §5, which grades no umbrella off its ladder
   at all.
 - NEVER return an empty findings list without the per-check account Process step 6 requires.
+- NEVER raise a finding against the `<!-- priced-against … -->` comment that ends a proposal, nor
+  count it against §4's or §10's section set. It is machine data the producing command writes and
+  checks through its bundled script (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §15),
+  not a section and not prose.
 
 **Vendor neutrality binds this file as it binds every other:** any example inside it is invented,
 and no figure, identifier, organisation, product or repository name from a real proposal appears.
