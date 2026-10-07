@@ -132,7 +132,7 @@ There is deliberately no `Cancel`: the commit has already happened, so there is 
 
 ### 2.5 Push
 
-`git -C "<repo>" push -u origin <branch>`. Never force. Where git cannot write the repository's `.git/config` — a container that mounts it read-only — `-u` fails after the push: git exits 0, prints `could not write config file` or `could not lock config file` (and may still announce that the branch is "set up to track"), and records no upstream. That is not a failed push and needs no investigation: the exit status and the `-> <branch>` line are the outcome §3.1 reports, and nothing in this reference reads the upstream.
+`git -C "<repo>" push -u origin <branch>`. Never force. Where git cannot write the repository's `.git/config` — a container that mounts it read-only — `-u` cannot record the upstream: git exits 0, prints `could not write config file` or `could not lock config file` (and may still announce that the branch is "set up to track"), and records no upstream. That is not a failed push and needs no investigation: the exit status and the `-> <branch>` line are the outcome §3.1 reports, and nothing in this reference reads the upstream.
 
 - **No `origin` remote** → nothing to push; the call ends and §3.1's `no origin remote` row is the line (§2.1 already established this is not a failure).
 - **Non-fast-forward rejection** → reported, never resolved by rebasing, resetting, or forcing. The branch is the run's own, so this means somebody else pushed to it; that is a human's call. Server-side rejections (protected-branch pattern, `pre-receive` hook, size or LFS limits) report the same way, through §3.1's `push FAILED (<reason>)` row.

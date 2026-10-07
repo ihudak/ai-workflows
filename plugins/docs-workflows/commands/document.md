@@ -1207,7 +1207,7 @@ Fold the run into clean history before handoff, every git call as `git -C <docs_
 ```
 choices: ["Push <branch> to origin now", "Skip — I'll push later", "Cancel"]
 ```
-- **Push** → `git -C <docs_repo_path> push -u origin <branch>`; report the result. (`git push` is git-protocol, not a REST API — the zero-external-API invariant is preserved.) Where git cannot write the repository's `.git/config` — a container that mounts it read-only — `-u` fails after the push: git exits 0, prints `could not write config file` or `could not lock config file`, and records no upstream. That is not a failed push: the exit status and the `-> <branch>` line are the result, and nothing in this run reads the upstream.
+- **Push** → `git -C <docs_repo_path> push -u origin <branch>`; report the result. (`git push` is git-protocol, not a REST API — the zero-external-API invariant is preserved.) Where git cannot write the repository's `.git/config` — a container that mounts it read-only — `-u` cannot record the upstream: git exits 0, prints `could not write config file` or `could not lock config file`, and records no upstream. That is not a failed push: the exit status and the `-> <branch>` line are the result, and nothing in this run reads the upstream.
 - **Skip** → "Branch `<branch>` ready with N commit(s). Push when ready."
 - **Cancel** → stop and summarise.
 

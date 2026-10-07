@@ -8,7 +8,8 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [4.21.0] — 2026-10-07
 
 ### Added
-- **`/design` offers the re-review the cap still holds where you ask for a deferred finding to be applied**, per `workflows-core` 1.30.0's *unspent re-review* rule.
+- **`/implement` offers the re-review the cap still holds after its `PASS WITH RECOMMENDATIONS` `review-fixer` pass**, per `workflows-core` 1.30.0's *unspent re-review* rule: taken, it is the `BLOCK` branch's one re-review in every respect (the re-captured diff, `claims_file`, triage, the stayed-blocked stop). The fixer's edits reached the tests unreviewed before.
+- **`/design` offers the same re-review where you ask for a deferred finding to be applied.**
 
 ### Fixed
 - **`code-handoff` §2.5 says a config error after `git push -u` is not a failed push.** Where the code repository's `.git/config` is mounted read-only, git pushes, exits 0, prints `could not write config file` and records no upstream; the exit status and the `-> <branch>` line are the outcome, and nothing reads the upstream.

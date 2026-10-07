@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [3.25.0] — 2026-10-07
 
 ### Added
-- **`/create-prd`, `/update-prd` and `/create-ard` say what happens to `MAJOR` findings under `PASS WITH RECOMMENDATIONS`**: the run offers to apply them before the handoff, putting a finding whose fix is a product or architectural decision to the user one question at a time. It said only "proceed", and a live run improvised the offer.
+- **`/create-prd`, `/update-prd` and `/create-ard` say what happens to `MAJOR` findings under `PASS WITH RECOMMENDATIONS`**: on the first review's verdict the run offers to apply them before the handoff, putting a finding whose fix is a product or architectural decision to the user one question at a time. It said only "proceed", and a live run improvised the offer.
 - **Every review gate here that can edit after a verdict that is not `BLOCK` offers the re-review the cap still holds**, per `workflows-core` 1.30.0's *unspent re-review* rule: `/create-prd`, `/update-prd`, `/create-ard` after applied findings; `/epics` after its `PASS WITH RECOMMENDATIONS` `doc-fixer` pass, which now writes `claims_file` for that re-review and removes it in Phase 8; `/specify`, `/prd-proposal` and `/brd-proposal` where the user asks for a deferred finding to be applied. `/create-ard` keeps its prior-ARD copies until that re-review has returned.
 
 ### Fixed

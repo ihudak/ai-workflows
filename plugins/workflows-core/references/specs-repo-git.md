@@ -784,9 +784,9 @@ to state.
    where the branch has no upstream, or one on a remote under another branch's
    name, which a branch cut from the default branch can inherit; a same-name
    upstream on any remote, and any upstream in this repository (`.`), stand as
-   they are. Where git cannot write `.git/config`, `-u` fails after the push
-   and prints a config error (`phase-handoff.md` §2.5); that is not the push's
-   outcome, which step 6 reads from `--porcelain` alone.
+   they are. Where git cannot write `.git/config`, `-u` records no upstream: git pushes,
+   then prints a config error (`phase-handoff.md` §2.5), which is not the push's
+   outcome — step 6 reads that from `--porcelain` alone.
    `--porcelain` is what step 6 reads its outcome from. Never a bare `git push`: under `push.default=matching`, or a
    `remote.<name>.push` refspec, it pushes other branches too, whose commits
    this step never measured.

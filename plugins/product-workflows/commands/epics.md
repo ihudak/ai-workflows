@@ -692,7 +692,7 @@ Act on the return:
     > "Fix the style violations for this brief:
     >
     > Task description: [Epic drafting for <KEY>]
-    > Reviewer or style-checker output: [paste full prose-style-checker output]
+    > Reviewer or style-checker output: [paste the full prose-style-checker output, less any finding on a heading `fixed_headings` names]
     > Project root: [resolved project_root]
     > Severities to fix: MAJOR only"
 

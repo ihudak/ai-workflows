@@ -373,28 +373,31 @@ its pull request with only the version line above to say the verdict predated it
 `choices: ["Re-review the edited <artifact> once (Recommended)", "Hand off as is — the report says the verdict predates the edits"]`
 
 `<artifact>` names what was reviewed — `prd.md`, `ard.md`, `specification.md`, `design.md`,
-`proposal.md`, the Epic drafts, the pages written. The offer is made where both hold: the verdict
-was not `BLOCK`, and an edit answering its findings followed it. An edit of any other kind — a style
+`proposal.md`, the Epic drafts, the pages written, the code change. The offer is made where all
+three hold: the verdict was not `BLOCK`, the run has not re-reviewed this artifact, and an edit
+answering the verdict's findings followed it. An edit of any other kind — a style
 pass, a resumed verify step — stays under the reporting rule above and makes no offer.
 
 - **Taken**, it is the cap's one re-review. Dispatch it as the command dispatches its re-review after
   a `BLOCK` — with the fixer's report as `claims_file` where the command passes one there — and
   triage it where the command triages its re-review (`finding-triage.md` § On re-review). A `BLOCK`,
-  or, where the command triages, a review that **stayed blocked**, escalates per the command's own
-  `Review verdict BLOCK (unresolved after one fix cycle)` rule below; any other verdict proceeds to
-  the handoff, and none starts a fix cycle. The version line then names the re-review's verdict, and
+  or, where the command triages, a review that **stayed blocked**, is handled as the command handles
+  one after its fix cycle — its own `Review verdict BLOCK (unresolved after one fix cycle)` rule
+  below, or `/implement`'s stayed-blocked stop; any other verdict proceeds to the handoff, and none
+  starts a fix cycle or offers to apply its findings. The version line then names the re-review's verdict, and
   an edit after it falls back to the reporting rule above, the cap now spent.
 - **Declined**, the run hands off exactly as before, and the version line says the verdict predates
   the edits.
 
 **It never raises the cap.** A run that went through a `BLOCK` spent its re-review there, and nothing
-here offers another. **Which commands it reaches is a behavioural test, as above: a command whose
-verdict that is not `BLOCK` leads to the handoff without a re-review, and which can edit the reviewed
-artifact on the way.** `/create-prd`, `/update-prd` and `/create-ard` offer to apply a `MAJOR`
-finding; `/epics` and `/document` dispatch `doc-fixer` over them; `/specify`, `/design`,
-`/prd-proposal` and `/brd-proposal` defer them, and edit only where the user asks. `/implement`,
-`/vuln` and `/upgrade` already spend the re-review on their `PASS WITH RECOMMENDATIONS` fixer pass,
-so the offer never arises there.
+here offers another. **Which commands it reaches is a behavioural test, as above: a command whose cap
+allows a re-review, whose verdict that is not `BLOCK` leads to the handoff without one, and which can
+edit the reviewed artifact on the way.** `/create-prd`, `/update-prd` and `/create-ard` offer to apply
+a `MAJOR` finding; `/epics` and `/document` dispatch `doc-fixer` over them, and `/implement`
+`review-fixer`; `/specify`, `/design`, `/prd-proposal` and `/brd-proposal` defer them, and edit only
+where the user asks. `/vuln` and `/upgrade` re-run their review after the `PASS WITH RECOMMENDATIONS`
+fixer pass, spending the re-review there, so the offer never arises; `/docs-init`, `/docs-brand` and
+`/docs-audit` cap at no re-review, so there is none to offer.
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline
 
