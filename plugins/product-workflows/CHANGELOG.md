@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.24.4] — 2026-10-07
+
+### Changed
+- **The getting-started and workflow pages say what the next command does with an artifact not yet on the default branch**: it stops while the artifact sits on an unmerged branch the commands cut, and treats one no such branch carries — written only to disk, or committed only to a branch of your own — as absent, falling back from it or, for a few commands, stopping. They said it refused to start until it found the artifact there, which is not true of a fallback (`workflows-core` `phase-handoff` §3.3 row F, as the roles-and-phases page already says).
+
 ## [3.24.3] — 2026-10-07
 
 ### Changed
