@@ -26,7 +26,7 @@ Usage: `/release-notes <ADDRESS> [--version <v>] [--no-docs] [--docs <path>] [--
 
 For full feature documentation use `/document`; for Epic drafting use `/epics`.
 
-This command makes **zero external API calls** and **never writes into the docs repo**.
+This command makes **no external API calls but key discovery's optional, read-only `gh search prs` and `gh pr view`** — with diff grounding on, where a scanned clone is on GitHub and `gh` is installed and logged in — and **never writes into the docs repo**.
 
 ---
 
@@ -189,7 +189,7 @@ run — the terminal `commit-artifacts` step skips on it.
   ```
   choices: ["Use $REPOS_PATH (default /workspace) (Recommended)", "Use a different path (you'll be prompted)", "Cancel"]
   ```
-  Clones are located in Phase 4 by matching `git remote` against each repo slug the Phase 3 implementation record and its commit scan named — not by assuming a `<base>/<slug>` directory name. Nothing here asks which pull-request statuses to include: Phase 3 builds its refs from `implementation.md` and a `git log --grep` scan, neither of which carries one, and `refs[]` is the only element list `diff-summarizer` takes.
+  Clones are located in Phase 4 by matching `git remote` against each repo slug the Phase 3 implementation record and its commit scan named — not by assuming a `<base>/<slug>` directory name. Nothing here asks which pull-request statuses to include: Phase 3 builds its refs from `implementation.md` and the commit scan, and a pull request reaches them only as the commits a merged one landed (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §4); `refs[]` is the only element list `diff-summarizer` takes.
 
 - **Output destination — derived, not asked.** The draft lands in **`release-notes.md` in the
   resolved PRD folder**, appended as a section. There is one home now, so the destination question
@@ -261,9 +261,11 @@ Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-rout
 
 1. **The record.** Read the `implementation.md` records named above. **Read only the blocks no earlier note covers** — a second release must not re-describe the first one's work, and the notes already in `release-notes.md` are the only honest boundary. `workflows-core:implementation-format` §4 fixes it per record, by what each earlier note read and never by a date: a block is skipped only where every commit it records is in the read set of an earlier note covering its record, a note for the PRD covering every record and a note for an Epic that Epic's alone, each note's scope and read set read off the comment above it (`${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §1, which also says what a note with none counts as). So a note drafted for one Epic moves no other Epic's boundary. An earlier note that records no read set bounds by its date instead, §4's one fallback: list every block that date rule dropped, and every commit it dropped by the commit's own date, beside the ones used — a commit dropped with a block recording it is accounted for by that block's listing and is not written out again (that same §4). A ref two of these records name — the same repository and the same commit — is one ref, counted once (that same §4). **Name the blocks this run used**, so a wrong boundary is visible rather than silent.
 2. **The scan.** For each repository — those `implementation.md` names, or, when it names none, the
-   repositories resolved from `$REPOS_PATH` — search commit messages for the identifiers this run
-   already holds, with the `git log` command `workflows-core:implementation-format` §4 gives: one
-   `--grep` per token, each matching only as a whole key. The tokens — keys and `workitem_key`s —
+   repositories resolved from `$REPOS_PATH`, never the specs or the docs repository
+   (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1) — search commit messages for the identifiers this run
+   already holds, through `${CLAUDE_PLUGIN_ROOT}/scripts/key-discovery.py`, run as
+   `${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1 says — the `git log` `workflows-core:implementation-format`
+   §4 gives, one `--grep` per token, each matching only as a whole key. The tokens — keys and `workitem_key`s —
    are the ones §4 names for this run's scope — the focus Epic's where `focus_key` is set, and,
    where it is null, **the PRD folder's and every `EPIC-` folder's**, since a whole-key match on the
    PRD's key does not reach the Epic keys `/product-workflows:epics` mints by extending it, and
@@ -281,6 +283,8 @@ Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-rout
 **unrecorded work**, named as such with its commits listed: folding hand-made commits silently into
 the recorded set would make the record look more complete than it is.
 
+**Merged pull requests add commits** (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §4) — only where a scanned clone is on GitHub and `gh` is installed and logged in. A merged pull request naming a token — one that shipped, its merge commit on `HEAD`, and is its own, bringing in no other branch's merges — contributes the commits it landed: one the scan already found is that commit, tagged with the pull request; one whose own message names no token joins the scan's commits as a commit only the scan found, reported as unrecorded work like any other and tagged with its pull request. Every other pull request found — a release pull request merging other branches onward and one merged into a branch that never shipped among them — is listed in the report, never read. A commit's tokens, wherever the note boundary above reads them, are its `keys`: those its message names and those of every pull request that landed it (`key-discovery.md` §4).
+
 **Carry the merged set forward as this run's *provisional* read set** — every commit taken from a
 block and every commit the scan kept, by repository. **It is provisional because nothing here has
 opened a diff**: the repositories are resolved to clones in Phase 4 and their diffs read in Phase 5,
@@ -297,13 +301,13 @@ was not read and is not written, so a later run reads it again"*). Phase 5 adds 
 whole of what can enter it (that same §1, which fixes the 12-character form every entry is written
 in).
 
-**Report the scan's own reach.** Say **how many commits it scanned** — the non-merge commits it walked,
-`git -C <repo> rev-list --no-merges --count HEAD` — **and how many matched**. Only a non-merge
+**Report the scan's own reach.** Say **how many commits it scanned** — the non-merge commits it walked, the script's `scanned`
+(`git -C <repo> rev-list --no-merges --count HEAD`) — **and how many matched** (`matched`). Only a non-merge
 commit whose message names the key is findable, and no convention compels a human to follow one — so
 a zero-match scan in a repository that has commits is a signal about the commit convention
 (`docs/reference/commit-convention.md`), not proof that no work happened.
 
-**On a repository the scan left at zero matches, run §4's report-only unanchored probe** — zero
+**On a repository the scan left at zero matches, run §4's report-only unanchored probe** (the script's `probe` for it, less the commits a found pull request accounts for) — zero
 **before** the note boundary drops anything, since a repository where the whole-key `--grep` matched
 and an earlier note had already read every match is one whose work is fully reported rather than
 one the scan could not reach, and reading the count after the drop would fire the probe there — and
@@ -327,7 +331,7 @@ unresolved; and a commit only the scan found — the scan takes no merge commit
 its own change (a root commit's, against the empty tree; a shallow clone's boundary commit, merge or not, comes back unresolved). A squash of a recorded commit is read beside that commit's own element: the same
 change summarised twice, which costs less than missing either.
 `repo_path` is a top-level input of that agent, passed once at the Phase 5 dispatch and never
-repeated inside an element. No URL, no host classification, no `gh` requirement.
+repeated inside an element. No URL and no host classification reach it, and nothing here requires `gh`: a pull request reaches `diff-summarizer` only as the commits it landed (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §4).
 
 
 When `focus_key` is set (Phase 0 step 1 — the address named an Epic folder), scope the **Phase 6
@@ -358,6 +362,7 @@ Take the slug→clone map Phase 3 built with the diff sources — this phase and
 ```
 choices: ["Skip and continue without its refs", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo"]
 ```
+"I'll clone it — wait" and a specified path run key discovery again once the clone is there (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1, *A clone mounted mid-run*).
 
 ---
 
@@ -554,6 +559,7 @@ Outside that one case there is no question to ask and no option that replaces th
    - Blocks used: <each block by its record and heading date | none>; dropped by §4's date fallback: <each block by its record and heading date, and each commit the date rule dropped by its own date, by SHA, date and subject — a commit dropped with a block recording it is accounted for by that block's listing | none> — on a run with diff grounding on
    - Not read: <per repository whose commits Phase 5 dropped from the read set, the repository and why — skipped at Phase 4, no clone resolved, `unresolved_prs`, a `resolved_via: key_commits` fallback that opened nothing this run had carried (unreachable while Phase 5 passes no keys), or an escalation that ended without a summary — and each commit by SHA | none — every provisional commit was read> — on a run with diff grounding on; nothing listed here is written into the scope comment, so the next grounded run reads it again, and on the `unresolved_prs` cause — usually a ref whose commits have left the clone — that means its block, or its scan commit, returns next release, unread again
    - Branch-name probe: <per repository the whole-key scan left at zero matches: each commit it matched, by SHA, date and subject — may name a key inside a branch name or in a merge commit, inspect by hand | fired on <repo>, matched nothing | not fired — the scan matched in every repository> — on a run with diff grounding on; nothing listed here was read
+   - Pull requests: <GitHub PR search: ok — <owners>, <queries> queries, <n> kept, <dropped> loose matches dropped | <status> — <detail> | not run — <first call's reason>>; read through their landed commits: <each by URL, with its commits' SHAs | none>; found but not read: <each by URL and why | none>; left out as never code: <the `excluded` slugs | none>; not read by the script: <each repository by path and its `error` | none> — on a run with diff grounding on (`key-discovery.md` §5)
    - Style check: <applied N safe fixes | report only (M findings) | skipped — you chose "Skip style check"> — rules: <the checker's rules_source, where it ran><; DEGRADED — Phase 7's reason, where Phase 7 recorded it>
    - Model routing: <under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` — every dispatch above already carries the enforced id, per `workflows-core:model-routing/classification` §10 | "MODERATE — detection chain throughout, no degradation (Phase 1.5)">
    - Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` skip line is Phase 9's own output; the `Session cost: …` skip line is Phase 11's own output, printed after this report and not restated in it.]
@@ -693,7 +699,7 @@ current working directory, where it is not the specs repository; no user name is
 ## Invariants (always enforced)
 
 - ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation, and Phase 0 step 1's named stops on a folder that resolved — `RELEASE_NOTES_BRD_NOT_SLICED`, `RELEASE_NOTES_FOLDER_NOT_PLACED`, `RELEASE_NOTES_PRD_NO_KEY` and `RELEASE_NOTES_NO_PRD`, each reporting the operator's own tree). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
-- ZERO external API calls — this run has no forge URL to resolve in the first place: Phase 3 builds `refs[]` from `implementation.md` and the commit scan, and `diff-summarizer` takes a ref's diff with pure local `git`.
+- No external API call but one — key discovery's optional, read-only `gh search prs` and `gh pr view`, where a scanned clone is on GitHub and `gh` is installed and logged in (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md`); `gh` wraps the API. This run has no forge URL to resolve: Phase 3 builds `refs[]` from `implementation.md` and the commit scan, which a merged pull request's landed commits join, and `diff-summarizer` takes a ref's diff with pure local `git`.
 - Every read of the specs tree is read-only.
 - The draft contains NO identifiers, NO PR links, and NO `{{#internal-note}}` block. The scope comment Phase 8 writes above it names a key and the commits the run read, and is not part of the draft (`${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §1).
 - The draft is EXACTLY one Summary, shaped by its destination per `${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §1/§3 — a plain **Category:** label + `### title` + prose for `breaking-changes` / `feature-updates`, or one or two bare past-tense sentences, opening with a past-tense verb, for `fixes`. It carries NO `Change type:` line and NO `Release-notes category:` line, and its **prose** names a release version only where the heading cannot say it — the version is the `#` heading the draft is filed under (Phase 1, `release-note-types.md` §1), which is the only thing that says which release a section belongs to now that the three destinations are three sections of one file. A breaking note that takes effect in a later release names that release, from the source or the user and never invented, or a far-off deprecation's end-of-life date (`release-note-types.md` §6), and every breaking note carries its remediation under a literal `**Action plan:**` label (§4). When the change deprecates something the Summary carries a deprecation note (end-of-life date required, end-of-support optional). A Change Type switch at the Phase 6 prompt re-dispatches the writer.

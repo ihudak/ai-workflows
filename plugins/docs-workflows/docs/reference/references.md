@@ -1,6 +1,6 @@
 # References reference
 
-`docs-workflows` bundles 23 files under `references/` — five top-level markdown files and four bundled subtrees. This page enumerates the five top-level files, the four in `docs-workflow/` and the three in `docs-audit/`, which are enumerated as well as counted because each is a distinct entry point a command names — grouped by concern below — then counts the other two subtrees rather than listing each file inside them, although commands and agents cite files in both of those by name too. The arithmetic: five named individually, plus 5 + 4 + 4 + 3 = 16 markdown pages across the four subtrees — 5 + 16 = 21 accounted for, against 23 files on disk. The remaining two are non-markdown data or templates inside the `docs-profiles/` subtree, deliberately not listed as reference pages: a defaults file and an owners list, neither of them prose a reader would open. The subtree figures below are markdown-page counts specifically; the two data files already sit inside that same subtree and are not part of that count, so nobody should later "correct" a subtree figure by adding them back in.
+`docs-workflows` bundles 24 files under `references/` — six top-level markdown files and four bundled subtrees. This page enumerates the six top-level files, the four in `docs-workflow/` and the three in `docs-audit/`, which are enumerated as well as counted because each is a distinct entry point a command names — grouped by concern below — then counts the other two subtrees rather than listing each file inside them, although commands and agents cite files in both of those by name too. The arithmetic: six named individually, plus 5 + 4 + 4 + 3 = 16 markdown pages across the four subtrees — 6 + 16 = 22 accounted for, against 24 files on disk. The remaining two are non-markdown data or templates inside the `docs-profiles/` subtree, deliberately not listed as reference pages: a defaults file and an owners list, neither of them prose a reader would open. The subtree figures below are markdown-page counts specifically; the two data files already sit inside that same subtree and are not part of that count, so nobody should later "correct" a subtree figure by adding them back in.
 
 The shared corpus every plugin in this family reads — the addressing grammar, the git and phase-handoff entry points, model routing, escalation and triage, cost/feedback/follow-up emission, the docs-grounding and doc-structure conventions, and the PRD format — ships in the companion `workflows-core` plugin and is enumerated on its own references page, reached through the loader skill rather than by path. What is listed here is what `docs-workflows` itself carries.
 
@@ -17,6 +17,12 @@ The accounting a documentation run keeps about what it actually verified, and th
 The one handoff mechanic that belongs to a single command rather than to the family, executed against a **docs** repository.
 
 - `finish-and-handoff.md` — the mechanics `/document` (keyed mode) uses for its inline-profiling-branch handling and its finish-and-handoff step: squash, opt-in push, copy-paste PR draft. The specs repo's own git entry points, and the code repo's, are elsewhere — `workflows-core:specs-repo-git` and `workflows-core:phase-handoff` for the first, the pipeline plugin's `dev-workflows:code-handoff` for the second.
+
+## Finding the work
+
+How the two documentation commands find the code a feature changed, beyond the implementation record.
+
+- `key-discovery.md` — how `/document` (keyed mode) and `/release-notes` run the whole-key commit scan, its probe and the optional GitHub pull-request search through `scripts/key-discovery.py`, and how a merged pull request's landed commits join the scan's result while every other pull request found is listed, never read.
 
 ## Authoring formats
 
