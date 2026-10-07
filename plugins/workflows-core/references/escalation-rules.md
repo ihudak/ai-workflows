@@ -271,21 +271,70 @@ option that resolves the second case, which the previous list had no answer
 for at all. Present this choice per affected repo. No `(Recommended)` marker —
 which option is right depends entirely on why the repo is absent.
 
+## Stashing the user's changes
+
+**Six stash choices run this procedure**: the Stash choice of § *Dirty working tree* below, and the
+"Stash … and continue" choices of the documentation commands that branch a repository they write
+into (`/document` Phase 6.2's two, `/docs-profile` Phase 5, `/docs-init` Phase 2.5 and `/docs-brand`
+Phase 7). `/implement` and `/upgrade` keep their own: each records a `stash_ref` that
+`dev-workflows:code-handoff` reads; `/vuln` never stashes.
+
+1. **Stash under a name no other run shares**, reading the stash ref on both sides of it:
+   `git -C "<repo>" rev-parse -q --verify refs/stash` (empty where there is none), then
+   `git -C "<repo>" stash push -u -m "<command> <KEY>: <why> <UTC timestamp>"`, untracked files
+   included, since `status --porcelain` counts them, then the same `rev-parse` again. `<KEY>` is the
+   run's key, or its command name alone where it has none. Never a bare `git stash`. **Where the
+   ref did not change, nothing was stashed** — git prints `No local changes to save` and exits 0 on
+   a clean tree — so record nothing and say so. Where the choice was § *Dirty working tree*'s, present that choice again rather than re-dispatching: what stash cannot take (changed content inside a submodule) keeps the tree dirty, and a re-dispatch would only return `DIRTY_TREE` again. Anywhere else, go on as the choice says. **Where the push exits
+   non-zero** (`You do not have the initial commit yet` on a repository with no commit), report
+   git's message and present the choice that led here again.
+2. **Record it at once**: its commit — the entry `git -C "<repo>" stash list --format='%H %gs'`
+   lists with this run's message, which no other run shares, where `stash@{0}` may already be
+   another session's — and where HEAD stood when the run reached the choice — `git -C "<repo>" branch --show-current`, or, where that prints nothing (a
+   detached HEAD), `git -C "<repo>" rev-parse HEAD`. A caller that has already moved HEAD records
+   where it stood before the move, and passes that.
+3. **Never apply or pop it.** The run then moves HEAD — a switch, a pull, a new branch — and the
+   changes belong where they were made.
+4. **Name it wherever the run ends** — its final report, or the stop message of a run that ends
+   early, a later repository's *Cancel* included; a run inside another (`/docs-profile --inline`
+   inside `/document`) hands the record back, and the outer run names it — by its message, with the
+   commands that restore it: `git -C "<repo>" switch <branch>` (`switch --detach <commit>` where HEAD was detached), then
+   `git -C "<repo>" stash apply <stash commit>`, and once the result is checked,
+   `git -C "<repo>" stash drop <ref>`, `<ref>` being the `stash@{<n>}` that
+   `git -C "<repo>" stash list --format='%gd %H'` pairs with that commit. **By commit, never by
+   index**: the stash stack is shared by every worktree and session, and each later stash shifts
+   every index under it.
+
 ## Dirty working tree
 
-`choices: ["Stash changes and retry this repo", "Skip this repo", "Cancel"]`
+`choices: ["Stash changes and retry this repo", "Use the checkout as it stands — no fetch, switch or pull", "Skip this repo", "Cancel"]`
 
 Used in `/document` Phase 5 when a diff-summarizer returns `DIRTY_TREE`. `/create-ard`, `/design`,
-`/release-notes`, and `/implement` (Phase 1.7) cite this rule by name without reproducing the list, so
-per the "Choice lists are presented verbatim" convention above they use this variant — the one written
-under this heading.
+`/release-notes` and `/implement` (Phase 1.7) cite this rule by name without reproducing the list,
+so per the "Choice lists are presented verbatim" convention above they use the list written under
+this heading; `/epics` (Phase 5) and `/specify` (Phase 4) reproduce the same list inline. **`/docs-audit`
+reproduces a list without the second choice**, and says why: its coverage denominator is a claim
+about the product as it ships. A new citer that reproduces a list inline states which one it uses.
 
-In `/epics` Phase 5 the variant is shorter still:
-`choices: ["Stash changes and retry this repo", "Skip this repo", "Cancel"]`
+**The uncommitted changes are the user's, in a repository the run only reads, so no choice commits,
+pushes or discards them.** Each choice does exactly this, and **the answer holds for the rest of the
+run**: a later dispatch to the same repository — a second scan round — is made the way the answer
+left it, and asks nothing, save a Stash that stashed nothing (§ *Stashing the user's changes* step 1).
 
-`/specify` (Phase 4) reproduces this shorter `/epics` variant inline as well. A new citer that reproduces
-a list inline states which variant it uses; a citer that names the rule without reproducing the list
-uses the `/document` variant above, which is the one written under this heading.
+- **Stash changes and retry this repo** — stash per § *Stashing the user's changes* above, then
+  re-dispatch the agent for this repo unchanged.
+- **Use the checkout as it stands — no fetch, switch or pull** — re-dispatch the agent for this repo
+  with its refresh off: `code-scanner` with `refresh.pull` and `refresh.switch_to_default_branch`
+  false, `diff-summarizer` with `refresh.fetch` and `refresh.pull` false. Neither then changes the
+  repository. **`code-scanner` reads the working tree as it is**, so a line it cites may be one no
+  commit holds: the run's final report says so per repository —
+  `<repo>: read as it stands at <prep.branch_at_scan> @ <git -C "<repo>" rev-parse --short HEAD>, with uncommitted changes`
+  — and an ARD, specification, design or Epic the run writes says the same where it names the code
+  it was grounded on (an ARD's `## Grounding findings`). **`diff-summarizer` diffs the refs the
+  clone already holds**, which may be behind `origin`; the final report says
+  `<repo>: read without a fetch`.
+- **Skip this repo** — the run goes on without it, and its report names the repository skipped.
+- **Cancel** — the run ends, naming any stash it took.
 
 ## Branch prefix undetected
 
@@ -305,16 +354,10 @@ Either way, prompt for the value with: `"Enter your initials (lowercase; 2–8 c
 `choices: ["Continue with current local state", "Skip this repo", "Cancel"]`
 
 Used in `/document` Phase 5 when a diff-summarizer returns `REFRESH_BLOCKED`. `/create-ard`, `/design`,
-`/release-notes`, and `/implement` (Phase 1.7) cite this rule by name without
-reproducing the list, so per the "Choice lists are presented verbatim" convention above they use this
-variant — the one written under this heading.
-
-In `/epics` Phase 5 the variant is shorter still:
-`choices: ["Continue with current local state", "Skip this repo", "Cancel"]`
-
-`/specify` (Phase 4) reproduces this shorter `/epics` variant inline as well. A new citer that reproduces
-a list inline states which variant it uses; a citer that names the rule without reproducing the list
-uses the `/document` variant above, which is the one written under this heading.
+`/docs-audit`, `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without
+reproducing the list, so per the "Choice lists are presented verbatim" convention above they use the
+list written under this heading; `/epics` (Phase 5) and `/specify` (Phase 4) reproduce the same list
+inline. A new citer that reproduces a list inline states which one it uses.
 
 ## Read-only mount — ref stale or diverged
 
