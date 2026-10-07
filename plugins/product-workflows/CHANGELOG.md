@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.26.0] — 2026-10-07
+
+### Added
+- **`/epics` and `/specify` offer to use a dirty code repository as it stands**, per `workflows-core` 1.31.0's *Dirty working tree* rule, which they now cite for what each choice does.
+
+### Fixed
+- **`/create-ard` holds every inline edit of its review phase to `ard-format`'s Quality rules.** A fix, an applied finding or a manual fix note that adds a claim about the code cites the `file:line` a search found, and a universal claim is searched for counter-examples. A live run's fix asserted, unsearched, that one service was an endpoint's only caller, and the re-review spent the cap on the BLOCKER that raised.
+
 ## [3.25.0] — 2026-10-07
 
 ### Added

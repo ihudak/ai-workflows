@@ -273,19 +273,36 @@ which option is right depends entirely on why the repo is absent.
 
 ## Dirty working tree
 
-`choices: ["Stash changes and retry this repo", "Skip this repo", "Cancel"]`
+`choices: ["Stash changes and retry this repo", "Use the checkout as it stands — no fetch, switch or pull", "Skip this repo", "Cancel"]`
 
 Used in `/document` Phase 5 when a diff-summarizer returns `DIRTY_TREE`. `/create-ard`, `/design`,
-`/release-notes`, and `/implement` (Phase 1.7) cite this rule by name without reproducing the list, so
-per the "Choice lists are presented verbatim" convention above they use this variant — the one written
-under this heading.
+`/docs-audit`, `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without
+reproducing the list, so per the "Choice lists are presented verbatim" convention above they use the
+list written under this heading; `/epics` (Phase 5) and `/specify` (Phase 4) reproduce the same list
+inline. A new citer that reproduces a list inline states which one it uses.
 
-In `/epics` Phase 5 the variant is shorter still:
-`choices: ["Stash changes and retry this repo", "Skip this repo", "Cancel"]`
+**The uncommitted changes are the user's, in a repository the run only reads, so no choice commits,
+pushes or discards them.** Each choice does exactly this:
 
-`/specify` (Phase 4) reproduces this shorter `/epics` variant inline as well. A new citer that reproduces
-a list inline states which variant it uses; a citer that names the rule without reproducing the list
-uses the `/document` variant above, which is the one written under this heading.
+- **Stash changes and retry this repo** — `git -C "<repo>" stash push -u -m "<command> <KEY>: before reading <repo>"`,
+  untracked files included, since the agent counts them as dirt; never a bare `git stash`, whose
+  stack every worktree and session shares. Note the branch it was taken on
+  (`git -C "<repo>" branch --show-current`), then re-dispatch the agent for this repo unchanged.
+  **The run never pops it**: the agent may have switched the branch and pulled, and the changes
+  belong to the branch they were made on. The final report names the stash by its message and that
+  branch, with the command that restores it —
+  `git -C "<repo>" switch <branch> && git -C "<repo>" stash pop "stash@{<n>}"`, `<n>` being the
+  entry's index in `git -C "<repo>" stash list` when the report is written.
+- **Use the checkout as it stands — no fetch, switch or pull** — re-dispatch the agent for this repo
+  with its refresh off: `code-scanner` with `refresh.pull` and `refresh.switch_to_default_branch`
+  false, `diff-summarizer` with `refresh.fetch` and `refresh.pull` false. Neither then changes the
+  repository. `code-scanner` reads the working tree as it is — the checked-out branch, uncommitted
+  changes included — so wherever the run records the branch and commit a repository was read at, it
+  adds `with uncommitted changes`: a line cited from that read may be one no commit holds.
+  `diff-summarizer` diffs the refs the clone already holds, which may be behind `origin`, and says so
+  in its `refresh_note`.
+- **Skip this repo** — the run goes on without it, and its report names the repository skipped.
+- **Cancel** — the run ends.
 
 ## Branch prefix undetected
 

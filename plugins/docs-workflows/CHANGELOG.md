@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.12.0] — 2026-10-07
+
+### Added
+- **`/document` offers to use a dirty repository as it stands**, per `workflows-core` 1.31.0's *Dirty working tree* rule, which it now cites for what each choice does: `diff-summarizer` then diffs the refs the clone already holds, without fetching.
+
 ## [1.11.0] — 2026-10-07
 
 ### Added

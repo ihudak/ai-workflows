@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.31.0] — 2026-10-07
+
+### Added
+- **`escalation-rules` § *Dirty working tree* offers "Use the checkout as it stands — no fetch, switch or pull"**: a re-dispatch with the agent's refresh off, which `code-scanner` and `diff-summarizer` already supported, as § *Refresh blocked* already offers for a blocked pull. A run that reads a dirty working tree records the branch and commit it read `with uncommitted changes`. A live `/create-ard` run had to stash a code repository whose only changes were another plugin's session files.
+
+### Fixed
+- **The *Stash* choice is defined, and its stash is never lost track of.** No reference said what it ran or what became of it. It is now a named `stash push -u` (untracked files included, which the agent counts as dirt), never popped by the run, since the agent may switch the branch and pull; the final report names it, its branch and the command that restores it. The section also states that no choice commits, pushes or discards the user's changes, lists `/docs-audit` among its citers, and drops the claim that `/epics`' list is shorter.
+- **A config error after `branch -d` is not a failed deletion.** In a container that mounts `.git/config` read-only, `branch -d` deletes the branch, exits 0 and prints `could not write config file` for the section it could not remove; `specs-repo-git` §3.5 B2 and `architecture-promotion` §9 now report the deletion as done.
+
 ## [1.30.0] — 2026-10-07
 
 ### Added
