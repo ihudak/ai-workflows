@@ -64,7 +64,7 @@ Never force-push. Never call a REST API over HTTPS from this flow. (The `gh` CLI
 
 ## 4. Host detection
 
-Classify the docs repo's `git -C <docs_repo_path> remote get-url origin`:
+Classify the docs repo's `git -C <docs_repo_path> remote get-url origin`, its host first resolved through an SSH alias as `workflows-core:phase-handoff` §2.6 resolves it — `git@github-ig.com:…`, where `github-ig.com` is a `~/.ssh/config` alias whose `HostName` is `github.com`, is GitHub:
 - host `bitbucket.org` → Bitbucket Cloud;
 - a self-hosted host with `/scm/` in the path or a bitbucket-style hostname →
   Bitbucket Server;
