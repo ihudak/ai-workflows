@@ -498,15 +498,15 @@ section the artifact's own format keeps for open questions:
 - `prd.md` — an entry under `## Assumptions & open questions`, adding that adapt-in section where a
   hybrid or full PRD does not carry it yet, since the finding now warrants it. A PRD on the lean
   profile — `/create-prd`'s kept `--lean`, or the profile `/update-prd` infers from the sections
-  present — has no such cluster, so there the final report alone carries it, as `/create-prd`
-  already records a kept contradiction. On the BRD route, `/create-prd` puts each such finding
-  through its Phase 3 triage of a gap the grill cannot close, so one only the customer can settle
-  becomes an `[AS#n]` in `decisions.md` and reaches the customer through `/brd-package`, rather
-  than stopping at a paragraph.
+  present — has no such cluster, so there the PRD gets no entry and the final report carries it,
+  as `/create-prd` already records a kept contradiction. On the BRD route, `/create-prd` also puts
+  each such finding through its Phase 3 triage of a gap the grill cannot close, on any profile, so
+  one only the customer can settle becomes an `[AS#n]` in `decisions.md` and reaches the customer
+  through `/brd-package`, rather than stopping at a paragraph. `/update-prd` writes no decision
+  register on either route, so it records the PRD entry alone.
 
-**The question names the requirement it puts in doubt, where it puts one in doubt**, so that
-requirement reads as provisional rather than final — a reviewer meeting an open question about something stated final takes it for a
-contradiction (`spec-reviewer`'s *Open-question consistency*). **And it is written after the last
+**The question names the requirement it puts in doubt, where it puts one in doubt**, so the next
+run knows which requirement to revisit when it settles the question. **And it is written after the last
 review the run takes** — once the unspent re-review offer is settled and any re-review it led to has
 returned, immediately before the handoff — so no review of this run is spent on the question
 itself.
