@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.26.1] — 2026-10-07
+
+### Fixed
+- **A proposal's currency was decided by file times git resets at checkout.** `/brd-proposal`'s readiness walk, and `/prd-proposal`'s next-phase offer through it, called a slice's `proposal.md` current when no `prd.md`, `decisions.md` or `grounding/` file was newer — by modification time alone. On a fresh clone every file carries its checkout time, in no useful order, so a stale proposal could be included as current and a current one sent back to be re-run. A path's time is now, where it is committed and unmodified, its last commit that added or changed it — read from `$SPECS_PATH` wherever the run starts, skipping a pure rename, counting a deleted grounding file, as epoch seconds — and its modification time otherwise. A tie or a shallow clone cannot order a proposal against its inputs: such a slice is asked about, with **Include** recommended and the reason printed, and the walk shows each slice's basis.
+- **`/update-prd` dated the artifacts it may invalidate by modification time**, which on a fresh clone is the checkout time. It now names each one's last commit time, and its modification time only where it is uncommitted or modified.
+
 ## [3.26.0] — 2026-10-07
 
 ### Added

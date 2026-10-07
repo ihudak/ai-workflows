@@ -32,7 +32,7 @@ commands §1's `altitude` row names each read the register filtered on their own
 report, `commands/prd-proposal.md`'s tier grading, `agents/proposal-reviewer.md` and
 `agents/customer-review-reader.md` read it too. `grep -l 'decisions\.md' commands/*.md agents/*.md`
 lists every command and agent that names the register. It is not a list of readers in either
-direction: a file may name it only to compare its modification time or to describe another
+direction: a file may name it only to compare its time with a proposal's or to describe another
 command's write, and `agents/customer-review-reader.md` reads it without naming it — it is handed
 the register by path, as its `assumptions` input. **Every one of them reads the register through
 §8** — the agent through its caller, which applies §8 to what the agent returns, since it reads the
