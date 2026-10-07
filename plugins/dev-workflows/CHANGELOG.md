@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.20.1] — 2026-10-07
+
+### Fixed
+- **A code pull request opens on a remote that uses an SSH host alias** (`code-handoff` §2.6, used by `/implement`, `/vuln` and `/upgrade`): the host is resolved with `ssh -G` before it is kept, as `workflows-core` 1.29.2's `phase-handoff` §2.6 does. A remote such as `git@github-ig.com:owner/repo.git`, an alias for `github.com`, made every `gh` call fail after the push had succeeded.
+
 ## [4.20.0] — 2026-10-06
 
 ### Changed
