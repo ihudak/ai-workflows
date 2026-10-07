@@ -368,9 +368,10 @@ RECOMMENDATIONS` with four `MAJOR` findings, two of them acceptance criteria con
 other; the user applied every finding, criteria were merged and renumbered, and the text went to
 its pull request with only the version line above to say the verdict predated it.
 
-**So, before the handoff, offer it once:**
+**So, before the step that follows the review gate, offer it once** — the handoff in most adopters,
+step 7.5 in `/implement`, whose tests still run on either answer:
 
-`choices: ["Re-review the edited <artifact> once (Recommended)", "Hand off as is — the report says the verdict predates the edits"]`
+`choices: ["Re-review the edited <artifact> once (Recommended)", "Go on without it — the report says the verdict predates the edits"]`
 
 `<artifact>` names what was reviewed — `prd.md`, `ard.md`, `specification.md`, `design.md`,
 `proposal.md`, the Epic drafts, the pages written, the code change. The offer is made where all
@@ -383,10 +384,11 @@ pass, a resumed verify step — stays under the reporting rule above and makes n
   triage it where the command triages its re-review (`finding-triage.md` § On re-review). A `BLOCK`,
   or, where the command triages, a review that **stayed blocked**, is handled as the command handles
   one after its fix cycle — its own `Review verdict BLOCK (unresolved after one fix cycle)` rule
-  below, or `/implement`'s stayed-blocked stop; any other verdict proceeds to the handoff, and none
+  below, or `/implement`'s stayed-blocked stop; any other verdict, or **Proceed** at a settle prompt,
+  goes on to the step that follows the review gate, as after the command's own re-review, and none
   starts a fix cycle or offers to apply its findings. The version line then names the re-review's verdict, and
   an edit after it falls back to the reporting rule above, the cap now spent.
-- **Declined**, the run hands off exactly as before, and the version line says the verdict predates
+- **Declined**, the run goes on exactly as before, and the version line says the verdict predates
   the edits.
 
 **It never raises the cap.** A run that went through a `BLOCK` spent its re-review there, and nothing
