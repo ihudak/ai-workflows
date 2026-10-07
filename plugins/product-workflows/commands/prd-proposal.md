@@ -222,8 +222,13 @@ folder holds and caps confidence accordingly, and no tier withholds permission t
 (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §5).
 
 **`--baseline <path>` may sit outside `$SPECS_PATH`, and is read strictly read-only.** Nothing is
-copied, committed or rewritten, and the reconciliation section cites it by the path the operator
-gave. **An unreadable path is a stop naming that path**, never a silently omitted section:
+copied, committed or rewritten. The reconciliation section cites a baseline under `$SPECS_PATH` by
+its path relative to it, and one outside it by its file name alone — a local path has no place in a
+document the customer receives, which is why the `priced-against` record withholds it too (§15.1).
+**It may not be this folder's own `proposal.md` or `proposal-brief.md`** — this run archives and
+rewrites both, so the reconciliation would be against a file that no longer says what it said:
+`PRD_PROPOSAL_BASELINE_IS_OUTPUT: --baseline named <path>, this folder's own <proposal.md|proposal-brief.md>, which this run archives and rewrites. Name the archived revision under revisions/ instead.`
+**An unreadable path is a stop naming that path**, never a silently omitted section:
 `PRD_PROPOSAL_BASELINE_UNREADABLE: --baseline named <path>, which cannot be read. Give a readable path or drop the flag — a reconciliation section written against a baseline nobody can open is worse than none.`
 Absent, §4's section 22 does not exist, is not a gap, and the document does not apologise for it.
 
@@ -347,8 +352,10 @@ the value is not read.
 Phase 3 reads the folder (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §15.4):
 
 ```bash
-rec=$(command mktemp -t proposal-record-XXXXXX) && python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" record --specs "$SPECS_PATH" --folder "<the resolved folder's absolute path>" > "$rec" && echo "$rec"
+rec=$(command mktemp -t proposal-record-XXXXXX) && python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" record --specs "$SPECS_PATH" --folder "<the resolved folder's absolute path>" --baseline "<the --baseline path, absolute>" > "$rec" && echo "$rec"
 ```
+
+`--baseline` is omitted where `--baseline` was not given: the record then holds no prior estimate.
 
 It prints the record file's path — a temp file, never inside a repository. **Note that path and
 write it out wherever a later phase names the record file**: a shell variable does not survive from
@@ -764,7 +771,7 @@ gap, `emit-block` (per `workflows-core:feedback-emission`) fires at that halt **
 **None of this command's own stops qualifies**, and that is the point of naming them here:
 `PRD_PROPOSAL_NEEDS_KEY`, `PRD_PROPOSAL_NOT_FOUND`, `PRD_PROPOSAL_BRD_NOT_SLICED`,
 `PRD_PROPOSAL_EPIC_FOLDER`, `PRD_PROPOSAL_NEEDS_PRD`, `PRD_PROPOSAL_PRD_NOT_HANDED_OFF`,
-`PRD_PROPOSAL_BASELINE_UNREADABLE`, `PRD_PROPOSAL_NEEDS_PROFILE` and an unset `$SPECS_PATH` each
+`PRD_PROPOSAL_BASELINE_UNREADABLE`, `PRD_PROPOSAL_BASELINE_IS_OUTPUT`, `PRD_PROPOSAL_NEEDS_PROFILE` and an unset `$SPECS_PATH` each
 report the state of the operator's own argument list, tree or environment — not a capability this
 plugin lacks. **`PRD_PROPOSAL_RECORD_FAILED` qualifies only by its cause**: where the script's stderr, or the shell's, names the operator's tree or environment — a file it cannot read or a name it cannot record, a missing `python3` or `git` (the last two the image exception below) — it is one of these; where it names something this run produced — a record file that no longer parses, an argument the run built — it is a plugin defect, and `emit-block` fires before the stop. A review BLOCK is not one either: that is the gate working. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 

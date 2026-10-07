@@ -235,7 +235,10 @@ Where it returns `basis: content`, the proposal ends with a well-formed `priced-
 the script has compared every input that slice's proposal priced with what is on disk — `ard.md`,
 `specification.md`, the interview records, the defect sources, the Epics and the profile as well as
 `prd.md`, `decisions.md` and `grounding/`: `current: true` is current, and `current: false` is
-stale, every path it lists `changed`, `added` or `removed` being why. The working-tree content
+stale, every path it lists `changed`, `added` or `removed` being why. A proposal that reconciled
+against a baseline this machine cannot compare — outside the specs repository, or not on this
+machine — also returns it under `unverifiable`: say so in the walk's picture, since that
+reconciliation is not checked. The working-tree content
 counts, committed or not: a re-run would price what is on disk. **Never compute or compare an id
 yourself.** A script that fails — any non-zero exit, a missing `python3` included — stops the run
 with the cause after the colon:
@@ -298,7 +301,21 @@ own defect sources changed is named as itself — every slice under `stale_slice
 and every slice under `unrecorded_slices` the time rule finds not current, with its basis. A failure
 — any non-zero exit — stops the run with `BRD_PROPOSAL_RECORD_FAILED`, as above.
 
-- **Current** — ask, printing the recommendation beside the array:
+- **Current** — **then say where that umbrella stands in git**, with three of `require-on-main`'s
+  read-only primitives (`workflows-core:phase-handoff` §3.2) and never the gate itself — this is a
+  read, so nothing here prompts, switches a branch or stops. `<default-ref>` is resolved as
+  `workflows-core:specs-repo-git` §3.2 resolves it, and `<path>` is the umbrella's `proposal.md`
+  relative to `$SPECS_PATH`. Where `$SPECS_PATH` is not a git repository, print *not under git*. Else
+  run `git -C "$SPECS_PATH" rev-parse --verify --quiet "<default-ref>"` — non-zero prints *the
+  default branch cannot be resolved* — then `git -C "$SPECS_PATH" cat-file -e
+  "<default-ref>:./<path>" 2>/dev/null` — non-zero prints *the default branch holds no umbrella* —
+  then `git -C "$SPECS_PATH" diff --quiet "<default-ref>" -- "<path>"`: exit 0 prints *the default
+  branch holds this umbrella as it stands*, non-zero *the default branch holds a different umbrella —
+  the one on disk is not merged*. Print the result beside the verdict, and where it is anything but
+  the one that holds this umbrella as it stands, say that **Stop** leaves it so: current is a
+  statement about its content, not about whether anyone has received it. Print, too, every slice
+  under `unverifiable_slices` with what it lists — a slice whose baseline this machine cannot
+  compare, so its section 22 was not checked. Then ask, printing the recommendation beside the array:
   `choices: ["Stop — the umbrella is current (Recommended)", "Re-price it anyway"]`.
   **Stop** ends the run here and writes no artifact. It is an operator's finished decision rather
   than a refusal, so it carries no stop id and runs the emitter tail (Phase 13) on the way out,
@@ -862,8 +879,8 @@ computed recommendation and, for each slice the walk asked about, the operator's
 included, excluded, or left for re-pricing — and each current slice as included without a question,
 so an inclusion taken against a **Stop** recommendation is visible rather than implied.
 **On a run Phase 2 ended** — the operator answered *Stop — the umbrella is current* — the report is
-the umbrella check's verdict and its basis, every slice Phase 2 enumerated with the basis that decided
-it, and that no artifact was written.
+the umbrella check's verdict and its basis, where the umbrella stands in git, every slice Phase 2
+enumerated with the basis that decided it, and that no artifact was written.
 **On a run the walk ended** — the operator answered "Price the slice first" or "Re-price it first" —
 the report is that walk plus the list of slices still to price, and it says plainly that no artifact
 was written and nothing was excluded; the rest of this list describes a run that reached Phase 8.

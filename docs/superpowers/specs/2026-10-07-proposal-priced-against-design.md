@@ -25,11 +25,12 @@ Defined **once**, in a new `references/proposal-format.md` §15, and enumerated 
 | `ard.md` | tier 3 |
 | `specification.md` | tier 4; the authored test-case count sizes QA |
 | `code-defect-log.md` | defect source 1 |
-| every file under `grounding/`, recursively — regular files only, never a symlink, and no name (file or directory) beginning with `.` | tier 2's verified-grounding half; driver evidence; defect source 2 |
+| every `.md` file under `grounding/`, recursively, no name (file or directory) beginning with `.` — a symlink counts as what it points at (amended 3.27.1: a skipped symlink left an edit through it unseen, and an editor's backup file read as an input) | tier 2's verified-grounding half; driver evidence; defect source 2 |
 | every `interview/round-<N>.md`, and `interview/customer-questions.md` | the register's settledness; the open-items sweep's unanswered customer questions |
 | every `self-review-<YYYYMMDD>.md` | defect source 3 |
 | `epic.md` in every immediate `EPIC-*` subfolder | seeds the middle work packages |
 | `$SPECS_PATH/.dev-workflows/proposal-profile.yml` | productivity basis, roles, calendar, engagement model |
+| the `--baseline` file, where one was given | section 22's reconciliation (amended 3.27.1; its line flagged `baseline` — folder-relative inside the folder, `$SPECS_PATH/` elsewhere under the root, `<outside>` beyond it; compared where held, else listed `unverifiable`) |
 
 **Not inputs:** `proposal.md` and `proposal-brief.md` (the output, and the stability anchor a re-run reads), `revisions/`, `brd-link.md` and `coverage-ledger.md` (read only to word a refusal).
 
@@ -40,7 +41,7 @@ Defined **once**, in a new `references/proposal-format.md` §15, and enumerated 
 **The record is computed, written and compared by one bundled script**, `plugins/product-workflows/scripts/proposal-record.py` — Python standard library only, the pattern `promotion-signals.py` and `architecture-harvest.py` already set in this plugin, with a `--selftest` run in CI. Enumeration, hashing, sorting, parsing and comparison are the parts an agent re-deriving them from prose gets subtly wrong (a glob, a sort order, a 40-character id transcribed), so the commands run the script and never compute an id themselves:
 
 ```
-proposal-record.py record --specs <SPECS_PATH> --folder <folder> [--brd-key <KEY> [--excluded <slice-dir>,…]]
+proposal-record.py record --specs <SPECS_PATH> --folder <folder> [--baseline <file>] [--brd-key <KEY> [--excluded <slice-dir>,…]]
 proposal-record.py stamp  --proposal <proposal.md> --record <file> [--excluded <slice-dir>,…]
 proposal-record.py check  --specs <SPECS_PATH> --proposal <proposal.md> [--brd-key <KEY>]
 proposal-record.py --selftest
@@ -149,3 +150,7 @@ Then the repository's gates — `scripts/check-docs.sh`, `scripts/validate-catal
 ## Release
 
 The next free `product-workflows` minor above 3.26.1 (3.27.0 unless taken at merge), CHANGELOG dated at merge; `docs/commands/prd-proposal.md`, `docs/commands/brd-proposal.md`, `docs/reference/proposal-format.md` and `.claude/rules/product-workflows.md` updated where they state the currency test, the census, or `/brd-proposal`'s flow (which gains the early check).
+
+## Amendment — 3.27.1
+
+Four follow-ups from the 3.27.0 review's set-aside cases, each a fix: **a symlink counts as the file or directory it points at** (the pricing reads through it; a dangling link is no input; a directory reached twice is walked once); **only `.md` files under `grounding/` are inputs**, so an editor's backup or autosave never is; **`--baseline` is an input** — under `$SPECS_PATH` by its `$SPECS_PATH/` path, inside the folder by its folder-relative path, elsewhere under the root by its `$SPECS_PATH/` path, outside it as `<outside>` with its id and without its path — each on a line flagged `baseline`, compared wherever this machine holds it and otherwise listed under `unverifiable`, never counted; never the folder's own `proposal.md` or `proposal-brief.md`; section 22 names an outside one by file name alone; and **`/brd-proposal`'s Stop answer says where the umbrella stands in git**, from three of `require-on-main`'s read-only primitives (phase-handoff §3.2) — never the gate, which prompts and can switch branches. A sorted walk records the same path on every machine, and a link up to the folder or above it is not followed.

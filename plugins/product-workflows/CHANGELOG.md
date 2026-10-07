@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.27.1] — 2026-10-07
+
+### Fixed
+- **A symlinked input was not watched.** The `priced-against` record skipped every symlink, while the pricing reads through them — so an edit to a symlinked grounding file, or to a `prd.md` that is a link, left a stale proposal reading as current. A symlink now counts as the file or directory it points at; a dangling one is no input; a directory reached twice through links is walked once, and walked in sorted order, so every machine records the same path for it; a link up the tree to the folder or above it — which would make the proposal its own input — is not followed. A proposal priced under 3.27.0 whose grounding held a symlink or a non-markdown file reads stale once, and re-pricing it settles it.
+- **An editor's leftover under `grounding/` counted as an input.** A `code-grounding.md~` backup, an `.orig` file or an autosave was recorded, so deleting it marked the proposal stale. Grounding records are markdown: only `.md` files under `grounding/` are inputs now.
+- **`--baseline` was not recorded.** A proposal reconciled against a prior estimate (section 22) read as current after that estimate changed. The baseline is now an input on a line flagged `baseline`: inside the folder by its folder-relative path, so a moved folder keeps it; elsewhere under `$SPECS_PATH` by its path there; outside it as `<outside>`, its path withheld — and section 22 now names an outside baseline by its file name alone, where it printed the local path the operator gave. It is compared wherever the machine holds it; an outside one, or one missing on this machine, is reported as not checked rather than counted. This folder's own `proposal.md` or `proposal-brief.md`, which the run rewrites, is refused as a baseline with `PRD_PROPOSAL_BASELINE_IS_OUTPUT`.
+- **"Stop — the umbrella is current" did not say where the umbrella stood in git.** `/brd-proposal` now prints, beside the verdict, whether the default branch holds that umbrella as it stands, a different one, none, or cannot be read — with read-only git commands, never the `require-on-main` gate, which can prompt and switch branches — and every included slice whose baseline could not be compared.
+
 ## [3.27.0] — 2026-10-07
 
 ### Added

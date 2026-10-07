@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3 standard library, git ≥ 2.32 (`GIT_CONFIG_GLOBAL` in the self-test), markdown command bodies, GitHub Actions.
 
-**Spec:** `docs/superpowers/specs/2026-10-07-proposal-priced-against-design.md` (ai-workflows, branch `iv-gu/proposal-priced-against`).
+**Spec:** `docs/superpowers/specs/2026-10-07-proposal-priced-against-design.md` **Superseded in part** by the two review rounds and the 3.27.1 amendment recorded in the spec — symlinks are now read through, only `.md` under `grounding/` counts, and the baseline is an input; where this plan and the spec differ, the spec and the shipped script are right. (ai-workflows, branch `iv-gu/proposal-priced-against`).
 
 ## Global Constraints
 
