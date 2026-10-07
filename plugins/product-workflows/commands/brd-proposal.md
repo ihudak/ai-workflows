@@ -235,7 +235,9 @@ Where it returns `basis: content`, the proposal ends with a well-formed `priced-
 the script has compared every input that slice's proposal priced with what is on disk — `ard.md`,
 `specification.md`, the interview records, the defect sources, the Epics and the profile as well as
 `prd.md`, `decisions.md` and `grounding/`: `current: true` is current, and `current: false` is
-stale, every path it lists `changed`, `added` or `removed` being why. The working-tree content
+stale, every path it lists `changed`, `added` or `removed` being why. A proposal that reconciled
+against a baseline outside the specs repository also returns it under `unverifiable`: say so in the
+walk's picture — that file's currency is not checked. The working-tree content
 counts, committed or not: a re-run would price what is on disk. **Never compute or compare an id
 yourself.** A script that fails — any non-zero exit, a missing `python3` included — stops the run
 with the cause after the colon:
@@ -298,7 +300,12 @@ own defect sources changed is named as itself — every slice under `stale_slice
 and every slice under `unrecorded_slices` the time rule finds not current, with its basis. A failure
 — any non-zero exit — stops the run with `BRD_PROPOSAL_RECORD_FAILED`, as above.
 
-- **Current** — ask, printing the recommendation beside the array:
+- **Current** — **then say where that umbrella stands in git**: execute `require-on-main` (§3) against
+  the umbrella's `proposal.md` for its return value only — never stop on it here — and print it beside
+  the verdict: on the default branch, on a branch or an open pull request, committed nowhere, or not
+  under git. Where it is not on the default branch, say that **Stop** leaves it there: current is a
+  statement about its content, not about whether anyone has received it. Then ask, printing the
+  recommendation beside the array:
   `choices: ["Stop — the umbrella is current (Recommended)", "Re-price it anyway"]`.
   **Stop** ends the run here and writes no artifact. It is an operator's finished decision rather
   than a refusal, so it carries no stop id and runs the emitter tail (Phase 13) on the way out,
@@ -862,8 +869,8 @@ computed recommendation and, for each slice the walk asked about, the operator's
 included, excluded, or left for re-pricing — and each current slice as included without a question,
 so an inclusion taken against a **Stop** recommendation is visible rather than implied.
 **On a run Phase 2 ended** — the operator answered *Stop — the umbrella is current* — the report is
-the umbrella check's verdict and its basis, every slice Phase 2 enumerated with the basis that decided
-it, and that no artifact was written.
+the umbrella check's verdict and its basis, where the umbrella stands in git, every slice Phase 2
+enumerated with the basis that decided it, and that no artifact was written.
 **On a run the walk ended** — the operator answered "Price the slice first" or "Re-price it first" —
 the report is that walk plus the list of slices still to price, and it says plainly that no artifact
 was written and nothing was excluded; the rest of this list describes a run that reached Phase 8.

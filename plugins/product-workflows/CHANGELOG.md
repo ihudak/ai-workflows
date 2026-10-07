@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.27.1] — Unreleased
+
+### Fixed
+- **A symlinked input was not watched.** The `priced-against` record skipped every symlink, while the pricing reads through them — so an edit to a symlinked grounding file, or to a `prd.md` that is a link, left a stale proposal reading as current. A symlink now counts as the file or directory it points at; a dangling one is no input, and a directory reached twice through links is walked once.
+- **An editor's leftover under `grounding/` counted as an input.** A `code-grounding.md~` backup, an `.orig` file or an autosave was recorded, so deleting it marked the proposal stale. Grounding records are markdown: only `.md` files under `grounding/` are inputs now.
+- **`--baseline` was not recorded.** A proposal reconciled against a prior estimate (section 22) read as current after that estimate changed. The baseline is now an input: under `$SPECS_PATH` by its path, so any machine can check it; outside it as `<baseline>`, its path withheld from the customer's document, and reported as not checked rather than compared.
+- **"Stop — the umbrella is current" did not say where the umbrella stood in git.** `/brd-proposal` now prints, beside the verdict, whether that umbrella is on the default branch, on a branch or pull request, committed nowhere, or not under git — current is a statement about content, not about delivery.
+
 ## [3.27.0] — 2026-10-07
 
 ### Added

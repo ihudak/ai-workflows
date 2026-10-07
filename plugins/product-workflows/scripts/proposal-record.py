@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """proposal-record.py — which version of each input an effort proposal priced.
 
-  proposal-record.py record --specs <root> --folder <folder> [--brd-key <KEY> [--excluded <dir>[,<dir>...]]]
+  proposal-record.py record --specs <root> --folder <folder> [--baseline <file>] [--brd-key <KEY> [--excluded <dir>[,<dir>...]]]
   proposal-record.py stamp --proposal <proposal.md> --record <file> [--excluded <dir>[,<dir>...]]
   proposal-record.py check --specs <root> --proposal <proposal.md> [--brd-key <KEY>]
   proposal-record.py --selftest
 
 record: prints the priced-against record of the inputs on disk now -- a slice's input set, or with
 --brd-key an umbrella's, over the slices whose brd-link.md names that key as its parent:; --excluded
-names the slice folders, by directory name, the umbrella excluded.
+names the slice folders, by directory name, the umbrella excluded; --baseline (a slice's only) adds
+the prior estimate a proposal reconciles against -- by its $SPECS_PATH/ path under the specs root,
+else as <baseline>, recorded but never compared (check lists it as "unverifiable").
 stamp: makes the record block in <file> the last thing in <proposal.md>, replacing a record that
 already ends it, removing any other record block (whole or damaged) so none hides the author's text,
 and preserving every other byte; --excluded re-marks which slices of an umbrella's record are
@@ -47,6 +49,7 @@ ROUND_RE = re.compile(r"round-\d+\.md")
 SELF_REVIEW_RE = re.compile(r"self-review-\d{8}(?:-\d+)?\.md")
 LINE_RE = re.compile(r"(?P<path>.+) (?P<id>[0-9a-f]{40}|[0-9a-f]{64})(?P<excluded> excluded)?")
 BRD_LINK_RE = re.compile(r"[^/]+/brd-link\.md")
+BASELINE_TOKEN = "<baseline>"
 PARENT_RE = re.compile(r"\s*parent:\s*(['\"]?)([^'\"\s#]+)\1\s*(?:#.*)?")
 LEGACY_PRD_RE = re.compile(r"[A-Z][A-Z0-9_]*(?:-\d+)+_[^/]*\.md")
 
@@ -94,6 +97,8 @@ def _slice(tmp, git=True):
         ("prd.md", "# PRD\n"), ("decisions.md", "# Decision register\n"), ("specification.md", "spec\n"),
         ("code-defect-log.md", "log\n"), ("grounding/code-grounding.md", "cg\n"),
         ("grounding/sub/design-grounding.md", "dg\n"), ("grounding/.DS_Store", "x"), ("grounding/.cache/x.md", "x\n"),
+        ("grounding/code-grounding.md~", "bak\n"), ("grounding/code-grounding.md.orig", "orig\n"),
+        ("grounding/#code-grounding.md#", "autosave\n"), ("grounding/notes.txt", "txt\n"),
         ("interview/round-1.md", "r1\n"), ("interview/round-12.md", "r12\n"),
         ("interview/customer-questions.md", "q\n"), ("interview/notes.md", "n\n"),
         ("self-review-20261001.md", "sr\n"), ("self-review-20261001-2.md", "sr2\n"), ("self-review-notes.md", "no\n"),
@@ -104,7 +109,7 @@ def _slice(tmp, git=True):
     ):
         _put(os.path.join(folder, rel), body)
     _put(os.path.join(specs, PROFILE_REL), "roles: []\n")
-    os.symlink(os.path.join(folder, "prd.md"), os.path.join(folder, "grounding", "link.md"))
+    os.symlink(os.path.join("..", "prd.md"), os.path.join(folder, "grounding", "link.md"))  # relative, as a repository holds one
     if git:
         _git(specs, "init", "-q")
     return specs, folder
@@ -112,7 +117,7 @@ def _slice(tmp, git=True):
 
 SLICE_EXPECTED = [
     PROFILE_TOKEN, "EPIC-1-01-orders/epic.md", "code-defect-log.md", "decisions.md",
-    "grounding/code-grounding.md", "grounding/sub/design-grounding.md", "interview/customer-questions.md",
+    "grounding/code-grounding.md", "grounding/link.md", "grounding/sub/design-grounding.md", "interview/customer-questions.md",
     "interview/round-1.md", "interview/round-12.md", "prd.md", "self-review-20261001-2.md",
     "self-review-20261001.md", "specification.md",
 ]
@@ -274,7 +279,7 @@ def case_changed_added_removed(tmp):
     _put(os.path.join(folder, "ard.md"), "# ARD\n")
     os.remove(os.path.join(folder, "grounding", "code-grounding.md"))
     got = check(specs, prop, None)
-    assert got == {"basis": "content", "current": False, "changed": ["prd.md"], "added": ["ard.md"],
+    assert got == {"basis": "content", "current": False, "changed": ["grounding/link.md", "prd.md"], "added": ["ard.md"],
                    "removed": ["grounding/code-grounding.md"]}, got
 
 
@@ -296,7 +301,8 @@ def case_non_inputs_never_move_the_verdict(tmp):
     prop, _ = _stamped(tmp, specs, folder)
     for rel in ("proposal-brief.md", "revisions/PRD-1-01_proposal_20261001.md", "revisions/new.md", "brd-link.md",
                 "coverage-ledger.md", "interview/notes.md", "EPIC-1-01-orders/specification.md",
-                "self-review-notes.md", "grounding/.DS_Store", "grounding/.cache/x.md"):
+                "self-review-notes.md", "grounding/.DS_Store", "grounding/.cache/x.md", "grounding/code-grounding.md~",
+                "grounding/code-grounding.md.orig", "grounding/#code-grounding.md#", "grounding/notes.txt"):
         _put(os.path.join(folder, rel), "moved\n")
     assert check(specs, prop, None)["current"] is True
 
@@ -568,6 +574,61 @@ def case_an_excluded_unpriced_slice_is_watched_through_its_own_inputs(tmp):
         raise AssertionError("stamp re-marked a slice whose inputs the record holds instead of a proposal")
 
 
+def case_a_symlink_counts_as_what_it_points_at(tmp):
+    specs, folder = _slice(tmp)
+    shared = os.path.join(tmp, "shared")
+    _put(os.path.join(shared, "extra-grounding.md"), "shared finding\n")
+    os.symlink(shared, os.path.join(folder, "grounding", "shared"))
+    os.symlink(os.path.join(folder, "grounding"), os.path.join(folder, "grounding", "sub", "loop"))
+    os.symlink(os.path.join(tmp, "nowhere.md"), os.path.join(folder, "grounding", "dangling.md"))
+    got = slice_inputs(specs, folder)
+    assert "grounding/shared/extra-grounding.md" in got and "grounding/dangling.md" not in got, sorted(got)
+    assert not any("/loop/" in k for k in got), sorted(got)
+    prop, _ = _stamped(tmp, specs, folder)
+    _put(os.path.join(shared, "extra-grounding.md"), "shared finding, revised\n")
+    _put(os.path.join(folder, "prd.md"), "# PRD, edited through the link's target\n")
+    got = check(specs, prop, None)
+    assert got["changed"] == ["grounding/link.md", "grounding/shared/extra-grounding.md", "prd.md"], got
+
+
+def case_a_baseline_inside_the_specs_root_is_watched(tmp):
+    specs, folder = _slice(tmp)
+    baseline = os.path.join(specs, "estimates", "prior.md")
+    _put(baseline, "prior: 400h\n")
+    prop = os.path.join(folder, "proposal.md")
+    _put(prop, "# Proposal\n")
+    rec = os.path.join(tmp, "rec.txt")
+    _put(rec, record(specs, folder, None, [], baseline=baseline))
+    stamp(prop, rec)
+    assert "\n$SPECS_PATH/estimates/prior.md " in _read(prop)
+    assert check(specs, prop, None)["current"] is True
+    _put(baseline, "prior: 450h\n")
+    assert check(specs, prop, None)["changed"] == ["$SPECS_PATH/estimates/prior.md"]
+    os.remove(baseline)
+    assert check(specs, prop, None)["removed"] == ["$SPECS_PATH/estimates/prior.md"]
+
+
+def case_a_baseline_outside_the_specs_root_is_recorded_but_not_checked(tmp):
+    specs, folder = _slice(tmp)
+    baseline = os.path.join(tmp, "elsewhere", "prior-estimate.md")
+    _put(baseline, "prior: 400h\n")
+    prop = os.path.join(folder, "proposal.md")
+    _put(prop, "# Proposal\n")
+    rec = os.path.join(tmp, "rec.txt")
+    _put(rec, record(specs, folder, None, [], baseline=baseline))
+    stamp(prop, rec)
+    text = _read(prop)
+    assert "\n<baseline> " in text and "elsewhere" not in text, text
+    got = check(specs, prop, None)
+    assert got["current"] is True and got["unverifiable"] == ["<baseline>"], got
+    try:
+        record(specs, os.path.dirname(folder), "BRD-1", [], baseline=baseline)
+    except Unrunnable:
+        pass
+    else:
+        raise AssertionError("an umbrella record accepted --baseline")
+
+
 def selftest():
     os.environ["GIT_CONFIG_GLOBAL"] = os.devnull
     os.environ["GIT_CONFIG_NOSYSTEM"] = "1"
@@ -590,11 +651,12 @@ def selftest():
 # ---- implementation ----
 
 def _plain_file(path):
-    return os.path.isfile(path) and not os.path.islink(path)
+    """A file the pricing can read: a regular file, or a symlink to one (a dangling link is none)."""
+    return os.path.isfile(path)
 
 
 def _plain_dir(path):
-    return os.path.isdir(path) and not os.path.islink(path)
+    return os.path.isdir(path)
 
 
 def _under(specs, folder):
@@ -612,11 +674,18 @@ def _grounding_and_self_reviews(folder, out):
     """Every file under grounding/ (no symlink, no dot-name) and every self-review-<date>.md."""
     grounding = os.path.join(folder, "grounding")
     if _plain_dir(grounding):
-        for dirpath, dirnames, filenames in os.walk(grounding):
-            dirnames[:] = [d for d in dirnames if not d.startswith(".") and _plain_dir(os.path.join(dirpath, d))]
+        seen = set()
+        for dirpath, dirnames, filenames in os.walk(grounding, followlinks=True):
+            real = os.path.realpath(dirpath)
+            if real in seen:  # a linked directory reached twice, or a link back up the tree
+                dirnames[:] = []
+                continue
+            seen.add(real)
+            dirnames[:] = [d for d in dirnames if not d.startswith(".")]
             for name in filenames:
                 path = os.path.join(dirpath, name)
-                if not name.startswith(".") and _plain_file(path):
+                # grounding records are markdown: an editor's backup or autosave, or any other file, is not one
+                if not name.startswith(".") and name.endswith(".md") and _plain_file(path):
                     out[os.path.relpath(path, folder).replace(os.sep, "/")] = path
     for name in os.listdir(folder):
         path = os.path.join(folder, name)
@@ -714,6 +783,7 @@ def hash_ids(specs, inputs):
     # Paths as arguments, never --stdin-paths: git reads those relative to the repository's top level
     # rather than to -C, which breaks a specs root below it.
     paths = [os.path.relpath(inputs[key], specs) for key in keys]
+    paths = [inputs[key] if rel.startswith("..") else rel for key, rel in zip(keys, paths)]
     try:
         run = subprocess.run(["git", "-C", specs, "hash-object", "--", *paths],
                              capture_output=True, text=True, encoding="utf-8")
@@ -776,9 +846,23 @@ def parse(text, umbrella):
     return {"status": "ok", "entries": entries, "start": start, "trailing": True}
 
 
-def record(specs, folder, brd_key, excluded):
+def _baseline_input(specs, baseline):
+    """The --baseline file as a record input: under the specs root by its $SPECS_PATH/ path, which any
+    machine can check; outside it by the token alone -- a local path has no place in a document a
+    customer receives, and no other machine could open it."""
+    if not _plain_file(baseline):
+        raise Unrunnable("--baseline %s is not a readable file" % baseline)
+    real = os.path.realpath(baseline)
+    if os.path.commonpath([specs, real]) == specs:
+        return "$SPECS_PATH/" + os.path.relpath(real, specs).replace(os.sep, "/"), real
+    return BASELINE_TOKEN, real
+
+
+def record(specs, folder, brd_key, excluded, baseline=None):
     specs, folder = os.path.realpath(specs), os.path.realpath(folder)
     _under(specs, folder)
+    if baseline and brd_key:
+        raise Unrunnable("--baseline is a slice proposal's: an umbrella reconciles against no prior estimate")
     if excluded and not brd_key:
         raise Unrunnable("--excluded needs --brd-key: only an umbrella excludes slices")
     if brd_key:
@@ -789,6 +873,9 @@ def record(specs, folder, brd_key, excluded):
         inputs = umbrella_inputs(specs, folder, brd_key, unpriced)
     else:
         inputs = slice_inputs(specs, folder)
+    if baseline:
+        key, path = _baseline_input(specs, baseline)
+        inputs[key] = path
     return render(hash_ids(specs, inputs), set(excluded))
 
 
@@ -878,13 +965,23 @@ def check(specs, proposal, brd_key):
         inputs = umbrella_inputs(specs, folder, brd_key, unpriced)
     else:
         inputs = slice_inputs(specs, folder)
+    unverifiable = []
+    for path in found["entries"]:
+        if path == BASELINE_TOKEN:
+            unverifiable.append(path)
+        elif path.startswith("$SPECS_PATH/") and path != PROFILE_TOKEN:  # a --baseline under the specs root
+            target = os.path.join(specs, path[len("$SPECS_PATH/"):])
+            if _plain_file(target):
+                inputs[path] = target
     now = hash_ids(specs, inputs)
-    then = {path: entry[0] for path, entry in found["entries"].items()}
+    then = {path: entry[0] for path, entry in found["entries"].items() if path not in unverifiable}
     changed = sorted(p for p in then if p in now and now[p] != then[p])
     added = sorted(p for p in now if p not in then)
     removed = sorted(p for p in then if p not in now)
     out = {"basis": "content", "current": not (changed or added or removed),
            "changed": changed, "added": added, "removed": removed}
+    if unverifiable:
+        out["unverifiable"] = unverifiable
     if brd_key:
         links = {p.split("/", 1)[0]: entry[1] for p, entry in found["entries"].items() if BRD_LINK_RE.fullmatch(p)}
         out["included"] = sorted(name for name, excluded in links.items() if not excluded)
@@ -928,6 +1025,7 @@ def main(argv):
     rec.add_argument("--folder", required=True)
     rec.add_argument("--brd-key")
     rec.add_argument("--excluded", default="")
+    rec.add_argument("--baseline")
     stm = sub.add_parser("stamp")
     stm.add_argument("--proposal", required=True)
     stm.add_argument("--record", required=True)
@@ -940,7 +1038,8 @@ def main(argv):
     try:
         if args.command == "record":
             excluded = [name.strip() for name in args.excluded.split(",") if name.strip()]
-            sys.stdout.write(record(_dir(args.specs, "--specs"), _dir(args.folder, "--folder"), args.brd_key, excluded))
+            sys.stdout.write(record(_dir(args.specs, "--specs"), _dir(args.folder, "--folder"), args.brd_key, excluded,
+                                    args.baseline))
         elif args.command == "stamp":
             excluded = None if args.excluded is None else [n.strip() for n in args.excluded.split(",") if n.strip()]
             print(json.dumps(stamp(_file(args.proposal, "--proposal"), _file(args.record, "--record"), excluded)))

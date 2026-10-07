@@ -25,7 +25,7 @@ Defined **once**, in a new `references/proposal-format.md` §15, and enumerated 
 | `ard.md` | tier 3 |
 | `specification.md` | tier 4; the authored test-case count sizes QA |
 | `code-defect-log.md` | defect source 1 |
-| every file under `grounding/`, recursively — regular files only, never a symlink, and no name (file or directory) beginning with `.` | tier 2's verified-grounding half; driver evidence; defect source 2 |
+| every `.md` file under `grounding/`, recursively, no name (file or directory) beginning with `.` — a symlink counts as what it points at (amended 3.27.1: a skipped symlink left an edit through it unseen, and an editor's backup file read as an input) | tier 2's verified-grounding half; driver evidence; defect source 2 |
 | every `interview/round-<N>.md`, and `interview/customer-questions.md` | the register's settledness; the open-items sweep's unanswered customer questions |
 | every `self-review-<YYYYMMDD>.md` | defect source 3 |
 | `epic.md` in every immediate `EPIC-*` subfolder | seeds the middle work packages |
@@ -149,3 +149,7 @@ Then the repository's gates — `scripts/check-docs.sh`, `scripts/validate-catal
 ## Release
 
 The next free `product-workflows` minor above 3.26.1 (3.27.0 unless taken at merge), CHANGELOG dated at merge; `docs/commands/prd-proposal.md`, `docs/commands/brd-proposal.md`, `docs/reference/proposal-format.md` and `.claude/rules/product-workflows.md` updated where they state the currency test, the census, or `/brd-proposal`'s flow (which gains the early check).
+
+## Amendment — 3.27.1
+
+Four follow-ups from the 3.27.0 review's set-aside cases, each a fix: **a symlink counts as the file or directory it points at** (the pricing reads through it; a dangling link is no input; a directory reached twice is walked once); **only `.md` files under `grounding/` are inputs**, so an editor's backup or autosave never is; **`--baseline` is an input** — under `$SPECS_PATH` by its `$SPECS_PATH/` path, outside it as the token `<baseline>` with its id and without its path, reported under `unverifiable` and never compared; and **`/brd-proposal`'s Stop answer says where the umbrella stands in git**, from `require-on-main`'s return value read without stopping on it.

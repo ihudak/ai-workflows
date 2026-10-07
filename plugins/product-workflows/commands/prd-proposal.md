@@ -347,8 +347,10 @@ the value is not read.
 Phase 3 reads the folder (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §15.4):
 
 ```bash
-rec=$(command mktemp -t proposal-record-XXXXXX) && python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" record --specs "$SPECS_PATH" --folder "<the resolved folder's absolute path>" > "$rec" && echo "$rec"
+rec=$(command mktemp -t proposal-record-XXXXXX) && python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" record --specs "$SPECS_PATH" --folder "<the resolved folder's absolute path>" --baseline "<the --baseline path, absolute>" > "$rec" && echo "$rec"
 ```
+
+`--baseline` is omitted where `--baseline` was not given: the record then holds no prior estimate.
 
 It prints the record file's path — a temp file, never inside a repository. **Note that path and
 write it out wherever a later phase names the record file**: a shell variable does not survive from

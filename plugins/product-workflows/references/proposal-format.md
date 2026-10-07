@@ -536,11 +536,19 @@ file one time. **A proposal written before this record existed carries none**, a
 | `ard.md` | tier 3 |
 | `specification.md` | tier 4; the authored test-case count sizes QA |
 | `code-defect-log.md` | defect source 1 (§7) |
-| every file under `grounding/`, recursively — regular files only, never a symlink, no name beginning with `.` | tier 2's verified-grounding half; driver evidence; defect source 2 |
+| every `.md` file under `grounding/`, recursively, no name beginning with `.` — an editor's backup, an autosave or any other file is not a grounding record | tier 2's verified-grounding half; driver evidence; defect source 2 |
 | every `interview/round-<N>.md`, and `interview/customer-questions.md` | the register's settledness; the open-items sweep's unanswered customer questions (§8) |
 | every `self-review-<YYYYMMDD>.md` | defect source 3 |
 | `epic.md` in every immediate `EPIC-*` subfolder | seeds the middle work packages (§7) |
 | `$SPECS_PATH/.dev-workflows/proposal-profile.yml` | productivity basis, roles, calendar, engagement model |
+| the `--baseline` file, where one was given | section 22's reconciliation to a prior estimate |
+
+**A symlink counts as the file or directory it points at** — the pricing reads through it, so the
+record does too — and a dangling one is no input; a directory reached twice through links is walked
+once. **The `--baseline` file is recorded by where it sits**: under `$SPECS_PATH` by its
+`$SPECS_PATH/` path, which any machine can check; outside it as `<baseline>` — its id recorded, its
+path not, since a local path has no place in a document a customer receives and no other machine
+could open it — so its currency is never compared, and `check` lists it under `unverifiable`.
 
 **An umbrella's** — paths relative to the BRD folder:
 
@@ -601,7 +609,7 @@ gets subtly wrong, so **no run computes, copies or edits an id itself**.
 
 | Subcommand | What it does | Run by |
 |---|---|---|
-| `record --specs <SPECS_PATH> --folder <folder>` | prints a slice's record for the inputs on disk now | `/prd-proposal`, end of Phase 2 |
+| `record --specs <SPECS_PATH> --folder <folder> [--baseline <file>]` | prints a slice's record for the inputs on disk now | `/prd-proposal`, end of Phase 2 |
 | `record … --brd-key <KEY> [--excluded <slice-dir>,…]` | prints an umbrella's, the excluded slices marked | `/brd-proposal`, end of Phase 5 |
 | `stamp --proposal <proposal.md> --record <file> [--excluded <slice-dir>,…]` | makes the block in `<file>` the last thing in the proposal, replacing a record already ending it and removing any other — a damaged one's stray opening line, which hides what follows it, included — and preserving every other byte; `--excluded` sets an umbrella's excluded marks; prints whether it wrote | the authoring phase, the pre-lint, and after the triage's last edit |
 | `check --specs <SPECS_PATH> --proposal <proposal.md> [--brd-key <KEY>]` | compares the record with the inputs on disk | the authoring phase; `/brd-proposal` Phase 2; `/prd-proposal` Phase 11 |
@@ -609,7 +617,8 @@ gets subtly wrong, so **no run computes, copies or edits an id itself**.
 `check` prints `basis: content` with `current` and the `changed`, `added` and `removed` paths — an
 umbrella's adding the `included` and `excluded` slices its record names, `stale_slices` (each included
 slice whose own record reads stale, with why — which also makes `current` false) and
-`unrecorded_slices` (each included slice whose proposal carries no readable record) — or `basis: none` with
+`unrecorded_slices` (each included slice whose proposal carries no readable record), and on a slice's,
+`unverifiable` where it records a `<baseline>` — or `basis: none` with
 `reason: no-record`, or `reason: unreadable` and a `detail`. **Exit 0 whenever it ran**: a stale or
 recordless proposal is a result, not a failure. Exit 2 when it could not run, the cause on stderr.
 A caller treats any non-zero exit as could-not-run: a missing `python3` exits otherwise.
