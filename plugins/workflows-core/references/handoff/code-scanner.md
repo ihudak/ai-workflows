@@ -33,7 +33,7 @@ prep:
   refreshed:        true | false
   refresh_note:     <e.g. "switched to main, pulled 12 commits" | "read-only mount; scanned at origin/main" | "skipped per user">
   read_only:        true | false
-  scanned_ref:      <ref name, e.g. "origin/main"; the default branch name when writable>
+  scanned_ref:      <ref name, e.g. "origin/main"; on a writable mount, the branch the prep left checked out — the default branch where it switched onto it, else the one it found — or HEAD's commit where HEAD is detached>
   ref_committed_at: <ISO-8601 timestamp of the ref's newest commit>
   head_divergence:  { branch: <working-tree branch>, ahead: <n>, behind: <n> }
 
@@ -57,7 +57,7 @@ gap_summary: |
   <1–2 paragraphs: what needs to be implemented from scratch>
 ```
 
-`prep.read_only`, `prep.scanned_ref`, `prep.ref_committed_at`, and `prep.head_divergence` are always present, so a caller never branches on absence. Every `evidence.path` is relative to the repo root and denotes content **at `scanned_ref`**; on a read-only mount, open one with `git -C "<repo_path>" show <scanned_ref>:<path>`. See `${CLAUDE_PLUGIN_ROOT}/references/read-only-repos.md`. `evidence.lines` is optional — present when the entry came from a grep hit, absent for a path glob or a whole-file read — and is meaningful only together with `scanned_ref`, because a line number moves with the ref it was read at.
+`prep.read_only`, `prep.scanned_ref`, `prep.ref_committed_at`, and `prep.head_divergence` are always present, so a caller never branches on absence. Every `evidence.path` is relative to the repo root and denotes content **at `scanned_ref`** — on a writable mount, the working tree of that branch, uncommitted changes included; on a read-only mount, open one with `git -C "<repo_path>" show <scanned_ref>:<path>`. A caller that records the ref records its commit, per `read-only-repos.md` §7. See `${CLAUDE_PLUGIN_ROOT}/references/read-only-repos.md`. `evidence.lines` is optional — present when the entry came from a grep hit, absent for a path glob or a whole-file read — and is meaningful only together with `scanned_ref`, because a line number moves with the ref it was read at.
 
 ## Status codes
 

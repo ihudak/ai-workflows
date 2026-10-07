@@ -86,7 +86,7 @@ threshold: 2                          # "done" = every unit with priority <= thr
 
 One surface spawns several units across quadrants, and **drift is detected per surface and then fans out to that surface's units** — one detection, many consequences. A single flat list would do one of two things, both worse: duplicate the evidence on every unit, so that the same file path is recorded four times and can disagree with itself; or keep one row per surface and lose the fan-out, so that a change to a route has no way of reaching the three pages written about it.
 
-`sources[].ref` is what makes drift computable at all. A backlog that recorded only *what* was scanned could tell you that a page exists; one that records the ref it was scanned at can tell you that the code has moved since. It is the same idea as `prep.scanned_ref` in `workflows-core:read-only-repos`, and for the same reason: a claim about a repository is only checkable against the exact commit it was made from.
+`sources[].ref` is what makes drift computable at all. A backlog that recorded only *what* was scanned could tell you that a page exists; one that records the ref it was scanned at can tell you that the code has moved since. It is the commit `prep.scanned_ref` resolved to when the scan returned (`workflows-core:read-only-repos` §7), never that name itself, for the reason that section gives: a claim about a repository is only checkable against the exact commit it was made from, and a branch name moves.
 
 ---
 

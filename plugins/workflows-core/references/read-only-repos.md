@@ -77,9 +77,9 @@ Two write-free scan targets:
   - search — `git -C "<repo_path>" grep -n <pattern> <ref> -- <pathspec>`
   - read — `git -C "<repo_path>" show <ref>:<path>`
 
-**When HEAD is already at the ref — `git -C "<repo_path>" rev-parse HEAD` equals `git -C "<repo_path>" rev-parse <ref>` — scan the working tree natively.** The content is identical and the native tools are better, so the common read-only case costs nothing extra.
+**When HEAD is already at the ref and the working tree is clean — `git -C "<repo_path>" rev-parse HEAD` equals `git -C "<repo_path>" rev-parse <ref>`, and `git --no-optional-locks -C "<repo_path>" status --porcelain` prints nothing — scan the working tree natively.** The content is identical and the native tools are better, so the common read-only case costs nothing extra. **HEAD at the ref is not enough on its own**: a read-only mount still carries whatever the host left uncommitted, and a line read from the working tree there is one no commit holds, cited as if it were at the ref. `--no-optional-locks` keeps `status` from trying to refresh the index, which a read-only mount refuses.
 
-Otherwise read at the ref. If `git grep <tree-ish>` is unavailable or errors, fall back to `git show`-per-file over an `ls-tree` shortlist. If that also fails, return `REFRESH_BLOCKED` with the one-line git error.
+Otherwise — HEAD elsewhere, or a dirty tree — read at the ref. If `git grep <tree-ish>` is unavailable or errors, fall back to `git show`-per-file over an `ls-tree` shortlist. If that also fails, return `REFRESH_BLOCKED` with the one-line git error.
 
 ## 5. When to escalate
 
@@ -97,18 +97,20 @@ Escalate to the caller — which prompts the user per the `Read-only mount — r
 ```yaml
 prep:
   read_only:        true | false
-  scanned_ref:      <ref name, e.g. "origin/main"; the default branch name when writable>
+  scanned_ref:      <ref name, e.g. "origin/main"; on a writable mount, the branch the prep left checked out — the default branch where it switched onto it, else the one it found — or HEAD's commit where HEAD is detached>
   ref_committed_at: <ISO-8601 timestamp of the ref's newest commit>
   head_divergence:  { branch: <working-tree branch>, ahead: <n>, behind: <n> }
 ```
 
 `docs-grounder` follows §1–§4 (read-only detection, what to skip, ref resolution, reading at the ref) but returns a digest — `status` / `retrieval` / `docs_references` / `docs_challenges` / `notes` — not a `prep` block; its staleness signal is the 14-day clause in `docs-grounding.md` instead.
 
-Every path an agent returns keeps its documented meaning — relative to the repo root — and denotes content **at `scanned_ref`**.
+Every path an agent returns keeps its documented meaning — relative to the repo root — and denotes content **at `scanned_ref`**, save, on a writable mount, the uncommitted changes of the working tree it read, which no ref holds; §7 says how a caller records them.
 
 ## 7. Caller contract
 
 A caller that reads repository files directly, rather than through one of these agents, must first confirm `HEAD` is at the remote default ref — or cite the content via `scanned_ref` (`git -C "<repo_path>" show <scanned_ref>:<path>`). A working tree on an unmerged branch is not released behavior, and citing it as current is the failure this reference exists to prevent.
+
+**A caller that records the ref a scan read — to cite it later, or to measure drift from it — records the commit, never the name.** `scanned_ref` names a branch or a remote ref, and both move: a month later the name points somewhere else, and the claim made against it can no longer be checked. Take `git -C "<repo_path>" rev-parse <scanned_ref>` as soon as the agent returns, and record that. **And on a writable mount, record what the commit does not hold**: where `git --no-optional-locks -C "<repo_path>" status --porcelain` prints anything, the working tree the agent read carried uncommitted changes, so `with uncommitted changes` goes beside the commit.
 
 ## 8. Hard rules
 

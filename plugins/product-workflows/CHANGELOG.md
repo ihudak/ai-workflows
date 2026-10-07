@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.26.2] — 2026-10-07
+
+### Fixed
+- **`/idea`'s `## Feasibility grounding` names the commit each claim was true of.** It headed the section `<repo>@<scanned_ref>`, a branch name that moves — and, until `workflows-core` 1.31.1, the default branch's name even where the scan read another branch. It now reads `<repo>@<scanned_ref> (<commit>)`, with `, with uncommitted changes` where the working tree read carried any; the final report names the commits too. `idea-format.md` says so.
+
 ## [3.26.1] — 2026-10-07
 
 ### Fixed

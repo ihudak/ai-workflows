@@ -434,7 +434,7 @@ resolved — or, where it returned `absent`, the one this write creates (**Path*
   art any more**; what the user hands over is the only prior art there is.
 - **`## Feasibility grounding`:** write the section per
   `${CLAUDE_PLUGIN_ROOT}/references/idea-format.md` when Phase 2.6 ran **and** returned at least one
-  finding; omit it entirely otherwise. Head it with each grounded repo as `<repo>@<scanned_ref>`; give
+  finding; omit it entirely otherwise. Head it with each grounded repo as `<repo>@<scanned_ref> (<commit>)` — `<commit>` the short form of `git -C <path> rev-parse <scanned_ref>`, read when the scan returned, and `, with uncommitted changes` after it where the working tree it read carried any (`workflows-core:read-only-repos` §7); give
   every bullet a repo-qualified `<repo>/<path>:<line>` citation (the first entry of that evidence's
   `lines`, or `<repo>/<path>` when it has none); write a **Reframing** line only when a finding
   contradicted the idea's premise. A theme still inconclusive after round 2 becomes a
@@ -703,7 +703,7 @@ the next phase — **adapted to status**:
      otherwise to a PRD grilled from scratch: that is the wait this offer names in place of a merge
      clause, and it is discharged by the path, not by a merge.
 
-Also report the code grounding when Phase 2.6 ran: the grounded repos with their `scanned_ref`s, any
+Also report the code grounding when Phase 2.6 ran: the grounded repos with their `scanned_ref`s and commits, any
 repo descoped or unmounted with the themes left unverified, any theme still inconclusive after round 2,
 and — first, because it is the most consequential thing a run can produce — the **Reframing** line if
 one was written. A reframing that changed the idea's Problem section must not be reported only inside
@@ -815,7 +815,7 @@ path (or notice, or, under `--skip-costs`, the `Session cost: …` line printed 
 first option, and the *Declined by the user* line on either other (Phase 5), that line being the one
 saying the files are written and not on the default branch; **a `status: draft` run prints none of
 them**, Phase 5's draft branch offering no handoff and asking nothing, so there is no entry point
-run and no offer declined for §4.1 to have a line about; the code grounding outcome — the grounded repos with their `scanned_ref`s, any
+run and no offer declined for §4.1 to have a line about; the code grounding outcome — the grounded repos with their `scanned_ref`s and commits, any
 descoped or inconclusive ones, and — first, because it is the most consequential thing a run can
 produce — the **Reframing** line if one was written; or, when no scan ran, `code grounding: off` (no
 `--ground-code`) or `code grounding: declined at the repo gate` (`--ground-code` given, "Ground
