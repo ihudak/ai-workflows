@@ -41,7 +41,7 @@ In order, stopping at the first that succeeds:
 3. `git -C "<repo_path>" rev-parse --verify --quiet origin/master >/dev/null`
 
 **Rungs 2–3 are existence probes, not name sources.** `rev-parse` prints a 40-character SHA, so a
-caller that takes its stdout records a SHA where §6 defines `scanned_ref` as a ref *name* (`origin/main`).
+caller that takes its stdout records a SHA where §6 defines a read-only `scanned_ref` as a ref *name* (`origin/main`).
 Redirect the output and use the literal name you probed — the same rule
 `dev-workflows:code-handoff` §2.8 states for its own ladder.
 
