@@ -805,9 +805,9 @@ Handle per-repo status after the batch returns:
   grill (e.g. answering a question from the scan instead of asking the user).
 - `REPO_MISSING` — should not happen at this stage (Phase 3 already checked). If it does, escalate per
   the `Repo missing (after resolution)` rule in `workflows-core:escalation-rules`.
-- `DIRTY_TREE` — escalate:
+- `DIRTY_TREE` — escalate per the `Dirty working tree` rule in `workflows-core:escalation-rules`, which says what each choice does:
   ```
-  choices: ["Stash changes and retry this repo", "Skip this repo", "Cancel"]
+  choices: ["Stash changes and retry this repo", "Use the checkout as it stands — no fetch, switch or pull", "Skip this repo", "Cancel"]
   ```
 - `REFRESH_BLOCKED` — escalate:
   ```

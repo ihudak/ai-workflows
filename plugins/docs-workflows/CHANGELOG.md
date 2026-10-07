@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.12.0] — 2026-10-07
+
+### Added
+- **`/document` and `/release-notes` offer to use a dirty repository as it stands**, per `workflows-core` 1.31.0's *Dirty working tree* rule, which `/document` now cites for what each choice does: `diff-summarizer` then diffs the refs the clone already holds, without fetching.
+
+### Fixed
+- **`/docs-audit` keeps its dirty-tree prompt to Stash, Skip and Cancel**, reproduced with the reason: a coverage denominator is a claim about the product as it ships, so it never reads a working tree's uncommitted changes.
+- **A stash is never lost track of.** `/document` Phase 6.2, `/docs-profile` Phase 5, `/docs-init` Phase 2.5 and `/docs-brand` Phase 7 run `workflows-core` 1.31.0's *Stashing the user's changes*: a named stash, recorded by commit, never applied by the run, and named with its restore commands wherever the run ends. An inline `/docs-profile` hands its stash back for `/document`'s report to name, and `/document` Phase 6.2 records the branch its changes were made on before its switch carried them away.
+
 ## [1.11.0] — 2026-10-07
 
 ### Added
