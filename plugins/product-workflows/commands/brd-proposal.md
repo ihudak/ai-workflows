@@ -1,6 +1,6 @@
 ---
 name: brd-proposal
-description: "Writes the programme effort proposal for a BRD container by rolling up its slices' own proposals: walks each slice to a recommendation (price it, exclude and disclose it, re-run a stale one, include a current one), adds cross-slice effort no slice priced, flags work two slices priced from one finding, and takes peak concurrency from the schedule rather than summing FTE. Optional and ungated, BRD route only; carries no money for human hours, and nothing on the build ladder reads it."
+description: "Writes the programme effort proposal for a BRD container by rolling up its slices' own proposals, first saying whether the umbrella on disk is still current: walks each slice to a recommendation (price it, exclude and disclose it, re-run a stale one, include a current one), adds cross-slice effort no slice priced, flags work two slices priced from one finding, and takes peak concurrency from the schedule rather than summing FTE. Optional and ungated, BRD route only; carries no money for human hours, and nothing on the build ladder reads it."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 disable-model-invocation: true
 ---
@@ -32,7 +32,8 @@ folder that exists, which is the ordering `/create-prd` and `/create-ard` state 
 **This command gates nothing on the build ladder and nothing on it waits.** It gates its own input —
 each included slice's `proposal.md` — and nothing beyond it. **No command of the build ladder reads a
 proposal**, and every targeted read of the umbrella this run writes is an own-folder one — a later
-run of this same command, anchoring its re-estimate on it (§8), and `proposal-reviewer` inside this
+run of this same command, reading its `priced-against` record to say whether it is current (Phase 2)
+and anchoring its re-estimate on it (§8), and `proposal-reviewer` inside this
 run (Phase 10); `/product-workflows:brd-reconcile`'s stale cross-reference sweep reads it only as
 prose, among every file under the parent, and never edits it: `/create-ard`, `/specify`, `/epics`,
 `/dev-workflows:design`, `/dev-workflows:implement` and `/dev-workflows:ready` each resolve a slice
@@ -218,10 +219,30 @@ is what lets a folder that is not a child be counted as one. The test also needs
 since `brd/`, `grounding/` and `dev-workflows/` carry no `brd-link.md` at all.
 
 Record, per slice: its key, its folder, whether `proposal.md` and `proposal-brief.md` are present,
-and the time of `proposal.md` against those of `prd.md`, `decisions.md` and `grounding/`, with the
-basis each was taken on — Phase 3 walks that record and decides nothing here. Every path below is
-relative to `$SPECS_PATH`, and every git call runs as `git -C "$SPECS_PATH"`, so the run reads the
-specs repository wherever it was started. Times are seconds since the epoch, compared as numbers.
+and, where `proposal.md` is, whether it is current and the basis that decided it — Phase 3 walks that
+record and decides nothing here. Every path below is relative to `$SPECS_PATH`, and every git call
+runs as `git -C "$SPECS_PATH"`, so the run reads the specs repository wherever it was started.
+
+**Basis `content` first** (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §15.5):
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS_PATH" --proposal "<slice>/proposal.md"
+```
+
+Where it returns `basis: content`, the proposal ends with a well-formed `priced-against` record and
+the script has compared every input that slice's proposal priced with what is on disk — `ard.md`,
+`specification.md`, the interview records, the defect sources, the Epics and the profile as well as
+`prd.md`, `decisions.md` and `grounding/`: `current: true` is current, and `current: false` is
+stale, every path it lists `changed`, `added` or `removed` being why. The working-tree content
+counts, committed or not: a re-run would price what is on disk. **Never compute or compare an id
+yourself.** A script that exits 2, or a missing `python3`, stops the run with the cause after the
+colon:
+`BRD_PROPOSAL_RECORD_FAILED: <the cause> — a proposal's currency cannot be decided without the record script. Fix the cause and re-run.`
+
+**Where it returns `basis: none`** — a proposal written before the record existed (`reason:
+no-record`), or one whose record does not parse (`reason: unreadable`, its `detail` printed in the
+walk's picture) — the proposal's time against those of `prd.md`, `decisions.md` and `grounding/`
+decides, with the basis each was taken on. Times are seconds since the epoch, compared as numbers.
 
 - **Basis `commit`** — where `git -C "$SPECS_PATH" status --porcelain -- <path>` succeeds and prints
   nothing: the
@@ -243,7 +264,8 @@ stale proposal after the requirement set it priced; a commit time orders by when
 the branch, which is what a reader of the default branch sees. Neither records which inputs a
 proposal priced: an input edited locally is newer only than its own last commit, so a proposal
 committed later by someone else still reads as current against it — the walk's picture shows each
-slice's basis for exactly that reason.
+slice's basis for exactly that reason, and says beside every slice decided by time that re-pricing it
+once moves it to basis `content`, which records exactly what was priced.
 
 Zero slices stops — there is no roll-up over an empty set, and a programme total computed from
 nothing would read as a real figure:
@@ -252,6 +274,36 @@ nothing would read as a real figure:
 BRD_PROPOSAL_NO_SLICES: <BRD-KEY> at <path> has no slices — nothing has been carved from it, so there is nothing to roll up.
   Carve them first: /product-workflows:brd-split <BRD-KEY> "<how to cut it>"
 ```
+
+**Then say whether the umbrella on disk is current** — only where the resolved folder already holds a
+`proposal.md`; a first run has no umbrella to ask about (§15.5):
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS_PATH" --proposal "<folder>/proposal.md" --brd-key <BRD-KEY>
+```
+
+**It is current** where that returns `basis: content` and `current: true` **and** every slice in its
+`included` list is current by the per-slice test above — a slice found stale, or `undecidable` on a
+time basis, makes the umbrella not current too. Print the verdict and every reason: each path the
+script lists `changed`, `added` or `removed` — a slice's `brd-link.md` added is a slice carved since
+and one removed a slice gone, its `proposal.md` changed is a slice re-priced since, a `proposal.md`
+added under a slice in the `excluded` list is a slice excluded then and priced since, and the profile
+or the root ledger changed is named as itself — and each included slice that is not current, with
+that slice's own reasons. Exit 2 stops the run with `BRD_PROPOSAL_RECORD_FAILED`, as above.
+
+- **Current** — ask, printing the recommendation beside the array:
+  `choices: ["Stop — the umbrella is current (Recommended)", "Re-price it anyway"]`.
+  **Stop** ends the run here and writes no artifact. It is an operator's finished decision rather
+  than a refusal, so it carries no stop id and runs the emitter tail (Phase 13) on the way out,
+  exactly as a completed run does. **Re-price it anyway** continues into the walk. **`--redo` and
+  `--profile` skip the question** — each already asks for a re-price — and the run prints the verdict
+  and continues.
+- **Not current, or `basis: none`** — print the reasons, or *no priced-against record — re-price once
+  to enable this check* (with the script's `detail` where the reason is `unreadable`), and continue
+  into the walk without a question.
+
+**This check decides only whether the run goes on**: every slice still gets its own row and
+recommendation in the walk below.
 
 ---
 
@@ -265,15 +317,17 @@ every slice is in exactly one — and the recommendation each one computes to:
 |---|---|
 | no `proposal.md`, and the slice grades tier ≥ 2 | **Stop.** Run `/product-workflows:prd-proposal <SLICE-KEY>` first — the slice is estimable, and excluding it understates the programme |
 | no `proposal.md`, and the slice grades tier 1 or holds no `prd.md` | **Exclude, and disclose.** Nothing better is available today, and stopping buys nothing |
-| `proposal.md` present but older than the slice's own `prd.md`, `decisions.md` or grounding files | **Re-run it.** The common case, and the easiest to miss |
-| `proposal.md` present, but its time cannot be ordered against its inputs' (Phase 2 basis `undecidable`) | **Include, and say why the times cannot tell** — a tie or a shallow clone. The stale row's array below, with this recommendation printed beside it: the operator, who knows what the proposal priced, decides |
-| `proposal.md` present and older than none of them | **Include.** The slice is priced and current, so there is nothing to decide: the walk asks no question for it and records it as included |
+| `proposal.md` present and stale — basis `content`: an input it priced changed, added or removed; a time basis: older than its own `prd.md`, `decisions.md` or grounding files | **Re-run it.** The common case, and the easiest to miss |
+| `proposal.md` present with no readable record, and its time cannot be ordered against its inputs' (Phase 2 basis `undecidable`) | **Include, and say why the times cannot tell** — a tie or a shallow clone. The stale row's array below, with this recommendation printed beside it: the operator, who knows what the proposal priced, decides |
+| `proposal.md` present and current — basis `content`: every input it priced unchanged; a time basis: older than none of them | **Include.** The slice is priced and current, so there is nothing to decide: the walk asks no question for it and records it as included |
 
 Grade a slice's tier against `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §5's ladder, over
 that slice's own folder — the same grading `/prd-proposal` Phase 3 performs, applied here only to
 decide which of the two no-`proposal.md` rows a slice is in; a slice with a `proposal.md` is placed by
-the times and basis Phase 2 recorded, and the walk's picture names that basis beside it — `by commit`,
-`by file time` or `undecidable` with its reason — and its tier is the one its proposal already carries.
+the basis Phase 2 recorded, and the walk's picture names that basis beside it — `by content` with
+every input that moved, or `by commit`, `by file time` or `undecidable` with its reason and the note
+that re-pricing the slice once moves it to basis `content` — and its tier is the one its proposal
+already carries.
 
 **A current slice is the one row with no array.** It is still printed in the walk's picture with its
 **Include** recommendation, and it is included exactly as an operator's *"Include it as it stands"* on
@@ -403,6 +457,21 @@ profile from here on.
 **No rates, no currency, no money in this file** — the same rule that binds both artifacts
 (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §1). A profile carrying one is reported and
 the value is not read.
+
+**Record which version of each input the roll-up prices — now**, once the walk has settled which
+slices are excluded and the profile is settled, and before Phase 6 reads a slice's figures (§15.4):
+
+```bash
+rec=$(command mktemp -t proposal-record-XXXXXX)   # never inside a repository
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" record --specs "$SPECS_PATH" --folder "<the resolved folder>" --brd-key <BRD-KEY> --excluded <slice-dir>,<slice-dir> > "$rec"
+```
+
+`--excluded` names every slice folder the walk excluded, by directory name, and is omitted where it
+excluded none — the record marks those slices, so a later run knows which ones this umbrella
+included. **Note the path `mktemp` printed, and write it out wherever a later phase says `$rec`** —
+a shell variable does not survive from one tool call to the next. Phase 8 stamps that file and
+Phase 10 re-stamps it. **Never compute, copy or edit an id yourself.** Exit 2, or a missing `python3`, stops the run with
+`BRD_PROPOSAL_RECORD_FAILED` (Phase 2).
 
 ---
 
@@ -535,6 +604,19 @@ them and this run executes them:
 
 Write the whole file as prose that is never hard-wrapped (`workflows-core:prose-formatting`).
 
+**Then end it with the `priced-against` record, through the script and only through it** (§15.3):
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" stamp --proposal "<folder>/proposal.md" --record "$rec"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS_PATH" --proposal "<folder>/proposal.md" --brd-key <BRD-KEY>
+```
+
+The record holds the ids Phase 5 took, so `check` returning `current: false` means an input moved
+while this run was rolling up — a slice re-priced, carved or removed, the root ledger or the profile
+changed: name each path it lists in the final report, and say that the next run of this command will
+report the umbrella as not current until it is re-run. Either call exiting 2 stops the run with
+`BRD_PROPOSAL_RECORD_FAILED` (Phase 2).
+
 ---
 
 ## Phase 9 — Author `proposal-brief.md`
@@ -570,7 +652,10 @@ that file describes the archived revision and not this one.
    collision* check does not run here**, that section being scoped to PRD, ARD and Epic files, and
    `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §11 records why the exclusion is deliberate
    rather than an oversight to be corrected. Advisory — surface every finding, inline-fix the
-   mechanical ones, and proceed; the reviewer is the gate.
+   mechanical ones, and proceed; the reviewer is the gate. **The `priced-against` record is checked
+   here too** (§15.3): re-run Phase 8's `stamp` with the same `$rec`. `{"written": false}` passes;
+   `{"written": true}` means the record was missing, altered or no longer last — a pre-lint finding,
+   already fixed by that run from Phase 5's ids, never from a fresh hash.
 2. **The review gate.** Dispatch `proposal-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no override unless §10 enforces a model). **It is the same reviewer the sibling dispatches, unchanged** — its
    check 9 (Coverage) applies on this run and is `N/A` on a slice's, and its check 2 carries an
    umbrella-totals relation for the same reason; nothing else in that agent narrows a check to an
@@ -606,6 +691,10 @@ that file describes the archived revision and not this one.
    settles a verdict its own findings no longer support. At either of that reference's settle
    prompts, **Keep the verdict** means the review stayed blocked — on a kept verdict that is not
    `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run.
+
+**After the last inline edit to `proposal.md` — a triage fix, or an edit a later prompt asked for —
+run Phase 8's `stamp` once more** with the same `$rec`, so no edit carries a damaged record into the
+handoff; `{"written": true}` there is reported beside the edit that caused it.
 
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
 
@@ -707,7 +796,7 @@ gap, `emit-block` (per `workflows-core:feedback-emission`) fires at that halt **
 **None of this command's own stops qualifies**, and that is the point of naming them here:
 `BRD_PROPOSAL_NEEDS_KEY`, `BRD_PROPOSAL_NOT_FOUND`, `BRD_PROPOSAL_NOT_A_CONTAINER`,
 `BRD_PROPOSAL_EPIC_FOLDER`, `BRD_PROPOSAL_NO_SLICES`, `BRD_PROPOSAL_SLICE_NOT_HANDED_OFF`,
-`BRD_PROPOSAL_NEEDS_PROFILE` and an unset `$SPECS_PATH` each report the state of the operator's own
+`BRD_PROPOSAL_NEEDS_PROFILE`, `BRD_PROPOSAL_RECORD_FAILED` and an unset `$SPECS_PATH` each report the state of the operator's own
 argument list, tree or environment — not a capability this plugin lacks. A review BLOCK is not one
 either: that is the gate working. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
@@ -759,11 +848,15 @@ Report: the resolved folder and the `BRD-` key; **every slice Phase 2 enumerated
 computed recommendation and, for each slice the walk asked about, the operator's decision** —
 included, excluded, or left for re-pricing — and each current slice as included without a question,
 so an inclusion taken against a **Stop** recommendation is visible rather than implied.
+**On a run Phase 2 ended** — the operator answered *Stop — the umbrella is current* — the report is
+the umbrella check's verdict and its basis, every slice Phase 2 enumerated with the basis that decided
+it, and that no artifact was written.
 **On a run the walk ended** — the operator answered "Price the slice first" or "Re-price it first" —
 the report is that walk plus the list of slices still to price, and it says plainly that no artifact
 was written and nothing was excluded; the rest of this list describes a run that reached Phase 8.
 Otherwise:
-the `require-on-main` return for each included slice; **the umbrella's readiness tier, the slice that
+the umbrella check's verdict at Phase 2 with every reason it printed, or that the folder held no
+umbrella yet; the `require-on-main` return for each included slice; **the umbrella's readiness tier, the slice that
 set it, and the full tier mix**, with the confidence ceiling that tier sets; the row set's totals and
 **the programme's expected hours with its summed low and high** (hours, never money), each named
 adjustment shown separately rather than absorbed — umbrella effort, every de-duplication deduction
@@ -779,7 +872,8 @@ default for its grade with its direction and recorded reason; **whether a ration
 and, when it was not, which of the two reasons applied** — the tier, or `--no-brief` — and, where a
 prior brief is left standing beside a newly written umbrella, that it describes the archived revision
 and not this one; whether this run was a revision, the archived paths, and whether `--redo` discarded
-the anchor; the profile's `engagement_model`, whether the profile was read back, corrected or
+the anchor; the `priced-against` record — stamped, with every input Phase 8's `check` found moved
+during the run, or that none did, and any pre-lint or post-triage re-stamp that wrote; the profile's `engagement_model`, whether the profile was read back, corrected or
 re-grilled, and any correction that moved a field the included slices were priced under, with the
 slices it affects; the pre-lint findings; the `proposal-reviewer` verdict with the triage line per
 `workflows-core:finding-triage` § Reporting — the counts, survivors, unverified findings, every
@@ -793,7 +887,8 @@ the next-step recommendation.
 **Say plainly, at the end, that this document gates nothing and that nothing on the build ladder
 reads it.** No command of that ladder reads a proposal and no tier withholds permission to begin
 work; every targeted read of an umbrella is an own-folder one — a later run of this command,
-anchoring its own re-estimate on it (§8), and `proposal-reviewer` inside the run that wrote it;
+reading its `priced-against` record to say whether it is current and anchoring its own re-estimate on
+it (§8), and `proposal-reviewer` inside the run that wrote it;
 `/brd-reconcile`'s stale cross-reference sweep reads one only as prose, and never edits it. It is
 the end of this
 branch rather than a phase in the ladder.
