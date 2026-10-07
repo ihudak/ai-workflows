@@ -440,7 +440,8 @@ allows a re-review, whose verdict that is not `BLOCK` leads to the handoff witho
 edit the reviewed artifact on the way.** `/create-prd`, `/update-prd` and `/create-ard` offer to apply
 a `MAJOR` finding; `/epics` and `/document` dispatch `doc-fixer` over them, and `/implement`
 `review-fixer`; `/specify`, `/design`, `/prd-proposal` and `/brd-proposal` defer them, and edit only
-where the user asks. `/vuln` and `/upgrade` re-run their review after the `PASS WITH RECOMMENDATIONS`
+where the user asks — save the open questions `A finding left open that needs a decision is recorded
+in the artifact` writes, which answer no finding. `/vuln` and `/upgrade` re-run their review after the `PASS WITH RECOMMENDATIONS`
 fixer pass, spending the re-review there, so the offer never arises; `/docs-init`, `/docs-brand` and
 `/docs-audit` cap at no re-review, so there is none to offer.
 
@@ -487,21 +488,35 @@ its re-review flagged that the specification recorded none of them; `/epics` wou
 without them. The `/create-ard` run before it left its architect-input gaps in its final report the
 same way.
 
-**So such a finding is also written into the artifact, before the handoff, as an open question that
-names it**, in the section the artifact's own format keeps for open questions:
+**So such a finding is also written into the artifact as an open question that names it**, in the
+section the artifact's own format keeps for open questions:
 
 - `specification.md` — a `- [ ]` item under the `Open questions` sub-heading of the stage it
   concerns, at the depth `product-workflows:specification-format` fixes for that stage, with the
   header's `- **Open questions**: N` count updated;
 - `ard.md` — an entry under `## Open questions`;
-- `prd.md` — an entry under `## Assumptions & open questions`; a kept `--lean` PRD has no such
-  section, so there the final report alone carries it, as `/create-prd` already records a kept
-  contradiction.
+- `prd.md` — an entry under `## Assumptions & open questions`, adding that adapt-in section where a
+  hybrid or full PRD does not carry it yet, since the finding now warrants it. A PRD on the lean
+  profile — `/create-prd`'s kept `--lean`, or the profile `/update-prd` infers from the sections
+  present — has no such cluster, so there the final report alone carries it, as `/create-prd`
+  already records a kept contradiction. On the BRD route, `/create-prd` puts each such finding
+  through its Phase 3 triage of a gap the grill cannot close, so one only the customer can settle
+  becomes an `[AS#n]` in `decisions.md` and reaches the customer through `/brd-package`, rather
+  than stopping at a paragraph.
+
+**The question names the requirement it puts in doubt, where it puts one in doubt**, so that
+requirement reads as provisional rather than final — a reviewer meeting an open question about something stated final takes it for a
+contradiction (`spec-reviewer`'s *Open-question consistency*). **And it is written after the last
+review the run takes** — once the unspent re-review offer is settled and any re-review it led to has
+returned, immediately before the handoff — so no review of this run is spent on the question
+itself.
 
 It reaches findings of any severity the run leaves open — a `MAJOR`, `MINOR` or `NIT` it did not
-apply, a `BLOCKER` deferred at the escalation — and no others: one the user overrode is settled, one
-whose fix is only an edit asks nobody anything, and one the command's own "Defer" already writes
-into the artifact (`/specify`'s `## Refinement notes`) is not written twice. A specification's open
+apply, a `BLOCKER` deferred at the escalation — and no others: one the user overrode is settled, and
+one whose fix is only an edit asks nobody anything. A `BLOCKER` `/specify`'s "Defer" writes into
+`## Refinement notes` is still written as an open question where its fix needs a decision: the note
+records the deferral, as a plain bullet that counts as no question, and the open question records
+the decision. A specification's open
 questions stop nothing downstream — `/design` reads them and may resolve or inherit them. Writing
 one is an edit after the verdict, which the final report names under `A recorded verdict names the
 version it was taken against`; it answers no finding, so it makes no re-review offer.
@@ -515,7 +530,7 @@ final report.
 `choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding", "Cancel the whole run"]`
 
 Used by the commands that fix their own reviewer's findings inline, with no delegated writer — `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and `/brd-proposal` — when the one re-review returns `BLOCK`, whether it followed a `BLOCK`'s fix cycle or was the unspent re-review offered after a verdict that was not (above); for `/prd-proposal` and `/brd-proposal`, which triage their re-review, when the review stayed blocked (`finding-triage.md` § On re-review).
-Escalate per unresolved BLOCKER individually. "Manual fix notes" → take free-text from the user and apply it inline in one bounded pass, with no further re-review, reading it first per `An inline fix is read against what it overlaps`. "Defer" → record the finding as deferred in the run's final report; `/specify` also appends it to a `## Refinement notes` section of `specification.md`, as one plain `- ` bullet per finding. Never a `- [ ]` item there: `pre-lint` counts every `- [ ]` in the file against the header's `Open questions` count, while `specification-format.md` counts only those under its Open questions sub-headings, so a checkbox in the notes would put the two at odds. "Override" → record it there with the user's rationale. "Cancel" aborts the run.
+Escalate per unresolved BLOCKER individually. "Manual fix notes" → take free-text from the user and apply it inline in one bounded pass, with no further re-review, reading it first per `An inline fix is read against what it overlaps`. "Defer" → record the finding as deferred in the run's final report; `/specify` also appends it to a `## Refinement notes` section of `specification.md`, as one plain `- ` bullet per finding. Never a `- [ ]` item there: `pre-lint` counts every `- [ ]` in the file against the header's `Open questions` count, while `specification-format.md` counts only those under its Open questions sub-headings, so a checkbox in the notes would put the two at odds. "Override" → record it in the run's final report with the user's rationale. "Cancel" aborts the run.
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — /document
 

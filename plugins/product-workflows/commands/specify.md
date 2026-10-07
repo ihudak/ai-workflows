@@ -932,15 +932,15 @@ the grill/author. **Advisory** — never blocks; proceed to Phase 6 once finding
      since no review follows them. "Defer" means appending a `## Refinement notes` section to
      `specification.md` with one plain `- ` bullet per deferred finding (mirrors `/epics`'
      Epic-refinement note), in addition to the final report — never a `- [ ]` item, which `pre-lint`
-     would count against the header's `Open questions` and the format would not.
+     would count against the header's `Open questions` and the format would not. A deferred finding
+     whose fix needs a decision also gets an open question (below).
    - **`MAJOR` / `MINOR` / `NIT`**, whatever verdict carried them — defer to the final report; no
-     mandatory fix cycle. One the run leaves open whose fix needs a product decision it did not take
-     is also written into `specification.md` before the handoff, as a `- [ ]` open question under the
-     sub-heading of the stage it concerns with the header count updated, per the `A finding left open
-     that needs a decision is recorded in the artifact` rule in `workflows-core:escalation-rules`.
+     mandatory fix cycle.
    - **`PASS`** / **`PASS WITH RECOMMENDATIONS`** — proceed to Phase 7.
 
 Cap: one fix cycle + one re-review maximum. Where the user asks for a deferred finding to be applied, that is an inline edit answering a verdict that was not `BLOCK`: it is read against what it overlaps, as a fix is, and the re-review the cap still holds is offered before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`.
+
+**A finding left open that needs a decision is recorded in the spec.** Once the last review has returned — the re-review offer above settled — and immediately before the handoff, every finding the run leaves open whose fix needs a product decision it did not take, a deferred BLOCKER among them, is written into `specification.md` as a `- [ ]` open question that names it, and the requirement it puts in doubt where it puts one in doubt, under the `Open questions` sub-heading of the stage it concerns, with the header count updated — per the `A finding left open that needs a decision is recorded in the artifact` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. A finding the user overrode, or whose fix is only an edit, stays in the final report alone.
 
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
 

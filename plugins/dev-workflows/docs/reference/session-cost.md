@@ -82,7 +82,7 @@ plugin_version: 2.10.0
 duration_s: 1284
 cost_computed_usd: 3.4821
 cost_statusline_usd: 3.5102   # present only when the plugin statusline is installed
-compactions: 1               # present only when the window held a compaction
+compactions: 1               # present only when the window held a compaction (§2)
 models:
   - {model: claude-opus-5, cost_usd: 2.9114, input_tokens: 12043, output_tokens: 88210, cache_read_tokens: 2109887, cache_write_tokens: 145002}
   - {model: claude-sonnet-5, cost_usd: 0.5707, input_tokens: 45120, output_tokens: 210334, cache_read_tokens: 880122, cache_write_tokens: 42011}

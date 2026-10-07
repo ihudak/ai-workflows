@@ -11,8 +11,10 @@ result to stdout. It NEVER writes the specs repo and NEVER writes the checkpoint
 back — the caller (references/cost-emission.md) persists ``new_checkpoint``,
 except under ``--advance-only``, which writes it itself (run-flags.md ``skip-cost``).
 
-Claude Code stores no dollar figure in the transcript; every assistant message
-carries ``.message.usage`` + ``.message.model``, so cost is computed, not read.
+Claude Code's own running dollar total reaches the transcript only as an occasional
+``cost-state`` record between sessions, never at a command's edges; every assistant
+message carries ``.message.usage`` + ``.message.model``, so cost is computed, not read.
+A compaction is billed but writes no usage, so it is counted, never priced.
 """
 
 import argparse
@@ -1462,8 +1464,8 @@ def _selftest_body(tmp):
                    "last_snapshot_cost": 9.0}, fh)
     _cw = run(transcript=_cpath, subagents_dir=_csub, checkpoint=_cck)
     check(_cw is not None and _cw.get("compactions") == 4,
-          "every compaction in the window is counted -- main and subagent, with or "
-          "without a timestamp -- and none before line_offset or outside (last_ts, now] "
+          "every compaction in the window is counted -- main and subagent, and a main one "
+          "with no timestamp -- and none before line_offset or outside (last_ts, now] "
           "(got %r)" % ((_cw or {}).get("compactions"),))
     _cs = run("--claim", "/prompt-grill-me", transcript=_cpath, subagents_dir=_csub,
               checkpoint=_cck)

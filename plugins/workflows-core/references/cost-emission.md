@@ -31,8 +31,9 @@ engineer and team. A PRD's cost is the sum of per-command cost lines contributed
 by every session that worked on it; summing is a read-time concern for the
 maintainer — the plugin only ever appends immutable per-invocation measurements.
 
-**Cost is computed, never read.** Claude Code stores no dollar figure in the
-transcript. Every assistant message carries `.message.usage` + `.message.model`;
+**Cost is computed, never read.** Claude Code's own running dollar total reaches
+the transcript only as an occasional `cost-state` record between sessions, never at
+a command's edges, so it cannot measure a command. Every assistant message carries `.message.usage` + `.message.model`;
 `${CLAUDE_PLUGIN_ROOT}/scripts/session-cost.py` sums tokens per model and multiplies by a price table
 (§4). One API response is written as several assistant records sharing one `.message.id`, each
 repeating the usage — a streaming partial first, the final record later — so within one measured
@@ -40,7 +41,8 @@ window each message id is counted once, at its final usage, across the main tran
 subagent transcripts together. A call whose records straddle two windows' edge is still counted in
 each. Dollars are therefore an estimate that drifts from Claude Code's own figure
 by the accuracy of the price table — an accepted trade (cost accuracy is
-explicitly secondary to code/doc quality).
+explicitly secondary to code/doc quality) — and by every compaction in the window,
+which Claude Code bills but writes no usage for (§2's `compactions`, §5).
 
 **Relationship to siblings.** Shares the `<PRD-dir>/dev-workflows/` per-PRD home
 with `feedback-emission.md` / `followup-emission.md` and the self-contained

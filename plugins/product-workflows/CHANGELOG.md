@@ -10,7 +10,11 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ### Changed
 - **`/specify` Phase 6 cites the inline-fix `BLOCK` escalation entry**, whose array matches its own, instead of `/epics`' ("record in Phase 9 report", where `/specify`'s Phase 9 is its cost phase). Its "Defer" writes one plain bullet per finding into `## Refinement notes`, never a `- [ ]`: `pre-lint` counts every checkbox in the file against the `Open questions` header, the specification format only those under its Open questions sub-headings, so a deferred BLOCKER put the two at odds.
 - **`/specify`, `/create-prd`, `/update-prd`, `/create-ard`, `/prd-proposal` and `/brd-proposal` read every inline fix against what it overlaps before the re-review**, and manual fix notes before the handoff (`workflows-core:escalation-rules`, 1.32.0). Both of a live `/specify` re-review's BLOCKERs were contradictions its own fix cycle had written.
-- **`/specify`, `/create-prd`, `/update-prd` and `/create-ard` write a finding they leave open whose fix needs a decision into the artifact as an open question**, beside the final report, so `/epics` and `/design` see it. A live `/specify` run left four product-input gaps in its report alone, and its re-review flagged that the specification recorded none.
+- **`/specify`, `/create-prd`, `/update-prd` and `/create-ard` write a finding they leave open whose fix needs a decision into the artifact as an open question**, beside the final report, so `/epics` and `/design` see it — a deferred BLOCKER included, after the last review, naming the requirement it puts in doubt; on the BRD route `/create-prd` mints an `[AS#n]` for one only the customer can settle. A live `/specify` run left four product-input gaps in its report alone, and its re-review flagged that the specification recorded none.
+- **`/create-prd` and `/create-ard`'s apply picker reads "Hand off without applying them — every finding goes to the final report"**, since the handoff may now add open questions and is no longer "as is".
+
+### Fixed
+- **The session-cost page said the computed cost drifts from Claude Code's own accounting by exactly the price table's accuracy, and that Claude Code stores no dollar figure in the transcript.** It drifts by every compaction in the window too, which Claude Code bills but records no usage for, and its running total does reach the transcript between sessions; the entry's new `compactions:` field counts the compactions (`workflows-core` 1.32.0).
 
 ## [3.27.1] — 2026-10-07
 

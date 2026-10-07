@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.12.2] — 2026-10-07
 
 ### Fixed
-- **The session-cost page said the computed cost drifts from Claude Code's own accounting by exactly the price table's accuracy.** It drifts by every compaction in the window too, which Claude Code bills but records no usage for; the entry's new `compactions:` field counts them (`workflows-core` 1.32.0).
+- **The session-cost page said the computed cost drifts from Claude Code's own accounting by exactly the price table's accuracy, and that Claude Code stores no dollar figure in the transcript.** It drifts by every compaction in the window too, which Claude Code bills but records no usage for, and its running total does reach the transcript between sessions; the entry's new `compactions:` field counts them (`workflows-core` 1.32.0).
 
 ## [1.12.1] — 2026-10-07
 

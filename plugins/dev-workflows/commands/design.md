@@ -389,12 +389,12 @@ Dispatch `design-reviewer` (Opus):
   `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` rule in
   `workflows-core:escalation-rules`, per unresolved BLOCKER individually:
   `choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding", "Cancel the whole run"]`
-- **`MAJOR` / `MINOR` / `NIT`** (surfaced under `PASS WITH RECOMMENDATIONS`) — defer to the final
-  report; no mandatory fix cycle.
+- **`MAJOR` / `MINOR` / `NIT`**, whatever verdict carried them — defer to the final report; no
+  mandatory fix cycle.
 - **`PASS`** / **`PASS WITH RECOMMENDATIONS`** — proceed to Phase 7.
 
 Cap: one fix cycle + one re-review maximum. Phase 7 will not hand off a `design.md` with any unresolved
-`- [ ]`. Where the user asks for a deferred finding to be applied, that is an inline edit answering a verdict that was not `BLOCK`, and the re-review the cap still holds is offered before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`.
+`- [ ]`. Where the user asks for a deferred finding to be applied, that is an inline edit answering a verdict that was not `BLOCK`: it is read against what it overlaps, as a fix is, and the re-review the cap still holds is offered before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`.
 
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
 
