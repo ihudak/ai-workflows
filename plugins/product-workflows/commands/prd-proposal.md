@@ -316,6 +316,13 @@ calendar:
   `choices: ["Use it as shown (Recommended)", "Correct a field — I'll say which", "Re-grill the whole profile"]`.
 - **`--profile`** — re-grill it in full regardless of what is on disk, then continue the run.
 
+**A profile correction reaches every proposal in the specs repository.** The profile is one file for
+all of them (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §15.1), so a corrected field or a
+re-grilled profile makes every proposal priced under the old one — this slice's siblings and any
+umbrella above them included — read as stale to `/product-workflows:brd-proposal`, which names the
+profile as the reason. Say so whenever a field is corrected or the profile re-grilled, naming the
+field.
+
 **`engagement_model` is a closed vocabulary, so a free-text answer to either picker is normalised
 into it or the question is re-asked — never written through as a third value**
 (`workflows-core:escalation-rules`, *Closed-vocabulary pickers must normalise the free-text answer*,
@@ -340,15 +347,16 @@ the value is not read.
 Phase 3 reads the folder (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §15.4):
 
 ```bash
-rec=$(command mktemp -t proposal-record-XXXXXX)   # never inside a repository
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" record --specs "$SPECS_PATH" --folder "<the resolved folder>" > "$rec"
+rec=$(command mktemp -t proposal-record-XXXXXX) && python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" record --specs "$SPECS_PATH" --folder "<the resolved folder's absolute path>" > "$rec" && echo "$rec"
 ```
 
-**Note the path `mktemp` printed, and write it out wherever a later phase says `$rec`** — a shell
-variable does not survive from one tool call to the next. Phase 7 stamps that file and Phase 9
-re-stamps it. **Never compute, copy or edit an id yourself** — the script enumerates §15.1's input set, hashes each file and sorts the block.
-Where it exits 2, or `python3` is not installed, stop with the script's stderr, or the shell's, after
-the colon:
+It prints the record file's path — a temp file, never inside a repository. **Note that path and
+write it out wherever a later phase names the record file**: a shell variable does not survive from
+one tool call to the next. Phase 7 stamps that file and Phase 9 re-stamps it. **Every path handed to the script is absolute** — the run's working directory is not the specs
+repository, and a relative path stops the run.
+**Never compute, copy or edit an id yourself** — the script enumerates §15.1's input set, hashes each
+file and sorts the block. Where the command fails — any non-zero exit, a missing `python3` included —
+stop with the script's stderr, or the shell's, after the colon:
 `PRD_PROPOSAL_RECORD_FAILED: <the cause> — a proposal that cannot record what it priced can never be told current or stale. Fix the cause and re-run.`
 
 ---
@@ -537,15 +545,16 @@ Write the whole file as prose that is never hard-wrapped (`workflows-core:prose-
 **Then end it with the `priced-against` record, through the script and only through it** (§15.3):
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" stamp --proposal "<folder>/proposal.md" --record "$rec"
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS_PATH" --proposal "<folder>/proposal.md"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" stamp --proposal "<the resolved folder's absolute path>/proposal.md" --record "<the record file Phase 2 printed>"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS_PATH" --proposal "<the resolved folder's absolute path>/proposal.md"
 ```
 
 The record holds the ids Phase 2 took, so `check` returning `current: false` means an input moved
 while this run was pricing: name each path it lists — changed, added or removed — in the final
 report, and say that the proposal will read as stale to `/product-workflows:brd-proposal` and to a
 sibling's next-step offer until it is re-run. That is the truthful state: this run priced what it
-read, and cannot say how much of the moved file it saw. Either call exiting 2 stops the run with
+read, and cannot say how much of the moved file it saw. Either call failing — any non-zero exit —
+stops the run with
 `PRD_PROPOSAL_RECORD_FAILED` (Phase 2).
 
 ---
@@ -584,7 +593,7 @@ file describes the archived revision and not this one.
    proposal; §4 and §10 are what required-section presence is checked against. Advisory — surface
    every finding, inline-fix the mechanical ones, and proceed; the reviewer is the gate. **The
    `priced-against` record is checked here too** (§15.3): re-run Phase 7's `stamp` with the same
-   `$rec`. `{"written": false}` passes; `{"written": true}` means the record was missing, altered or
+   record file. `{"written": false}` passes; `{"written": true}` means the record was missing, altered or
    no longer last — a pre-lint finding, already fixed by that run from Phase 2's ids, never from a
    fresh hash.
 2. **The review gate.** Dispatch `proposal-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no override unless §10 enforces a model):
@@ -620,7 +629,7 @@ file describes the archived revision and not this one.
    `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run.
 
 **After the last inline edit to `proposal.md` — a triage fix, or an edit a later prompt asked for —
-run Phase 7's `stamp` once more** with the same `$rec`, so no edit carries a damaged record into the
+run Phase 7's `stamp` once more** with the same record file, so no edit carries a damaged record into the
 handoff; `{"written": true}` there is reported beside the edit that caused it.
 
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
@@ -703,12 +712,12 @@ sibling holds a *stale* one — it would vanish in the commonest case there is. 
 `/product-workflows:brd-proposal` Phase 3's test, decided as `/product-workflows:brd-proposal`
 Phase 2 decides it (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §15.5): a sibling's
 `proposal.md` exists, and
-`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS_PATH" --proposal "<sibling>/proposal.md"`
+`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS_PATH" --proposal "<the sibling folder's absolute path>/proposal.md"`
 returns `basis: content` with `current: true` — or, where it returns `basis: none` (a proposal
 written before the record existed, or one whose record does not parse), the times
 `/product-workflows:brd-proposal` Phase 2 records show it is not older than that sibling's `prd.md`,
 `decisions.md` or `grounding/`. A time that cannot be ordered (a tie, a shallow clone), and a `check`
-that cannot run (exit 2), count as not current here, so the option stands for it — this phase never
+that cannot run (any non-zero exit), count as not current here, so the option stands for it — this phase never
 stops the run. **That reads the sibling's `priced-against` record and nothing else of its
 proposal** — no figure, no section — the one record-only read the census at the top of this file
 names. **Where
@@ -755,9 +764,9 @@ gap, `emit-block` (per `workflows-core:feedback-emission`) fires at that halt **
 **None of this command's own stops qualifies**, and that is the point of naming them here:
 `PRD_PROPOSAL_NEEDS_KEY`, `PRD_PROPOSAL_NOT_FOUND`, `PRD_PROPOSAL_BRD_NOT_SLICED`,
 `PRD_PROPOSAL_EPIC_FOLDER`, `PRD_PROPOSAL_NEEDS_PRD`, `PRD_PROPOSAL_PRD_NOT_HANDED_OFF`,
-`PRD_PROPOSAL_BASELINE_UNREADABLE`, `PRD_PROPOSAL_NEEDS_PROFILE`, `PRD_PROPOSAL_RECORD_FAILED` and an unset `$SPECS_PATH` each
+`PRD_PROPOSAL_BASELINE_UNREADABLE`, `PRD_PROPOSAL_NEEDS_PROFILE` and an unset `$SPECS_PATH` each
 report the state of the operator's own argument list, tree or environment — not a capability this
-plugin lacks. A review BLOCK is not one either: that is the gate working. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
+plugin lacks. **`PRD_PROPOSAL_RECORD_FAILED` qualifies only by its cause**: where the script's stderr, or the shell's, names the operator's tree or environment — a file it cannot read or a name it cannot record, a missing `python3` or `git` (the last two the image exception below) — it is one of these; where it names something this run produced — a record file that no longer parses, an argument the run built — it is a plugin defect, and `emit-block` fires before the stop. A review BLOCK is not one either: that is the gate working. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 

@@ -20,7 +20,7 @@ Defined **once**, in a new `references/proposal-format.md` §15, and enumerated 
 
 | Input | Why the pricing reads it |
 |---|---|
-| `prd.md` | the requirement set the packages cluster |
+| `prd.md` — or, where none exists, the `<KEY>_<slug>.md` PRD addressing's legacy fallback accepts | the requirement set the packages cluster |
 | `decisions.md` | tier 2's settled-register half; frozen decisions are driver evidence |
 | `ard.md` | tier 3 |
 | `specification.md` | tier 4; the authored test-case count sizes QA |
@@ -41,12 +41,12 @@ Defined **once**, in a new `references/proposal-format.md` §15, and enumerated 
 
 ```
 proposal-record.py record --specs <SPECS_PATH> --folder <folder> [--brd-key <KEY> [--excluded <slice-dir>,…]]
-proposal-record.py stamp  --proposal <proposal.md> --record <file>
+proposal-record.py stamp  --proposal <proposal.md> --record <file> [--excluded <slice-dir>,…]
 proposal-record.py check  --specs <SPECS_PATH> --proposal <proposal.md> [--brd-key <KEY>]
 proposal-record.py --selftest
 ```
 
-`record` prints the record block for the inputs on disk now (a slice's, or with `--brd-key` an umbrella's); the command saves it to a temp file (`command mktemp`, never inside a repository). `stamp` writes that block as the last thing in `proposal.md`, replacing any record already there and preserving every other byte, and reports whether it changed anything. `check` parses the record a `proposal.md` ends with and compares it with the inputs on disk, printing JSON — `basis: content` with `current` and the `changed`, `added` and `removed` paths, or `basis: none` with `reason: no-record` or `reason: unreadable` and what failed. Exit 0 whenever it ran; 2 when it could not (a missing folder, git absent, a bad argument), with the cause on stderr.
+`record` prints the record block for the inputs on disk now (a slice's, or with `--brd-key` an umbrella's); the command saves it to a temp file (`command mktemp`, never inside a repository). `stamp` writes that block as the last thing in `proposal.md`, replacing any record already there and removing any other record block — a damaged one's stray opening line included, since an unclosed comment hides everything after it — preserving every other byte, and reports whether it changed anything; on an umbrella, `--excluded` sets which slices the record marks excluded. `check` parses the record a `proposal.md` ends with and compares it with the inputs on disk, printing JSON — `basis: content` with `current` and the `changed`, `added` and `removed` paths, or `basis: none` with `reason: no-record` or `reason: unreadable` and what failed; an umbrella's adds the `included` and `excluded` slices, `stale_slices` (an included slice whose own record reads stale, which also makes `current` false) and `unrecorded_slices`. Exit 0 whenever it ran; 2 when it could not (a missing folder, git absent, a bad argument, any file-system or encoding failure), with the cause on stderr — and callers treat any non-zero exit as could-not-run.
 
 ## 2. The record
 
@@ -105,6 +105,8 @@ Its sibling option asks the same question of each sibling — *does it hold a cu
 | `<slice>/brd-link.md` for every slice Phase 2 enumerates | a slice carved or removed since |
 | `<slice>/proposal.md` for every slice holding one, included or excluded | a slice re-priced since, or one excluded then and priced since |
 | `coverage-ledger.md` (the root ledger) | the coverage statement |
+| the container's own `code-defect-log.md`, `grounding/` files and `self-review-*.md` | the defect sweep `/brd-proposal` Phase 6 runs at container level |
+| an excluded slice holding no `proposal.md`: its own §1 input set, under `<slice>/` | an excluded slice becoming estimable — nothing else in the record would show it |
 | `$SPECS_PATH/.dev-workflows/proposal-profile.yml` | team shape and calendar: peak concurrency and the schedule |
 
 **Which slices the umbrella included is part of the record**: an excluded slice's `brd-link.md` line carries a third field, `excluded` — `PRD-1234-03/brd-link.md <id> excluded`. That word is the only third field the grammar admits, and only on a `brd-link.md` line of an umbrella record; a slice record never carries one.
@@ -118,7 +120,7 @@ Its sibling option asks the same question of each sibling — *does it hold a cu
   **Stop** ends the run there: no artifact written, no stop id (an operator's finished decision), the Phase 13 emitter tail run on the way out, and the final report saying the umbrella is current against its record. **Re-price it anyway** continues into the walk. `--redo` and `--profile` skip the question — each already asks for a re-price — and the run continues.
 - **Stale, or carrying no record** (an umbrella written before this release, or one whose record does not parse) → the reasons are printed, or *"no record — re-price once to enable this check"*, and the run continues into the walk with no question.
 
-**The umbrella's ids are taken once, at the end of Phase 5** — after the walk has settled which slices are excluded and the profile is settled, and before Phase 6 reads the slices' figures to roll them up, so the record names the versions the roll-up actually read; Phase 8 stamps the block and runs `check`, and where any input moved mid-run the record keeps the Phase 5 id and the final report names it.
+**A slice Phase 6 step 1 excludes later** (its figures could not be read) is marked by Phase 8's `stamp --excluded`, which sets the marks without re-taking any id. **The umbrella's ids are taken once, at the end of Phase 5** — after the walk has settled which slices are excluded and the profile is settled, and before Phase 6 reads the slices' figures to roll them up, so the record names the versions the roll-up actually read; Phase 8 stamps the block and runs `check`, and where any input moved mid-run the record keeps the Phase 5 id and the final report names it.
 
 **After pricing a slice**, `/prd-proposal`'s closing offer already carries *"Roll it into the programme umbrella"*; it is left as it is, and reads no umbrella record — which would add a read the census does not need.
 
@@ -140,7 +142,7 @@ Its sibling option asks the same question of each sibling — *does it hold a cu
 2. An absent input yields no line; an input added after recording is reported *added*; a deleted one *removed*; an edited one *changed*; an untouched set compares equal whether committed, staged or neither.
 3. A folder moved with `git mv` compares equal.
 4. A record that is not last, or has a malformed line, falls back to the time rule.
-5. The umbrella's check: a re-priced included slice, a new slice, an excluded slice priced since, a stale included slice, a changed profile — each reported stale with its reason; an untouched set reported current; an `excluded` field on any line but a `brd-link.md` one refused as malformed.
+5. The umbrella's check: a re-priced included slice, a new slice, an excluded slice priced since, an excluded unpriced slice whose inputs moved, a stale included slice (through `stale_slices`), a changed container defect source, a changed profile — each reported stale with its reason; an untouched set reported current; an `excluded` field on any line but a `brd-link.md` one refused as malformed.
 
 Then the repository's gates — `scripts/check-docs.sh`, `scripts/validate-catalog.py`, `scripts/check-id-grammar.sh`, the mermaid gate — and one Opus whole-branch review, its findings all fixed in the same round.
 

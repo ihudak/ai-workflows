@@ -222,11 +222,13 @@ Record, per slice: its key, its folder, whether `proposal.md` and `proposal-brie
 and, where `proposal.md` is, whether it is current and the basis that decided it — Phase 3 walks that
 record and decides nothing here. Every path below is relative to `$SPECS_PATH`, and every git call
 runs as `git -C "$SPECS_PATH"`, so the run reads the specs repository wherever it was started.
+**Every path handed to the script is absolute** — `$SPECS_PATH/` and the path below; the run's working directory is not the specs
+repository, and a relative path stops the run.
 
 **Basis `content` first** (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §15.5):
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS_PATH" --proposal "<slice>/proposal.md"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS_PATH" --proposal "$SPECS_PATH/<slice>/proposal.md"
 ```
 
 Where it returns `basis: content`, the proposal ends with a well-formed `priced-against` record and
@@ -235,8 +237,8 @@ the script has compared every input that slice's proposal priced with what is on
 `prd.md`, `decisions.md` and `grounding/`: `current: true` is current, and `current: false` is
 stale, every path it lists `changed`, `added` or `removed` being why. The working-tree content
 counts, committed or not: a re-run would price what is on disk. **Never compute or compare an id
-yourself.** A script that exits 2, or a missing `python3`, stops the run with the cause after the
-colon:
+yourself.** A script that fails — any non-zero exit, a missing `python3` included — stops the run
+with the cause after the colon:
 `BRD_PROPOSAL_RECORD_FAILED: <the cause> — a proposal's currency cannot be decided without the record script. Fix the cause and re-run.`
 
 **Where it returns `basis: none`** — a proposal written before the record existed (`reason:
@@ -279,17 +281,22 @@ BRD_PROPOSAL_NO_SLICES: <BRD-KEY> at <path> has no slices — nothing has been c
 `proposal.md`; a first run has no umbrella to ask about (§15.5):
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS_PATH" --proposal "<folder>/proposal.md" --brd-key <BRD-KEY>
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS_PATH" --proposal "<the resolved folder's absolute path>/proposal.md" --brd-key <BRD-KEY>
 ```
 
-**It is current** where that returns `basis: content` and `current: true` **and** every slice in its
-`included` list is current by the per-slice test above — a slice found stale, or `undecidable` on a
-time basis, makes the umbrella not current too. Print the verdict and every reason: each path the
-script lists `changed`, `added` or `removed` — a slice's `brd-link.md` added is a slice carved since
-and one removed a slice gone, its `proposal.md` changed is a slice re-priced since, a `proposal.md`
-added under a slice in the `excluded` list is a slice excluded then and priced since, and the profile
-or the root ledger changed is named as itself — and each included slice that is not current, with
-that slice's own reasons. Exit 2 stops the run with `BRD_PROPOSAL_RECORD_FAILED`, as above.
+**It is current** where that returns `basis: content` and `current: true` — which the script already
+makes false while any slice in its `included` list has a record of its own that reads stale, listing
+each under `stale_slices` with why — **and** every slice under `unrecorded_slices`, an included slice
+whose proposal carries no readable record, is current by the time rule above, `undecidable` counting
+as not current. Print the verdict and every reason: each path the script lists `changed`, `added`
+or `removed` — a slice's `brd-link.md` added is a slice carved since and one removed a slice gone,
+its `proposal.md` changed is a slice re-priced since, a `proposal.md` added under a slice in the
+`excluded` list is a slice excluded then and priced since, a path under an excluded unpriced slice
+(the record watches its own inputs, §15.1) is a slice excluded as not yet estimable whose inputs have
+moved, so the walk may now recommend pricing it, and the profile, the root ledger or the container's
+own defect sources changed is named as itself — every slice under `stale_slices` with its reasons,
+and every slice under `unrecorded_slices` the time rule finds not current, with its basis. A failure
+— any non-zero exit — stops the run with `BRD_PROPOSAL_RECORD_FAILED`, as above.
 
 - **Current** — ask, printing the recommendation beside the array:
   `choices: ["Stop — the umbrella is current (Recommended)", "Re-price it anyway"]`.
@@ -462,16 +469,17 @@ the value is not read.
 slices are excluded and the profile is settled, and before Phase 6 reads a slice's figures (§15.4):
 
 ```bash
-rec=$(command mktemp -t proposal-record-XXXXXX)   # never inside a repository
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" record --specs "$SPECS_PATH" --folder "<the resolved folder>" --brd-key <BRD-KEY> --excluded <slice-dir>,<slice-dir> > "$rec"
+rec=$(command mktemp -t proposal-record-XXXXXX) && python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" record --specs "$SPECS_PATH" --folder "<the resolved folder's absolute path>" --brd-key <BRD-KEY> --excluded <slice-dir>,<slice-dir> > "$rec" && echo "$rec"
 ```
 
 `--excluded` names every slice folder the walk excluded, by directory name, and is omitted where it
 excluded none — the record marks those slices, so a later run knows which ones this umbrella
-included. **Note the path `mktemp` printed, and write it out wherever a later phase says `$rec`** —
-a shell variable does not survive from one tool call to the next. Phase 8 stamps that file and
-Phase 10 re-stamps it. **Never compute, copy or edit an id yourself.** Exit 2, or a missing `python3`, stops the run with
-`BRD_PROPOSAL_RECORD_FAILED` (Phase 2).
+included, and so the record watches each excluded slice holding no `proposal.md` through its own
+inputs (§15.1). The command prints the record file's path — a temp file, never inside a repository.
+**Note that path and write it out wherever a later phase names the record file**: a shell variable
+does not survive from one tool call to the next. Phase 8 stamps that file and Phase 10 re-stamps it.
+**Never compute, copy or edit an id yourself.** A failure — any non-zero exit, a missing `python3`
+included — stops the run with `BRD_PROPOSAL_RECORD_FAILED` (Phase 2).
 
 ---
 
@@ -607,15 +615,19 @@ Write the whole file as prose that is never hard-wrapped (`workflows-core:prose-
 **Then end it with the `priced-against` record, through the script and only through it** (§15.3):
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" stamp --proposal "<folder>/proposal.md" --record "$rec"
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS_PATH" --proposal "<folder>/proposal.md" --brd-key <BRD-KEY>
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" stamp --proposal "<the resolved folder's absolute path>/proposal.md" --record "<the record file Phase 5 printed>" --excluded <slice-dir>,<slice-dir>
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS_PATH" --proposal "<the resolved folder's absolute path>/proposal.md" --brd-key <BRD-KEY>
 ```
 
-The record holds the ids Phase 5 took, so `check` returning `current: false` means an input moved
-while this run was rolling up — a slice re-priced, carved or removed, the root ledger or the profile
-changed: name each path it lists in the final report, and say that the next run of this command will
-report the umbrella as not current until it is re-run. Either call exiting 2 stops the run with
-`BRD_PROPOSAL_RECORD_FAILED` (Phase 2).
+`--excluded` names every slice this run excluded — in the walk, and in Phase 6 step 1 where a slice's
+figures could not be read — and is omitted where it excluded none: it sets the marks Phase 5
+recorded, so a slice Phase 6 excluded is not recorded as included. The record holds the ids Phase 5
+took, so where `check` lists any path `changed`, `added` or `removed`, an input moved while this run was rolling up — a slice re-priced, carved or removed, the
+root ledger, a defect source or the profile changed: name each path in the final report, and say that
+the next run of this command will report the umbrella as not current until it is re-run. A slice
+under `stale_slices` is not such a move — the walk already showed it stale and it was included as it
+stands — so it is not reported again here. Either call failing — any non-zero exit — stops the run
+with `BRD_PROPOSAL_RECORD_FAILED` (Phase 2).
 
 ---
 
@@ -653,7 +665,7 @@ that file describes the archived revision and not this one.
    `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §11 records why the exclusion is deliberate
    rather than an oversight to be corrected. Advisory — surface every finding, inline-fix the
    mechanical ones, and proceed; the reviewer is the gate. **The `priced-against` record is checked
-   here too** (§15.3): re-run Phase 8's `stamp` with the same `$rec`. `{"written": false}` passes;
+   here too** (§15.3): re-run Phase 8's `stamp`, with the same record file and `--excluded`. `{"written": false}` passes;
    `{"written": true}` means the record was missing, altered or no longer last — a pre-lint finding,
    already fixed by that run from Phase 5's ids, never from a fresh hash.
 2. **The review gate.** Dispatch `proposal-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no override unless §10 enforces a model). **It is the same reviewer the sibling dispatches, unchanged** — its
@@ -693,7 +705,7 @@ that file describes the archived revision and not this one.
    `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run.
 
 **After the last inline edit to `proposal.md` — a triage fix, or an edit a later prompt asked for —
-run Phase 8's `stamp` once more** with the same `$rec`, so no edit carries a damaged record into the
+run Phase 8's `stamp` once more** with the same record file and `--excluded`, so no edit carries a damaged record into the
 handoff; `{"written": true}` there is reported beside the edit that caused it.
 
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
@@ -796,8 +808,8 @@ gap, `emit-block` (per `workflows-core:feedback-emission`) fires at that halt **
 **None of this command's own stops qualifies**, and that is the point of naming them here:
 `BRD_PROPOSAL_NEEDS_KEY`, `BRD_PROPOSAL_NOT_FOUND`, `BRD_PROPOSAL_NOT_A_CONTAINER`,
 `BRD_PROPOSAL_EPIC_FOLDER`, `BRD_PROPOSAL_NO_SLICES`, `BRD_PROPOSAL_SLICE_NOT_HANDED_OFF`,
-`BRD_PROPOSAL_NEEDS_PROFILE`, `BRD_PROPOSAL_RECORD_FAILED` and an unset `$SPECS_PATH` each report the state of the operator's own
-argument list, tree or environment — not a capability this plugin lacks. A review BLOCK is not one
+`BRD_PROPOSAL_NEEDS_PROFILE` and an unset `$SPECS_PATH` each report the state of the operator's own
+argument list, tree or environment — not a capability this plugin lacks. **`BRD_PROPOSAL_RECORD_FAILED` qualifies only by its cause**: where the script's stderr, or the shell's, names the operator's tree or environment — a file it cannot read or a name it cannot record, a missing `python3` or `git` (the last two the image exception below) — it is one of these; where it names something this run produced — a record file that no longer parses, an argument the run built — it is a plugin defect, and `emit-block` fires before the stop. A review BLOCK is not one
 either: that is the gate working. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
@@ -854,6 +866,8 @@ it, and that no artifact was written.
 **On a run the walk ended** — the operator answered "Price the slice first" or "Re-price it first" —
 the report is that walk plus the list of slices still to price, and it says plainly that no artifact
 was written and nothing was excluded; the rest of this list describes a run that reached Phase 8.
+Every run, an ended one included, carries the emitter tail's lines at the end of this list — the
+feedback, follow-up and cost paths, or their skip lines, and the `Specs repo:` line.
 Otherwise:
 the umbrella check's verdict at Phase 2 with every reason it printed, or that the folder held no
 umbrella yet; the `require-on-main` return for each included slice; **the umbrella's readiness tier, the slice that
