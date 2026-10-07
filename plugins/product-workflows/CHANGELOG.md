@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.27.0] — Unreleased
+## [3.27.0] — 2026-10-07
 
 ### Added
 - **Every effort proposal records which version of each input it priced, and its currency is decided by content.** `/prd-proposal` ends `proposal.md` with a `priced-against` record — an HTML comment, invisible wherever the markdown renders — holding the git blob id of every input it priced: `prd.md`, `decisions.md`, `ard.md`, `specification.md`, the code-defect log, every grounding file, the interview rounds and customer questions, the self-reviews, each Epic's `epic.md` and the shared proposal profile. `/brd-proposal`'s readiness walk, and `/prd-proposal`'s next-step offer through the same test, compare that record with the inputs on disk: a proposal is stale when any input changed, appeared or vanished since — so a tier-2 proposal no longer reads as current after its slice's `ard.md` lands, and a squash merge, a fresh clone or a local edit can no longer make a stale proposal look current. A proposal written before this release keeps the 3.26.1 time rule until it is re-priced. The record is computed, stamped and compared only by a new bundled script, `scripts/proposal-record.py` (Python standard library, self-tested in CI); a run that cannot run it stops with `PRD_PROPOSAL_RECORD_FAILED` or `BRD_PROPOSAL_RECORD_FAILED`.
