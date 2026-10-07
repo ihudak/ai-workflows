@@ -536,7 +536,7 @@ file one time. **A proposal written before this record existed carries none**, a
 | `ard.md` | tier 3 |
 | `specification.md` | tier 4; the authored test-case count sizes QA |
 | `code-defect-log.md` | defect source 1 (§7) |
-| every `.md` file under `grounding/`, recursively, no name beginning with `.` — an editor's backup, an autosave or any other file is not a grounding record | tier 2's verified-grounding half; driver evidence; defect source 2 |
+| every `.md` file under `grounding/` (in any case), recursively, no name beginning with `.` — an editor's backup, an autosave or any other file is not a grounding record | tier 2's verified-grounding half; driver evidence; defect source 2 |
 | every `interview/round-<N>.md`, and `interview/customer-questions.md` | the register's settledness; the open-items sweep's unanswered customer questions (§8) |
 | every `self-review-<YYYYMMDD>.md` | defect source 3 |
 | `epic.md` in every immediate `EPIC-*` subfolder | seeds the middle work packages (§7) |
@@ -545,10 +545,14 @@ file one time. **A proposal written before this record existed carries none**, a
 
 **A symlink counts as the file or directory it points at** — the pricing reads through it, so the
 record does too — and a dangling one is no input; a directory reached twice through links is walked
-once. **The `--baseline` file is recorded by where it sits**: under `$SPECS_PATH` by its
-`$SPECS_PATH/` path, which any machine can check; outside it as `<baseline>` — its id recorded, its
-path not, since a local path has no place in a document a customer receives and no other machine
-could open it — so its currency is never compared, and `check` lists it under `unverifiable`.
+once, by the path a sorted walk meets first, and a link up to the folder or above it is not followed.
+**The `--baseline` file is recorded by where it sits**, on a line flagged `baseline`: inside the
+folder by its folder-relative path, so a moved folder keeps it; elsewhere under `$SPECS_PATH` by its
+`$SPECS_PATH/` path; outside it as `<outside>` — its id recorded, its path not, since a local path
+has no place in a document a customer receives (section 22 names it by file name alone). `check`
+compares it wherever this machine holds it; an `<outside>` one, or one missing here, it lists under
+`unverifiable` and never counts — absence says nothing about whether the reconciliation still holds.
+It may never be the folder's own `proposal.md` or `proposal-brief.md`, which the run rewrites.
 
 **An umbrella's** — paths relative to the BRD folder:
 
@@ -557,7 +561,7 @@ could open it — so its currency is never compared, and `check` lists it under 
 | `<slice>/brd-link.md`, for every slice `commands/brd-proposal.md` Phase 2 enumerates | a slice carved or removed since |
 | `<slice>/proposal.md`, for every slice holding one, included or excluded | a slice re-priced since, or one excluded then and priced since |
 | `coverage-ledger.md`, the root ledger | the coverage statement (§14) |
-| `code-defect-log.md`, every file under `grounding/` and every `self-review-<YYYYMMDD>.md` in the BRD folder itself, read as a slice's are | the container's own defect sources, which `commands/brd-proposal.md` Phase 6 step 3 sweeps |
+| `code-defect-log.md`, every `.md` file under `grounding/` and every `self-review-<YYYYMMDD>.md` in the BRD folder itself, read as a slice's are | the container's own defect sources, which `commands/brd-proposal.md` Phase 6 step 3 sweeps |
 | for every slice the umbrella excluded that holds no `proposal.md`: that slice's own input set above, its paths under `<slice>/` (the profile once, for all) | an excluded unpriced slice whose inputs moved, so it may be estimable now; one excluded although estimable reads stale only when its inputs move |
 | `$SPECS_PATH/.dev-workflows/proposal-profile.yml` | team shape and calendar: peak concurrency and the schedule |
 
@@ -591,13 +595,13 @@ umbrella included; that word appears on no other line. The id is git's because i
 `hash-object` applies the clean filters a commit would — a CRLF and an LF checkout of one file hash
 alike — and outside one it still runs. The paths are folder-relative so a folder moved with `git mv`
 keeps its record; the profile, which sits outside every folder, keeps its literal `$SPECS_PATH/`
-prefix. **An HTML comment** because a proposal is a document a vendor sends a customer: it is
+prefix, as does a baseline elsewhere under the specs root, and one outside it is `<outside>` (§15.1). **An HTML comment** because a proposal is a document a vendor sends a customer: it is
 invisible wherever the markdown renders, archived with the revision it belongs to (§2), and committed
 and gated with it.
 
 **A record that does not parse is no record** — not the last thing in the file, not closed, a line
 that is not `<path> <id>` (or an umbrella's `<slice>/brd-link.md <id> excluded`), an id of any other
-length, a path recorded twice. The reader falls back to the time rule and says the record is
+length, a path recorded twice, a path stepping out with `..`. The reader falls back to the time rule and says the record is
 unreadable.
 
 ### 15.3 The script, and who runs what
@@ -617,8 +621,9 @@ gets subtly wrong, so **no run computes, copies or edits an id itself**.
 `check` prints `basis: content` with `current` and the `changed`, `added` and `removed` paths — an
 umbrella's adding the `included` and `excluded` slices its record names, `stale_slices` (each included
 slice whose own record reads stale, with why — which also makes `current` false) and
-`unrecorded_slices` (each included slice whose proposal carries no readable record), and on a slice's,
-`unverifiable` where it records a `<baseline>` — or `basis: none` with
+`unrecorded_slices` (each included slice whose proposal carries no readable record) and
+`unverifiable_slices` (each included slice's own `unverifiable`), and on a slice's, `unverifiable` where
+its baseline cannot be compared here — or `basis: none` with
 `reason: no-record`, or `reason: unreadable` and a `detail`. **Exit 0 whenever it ran**: a stale or
 recordless proposal is a result, not a failure. Exit 2 when it could not run, the cause on stderr.
 A caller treats any non-zero exit as could-not-run: a missing `python3` exits otherwise.
