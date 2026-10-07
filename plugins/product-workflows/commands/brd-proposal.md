@@ -218,8 +218,13 @@ is what lets a folder that is not a child be counted as one. The test also needs
 since `brd/`, `grounding/` and `dev-workflows/` carry no `brd-link.md` at all.
 
 Record, per slice: its key, its folder, whether `proposal.md` and `proposal-brief.md` are present,
-and the modification times of `proposal.md` against `prd.md`, `decisions.md` and the files under
-`grounding/` — Phase 3 walks that record and decides nothing here.
+and the time of `proposal.md` against those of `prd.md`, `decisions.md` and the files under
+`grounding/` — Phase 3 walks that record and decides nothing here. **A file's time is its last commit
+time where it is committed and unmodified** (`git log -1 --format=%cI -- <file>`, with
+`git status --porcelain -- <file>` empty), **else its modification time**: git sets every file's
+modification time at checkout, so on a fresh clone file times alone can order a stale proposal after
+the requirement set it priced, while an uncommitted edit is newer than any commit and its file time
+is the right one.
 
 Zero slices stops — there is no roll-up over an empty set, and a programme total computed from
 nothing would read as a real figure:
@@ -247,7 +252,7 @@ every slice is in exactly one — and the recommendation each one computes to:
 Grade a slice's tier against `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §5's ladder, over
 that slice's own folder — the same grading `/prd-proposal` Phase 3 performs, applied here only to
 decide which of the two no-`proposal.md` rows a slice is in; a slice with a `proposal.md` is placed by
-the modification times Phase 2 recorded, and its tier is the one its proposal already carries.
+the file times Phase 2 recorded, and its tier is the one its proposal already carries.
 
 **A current slice is the one row with no array.** It is still printed in the walk's picture with its
 **Include** recommendation, and it is included exactly as an operator's *"Include it as it stands"* on

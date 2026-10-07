@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.25.1] — Unreleased
+
+### Fixed
+- **A proposal's currency was decided by file times git resets at checkout.** `/brd-proposal`'s readiness walk, and `/prd-proposal`'s next-phase offer through it, called a slice's `proposal.md` current when no `prd.md`, `decisions.md` or `grounding/` file was newer — by modification time alone. On a fresh clone every file carries its checkout time, in no useful order, so a stale proposal could be included as current and a current one sent back to be re-run. A file's time is now its last commit time where it is committed and unmodified, else its modification time, which is still right for an uncommitted edit.
+
 ## [3.25.0] — 2026-10-07
 
 ### Added
