@@ -9,7 +9,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed
 - **A pull request opens on a remote that uses an SSH host alias.** `phase-handoff` §2.6 kept any host other than `github.com`, so a specs remote such as `git@github-ig.com:owner/repo.git` — an alias in `~/.ssh/config` whose `HostName` is `github.com` — became `github-ig.com/owner/repo`, and every `gh` call failed with `error connecting to github-ig.com` after the push had succeeded: no pull request opened, and `require-on-main` §3.5 could not check one. The host is now resolved with `ssh -G` first (an `ssh`/scp-like remote and a plain hostname only; an `https` remote and an Enterprise host behave as before). `/promote-decisions`' `gh` calls and compare URL now name their repository the same way. The docs-repo folder name (`specs-repo-git` §2.1) deliberately keeps the alias, so existing folders keep their names.
-- **`phase-handoff`'s opening principle names its one exception**: the next command does not run until the previous artifact is on the default branch, save for an artifact that reached no branch at all, where §3.4 records that it falls back to what it does without it.
+- **`phase-handoff`'s opening principle names the exception for an artifact no plugin branch carries**: the next command does not run until the previous artifact is on the default branch, save where §3.3 row F applies and §3.4 records that it falls back to what it does without it.
 
 ## [1.29.1] — 2026-10-07
 

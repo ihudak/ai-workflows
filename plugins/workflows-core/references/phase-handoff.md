@@ -1,8 +1,8 @@
 # Phase handoff — Shared Reference
 
-Single source of truth for the two entry points that move a **phase deliverable** into `$SPECS_PATH`'s default branch and that refuse to start a phase whose committed input never got there: `handoff-to-main` (§2, producer) and `require-on-main` (§3, consumer).
+Single source of truth for the two entry points that move a **phase deliverable** into `$SPECS_PATH`'s default branch and that refuse to start a phase whose input never got there, save where §3.4 falls back: `handoff-to-main` (§2, producer) and `require-on-main` (§3, consumer).
 
-**The principle.** A workflow phase is not finished until its artifact is on the default branch. A command that ends a phase commits, pushes, and opens a pull request. The command that starts the next phase does not run until the previous artifact is there — save, for an artifact that reached no branch at all, where §3.4 records that it falls back to what it does without it. The gate applies even when the role does not change — it may be a different human of the same role, and even the same human should have to confirm the previous phase is done.
+**The principle.** A workflow phase is not finished until its artifact is on the default branch. A command that ends a phase commits, pushes, and opens a pull request. The command that starts the next phase does not run until the previous artifact is there — save, for an artifact no plugin branch carries (§3.3 row F), where §3.4 records that it falls back to what it does without it. The gate applies even when the role does not change — it may be a different human of the same role, and even the same human should have to confirm the previous phase is done.
 
 **Relationship to `specs-repo-git.md`.** That reference owns the *bookkeeping* paths (its §2.1) and the run-start/terminal steps for them. This one owns *deliverables*. It inherits four of that file's hard rules and deliberately differs on three; §1 states which.
 
