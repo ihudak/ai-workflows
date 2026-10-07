@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.10.1] — 2026-10-07
+
+### Fixed
+- **`finish-and-handoff` §4 classifies a docs repository behind an SSH host alias by its real host**, as `workflows-core` 1.29.2's `phase-handoff` §2.6 resolves it, so a GitHub repository reached through an alias gets the GitHub footer and its `gh pr create` suggestion instead of the generic one.
+
 ## [1.10.0] — 2026-10-06
 
 ### Changed

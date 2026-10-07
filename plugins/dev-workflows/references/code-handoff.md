@@ -153,12 +153,21 @@ Otherwise derive the repository and create it. Run the cheap `gh auth status` pr
     url=$(git -C "<repo>" remote get-url origin)
     host=$(printf '%s' "$url" | sed -E 's#^[a-zA-Z][a-zA-Z0-9+.-]*://##; s#^[^/@]+@##; s#[:/].*$##')
     slug=$(printf '%s' "$url" | sed -E 's#^[a-zA-Z][a-zA-Z0-9+.-]*://##; s#^[^/@]+@##; s#^[^/:]+(:[0-9]+)?[/:]##; s#/+$##; s#\.git$##')
+    case "$url" in
+      http://*|https://*) ;;
+      *) case "$host" in
+           [A-Za-z0-9]*) real=$(ssh -G "$host" 2>/dev/null | awk '$1=="hostname" {print $2; exit}')
+                         [ -n "$real" ] && host=$real ;;
+         esac ;;
+    esac
     case "$host" in github.com) owner_repo="$slug" ;; *) owner_repo="$host/$slug" ;; esac
 
     gh pr create -R "$owner_repo" --base <base> --head <branch> \
                  --title '<title>' --body-file "<body-path>" [--draft]
 
 **`<title>` is free text, so it goes in single quotes**, each `'` it holds written `'\''`: inside double quotes its backticks and `$(…)` would be command-substituted before `gh` saw it. §3.2's command quotes it the same way.
+
+**An SSH host alias is resolved before the host is kept** — the same rule as `workflows-core:phase-handoff` §2.6. An scp-like or `ssh://` remote may name a `Host` alias from `~/.ssh/config` — `git@github-ig.com:owner/repo.git`, whose `HostName` is `github.com` — which only ssh knows: `gh` reads `-R` as a real host, so `github-ig.com/owner/repo` failed every `gh` call with `error connecting to github-ig.com` while the push over the same alias succeeded (measured). `ssh -G <host>` prints the configuration ssh would use and connects to nothing; its `hostname` line is the real host, and the host itself where no alias applies. An `http(s)://` remote names a real host and is left alone; only a plain hostname is passed to `ssh`, so the remote's text can never reach it as an option; and where `ssh` is absent or prints no `hostname`, the host stands as written.
 
 **The host is kept, not stripped.** `gh -R` accepts `[HOST/]OWNER/REPO`, and `gh auth status` succeeds whenever the user is authenticated to *any* host — so a bare `OWNER/REPO` derived from a GitHub Enterprise remote resolves against **github.com**, silently targeting an unrelated public repository if one happens to sit at that path. Only `github.com` may drop the host. Validate the slug against `^[^/]+/[^/]+$` before calling `gh`; anything else (a Bitbucket `scm/proj/repo`, a nested GitLab group) is not a `gh` target — skip to §3.2.
 

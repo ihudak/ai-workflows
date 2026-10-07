@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.29.2] — 2026-10-07
+
+### Fixed
+- **A pull request opens on a remote that uses an SSH host alias.** `phase-handoff` §2.6 kept any host other than `github.com`, so a specs remote such as `git@github-ig.com:owner/repo.git` — an alias in `~/.ssh/config` whose `HostName` is `github.com` — became `github-ig.com/owner/repo`, and every `gh` call failed with `error connecting to github-ig.com` after the push had succeeded: no pull request opened, and `require-on-main` §3.5 could not check one. The host is now resolved with `ssh -G` first (an `ssh`/scp-like remote and a plain hostname only; an `https` remote and an Enterprise host behave as before). `/promote-decisions`' `gh` calls now name their repository the same way. The docs-repo folder name (`specs-repo-git` §2.1) deliberately keeps the alias, so existing folders keep their names.
+- **A phase's pull-request body says what the next command does until it is merged** (`phase-handoff` §2.7). It said the next command "will not run until this pull request is merged" for every artifact, which is false for `/idea`'s `idea.md`: `/create-prd` falls back to its idea ladder rather than stopping. The body now takes the stopping or falling-back clause §4.1 already resolves, and the reference's opening principle names the fallback.
+
 ## [1.29.1] — 2026-10-07
 
 ### Changed
