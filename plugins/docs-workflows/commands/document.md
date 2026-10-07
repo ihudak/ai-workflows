@@ -443,7 +443,7 @@ alongside it.
 **unrecorded work**, named as such with its commits listed: folding hand-made commits silently into
 the recorded set would make the record look more complete than it is.
 
-**Merged pull requests add commits** (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §4) — only where a scanned clone is on GitHub and `gh` is installed and logged in. A merged pull request naming a token contributes the commits it landed: one the scan already found is that commit, tagged with the pull request; one whose own message names no token joins the scan's commits as a commit only the scan found, reported as unrecorded work like any other and tagged with its pull request. Every other pull request found is listed in the report, never read.
+**Merged pull requests add commits** (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §4) — only where a scanned clone is on GitHub and `gh` is installed and logged in. A merged pull request naming a token — one that shipped, its merge commit on `HEAD`, and is its own, bringing in no other branch's merges — contributes the commits it landed: one the scan already found is that commit, tagged with the pull request; one whose own message names no token joins the scan's commits as a commit only the scan found, reported as unrecorded work like any other and tagged with its pull request. Every other pull request found — a release pull request merging other branches onward and one merged into a branch that never shipped among them — is listed in the report, never read.
 
 **Report the scan's own reach.** Say **how many commits it scanned** — the non-merge commits it walked, the script's `scanned`
 (`git -C <repo> rev-list --no-merges --count HEAD`) — **and how many matched** (`matched`). Only a non-merge
@@ -515,11 +515,11 @@ From the **implementation record** — the `implementation.md` blocks Phase 3 re
      choices: ["Mount the missing repo(s) now — I'll wait, then re-scan (Recommended)", "Proceed without them — PRD-only for the missing repos", "Cancel", "Specify a different absolute path for a missing repo"]
      ```
      Choice semantics follow the `Repo unresolved (zero matches) — /document` rule in `workflows-core:escalation-rules`, applied to the whole missing set at once:
-     - **Mount now & re-scan** (≈ the rule's "I'll clone it — wait") — pause until the user confirms the clones are present under `$REPOS_PATH`, then re-run step 3's scan and re-render this gate. Loop until `missing` is empty or the user picks another option. This is how the operator gets per-repo control: mount whichever repos are available, re-scan, then choose "Proceed" for whatever remains.
+     - **Mount now & re-scan** (≈ the rule's "I'll clone it — wait") — pause until the user confirms the clones are present under `$REPOS_PATH`, then rebuild the map and run key discovery again (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1, *A clone mounted mid-run*) and re-render this gate. Loop until `missing` is empty or the user picks another option. This is how the operator gets per-repo control: mount whichever repos are available, re-scan, then choose "Proceed" for whatever remains.
      - **Proceed without them** (≈ the rule's "Skip and continue without its refs") — record every currently-missing repo's refs as `unresolved`, out of scope; continue. Identical downstream state to the previous per-slug skip.
      - **Cancel** — abort the run.
-     - **Specify a different absolute path for a missing repo** (≈ the rule's "Specify a different absolute path") — record the given path as that slug's `repo_path`, move it from `missing` to `mounted`, and re-render.
-6. A `refs[]` element carries no host and needs none — the diff is taken locally, and `refs[]` is the only element list `diff-summarizer` takes. Nothing here resolves a host, and a report of this run therefore names refs, not pull requests (Phase 9).
+     - **Specify a different absolute path for a missing repo** (≈ the rule's "Specify a different absolute path") — record the given path as that slug's `repo_path`, move it from `missing` to `mounted`, run key discovery again with it (`key-discovery.md` §1, *A clone mounted mid-run*), and re-render.
+6. A `refs[]` element carries no host and needs none — the diff is taken locally, and `refs[]` is the only element list `diff-summarizer` takes. Nothing here resolves a host; a report of this run names refs, and names a pull request only where key discovery found one (Phase 9's *Pull requests*).
 
 ---
 
@@ -1311,7 +1311,10 @@ SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 [`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §5.]
 - GitHub PR search: [ok — <owners>, <queries> queries, <n> kept, <dropped> loose matches dropped | <status> — <detail>]
 - Read through their landed commits: [each merged pull request by URL, with its commits' SHAs | none]
-- Found but not read: [each by URL and why — open, closed, merge commit not in the clone, or a repository no scanned clone holds | none]
+- Found but not read: [each by URL and why — open, closed, merge commit not in the clone or not on `HEAD`, lands other branches' merges, left unviewed by the time budget, or a repository no scanned clone holds | none]
+- Left out as never code: [the `excluded` slugs | none]
+- Repositories the script could not read: [each by path and its `error` | none]
+- [where the script could not run: the first call's reason, and whether the `--no-github` retry ran the scan]
 
 ### Output file(s)
 - [absolute path] — [kind: extend-existing | new-page-in-existing-section | new-section]

@@ -13,11 +13,14 @@ case-insensitively. --scope head scans HEAD; --scope default scans the origin's 
 clone where no commit matched, every commit naming a key bare, merge commits included -- reported,
 never read. Unless --no-github, where `gh` is installed and logged in to github.com, it also
 searches the GitHub pull requests of the clones' owners for the keys, keeps those whose title or
-body names a key whole, and lists the commits each merged one landed where the clone holds its
-merge commit. --exclude names a clone whose repository is never code -- a specs or a docs
+body names a key whole, and lists the commits each merged one landed where its merge commit is on
+the scanned ref and brings in no other branch's merges (a release pull request is listed, never
+read). Dates are local time. GitHub calls stop after a time budget; a failure there never costs the
+commit scan. --exclude names a clone whose repository is never code -- a specs or a docs
 repository: every --repo with its origin's slug is left unscanned, and every pull request in a
 repository of that name is dropped. --owner-of names a clone that is not scanned but whose GitHub
-owner is searched too. Prints one JSON document; fetches nothing and writes nothing.
+owner is searched too. Prints one JSON document, indented so a reader can take it line by line;
+fetches nothing and writes nothing.
 
 Exit 0: it ran -- a clone or a search it could not reach is a field of the result. Exit 2: it
 could not run; the cause is on stderr. Python standard library only.
@@ -34,6 +37,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 GIT_TIMEOUT = 60
 GH_TIMEOUT = 30
@@ -44,8 +48,9 @@ EDGE_R = r"([^A-Za-z0-9_-]|$)"
 ERE_META = set("\\.[](){}*+?^$|")
 PLAIN_HOST_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9.-]*")
 OWNER_REPO_RE = re.compile(r"[^/\s]+/[^/\s]+")
-FMT = "%H%x1f%cI%x1f%B"
+FMT = "%H%x1f%cd%x1f%B"
 SEARCH_LIMIT = 1000
+GH_BUDGET = 300
 STATES = {"merged": "MERGED", "open": "OPEN", "closed": "CLOSED"}
 
 
@@ -569,6 +574,126 @@ def case_git_never_fetches_lazily(tmp):
     assert _git_env().get("GIT_NO_LAZY_FETCH") == "1"
 
 
+def case_a_release_pr_that_lands_other_branches_is_not_read(tmp):
+    r = _github_clone(tmp)
+    _commit(r, "base")
+    _git(r, "checkout", "-q", "-b", "develop")
+    _git(r, "checkout", "-q", "-b", "fa")
+    other = _commit(r, "[ACME-9] billing rework")
+    _git(r, "checkout", "-q", "develop")
+    _merge(r, "fa", "Merge feature A")
+    _git(r, "checkout", "-q", "main")
+    release = _merge(r, "develop", "Merge pull request #20 from acme/develop")
+    _no_ssh_alias(tmp)
+    _gh(tmp, [_search_hit("acme/app", 20, "Release 2.3", "Includes ACME-7 and ACME-9")], {20: _merged_view(release)})
+    out = discover(["ACME-7"], [r], "head")
+    (pr,) = out["github"]["prs"]
+    assert pr["landed_as"] is None and pr["landed"] == [] and "other branches" in pr["reason"], pr
+    assert other not in [c["sha"] for c in out["commits"]]
+
+
+def case_a_branch_that_merged_its_base_is_still_read(tmp):
+    r = _github_clone(tmp)
+    _commit(r, "base")
+    _git(r, "checkout", "-q", "-b", "topic")
+    own = _commit(r, "topic work")
+    _git(r, "checkout", "-q", "main")
+    _commit(r, "main moves on")
+    _git(r, "checkout", "-q", "topic")
+    _merge(r, "main", "Merge branch 'main' into topic")
+    _git(r, "checkout", "-q", "main")
+    merge = _merge(r, "topic", "Merge pull request #22 from acme/topic")
+    _no_ssh_alias(tmp)
+    _gh(tmp, [_search_hit("acme/app", 22, "[ACME-7] topic")], {22: _merged_view(merge)})
+    (pr,) = discover(["ACME-7"], [r], "head")["github"]["prs"]
+    assert pr["landed_as"] == "merge" and pr["landed"] == [own], pr
+
+
+def case_a_merge_commit_off_the_scanned_ref_is_not_read(tmp):
+    r = _github_clone(tmp)
+    _commit(r, "base")
+    _git(r, "checkout", "-q", "-b", "part1")
+    _commit(r, "part one")
+    _git(r, "checkout", "-q", "-b", "part2")
+    two = _commit(r, "part two")
+    _git(r, "checkout", "-q", "part1")
+    stacked = _merge(r, "part2", "Merge pull request #21 from acme/part2")
+    _git(r, "checkout", "-q", "main")
+    _no_ssh_alias(tmp)
+    _gh(tmp, [_search_hit("acme/app", 21, "[ACME-7] part 2")], {21: _merged_view(stacked)})
+    out = discover(["ACME-7"], [r], "head")
+    (pr,) = out["github"]["prs"]
+    assert pr["landed_as"] is None and pr["reason"] == "merge commit not on HEAD", pr
+    assert two not in [c["sha"] for c in out["commits"]]
+
+
+def case_dates_are_local(tmp):
+    r = _repo(tmp, "r")
+    saved = {k: os.environ.get(k) for k in ("TZ", "GIT_COMMITTER_DATE")}
+    os.environ["GIT_COMMITTER_DATE"] = "2026-10-06T23:30:00-07:00"
+    try:
+        _commit(r, "[ACME-7] late")
+        os.environ.pop("GIT_COMMITTER_DATE")
+        os.environ["TZ"] = "UTC"
+        (c,) = discover(["ACME-7"], [r], "head", github=False)["commits"]
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+    assert c["date"].startswith("2026-10-07T06:30:00"), c["date"]
+
+
+def case_a_commit_takes_the_keys_of_the_prs_that_landed_it(tmp):
+    r = _github_clone(tmp)
+    _commit(r, "base")
+    _git(r, "checkout", "-q", "-b", "topic")
+    own = _commit(r, "[ACME-7] work")
+    _git(r, "checkout", "-q", "main")
+    merge = _merge(r, "topic", "Merge pull request #23 from acme/topic")
+    _no_ssh_alias(tmp)
+    _gh(tmp, [_search_hit("acme/app", 23, "[ACME-8] the epic")], {23: _merged_view(merge)})
+    out = discover(["ACME-7", "ACME-8"], [r], "head")
+    (c,) = [c for c in out["commits"] if c["sha"] == own]
+    assert c["keys"] == ["ACME-7", "ACME-8"] and c["via"] == "message", c
+
+
+def case_an_odd_gh_answer_is_partial_and_the_scan_survives(tmp):
+    r = _github_clone(tmp)
+    sha = _commit(r, "[ACME-7]")
+    _no_ssh_alias(tmp)
+    _stub(tmp, "gh", [(["auth", "status"], 0, "", ""), (["search", "prs"], 0, json.dumps([1, None, {"repository": None}]), "")])
+    out = discover(["ACME-7"], [r], "head")
+    assert out["github"]["status"] == "partial" and out["github"]["detail"], out["github"]
+    assert [c["sha"] for c in out["commits"]] == [sha]
+
+
+def case_the_view_budget_runs_out(tmp):
+    r = _github_clone(tmp)
+    _commit(r, "base")
+    _no_ssh_alias(tmp)
+    _gh(tmp, [_search_hit("acme/app", 24, "[ACME-7]")], {24: _merged_view("7" * 40)})
+    saved = globals()["GH_BUDGET"]
+    globals()["GH_BUDGET"] = 0
+    try:
+        out = discover(["ACME-7"], [r], "head")
+    finally:
+        globals()["GH_BUDGET"] = saved
+    (pr,) = out["github"]["prs"]
+    assert pr["head_ref"] is None and "budget" in pr["reason"] and out["github"]["status"] == "partial", out["github"]
+
+
+def case_an_exclude_that_is_no_repository_top_excludes_nothing(tmp):
+    product = _repo(tmp, "product", "git@github.com:acme/product.git")
+    sha = _commit(product, "[ACME-7] code")
+    os.makedirs(os.path.join(product, "docs"))
+    loose = os.path.join(tmp, "notes", "product")
+    os.makedirs(loose)
+    out = discover(["ACME-7"], [product], "head", github=False, excludes=[os.path.join(product, "docs"), loose])
+    assert out["excluded"] == [] and [c["sha"] for c in out["commits"]] == [sha], out
+
+
 def _main(argv):
     out, err = io.StringIO(), io.StringIO()
     with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
@@ -588,6 +713,7 @@ def case_cli(tmp):
     assert doc["keys"] == ["ACME-7"] and doc["scope"] == "head" and [c["sha"] for c in doc["commits"]] == [sha]
     assert set(doc) == {"keys", "scope", "excluded", "repos", "commits", "github"}
     assert set(doc["github"]) == {"status", "detail", "owners", "queries", "dropped_loose", "prs"}
+    assert out.count("\n") > 10 and max(len(line) for line in out.splitlines()) < 2000, "indented, line-readable JSON"
 
 
 def case_refusals_exit_2(tmp):
@@ -703,7 +829,7 @@ def scan_ref(clone, scope):
 
 
 def _log(clone, ref, greps, merges):
-    argv = ["log", ref, "-z", "--extended-regexp", "--regexp-ignore-case", "--format=" + FMT]
+    argv = ["log", ref, "-z", "--date=iso-strict-local", "--extended-regexp", "--regexp-ignore-case", "--format=" + FMT]
     if not merges:
         argv.append("--no-merges")
     argv += ["--grep=" + g for g in greps]
@@ -830,9 +956,12 @@ def search(owners, batch):
             raise RateLimited(reason)
         raise SearchFailed(reason)
     try:
-        return json.loads(out)
+        hits = json.loads(out)
     except ValueError:
         raise SearchFailed("gh search printed no JSON")
+    if not isinstance(hits, list):
+        raise SearchFailed("gh search printed no list")
+    return hits
 
 
 def view(owner_repo, number):
@@ -841,21 +970,35 @@ def view(owner_repo, number):
     if rc != 0:
         raise SearchFailed("gh pr view failed: " + _last_line(err, "exit %s" % rc))
     try:
-        return json.loads(out)
+        details = json.loads(out)
     except ValueError:
         raise SearchFailed("gh pr view failed: no JSON")
+    if not isinstance(details, dict):
+        raise SearchFailed("gh pr view failed: no JSON object")
+    return details
 
 
-def landing(clone, merge_oid, pr_commits):
-    """(landed_as, landed, reason) for a merged pull request's merge commit in the clone."""
+def landing(clone, merge_oid, pr_commits, ref="HEAD", shown="HEAD"):
+    """(landed_as, landed, reason) for a merged pull request's merge commit on the scanned ref."""
     rc, _, _ = _git_in(clone, "cat-file", "-e", merge_oid + "^{commit}")
     if rc != 0:
         return None, [], "merge commit not in the clone"
+    rc, _, _ = _git_in(clone, "merge-base", "--is-ancestor", merge_oid, ref)
+    if rc != 0:
+        return None, [], "merge commit not on %s" % shown
     rc, out, err = _git_in(clone, "rev-list", "--parents", "-n", "1", merge_oid)
     if rc != 0:
         return None, [], "cannot read the merge commit: " + _last_line(err, "exit %s" % rc)
     parents = out.split()[1:]
     if len(parents) >= 2:
+        rc, out, err = _git_in(clone, "rev-list", "--merges", "--parents", "%s^1..%s^2" % (merge_oid, merge_oid))
+        if rc != 0:
+            return None, [], "cannot list the merged commits: " + _last_line(err, "exit %s" % rc)
+        for line in out.splitlines():
+            for parent in line.split()[2:]:
+                inside, _, _ = _git_in(clone, "merge-base", "--is-ancestor", parent, merge_oid + "^1")
+                if inside != 0:
+                    return None, [], "lands other branches' merges -- read by hand"
         rc, out, err = _git_in(clone, "rev-list", "--reverse", "--no-merges", "%s^1..%s^2" % (merge_oid, merge_oid))
         if rc != 0:
             return None, [], "cannot list the merged commits: " + _last_line(err, "exit %s" % rc)
@@ -889,7 +1032,8 @@ def _pr_entry(hit, keys):
             "merge_commit": None, "cross_repository": None, "landed_as": None, "landed": [], "reason": None}
 
 
-def github_layer(keys, patterns, clones, slugs, owner_slugs=(), excluded=()):
+def github_layer(keys, patterns, clones, slugs, owner_slugs=(), excluded=(), refs=None):
+    refs = refs or {}
     result = {"status": "ok", "detail": None, "owners": [], "queries": 0, "dropped_loose": 0, "prs": []}
     by_slug = {}
     for clone in clones:
@@ -923,8 +1067,12 @@ def github_layer(keys, patterns, clones, slugs, owner_slugs=(), excluded=()):
             continue
         if len(hits) >= SEARCH_LIMIT:
             failures.append("%s: %d hits, the search's limit -- more were not read" % (" OR ".join(batch), len(hits)))
+        malformed = 0
         for hit in hits:
-            text = (hit.get("title") or "") + "\n" + (hit.get("body") or "")
+            if not isinstance(hit, dict) or not hit.get("url") or not isinstance(hit.get("repository"), dict):
+                malformed += 1
+                continue
+            text = str(hit.get("title") or "") + "\n" + str(hit.get("body") or "")
             named = [k for k in keys if patterns[k].search(text)]
             url = hit.get("url")
             repo = str(hit.get("repository", {}).get("name", "")).lower()
@@ -936,13 +1084,19 @@ def github_layer(keys, patterns, clones, slugs, owner_slugs=(), excluded=()):
                 found[url]["keys"] = [k for k in keys if k in found[url]["keys"] or k in named]
             elif url:
                 found[url] = _pr_entry(hit, named)
+        if malformed:
+            failures.append("%s: %d results gh printed in a shape it does not use" % (" OR ".join(batch), malformed))
     result["dropped_loose"] = len(loose)
-    if failures and result["status"] == "ok":
-        result["status"], result["detail"] = "partial", "; ".join(failures)
+    started = time.monotonic()
     for pr in found.values():
         clone = by_slug.get(("%s/%s" % (pr["owner"], pr["repo"])).lower())
         pr["clone"] = clone
         if clone is None:
+            continue
+        if time.monotonic() - started >= GH_BUDGET:
+            pr["reason"] = "not viewed -- the GitHub time budget ran out"
+            if "time budget" not in "; ".join(failures):
+                failures.append("the GitHub time budget (%ds) ran out before every pull request was viewed" % GH_BUDGET)
             continue
         try:
             details = view("%s/%s" % (pr["owner"], pr["repo"]), pr["number"])
@@ -955,13 +1109,17 @@ def github_layer(keys, patterns, clones, slugs, owner_slugs=(), excluded=()):
                    "head_oid": details.get("headRefOid"), "merge_commit": merge,
                    "cross_repository": details.get("isCrossRepository")})
         if pr["state"] == "MERGED" and merge:
-            pr["landed_as"], pr["landed"], pr["reason"] = landing(clone, merge, details.get("commits") or [])
+            ref, shown = refs.get(clone, ("HEAD", "HEAD"))
+            commits = [c for c in (details.get("commits") or []) if isinstance(c, dict)]
+            pr["landed_as"], pr["landed"], pr["reason"] = landing(clone, merge, commits, ref, shown)
+    if failures and result["status"] == "ok":
+        result["status"], result["detail"] = "partial", "; ".join(failures)
     result["prs"] = list(found.values())
     return result
 
 
 def _describe(clone, shas):
-    rc, out, _ = _git_in(clone, "show", "-s", "--format=%H%x1f%cI%x1f%s", *shas)
+    rc, out, _ = _git_in(clone, "show", "-s", "--date=iso-strict-local", "--format=%H%x1f%cd%x1f%s", *shas)
     rows = {}
     if rc == 0:
         for line in out.splitlines():
@@ -973,13 +1131,19 @@ def _describe(clone, shas):
 
 def discover(keys, clones, scope, probe=False, github=True, excludes=(), owners_of=()):
     patterns = {k: whole_pattern(k) for k in keys}
-    excluded, excluded_paths = [], set()
+    excluded, excluded_paths, lowered = [], set(), set()
     for path in excludes:
-        excluded_paths.add(os.path.realpath(path))
-        slug = remote_slug(path) or os.path.basename(os.path.realpath(path))
-        if slug.lower() not in [e.lower() for e in excluded]:
-            excluded.append(slug)
-    lowered = {e.lower() for e in excluded}
+        rc, out, _ = _git_in(path, "rev-parse", "--show-toplevel")
+        top = os.path.realpath(out.strip()) if rc == 0 and out.strip() else None
+        if top is None or top != os.path.realpath(path):
+            continue  # only a repository's own top level is a repository to leave out
+        excluded_paths.add(top)
+        slug = remote_slug(top)
+        if slug:
+            lowered.add(slug.lower())
+        name = slug or os.path.basename(top)
+        if name.lower() not in [e.lower() for e in excluded]:
+            excluded.append(name)
     if excludes:
         clones = [c for c in clones
                   if os.path.realpath(c) not in excluded_paths and (remote_slug(c) or "").lower() not in lowered]
@@ -988,12 +1152,16 @@ def discover(keys, clones, scope, probe=False, github=True, excludes=(), owners_
         entry, found, ref = scan_clone(clone, scope, keys, patterns)
         repos.append(entry)
         commits += found
-        refs[clone] = ref
+        refs[clone] = (ref, entry["ref"])
     if github:
         slugs = {clone: github_slug(clone) for clone in clones}
         for entry in repos:
             entry["github"] = slugs[entry["path"]]
-        layer = github_layer(keys, patterns, clones, slugs, [github_slug(c) for c in owners_of], lowered)
+        try:
+            layer = github_layer(keys, patterns, clones, slugs, [github_slug(c) for c in owners_of], lowered, refs)
+        except Exception as e:  # the GitHub layer is optional: its failure never costs the commit scan
+            layer = {"status": "partial", "detail": "the GitHub search failed: %s: %s" % (type(e).__name__, e),
+                     "owners": [], "queries": 0, "dropped_loose": 0, "prs": []}
     else:
         layer = {"status": "off", "detail": None, "owners": [], "queries": 0, "dropped_loose": 0, "prs": []}
     index = {(c["repo"], c["sha"]): c for c in commits}
@@ -1016,11 +1184,12 @@ def discover(keys, clones, scope, probe=False, github=True, excludes=(), owners_
                 commits.append(known)
             if pr["url"] not in known["prs"]:
                 known["prs"].append(pr["url"])
+            known["keys"] = [k for k in keys if k in known["keys"] or k in pr["keys"]]
     if probe:
         for entry in repos:
             if entry["error"] is None and entry["matched"] == 0:
                 try:
-                    entry["probe"] = probe_clone(entry["path"], refs[entry["path"]], keys, accounted)
+                    entry["probe"] = probe_clone(entry["path"], refs[entry["path"]][0], keys, accounted)
                 except SearchFailed as e:
                     entry["error"] = "probe: %s" % e
     return {"keys": keys, "scope": scope, "excluded": excluded, "repos": repos, "commits": commits, "github": layer}
@@ -1062,7 +1231,7 @@ def main(argv):
             raise Unrunnable("git is not on PATH")
         print(json.dumps(discover(keys, clones, args.scope, args.probe, not args.no_github,
                                   [os.path.realpath(p) for p in args.exclude],
-                                  [os.path.realpath(p) for p in args.owner_of]), ensure_ascii=False))
+                                  [os.path.realpath(p) for p in args.owner_of]), ensure_ascii=False, indent=1))
     except Unrunnable as e:
         print("key-discovery: %s" % e, file=sys.stderr)
         return 2

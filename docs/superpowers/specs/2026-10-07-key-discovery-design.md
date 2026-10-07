@@ -158,3 +158,12 @@ The shared script changed under that review, and this edition follows it.
 - **Tokens are quoted as phrases** in the search; a batch that returns the 1000-hit limit makes the layer `partial`. `dropped_loose` counts pull requests; a rate limit keeps the earlier failures in `detail`; `not-authenticated` carries `gh auth status`'s last line.
 - **The script cannot be broken by a commit message**: the log is read NUL-separated and an unparsable record skipped; any unexpected failure exits 2 with one line; git runs with `GIT_NO_LAZY_FETCH=1`; a rebase landing compares each commit's first line with the pull request's headline, an ellipsis-cut headline as a prefix.
 - **Any failure counts as exit 2** in the commands — another exit, stdout that is not JSON, or the Bash tool's 600000 ms timeout.
+
+## Second amendment — after this edition's whole-branch review (2026-10-07)
+
+- **A merged pull request is read only where it shipped and is its own**: its merge commit on `HEAD`, its range bringing in no other branch's merges. A release pull request whose description lists every ticket it ships, and one merged into a branch that never shipped, are listed, never read.
+- **A commit's tokens are its `keys`**: those its message names and those of every found pull request that landed it — the note boundary reads them.
+- **`--exclude` takes a repository's own top level only**; the specs repository is the PRD folder's repository (`rev-parse --show-toplevel`), the docs repository `/document`'s `docs_repo_path` or `/release-notes`' resolved docs root, and neither is passed where `implementation.md` names it.
+- **The JSON is indented and goes to a temporary file** the run reads and removes; a run where the script could not run retries with `--no-github`; GitHub calls stop after a 300-second budget, and an answer the script cannot use makes the search `partial`. Dates are local time.
+- **Owners**: every owner a clone under `$REPOS_PATH` belongs to — the scanned clones' and, through `--owner-of`, every other clone's.
+- **A clone mounted at Phase 4 is scanned**: the script runs again over the new set.

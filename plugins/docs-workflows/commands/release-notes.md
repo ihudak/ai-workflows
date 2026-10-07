@@ -26,7 +26,7 @@ Usage: `/release-notes <ADDRESS> [--version <v>] [--no-docs] [--docs <path>] [--
 
 For full feature documentation use `/document`; for Epic drafting use `/epics`.
 
-This command makes **zero external API calls** and **never writes into the docs repo**.
+This command makes **no external API calls but key discovery's optional, read-only `gh search prs` and `gh pr view`** — with diff grounding on, where a scanned clone is on GitHub and `gh` is installed and logged in — and **never writes into the docs repo**.
 
 ---
 
@@ -283,7 +283,7 @@ Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-rout
 **unrecorded work**, named as such with its commits listed: folding hand-made commits silently into
 the recorded set would make the record look more complete than it is.
 
-**Merged pull requests add commits** (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §4) — only where a scanned clone is on GitHub and `gh` is installed and logged in. A merged pull request naming a token contributes the commits it landed: one the scan already found is that commit, tagged with the pull request; one whose own message names no token joins the scan's commits as a commit only the scan found, reported as unrecorded work like any other and tagged with its pull request. Every other pull request found is listed in the report, never read. Their tokens, for the note boundary above and for the read set, are the tokens their pull request named.
+**Merged pull requests add commits** (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §4) — only where a scanned clone is on GitHub and `gh` is installed and logged in. A merged pull request naming a token — one that shipped, its merge commit on `HEAD`, and is its own, bringing in no other branch's merges — contributes the commits it landed: one the scan already found is that commit, tagged with the pull request; one whose own message names no token joins the scan's commits as a commit only the scan found, reported as unrecorded work like any other and tagged with its pull request. Every other pull request found — a release pull request merging other branches onward and one merged into a branch that never shipped among them — is listed in the report, never read. A commit's tokens, wherever the note boundary above reads them, are its `keys`: those its message names and those of every pull request that landed it (`key-discovery.md` §4).
 
 **Carry the merged set forward as this run's *provisional* read set** — every commit taken from a
 block and every commit the scan kept, by repository. **It is provisional because nothing here has
@@ -362,6 +362,7 @@ Take the slug→clone map Phase 3 built with the diff sources — this phase and
 ```
 choices: ["Skip and continue without its refs", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo"]
 ```
+"I'll clone it — wait" and a specified path run key discovery again once the clone is there (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1, *A clone mounted mid-run*).
 
 ---
 
@@ -558,7 +559,7 @@ Outside that one case there is no question to ask and no option that replaces th
    - Blocks used: <each block by its record and heading date | none>; dropped by §4's date fallback: <each block by its record and heading date, and each commit the date rule dropped by its own date, by SHA, date and subject — a commit dropped with a block recording it is accounted for by that block's listing | none> — on a run with diff grounding on
    - Not read: <per repository whose commits Phase 5 dropped from the read set, the repository and why — skipped at Phase 4, no clone resolved, `unresolved_prs`, a `resolved_via: key_commits` fallback that opened nothing this run had carried (unreachable while Phase 5 passes no keys), or an escalation that ended without a summary — and each commit by SHA | none — every provisional commit was read> — on a run with diff grounding on; nothing listed here is written into the scope comment, so the next grounded run reads it again, and on the `unresolved_prs` cause — usually a ref whose commits have left the clone — that means its block, or its scan commit, returns next release, unread again
    - Branch-name probe: <per repository the whole-key scan left at zero matches: each commit it matched, by SHA, date and subject — may name a key inside a branch name or in a merge commit, inspect by hand | fired on <repo>, matched nothing | not fired — the scan matched in every repository> — on a run with diff grounding on; nothing listed here was read
-   - Pull requests: <GitHub PR search: ok — <owners>, <queries> queries, <n> kept | <status> — <detail>>; read through their landed commits: <each by URL | none>; found but not read: <each by URL and why | none> — on a run with diff grounding on (`key-discovery.md` §5)
+   - Pull requests: <GitHub PR search: ok — <owners>, <queries> queries, <n> kept, <dropped> loose matches dropped | <status> — <detail> | not run — <first call's reason>>; read through their landed commits: <each by URL, with its commits' SHAs | none>; found but not read: <each by URL and why | none>; left out as never code: <the `excluded` slugs | none>; not read by the script: <each repository by path and its `error` | none> — on a run with diff grounding on (`key-discovery.md` §5)
    - Style check: <applied N safe fixes | report only (M findings) | skipped — you chose "Skip style check"> — rules: <the checker's rules_source, where it ran><; DEGRADED — Phase 7's reason, where Phase 7 recorded it>
    - Model routing: <under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` — every dispatch above already carries the enforced id, per `workflows-core:model-routing/classification` §10 | "MODERATE — detection chain throughout, no degradation (Phase 1.5)">
    - Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` skip line is Phase 9's own output; the `Session cost: …` skip line is Phase 11's own output, printed after this report and not restated in it.]

@@ -219,7 +219,7 @@ list inline without naming the rule; a citer that names the rule uses the list w
 Used in `/document` Phase 4 when a repo slug has zero matches in the
 slug→clone map. The first option names **refs**, not PRs: that command builds
 its `refs[]` from `implementation.md` and the `git log --grep` scan beside it,
-and reads no pull request (`/document` Phase 4 step 1).
+and reads a pull request only as the commits a merged one landed (`/document` Phase 4 step 1).
 
 ## Repo unresolved (zero matches) — /epics
 

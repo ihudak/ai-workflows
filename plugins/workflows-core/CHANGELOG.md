@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.33.0] — Unreleased
 
 ### Added
-- **`implementation-format` §4 gains the pull-request layer, optional**: where a scanned clone is on GitHub and `gh` is installed and logged in, the scan's consumers also search the GitHub pull requests of the scanned clones' owners for the same tokens, keep one only where its title or body names a token whole, and take a merged one's landed commits into the scan's result — a landed commit whose own message names no token joining as one only the scan found, its tokens those its pull request named; an open, unmerged or out-of-clone pull request is reported, never read.
+- **`implementation-format` §4 gains the pull-request layer, optional**: where a scanned clone is on GitHub and `gh` is installed and logged in, the scan's consumers also search the GitHub pull requests of every owner a clone under `$REPOS_PATH` belongs to for the same tokens, keep one only where its title or body names a token whole, and take a merged one's landed commits into the scan's result where it shipped and is its own — a landed commit whose own message names no token joining as one only the scan found, its tokens those its message names and those of every pull request that landed it; an open, unmerged or out-of-clone pull request is reported, never read.
 
 ### Changed
 - **§4's scan never covers the specs repository or the docs repository**, whose commits carry the tokens by the family's own conventions.
