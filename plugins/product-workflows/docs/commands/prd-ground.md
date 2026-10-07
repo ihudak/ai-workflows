@@ -220,7 +220,7 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   `PRD_GROUND_INVENTORY_NOT_HANDED_OFF`, whose action is to commit and merge it, and which names no
   `/brd-intake` run: that command refuses a slice and any folder that is not a container, and every
   container has already been refused as a root. Where the gate reports
-  the ledger is on no ref at all, the run **splits a state the gate cannot**, exactly as
+  the ledger is on no branch the commands cut, the run **splits a state the gate cannot**, exactly as
   [`/brd-reconcile`](brd-reconcile.md) does on its own row F. No `coverage-ledger.md` in the folder
   means it was never produced or was lost after it was written, and the stop names the producing run by level: a folder naming no
   parent — no slice, and no container [`/brd-intake`](brd-intake.md) would re-run over — stops with

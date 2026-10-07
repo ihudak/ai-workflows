@@ -822,7 +822,7 @@ every one of whose ledger rows is an orphan row — each claim it made withdrawn
 the row now `covered-by` another BRD or carrying a fate the parent settled — kept none of its
 requirements and has nothing of its own to decide. Its inventory holds no row, each claim's row
 having been withdrawn with it, but the *Resolve inputs and gate the grounded BRD* phase counts
-inventory rows only where the grounding is on no ref at all, so `BRD_INTERVIEW_EMPTY_INVENTORY`
+inventory rows only where the grounding is on no branch the commands cut, so `BRD_INTERVIEW_EMPTY_INVENTORY`
 never fires on a slice whose grounding is on main, and this is the gate that sees it. Do not open a
 round for it and do not write an empty round record: a round record is append-only and permanent
 (`interview-tagging.md` §5), and an empty one would sit on file forever recording that nothing was

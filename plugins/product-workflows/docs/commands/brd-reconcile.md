@@ -425,7 +425,7 @@ command removes none of them; the next `/brd-interview` run does.
   into a parent's figures file, defect resolutions into a parent's log, sweep dispositions into a
   dependent's register, and stale-reference corrections into a sibling slice's artifacts are all
   cross-BRD writes, and each runs `require-on-main` against the
-  target first. Any stopping row — including the artifact being on no ref at all — means **record,
+  target first. Any stopping row — including the artifact being on no branch the commands cut — means **record,
   never write**, naming the intended change and the branch/PR state. It never stops the run: letting
   a dependent's open pull request block the prerequisite's own customer loop is the D20 failure
   arriving from the other direction.
