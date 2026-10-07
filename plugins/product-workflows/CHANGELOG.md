@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.27.1] — Unreleased
+## [3.27.1] — 2026-10-07
 
 ### Fixed
 - **A symlinked input was not watched.** The `priced-against` record skipped every symlink, while the pricing reads through them — so an edit to a symlinked grounding file, or to a `prd.md` that is a link, left a stale proposal reading as current. A symlink now counts as the file or directory it points at; a dangling one is no input; a directory reached twice through links is walked once, and walked in sorted order, so every machine records the same path for it; a link up the tree to the folder or above it — which would make the proposal its own input — is not followed. A proposal priced under 3.27.0 whose grounding held a symlink or a non-markdown file reads stale once, and re-pricing it settles it.
