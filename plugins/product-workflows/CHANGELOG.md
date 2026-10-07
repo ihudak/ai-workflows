@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.24.1] — 2026-10-07
+
+### Fixed
+- **`/create-ard`'s harvest line puts `<merge-clause>` in a span of its own after the command**, as `workflows-core`'s `next-phase-offer.md` requires of every offer; it sat inside the command's span. The line it prints is unchanged.
+
 ## [3.24.0] — 2026-10-06
 
 ### Changed

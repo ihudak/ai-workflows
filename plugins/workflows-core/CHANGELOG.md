@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.29.1] — 2026-10-07
+
+### Changed
+- **`next-phase-offer.md` records why check 11 stays `choices:`-only.** Its second limit — a prose offer is invisible to the gate — now carries the measurement behind it: the eight prose offers here that carry the clause in a code span take six shapes, one of them lets a single clause cover two commands, and a reader keyed on their introducers matched 53 command spans, 5 of them offers carrying the clause, while missing 3 of the 8. A gate built on it would fire on correct text, so prose offers stay held by review.
+
 ## [1.29.0] — 2026-10-06
 
 ### Changed
