@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.13.0] — Unreleased
+## [1.13.0] — 2026-10-07
 
 ### Added
 - **The commit scan finds pull requests too, where it can.** Where a scanned clone is on GitHub and `gh` is installed and logged in, `/document` (keyed mode) and `/release-notes` (with diff grounding on) also search the GitHub pull requests of every owner a clone belongs to for the run's tokens, keep one only where its title or body names a token whole — GitHub's own search matches loosely, even with each token quoted — and read a merged one through the commits it landed: the branch's own commits for a merge commit, the one commit for a squash, the rebased run for a rebase — only where it shipped, its merge commit on `HEAD`, and is its own: a release pull request that merges other branches onward, or one merged into a branch that never shipped, is listed, never read. A landed commit whose own message names no token joins the scan's commits as one only the scan found, reported as unrecorded work, its tokens those its message names and those of every pull request that landed it — so `/release-notes`' read set and note boundary take it unchanged. Every other pull request found — open, closed unmerged, merged with its merge commit not in the clone, or in a repository outside the scanned set — is listed, never read. Without `gh`, nothing changes.
