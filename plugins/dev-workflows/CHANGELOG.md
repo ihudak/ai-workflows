@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.21.0] — 2026-10-07
+
+### Added
+- **`/design` offers the re-review the cap still holds where you ask for a deferred finding to be applied**, per `workflows-core` 1.30.0's *unspent re-review* rule.
+
+### Fixed
+- **`code-handoff` §2.5 says a config error after `git push -u` is not a failed push.** Where the code repository's `.git/config` is mounted read-only, git pushes, exits 0, prints `could not write config file` and records no upstream; the exit status and the `-> <branch>` line are the outcome, and nothing reads the upstream.
+
 ## [4.20.3] — 2026-10-07
 
 ### Changed

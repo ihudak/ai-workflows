@@ -135,7 +135,7 @@ Update the PRD live against `Skill(skill: "workflows-core:reference", args: "prd
 
 ## Phase 3.5 — Prose style check
 
-Run the prose style check on the updated PRD **before** the review gate (quality enhancement, never a gate) — mirror `/create-prd` Phase 3.5 (Agent `prose-style:prose-style-checker`, `doc_type: prd`, `detection_model`); apply MAJOR fixes inline and re-run once. `prose-style` is a declared dependency of `product-workflows`, so this dispatch has no absent case to skip.
+Run the prose style check on the updated PRD **before** the review gate (quality enhancement, never a gate) — mirror `/create-prd` Phase 3.5 (Agent `prose-style:prose-style-checker`, `doc_type: prd`, `fixed_headings` as there, `detection_model`); apply MAJOR fixes inline and re-run once — never to a heading `fixed_headings` names (that phase says why). `prose-style` is a declared dependency of `product-workflows`, so this dispatch has no absent case to skip.
 
 ---
 
@@ -156,7 +156,7 @@ Dispatch `prd-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, n
   > Base: [absolute path to the archived copy Phase 3's pre-write archive wrote under revisions/; omit where no write has happened yet, since `prd.md` is then the base itself]
   > Profile: [lean | hybrid | full — infer from the sections present]"
 
-Act on the verdict as `/create-prd` Phase 4 does: on `BLOCK`, fix the BLOCKER findings inline and re-review once; if still `BLOCK`, escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` rule in `workflows-core:escalation-rules`. Cap: one fix cycle + one re-review.
+Act on the verdict as `/create-prd` Phase 4 does: on `BLOCK`, fix the BLOCKER findings inline and re-review once; if still `BLOCK`, escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` rule in `workflows-core:escalation-rules`. On `PASS WITH RECOMMENDATIONS` with a `MAJOR` finding among them, offer to apply them with the same picker. Cap: one fix cycle + one re-review — and where an edit answering a verdict that was not `BLOCK` followed it, offer the re-review the cap still holds before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`.
 
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
 

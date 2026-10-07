@@ -713,7 +713,15 @@ is a **quality enhancement, not a gate** — it never blocks the handoff.
   >
   > files:    [absolute path to prd.md]
   > doc_type: prd
-  > emphasis: terminology and customer-facing captions, labels, messages, and text"
+  > emphasis: terminology and customer-facing captions, labels, messages, and text
+  > fixed_headings: [the text of every `## ` heading `workflows-core:prd-format` names in its Spine list and its Adapt-in menu table, verbatim]"
+
+**Those headings are contract strings, so the check never changes one.** Pre-lint's PRD block
+and every later reader find a section by its heading as `prd-format` writes it — `## User
+Stories`, `## Assumptions & open questions` — and a sentence-case or `&`-free "fix" makes the
+section look missing. The checker raises nothing on a heading `fixed_headings` names; a finding
+that still does, which a `prose-style` older than 0.7.0 returns, is never applied, whatever its
+severity, and the final report counts it as declined (a format heading), not as outstanding.
 
 Act on the return:
 - **`OK`** — proceed to Phase 4.
@@ -751,7 +759,10 @@ Dispatch `prd-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, n
 
 Act on the verdict (mirrors `/specify`, save the escalation rule it cites):
 - **`BLOCK`** — fix the BLOCKER findings inline (the orchestrator/grill edits the PRD — no delegated writer) and re-review **once**. If still `BLOCK`, escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` rule in `workflows-core:escalation-rules` for each unresolved BLOCKER individually (`choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding", "Cancel the whole run"]`).
-- **`PASS` / `PASS WITH RECOMMENDATIONS`** — proceed. Cap: one fix cycle + one re-review.
+- **`PASS`** — proceed.
+- **`PASS WITH RECOMMENDATIONS`** — where a `MAJOR` finding is among them, offer to apply them before the handoff: `choices: ["Apply the MAJOR findings (Recommended)", "Hand off as is — every finding goes to the final report"]`. Applying is an inline edit, as on the `BLOCK` path; a finding whose fix is a product decision is put to the user one question at a time, as the grill asks, and a MINOR or NIT finding is applied where the user asks for it. With no `MAJOR` among them, proceed; the findings go to the final report.
+
+Cap: one fix cycle + one re-review. **A verdict that is not `BLOCK` spends neither**, so where an edit answering its findings followed it, offer the re-review the cap still holds before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`.
 
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
 

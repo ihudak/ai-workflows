@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.30.0] — 2026-10-07
+
+### Added
+- **`escalation-rules` § *Edits after a verdict that is not BLOCK — the unspent re-review*.** A `PASS` or `PASS WITH RECOMMENDATIONS` spends neither the fix cycle nor the re-review, so where a run then edits the reviewed artifact in answer to the findings — `MAJOR` findings the user chose to apply, or a fixer pass over them — it offers that re-review once before the handoff. Taken, it is the run's one re-review, and a `BLOCK` from it escalates as after a fix cycle; declined, the version line says the verdict predates the edits, as before. It never raises the cap. A live `/create-prd` run applied four `MAJOR` findings, two of them contradicting acceptance criteria, merged and renumbered criteria, and shipped the text unreviewed with a cap that was never spent. The *A recorded verdict names the version* section now says it is a reporting rule once the cap is spent, and the inline-fix BLOCK rule names the unspent re-review among the re-reviews it escalates.
+
+### Fixed
+- **A `.git/config` git cannot write no longer reads as a failed push.** In a container that mounts the file read-only, `git push -u` pushes, exits 0, then prints `could not write config file` (or `could not lock config file`) and records no upstream. `phase-handoff` §2.5, `specs-repo-git` §4 step 5 and `architecture-promotion` §11.1 step 6 say it is `-u` failing, not the push, and that the push's own status is the outcome. The environment page says the same to the user.
+- **`specs-repo-git` §4 step 5 sees a branch the remote deleted even where no upstream was recorded.** The test read only the branch's upstream, which a push from a read-only `.git/config` never records, so in such a container a pull request merged with *delete branch on merge* while the run was finishing had its branch recreated by the session-file push. A branch with no upstream at all now counts as pushed where its remote-tracking ref exists, the ref the push itself wrote.
+
 ## [1.29.4] — 2026-10-07
 
 ### Changed

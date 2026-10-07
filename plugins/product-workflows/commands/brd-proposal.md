@@ -572,7 +572,10 @@ that file describes the archived revision and not this one.
    escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`
    rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`; on § On re-review's
    **Proceed**, proceed as after a verdict that is not `BLOCK`. `PASS` / `PASS WITH RECOMMENDATIONS`
-   → proceed. Cap: one fix cycle plus one re-review. Where triage empties the survivor set, do not
+   → proceed. Cap: one fix cycle plus one re-review — and where the user asks for a finding of a
+   verdict that was not `BLOCK` to be applied, that inline edit leaves the re-review unspent, and it
+   is offered before the handoff, per the
+   `Edits after a verdict that is not BLOCK — the unspent re-review` rule in the same reference. Where triage empties the survivor set, do not
    dispatch a fix cycle with nothing to apply and do not silently promote the verdict — the user
    settles a verdict its own findings no longer support. At either of that reference's settle
    prompts, **Keep the verdict** means the review stayed blocked — on a kept verdict that is not

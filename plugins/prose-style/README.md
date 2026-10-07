@@ -87,6 +87,13 @@ The overlay layers on top of the baseline, per file name:
 The overlay can therefore add rules, tighten rules, contradict rules, and switch rules
 off — without editing anything the plugin ships.
 
+**No rule set reaches a heading the caller names in `fixed_headings`.** A caller writing to
+a format whose section headings are fixed — a PRD's `## User Stories`, an Epic's
+`## Independent Test` — passes those headings, and the checker raises nothing on them,
+whatever the baseline or an overlay says, because a renamed heading breaks every check and
+reader that finds the section by it. `/create-prd`, `/update-prd` and `/epics` pass their
+formats' headings; the input arrived in 0.7.0.
+
 ### Worked example
 
 Your organization uses "workspace" where the product used to say "tenant", writes in

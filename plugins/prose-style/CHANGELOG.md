@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.0 — 2026-10-07
+
+### Added
+- **`prose-style-checker` takes `fixed_headings`**: the heading texts a format the caller writes to requires verbatim. No rule raises a finding on such a heading, whatever the baseline or an overlay says, and no finding elsewhere suggests renaming it; the prose under it is checked as usual. A live `/create-prd` run got three NITs asking to rename `## User Stories`, `## Success Metrics` and `## Assumptions & open questions`, headings pre-lint requires as written, so applying any of them breaks the PRD. The README says so.
+
 ## 0.6.0 — 2026-10-06
 
 ### Changed

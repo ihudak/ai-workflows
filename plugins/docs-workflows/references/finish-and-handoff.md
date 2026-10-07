@@ -57,7 +57,11 @@ Then squash:
 
 Offer `["Push <branch> to origin now", "Skip — I'll push later", "Cancel"]`.
 - **Push** → `git -C <docs_repo_path> push -u origin <branch>`; report the result. `git push` is
-  git-protocol, not the REST API the zero-external-API invariant forbids.
+  git-protocol, not the REST API the zero-external-API invariant forbids. Where git cannot write
+  the repository's `.git/config` — a container that mounts it read-only — `-u` fails after the
+  push: git exits 0, prints `could not write config file` or `could not lock config file`, and
+  records no upstream. That is not a failed push: the exit status and the `-> <branch>` line are
+  the result, and nothing in this reference reads the upstream.
 - **Skip** → "Branch `<branch>` ready with N commit(s). Push when ready."
 - **Cancel** → stop and summarise.
 Never force-push. Never call a REST API over HTTPS from this flow. (The `gh` CLI wraps the API rather than calling it over HTTPS and is permitted where a host provides one — but that allowance belongs to pull-request creation, which this docs-repo flow does not perform; see §5 and `workflows-core:phase-handoff` §2.6.)
