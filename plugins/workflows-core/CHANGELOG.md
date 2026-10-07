@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.29.3] — 2026-10-07
+
+### Fixed
+- **A refused push is recorded where a hardened container can write it.** `specs-repo-git` §4 step 6 recorded a push `origin` refused as `branch.<branch>.workflowsPushRefused` in `.git/config`; a container that mounts `.git/config` read-only (it can start programs) refused the write, so every later run pushed into the same refusal while its commits piled up locally, and session-branch mode never switched on. The record is now a file, `workflows/push-refused/<branch>` in the repository's common git directory, holding the date (§1 rule 8); the old key is still read, so a clone that recorded a refusal before keeps it. `session-branch.py`'s `mode` reads both, with selftest cases. §3.5's B2 removes the record of a branch it deletes, as `branch -d` removed the key; the outcome rows and the environment page name the file to remove once `origin` takes pushes again.
+
 ## [1.29.1] — 2026-10-07
 
 ### Changed
