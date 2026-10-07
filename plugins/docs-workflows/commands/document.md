@@ -802,11 +802,13 @@ Every git call in this phase, and in Phase 6.3's commit and Phase 8.5, runs as `
    ```
    choices: ["Stash local changes and continue (Recommended)", "Proceed from current base state", "Cancel"]
    ```
+   A stash runs `workflows-core:escalation-rules` § *Stashing the user's changes*: named, recorded by commit, never applied by the run, and named with its restore commands wherever the run ends.
 
 2. **Clean-tree check.** `git -C <docs_repo_path> status --porcelain`; if non-empty:
    ```
    choices: ["Stash changes and continue (Recommended)", "Proceed anyway — pre-existing changes will appear in the diff", "Cancel"]
    ```
+   A stash runs `workflows-core:escalation-rules` § *Stashing the user's changes*: named, recorded by commit, never applied by the run, and named with its restore commands wherever the run ends.
    **Cancel** stops the run; where Phase 0 step 4(c) committed a generated profile, it ends with that step's left-on-a-branch notice.
 
 3. **Derive branch name from repo conventions.** In priority order, look at the repo root — `docs_repo_path` — for `CONTRIBUTING.md`, `CONTRIBUTION.md`, `README.md`, `DOCUMENTATION-GUIDELINES.md`. Grep each for a branch-naming section (case-insensitive, patterns like "Branch name", "Branch naming", "naming your branch"). If a pattern like `<user>/<KEY>-<slug>` or `<prefix>/<name>` is documented, derive the branch name by filling placeholders with known values (key from Phase 0, slug from the feature summary, and any **identity** placeholder (`<user>`, `<your-name-or-initials>`, `<initials>`, …) from the §2 ladder in `Skill(skill: "workflows-core:reference", args: "branch-naming")` — `$GIT_USER_INITIALS` → `git -C <docs_repo_path> config user.initials` → inference from existing branches → its §2.5 prompt). Classify the pattern's segments per §1.2 and never add an identity segment it does not ask for. If multiple patterns are documented, offer them all to the user. When no pattern is documented (§1.4), take the whole prefix from the same ladder, whose fallback for this command is `docs/`.

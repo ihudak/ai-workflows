@@ -118,7 +118,11 @@ model_routing:
    - **`PARTIAL`** — at least one theme carries `classification: error`. The rest of that map is read normally; **the errored themes go to the unresolved list and never to the gap list.** `code-scanner`'s classification has four values and only one of them, `absent`, means *looked and found none*. An `error` folded into absence asserts that the product lacks something nobody managed to look for.
    - **`EMPTY`** — the repository was read and holds none of the kinds it was asked about. That is an answer: it contributes no surface, and it is **reported** in the run's own output rather than dropped in silence, because a repository the operator named and that yielded nothing is worth their attention.
    - **`REPO_MISSING`** — escalate per `workflows-core:escalation-rules`, *Repo missing (after resolution)*, per affected repository.
-   - **`DIRTY_TREE`** — escalate per that file's *Dirty working tree*. Cited by name and not reproduced, so this command uses the variant written under that heading.
+   - **`DIRTY_TREE`** — escalate per that file's *Dirty working tree*, with this list, reproduced because it leaves out that rule's *Use the checkout as it stands*: a coverage denominator is a claim about the product as it ships, which a working tree's uncommitted changes and checked-out branch are not, and `sources[]` records the default branch's ref for every later read:
+     ```
+     choices: ["Stash changes and retry this repo", "Skip this repo", "Cancel"]
+     ```
+     Each choice does what that rule says, and the answer holds for a second scan round of the same repository.
    - **`REFRESH_BLOCKED`** — escalate per that file's *Refresh blocked*, on the same terms.
 
    A return whose `prep.read_only` is `true` and whose `prep.ref_committed_at` is more than 14 days old, or whose `prep.head_divergence.ahead` is greater than zero, additionally raises that file's *Read-only mount — ref stale or diverged*, per affected repository. A read-only mount is not a failure and never raises *Refresh blocked*: the scan proceeds at `prep.scanned_ref`, which is the ref `sources[]` records and the ref every later read of that repository is made at (`workflows-core:read-only-repos`).

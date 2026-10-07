@@ -8,11 +8,10 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [3.26.0] — 2026-10-07
 
 ### Added
-- **`/epics` and `/specify` offer to use a dirty code repository as it stands**, per `workflows-core` 1.31.0's *Dirty working tree* rule, which they now cite for what each choice does.
+- **`/create-ard`, `/epics` and `/specify` offer to use a dirty code repository as it stands**, per `workflows-core` 1.31.0's *Dirty working tree* rule; `/epics` and `/specify`, which reproduce its list, now cite it for what each choice does.
 
 ### Fixed
-- **`/create-ard` holds every inline edit of its review phase to `ard-format`'s Quality rules.** A fix, an applied finding or a manual fix note that adds a claim about the code cites the `file:line` a search found, and a universal claim is searched for counter-examples. A live run's fix asserted, unsearched, that one service was an endpoint's only caller, and the re-review spent the cap on the BLOCKER that raised.
-
+- **`/create-ard` holds every inline edit of its review phase to `ard-format`'s Quality rules**, and adds a counter-example search for a universal claim. A fix, an applied finding or a manual fix note that adds a claim about the code cites the `file:line` a search found. A live run's fix asserted, unsearched, that one service was an endpoint's only caller, and the re-review spent the cap on the BLOCKER that raised. The docs page says so.
 ## [3.25.0] — 2026-10-07
 
 ### Added
