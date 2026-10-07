@@ -427,7 +427,8 @@ alongside it.
    ref two of these records name — the same repository and the same commit — is one ref, counted
    once (that reference's §4).
 2. **The scan.** For each repository — those `implementation.md` names, or, when it names none, the
-   repositories resolved from `$REPOS_PATH` — search commit messages for the identifiers this run
+   repositories resolved from `$REPOS_PATH`, never the specs or the docs repository
+   (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1) — search commit messages for the identifiers this run
    already holds, through `${CLAUDE_PLUGIN_ROOT}/scripts/key-discovery.py`, run as
    `${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1 says — the `git log` `workflows-core:implementation-format`
    §4 gives, one `--grep` per token, each matching only as a whole key. The tokens — keys and `workitem_key`s —

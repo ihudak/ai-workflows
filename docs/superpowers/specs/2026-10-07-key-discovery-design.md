@@ -148,3 +148,13 @@ Each edition's `check-docs.sh`, `check-id-grammar.sh`, `validate-catalog.py` and
 - **Reaching a key inside a branch name.** `workflows-core:implementation-format` §4 declined it; that stands.
 - **Other forges' pull-request search, and GitHub Enterprise.** A clone on another host is scanned for commits and never searched.
 - **Open pull requests' content.** They are listed, never read: an open pull request is not work that reached the feature.
+
+## Amendment — after the sibling edition's whole-branch review (2026-10-07)
+
+The shared script changed under that review, and this edition follows it.
+
+- **The specs and docs repositories are never code.** Their commits and pull requests carry the run's tokens by the family's own conventions, so read as code they would verify a requirement by its own text. The script takes `--exclude <clone>`: every `--repo` with an excluded clone's `origin` slug is left unscanned, every pull request in a repository of that name is dropped, and the output gains `excluded`. Both commands pass `$SPECS_PATH` and the docs repository; `workflows-core:implementation-format` §4's scan scope says so too.
+- **Every clone's owner is searched**: a clone not picked for its slug goes as `--owner-of <clone>`.
+- **Tokens are quoted as phrases** in the search; a batch that returns the 1000-hit limit makes the layer `partial`. `dropped_loose` counts pull requests; a rate limit keeps the earlier failures in `detail`; `not-authenticated` carries `gh auth status`'s last line.
+- **The script cannot be broken by a commit message**: the log is read NUL-separated and an unparsable record skipped; any unexpected failure exits 2 with one line; git runs with `GIT_NO_LAZY_FETCH=1`; a rebase landing compares each commit's first line with the pull request's headline, an ellipsis-cut headline as a prefix.
+- **Any failure counts as exit 2** in the commands — another exit, stdout that is not JSON, or the Bash tool's 600000 ms timeout.

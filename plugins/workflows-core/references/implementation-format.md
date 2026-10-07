@@ -172,7 +172,8 @@ git -C <repo> log --no-merges --extended-regexp --regexp-ignore-case \
 ```
 
 over the repositories this file names — or, when it names none, the repositories resolved from
-`$REPOS_PATH` — with one `--grep` for each key and each `workitem_key` below; git lists a commit
+`$REPOS_PATH`, never the specs repository or the docs repository, whose commits carry the tokens by
+the family's own conventions — with one `--grep` for each key and each `workitem_key` below; git lists a commit
 that matches any of them anywhere in its message, its trailers included.
 
 **The scan takes no merge commit (`--no-merges`).** A merge commit's range is the whole branch it
