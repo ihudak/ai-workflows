@@ -276,8 +276,8 @@ which option is right depends entirely on why the repo is absent.
 **Six stash choices run this procedure**: the Stash choice of § *Dirty working tree* below, and the
 "Stash … and continue" choices of the documentation commands that branch a repository they write
 into (`/document` Phase 6.2's two, `/docs-profile` Phase 5, `/docs-init` Phase 2.5 and `/docs-brand`
-Phase 7). `/implement`, `/upgrade` and `/vuln` keep their own: each records a `stash_ref` that
-`dev-workflows:code-handoff` reads.
+Phase 7). `/implement` and `/upgrade` keep their own: each records a `stash_ref` that
+`dev-workflows:code-handoff` reads; `/vuln` never stashes.
 
 1. **Stash under a name no other run shares**, reading the stash ref on both sides of it:
    `git -C "<repo>" rev-parse -q --verify refs/stash` (empty where there is none), then
