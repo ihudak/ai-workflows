@@ -658,10 +658,11 @@ Read that as one predicate over the siblings, matching `workflows-core:next-phas
 (*"the next sibling holding no current proposal"*): the option stands wherever some sibling has no
 current proposal, a sibling that was never priced included. Read the other way — dropped unless a
 sibling holds a *stale* one — it would vanish in the commonest case there is. **Current** is
-`/product-workflows:brd-proposal` Phase 3's test, decided by presence and Phase 2's file times alone — a committed, unmodified file's last commit
-time, else its modification time: a
-sibling's `proposal.md` exists and is not older than that sibling's `prd.md`, `decisions.md` or any
-file under its `grounding/`. It never opens a sibling's proposal, so this is no read of another
+`/product-workflows:brd-proposal` Phase 3's test, decided by presence and the times
+`/product-workflows:brd-proposal` Phase 2 records (a committed, unmodified path's last commit time,
+else its modification time): a sibling's `proposal.md` exists and is not older than that sibling's
+`prd.md`, `decisions.md` or `grounding/`, and a time that cannot be ordered (a tie, a shallow clone)
+counts as not current here, so the option stands for it. It never opens a sibling's proposal, so this is no read of another
 folder's proposal and the census at the top of this file stands. **Where
 dropping would leave fewer than two options, add** `"Re-derive it from scratch once the inputs move —
 /product-workflows:prd-proposal <KEY> --redo"`, which is available on every run, so the array never

@@ -218,13 +218,32 @@ is what lets a folder that is not a child be counted as one. The test also needs
 since `brd/`, `grounding/` and `dev-workflows/` carry no `brd-link.md` at all.
 
 Record, per slice: its key, its folder, whether `proposal.md` and `proposal-brief.md` are present,
-and the time of `proposal.md` against those of `prd.md`, `decisions.md` and the files under
-`grounding/` — Phase 3 walks that record and decides nothing here. **A file's time is its last commit
-time where it is committed and unmodified** (`git log -1 --format=%cI -- <file>`, with
-`git status --porcelain -- <file>` empty), **else its modification time**: git sets every file's
-modification time at checkout, so on a fresh clone file times alone can order a stale proposal after
-the requirement set it priced, while an uncommitted edit is newer than any commit and its file time
-is the right one.
+and the time of `proposal.md` against those of `prd.md`, `decisions.md` and `grounding/`, with the
+basis each was taken on — Phase 3 walks that record and decides nothing here. Every path below is
+relative to `$SPECS_PATH`, and every git call runs as `git -C "$SPECS_PATH"`, so the run reads the
+specs repository wherever it was started. Times are seconds since the epoch, compared as numbers.
+
+- **Basis `commit`** — where `git -C "$SPECS_PATH" status --porcelain -- <path>` succeeds and prints
+  nothing: the
+  last commit that added or changed it, `git -C "$SPECS_PATH" log -1 --follow -M100% --diff-filter=AM
+  --format=%ct -- <file>` for a file, which skips a pure rename such as a folder moved with `git mv`,
+  and `git -C "$SPECS_PATH" log -1 --format=%ct -- <slice>/grounding/` for the directory, which also
+  counts a committed deletion.
+- **Basis `file`** — where that status prints a line (the path is modified, untracked or, for
+  `grounding/`, has any file changed, added or deleted under it), or fails (`$SPECS_PATH` is not a git
+  repository, or git refuses it): the modification time — for `grounding/` the newest of its files' — and a deletion
+  shown by the status counts as newer than every commit.
+- **Basis `undecidable`** — where the proposal's time equals an input's, or the clone is shallow
+  (`git -C "$SPECS_PATH" rev-parse --is-shallow-repository` prints `true`, which gives every file the
+  tip commit's time): one squash or rebase merge, or the preflight's flush, can carry a proposal and
+  the change it never priced in a single commit, so a tie says nothing about which came first.
+
+Git sets every file's modification time at checkout, so on a fresh clone file times alone can order a
+stale proposal after the requirement set it priced; a commit time orders by when a change landed on
+the branch, which is what a reader of the default branch sees. Neither records which inputs a
+proposal priced: an input edited locally is newer only than its own last commit, so a proposal
+committed later by someone else still reads as current against it — the walk's picture shows each
+slice's basis for exactly that reason.
 
 Zero slices stops — there is no roll-up over an empty set, and a programme total computed from
 nothing would read as a real figure:
@@ -239,7 +258,7 @@ BRD_PROPOSAL_NO_SLICES: <BRD-KEY> at <path> has no slices — nothing has been c
 ## Phase 3 — The readiness walk
 
 Walk every slice Phase 2 enumerated, one at a time, and **carry a computed recommendation for each —
-the decision stays the operator's**. Four states — two with no `proposal.md` and two with one, so
+the decision stays the operator's**. Five states — two with no `proposal.md` and three with one, so
 every slice is in exactly one — and the recommendation each one computes to:
 
 | Slice state | Recommendation |
@@ -247,12 +266,14 @@ every slice is in exactly one — and the recommendation each one computes to:
 | no `proposal.md`, and the slice grades tier ≥ 2 | **Stop.** Run `/product-workflows:prd-proposal <SLICE-KEY>` first — the slice is estimable, and excluding it understates the programme |
 | no `proposal.md`, and the slice grades tier 1 or holds no `prd.md` | **Exclude, and disclose.** Nothing better is available today, and stopping buys nothing |
 | `proposal.md` present but older than the slice's own `prd.md`, `decisions.md` or grounding files | **Re-run it.** The common case, and the easiest to miss |
+| `proposal.md` present, but its time cannot be ordered against its inputs' (Phase 2 basis `undecidable`) | **Include, and say why the times cannot tell** — a tie or a shallow clone. The stale row's array below, with this recommendation printed beside it: the operator, who knows what the proposal priced, decides |
 | `proposal.md` present and older than none of them | **Include.** The slice is priced and current, so there is nothing to decide: the walk asks no question for it and records it as included |
 
 Grade a slice's tier against `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §5's ladder, over
 that slice's own folder — the same grading `/prd-proposal` Phase 3 performs, applied here only to
 decide which of the two no-`proposal.md` rows a slice is in; a slice with a `proposal.md` is placed by
-the file times Phase 2 recorded, and its tier is the one its proposal already carries.
+the times and basis Phase 2 recorded, and the walk's picture names that basis beside it — `by commit`,
+`by file time` or `undecidable` with its reason — and its tier is the one its proposal already carries.
 
 **A current slice is the one row with no array.** It is still printed in the walk's picture with its
 **Include** recommendation, and it is included exactly as an operator's *"Include it as it stands"* on
