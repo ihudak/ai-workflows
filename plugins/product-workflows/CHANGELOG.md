@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.29.1] — Unreleased
+## [3.29.1] — 2026-10-08
 
 ### Fixed
 - **`/epics` made the same promise** — "show candidates at plan approval" — for the repositories its code scan resolves in Phase 4, after its Phase 2 approval. It now asks the same question once every repository is resolved, before the scan.

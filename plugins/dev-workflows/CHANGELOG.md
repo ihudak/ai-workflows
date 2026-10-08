@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.22.4] — Unreleased
+## [4.22.4] — 2026-10-08
 
 ### Fixed
 - **The plugin's description counted fifteen reference files**; `references/` holds sixteen, as its docs page says.

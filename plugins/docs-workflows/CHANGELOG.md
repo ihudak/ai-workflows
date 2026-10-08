@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.13.2] — Unreleased
+## [1.13.2] — 2026-10-08
 
 ### Fixed
 - **`docs-style-checker`'s two-minute cap per linter pass said nothing of how**, so a run could write it as a `timeout` prefix, which macOS does not ship; it is the Bash tool's own timeout.
