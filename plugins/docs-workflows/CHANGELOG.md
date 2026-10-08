@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.13.2] — Unreleased
+
+### Fixed
+- **`/document`'s and `/release-notes`' slug→clone maps came up empty on macOS**, which ships no `timeout` binary: the bare `timeout 5 git -C <dir> remote get-url origin` failed with `command not found`, and a failed call skips the directory — so every slug the run resolved matched no clone, and the commit scan read none. Both now run it as `bounded 5 git …` (`workflows-core:bounded-run`, 1.35.3) — `timeout`, else `gtimeout`, else a `perl` alarm.
+
 ## [1.13.1] — 2026-10-08
 
 ### Fixed

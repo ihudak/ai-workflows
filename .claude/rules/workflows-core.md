@@ -13,7 +13,7 @@ Split out for the 20,000-character budget: the git authorities (`specs-repo-git`
 
 ## Plugin facts
 
-`workflows-core` carries thirty-six reference files (`find plugins/workflows-core/references -type f | wc -l`), ten agents (`adr-drafter`, `architecture-grounder`, `code-scanner`, `defect-reporter`, `doc-fixer`, `docs-grounder`, `frame-describer`, `impl-maintenance`, `promotion-scout`, `session-analyst`; `ls plugins/workflows-core/agents | wc -l`), two bundled skills (`model-routing` and the `reference` loader), the cost and status-line scripts under `scripts/`, and seven family-meta commands — `/feedback`, `/prompt`, `/prompt-brainstorm`, `/prompt-grill-me`, `/statusline`, `/frames` and `/diagnose-session` (`ls plugins/workflows-core/commands | wc -l`).
+`workflows-core` carries thirty-seven reference files (`find plugins/workflows-core/references -type f | wc -l`), ten agents (`adr-drafter`, `architecture-grounder`, `code-scanner`, `defect-reporter`, `doc-fixer`, `docs-grounder`, `frame-describer`, `impl-maintenance`, `promotion-scout`, `session-analyst`; `ls plugins/workflows-core/agents | wc -l`), two bundled skills (`model-routing` and the `reference` loader), the cost and status-line scripts under `scripts/`, and seven family-meta commands — `/feedback`, `/prompt`, `/prompt-brainstorm`, `/prompt-grill-me`, `/statusline`, `/frames` and `/diagnose-session` (`ls plugins/workflows-core/commands | wc -l`).
 
 It ships two hooks — `notify-done` and `test-notify`, both session-wide rather than command-scoped, which is why they live in `workflows-core`: every family plugin declares `workflows-core`, so one copy serves everyone.
 

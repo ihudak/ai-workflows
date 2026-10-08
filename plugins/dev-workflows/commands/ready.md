@@ -339,7 +339,7 @@ this run. This is the mechanical half of that dimension. **On a multi-component 
    spans>`); and any ARD's `grounded_repos:` frontmatter list (`product-workflows:ard-format`). Dedupe.
 2. Build the slug→clone map **exactly as `epics.md` Phase 4 does**: for each top-level directory under
    each entry of `${REPOS_PATH:-/workspace}`, run
-   `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git` or whose `git remote`
+   `bounded 5 git -C <dir> remote get-url origin 2>/dev/null` (`workflows-core:bounded-run`), strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git` or whose `git remote`
    call fails/times out.
 3. Match each derived candidate against the map: mounted (record the resolved path) or not-mounted.
    **Presence only — never dispatch `code-scanner`, never confirm/mount-gate like `/design`'s Phase 3**;
