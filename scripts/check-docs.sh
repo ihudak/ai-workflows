@@ -2044,7 +2044,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   expect_fail_msg "a pass-on sentence is compared under a differently-cased NEVER-dispatch rule" 20 "pass-on sentence differs" \
     "sed -i.bak 's/^- NEVER dispatch/- Never dispatch/; s/adds after its output to the end of your own reply, with your own, unchanged/returns into your own reply, unchanged/' $PLUGIN_REL/agents/beta.md"
   expect_fail_msg "a pass-on sentence in a plugin check 17 does not read still needs its NEVER-dispatch rule" 20 "no NEVER-dispatch rule" \
-    "sed -i.bak '/^description:/a tools: [\"Read\", \"Task\"]' plugins/fixture-guarded/agents/kappa.md && printf -- '\n- Copy every \`Untrusted-content notice:\` line \`eta\` returns into your own reply, unchanged.\n' >> plugins/fixture-guarded/agents/kappa.md"
+    "perl -i.bak -pe 's/^(description:.*\n)/\$1tools: [\"Read\", \"Task\"]\n/' plugins/fixture-guarded/agents/kappa.md && printf -- '\n- Copy every \`Untrusted-content notice:\` line \`eta\` returns into your own reply, unchanged.\n' >> plugins/fixture-guarded/agents/kappa.md"
   expect_fail_msg "a pass-on sentence with trailing whitespace says so" 20 "trailing whitespace" \
     "sed -i.bak 's/with your own, unchanged\.\$/with your own, unchanged. /' $PLUGIN_REL/agents/beta.md"
   expect_fail_msg "a relay sentence with trailing whitespace says so" 20 "trailing whitespace" \

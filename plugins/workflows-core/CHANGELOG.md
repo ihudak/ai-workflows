@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.34.0] — 2026-10-08
+
+### Added
+- **Claude Haiku 5.5 is priced and routable.** `cost-prices.yaml` keys `claude-haiku-5-5` from the pricing page, and `run-flags` §2 lists it as the newest of the Haiku rows, so `--enforce-model=haiku` resolves to it where the model parameter accepts ids, and `haiku5.5` is the version-specific Haiku form a family-only harness accepts (`haiku4.5` no longer is). No `classification.md` chain names Haiku, as before.
+- **`session-cost.py` prices by prompt length where a model bills by it.** Haiku 5.5 charges $0.10 / $0.50 per MTok up to 100,000 prompt tokens and $0.50 / $2.50 above, so its entry carries a `long_context:` block (`above:` plus the long rates). The engine classes each message by its own prompt — input + cache read + cache write — and bills all of a message's tokens at the long rates once it passes `above`. A row with any such message carries `modifiers: [long-context]`; a block with no numeric `above:` prices the row null with `note: unpriced-long-context`. Every other model prices exactly as before. Eight selftest cases pin the boundary, the per-message split, cache writes counting toward the prompt, the US-inference multiplier stacking, the modifier and the unpriced note.
+
+### Fixed
+- **Sonnet 5.5 cache reads priced at $0.10 per MTok, not $0.20.** The pricing page bills Sonnet 5.5's cache hits at 0.05x input, as it does Opus 5.5's; `cost-prices.yaml` keyed the 0.1x rate, so every Sonnet 5.5 cache read was priced 2x high. The selftest now pins $0.10, so the Sonnet pair's price check tells 5.5 and 5 apart.
+
 ## [1.33.0] — 2026-10-07
 
 ### Added
