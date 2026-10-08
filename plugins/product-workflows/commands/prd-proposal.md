@@ -88,7 +88,7 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
 
 2. **Resolve the address.** Resolve the single positional `<ADDRESS>` — a `<KEY>`, or an `@<path>`
    naming a folder — with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3).
-   A key that fails §1's grammar stops with
+   A token `read-key` (§1) finds `invalid` stops with
    `PRD_PROPOSAL_NEEDS_KEY: /prd-proposal needs an address (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. PRODUCT-1234 or the slice PRODUCT-1234-01) — re-run '/product-workflows:prd-proposal <ADDRESS>'.`
    Shape only, and never checked against anything (§1) — a key names a folder in `$SPECS_PATH`.
    `status: absent` stops with

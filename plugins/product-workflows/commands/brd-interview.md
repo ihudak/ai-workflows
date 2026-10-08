@@ -124,7 +124,7 @@ and nothing downstream can tell the difference afterwards.
 ## Phase 0 — Resolve inputs and gate the grounded BRD
 
 1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--round` consumes the token after it (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
-   (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix and carries the bare key from then on. If absent or invalid, stop:
+   (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix or a folder's whole name, and carries the bare key from then on. If absent or invalid, stop:
    `BRD_INTERVIEW_NEEDS_KEY: /brd-interview needs a BRD key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) — re-run '/product-workflows:brd-interview <KEY>'.`
 2. **`--round N`.** Optional, consuming the next token, which must be a positive integer. Malformed
    or absent value → stop, rather than silently falling back to the no-flag behaviour, which would

@@ -111,10 +111,9 @@ cannot review, and they will not tell you that — they will review it anyway, b
 ## Phase 0 — Resolve inputs and gate the decided BRD
 
 1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--depends-on` consumes the token after it (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
-   (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix and carries the bare key from then on. If absent or invalid, stop:
+   (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix or a folder's whole name, and carries the bare key from then on. If absent or invalid, stop:
    `BRD_PACKAGE_NEEDS_KEY: /brd-package needs a BRD key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) — re-run '/product-workflows:brd-package <KEY>'.`
-2. **`--depends-on <BRD-KEY>`.** Repeatable, each consuming the next token; read each with
-   `read-key` and drop (warn, do not stop the run) any that fail shape — the same handling
+2. **`--depends-on <BRD-KEY>`.** Repeatable, each consuming the next token; read each with `read-key`, carry the key each reads and never the token typed, and drop (warn, do not stop the run) any that fail shape — the same handling
    `/prd-ground` Phase 0 gives the same flag, because the flag means the same thing here and a
    mistyped prerequisite must not cost the operator the whole run. Any key at any level is
    admissible as the value (D17), so a slice depending on a source-owning BRD and a slice depending

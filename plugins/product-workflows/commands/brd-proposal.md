@@ -79,7 +79,7 @@ not work: a flag is a token, so `--redo` would arrive as the address.
 
 2. **Resolve the address.** Resolve the single positional `<ADDRESS>` — a `<KEY>`, or an `@<path>`
    naming a folder — with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3).
-   A key that fails §1's grammar stops with
+   A token `read-key` (§1) finds `invalid` stops with
    `BRD_PROPOSAL_NEEDS_KEY: /brd-proposal needs an address (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. PRODUCT-1234) — re-run '/product-workflows:brd-proposal <ADDRESS>'.`
    Shape only, and never checked against anything (§1) — a key names a folder in `$SPECS_PATH`.
    `status: absent` stops with

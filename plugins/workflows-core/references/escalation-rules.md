@@ -384,14 +384,9 @@ finding written into the artifact, a style pass, a resumed verify step — the f
 plainly and names the edits. One line: *"`<verdict>` was reached before <the edits>, which followed
 it; the current text has not been reviewed."*
 
-**The line goes wherever the verdict is recorded, and the pull request is one of those places.** A
-command that hands its artifact off (`workflows-core:phase-handoff` §2) puts the verdict in its
-`body_facts`, and the pull request is what a reviewer reads before merging: there the verdict carries
-this line, and every finding the run leaves open is listed beside it with its severity. A session
-record the command keeps (`/specify`'s `_session.md`, `/design`'s `_design-session.md`) records the
-verdict with the same line. A live `/specify` run had to work out both places for itself.
+**The line also goes into the pull request of a specs-repository handoff, and into a session record.** A command that hands a reviewed artifact off (`workflows-core:phase-handoff` §2) puts the verdict in its `body_facts`, and the pull request is what a reviewer reads before merging: there the verdict carries this line, and every finding the run leaves open is listed beside it with its severity. A session record the command keeps (`/specify`'s `_session.md`, `/design`'s `_design-session.md`) records the verdict with the same line. A live `/specify` run had to work out both places for itself.
 
-**Which commands those are is derived, not listed, and a phrase grep is not the derivation.** The set
+**Which commands record a verdict is derived, not listed, and a phrase grep is not the derivation.** The set
 was first taken from the commands carrying the literal *"one fix cycle + one re-review"* cap, which
 missed `/vuln` and `/upgrade` — both run one fixer pass and one re-review, both edit afterwards
 through a resumed verify step, and `/upgrade`'s own results table carries a `Review` column. The test
@@ -421,8 +416,7 @@ The user merged, and the fix took a second pull request.
 
 **So, after each review the gate takes whose verdict is not `BLOCK` — the first review or the
 re-review, or one the run goes on from as from such a verdict at a triage settle prompt's
-**Proceed** — and before whatever follows it, offer once to apply the findings it leaves open whose fix
-is only an edit:**
+**Proceed** — and before whatever follows it, where it leaves open at least one finding whose fix is only an edit, offer once to apply them:**
 
 `choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]`
 
@@ -431,8 +425,7 @@ not applied, not overridden and not dismissed; a finding triage marked unverifie
 (`finding-triage.md`), here as anywhere; and the re-review's offer carries every finding of the first
 review still open beside its own. A finding whose fix needs a decision the run does not have is no
 edit: a command that settles such decisions as it applies (`/create-prd`, `/update-prd`,
-`/create-ard`) puts it to the user one question at a time, as the grill asks, and every other leaves
-it to *A finding left open that needs a decision is recorded in the artifact* below. A free-text
+`/create-ard`) puts it to the user one question at a time, as the grill asks, and every other records it as *A finding left open that needs a decision is recorded in the artifact* below says where that section reaches the command, and lists it in the final report and the pull request where it does not. A free-text
 answer naming some of the findings applies those.
 
 - **Taken**, each edit is the orchestrator's own, read against what it overlaps (*An inline fix is
@@ -449,8 +442,7 @@ it is exactly what it allowed before. Used by the commands that fix inline — `
 
 **A verdict that is not `BLOCK` spends neither half of the cap**, so the no-fixed-point argument
 above does not reach it. A run that edits the reviewed artifact in answer to such a verdict's
-findings — findings the user chose to apply at the offer above, or the fixer pass a command
-dispatches over them — still holds the cap's one re-review, and handing off without offering it ships edited text
+findings — a first review's findings the user chose to apply at the offer above, or the fixer pass a command dispatches over them — still holds the cap's one re-review, and handing off without offering it ships edited text
 unreviewed for no reason the cap gives. A live `/create-prd` run is the case: `PASS WITH
 RECOMMENDATIONS` with four `MAJOR` findings, two of them acceptance criteria contradicting each
 other; the user applied every finding, criteria were merged and renumbered, and the text went to
@@ -474,7 +466,7 @@ pass, a resumed verify step — stays under the reporting rule above and makes n
   one after its fix cycle — its own `Review verdict BLOCK (unresolved after one fix cycle)` rule
   below, or `/implement`'s stayed-blocked stop; any other verdict, or **Proceed** at a settle prompt,
   goes on to the step that follows the review gate, as after the command's own re-review, and none
-  starts a fix cycle: its findings meet the offer above, whose edits no review follows. The version line then names the re-review's verdict, and
+  starts a fix cycle: a command that fixes inline puts its findings to the offer above, whose edits no review follows, and every other reports them. The version line then names the re-review's verdict, and
   an edit after it falls back to the reporting rule above, the cap now spent.
 - **Declined**, the run goes on exactly as before, and the version line says the verdict predates
   the edits.
@@ -581,8 +573,7 @@ one is an edit after the verdict, which the final report names under `A recorded
 version it was taken against`; it answers no finding, so it makes no re-review offer.
 
 Used by `/create-prd`, `/update-prd`, `/create-ard`, `/specify` and `/epics`. `/design` is not among them: its
-own open questions must be resolved before its gate passes, so a finding it leaves open stays in its
-final report.
+own open questions must be resolved before its gate passes, so a finding it leaves open stays in its final report and its pull request.
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline
 

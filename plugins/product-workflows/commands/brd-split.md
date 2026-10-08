@@ -59,7 +59,7 @@ four-resolution one.
 ## Phase 0 — Resolve inputs and gate on verification
 
 1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first non-flag token; read it with `read-key`
-   (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix and carries the bare key from then on. If absent or invalid, stop:
+   (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix or a folder's whole name, and carries the bare key from then on. If absent or invalid, stop:
    `BRD_SPLIT_NEEDS_KEY: /brd-split needs a BRD key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) — re-run '/product-workflows:brd-split <KEY>'.`
 1a. **`<instruction>` (mandatory on a root that still has a row to place, optional on a slice).** Every token after
    the key, joined verbatim, is a slicing instruction in the operator's own words — `cover orders and

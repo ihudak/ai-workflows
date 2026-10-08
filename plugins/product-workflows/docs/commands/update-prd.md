@@ -12,7 +12,7 @@ Refreshes an existing Product Requirements Document — routine updates and the 
 /update-prd <KEY> [@transcript-or-notes ...] [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
-- **`<KEY>`** (mandatory) — the existing PRD's key. Format-validated only (`^[A-Z][A-Z0-9_]*(-\d+)+$`). The grammar fixes no depth, and that is what lets [`/create-prd`](create-prd.md) send you here with a three-segment key — a PRD it authored inside a BRD slice on the BRD route. A two-segment key validates exactly as it always did.
+- **`<KEY>`** (mandatory) — the existing PRD's key. Format-validated only (`^[A-Z][A-Z0-9_]*(-\d+)+$`), and accepted behind its folder's `PRD-` prefix, or as its folder's whole name, too, read as the bare key. The grammar fixes no depth, and that is what lets [`/create-prd`](create-prd.md) send you here with a three-segment key — a PRD it authored inside a BRD slice on the BRD route. A two-segment key validates exactly as it always did.
 - **`[@transcript-or-notes ...]`** (optional) — one or more paths to a transcript or notes file, read as secondary, read-only grounding for the grill.
 - **`[--no-docs]`** — turns off documentation grounding for the run (see [What it needs](#what-it-needs)).
 - **`[--docs <path>]`** — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`. The flag and its value are stripped together before the address is parsed.

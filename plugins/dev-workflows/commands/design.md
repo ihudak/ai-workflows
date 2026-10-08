@@ -383,8 +383,7 @@ Dispatch `design-reviewer` (Opus):
 - **`BLOCK`** — fix the BLOCKER findings (the orchestrator/grill edits `design.md` inline — no delegated
   writer), read the fix against what it overlaps — each line it adds or changes, in any section (an
   interface, a seam, a test-strategy line, a migration or rollout step), against those that govern
-  the same behaviour, and an operational step against everything its selector reaches in the
-  target's deploy files, per the `An inline fix is read against what it overlaps` rule in
+  the same behaviour, and an operational step against everything its selector reaches in the deploy files of the repositories Phase 3 confirmed, ride-along deploy components included, per the `An inline fix is read against what it overlaps` rule in
   `workflows-core:escalation-rules`, and manual fix notes the same
   way before the handoff — and re-review once. **Any unresolved `design.md` `- [ ]` is a BLOCKER by policy** — resolve it
   or push it onto the spec (Phase 5) before handoff. If still `BLOCK`, escalate per the
@@ -402,7 +401,7 @@ Dispatch `design-reviewer` (Opus):
 Cap: one fix cycle + one re-review maximum. Phase 7 will not hand off a `design.md` with any unresolved
 `- [ ]`. A finding applied at that offer after the first review is an inline edit answering a verdict that was not `BLOCK`: it is read against what it overlaps, as a fix is, and the re-review the cap still holds is offered before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`.
 
-**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
+**The recorded verdict names the version it was taken against** — where any edit followed it, the final report, Phase 7's `body_facts` and `_design-session.md` say so and name the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
 
 ---
 
