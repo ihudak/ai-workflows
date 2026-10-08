@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.35.2] — 2026-10-08
+
+### Fixed
+- **`phase-handoff` §4.1's *Stacked on another phase's branch* row** held an unescaped `|` inside its code span, which a rendered table reads as a cell boundary; it is escaped.
+
 ## [1.35.1] — 2026-10-08
 
 ### Fixed
