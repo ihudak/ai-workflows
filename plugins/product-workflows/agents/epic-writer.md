@@ -38,7 +38,7 @@ Return `status: BLOCKED` with the specific gap when: the handoff file is missing
 2. **Sizing / sequencing.** Prefer fewer, larger Epics when the PRD direction is
    already validated; split only at a genuine risk or feedback-loop boundary.
    Order the Epics so that none depends on a later one (supports the reviewer's
-   independence check).
+   independence check) — save the one dependency an ARD's contracts make legal: a consumer of a `new` or `changed` interface whose `artifact` is null names the Epic producing that interface in `## Dependencies` as one it does not wait for, since its Independent Test runs against a stub, so that Epic may land after the consumer (*Components and contracts* below).
 3. **Needs and shared decisions** (the reviewer's *Cross-Epic dependencies*
    dimension).
    - **Needs.** For each Epic, list what it needs before it can start or before

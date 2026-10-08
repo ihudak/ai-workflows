@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.30.3] — 2026-10-08
+
+### Fixed
+- **`epic-writer`'s sequencing step no longer forbids the one forward dependency an ARD's contracts make legal.** It said "order the Epics so that none depends on a later one" outright, while its own *Components and contracts* rule lets the producer of a `new` or `changed` interface whose `artifact` is null land after its consumers, each consumer naming it as one it does not wait for. `/epics`' planning list was qualified the same way in an earlier release and this copy was missed; a writer following the bare sentence could reorder against a legal landing order, or read the dependency as a cycle.
+
 ## [3.30.2] — 2026-10-08
 
 ### Fixed
