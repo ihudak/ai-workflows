@@ -2227,7 +2227,8 @@ EOF
 # work tree, as the selftest's fixture copies are, or below its top level) it walks the directory.
 check_edition_forbidden() {
   local root="$1" pat hits top
-  [ -n "$EDITION_FORBIDDEN_B64" ] || return 0
+  [ -n "$EDITION_FORBIDDEN_B64" ] \
+    || { note "check 19 not applicable: this edition forbids nothing (EDITION_FORBIDDEN_B64 is empty)"; return 0; }
   pat="$(b64d "$EDITION_FORBIDDEN_B64")"
   # The same vacuity guard check 14 carries: a value that decodes to nothing would examine
   # nothing while reporting success.
@@ -2648,6 +2649,17 @@ selftest() {
     local cfg; cfg=$(case_cfg "$2")
     if gate --config "$cfg" >/dev/null 2>&1; then printf 'ok    %s\n' "$1"
     else printf 'FAIL  %s: expected exit 0\n' "$1"; rc=1; fi
+    rm -f "$cfg"; rm -rf "$tmp"
+  }
+  # ...and a pass that must SAY something: a check an edition switches off reports that it did
+  # not run, and a silent skip is the failure a green run cannot otherwise show.
+  expect_pass_saying() { # <description> <config-assignments> <output-needle> <mutation-shell>
+    tmp=$(mktemp -d); cp -R "$fixture/." "$tmp/"
+    ( cd "$tmp" && eval "$4" )
+    local cfg; cfg=$(case_cfg "$2")
+    local out; out=$(gate --config "$cfg" 2>&1); local got=$?
+    if [ "$got" -eq 0 ] && grep -qF -- "$3" <<<"$out"; then printf 'ok    %s (says: %s)\n' "$1" "$3"
+    else printf 'FAIL  %s: expected exit 0 and "%s", got exit %s\n' "$1" "$3" "$got"; rc=1; fi
     rm -f "$cfg"; rm -rf "$tmp"
   }
 
@@ -3583,7 +3595,9 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf '%s\n' \"\$(b64d enotZWRpdGlvbi1mb3JiaWRkZW4tZml4dHVyZS10b2tlbg==)\" >> $PLUGIN_REL/CHANGELOG.md"
   # The edition that forbids nothing: an EMPTY value passes with the token present, which is the
   # internal edition's configuration and the reason the body must tolerate it under set -u.
-  expect_pass_after_env "an empty EDITION_FORBIDDEN_B64 passes with the token present" "EDITION_FORBIDDEN_B64=" \
+  # ...and it says so, as checks 13 and 16 do when they are switched off.
+  expect_pass_saying "an empty EDITION_FORBIDDEN_B64 passes with the token present" "EDITION_FORBIDDEN_B64=" \
+    "check 19 not applicable" \
     "printf '%s\n' \"\$(b64d enotZWRpdGlvbi1mb3JiaWRkZW4tZml4dHVyZS10b2tlbg==)\" >> $PLUGIN_REL/docs/README.md"
   # VACUITY GUARD: a value that decodes to nothing must turn the build red, not green.
   expect_fail_env "an undecodable EDITION_FORBIDDEN_B64 is rejected" 19 "EDITION_FORBIDDEN_B64=@@@" "true"
