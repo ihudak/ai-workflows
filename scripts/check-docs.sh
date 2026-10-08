@@ -40,11 +40,15 @@ set -uo pipefail
 # check that reads it. An edition with no use for a name defines it EMPTY, or 0, and never
 # leaves it out: the internal editions' NS_MAP_REL, LOADER_SKILL and EDITION_FORBIDDEN_B64
 # are empty and their VENDOR_NEUTRAL is 0; this edition's VENDORED_COPIES is empty.
+# EVERY NAME IS A PLAIN ASSIGNMENT, never `${NAME:-default}`: nothing a shell exports may change
+# what a real run checks (an exported empty EDITION_FORBIDDEN_B64 once switched check 19 off).
+# The selftest passes its fixture's values with --config. Only ASSERT_PUBLISHED, which arms
+# check 18, is read from the environment, because CI sets it there on purpose.
 # Space-separated; the dispatch loop sets PLUGIN_REL from it per iteration, so every
 # check function below is unchanged and still reads a single PLUGIN_REL. A one-element
 # list behaves exactly as the old scalar did, which is what keeps this body portable to
 # editions that ship one plugin.
-PLUGIN_RELS="${PLUGIN_RELS:-plugins/dev-workflows plugins/guideline-reviewers plugins/workflows-core plugins/docs-workflows plugins/product-workflows}"   # copilot: dev-workflows
+PLUGIN_RELS="plugins/dev-workflows plugins/guideline-reviewers plugins/workflows-core plugins/docs-workflows plugins/product-workflows"   # copilot: dev-workflows
 CMD_DIR="commands"                   # copilot: skills
 CMD_SUFFIX=".md"                     # copilot: /SKILL.md
 CMD_EXCLUDE=""                       # copilot: _shared
@@ -74,7 +78,7 @@ CHANGELOG_GLOB="plugins/*/CHANGELOG.md"   # copilot: */CHANGELOG.md -- its plugi
 # repo-relative. Empty means this edition ships none, and check 4's manifest assertion is
 # skipped. It is NOT derived from CORE_PLUGIN_REL: the manifest sits beside the script,
 # and a corpus that relocates without the script would silently stop being checked.
-NS_MAP_REL="${NS_MAP_REL:-plugins/workflows-core/scripts/command-namespaces.json}"
+NS_MAP_REL="plugins/workflows-core/scripts/command-namespaces.json"
                                      # copilot: "" -- no cost subsystem, so no manifest
 
 # Which plugins ship the subsystems checks 8 and 11 examine. Applicability is declared,
@@ -84,15 +88,15 @@ NS_MAP_REL="${NS_MAP_REL:-plugins/workflows-core/scripts/command-namespaces.json
 # assert that a plugin holding the CALL SITES is declared. The trigger is the call sites and
 # not the reference file: the corpus extraction separated the two, and a file-presence
 # trigger got both directions wrong at once (see those two functions).
-COST_PLUGIN_RELS="${COST_PLUGIN_RELS:-plugins/dev-workflows plugins/docs-workflows plugins/workflows-core plugins/product-workflows}"        # copilot: ""
-HANDOFF_PLUGIN_RELS="${HANDOFF_PLUGIN_RELS:-plugins/product-workflows}"  # copilot: dev-workflows
+COST_PLUGIN_RELS="plugins/dev-workflows plugins/docs-workflows plugins/workflows-core plugins/product-workflows"        # copilot: ""
+HANDOFF_PLUGIN_RELS="plugins/product-workflows"  # copilot: dev-workflows
 # Which plugins check 20 holds to the untrusted-content guard: every docs-gated plugin plus
 # prose-style, which ships agents and dispatching commands but no docs/ tree. Declared, like
 # the lists above, never inferred from a directory listing.
-GUARD_PLUGIN_RELS="${GUARD_PLUGIN_RELS:-$PLUGIN_RELS plugins/prose-style}"   # copilot: dev-workflows dt-style-guide
+GUARD_PLUGIN_RELS="$PLUGIN_RELS plugins/prose-style"   # copilot: dev-workflows dt-style-guide
 # Which plugin check 21 reads for the install references /vuln and /upgrade follow: the one
 # that ships those two commands. Declared, like the lists above.
-ITC_PLUGIN_REL="${ITC_PLUGIN_REL:-plugins/dev-workflows}"   # copilot: dev-workflows
+ITC_PLUGIN_REL="plugins/dev-workflows"   # copilot: dev-workflows
 
 # The plugin that holds the shared reference corpus. Checks 8, 9, 11 and 16 read a reference
 # from HERE and their call sites from $PLUGIN_REL -- the corpus now lives in its own plugin,
@@ -100,7 +104,7 @@ ITC_PLUGIN_REL="${ITC_PLUGIN_REL:-plugins/dev-workflows}"   # copilot: dev-workf
 # plugin under check would report a MISSING reference for every plugin that merely reads it.
 # An edition whose corpus and call sites still live together points this at that one plugin,
 # which is byte-for-byte the behaviour this variable replaces.
-CORE_PLUGIN_REL="${CORE_PLUGIN_REL:-plugins/workflows-core}"         # copilot: dev-workflows
+CORE_PLUGIN_REL="plugins/workflows-core"         # copilot: dev-workflows
 
 # The skill a dependent plugin reads that corpus THROUGH, as it is written at a call site.
 # It is edition config in its own right and NOT derived from CORE_PLUGIN_REL, deliberately:
@@ -108,7 +112,7 @@ CORE_PLUGIN_REL="${CORE_PLUGIN_REL:-plugins/workflows-core}"         # copilot: 
 # rewritten, and a derived name would silently stop matching them. Empty means this edition
 # has no loader -- its corpus and its call sites ship in one plugin, so ${CLAUDE_PLUGIN_ROOT}
 # reaches every reference by path and check 16 has nothing to assert.
-LOADER_SKILL="${LOADER_SKILL:-workflows-core:reference}"             # copilot: "" -- one plugin, no loader
+LOADER_SKILL="workflows-core:reference"             # copilot: "" -- one plugin, no loader
 
 # RUNTIME_VARS is a SILENCER: every name in it kills both directions of check 5 (env-var doc
 # agreement) for that variable, permanently -- no mutation of the fixture tree can reveal a
@@ -137,9 +141,8 @@ RUNTIME_VARS_FROZEN="ARGUMENTS BASH_REMATCH BASH_SOURCE CLAUDE_PLUGIN_ROOT OSTYP
 # EMPTY and check 19 passes there without looking; this public edition names that
 # organisation and its internal repositories nowhere, so its value is set. Encoded for the
 # reason check 14 gives for its own list: a denylist in clear text would put the names into
-# the tree, making the gate the one violation of the rule it enforces. `-` rather than `:-`
-# in the default is deliberate: an explicitly EMPTY value from the environment must win.
-EDITION_FORBIDDEN_B64="${EDITION_FORBIDDEN_B64-ZHluYXRyYWNlfG1nZC1zcGVjaWZpY2F0aW9uc3xtZ2QtY2xhdWRlLXBsdWdpbnN8KF58W15bOmFsbnVtOl1fXSltZ2QoW15bOmFsbnVtOl1fXXwkKQ==}"
+# the tree, making the gate the one violation of the rule it enforces.
+EDITION_FORBIDDEN_B64="ZHluYXRyYWNlfG1nZC1zcGVjaWZpY2F0aW9uc3xtZ2QtY2xhdWRlLXBsdWdpbnN8KF58W15bOmFsbnVtOl1fXSltZ2QoW15bOmFsbnVtOl1fXXwkKQ=="
                                      # internal edition: "" -- it names that organisation
                                      # by design
 
@@ -3807,6 +3810,17 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   else
     printf 'skip  the vendored-copy cases (the fixture declares fewer than two VENDORED_COPIES pairs)\n'
   fi
+
+  # Every config name is set by the config block, and none is taken from the environment: the
+  # block above `FAILURES=0` is sourced with each name exported as a sentinel, and no name may
+  # come out holding it (or unset, which aborts under set -u). This reads THIS edition's own
+  # block, so each edition's selftest proves its own. ASSERT_PUBLISHED is not config.
+  local cfg_names="PLUGIN_RELS CMD_DIR CMD_SUFFIX CMD_EXCLUDE REF_DIR REF_FLAT_EXTRA DOC_CMD_DIR CMD_FORM CLI CLI_VERBS CLI_REQUIRED HAS_COST HAS_CHOICE_CAP HAS_AUTO_OTHER CHANGELOG_GLOB NS_MAP_REL COST_PLUGIN_RELS HANDOFF_PLUGIN_RELS GUARD_PLUGIN_RELS ITC_PLUGIN_REL CORE_PLUGIN_REL LOADER_SKILL RUNTIME_VARS RUNTIME_VARS_FROZEN EDITION_FORBIDDEN_B64 VENDOR_NEUTRAL CHECK11_FAMILY CHECK11_PROSE CHECK11_OFFER_SCOPE INSTRUCTION_TIERS VENDORED_COPIES" leaked
+  leaked=$(env $(for n in $cfg_names; do printf '%s=env-sentinel ' "$n"; done) bash -c '
+    eval "$(sed -n "1,/^FAILURES=0\$/p" "$1")"
+    for n in $2; do [ "${!n}" = env-sentinel ] && printf "%s " "$n"; done; true' _ "$0" "$cfg_names" 2>&1)
+  if [ -z "$leaked" ]; then printf 'ok    every config name is set by the config block, none by the environment\n'
+  else printf 'FAIL  every config name is set by the config block, none by the environment: %s\n' "$leaked"; rc=1; fi
 
   if [ "$rc" -eq 0 ]; then echo "SELFTEST PASS"; else echo "SELFTEST FAIL"; fi
   exit "$rc"
