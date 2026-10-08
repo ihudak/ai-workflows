@@ -6,11 +6,14 @@
 # in the two restructures this one follows (a sibling plugin repo,
 # ai-containers#78).
 #
-# TWENTY-ONE checks, numbered 1-21 in the order their functions appear below. The number is
+# TWENTY-TWO checks, numbered 1-22 in the order their functions appear below. The number is
 # written here and nowhere else in this file, and nothing gates it -- re-derive it with
 # `grep -oE '\bfail [0-9]+ ' "$0" | awk '{print $2}' | sort -un` -- the numbers a fail() call
 # can actually report -- rather than trusting this sentence, and update it in the commit that
-# adds a check. Counting the banner comments instead gives 19: checks 1 and 2 share one.
+# adds a check. Counting the banner comments instead gives 21: checks 1 and 2 share one. Every
+# edition carries all twenty-two: a check an edition has no use for is switched off by its
+# config block (checks 13, 16 and 19 in the internal editions, check 22 here), never cut from
+# the body.
 #
 # --selftest mutates a copy of the passing fixture once per check and asserts the
 # gate rejects it. Without that, the fixtures are decorative: a gate that cannot
@@ -20,21 +23,23 @@
 set -uo pipefail
 
 # ---------------------------------------------------------------- edition config
-# THIS EDITION'S CONFIGURATION. Never copy it across.
-# The body below is this edition's own, not shared: the internal edition and
-# ihudak-copilot-plugins share one body byte for byte, and this one has diverged from it --
-# most of the checks the three have in common differ, and only this one runs checks 13,
-# 14, 16 and 19 -- so a fix ports between this body and theirs by hand, never by `cp`.
+# THIS EDITION'S CONFIGURATION, and the only part of this file that differs between the three
+# editions -- this one, the internal Claude edition and the Copilot edition
+# (ihudak-copilot-plugins). Never copy it across. Everything from the `FAILURES=0` line to the
+# end of the file -- every check, the selftest and main -- is byte-identical in all three, so a
+# fix to the gate ports between them by plain `cp` of the body, and `cmp` of the three bodies
+# is the proof that they have not drifted. An edition keeps its behaviour through the values
+# below and through its fixture's own configuration (fixtures/docs/fixture.env), never through
+# an edition branch in the body.
 #
-# THE BODY REQUIRES EVERY NAME BELOW TO EXIST. `set -u` is on, so a ported edition whose
-# hand-written config block omits one ABORTS rather than skipping a check -- which is the
-# property that matters, though not everywhere at the same moment. The three LIST variables
-# the dispatch loop expands (PLUGIN_RELS, COST_PLUGIN_RELS, HANDOFF_PLUGIN_RELS) abort at
-# that loop; CORE_PLUGIN_REL is read only inside check bodies, so it aborts at the first one
-# that reads it -- check_handoff_applicability, which runs for every listed plugin. All four
-# arrived with multi-plugin support and are the ones a config block copied from an older
-# edition will be missing. EDITION_FORBIDDEN_B64 (check 19, below) is required the same way:
-# an edition that forbids nothing defines it EMPTY, never leaves it out.
+# THE BODY REQUIRES EVERY NAME BELOW TO EXIST, in every edition. `set -u` is on, so a config
+# block that omits one ABORTS rather than skipping a check -- which is the property that
+# matters, though not everywhere at the same moment: a LIST the dispatch loop expands
+# (PLUGIN_RELS, COST_PLUGIN_RELS, HANDOFF_PLUGIN_RELS) aborts at that loop, and a name read
+# only inside a check (CORE_PLUGIN_REL, VENDOR_NEUTRAL, VENDORED_COPIES, ...) at the first
+# check that reads it. An edition with no use for a name defines it EMPTY, or 0, and never
+# leaves it out: the internal editions' NS_MAP_REL, LOADER_SKILL and EDITION_FORBIDDEN_B64
+# are empty and their VENDOR_NEUTRAL is 0; this edition's VENDORED_COPIES is empty.
 # Space-separated; the dispatch loop sets PLUGIN_REL from it per iteration, so every
 # check function below is unchanged and still reads a single PLUGIN_REL. A one-element
 # list behaves exactly as the old scalar did, which is what keeps this body portable to
@@ -591,9 +596,10 @@ check_table_cells() {
 #
 # It is a SUBSET pin, not equality: the root README documents the whole
 # marketplace, while this page documents ONE plugin and should install only what
-# that plugin actually needs. (dev-workflows references `prose-style` 32 times;
-# `acli` zero, and `$REF_DIR/followup-emission.md` states outright that it has no
-# runtime dependency on `obsidian-llm-wiki`.) So every line HERE must appear verbatim
+# that plugin actually needs. (Measured in the upstream edition: dev-workflows references
+# `prose-style` 32 times and `acli` zero, and `$REF_DIR/followup-emission.md` states
+# outright that it has no runtime dependency on `obsidian-llm-wiki`.) So every line HERE
+# must appear verbatim
 # in the root README -- which is what catches a drifted marketplace name or command
 # form -- but the root README may list more.
 check_install_block() {
@@ -832,7 +838,8 @@ check_prose_counts() {
   # disappears when `awk '{print $1}'` splits the extracted match.
   _one "commands"        "$p/README.md"                  '(^|[^[:alnum:]_-])(one|two|three|four|five|six|seven|eight|nine|ten|fifteen|sixteen|seventeen|eighteen|nineteen|twenty-one|twenty-two|twenty-three|twenty-four|twenty-five|twenty-six|twenty-seven|twenty-eight|thirty-four|ninety-eight|[0-9]+) slash commands'    "$(cmd_names "$p" | wc -l | tr -d ' ')"
   # "eleven" is in the agents alternation and in NO sibling below, and that asymmetry was
-  # measured before it was taken rather than tidied into uniformity. docs-workflows crossed ten
+  # measured -- in the upstream edition, whose plugins every name below is -- before it was
+  # taken rather than tidied into uniformity. docs-workflows crossed ten
   # agents and writes that count as a WORD ("eleven agents"), which is the whole reason this
   # word is here: before it, the sentence matched no alternative and check 9 reported the count
   # as ABSENT -- a drifted wording -- instead of comparing 11 against 11. Measured at the same
@@ -1433,7 +1440,9 @@ PYEOF
 }
 
 # ------------------------------------------------------------------ check 13
-# Vendor-token quarantine. Vendor neutrality is a HARD constraint of this plugin -- one
+# Vendor-token quarantine. It runs where VENDOR_NEUTRAL=1 -- the upstream edition, whose
+# history and census every figure in this header is. Vendor neutrality is a HARD
+# constraint there -- one
 # markdown tree is the system of record and no tracker is read -- and until this check it
 # was held by prose alone. On this codebase that is the losing side of a settled bet: every
 # rule enforced by a check has survived, every rule enforced by prose has drifted. It had
@@ -1681,7 +1690,10 @@ check_index_membership() {
 }
 
 # ------------------------------------------------------------------ check 16
-# The loader contract. $CORE_PLUGIN_REL holds the shared reference corpus; every other
+# The loader contract. It runs where LOADER_SKILL is set -- the upstream edition, whose corpus
+# and call sites ship in different plugins, and whose census every figure in this header is;
+# an edition whose corpus and call sites ship in one plugin has no loader and sets it empty.
+# $CORE_PLUGIN_REL holds the shared reference corpus; every other
 # plugin reads it through ONE argument-taking skill, because ${CLAUDE_PLUGIN_ROOT} resolves
 # to the READING plugin and a dependent plugin therefore cannot open core's files by path.
 # One skill instead of one wrapper per reference is a deliberate trade: a typo in an
@@ -2130,16 +2142,15 @@ EOF
 
 # --------------------------------------------------------------- check 19
 # CHECK 19 gates the edition's own denylist, EDITION_FORBIDDEN_B64 in the config block: base64
-# of one extended regex naming what this edition must never print. It exists because a
+# of one extended regex naming what that edition must never print. It exists because a
 # constraint held by discipline alone stopped holding: the public edition's design archive,
 # with its neighbouring records, named the organisation it was written inside and that
 # organisation's internal repositories, across more than a hundred files before anyone swept
 # them out on 2026-09-23. Check 14 could not see it -- check 14 quarantines a DIFFERENT
 # organisation, the one the plugin was extracted from, and its list is body, identical in
-# every edition. This list cannot be body, because the
-# internal edition legitimately names exactly what this one forbids; so the pattern is edition
-# config, and an EMPTY value means "this edition forbids nothing" and the check passes without
-# opening a file.
+# every edition. This list cannot be body, because the internal editions legitimately name
+# exactly what the public one forbids; so the pattern is edition config, and an EMPTY value --
+# theirs -- means "this edition forbids nothing" and the check passes without opening a file.
 #
 # SCOPE is every text file under the root minus .git, like check 14's, with two differences.
 # First, files named CHANGELOG.md are exempt: a changelog is history and keeps what it shipped
