@@ -2,8 +2,16 @@
 # Rates sourced from https://platform.claude.com/docs/en/about-claude/pricing (standard
 # first-party Claude API, Sonnet/Opus/Haiku/Fable re-verified live 2026-09-02; Opus 5.5 added from the
 # same page 2026-09-23; Fable 5.1 and Sonnet 5.5 keys, and the fast-mode and data-residency
-# rules, taken from it 2026-09-30). The Batch discount is NOT applied: an interactive session
-# is never a batch.
+# rules, taken from it 2026-09-30; Haiku 5.5 and its prompt-length rule added from it
+# 2026-10-08). The Batch discount is NOT applied: an interactive session is never a batch.
+#
+# PROMPT LENGTH is priced where a model bills by it -- Haiku 5.5 alone today: "a prompt of
+# over 100,000 tokens pays higher prices". A `long_context:` block inside a model's rates
+# carries `above:` (the prompt length, in tokens, that a message must exceed) and the rates
+# that message then bills at, on ALL its tokens. The engine classes each message by its own
+# prompt -- input + cache read + cache write; the page does not say which tokens count, and
+# this reading is the one that never prices a long prompt low. A `long_context:` block with
+# no numeric `above:` is reported `unpriced-long-context`, null cost.
 #
 # FAST MODE AND DATA RESIDENCY are priced, because the transcript records both and they change
 # the RATE, not the token count. Every assistant message carries `usage.speed` (`standard` |
@@ -53,8 +61,8 @@
 # Override without editing this file: set $DEV_WORKFLOWS_COST_PRICES to a path, or
 # drop a repo-local cost-prices.yaml. Cache multipliers follow Anthropic's model
 # (cache_read = input * 0.1, cache_write_5m = input * 1.25, cache_write_1h = input * 2.0),
-# except Opus 5.5, whose cache reads bill at input * 0.05, and Fable 5.1, whose bill at
-# input * 0.025 -- which is why every rate below is keyed explicitly rather than derived
+# except Opus 5.5 and Sonnet 5.5, whose cache reads bill at input * 0.05, and Fable 5.1,
+# whose bill at input * 0.025 -- which is why every rate below is keyed explicitly rather than derived
 # from `input`.
 models:
   # Opus chain (§2). Opus 5.5 bills at $4 / $20 with cache reads at 0.05x ($0.20);
@@ -125,17 +133,17 @@ models:
     cache_read: 0.5
     cache_write_5m: 6.25
     cache_write_1h: 10.0
-  # Sonnet chain (§2.1). Sonnet 5.5 and Sonnet 5 both bill at $2 / $10 (see the header);
+  # Sonnet chain (§2.1). Sonnet 5.5 and Sonnet 5 both bill at $2 / $10 (see the header),
+  # but Sonnet 5.5 reads cache at 0.05x ($0.10) where Sonnet 5 reads it at 0.1x ($0.20);
   # Sonnet 4.5/4.6 remain at $3 / $15.
-  # claude-sonnet-5-5 is keyed explicitly even though its rates currently equal Sonnet 5's,
-  # because `claude-sonnet-5` is a strict PREFIX of it. Without its own key the table is
-  # correct only by coincidence, and the day either model is repriced that silently becomes
-  # a wrong figure with no `unpriced-model` note -- exactly what claude-opus-5-5 did against
-  # claude-opus-5 until 1.7.5. Two models at one rate is not a reason to share one key.
+  # claude-sonnet-5-5 MUST stay keyed: `claude-sonnet-5` is a strict PREFIX of it, so
+  # without its own key the prefix fallback prices 5.5's cache reads at 5's rate, 2x high --
+  # exactly what claude-opus-5-5 did against claude-opus-5 until 1.7.5. This key itself
+  # carried 0.2 until 1.34.0, pricing every Sonnet 5.5 cache read 2x high.
   claude-sonnet-5-5:
     input: 2.0
     output: 10.0
-    cache_read: 0.2
+    cache_read: 0.1         # 0.05 x 2.0 -- Sonnet 5.5's own cache-read multiplier, not 0.1
     cache_write_5m: 2.5
     cache_write_1h: 4.0
   claude-sonnet-5:
@@ -197,6 +205,21 @@ models:
     cache_write_1h: 20.0
   # Haiku. No classification.md chain names it (defect-reporter runs on §2.1), but a
   # session or an --enforce-model value may run on it.
+  # Haiku 5.5 bills by prompt length (see the header): $0.10 / $0.50 up to 100,000 prompt
+  # tokens, $0.50 / $2.50 above, both at the standard 0.1x / 1.25x / 2x cache multipliers.
+  claude-haiku-5-5:
+    input: 0.1
+    output: 0.5
+    cache_read: 0.01
+    cache_write_5m: 0.125
+    cache_write_1h: 0.2
+    long_context:           # prompt (input + cache read + cache write) over 100,000 tokens
+      above: 100000
+      input: 0.5
+      output: 2.5
+      cache_read: 0.05
+      cache_write_5m: 0.625
+      cache_write_1h: 1.0
   claude-haiku-4-5:
     input: 1.0
     output: 5.0

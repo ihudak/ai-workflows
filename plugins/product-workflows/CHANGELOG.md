@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.28.1] — 2026-10-08
+
+### Changed
+- **The model-routing reference names Claude Haiku 5.5 as the newest Haiku** — `claude-haiku-5-5`, so `haiku5.5` is the version-specific Haiku form a family-only harness accepts (`workflows-core` 1.34.0).
+
+
 ## [3.28.0] — 2026-10-07
 
 ### Changed

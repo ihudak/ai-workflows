@@ -187,6 +187,8 @@ default: null
 - **`speed: fast`** prices from the model's own `fast:` sub-block — explicit rates, like every other rate in the table, never a multiplier. Fast mode exists on Opus 5.5 ($8/$40) and on Opus 5 and Opus 4.8 ($10/$50). Opus 4.6 accepts `speed: fast` but runs and bills at standard, so its `fast:` block repeats the standard rates; Opus 4.7 rejects it and has no block. Prompt-caching multipliers apply on top of the fast input price, so Opus 5.5's fast cache read is 0.05 × $8, not 0.05 × $4. A fast record on a model whose entry has no `fast:` block is **`unpriced-speed:fast`, cost null** — never priced at the standard rate, which would be a confident figure known to be low by half.
 - **`inference_geo: us`** multiplies every category by `modifiers.inference_geo.us` (1.1), and stacks on fast mode. `global`, `not_available` and an absent field are the standard case and are never looked up, so an override file written before this map existed still prices every global record. Any other value with no entry is **`unpriced-inference-geo:<value>`, cost null**.
 
+**Prompt length changes the rate on a model that bills by it** — Haiku 5.5 alone today ($0.10/$0.50 up to 100,000 prompt tokens, $0.50/$2.50 above). Its entry carries a `long_context:` block holding `above:` and the long rates, and the engine classes each message by its own prompt — input + cache read + cache write — billing all of a message's tokens at the long rates once that prompt exceeds `above`. Summed totals cannot make that split, which is why each message is classed as it is accumulated. A `long_context:` block with no numeric `above:` is **`unpriced-long-context`, cost null**.
+
 Both follow this file's one rule about an unknown: a null the run reports beats a plausible figure nobody confirmed. The engine previously read neither field and the table said these modifiers were "NOT applied (interactive Claude Code sessions bill at standard rates)" — false from the first `/fast` session, and wrong in one direction only. No entry written before then is affected: every record observed locally was `standard` with `global` or `not_available`.
 
 Model lookup is exact-first, then longest-prefix: an undated base key (e.g.
@@ -206,7 +208,8 @@ fallback rate map. Any model id absent from `models:` is always priced
 is set to.
 
 Cache multipliers follow Anthropic's standard model (read 0.1x, 5m write 1.25x,
-1h write 2x) — except Opus 5.5, whose cache reads bill at 0.05x, and the table keys
+1h write 2x) — except Opus 5.5 and Sonnet 5.5, whose cache reads bill at 0.05x, and
+Fable 5.1 and Mythos 5.1, whose bill at 0.025x — and the table keys
 every rate explicitly for that reason; the transcript's `ephemeral_5m` / `ephemeral_1h` split lets cache
 pricing be exact, and a message without the split prices
 `cache_creation_input_tokens` at the 5m rate.
@@ -308,17 +311,18 @@ unavailable; `compactions` is omitted when §2 returned 0, and otherwise says th
 `cost_computed_usd` leaves that many billed compactions out (§5's compaction
 caveat); a model priced `null` carries a `note:` saying why — `unpriced-model`
 (no key for the id), `unpriced-speed:<value>` (the record ran in a speed the model's
-entry has no rate block for), or `unpriced-inference-geo:<value>` (a residency the
-table has no multiplier for).
+entry has no rate block for), `unpriced-inference-geo:<value>` (a residency the
+table has no multiplier for), or `unpriced-long-context` (a `long_context:` block with
+no numeric `above:`).
 
-**A row may carry `modifiers:`** — a list such as `[speed:fast]` or
-`[inference-geo:us, speed:fast]` — present only when some of that model's tokens were
-priced at a non-default rate. Fast mode and US-only inference change the **rate**, not
+**A row may carry `modifiers:`** — a list such as `[speed:fast]`,
+`[inference-geo:us, speed:fast]` or `[long-context]` — present only when some of that model's tokens were
+priced at a non-default rate. Fast mode, US-only inference and a long prompt change the **rate**, not
 the token count, so a row's tokens are still the plain totals while its `cost_usd` is
-the sum over its `(speed, geo)` variants; without the field, a fast row's cost per
+the sum over its `(speed, geo)` variants, each split by prompt length where the model bills by it; without the field, a fast row's cost per
 token would simply look like a wrong price table. A row with no `modifiers:` was
-priced entirely at standard, global rates. The engine reads `usage.speed` and
-`usage.inference_geo` off every assistant message (§4).
+priced entirely at standard, global, short-prompt rates. The engine reads `usage.speed` and
+`usage.inference_geo` off every assistant message, and classes each message by its prompt length (§4).
 
 ### 6.1 Unpriced-model dominance warning
 
@@ -328,8 +332,8 @@ are actually **dominated** by an unpriced model, that has to be visible where
 the user is already looking: the run output.
 
 **Trigger.** Among the entry's `models` array (§6), some model has `cost_usd: null` —
-whichever of the three notes it carries: `unpriced-model`, `unpriced-speed:<value>`, or
-`unpriced-inference-geo:<value>` — **and** its token total
+whichever of the four notes it carries: `unpriced-model`, `unpriced-speed:<value>`,
+`unpriced-inference-geo:<value>`, or `unpriced-long-context` — **and** its token total
 (`input_tokens + output_tokens + cache_read_tokens + cache_write_tokens`) is
 the largest of any model in the array — i.e. the model the price table cannot
 price is the single biggest contributor to this run, not a minor stray call.
@@ -348,9 +352,10 @@ excluded from cost_computed_usd. See the maintainer checklist (§12) to price it
 `<reason>` is the row's own note in words: `absent from cost-prices.yaml` for
 `unpriced-model`; `no fast-mode rates for this model in cost-prices.yaml` for
 `unpriced-speed:fast`; `no multiplier for inference_geo <value> in cost-prices.yaml` for
-`unpriced-inference-geo:<value>`. The last two name a table that is *behind* rather than
-a model that is missing — the fix is a `fast:` block or a `modifiers.inference_geo` entry,
-not a new model key.
+`unpriced-inference-geo:<value>`; `no prompt-length threshold for this model in cost-prices.yaml` for
+`unpriced-long-context`. The last three name a table that is *behind* or malformed rather than
+a model that is missing — the fix is a `fast:` block, a `modifiers.inference_geo` entry
+or an `above:` in the `long_context:` block, not a new model key.
 
 Print-only — no extra file write, no interactivity, and it never blocks or
 alters the entry that gets persisted (§6 still writes `cost_usd: null` for

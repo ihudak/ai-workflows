@@ -190,7 +190,14 @@ def add_usage(acc, model, usage):
     the row format is unaffected. The same increments ALSO land in
     acc[model]["_v"][(speed, geo)], which is what `price_model` prices from:
     fast mode and US-only inference change the rate, not the count, so a model's
-    cost is the sum over its variants and cannot be recovered from the totals."""
+    cost is the sum over its variants and cannot be recovered from the totals.
+
+    Each variant also keeps `_p`, one (prompt_tokens, increment) pair per
+    message, because a model priced by prompt length (a `long_context:` block,
+    Haiku 5.5's) bills a whole message at the long rate once its prompt passes
+    the block's `above:` -- a per-message fact the summed totals have lost. The
+    prompt is every input-side token of the message: input + cache read + cache
+    write."""
     m = acc.setdefault(model, _blank())
     inc = _blank()
     inc["input"] = _num(usage.get("input_tokens"))
@@ -210,6 +217,8 @@ def add_usage(acc, model, usage):
     for k in TOKEN_KEYS:
         m[k] += inc[k]
         v[k] += inc[k]
+    prompt = inc["input"] + inc["cache_read"] + inc["cache_write_5m"] + inc["cache_write_1h"]
+    v.setdefault("_p", []).append((prompt, inc))
 
 
 MARKER_OPEN = "<command-name>"
@@ -600,8 +609,8 @@ def _rate(rates, key):
     return float(v) if isinstance(v, (int, float)) else 0.0
 
 
-def price_model(model, tok, prices):
-    """Return (cost_usd or None, note or None). Rates are USD per MILLION tokens."""
+def model_rates(model, prices):
+    """The model's rate dict from the table, or None where no key prices it."""
     table = prices.get("models") if isinstance(prices.get("models"), dict) else {}
     rates = table.get(model)
     if not isinstance(rates, dict):
@@ -613,7 +622,30 @@ def price_model(model, tok, prices):
                 if best is None or len(k) > len(best):
                     best = k
         rates = table.get(best) if best is not None else None
-    if not isinstance(rates, dict):
+    return rates if isinstance(rates, dict) else None
+
+
+def _long_tokens(vt, vrates):
+    """The tokens of variant `vt` from messages whose prompt passes the rates'
+    `long_context.above`, or None where the rates carry no long_context block."""
+    lc = vrates.get("long_context") if isinstance(vrates, dict) else None
+    if not isinstance(lc, dict):
+        return None
+    above = lc.get("above")
+    if not isinstance(above, (int, float)) or isinstance(above, bool):
+        return None
+    long_t = _blank()
+    for prompt, inc in vt.get("_p") or ():
+        if prompt > above:
+            for k in TOKEN_KEYS:
+                long_t[k] += inc[k]
+    return long_t
+
+
+def price_model(model, tok, prices):
+    """Return (cost_usd or None, note or None). Rates are USD per MILLION tokens."""
+    rates = model_rates(model, prices)
+    if rates is None:
         return None, "unpriced-model"
     # A token dict built by add_usage carries its (speed, geo) variants; one
     # built by hand (the selftest's, or any caller pricing plain totals) does
@@ -639,7 +671,19 @@ def price_model(model, tok, prices):
             mult = geo_multiplier(prices, geo)
             if mult is None:
                 return None, "unpriced-inference-geo:" + geo
-        cost += mult * sum(vt[k] * _rate(vrates, k) for k in TOKEN_KEYS)
+        lc = vrates.get("long_context")
+        if not isinstance(lc, dict):
+            cost += mult * sum(vt[k] * _rate(vrates, k) for k in TOKEN_KEYS)
+            continue
+        # Priced by prompt length: a message whose prompt passes `above` bills ALL
+        # its tokens at the long rates. A block with no numeric `above` cannot say
+        # which messages those are, so it is unpriced rather than guessed.
+        long_t = _long_tokens(vt, vrates)
+        if long_t is None:
+            return None, "unpriced-long-context"
+        # A hand-built dict carries no `_p`, so every token prices at the short rate.
+        cost += mult * sum((vt[k] - long_t[k]) * _rate(vrates, k)
+                           + long_t[k] * _rate(lc, k) for k in TOKEN_KEYS)
     return round(cost / 1_000_000.0, 4), None
 
 
@@ -656,10 +700,12 @@ def geo_multiplier(prices, geo):
     return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else None
 
 
-def pricing_modifiers(tok):
+def pricing_modifiers(tok, rates=None):
     """The non-default variants that contributed tokens to this model, as the
     strings the entry's optional `modifiers:` field carries -- so a row whose
-    cost per token looks high says why, instead of looking like a bad table."""
+    cost per token looks high says why, instead of looking like a bad table.
+    `rates` (the model's entry) adds `long-context` where some message's prompt
+    passed its `long_context.above`; without it that one is not looked for."""
     variants = tok.get("_v") if isinstance(tok, dict) else None
     out = set()
     for (speed, geo), vt in (variants or {}).items():
@@ -669,6 +715,11 @@ def pricing_modifiers(tok):
             out.add("speed:" + speed)
         if geo != GLOBAL_GEO:
             out.add("inference-geo:" + geo)
+        if isinstance(rates, dict):
+            vrates = rates if speed == STANDARD_SPEED else rates.get(speed)
+            long_t = _long_tokens(vt, vrates)
+            if long_t is not None and any(long_t[k] for k in TOKEN_KEYS):
+                out.add("long-context")
     return sorted(out)
 
 
@@ -914,15 +965,14 @@ def _selftest_body(tmp):
                                         "..", "references", "cost-prices.yaml"))
     for _mid, _want in (("claude-opus-5-5", 4.2), ("claude-opus-5", 5.5),
                         ("claude-fable-5-1", 10.25), ("claude-fable-5", 11.0),
-                        ("claude-sonnet-5-5", 2.2), ("claude-sonnet-5", 2.2)):
+                        ("claude-sonnet-5-5", 2.1), ("claude-sonnet-5", 2.2)):
         _got = price_model(_mid, _tk, _shipped)
         check(_got[1] is None and _got[0] is not None and abs(_got[0] - _want) < 1e-9,
               "shipped cost-prices.yaml keys %s at its own rates (1M in + 1M cache read = $%s)"
               % (_mid, _want))
-    # The Sonnet pair is the one case a price assertion CANNOT police: 5.5 and 5 bill
-    # identically today, so dropping the `claude-sonnet-5-5` key leaves the figure unchanged
-    # (longest-prefix falls through) and both checks above still pass. The key exists to
-    # survive a future divergence, so it is asserted present by name.
+    # The Sonnet pair differs only in its cache-read rate (5.5 reads at 0.05x, 5 at 0.1x),
+    # which the price checks above now police; the key is also asserted present by name,
+    # since a test that prices 1M input alone could not tell the two apart.
     check("claude-sonnet-5-5" in _shipped.get("models", {}),
           "shipped cost-prices.yaml keys claude-sonnet-5-5 explicitly, not by prefix")
 
@@ -931,8 +981,9 @@ def _selftest_body(tmp):
     # assistant message; until this existed the engine read neither and a /fast
     # session priced 50% low. Built through add_usage, not by hand, so the path
     # from a usage record to a variant bucket is what is under test.
-    def _use(speed=None, geo=None, inp=1_000_000, cr=1_000_000):
-        u = {"input_tokens": inp, "output_tokens": 0, "cache_read_input_tokens": cr}
+    def _use(speed=None, geo=None, inp=1_000_000, cr=1_000_000, cw=0):
+        u = {"input_tokens": inp, "output_tokens": 0, "cache_read_input_tokens": cr,
+             "cache_creation_input_tokens": cw}
         if speed is not None:
             u["speed"] = speed
         if geo is not None:
@@ -998,6 +1049,33 @@ def _selftest_body(tmp):
           "shipped cost-prices.yaml keys claude-opus-4-5 (1M in + 1M cache read = $5.5)")
     check(_cost("claude-opus-5-5", _shipped, _use("standard", "us"))[0] == (4.62, None),
           "shipped cost-prices.yaml carries the 1.1x US-inference multiplier")
+    # Haiku 5.5 is priced by prompt length: a message whose prompt (input + cache read +
+    # cache write) passes 100,000 tokens bills all its tokens at the long rates, 5x the
+    # short ones. Summed totals cannot tell the two apart, so each message is classed.
+    _hk = "claude-haiku-5-5"
+    check(_cost(_hk, _shipped, _use(inp=50_000, cr=50_000))[0] == (0.0055, None),
+          "Haiku 5.5: a 100,000-token prompt is the short rate card ($0.10 in, $0.01 read)")
+    check(_cost(_hk, _shipped, _use(inp=50_001, cr=50_000))[0] == (0.0275, None),
+          "Haiku 5.5: a 100,001-token prompt bills every token at the long card")
+    check(_cost(_hk, _shipped, _use(inp=1_000, cr=99_500, cw=1_000))[0] is not None
+          and abs(_cost(_hk, _shipped, _use(inp=1_000, cr=99_500, cw=1_000))[0][0]
+                  - round((1_000 * 0.5 + 99_500 * 0.05 + 1_000 * 0.625) / 1e6, 4)) < 1e-9,
+          "Haiku 5.5: cache writes count toward the prompt length")
+    _two, _ = _cost(_hk, _shipped, _use(inp=50_000, cr=50_000), _use(inp=50_001, cr=50_000))
+    check(_two == (round(0.0055 + 0.0275, 4), None),
+          "Haiku 5.5: short and long messages of one model are classed one by one and summed")
+    check(_cost(_hk, _shipped, _use("standard", "us", inp=50_001, cr=50_000))[0]
+          == (round(0.0275 * 1.1, 4), None),
+          "Haiku 5.5: the US-inference multiplier stacks on the long rate card")
+    _pb3, _ = price_block({_hk: _cost(_hk, _shipped, _use(inp=50_001, cr=50_000))[1]}, _shipped)
+    check(_pb3[0].get("modifiers") == ["long-context"],
+          "Haiku 5.5: a row with a message priced at the long card names long-context")
+    _pb4, _ = price_block({_hk: _cost(_hk, _shipped, _use(inp=50_000, cr=50_000))[1]}, _shipped)
+    check("modifiers" not in _pb4[0],
+          "Haiku 5.5: a row priced only at the short card carries no modifiers field")
+    check(_cost(_hk, {"models": {_hk: {"input": 1, "long_context": {"input": 5}}}},
+                _use(inp=200_000, cr=0))[0] == (None, "unpriced-long-context"),
+          "a long_context block with no `above` is unpriced, never guessed")
     for _mid in ("claude-opus-4-7", "claude-sonnet-5-5"):
         check(_cost(_mid, _shipped, _use("fast"))[0] == (None, "unpriced-speed:fast"),
               "shipped cost-prices.yaml gives %s no fast block (fast mode does not exist there)"
@@ -1560,7 +1638,7 @@ def price_block(acc, prices):
         }
         if note:
             entry["note"] = note
-        mods = pricing_modifiers(tok)
+        mods = pricing_modifiers(tok, model_rates(model, prices))
         if mods:
             entry["modifiers"] = mods
         models.append(entry)
