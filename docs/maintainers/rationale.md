@@ -42,6 +42,8 @@ A count taken off the prose it was meant to check agrees with that prose by cons
 
 **`CHECK11_PROSE` stays 0 here**, on the measurement `workflows-core:next-phase-offer` records; the merged reader was diffed against the old one on this tree before it shipped, and the eight family commands it reads and the seventeen offers it requires came out identical.
 
+**Its review (same day) kept each edition's measured behaviour where the merge had not.** The merged check 11 read `choices:` arrays only under a command's next-step heading, the internal editions' scope; this edition's had always read the whole file, which is what `workflows-core:next-phase-offer` says it asserts, so a clause-free array above `prd-ground.md`'s Phase 10 passed. `CHECK11_OFFER_SCOPE` restores `file` here and keeps `next-step` there. The internal editions' readers also took any `word:` as a command, a form only the Copilot edition writes (`split_mode:` read as caller `mode`), and matched a caller as a substring (`split` inside `brd-split`); `CMD_FORM` confines the bare form to that edition and the lookups now compare whole names. Nine config names read the environment first, so an exported `EDITION_FORBIDDEN_B64=` turned this edition's leak guard off; every name is now a plain assignment. Two `printf | grep -q` pipelines failed 1 run in 960 under pipefail when grep exited before its writer; no pipeline ends in `grep -q` now. Each fix carries a selftest case that is red against the body before it.
+
 ## check-10
 
 Check 10 enforces the identity quarantine; before that check existed two per-command pages linked a sibling plugin by full container URL and survived releases, found only by hand. The binding reason is **forks**: a hardcoded container URL is wrong in anyone's fork.
