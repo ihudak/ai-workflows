@@ -384,6 +384,13 @@ finding written into the artifact, a style pass, a resumed verify step — the f
 plainly and names the edits. One line: *"`<verdict>` was reached before <the edits>, which followed
 it; the current text has not been reviewed."*
 
+**The line goes wherever the verdict is recorded, and the pull request is one of those places.** A
+command that hands its artifact off (`workflows-core:phase-handoff` §2) puts the verdict in its
+`body_facts`, and the pull request is what a reviewer reads before merging: there the verdict carries
+this line, and every finding the run leaves open is listed beside it with its severity. A session
+record the command keeps (`/specify`'s `_session.md`, `/design`'s `_design-session.md`) records the
+verdict with the same line. A live `/specify` run had to work out both places for itself.
+
 **Which commands those are is derived, not listed, and a phrase grep is not the derivation.** The set
 was first taken from the commands carrying the literal *"one fix cycle + one re-review"* cap, which
 missed `/vuln` and `/upgrade` — both run one fixer pass and one re-review, both edit afterwards
@@ -396,16 +403,54 @@ cap trades one unreviewed version for a later one and has no fixed point, since 
 find something the previous fix introduced. What actually costs the reader is not the unreviewed
 edit — a run has to stop somewhere — but believing the verdict covers it. Saying which version it
 covers costs nothing, cannot itself introduce a defect, and leaves the decision about the residue
-where it belongs. **Where no edit followed the verdict, say that too**, so a clean run reads as
-checked rather than as unreported. A run whose verdict was not `BLOCK` has not spent the cap, and
-the next section offers it the re-review the cap still holds.
+where it belongs — with the user, whom the next section asks. **Where no edit followed the verdict,
+say that too**, so a clean run reads as checked rather than as unreported. A run whose verdict was
+not `BLOCK` has not spent the cap, and the section after the next offers it the re-review the cap
+still holds.
+
+## Findings a review leaves open — the offer to apply them
+
+**A finding the gate does not fix is a defect the run knows of, and shipping it is the user's
+decision, not the run's.** Under the cap a `MAJOR`, `MINOR` or `NIT` finding carries no mandatory
+fix, and nothing offered to apply a re-review's. A live `/design` run applied a first review's
+findings at the user's choice, and one fix wrote a namespace-wide restart into the design's rollout
+that would also have restarted its databases and a data-wiping sidecar. The re-review found it as a
+`MAJOR` with the cap spent, and the run asked to open the pull request without naming it, saying
+only in its final report, after the pull request was open, that it had to be fixed before merging.
+The user merged, and the fix took a second pull request.
+
+**So, after each review the gate takes whose verdict is not `BLOCK` — the first review or the
+re-review, or one the run goes on from as from such a verdict at a triage settle prompt's
+**Proceed** — and before whatever follows it, offer once to apply the findings it leaves open whose fix
+is only an edit:**
+
+`choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]`
+
+The question lists each with its severity and says whether a re-review remains. **Left open** means
+not applied, not overridden and not dismissed; a finding triage marked unverified is never applied
+(`finding-triage.md`), here as anywhere; and the re-review's offer carries every finding of the first
+review still open beside its own. A finding whose fix needs a decision the run does not have is no
+edit: a command that settles such decisions as it applies (`/create-prd`, `/update-prd`,
+`/create-ard`) puts it to the user one question at a time, as the grill asks, and every other leaves
+it to *A finding left open that needs a decision is recorded in the artifact* below. A free-text
+answer naming some of the findings applies those.
+
+- **Taken**, each edit is the orchestrator's own, read against what it overlaps (*An inline fix is
+  read against what it overlaps*, below) before anything follows. After the first review the
+  unspent re-review offer (next section) follows; after the re-review no review follows, and the
+  version line above names these edits.
+- **Declined**, the findings stay open, listed in the final report and the pull request (above).
+
+**It is not a fix cycle and raises no cap**: it dispatches no review, and what the cap allows after
+it is exactly what it allowed before. Used by the commands that fix inline — `/create-prd`,
+`/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and `/brd-proposal`.
 
 ## Edits after a verdict that is not BLOCK — the unspent re-review
 
 **A verdict that is not `BLOCK` spends neither half of the cap**, so the no-fixed-point argument
 above does not reach it. A run that edits the reviewed artifact in answer to such a verdict's
-findings — `MAJOR` findings the user chose to apply, or the fixer pass a command dispatches over
-them — still holds the cap's one re-review, and handing off without offering it ships edited text
+findings — findings the user chose to apply at the offer above, or the fixer pass a command
+dispatches over them — still holds the cap's one re-review, and handing off without offering it ships edited text
 unreviewed for no reason the cap gives. A live `/create-prd` run is the case: `PASS WITH
 RECOMMENDATIONS` with four `MAJOR` findings, two of them acceptance criteria contradicting each
 other; the user applied every finding, criteria were merged and renumbered, and the text went to
@@ -429,7 +474,7 @@ pass, a resumed verify step — stays under the reporting rule above and makes n
   one after its fix cycle — its own `Review verdict BLOCK (unresolved after one fix cycle)` rule
   below, or `/implement`'s stayed-blocked stop; any other verdict, or **Proceed** at a settle prompt,
   goes on to the step that follows the review gate, as after the command's own re-review, and none
-  starts a fix cycle or offers to apply its findings. The version line then names the re-review's verdict, and
+  starts a fix cycle: its findings meet the offer above, whose edits no review follows. The version line then names the re-review's verdict, and
   an edit after it falls back to the reporting rule above, the cap now spent.
 - **Declined**, the run goes on exactly as before, and the version line says the verdict predates
   the edits.
@@ -437,12 +482,11 @@ pass, a resumed verify step — stays under the reporting rule above and makes n
 **It never raises the cap.** A run that went through a `BLOCK` spent its re-review there, and nothing
 here offers another. **Which commands it reaches is a behavioural test, as above: a command whose cap
 allows a re-review, whose verdict that is not `BLOCK` leads to the handoff without one, and which can
-edit the reviewed artifact on the way.** `/create-prd`, `/update-prd` and `/create-ard` offer to apply
-a `MAJOR` finding; `/epics` and `/document` dispatch `doc-fixer` over them — `/epics` also folds a
+edit the reviewed artifact on the way.** The seven commands that fix inline edit it through the offer
+above; `/epics` and `/document` dispatch `doc-fixer` over the findings — `/epics` also folds a
 finding's rewording in itself, under any verdict, where the user takes it for text they chose —
-and `/implement` `review-fixer`; `/specify`, `/design`, `/prd-proposal` and `/brd-proposal` defer them, and edit only
-where the user asks — save the open questions `A finding left open that needs a decision is recorded
-in the artifact` writes, which answer no finding. `/vuln` and `/upgrade` re-run their review after the `PASS WITH RECOMMENDATIONS`
+and `/implement` `review-fixer`. The open questions `A finding left open that needs a decision is
+recorded in the artifact` writes answer no finding, and make no offer. `/vuln` and `/upgrade` re-run their review after the `PASS WITH RECOMMENDATIONS`
 fixer pass, spending the re-review there, so the offer never arises; `/docs-init`, `/docs-brand` and
 `/docs-audit` cap at no re-review, so there is none to offer.
 
@@ -457,13 +501,19 @@ re-review found both, so the cap was spent on what the fix itself had written. A
 had already spent a re-review the same way, on an unsearched *only* (that command's Phase 5).
 
 **So every inline edit that answers a review finding is read against the rest of the artifact that
-governs the same condition before the step that follows it** — a `BLOCK`'s fix cycle before its
-re-review, a finding the user chose to apply before the re-review offer or the handoff, and an
-escalation's manual fix notes before the handoff, which no review follows at all:
+governs the same condition, and an operational step against what it acts on, before the step that
+follows it** — a `BLOCK`'s fix cycle before its re-review, a finding the user chose to apply at the
+offer above before the re-review offer or the handoff, and an escalation's manual fix notes before
+the handoff, which no review follows at all:
 
 - each requirement the edit adds or changes — a criterion, a test case, a scope line, a story, a
   decision's Rule, a cost line — is read against every other one whose trigger, precondition, state
   or figure overlaps it, in its own section and across the others;
+- each operational step the edit adds or changes — a restart, a delete, a scale, a migration, a
+  bootstrap, run against a deployed system — is read against everything its selector reaches in the
+  deploy files of the repositories the run grounded in, stateful workloads and containers with side
+  effects included: a live `/design` fix wrote a namespace-wide restart that reached two databases
+  and a sidecar that empties six services, and only the re-review saw it;
 - each test case the edit left alone is read against every criterion the edit changed, since a
   criterion can forbid a step a test case written before it still takes;
 - a pair that gives one condition two outcomes, or a test case whose step a criterion now forbids,
@@ -512,8 +562,8 @@ the artifact's own format keeps its open questions:
 
 **The question names the requirement it puts in doubt, where it puts one in doubt**, so the next
 run knows which requirement to revisit when it settles the question. **And it is written after the last
-review the run takes** — once the unspent re-review offer is settled and any re-review it led to has
-returned, immediately before the handoff — so no review of this run is spent on the question
+review the run takes** — once the offers to apply findings and the unspent re-review offer are
+settled and any re-review they led to has returned, immediately before the handoff — so no review of this run is spent on the question
 itself.
 
 It reaches findings of any severity the run leaves open — a `MAJOR`, `MINOR` or `NIT` it did not

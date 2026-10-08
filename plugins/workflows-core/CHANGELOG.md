@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.36.0] — 2026-10-08
+
+### Added
+- **A key typed behind its folder's kind prefix resolves** (`addressing` §1's new `read-key`, which `resolve-address` now reads its key branch with). `EPIC-BOOK-1-01` reads as the key `BOOK-1-01`, with one line saying so, because `EPIC-`, `PRD-` and `BRD-` are what an operator sees in the tree; a live `/dev-workflows:design EPIC-BOOK-1-01` stopped with "not a key" beside the Epic folder, and the operator read it as "not found". The prefix is matched against §2's three kinds and the rest held to the whole grammar, so a key that begins with a kind token (`EPIC-008`) is still read as itself, and a whole folder name is still refused. The run carries the bare key from then on. A key minted for a new child folder is held to `key-valid` alone, and a command that creates the folder it was addressed with refuses a prefix of another kind.
+- **`escalation-rules` § *Findings a review leaves open — the offer to apply them*.** After each review whose verdict is not `BLOCK`, the first review or the re-review, the seven commands that fix inline offer once to apply the findings left open whose fix is only an edit (`["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]`). A live `/design` run's re-review found a namespace-wide restart its own fix had written, which would also have restarted the databases and a data-wiping sidecar, and the run opened the pull request without naming it. The edits are read against what they overlap, and the version line names them. The offer dispatches no review and raises no cap.
+
+### Changed
+- **A review verdict's version line, and every finding the run leaves open, go into the handoff's pull request body** and into a session record the command keeps, not only into the final report (`escalation-rules`, *A recorded verdict names the version it was taken against*).
+- **The overlap read covers an operational step** (`escalation-rules`, *An inline fix is read against what it overlaps*). A restart, delete, scale, migration or bootstrap the edit adds is read against everything its selector reaches in the deploy files.
+- **`grilling-technique`: a recommendation is read against the live `[AD#N]` Rules word for word, and a part's requirements against each other before its confirmation gate.** A departure from a Rule is offered only as an ARD deviation. A live `/specify` run recommended a 100-book sweep bound against a Rule saying every book, recommended a case-insensitive match against a Rule fixing a literal suffix, and gave one situation two outcomes across two stories. The reviewer spent three BLOCKERs on them.
+- **A command that stops on what `resolve-address` returns still runs its emitter tail** (`addressing` §3, pointing at `specs-repo-git` §4's refusal rule). A live `/design` that stopped on `invalid` wrote no cost entry, and the session's next command was charged for its tokens.
+
 ## [1.35.4] — 2026-10-08
 
 ### Changed

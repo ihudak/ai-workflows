@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.14.0] — 2026-10-08
+
+### Changed
+- **`/document`'s keyed mode and `/release-notes` accept a key typed behind its folder's kind prefix** (`EPIC-ACME-1-01`), through `workflows-core:addressing`'s `read-key` (workflows-core 1.36.0).
+
 ## [1.13.3] — 2026-10-08
 
 ### Changed

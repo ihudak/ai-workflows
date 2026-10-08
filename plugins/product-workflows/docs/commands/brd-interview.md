@@ -561,7 +561,7 @@ Re-opening a closed round later, with its cause recorded:
 - `workflows-core:grounding-format` — the finding record, the six
   verdicts, the two horizons, and §8's verification outcomes the Phase 0 gate depends on.
 - `workflows-core:addressing` — the `<BRD-KEY>` grammar and folder
-  resolution this command uses by name (`key-valid`, `resolve-address`).
+  resolution this command uses by name (`read-key`, `resolve-address`).
 - [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) — the dispositions the
   allocation gate reads, and §6's ledger line the final report ends with.
 - [Agents](../reference/agents.md) — `impl-maintenance`'s full contract.

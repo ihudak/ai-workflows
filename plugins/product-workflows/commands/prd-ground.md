@@ -38,11 +38,11 @@ behaviour, not the behaviour.
 
 ## Phase 0 — Resolve inputs and gate on main
 
-1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--depends-on` and `--docs` each consume the token after them (step 2), and a value skipped as "non-flag" would be read as the key; validate with `key-valid`
-   (`workflows-core:addressing` §1). If absent or invalid, stop:
+1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--depends-on` and `--docs` each consume the token after them (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
+   (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix and carries the bare key from then on. If absent or invalid, stop:
    `PRD_GROUND_NEEDS_KEY: /prd-ground needs a key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) — re-run '/product-workflows:prd-ground <KEY>'.`
-2. **Flags.** `--depends-on <BRD-KEY>` — repeatable, each consuming the next token; validate each
-   with `key-valid` and drop (warn, do not stop the run) any that fail shape. **Refused outright on
+2. **Flags.** `--depends-on <BRD-KEY>` — repeatable, each consuming the next token; read each
+   with `read-key` and drop (warn, do not stop the run) any that fail shape. **Refused outright on
    `route: idea`** — deferred to immediately after step 5a resolves the route, for the same reason
    the fourth `--no-code` refusal below waits for the resolved folder: the route is not known until
    then. Phase 6 only ever sets `horizon: will-change` from a declared prerequisite's **frozen**

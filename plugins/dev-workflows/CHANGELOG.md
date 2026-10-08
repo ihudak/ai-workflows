@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.23.0] — 2026-10-08
+
+### Changed
+- **`/design` offers to apply the findings a review leaves open**, after the first review and after the re-review alike (`workflows-core:escalation-rules`, workflows-core 1.36.0). A live run opened its pull request with a re-review `MAJOR` unmentioned: a namespace-wide restart its own fix had written. The pull request body now carries the verdict's version line and every finding left open.
+- **`/design`'s fix reads every line it touches, in any section, against what governs the same behaviour, and an operational step against everything its selector reaches.** The step used to read only interface, seam and test-strategy lines, and that narrower read let the restart through.
+- **`/design`, `/ready`, `/implement` and `/vuln` accept a key typed behind its folder's kind prefix** (`EPIC-BOOK-1-01`), through `workflows-core:addressing`'s `read-key`.
+
 ## [4.22.5] — 2026-10-08
 
 ### Changed
