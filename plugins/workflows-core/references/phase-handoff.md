@@ -414,7 +414,7 @@ one, and two lines on a run whose reader expected one.
 | Nothing to commit | `Phase handoff: no deliverable changes to commit on <branch>` |
 | Commit failed | `Phase handoff: NOT handed off — the commit failed (<the first line of git's error or the hook's output>). The deliverable is staged on <branch>, not committed.` |
 | Branch name substituted | append `; branch name <intended> was taken, used <actual>` |
-| Stacked on another phase's branch | append `; cut from <HEAD's branch>, whose unmerged commits this pull request carries — <it changed <path>, which this run builds on | git refused the switch to <default-ref>: <git's first line>>` (§2.2, *Where a new branch is cut*), naming, where it stacked on purpose, the first path `git -C "$SPECS_PATH" diff --name-only <default-ref>...HEAD -- <the tested paths>` prints |
+| Stacked on another phase's branch | append `; cut from <HEAD's branch>, whose unmerged commits this pull request carries — <it changed <path>, which this run builds on \| git refused the switch to <default-ref>: <git's first line>>` (§2.2, *Where a new branch is cut*), naming, where it stacked on purpose, the first path `git -C "$SPECS_PATH" diff --name-only <default-ref>...HEAD -- <the tested paths>` prints |
 | Declaration unaccounted for | append `; <path> was declared but staged by nothing — this run put nothing on <branch> for it` (§2.3 step 4), one clause per path |
 | Record unreadable | append `; a status record could not be read as a path (<record>) — nothing was staged for it` (§2.3 step 4), one clause per record |
 | Declined by the user | `Phase handoff: skipped at your request — this run's deliverable (<artifacts>) is written but not on <default>. <next-phase-clause>` |
