@@ -601,7 +601,7 @@ offered here. It is each such child's own re-entry at `/prd-ground` and then, in
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
 - `workflows-core:addressing` — the `<BRD-KEY>` grammar and folder
-  resolution this command uses by name (`key-valid`, `resolve-address`), including how a slice
+  resolution this command uses by name (`read-key` for its address, `key-valid` for a slice key it mints, `resolve-address`), including how a slice
   nests inside its parent and why that nesting — and only the nesting — is capped at one level
   (§3).
 - [`coverage-ledger-format.md`](../../references/coverage-ledger-format.md) — the authority for

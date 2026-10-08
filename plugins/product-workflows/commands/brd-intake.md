@@ -24,9 +24,12 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
 
 ## Phase 0 — Resolve inputs
 
-1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag, nor a flag's value, nor the `@<brd-file>` argument — `--sort-existing` and `--docs` each consume the token after them (step 4), and a value skipped as "non-flag" would be read as the key; a token opening with `@` is step 2's source wherever it stands, so an operator who types the path first is not told the key is missing; validate it with `key-valid`
-   (`workflows-core:addressing` §1's `key-valid` — shape only,
-   never checked against a tracker). If absent or invalid, **stop gracefully**:
+1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag, nor a flag's value, nor the `@<brd-file>` argument — `--sort-existing` and `--docs` each consume the token after them (step 4), and a value skipped as "non-flag" would be read as the key; a token opening with `@` is step 2's source wherever it stands, so an operator who types the path first is not told the key is missing; read it with `read-key`
+   (`workflows-core:addressing` §1 — a key for shape only, a whole folder name against the tree's folder names, neither against a tracker), which also takes
+   the key behind a typed folder prefix (`BRD-<KEY>`) or a folder's whole name, and carries the bare key from then on — where
+   resolution returns `absent`, a whole name, or a prefix other than `BRD-`, stops as that entry point says, since this
+   run creates a `BRD-` folder. On `needs-tree` (`$SPECS_PATH` unset), take step 5's `$SPECS_PATH`
+   stop now — answered with a path, return here and read the token again before steps 2–4. If absent or invalid, **stop gracefully**:
    `BRD_INTAKE_NEEDS_KEY: /brd-intake needs a BRD key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-001) — pick a short stable identifier for this business requirements document, then re-run '/product-workflows:brd-intake <KEY> @<brd-file>'.`
 2. **`@<brd-file>` (mandatory).** The customer's source file argument. If absent, **stop**:
    `BRD_INTAKE_NEEDS_SOURCE: /brd-intake needs the customer's source as an @-argument — re-run '/product-workflows:brd-intake <KEY> @<path-to-brd>'.`
@@ -76,7 +79,7 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
    **Four of the six slots are substituted and two stay literal, and the text says which.**
    `<PARENT-KEY>`, and the slot naming the `parent:` field in the stop's first sentence, are both
    that `parent:` field as it reads, never a key parsed out of the folder's name
-   (`CLAUDE.md`, *Resolve an identifier against a known set*); `<BRD-KEY>` is the address typed; and
+   (`CLAUDE.md`, *Resolve an identifier against a known set*); `<BRD-KEY>` is the key step 1 read, never a typed prefix; and
    the source is the `@<brd-file>` this invocation was given, substituted exactly as typed — the run
    holds it, and it is telling the operator to re-type it against a different key.
    `"<how to cut it>"` stays literal, as Phase 8 prints its own copy, because the slicing
@@ -111,7 +114,8 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
    refused**: what runs next on an idea-route PRD folder or an Epic depends on what that folder
    already holds, which this command has not read and has no reason to, and a remedy naming a run
    that refuses the folder would be worse than none. Both are argument halts, so `emit-block` does
-   not fire (Phase 9). Absent → this is a
+   not fire (Phase 9). Absent → where step 1 read the key as a whole name, or behind a prefix other than `BRD-`, stop here,
+   before anything is written, as `workflows-core:addressing` §1's `read-key` says; otherwise this is a
    brand-new BRD: derive `<slug>` from the source file's first heading — lowercase it, keep every
    letter and digit of any script together with the accents and vowel signs written on it (Unicode
    letters and decimal digits, and a combining mark only where it follows a kept character), turn
