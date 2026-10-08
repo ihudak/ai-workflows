@@ -58,7 +58,7 @@ Do NOT edit `~/.claude/claude-config/` — that repo is retired and will be dele
 2. Add content directories (`commands/`, `agents/`, `hooks/`, etc.).
 3. For hooks: create `hooks/hooks.json` using `${CLAUDE_PLUGIN_ROOT}` for all paths.
 4. Register in `.claude-plugin/marketplace.json` with `"source": "./plugins/<name>"`.
-5. Commit and push to `main`. Claude Code picks up changes on next sync/reinstall.
+5. Commit and push to `main`. Claude Code picks up the change on the next `claude plugin update` of that plugin, and a restart.
 
 ## Conventions
 
@@ -80,7 +80,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `gates-id-grammar.md` | `scripts/`: `check-id-grammar.sh`, `spec-id-baseline.txt`, `validate-catalog.py`; `.github/workflows/validate-catalog.yml` (repo root) | the ID-grammar gate |
 | `gates-validate-catalog.md` | `scripts/validate-catalog.py`, `.github/workflows/validate-catalog.yml` (repo root) | `scripts/validate-catalog.py` |
 | `gates-mermaid.md` | `scripts/mermaid/**`, `.github/workflows/validate-catalog.yml` (repo root) | the mermaid gate |
-| `dev-workflows.md` | `dev-workflows/**` | invariants, map, callers, two authorities |
+| `dev-workflows.md` | `dev-workflows/**` | invariants, map, callers, three authorities |
 | `dev-workflows-tests.md` | `dev-workflows/`: `commands/implement.md`, `agents/test-*.md`, `docs/commands/implement.md`, `references/handoff/test-*.md`, `docs/reference/test-suite-detection.md`, `references/code-handoff.md` | `/implement` invariants, test-writing requirement |
 | `product-workflows.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `docs-workflows/commands/release-notes.md`; `workflows-core/references/`: `addressing.md`, `grilling-technique.md`, `prd-format.md` | invariants, map, callers |
 | `brd-route.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `workflows-core/references/addressing.md`; `workflows-core/commands/frames.md`; `docs-workflows/commands/`: `document.md`, `release-notes.md` | BRD-route map lines, folder-kind invariants |
