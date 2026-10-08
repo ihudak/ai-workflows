@@ -281,7 +281,10 @@ check_links_and_anchors() {
         heading_file="$f"
       fi
       if [ -n "$anchor" ] && [ -f "$heading_file" ]; then
-        # Collect first, match second. `... | grep -qx` would exit on the first
+        # Collect first, match second -- here and everywhere in this file: no pipeline ends in
+        # `grep -q`, which exits on its first match and leaves the writer a SIGPIPE that
+        # pipefail reports, at random (`printf | grep -q` failed 1 run in 960). Match on a
+        # here-string or a captured value instead. `... | grep -qx` would exit on the first
         # match, SIGPIPE the producer, and `pipefail` would report that as a
         # failure -- turning a VALID anchor into a check-2 error. Same defect
         # ai-containers#78 caught in its own new gate.
@@ -671,7 +674,7 @@ check_install_block() {
 cost_role_marker() { # <file> -> emit | defer | (empty)
   local flat; flat=$(tr '\n' ' ' < "$1" | tr -s ' ')
   if grep -q 'emit-cost' "$1"; then printf 'emit\n'
-  elif printf '%s' "$flat" | grep -q '13.1 intent record'; then printf 'defer\n'
+  elif grep -q '13.1 intent record' <<<"$flat"; then printf 'defer\n'
   fi
 }
 emit_cost_calls() { # <plugin-dir>  ->  lines of  <command>|<phase>|<role>
@@ -1313,11 +1316,11 @@ check_merge_clause() {
     # (`<KEY>_<slug>.md`, `*_ARD.md`) and has no fixed basename for an extractor to find --
     # and row F names it as prose for the same reason, so it can never be a target either.
     prose_artifact=0
-    awk '
+    [ -n "$(awk '
       /`deliverable_paths`[[:space:]]*=/ {
         line = $0; p = index(line, "`deliverable_paths`"); line = substr(line, p)
         if (line ~ /= the ([a-zA-Z]+ )?(VI|ARD)( file| dir)?/) { print "prose"; exit }
-      }' "$f" | grep -q prose && prose_artifact=1
+      }' "$f")" ] && prose_artifact=1
     if [ -z "$writers" ] && [ "$prose_artifact" != 1 ]; then
       fail 11 "$CMD_DIR/$y$CMD_SUFFIX is in the <merge-clause> family but its \`deliverable_paths\` = ... \`title:\` span yields no path -- the EXTRACTOR has drifted or the handoff sentence was reworded, and every offer this command makes has stopped being checked; fix the parser or restore the declaration, never the offers"
       continue
@@ -1740,7 +1743,7 @@ check_index_membership() {
     grep -qE "$pat" "$p/docs/README.md" || fail 15 "$(cmd_ref "$n") is not listed in docs/README.md"
     grep -qE "$pat" "$p/README.md"      || fail 15 "$(cmd_ref "$n") is not listed in $PLUGIN_REL/README.md"
     grep -qxF -- "$n" <<<"$notnode" && continue   # diagram exemption -- see header
-    printf '%s' "$diagram" | grep -qE "$pat" \
+    grep -qE "$pat" <<<"$diagram" \
       || fail 15 "$(cmd_ref "$n") does not appear in docs/workflow.md's diagram, which says it shows every command (prose below it does not count -- that is where the last one went missing)"
   done < <(cmd_names "$p")
 }
@@ -2613,7 +2616,8 @@ selftest() {
     local cfg; cfg=$(case_cfg "$3")
     local out; out=$(gate --config "$cfg" 2>&1); local got=$?
     rm -f "$cfg"
-    if [ "$got" -eq 1 ] && grep "FAIL check $2:" <<<"$out" | grep -qF -- "${5:-}"; then
+    local lines; lines=$(grep "FAIL check $2:" <<<"$out")
+    if [ "$got" -eq 1 ] && [ -n "$lines" ] && grep -qF -- "${5:-}" <<<"$lines"; then
       printf 'ok    %s (check %s fired%s)\n' "$1" "$2" "${5:+: $5}"
     else
       printf 'FAIL  %s: expected exit 1 with a "FAIL check %s" line carrying "%s", got exit %s\n' "$1" "$2" "${5:-}" "$got"; rc=1
@@ -2627,7 +2631,8 @@ selftest() {
     tmp=$(mktemp -d); cp -R "$fixture/." "$tmp/"
     ( cd "$tmp" && eval "$4" )
     local out; out=$(gate 2>&1); local got=$?
-    if [ "$got" -eq 1 ] && grep "FAIL check $2:" <<<"$out" | grep -qF -- "$3"; then
+    local lines; lines=$(grep "FAIL check $2:" <<<"$out")
+    if [ "$got" -eq 1 ] && [ -n "$lines" ] && grep -qF -- "$3" <<<"$lines"; then
       printf 'ok    %s (check %s fired: %s)\n' "$1" "$2" "$3"
     else
       printf 'FAIL  %s: expected exit 1 with a "FAIL check %s" line carrying "%s", got exit %s\n' "$1" "$2" "$3" "$got"; rc=1
@@ -2916,6 +2921,12 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "sed -i.bak -E 's#\`/?alpha:?\`, ##' $PLUGIN_REL/README.md"
   expect_fail "a command missing from the workflow DIAGRAM is rejected" 15 \
     "sed -i.bak -E 's#\"/?alpha-two:?\"#\"/removed\"#' $PLUGIN_REL/docs/workflow.md"
+  # A command near the top of a diagram larger than a pipe buffer is found. Matched through a
+  # pipe, the grep exited on its first match while the writer still had most of 500 KB to
+  # send; the writer died of SIGPIPE, pipefail failed the match, and the command read as
+  # absent -- every time at this size, and at random on a real page.
+  expect_pass_after "a command early in a diagram larger than a pipe buffer is found" \
+    "awk 'BEGIN { print \"\"; print \"\`\`\`mermaid\"; print \"flowchart TD\"; for (i = 0; i < 20000; i++) printf \"    f%d[\\\"filler %d\\\"]\\n\", i, i; print \"\`\`\`\" }' >> $PLUGIN_REL/docs/workflow.md"
   expect_fail "a workflow page with no diagram at all is rejected" 15 \
     "sed -i.bak 's|^\`\`\`mermaid$|text|' $PLUGIN_REL/docs/workflow.md"
   # The docs-index surface, which the cases above leave to the README and the diagram: every line
