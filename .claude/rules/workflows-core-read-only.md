@@ -1,33 +1,19 @@
 ---
 paths:
-  - "plugins/workflows-core/references/read-only-repos.md"
-  - "plugins/workflows-core/references/escalation-rules.md"
   - "plugins/workflows-core/references/specs-repo-git.md"
+  - "plugins/workflows-core/references/phase-handoff.md"
+  - "plugins/workflows-core/references/read-only-repos.md"
+  - "plugins/workflows-core/references/grounding-format.md"
   - "plugins/dev-workflows/references/code-handoff.md"
-  - "plugins/workflows-core/agents/code-scanner.md"
-  - "plugins/docs-workflows/agents/diff-summarizer.md"
-  - "plugins/workflows-core/agents/docs-grounder.md"
-  - "plugins/product-workflows/agents/code-grounder.md"
-  - "plugins/product-workflows/agents/grounding-verifier.md"
-  - "plugins/docs-workflows/agents/docs-auditor.md"
-  - "plugins/dev-workflows/commands/implement.md"
-  - "plugins/dev-workflows/commands/design.md"
-  - "plugins/product-workflows/commands/idea.md"
-  - "plugins/product-workflows/commands/create-ard.md"
-  - "plugins/product-workflows/commands/specify.md"
-  - "plugins/product-workflows/commands/epics.md"
-  - "plugins/product-workflows/commands/prd-ground.md"
-  - "plugins/docs-workflows/commands/document.md"
-  - "plugins/docs-workflows/commands/release-notes.md"
-  - "plugins/docs-workflows/commands/docs-audit.md"
-  - "plugins/docs-workflows/commands/docs-profile.md"
-  - "plugins/docs-workflows/commands/docs-brand.md"
-  - "plugins/docs-workflows/commands/docs-init.md"
+  - "plugins/workflows-core/scripts/session-branch.py"
+  - "plugins/*/commands/*.md"
+  - "plugins/*/references/**"
+  - "plugins/*/agents/*.md"
 ---
 
 # workflows-core — the read-only-repos authority
 
-Loaded when `workflows-core:read-only-repos` is read, or an agent, command or reference the paragraph below names: the agents that emit or consume `prep`, the commands that dispatch `code-scanner` or `diff-summarizer` and the others it names, and `workflows-core:escalation-rules`, `workflows-core:specs-repo-git` and `dev-workflows:code-handoff`, whose ladders it sets beside its own. A file that starts consuming it needs adding to these `paths:`. Split out of `.claude/rules/workflows-core-git.md` to keep that file under 20,000 characters; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
+Loaded with `.claude/rules/workflows-core-git.md`, whose `paths:` it shares. Split out of `.claude/rules/workflows-core-git.md` to keep that file under 20,000 characters; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
 ## Authority
 

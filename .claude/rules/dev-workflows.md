@@ -7,7 +7,7 @@ paths:
 
 Loaded when a file under `plugins/dev-workflows/` is read. Repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
-The `/implement`-specific invariants and the test-writing requirement for code changes are in `.claude/rules/dev-workflows-tests.md`, loaded with `/implement`, the test agents and their handoff files, and `references/code-handoff.md`.
+The `/implement`-specific invariants are in `.claude/rules/dev-workflows-implement.md`, loaded with this file. The test-writing requirement for code changes is in `.claude/rules/dev-workflows-tests.md`, loaded with `/implement`, the test agents and their handoff files, and `references/code-handoff.md`.
 
 ## Scope
 

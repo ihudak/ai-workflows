@@ -1,13 +1,11 @@
 ---
 paths:
-  - "plugins/**"
-  - ".claude-plugin/marketplace.json"
-  - "CLAUDE.md"
+  - "**"
 ---
 
 # Plugin updates
 
-Loaded when a file under `plugins/` — the content an update ships — or `.claude-plugin/marketplace.json` is read, or `CLAUDE.md`, into which a CLI command must never be written unverified. Moved out of `CLAUDE.md` to keep it under its 36,000-character warning; evidence is in `docs/maintainers/rationale.md`.
+Loaded when any file is read (`paths: "**"`), as near to always-on as a rules file comes: it was always-on in `CLAUDE.md`. Moved out of `CLAUDE.md` to keep it under its 36,000-character warning; evidence is in `docs/maintainers/rationale.md`.
 
 ## Updating installed plugins after editing
 

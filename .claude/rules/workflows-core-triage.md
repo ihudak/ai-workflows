@@ -1,26 +1,13 @@
 ---
 paths:
-  - "plugins/workflows-core/references/finding-triage.md"
-  - "plugins/dev-workflows/commands/implement.md"
-  - "plugins/dev-workflows/commands/vuln.md"
-  - "plugins/dev-workflows/commands/upgrade.md"
-  - "plugins/docs-workflows/commands/document.md"
-  - "plugins/product-workflows/commands/epics.md"
-  - "plugins/docs-workflows/commands/docs-init.md"
-  - "plugins/docs-workflows/commands/docs-brand.md"
-  - "plugins/docs-workflows/commands/docs-audit.md"
-  - "plugins/product-workflows/commands/prd-proposal.md"
-  - "plugins/product-workflows/commands/brd-proposal.md"
-  - "plugins/dev-workflows/agents/review-fixer.md"
-  - "plugins/workflows-core/agents/doc-fixer.md"
-  - "plugins/docs-workflows/agents/docs-scaffold-reviewer.md"
-  - "plugins/docs-workflows/agents/docs-audit-reviewer.md"
-  - "plugins/product-workflows/agents/proposal-reviewer.md"
+  - "plugins/workflows-core/**"
+  - "plugins/*/commands/*.md"
+  - "plugins/*/agents/*.md"
 ---
 
 # workflows-core — the finding-triage authority
 
-Loaded when `workflows-core:finding-triage` is read, or a command or agent that cites it — the set `grep -l finding-triage plugins/*/commands/*.md plugins/*/agents/*.md` returns, which the paragraph below names. A command or agent that starts citing it needs its file added to these `paths:`. Split out of `.claude/rules/workflows-core.md` to keep that file under 20,000 characters; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
+Loaded with `.claude/rules/workflows-core.md`, whose `paths:` it shares. Split out of `.claude/rules/workflows-core.md` to keep that file under 20,000 characters; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
 ## Authority
 

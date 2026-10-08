@@ -58,7 +58,7 @@ Do NOT edit `~/.claude/claude-config/` — that repo is retired and will be dele
 2. Add content directories (`commands/`, `agents/`, `hooks/`, etc.).
 3. For hooks: create `hooks/hooks.json` using `${CLAUDE_PLUGIN_ROOT}` for all paths.
 4. Register in `.claude-plugin/marketplace.json` with `"source": "./plugins/<name>"`.
-5. Commit and push to `main`. Claude Code picks up the change on the next `claude plugin update` of that plugin, and a restart.
+5. Commit and push to `main`. Claude Code picks up the change on the next `claude plugin update` of that plugin, and a restart — before writing any such command for someone to run, Read `.claude/rules/plugin-updates.md`.
 
 ## Conventions
 
@@ -77,26 +77,28 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | Rules file | `paths:` | Holds |
 |---|---|---|
 | `gates.md` | `scripts/**`, `.github/**` (repo root) | what each `check-docs.sh` check enforces and cannot see; the rule every gate shares |
-| `gates-id-grammar.md` | `scripts/`: `check-id-grammar.sh`, `spec-id-baseline.txt`, `validate-catalog.py`; `.github/workflows/validate-catalog.yml` (repo root) | the ID-grammar gate |
-| `gates-validate-catalog.md` | `scripts/validate-catalog.py`, `.github/workflows/validate-catalog.yml` (repo root) | `scripts/validate-catalog.py` |
-| `gates-mermaid.md` | `scripts/mermaid/**`, `.github/workflows/validate-catalog.yml` (repo root) | the mermaid gate |
+| `gates-id-grammar.md` | as `gates.md` | the ID-grammar gate |
+| `gates-validate-catalog.md` | as `gates.md` | `scripts/validate-catalog.py` |
+| `gates-mermaid.md` | as `gates.md` | the mermaid gate |
 | `dev-workflows.md` | `dev-workflows/**` | invariants, map, callers, three authorities |
-| `dev-workflows-tests.md` | `dev-workflows/`: `commands/implement.md`, `agents/test-*.md`, `docs/commands/implement.md`, `references/handoff/test-*.md`, `docs/reference/test-suite-detection.md`, `references/code-handoff.md` | `/implement` invariants, test-writing requirement |
+| `dev-workflows-implement.md` | `dev-workflows/**` | `/implement` invariants |
+| `dev-workflows-tests.md` | `dev-workflows/`: `commands/implement.md`, `agents/test-*.md`, `docs/commands/implement.md`, `references/handoff/test-*.md`, `docs/reference/test-suite-detection.md`, `references/code-handoff.md` | test-writing requirement |
 | `product-workflows.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `docs-workflows/commands/release-notes.md`; `workflows-core/references/`: `addressing.md`, `grilling-technique.md`, `prd-format.md` | invariants, map, callers |
 | `brd-route.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `workflows-core/references/addressing.md`; `workflows-core/commands/frames.md`; `docs-workflows/commands/`: `document.md`, `release-notes.md` | BRD-route map lines, folder-kind invariants |
-| `brd-route-detection.md` | `product-workflows/`: `commands/`: `create-prd.md`, `create-ard.md`, `specify.md`, and their `docs/commands/` pages | BRD-route detection |
-| `prd-ground-verification.md` | `product-workflows/`: `commands/prd-ground.md`, `docs/commands/prd-ground.md`, `agents/grounding-verifier.md` | `/prd-ground`'s blind verification |
+| `brd-route-detection.md` | as `brd-route.md` | BRD-route detection |
+| `prd-ground-verification.md` | as `brd-route.md` | `/prd-ground`'s blind verification |
 | `docs-workflows.md` | `docs-workflows/**`; `product-workflows/`: `commands/epics.md`, `agents/epic-*.md`, `docs/commands/epics.md` | invariants, map, callers |
-| `docs-workflows-gates.md` | `docs-workflows/`: the three gate references; `/document`, `/docs-init`, `/docs-brand`, `/docs-serve`; `doc-planner`, `doc-reviewer`, `docs-style-checker` | three gate authorities |
+| `docs-workflows-gates.md` | as `docs-workflows.md` | three gate authorities |
 | `docs-serve.md` | `docs-workflows/`: `commands/docs-serve.md`, `docs/commands/docs-serve.md`, `references/docs-profiles/render-verification.md`, `references/toolchain-preflight.md` | `/docs-serve` |
 | `release-notes.md` | `docs-workflows/`: `commands/release-notes.md`, `agents/release-notes-writer.md`, `references/release-note-types.md`, `docs/commands/release-notes.md` | `/release-notes` and its authority |
 | `docs-grounding.md` | `workflows-core/`: `references/*-grounding.md`, `agents/*-grounder.md`; and 23 command files: the nine docs-grounding consumers, `/design` (architecture only) and thirteen that resolve none | docs/architecture grounding |
 | `workflows-core.md` | `workflows-core/**`, `*/commands/*.md`, `*/agents/*.md` | plugin facts, model routing, authorities, map |
-| `workflows-core-triage.md` | `workflows-core/references/finding-triage.md` and the commands and agents citing it | the finding-triage authority |
+| `workflows-core-bounded-run.md` | `*/scripts/bounded.py`, `*/commands/*.md`, `*/agents/*.md`, `*/references/**`; `.github/workflows/validate-catalog.yml` (repo root) | the bounded-run authority |
+| `workflows-core-triage.md` | as `workflows-core.md` | the finding-triage authority |
 | `workflows-core-git.md` | `workflows-core/scripts/session-branch.py`; `*/commands/*.md`, `*/references/**` (the git references among them), `*/agents/*.md` | git authorities and invariants |
-| `workflows-core-read-only.md` | `workflows-core/references/read-only-repos.md` and the agents, commands and references its paragraph names | the read-only-repos authority |
-| `claim-sweep.md` | `plugins/**`, `README.md`, `CLAUDE.md`, `docs/maintainers/**` (repo root) | the claim-expiry sweep's refinements |
-| `plugin-updates.md` | `plugins/**`, `.claude-plugin/marketplace.json`, `CLAUDE.md` (repo root) | updating installed plugins after editing |
+| `workflows-core-read-only.md` | as `workflows-core-git.md` | the read-only-repos authority |
+| `claim-sweep.md` | `**` (any file) | the claim-expiry sweep's refinements |
+| `plugin-updates.md` | `**` (any file) | updating installed plugins after editing |
 
 The evidence behind the rules — measured cases, refused widenings, history — is in `docs/maintainers/rationale.md`, reached by each rule's `why` link. It is never auto-loaded; read a rule's section before proposing to change the rule.
 
@@ -107,7 +109,7 @@ The evidence behind the rules — measured cases, refused widenings, history —
 - `plugins/workflows-core/references/instruction-file-maintenance.md` is the **single source of truth** for changes to agent-instruction files (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, rules files, and the `references/*.md` of `workflows-core` and of every plugin that depends on it), consumed by `impl-maintenance` and binding on hand edits to `CLAUDE.md` and `.claude/rules/*.md`: verify every command claim against the thing that runs it; a pointer names an observable trigger, never one the agent must judge; two live contradictory instructions is a defect; retirement needs grounds, never "it looks derivable" and never "nothing has failed on it lately". (Narrowing is a deletion: see the drift-risk bullet.)
 - **Resolve an identifier against a known set; never parse one out of free text.** A key re-derived by pattern — out of a branch name, a path, a slug — is a guess that a longer or differently-shaped identifier falsifies. Where there is no set to resolve against, that absence is the finding to report; a wider pattern is not the answer to it. `workflows-core:specs-repo-git` §3.5's `branch-key` is the worked example. ([why](docs/maintainers/rationale.md#resolve-against-a-known-set))
 - **Re-measure in one place and cite it everywhere else.** A recipe that returns a wrong answer is worse than none, because the next reader trusts what it returns: **match the execution phrase, not the bare name** — a bare-name grep counts a negative mention as a caller. ([why](docs/maintainers/rationale.md#recipe-returns-wrong-answer))
-- **A note saying a feature or an edge does not ship is a claim with an expiry date, and one left standing beside the now-shipped feature is its own defect.** No script gates such prose. When a capability lands, sweep for the sentences that said it would not — **by phrase, never by line number** — and rewrite each against what the shipped thing actually enforces, read out of its own Phase 0 rather than assumed. A sentence that named the absence as its *reason* for an offer needs a new reason, not a deletion. ([why](docs/maintainers/rationale.md#claim-expiry-sweep)) Its refinements are in `.claude/rules/claim-sweep.md`.
+- **A note saying a feature or an edge does not ship is a claim with an expiry date, and one left standing beside the now-shipped feature is its own defect.** No script gates such prose. When a capability lands, sweep for the sentences that said it would not — **by phrase, never by line number** — and rewrite each against what the shipped thing actually enforces, read out of its own Phase 0 rather than assumed. A sentence that named the absence as its *reason* for an offer needs a new reason, not a deletion. ([why](docs/maintainers/rationale.md#claim-expiry-sweep)) Its eight refinements are in `.claude/rules/claim-sweep.md`, which loads with the first file a session reads; before a sweep run by `grep` alone, which reads none, Read it.
 - **A sentence is true in the context it was written in; two kinds of edit break that** — one that changes the context under a sentence that stays put, and one that leaves a sentence relying on context its reader does not carry. ([why](docs/maintainers/rationale.md#sentence-context))
   - **Extent face.** Widening the extent of a claim, a trigger or a condition puts every neighbouring sentence under a premise it was not written for, where no phrase sweep reaches. **Enumerate the cases the new extent now reaches and read each against the text around it** — a trigger's cases, a condition's branches, a rationale's neighbouring claims; for a question, check **every effect it states against the preconditions the new trigger does not carry**, in the paragraphs the old precondition kept out of reach too. Re-read, never qualify every match; **where you do qualify, qualify by the class and not by the member in front of you**. After adding an effect or a reason, re-read the whole paragraph it landed in against the premise you have just moved.
   - **Pointer face.** Re-read a sentence from where it lands for a **pointer** (`this`, `that`, `here`, `above`, `below`, `it`) that re-points at whatever is now nearest, and an **omitted subject or object** carried from earlier in the sentence. **One tell is mechanical and covers one pointer only**: a bare `this <noun>` whose noun names a **kind of file** that is not the file the block belongs to; `above`, `below`, `it` and an omitted subject have no tell and fall to the re-read, which is the check — the tell is a way into it, never a substitute for it.

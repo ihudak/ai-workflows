@@ -1,13 +1,18 @@
 ---
 paths:
-  - "plugins/product-workflows/commands/prd-ground.md"
-  - "plugins/product-workflows/docs/commands/prd-ground.md"
-  - "plugins/product-workflows/agents/grounding-verifier.md"
+  - "plugins/product-workflows/**"
+  - "plugins/dev-workflows/commands/design.md"
+  - "plugins/dev-workflows/commands/ready.md"
+  - "plugins/dev-workflows/commands/implement.md"
+  - "plugins/workflows-core/references/addressing.md"
+  - "plugins/workflows-core/commands/frames.md"
+  - "plugins/docs-workflows/commands/document.md"
+  - "plugins/docs-workflows/commands/release-notes.md"
 ---
 
 # `/prd-ground` — blind verification
 
-Loaded when `/prd-ground`'s command file or docs page, or `grounding-verifier`, is read — the run and the agent the invariant below binds. Split out of `.claude/rules/brd-route.md` to keep that file under 20,000 characters; the route's map lines, `/prd-ground`'s among them, and its other invariants are there; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
+Loaded with `.claude/rules/brd-route.md`, whose `paths:` it shares. Split out of `.claude/rules/brd-route.md` to keep that file under 20,000 characters; the route's map lines, `/prd-ground`'s among them, and its other invariants are there; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
 ## Invariants
 

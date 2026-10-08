@@ -1,12 +1,12 @@
 ---
 paths:
-  - "scripts/validate-catalog.py"
-  - ".github/workflows/validate-catalog.yml"
+  - "scripts/**"
+  - ".github/**"
 ---
 
 # Gates — `scripts/validate-catalog.py`
 
-Loaded when `scripts/validate-catalog.py` or `.github/workflows/validate-catalog.yml` is read — always together with `.claude/rules/gates.md`, whose opening rule binds every gate. Split out of `.claude/rules/gates.md` to keep that file under 20,000 characters; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
+Loaded with `.claude/rules/gates.md`, whose `paths:` it shares and whose opening rule binds every gate. Split out of `.claude/rules/gates.md` to keep that file under 20,000 characters; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
 ## `scripts/validate-catalog.py`
 

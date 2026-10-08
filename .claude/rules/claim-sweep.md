@@ -1,14 +1,11 @@
 ---
 paths:
-  - "plugins/**"
-  - "README.md"
-  - "CLAUDE.md"
-  - "docs/maintainers/**"
+  - "**"
 ---
 
 # Claim-expiry sweep — the refinements
 
-Loaded when a file in the sweep's own scope (refinement 4, below) is read — anything under `plugins/` or `docs/maintainers/`, or the repo-root `README.md` or `CLAUDE.md`; `.claude/rules/` is in that scope too, though no rules file loads on another. These are the refinements of the claim-expiry sweep in `CLAUDE.md` § Editing discipline — *a note saying a feature or an edge does not ship is a claim with an expiry date* — which stays there; they were moved out to keep `CLAUDE.md` under its 36,000-character warning. Evidence is in `docs/maintainers/rationale.md`.
+Loaded when any file is read (`paths: "**"`), as near to always-on as a rules file comes: it was always-on in `CLAUDE.md`. These are the refinements of the claim-expiry sweep in `CLAUDE.md` § Editing discipline — *a note saying a feature or an edge does not ship is a claim with an expiry date* — which stays there; they were moved out to keep `CLAUDE.md` under its 36,000-character warning. Evidence is in `docs/maintainers/rationale.md`.
 
   1. **A phrase hit dispositions the whole paragraph, not the matched sentence.** ([why](../../docs/maintainers/rationale.md#refinement-1))
   2. **The phrase sweep is backed by an end-to-end read of every phase the change touches.** ([why](../../docs/maintainers/rationale.md#refinement-2))

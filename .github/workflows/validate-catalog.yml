@@ -44,8 +44,8 @@ name: Validate plugin catalog
 # --ignore-scripts, so neither can change under the gate between two runs nor execute
 # code when it installs.
 #
-# Finally it self-tests session-cost.py's window splitter. That script is the only
-# executable code the family ships, and the splitter's failure mode is silent: a
+# Finally it self-tests session-cost.py's window splitter. That script was once the only
+# executable code the family shipped, and the splitter's failure mode is silent: a
 # command boundary that is missed or invented still produces a plausible dollar
 # figure, filed against the wrong phase. Its fixtures are built to discriminate,
 # each against the broken implementation it exists to catch: an unanchored marker
@@ -161,18 +161,29 @@ jobs:
         run: python3 plugins/docs-workflows/scripts/key-discovery.py --selftest
 
       - name: Self-test the bounded run
-        # Every capped call in the plugin runs through it -- the slug-to-clone maps, the qmd probes,
-        # the clone-identity lines. A cap that does not fire, or a timeout reported as the command's own exit, reads as
-        # "skip" downstream. Real sleeps and child processes, about ten seconds.
+        # Every capped call in the family runs through it -- the slug-to-clone maps, the qmd probes,
+        # the clone-identity lines. A cap that does not fire, a child left running, or a timeout
+        # reported as the command's own exit reads as "skip" downstream. Real sleeps, child
+        # processes and signals, about fifteen seconds.
         run: python3 plugins/workflows-core/scripts/bounded.py --selftest
 
       - name: Every plugin's bounded run is the same script
-        # A command calls ${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py, which is its own plugin's copy;
-        # workflows-core's is the one the self-test above runs, so every other copy must equal it.
+        # A command, agent or reference calls ${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py -- the copy in
+        # the calling file's own plugin. A plugin with a call site must ship one, or every capped
+        # call there exits 2 and reads as "skip"; and every copy must equal workflows-core's, the
+        # one the self-test above runs.
         run: |
-          for f in plugins/*/scripts/bounded.py; do
-            cmp plugins/workflows-core/scripts/bounded.py "$f" || { echo "::error file=$f::differs from plugins/workflows-core/scripts/bounded.py"; exit 1; }
+          status=0
+          for d in plugins/*/; do
+            p=${d%/}
+            if grep -rqs --include='*.md' 'scripts/bounded\.py' "$p/commands" "$p/agents" "$p/references"; then
+              [ -f "$p/scripts/bounded.py" ] || { echo "::error file=$p::calls scripts/bounded.py but ships none"; status=1; }
+            fi
+            if [ -f "$p/scripts/bounded.py" ]; then
+              cmp -s plugins/workflows-core/scripts/bounded.py "$p/scripts/bounded.py" || { echo "::error file=$p/scripts/bounded.py::differs from plugins/workflows-core/scripts/bounded.py"; status=1; }
+            fi
           done
+          exit $status
 
       - name: Self-test the session branch
         # specs-repo-git §8 commits, merges and lifts session files with it on a specs

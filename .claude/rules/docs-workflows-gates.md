@@ -1,20 +1,14 @@
 ---
 paths:
-  - "plugins/docs-workflows/references/gate-ledger.md"
-  - "plugins/docs-workflows/references/repo-verification-gates.md"
-  - "plugins/docs-workflows/references/toolchain-preflight.md"
-  - "plugins/docs-workflows/commands/document.md"
-  - "plugins/docs-workflows/commands/docs-init.md"
-  - "plugins/docs-workflows/commands/docs-brand.md"
-  - "plugins/docs-workflows/commands/docs-serve.md"
-  - "plugins/docs-workflows/agents/doc-planner.md"
-  - "plugins/docs-workflows/agents/doc-reviewer.md"
-  - "plugins/docs-workflows/agents/docs-style-checker.md"
+  - "plugins/docs-workflows/**"
+  - "plugins/product-workflows/commands/epics.md"
+  - "plugins/product-workflows/agents/epic-*.md"
+  - "plugins/product-workflows/docs/commands/epics.md"
 ---
 
 # docs-workflows — gate authorities
 
-Loaded when `docs-workflows:gate-ledger`, `docs-workflows:repo-verification-gates` or `docs-workflows:toolchain-preflight` is read, or a command or agent the paragraphs below name as consuming, applying or citing one — `/document`, `/docs-init`, `/docs-brand`, `/docs-serve`, `doc-planner`, `doc-reviewer` and `docs-style-checker`. Split out of `.claude/rules/docs-workflows.md` to keep that file under 20,000 characters; the plugin's other rules are there; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
+Loaded with `.claude/rules/docs-workflows.md`, whose `paths:` it shares. Split out of `.claude/rules/docs-workflows.md` to keep that file under 20,000 characters; the plugin's other rules are there; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
 ## Authorities
 
