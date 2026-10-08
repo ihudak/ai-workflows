@@ -12,8 +12,8 @@
 # can actually report -- rather than trusting this sentence, and update it in the commit that
 # adds a check. Counting the banner comments instead gives 21: checks 1 and 2 share one. Every
 # edition carries all twenty-two: a check an edition has no use for is switched off by its
-# config block (checks 13, 16 and 19 in the internal editions, check 22 here), never cut from
-# the body.
+# config block (checks 13, 16 and 19 in the internal editions, check 22 here and in the Copilot
+# edition), never cut from the body.
 #
 # --selftest mutates a copy of the passing fixture once per check and asserts the
 # gate rejects it. Without that, the fixtures are decorative: a gate that cannot
@@ -88,7 +88,7 @@ NS_MAP_REL="plugins/workflows-core/scripts/command-namespaces.json"
 # assert that a plugin holding the CALL SITES is declared. The trigger is the call sites and
 # not the reference file: the corpus extraction separated the two, and a file-presence
 # trigger got both directions wrong at once (see those two functions).
-COST_PLUGIN_RELS="plugins/dev-workflows plugins/docs-workflows plugins/workflows-core plugins/product-workflows"        # copilot: ""
+COST_PLUGIN_RELS="plugins/dev-workflows plugins/docs-workflows plugins/workflows-core plugins/product-workflows"        # copilot: dev-workflows
 HANDOFF_PLUGIN_RELS="plugins/product-workflows"  # copilot: dev-workflows
 # Which plugins check 20 holds to the untrusted-content guard: every docs-gated plugin plus
 # prose-style, which ships agents and dispatching commands but no docs/ tree. Declared, like
@@ -98,7 +98,7 @@ GUARD_PLUGIN_RELS="$PLUGIN_RELS plugins/prose-style"   # copilot: dev-workflows 
 # that ships those two commands. Declared, like the lists above.
 ITC_PLUGIN_REL="plugins/dev-workflows"   # copilot: dev-workflows
 
-# The plugin that holds the shared reference corpus. Checks 8, 9, 11 and 16 read a reference
+# The plugin that holds the shared reference corpus. Checks 8, 9, 11, 16 and 20 read a reference
 # from HERE and their call sites from $PLUGIN_REL -- the corpus now lives in its own plugin,
 # so those are different directories, and a check that resolved both halves against the
 # plugin under check would report a MISSING reference for every plugin that merely reads it.
@@ -125,7 +125,7 @@ LOADER_SKILL="workflows-core:reference"             # copilot: "" -- one plugin,
 RUNTIME_VARS="CLAUDE_PLUGIN_ROOT ARGUMENTS OSTYPE BASH_SOURCE BASH_REMATCH ROOT OWNER_REPO"
                                      # copilot: BASH_REMATCH BASH_SOURCE MODEL_ROUTING OSTYPE
                                      # OWNER_REPO PLUGIN_ROOT ROOT -- reads no ARGUMENTS; adds
-                                     # MODEL_ROUTING (hook-local, hooks/preload-context.sh:52)
+                                     # MODEL_ROUTING (hook-local, hooks/preload-context.sh:62)
                                      # and PLUGIN_ROOT (host-injected plugin-root path)
 # NOTE: this tripwire is self-referential -- it guards a constant in THIS file, and --selftest
 # only ever mutates a copy of the fixture tree, never the script. It is therefore verified
@@ -3615,6 +3615,8 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # The edition that forbids nothing: an EMPTY value passes with the token present, which is the
   # internal edition's configuration and the reason the body must tolerate it under set -u.
   # ...and it says so, as checks 13 and 16 do when they are switched off.
+  expect_pass_saying "check 8 says it does not apply where the edition has no cost subsystem" \
+    "HAS_COST=0 COST_PLUGIN_RELS=$PLUGIN_REL" "check 8 not applicable" "true"
   expect_pass_saying "an empty EDITION_FORBIDDEN_B64 passes with the token present" "EDITION_FORBIDDEN_B64=" \
     "check 19 not applicable" \
     "printf '%s\n' \"\$(b64d enotZWRpdGlvbi1mb3JiaWRkZW4tZml4dHVyZS10b2tlbg==)\" >> $PLUGIN_REL/docs/README.md"
