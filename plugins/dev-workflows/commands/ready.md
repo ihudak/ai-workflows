@@ -278,6 +278,7 @@ key, never the run's own `key`**, which on an Epic-level run is the Epic's: the 
   never authors a deviation record itself — it only checks whether one already exists in the artifacts
   it reads (an artifact that violates an `AD#N` **without** a matching
   `- ARD deviation: … flag: architect` line is a BLOCKER per the reviewer's ARD-conformance dimension).
+- **A stop at any other row** (`workflows-core:ard-resolution`, *Any other stopping state of that gate stops the caller as `unmerged` does* — a working copy that differs from a merged ARD) → **never stop**, under the exemption that rule names for this command: carry the stopping row's message forward as a readiness finding — "ARD edited, not landed" — into Phase 3(b)'s status-expectation table, capping the verdict at `PARTIAL`, and skip the ARD-conformance dimension, since neither the merged ARD nor the working copy is the one the artifacts must answer to until the edit lands.
 - **`status: unmerged`** → **never stop**, the exemption `workflows-core:ard-resolution`'s unmerged rule names for this command. Carry the returned `invariants` forward to Phase 4 as `applicable_ard` exactly as `found` does, and additionally carry the returned `branch`/`pr` forward as a readiness finding — "ARD authored, not handed off" — into Phase 3(b)'s status-expectation table, so it reaches `readiness-reviewer` and caps the eventual verdict at `PARTIAL` rather than letting a not-yet-merged ARD read as equivalent to a merged one.
 
 ---

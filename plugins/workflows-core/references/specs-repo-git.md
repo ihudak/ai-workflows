@@ -517,7 +517,7 @@ B3 now exists for two reasons.
 
 The failure this section used to defend against — `/create-ard` continuing silently against the wrong source when the authored PRD file existed only on an unmerged branch — is now caught loudly instead: `phase-handoff.md` §3.3 rows D and E stop that run rather than letting it proceed, so the defense moved there.
 
-B3 keeps the working tree containing the artifact the run is about to read or amend. Where the run amends what that branch wrote, its own branch is cut from the earlier branch rather than from the default — a stacked branch, which states the dependency honestly. Where it does not, `phase-handoff.md` §2.2 (*Where a new branch is cut*) cuts it from the default ref instead: a gated input on that branch has already stopped the run at rows D/E, so a stack there could only carry another phase's unmerged commits into a pull request that does not depend on them.
+B3 keeps the working tree containing the artifact the run is about to read or amend. Where the run amends what that branch wrote, its own branch is cut from the earlier branch rather than from the default — a stacked branch, which states the dependency honestly. Where it neither declares nor read anything that branch changed, `phase-handoff.md` §2.2 (*Where a new branch is cut*) cuts it from the default ref instead: a stack there could only carry another phase's unmerged commits into a pull request that does not depend on them. Either way a gated input that branch changed has already met `require-on-main` — rows D/E where the default branch lacks it, the C rows where it differs — so what stacks is what the run read ungated or declares.
 
 ### 3.7 Detached HEAD is blocking, not merely skipped
 

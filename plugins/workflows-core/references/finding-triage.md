@@ -165,7 +165,7 @@ reviewer's answer.
    triage — never on the verdict word.** A `BLOCKER` carried as dismissed or unverified is not one.
    A review **stayed blocked** where a `BLOCKER` survives its re-review's triage, or where the user
    keeps the verdict at either settle prompt — the name every caller that re-reviews gives this stop;
-   a caller that works unit by unit may count a settle prompt's **Cancel** as one too, and says so; and a caller whose own rule keeps a first review's `BLOCKER` from the fixer, because its fix lies in another code repository, counts that `BLOCKER` as one, and says so.
+   a caller that works unit by unit may count a settle prompt's **Cancel** as one too, and says so; and a caller whose own rule keeps a first review's `BLOCKER` from the fixer, because its fix lies in another code repository, counts that `BLOCKER` as one, and says so; and `/epics`, whose *User-resolved text* hands the user a `BLOCKER` on text they chose, counts one the user kept there as none — it is their override, carried forward as such — and says so.
 3. **Where the second verdict is `BLOCK` and no `BLOCKER` survives**, the verdict is one its own
    findings no longer support. Never promote it silently: report the verdict, each carried row with
    its outcome and every new disposition, then ask:
