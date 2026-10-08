@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.35.4] — 2026-10-08
+
+### Changed
+- **Every capped call runs through a script the plugin ships, `scripts/bounded.py`, called by its path.** `bounded <N>` was shorthand for a `timeout`/`gtimeout`/`perl` one-liner that a run could expand only from `bounded-run.md`, so a run that had not read it ran `bounded` as a command, got exit 127 and skipped every capped call — every clone of a slug→clone map, and `docs-grounding.md` step 3.5's qmd probes and refresh. The script needs only `python3` (3.9 or newer, which the README now lists as required); runs the command in a session of its own whose whole group the cap ends — SIGTERM, then SIGKILL two seconds later for whatever is left, a child that ignores SIGTERM included; passes a SIGTERM, SIGHUP or SIGINT sent to it on to that group, as GNU `timeout` does; and reports a timeout as exit 124 alone. It is self-tested in CI (21 cases). `workflows-core`, `dev-workflows`, `docs-workflows` and `product-workflows` each ship the same copy, since `${CLAUDE_PLUGIN_ROOT}` is the calling file's own plugin, and CI fails one that differs from `workflows-core`'s. `components.md` §1, `docs-grounding.md` step 3.5 and `docs-grounder` call it.
+
 ## [1.35.3] — 2026-10-08
 
 ### Added

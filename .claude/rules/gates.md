@@ -8,13 +8,9 @@ paths:
 
 Loaded when a file under `scripts/` or `.github/` is read. Repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
+Split out to keep this file under 20,000 characters: the ID-grammar gate → `.claude/rules/gates-id-grammar.md`, `scripts/validate-catalog.py` → `.claude/rules/gates-validate-catalog.md`, and the mermaid gate → `.claude/rules/gates-mermaid.md`. Each loads with the files its section names and `.github/workflows/validate-catalog.yml`, always beside this file, whose opening rule binds every gate.
+
 **A gate widening or a scope change is measured before it is taken, and one that would fire only on correct content is refused.** Each refused widening below records that result; do not re-propose one without new evidence.
-
-## ID-grammar gate (`scripts/check-id-grammar.sh`)
-
-It runs on every push via `.github/workflows/validate-catalog.yml` — preceded there by `--selftest`, which asserts, per fixture, the exit code **and every ID form the gate must have named** — one grep per alternation of `PATTERN`. The exit code alone is not enough: each negative fixture carries several violating lines, so any surviving alternation holds the exit at 1. `scripts/validate-catalog.py`'s own `--selftest` does the same, ahead of its run. ([why](../../docs/maintainers/rationale.md#id-grammar))
-
-Of the `id-grammar-ok` markers, one accepts the legacy form as a tolerant reader — `workflows-core:ard-resolution`; the others are the reviewers that check identifier integrity and must quote the form they reject. Re-derive the census with `grep -rn 'id-grammar-ok' plugins/ --include=*.md | grep -v CHANGELOG` — scoped to `plugins/`, not to one plugin, since the split put `workflows-core:ard-resolution`'s marker outside `dev-workflows` rather than adjusting it. The spec/design numbered-ID namespace is deliberately outside this grammar and unchanged; `scripts/spec-id-baseline.txt` is its census tripwire.
 
 ## `scripts/check-docs.sh`
 
@@ -125,17 +121,3 @@ Every `choices:` option in the `/brd-*` and `/prd-*` families — the families c
 ### Check 21
 
 **Check 21 gates install-time code**: every install command in `ITC_PLUGIN_REL`'s three install references, two agents and two commands — each code span and each command of a chained line on its own, prose included — carries `--ignore-scripts` (yarn berry `--mode=skip-build`) if it is npm, pnpm or yarn, and `--only-binary=:all:` (a pipenv lock too), never `:all:` for no-binary, if it is pip or pipenv; none at all fails as vacuous.
-
-## `scripts/validate-catalog.py`
-
-Besides the catalog, it gates the instruction tiers. **Sizes**, as Python `len` of the decoded file, at `CLAUDE.md` § Running the gates' thresholds; a rules file past its warning is split with narrower `paths:` globs, or its evidence moved to the rationale. **Paths**: every rules file must carry frontmatter with a top-level `paths:` block list (without one it loads every session), and every glob must match at least one *file* outside `.git`, worktrees, fixtures, `node_modules`, `.superpowers` and `.claude/rules/`. Globs are matched by pathlib, which has no brace expansion, so a `{a,b}` glob is reported dead: write each alternative as its own entry. **Descriptions**: a command, agent or skill `description` fails above 1,024 characters and warns above 600. ([why](../../docs/maintainers/rationale.md#entry-descriptions)) **Typed-only commands** (`CLAUDE.md` § Command, agent, and skill taxonomy): it sees a call only as the Skill tool named before `skill: "<plugin>:<name>"`, or `Skill(skill: …)`, outside a fence; a run's call must say so.
-
-## Mermaid gate (`scripts/mermaid/check-mermaid.mjs`)
-
-The gate finds diagrams with a real CommonMark lexer (`marked`) and parses each with mermaid's own parser, both pinned by exact version and a committed lockfile, over tracked files only — which is what GitHub renders, and which leaves out every worktree copy under the ignored `.worktrees/` — and excluding its own fixture tree, `scripts/fixtures/mermaid/`, whose green cases are skipped as well as the red ones broken on purpose. Do not replace the lexer with a regex: the selftest runs it over a fixture for each of the four constructs a hand-rolled fence scanner got wrong, so an extractor that misses them again fails it. It never runs the old scanner. ([why](../../docs/maintainers/rationale.md#mermaid-gate))
-
-A failure names the **source-file line**, found by content — the context mermaid prints around a failure, located in the diagram — never by replaying mermaid's own rewrites of the text. Where that context matches no single place, the gate names the fence line and says why; it never guesses. An unclosed fence is not rejected for being unclosed — CommonMark runs it to the end of its container and GitHub draws what it holds — so only its content is judged.
-
-It runs on every push after its `--selftest`, every fixture case of which asserts the block count as well as the exit code, and each red case what the gate reported. Two cases are red/green pairs, named in the script's selftest comment; every other green case pins a construct the lexer must find or leave alone.
-
-**What it cannot see:** it parses and does not render, so a diagram that parses and then fails at layout passes — a render needs a browser CI does not carry — and a mermaid fence inside a raw HTML block is outside it, as it is outside any CommonMark lexer. Run it locally as `.github/workflows/validate-catalog.yml` does.

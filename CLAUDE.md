@@ -58,7 +58,7 @@ Do NOT edit `~/.claude/claude-config/` — that repo is retired and will be dele
 2. Add content directories (`commands/`, `agents/`, `hooks/`, etc.).
 3. For hooks: create `hooks/hooks.json` using `${CLAUDE_PLUGIN_ROOT}` for all paths.
 4. Register in `.claude-plugin/marketplace.json` with `"source": "./plugins/<name>"`.
-5. Commit and push to `main`. Claude Code picks up changes on next sync/reinstall.
+5. Commit and push to `main`. Claude Code picks up the change on the next `claude plugin update` of that plugin, and a restart — before writing any such command for someone to run, Read `.claude/rules/plugin-updates.md`.
 
 ## Conventions
 
@@ -76,17 +76,29 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 
 | Rules file | `paths:` | Holds |
 |---|---|---|
-| `gates.md` | `scripts/**`, `.github/**` (repo root) | what each check enforces and cannot see |
-| `dev-workflows.md` | `dev-workflows/**` | invariants, map, callers, two authorities |
+| `gates.md` | `scripts/**`, `.github/**` (repo root) | what each `check-docs.sh` check enforces and cannot see; the rule every gate shares |
+| `gates-id-grammar.md` | as `gates.md` | the ID-grammar gate |
+| `gates-validate-catalog.md` | as `gates.md` | `scripts/validate-catalog.py` |
+| `gates-mermaid.md` | as `gates.md` | the mermaid gate |
+| `dev-workflows.md` | `dev-workflows/**` | invariants, map, callers, three authorities |
+| `dev-workflows-implement.md` | `dev-workflows/**` | `/implement` invariants |
 | `dev-workflows-tests.md` | `dev-workflows/`: `commands/implement.md`, `agents/test-*.md`, `docs/commands/implement.md`, `references/handoff/test-*.md`, `docs/reference/test-suite-detection.md`, `references/code-handoff.md` | test-writing requirement |
 | `product-workflows.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `docs-workflows/commands/release-notes.md`; `workflows-core/references/`: `addressing.md`, `grilling-technique.md`, `prd-format.md` | invariants, map, callers |
 | `brd-route.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `workflows-core/references/addressing.md`; `workflows-core/commands/frames.md`; `docs-workflows/commands/`: `document.md`, `release-notes.md` | BRD-route map lines, folder-kind invariants |
-| `docs-workflows.md` | `docs-workflows/**`; `product-workflows/`: `commands/epics.md`, `agents/epic-*.md`, `docs/commands/epics.md` | invariants, map, callers, three authorities |
+| `brd-route-detection.md` | as `brd-route.md` | BRD-route detection |
+| `prd-ground-verification.md` | as `brd-route.md` | `/prd-ground`'s blind verification |
+| `docs-workflows.md` | `docs-workflows/**`; `product-workflows/`: `commands/epics.md`, `agents/epic-*.md`, `docs/commands/epics.md` | invariants, map, callers |
+| `docs-workflows-gates.md` | as `docs-workflows.md` | three gate authorities |
 | `docs-serve.md` | `docs-workflows/`: `commands/docs-serve.md`, `docs/commands/docs-serve.md`, `references/docs-profiles/render-verification.md`, `references/toolchain-preflight.md` | `/docs-serve` |
 | `release-notes.md` | `docs-workflows/`: `commands/release-notes.md`, `agents/release-notes-writer.md`, `references/release-note-types.md`, `docs/commands/release-notes.md` | `/release-notes` and its authority |
 | `docs-grounding.md` | `workflows-core/`: `references/*-grounding.md`, `agents/*-grounder.md`; and 23 command files: the nine docs-grounding consumers, `/design` (architecture only) and thirteen that resolve none | docs/architecture grounding |
 | `workflows-core.md` | `workflows-core/**`, `*/commands/*.md`, `*/agents/*.md` | plugin facts, model routing, authorities, map |
+| `workflows-core-bounded-run.md` | `*/scripts/bounded.py`, `*/commands/*.md`, `*/agents/*.md`, `*/references/**`; `.github/workflows/validate-catalog.yml` (repo root) | the bounded-run authority |
+| `workflows-core-triage.md` | as `workflows-core.md` | the finding-triage authority |
 | `workflows-core-git.md` | `workflows-core/scripts/session-branch.py`; `*/commands/*.md`, `*/references/**` (the git references among them), `*/agents/*.md` | git authorities and invariants |
+| `workflows-core-read-only.md` | as `workflows-core-git.md` | the read-only-repos authority |
+| `claim-sweep.md` | `**` (any file) | the claim-expiry sweep's refinements |
+| `plugin-updates.md` | `**` (any file) | updating installed plugins after editing |
 
 The evidence behind the rules — measured cases, refused widenings, history — is in `docs/maintainers/rationale.md`, reached by each rule's `why` link. It is never auto-loaded; read a rule's section before proposing to change the rule.
 
@@ -97,15 +109,7 @@ The evidence behind the rules — measured cases, refused widenings, history —
 - `plugins/workflows-core/references/instruction-file-maintenance.md` is the **single source of truth** for changes to agent-instruction files (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, rules files, and the `references/*.md` of `workflows-core` and of every plugin that depends on it), consumed by `impl-maintenance` and binding on hand edits to `CLAUDE.md` and `.claude/rules/*.md`: verify every command claim against the thing that runs it; a pointer names an observable trigger, never one the agent must judge; two live contradictory instructions is a defect; retirement needs grounds, never "it looks derivable" and never "nothing has failed on it lately". (Narrowing is a deletion: see the drift-risk bullet.)
 - **Resolve an identifier against a known set; never parse one out of free text.** A key re-derived by pattern — out of a branch name, a path, a slug — is a guess that a longer or differently-shaped identifier falsifies. Where there is no set to resolve against, that absence is the finding to report; a wider pattern is not the answer to it. `workflows-core:specs-repo-git` §3.5's `branch-key` is the worked example. ([why](docs/maintainers/rationale.md#resolve-against-a-known-set))
 - **Re-measure in one place and cite it everywhere else.** A recipe that returns a wrong answer is worse than none, because the next reader trusts what it returns: **match the execution phrase, not the bare name** — a bare-name grep counts a negative mention as a caller. ([why](docs/maintainers/rationale.md#recipe-returns-wrong-answer))
-- **A note saying a feature or an edge does not ship is a claim with an expiry date, and one left standing beside the now-shipped feature is its own defect.** No script gates such prose. When a capability lands, sweep for the sentences that said it would not — **by phrase, never by line number** — and rewrite each against what the shipped thing actually enforces, read out of its own Phase 0 rather than assumed. A sentence that named the absence as its *reason* for an offer needs a new reason, not a deletion. ([why](docs/maintainers/rationale.md#claim-expiry-sweep)) The refinements:
-  1. **A phrase hit dispositions the whole paragraph, not the matched sentence.** ([why](docs/maintainers/rationale.md#refinement-1))
-  2. **The phrase sweep is backed by an end-to-end read of every phase the change touches.** ([why](docs/maintainers/rationale.md#refinement-2))
-  3. **Run an exclusivity probe as its own axis** — `only when`, `is the only`, `nothing else`, `and no other`, `only ever` — then the noun forms: `the only <noun>` with no preceding `is`, `the sole`, `only writer`, `only caller`, `only consumer`, `no other command`, `the one command`, `the only place`. The five are a starting set, not the vocabulary: generalise from a claim's own wording rather than matching a list. ([why](docs/maintainers/rationale.md#refinement-3))
-  4. **Scope the sweep to `plugins/` — every `CHANGELOG.md` included — plus the repo-root `README.md`, `CLAUDE.md`, `.claude/rules/` and `docs/maintainers/`, never to the plugin the capability shipped from.** This binds a sweep, not any gate's scope. Check any ad-hoc resolver that copies the gates' `CHANGELOG.md` filter. Read the phase each citation names; that **proves containment, not uniqueness**, and in a command with two modes over the same phase numbers (`/document`'s `# Mode A` and `# Mode B`) pick the mode before slicing. ([why](docs/maintainers/rationale.md#refinement-4))
-  5. **A correction fires the sweep as surely as a capability landing does**, and the claim to sweep is the one you just rewrote. ([why](docs/maintainers/rationale.md#refinement-5))
-  6. **Sweep the claim's *subject* — the agent, variable, field or artifact it is about — never any one site's wording**, neither the correction's nor the fixed site's. ([why](docs/maintainers/rationale.md#refinement-6))
-  7. **A sweep is not finished until the literal string is counted**: count the exact string you are changing across refinement 4's scope immediately before and after your edit, wrap-insensitively, and check the after-count against the number you intended. On an addition, which leaves the old string inside the new form, count it **bounded, on the side the text moved, by enough context that the post-edit text cannot contain it** (one delimiter where that delimiter is unique to the edit, the whole neighbouring element where it is not), never the list or alternation body alone. Wrap-insensitive: collapse whitespace across the whole file and across the search string, match on the collapsed text, then map the offset back to a source line. Reading the paragraph is not enough; the after-edit count is what says you are done. ([why](docs/maintainers/rationale.md#refinement-7))
-  8. **A change to a claim's *extent* falsifies its whole population, not the sites the edit touched** — a narrowing most sharply, since a copy left standing promises what the run no longer does. Enumerate *every statement of the claim* before the edit, re-read each after it, and run refinement 7's count over that set; the copies include the `docs/` page describing the behaviour, where a stale copy is the one **acted on**. When you write, use one noun across every copy, since the next sweep matches on it — but never search by that noun instead of the subject. ([why](docs/maintainers/rationale.md#refinement-8))
+- **A note saying a feature or an edge does not ship is a claim with an expiry date, and one left standing beside the now-shipped feature is its own defect.** No script gates such prose. When a capability lands, sweep for the sentences that said it would not — **by phrase, never by line number** — and rewrite each against what the shipped thing actually enforces, read out of its own Phase 0 rather than assumed. A sentence that named the absence as its *reason* for an offer needs a new reason, not a deletion. ([why](docs/maintainers/rationale.md#claim-expiry-sweep)) Its eight refinements are in `.claude/rules/claim-sweep.md`, which loads with the first file a session reads; before a sweep run by `grep` alone, which reads none, Read it.
 - **A sentence is true in the context it was written in; two kinds of edit break that** — one that changes the context under a sentence that stays put, and one that leaves a sentence relying on context its reader does not carry. ([why](docs/maintainers/rationale.md#sentence-context))
   - **Extent face.** Widening the extent of a claim, a trigger or a condition puts every neighbouring sentence under a premise it was not written for, where no phrase sweep reaches. **Enumerate the cases the new extent now reaches and read each against the text around it** — a trigger's cases, a condition's branches, a rationale's neighbouring claims; for a question, check **every effect it states against the preconditions the new trigger does not carry**, in the paragraphs the old precondition kept out of reach too. Re-read, never qualify every match; **where you do qualify, qualify by the class and not by the member in front of you**. After adding an effect or a reason, re-read the whole paragraph it landed in against the premise you have just moved.
   - **Pointer face.** Re-read a sentence from where it lands for a **pointer** (`this`, `that`, `here`, `above`, `below`, `it`) that re-points at whatever is now nearest, and an **omitted subject or object** carried from earlier in the sentence. **One tell is mechanical and covers one pointer only**: a bare `this <noun>` whose noun names a **kind of file** that is not the file the block belongs to; `above`, `below`, `it` and an omitted subject have no tell and fall to the re-read, which is the check — the tell is a way into it, never a substitute for it.
@@ -135,7 +139,7 @@ The evidence behind the rules — measured cases, refused widenings, history —
 
 **Run the gates as one `&&` chain and read the chain's own exit code.** `.github/workflows/validate-catalog.yml`'s `run:` steps are the authoritative list of them, in order. A trailing `echo "EXIT=$?"` makes the invocation's own status 0, so read the printed value. ([why](docs/maintainers/rationale.md#gate-chain-exit))
 
-`scripts/validate-catalog.py` fails `CLAUDE.md` above 40,000 characters and warns above 36,000, warns on a rules file above 20,000, and fails a rules file without `paths:` or with a glob matching no file outside `.claude/rules/` — overflow belongs in a rules file or the rationale (`.claude/rules/gates.md` § `scripts/validate-catalog.py`).
+`scripts/validate-catalog.py` fails `CLAUDE.md` above 40,000 characters and warns above 36,000, warns on a rules file above 20,000, and fails a rules file without `paths:` or with a glob matching no file outside `.claude/rules/` — overflow belongs in a rules file or the rationale (`.claude/rules/gates-validate-catalog.md`).
 
 ## Shared authorities
 
@@ -147,17 +151,17 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 - `workflows-core:prose-formatting` — output line-wrapping: never hard-wrap prose → `workflows-core.md`
 - `workflows-core:implementation-format` — the append-only `implementation.md` record, the `[<key>]` commit convention, the two-source read → `workflows-core.md`
 - `workflows-core:doc-structure-conventions` — traceability boundary, callout scope and adjacency, component-pattern fidelity → `workflows-core.md`
-- `workflows-core:finding-triage` — the orchestrator's step between a reviewer's findings and a fixer (keep, mark unverified or dismiss), its re-review rules, and the patch gate → `workflows-core.md`
+- `workflows-core:finding-triage` — the orchestrator's step between a reviewer's findings and a fixer (keep, mark unverified or dismiss), its re-review rules, and the patch gate → `workflows-core-triage.md`
 - `workflows-core:specs-repo-git` — `specs-preflight`, `commit-artifacts`, the bounded write authority, the specs-repo git hard rules → `workflows-core-git.md`
 - `workflows-core:phase-handoff` — `handoff-to-main`, `require-on-main`, the branch-prefix authority, the handoff consent choice → `workflows-core-git.md`
-- `workflows-core:read-only-repos` — read-only mount detection, write-free ref reading, the `prep` output contract → `workflows-core-git.md`
+- `workflows-core:read-only-repos` — read-only mount detection, write-free ref reading, the `prep` output contract → `workflows-core-read-only.md`
 - `workflows-core:docs-grounding` — `$DOCS_PATH` grounding: the resolution gate, `resolve-docs-grounding`, grill-rank / writer-attach → `docs-grounding.md`
 - `dev-workflows:bug-diagnosis` — repro first, ranked hypotheses, tagged instrumentation, a regression test at a seam → `dev-workflows.md`
 - `dev-workflows:code-handoff` — the code repo's `finish-code-branch`: commit, consent-gated push and pull request; a fixer's per-unit revert (§6) → `dev-workflows.md`
 - `docs-workflows:release-note-types` — the release-note section map, per-section draft shape and prose rules, the deprecation note → `release-notes.md`
-- `docs-workflows:gate-ledger` — verification-gate accounting: the six outcomes and the `/document` gate registry → `docs-workflows.md`
-- `docs-workflows:repo-verification-gates` — a docs repo's own pre-PR checklist as `repo_verification_gates` → `docs-workflows.md`
-- `docs-workflows:toolchain-preflight` — the pre-write environment check, the `toolchain` block, each tool's test → `docs-workflows.md`
+- `docs-workflows:gate-ledger` — verification-gate accounting: the six outcomes and the `/document` gate registry → `docs-workflows-gates.md`
+- `docs-workflows:repo-verification-gates` — a docs repo's own pre-PR checklist as `repo_verification_gates` → `docs-workflows-gates.md`
+- `docs-workflows:toolchain-preflight` — the pre-write environment check, the `toolchain` block, each tool's test → `docs-workflows-gates.md`
 - `workflows-core:instruction-file-maintenance` — changes to agent-instruction files → § Editing discipline above
 
 ## Command, agent, and skill taxonomy
@@ -166,26 +170,6 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 - **Agents** (`agents/`) are Claude Code sub-agent system prompts, not user entry points: each does one bounded job — planning, research, review, fixing, test writing, grounding, or maintenance — and returns its result to the invoking command.
 - **Skills** (`skills/`, optional) package durable instructions or domain knowledge that multiple commands or agents may consult; a skill is neither a command nor an agent. If a plugin has no `skills/`, keep shared runtime docs under `references/`.
 - **Working rule:** keep the three roles separate so workflows stay predictable.
-
-## Updating installed plugins after editing
-
-After pushing an edit, update the affected plugin on each machine so Claude Code picks up the new content:
-
-```bash
-claude plugin update dev-workflows@shipwright
-claude plugin update product-workflows@shipwright
-claude plugin update docs-workflows@shipwright
-claude plugin update workflows-core@shipwright
-```
-
-- **`claude plugin update` requires a restart to apply** — the CLI says so itself.
-- **There is no `claude plugin reinstall`.** The verb is `update`. Verify a command against `claude plugin --help` before writing it into `CLAUDE.md` or `.claude/rules/` — agents run what those files say, and a command that does not exist fails in a way that looks like a broken plugin. ([why](docs/maintainers/rationale.md#plugin-update-cli))
-- **Update `prose-style` with `docs-workflows` past 1.1.3** (`claude plugin update prose-style@shipwright`): beside a `prose-style` older than 0.4.0, `/release-notes` records its style check `DEGRADED`.
-- **Update the plugin that holds the file you edited — not the one whose workflow you were thinking about.** An update re-fetches exactly one plugin: the shared references, shared agents and family-meta commands are `workflows-core`'s, the product-definition commands and their agents and references `product-workflows`'s, the documentation commands `docs-workflows`'s. Otherwise the run picks up the old content and the change looks like it did not land.
-- **`claude plugin marketplace update <marketplace>` does NOT update installed plugins.** It refreshes the *catalogue* — what the marketplace advertises — which is what makes a newly added plugin installable. An already-installed plugin stays at the version it was installed at. Use `claude plugin update` per plugin, or the `/plugins` interface (next bullet). ([why](docs/maintainers/rationale.md#plugin-update-cli))
-- **The `/plugins` interface inside Claude Code upgrades what is already installed**, and **AutoUpdate** is settable per plugin there, after which nothing above is needed. This is a human step: an agent cannot drive that interface, so it uses the per-plugin `update` command.
-- **A renamed plugin blocks marketplace update entirely** — not just its own, but every plugin from that marketplace. The remedy is to remove the marketplace and its plugins and reinstall from scratch (`claude plugin marketplace remove`, then `add`, then install each plugin), and the cost lands on every user, so weigh it before renaming one.
-- `claude plugin validate <path>` validates a plugin or marketplace manifest, or the skills, agents and commands in a directory — a local pre-flight cheaper than a failed install. `claude plugin tag [path]` creates a `{name}--v{version}` git tag for a plugin release, **validating that `plugin.json` and any enclosing marketplace entry agree**, as `scripts/validate-catalog.py` also asserts — the last place to catch a disagreement.
 
 ## Behavioral guardrails (Karpathy) — marketplace-specific notes
 

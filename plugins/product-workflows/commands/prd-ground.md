@@ -635,7 +635,7 @@ the manual path:
 1. Prompt for the repos in scope for this BRD's claims — a free-text list of short names, one per
    line or space-separated.
 2. **Build a slug→clone map**, exactly as `/epics` Phase 4 does: for each top-level directory
-   under each entry of `$REPOS_PATH`, run `bounded 5 git -C <dir> remote get-url origin
+   under each entry of `$REPOS_PATH`, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -C <dir> remote get-url origin
    2>/dev/null` (`workflows-core:bounded-run`), strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git` or whose `git remote` call fails/times out. **Never
    assume a `<base>/<slug>` directory name** — resolution is always by remote slug.
 3. Resolve each named repo against the map: one match → use it; multiple matches → auto-prefer

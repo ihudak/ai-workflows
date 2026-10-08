@@ -34,7 +34,7 @@ documentation does not inform that decision.
      (`find "$docs_root" -type f -name '*.md' -print -quit` is non-empty).
    On a host where `/workspace/docs` is absent, the gate fails → `OFF` → the run
    behaves exactly as it does without docs grounding.
-3.5. **Index state — qmd only.** Skip entirely when `command -v qmd` fails: `retrieval: fallback`, silent, exactly as it does without this step. Otherwise probe with `bounded 10 qmd status` and `bounded 10 qmd collection list` (`workflows-core:bounded-run`). **If either probe fails or times out, treat that exactly as `qmd` absent** — `retrieval: fallback`, silent, no prompt — which mirrors `docs-grounder`'s rung 3 so the command and the agent degrade identically instead of disagreeing about the same broken install. Apply **Shadow detection** below before selecting a coverage branch: a shadowing project-local index means `retrieval: fallback`, no build or refresh, with the shadow clause in the plan-approval line. Otherwise take one branch according to whether a collection covers `docs_root`.
+3.5. **Index state — qmd only.** Skip entirely when `command -v qmd` fails: `retrieval: fallback`, silent, exactly as it does without this step. Otherwise probe with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 10 qmd status` and `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 10 qmd collection list` (`workflows-core:bounded-run`). **If either probe fails or times out, treat that exactly as `qmd` absent** — `retrieval: fallback`, silent, no prompt — which mirrors `docs-grounder`'s rung 3 so the command and the agent degrade identically instead of disagreeing about the same broken install. Apply **Shadow detection** below before selecting a coverage branch: a shadowing project-local index means `retrieval: fallback`, no build or refresh, with the shadow clause in the plan-approval line. Otherwise take one branch according to whether a collection covers `docs_root`.
 
    **Global vector counts do not prove coverage of this root.** A positive `Vectors:` count from `qmd status` can belong entirely to unrelated collections. Successful probes that find no collection covering `docs_root` therefore take the no-collection branch even when the global count is positive. These probes alone establish neither orphaned documents nor a corrupt registry: do not diagnose either, recommend registry repair, or suppress the build choice on that evidence. No direct SQLite inspection or repair belongs to this procedure.
 
@@ -48,7 +48,7 @@ documentation does not inform that decision.
 
    A collection that exists and does not cover `docs_root` is the ordinary no-collection branch, whatever either count says.
 
-   **A collection covers `docs_root`** → `bounded 60 qmd update`. Incremental (qmd re-indexes only changed files), instant when nothing changed, and safe to kill because the index is SQLite and rolls back. On a cap breach, prompt once — never silently pay 60 seconds on every future run:
+   **A collection covers `docs_root`** → `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 60 qmd update`. Incremental (qmd re-indexes only changed files), instant when nothing changed, and safe to kill because the index is SQLite and rolls back. On a cap breach, prompt once — never silently pay 60 seconds on every future run:
 
    ```
    choices: ["Continue with the current index — some pages may be stale (Recommended)",
