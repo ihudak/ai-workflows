@@ -2175,9 +2175,11 @@ check_dispatch_authority() {
 # form. The upstream tree carries exactly one, `### [Unreleased] (pre-plugin-split)` in
 # dev-workflows' changelog -- a labelled historical section recording work from before the
 # marketplace split, which is correct content. Matching it would fire on correct content and on
-# nothing else, which is the same result on which this file's earlier widenings were refused. The
-# convention these repositories actually write is the version-heading form, and that is what is
-# gated.
+# nothing else, which is the same result on which this file's earlier widenings were refused. What
+# IS gated is every heading that ENDS in a dash and Unreleased, the version bracketed or not:
+# `## [1.1.0] — Unreleased` and `## 0.3.0 — Unreleased` alike. The bracketed form alone was
+# matched once, and the plugins that write their versions bare (five of the sixteen changelogs
+# across the three editions) went unchecked.
 check_published_changelog() {
   local root="$1" f rp seen=0 hit line n
   [ "${ASSERT_PUBLISHED:-}" = 1 ] || return 0
@@ -2185,7 +2187,8 @@ check_published_changelog() {
     [ -e "$f" ] || continue
     seen=$((seen + 1))
     rp="${f#$root/}"
-    # `##`-or-deeper heading, a bracketed version, an em dash or hyphen, then Unreleased.
+    # `##`-or-deeper heading, any text (a version, bracketed or bare), an em dash or hyphen,
+    # then Unreleased to the end of the line.
     # An alternation, never a bracket expression: `[—-]` is a set of BYTES in a C/POSIX locale
     # (a container with LANG unset), where the three-byte em dash can never match it and the
     # check went silently inert on the form this repo actually writes.
@@ -2195,7 +2198,7 @@ check_published_changelog() {
       hit="${line#*:}"
       fail 18 "$rp:$n is headed \`${hit# }\` on a ref that publishes it -- this file's own header says an \`— Unreleased\` section \"has not been published yet\", and everything on the default branch is what the CLI's plugin update fetches. Date it with the day of the push that publishes it"
     done <<EOF
-$(grep -nE '^#{2,}[[:space:]]+\[[^]]+\][[:space:]]*(—|-)[[:space:]]*Unreleased[[:space:]]*$' "$f" || true)
+$(grep -nE '^#{2,}[[:space:]]+[^[:space:]].*(—|-)[[:space:]]*Unreleased[[:space:]]*$' "$f" || true)
 EOF
   done
   [ "$seen" -gt 0 ] \
@@ -3563,6 +3566,11 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   expect_fail_env "an Unreleased changelog section on a publishing ref is rejected" 18 \
     "ASSERT_PUBLISHED=1" \
     "sed -i.bak 's|^## \[1.1.0\] — 2026-09-22|## [1.1.0] — Unreleased|' $PLUGIN_REL/CHANGELOG.md"
+  # ...and the same claim with the version written bare, as five of the three editions' sixteen
+  # changelogs write it: a regex keyed on the brackets let every one of them through.
+  expect_fail_env "an unbracketed Unreleased heading on a publishing ref is rejected" 18 \
+    "ASSERT_PUBLISHED=1" \
+    "sed -i.bak 's|^## \[1.1.0\] — 2026-09-22|## 1.1.0 — Unreleased|' $PLUGIN_REL/CHANGELOG.md"
   expect_pass_after "the same Unreleased section is accepted off a publishing ref" \
     "sed -i.bak 's|^## \[1.1.0\] — 2026-09-22|## [1.1.0] — Unreleased|' $PLUGIN_REL/CHANGELOG.md"
   # A dated tree must still PASS with the gate armed -- otherwise the red case above could be
