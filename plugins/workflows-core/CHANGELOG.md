@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.35.1] — 2026-10-08
+
+### Fixed
+- **A handoff that stacks on another phase's unmerged branch on purpose now says so** (`phase-handoff` §2.2, §4.1): 1.35.0 printed the *Stacked after a refused switch* clause only when git refused the switch, so a stack the input test chose — a run reading a file that branch changed — opened a pull request that would land the other phase's commits with no word on the outcome line. The append is now *Stacked on another phase's branch*, naming the first path that branch changed or git's refusal.
+- **`phase-handoff` §4.0 and §4.1's decline sentences** said a declined handoff always leaves the next phase reading row F; both now carry 1.35.0's exception for an edit of a copy the default branch already carries, which meets the C rows.
+
 ## [1.35.0] — 2026-10-08
 
 ### Added
