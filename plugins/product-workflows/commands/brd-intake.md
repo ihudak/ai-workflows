@@ -28,7 +28,8 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
    (`workflows-core:addressing` §1 — a key for shape only, a whole folder name against the tree's folder names, neither against a tracker), which also takes
    the key behind a typed folder prefix (`BRD-<KEY>`) or a folder's whole name, and carries the bare key from then on — where
    resolution returns `absent`, a prefix other than `BRD-` stops as that entry point says, since this
-   run creates a `BRD-` folder. If absent or invalid, **stop gracefully**:
+   run creates a `BRD-` folder. On `needs-tree` (`$SPECS_PATH` unset), take step 5's `$SPECS_PATH`
+   stop now. If absent or invalid, **stop gracefully**:
    `BRD_INTAKE_NEEDS_KEY: /brd-intake needs a BRD key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-001) — pick a short stable identifier for this business requirements document, then re-run '/product-workflows:brd-intake <KEY> @<brd-file>'.`
 2. **`@<brd-file>` (mandatory).** The customer's source file argument. If absent, **stop**:
    `BRD_INTAKE_NEEDS_SOURCE: /brd-intake needs the customer's source as an @-argument — re-run '/product-workflows:brd-intake <KEY> @<path-to-brd>'.`
@@ -113,7 +114,7 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
    refused**: what runs next on an idea-route PRD folder or an Epic depends on what that folder
    already holds, which this command has not read and has no reason to, and a remedy naming a run
    that refuses the folder would be worse than none. Both are argument halts, so `emit-block` does
-   not fire (Phase 9). Absent → where step 1 read the key behind a prefix other than `BRD-`, stop here,
+   not fire (Phase 9). Absent → where step 1 read the key as a whole name, or behind a prefix other than `BRD-`, stop here,
    before anything is written, as `workflows-core:addressing` §1's `read-key` says; otherwise this is a
    brand-new BRD: derive `<slug>` from the source file's first heading — lowercase it, keep every
    letter and digit of any script together with the accents and vowel signs written on it (Unicode

@@ -57,12 +57,7 @@ in this order, the first that holds winning:
    hyphen — `BRD-`, `PRD-` or `EPIC-` — followed by a rest `key-valid` finds valid: `key: <the rest>`,
    `prefix: <that kind>`.
 
-Where the first holds nothing and `$SPECS_PATH/specifications/` is not a directory — the variable
-unset, or pointing where no tree is — the second cannot be tried, and a token the third does not take
-either returns **`needs-tree`** rather than `invalid`. A caller whose address is required goes on to
-its own `$SPECS_PATH` check and resolution with the token, and stops there — on the variable, or on
-§3's `specs-root-check` — not on a key grammar the token may never have been meant to meet; a caller
-with a direct mode reads `needs-tree` as no address. Anything else is `invalid`.
+Where `$SPECS_PATH` is unset the second reading cannot be tried, and a token neither of the others takes returns **`needs-tree`** rather than `invalid`: a caller whose address is required takes its own `$SPECS_PATH` stop on it, wherever in its order that check stands, rather than a key-grammar stop the token may never have been meant to meet; a caller with a direct mode reads it as no address, since with no tree to look in a whole name cannot be told from prose. Anything else is `invalid` — a `$SPECS_PATH` holding no `specifications/` included, where no name can match.
 
 **The line.** A reading other than the first prints one line —
 `Read '<TOKEN>' as the key <key> — <prefix>- is a folder kind prefix, not part of a key.` for the
@@ -87,8 +82,7 @@ to the whole grammar above — so nothing is extracted by pattern.
 its address before its preflight reads the checkout as it stands, as its resolution does anyway. A
 caller that reads its key before the preflight — its run key set being that key (§3.2 of
 `workflows-core:specs-repo-git`) — reads a whole name on the checkout the preflight may then switch
-away from; it resolves the key read after the preflight as always, and the `prefix` the name carried
-keeps a creating command's refusal below in force where that resolution comes back `absent`.
+away from; it resolves the key read after the preflight as always. **A whole name that then resolves `absent` stops the run, whatever the command**: the folder it named was on the checkout before the preflight moved it, and creating one for its key would make a second. The stop names the token, the branch it was read on and the branch the run now stands on.
 
 **From a reading that is not the first, the run's key is `key`, never the token typed** — in every
 later step and in everything the run prints or writes — so neither a prefix nor a slug reaches a

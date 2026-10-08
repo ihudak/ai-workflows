@@ -244,7 +244,7 @@ that takes an address and reads its key set from resolution resolves it first, s
 what resolution returns (the resolved key, and on an Epic-level folder the key its parent's carrier
 asserts), and runs this before any placement or refusal reads the resolved folder; a command that
 takes none, or whose key set is the keys `workflows-core:addressing` §1's `read-key` reads off its arguments — `/dev-workflows:vuln`'s
-per-token keys among them, keyless where no token carries one — runs it as soon as `$SPECS_PATH` is known, and resolves afterwards — `read-key` having read at most one carrier first, for a key typed as a folder's whole name (`workflows-core:addressing` §1). Where resolution comes first,
+per-token keys among them, keyless where no token carries one — runs it as soon as `$SPECS_PATH` is known, and resolves afterwards — `read-key` having first read the carrier of each key typed as a folder's whole name (`workflows-core:addressing` §1). Where resolution comes first,
 a run that stops on its address — `invalid`, `ambiguous`, `misrooted` or `absent` — runs none. In
 either order, a run that stops before the preflight on a check of its own inputs needing no specs-repo
 state — a run flag, the directory it runs from, a path it reads where it sits rather than as an

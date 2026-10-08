@@ -29,7 +29,7 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
 ## Phase 0 — Resolve the address + model routing
 
 1. **The address (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Because the token after the key may be this command's own free-text `<prompt>`, that prose is protected per `workflows-core:run-flags` §3 step 1 (the prose span begins at the first token after the key): a run-flag token before the key, or in a trailing run at the very end of `$ARGUMENTS`, is stripped, but one written inside the prompt itself is kept as prompt text, even where it looks like a flag. Parse the first token that is neither a flag nor a flag's value — `--docs` always consumes the token after it, and `--ground-code` only as the Flags paragraph above conditions it, and a value skipped as "non-flag" would be read as the key and read it with `read-key`
-   (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix (`PRD-<KEY>`) or a folder's whole name, and carries the bare key from then on — where resolution returns `absent`, a prefix other than `PRD-` stops there as that entry point says, since this run creates a `PRD-` folder. Absent or malformed → stop:
+   (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix (`PRD-<KEY>`) or a folder's whole name, and carries the bare key from then on — where resolution returns `absent`, a prefix other than `PRD-` stops there as that entry point says, since this run creates a `PRD-` folder. `needs-tree` (`$SPECS_PATH` unset) → the `$SPECS_PATH` stop below, now. Absent or malformed → stop:
    `IDEA_NEEDS_KEY: /idea needs a PRD key (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-77) — it names the folder this idea will live in. Re-run '/product-workflows:idea <PRD-KEY> [<prompt>|@<file>]'.`
 
    **The key is an argument because there is nowhere keyless to write.** `idea.md` lands in its final
@@ -37,13 +37,13 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
    comes first:** if it is unset, stop naming it (`choices: ["Set SPECS_PATH (enter the path)", "Cancel"]`,
    `workflows-core:escalation-rules` *Required path environment variable unset*) — resolution and Phase 4's
    write both need it, and an empty one would aim `idea.md` at `/specifications/` under the filesystem root.
-   **Then run the specs-repo preflight below**, its run key set the one key this step read (`workflows-core:specs-repo-git` §3.2), before the folder is resolved or anything in it is read — save the one carrier `read-key` reads where the key was typed as a folder's whole name, which `workflows-core:addressing` §1 says how it stays safe: a
+   **Then run the specs-repo preflight below**, its run key set the one key this step read (`workflows-core:specs-repo-git` §3.2), before the folder is resolved or anything in it is read. (A key typed as a folder's whole name is the one exception: `read-key` has read that folder's carrier already, and `workflows-core:addressing` §1 says what keeps it safe.) The preflight goes first because a
    stale plugin branch it switches away from would otherwise hide the `brd-link.md`, `prd.md` or
    coverage ledger the test below reads, and the run would refuse the folder with the wrong remedy,
    or take a folder as an idea-route one that is not.
    Resolve the folder here with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`,
    §3): `found` is the folder this run writes into — **where it is an idea-route PRD folder**, below
-   — and `ambiguous` and `misrooted` are §3's two hard stops. **On `absent` nothing is created here** — save that a key step 1 read behind a prefix other than `PRD-` stops here, at resolution, as `workflows-core:addressing` §1's `read-key` says — because Phase 0
+   — and `ambiguous` and `misrooted` are §3's two hard stops. **On `absent` nothing is created here** — save that a key step 1 read as a whole name, or behind a prefix other than `PRD-`, stops here, at resolution, as `workflows-core:addressing` §1's `read-key` says — because Phase 0
    holds no slug to name a folder with: the folder is created by Phase 4's first write, as
    `PRD-<KEY>-<candidate_slug>/` (`workflows-core:addressing` §2), `candidate_slug` being the one
    Phase 2's digest returns. Creating it with `idea.md`, which carries its `kind` and `key`, is also
