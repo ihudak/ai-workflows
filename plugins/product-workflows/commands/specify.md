@@ -368,9 +368,9 @@ read as context rather than frozen, and its absence is the ordinary case. The PR
 every route.
 
 **Gate the Epic — wherever the run reads one, once it knows which.** Where the address named an
-`EPIC-` folder, here, after the gates above; where it named a PRD, at the end of Phase 2 Step A,
-which settles the Epics this run reads before Step B reads any of them (*Gate the Epics Step A
-settled*). Execute `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against
+`EPIC-` folder, here, after the gates above; where it named a PRD, at the head of Phase 2 Step B,
+once Step A has settled the Epics this run reads and before Step B reads any of them (*Gate the
+Epics first*). Execute `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against
 the `epic.md` in that Epic folder — the folder resolved or picked, never a path re-derived here —
 and map its §3.7 return value by `stopped` first, never by `on_main` alone. Any stopping state →
 stop per §4.4. An Epic on an unmerged `epics/` branch is the state this gate exists for:
@@ -590,16 +590,20 @@ provisional PRD-level folder confirmed in Phase 1 — Phase 0 already marks that
 the folder read runs. Re-detect a prior run there (a `_session.md` → a resume is available for that
 Epic). The broad-PRD-spec case — the only other one left — leaves the folder Phase 1 confirmed unchanged.
 
-**Gate the Epics Step A settled, before Step B reads them.** Run Phase 0's *Gate the Epic* against
-each `epic.md` Step B is about to read: the Epic this step set `focus_key` to — every time it sets
-it, Phase 7's *Next Epic* re-render included — or, on a broad PRD-level spec, the `epic.md` of every
-`EPIC-` folder under the PRD folder, since Step B reads them all. A stop on any one stops the run;
-each `absent` is reported on its own line. A run that entered with `focus_key` set gated its Epic in
-Phase 0 and skips this.
-
 ### Step B — Full Epic-scoped read
 
 With granularity settled and `focus_key` resolved, perform the `full` read.
+
+**Gate the Epics first, before this step reads any.** Run Phase 0's *Gate the Epic* against each
+`epic.md` this step is about to read: the Epic Step A set `focus_key` to — every time it sets it,
+Phase 7's *Next Epic* re-render included — or, on a broad PRD-level spec, the `epic.md` of every
+`EPIC-` folder under the PRD folder, since this step reads them all. A stop on any one stops the run;
+each `absent` is reported on its own line. A run that entered with `focus_key` set gated its Epic in
+Phase 0 and skips this. **This is a deliberate exception to `workflows-core:phase-handoff` §5 rule 2's
+Phase 0 placement**, as `/epics`' early docs-grounding resolution is to its ordering: on a PRD
+address, which Epics the run reads is settled only by Step A's picker, after Phase 1's configuration
+and grounding resolution; the gate still runs before any subagent dispatch, code scan, docs-grounding
+retrieval or grill question, which is what rule 2 protects.
 **Read the Epic folder itself, and everything under the PRD folder that bears on it.** The raw
 material for user stories, acceptance criteria and test cases is the PRD's own text plus whatever the
 Epic folder already holds — its `epic.md` where one exists, and any earlier `specification.md` or
@@ -1013,7 +1017,7 @@ When this run authored a **per-Epic** spec that was selected from Step A's ≥2-
 ```
 choices: ["Next Epic — re-open the picker (Recommended)", "Stop here"]
 ```
-On **"Next Epic"**, **re-render the Phase 2 Step A progress-aware picker minus the just-completed Epic** — recompute each remaining Epic's ○/◐/● state from its feature folder, so the freshly-authored spec now shows **● done** and drops out of the actionable set — then, on selection, set `focus_key` to the new Epic and loop back through Phase 2's *Gate the Epics Step A settled* → Step B → Phases 3–7 for it. This offer does **not** apply to a single-Epic PRD or a broad PRD-level spec — there is no sibling to advance to. **On the BRD route it applies on exactly the same terms**: Step A runs there too, so a slice holding two or more `EPIC-` folders re-renders the picker like any other PRD folder, and a slice holding none or one does not — the same two exclusions as above, reached by the same test rather than by a route branch. What is *not* a sibling Epic is another **slice**: that is a separate folder with its own seed, reached by re-running `/product-workflows:specify <SIBLING-SLICE-KEY>`, which waits on nothing this run produced.
+On **"Next Epic"**, **re-render the Phase 2 Step A progress-aware picker minus the just-completed Epic** — recompute each remaining Epic's ○/◐/● state from its feature folder, so the freshly-authored spec now shows **● done** and drops out of the actionable set — then, on selection, set `focus_key` to the new Epic and loop back through Phase 2 Step B — whose *Gate the Epics first* gates it — → Phases 3–7 for it. This offer does **not** apply to a single-Epic PRD or a broad PRD-level spec — there is no sibling to advance to. **On the BRD route it applies on exactly the same terms**: Step A runs there too, so a slice holding two or more `EPIC-` folders re-renders the picker like any other PRD folder, and a slice holding none or one does not — the same two exclusions as above, reached by the same test rather than by a route branch. What is *not* a sibling Epic is another **slice**: that is a separate folder with its own seed, reached by re-running `/product-workflows:specify <SIBLING-SLICE-KEY>`, which waits on nothing this run produced.
 
 ### The Epic flow (document to the user)
 

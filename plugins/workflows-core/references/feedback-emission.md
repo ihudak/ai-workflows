@@ -253,7 +253,9 @@ the target (§2); write; surface the path + any degradation notice.
 Inputs: `command` (inferred from recent context, or `n/a`), the **corrective
 triple** — Friction, the **verbatim User prompt** (redacted here per §1.1, never by the caller), and the Resolution — a
 `category`, `impact`, `key` (or `null`), `source`, and `plugin_version` — the calling command's own (§3), which every
-caller of this entry point ships from `workflows-core`.
+caller of this entry point ships from `workflows-core`. On these entries, as on `emit-manual`'s, it versions the command
+that captured the correction, beside a `command:` naming the command corrected, which may ship from another plugin:
+read the two together as "reported through `workflows-core` <version> about `<command>`", never as that command's version.
 
 Behavior: `origin: prompt`; write the entry with the two extra prose blocks
 (User prompt verbatim save §1.1's redactions + Resolution, §1); never silently skipped (§3); resolve

@@ -8,6 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [4.22.1] — 2026-10-08
 
 ### Fixed
+- **`/implement` Phase 4.5 presented the array saying the next phase would not stop** for annotations of a `design.md` the default branch already carries, whose decline stops the next run's in-scope gate (`workflows-core:phase-handoff` §4.1, 1.34.0); such a run now presents the stopping array.
 - **The environment reference's list of specs-repo handoff branches** takes `epics/`, the prefix `/product-workflows:epics` now hands its drafts off on (workflows-core 1.34.0).
 
 ## [4.22.0] — 2026-10-07

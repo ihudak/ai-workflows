@@ -522,8 +522,9 @@ one whose fix is only an edit asks nobody anything. A `BLOCKER` that `/specify`'
 decision: the note records the deferral, as a plain bullet that counts as no question, and the open
 question records the decision. A specification's open
 questions stop nothing downstream — `/design` reads them and may resolve or inherit them. An Epic's
-marker is asked again wherever the Epic is next read: `/specify`'s grill asks it, and a later
-`/epics` run on the Epic puts it through its clarification gate, where one left unresolved is an
+marker is asked again wherever the Epic is next read: `/specify`'s grill asks it, an Epic-level
+`/create-ard`'s grill asks it where it is an architecture decision, and a later `/epics` run on the
+Epic puts it through its clarification gate, where one left unresolved is an
 `epic-reviewer` `BLOCKER`, as every marker is. Writing
 one is an edit after the verdict, which the final report names under `A recorded verdict names the
 version it was taken against`; it answers no finding, so it makes no re-review offer.
@@ -553,4 +554,6 @@ Escalate per unresolved BLOCKER individually.
 Used in `/epics` Phase 7 at either of two points: when `doc-fixer` returns `Stop condition flag: NEEDS HUMAN` — it deferred a BLOCKER as needing a human decision, so no re-review runs — or when the review stayed blocked (`finding-triage.md` § On re-review).
 Escalate per unresolved BLOCKER individually. "Defer" means the finding goes
 into an Epic-refinement note in the draft itself (appended as a
-`## Refinement notes` section) in addition to the Phase 9 report.
+`## Refinement notes` section, one plain `- ` bullet per finding) in addition to the Phase 9 report;
+a deferred finding whose fix needs a decision also becomes a marker in the Epic (*A finding left
+open that needs a decision is recorded in the artifact*).
