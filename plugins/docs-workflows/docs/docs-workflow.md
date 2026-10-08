@@ -9,7 +9,7 @@ A portal is not finished when it builds. [`/docs-init`](commands/docs-init.md) g
 ```mermaid
 flowchart TD
     subgraph ONCE["Once — stand the portal up"]
-        INIT["/docs-init — scaffold the repository"]
+        INIT["▶ start — /docs-init — scaffold the repository"]
         SERVE["/docs-serve — look at it"]
         AUDIT["/docs-audit — the backlog"]
         INIT --> SERVE
@@ -33,6 +33,9 @@ flowchart TD
     VERIFY --> ROT
     REFRESH --> WRITE
     ROT --> WRITE
+
+    classDef entry stroke:#dc2626,stroke-width:3px
+    class INIT entry
 ```
 
 Every node carrying *by hand* is a step nothing in this plugin runs for you, and the loop in the middle is three of them on purpose: the commands on either side derive what a portal ought to contain and measure what it does, and neither of those is the act of writing a page about a product for a person who has never used it. [Workflow overview](workflow.md) draws all seven of this plugin's commands and where each sits; this page draws only the ones on this route, plus the work between them.

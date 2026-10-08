@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.36.2] — 2026-10-08
+
+### Changed
+- **The family map draws `/harvest-decisions` and `/promote-decisions`.** The page said it showed every slash command of the four plugins, and the two architecture-decision commands were missing from it; they now sit in the PA lane with their edges — merged ARDs into the harvest, team records into `/create-ard`, `/specify`, `/dev-workflows:design` and `/promote-decisions`, and accepted organisation ADRs back into grounding — and a *Reading it* bullet says what the lane keeps.
+- **The family map marks where work starts.** `/idea`, `/brd-intake` and `/docs-init` are drawn as ▶ entry points, outlined in red so the plugin colours stay, and a *Where to start* list under the page's opening says which to run for an idea of your own, a customer's requirements document, and a documentation portal.
+- **A new *Grounding sources* reference page** lists every source the family's authoring commands ground on — shipped docs, the architecture repository, the team decision records, mounted code and design frames — with what each feeds, the commands that read it, what turns it on, its status line and its off switch.
+
 ## [1.36.1] — 2026-10-08
 
 ### Changed

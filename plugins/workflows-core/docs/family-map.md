@@ -2,6 +2,13 @@
 
 This page shows the whole plugin family on one diagram: every slash command of `product-workflows`, `dev-workflows`, `docs-workflows` and `workflows-core`, from the two ways work enters — `/idea` and `/brd-intake` — to shipped code, its documentation and its release notes. Each lane is a **role**. Each command is **coloured by the plugin that ships it**. Labels name artifacts or explicitly marked actions; gray manual steps are not commands.
 
+**Where to start.** The nodes outlined in red and marked ▶ are the entry points:
+
+- **An idea of your own** — `/idea <PRD-KEY>`, then `/create-prd`.
+- **A customer's business requirements document** — `/brd-intake <BRD-KEY> @<brd-file>`, the start of the six-command BRD route.
+- **A documentation portal for a project that has none** — `/docs-init`, once per documentation repository; a documentation repository that already exists is profiled with `/docs-profile` instead.
+- **Anytime** — the commands in the Anytime lane start on their own and hand nothing to the pipeline, save `/frames`.
+
 ```mermaid
 flowchart TD
     subgraph KEY["Legend"]
@@ -10,10 +17,11 @@ flowchart TD
         kdocs["docs-workflows"]:::docs
         kcore["workflows-core"]:::core
         kmanual["Manual work — no command"]:::manual
+        kentry["▶ entry point — start here"]:::entry
     end
 
     subgraph BRDR["PM — BRD route (entry for a customer's requirements document)"]
-        brdintake["/brd-intake"]:::prod
+        brdintake["▶ start — /brd-intake"]:::prod
         splitroot["/brd-split (root)"]:::prod
         splitslice["/brd-split (slice)"]:::prod
         brdinterview["/brd-interview"]:::prod
@@ -24,7 +32,7 @@ flowchart TD
         review["reviews the bundle"]:::cust
     end
     subgraph PMR["PM — idea route and the PRD"]
-        idea["/idea"]:::prod
+        idea["▶ start — /idea"]:::prod
         createprd["/create-prd"]:::prod
         updateprd["/update-prd"]:::prod
         rnearly["/docs-workflows:release-notes (PRD draft / refresh)"]:::docs
@@ -37,6 +45,8 @@ flowchart TD
         groundbrd["/prd-ground (BRD slice)"]:::prod
         groundprd["/prd-ground (idea PRD)"]:::prod
         createard["/create-ard"]:::prod
+        harvest["/harvest-decisions"]:::prod
+        promote["/promote-decisions"]:::prod
     end
     subgraph PE["PE — breakdown and specification"]
         epics["/epics"]:::prod
@@ -52,7 +62,7 @@ flowchart TD
         rnfinal["/docs-workflows:release-notes (final)"]:::docs
     end
     subgraph PORTAL["Dev — documentation portal, off the spine"]
-        docsinit["/docs-init"]:::docs
+        docsinit["▶ docs start — /docs-init"]:::docs
         docsbrand["/docs-brand"]:::docs
         docsprofile["/docs-profile"]:::docs
         docsserve["/docs-serve"]:::docs
@@ -101,6 +111,12 @@ flowchart TD
     createard -.->|"ard.md"| epics
     epics -->|"epic.md"| specify
     specify -.->|"optional PRD-level specification.md"| epics
+    createard -.->|"merged ard.md"| harvest
+    harvest -.->|"team decision records"| createard
+    harvest -.->|"team decision records"| specify
+    harvest -.->|"team decision records"| design
+    harvest -.->|"team decision records"| promote
+    promote -.->|"accepted org ADRs — grounding"| createard
 
     specify -->|"specification.md"| design
     design -->|"design.md"| implement
@@ -132,6 +148,8 @@ flowchart TD
     classDef core fill:#ede9fe,stroke:#6d28d9,color:#4c1d95
     classDef cust fill:#f3f4f6,stroke:#6b7280,color:#1f2937
     classDef manual fill:#f3f4f6,stroke:#6b7280,color:#1f2937,stroke-dasharray:5 5
+    classDef entry stroke:#dc2626,stroke-width:3px
+    class idea,brdintake,docsinit entry
 ```
 
 ## Reading it
@@ -142,6 +160,7 @@ flowchart TD
 - **`/update-prd` offers reruns for existing downstream artifacts** — architecture, specification, Epics and release notes — and recommends a rerun when the update invalidates one. These edges do not require creating artifacts that do not yet exist. The specification-to-Epics edge is optional enrichment from a PRD-level `specification.md`, not a requirement to specify before splitting.
 - **`/docs-workflows:release-notes` is drawn twice** to show PRD-driven drafts or refreshes and the post-implementation note. The final run reads nothing `/document` writes, so the two documentation commands are independent. This command, `/dev-workflows:upgrade`, `/workflows-core:statusline` and `/workflows-core:feedback` use qualified names because their bare names collide with built-ins, and `/dev-workflows:design` because its bare name does on the accounts Claude Code's own `/design` is switched on for.
 - **The audit backlog has a manual implementation stage.** Select an actionable unit, write its page, maintain its `unit:` metadata and backlog `page_path` / `status`, verify its claims, and publish it. `/document` direct mode can help with a described prose edit, but it never reads the backlog or manages unit status; keyed mode remains the feature-documentation route. `/docs-write` is planned, not shipped. The `docs-workflows` documentation route page describes the manual procedure; `--refresh` re-audits coverage and does not replace verification.
+- **The PA lane keeps its own decisions.** `/harvest-decisions` turns the decisions of merged ARDs into team records that `/create-ard`, `/specify` and `/dev-workflows:design` ground on; `/promote-decisions`, run in the architecture repository, proposes organisation ADRs from them, and once one is accepted grounding cites the ADR instead of the record. The product-workflows Workflow overview page draws the whole loop.
 - **`/ready` sits beside the spine, not on it.** Its verdict is advice `/implement` reads; it blocks nothing.
 - **The Anytime lane hands no deliverable to the pipeline** except `/frames`' frame-set index, which `/prd-ground`'s design grounding needs. The portal lane prepares the documentation repository `/document` writes into, and `/docs-serve` only previews it.
 

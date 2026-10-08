@@ -1,6 +1,6 @@
 # Workflow overview
 
-`docs-workflows` carries the documentation tail of the pipeline the companion `product-workflows` and `dev-workflows` plugins drive. Every command it ships is shown below. The spine is short: once a Product Requirements Document's Epics are implemented, `/docs-workflows:document` writes the product documentation and `/docs-workflows:release-notes` drafts the note that announces it. Before that spine can run at all there has to be a documentation repository, and `/docs-workflows:docs-init` is the cold-start command that creates one — a portal skeleton that builds, serves, lints and carries a profile — running `/docs-workflows:docs-brand` inline as one of its own phases. `/docs-workflows:docs-profile`, `/docs-workflows:docs-brand`, and `/docs-workflows:docs-serve` also stand alone outside the spine — setup utilities reached at any point: the first teaches `/document` what an existing documentation repository looks like, the second extracts a logo and a rough colour pair from the product's own code and applies them to the docs site, and the third runs that repository's own dev server so you can look at it. Between the cold start and the spine sits `/docs-workflows:docs-audit`, which answers what the portal is still missing: against a documentation repository that already exists, it reads the code repositories the profile records and the specs tree, and writes a coverage grid and a prioritised backlog into that repository for a person to work through — so it runs after `/docs-init` on a fresh portal, and at any later point on one that has been filling up.
+`docs-workflows` carries the documentation tail of the pipeline the companion `product-workflows` and `dev-workflows` plugins drive. Every command it ships is shown below. The spine is short: once a Product Requirements Document's Epics are implemented, `/docs-workflows:document` writes the product documentation and `/docs-workflows:release-notes` drafts the note that announces it. Before that spine can run at all there has to be a documentation repository, and `/docs-workflows:docs-init` is the cold-start command that creates one — a portal skeleton that builds, serves, lints and carries a profile — running `/docs-workflows:docs-brand` inline as one of its own phases. `/docs-workflows:docs-profile`, `/docs-workflows:docs-brand`, and `/docs-workflows:docs-serve` also stand alone outside the spine — setup utilities reached at any point: the first teaches `/document` what an existing documentation repository looks like, the second extracts a logo and a rough colour pair from the product's own code and applies them to the docs site, and the third runs that repository's own dev server so you can look at it. Between the cold start and the spine sits `/docs-workflows:docs-audit`, which answers what the portal is still missing: against a documentation repository that already exists, it reads the code repositories the profile records and the specs tree, and writes a coverage grid and a prioritised backlog into that repository for a person to work through — so it runs after `/docs-init` on a fresh portal, and at any later point on one that has been filling up. The ▶ node, outlined in red, is where the documentation flow starts: `/docs-workflows:docs-init`, for a project with no documentation repository yet.
 
 ```mermaid
 flowchart TD
@@ -17,7 +17,7 @@ flowchart TD
         rndev["/docs-workflows:release-notes (final)"]:::docs
     end
     subgraph COLD["Cold start — a project with no docs repository"]
-        init["/docs-workflows:docs-init"]:::docs
+        init["▶ docs start — /docs-workflows:docs-init"]:::docs
     end
     subgraph PLAN["Plan — what the portal is still missing"]
         audit["/docs-workflows:docs-audit"]:::docs
@@ -55,6 +55,8 @@ flowchart TD
     classDef dev fill:#dcfce7,stroke:#15803d,color:#14532d
     classDef docs fill:#fef3c7,stroke:#b45309,color:#78350f
     classDef manual fill:#f3f4f6,stroke:#6b7280,color:#1f2937,stroke-dasharray:5 5
+    classDef entry stroke:#dc2626,stroke-width:3px
+    class init entry
 ```
 
 Three nodes are drawn for continuity and are not this plugin's commands: `/dev-workflows:implement` ships in the companion `dev-workflows` plugin, and `/product-workflows:create-prd` and `/product-workflows:create-ard` in the companion `product-workflows` plugin, and each is documented there.

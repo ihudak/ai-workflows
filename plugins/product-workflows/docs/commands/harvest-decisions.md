@@ -42,4 +42,5 @@ The first shows what would change and every problem (an unparseable decision, a 
 
 - [`/create-ard`](create-ard.md) — grounds on the live records, and writes the `Supersedes` the next harvest applies.
 - [`/specify`](specify.md) and `/dev-workflows:design` — ground on the live records too.
+- [Architecture knowledge base](../workflow.md#architecture-knowledge-base) — the whole loop, from merged ARDs to organisation ADRs and back into grounding.
 - `workflows-core:architecture-kb` — the format: identity, statuses, citations and every problem kind with its fix.

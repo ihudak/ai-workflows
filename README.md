@@ -9,7 +9,7 @@ Ivan Gudak's open-source Claude Code plugin marketplace, **Shipwright**: plugins
 | Plugin | Description |
 |--------|-------------|
 | [dev-workflows](plugins/dev-workflows/) | Five slash commands for design → implementation → readiness, upgrade, and vuln fixing, with Opus-backed planning and review gates. Needs `workflows-core`. [Docs](plugins/dev-workflows/docs/README.md) |
-| [product-workflows](plugins/product-workflows/) | Sixteen slash commands: idea → PRD → ARD → specification, a six-command BRD-to-PRD route, effort proposals. Needs `workflows-core` and `prose-style`. [Docs](plugins/product-workflows/docs/README.md) |
+| [product-workflows](plugins/product-workflows/) | Sixteen slash commands: idea → PRD → ARD → spec, BRD-to-PRD route, effort proposals, decision harvest/promotion. Needs `workflows-core`, `prose-style`. [Docs](plugins/product-workflows/docs/README.md) |
 | [guideline-reviewers](plugins/guideline-reviewers/) | Two standalone commands: `/api-guideline-reviewer` reviews OpenAPI specs against bundled REST/IAM guidance; `/guideline-reviewer` reviews code/UI against bundled design-system and a11y standards. |
 | [workflows-core](plugins/workflows-core/) | Shared foundation for the workflow plugin family — addressing, git handoff, model routing, emission — plus seven utility commands. [Docs](plugins/workflows-core/docs/README.md) |
 | [docs-workflows](plugins/docs-workflows/) | Seven commands: scaffold, brand and serve a docs portal, audit its coverage, write pages, profile, release notes. Needs `workflows-core`, `prose-style`. [Docs](plugins/docs-workflows/docs/README.md) |
@@ -20,6 +20,14 @@ Ivan Gudak's open-source Claude Code plugin marketplace, **Shipwright**: plugins
 ## How the plugins fit together
 
 `product-workflows`, `dev-workflows` and `docs-workflows` form one pipeline, from an idea or a customer's requirements document to shipped, documented code, and `workflows-core` is the foundation all three depend on. The **[family map](plugins/workflows-core/docs/family-map.md)** draws every command of the four on one diagram: grouped by role, coloured by plugin, with the deliverable each command hands the next. Each plugin's own workflow page carries the detail.
+
+**Where to start** — the map marks each entry point ▶:
+
+- **An idea of your own** — `/idea <PRD-KEY>`, then `/create-prd` (`product-workflows`).
+- **A customer's business requirements document** — `/brd-intake <BRD-KEY> @<brd-file>`, the start of the BRD-to-PRD route (`product-workflows`).
+- **A documentation portal for a project that has none** — `/docs-init` (`docs-workflows`); an existing documentation repository is profiled with `/docs-profile` instead.
+
+What the authoring commands ground on, and how to turn each source off, is on the [Grounding sources](plugins/workflows-core/docs/reference/grounding.md) page.
 
 ## Prerequisites
 
@@ -54,18 +62,20 @@ claude plugin install docs-workflows@shipwright
 
 ### 3. Configure environment variables
 
-The workflow plugins resolve their inputs and outputs through three core environment variables — plus an optional `DOCS_PATH`, read-only as a documentation-grounding root and a write target for the docs commands that write a docs repository. Export them in your shell profile (or rely on the AI-Container defaults):
+The workflow plugins resolve their inputs and outputs through three core environment variables — plus an optional `DOCS_PATH`, read-only as a documentation-grounding root and a write target for the docs commands that write a docs repository, and an optional `ARCHITECTURE_REPO_PATH` for architecture grounding. Export them in your shell profile (or rely on the AI-Container defaults):
 
 ```bash
 export SPECS_PATH="/workspace/specs"   # shared store: specifications, designs, ARDs
 export REPOS_PATH="/workspace"         # where your code clones live (default: /workspace)
 export DOCS_PATH="/workspace/docs"     # optional: your product docs clone; read-only for grounding (default: /workspace/docs)
+export ARCHITECTURE_REPO_PATH="/workspace/architecture"   # optional: your architecture repo, read-only for grounding (no default)
 export GIT_USER_INITIALS="iv-gu"       # optional: branch prefix for every command that creates a branch in a code or docs repo
 ```
 
 - **`SPECS_PATH`** — the shared, team-visible store for a ticket's `specification.md` / `design.md` / ARD under `specifications/<KIND>-<KEY>-<slug>/…` (kind `BRD`/`PRD`/`EPIC`). It names the root of a dedicated specs repository, the directory that holds `specifications/`, never `specifications/` itself, which a run resolving an address stops on. Required by the commands that stop without it — `grep -lE 'Set SPECS_PATH|Required path environment variable unset' plugins/*/commands/*.md` lists them. `/implement`, `/document` in keyed mode and `/release-notes` are among them on a `<KEY>` address; an `@<path>` address and the direct modes do not need it; `/epics` and `/docs-audit`, among others, read the specs tree where it is set without carrying that stop.
 - **`REPOS_PATH`** — where code clones live; a single directory or a colon-separated list. Defaults to `/workspace`. The match is by `git remote get-url origin` slug where a command was handed the slug; where a command lists candidates to offer you instead (`/create-ard`, bare `/idea --ground-code`, `/docs-init`, `/docs-brand` where neither its `--from` nor the docs profile's recorded source repositories settle the repository, and `/docs-audit` where those recorded repositories do not settle the set), your answer is resolved against that listing, so a rename changes the name a clone is offered under, never whether it is offered.
 - **`DOCS_PATH`** *(optional)* — your product documentation's clone (default `/workspace/docs`), in **two roles**. As a **grounding root** it is read-only: when it is an existing directory containing markdown, the commands that ground on shipped docs — among them `/idea`, `/create-prd`, `/specify`, `/epics` and `/release-notes` — read it through the read-only `docs-grounder` agent, never write to it, and treat every miss as a silent, non-blocking skip. Disable grounding per run with `--no-docs`, or override the root with `--docs <path>`. As a **write target** it is a docs repository like any other: `/docs-init` scaffolds one there when nothing is there yet, and every other `docs-workflows` command that resolves a docs repository — `/document`, `/docs-profile`, `/docs-brand`, `/docs-audit` and `/docs-serve` — writes into the one it resolves there (`/docs-audit` its backlog, `/docs-serve` the record of the server it started). The two roles are different uses of one variable, not a contradiction; `plugins/workflows-core/references/docs-grounding.md` owns the first and `plugins/docs-workflows/references/docs-workflow/repo-resolution.md` the second.
+- **`ARCHITECTURE_REPO_PATH`** *(optional)* — a clone of your organisation's architecture repository (technology radar, standards, principles, patterns, ADRs). When it names a valid one — a catalog, a radar file or an ADR folder — `/create-ard`, `/specify` and `/dev-workflows:design` ground their work in it through the read-only `architecture-grounder` agent; there is no default and nothing scans for a clone. Grounding never writes, fetches or pulls it; the one command that writes an architecture repository is `/promote-decisions`, which proposes ADRs there on a branch of its own. Unset, architecture grounding is off, while the team's harvested decisions under `$SPECS_PATH/architecture/` are still read where they exist. Disable both per run with `--no-arch`; `plugins/workflows-core/references/architecture-grounding.md` owns the rule.
 - **`GIT_USER_INITIALS`** *(optional)* — your branch identifier, used verbatim (no trailing `/`) by every command that creates a branch in a code or documentation repository; `plugins/workflows-core/references/branch-naming.md` names them. Branch naming is **repo-rule-first**: each command reads the target repo's own `CONTRIBUTING.md` / `README.md` / `DOCUMENTATION-GUIDELINES.md` / `CLAUDE.md` and follows the convention documented there. Where that convention has a name/initials segment — as `example-docs` does (`<your-name-or-initials>/<JIRA-ISSUE-KEY>-<short-branch-name>`) — this variable fills it, giving `iv-gu/PRODUCT-1234-add-oauth`. Where it has none (say a plain `feat/<slug>` repo), the convention is followed as written and no initials are injected. Only when a repo documents no convention at all does this variable become the whole prefix. When unset, the commands fall back to `git config user.initials`, then infer from existing branch names, then ask. Full algorithm: `plugins/workflows-core/references/branch-naming.md`.
 
 ### 4. Raise Claude Code's skill-listing budget
