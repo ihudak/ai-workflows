@@ -674,10 +674,13 @@ the next phase — **adapted to status**:
   **On a decline, or where §4.1's *Gate failed* line was emitted, offer the `@<path>` route beside
   it** — the one the draft branch below names for the same on-disk state:
   `/product-workflows:create-prd <KEY> @<the absolute path of this idea.md>`. Neither outcome
-  committed anything, so `idea.md` is written and on no ref, exactly as a draft is, and `/create-prd
-  <KEY>` with no path then finds it on no ref (row F), names it without reading it, and goes on down
-  its idea ladder — which comes back to this brief only through its same-session rung or a path the
-  operator types, and otherwise grills the PRD from scratch. Named as a path, the file is read where
+  committed anything. Where this run wrote a new brief, `idea.md` is written and on no ref, exactly as
+  a draft is, and `/create-prd <KEY>` with no path then finds it on no ref (row F), names it without
+  reading it, and goes on down its idea ladder — which comes back to this brief only through its
+  same-session rung or a path the operator types, and otherwise grills the PRD from scratch. Where it
+  refined a brief the default branch already carries, the working copy differs from the merged one,
+  and `/create-prd <KEY>` stops on that at `workflows-core:phase-handoff` §3.3's C rows until it is
+  committed (§4.1, the stopping array this run presented). Named as a path, the file is read where
   it sits on rung 2's terms: never relocated, never gated, reported once as out-of-contract. The
   merge-clause route is for an operator who will land the files first; the `@<path>` route is the
   one that does not wait for them.

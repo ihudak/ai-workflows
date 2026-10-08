@@ -15,6 +15,8 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`/epics` reads each suggested clarification answer against the `[AD#N]` Rules and PRD requirements it touches before offering it**, and `epic-writer` holds a suggested answer to ARD conformance; a live run's suggestion misstated an ARD's reset, and the user decided the same captions three times.
 
 ### Fixed
+- **`/idea`'s and `/epics`' next-step guidance** said a declined handoff falls back; for a refined brief or a re-drafted Epic whose merged copy it changed, the next phase stops until the edit is committed, and both now say so.
+- **`/epics` *User-resolved text*:** a fold after a `PASS` offers the unspent re-review, and a kept `BLOCKER` does not count toward the review's having stayed blocked.
 - **`/idea` on its refine path and `/create-ard` refining an ARD presented the array saying the next phase would not stop**, when a declined edit of a merged copy stops it (`workflows-core:phase-handoff` §4.1, 1.34.0); each now presents the stopping array on such a run.
 - **`/create-ard` at Epic altitude did not read the Epic's own `epic.md`** — only its specification and design, which do not exist yet when an Epic-level ARD comes first; it reads the Epic's goal, scope, criteria and target now, and a stale "dispatch the folder read" clause from the retired tracker reader is gone.
 - **`/epics` built its requirements ground truth without `[SMC#n]`**, which `prd-format` lists with the other series `## Covers` and `_coverage.md` cite, and its no-requirements refusal tested the same short list.

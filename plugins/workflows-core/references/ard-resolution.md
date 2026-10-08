@@ -79,6 +79,8 @@ contracts:           # the PRD-level ARD's `## Contracts` (step 4), or null
 
 **An ARD file no plugin branch carries is not `unmerged`.** There `require-on-main` returns row F — `on_main: absent`, with no branch to pass through — which is the state a declined `/create-ard` handoff leaves, or that an ARD committed only on a branch of the person's own leaves, and it is `status: none`, exactly as `phase-handoff.md` §3.4's ARD row records it: the file is not read, and the no-regression rule below applies unchanged. Reading it as `unmerged` would stop every consumer but `/ready`, naming no branch, in a state §3.4 lets them proceed past.
 
+**Any other stopping state of that gate stops the caller as `unmerged` does.** `require-on-main` also stops on an ARD the default branch already carries whose working copy differs from it — §3.3's rows C′ and C″, and row C once its repair offer is declined or fails — which is what a declined `/create-ard` refinement of a merged ARD leaves, and what a hand edit leaves. There is no status for it here and none is owed: the caller stops on that row's own §4.4 message, naming the files, and `/ready` records it as a readiness finding capping the verdict at `PARTIAL`, as it records `unmerged`. Reading that copy as `found` would ground the run on an edit nobody landed, and reading it as `none` would drop a decision the default branch holds.
+
 **`unmerged` is reachable only when an ARD file resolves.** An absent ARD is `none`, unchanged — see the no-regression rule below. This status does not make `/create-ard` a prerequisite for anything.
 
 ## No-regression rule (central)

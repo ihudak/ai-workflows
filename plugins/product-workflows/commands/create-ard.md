@@ -325,9 +325,9 @@ is the ordinary case. The PRD is gated above on every route.
 re-derived here — and map its §3.7 return value by `stopped` first, never by `on_main` alone. Any
 stopping state → stop per §4.4. An Epic on an unmerged `epics/` branch is the state this gate exists
 for: `/product-workflows:epics` hands its drafts off on that branch, and the preflight keeps a run
-whose key the branch carries on it (`workflows-core:specs-repo-git` §3.5 B3), so architecting there
-would cut this run's `ard/` branch from the Epic's own and carry its pull request's commits into this
-one. Otherwise (`stopped: false`): on `pass`/`pass_amending`, proceed; on `absent`, Phase 2 reads the
+whose key the branch carries on it (`workflows-core:specs-repo-git` §3.5 B3), so without this gate the
+run would read and architect an Epic the default branch does not hold, and its ARD could land before
+it. Otherwise (`stopped: false`): on `pass`/`pass_amending`, proceed; on `absent`, Phase 2 reads the
 Epic folder as it stands, exactly as it does without this gate — `epic.md` is read where one exists,
 and an Epic folder holding none is no stop — but report it: *"`<EPIC>`'s `epic.md` is on no branch —
 architecting from the Epic folder at `<path>` as it stands."*, or, where the folder holds no

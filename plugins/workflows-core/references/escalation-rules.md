@@ -438,8 +438,9 @@ pass, a resumed verify step — stays under the reporting rule above and makes n
 here offers another. **Which commands it reaches is a behavioural test, as above: a command whose cap
 allows a re-review, whose verdict that is not `BLOCK` leads to the handoff without one, and which can
 edit the reviewed artifact on the way.** `/create-prd`, `/update-prd` and `/create-ard` offer to apply
-a `MAJOR` finding; `/epics` and `/document` dispatch `doc-fixer` over them, and `/implement`
-`review-fixer`; `/specify`, `/design`, `/prd-proposal` and `/brd-proposal` defer them, and edit only
+a `MAJOR` finding; `/epics` and `/document` dispatch `doc-fixer` over them — `/epics` also folds a
+finding's rewording in itself, under any verdict, where the user takes it for text they chose —
+and `/implement` `review-fixer`; `/specify`, `/design`, `/prd-proposal` and `/brd-proposal` defer them, and edit only
 where the user asks — save the open questions `A finding left open that needs a decision is recorded
 in the artifact` writes, which answer no finding. `/vuln` and `/upgrade` re-run their review after the `PASS WITH RECOMMENDATIONS`
 fixer pass, spending the re-review there, so the offer never arises; `/docs-init`, `/docs-brand` and

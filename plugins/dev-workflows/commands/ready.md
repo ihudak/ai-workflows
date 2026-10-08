@@ -537,11 +537,12 @@ Mirrors `epics.md` Phase 8, run as a genuinely **terminal** phase (unlike `/epic
 feeds the still-to-come final report — here the readiness report already printed in Phase 5).
 
 a. `project_root` = `$SPECS_PATH` for this run (where `_readiness.md` was written). Run
-   `git diff --stat` from `project_root` if it is a git repo (it should be, per Phase 0 step 3) —
-   just to report what changed. Phase 5 step 3 already ran the only commit `_readiness.md` ever gets, so
-   this diff is clean if the user consented there and still shows `_readiness.md` if they declined; this
-   phase itself commits nothing beyond the bounded artifact paths the terminal `commit-artifacts` step
-   stages (`workflows-core:specs-repo-git` §2.1).
+   `git -C "$SPECS_PATH" status --short -- <the _readiness.md path>` if it is a git repo (it should be,
+   per Phase 0 step 3) — just to report what changed. Phase 5 step 3 already ran the only commit
+   `_readiness.md` ever gets, so this prints nothing if the user consented there, and lists the file if
+   they declined — `??` for a first report, which `git diff --stat` would not show at all, ` M` over an
+   earlier one; this phase itself commits nothing beyond the bounded artifact paths the terminal
+   `commit-artifacts` step stages (`workflows-core:specs-repo-git` §2.1).
 b. Compose a **change summary block**:
 
 ```
