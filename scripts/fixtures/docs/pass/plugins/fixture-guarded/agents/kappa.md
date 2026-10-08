@@ -1,6 +1,7 @@
 ---
 name: kappa
 description: A fixture agent in a plugin outside the docs-gated set.
+tools: ["Read"]
 ---
 
 A fixture agent.

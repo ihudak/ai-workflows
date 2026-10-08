@@ -5,12 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.29.3] — 2026-10-08
+## [3.30.1] — 2026-10-08
 
 ### Changed
 - **The architecture knowledge base is drawn end to end.** A new *Architecture knowledge base* section in the workflow overview shows the loop: merged `ard.md` files → `/harvest-decisions` → team records under `$SPECS_PATH/architecture/` → `/promote-decisions` → proposed organisation ADRs, drafted from the architecture repository's own template, that a human accepts there → `architecture-grounder`, which grounds `/create-ard`, `/specify` and `/dev-workflows:design` on both roots. In the main diagram `/promote-decisions` is no longer a dead end: accepted organisation ADRs feed back into grounding.
 - **`/harvest-decisions` and `/promote-decisions` link to the new section** from their See also lists.
 - **The workflow overview marks where work enters.** `/idea` and `/brd-intake` are drawn as ▶ entry points, outlined in red, and a *Where to start* paragraph under the page's opening names both.
+
+## [3.30.0] — 2026-10-08
+
+### Changed
+- **`/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/prd-proposal` and `/brd-proposal` offer to apply the findings a review leaves open, after the first review and after the re-review alike** (`workflows-core:escalation-rules`, workflows-core 1.36.0). This replaces `/create-prd`'s, `/update-prd`'s and `/create-ard`'s first-review-only offer for `MAJOR` findings. Each pull request body carries the verdict's version line and every finding left open.
+- **Every address accepts a key typed behind its folder's kind prefix** (`PRD-ACME-1`, `EPIC-ACME-1-01`, `BRD-ACME-2`) **or as its folder's whole name**, through `workflows-core:addressing`'s `read-key`. That covers the nine commands that read their key before resolving it, `--depends-on` values among them. `/idea`, `/create-prd` and `/brd-intake` refuse a prefix of a kind they do not create.
 
 ## [3.29.2] — 2026-10-08
 

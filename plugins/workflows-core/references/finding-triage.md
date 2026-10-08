@@ -158,8 +158,7 @@ reviewer's answer.
 
 **Then:**
 
-1. **No survivor of a re-review is handed to a fixer** — each artifact gets at most one fix cycle, and
-   only before its first re-review. Each survivor is recorded in the triage line at its own severity,
+1. **No survivor of a re-review is handed to a fixer** — each artifact gets at most one fix cycle, and only before its first re-review. The one exception is a survivor the user chooses to apply, in a caller that fixes inline, at `escalation-rules`' *Findings a review leaves open — the offer to apply them*: that is an edit the user asked for, not a fix cycle, no review follows it, and the version line names it. Each survivor is recorded in the triage line at its own severity,
    and a second verdict that is not `BLOCK` gates nothing further.
 2. **The caller's second-verdict stop or escalation acts on a `BLOCKER` surviving the re-review's
    triage — never on the verdict word.** A `BLOCKER` carried as dismissed or unverified is not one.
@@ -185,7 +184,7 @@ The orchestrator's run report carries one triage line per review pass, and the l
 - how many findings were reviewed, and how many **survived**, are **unverified** and were
   **dismissed** — the three always sum to the findings reviewed, and a finding in none of them is a
   triage failure; on a re-review, also how many were **carried**;
-- on a re-review, every survivor with its severity — none of them is handed to a fixer;
+- on a re-review, every survivor with its severity — none of them is handed to a fixer, save one the user applies at that offer;
 - **every dismissal with its reason** — a triage that reports only survivors is indistinguishable from
   a reviewer that found less;
 - every unverified finding with its grade if true and what would settle it;

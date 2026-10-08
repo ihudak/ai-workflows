@@ -274,7 +274,7 @@ offers to branch, commit, push, and open a pull request.
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
 - `workflows-core:addressing` — the `<BRD-KEY>` grammar and folder
-  resolution this command uses by name (`key-valid`, `resolve-address`).
+  resolution this command uses by name (`read-key`, `resolve-address`).
 - [`brd-format.md`](../../references/brd-format.md) — the `[BR#n]` row shape, the immutability rule,
   §1.1's account of what `brd/source/` and `brd/source-external/` hold and of the link log beside
   them, §1.2's figures file, and the six defect classes this command confirms against.

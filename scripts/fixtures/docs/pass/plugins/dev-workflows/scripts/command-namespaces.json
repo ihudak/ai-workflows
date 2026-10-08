@@ -3,6 +3,9 @@
     "alpha",
     "alpha-two"
   ],
+  "fixture-guarded": [
+    "iota"
+  ],
   "fixture-two": [
     "omega"
   ],

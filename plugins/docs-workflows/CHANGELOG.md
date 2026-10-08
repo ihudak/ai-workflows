@@ -5,10 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.13.4] — 2026-10-08
+## [1.14.1] — 2026-10-08
 
 ### Changed
 - **The workflow overview and the documentation route mark where the documentation flow starts.** `/docs-init` is drawn as a ▶ entry point, outlined in red, on both pages, and the overview's opening says so.
+
+## [1.14.0] — 2026-10-08
+
+### Changed
+- **`/document`'s keyed mode and `/release-notes` accept a key typed behind its folder's kind prefix** (`EPIC-ACME-1-01`) **or as its folder's whole name**, through `workflows-core:addressing`'s `read-key` (workflows-core 1.36.0). `/release-notes` checks `$SPECS_PATH` before any address that is not an `@<path>`, so a whole name typed with the variable unset stops on the variable, not on the key grammar.
 
 ## [1.13.3] — 2026-10-08
 
