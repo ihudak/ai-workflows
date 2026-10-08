@@ -81,14 +81,14 @@ NS_MAP_REL="${NS_MAP_REL:-plugins/workflows-core/scripts/command-namespaces.json
 # not the reference file: the corpus extraction separated the two, and a file-presence
 # trigger got both directions wrong at once (see those two functions).
 COST_PLUGIN_RELS="${COST_PLUGIN_RELS:-plugins/dev-workflows plugins/docs-workflows plugins/workflows-core plugins/product-workflows}"        # copilot: ""
-HANDOFF_PLUGIN_RELS="${HANDOFF_PLUGIN_RELS:-plugins/product-workflows}"  # copilot: ""
+HANDOFF_PLUGIN_RELS="${HANDOFF_PLUGIN_RELS:-plugins/product-workflows}"  # copilot: dev-workflows
 # Which plugins check 20 holds to the untrusted-content guard: every docs-gated plugin plus
 # prose-style, which ships agents and dispatching commands but no docs/ tree. Declared, like
 # the lists above, never inferred from a directory listing.
-GUARD_PLUGIN_RELS="${GUARD_PLUGIN_RELS:-$PLUGIN_RELS plugins/prose-style}"   # copilot: n/a (one plugin)
+GUARD_PLUGIN_RELS="${GUARD_PLUGIN_RELS:-$PLUGIN_RELS plugins/prose-style}"   # copilot: dev-workflows dt-style-guide
 # Which plugin check 21 reads for the install references /vuln and /upgrade follow: the one
 # that ships those two commands. Declared, like the lists above.
-ITC_PLUGIN_REL="${ITC_PLUGIN_REL:-plugins/dev-workflows}"   # copilot: n/a ($PLUGIN_REL)
+ITC_PLUGIN_REL="${ITC_PLUGIN_REL:-plugins/dev-workflows}"   # copilot: dev-workflows
 
 # The plugin that holds the shared reference corpus. Checks 8, 9, 11 and 16 read a reference
 # from HERE and their call sites from $PLUGIN_REL -- the corpus now lives in its own plugin,
@@ -134,8 +134,7 @@ RUNTIME_VARS_FROZEN="ARGUMENTS BASH_REMATCH BASH_SOURCE CLAUDE_PLUGIN_ROOT OSTYP
 # organisation and its internal repositories nowhere, so its value is set. Encoded for the
 # reason check 14 gives for its own list: a denylist in clear text would put the names into
 # the tree, making the gate the one violation of the rule it enforces. `-` rather than `:-`
-# in the default is deliberate: an explicitly EMPTY value from the environment must win, which
-# is how the selftest proves the empty-config edition passes.
+# in the default is deliberate: an explicitly EMPTY value from the environment must win.
 EDITION_FORBIDDEN_B64="${EDITION_FORBIDDEN_B64-ZHluYXRyYWNlfG1nZC1zcGVjaWZpY2F0aW9uc3xtZ2QtY2xhdWRlLXBsdWdpbnN8KF58W15bOmFsbnVtOl1fXSltZ2QoW15bOmFsbnVtOl1fXXwkKQ==}"
                                      # internal edition: "" -- it names that organisation
                                      # by design
@@ -2994,7 +2993,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "sed 's|Two offers carry it — [^.]*\\.|Nothing in this file names an adopter.|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md" \
     "no longer names its adopting commands"
   expect_fail_env "an adopting sentence naming no command of the plugin is rejected" 11 "CHECK11_FAMILY=sentence" \
-    "sed 's|\`/alpha\`|\`/zulu\`|; s|\`/alpha-two\`|\`/zulu-two\`|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md" \
+    "sed -E 's#\`/?alpha(:?)\`#\`/zulu\1\`#; s#\`/?alpha-two(:?)\`#\`/zulu-two\1\`#' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md" \
     "which matches no command"
 
   # ---- a row-F caller written /plugin:name ----
@@ -3393,7 +3392,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # ...and the same membership read through the sentence form, where the family is bare names:
   # the sentence names omega, a command of fixture-two, which is in no declared list.
   expect_fail_env "a plugin with a command the adopting sentence names, undeclared in HANDOFF_PLUGIN_RELS, is rejected" 11 "CHECK11_FAMILY=sentence" \
-    "sed 's|section and \`/alpha-two\`|section, \`/omega\` and \`/alpha-two\`|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md" \
+    "sed -E 's#section and (\`/?alpha-two:?\`)#section, \`/omega\` and \1#' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md" \
     "is not a member of HANDOFF_PLUGIN_RELS"
 
   # Check 17 -- agent dispatch authority (PS15). The baseline fixture already carries the
