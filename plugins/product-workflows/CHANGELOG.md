@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.29.2] — Unreleased
+## [3.29.2] — 2026-10-08
 
 ### Changed
 - **The slug→clone maps of `/epics`, `/specify` and `/prd-ground`, and `/idea`'s and `/create-ard`'s clone identities, run through the plugin's own `scripts/bounded.py`, called by its path** (`workflows-core:bounded-run`, workflows-core 1.35.4), instead of the `bounded <N>` shorthand a run could expand only from that reference — one that had not read it ran `bounded` as a command, got exit 127 and skipped the call.
