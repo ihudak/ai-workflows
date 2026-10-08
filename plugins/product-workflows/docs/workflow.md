@@ -2,16 +2,18 @@
 
 This is the `product-workflows` pipeline top to bottom — every command shown here, in the order the roles typically hand work to each other. `/idea → /create-prd` opens a Product Requirements Document; `/specify` is where this plugin's spine ends, handing `specification.md` to the companion `dev-workflows` plugin's `/dev-workflows:design`, which carries the pipeline the rest of the way to shipped code and, through the companion `docs-workflows` plugin, product documentation and release notes. A second route into a PRD exists alongside it: `/brd-intake → /brd-split → /prd-ground → /brd-split → /brd-interview → /brd-package → /brd-reconcile` — the second `/brd-split` running on each slice the first carved — turns a customer-supplied BRD into a grounded, allocated and decided requirement inventory — customer-reviewed wherever a decision is the customer's to make — instead of a PM-authored idea, then hands over to `/create-prd`, `/create-ard` or `/specify` on the BRD route — see [BRD workflow](brd-workflow.md) for its own diagram and parameter table. `/prd-ground` is one command serving both routes, drawn separately for each so an idea-route PRD cannot appear to enter `/brd-split`. Grounding a BRD slice is required before its allocation walk; grounding an idea-route PRD is optional, checking its own `[AC#n]`/`[FR#n]` rows to seed architecture and specification. BRD authoring also reads its slice's findings after the decision handoff; those additional input edges are not drawn.
 
+**Where to start.** The two ▶ nodes, outlined in red, are the ways work enters this plugin: `/idea <PRD-KEY>` for an idea of your own, which `/create-prd` turns into a PRD, and `/brd-intake <BRD-KEY> @<brd-file>` for a customer's business requirements document, which the BRD route carries to the same PRD ladder.
+
 ```mermaid
 flowchart TD
     subgraph PM["PM — ideation & framing"]
-        idea["/idea"]:::prod -->|idea.md| createvi["/create-prd"]:::prod
+        idea["▶ start — /idea"]:::prod -->|idea.md| createvi["/create-prd"]:::prod
         createvi -.->|prd.md| rnpm["/docs-workflows:release-notes (PRD draft / refresh)"]:::docs
         createvi -.->|PRD exists| updatevi["/update-prd"]:::prod
         updatevi -.->|updated prd.md — existing release note| rnpm
     end
     subgraph BRD["PM/PA/Dev — BRD-to-PRD route (alt. entry)"]
-        brdintake["/brd-intake"]:::prod -->|inventory + ledger| brdsplitroot["/brd-split (root)"]:::prod
+        brdintake["▶ start — /brd-intake"]:::prod -->|inventory + ledger| brdsplitroot["/brd-split (root)"]:::prod
         brdsplitslice["/brd-split (slice)"]:::prod -->|allocated ledger| brdinterview["/brd-interview"]:::prod
         brdinterview -->|"decisions.md + held [C] questions"| brdpackage["/brd-package"]:::prod
         brdreconcile["/brd-reconcile"]:::prod
@@ -47,6 +49,7 @@ flowchart TD
     harvest -.->|team decisions| specify
     harvest -.->|team records| promote
     harvest -.->|team decisions| design
+    promote -.->|"accepted org ADRs — grounding"| createard
     createvi -->|prd.md| epics
     createard -->|ard.md| epics
     epics -->|epic.md| specify
@@ -83,9 +86,11 @@ flowchart TD
     classDef dev fill:#dcfce7,stroke:#15803d,color:#14532d
     classDef docs fill:#fef3c7,stroke:#b45309,color:#78350f
     classDef cust fill:#f3f4f6,stroke:#6b7280,color:#1f2937
+    classDef entry stroke:#dc2626,stroke-width:3px
+    class idea,brdintake entry
 ```
 
-The diagram draws the ARD reaching `/epics`, and an Epic-level ARD reaching `/dev-workflows:design`, but those are two of five consumers: `/epics`, `/specify`, and the companion `dev-workflows` plugin's `/dev-workflows:design`, `/dev-workflows:implement`, and `/dev-workflows:ready` all resolve the applicable ARD once it exists. The edges are drawn sparingly to keep the diagram readable, not because the others do not consult it.
+The diagram draws the ARD reaching `/epics`, and an Epic-level ARD reaching `/dev-workflows:design`, but those are two of five consumers: `/epics`, `/specify`, and the companion `dev-workflows` plugin's `/dev-workflows:design`, `/dev-workflows:implement`, and `/dev-workflows:ready` all resolve the applicable ARD once it exists. The edges are drawn sparingly to keep the diagram readable, not because the others do not consult it. Accepted organisation ADRs also ground `/specify` and `/dev-workflows:design`; the knowledge-base loop is drawn in [Architecture knowledge base](#architecture-knowledge-base).
 
 The dashed return paths from `/update-prd` refresh existing downstream artifacts, not artifacts that have never been authored. A changed requirement that invalidates one makes its rerun recommended; otherwise the existing artifact's rerun remains optional.
 
@@ -102,6 +107,43 @@ Five nodes in the diagram are not this plugin's commands and are drawn for conti
 The diagram above shows where each command sits in the pipeline; [Roles and phases](roles-and-phases.md) says what each role is accountable for and what it hands over at each seam.
 
 **None of this plugin's own sixteen commands is known to collide with a Claude Code built-in today**, so every one of them works either way, bare or `product-workflows:`-qualified. Of the cross-plugin commands this diagram draws for continuity, `/docs-workflows:release-notes` collides, and `/dev-workflows:design` does on the accounts Claude Code's own `/design` is switched on for; both are qualified, as is every cross-plugin node, and they ship in the companion `docs-workflows` and `dev-workflows` plugins.
+
+## Architecture knowledge base
+
+The architecture decisions of merged ARDs do not stay in their ARDs. They become the team's records, the strongest of them become organisation ADRs, and both feed the next ARD, specification and design:
+
+```mermaid
+flowchart TD
+    subgraph SPECS["Specs repo — $SPECS_PATH, default branch"]
+        ards["merged ard.md files and their AD#N decisions"]
+        kb["architecture/ — one record per decision + index.yaml"]
+    end
+    subgraph ARCH["Architecture repo — $ARCHITECTURE_REPO_PATH"]
+        org["accepted ADRs · radar · standards · principles"]
+        proposed["proposed ADRs"]
+    end
+    createard["/create-ard"]:::prod -->|"ARD pull request, merged"| ards
+    createard -.->|"offers"| harvest["/harvest-decisions"]:::prod
+    ards -->|"read by the bundled script, --layout prd"| harvest
+    harvest -->|"kb/harvest-date pull request"| kb
+    kb -->|"live records + departure signals"| promote["/promote-decisions — PA, inside the architecture repo"]:::prod
+    org -->|"covered · conflicts · new"| promote
+    promote -->|"drafts from the repo's own ADR template — pull request"| proposed
+    promote -->|"promotion keys — kb/promote-date pull request"| kb
+    proposed -.->|"reviewed and accepted by a human"| org
+    kb -->|"team root"| grounder["architecture-grounder (workflows-core, read-only)"]:::core
+    org -->|"organisation root"| grounder
+    grounder -.->|"references + challenges"| createard
+    grounder -.->|"references + challenges"| specify["/specify"]:::prod
+    grounder -.->|"references + challenges"| design["/dev-workflows:design"]:::dev
+    createard -.->|"Supersedes — applied by the next harvest"| harvest
+
+    classDef prod fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
+    classDef dev fill:#dcfce7,stroke:#15803d,color:#14532d
+    classDef core fill:#ede9fe,stroke:#6d28d9,color:#4c1d95
+```
+
+`/harvest-decisions` is a deterministic script: it reads only the default branch, writes one record per `[AD#N]` of every `ard.md` and `ard-<area>.md` in the `PRD-` and `EPIC-` folders, marks a record superseded or withdrawn, and never deletes one. `/promote-decisions` runs inside the architecture repository, where the Product Architect picks from ranked shortlists; it drafts `proposed` ADRs from that repository's own template on a pull request there, and never edits or accepts an ADR itself. On its next run it reads each ADR's `Origin:` line and records `accepted` or `rejected` on the team records it named. From then on `architecture-grounder` skips a team record whose ADR was accepted, or which an ADR already covers, and cites that ADR instead. The organisation root is `$ARCHITECTURE_REPO_PATH` alone — nothing scans for a clone — while the team root is read wherever `$SPECS_PATH/architecture/` exists; `--no-arch` turns both off.
 
 ## Parameters at the BRD-to-PRD handoff
 

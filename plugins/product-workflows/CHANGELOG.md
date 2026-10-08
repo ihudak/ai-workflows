@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.29.3] — 2026-10-08
+
+### Changed
+- **The architecture knowledge base is drawn end to end.** A new *Architecture knowledge base* section in the workflow overview shows the loop: merged `ard.md` files → `/harvest-decisions` → team records under `$SPECS_PATH/architecture/` → `/promote-decisions` → proposed organisation ADRs, drafted from the architecture repository's own template, that a human accepts there → `architecture-grounder`, which grounds `/create-ard`, `/specify` and `/dev-workflows:design` on both roots. In the main diagram `/promote-decisions` is no longer a dead end: accepted organisation ADRs feed back into grounding.
+- **`/harvest-decisions` and `/promote-decisions` link to the new section** from their See also lists.
+- **The workflow overview marks where work enters.** `/idea` and `/brd-intake` are drawn as ▶ entry points, outlined in red, and a *Where to start* paragraph under the page's opening names both.
+
 ## [3.29.2] — 2026-10-08
 
 ### Changed
