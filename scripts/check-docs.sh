@@ -156,6 +156,12 @@ CHECK11_FAMILY="glob"                # internal editions: sentence
 # workflows-core's next-phase-offer.md (what the gate cannot see, item 2): this edition's prose
 # offers take six shapes, and a reader keyed on their introducers fires on correct text.
 CHECK11_PROSE=0                      # internal editions: 1
+# Where check 11 reads a family command's `choices:` offers. `file`: every array in the command
+# file -- this edition's scope since check 11 shipped, and what workflows-core's
+# next-phase-offer.md says it asserts ("every `choices:` option"). `next-step`: only the
+# command's next-step section, where a mid-run array (an escalation, a refusal) that names a
+# pipeline command without offering it cannot be mistaken for an offer.
+CHECK11_OFFER_SCOPE="file"           # internal editions: next-step
 
 # The repo-root instruction tiers, as globs relative to the root. Checks 1 and 2 resolve their
 # links and anchors -- a why-link must land on a real rationale heading -- and check 13 reads
@@ -1006,11 +1012,13 @@ check_identity_quarantine() {
 # instead, so a new adopter is one sentence edit away from being covered, exactly as adding a
 # glob would be. Either way the family is read from there and never hand-copied here.
 #
-# THE OFFERS. Every `choices:` option a family command prints in its NEXT-STEP section (the last
-# heading matching `Next step(s)` or `Next-step offer`, to the end of the file; a command with
-# no such heading is read whole, which can only widen what is examined) -- a mid-run array (an
-# escalation, a refusal) routinely names a pipeline command without offering it as this run's
-# forward route. The array is read bracket-bounded and quote-aware, as check 12 reads it: a
+# THE OFFERS. Every `choices:` option a family command prints, in the scope CHECK11_OFFER_SCOPE
+# names: `file`, the whole command file; or `next-step`, its NEXT-STEP section (the last heading
+# matching `Next step(s)` or `Next-step offer`, to the end of the file; a command with no such
+# heading is read whole, which can only widen what is examined), because there a mid-run array
+# (an escalation, a refusal) routinely names a pipeline command without offering it as this
+# run's forward route. Each edition keeps the scope its own tree was measured under. The array
+# is read bracket-bounded and quote-aware, as check 12 reads it: a
 # scan with no closing bound runs past the `]` into prose later on the same long line. A
 # command is named in an option as `/name`, `/plugin:name` or `name:` (the Copilot edition's
 # trigger), each reduced to `name`. With CHECK11_PROSE=1 the check also reads PROSE offers (the
@@ -1090,6 +1098,10 @@ check_merge_clause() {
         || { fail 11 "$CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md's adopting-commands sentence names no command this check can parse -- the EXTRACTOR has drifted or the sentence was reworded; fix the parser, never the sentence"; return; } ;;
     *) fail 11 "CHECK11_FAMILY is '$CHECK11_FAMILY' -- the edition config must set it to glob or sentence"; return ;;
   esac
+  case "$CHECK11_OFFER_SCOPE" in
+    file|next-step) : ;;
+    *) fail 11 "CHECK11_OFFER_SCOPE is '$CHECK11_OFFER_SCOPE' -- the edition config must set it to file or next-step"; return ;;
+  esac
   family_desc=$(check11_desc "$decl" "$qual")
 
   # targets: one `<command>|<artifact-basename>` line per row-F table cell. A caller is named
@@ -1125,13 +1137,17 @@ check_merge_clause() {
     f=$(cmd_file "$p" "$y"); [ -f "$f" ] || continue
     route_n=$((route_n + 1))
 
-    # The next-step section, and the line it starts after (0 when the whole file is read).
-    section=$(awk '
-      /^##[#]?[[:space:]]+.*[Nn]ext[-[:space:]][Ss]teps?/ { buf = ""; from = NR; next }
-      { if (from) buf = buf $0 "\n" }
-      END { printf "%s", buf }
-    ' "$f")
-    offlineno=$(awk '/^##[#]?[[:space:]]+.*[Nn]ext[-[:space:]][Ss]teps?/{n=NR} END{print n+0}' "$f")
+    # The text the choices reader reads, and the line it starts after (0 when the whole file is
+    # read): the next-step section where CHECK11_OFFER_SCOPE=next-step, else the whole file.
+    section=""; offlineno=0
+    if [ "$CHECK11_OFFER_SCOPE" = next-step ]; then
+      section=$(awk '
+        /^##[#]?[[:space:]]+.*[Nn]ext[-[:space:]][Ss]teps?/ { buf = ""; from = NR; next }
+        { if (from) buf = buf $0 "\n" }
+        END { printf "%s", buf }
+      ' "$f")
+      offlineno=$(awk '/^##[#]?[[:space:]]+.*[Nn]ext[-[:space:]][Ss]teps?/{n=NR} END{print n+0}' "$f")
+    fi
     [ -n "$section" ] || { section=$(cat "$f"); offlineno=0; }
 
     # writers: the backticked *.md paths inside this command's `deliverable_paths` = ...
@@ -2612,6 +2628,12 @@ selftest() {
   # three checks -- four, with check 20's canonical block -- so a case that relocated only the file
   # it is about would leave the others reporting a reference missing from the corpus plugin -- red, for a reason the case
   # was not making. That is the real shape too: the corpus is extracted as a whole.
+  # Writes a line, then a blank one, just above a command's next-step heading -- the place a
+  # mid-run array sits. awk, not sed: a `\n` in a sed replacement is a GNU extension.
+  insert_before_next_step() { # <file> <line> -- run from inside the copied tree
+    awk -v L="$2" '/^##[#]?[[:space:]]+.*[Nn]ext[-[:space:]][Ss]teps?/ && !done { print L; print ""; done = 1 } { print }' "$1" > nx.tmp \
+      && mv nx.tmp "$1"
+  }
   relocate_corpus() {
     local f set=""
     for f in cost-emission.md next-phase-offer.md phase-handoff.md untrusted-content.md; do
@@ -2983,6 +3005,19 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "sed 's|^\*\*Where this rule applies:.*|& The \`/${PLUGIN_REL##*/}:nu-*\` command carries the same convention under its own glob: it prints an offer naming a downstream command whose require-on-main gate this same run feeds.|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL nu-ground)) && printf -- '---\nname: nu-ground\ndescription: A fixture command in a second glob family, disjoint from alpha*.\n---\n\nOn the first choice, execute \`handoff-to-main\` with \`deliverable_paths\` = \`alpha-deliverable.md\`,\nand \`title: nu-ground fixture handoff\`.\n\n\`\`\`\nchoices: [\"Run the gated consumer — /${PLUGIN_REL##*/}:omega <KEY> (Recommended)\", \"Stop here\"]\n\`\`\`\n' > $(cmd_file $PLUGIN_REL nu-ground) && printf -- '# /nu-ground\n\nA fixture command page for the second check-11 family.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/nu-ground.md && printf -- '\n- [\`/nu-ground\`]($DOC_CMD_DIR/nu-ground.md)\n' >> $PLUGIN_REL/docs/README.md && sed -i.bak 's|two slash commands|three slash commands|' $PLUGIN_REL/README.md && printf -- '\nCommand: \`/nu-ground\`.\n' >> $PLUGIN_REL/README.md && printf -- '\n\`\`\`mermaid\nflowchart TD\n    n[\"/nu-ground\"]\n\`\`\`\n' >> $PLUGIN_REL/docs/workflow.md && ns_map_regen"
   expect_pass_after_env "the same second-glob-only command is accepted once its offer carries <merge-clause>" "CHECK11_FAMILY=glob" \
     "sed 's|^\*\*Where this rule applies:.*|& The \`/${PLUGIN_REL##*/}:nu-*\` command carries the same convention under its own glob: it prints an offer naming a downstream command whose require-on-main gate this same run feeds.|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL nu-ground)) && printf -- '---\nname: nu-ground\ndescription: A fixture command in a second glob family, disjoint from alpha*.\n---\n\nOn the first choice, execute \`handoff-to-main\` with \`deliverable_paths\` = \`alpha-deliverable.md\`,\nand \`title: nu-ground fixture handoff\`.\n\n\`\`\`\nchoices: [\"Run the gated consumer — /${PLUGIN_REL##*/}:omega <KEY> (Recommended) <merge-clause>\", \"Stop here\"]\n\`\`\`\n' > $(cmd_file $PLUGIN_REL nu-ground) && printf -- '# /nu-ground\n\nA fixture command page for the second check-11 family.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/nu-ground.md && printf -- '\n- [\`/nu-ground\`]($DOC_CMD_DIR/nu-ground.md)\n' >> $PLUGIN_REL/docs/README.md && sed -i.bak 's|two slash commands|three slash commands|' $PLUGIN_REL/README.md && printf -- '\nCommand: \`/nu-ground\`.\n' >> $PLUGIN_REL/README.md && printf -- '\n\`\`\`mermaid\nflowchart TD\n    n[\"/nu-ground\"]\n\`\`\`\n' >> $PLUGIN_REL/docs/workflow.md && ns_map_regen"
+
+  # ---- where the offers are read (CHECK11_OFFER_SCOPE) ----
+  # A clause-free offer of omega in an array ABOVE alpha's next-step heading: read where the
+  # scope is the file, the upstream edition's, and not where it is the next-step section, the
+  # internal editions'. Each edition keeps the scope its own tree was measured under, so each
+  # half is red under the other scope.
+  expect_fail_env "a choices offer above the next-step section is read where CHECK11_OFFER_SCOPE=file" 11 "CHECK11_OFFER_SCOPE=file" \
+    "insert_before_next_step $(cmd_file $PLUGIN_REL alpha) 'choices: [\"Hand off early — /${PLUGIN_REL##*/}:omega <KEY>\", \"Stop here\"]'" \
+    "offers /omega with no <merge-clause>"
+  expect_pass_after_env "a choices offer above the next-step section is not read where CHECK11_OFFER_SCOPE=next-step" "CHECK11_OFFER_SCOPE=next-step" \
+    "insert_before_next_step $(cmd_file $PLUGIN_REL alpha) 'choices: [\"Hand off early — /${PLUGIN_REL##*/}:omega <KEY>\", \"Stop here\"]'"
+  expect_fail_env "an unknown CHECK11_OFFER_SCOPE is rejected" 11 "CHECK11_OFFER_SCOPE=section" "true" \
+    "must set it to file or next-step"
 
   # ---- the sentence form of the family (CHECK11_FAMILY=sentence) ----
   # The single-plugin form reads the family from the scope paragraph's "<N> offers carry it --
