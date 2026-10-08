@@ -219,7 +219,7 @@ cmd_ref() { if [ "$CMD_FORM" = trigger ]; then printf '%s:' "$1"; else printf '/
 tier_files() { # <root> -> file paths
   local -a globs; local g f
   read -ra globs <<<"$INSTRUCTION_TIERS"
-  for g in "${globs[@]}"; do
+  for g in ${globs[@]+"${globs[@]}"}; do   # bash < 4.4 calls an empty array unbound under set -u
     for f in "$1"/$g; do [ -f "$f" ] && printf '%s\n' "$f"; done
   done
   return 0
@@ -2447,6 +2447,9 @@ check_untrusted_content() {
 # a command of its own, and a table cell listing two holds both) and at &&, ||, ; and |, and
 # every command counts, prose too: an agent follows "run `npm install`" as readily as a fenced
 # command. A shell comment is no part of a command: a flag written only after " #" is not there.
+# The split is awk's, not sed's: a `\n` in a sed replacement is a GNU extension, and BSD sed
+# (macOS) writes a literal `n`, which turned every line into one command and passed a
+# code span's bare install.
 #   - npm / pnpm install and every npm alias of it (i, in, ins, inst, insta, instal, isnt,
 #     isnta, isntal, isntall, add), ci and its aliases (clean-install, ic, install-clean,
 #     isntall-clean), it, cit, install-test, install-ci-test, update and its aliases (up,
@@ -2506,7 +2509,7 @@ check_install_time_code() {
             fail 21 "$ITC_PLUGIN_REL/$rel:$ln installs a Python dependency without --only-binary=:all: (or PIP_ONLY_BINARY=:all:) -- a source distribution's build would run its setup.py with the user's permissions"
           fi
         fi
-      done < <(printf '%s\n' "$line" | sed -E 's/`/\n/g; s/(&&|\|\||;|\|)/\n/g')
+      done < <(printf '%s\n' "$line" | awk '{ gsub(/`/, "\n"); gsub(/&&|\|\||;|\|/, "\n"); print }')
     done < "$f"
   done
   [ "$n" -gt 0 ] || fail 21 "no install command in $ITC_PLUGIN_REL/$REF_DIR's install references -- this check would examine nothing"
@@ -2697,6 +2700,12 @@ selftest() {
   insert_before_next_step() { # <file> <line> -- run from inside the copied tree
     awk -v L="$2" '/^##[#]?[[:space:]]+.*[Nn]ext[-[:space:]][Ss]teps?/ && !done { print L; print ""; done = 1 } { print }' "$1" > nx.tmp \
       && mv nx.tmp "$1"
+  }
+  # Adds an `/omega` row under alpha's in a section-7 table. awk, not sed: a `\n` in a sed
+  # replacement is a GNU extension that BSD sed writes as a literal `n`.
+  add_omega_row() { # <cost-emission.md> -- run from inside the copied tree
+    awk '{ print } /^[|] `\/alpha` [|] fixture-phase [|] pm [|]$/ { print "| `/omega` | fixture-phase | pm |" }' "$1" > row.tmp \
+      && mv row.tmp "$1"
   }
   relocate_corpus() {
     local f set=""
@@ -2925,6 +2934,8 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "mkdir -p .github/instructions && printf 'See [x](nowhere.md).\n' > .github/instructions/area.instructions.md"
   expect_pass_after "an instruction file INSTRUCTION_TIERS does not name is not read" \
     "mkdir -p .github/instructions && printf 'See [x](nowhere.md).\n' > .github/instructions/area.instructions.md"
+  expect_pass_after_env "an empty INSTRUCTION_TIERS reads no instruction file" "INSTRUCTION_TIERS=" \
+    "printf '\nSee [the rule](docs/maintainers/nowhere.md).\n' >> CLAUDE.md"
   expect_fail "a broken link inside docs/maintainers is caught" 1 \
     "mkdir -p docs/maintainers && printf '# Rationale\n\nSee [x](nowhere.md).\n' > docs/maintainers/rationale.md"
   expect_fail "the foreign organisation named OUTSIDE the plugin is rejected" 14 \
@@ -2950,7 +2961,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # The docs-index surface, which the cases above leave to the README and the diagram: every line
   # naming alpha goes, so only the index assertion is left to say so.
   expect_fail_msg "a command missing from the docs index is rejected" 15 "$(cmd_ref alpha) is not listed in docs/README.md" \
-    "sed -i.bak '/alpha/Id' $PLUGIN_REL/docs/README.md"
+    "sed -i.bak '/alpha/d' $PLUGIN_REL/docs/README.md"
   # The bare `name:` trigger lists a command only where it is the edition's command form. The
   # README written in that form passes under CMD_FORM=trigger in every fixture; under
   # CMD_FORM=slash it is no listing -- a case a fixture written in the trigger form cannot run.
@@ -2970,12 +2981,12 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # inventing a command -- which would also have to be registered in check 9's count sentence,
   # a different check's surface this case is not about).
   expect_pass_after "a command the diagram's own intro prose exempts is not required in it" \
-    "sed -i.bak 's|alpha|zzz-placeholder|I; s|Every command shown here\\.|Every command shown here, except \`/alpha\` (\`alpha:\`), which is not a pipeline node and is omitted below.|' $PLUGIN_REL/docs/workflow.md"
+    "sed -i.bak 's|alpha|zzz-placeholder|; s|Every command shown here\\.|Every command shown here, except \`/alpha\` (\`alpha:\`), which is not a pipeline node and is omitted below.|' $PLUGIN_REL/docs/workflow.md"
   # ...and its red twin: naming a command in the intro is not exempting it. Only the sentence
   # that says its names are omitted counts -- an intro that merely mentions a command
   # ("`/document` and `/release-notes` close it out") exempted both until this case existed.
   expect_fail "a command the intro merely mentions is still required in the diagram" 15 \
-    "sed -i.bak 's|alpha|zzz-placeholder|I; s|Every command shown here\\.|Every command shown here. \`/alpha\` (\`alpha:\`) opens the pipeline.|' $PLUGIN_REL/docs/workflow.md"
+    "sed -i.bak 's|alpha|zzz-placeholder|; s|Every command shown here\\.|Every command shown here. \`/alpha\` (\`alpha:\`) opens the pipeline.|' $PLUGIN_REL/docs/workflow.md"
   expect_fail "a titled link to a missing file is rejected"    1 "printf '\n[bad](nope.md \"T\")\n' >> $PLUGIN_REL/docs/$DOC_CMD_DIR/alpha.md"
   expect_fail "an angle-bracket link to a missing file is rejected" 1 "printf '\n[bad](<nope.md>)\n' >> $PLUGIN_REL/docs/$DOC_CMD_DIR/alpha.md"
   expect_fail "an over-long INDENTED table cell is rejected"   6 "awk 'BEGIN{s=\"\"; while(length(s)<260) s=s \"q\"; printf \"\n  | a | %s |\n  |---|---|\n\", s}' >> $PLUGIN_REL/docs/reference/agents.md"
@@ -3445,7 +3456,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     expect_fail "a section-7 row backed only by look-alike prose is rejected" 8 \
       "sed -i.bak 's|Call \`emit-cost\` with |Recorded as |' $(cmd_file $PLUGIN_REL alpha)"
     expect_fail "a drifted attributed role is rejected"      8 "sed -i.bak 's;| \`/alpha\` | fixture-phase | pm |;| \`/alpha\` | fixture-phase | pe |;' $PLUGIN_REL/$REF_DIR/cost-emission.md"
-    expect_fail "a section-7 row for a non-emitting command is rejected" 8 "sed -i.bak 's;| \`/alpha\` | fixture-phase | pm |;| \`/alpha\` | fixture-phase | pm |\n| \`/omega\` | fixture-phase | pm |;' $PLUGIN_REL/$REF_DIR/cost-emission.md"
+    expect_fail "a section-7 row for a non-emitting command is rejected" 8 "add_omega_row $PLUGIN_REL/$REF_DIR/cost-emission.md"
     expect_fail "a drifted cost-emitting count is rejected"  9 "sed -i.bak 's|One commands emit a cost entry|Five commands emit a cost entry|' $PLUGIN_REL/docs/reference/session-cost.md"
 
     # ---- checks 8 and 9 with the section-7 table in ANOTHER plugin ----
@@ -3463,7 +3474,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     # while checking dev-workflows, and on `/alpha` while checking fixture-two.
     expect_pass_after_env "a section-7 table attributing a SECOND plugin's emitter is accepted" \
       "CORE_PLUGIN_REL=$(plugin_parent)fixture-core COST_PLUGIN_RELS='$PLUGIN_REL $(plugin_parent)fixture-two'" \
-      "relocate_corpus && printf -- '\nCall \`emit-cost\` with \`command: /omega\`, \`phase: fixture-phase\`, \`role: pm\`, done.\n' >> $(cmd_file $(plugin_parent)fixture-two omega) && sed -i.bak 's;| \`/alpha\` | fixture-phase | pm |;| \`/alpha\` | fixture-phase | pm |\n| \`/omega\` | fixture-phase | pm |;' $(plugin_parent)fixture-core/$REF_DIR/cost-emission.md"
+      "relocate_corpus && printf -- '\nCall \`emit-cost\` with \`command: /omega\`, \`phase: fixture-phase\`, \`role: pm\`, done.\n' >> $(cmd_file $(plugin_parent)fixture-two omega) && add_omega_row $(plugin_parent)fixture-core/$REF_DIR/cost-emission.md"
     # The matching reds. The first proves the reverse direction still reads the relocated
     # table; the second proves check 9's cost-emitting count is still ASSERTED once the
     # reference has moved out of the plugin whose page states it -- the count derives from
@@ -3473,7 +3484,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     # count passes it too.
     expect_fail_env "a section-7 row for a non-emitting command is rejected with the table in another plugin" 8 \
       "CORE_PLUGIN_REL=$(plugin_parent)fixture-core" \
-      "relocate_corpus && sed -i.bak 's;| \`/alpha\` | fixture-phase | pm |;| \`/alpha\` | fixture-phase | pm |\n| \`/omega\` | fixture-phase | pm |;' $(plugin_parent)fixture-core/$REF_DIR/cost-emission.md"
+      "relocate_corpus && add_omega_row $(plugin_parent)fixture-core/$REF_DIR/cost-emission.md"
     expect_fail_env "a drifted cost-emitting count is rejected with the table in another plugin" 9 \
       "CORE_PLUGIN_REL=$(plugin_parent)fixture-core" \
       "relocate_corpus && sed -i.bak 's|One commands emit a cost entry|Five commands emit a cost entry|' $PLUGIN_REL/docs/reference/session-cost.md"
@@ -3693,7 +3704,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   expect_fail_msg "a relay sentence with trailing whitespace says so" 20 "trailing whitespace" \
     "sed -i.bak 's/in the final report\.\$/in the final report. /' $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "a relay sentence with a CRLF ending says so" 20 "carriage return" \
-    "sed -i.bak 's/in the final report\.\$/in the final report.\r/' $(cmd_file $PLUGIN_REL alpha)"
+    "awk '{ sub(/in the final report[.]\$/, \"in the final report.\\r\") } 1' $(cmd_file $PLUGIN_REL alpha) > cr.tmp && mv cr.tmp $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "a relay sentence written as a list item says so" 20 "indented or prefixed" \
     "sed -i.bak 's/^Content this run reads/- Content this run reads/' $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "a relay sentence inside a fenced code block is rejected" 20 "fenced code block" \
