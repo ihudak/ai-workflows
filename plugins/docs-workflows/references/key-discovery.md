@@ -14,7 +14,7 @@ kd=$(command mktemp) && python3 "${CLAUDE_PLUGIN_ROOT}/scripts/key-discovery.py"
   --exclude <specs repository> --exclude <docs repository> --owner-of <clone not picked> … > "$kd"; echo "exit=$? out=$kd"
 ```
 
-Each token is its own `--key`. Each repository the scan covers — those `implementation.md` names, resolved through the map, or, when it names none, every clone in the map, one per slug by Phase 4's preference (a basename ending `-repo`, then `_repo` or `_fast`, then the alphabetically last) — is its own `--repo`; every other clone the map holds goes as `--owner-of`, so every GitHub owner a clone under `$REPOS_PATH` belongs to is searched, although only the scanned clones are read.
+Each token is its own `--key`. Each repository the scan covers — those `implementation.md` names, resolved through the map, or, when it names none, every clone in the map, one per slug — the clone the user chose for the slug, where `/document` Phase 4 step 5 recorded one, else by Phase 4's preference (a basename ending `-repo`, then `_repo` or `_fast`, then the alphabetically last) — is its own `--repo`; every other clone the map holds goes as `--owner-of`, so every GitHub owner a clone under `$REPOS_PATH` belongs to is searched, although only the scanned clones are read.
 
 The JSON goes to a file of the run's own, never to the tool's output, which a large result would overflow: read the file the printed line names — the script indents it, so it reads line by line however large — and remove it with `rm -f` once this phase has taken what it needs.
 
@@ -22,7 +22,7 @@ The JSON goes to a file of the run's own, never to the tool's output, which a la
 
 `exit=0` with one JSON document in the file (§2) is the only success. Any other exit, a file that is not JSON, or a call the tool's timeout ended, means it could not run: run it once more with `--no-github` — the scan alone — and report the pull-request search as not run, with the first call's reason (its stderr line, or that it timed out). Only where that fails too, report it as the scan's result for every repository, and continue on the record alone.
 
-**A clone mounted mid-run.** Where Phase 4 waits for a missing repository — "Mount the missing repo(s) now", "I'll clone it — wait" — or takes a path the user specifies for one, rebuild the map and run the script again over the new set, the new clone among the scanned ones; its result replaces the earlier one. It is cheap, and it is the only way the new clone's commits are scanned, and its pull requests given a `clone`.
+**A clone mounted mid-run.** Where Phase 4 waits for a missing repository — "Mount the missing repo(s) now", "I'll clone it — wait" — takes a path the user specifies for one, or takes another of a slug's clones (`/document` Phase 4 step 5), rebuild the map and run the script again over the new set, the new or chosen clone among the scanned ones; its result replaces the earlier one. It is cheap, and it is the only way the new clone's commits are scanned, and its pull requests given a `clone`.
 
 The script fetches nothing and writes nothing: it reads each clone as it stands.
 

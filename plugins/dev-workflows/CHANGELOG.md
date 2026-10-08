@@ -4,11 +4,11 @@ All notable changes to the **dev-workflows** plugin are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
-- **The plugin's description counted fifteen reference files**; `references/` holds sixteen, as its docs page says.
 
 ## [4.22.4] — Unreleased
 
 ### Fixed
+- **The plugin's description counted fifteen reference files**; `references/` holds sixteen, as its docs page says.
 - **`/design`'s and `/ready`'s slug→clone maps came up empty on macOS**, which ships no `timeout` binary: the bare `timeout 5 git -C <dir> remote get-url origin` failed with `command not found`, and a failed call skips the directory, so every candidate repository matched no clone. Both now run it as `bounded 5 git …` (`workflows-core:bounded-run`, 1.35.3) — `timeout`, else `gtimeout`, else a `perl` alarm.
 
 ## [4.22.3] — 2026-10-08

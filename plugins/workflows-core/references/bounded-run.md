@@ -2,7 +2,7 @@
 
 Single source of truth for running a command under a time cap on every host. macOS ships no `timeout` binary, so a call written as a bare `timeout <N>s <cmd>` fails there with `command not found` — and a caller that reads a failed call as "skip" (a slug→clone map skipping a directory, a qmd probe dropping to the fallback) then silently skips everything.
 
-Consumers: every command, agent and reference that caps a call — the slug→clone maps and clone-identity lines of `/dev-workflows:design`, `/dev-workflows:ready`, `/docs-workflows:document`, `/docs-workflows:release-notes`, `/product-workflows:create-ard`, `/product-workflows:epics`, `/product-workflows:idea`, `/product-workflows:prd-ground` and `/product-workflows:specify`; `workflows-core:components` §1; `workflows-core:docs-grounding` step 3.5; and `docs-grounder`.
+A cap the Bash tool's own timeout holds — `docs-style-checker`'s linter pass, `guideline-reviewer`'s ESLint run — needs no wrapper, and is never written as a `timeout` prefix either. Consumers: every command, agent and reference that caps a call in the shell — the slug→clone maps and clone-identity lines of `/dev-workflows:design`, `/dev-workflows:ready`, `/docs-workflows:document`, `/docs-workflows:release-notes`, `/product-workflows:create-ard`, `/product-workflows:epics`, `/product-workflows:idea`, `/product-workflows:prd-ground` and `/product-workflows:specify`; `workflows-core:components` §1; `workflows-core:docs-grounding` step 3.5; and `docs-grounder`.
 
 ## The idiom — `bounded <seconds> <command…>`
 
