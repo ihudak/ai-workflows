@@ -494,10 +494,15 @@ From the **implementation record** — the `implementation.md` blocks Phase 3 re
 3. Take the slug→clone map Phase 3 built with the diff sources — for each top-level directory under each entry of `$REPOS_PATH`, `bounded 5 git -C <dir> remote get-url origin 2>/dev/null` (`workflows-core:bounded-run`), directories with no `.git` or whose `git remote` call fails or times out skipped, any trailing `/` and then a trailing `.git` stripped, the URL's last path segment — what follows its last `/` or `:` — taken as that clone's slug, giving `<slug> → [<absolute path>, ...]`. That step and this one run on every keyed run, so the map is always in hand here and is never built twice.
 4. Resolve each unique in-scope `repo` slug against the map:
    - **One match** — use that absolute path as `repo_path`.
-   - **Multiple matches** (e.g. `cluster` and `cluster-repo`, both pointing at the same upstream) — auto-prefer basename ending `-repo`, then `_repo`/`_fast`, then alphabetically last; show all candidates at plan approval so the user can override.
+   - **Multiple matches** (e.g. `cluster` and `cluster-repo`, both pointing at the same upstream) — auto-prefer basename ending `-repo`, then `_repo`/`_fast`, then alphabetically last — the clone key discovery scanned (`key-discovery.md` §1) — and record the slug's other clones as its `alternates`, which step 5 shows.
    - **Zero matches** — record the slug as **missing** and defer it to the consolidated repo gate in step 5 (do NOT escalate per slug).
    Record each resolution as `repo_slug → repo_path` for Phase 5.
 5. **Consolidated repo gate.** From step 4, compute `expected` = the unique in-scope repo slugs, `mounted` = those that resolved to a path, and `missing` = the zero-match slugs. This is the earliest point the repo set is known (it depends on the implementation record read at the top of this phase) and it runs before any diff work.
+   - **A repository with several clones — first, and only where one has `alternates`.** Show each such slug as `<slug> → <chosen path> (also: <alternate path>, …)`, then ask once:
+     ```
+     choices: ["Use the preferred clones (Recommended)", "Use another clone for a repository (you'll name the slug and the path)", "Cancel"]
+     ```
+     *Use another* takes `<slug> <path>` for each change, the path one of that slug's clones; records it as the slug's `repo_path`; and runs key discovery again with it as the slug's scanned clone and the preferred one as `--owner-of` (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1, *A clone mounted mid-run*), so the scan and the diff read the same clone. Then the rest of this step runs. No slug with `alternates` → nothing is asked.
    - **`missing` is empty** — print one line and continue with no gate:
      ```
      Resolved <M>/<N> repositories from the implementation record.
@@ -1293,7 +1298,7 @@ SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 - Themes: [2–4 bullet points from the folder read]
 
 ### Repos analysed
-- <repo-1> (<resolved repo_path>) — [N refs in scope, M resolved, K unresolved]
+- <repo-1> (<resolved repo_path>) — [N refs in scope, M resolved, K unresolved][; chosen over <alternate paths> — the preferred clone, or the one you named in Phase 4]
 - ...
 
 ### Refs in scope

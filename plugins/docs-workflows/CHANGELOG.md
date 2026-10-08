@@ -4,6 +4,7 @@ All notable changes to the **docs-workflows** plugin are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
+- **`/document` promised to show a repository's several clones "at plan approval", which comes before they are known.** Phase 2's approval precedes Phase 4, where the in-scope repositories are first resolved, so the promised override never appeared and the preferred clone was used silently. Phase 4 now records a slug's other clones and, where any slug has them, lists each as `<slug> → <chosen path> (also: …)` and asks once, before the missing-repository gate, whether to use another; a changed clone re-runs key discovery with it, so the scan and the diff read the same clone.
 
 ## [1.13.2] — Unreleased
 

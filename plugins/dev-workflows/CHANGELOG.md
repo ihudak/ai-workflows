@@ -4,6 +4,7 @@ All notable changes to the **dev-workflows** plugin are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
+- **The plugin's description counted fifteen reference files**; `references/` holds sixteen, as its docs page says.
 
 ## [4.22.4] — Unreleased
 
