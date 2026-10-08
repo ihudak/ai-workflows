@@ -21,7 +21,7 @@ Consumers: `/product-workflows:create-ard` and `/product-workflows:specify`, on 
 
 ## Plan-approval line
 
-Show it in the command's configure step, beside the `docs grounding:` line, verbatim; the off switch is stated separately (`off switch: --no-arch`).
+Show it in the command's configure step, beside the `docs grounding:` line, verbatim — printed as text before the step's next question or dispatch; a line that only goes into a question, an agent prompt or the final report has not been shown; the off switch is stated separately (`off switch: --no-arch`).
 
 ```
 architecture grounding: ON <root> (<branch> @ <short-sha>, <date>)

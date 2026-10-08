@@ -77,7 +77,7 @@ This mirrors `${REPOS_PATH:-/workspace}`. The one write root, `SPECS_PATH`, deli
 
 ## Plan-approval line
 
-When `resolve-docs-grounding` returns, surface one line in the command's plan/approval (or config-confirm) step, with an off switch. This reference owns the format; consumer commands quote it.
+When `resolve-docs-grounding` returns, surface one line in the command's plan/approval (or config-confirm) step, with an off switch. Shown means printed as text in your reply before the step's next question or dispatch; a line that only goes into a question, an agent prompt or the final report has not been shown. This reference owns the format; consumer commands quote it.
 
 ```
 docs grounding: ON <root> (retrieval: qmd-vector)
