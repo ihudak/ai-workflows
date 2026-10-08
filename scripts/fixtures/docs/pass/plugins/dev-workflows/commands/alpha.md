@@ -6,8 +6,12 @@ description: A fixture command reading $SPECS_PATH.
 Call `emit-cost` with `command: /alpha`, `phase: fixture-phase`, `role: pm`,
 and the run's plugin version.
 
+### Next step
+
 On the first choice, execute `handoff-to-main` with `deliverable_paths` = `alpha-deliverable.md`,
 and `title: fixture handoff`.
+
+End the report with a recommendation per `next-phase-offer.md`: → `/dev-workflows:omega <KEY>` (consumer) `<merge-clause>`, which waits on this run's deliverable — §3.4's `/omega` row says so.
 
 ```
 choices: ["Run the gated consumer — /dev-workflows:omega <KEY> (Recommended) <merge-clause>", "Stop here"]

@@ -957,54 +957,14 @@ check_identity_quarantine() {
 }
 
 # ------------------------------------------------------------------ check 11
-# The family globs, read out of ONE line: next-phase-offer.md's scope paragraph, the single
-# unwrapped line beginning `**Where this rule applies:`. Both readers below call this, so the
-# two can never disagree about which commands the rule binds.
-#
-# WHY NOT `head -1` OVER THE WHOLE FILE, which is what this was. That was a proxy, and it held
-# only while the scope paragraph happened to be the first `<plugin>:<family>*` phrase in the
-# file. The repo's instructions (now .claude/rules/gates.md, § Check 11) have always said the
-# family comes from the scope paragraph; the proxy agreed with it by accident of line order. The
-# file also carries a `## Not pipeline nodes` list -- commands that print NO offer -- and the
-# moment a phrase there qualifies for the plugin under check, the proxy hands that plugin a
-# family the rule never bound: check_handoff_applicability forces it into HANDOFF_PLUGIN_RELS,
-# check_merge_clause then finds no offer of it anywhere, and NEITHER branch is green. Anchoring
-# is behaviour-preserving on a file whose scope paragraph does come first, and it is strictly
-# stronger in the direction .claude/rules/gates.md asks for: a reworded scope sentence now
-# empties the glob and turns the build red, where before any stray phrase elsewhere in the file
-# would silently stand in for it.
-#
-# WHY NOT `head -1` ON THE ANCHORED LINE EITHER, which is what this became next. That held only
-# while the scope paragraph named exactly one glob per plugin, and it stopped holding the moment
-# one plugin's own line named two: `/prd-ground` left the `/product-workflows:brd-*` family it
-# used to belong to -- correctly, per the design's own rule that `brd-` names the BRD route and
-# this command now serves two -- but it still prints an offer this gate must cover, so the scope
-# paragraph names it under a SECOND glob, `/product-workflows:prd-*`, on the very same line.
-# Taking only the first of the two silently drops every offer the second names: `route_n` still
-# comes out above zero from the first glob alone, so the vacuity guard stays quiet and the build
-# stays green while a whole command's coverage lapses -- exactly the failure mode this check's
-# own header comment already named as `head -1`'s risk, one level up. `scope_family` now returns
-# every glob on the line, one per line, and both callers accumulate `route_n` / `req_n` across
-# all of them -- so a plugin whose scope line names two families is covered by both, and one
-# whose line names none still fails loudly.
-#
-# The two empty-glob dispositions stay exactly as they are -- `fail 11` in check_merge_clause,
-# an early `return` in check_handoff_applicability -- and "empty" now means the function
-# returned no line at all, never that its first line was empty. The quiet one is safe only
-# because the loud one exists.
-scope_family() { # <next-phase-offer.md> <qualifier>  -> one family glob per line, or empty
-  grep '^\*\*Where this rule applies:' "$1" 2>/dev/null \
-    | grep -oE "$2[a-z][a-z0-9-]*\*" | sed "s|^$2||" | sort -u
-}
-
-# Merge-clause adoption. An offer that names a downstream command whose Phase 0 gate
-# targets an artifact THIS run writes must carry the `<merge-clause>` placeholder, because
-# that command stops while this phase's pull request is open. The placeholder and its
-# resolution table live in $CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md, which binds the rule
-# to EVERY offer the dependent plugin family prints -- not to the corpus plugin that ships the
-# rule, whose own single offer deliberately carries no clause; the family glob below is this
-# GATE's scope, not the rule's, and that same file records why it is not widened. This check
-# only enforces adoption.
+# Merge-clause adoption. An offer that names a downstream command whose Phase 0 gate targets
+# an artifact THIS run writes must carry the `<merge-clause>` placeholder, because that command
+# stops while this phase's pull request is open. The placeholder and its resolution table live
+# in $CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md, and the row-F target table in
+# $CORE_PLUGIN_REL/$REF_DIR/phase-handoff.md (§3.4); the commands, their offers and their
+# `deliverable_paths` come from $PLUGIN_REL. Once a corpus is extracted those are different
+# plugins, and the rule still binds the offers of the plugin that prints them. This check only
+# enforces adoption.
 #
 # The failure it exists for is PARTIAL adoption, which is worse than none: a reference
 # claiming family-wide ownership while seven offers still carried a hardcoded clause, or
@@ -1012,154 +972,334 @@ scope_family() { # <next-phase-offer.md> <qualifier>  -> one family glob per lin
 # found once, by enumerating every option by hand. Nothing re-enumerated it afterwards.
 #
 # Three relations, every one DERIVED, none written in here:
-#   family  -- the `<plugin>:<family>*` glob next-phase-offer.md names, which is this gate's
-#              scope. Only offers made BY a command of that family are checked. Widening it
-#              was measured, not assumed, and re-measured since: with the filter removed the
-#              check fires on THREE sites -- a command that runs no handoff at all, and two
-#              mid-run refusals -- every one correct content, and catches NONE of the six
-#              offers outside the family that carried an unconditional clause or no clause
-#              at all. The fourth site the earlier measurement named (a report sentence
-#              trailing an array on one line of idea.md) is gone with the branch it sat in,
-#              so widening now yields less and still catches nothing -- including the /idea
-#              offer that was the sixth defect, which is prose and invisible to any
-#              `choices:` scanner. A `choices:` array here is a refusal or a branch point as
-#              often as it is an offer, and nothing marks which. Do not widen without new
-#              evidence; next-phase-offer.md holds the full record and the numbers.
-#   targets -- what each command runs `require-on-main` against, read out of
-#              phase-handoff.md's row-F table (column 2's backticked *.md, by basename).
+#   family  -- which commands' offers are checked, read from next-phase-offer.md in the form
+#              CHECK11_FAMILY names (below). It is this GATE's scope, not the rule's: the rule
+#              binds every offer the dependent plugins print, and that same file records why
+#              the gate is not widened. Widening it was measured, not assumed, and re-measured
+#              since: with the filter removed the check fired only on correct content -- a
+#              command that runs no handoff at all, mid-run refusals -- and caught none of the
+#              offers outside the family that carried an unconditional clause or none at all.
+#              A `choices:` array is a refusal or a branch point as often as it is an offer,
+#              and nothing marks which. Do not widen without new evidence.
+#   targets -- what each command runs `require-on-main` against, read out of phase-handoff.md's
+#              row-F table (column 2's backticked *.md, by basename; column 3 routinely cites
+#              reference FILES that are not gate targets). A prose target with no backticked .md
+#              token ("the ARD") is not a candidate -- the extractor is selective by
+#              construction, not a claim that every row names a decidable artifact.
 #   writers -- what a command declares it hands off, read out of its own
 #              `deliverable_paths` = ... `title:` span (same basename form).
 # An offer is REQUIRED to carry the clause when writers(offerer) and targets(offered)
-# intersect. It is never required to DROP one: an offer may carry the clause for a reason
-# this check cannot see, and a check that forbade that would be asserting more than it knows.
+# intersect. It is never required to DROP one: an offer may carry the clause for a reason this
+# check cannot see, and a check that forbade that would be asserting more than it knows.
 #
-# What it deliberately does NOT catch. It reads the option's TEXT for the placeholder, not
-# the clause the run resolves it to -- whether the resolution table is applied correctly at
-# runtime is not in the file. It cannot see an offer outside a `choices:` array (a prose
-# `### Next step` line is not checked). And its writer relation is the paths the command
-# DECLARES; a file a run writes but never declares is invisible to it, which under-fires
-# rather than over-fires. That last one limits WHICH paths are seen; it is not a licence for a
-# whole command to drop out. Any relation coming up empty is a FAILURE -- per family command
-# for `writers`, run-wide for the family glob and the target table -- so a reworded handoff
-# turns the build red instead of quietly narrowing this check's surface.
+# THE FAMILY, in one of two forms (CHECK11_FAMILY). `glob`, the multi-plugin form: every
+# `/<plugin>:<family>*` phrase on the scope paragraph's one line, `**Where this rule applies:`,
+# qualified by the plugin under check -- several plugins share one corpus there and the rule
+# binds only some of each plugin's commands. `sentence`, the single-plugin form: that
+# paragraph names no glob, and its "<N> offers carry it — ..." sentence enumerates the adopters
+# instead, so a new adopter is one sentence edit away from being covered, exactly as adding a
+# glob would be. Either way the family is read from there and never hand-copied here.
 #
-# WHERE EACH HALF IS READ FROM. Both references -- next-phase-offer.md (the family and the
-# placeholder) and phase-handoff.md (the row-F target table) -- come from $CORE_PLUGIN_REL;
-# the commands, their offers and their `deliverable_paths` come from $PLUGIN_REL. Once the
-# corpus is extracted those are different plugins, and the rule still binds the offers of the
-# plugin that prints them. None of the three relations becomes optional as a result: an
-# absent reference is still a FAILURE, not a skip, exactly as an emptied one is.
+# THE OFFERS. Every `choices:` option a family command prints in its NEXT-STEP section (the last
+# heading matching `Next step(s)` or `Next-step offer`, to the end of the file; a command with
+# no such heading is read whole, which can only widen what is examined) -- a mid-run array (an
+# escalation, a refusal) routinely names a pipeline command without offering it as this run's
+# forward route. The array is read bracket-bounded and quote-aware, as check 12 reads it: a
+# scan with no closing bound runs past the `]` into prose later on the same long line. A
+# command is named in an option as `/name`, `/plugin:name` or `name:` (the Copilot edition's
+# trigger), each reduced to `name`. With CHECK11_PROSE=1 the check also reads PROSE offers (the
+# reader below has the shape) and holds each family command that writes a gated artifact to at
+# least one offer it reads. The upstream edition keeps it 0 on a measurement its
+# next-phase-offer.md records -- its prose offers take six shapes and a reader keyed on their
+# introducers fires on correct text -- so a prose offer there is held by review.
+#
+# What it deliberately does NOT catch. It reads the option's TEXT for the placeholder, not the
+# clause the run resolves it to -- whether the resolution table is applied correctly at runtime
+# is not in the file. Its writer relation is the paths the command DECLARES; a file a run
+# writes but never declares is invisible to it, which under-fires rather than over-fires. That
+# limits WHICH paths are seen; it is not a licence for a whole command to drop out. Any relation
+# coming up empty is a FAILURE -- per family command for `writers`, run-wide for the family and
+# the target table -- so a reworded handoff turns the build red instead of quietly narrowing
+# this check's surface. An absent reference is a FAILURE too, not a skip.
+#
+# WHY THE SCOPE LINE AND NOT `head -1` OVER THE WHOLE FILE, in glob form. That was a proxy that
+# held only while the scope paragraph happened to be the first `<plugin>:<family>*` phrase in
+# the file; the file also carries a `## Not pipeline nodes` list -- commands that print NO
+# offer -- and the moment a phrase there qualified, the proxy handed the plugin a family the
+# rule never bound. Nor `head -1` on the anchored line: one plugin's line names two globs
+# (`/prd-ground` left the `brd-*` family on a rename but still prints an offer this gate must
+# cover, under a second glob), and taking the first silently drops every offer the second
+# names. scope_family returns every glob on the line, and route_n / req_n count across all.
+scope_family() { # <next-phase-offer.md> <qualifier>  -> one family glob per line, or empty
+  grep '^\*\*Where this rule applies:' "$1" 2>/dev/null \
+    | grep -oE "$2[a-z][a-z0-9-]*\*" | sed "s|^$2||" | sort -u
+}
+adopt_sentence() { # <next-phase-offer.md> -> the "<N> offers carry it — ..." sentence, or empty
+  grep -oE '[A-Z][a-z]+ offers? carr(y|ies) it — [^.]*\.' "$1" 2>/dev/null | head -1
+}
+check11_family() { # <next-phase-offer.md> <qualifier> -> the family declaration, one glob or name per line
+  case "$CHECK11_FAMILY" in
+    glob)     scope_family "$1" "$2" ;;
+    sentence) adopt_sentence "$1" | grep -oE '`/?[a-zA-Z][a-zA-Z0-9-]*:?`' | tr -d '`:/' | sort -u ;;
+  esac
+}
+check11_member() { # <command-name> <declaration> -> status 0 when the declaration covers the command
+  local d
+  while IFS= read -r d; do
+    [ -n "$d" ] || continue
+    if [ "$CHECK11_FAMILY" = glob ]; then
+      case "$1" in $d) return 0 ;; esac
+    else
+      [ "$1" = "$d" ] && return 0
+    fi
+  done <<<"$2"
+  return 1
+}
+check11_desc() { # <declaration> <qualifier> -> the family named for a message
+  if [ "$CHECK11_FAMILY" = glob ]; then
+    printf "'%s'" "$(printf '%s\n' "$1" | sed "s|^|$2|" | tr '\n' ' ' | sed 's/ $//')"
+  else
+    printf "'%s' (named by the adopting-commands sentence)" "$(printf '%s\n' "$1" | tr '\n' ' ' | sed 's/ $//')"
+  fi
+}
+
 check_merge_clause() {
   local root="$1" p="$1/$PLUGIN_REL" core="$1/$CORE_PLUGIN_REL"
   local ref="$core/$REF_DIR/next-phase-offer.md" ph="$core/$REF_DIR/phase-handoff.md"
-  local qual="/${PLUGIN_REL##*/}:" globs glob targets writers offers route_n=0 req_n=0
-  local y f x ln has t need needt
+  local qual="/${PLUGIN_REL##*/}:" decl family_desc targets gated known writers offers prose
+  local route_n=0 req_n=0 y f x ln has t w need needt feedt req_y section offlineno prose_artifact
 
   [ -f "$ref" ] || { fail 11 "$CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md is missing -- it owns the <merge-clause> placeholder, its resolution table, and the command family the rule binds"; return; }
   [ -f "$ph" ]  || { fail 11 "$CORE_PLUGIN_REL/$REF_DIR/phase-handoff.md is missing -- its row-F table is where each command's require-on-main target is declared"; return; }
 
-  globs=$(scope_family "$ref" "$qual")
-  [ -n "$globs" ] || { fail 11 "$CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md no longer names the command family the <merge-clause> rule binds -- the family is read ONLY from the scope-paragraph line, the single line beginning \`**Where this rule applies:\`, and that line carries no \`$qual<family>*\` phrase. A phrase of that shape elsewhere in the file does NOT count and will not silence this; with no family, the check would examine no offer at all"; return; }
+  case "$CHECK11_FAMILY" in
+    glob)
+      decl=$(check11_family "$ref" "$qual")
+      [ -n "$decl" ] || { fail 11 "$CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md no longer names the command family the <merge-clause> rule binds -- the family is read ONLY from the scope-paragraph line, the single line beginning \`**Where this rule applies:\`, and that line carries no \`$qual<family>*\` phrase. A phrase of that shape elsewhere in the file does NOT count and will not silence this; with no family, the check would examine no offer at all"; return; } ;;
+    sentence)
+      [ -n "$(adopt_sentence "$ref")" ] \
+        || { fail 11 "$CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md's scope paragraph no longer names its adopting commands in the one sentence this check reads (\"<N> offers carry it — ...\") -- with no family, this check would examine no offer at all"; return; }
+      decl=$(check11_family "$ref" "$qual")
+      [ -n "$decl" ] \
+        || { fail 11 "$CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md's adopting-commands sentence names no command this check can parse -- the EXTRACTOR has drifted or the sentence was reworded; fix the parser, never the sentence"; return; } ;;
+    *) fail 11 "CHECK11_FAMILY is '$CHECK11_FAMILY' -- the edition config must set it to glob or sentence"; return ;;
+  esac
+  family_desc=$(check11_desc "$decl" "$qual")
 
-  # targets: one `<command>|<artifact-basename>` line per row-F table cell. Column 2 only --
-  # column 3 routinely cites reference FILES that are not gate targets.
+  # targets: one `<command>|<artifact-basename>` line per row-F table cell. A caller is named
+  # `/name`, `name:` (the Copilot edition's trigger) or the typed `/plugin:name`; each reduces to
+  # `name`. The prefixed form once read as a command named after the PLUGIN, and the command it
+  # named had no gate as far as this check could see.
   targets=$(awk -F'|' '
-    /^\| `?\/[a-z]/ {
+    /^\| `?[\/a-zA-Z]/ {
       c1 = $2; c2 = $3; n = 0
       while (match(c2, /`[^`]*\.md`/)) {
         t = substr(c2, RSTART + 1, RLENGTH - 2); sub(/.*\//, "", t); tg[++n] = t
         c2 = substr(c2, RSTART + RLENGTH)
       }
       if (n == 0) next
-      while (match(c1, /\/[a-z][a-z0-9-]*/)) {
-        cmd = substr(c1, RSTART + 1, RLENGTH - 1); c1 = substr(c1, RSTART + RLENGTH)
+      while (match(c1, /\/[a-zA-Z][a-zA-Z0-9:-]*|[a-zA-Z][a-zA-Z0-9-]*:/)) {
+        cmd = substr(c1, RSTART, RLENGTH); c1 = substr(c1, RSTART + RLENGTH)
+        sub(/^\//, "", cmd)
+        if (cmd ~ /:.+/) sub(/^[^:]*:/, "", cmd)
+        sub(/:$/, "", cmd)
         for (i = 1; i <= n; i++) print cmd "|" tg[i]
       }
     }' "$ph" | sort -u)
   [ -n "$targets" ] || { fail 11 "$CORE_PLUGIN_REL/$REF_DIR/phase-handoff.md's row-F table yielded no require-on-main target -- the EXTRACTOR has drifted, not the table; fix the parser, never the rows"; return; }
+  gated=$(sed 's/^[^|]*|//' <<<"$targets" | sort -u)   # every artifact some gate targets
+  # Every command name the gate knows, space-delimited: this plugin's commands and the row-F
+  # callers. The prose reader takes a span for a command only when it names one of these --
+  # `/workspace` or `status: merged` in a role label is a label.
+  known=" $(cmd_names "$p" | tr '\n' ' ')$(cut -d'|' -f1 <<<"$targets" | sort -u | tr '\n' ' ')"
 
-  # Outer loop over every glob the scope paragraph names (usually one; two where a command like
-  # /prd-ground serves two families at once). route_n and req_n accumulate across all of them,
-  # so the vacuity guards below see the family's TOTAL coverage, never just one glob's.
-  while IFS= read -r glob; do
-    [ -n "$glob" ] || continue
-    while IFS= read -r y; do
-      [ -n "$y" ] || continue
-      case "$y" in $glob) ;; *) continue ;; esac
-      f=$(cmd_file "$p" "$y"); [ -f "$f" ] || continue
-      route_n=$((route_n + 1))
+  while IFS= read -r y; do
+    [ -n "$y" ] || continue
+    check11_member "$y" "$decl" || continue
+    f=$(cmd_file "$p" "$y"); [ -f "$f" ] || continue
+    route_n=$((route_n + 1))
 
-      # offers: one `<line>|<offered-command>|<0|1 carries the placeholder>` per option.
-      offers=$(awk -v Y="$y" -v Q="$qual" '
-        index($0, "choices: [") {
-          body = substr($0, index($0, "choices: [") + 9)
-          while (match(body, /"[^"]*"/)) {
-            opt = substr(body, RSTART + 1, RLENGTH - 2); body = substr(body, RSTART + RLENGTH)
-            tmp = opt
-            while ((i = index(tmp, Q)) > 0) {
-              rest = substr(tmp, i + length(Q))
-              match(rest, /^[a-z][a-z0-9-]*/)
-              x = substr(rest, 1, RLENGTH); tmp = substr(rest, RLENGTH + 1)
-              if (x != Y) print FNR "|" x "|" (index(opt, "<merge-clause>") ? "1" : "0")
+    # The next-step section, and the line it starts after (0 when the whole file is read).
+    section=$(awk '
+      /^##[#]?[[:space:]]+.*[Nn]ext[-[:space:]][Ss]teps?/ { buf = ""; from = NR; next }
+      { if (from) buf = buf $0 "\n" }
+      END { printf "%s", buf }
+    ' "$f")
+    offlineno=$(awk '/^##[#]?[[:space:]]+.*[Nn]ext[-[:space:]][Ss]teps?/{n=NR} END{print n+0}' "$f")
+    [ -n "$section" ] || { section=$(cat "$f"); offlineno=0; }
+
+    # writers: the backticked *.md paths inside this command's `deliverable_paths` = ...
+    # `title:` span. The `=` is required: the same word appears in prose that lists nothing.
+    # The span starts AT the `deliverable_paths` token and ends AT the `title:` token, each on
+    # the line that carries it, never at that line's start or end: a line routinely cites a
+    # reference file before the token and names the deliverable again in prose after
+    # `title:`, and either one would keep a declaration reworded to name no path looking
+    # extractable.
+    writers=$(awk '
+      /`deliverable_paths`[[:space:]]*=/ { span = 1; k = 0; first = 1 }
+      span {
+        line = $0
+        if (first) { line = substr(line, index(line, "`deliverable_paths`")); first = 0 }
+        if ((q = index(line, "`title:")) > 0) line = substr(line, 1, q - 1)
+        while (match(line, /`[^`]*\.md`/)) {
+          t = substr(line, RSTART + 1, RLENGTH - 2); sub(/.*\//, "", t); print t
+          line = substr(line, RSTART + RLENGTH)
+        }
+        if ($0 ~ /`title:/ || ++k > 20) span = 0
+      }' "$f" | sort -u)
+
+    # offers: one `<line>|<offered-command>|<0|1 carries the placeholder>` per choices option.
+    offers=$(awk -v Y="$y" -v OFF="$offlineno" '
+      {
+        s = $0
+        while ((p = index(s, "choices: [")) > 0) {
+          rest = substr(s, p + 10)
+          depth = 1; inq = 0; buf = ""; opts_n = 0; j = 1; L = length(rest)
+          while (j <= L && depth > 0) {
+            c = substr(rest, j, 1)
+            if (inq) {
+              if (c == "\\") { buf = buf c substr(rest, j+1, 1); j += 2; continue }
+              else if (c == "\"") { inq = 0; opts_n++; opt[opts_n] = buf; buf = "" }
+              else buf = buf c
+            } else {
+              if (c == "\"") inq = 1
+              else if (c == "[") depth++
+              else if (c == "]") depth--
+            }
+            j++
+          }
+          for (k = 1; k <= opts_n; k++) {
+            optv = opt[k]
+            tmp = optv
+            while (match(tmp, /\/[a-zA-Z][a-zA-Z0-9:_-]*|[a-zA-Z][a-zA-Z0-9-]*:/)) {
+              cand = substr(tmp, RSTART, RLENGTH)
+              gsub(/^\//, "", cand)      # /name or /plugin:name -> name or plugin:name
+              if (cand ~ /:.+/) sub(/^[^:]*:/, "", cand)   # plugin:name -> name (colon NOT at the end)
+              sub(/:$/, "", cand)        # name: -> name (bare trailing colon)
+              tmp = substr(tmp, RSTART + RLENGTH)
+              if (cand != "" && cand != Y) {
+                has = (index(optv, "<merge-clause>") > 0) ? 1 : 0
+                print (NR + OFF) "|" cand "|" has
+              }
             }
           }
-        }' "$f" | sort -u)
-      # A family command that makes no offer has no surface for this check to cover, so it needs
-      # no writer set and is not asserted about.
-      [ -n "$offers" ] || continue
+          s = substr(rest, j)
+        }
+      }' <<<"$section")
 
-      # writers: the backticked *.md paths inside this command's `deliverable_paths` = ...
-      # `title:` span. The `=` is required: the same word appears in prose that lists nothing.
-      # The span starts AT the `deliverable_paths` token and ends AT the `title:` token, each on
-      # the line that carries it, never at that line's start or end: a line routinely cites a
-      # reference file before the token and names the deliverable again in prose after
-      # `title:`, and either one would keep a declaration reworded to name no path looking
-      # extractable.
-      writers=$(awk '
-        /`deliverable_paths`[[:space:]]*=/ { span = 1; k = 0; first = 1 }
-        span {
-          line = $0
-          if (first) { line = substr(line, index(line, "`deliverable_paths`")); first = 0 }
-          if ((q = index(line, "`title:")) > 0) line = substr(line, 1, q - 1)
-          while (match(line, /`[^`]*\.md`/)) {
-            t = substr(line, RSTART + 1, RLENGTH - 2); sub(/.*\//, "", t); print t
-            line = substr(line, RSTART + RLENGTH)
+    # offers, prose form (CHECK11_PROSE=1) -- the shape next-phase-offer.md states for an offer
+    # written as a sentence: on a line citing that reference, the offered command's code span
+    # immediately preceded by `→` or the word "recommend" (only spaces or `*` between), and
+    # `<merge-clause>` the first span after it, within the offer's own clause of the sentence
+    # (the search stops at `.`, `;`, `—` or "which"), that is the clause or names another
+    # command -- so each command carries its own, and a role label between ("(depth, still
+    # Dev)", plain or in spans of its own) is passed over. A command is a name in $known. A
+    # command joined to an offer by "or", "and" or a comma, a parenthesised label allowed before
+    # the joiner, is an offer too. Not read as one: a command named any other way on that line
+    # ("§3.4's `/design` row"), an arrow between two commands (a pipeline, "`/idea` →
+    # `/create-vi`"), and a negated recommend (not, never, or n't with a straight or curly
+    # apostrophe). It runs under LC_ALL=C so every awk reads bytes alike: the curly apostrophe
+    # is its three bytes, `→` and `—` are matched as byte sequences. Whole file, not the
+    # next-step section: an offer may sit under a handoff phase, and the citing line is what
+    # marks an offer paragraph. A clause inside the command's own span is no span after it, so
+    # it reads as missing -- the reference forbids that.
+    if [ "$CHECK11_PROSE" = 1 ]; then
+      prose=$(LC_ALL=C awk -v Y="$y" -v K="$known" '
+        function cmdname(t,   c) {
+          if (!match(t, /^\/[a-zA-Z][a-zA-Z0-9:_-]*|^[a-zA-Z][a-zA-Z0-9-]*:/)) return ""
+          c = substr(t, RSTART, RLENGTH)
+          sub(/^\//, "", c)
+          if (c ~ /:.+/) sub(/^[^:]*:/, "", c)
+          sub(/:$/, "", c)
+          return (index(K, " " c " ") ? c : "")
+        }
+        index($0, "next-phase-offer.md") {
+          s = $0; n = 0
+          while (match(s, /`[^`]*`/)) {
+            n++; txt[n] = substr(s, RSTART + 1, RLENGTH - 2); gap[n] = substr(s, 1, RSTART - 1)
+            s = substr(s, RSTART + RLENGTH)
           }
-          if ($0 ~ /`title:/ || ++k > 20) span = 0
-        }' "$f" | sort -u)
-      # PER-COMMAND coverage assertion, and it has to be per command. Rewording one command's
-      # `deliverable_paths` = to `deliverable_paths` lists empties ITS writer set alone: every
-      # offer that command makes silently stops being checked while the whole-run assertions
-      # below still pass, because the other family commands keep req_n above zero. That is a
-      # gate quietly ceasing to cover part of its surface -- the failure this file's check-8
-      # extractor-coverage assertion exists to prevent, and the reason no stop-routing check was
-      # shipped. A family command that offers something must declare what it writes.
-      if [ -z "$writers" ]; then
-        fail 11 "$CMD_DIR/$y$CMD_SUFFIX makes a choices: offer but its \`deliverable_paths\` = ... \`title:\` span yields no path -- the EXTRACTOR has drifted or the handoff sentence was reworded, and every offer this command makes has stopped being checked; fix the parser or restore the declaration, never the offers"
-        continue
-      fi
+          run = 0
+          for (k = 1; k <= n; k++) {
+            cand = cmdname(txt[k])
+            if (cand == "") {
+              if (txt[k] != "<merge-clause>" && gap[k] ~ /[^ ,*]/) run = 0
+              continue
+            }
+            intro = (gap[k] ~ /→[ *]*$/ || gap[k] ~ /[Rr]ecommend[ *]*$/)
+            if (gap[k] ~ /([Nn]ot|[Nn]ever|n(\047|\342\200\231)t)[ *]+[Rr]ecommend[ *]*$/) intro = 0
+            if (k > 1 && cmdname(txt[k - 1]) != "" && gap[k] ~ /^[ *]*→[ *]*$/) intro = 0
+            if (!intro && run && gap[k] ~ /^[ ,*]*(\([^)]*\)[ ,*]*)?((or|and)[ *]*)?$/) intro = 1
+            run = intro
+            if (!intro || cand == Y) continue
+            has = 0
+            for (j = k + 1; j <= n; j++) {
+              if (gap[j] ~ /[.;]|—|[Ww]hich/) break
+              if (txt[j] == "<merge-clause>") { has = 1; break }
+              if (cmdname(txt[j]) != "") break
+            }
+            print NR "|" cand "|" has
+          }
+        }' "$f")
+      [ -n "$prose" ] && offers=$(printf '%s\n%s' "$offers" "$prose")
+    fi
+    # A family command that makes no offer the check reads has no surface to cover -- unless
+    # prose offers are read, where the per-command guard below asks whether one went missing.
+    [ -n "$offers" ] || [ "$CHECK11_PROSE" = 1 ] || continue
 
-      while IFS='|' read -r ln x has; do
-        [ -n "$ln" ] || continue
-        need=0; needt=""
-        while IFS= read -r t; do
-          [ -n "$t" ] || continue
-          grep -qxF -- "$t" <<<"$writers" && { need=1; needt="$t"; break; }
-        done < <(grep -F "$x|" <<<"$targets" | sed 's/^[^|]*|//')
-        [ "$need" = 1 ] || continue
-        req_n=$((req_n + 1))
-        [ "$has" = 1 ] || fail 11 "$CMD_DIR/$y$CMD_SUFFIX:$ln offers $qual$x with no <merge-clause>, and this run writes '$needt' -- the artifact $qual$x's require-on-main gate targets, so that command stops while this phase's pull request is open ($CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md owns the placeholder and its resolution table)"
-      done <<<"$offers"
-    done < <(cmd_names "$p")
-  done <<<"$globs"
+    # The writer guard is PER COMMAND, and it has to be. Rewording one command's
+    # `deliverable_paths` = to `deliverable_paths` lists empties ITS writer set alone: every
+    # offer that command makes silently stops being checked while the whole-run assertions below
+    # still pass, because the other family commands keep req_n above zero -- the failure this
+    # file's check-8 extractor-coverage assertion exists to prevent. One convention is exempt:
+    # a command whose declaration says, in prose, that it hands off "the VI" or "the ARD"
+    # (`= the VI file`, `= the ARD dir`), because that deliverable's filename is templated
+    # (`<KEY>_<slug>.md`, `*_ARD.md`) and has no fixed basename for an extractor to find --
+    # and row F names it as prose for the same reason, so it can never be a target either.
+    prose_artifact=0
+    awk '
+      /`deliverable_paths`[[:space:]]*=/ {
+        line = $0; p = index(line, "`deliverable_paths`"); line = substr(line, p)
+        if (line ~ /= the ([a-zA-Z]+ )?(VI|ARD)( file| dir)?/) { print "prose"; exit }
+      }' "$f" | grep -q prose && prose_artifact=1
+    if [ -z "$writers" ] && [ "$prose_artifact" != 1 ]; then
+      fail 11 "$CMD_DIR/$y$CMD_SUFFIX is in the <merge-clause> family but its \`deliverable_paths\` = ... \`title:\` span yields no path -- the EXTRACTOR has drifted or the handoff sentence was reworded, and every offer this command makes has stopped being checked; fix the parser or restore the declaration, never the offers"
+      continue
+    fi
+
+    # feedt: an artifact this command writes that the gate of SOME OTHER command targets -- its
+    # own gate is never an offer it can make. Such a command must make at least one offer this
+    # check reads and requires: the per-command vacuity guard below, read with CHECK11_PROSE=1.
+    feedt=""
+    while IFS= read -r w; do
+      [ -n "$w" ] || continue
+      grep -v -- "^$y|" <<<"$targets" | sed 's/^[^|]*|//' | grep -qxF -- "$w" && { feedt="$w"; break; }
+    done <<<"$writers"
+    req_y=0
+
+    while IFS='|' read -r ln x has; do
+      [ -n "$ln" ] || continue
+      need=0; needt=""
+      while IFS= read -r t; do
+        [ -n "$t" ] || continue
+        grep -qxF -- "$t" <<<"$writers" && { need=1; needt="$t"; break; }
+      done < <(grep -F "$x|" <<<"$targets" | sed 's/^[^|]*|//')
+      [ "$need" = 1 ] || continue
+      req_n=$((req_n + 1)); req_y=$((req_y + 1))
+      [ "$has" = 1 ] || fail 11 "$CMD_DIR/$y$CMD_SUFFIX:$ln offers /$x with no <merge-clause>, and this run writes '$needt' -- the artifact /$x's require-on-main gate targets, so that command stops while this phase's pull request is open ($CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md owns the placeholder and its resolution table)"
+    done <<<"$offers"
+    # Per command, because a family-wide count hides one command whose offer has dropped out
+    # (its introducer reworded, its citing line rewrapped away, its option gone) while its
+    # siblings still require the clause.
+    if [ "$CHECK11_PROSE" = 1 ] && [ -n "$feedt" ] && [ "$req_y" -eq 0 ]; then
+      fail 11 "$CMD_DIR/$y$CMD_SUFFIX writes '$feedt', which a require-on-main gate targets, yet makes no offer this check reads that names a command gated on it -- an offer lost its introducer, its line citing next-phase-offer.md or its option, and the clause it carried is no longer checked"
+    fi
+  done < <(cmd_names "$p")
 
   # Coverage assertions. Both states mean the check has gone quiet rather than clean, and a
-  # gate that has stopped being able to fail must turn the build red, not green. The family
-  # description below lists every glob the scope paragraph named, not just one of them, so the
-  # message stays accurate on a plugin whose line names more than one.
-  local family_desc; family_desc=$(printf '%s\n' "$globs" | sed "s|^|$qual|" | tr '\n' ' ' | sed 's/ $//')
-  [ "$route_n" -gt 0 ] || fail 11 "$CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md binds the <merge-clause> rule to '$family_desc', which matches no command in $CMD_DIR/ -- the family was renamed or retired and this check now examines nothing"
-  [ "$req_n" -gt 0 ] || fail 11 "no offer in the '$family_desc' family names a command whose require-on-main target that offer's own run writes -- either the route stopped handing off to itself or the EXTRACTOR drifted; fix the parser, never the offers"
+  # gate that has stopped being able to fail must turn the build red, not green.
+  [ "$route_n" -gt 0 ] || fail 11 "$CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md binds the <merge-clause> rule to $family_desc, which matches no command in $CMD_DIR/ -- the family was renamed or retired and this check now examines nothing"
+  [ "$route_n" -eq 0 ] || [ "$req_n" -gt 0 ] || fail 11 "no offer in $family_desc names a downstream command whose require-on-main gate its own run feeds -- the route stopped handing off to itself, or the target/writer extraction (with CHECK11_PROSE=1, the prose convention too) drifted, and this check now requires nothing"
 }
 
 # HANDOFF_PLUGIN_RELS is a declared list, not an inferred one -- same asymmetry as
@@ -1183,28 +1323,21 @@ check_merge_clause() {
 # Re-basing the trigger keeps that direction loud.
 check_handoff_applicability() {
   local root="$1" p="$1/$PLUGIN_REL" ref="$1/$CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md"
-  local qual="/${PLUGIN_REL##*/}:" globs glob y n=0 family_desc
+  local qual="/${PLUGIN_REL##*/}:" decl y n=0
   # An absent or family-less reference is not degraded to a skip HERE only because it is
   # already loud THERE: check_merge_clause fails on both for every declared plugin, and
   # HANDOFF_PLUGIN_RELS is non-empty in every edition that ships the subsystem.
   [ -f "$ref" ] || return
-  globs=$(scope_family "$ref" "$qual")
-  [ -n "$globs" ] || return
-  # Same accumulation as check_merge_clause: a plugin's scope line may name more than one
-  # glob (e.g. /prd-ground's own family alongside the route it left), and `n` has to count
-  # matches across every one of them, not just the first.
-  while IFS= read -r glob; do
-    [ -n "$glob" ] || continue
-    while IFS= read -r y; do
-      [ -n "$y" ] || continue
-      case "$y" in $glob) n=$((n + 1)) ;; esac
-    done < <(cmd_names "$p")
-  done <<<"$globs"
+  decl=$(check11_family "$ref" "$qual")
+  [ -n "$decl" ] || return
+  while IFS= read -r y; do
+    [ -n "$y" ] || continue
+    check11_member "$y" "$decl" && n=$((n + 1))
+  done < <(cmd_names "$p")
   [ "$n" -gt 0 ] || return
-  family_desc=$(printf '%s\n' "$globs" | sed "s|^|$qual|" | tr '\n' ' ' | sed 's/ $//')
   case " $HANDOFF_PLUGIN_RELS " in
     *" $PLUGIN_REL "*) : ;;
-    *) fail 11 "$PLUGIN_REL ships $n command(s) of the '$family_desc' family that $CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md binds the <merge-clause> rule to, but is not a member of HANDOFF_PLUGIN_RELS -- check 11 never runs for it" ;;
+    *) fail 11 "$PLUGIN_REL ships $n command(s) of the $(check11_desc "$decl" "$qual") family that $CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md binds the <merge-clause> rule to, but is not a member of HANDOFF_PLUGIN_RELS -- check 11 never runs for it" ;;
   esac
 }
 
@@ -2756,33 +2889,39 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   expect_fail "an underivable identity token set is rejected" 10 \
     "sed -i.bak '/^$CLI plugin /d' README.md"
 
-  # Check 11 -- merge-clause adoption. The fixture's route is one command (`alpha`, matched by
-  # the `alpha*` family glob next-phase-offer.md declares) offering `/dev-workflows:omega`,
-  # whose row-F entry gates `alpha-deliverable.md` -- which alpha's own `deliverable_paths`
-  # declares. That is one clause-requiring offer; the live tree has eight.
-  expect_fail "an offer that drops <merge-clause> is rejected" 11 \
-    "sed -i.bak 's| <merge-clause>||' $(cmd_file $PLUGIN_REL alpha)"
+  # Check 11 -- merge-clause adoption. The fixture's family is two commands, `alpha` and
+  # `alpha-two`, which next-phase-offer.md declares BOTH ways -- the `alpha*` glob on its scope
+  # line and the "Two offers carry it" sentence -- so either CHECK11_FAMILY form reads it, and
+  # the fixture runs in its edition's own. alpha offers `/dev-workflows:omega`, whose row-F
+  # entry gates `alpha-deliverable.md`, which alpha's own `deliverable_paths` declares; it
+  # makes that offer twice, in its `choices:` array and in prose (read under CHECK11_PROSE=1).
+  # alpha-two offers `/tau` on `alpha-two-out.md`. A case that belongs to one form or one
+  # switch setting names it; the rest hold in every configuration.
+  expect_fail_msg "an offer that drops <merge-clause> is rejected" 11 "offers /omega with no <merge-clause>" \
+    "sed -i.bak '/choices:/s| <merge-clause>||' $(cmd_file $PLUGIN_REL alpha)"
   # The PER-COMMAND coverage guard. Rewording one family command's handoff sentence empties its
   # writer set alone, and every offer that command makes stops being checked while the run-wide
   # assertions stay satisfied by the other family commands -- green, and quietly covering less.
   # This mutation is the one a review demonstrated against the live tree on prd-ground.md.
-  expect_fail "a family command whose handoff declares no path is rejected" 11 \
+  expect_fail_msg "a family command whose handoff declares no path is rejected" 11 "yields no path" \
     "sed -i.bak 's|\`deliverable_paths\` = |\`deliverable_paths\` lists |' $(cmd_file $PLUGIN_REL alpha)"
   # The declaration's span is bounded at BOTH ends, on the line that carries each bound: it
   # starts at the `deliverable_paths` token, not at the start of its line, and ends at the
   # `title:` token, not at the end of its line. A line routinely cites a reference file before
   # the token and names the deliverable again in prose after `title:`; read whole, either one
   # keeps a declaration reworded to name no path looking extractable.
-  expect_fail "a path named only after the title: token is not a declared path" 11 \
+  expect_fail_msg "a path named only after the title: token is not a declared path" 11 "yields no path" \
     "sed -i.bak 's|\`deliverable_paths\` = \`alpha-deliverable.md\`,|\`deliverable_paths\` = the fixture file, \`title: fixture handoff\`, which writes \`alpha-deliverable.md\`,|' $(cmd_file $PLUGIN_REL alpha)"
-  expect_fail "a path cited before the deliverable_paths token is not a declared path" 11 \
+  expect_fail_msg "a path cited before the deliverable_paths token is not a declared path" 11 "yields no path" \
     "sed -i.bak 's|with \`deliverable_paths\` = \`alpha-deliverable.md\`,|per \`alpha-deliverable.md\`, with \`deliverable_paths\` = the fixture file,|' $(cmd_file $PLUGIN_REL alpha)"
   # The three vacuity guards rewrite through a temp file OUTSIDE the reference dir rather than
   # with `sed -i.bak`: a stray `.bak` there is a file `find $REF_DIR -type f` counts, so the
   # mutation would trip check 9's reference-file count too and blur what the case proves.
   # The three vacuity guards. Each leaves the tree otherwise valid and makes the check examine
   # nothing, which must be RED: a gate that has stopped being able to fail proves nothing green.
-  expect_fail "a reworded family-scope sentence is rejected" 11 \
+  # The family ones below read the glob form, so they name it; the sentence form's twins follow
+  # the second-glob pair.
+  expect_fail_env "a reworded family-scope sentence is rejected" 11 "CHECK11_FAMILY=glob" \
     "sed 's|/${PLUGIN_REL##*/}:alpha\*|the family|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md"
   # ...and the PAIR that discriminates the scope-paragraph anchor from whole-file `head -1`.
   # Neither case proves anything alone. RED: the scope sentence is reworded away AND a stray
@@ -2794,13 +2933,13 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # becomes `zulu*`, which matches no command, and this case goes red; anchored, the scope
   # paragraph still wins and the tree stays green. Verified red before / green after by
   # stashing scope_family.
-  expect_fail "a reworded scope sentence is rejected even with a stray family phrase elsewhere" 11 \
+  expect_fail_env "a reworded scope sentence is rejected even with a stray family phrase elsewhere" 11 "CHECK11_FAMILY=glob" \
     "sed 's|^\*\*Where this rule applies:.*|**Where this rule applies:** every offer this plugin prints.|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md && printf -- '\n## Not pipeline nodes\n\n\`/${PLUGIN_REL##*/}:alpha*\` prints no offer.\n' >> $PLUGIN_REL/$REF_DIR/next-phase-offer.md"
-  expect_pass_after "a stray family phrase under another heading does not become the family" \
+  expect_pass_after_env "a stray family phrase under another heading does not become the family" "CHECK11_FAMILY=glob" \
     "{ printf -- '## Not pipeline nodes\n\n\`/${PLUGIN_REL##*/}:zulu*\` prints no offer.\n\n'; cat $PLUGIN_REL/$REF_DIR/next-phase-offer.md; } > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md"
-  expect_fail "a family glob matching no command is rejected" 11 \
+  expect_fail_env "a family glob matching no command is rejected" 11 "CHECK11_FAMILY=glob" \
     "sed 's|alpha\*|zulu*|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md"
-  expect_fail "a row-F table with no gated artifact is rejected" 11 \
+  expect_fail_msg "a row-F table with no gated artifact is rejected" 11 "yielded no require-on-main target" \
     "sed '/alpha-deliverable.md/d; /alpha-two-out.md/d; /elsewhere.md/d' $PLUGIN_REL/$REF_DIR/phase-handoff.md > ph.tmp && mv ph.tmp $PLUGIN_REL/$REF_DIR/phase-handoff.md"
   # ...and the other half of the assertion: the clause is required only where the offering run
   # writes what the offered command gates. `/dev-workflows:sigma` gates `elsewhere.md`, which no
@@ -2830,10 +2969,96 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # implementation that reads both globs but only ever CHECKS the first passes the green case
   # for the wrong reason (there is nothing there to catch either way), and only the red case
   # discriminates.
-  expect_fail "a command matched only by the scope line's SECOND glob with no <merge-clause> is rejected" 11 \
-    "sed 's|^\*\*Where this rule applies:.*|& The \`/${PLUGIN_REL##*/}:nu-*\` command carries the same convention under its own glob: it prints an offer naming a downstream command whose require-on-main gate this same run feeds.|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md && printf -- '---\nname: nu-ground\ndescription: A fixture command in a second glob family, disjoint from alpha*.\n---\n\nOn the first choice, execute \`handoff-to-main\` with \`deliverable_paths\` = \`alpha-deliverable.md\`,\nand \`title: nu-ground fixture handoff\`.\n\n\`\`\`\nchoices: [\"Run the gated consumer — /${PLUGIN_REL##*/}:omega <KEY> (Recommended)\", \"Stop here\"]\n\`\`\`\n' > $(cmd_file $PLUGIN_REL nu-ground) && printf -- '# /nu-ground\n\nA fixture command page for the second check-11 family.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/nu-ground.md && printf -- '\n- [\`/nu-ground\`]($DOC_CMD_DIR/nu-ground.md)\n' >> $PLUGIN_REL/docs/README.md && sed -i.bak 's|two slash commands|three slash commands|' $PLUGIN_REL/README.md && printf -- '\nCommand: \`/nu-ground\`.\n' >> $PLUGIN_REL/README.md && printf -- '\n\`\`\`mermaid\nflowchart TD\n    n[\"/nu-ground\"]\n\`\`\`\n' >> $PLUGIN_REL/docs/workflow.md && ns_map_regen"
-  expect_pass_after "the same second-glob-only command is accepted once its offer carries <merge-clause>" \
-    "sed 's|^\*\*Where this rule applies:.*|& The \`/${PLUGIN_REL##*/}:nu-*\` command carries the same convention under its own glob: it prints an offer naming a downstream command whose require-on-main gate this same run feeds.|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md && printf -- '---\nname: nu-ground\ndescription: A fixture command in a second glob family, disjoint from alpha*.\n---\n\nOn the first choice, execute \`handoff-to-main\` with \`deliverable_paths\` = \`alpha-deliverable.md\`,\nand \`title: nu-ground fixture handoff\`.\n\n\`\`\`\nchoices: [\"Run the gated consumer — /${PLUGIN_REL##*/}:omega <KEY> (Recommended) <merge-clause>\", \"Stop here\"]\n\`\`\`\n' > $(cmd_file $PLUGIN_REL nu-ground) && printf -- '# /nu-ground\n\nA fixture command page for the second check-11 family.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/nu-ground.md && printf -- '\n- [\`/nu-ground\`]($DOC_CMD_DIR/nu-ground.md)\n' >> $PLUGIN_REL/docs/README.md && sed -i.bak 's|two slash commands|three slash commands|' $PLUGIN_REL/README.md && printf -- '\nCommand: \`/nu-ground\`.\n' >> $PLUGIN_REL/README.md && printf -- '\n\`\`\`mermaid\nflowchart TD\n    n[\"/nu-ground\"]\n\`\`\`\n' >> $PLUGIN_REL/docs/workflow.md && ns_map_regen"
+  expect_fail_env "a command matched only by the scope line's SECOND glob with no <merge-clause> is rejected" 11 "CHECK11_FAMILY=glob" \
+    "sed 's|^\*\*Where this rule applies:.*|& The \`/${PLUGIN_REL##*/}:nu-*\` command carries the same convention under its own glob: it prints an offer naming a downstream command whose require-on-main gate this same run feeds.|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL nu-ground)) && printf -- '---\nname: nu-ground\ndescription: A fixture command in a second glob family, disjoint from alpha*.\n---\n\nOn the first choice, execute \`handoff-to-main\` with \`deliverable_paths\` = \`alpha-deliverable.md\`,\nand \`title: nu-ground fixture handoff\`.\n\n\`\`\`\nchoices: [\"Run the gated consumer — /${PLUGIN_REL##*/}:omega <KEY> (Recommended)\", \"Stop here\"]\n\`\`\`\n' > $(cmd_file $PLUGIN_REL nu-ground) && printf -- '# /nu-ground\n\nA fixture command page for the second check-11 family.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/nu-ground.md && printf -- '\n- [\`/nu-ground\`]($DOC_CMD_DIR/nu-ground.md)\n' >> $PLUGIN_REL/docs/README.md && sed -i.bak 's|two slash commands|three slash commands|' $PLUGIN_REL/README.md && printf -- '\nCommand: \`/nu-ground\`.\n' >> $PLUGIN_REL/README.md && printf -- '\n\`\`\`mermaid\nflowchart TD\n    n[\"/nu-ground\"]\n\`\`\`\n' >> $PLUGIN_REL/docs/workflow.md && ns_map_regen"
+  expect_pass_after_env "the same second-glob-only command is accepted once its offer carries <merge-clause>" "CHECK11_FAMILY=glob" \
+    "sed 's|^\*\*Where this rule applies:.*|& The \`/${PLUGIN_REL##*/}:nu-*\` command carries the same convention under its own glob: it prints an offer naming a downstream command whose require-on-main gate this same run feeds.|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md && mkdir -p $(dirname $(cmd_file $PLUGIN_REL nu-ground)) && printf -- '---\nname: nu-ground\ndescription: A fixture command in a second glob family, disjoint from alpha*.\n---\n\nOn the first choice, execute \`handoff-to-main\` with \`deliverable_paths\` = \`alpha-deliverable.md\`,\nand \`title: nu-ground fixture handoff\`.\n\n\`\`\`\nchoices: [\"Run the gated consumer — /${PLUGIN_REL##*/}:omega <KEY> (Recommended) <merge-clause>\", \"Stop here\"]\n\`\`\`\n' > $(cmd_file $PLUGIN_REL nu-ground) && printf -- '# /nu-ground\n\nA fixture command page for the second check-11 family.\n' > $PLUGIN_REL/docs/$DOC_CMD_DIR/nu-ground.md && printf -- '\n- [\`/nu-ground\`]($DOC_CMD_DIR/nu-ground.md)\n' >> $PLUGIN_REL/docs/README.md && sed -i.bak 's|two slash commands|three slash commands|' $PLUGIN_REL/README.md && printf -- '\nCommand: \`/nu-ground\`.\n' >> $PLUGIN_REL/README.md && printf -- '\n\`\`\`mermaid\nflowchart TD\n    n[\"/nu-ground\"]\n\`\`\`\n' >> $PLUGIN_REL/docs/workflow.md && ns_map_regen"
+
+  # ---- the sentence form of the family (CHECK11_FAMILY=sentence) ----
+  # The single-plugin form reads the family from the scope paragraph's "<N> offers carry it --
+  # ..." sentence, which the fixture's reference carries beside its glob, so both forms read one
+  # fixture. Each vacuity guard names its own message: with an emptied family the run-wide
+  # guards would answer for one that had stopped working.
+  expect_fail_env "a reworded adopting-commands sentence is rejected" 11 "CHECK11_FAMILY=sentence" \
+    "sed 's|Two offers carry it — [^.]*\\.|Nothing in this file names an adopter.|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md" \
+    "no longer names its adopting commands"
+  expect_fail_env "an adopting sentence naming no command of the plugin is rejected" 11 "CHECK11_FAMILY=sentence" \
+    "sed 's|\`/alpha\`|\`/zulu\`|; s|\`/alpha-two\`|\`/zulu-two\`|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md" \
+    "which matches no command"
+
+  # ---- a row-F caller written /plugin:name ----
+  # A caller in the typed `/plugin:name` form still names its command: the table reader once
+  # stopped at the colon and read the PLUGIN as the caller, so nothing that offered the command
+  # was ever required to carry the clause. omega's row and offers stay as they are, so only
+  # psi's offer, which never carried a clause, can fire either case -- the choices form, read in
+  # every configuration, and the prose form.
+  expect_fail_msg "a §3.4 caller written /plugin:name still gates a choices offer of its command" 11 "offers /psi with no <merge-clause>" \
+    "printf '| \`/${PLUGIN_REL##*/}:psi <KEY>\` | the same \`alpha-deliverable.md\` | **stops** |\n' >> $PLUGIN_REL/$REF_DIR/phase-handoff.md && printf -- '\nchoices: [\"Run psi — /${PLUGIN_REL##*/}:psi <KEY>\", \"Stop here\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_env "a §3.4 caller written /plugin:name still gates its command" 11 "CHECK11_PROSE=1" \
+    "printf '| \`/${PLUGIN_REL##*/}:psi <KEY>\` | the same \`alpha-deliverable.md\` | **stops** |\n' >> $PLUGIN_REL/$REF_DIR/phase-handoff.md && printf '\nPer \`next-phase-offer.md\`, recommend \`/${PLUGIN_REL##*/}:psi <KEY>\` next.\n' >> $(cmd_file $PLUGIN_REL alpha)" \
+    "offers /psi with no <merge-clause>"
+
+  # ---- prose offers (CHECK11_PROSE=1) ----
+  # alpha also offers omega in prose, on a line citing next-phase-offer.md: `→`, the command's
+  # span, a role label, then `<merge-clause>` as the next span -- beside an explanatory mention
+  # of the same command ("§3.4's ... row"), which carries no introducer and is not an offer.
+  # The citation is the bare basename, a form check 16 neither counts nor forbids, so the line
+  # stays correct when the corpus is relocated.
+  local p11="CHECK11_PROSE=1"
+  expect_fail_env "a prose offer that drops <merge-clause> is rejected" 11 "$p11" \
+    "sed -i.bak '/next-phase-offer.md/s| \`<merge-clause>\`||' $(cmd_file $PLUGIN_REL alpha)" \
+    "offers /omega with no <merge-clause>"
+  # ...and the switch: with prose offers off the same mutation stays green, because the choices
+  # offer still carries the clause -- the upstream edition's configuration, proven quiet.
+  expect_pass_after_env "a prose offer is not read where CHECK11_PROSE=0" "CHECK11_PROSE=0" \
+    "sed -i.bak '/next-phase-offer.md/s| \`<merge-clause>\`||' $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_env "a prose offer whose clause sits inside the command's span is rejected" 11 "$p11" \
+    "sed -i.bak 's|<KEY>\` (consumer) \`<merge-clause>\`|<KEY> <merge-clause>\` (consumer)|' $(cmd_file $PLUGIN_REL alpha)" \
+    "offers /omega with no <merge-clause>"
+  expect_fail_env "a prose offer introduced by recommend is read" 11 "$p11" \
+    "sed -i.bak '/next-phase-offer.md/s|→ \`|recommend \`|' $(cmd_file $PLUGIN_REL alpha) && sed -i.bak '/next-phase-offer.md/s| \`<merge-clause>\`||' $(cmd_file $PLUGIN_REL alpha)" \
+    "offers /omega with no <merge-clause>"
+  expect_pass_after_env "a gated command named without → or recommend is not an offer" "$p11" \
+    "printf '\nOn a line citing \`next-phase-offer.md\`, naming \`/${PLUGIN_REL##*/}:omega\` to explain its wait offers nothing.\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after_env "a pipeline arrow between two commands is not an offer" "$p11" \
+    "printf '\nPer \`next-phase-offer.md\`, the route runs \`/${PLUGIN_REL##*/}:alpha\` → \`/${PLUGIN_REL##*/}:omega\` → \`/${PLUGIN_REL##*/}:sigma\`.\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after_env "a negated recommend is not an offer" "$p11" \
+    "printf '\nPer \`next-phase-offer.md\`, do not recommend \`/${PLUGIN_REL##*/}:omega\` before that merge.\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after_env "a role label in its own code span does not hide the clause" "$p11" \
+    "sed -i.bak '/next-phase-offer.md/s|(consumer)|(\`consumer\`)|' $(cmd_file $PLUGIN_REL alpha)"
+  # The join also holds after a role label that follows the clause: `/a` `<merge-clause>` (PE) or `/b`.
+  expect_fail_env "a second command joined to an offer by or is an offer too" 11 "$p11" \
+    "printf '| \`/${PLUGIN_REL##*/}:psi <KEY>\` | the same \`alpha-deliverable.md\` | **stops** |\n' >> $PLUGIN_REL/$REF_DIR/phase-handoff.md && sed -i.bak '/next-phase-offer.md/s|\`<merge-clause>\`, which waits|\`<merge-clause>\` (PE) or \`/${PLUGIN_REL##*/}:psi <KEY>\`, which waits|' $(cmd_file $PLUGIN_REL alpha)" \
+    "offers /psi with no <merge-clause>"
+  # Only a command the gate knows (this plugin's commands and row F's callers) ends the search
+  # for the clause: a path or a key-value span in a role label is a label.
+  expect_pass_after_env "a path-like span in a role label does not hide the clause" "$p11" \
+    "sed -i.bak '/next-phase-offer.md/s|(consumer)|(consumer, run from \`/workspace\`, reads \`status: merged\`)|' $(cmd_file $PLUGIN_REL alpha)"
+  # The clause belongs to its offer's own clause of the sentence: one named later, after a
+  # "which" or a full stop, is explanation, not the offer's.
+  expect_fail_env "a clause named later in the sentence is not the offer's" 11 "$p11" \
+    "sed -i.bak '/next-phase-offer.md/s|(consumer) \`<merge-clause>\`, which waits|(consumer), which waits for \`<merge-clause>\`|' $(cmd_file $PLUGIN_REL alpha)" \
+    "offers /omega with no <merge-clause>"
+  # A curly apostrophe is three bytes to a byte-oriented awk, one character to a UTF-8 one;
+  # the negation must hold under both. ...and only an apostrophe makes a negation:
+  # "environment recommend" is not one, so the offer after it is read and must carry its clause.
+  expect_fail_env "a word ending in n…t before recommend is not a negation" 11 "$p11" \
+    "printf '| \`/${PLUGIN_REL##*/}:psi <KEY>\` | the same \`alpha-deliverable.md\` | **stops** |\n' >> $PLUGIN_REL/$REF_DIR/phase-handoff.md && printf '\nPer \`next-phase-offer.md\`, for the release environment recommend \`/${PLUGIN_REL##*/}:psi <KEY>\` next.\n' >> $(cmd_file $PLUGIN_REL alpha)" \
+    "offers /psi with no <merge-clause>"
+  expect_pass_after_env "a negated recommend with a curly apostrophe is not an offer" "$p11" \
+    "printf '\nPer \`next-phase-offer.md\`, don’t recommend \`/${PLUGIN_REL##*/}:omega\` before that merge.\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  # ...and the per-command vacuity guard, which rides on the prose reader: a command that
+  # writes a gated artifact but makes no offer this check reads -- the array gone and the prose
+  # offer's introducer reworded away -- has dropped out of it, whatever its siblings require.
+  expect_fail_env "a command whose offers all dropped out of the check is rejected" 11 "$p11" \
+    "sed -i.bak '/choices:/d' $(cmd_file $PLUGIN_REL alpha) && sed -i.bak '/next-phase-offer.md/s|→ \`|then \`|' $(cmd_file $PLUGIN_REL alpha)" \
+    "makes no offer this check reads"
+
+  # ---- the family-wide vacuity guard ----
+  # Every target renamed so that no family command writes one: every offer is still read, none
+  # is required, and only this guard sees it -- in whichever form the fixture reads its family.
+  expect_fail_msg "a family whose offers require nothing is rejected" 11 "now requires nothing" \
+    "sed 's|alpha-deliverable.md|renamed-deliverable.md|; s|alpha-two-out.md|renamed-two-out.md|' $PLUGIN_REL/$REF_DIR/phase-handoff.md > ph.tmp && mv ph.tmp $PLUGIN_REL/$REF_DIR/phase-handoff.md"
 
   # ---- check 11 with BOTH its references in another plugin ----
   # The shape after the reference corpus is extracted: next-phase-offer.md (the family and the
@@ -2848,7 +3073,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "relocate_corpus"
   expect_fail_env "an offer that drops <merge-clause> is rejected with the references in another plugin" 11 \
     "CORE_PLUGIN_REL=$(plugin_parent)fixture-core" \
-    "relocate_corpus && sed -i.bak 's| <merge-clause>||' $(cmd_file $PLUGIN_REL alpha)"
+    "relocate_corpus && sed -i.bak '/choices:/s| <merge-clause>||' $(cmd_file $PLUGIN_REL alpha)"
   # ...and the vacuity guard, which is the property most easily lost in a cross-plugin rewrite:
   # a relation that comes up empty must still FAIL rather than quietly narrowing the check's
   # surface. Emptying the RELOCATED row-F table proves the target relation is still asserted
@@ -3150,10 +3375,15 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # family belongs to whichever plugin ships those commands, and the reference says so. The
   # phrase is added INSIDE the scope paragraph, because that is the one line scope_family
   # reads; appended anywhere else it would be the stray the anchoring pair above rejects.
-  expect_fail "a plugin with a family command undeclared in HANDOFF_PLUGIN_RELS is rejected" 11 \
+  expect_fail_env "a plugin with a family command undeclared in HANDOFF_PLUGIN_RELS is rejected" 11 "CHECK11_FAMILY=glob" \
     "sed 's|^\*\*Where this rule applies:.*|& The \`/fixture-two:omega*\` commands write their offers to the same convention.|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md"
   expect_pass_after "a plugin holding next-phase-offer.md with no family command is accepted" \
     "give_two_refs next-phase-offer.md"
+  # ...and the same membership read through the sentence form, where the family is bare names:
+  # the sentence names omega, a command of fixture-two, which is in no declared list.
+  expect_fail_env "a plugin with a command the adopting sentence names, undeclared in HANDOFF_PLUGIN_RELS, is rejected" 11 "CHECK11_FAMILY=sentence" \
+    "sed 's|section and \`/alpha-two\`|section, \`/omega\` and \`/alpha-two\`|' $PLUGIN_REL/$REF_DIR/next-phase-offer.md > np.tmp && mv np.tmp $PLUGIN_REL/$REF_DIR/next-phase-offer.md" \
+    "is not a member of HANDOFF_PLUGIN_RELS"
 
   # Check 17 -- agent dispatch authority (PS15). The baseline fixture already carries the
   # shape both cases below assume: agents/beta.md grants `Task` and carries the exact
