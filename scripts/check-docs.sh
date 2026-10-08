@@ -53,6 +53,10 @@ REF_FLAT_EXTRA="model-routing"       # canonical: references/model-routing/*.md 
                                      # subtree of reference FILES; copilot: "" (its
                                      # model-routing.md is a flat file in _shared)
 DOC_CMD_DIR="commands"               # copilot: skills
+CMD_FORM="slash"                     # copilot: trigger -- how prose writes a command. `slash`:
+                                     # `/name` or the typed `/plugin:name`. `trigger`: those and the
+                                     # bare `name:` the Copilot edition writes, which is also how a
+                                     # message then names one (checks 11 and 15 read it)
 CLI="claude"                         # copilot: copilot
 CLI_VERBS="marketplace add|marketplace update|install|update"   # copilot: marketplace add|install|update
 CLI_REQUIRED="marketplace add|marketplace update|update"   # copilot: marketplace add|update -- the verb
@@ -202,6 +206,9 @@ cmd_file() { printf '%s/%s/%s%s\n' "$1" "$CMD_DIR" "$2" "$CMD_SUFFIX"; } # <plug
 # A walk over "every plugin in the tree" globs "$root/$(plugin_parent)"*/ and never a
 # hardcoded plugins/, which would see nothing at all in the root layout.
 plugin_parent() { case "$PLUGIN_REL" in */*) printf '%s/' "${PLUGIN_REL%/*}" ;; esac; }
+# How a message names a command: as this edition writes one (CMD_FORM) -- `/name`, or the
+# Copilot edition's `name:` trigger.
+cmd_ref() { if [ "$CMD_FORM" = trigger ]; then printf '%s:' "$1"; else printf '/%s' "$1"; fi; }
 # The repo-root instruction tiers INSTRUCTION_TIERS names -- CLAUDE.md and its rules files in a
 # Claude edition, .github's instruction files in the Copilot one, the maintainers' rationale in
 # both -- expanded under <root>, one existing file per line. The globs are split with `read -a`,
@@ -1077,10 +1084,35 @@ check11_desc() { # <declaration> <qualifier> -> the family named for a message
   fi
 }
 
+# Check 11's readers, where the edition writes a command as the Copilot trigger `name:`
+# (CMD_FORM=trigger), first rewrite each such token to `/name`, so every reader below matches the
+# one slash form. A token counts only when it is a whole word: lower-case, not preceded by a word
+# character, `_`, `/`, `:`, `.` or `-` (so `split_mode:` is no `mode`, and the `dev-workflows:` of
+# `/dev-workflows:psi` stays the plugin it is) and not followed by one of them or `/` (so `https:`
+# is no command). Where the edition writes `/name` (CMD_FORM=slash) no `word:` is a command at all:
+# an option's `cause:` or `frames:` was once read as an offered command.
+AWK_T2S='
+function t2s(s,   out, b, a) {
+  if (!TRIG) return s
+  out = ""
+  while (match(s, /[a-z][a-z0-9-]*:/)) {
+    b = (RSTART == 1) ? "" : substr(s, RSTART - 1, 1)
+    a = substr(s, RSTART + RLENGTH, 1)
+    if (b !~ /[a-zA-Z0-9_\/:.-]/ && a !~ /[a-zA-Z0-9_\/:]/)
+      out = out substr(s, 1, RSTART - 1) "/" substr(s, RSTART, RLENGTH - 1)
+    else
+      out = out substr(s, 1, RSTART + RLENGTH - 1)
+    s = substr(s, RSTART + RLENGTH)
+  }
+  return out s
+}
+'
+check11_trig() { [ "$CMD_FORM" = trigger ] && echo 1 || echo 0; }
+
 check_merge_clause() {
   local root="$1" p="$1/$PLUGIN_REL" core="$1/$CORE_PLUGIN_REL"
   local ref="$core/$REF_DIR/next-phase-offer.md" ph="$core/$REF_DIR/phase-handoff.md"
-  local qual="/${PLUGIN_REL##*/}:" decl family_desc targets gated known writers offers prose
+  local qual="/${PLUGIN_REL##*/}:" decl family_desc targets known writers offers prose others trig
   local route_n=0 req_n=0 y f x ln has t w need needt feedt req_y section offlineno prose_artifact
 
   [ -f "$ref" ] || { fail 11 "$CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md is missing -- it owns the <merge-clause> placeholder, its resolution table, and the command family the rule binds"; return; }
@@ -1105,10 +1137,11 @@ check_merge_clause() {
   family_desc=$(check11_desc "$decl" "$qual")
 
   # targets: one `<command>|<artifact-basename>` line per row-F table cell. A caller is named
-  # `/name`, `name:` (the Copilot edition's trigger) or the typed `/plugin:name`; each reduces to
+  # `/name` or the typed `/plugin:name` (and `name:` where CMD_FORM=trigger); each reduces to
   # `name`. The prefixed form once read as a command named after the PLUGIN, and the command it
   # named had no gate as far as this check could see.
-  targets=$(awk -F'|' '
+  trig=$(check11_trig)
+  targets=$(awk -F'|' -v TRIG="$trig" "$AWK_T2S"'
     /^\| `?[\/a-zA-Z]/ {
       c1 = $2; c2 = $3; n = 0
       while (match(c2, /`[^`]*\.md`/)) {
@@ -1116,7 +1149,8 @@ check_merge_clause() {
         c2 = substr(c2, RSTART + RLENGTH)
       }
       if (n == 0) next
-      while (match(c1, /\/[a-zA-Z][a-zA-Z0-9:-]*|[a-zA-Z][a-zA-Z0-9-]*:/)) {
+      c1 = t2s(c1)
+      while (match(c1, /\/[a-zA-Z][a-zA-Z0-9:-]*/)) {
         cmd = substr(c1, RSTART, RLENGTH); c1 = substr(c1, RSTART + RLENGTH)
         sub(/^\//, "", cmd)
         if (cmd ~ /:.+/) sub(/^[^:]*:/, "", cmd)
@@ -1125,7 +1159,6 @@ check_merge_clause() {
       }
     }' "$ph" | sort -u)
   [ -n "$targets" ] || { fail 11 "$CORE_PLUGIN_REL/$REF_DIR/phase-handoff.md's row-F table yielded no require-on-main target -- the EXTRACTOR has drifted, not the table; fix the parser, never the rows"; return; }
-  gated=$(sed 's/^[^|]*|//' <<<"$targets" | sort -u)   # every artifact some gate targets
   # Every command name the gate knows, space-delimited: this plugin's commands and the row-F
   # callers. The prose reader takes a span for a command only when it names one of these --
   # `/workspace` or `status: merged` in a role label is a label.
@@ -1171,7 +1204,7 @@ check_merge_clause() {
       }' "$f" | sort -u)
 
     # offers: one `<line>|<offered-command>|<0|1 carries the placeholder>` per choices option.
-    offers=$(awk -v Y="$y" -v OFF="$offlineno" '
+    offers=$(awk -v Y="$y" -v OFF="$offlineno" -v TRIG="$trig" "$AWK_T2S"'
       {
         s = $0
         while ((p = index(s, "choices: [")) > 0) {
@@ -1192,12 +1225,12 @@ check_merge_clause() {
           }
           for (k = 1; k <= opts_n; k++) {
             optv = opt[k]
-            tmp = optv
-            while (match(tmp, /\/[a-zA-Z][a-zA-Z0-9:_-]*|[a-zA-Z][a-zA-Z0-9-]*:/)) {
+            tmp = t2s(optv)
+            while (match(tmp, /\/[a-zA-Z][a-zA-Z0-9:_-]*/)) {
               cand = substr(tmp, RSTART, RLENGTH)
               gsub(/^\//, "", cand)      # /name or /plugin:name -> name or plugin:name
               if (cand ~ /:.+/) sub(/^[^:]*:/, "", cand)   # plugin:name -> name (colon NOT at the end)
-              sub(/:$/, "", cand)        # name: -> name (bare trailing colon)
+              sub(/:$/, "", cand)        # /name: -> name (a colon closing the token)
               tmp = substr(tmp, RSTART + RLENGTH)
               if (cand != "" && cand != Y) {
                 has = (index(optv, "<merge-clause>") > 0) ? 1 : 0
@@ -1226,9 +1259,10 @@ check_merge_clause() {
     # marks an offer paragraph. A clause inside the command's own span is no span after it, so
     # it reads as missing -- the reference forbids that.
     if [ "$CHECK11_PROSE" = 1 ]; then
-      prose=$(LC_ALL=C awk -v Y="$y" -v K="$known" '
+      prose=$(LC_ALL=C awk -v Y="$y" -v K="$known" -v TRIG="$trig" "$AWK_T2S"'
         function cmdname(t,   c) {
-          if (!match(t, /^\/[a-zA-Z][a-zA-Z0-9:_-]*|^[a-zA-Z][a-zA-Z0-9-]*:/)) return ""
+          t = t2s(t)
+          if (!match(t, /^\/[a-zA-Z][a-zA-Z0-9:_-]*/)) return ""
           c = substr(t, RSTART, RLENGTH)
           sub(/^\//, "", c)
           if (c ~ /:.+/) sub(/^[^:]*:/, "", c)
@@ -1293,9 +1327,10 @@ check_merge_clause() {
     # own gate is never an offer it can make. Such a command must make at least one offer this
     # check reads and requires: the per-command vacuity guard below, read with CHECK11_PROSE=1.
     feedt=""
+    others=$(awk -F'|' -v y="$y" '$1 != y { print $2 }' <<<"$targets")
     while IFS= read -r w; do
       [ -n "$w" ] || continue
-      grep -v -- "^$y|" <<<"$targets" | sed 's/^[^|]*|//' | grep -qxF -- "$w" && { feedt="$w"; break; }
+      grep -qxF -- "$w" <<<"$others" && { feedt="$w"; break; }
     done <<<"$writers"
     req_y=0
 
@@ -1305,10 +1340,10 @@ check_merge_clause() {
       while IFS= read -r t; do
         [ -n "$t" ] || continue
         grep -qxF -- "$t" <<<"$writers" && { need=1; needt="$t"; break; }
-      done < <(grep -F "$x|" <<<"$targets" | sed 's/^[^|]*|//')
+      done < <(awk -F'|' -v x="$x" '$1 == x { print $2 }' <<<"$targets")
       [ "$need" = 1 ] || continue
       req_n=$((req_n + 1)); req_y=$((req_y + 1))
-      [ "$has" = 1 ] || fail 11 "$CMD_DIR/$y$CMD_SUFFIX:$ln offers /$x with no <merge-clause>, and this run writes '$needt' -- the artifact /$x's require-on-main gate targets, so that command stops while this phase's pull request is open ($CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md owns the placeholder and its resolution table)"
+      [ "$has" = 1 ] || fail 11 "$CMD_DIR/$y$CMD_SUFFIX:$ln offers $(cmd_ref "$x") with no <merge-clause>, and this run writes '$needt' -- the artifact $(cmd_ref "$x")'s require-on-main gate targets, so that command stops while this phase's pull request is open ($CORE_PLUGIN_REL/$REF_DIR/next-phase-offer.md owns the placeholder and its resolution table)"
     done <<<"$offers"
     # Per command, because a family-wide count hides one command whose offer has dropped out
     # (its introducer reworded, its citing line rewrapped away, its option gone) while its
@@ -1656,8 +1691,9 @@ check_foreign_identity() {
 # THE THREE SURFACES, and why the diagram is asserted separately from the page: the prose
 # below a diagram is where a command lands when someone adds it in a hurry, so asserting
 # only "appears in workflow.md" would have passed the very defect this check was written
-# for. A node may be written bare (`/idea`), namespaced (`/docs-workflows:release-notes`) or
-# as a bare colon trigger (`idea:`, the Copilot edition's form) -- the boundary class `(/|:)`
+# for. A node may be written bare (`/idea`), namespaced (`/docs-workflows:release-notes`) or,
+# where it is the edition's form (CMD_FORM=trigger), as a bare colon trigger (`idea:`, the
+# Copilot edition's) -- the boundary class `(/|:)`
 # before the name and `([^a-zA-Z0-9_-]|$)` after it, or a `:` right after it, covers all three
 # without matching a longer name that merely starts with this one's (`/alpha` is not covered
 # by `/alpha-two`, the same prefix hazard check 9 guards elsewhere).
@@ -1677,7 +1713,11 @@ check_foreign_identity() {
 # reviewer(s)", which resolves to every command whose own name contains `guideline-reviewer`
 # -- an intro that names the two reviewers generically would otherwise exempt neither.
 check_index_membership() {
-  local root="$1" p="$1/$PLUGIN_REL" n f diagram notnode intro
+  local root="$1" p="$1/$PLUGIN_REL" n f diagram notnode intro pat
+  case "$CMD_FORM" in
+    slash|trigger) : ;;
+    *) fail 15 "CMD_FORM is '$CMD_FORM' -- the edition config must set it to slash or trigger"; return ;;
+  esac
   diagram=$(awk '/^```mermaid/{f=1;next} /^```/{f=0} f' "$p/docs/workflow.md" 2>/dev/null)
   [ -n "$diagram" ] \
     || { fail 15 "docs/workflow.md holds no mermaid diagram -- this check would examine nothing"; return; }
@@ -1692,15 +1732,16 @@ check_index_membership() {
   fi
   while IFS= read -r n; do
     [ -n "$n" ] || continue
-    # Two name-reference forms coexist across editions: a leading marker (`/name`,
-    # `plugin:name`) and a bare trailing colon trigger with no leading marker at all
-    # (`name:`, the Copilot edition's form) -- matched by requiring EITHER a `/` or `:`
-    # immediately before the name OR a `:` immediately after it.
-    grep -qE "((/|:)$n([^a-zA-Z0-9_-]|\$)|(^|[^a-zA-Z0-9_-])$n:)" "$p/docs/README.md" || fail 15 "/$n is not listed in docs/README.md"
-    grep -qE "((/|:)$n([^a-zA-Z0-9_-]|\$)|(^|[^a-zA-Z0-9_-])$n:)" "$p/README.md"      || fail 15 "/$n is not listed in $PLUGIN_REL/README.md"
+    # A leading marker (`/name`, `plugin:name`) counts in every edition; the bare trailing-colon
+    # trigger (`name:`) only where it is the edition's command form (CMD_FORM=trigger) -- in a
+    # slash edition `alpha:` is a word followed by a colon, not a listing of /alpha.
+    pat="(/|:)$n([^a-zA-Z0-9_-]|\$)"
+    [ "$CMD_FORM" = trigger ] && pat="($pat|(^|[^a-zA-Z0-9_-])$n:)"
+    grep -qE "$pat" "$p/docs/README.md" || fail 15 "$(cmd_ref "$n") is not listed in docs/README.md"
+    grep -qE "$pat" "$p/README.md"      || fail 15 "$(cmd_ref "$n") is not listed in $PLUGIN_REL/README.md"
     grep -qxF -- "$n" <<<"$notnode" && continue   # diagram exemption -- see header
-    printf '%s' "$diagram" | grep -qE "((/|:)$n([^a-zA-Z0-9_-]|\$)|(^|[^a-zA-Z0-9_-])$n:)" \
-      || fail 15 "/$n does not appear in docs/workflow.md's diagram, which says it shows every command (prose below it does not count -- that is where the last one went missing)"
+    printf '%s' "$diagram" | grep -qE "$pat" \
+      || fail 15 "$(cmd_ref "$n") does not appear in docs/workflow.md's diagram, which says it shows every command (prose below it does not count -- that is where the last one went missing)"
   done < <(cmd_names "$p")
 }
 
@@ -2879,8 +2920,21 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "sed -i.bak 's|^\`\`\`mermaid$|text|' $PLUGIN_REL/docs/workflow.md"
   # The docs-index surface, which the cases above leave to the README and the diagram: every line
   # naming alpha goes, so only the index assertion is left to say so.
-  expect_fail "a command missing from the docs index is rejected" 15 \
+  expect_fail_msg "a command missing from the docs index is rejected" 15 "$(cmd_ref alpha) is not listed in docs/README.md" \
     "sed -i.bak '/alpha/Id' $PLUGIN_REL/docs/README.md"
+  # The bare `name:` trigger lists a command only where it is the edition's command form. The
+  # README written in that form passes under CMD_FORM=trigger in every fixture; under
+  # CMD_FORM=slash it is no listing -- a case a fixture written in the trigger form cannot run.
+  expect_pass_after_env "a name: mention lists a command where the command form is the trigger" "CMD_FORM=trigger" \
+    "sed -i.bak -E 's#\`/?alpha(-two)?:?\`#\`alpha\1:\`#g' $PLUGIN_REL/README.md"
+  if [ "$CMD_FORM" = slash ]; then
+    expect_fail_env "a name: mention is no listing where the command form is /name" 15 "CMD_FORM=slash" \
+      "sed -i.bak -E 's#\`/?alpha(-two)?:?\`#\`alpha\1:\`#g' $PLUGIN_REL/README.md" \
+      "/alpha is not listed in $PLUGIN_REL/README.md"
+  else
+    printf 'skip  the slash-form listing case (this fixture is written in the trigger form)\n'
+  fi
+  expect_fail_env "an unknown CMD_FORM is rejected" 15 "CMD_FORM=colon" "true" "must set it to slash or trigger"
   # ...and the diagram exemption: a command the diagram's own intro prose names as omitted must
   # NOT be required in the diagram, but still must appear in the other two surfaces (already
   # true for alpha without any mutation, so the green case names alpha itself rather than
@@ -2929,7 +2983,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # makes that offer twice, in its `choices:` array and in prose (read under CHECK11_PROSE=1).
   # alpha-two offers `/tau` on `alpha-two-out.md`. A case that belongs to one form or one
   # switch setting names it; the rest hold in every configuration.
-  expect_fail_msg "an offer that drops <merge-clause> is rejected" 11 "offers /omega with no <merge-clause>" \
+  expect_fail_msg "an offer that drops <merge-clause> is rejected" 11 "offers $(cmd_ref omega) with no <merge-clause>" \
     "sed -i.bak '/choices:/s| <merge-clause>||' $(cmd_file $PLUGIN_REL alpha)"
   # The PER-COMMAND coverage guard. Rewording one family command's handoff sentence empties its
   # writer set alone, and every offer that command makes stops being checked while the run-wide
@@ -3013,7 +3067,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # half is red under the other scope.
   expect_fail_env "a choices offer above the next-step section is read where CHECK11_OFFER_SCOPE=file" 11 "CHECK11_OFFER_SCOPE=file" \
     "insert_before_next_step $(cmd_file $PLUGIN_REL alpha) 'choices: [\"Hand off early — /${PLUGIN_REL##*/}:omega <KEY>\", \"Stop here\"]'" \
-    "offers /omega with no <merge-clause>"
+    "offers $(cmd_ref omega) with no <merge-clause>"
   expect_pass_after_env "a choices offer above the next-step section is not read where CHECK11_OFFER_SCOPE=next-step" "CHECK11_OFFER_SCOPE=next-step" \
     "insert_before_next_step $(cmd_file $PLUGIN_REL alpha) 'choices: [\"Hand off early — /${PLUGIN_REL##*/}:omega <KEY>\", \"Stop here\"]'"
   expect_fail_env "an unknown CHECK11_OFFER_SCOPE is rejected" 11 "CHECK11_OFFER_SCOPE=section" "true" \
@@ -3037,11 +3091,31 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # was ever required to carry the clause. omega's row and offers stay as they are, so only
   # psi's offer, which never carried a clause, can fire either case -- the choices form, read in
   # every configuration, and the prose form.
-  expect_fail_msg "a §3.4 caller written /plugin:name still gates a choices offer of its command" 11 "offers /psi with no <merge-clause>" \
+  expect_fail_msg "a §3.4 caller written /plugin:name still gates a choices offer of its command" 11 "offers $(cmd_ref psi) with no <merge-clause>" \
     "printf '| \`/${PLUGIN_REL##*/}:psi <KEY>\` | the same \`alpha-deliverable.md\` | **stops** |\n' >> $PLUGIN_REL/$REF_DIR/phase-handoff.md && printf -- '\nchoices: [\"Run psi — /${PLUGIN_REL##*/}:psi <KEY>\", \"Stop here\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_env "a §3.4 caller written /plugin:name still gates its command" 11 "CHECK11_PROSE=1" \
     "printf '| \`/${PLUGIN_REL##*/}:psi <KEY>\` | the same \`alpha-deliverable.md\` | **stops** |\n' >> $PLUGIN_REL/$REF_DIR/phase-handoff.md && printf '\nPer \`next-phase-offer.md\`, recommend \`/${PLUGIN_REL##*/}:psi <KEY>\` next.\n' >> $(cmd_file $PLUGIN_REL alpha)" \
-    "offers /psi with no <merge-clause>"
+    "offers $(cmd_ref psi) with no <merge-clause>"
+
+  # ---- which spans name a command, and which gate an offer is held to ----
+  # A `word:` names a command only where the trigger is the edition's form: under CMD_FORM=slash
+  # a `cause:` row-F caller and an option's `cause:` are words, not a gated offer; under
+  # CMD_FORM=trigger they are one. An underscored key (`split_mode:`) is a caller in neither.
+  if [ "$CMD_FORM" = slash ]; then
+    expect_pass_after_env "a word: in a choices option is no command where the command form is /name" "CMD_FORM=slash" \
+      "printf '| \`cause:\` | the same \`alpha-deliverable.md\` | **stops** |\n' >> $PLUGIN_REL/$REF_DIR/phase-handoff.md && printf -- '\nchoices: [\"Investigate the cause: <KEY>\", \"Stop here\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  else
+    printf 'skip  the slash-form word: case (this fixture is written in the trigger form)\n'
+  fi
+  expect_fail_env "a name: in a choices option is a command where the command form is the trigger" 11 "CMD_FORM=trigger" \
+    "printf '| \`cause:\` | the same \`alpha-deliverable.md\` | **stops** |\n' >> $PLUGIN_REL/$REF_DIR/phase-handoff.md && printf -- '\nchoices: [\"Investigate the cause: <KEY>\", \"Stop here\"]\n' >> $(cmd_file $PLUGIN_REL alpha)" \
+    "offers cause: with no <merge-clause>"
+  expect_pass_after_env "an underscored key: in a row-F caller cell is no caller" "CMD_FORM=trigger" \
+    "printf '| \`split_mode:\` | the same \`alpha-deliverable.md\` | **stops** |\n' >> $PLUGIN_REL/$REF_DIR/phase-handoff.md && printf -- '\nchoices: [\"Pick a mode: <KEY>\", \"Stop here\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  # An offer is held to its own command's row-F gate, matched as a whole caller name: `/gamma` is
+  # not gated by the row of `/alpha-gamma`, which merely ends with its name.
+  expect_pass_after "an offered command is held to its own gate, not one whose caller ends with its name" \
+    "printf '| \`/alpha-gamma\` | the same \`alpha-deliverable.md\` | **stops** |\n' >> $PLUGIN_REL/$REF_DIR/phase-handoff.md && printf -- '\nchoices: [\"Run gamma — /${PLUGIN_REL##*/}:gamma <KEY>\", \"Stop here\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
 
   # ---- prose offers (CHECK11_PROSE=1) ----
   # alpha also offers omega in prose, on a line citing next-phase-offer.md: `→`, the command's
@@ -3052,17 +3126,17 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   local p11="CHECK11_PROSE=1"
   expect_fail_env "a prose offer that drops <merge-clause> is rejected" 11 "$p11" \
     "sed -i.bak '/next-phase-offer.md/s| \`<merge-clause>\`||' $(cmd_file $PLUGIN_REL alpha)" \
-    "offers /omega with no <merge-clause>"
+    "offers $(cmd_ref omega) with no <merge-clause>"
   # ...and the switch: with prose offers off the same mutation stays green, because the choices
   # offer still carries the clause -- the upstream edition's configuration, proven quiet.
   expect_pass_after_env "a prose offer is not read where CHECK11_PROSE=0" "CHECK11_PROSE=0" \
     "sed -i.bak '/next-phase-offer.md/s| \`<merge-clause>\`||' $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_env "a prose offer whose clause sits inside the command's span is rejected" 11 "$p11" \
     "sed -i.bak 's|<KEY>\` (consumer) \`<merge-clause>\`|<KEY> <merge-clause>\` (consumer)|' $(cmd_file $PLUGIN_REL alpha)" \
-    "offers /omega with no <merge-clause>"
+    "offers $(cmd_ref omega) with no <merge-clause>"
   expect_fail_env "a prose offer introduced by recommend is read" 11 "$p11" \
     "sed -i.bak '/next-phase-offer.md/s|→ \`|recommend \`|' $(cmd_file $PLUGIN_REL alpha) && sed -i.bak '/next-phase-offer.md/s| \`<merge-clause>\`||' $(cmd_file $PLUGIN_REL alpha)" \
-    "offers /omega with no <merge-clause>"
+    "offers $(cmd_ref omega) with no <merge-clause>"
   expect_pass_after_env "a gated command named without → or recommend is not an offer" "$p11" \
     "printf '\nOn a line citing \`next-phase-offer.md\`, naming \`/${PLUGIN_REL##*/}:omega\` to explain its wait offers nothing.\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after_env "a pipeline arrow between two commands is not an offer" "$p11" \
@@ -3074,7 +3148,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # The join also holds after a role label that follows the clause: `/a` `<merge-clause>` (PE) or `/b`.
   expect_fail_env "a second command joined to an offer by or is an offer too" 11 "$p11" \
     "printf '| \`/${PLUGIN_REL##*/}:psi <KEY>\` | the same \`alpha-deliverable.md\` | **stops** |\n' >> $PLUGIN_REL/$REF_DIR/phase-handoff.md && sed -i.bak '/next-phase-offer.md/s|\`<merge-clause>\`, which waits|\`<merge-clause>\` (PE) or \`/${PLUGIN_REL##*/}:psi <KEY>\`, which waits|' $(cmd_file $PLUGIN_REL alpha)" \
-    "offers /psi with no <merge-clause>"
+    "offers $(cmd_ref psi) with no <merge-clause>"
   # Only a command the gate knows (this plugin's commands and row F's callers) ends the search
   # for the clause: a path or a key-value span in a role label is a label.
   expect_pass_after_env "a path-like span in a role label does not hide the clause" "$p11" \
@@ -3083,13 +3157,13 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # "which" or a full stop, is explanation, not the offer's.
   expect_fail_env "a clause named later in the sentence is not the offer's" 11 "$p11" \
     "sed -i.bak '/next-phase-offer.md/s|(consumer) \`<merge-clause>\`, which waits|(consumer), which waits for \`<merge-clause>\`|' $(cmd_file $PLUGIN_REL alpha)" \
-    "offers /omega with no <merge-clause>"
+    "offers $(cmd_ref omega) with no <merge-clause>"
   # A curly apostrophe is three bytes to a byte-oriented awk, one character to a UTF-8 one;
   # the negation must hold under both. ...and only an apostrophe makes a negation:
   # "environment recommend" is not one, so the offer after it is read and must carry its clause.
   expect_fail_env "a word ending in n…t before recommend is not a negation" 11 "$p11" \
     "printf '| \`/${PLUGIN_REL##*/}:psi <KEY>\` | the same \`alpha-deliverable.md\` | **stops** |\n' >> $PLUGIN_REL/$REF_DIR/phase-handoff.md && printf '\nPer \`next-phase-offer.md\`, for the release environment recommend \`/${PLUGIN_REL##*/}:psi <KEY>\` next.\n' >> $(cmd_file $PLUGIN_REL alpha)" \
-    "offers /psi with no <merge-clause>"
+    "offers $(cmd_ref psi) with no <merge-clause>"
   expect_pass_after_env "a negated recommend with a curly apostrophe is not an offer" "$p11" \
     "printf '\nPer \`next-phase-offer.md\`, don’t recommend \`/${PLUGIN_REL##*/}:omega\` before that merge.\n' >> $(cmd_file $PLUGIN_REL alpha)"
   # ...and the per-command vacuity guard, which rides on the prose reader: a command that
