@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.22.3] — 2026-10-08
+
+### Fixed
+- **The `/ready` page** describes the ARD case 4.22.2 added: a working copy that differs from the merged ARD never stops the run, becomes an "ARD edited, not landed" finding capping the verdict at `PARTIAL`, and skips ARD conformance until the edit lands.
+
 ## [4.22.2] — 2026-10-08
 
 ### Fixed
