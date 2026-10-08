@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.30.2] — 2026-10-08
+
+### Fixed
+- **`proposal-record.py --selftest` passes on macOS.** Its exit-2 case creates a grounding file named `\xff.md` — a name that is not UTF-8 — to prove `record` refuses it with one line rather than a traceback. APFS holds only UTF-8 names and refuses to create it (`EILSEQ`), so the case failed on its own setup. Where the filesystem refuses the name, that one check is skipped: the case it guards against cannot arise there. Linux still runs it.
+
 ## [3.30.1] — 2026-10-08
 
 ### Changed

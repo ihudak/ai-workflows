@@ -495,6 +495,7 @@ def case_stamp_sets_the_excluded_marks(tmp):
 
 def case_failures_exit_2_never_a_traceback(tmp):
     import contextlib
+    import errno
     import io
     specs, folder = _slice(tmp)
     prop = os.path.join(folder, "proposal.md")
@@ -513,7 +514,14 @@ def case_failures_exit_2_never_a_traceback(tmp):
     finally:
         globals()["_write_text"] = real
     assert code == 2 and "proposal-record:" in err.getvalue(), (code, err.getvalue())
-    fd = os.open(os.path.join(folder, "grounding").encode() + b"/\xff.md", os.O_WRONLY | os.O_CREAT, 0o644)
+    try:
+        fd = os.open(os.path.join(folder, "grounding").encode() + b"/\xff.md", os.O_WRONLY | os.O_CREAT, 0o644)
+    except OSError as e:
+        # A filesystem that holds only UTF-8 names (macOS APFS) refuses the name, so the
+        # case it guards against cannot arise there; Linux still runs it.
+        if e.errno != errno.EILSEQ:
+            raise
+        return
     os.close(fd)
     err = io.StringIO()
     with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
