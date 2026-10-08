@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.35.5] — 2026-10-08
+
+### Changed
+- **`scripts/check-docs.sh` (repository gate, not shipped) shares one body byte for byte with the internal editions.** Each edition's behaviour differs only by its config block and its selftest fixture's `fixture.env`, read with `--config`. Every config name is a plain assignment, never read from the environment, save `ASSERT_PUBLISHED`, which CI sets. Twenty-two checks; each that does not apply to an edition says so on the run. Here every check runs, check 11 keeps reading every `choices:` array in a command (`CHECK11_OFFER_SCOPE=file`) without the prose reader (`CHECK11_PROSE=0`, as measured), and checks 12, 15, 17, 18 and 20 take the internal editions' later fixes. 279 selftest cases, up from 223, among them check 11's family-wide guard and check 17's vacuity guard, which had none. On the way: check 11 matches commands and §3.4 callers as whole names and reduces a `/plugin:name` caller, which one reader misread as a command named after the plugin; check 18 also catches an `— Unreleased` heading whose version is not bracketed; no pipeline ends in an early-exit `grep -q`, which `pipefail` could fail at random; no GNU-only `sed`; checks 4 and 12 say when `python3` is missing.
+
 ## [1.35.4] — 2026-10-08
 
 ### Changed
