@@ -82,7 +82,7 @@ to the whole grammar above — so nothing is extracted by pattern.
 its address before its preflight reads the checkout as it stands, as its resolution does anyway. A
 caller that reads its key before the preflight — its run key set being that key (§3.2 of
 `workflows-core:specs-repo-git`) — reads a whole name on the checkout the preflight may then switch
-away from; it resolves the key read after the preflight as always. **A whole name that then resolves `absent` stops the run, whatever the command**: the folder it named was on the checkout before the preflight moved it, and creating one for its key would make a second. The stop names the token, the branch it was read on and the branch the run now stands on; a caller whose `absent` is already a stop adds those two branches to its own stop's text, and its remedies wait until that branch is merged.
+away from; it resolves the key read after the preflight as always. **A whole name that then resolves `absent` stops the run, whatever the command**: the folder it named was on the checkout before the preflight moved it, and creating one for its key would make a second. The stop names the token, the branch it was read on and the branch the run now stands on; a caller whose `absent` is already a stop adds those two branches to its own stop's text and, in place of its remedies, says to merge the branch the name was read on and re-run; a caller that goes on keyless on `absent` (`/dev-workflows:vuln`) takes this stop instead.
 
 **From a reading that is not the first, the run's key is `key`, never the token typed** — in every
 later step and in everything the run prints or writes — so neither a prefix nor a slug reaches a
@@ -91,10 +91,9 @@ operator supplies or a command proposes for a new child folder (`/product-workfl
 `/product-workflows:epics`) is held to `key-valid` alone, and only the key, never a whole name, is
 validated for shape only. **A command that creates the folder its address names where resolution
 returns `absent`** — `/product-workflows:idea` and `/product-workflows:create-prd` a `PRD-` folder,
-`/product-workflows:brd-intake` a `BRD-` one — creates it only where `prefix` is `none` or that
-kind, and otherwise stops before creating anything — a key typed behind a prefix with:
+`/product-workflows:brd-intake` a `BRD-` one — creates it only where `prefix` is `none` or that kind and the token was not a whole name, and otherwise stops before creating anything — a key behind a prefix of another kind with:
 `'<TOKEN>' names a <prefix>- folder, and this command creates a <its kind>- folder — re-run it with the bare key <key>.`
-and a whole name with the stop above, since its folder was there before the preflight.
+and a whole name of any kind with the stop above, since its folder was there before the preflight.
 
 ## 2. Directory naming
 
