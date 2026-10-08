@@ -381,22 +381,27 @@ Dispatch `design-reviewer` (Opus):
 
 **Act on the verdict** (mirrors `/specify`, save `/specify`'s refinement-notes "Defer" and its open question for a finding left open — a design resolves its own open questions to zero):
 - **`BLOCK`** — fix the BLOCKER findings (the orchestrator/grill edits `design.md` inline — no delegated
-  writer), read the fix against what it overlaps — each interface, seam and test-strategy line it
-  adds or changes against those that govern the same behaviour, per the `An inline fix is read
-  against what it overlaps` rule in `workflows-core:escalation-rules`, and manual fix notes the same
+  writer), read the fix against what it overlaps — each line it adds or changes, in any section (an
+  interface, a seam, a test-strategy line, a migration or rollout step), against those that govern
+  the same behaviour, and an operational step against everything its selector reaches in the deploy files of the repositories Phase 3 confirmed, ride-along deploy components included, per the `An inline fix is read against what it overlaps` rule in
+  `workflows-core:escalation-rules`, and manual fix notes the same
   way before the handoff — and re-review once. **Any unresolved `design.md` `- [ ]` is a BLOCKER by policy** — resolve it
   or push it onto the spec (Phase 5) before handoff. If still `BLOCK`, escalate per the
   `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` rule in
   `workflows-core:escalation-rules`, per unresolved BLOCKER individually:
   `choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding", "Cancel the whole run"]`
-- **`MAJOR` / `MINOR` / `NIT`**, whatever verdict carried them — defer to the final report; no
-  mandatory fix cycle.
-- **`PASS`** / **`PASS WITH RECOMMENDATIONS`** — proceed to Phase 7.
+- **`MAJOR` / `MINOR` / `NIT`**, whatever verdict carried them — no mandatory fix cycle. After the
+  first review and after the re-review alike, where a verdict that is not `BLOCK` leaves open at
+  least one finding whose fix is only an edit, offer to apply them before going on, per the `Findings a review leaves open — the offer to apply them` rule in `workflows-core:escalation-rules`:
+  `choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]`
+  Applying is an inline edit, read against what it overlaps, as a fix is; a finding not applied goes
+  to the final report and the pull request.
+- **`PASS`** / **`PASS WITH RECOMMENDATIONS`** — proceed to Phase 7, once that offer is settled.
 
 Cap: one fix cycle + one re-review maximum. Phase 7 will not hand off a `design.md` with any unresolved
-`- [ ]`. Where the user asks for a deferred finding to be applied, that is an inline edit answering a verdict that was not `BLOCK`: it is read against what it overlaps, as a fix is, and the re-review the cap still holds is offered before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`.
+`- [ ]`. A finding applied at that offer after the first review is an inline edit answering a verdict that was not `BLOCK`: it is read against what it overlaps, as a fix is, and the re-review the cap still holds is offered before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`.
 
-**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
+**The recorded verdict names the version it was taken against** — where any edit followed it, the final report, Phase 7's `body_facts` and `_design-session.md` say so and name the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
 
 ---
 
@@ -407,7 +412,7 @@ Write the feature folder: `design.md` (flat, alongside `specification.md`), the 
 Then **offer** (commit-when-asked — never automatic), invoking `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and presenting its §4.3 choice array verbatim:
 `choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]`
 
-On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with `prefix: design`; `feature_folder` as resolved in Phase 0 — the per-Epic subfolder for a **per-Epic** design (`<EPIC>` set; every `EPIC-` folder sits under a PRD folder, so this is the only Epic-level shape), or the PRD dir for a **broad PRD-level** design (`<EPIC>` null); Epic keys are globally unique, so the per-Epic form needs no PRD prefix — §2.2 derives `design/<EPIC>-<eslug>` or `design/<PRD>-<vslug>` from it, both forms using hyphens; `deliverable_paths` = `design.md`, the amended `specification.md`, `_design-session.md`, and `_design-glossary.md`; `title: <EPIC|PRD> Add engineering design`; and `body_facts` = the `design.md` sections authored, the spec-challenge count (`## Engineering review` notes / new spec `- [ ]`), the confirmed repo set, the `design-reviewer` verdict, and — where architecture grounding ran — the governance-citation count and every `Architecture deviation:` line verbatim, so the architect sees each one in the pull request. **Merged-to-main = ready for `/implement`.** Emit its §4.1 outcome line in the Final report.
+On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with `prefix: design`; `feature_folder` as resolved in Phase 0 — the per-Epic subfolder for a **per-Epic** design (`<EPIC>` set; every `EPIC-` folder sits under a PRD folder, so this is the only Epic-level shape), or the PRD dir for a **broad PRD-level** design (`<EPIC>` null); Epic keys are globally unique, so the per-Epic form needs no PRD prefix — §2.2 derives `design/<EPIC>-<eslug>` or `design/<PRD>-<vslug>` from it, both forms using hyphens; `deliverable_paths` = `design.md`, the amended `specification.md`, `_design-session.md`, and `_design-glossary.md`; `title: <EPIC|PRD> Add engineering design`; and `body_facts` = the `design.md` sections authored, the spec-challenge count (`## Engineering review` notes / new spec `- [ ]`), the confirmed repo set, the `design-reviewer` verdict with its version line and every finding left open (`workflows-core:escalation-rules`, *A recorded verdict names the version it was taken against*), and — where architecture grounding ran — the governance-citation count and every `Architecture deviation:` line verbatim, so the architect sees each one in the pull request. **Merged-to-main = ready for `/implement`.** Emit its §4.1 outcome line in the Final report.
 
 ### Next Epic (after a per-Epic design from a multi-Epic PRD)
 

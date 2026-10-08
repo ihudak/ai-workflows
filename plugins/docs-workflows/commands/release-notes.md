@@ -40,14 +40,14 @@ This command makes **no external API calls but key discovery's optional, read-on
    path is. `--docs` and `--no-docs` are carried to the `resolve-docs-grounding` call; `--version` is
    consumed where the version is needed.
 1. **Resolve the address.** Parse the **single positional address** from `$ARGUMENTS` — a `<KEY>`, or an `@<path>` naming a
-   folder or a file inside one. **On a `<KEY>`, `$SPECS_PATH` comes first:** if it is unset, stop
+   folder or a file inside one. **On an address that is not an `@<path>`, `$SPECS_PATH` comes first:** if it is unset, stop
    naming it before resolving anything or running the specs-repo preflight below
    (`choices: ["Set SPECS_PATH (enter the path)", "Cancel"]`, `workflows-core:escalation-rules`
    *Required path environment variable unset*) — a key is found only by searching the specs tree, so
    with no tree the `absent` stop below would name the wrong cause and offer a re-enter that cannot
    succeed. An `@<path>` address needs no specs tree to resolve and runs on, exactly as `/document`'s
    *Mode detection* does. Then resolve the address with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). Carry the resolved `path`, `kind` and
-   `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `RELEASE_NOTES_NEEDS_KEY` below, naming the token that failed §1's grammar (a token that fails it is no `<KEY>`, so the `$SPECS_PATH` test above does not stop it, and `resolve-address` tests the grammar before it searches). **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
+   `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `RELEASE_NOTES_NEEDS_KEY` below, naming the token `read-key` (§1) did not read — a key, a key behind its folder's kind prefix, or a folder's whole name — which the `$SPECS_PATH` test above has already let through. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
 
    **Then settle the specs checkout, before the placement below reads anything.** Fix the run key
    set (`workflows-core:specs-repo-git` §3.2), reading only carrier frontmatter (`key:`, `kind:`) as

@@ -523,7 +523,7 @@ baseline finding the run writes per repository is `CONFIRMED` too, and is not on
   route.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
 - `workflows-core:addressing` — the `<KEY>` grammar and folder
-  resolution this command uses by name (`key-valid`, `resolve-address`), including how a slice
+  resolution this command uses by name (`read-key`, `resolve-address`), including how a slice
   nests inside its parent.
 - `workflows-core:grounding-format` — the authority for the finding
   record, the six verdicts, the two horizons, the `baseline-integrity` procedure this command's

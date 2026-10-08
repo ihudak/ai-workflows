@@ -31,13 +31,13 @@ Default heuristics:
 
 Because the required fix is not known up front, start with a provisional `MODERATE` routing block for research, then finalize the classification from the research report **before** fix application begins.
 
-**Specs-repo preflight.** Its run key set (`workflows-core:specs-repo-git` §3.2) is the key each token of `$ARGUMENTS` carries as its optional address, validated against `workflows-core:addressing` §1's grammar and taken as typed — the validated-argument case of §3, so the preflight runs before Step 1 resolves any address, and no folder is read first; where no token carries a key, the set is empty and the run keyless. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run, retry an artifact commit that failed to push, and settle the branch. This runs against `$SPECS_PATH` only — `git -C "$SPECS_PATH"`, never a `cd`, so the code repo this run is about to branch and fix is untouched (§1 rule 1). Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts` step skips on it.
+**Specs-repo preflight.** Its run key set (`workflows-core:specs-repo-git` §3.2) is the key each token of `$ARGUMENTS` carries as its optional address, read with `read-key` (`workflows-core:addressing` §1) and taken as the key it reads — the validated-argument case of §3, so the preflight runs before Step 1 resolves any address, and no folder is read first save the carrier `read-key` reads for each key typed as a folder's whole name; where no token carries a key, the set is empty and the run keyless. Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session artifacts from an earlier run, retry an artifact commit that failed to push, and settle the branch. This runs against `$SPECS_PATH` only — `git -C "$SPECS_PATH"`, never a `cd`, so the code repo this run is about to branch and fix is untouched (§1 rule 1). Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal `commit-artifacts` step skips on it.
 
 ---
 
 ## Step 1 — Prepare
 
-1. **Parse** — Take `--allow-install-scripts <name>[,<name>…]` (or `--allow-install-scripts=<name>[,<name>…]`) out of the tokens first, where given ("Install scripts" below); then extract the optional address and the CVE ID from each remaining token. The address is a key resolved against `$SPECS_PATH` with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), never a tracker lookup; a token may carry none.
+1. **Parse** — Take `--allow-install-scripts <name>[,<name>…]` (or `--allow-install-scripts=<name>[,<name>…]`) out of the tokens first, where given ("Install scripts" below); then extract the optional address and the CVE ID from each remaining token. The address is a key, read with `read-key` (`workflows-core:addressing` §1) as the preflight read it — the key it reads, never the token typed, is the address from here on, in the branch name and the commit message below — and resolved against `$SPECS_PATH` with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), never a tracker lookup; a token may carry none. A key read off a folder's whole name that resolves `absent` here stops the run, as `workflows-core:addressing` §1 says.
 2. **Determine the no-address placeholder** — Scan recent branch names and commit history for `NOISSUE` / `NOJIRA` / `NO-JIRA`; use whichever the project already writes when a token carries no address. <!-- vendor-token-ok: literals a repo's own branch/commit history may contain, matched rather than minted -->
 3. **Filter** — Skip non-CVE IDs (`CWE-*`, OWASP patterns) with a warning.
 4. **Snapshot repo context** — Note the repo path, its top level (`git rev-parse --show-toplevel`), and, when obvious, the primary ecosystem so the research agent can disambiguate detection.
@@ -376,7 +376,7 @@ rolling a security fix back because a suite could not be started is a decision t
 
 ### Branch naming
 
-Resolve the branch name by invoking `Skill(skill: "workflows-core:reference", args: "branch-naming")` and following it — **the repo's own documented convention wins**. The orchestrator reads the repo's `CONTRIBUTING.md`, `CONTRIBUTION.md`, `README.md`, `DOCUMENTATION-GUIDELINES.md`, `CLAUDE.md` for a branch-naming section (§1.1), fills its segments (§1.2) — **identity** from the §2 ladder (`$GIT_USER_INITIALS` → `git config user.initials` → inference → the §2.5 prompt), **issue key** from the CVE's address when the token carried one (else the documented no-issue literal, or the placeholder detected in Step 1 step 2), **description** from the CVE ID — and hands the resolved name to `vuln-fixer`. Never add an identity segment the pattern does not ask for.
+Resolve the branch name by invoking `Skill(skill: "workflows-core:reference", args: "branch-naming")` and following it — **the repo's own documented convention wins**. The orchestrator reads the repo's `CONTRIBUTING.md`, `CONTRIBUTION.md`, `README.md`, `DOCUMENTATION-GUIDELINES.md`, `CLAUDE.md` for a branch-naming section (§1.1), fills its segments (§1.2) — **identity** from the §2 ladder (`$GIT_USER_INITIALS` → `git config user.initials` → inference → the §2.5 prompt), **issue key** from the CVE's resolved key when the token carried an address (else the documented no-issue literal, or the placeholder detected in Step 1 step 2), **description** from the CVE ID — and hands the resolved name to `vuln-fixer`. Never add an identity segment the pattern does not ask for.
 
 When the repo documents no convention (§1.4), `<prefix>` comes from the §2 ladder with fallback `fix/`:
 
@@ -391,7 +391,7 @@ Applied by the orchestrator in Step 3.9, never by `vuln-fixer` — it is passed 
 ```
 fix(deps): upgrade <library> to <version> to remediate <CVE-ID> [<key>]
 
-Resolves <ADDRESS>
+Resolves <key>
 Fixes <CVE-ID> - <one-line CVE description>
 
 Vulnerable range: <range>

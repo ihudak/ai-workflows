@@ -6,7 +6,8 @@ defined once rather than reinvented per caller. Design authority:
 `docs/superpowers/specs/2026-08-31-specs-native-pipeline-design.md` §§4–5 (removed from the tree 2026-09-23; `git show 62e791e8:docs/superpowers/specs/2026-08-31-specs-native-pipeline-design.md` retrieves it).
 
 **Consumed by every command that addresses a folder in the specs tree.** Each calls `resolve-address`
-(§3) and, where it validates a key before touching the filesystem, `key-valid` (§1). Those commands
+(§3) and, where it reads its address before touching the filesystem, `read-key` (§1) — or, where it
+mints a key, `key-valid`. Those commands
 are what `grep -l resolve-address plugins/*/commands/*.md` returns — re-run it rather than keeping a
 list or a count here, since both went stale in this paragraph — and they, with the one shared
 authority §7 names, all reach the tree through this file; `product-workflows:brd-format` and
@@ -38,6 +39,61 @@ questions, and this section answers only the first; §3 answers the second.
 
 Returns `valid` when `<KEY>` matches the grammar above, `invalid` otherwise. Takes no other input and
 touches no filesystem — a pure string test, safe to call before `$SPECS_PATH` is even resolved.
+
+### Entry point: `read-key <TOKEN>`
+
+**Reads a key the operator typed as an address, where `key-valid` tests one.** Three readings, tried
+in this order, the first that holds winning:
+
+1. **A key.** Where `key-valid <TOKEN>` is `valid`: `key: <TOKEN>`, `prefix: none`.
+2. **A folder's whole name.** Where `$SPECS_PATH/specifications/` is a directory and exactly one
+   directory at most three levels below it is named `<TOKEN>` exactly — §2's reserved names never
+   counted — §4 reads that folder's carrier, and the name begins `<KIND>-<key>-` (§4.1, `<KIND>` one
+   of §2's three, `<key>` the key the carrier asserts) or, a legacy name (§5), `<key>-`: `key:` that
+   key and `prefix:` that kind, or `none` for a legacy name. A name that begins with neither is §4's
+   hard stop on a key that disagrees with its folder name; a folder with no carrier yields nothing
+   here, and its key or an `@<path>` still reaches it (§5).
+3. **A key behind its folder's kind prefix.** Where `<TOKEN>` is one of §2's three folder kinds and a
+   hyphen — `BRD-`, `PRD-` or `EPIC-` — followed by a rest `key-valid` finds valid: `key: <the rest>`,
+   `prefix: <that kind>`.
+
+Where `$SPECS_PATH` is unset the second reading cannot be tried, and a token neither of the others takes returns **`needs-tree`** rather than `invalid`: a caller whose address is required takes its own `$SPECS_PATH` stop on it, wherever in its order that check stands, rather than a key-grammar stop the token may never have been meant to meet, and — that stop answered with a path — reads the token again with `read-key`, from the top of the step that first read it, its own `invalid` stop applying to the result; a caller with a direct mode reads it as no address, since with no tree to look in a whole name cannot be told from prose. Anything else is `invalid` — a `$SPECS_PATH` holding no `specifications/` included, where no name can match.
+
+**The line.** A reading other than the first prints one line —
+`Read '<TOKEN>' as the key <key> — <prefix>- is a folder kind prefix, not part of a key.` for the
+third, `Read '<TOKEN>' as the key <key> — the name of its folder, <path below specifications/>.` for
+the second — once per run, at the first step that reads the token for its key: a step that only decides whether a token is an address (a mode test, `workflows-core:run-flags` §3) prints nothing and hands on the token as typed, and every step after that first read is handed the key.
+
+**Why it exists.** Every folder the family creates is named `<KIND>-<KEY>-<slug>` (§2), so the
+prefixed form and the whole name are what an operator sees in the tree, and typing either is the
+natural gesture: a live `/dev-workflows:design EPIC-BOOK-1-01` stopped with "not a key" beside the
+Epic folder `EPIC-BOOK-1-01-alerts-service/`, and the operator read the stop as "not found".
+
+**It cannot misread a key, and it parses nothing.** A key's leading token holds no hyphen and the
+segment after it is numeric, so a kind, a hyphen and a key — whose own leading token is alphabetic —
+never passes `key-valid`, which is tried first, and `EPIC-008`, a key beginning with a kind token
+(§2), stays the key `EPIC-008`. A whole name is matched against the folders the tree holds and its
+key read off the carrier, never split out of the name (§4), and it is tried before the prefixed
+reading, so a name whose slug is all digits (`PRD-ACME-1-2024`) is read as its folder and never as the
+key `ACME-1-2024`. The prefix is matched against the closed set of §2's three kinds and the rest held
+to the whole grammar above — so nothing is extracted by pattern.
+
+**The second reading reads the tree, and where it runs decides which tree.** A caller that resolves
+its address before its preflight reads the checkout as it stands, as its resolution does anyway. A
+caller that reads its key before the preflight — its run key set being that key (§3.2 of
+`workflows-core:specs-repo-git`) — reads a whole name on the checkout the preflight may then switch
+away from; it resolves the key read after the preflight as always. **A whole name that then resolves `absent` stops the run, whatever the command**: the folder it named was on the checkout before the preflight moved it, and creating one for its key would make a second. The stop names the token, the branch it was read on and the branch the run now stands on; a caller whose `absent` is already a stop adds those two branches to its own stop's text and, in place of its remedies, says to merge the branch the name was read on and re-run; a caller that goes on keyless on `absent` (`/dev-workflows:vuln`) takes this stop instead.
+
+**From a reading that is not the first, the run's key is `key`, never the token typed** — in every
+later step and in everything the run prints or writes — so neither a prefix nor a slug reaches a
+message, branch, commit subject or file. **It reads an address, never a key to mint**: a key an
+operator supplies or a command proposes for a new child folder (`/product-workflows:brd-split`,
+`/product-workflows:epics`) is held to `key-valid` alone, and only the key, never a whole name, is
+validated for shape only. **A command that creates the folder its address names where resolution
+returns `absent`** — `/product-workflows:idea` and `/product-workflows:create-prd` a `PRD-` folder,
+`/product-workflows:brd-intake` a `BRD-` one — creates it only where `prefix` is `none` or that kind and the token was not a whole name, and otherwise stops before creating anything — a key behind a prefix of another kind with:
+`'<TOKEN>' names a <prefix>- folder, and this command creates a <its kind>- folder — re-run it with the bare key <key>.`
+and a whole name of any kind with the stop above, since its folder was there before the preflight.
 
 ## 2. Directory naming
 
@@ -117,8 +173,9 @@ the kind is frequently what decides the run's mode.
    `<KEY>` instead, which §5's fallback resolves with that key — a prefixed name with no carrier is
    found by no key at all (§5).
 
-2. **Anything else → the key branch.** `key-valid <ARG>`; on `invalid`, return `status: invalid`. On
-   `valid`, `resolve-key <ARG> [<KIND>]` and return `form: key`.
+2. **Anything else → the key branch.** `read-key <ARG>` (§1); on `invalid` or `needs-tree`, return `status: invalid`.
+   Otherwise `resolve-key <key> [<KIND>]`, `<key>` being the key it read, and return `form: key` with
+   its `prefix`. A caller that read its address with `read-key` before resolving passes the key it read, so the token is read, and its line printed, once.
 
 ### Entry point: `specs-root-check`
 
@@ -355,11 +412,16 @@ path:    <absolute path of the resolved folder>   # found only
 kind:    brd | prd | epic                         # found only; empty on a folder with no carrier (§5)
 key:     <the folder's asserted key>              # found only; read, never parsed (§4) — on a folder with no carrier, the key searched for (§5), or empty on a path to one (§3 step 1)
 form:    key | path                               # which form the caller supplied
+prefix:  none | BRD | PRD | EPIC                  # form: key only — the kind prefix read-key (§1) read off the token
 legacy:  true | false                             # true when §5's fallback resolved it
 matches: [ <absolute path>, … ]                   # ambiguous only
 ```
 
-**It terminates because the bound is a constant, not a property of the key or of the tree.** Three
+**A caller whose Phase 0 stops on what this returns, before it has a deliverable, a branch or a handoff, has refused, and still runs its emitter tail** as `workflows-core:specs-repo-git` §4's *A run that refuses before it has written anything* settles it: the cost entry and the terminal commit, and no feedback, follow-ups or `resume.md`. A
+live `/dev-workflows:design` that stopped on `invalid` ran none of it, and the next command of the
+session was charged its tokens.
+
+**`resolve-key` terminates because the bound is a constant, not a property of the key or of the tree.** Three
 levels are scanned, each enumerating a finite set of directories; nothing found on disk can raise
 that. So `resolve-key` always answers, and always after a bounded number of scans.
 

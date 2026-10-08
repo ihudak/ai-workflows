@@ -88,9 +88,9 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
 
 2. **Resolve the address.** Resolve the single positional `<ADDRESS>` — a `<KEY>`, or an `@<path>`
    naming a folder — with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3).
-   A key that fails §1's grammar stops with
+   A token `read-key` (§1) finds `invalid` stops with
    `PRD_PROPOSAL_NEEDS_KEY: /prd-proposal needs an address (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. PRODUCT-1234 or the slice PRODUCT-1234-01) — re-run '/product-workflows:prd-proposal <ADDRESS>'.`
-   Shape only, and never checked against anything (§1) — a key names a folder in `$SPECS_PATH`.
+   A key is validated for shape only and checked against nothing (§1) — it names a folder in `$SPECS_PATH`; a whole folder name is matched against that tree's folder names.
    `status: absent` stops with
    `PRD_PROPOSAL_NOT_FOUND: no folder found for <KEY> under $SPECS_PATH/specifications/ (every level addressing.md §3 bounds, plus §5's legacy fallback) — /prd-proposal prices an existing PRD folder and creates none.`
    This command creates no folder in the specs tree.
@@ -629,9 +629,12 @@ file describes the archived revision and not this one.
    escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`
    rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`; on § On re-review's
    **Proceed**, proceed as after a verdict that is not `BLOCK`. `PASS` / `PASS WITH RECOMMENDATIONS`
-   → proceed. Cap: one fix cycle plus one re-review — and where the user asks for a finding of a
-   verdict that was not `BLOCK` to be applied, that inline edit leaves the re-review unspent, and it
-   is offered before the handoff, per the
+   → after the first review and after the re-review alike, where it leaves open at least one surviving finding
+   whose fix is only an edit, offer to apply them before going on, per the `Findings a review leaves open — the offer to apply
+   them` rule in the same reference — `choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]` — applying each inline, read against what it overlaps,
+   and a finding not applied going to the final report and the pull request; then proceed. Cap: one
+   fix cycle plus one re-review — and a finding applied at that offer after the first review leaves
+   the re-review unspent, and it is offered before the handoff, per the
    `Edits after a verdict that is not BLOCK — the unspent re-review` rule in the same reference. Where triage empties the survivor set, do not
    dispatch a fix cycle with nothing to apply and do not silently promote the verdict — the user
    settles a verdict its own findings no longer support. At either of that reference's settle
@@ -684,8 +687,7 @@ first-free rule actually wrote — `<KEY>_proposal_<YYYYMMDD>.md`, or the first 
 where that was taken — and the brief archived beside it, where one was, at the name the same rule
 wrote for it, `title: <KEY> Effort proposal <YYYYMMDD>`, and `body_facts` = the readiness tier and what
 capped it; the `[WP#n]` count and the total expected hours with its range; the count of packages graded
-Low and how many carry a declared re-estimate gate; the `proposal-reviewer` verdict; and whether a
-rationale brief was rendered. Emit its §4.1 outcome line in the final report.
+Low and how many carry a declared re-estimate gate; the `proposal-reviewer` verdict with its version line and every finding left open (`workflows-core:escalation-rules`, *A recorded verdict names the version it was taken against*); and whether a rationale brief was rendered. Emit its §4.1 outcome line in the final report.
 
 ---
 
