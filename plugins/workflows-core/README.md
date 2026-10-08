@@ -6,7 +6,7 @@ Shared foundation for the `dev-workflows` plugin family: the addressing grammar 
 
 ## What it does
 
-Most of this plugin is not a command at all. It is the corpus a sibling plugin reads: 36 files under `references/`, reached through the `reference` loader skill, the `model-routing` skill that resolves the classification rules, and ten agents dispatched by name. The seven commands it does ship are the ones that belong to no single pipeline — they act on the plugin family itself, or on the specs tree rather than on a phase of it.
+Most of this plugin is not a command at all. It is the corpus a sibling plugin reads: 37 files under `references/`, reached through the `reference` loader skill, the `model-routing` skill that resolves the classification rules, and ten agents dispatched by name. The seven commands it does ship are the ones that belong to no single pipeline — they act on the plugin family itself, or on the specs tree rather than on a phase of it.
 
 | Group | Commands | What it does |
 |-------|----------|--------------|

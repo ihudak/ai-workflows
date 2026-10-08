@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.29.1] — 2026-10-08
+
+### Fixed
+- **`/epics` made the same promise** — "show candidates at plan approval" — for the repositories its code scan resolves in Phase 4, after its Phase 2 approval. It now asks the same question once every repository is resolved, before the scan.
+- **The slug→clone maps of `/epics`, `/specify` and `/prd-ground` came up empty on macOS, and `/idea`'s and `/create-ard`'s discovery named no directory by its slug**, because macOS ships no `timeout` binary: the bare `timeout 5 git -C <dir> remote get-url origin` failed with `command not found`, and a failed call skips the directory. Each now runs it as `bounded 5 git …` (`workflows-core:bounded-run`, 1.35.3) — `timeout`, else `gtimeout`, else a `perl` alarm.
+
 ## [3.29.0] — 2026-10-08
 
 ### Added

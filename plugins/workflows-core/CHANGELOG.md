@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.35.3] — 2026-10-08
+
+### Added
+- **`references/bounded-run.md`** — `bounded <seconds> <command…>`, the one portable way to cap a call's run time: `timeout`, else `gtimeout`, else `perl -e 'alarm shift; exec @ARGV or exit 127' <N> <cmd>`, with the Bash tool's own timeout at least (N+5)·1000 ms and exit 124 or 142 meaning the call timed out; a cap the Bash tool's own timeout holds needs no wrapper and is never a `timeout` prefix either. Verified on macOS without `timeout` or `gtimeout`: the alarm exits 142, a command's own exit code passes through, and a command not on the path exits 127.
+
+### Fixed
+- **Every capped call failed on macOS, which ships no `timeout` binary.** `components.md` §1's slug derivation, `docs-grounding.md` step 3.5's `qmd` probes and `qmd update`, and `docs-grounder`'s `qmd` probes, searches and reads were each written as a bare `timeout <N>s …`, which fails there with `command not found` — and every caller reads a failed call as a skip, so step 3.5 treated an installed `qmd` as absent and `docs-grounder` dropped silently to its keyword fallback. Each now runs in the bounded-run form, which takes the same branch on a host with or without `timeout`.
+
 ## [1.35.2] — 2026-10-08
 
 ### Fixed

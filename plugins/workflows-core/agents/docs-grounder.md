@@ -35,21 +35,23 @@ project-local `.qmd` index from the directory it runs in, which is what Path A's
 
 Use when the `qmd` binary is available (`command -v qmd`). **This agent never builds or refreshes the index** — that belongs to `resolve-docs-grounding` (`${CLAUDE_PLUGIN_ROOT}/references/docs-grounding.md` step 3.5), which can ask the user first. Here, probe what already exists and pick a rung.
 
-1. **Probe — model-free and mutation-free.** `timeout 10s qmd status` and `timeout 10s qmd collection list`.
+Every capped `qmd` call below runs in **the bounded-run form** (`${CLAUDE_PLUGIN_ROOT}/references/bounded-run.md`), for a cap of `<N>` seconds: `if command -v timeout >/dev/null 2>&1; then timeout <N>s <cmd>; elif command -v gtimeout >/dev/null 2>&1; then gtimeout <N>s <cmd>; else perl -e 'alarm shift; exec @ARGV or exit 127' <N> <cmd>; fi`, with the Bash tool's timeout set to at least (N+5)·1000 ms. Exit 124 or 142 means the call timed out.
+
+1. **Probe — model-free and mutation-free.** `qmd status` and `qmd collection list`, each in the bounded-run form at 10 s.
    - `qmd status`'s first line is `Index: <path>`. When that path is not the user-scope `~/.cache/qmd/index.sqlite`, a project-local `.qmd` index in the current directory is shadowing it: record that in `notes` and take rung 3.
-   - For "does the collection have embeddings", prefer `timeout 10s qmd collection show <name>` when it reports a per-collection embedding count — a global `Vectors:` count from `qmd status` can be satisfied by a *different* collection. Fall back to the global count when per-collection is unavailable.
+   - For "does the collection have embeddings", prefer `qmd collection show <name>` (bounded-run form, 10 s) when it reports a per-collection embedding count — a global `Vectors:` count from `qmd status` can be satisfied by a *different* collection. Fall back to the global count when per-collection is unavailable.
 2. **Select the rung.**
 
 | Rung | Precondition | Retrieval | `retrieval:` |
 |---|---|---|---|
-| 1 | a collection covers `docs_path` **and** it reports embedded vectors > 0 | `timeout 30s qmd search "<terms>"` + `timeout 30s qmd vsearch "<terms>"`, unioned | `qmd-vector` |
-| 2 | a collection covers `docs_path`, vectors == 0 | `timeout 30s qmd search "<terms>"` | `qmd-lexical` |
+| 1 | a collection covers `docs_path` **and** it reports embedded vectors > 0 | `qmd search "<terms>"` + `qmd vsearch "<terms>"`, each in the bounded-run form at 30 s, unioned | `qmd-vector` |
+| 2 | a collection covers `docs_path`, vectors == 0 | `qmd search "<terms>"`, in the bounded-run form at 30 s | `qmd-lexical` |
 | 3 | no collection covers `docs_path`, `qmd` absent, a project-local index is shadowing, or either probe fails | Path B | `fallback` |
 
 **Rung 3 must say WHICH of its preconditions fired.** Record the observed cause in `notes`: `qmd absent`; `probe failed: <which call, exit or timeout>`; `project-local .qmd index at <path> shadowing the user-scope one`; `no collection covers <docs_path>`; or, where `qmd collection list` reports no collections at all while `qmd status` reports indexed documents, `index holds <D> documents but no collections — a rebuild may duplicate them`. A positive global vector count may belong entirely to other collections and does not change the `no collection covers` diagnosis; an index with documents and zero collections has no other collection to own them. These probes alone cannot establish orphaned documents or registry corruption; do not claim either or recommend registry repair. `resolve-docs-grounding` step 3.5 uses the same root-coverage test and may offer a consented build for an uncovered root; this agent only falls back.
 
    `<terms>` = `feature_summary` keywords + `themes`, minus stopwords. **Union of the two ranked lists:** interleave `qmd search` and `qmd vsearch` results by rank position, dedupe by path keeping the better rank, truncate at the Bounding cap of 8.
-3. **Read the top hits** with `timeout 30s qmd get "<file>"` (or `Read`), capped per Bounding.
+3. **Read the top hits** with `qmd get "<file>"` in the bounded-run form at 30 s (or `Read`), capped per Bounding.
 4. **A timeout or non-zero exit on any qmd call drops one rung** and is recorded in `notes` — except that a failing `qmd search` drops straight to Path B, because rung 2 depends on that same call and would fail identically. This is the backstop for anything qmd does that this procedure did not anticipate.
 5. **Record `retrieval:`** with whichever rung was actually used (per the table in step 2 above), not the rung first attempted before any drop.
 

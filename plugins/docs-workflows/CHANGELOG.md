@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.13.2] — 2026-10-08
+
+### Fixed
+- **`docs-style-checker`'s two-minute cap per linter pass said nothing of how**, so a run could write it as a `timeout` prefix, which macOS does not ship; it is the Bash tool's own timeout.
+- **`/document` promised to show a repository's several clones "at plan approval", which comes before they are known.** Phase 2's approval precedes Phase 4, where the in-scope repositories are first resolved, so the promised override never appeared and the preferred clone was used silently. Phase 4 now records a slug's other clones and, where any slug has them, lists each as `<slug> → <chosen path> (also: …)` and asks once, before the missing-repository gate, whether to use another. The path named must be one of the slug's clones; key discovery then runs again and scans the chosen clone, on every later re-scan in the run too, so the scan and the diff read the same clone; a slug that gains clones in a re-scan is asked about then; and Phase 2's plan no longer offers a slug→clone resolution it cannot have yet.
+- **`/document`'s and `/release-notes`' slug→clone maps came up empty on macOS**, which ships no `timeout` binary: the bare `timeout 5 git -C <dir> remote get-url origin` failed with `command not found`, and a failed call skips the directory — so every slug the run resolved matched no clone, and the commit scan read none. Both now run it as `bounded 5 git …` (`workflows-core:bounded-run`, 1.35.3) — `timeout`, else `gtimeout`, else a `perl` alarm.
+
 ## [1.13.1] — 2026-10-08
 
 ### Fixed

@@ -216,7 +216,8 @@ ESLint prints and this step hands it, whatever else the lint covered — a lint 
 than the files it is handed, as `"eslint": "eslint src"` lints all of `src/` beside them, and a
 finding in a file outside the review is not this review's — then keep only their messages whose
 `ruleId` starts with `jsx-a11y/`, and map severity `2` → **Critical**, `1` → **Warning**.
-Cap the run at 2 minutes.
+Cap the run at 2 minutes — the Bash tool's own timeout, 120000 ms, never a `timeout` prefix, which
+macOS does not ship.
 
 Set `a11y_check: eslint-jsx-a11y`. A non-zero ESLint exit code means violations were found and is
 **not** a failure of this step. A missing binary, unparseable output, or a timeout **is**: record

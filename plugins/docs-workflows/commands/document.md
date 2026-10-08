@@ -387,7 +387,7 @@ Present a concise plan:
 
 - The resolved address and the folder it resolved to
 - Output filename / path under the resolved `docs_repo_path` (from Phase 1)
-- `$REPOS_PATH` and the slug→clone resolution for the repos that will be examined (inferred from the folder read output in Phase 3; if Phase 3 hasn't run yet, list "TBD — resolved after the folder read")
+- `$REPOS_PATH` — the repositories to examine are resolved in Phase 4, after the folder read and the commit scan; a repository with several clones is asked about there
 - Parallelism plan (up to 4 `diff-summarizer` instances per batch; up to 4 repos per Agent message)
 - Write context + whether branching will happen
 - Screenshots: `new_images_wanted` (yes/no, from Phase 1). Phase 5.6 always runs: when yes, its add-list candidates are gathered and confirmed there (specs scan + folder `attachments[]` + manual paths) — list "candidates resolved in Phase 5.6"; either way, Phase 5.6 also reviews the images already on the edited pages for staleness.
@@ -410,7 +410,7 @@ choices: ["Approve & continue (Recommended)", "Revise plan", "Cancel"]
 artifact present. Read its `prd.md` for the product content — its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement) — and the `specs` files Phase 0 resolved
 alongside it.
 
-**Resolve the diff sources — two of them, merged.** Invoke `Skill(skill: "workflows-core:reference", args: "implementation-format")` and follow its §4. **Both steps below run inside a clone, so build the slug→clone map here, once** — the map Phase 4 step 3 resolves against, by the recipe stated there: for each top-level directory under each entry of `$REPOS_PATH`, `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, a directory with no `.git` or a failed or timed-out call skipped, any trailing `/` and then a trailing `.git` stripped, the URL's last path segment — what follows its last `/` or `:` — taken as that clone's slug. Step 2's `git log` runs in the clone, and so does the `git rev-parse` that resolves a block's abbreviated `commit:` before the merge below compares it — §4 requires that resolution of every comparison, the template writing the field abbreviated. Phase 4 takes this same map rather than rebuilding it, and is where the operator settles a slug it matches to no clone; until then such a slug is scanned in no repository and compared in none:
+**Resolve the diff sources — two of them, merged.** Invoke `Skill(skill: "workflows-core:reference", args: "implementation-format")` and follow its §4. **Both steps below run inside a clone, so build the slug→clone map here, once** — the map Phase 4 step 3 resolves against, by the recipe stated there: for each top-level directory under each entry of `$REPOS_PATH`, `bounded 5 git -C <dir> remote get-url origin 2>/dev/null` (`workflows-core:bounded-run`), a directory with no `.git` or a failed or timed-out call skipped, any trailing `/` and then a trailing `.git` stripped, the URL's last path segment — what follows its last `/` or `:` — taken as that clone's slug. Step 2's `git log` runs in the clone, and so does the `git rev-parse` that resolves a block's abbreviated `commit:` before the merge below compares it — §4 requires that resolution of every comparison, the template writing the field abbreviated. Phase 4 takes this same map rather than rebuilding it, and is where the operator settles a slug it matches to no clone; until then such a slug is scanned in no repository and compared in none:
 
 1. **The record.** Read `implementation.md` — `/dev-workflows:implement` writes it into the folder
    of the unit it implemented, so a run that implemented an Epic records its work in that Epic's
@@ -491,13 +491,18 @@ From the **implementation record** — the `implementation.md` blocks Phase 3 re
 
 1. Take every entry's `repo`, `branch`, `base` and `commit`. **There is no `pull_requests[]` to filter and no PR `status` to filter on** — the record of what was implemented is `implementation.md` and the commit scan beside it, which a merged GitHub pull request's landed commits join (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §4); an open or unmerged one is listed, never read. An entry with `pushed: false` is still in scope: it is local to one machine, which the run reports rather than skipping.
 2. Group the entries by `repo` (short repo name).
-3. Take the slug→clone map Phase 3 built with the diff sources — for each top-level directory under each entry of `$REPOS_PATH`, `timeout 5 git -C <dir> remote get-url origin 2>/dev/null`, directories with no `.git` or whose `git remote` call fails or times out skipped, any trailing `/` and then a trailing `.git` stripped, the URL's last path segment — what follows its last `/` or `:` — taken as that clone's slug, giving `<slug> → [<absolute path>, ...]`. That step and this one run on every keyed run, so the map is always in hand here and is never built twice.
+3. Take the slug→clone map Phase 3 built with the diff sources — for each top-level directory under each entry of `$REPOS_PATH`, `bounded 5 git -C <dir> remote get-url origin 2>/dev/null` (`workflows-core:bounded-run`), directories with no `.git` or whose `git remote` call fails or times out skipped, any trailing `/` and then a trailing `.git` stripped, the URL's last path segment — what follows its last `/` or `:` — taken as that clone's slug, giving `<slug> → [<absolute path>, ...]`. That step and this one run on every keyed run, so the map is always in hand here and is never built twice.
 4. Resolve each unique in-scope `repo` slug against the map:
    - **One match** — use that absolute path as `repo_path`.
-   - **Multiple matches** (e.g. `cluster` and `cluster-repo`, both pointing at the same upstream) — auto-prefer basename ending `-repo`, then `_repo`/`_fast`, then alphabetically last; show all candidates at plan approval so the user can override.
+   - **Multiple matches** (e.g. `cluster` and `cluster-repo`, both pointing at the same upstream) — use the clone key discovery scanned (`key-discovery.md` §1): the one chosen in step 5, else the preferred one — basename ending `-repo`, then `_repo`/`_fast`, then alphabetically last — and record the slug's other clones as its `alternates`, which step 5 shows.
    - **Zero matches** — record the slug as **missing** and defer it to the consolidated repo gate in step 5 (do NOT escalate per slug).
    Record each resolution as `repo_slug → repo_path` for Phase 5.
 5. **Consolidated repo gate.** From step 4, compute `expected` = the unique in-scope repo slugs, `mounted` = those that resolved to a path, and `missing` = the zero-match slugs. This is the earliest point the repo set is known (it depends on the implementation record read at the top of this phase) and it runs before any diff work.
+   - **A repository with several clones — first, and only where one has `alternates`.** Show each such slug as `<slug> → <chosen path> (also: <alternate path>, …)`, then ask once:
+     ```
+     choices: ["Use the preferred clones (Recommended)", "Use another clone for a repository (you'll name the slug and the path)", "Cancel"]
+     ```
+     *Use another* takes `<slug> <path>` for each change. A path that is not one of that slug's `alternates` is refused with one line naming them, and the question asked again. Each path named becomes the slug's `repo_path` and its **chosen clone**, the clone it replaces taking its place among the `alternates`; then key discovery runs again (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1, *A clone mounted mid-run*), which scans a slug's chosen clone and passes every other as `--owner-of` — on every later run in this run too — so the scan and the diff read the same clone. *Cancel* aborts the run, as the missing-repository gate's *Cancel* below does. Then the rest of this step runs. No slug with `alternates` → nothing is asked; after a re-scan below, it is asked again for a slug whose `alternates` it has not shown yet.
    - **`missing` is empty** — print one line and continue with no gate:
      ```
      Resolved <M>/<N> repositories from the implementation record.
@@ -1293,7 +1298,7 @@ SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 - Themes: [2–4 bullet points from the folder read]
 
 ### Repos analysed
-- <repo-1> (<resolved repo_path>) — [N refs in scope, M resolved, K unresolved]
+- <repo-1> (<resolved repo_path>) — [N refs in scope, M resolved, K unresolved][; chosen over <alternate paths> — the preferred clone, or the one you named in Phase 4]
 - ...
 
 ### Refs in scope
