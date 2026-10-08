@@ -57,7 +57,7 @@ in this order, the first that holds winning:
    hyphen — `BRD-`, `PRD-` or `EPIC-` — followed by a rest `key-valid` finds valid: `key: <the rest>`,
    `prefix: <that kind>`.
 
-Where `$SPECS_PATH` is unset the second reading cannot be tried, and a token neither of the others takes returns **`needs-tree`** rather than `invalid`: a caller whose address is required takes its own `$SPECS_PATH` stop on it, wherever in its order that check stands, rather than a key-grammar stop the token may never have been meant to meet; a caller with a direct mode reads it as no address, since with no tree to look in a whole name cannot be told from prose. Anything else is `invalid` — a `$SPECS_PATH` holding no `specifications/` included, where no name can match.
+Where `$SPECS_PATH` is unset the second reading cannot be tried, and a token neither of the others takes returns **`needs-tree`** rather than `invalid`: a caller whose address is required takes its own `$SPECS_PATH` stop on it, wherever in its order that check stands, rather than a key-grammar stop the token may never have been meant to meet, and — that stop answered with a path — reads the token again with `read-key`, from the top of the step that first read it, its own `invalid` stop applying to the result; a caller with a direct mode reads it as no address, since with no tree to look in a whole name cannot be told from prose. Anything else is `invalid` — a `$SPECS_PATH` holding no `specifications/` included, where no name can match.
 
 **The line.** A reading other than the first prints one line —
 `Read '<TOKEN>' as the key <key> — <prefix>- is a folder kind prefix, not part of a key.` for the
@@ -82,7 +82,7 @@ to the whole grammar above — so nothing is extracted by pattern.
 its address before its preflight reads the checkout as it stands, as its resolution does anyway. A
 caller that reads its key before the preflight — its run key set being that key (§3.2 of
 `workflows-core:specs-repo-git`) — reads a whole name on the checkout the preflight may then switch
-away from; it resolves the key read after the preflight as always. **A whole name that then resolves `absent` stops the run, whatever the command**: the folder it named was on the checkout before the preflight moved it, and creating one for its key would make a second. The stop names the token, the branch it was read on and the branch the run now stands on.
+away from; it resolves the key read after the preflight as always. **A whole name that then resolves `absent` stops the run, whatever the command**: the folder it named was on the checkout before the preflight moved it, and creating one for its key would make a second. The stop names the token, the branch it was read on and the branch the run now stands on; a caller whose `absent` is already a stop adds those two branches to its own stop's text, and its remedies wait until that branch is merged.
 
 **From a reading that is not the first, the run's key is `key`, never the token typed** — in every
 later step and in everything the run prints or writes — so neither a prefix nor a slug reaches a
@@ -92,8 +92,9 @@ operator supplies or a command proposes for a new child folder (`/product-workfl
 validated for shape only. **A command that creates the folder its address names where resolution
 returns `absent`** — `/product-workflows:idea` and `/product-workflows:create-prd` a `PRD-` folder,
 `/product-workflows:brd-intake` a `BRD-` one — creates it only where `prefix` is `none` or that
-kind, and otherwise stops before creating anything:
+kind, and otherwise stops before creating anything — a key typed behind a prefix with:
 `'<TOKEN>' names a <prefix>- folder, and this command creates a <its kind>- folder — re-run it with the bare key <key>.`
+and a whole name with the stop above, since its folder was there before the preflight.
 
 ## 2. Directory naming
 
