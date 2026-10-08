@@ -5,6 +5,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.29.0] — 2026-10-08
+
+### Added
+- **`/epics` hands its drafts off** (Phase 7.5): once the review gate has settled it offers branch + commit + push + pull request for every `epic.md` it wrote and `_coverage.md`, behind the consent choice every producer presents, on an `epics/<PRD-KEY>-<slug>` branch (`workflows-core:phase-handoff`, 1.35.0); its session files ride the same branch outside session-branch mode. The array is chosen per run: a run that edited an Epic already on the default branch warns that declining stops the next phase. It used to commit none of its drafts — a rule kept from when it wrote them outside any repository the plugin managed — so a live run's Epics reached the remote only after the operator asked where they were, while its bookkeeping commit was pushed to `main` beside them. Its report's *Git state* is now *Handoff*, and its next-step offers carry `<merge-clause>`.
+- **`/specify` and `/create-ard` gate the Epic they read** (`require-on-main` on `epic.md`): an Epic on an unmerged `epics/` branch stops them, and one on no branch is read from the folder as it stands and reported. `/specify` gates each Epic its Phase 2 picker settles, every one on a broad spec.
+- **A finding `/epics` leaves open that needs a decision is written into its Epic** as a `[NEEDS CLARIFICATION]` marker after the last review, so `/specify`'s grill asks it and a later `/epics` run's Phase 6.1 resolves it; `epic-writer` keeps a marker it finds in a body it refines and returns it for that gate. A live run left four such decisions in its final report alone.
+- **`/epics` never lets a fixer rewrite text the user chose in Phase 6.1**: a style violation or review finding on it is put to the user instead — *Take* folds the rewording in as the user's answer, *Keep* overrides the finding, and either way no fixer receives it. A live run's style fixer was told to fix a MAJOR on the captions the user had chosen minutes before.
+- **`/epics` reads each suggested clarification answer against the `[AD#N]` Rules and PRD requirements it touches before offering it**, and `epic-writer` holds a suggested answer to ARD conformance; a live run's suggestion misstated an ARD's reset, and the user decided the same captions three times.
+
+### Fixed
+- **`/idea`'s and `/epics`' next-step guidance** said a declined handoff falls back; for a refined brief or a re-drafted Epic whose merged copy it changed, the next phase stops until the edit is committed, and both now say so.
+- **`/epics` *User-resolved text*:** a fold after a `PASS` offers the unspent re-review, and a kept `BLOCKER` does not count toward the review's having stayed blocked.
+- **`/idea` on its refine path and `/create-ard` refining an ARD presented the array saying the next phase would not stop**, when a declined edit of a merged copy stops it (`workflows-core:phase-handoff` §4.1, 1.35.0); each now presents the stopping array on such a run.
+- **`/create-ard` at Epic altitude did not read the Epic's own `epic.md`** — only its specification and design, which do not exist yet when an Epic-level ARD comes first; it reads the Epic's goal, scope, criteria and target now, and a stale "dispatch the folder read" clause from the retired tracker reader is gone.
+- **`/epics` built its requirements ground truth without `[SMC#n]`**, which `prd-format` lists with the other series `## Covers` and `_coverage.md` cite, and its no-requirements refusal tested the same short list.
+- **`/epics` passes `## Contract` in `fixed_headings`** where an Epic carries one, and runs the key-collision check below an Epic's frontmatter.
+- **`/epics`' plan claimed no Epic would depend on a later one** where an ARD lands an artifact-less producer after its consumers; the plan names that exception, and `epic-writer` says in such a dependency line that the consumer does not wait.
+- **`epic-writer` never writes an angle-bracket placeholder** for a value the ARD leaves to design; it names the dependency instead, or raises a marker.
+- **`/brd-proposal` and `/prd-ground` stated the branch prefixes' count**; they cite the authority instead.
+
 ## [3.28.1] — 2026-10-08
 
 ### Changed

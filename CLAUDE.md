@@ -149,7 +149,7 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 - `workflows-core:doc-structure-conventions` — traceability boundary, callout scope and adjacency, component-pattern fidelity → `workflows-core.md`
 - `workflows-core:finding-triage` — the orchestrator's step between a reviewer's findings and a fixer (keep, mark unverified or dismiss), its re-review rules, and the patch gate → `workflows-core.md`
 - `workflows-core:specs-repo-git` — `specs-preflight`, `commit-artifacts`, the bounded write authority, the specs-repo git hard rules → `workflows-core-git.md`
-- `workflows-core:phase-handoff` — `handoff-to-main`, `require-on-main`, the nine-prefix branch authority, the handoff consent choice → `workflows-core-git.md`
+- `workflows-core:phase-handoff` — `handoff-to-main`, `require-on-main`, the branch-prefix authority, the handoff consent choice → `workflows-core-git.md`
 - `workflows-core:read-only-repos` — read-only mount detection, write-free ref reading, the `prep` output contract → `workflows-core-git.md`
 - `workflows-core:docs-grounding` — `$DOCS_PATH` grounding: the resolution gate, `resolve-docs-grounding`, grill-rank / writer-attach → `docs-grounding.md`
 - `dev-workflows:bug-diagnosis` — repro first, ranked hypotheses, tagged instrumentation, a regression test at a seam → `dev-workflows.md`

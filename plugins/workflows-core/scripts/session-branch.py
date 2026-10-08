@@ -54,7 +54,7 @@ _EXCLUDED_RE = re.compile(EXCLUDED)
 
 # branch-naming §4's skip list; the selftest fails where they differ.
 IDENTITY_SKIP = frozenset(("feat", "feature", "fix", "bugfix", "hotfix", "docs", "chore", "release", "story",
-                           "idea", "prd", "ard", "spec", "design", "ready", "brd", "frames", "kb", "session"))
+                           "idea", "prd", "ard", "spec", "epics", "design", "ready", "brd", "frames", "kb", "session"))
 
 # The appended shapes merge with git's union driver. The overwritten ones are unset (-merge), so a
 # merge keeps the session branch's version whole (merge-tree -X ours) rather than splicing two

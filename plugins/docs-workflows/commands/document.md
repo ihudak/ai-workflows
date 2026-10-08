@@ -1112,15 +1112,15 @@ stops before this phase removes the files it had made, in the same way.
 
 Then gather the change context:
 
-a. Run `git -C <docs_repo_path> diff --stat` against the base branch (if branching happened at Phase 6.2) or against HEAD (if no branching) and capture the list of changed files.
+a. Capture the list of changed files from what the run's agents reported — `doc-writer`'s `files_written` and every file `doc-fixer` reported changing — never from `git diff --stat`, which lists no new page git does not track yet, and nothing at all once Phase 6.3 has committed the pages on a run that cut no branch.
 b. Compose a **change summary block**:
 
 ```
 Implementation: [one-sentence description of what was documented, naming <KEY>]
 Change type: docs
 Classification: SIGNIFICANT
-Files changed (from git diff --stat):
-<paste the git diff --stat output>
+Files changed:
+<one path per line, from step a>
 Notable additions/removals: [new pages, new sections, new snippets, new cross-links, restructured navigation — one line each; or "none"]
 Doc-review verdict: [PASS | PASS WITH RECOMMENDATIONS | BLOCK]
 ```
@@ -1682,15 +1682,15 @@ After the style check, hold the edited files against the `repo_verification_gate
 
 First gather the actual change context:
 
-a. Run `git -C <repo_root> diff --stat` (or equivalent) — in the repository Phase 0 step 3 resolved, whichever one cwd sits in — and capture the list of changed files with line counts. Note: the user has not committed, so `git diff --stat` will reflect unstaged changes.
+a. Capture the list of changed files — the pages this run wrote or edited — with `git -C <repo_root> status --short -- <those files>` in the repository Phase 0 step 3 resolved, whichever one cwd sits in. Note: the user has not committed, so a new page shows as `??`, which `git diff --stat` would not list at all.
 b. Compose a **change summary block**:
 
 ```
 Implementation: [one-sentence description of what was edited]
 Change type: docs
 Classification: [SIMPLE | MODERATE]
-Files changed (from git diff --stat):
-<paste the git diff --stat output>
+Files changed:
+<one path per line, from step a>
 Notable additions/removals: [new pages, new sections, new cross-links, restructured navigation — one line each; or "none"]
 Validation result: [PASS | PARTIAL — with note on what's still broken]
 ```

@@ -630,6 +630,11 @@ the next phase — **adapted to status**:
   the falling-back half. The **gated — stopping** array would promise a refusal `/create-prd` does
   not make: on `absent` it names the file without reading it and goes on down its idea ladder,
   which is what the falling-back array's parenthetical and the declined outcome line both warn of.
+  **Save on a run that refined an `idea.md` the default branch already carries** (Phase 4's *Refine
+  the existing `idea.md`* path, tested by `git -C "$SPECS_PATH" cat-file -e "<default-ref>:./<its path>"`
+  before the offer): a declined edit of a merged copy meets `/create-prd`'s gate at the C rows, a
+  stop (`workflows-core:phase-handoff` §4.1, *Row F is the next phase's reading only where …*), so that run presents the
+  **gated — stopping** array instead: `choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]`.
   Then on the first option execute `handoff-to-main` (§2) with all five of its §2.9 inputs: `prefix: idea`;
   `feature_folder` = the folder Phase 4 wrote `idea.md` into; `deliverable_paths` = `idea.md`,
   **plus every file Phase 4.5 wrote or reused** — each copy under `attachments/`, each image copy
@@ -669,10 +674,13 @@ the next phase — **adapted to status**:
   **On a decline, or where §4.1's *Gate failed* line was emitted, offer the `@<path>` route beside
   it** — the one the draft branch below names for the same on-disk state:
   `/product-workflows:create-prd <KEY> @<the absolute path of this idea.md>`. Neither outcome
-  committed anything, so `idea.md` is written and on no ref, exactly as a draft is, and `/create-prd
-  <KEY>` with no path then finds it on no ref (row F), names it without reading it, and goes on down
-  its idea ladder — which comes back to this brief only through its same-session rung or a path the
-  operator types, and otherwise grills the PRD from scratch. Named as a path, the file is read where
+  committed anything. Where this run wrote a new brief, `idea.md` is written and on no ref, exactly as
+  a draft is, and `/create-prd <KEY>` with no path then finds it on no ref (row F), names it without
+  reading it, and goes on down its idea ladder — which comes back to this brief only through its
+  same-session rung or a path the operator types, and otherwise grills the PRD from scratch. Where it
+  refined a brief the default branch already carries, the working copy differs from the merged one,
+  and `/create-prd <KEY>` stops on that at `workflows-core:phase-handoff` §3.3's C rows until it is
+  committed (§4.1, the stopping array this run presented). Named as a path, the file is read where
   it sits on rung 2's terms: never relocated, never gated, reported once as out-of-contract. The
   merge-clause route is for an operator who will land the files first; the `@<path>` route is the
   one that does not wait for them.

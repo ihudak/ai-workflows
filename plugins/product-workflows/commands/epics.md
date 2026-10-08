@@ -15,7 +15,7 @@ Key distinction from `/document` (keyed mode): the PRD being Epic-ized is **not 
 
 **`/epics` accepts exactly two shapes and refuses everything else** (Phase 0 steps 1a and 1b): a `PRD-` folder, which it partitions into new Epics, or an `EPIC-` folder holding its `epic.md` **that has a PRD above it**, which it re-refines. A stand-alone `EPIC-` folder, an `EPIC-` folder holding no `epic.md` and a `BRD-` container are all refused. **Epics come from a PRD only**, and `/epics` is the only command in this plugin that creates an `EPIC-` folder — `/create-ard` and `/specify` refuse an absent one rather than minting it.
 
-`/epics` **never branches** and **never commits the Epic drafts** (still true — the run's git **writes** are confined to `$SPECS_PATH`, per `workflows-core:specs-repo-git`; the run does make read-only git calls elsewhere — Phase 4's `git remote get-url origin` per candidate clone and Phase 8's `git diff --stat` from `project_root` — but none of them writes), and writes only inside the resolved PRD folder — one `EPIC-<PRD-KEY>-NN-<eslug>/` per Epic, plus `_coverage.md` beside `prd.md`. Git hygiene of the write target is the user's responsibility — they may or may not have it under version control. The run commits only inside `$SPECS_PATH`, and only its bounded session-artifact paths (`workflows-core:specs-repo-git` §2.1) — via the `specs-preflight` flush at run start (§3.4) and the terminal `commit-artifacts` step (§4); never the drafts, never the write target. It still creates no branch (still true — `specs-preflight` switches `$SPECS_PATH` only between branches that already exist, and only plugin-created ones (`workflows-core:specs-repo-git` §2.2); it creates none).
+`/epics` **hands its drafts off as every other producing phase does.** Once the review gate has settled it offers branch + commit + push + pull request for the Epic drafts and `_coverage.md`, behind its consent choice (Phase 7.5, `workflows-core:phase-handoff` §2), on an `epics/` branch named from the PRD folder. Its git **writes** are confined to `$SPECS_PATH`; the run does make a read-only git call elsewhere — Phase 4's `git remote get-url origin` per candidate clone — which writes nothing. It writes only inside the resolved PRD folder — one `EPIC-<PRD-KEY>-NN-<eslug>/` per Epic, plus `_coverage.md` beside `prd.md`. Its session files are committed by the `specs-preflight` flush at run start (`workflows-core:specs-repo-git` §3.4) and the terminal `commit-artifacts` step (§4), which stages only the bounded session-artifact paths (§2.1) — on the `epics/` branch where the handoff cut one, so they ride its pull request, save in session-branch mode, where they go to the session branch (§8). **This command used to commit nothing it drafted** — a rule kept from the version that wrote Epic drafts into a personal note vault, where leaving git to the user was right. Once the drafts moved into the specs repository the plugin manages, they reached the remote only when an operator noticed and committed them by hand, while the run's own bookkeeping commit was pushed beside them and its `Specs repo: … pushed` line read as if the run's output had landed.
 
 Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
@@ -268,12 +268,12 @@ terminal `commit-artifacts` step skips on it.
 the preflight, which step 1 ends with — and before Phase 1 asks anything. The `prd.md` that
 table accepted — the resolved folder's on a Draft row, the parent's on a Re-refine row — is the one
 tested. A `prd.md` that carries no live `[US#n]`,
-`[AC#n]`, `[SM#n]`, `[UC#n]` or `[FR#n]` — the identifiers Phase 3 builds `requirements[]` from, a
+`[AC#n]`, `[SM#n]`, `[SMC#n]`, `[UC#n]` or `[FR#n]` — the identifiers Phase 3 builds `requirements[]` from, a
 superseded or withdrawn one not counted — states no requirements, and drafting against it would give an empty ground truth that every Epic
 passes vacuously. The key resolved and the PRD is there, so this is neither the `key dir not found`
 rule, whose re-enter cannot help, nor `EPICS_NO_PRD`, whose message says no PRD is there:
 ```
-EPICS_PRD_NO_REQUIREMENTS: <PRD-KEY>'s prd.md at <path> states no requirements — no live [US#n], [AC#n], [SM#n], [UC#n] or [FR#n] — so there is nothing to partition. Add them with /product-workflows:update-prd <PRD-KEY>, then re-run /product-workflows:epics <KEY>.
+EPICS_PRD_NO_REQUIREMENTS: <PRD-KEY>'s prd.md at <path> states no requirements — no live [US#n], [AC#n], [SM#n], [SMC#n], [UC#n] or [FR#n] — so there is nothing to partition. Add them with /product-workflows:update-prd <PRD-KEY>, then re-run /product-workflows:epics <KEY>.
 ```
 It is a user halt, so `emit-block` does not fire.
 
@@ -326,7 +326,7 @@ Also display (for user context):
 - Resolved `$REPOS_PATH` (or "N/A — code scan off")
 - Resolved `prd_dir`, `key` and `focus_key` (or "none — PRD-level")
 
-No branching context is shown — this command never branches (still true — `specs-preflight` only switches `$SPECS_PATH` between branches that already exist, and only ones the plugin created, per `workflows-core:specs-repo-git` §2.2; it creates none).
+No branching context is shown here: the one branch this run may create is the `epics/` branch Phase 7.5's handoff cuts behind its consent choice, and `specs-preflight` only switches `$SPECS_PATH` between branches that already exist, and only ones the plugin created (`workflows-core:specs-repo-git` §2.2).
 
 ---
 
@@ -366,7 +366,7 @@ Present a concise plan:
 - Docs grounding: the `docs grounding:` line that `resolve-docs-grounding` returned, verbatim — including its `retrieval:` value and any index-build, staleness, or shadowing clause (off switch: --no-docs)
 - Output directory with one file per new Epic; propose a name stub per Epic if the themes already suggest them
 - Parallelism plan (up to 4 `code-scanner` instances per batch, single Agent message per batch)
-- Proposed Epic sizing/sequencing — prefer fewer, larger Epics where the PRD direction is validated; split only at a genuine risk / feedback-loop boundary; order so that no Epic depends on a later one
+- Proposed Epic sizing/sequencing — prefer fewer, larger Epics where the PRD direction is validated; split only at a genuine risk / feedback-loop boundary; order so that no Epic depends on a later one, save the one dependency an ARD's contracts make legal: its `### Landing order` binds only a producer whose interface artifact is a code file, so a producer of any other `new` or `changed` row may land after its consumers, and each consumer names it in `## Dependencies` as one it does not wait for, its Independent Test running against a stub (`epic-writer`, *Components and contracts*). A plan over such an ARD does not claim that no Epic names a later one
 - **Wide-refactor exception** — a blast-radius-wide *mechanical* change (rename/retype a shared symbol, column, or type) that genuinely cannot be tracer-bulleted into independent vertical slices is sequenced **expand → migrate-in-batches → contract**: one Epic adds the new form alongside the old, one-or-more Epics migrate call sites in batches, and a final Epic removes the old form (blocked by every migrate-batch). Prefer this over forcing the change into an awkward vertical slice
 
 Ask:
@@ -464,8 +464,10 @@ the retired reader used to return. Each Epic folder's `key` and title come from 
 run on — `epic-writer` receives it, `epic-reviewer` checks Epic coverage against it, and `_coverage.md`
 is rendered from it — so nothing downstream works if this step leaves it unset. One row per live requirement
 the PRD states — never one marked `Superseded by` or `Withdrawn`, which binds nothing
-(`workflows-core:prd-format` § Changing a requirement): its `id` (`[US#n]` / `[AC#n]` / `[SM#n]` / `[UC#n]` / `[FR#n]`), its `type`
-(`story` / `criterion` / `metric` / `use-case` / `functional`), and its text. Set
+(`workflows-core:prd-format` § Changing a requirement): its `id` (`[US#n]` / `[AC#n]` / `[SM#n]` / `[SMC#n]` / `[UC#n]` / `[FR#n]` — every series
+`workflows-core:prd-format` § Changing a requirement lists, since `## Covers` and `_coverage.md` cite
+each of them), its `type` (`story` / `criterion` / `metric`, a counter-metric included / `use-case` /
+`functional`), and its text. Set
 `requirements_source: prd` alongside it.
 
 **Existing Epics come from the same read**, as one entry per `EPIC-` subfolder with its `key` and
@@ -626,7 +628,7 @@ Skip where Phase 2.5 supplied a known set.
 
 ## Phase 6 — Write Epics
 
-The drafting is delegated to the **`epic-writer`** subagent (pinned to the §2.1 Sonnet detection chain for MODERATE; §2 Opus only if the run is SIGNIFICANT/HIGH-RISK — see `workflows-core:model-routing/classification` §9.2). The orchestrator prepares a handoff and dispatches; it does not write Epics itself, and **nothing commits in this phase** (still true — `/epics` never branches, and the Epic drafts it writes are never committed; git hygiene of the write target is the user's responsibility. The run commits only inside `$SPECS_PATH`, and only its bounded session-artifact paths, per `workflows-core:specs-repo-git` §2.1).
+The drafting is delegated to the **`epic-writer`** subagent (pinned to the §2.1 Sonnet detection chain for MODERATE; §2 Opus only if the run is SIGNIFICANT/HIGH-RISK — see `workflows-core:model-routing/classification` §9.2). The orchestrator prepares a handoff and dispatches; it does not write Epics itself, and **nothing commits in this phase** — the drafts are handed off at Phase 7.5, once the review gate has passed.
 
 1. **Write the handoff file.** Create a temp file (`command mktemp` — never a repo, never the specs tree) containing the `epic-writer` input contract: `folder_read`, `code_scanner_outputs` (empty if no scan), `scope` (Phase 2 in/out of scope), `existing_epics` (non-duplication), `prd_dir` (the resolved PRD folder), `vi_goal`, `key`, `requirements` + `requirements_source` (from Phase 3), `applicable_ard` (the Phase 2.5 invariants + guidance_summary, or omit when status was none), `existing_epic_themes` (themes of the already-linked Epics), `mode` (`generate` | `refine` | `both` — from Phase 3.5; `generate` when 3.5 skipped), `refinement_targets` (list of `{key, scope_hint, current_body_path}`, where `current_body_path = <prd_dir>/EPIC-<EPIC-KEY>-<eslug>/epic.md` — the keyed folder, keyless filename shape `epic-writer` writes and `workflows-core:addressing` §2/§4 define; empty in `generate` mode), `components`, `multi_component` and `contracts` (the known set from Phase 2.5 or 5.5, whether it is multi-component — two or more `kind: code` components, §3 — and the ARD's interface rows with their landing order — omit each where the run has none), and `docs_grounding` (the Phase 3.6 digest, or omit when OFF/EMPTY). Record its absolute path. When `focus_key` is set (the Phase 3 refinement target), set `scope` in-scope to just the focus Epic and `existing_epics` to the *other* linked Epics, so `epic-writer` re-drafts the single focus Epic's `epic.md`; the PRD folder is unchanged. **A focus run splits** where the run has a known set (`workflows-core:components` §3) and either the user's Phase 2 *Revise* names work of the focus Epic that moves to another component of the set — the instruction `/dev-workflows:design`'s *Re-split* tells the user to give — or the focus Epic's scope, an untargeted one's included, already lands in more than one component. Then set `mode: both` with that same in-scope, so the writer keeps the focus Epic on one target and drafts a net-new Epic — keyed as Phase 1 mints net-new keys — for each other component that work lands in, linked in landing order. §6's `epic_target` remedy sends a user here for the second case.
 
@@ -641,7 +643,7 @@ The drafting is delegated to the **`epic-writer`** subagent (pinned to the §2.1
    ```
    choices: ["Provide the missing input (you'll be prompted)", "Cancel"]
    ```
-   On a provided value, rewrite the handoff and re-dispatch once. Nothing is committed here (still true — this step writes only `epic.md` files and `_coverage.md` into the PRD folder, none of which `commit-artifacts` stages; git management there is the user's responsibility).
+   On a provided value, rewrite the handoff and re-dispatch once. Nothing is committed here; Phase 7.5 hands the drafts off.
 
    Also record `coverage_file` (the `_coverage.md` path) and `clarifications_needed[]` for Phases 6.1 and 7.
 
@@ -651,12 +653,22 @@ The drafting is delegated to the **`epic-writer`** subagent (pinned to the §2.1
 
 If the writer returned a non-empty `clarifications_needed[]`, resolve it BEFORE
 the style check and review (so no review cycle is spent on known unknowns).
+
+**Read each suggested answer against what it touches before offering it.** A suggested answer is
+Epic text the moment the user takes it, so read it against every `[AD#N]` Rule and PRD requirement
+the marker's section cites or bears on; where it contradicts one, say so beside it in the prompt,
+quoting the Rule or the requirement, rather than offering it as it stands. A live run offered an
+answer that misstated which subscriptions an ARD's reset kept; the user took it, the review raised
+it as a MAJOR, and the user decided the same captions three times.
+
 Present ONE batched prompt listing every marker grouped by Epic; for each:
 ```
 choices: ["Use the writer's suggested answer", "I'll answer (you'll be prompted)", "Leave unresolved"]
 ```
 Fold each resolved answer into the affected Epic draft (Edit the file inline, or
-re-dispatch `epic-writer` once with the resolutions). Markers the user chooses to
+re-dispatch `epic-writer` once with the resolutions), and **keep, for Phases 6.2
+and 7, the text each answer put into an Epic** — the user's answer, which no
+fixer rewrites (*User-resolved text*, below). Markers the user chooses to
 **leave unresolved** stay visible in the draft and become `epic-reviewer`
 BLOCKERs in Phase 7. If `clarifications_needed[]` is empty, this phase is a
 **silent no-op** (byte-identical to a run without it).
@@ -679,26 +691,32 @@ Invoke `prose-style-checker` on the files written in Phase 6. Unlike `/document`
   > files:    [absolute paths of every Epic file written in Phase 6]
   > doc_type: epic
   > emphasis: terminology and customer-facing captions, labels, messages, and text
-  > fixed_headings: [the text of every heading `workflows-core:pre-lint`'s Epic block requires per Epic file, verbatim]"
+  > fixed_headings: [the text of every heading `workflows-core:pre-lint`'s Epic block requires per Epic file, verbatim, plus `## Contract` where an Epic carries one]"
 
-Those headings are contract strings — pre-lint, `epic-reviewer` and every later reader find an Epic's sections by them, `## Independent Test` included — so the checker raises nothing on one, and a finding that still does, which a `prose-style` older than 0.7.0 returns, is never handed to `doc-fixer`, whatever its severity, and the Phase 9 report counts it as declined, not remaining.
+Those headings are contract strings — pre-lint, `epic-reviewer` and every later reader find an Epic's sections by them, `## Independent Test` included, and `## Contract` with them, which pre-lint does not require only because a run with no multi-component contracts writes none (`epic-writer`, *Components and contracts*) — so the checker raises nothing on one, and a finding that still does, which a `prose-style` older than 0.7.0 returns, is never handed to `doc-fixer`, whatever its severity, and the Phase 9 report counts it as declined, not remaining.
 
 Act on the return:
 
 - **`status: OK`** — zero violations. Proceed to Phase 7.
-- **`status: VIOLATIONS_FOUND`** — invoke `doc-fixer` with the violations treated as per their severity. After `doc-fixer` completes, re-run `prose-style-checker` once:
+- **`status: VIOLATIONS_FOUND`** — invoke `doc-fixer` with the violations treated as per their severity, save any on user-resolved text, which the user settles instead and no fixer receives (*User-resolved text*, below). After `doc-fixer` completes, re-run `prose-style-checker` once:
 
   → Agent (subagent_type: "workflows-core:doc-fixer", model: `<detection_model — §9 / §2.1 Sonnet chain>`):
     > "Fix the style violations for this brief:
     >
     > Task description: [Epic drafting for <KEY>]
-    > Reviewer or style-checker output: [paste the full prose-style-checker output, less any finding on a heading `fixed_headings` names]
+    > Reviewer or style-checker output: [paste the full prose-style-checker output, less any finding on a heading `fixed_headings` names and any the user settled under *User-resolved text*]
     > Project root: [resolved project_root]
     > Severities to fix: MAJOR only"
 
   If violations remain after the re-run, proceed to Phase 7 — the remaining findings (mostly MINOR/NIT for epics) are informational and will appear in the Phase 9 report.
 
 - **`status: ERROR`** — surface the error reason. Proceed to Phase 7 regardless (style check is not a gate for Epics, but a quality enhancement).
+
+**User-resolved text.** Text a Phase 6.1 answer put into an Epic is the user's decision, and a fixer that rewrote it would overturn that decision without asking. So a style violation of this phase, or a surviving review finding of Phase 7, that lands on such text is put to the user before any fixer runs — the finding, its suggestion, and the text it would replace:
+```
+choices: ["Take the finding's rewording", "Keep my answer — record the finding as declined"]
+```
+Neither option carries a recommendation, and none is owed: the answer is the user's, and the finding may still be right — a review finding that the text contradicts an `[AD#N]` Rule usually is. *Take* folds the finding's rewording in as the user's answer — the orchestrator's own edit, as Phase 6.1's fold is, whatever the finding's severity — and a free-text answer, a third wording, is folded in the same way. *Keep* is the user's override of the finding: the text stands, and the Phase 9 report counts the finding as declined by the user, naming it. **Either answer disposes of the finding, so no `doc-fixer` dispatch of this run carries it** — Phase 6.2's and Phase 7's each leave out every finding the user settled here — and a re-review carries the user's answer forward as a ruling this run already made rather than raising it again (`workflows-core:finding-triage` § On re-review); a kept `BLOCKER` is recorded as the escalation's *Override and accept the finding*, so it is never escalated a second time, and it does not count toward the review's having stayed blocked (`workflows-core:finding-triage` § On re-review) — the escalation that count would lead to is the one the user has already answered. A live run's fixer was told to fix every MAJOR the checker raised, one of which rewrote the confirmation captions the user had chosen minutes earlier; only the orchestrator's own judgement asked first.
 
 `prose-style` is a declared dependency of `product-workflows`, so this dispatch has no absent case — `prose-style-checker` always runs, and whatever it reports, Phase 7 follows (per `status: ERROR` above, the check is a quality pass, never a gate).
 
@@ -707,7 +725,7 @@ Act on the return:
 ## Phase 6.3 — Structural pre-lint
 
 Before the review gate, run the deterministic checks in `Skill(skill: "workflows-core:reference", args: "pre-lint")` against each drafted Epic file: the **Universal checks**,
-the **key-collision** check (run on the whole Epic file — the template has no frontmatter), and
+the **key-collision** check (below the frontmatter, whose `key:` carries the Epic's own key), and
 the **Epic** block (required headings incl. `## Independent Test`; Given/When/Then acceptance
 criteria; `[NEEDS CLARIFICATION]` ≤ 3 per Epic; `_coverage.md` present). Surface every finding;
 inline-fix the mechanical ones (delete a stray placeholder token); leave content gaps for the author.
@@ -735,9 +753,9 @@ When `mode` is `refine`/`both`, include `refinement_targets` in the `epic-review
 
 Act on the verdict (same shape as `/document` keyed mode Phase 7):
 
-**Triage sub-step** (before any fixer dispatch, and on every re-review): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; and raise a grade only by effect. Hand the fixer **survivors only**, and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled — save, on a re-review you chose at the first settle prompt, the dismissed and unverified findings it re-verifies — and no survivor of it is handed to a fixer. At either of that reference's settle prompts, **Keep the verdict** means the review **stayed blocked** (below) — on a kept verdict that is not `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run, as the escalation's own *Cancel the whole run* does.
+**Triage sub-step** (before any fixer dispatch, and on every re-review): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; and raise a grade only by effect. Hand the fixer **survivors only** — and none on user-resolved text, which the user settles instead (Phase 6.2's *User-resolved text*) — and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled — save, on a re-review you chose at the first settle prompt, the dismissed and unverified findings it re-verifies — and no survivor of it is handed to a fixer. At either of that reference's settle prompts, **Keep the verdict** means the review **stayed blocked** (below) — on a kept verdict that is not `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run, as the escalation's own *Cancel the whole run* does.
 
-- **BLOCK** — invoke `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain>`) with `Severities to fix: BLOCKER and MAJOR`. Write the `doc-fixer` Fix Report to a temp file (`command mktemp -t dw-epics-claims-XXXXXX`, never inside a repo tree or the specs tree), record its path as `claims_file`, then **check `doc-fixer`'s `Stop condition flag` before re-invoking anything**. If it is `NEEDS HUMAN`, the fixer deferred at least one BLOCKER as needing a human decision: do NOT re-invoke `epic-reviewer` — a re-review can only re-find the BLOCKER the fixer has just reported it could not resolve — and instead surface each deferred BLOCKER with the reason the fixer gave, then escalate it individually per the `Review verdict BLOCK (unresolved after one fix cycle) — /epics` rule in `workflows-core:escalation-rules`, which names this entry point alongside a review that stayed blocked. Only when the flag is `CLEAR` do you re-invoke `epic-reviewer` once **passing `claims_file`** — so the re-review falsifies the fixer's account rather than assuming it. Triage the re-review under `workflows-core:finding-triage` § On re-review (the triage sub-step above); on that section's **Proceed**, continue to Phase 8 as after a verdict that is not BLOCK. If the review **stayed blocked** — a BLOCKER survives that triage, or you keep the verdict at either settle prompt — escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — /epics` rule in `workflows-core:escalation-rules` for each unresolved BLOCKER individually:
+- **BLOCK** — invoke `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain>`) with `Severities to fix: BLOCKER and MAJOR`. Write the `doc-fixer` Fix Report to a temp file (`command mktemp -t dw-epics-claims-XXXXXX`, never inside a repo tree or the specs tree), record its path as `claims_file`, then **check `doc-fixer`'s `Stop condition flag` before re-invoking anything**. If it is `NEEDS HUMAN`, the fixer deferred at least one BLOCKER as needing a human decision: do NOT re-invoke `epic-reviewer` — a re-review can only re-find the BLOCKER the fixer has just reported it could not resolve — and instead surface each deferred BLOCKER with the reason the fixer gave, then escalate it individually per the `Review verdict BLOCK (unresolved after one fix cycle) — /epics` rule in `workflows-core:escalation-rules`, which names this entry point alongside a review that stayed blocked. Only when the flag is `CLEAR` do you re-invoke `epic-reviewer` once **passing `claims_file`** — so the re-review falsifies the fixer's account rather than assuming it. Triage the re-review under `workflows-core:finding-triage` § On re-review (the triage sub-step above); on that section's **Proceed**, continue as after a verdict that is not BLOCK — to this phase's closing paragraphs, then Phase 7.5. If the review **stayed blocked** — a BLOCKER survives that triage, or you keep the verdict at either settle prompt — escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — /epics` rule in `workflows-core:escalation-rules` for each unresolved BLOCKER individually:
   ```
   choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding", "Cancel the whole run"]
   ```
@@ -746,7 +764,7 @@ Act on the verdict (same shape as `/document` keyed mode Phase 7):
   re-review cycle — the same resolution `/document`'s identical option takes. Stating it is not
   redundant: every other option in this array has a resolution line and this one had none, so an
   operator who picked it reached undefined behaviour.
-  For `/epics`, "Defer" means the finding goes into an Epic-refinement note in the draft itself (appended as a `## Refinement notes` section) in addition to the Phase 9 report.
+  For `/epics`, "Defer" means the finding goes into an Epic-refinement note in the draft itself (appended as a `## Refinement notes` section, one plain `- ` bullet per finding) in addition to the Phase 9 report. A deferred finding whose fix needs a decision also gets a marker (below).
 
 - **PASS WITH RECOMMENDATIONS** — invoke `doc-fixer` for MAJOR findings only:
 
@@ -754,17 +772,38 @@ Act on the verdict (same shape as `/document` keyed mode Phase 7):
     > "Fix the review findings for this brief:
     >
     > Task description: [Epic drafting for <KEY>]
-    > Reviewer or style-checker output: [paste the triaged survivor list from the triage sub-step above — the surviving `epic-reviewer` findings only, never the dismissed or unverified ones]
+    > Reviewer or style-checker output: [paste the triaged survivor list from the triage sub-step above — the surviving `epic-reviewer` findings only, never the dismissed or unverified ones, nor one the user settled under *User-resolved text*]
     > Project root: [resolved project_root]
     > Severities to fix: BLOCKER and MAJOR"
 
-  MINOR / NIT findings are deferred to the Phase 9 report. Write `doc-fixer`'s Fix Report to `claims_file` as the BLOCK path does: its edits answer a verdict that was not BLOCK, so the re-review the cap still holds is offered before Phase 8, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`, and, taken, is dispatched with that `claims_file` and triaged like the BLOCK path's re-review.
+  MINOR / NIT findings are deferred to the Phase 9 report. Write `doc-fixer`'s Fix Report to `claims_file` as the BLOCK path does: its edits answer a verdict that was not BLOCK — and so does a *User-resolved text* edit made under this verdict, whether or not `doc-fixer` ran, which the claims file records beside the fixer's report — so the re-review the cap still holds is offered before this phase's closing paragraphs and Phase 7.5, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`, and, taken, is dispatched with that `claims_file` and triaged like the BLOCK path's re-review.
 
-- **PASS** — proceed to Phase 8.
+- **PASS** — proceed to this phase's closing paragraphs, then Phase 7.5 — save where *User-resolved text* folded a finding's rewording in (*Take*, or a wording of the user's own): that edit answers a verdict that was not BLOCK, so the re-review the cap still holds is offered first, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule, as on PASS WITH RECOMMENDATIONS.
 
 Cap: one fix cycle + one re-review maximum.
 
+**A finding left open that needs a decision is recorded in the Epic.** Once the last review has returned — the re-review offer above settled — and before Phase 7.5's handoff, every finding the run leaves open whose fix needs a decision it did not take, a deferred BLOCKER among them, is written into the Epic it concerns as an inline `[NEEDS CLARIFICATION: <question>]` marker at the point it concerns, naming the finding and the requirement it puts in doubt where it puts one in doubt — within `epic-writer`'s cap of three per Epic, counting the markers the Epic already carries; one past the cap stays in the Phase 9 report, which names the Epic as under-specified — per the `A finding left open that needs a decision is recorded in the artifact` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. A finding the user overrode, or whose fix is only an edit, gets no marker, and nor does one that already is a marker — a `[NEEDS CLARIFICATION]` the user left unresolved at Phase 6.1, which the review raised as a BLOCKER — so it neither counts twice against the cap nor is quoted into its own refinement note. That is how the next phase sees it: `/product-workflows:specify` asks an Epic's markers in its grill, and a later `/epics` run on the Epic puts them through Phase 6.1. A live run left the Epics' ports, a service's place in a configuration fan-out and a success metric's measurement source in its final report alone, where no later command reads.
+
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
+
+---
+
+## Phase 7.5 — Handoff
+
+Runs once Phase 7 has settled — the review gate passed, or escalated to a decision the user took, and the markers its closing paragraph calls for written — and before Phase 8. **Offer** (commit-when-asked — never automatic), invoking `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and presenting its §4.3 choice array verbatim. **Which array is a per-run choice** (§4.1). An Epic's `epic.md` is gated by `/product-workflows:specify` and `/product-workflows:create-ard` at Epic altitude, and both fall back on `absent` (§3.4), while nothing after this run reads `_coverage.md`, which a later `/epics` run recomputes rather than reads (§4.0). So where every `epic.md` this run declares is new — `<default-ref>` carries none of them, tested before the offer with `git -C "$SPECS_PATH" cat-file -e "<default-ref>:./<path>"` — present §4.3's **gated — falling back** array:
+```
+choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase does not stop on this, but until this is on main it might not read your copy)", "Cancel"]
+```
+Where the run edited an `epic.md` the default branch already carries — a focus run's re-draft, a leftover assigned to an existing Epic, a marker or a refinement note written into one — present §4.3's **gated — stopping** array instead: a declined edit of a merged copy meets those two commands' gate at §3.3's C rows, a stop (§4.1, *Row F is the next phase's reading only where …*):
+```
+choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]
+```
+
+On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with `prefix: epics`; `feature_folder` = `prd_dir`, the PRD folder, on a focus run as on a generate one — `_coverage.md` is the PRD's, and a split's net-new Epics sit beside the focus one — so §2.2 derives `epics/<PRD-KEY>-<vslug>` from it, and a later `/epics` run on the same PRD while that pull request is open reuses the branch (§2.2 rule 3; the preflight's B3 has already kept the run on it); `deliverable_paths` = every `epic.md` this run wrote or edited — each `EPIC-<KEY>-<eslug>/epic.md` Phase 6 returned in `files_written`, any net-new Epic or leftover assignment Phase 6.1 made, and any Epic Phase 7's markers or refinement notes touched — and `_coverage.md` in `prd_dir`, each named by its path relative to `$SPECS_PATH` (§2.9), never by the absolute path `epic-writer` returns; `title: <PRD-KEY> Add Epic drafts`, or `<PRD-KEY> Refine <focus_key>` on a focus run; and `body_facts` = each Epic written with its target, the coverage roll-up, the `epic-reviewer` verdict with the version line Phase 7 records, the count of `[NEEDS CLARIFICATION]` markers the drafts carry, and the next command — `/product-workflows:specify <EPIC>`, which will not run until this pull request is merged. Emit its §4.1 outcome line in the Phase 9 report's `### Handoff`.
+
+On the second or third choice the drafts stay written and uncommitted, and §4.1's *Declined by the user* line is the report's `### Handoff`. Beyond the clause that line carries, an uncommitted draft costs what any path outside the bounded artifact set does: `workflows-core:specs-repo-git` §3.3's G1 advisory fires on every later run of any command until it is committed or removed.
+
+A run that ends before this phase — a *Cancel* at an earlier choice — reaches no offer and prints no `Phase handoff:` line (§4.1); its report says the drafts are written and uncommitted.
 
 ---
 
@@ -781,7 +820,7 @@ the files it had made, in the same way.
 
 Then gather the change context:
 
-a. `project_root` is the resolved PRD folder. Run `git diff --stat` from `project_root` if it is a git repo; otherwise list the written files manually. This command never commits anything under `project_root` — just report what changed (the terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded artifact paths, per `workflows-core:specs-repo-git` §2.1).
+a. `project_root` is the resolved PRD folder. List the files Phase 6 wrote, from its `files_written`, and the Epics Phases 6.1 and 7 edited — never from `git diff --stat`, which shows neither a new draft, untracked until committed, nor one Phase 7.5 committed. Phase 8 commits nothing under `project_root`: the drafts' commit is Phase 7.5's, and the terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1).
 b. Compose a **change summary block**:
 
 ```
@@ -805,8 +844,8 @@ Then spawn all four maintenance agents in a **single Agent message**. They are i
 > The project root is the resolved PRD folder; look only for internal documentation files that reference the Epics (e.g., an index page enumerating them).
 > Determine if any such file needs updating — e.g., a new entry in a drafts index.
 > Skip if: no such file exists or drafts aren't indexed centrally.
-> If an update is warranted: apply minimal edits.
-> Return: file updated and what changed, OR 'no update required (reason)'."
+> If an update is warranted: do NOT edit the file — this run has already handed its drafts off, and an edit made now would sit uncommitted. Return the file and the minimal edit it needs.
+> Return: the file and the edit it needs, OR 'no update required (reason)'."
 
 **Agent 2 — Knowledge base** (general-purpose, model: `<detection_model — §9 / §2.1 Sonnet chain>`):
 > "Post-write knowledge review. Change summary:
@@ -931,10 +970,10 @@ MODERATE — Epic drafting for a single PRD
 [verdict + any `- ARD deviation:` lines recorded] — _omit this whole section when Phase 2.5 status was none_
 
 ### Prose style check (Phase 6.2)
-[OK | VIOLATIONS_FOUND (N fixed, M remaining[, K declined — format headings]) | ERROR (reason)] — [1-line summary]
+[OK | VIOLATIONS_FOUND (N fixed, M remaining[, K declined — format headings][, U declined by you — each named, on your Phase 6.1 answers]) | ERROR (reason)] — [1-line summary]
 
 ### Documentation (Agent 1)
-- [file updated] — [what was added/changed] OR "no update required (reason)"
+- [file that needs an update] — [the edit it needs, for you to make] OR "no update required (reason)"
 
 ### Knowledge base (Agent 2)
 - [file updated/created] — [summary of entry] OR "no update required"
@@ -946,16 +985,16 @@ MODERATE — Epic drafting for a single PRD
 - [top suggestions from impl-maintenance agent, or "no suggestions — routine session" — or, under `--skip-feedback`, `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` / `— no defects` in its place]
 
 ### Deferred items
-[MINOR / NIT findings that were not applied, OR epic-reviewer BLOCK findings that were overridden / deferred with the ## Refinement notes section appended — one line each; or "none"]
+[MINOR / NIT findings that were not applied, OR epic-reviewer BLOCK findings that were overridden / deferred with the ## Refinement notes section appended, OR review findings on your Phase 6.1 answers that you kept — one line each, saying which Phase 7 recorded as a `[NEEDS CLARIFICATION]` marker and which a marker past the cap of three left here alone; or "none"]
 
 ### Assumptions & limitations
 - [list any]
 
-### Git state
-The project root has uncommitted changes. `/epics` never commits the project root — git management there is your responsibility. (This run's `$SPECS_PATH` session artifacts are committed separately by the terminal step — see its outcome line at the end of the run.)
+### Handoff
+[The Phase 7.5 `Phase handoff:` line (`workflows-core:phase-handoff` §4.1), with the paths it committed beneath it — or, on a run that reached no offer, that the drafts are written and uncommitted, and why. This run's `$SPECS_PATH` session artifacts are committed separately by the terminal step — see its outcome line at the end of the run; on the `epics/` branch the handoff cut, they ride its pull request, save in session-branch mode (`workflows-core:specs-repo-git` §8), where they go to the session branch.]
 
 ### Next step
-[Per `workflows-core:next-phase-offer` — guidance only, never auto-invoked. For each Epic just drafted, author its spec → `/product-workflows:specify <EPIC>` (PE) — one address, the Epic's own (D4); `/specify` resolves that folder and, finding no `brd-link.md` in it, looks one level up, so a slice-derived Epic keeps the BRD-route contract on this address exactly as it does through the picker; the **Epic fan-out** (depth vs breadth) applies from the spec/design stage on. Optionally a Product Architect adds an Epic-level ARD first → `/product-workflows:create-ard <EPIC>`. If the review BLOCKED, resolve that first.]
+[Per `workflows-core:next-phase-offer` — guidance only, never auto-invoked. For each Epic just drafted, author its spec → `/product-workflows:specify <EPIC>` (PE) `<merge-clause>` — it stops while the Epic's `epic.md` sits on this run's unmerged `epics/` branch (`workflows-core:phase-handoff` §3.3 rows D/E), and, wherever the drafts reached no branch, reads a new Epic from the folder as it stands (§3.4's `/specify` **(an Epic)** row) but stops on a re-drafted Epic whose merged copy it no longer matches, until the edit is committed (§3.3's C rows); one address, the Epic's own (D4); `/specify` resolves that folder and, finding no `brd-link.md` in it, looks one level up, so a slice-derived Epic keeps the BRD-route contract on this address exactly as it does through the picker; the **Epic fan-out** (depth vs breadth) applies from the spec/design stage on. Optionally a Product Architect adds an Epic-level ARD first → `/product-workflows:create-ard <EPIC>` `<merge-clause>`, which gates the Epic the same way. `<merge-clause>` is `workflows-core:next-phase-offer`'s placeholder, resolved from Phase 7.5's own `Phase handoff:` line — never the unconditional "once the pull request above is merged", since that handoff reaches a declined and a nothing-to-commit outcome among the others §4.1 lists. A draft's `[NEEDS CLARIFICATION]` markers are questions that run's grill asks. If the review BLOCKED, resolve that first.]
 
 ### Context hygiene
 
@@ -977,8 +1016,10 @@ interrupts an earlier phase. Persist the run's manual-step / out-of-scope
 follow-ups by invoking `Skill(skill: "workflows-core:reference", args: "followup-emission")` and executing its steps inline.
 
 1. **Collect** the qualifying follow-ups: the manual publish step ("create these
-   drafted Epics elsewhere manually" — the drafts are plain files
-   tickets) and the Phase 9 `### Deferred items` that are out-of-scope refinement.
+   drafted Epics in your tracker by hand, where your team keeps Epics in one" —
+   the drafts are plain files, not tickets), landing the drafts where Phase 7.5's
+   handoff was declined, and the Phase 9 `### Deferred items` that are
+   out-of-scope refinement.
 2. **Filter** them with the reference's §6 qualifying predicate.
 3. **Resolve** the write target via the §2 ladder using `key` and `source`;
    render + place tasks and verbose notes per §1–§3; dedupe per §5.
@@ -1028,10 +1069,9 @@ report was composed before this phase, **print its §6 outcome line here**, as
 the run's last output — prefixed `Specs repo:`, with any guard notice repeated
 in full.
 
-ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git
-for the deliverable remains the user's responsibility — `/epics` never
-branches or opens a PR; the terminal step above commits only the bounded
-session-artifact paths in `$SPECS_PATH`), and NEVER writes into
+ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (that
+is Phase 7.5's handoff, behind its consent choice; the terminal step above
+commits only the bounded session-artifact paths in `$SPECS_PATH`), and NEVER writes into
 the current working directory, where it is not the specs repository; no
 user name is ever written (§10 privacy).
 
@@ -1043,16 +1083,17 @@ user name is ever written (§10 privacy).
 - ALWAYS resolve one positional address (Phase 0) — a key or an `@<path>` naming a folder in the specs tree works without it; `/epics` is cwd-agnostic and rejects `mode: direct`
 - ALWAYS gate the resolved folder in Phase 0 step 1b on **`prd.md`'s own `kind: prd`** (and, one level down, `epic.md`'s own `kind: epic`) — NEVER on the folder's asserted `kind:`, which a `PRD-` slice folder sets to `brd`; two shapes are accepted (a PRD folder → draft; an `EPIC-` folder with a PRD above it → re-refine, `focus_key` derived from it) and every other shape is refused
 - NEVER partition a `BRD-` container (step 1a, `EPICS_BRD_NOT_SLICED`, taken on the directory prefix after the specs-repo preflight and before any other read) or an `EPIC-` folder with no PRD above it (`EPICS_EPIC_NOT_UNDER_PRD`) or no `epic.md` in it (`EPICS_NO_PRD`) — Epics come from a PRD only, and `/epics` is the ONLY command that creates an `EPIC-` folder
-- NEVER create a git branch — this command never branches. `specs-preflight` may switch `$SPECS_PATH` between branches that already exist, and only ones the plugin created (`workflows-core:specs-repo-git` §2.2); it creates none.
-- NEVER commit the Epic files, or anything in the current working directory, where it is not the specs repository — git management there is the user's responsibility. **Say what leaving them uncommitted costs**: an `epic.md` in the PRD folder is an `OTHER` path to `workflows-core:specs-repo-git` §2.1, so it fires §3.3's G1 advisory on every later run of any command and keeps the preflight's leftover flush and branch settle skipped until it is committed or removed. The terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1).
+- ALWAYS offer Phase 7.5's handoff once Phase 7 has settled — the one branch this command creates is the `epics/` branch `handoff-to-main` cuts behind that consent choice (`workflows-core:phase-handoff` §2). `specs-preflight` may switch `$SPECS_PATH` between branches that already exist, and only ones the plugin created (`workflows-core:specs-repo-git` §2.2); it creates none.
+- NEVER commit the Epic files except through Phase 7.5's `handoff-to-main`, and never anything in the current working directory, where it is not the specs repository. **Say what a declined handoff costs**: an uncommitted `epic.md` in the PRD folder is an `OTHER` path to `workflows-core:specs-repo-git` §2.1, so it fires §3.3's G1 advisory on every later run of any command and keeps the preflight's leftover flush and branch settle skipped until it is committed or removed. The terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1).
 - ALWAYS run `specs-preflight` at Phase 0 and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`) — bounded to `$SPECS_PATH`'s artifact paths (§2.1), switching only branches the plugin created (§2.2) and pushing only what §4 step 5 allows, always `git -C "$SPECS_PATH"` and never a `cd` (§1 rule 1), never force-pushing, and never failing the run
 - NEVER write inside `_archive/` — read-only by convention
 - ALWAYS write inside the resolved PRD folder — each Epic in its own `EPIC-` subfolder, `_coverage.md` beside `prd.md` (there is one home and it is derived, so no path is asked for)
 - ALWAYS write to `EPIC-<PRD-KEY>-NN-<eslug>/epic.md` under the resolved PRD folder — one home, derived rather than asked for  — auto-create the directory if missing
 - ALWAYS escalate missing repos before proceeding — never silent skip
-- ALWAYS invoke `epic-reviewer` before Phase 8 maintenance
+- ALWAYS invoke `epic-reviewer` before Phase 7.5's handoff and Phase 8 maintenance
 - ALWAYS resolve the `model_routing` block at Phase 1.5 and pin each subagent dispatch to its §9 chain via `model:` — the mechanical steps (the folder read, `code-scanner`, `prose-style-checker`, `doc-fixer`, the Phase 8 maintenance agents) and `epic-writer` (MODERATE) to the §2.1 Sonnet chain; `epic-reviewer` keeps its frontmatter Opus pin (no override unless §10 enforces a model); coordination + interactive gates run on `current_model`
-- ALWAYS delegate Phase 6 writing to the `epic-writer` subagent (write-only); the orchestrator never writes Epics itself and never commits the drafts (still true — the Epic files land in the PRD folder, which the terminal `commit-artifacts` step never stages; git management there is the user's responsibility)
+- ALWAYS delegate Phase 6 writing to the `epic-writer` subagent (write-only); the orchestrator never writes Epics itself, save the edits this command names as its own — folding in an answer the user gave (Phase 6.1, and *User-resolved text*), Phase 6.1's inline leftover assignment, and Phase 7's refinement notes and markers — and commits the drafts only through Phase 7.5's handoff — the terminal `commit-artifacts` step never stages them
+- NEVER hand a fixer a finding on text a Phase 6.1 answer put into an Epic — the user settles it instead (Phase 6.2's *User-resolved text*)
 - ALWAYS cap review/fix cycles: 1 fix + 1 re-review max
 - ALWAYS pass `Change type: docs` in the Phase 8 change summary block
 - ALWAYS pass `Command run: /epics` in the Phase 8 Agent 4 session handoff

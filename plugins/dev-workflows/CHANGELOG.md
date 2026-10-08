@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.22.2] — 2026-10-08
+
+### Fixed
+- **`/ready` Phase 2.5 handles an ARD whose working copy differs from the merged one** (`workflows-core:ard-resolution`, 1.35.0): it records the gate's stop as a readiness finding capping the verdict at `PARTIAL` and skips ARD conformance, where it had handled only `none`, `found` and `unmerged`.
+- **`/ready` Phase 6 read `git diff --stat` for `_readiness.md`**, which never lists a first report git does not track yet; it reads `git status --short` on that path.
+- **`/implement` Phase 4.5 presented the array saying the next phase would not stop** for annotations of a `design.md` the default branch already carries, whose decline stops the next run's in-scope gate (`workflows-core:phase-handoff` §4.1, 1.35.0); such a run now presents the stopping array.
+- **The environment reference's list of specs-repo handoff branches** takes `epics/`, the prefix `/product-workflows:epics` now hands its drafts off on (workflows-core 1.35.0).
+
 ## [4.22.1] — 2026-10-08
 
 ### Changed

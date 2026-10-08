@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.13.1] — 2026-10-08
+
+### Fixed
+- **`/document` listed the files it changed from `git diff --stat`**, which shows no new page git does not track yet, and nothing once keyed mode has committed the pages on a run that cut no branch — so the change summary its maintenance agents read could leave out every page it wrote. Keyed mode lists the files its writer and fixer reported; direct mode reads `git status --short` on the pages it touched.
+
 ## [1.13.0] — 2026-10-07
 
 ### Added

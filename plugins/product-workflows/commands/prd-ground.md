@@ -1775,8 +1775,8 @@ by every `/brd-*` command, per `brd-intake.md`'s own precedent) or **`prefix: pr
 (shared with the other commands `workflows-core:phase-handoff` §2.9's `prefix` row names — that row
 is the authority on the set and is deliberately not copied here, since a second list is how two
 lists come to disagree — per that section's own precedent for one prefix serving more than one
-command; the nine-prefix branch authority in `workflows-core:specs-repo-git` §1 and
-`workflows-core:phase-handoff` §1 rule 3 is unchanged, and no ninth prefix is added). **Sharing
+command; the plugin's branch-prefix authority in `workflows-core:specs-repo-git` §1 and
+`workflows-core:phase-handoff` §1 rule 3 is unchanged, and no prefix is added for it). **Sharing
 `prd` is disposed of rather than excluded, and the difference is what this paragraph used to get
 wrong.** Step 6i's `require-on-main` on `<PRD-dir>/prd.md` rules out exactly one sharer —
 `/product-workflows:create-prd`, whose own `prd/<KEY>-<slug>` branch must already have merged for

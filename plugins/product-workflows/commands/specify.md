@@ -367,6 +367,23 @@ subsection says.
 read as context rather than frozen, and its absence is the ordinary case. The PRD is gated above on
 every route.
 
+**Gate the Epic — wherever the run reads one, once it knows which.** Where the address named an
+`EPIC-` folder, here, after the gates above; where it named a PRD, at the head of Phase 2 Step B,
+once Step A has settled the Epics this run reads and before Step B reads any of them (*Gate the
+Epics first*). Execute `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against
+the `epic.md` in that Epic folder — the folder resolved or picked, never a path re-derived here —
+and map its §3.7 return value by `stopped` first, never by `on_main` alone. Any stopping state →
+stop per §4.4. An Epic on an unmerged `epics/` branch is the state this gate exists for:
+`/product-workflows:epics` hands its drafts off on that branch, and the preflight keeps a run whose key the branch
+carries on it (`workflows-core:specs-repo-git` §3.5 B3), so without this gate the run would read
+and specify an Epic the default branch does not hold, and its specification could land before it. Otherwise
+(`stopped: false`): on `pass`/`pass_amending`, proceed; on `absent`, Step B reads the Epic folder as
+it stands, exactly as it does without this gate — `epic.md` is read where one exists, and an Epic
+folder holding none is no stop — but report it: *"`<EPIC>`'s `epic.md` is on no branch — specifying
+from the Epic folder at `<path>` as it stands."*, or, where the folder holds no `epic.md`, *"No
+`epic.md` in `<path>` — specifying from what the Epic folder holds."*; on `unmanaged`, behave exactly
+as before this gate.
+
 ---
 
 ## Phase 1 — Configure
@@ -576,10 +593,24 @@ Epic). The broad-PRD-spec case — the only other one left — leaves the folder
 ### Step B — Full Epic-scoped read
 
 With granularity settled and `focus_key` resolved, perform the `full` read.
+
+**Gate the Epics first, before this step reads any.** Run Phase 0's *Gate the Epic* against each
+`epic.md` this step is about to read: the Epic Step A set `focus_key` to — every time it sets it,
+Phase 7's *Next Epic* re-render included — or, on a broad PRD-level spec, the `epic.md` of every
+`EPIC-` folder under the PRD folder, since this step reads them all. A stop on any one stops the run;
+each `absent` is reported on its own line. A run that entered with `focus_key` set gated its Epic in
+Phase 0 and skips this. **This is a deliberate exception to `workflows-core:phase-handoff` §5 rule 2's
+Phase 0 placement**, as `/epics`' early docs-grounding resolution is to its ordering: on a PRD
+address, which Epics the run reads is settled only by Step A's picker, after Phase 1's configuration
+and grounding resolution; the gate still runs before any subagent dispatch, code scan, docs-grounding
+retrieval or grill question, which is what rule 2 protects.
 **Read the Epic folder itself, and everything under the PRD folder that bears on it.** The raw
 material for user stories, acceptance criteria and test cases is the PRD's own text plus whatever the
 Epic folder already holds — its `epic.md` where one exists, and any earlier `specification.md` or
-`design.md`. A linked subtree of Stories and Sub-tasks is not something the tree carries, so where the
+`design.md`. **A `[NEEDS CLARIFICATION]` marker in that `epic.md` is a decision `/epics` left open**
+(`workflows-core:escalation-rules`, *A finding left open that needs a decision is recorded in the
+artifact*): Phase 5's grill asks it, and one the grill does not settle becomes an open question of
+the stage it concerns, as any other unsettled question does. A linked subtree of Stories and Sub-tasks is not something the tree carries, so where the
 PRD is thin the grill has less to work from and must ask more; that is a real change in where the
 detail comes from, and it belongs to the operator's answers rather than to an import.
 
@@ -986,17 +1017,19 @@ When this run authored a **per-Epic** spec that was selected from Step A's ≥2-
 ```
 choices: ["Next Epic — re-open the picker (Recommended)", "Stop here"]
 ```
-On **"Next Epic"**, **re-render the Phase 2 Step A progress-aware picker minus the just-completed Epic** — recompute each remaining Epic's ○/◐/● state from its feature folder, so the freshly-authored spec now shows **● done** and drops out of the actionable set — then, on selection, set `focus_key` to the new Epic and loop back through Phase 2 Step B → Phases 3–7 for it. This offer does **not** apply to a single-Epic PRD or a broad PRD-level spec — there is no sibling to advance to. **On the BRD route it applies on exactly the same terms**: Step A runs there too, so a slice holding two or more `EPIC-` folders re-renders the picker like any other PRD folder, and a slice holding none or one does not — the same two exclusions as above, reached by the same test rather than by a route branch. What is *not* a sibling Epic is another **slice**: that is a separate folder with its own seed, reached by re-running `/product-workflows:specify <SIBLING-SLICE-KEY>`, which waits on nothing this run produced.
+On **"Next Epic"**, **re-render the Phase 2 Step A progress-aware picker minus the just-completed Epic** — recompute each remaining Epic's ○/◐/● state from its feature folder, so the freshly-authored spec now shows **● done** and drops out of the actionable set — then, on selection, set `focus_key` to the new Epic and loop back through Phase 2 Step B — whose *Gate the Epics first* gates it — → Phases 3–7 for it. This offer does **not** apply to a single-Epic PRD or a broad PRD-level spec — there is no sibling to advance to. **On the BRD route it applies on exactly the same terms**: Step A runs there too, so a slice holding two or more `EPIC-` folders re-renders the picker like any other PRD folder, and a slice holding none or one does not — the same two exclusions as above, reached by the same test rather than by a route branch. What is *not* a sibling Epic is another **slice**: that is a separate folder with its own seed, reached by re-running `/product-workflows:specify <SIBLING-SLICE-KEY>`, which waits on nothing this run produced.
 
 ### The Epic flow (document to the user)
 
 1. `/product-workflows:epics <ADDRESS>` writes one `EPIC-` folder per child Epic under the PRD folder.
 2. `/product-workflows:specify <EPIC-ADDRESS>` authors that Epic's `specification.md`.
 
-**There is no step between them.** `/epics` writes into the tree this command reads, so an Epic is
-visible to `/specify` the moment it is written — no creating it anywhere else, and nothing to import.
-That gap used to be a manual export-and-re-import through a tracker, and removing it is most of what
-this increment is for.
+**The one step between them is merging `/epics`' pull request.** `/epics` writes into the tree this
+command reads and hands its drafts off on an `epics/` branch behind its consent choice; Phase 0's
+*Gate the Epic* stops this command while an Epic sits on that branch unmerged, and reads one that was
+never handed off from the folder as it stands. There is no creating it anywhere else, and nothing to
+import. That gap used to be a manual export-and-re-import through a tracker, and removing it is most
+of what this increment is for.
 
 
 ## Phase 8 — Session maintenance & feedback
