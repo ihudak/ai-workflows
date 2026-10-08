@@ -35,7 +35,7 @@ project-local `.qmd` index from the directory it runs in, which is what Path A's
 
 Use when the `qmd` binary is available (`command -v qmd`). **This agent never builds or refreshes the index** — that belongs to `resolve-docs-grounding` (`${CLAUDE_PLUGIN_ROOT}/references/docs-grounding.md` step 3.5), which can ask the user first. Here, probe what already exists and pick a rung.
 
-Every capped `qmd` call below runs in **the bounded-run form** (`${CLAUDE_PLUGIN_ROOT}/references/bounded-run.md`), for a cap of `<N>` seconds: `if command -v timeout >/dev/null 2>&1; then timeout <N>s <cmd>; elif command -v gtimeout >/dev/null 2>&1; then gtimeout <N>s <cmd>; else perl -e 'alarm shift; exec @ARGV or exit 127' <N> <cmd>; fi`, with the Bash tool's timeout set to at least (N+5)·1000 ms. Exit 124 or 142 means the call timed out.
+Every capped `qmd` call below runs in **the bounded-run form** (`${CLAUDE_PLUGIN_ROOT}/references/bounded-run.md`), for a cap of `<N>` seconds: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" <N> <cmd>`, never a bare `timeout`, which macOS does not ship — with the Bash tool's timeout set to at least (N+5)·1000 ms. Exit 124 means the call timed out.
 
 1. **Probe — model-free and mutation-free.** `qmd status` and `qmd collection list`, each in the bounded-run form at 10 s.
    - `qmd status`'s first line is `Index: <path>`. When that path is not the user-scope `~/.cache/qmd/index.sqlite`, a project-local `.qmd` index in the current directory is shadowing it: record that in `notes` and take rung 3.

@@ -160,6 +160,20 @@ jobs:
         # Fixtures and a fake gh and ssh are built at run time.
         run: python3 plugins/docs-workflows/scripts/key-discovery.py --selftest
 
+      - name: Self-test the bounded run
+        # Every capped call in the plugin runs through it -- the slug-to-clone maps, the qmd probes,
+        # the clone-identity lines. A cap that does not fire, or a timeout reported as the command's own exit, reads as
+        # "skip" downstream. Real sleeps and child processes, about ten seconds.
+        run: python3 plugins/workflows-core/scripts/bounded.py --selftest
+
+      - name: Every plugin's bounded run is the same script
+        # A command calls ${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py, which is its own plugin's copy;
+        # workflows-core's is the one the self-test above runs, so every other copy must equal it.
+        run: |
+          for f in plugins/*/scripts/bounded.py; do
+            cmp plugins/workflows-core/scripts/bounded.py "$f" || { echo "::error file=$f::differs from plugins/workflows-core/scripts/bounded.py"; exit 1; }
+          done
+
       - name: Self-test the session branch
         # specs-repo-git §8 commits, merges and lifts session files with it on a specs
         # repository whose default branch takes no push. Its failure mode loses entries: a
