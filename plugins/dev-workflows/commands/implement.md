@@ -34,7 +34,7 @@ Test the rows top to bottom for each `@path` token: the first that matches class
 
 **Address resolution.** After the working directory and before the per-`@path` classification above, look for a **single positional
 address** in what the run flags left of `$ARGUMENTS` — a `<KEY>` that `workflows-core:addressing` §1's `read-key` reads (a bare key, one behind its folder's kind prefix, or its folder's whole name, carried as the bare key from then on), or an `@<path>` naming a folder in the specs tree. Present →
-resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3) and the run
+resolve it, as typed, with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3) and the run
 is **keyed**; absent → the run is **direct** (free-text / `@file`, this command's existing flow).
 That is the whole mode test, and it unifies the input grammar with `/document`. **On a `<KEY>`,
 `$SPECS_PATH` comes first:** if it is unset, stop naming it before resolving anything

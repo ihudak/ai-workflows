@@ -25,7 +25,7 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
 ## Phase 0 — Resolve inputs
 
 1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag, nor a flag's value, nor the `@<brd-file>` argument — `--sort-existing` and `--docs` each consume the token after them (step 4), and a value skipped as "non-flag" would be read as the key; a token opening with `@` is step 2's source wherever it stands, so an operator who types the path first is not told the key is missing; read it with `read-key`
-   (`workflows-core:addressing` §1 — shape only, never checked against a tracker), which also takes
+   (`workflows-core:addressing` §1 — a key for shape only, a whole folder name against the tree's folder names, neither against a tracker), which also takes
    the key behind a typed folder prefix (`BRD-<KEY>`) or a folder's whole name, and carries the bare key from then on — where
    resolution returns `absent`, a prefix other than `BRD-` stops as that entry point says, since this
    run creates a `BRD-` folder. If absent or invalid, **stop gracefully**:

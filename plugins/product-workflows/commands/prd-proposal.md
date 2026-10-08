@@ -90,7 +90,7 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
    naming a folder — with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3).
    A token `read-key` (§1) finds `invalid` stops with
    `PRD_PROPOSAL_NEEDS_KEY: /prd-proposal needs an address (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. PRODUCT-1234 or the slice PRODUCT-1234-01) — re-run '/product-workflows:prd-proposal <ADDRESS>'.`
-   Shape only, and never checked against anything (§1) — a key names a folder in `$SPECS_PATH`.
+   A key is validated for shape only and checked against nothing (§1) — it names a folder in `$SPECS_PATH`; a whole folder name is matched against that tree's folder names.
    `status: absent` stops with
    `PRD_PROPOSAL_NOT_FOUND: no folder found for <KEY> under $SPECS_PATH/specifications/ (every level addressing.md §3 bounds, plus §5's legacy fallback) — /prd-proposal prices an existing PRD folder and creates none.`
    This command creates no folder in the specs tree.
@@ -629,8 +629,8 @@ file describes the archived revision and not this one.
    escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`
    rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`; on § On re-review's
    **Proceed**, proceed as after a verdict that is not `BLOCK`. `PASS` / `PASS WITH RECOMMENDATIONS`
-   → after the first review and after the re-review alike, where it leaves surviving findings open,
-   offer to apply them before going on, per the `Findings a review leaves open — the offer to apply
+   → after the first review and after the re-review alike, where it leaves open at least one surviving finding
+   whose fix is only an edit, offer to apply them before going on, per the `Findings a review leaves open — the offer to apply
    them` rule in the same reference — `choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]` — applying each inline, read against what it overlaps,
    and a finding not applied going to the final report and the pull request; then proceed. Cap: one
    fix cycle plus one re-review — and a finding applied at that offer after the first review leaves

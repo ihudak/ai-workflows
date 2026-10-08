@@ -37,8 +37,7 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
    comes first:** if it is unset, stop naming it (`choices: ["Set SPECS_PATH (enter the path)", "Cancel"]`,
    `workflows-core:escalation-rules` *Required path environment variable unset*) — resolution and Phase 4's
    write both need it, and an empty one would aim `idea.md` at `/specifications/` under the filesystem root.
-   **Then run the specs-repo preflight below**, its run key set the one key this step validated
-   (`workflows-core:specs-repo-git` §3.2), before the folder is resolved or anything in it is read: a
+   **Then run the specs-repo preflight below**, its run key set the one key this step read (`workflows-core:specs-repo-git` §3.2), before the folder is resolved or anything in it is read — save the one carrier `read-key` reads where the key was typed as a folder's whole name, which `workflows-core:addressing` §1 says how it stays safe: a
    stale plugin branch it switches away from would otherwise hide the `brd-link.md`, `prd.md` or
    coverage ledger the test below reads, and the run would refuse the folder with the wrong remedy,
    or take a folder as an idea-route one that is not.

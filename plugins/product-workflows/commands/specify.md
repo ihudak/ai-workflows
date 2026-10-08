@@ -966,8 +966,8 @@ the grill/author. **Advisory** — never blocks; proceed to Phase 6 once finding
      would count against the header's `Open questions` and the format would not. A deferred finding
      whose fix needs a decision also gets an open question (below).
    - **`MAJOR` / `MINOR` / `NIT`**, whatever verdict carried them — no mandatory fix cycle. After the
-     first review and after the re-review alike, where a verdict that is not `BLOCK` leaves findings
-     open, offer to apply them before going on, per the `Findings a review leaves open — the offer to apply them` rule in `workflows-core:escalation-rules`:
+     first review and after the re-review alike, where a verdict that is not `BLOCK` leaves open at
+     least one finding whose fix is only an edit, offer to apply them before going on, per the `Findings a review leaves open — the offer to apply them` rule in `workflows-core:escalation-rules`:
      `choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]`
      Applying is an inline edit, read against what it overlaps, as a fix is; a finding not applied
      goes to the final report and the pull request.

@@ -55,8 +55,8 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
 
 ## Phase 0 — Load and dispatch
 
-1. **Resolve the address.** Parse the single positional address from `$ARGUMENTS` — a `<KEY>`, the
-   key Mode detection read, or an `@<path>` naming a folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). Present and resolving → `mode: keyed`;
+1. **Resolve the address.** Parse the single positional address from `$ARGUMENTS` — a `<KEY>`, handed on
+   as typed, since Mode detection only decided it is one, or an `@<path>` naming a folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). Present and resolving → `mode: keyed`;
    absent from the argument list → `mode: direct`, and the rest of this phase's keyed steps are
    skipped. A `<KEY>` with `$SPECS_PATH` unset never reaches this step: Mode detection has already
    stopped on it. Carry the resolved `path`, `kind`, `key`, and the `specs` files found in that

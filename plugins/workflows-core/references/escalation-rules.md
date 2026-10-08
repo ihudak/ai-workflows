@@ -425,7 +425,7 @@ not applied, not overridden and not dismissed; a finding triage marked unverifie
 (`finding-triage.md`), here as anywhere; and the re-review's offer carries every finding of the first
 review still open beside its own. A finding whose fix needs a decision the run does not have is no
 edit: a command that settles such decisions as it applies (`/create-prd`, `/update-prd`,
-`/create-ard`) puts it to the user one question at a time, as the grill asks, and every other records it as *A finding left open that needs a decision is recorded in the artifact* below says where that section reaches the command, and lists it in the final report and the pull request where it does not. A free-text
+`/create-ard`) puts it to the user one question at a time, as the grill asks, and every other records it where *A finding left open that needs a decision is recorded in the artifact* (below) names the command, and otherwise lists it in the final report and the pull request. A free-text
 answer naming some of the findings applies those.
 
 - **Taken**, each edit is the orchestrator's own, read against what it overlaps (*An inline fix is
