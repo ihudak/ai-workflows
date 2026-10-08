@@ -192,6 +192,18 @@ cmd_file() { printf '%s/%s/%s%s\n' "$1" "$CMD_DIR" "$2" "$CMD_SUFFIX"; } # <plug
 # A walk over "every plugin in the tree" globs "$root/$(plugin_parent)"*/ and never a
 # hardcoded plugins/, which would see nothing at all in the root layout.
 plugin_parent() { case "$PLUGIN_REL" in */*) printf '%s/' "${PLUGIN_REL%/*}" ;; esac; }
+# The repo-root instruction tiers INSTRUCTION_TIERS names -- CLAUDE.md and its rules files in a
+# Claude edition, .github's instruction files in the Copilot one, the maintainers' rationale in
+# both -- expanded under <root>, one existing file per line. The globs are split with `read -a`,
+# never by an unquoted expansion, which would match them against the CURRENT directory first.
+tier_files() { # <root> -> file paths
+  local -a globs; local g f
+  read -ra globs <<<"$INSTRUCTION_TIERS"
+  for g in "${globs[@]}"; do
+    for f in "$1"/$g; do [ -f "$f" ] && printf '%s\n' "$f"; done
+  done
+  return 0
+}
 
 # ---------------------------------------------------------------- check 1 + 2
 # Every relative link resolves, and every #anchor resolves to a real heading in
@@ -270,11 +282,9 @@ check_links_and_anchors() {
   done < <({ find "$root/$PLUGIN_REL/docs" -name '*.md' 2>/dev/null
              [ -f "$root/$PLUGIN_REL/README.md" ] && printf '%s\n' "$root/$PLUGIN_REL/README.md"
              [ -f "$root/README.md" ] && printf '%s\n' "$root/README.md"
-             # The instruction tiers: every why-link from CLAUDE.md or a rules file lands on
-             # a docs/maintainers anchor, and a renamed rationale heading must turn this red.
-             for extra in "$root/CLAUDE.md" "$root"/.claude/rules/*.md "$root"/docs/maintainers/*.md; do
-               [ -f "$extra" ] && printf '%s\n' "$extra"
-             done; })
+             # The instruction tiers: every why-link from an instruction file lands on a
+             # docs/maintainers anchor, and a renamed rationale heading must turn this red.
+             tier_files "$root"; })
 }
 
 # ------------------------------------------------------------------- check 3
@@ -1312,9 +1322,15 @@ PYEOF
 # same shape of result -- fires only on correct content, catches nothing -- on which check
 # 11's widening was measured and rejected twice, so it is rejected here for the same reason.
 #
-# SCOPE is $PLUGIN_REL plus the repo-root instruction tiers: CLAUDE.md, .claude/rules/*.md and
-# docs/maintainers/*.md (the 2026-09-23 split moved CLAUDE.md's area rules and evidence into
-# the latter two, and moved text must not escape the gate). The repo-root README stays out: it
+# IT RUNS ONLY WHERE VENDOR_NEUTRAL=1. The upstream edition is vendor-neutral by design; the
+# internal Claude and Copilot editions are written for one organisation and name its tracker
+# throughout on purpose, so a check enforcing silence about it would be fighting their subject
+# matter. They set it 0, and the check passes there without opening a file.
+#
+# SCOPE is $PLUGIN_REL plus the repo-root instruction tiers INSTRUCTION_TIERS names --
+# CLAUDE.md, .claude/rules/*.md and docs/maintainers/*.md in this edition (the 2026-09-23
+# split moved CLAUDE.md's area rules and evidence into the latter two, and moved text must
+# not escape the gate). The repo-root README stays out: it
 # documents the whole marketplace, including a sibling plugin whose SUBJECT is a vendor CLI,
 # so vendor names there are its subject matter rather than this plugin's vocabulary -- the
 # same reason check 10 leaves that file alone. CLAUDE.md was OUT of scope and is now in, on
@@ -1389,18 +1405,19 @@ VENDOR_TOKENS="jira atlassian confluence clickup trello asana youtrack redmine s
 
 check_vendor_tokens() {
   local root="$1" p="$1/$PLUGIN_REL" files hits h
+  [ "$VENDOR_NEUTRAL" = 1 ] || { note "check 13 not applicable: this edition is not vendor-neutral (VENDOR_NEUTRAL=$VENDOR_NEUTRAL)"; return 0; }
   [ -n "$VENDOR_TOKENS" ] \
     || { fail 13 "VENDOR_TOKENS is empty -- this check would examine nothing"; return; }
   # EVERY text file under the plugin, not just *.md. `grep -rIl ''` lists text files and
   # skips binaries by -I, so a compiled artifact or an image cannot reach awk. CHANGELOG.md
   # stays excluded, as history.
   files=$(grep -rIl '' "$p" 2>/dev/null | grep -v '/CHANGELOG\.md$' | sort)
-  # The repo-root instruction tiers: CLAUDE.md, its path-scoped rules and the rationale they
-  # link to. Text moved between them by the 2026-09-23 split stays under this check.
+  # The repo-root instruction tiers: the instruction files, their path-scoped rules and the
+  # rationale they link to. Text moved between them by a split stays under this check.
   local extra
-  for extra in "$root/CLAUDE.md" "$root"/.claude/rules/*.md "$root"/docs/maintainers/*.md; do
-    [ -f "$extra" ] && files=$(printf '%s\n%s\n' "$files" "$extra")
-  done
+  while IFS= read -r extra; do
+    [ -n "$extra" ] && files=$(printf '%s\n%s\n' "$files" "$extra")
+  done < <(tier_files "$root")
   [ -n "$files" ] \
     || { fail 13 "no markdown under $PLUGIN_REL to scan -- this check would examine nothing"; return; }
   hits=$(while IFS= read -r f; do
@@ -2671,6 +2688,14 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "mkdir -p docs/maintainers && printf '# Rationale\n\n## real-slug\n\nEvidence.\n' > docs/maintainers/rationale.md && printf '\nA rule. ([why](docs/maintainers/rationale.md#no-such-slug))\n' >> CLAUDE.md"
   expect_pass_after "a why-link to a present rationale anchor passes, from CLAUDE.md and from a rules file" \
     "mkdir -p docs/maintainers .claude/rules && printf '# Rationale\n\n## real-slug\n\nEvidence.\n' > docs/maintainers/rationale.md && printf '\nA rule. ([why](docs/maintainers/rationale.md#real-slug))\n' >> CLAUDE.md && printf 'A rule. ([why](../../docs/maintainers/rationale.md#real-slug))\n' > .claude/rules/area.md"
+  # The tiers are configuration, not a hardcoded list: a tier INSTRUCTION_TIERS names is read
+  # (the Copilot edition's .github instruction files, here), and an instruction file it does
+  # not name is not -- the pair a hardcoded list fails one half of, whichever list it hardcodes.
+  expect_fail_env "a broken link in a configured instruction tier is caught" 1 \
+    "INSTRUCTION_TIERS='.github/copilot-instructions.md .github/instructions/*.md'" \
+    "mkdir -p .github/instructions && printf 'See [x](nowhere.md).\n' > .github/instructions/area.instructions.md"
+  expect_pass_after "an instruction file INSTRUCTION_TIERS does not name is not read" \
+    "mkdir -p .github/instructions && printf 'See [x](nowhere.md).\n' > .github/instructions/area.instructions.md"
   expect_fail "a broken link inside docs/maintainers is caught" 1 \
     "mkdir -p docs/maintainers && printf '# Rationale\n\nSee [x](nowhere.md).\n' > docs/maintainers/rationale.md"
   expect_fail "the foreign organisation named OUTSIDE the plugin is rejected" 14 \
@@ -2890,6 +2915,10 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # tree, see check 13 fail) rather than by a case here.
   expect_fail "an unmarked vendor token is rejected"          13 \
     "printf -- '\nThe run reads the Jira ticket it was handed.\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  # ...and the switch: an edition that is not vendor-neutral passes the same token, so the
+  # internal editions' VENDOR_NEUTRAL=0 is proven quiet rather than merely untested.
+  expect_pass_after_env "an unmarked vendor token passes where the edition is not vendor-neutral" "VENDOR_NEUTRAL=0" \
+    "printf -- '\nThe run reads the Jira ticket it was handed.\n' >> $(cmd_file $PLUGIN_REL alpha) && printf 'A stale claim about a Jira status.\n' >> CLAUDE.md"
   expect_pass_after "a marked vendor token is accepted" \
     "printf -- '\nQuoting a repo convention: \`<JIRA-ISSUE-KEY>\` <!-- vendor-token-ok: fixture quote -->\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_fail "a vendor token in an UNMARKED fenced block is rejected" 13 \
