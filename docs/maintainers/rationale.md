@@ -286,7 +286,7 @@ A refactor deleted `prd-source-resolution.md` rather than rewriting it, on the j
 
 That `marketplace update` leaves installed plugins alone was measured, not assumed: after a successful `marketplace update`, `claude plugins list` still reported `docs-workflows` at `1.0.0` while the catalogue advertised `1.1.0`. **`CLAUDE.md` previously claimed the opposite** — that refreshing the marketplace "does the same thing for every plugin installed from it, in one step" — and that claim is retired. The `/plugins` interface was verified live, where it took `docs-workflows` from 1.0.0 to 1.1.0 after a CLI `marketplace update` had left it at 1.0.0.
 
-`prose-style` 0.4.0 is the release whose checker applies the specs repository's house-style rules to `/release-notes`' draft. The `/plugins` interface is a human step, which is why `CLAUDE.md`'s update section leads with the per-plugin `update` command.
+`prose-style` 0.4.0 is the release whose checker applies the specs repository's house-style rules to `/release-notes`' draft. The `/plugins` interface is a human step, which is why the update section, now `.claude/rules/plugin-updates.md`, leads with the per-plugin `update` command.
 
 An edit that "did not land" is very often a session that has not restarted since the update.
 

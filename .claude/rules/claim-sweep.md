@@ -1,0 +1,20 @@
+---
+paths:
+  - "plugins/**"
+  - "README.md"
+  - "CLAUDE.md"
+  - "docs/maintainers/**"
+---
+
+# Claim-expiry sweep — the refinements
+
+Loaded when a file in the sweep's own scope (refinement 4, below) is read — anything under `plugins/` or `docs/maintainers/`, or the repo-root `README.md` or `CLAUDE.md`; `.claude/rules/` is in that scope too, though no rules file loads on another. These are the refinements of the claim-expiry sweep in `CLAUDE.md` § Editing discipline — *a note saying a feature or an edge does not ship is a claim with an expiry date* — which stays there; they were moved out to keep `CLAUDE.md` under its 36,000-character warning. Evidence is in `docs/maintainers/rationale.md`.
+
+  1. **A phrase hit dispositions the whole paragraph, not the matched sentence.** ([why](../../docs/maintainers/rationale.md#refinement-1))
+  2. **The phrase sweep is backed by an end-to-end read of every phase the change touches.** ([why](../../docs/maintainers/rationale.md#refinement-2))
+  3. **Run an exclusivity probe as its own axis** — `only when`, `is the only`, `nothing else`, `and no other`, `only ever` — then the noun forms: `the only <noun>` with no preceding `is`, `the sole`, `only writer`, `only caller`, `only consumer`, `no other command`, `the one command`, `the only place`. The five are a starting set, not the vocabulary: generalise from a claim's own wording rather than matching a list. ([why](../../docs/maintainers/rationale.md#refinement-3))
+  4. **Scope the sweep to `plugins/` — every `CHANGELOG.md` included — plus the repo-root `README.md`, `CLAUDE.md`, `.claude/rules/` and `docs/maintainers/`, never to the plugin the capability shipped from.** This binds a sweep, not any gate's scope. Check any ad-hoc resolver that copies the gates' `CHANGELOG.md` filter. Read the phase each citation names; that **proves containment, not uniqueness**, and in a command with two modes over the same phase numbers (`/document`'s `# Mode A` and `# Mode B`) pick the mode before slicing. ([why](../../docs/maintainers/rationale.md#refinement-4))
+  5. **A correction fires the sweep as surely as a capability landing does**, and the claim to sweep is the one you just rewrote. ([why](../../docs/maintainers/rationale.md#refinement-5))
+  6. **Sweep the claim's *subject* — the agent, variable, field or artifact it is about — never any one site's wording**, neither the correction's nor the fixed site's. ([why](../../docs/maintainers/rationale.md#refinement-6))
+  7. **A sweep is not finished until the literal string is counted**: count the exact string you are changing across refinement 4's scope immediately before and after your edit, wrap-insensitively, and check the after-count against the number you intended. On an addition, which leaves the old string inside the new form, count it **bounded, on the side the text moved, by enough context that the post-edit text cannot contain it** (one delimiter where that delimiter is unique to the edit, the whole neighbouring element where it is not), never the list or alternation body alone. Wrap-insensitive: collapse whitespace across the whole file and across the search string, match on the collapsed text, then map the offset back to a source line. Reading the paragraph is not enough; the after-edit count is what says you are done. ([why](../../docs/maintainers/rationale.md#refinement-7))
+  8. **A change to a claim's *extent* falsifies its whole population, not the sites the edit touched** — a narrowing most sharply, since a copy left standing promises what the run no longer does. Enumerate *every statement of the claim* before the edit, re-read each after it, and run refinement 7's count over that set; the copies include the `docs/` page describing the behaviour, where a stale copy is the one **acted on**. When you write, use one noun across every copy, since the next sweep matches on it — but never search by that noun instead of the subject. ([why](../../docs/maintainers/rationale.md#refinement-8))

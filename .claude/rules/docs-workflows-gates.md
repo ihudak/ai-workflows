@@ -1,0 +1,25 @@
+---
+paths:
+  - "plugins/docs-workflows/references/gate-ledger.md"
+  - "plugins/docs-workflows/references/repo-verification-gates.md"
+  - "plugins/docs-workflows/references/toolchain-preflight.md"
+  - "plugins/docs-workflows/commands/document.md"
+  - "plugins/docs-workflows/commands/docs-init.md"
+  - "plugins/docs-workflows/commands/docs-brand.md"
+  - "plugins/docs-workflows/commands/docs-serve.md"
+  - "plugins/docs-workflows/agents/doc-planner.md"
+  - "plugins/docs-workflows/agents/doc-reviewer.md"
+  - "plugins/docs-workflows/agents/docs-style-checker.md"
+---
+
+# docs-workflows — gate authorities
+
+Loaded when `docs-workflows:gate-ledger`, `docs-workflows:repo-verification-gates` or `docs-workflows:toolchain-preflight` is read, or a command or agent the paragraphs below name as consuming, applying or citing one — `/document`, `/docs-init`, `/docs-brand`, `/docs-serve`, `doc-planner`, `doc-reviewer` and `docs-style-checker`. Split out of `.claude/rules/docs-workflows.md` to keep that file under 20,000 characters; the plugin's other rules are there; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
+
+## Authorities
+
+`plugins/docs-workflows/references/gate-ledger.md` is the **single source of truth** for verification-gate accounting — the six outcomes (`RAN` / `DEGRADED` / `FAILED` / `UNAVAILABLE` / `SKIPPED_BY_USER` / `NOT_APPLICABLE`), the rule that **no outcome is orchestrator-assignable to mean "I decided not to run this"**, the `/document` gate registry, the `UNAVAILABLE` conversion prompt, and the reviewer contract. Consumed by `/document` (both modes), plus `doc-reviewer` and `docs-style-checker`, which read the ledger it produces; written generically for other commands to adopt.
+
+`plugins/docs-workflows/references/repo-verification-gates.md` is the **single source of truth** for extracting a docs repo's own pre-PR checklist into the `repo_verification_gates` block — the heading patterns, what counts as checkable against the written files, and the augment-never-override rule. Applied by `doc-planner` in `/document` keyed mode and by the orchestrator itself in direct mode, which has no planner.
+
+`plugins/docs-workflows/references/toolchain-preflight.md` is the **single source of truth** for the environment check a run makes before it writes anything — deriving the required tool set from the resolved profile, the repo's config signals, and the repo's own documented `Prerequisites`; the `toolchain` block with its tool→gate map; and the missing-tool prompt (Cancel recommended, silence when everything resolves). Its §2, source 2, is also where the plugin defines the five names Vale reads its configuration from and how every Vale run in the plugin — a lint and `vale sync` alike — runs over one: a form chosen by whether that configuration sets `StylesPath`, since `--no-global` drops Vale's default StylesPath along with the global configuration. Consumed by `/document` (both modes) at Phase 0, and by `/docs-init` at Phase 2 — which derives nothing, since there is no profile yet, and hands the check a fixed set of its own. `/docs-brand` and `/docs-serve` run no toolchain preflight, though `/docs-serve` Phase 4 takes its §2 definition of a command's tool, and §3's test for one, before it starts a server, and Phase 2 takes §2's set-aside of a leading `cd <dir> &&` and `VAR=value` words when it matches a recorded command to a process's command line. Its §3 chooses each tool's test, once, by running `command -v` in the shell — and from the directory — that will run it, never by emulating either: a tool the plugin runs through `bash -c` or as `command <name>` — `bash`, `curl`, `lsof`, `ps`, `vale` and every dev server's tool — is asked of that same child shell, which expands no alias of the user's and takes no unexported function of theirs, where a bare `command -v` in the Bash tool's own shell passes on both; a tool the gates run in the Bash tool's own shell — a build or lint command's — is asked of that shell, where the user's aliases and functions apply exactly as they will at run time; either test runs from the directory the command runs from, which is what resolves a path-valued tool such as `node_modules/.bin/vitepress`; an alias that resolves to something absent passes and fails at the gate, recorded there as any environmental failure is; and a tool that serves both takes both. `/docs-serve`'s Mode dispatch and Phase 4, `/document`'s render check and `docs-style-checker`'s third rung cite that split for their own tools.
