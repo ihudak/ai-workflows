@@ -55,6 +55,11 @@ CLI_REQUIRED="marketplace add|marketplace update|update"   # copilot: marketplac
                                      # of CLI_VERBS; differs per edition because Copilot
                                      # updates with `plugin update --all`, not a marketplace verb.
 HAS_COST=1                           # copilot: 0 -- no cost subsystem exists there
+HAS_CHOICE_CAP=1                     # copilot: 0 -- its ask_user takes any number of choices
+HAS_AUTO_OTHER=1                     # copilot: 1 -- AskUserQuestion supplies its own "Other", and
+                                     # Copilot CLI 1.0.71+ its own custom answer; an authored one duplicates it
+CHANGELOG_GLOB="plugins/*/CHANGELOG.md"   # copilot: */CHANGELOG.md -- its plugins sit at the
+                                     # repository root, one level shallower (no plugins/ directory)
 
 # The command-namespace manifest session-cost.py resolves every cost boundary against,
 # repo-relative. Empty means this edition ships none, and check 4's manifest assertion is
@@ -129,6 +134,36 @@ RUNTIME_VARS_FROZEN="ARGUMENTS BASH_REMATCH BASH_SOURCE CLAUDE_PLUGIN_ROOT OSTYP
 EDITION_FORBIDDEN_B64="${EDITION_FORBIDDEN_B64-ZHluYXRyYWNlfG1nZC1zcGVjaWZpY2F0aW9uc3xtZ2QtY2xhdWRlLXBsdWdpbnN8KF58W15bOmFsbnVtOl1fXSltZ2QoW15bOmFsbnVtOl1fXXwkKQ==}"
                                      # internal edition: "" -- it names that organisation
                                      # by design
+
+# Check 13 (vendor-token quarantine) runs where this is 1. This edition is vendor-neutral by
+# design; the internal Claude and Copilot editions are written for one organisation's tracker
+# and name it on purpose, so they set 0 and check 13 passes there without opening a file.
+VENDOR_NEUTRAL=1                     # internal editions: 0
+
+# How check 11 reads the command family its <merge-clause> rule binds. `glob`: every
+# `/<plugin>:<family>*` phrase on next-phase-offer.md's `**Where this rule applies:` line, the
+# multi-plugin form, where the rule binds some of each plugin's commands. `sentence`: the
+# command spans of that reference's "<N> offers carry it — ..." sentence, the single-plugin
+# form, whose scope line names no glob.
+CHECK11_FAMILY="glob"                # internal editions: sentence
+# 1: check 11 also reads PROSE offers -- a command span introduced by `→` or "recommend" on a
+# line citing next-phase-offer.md -- and holds every family command that writes a gated
+# artifact to at least one offer it reads. 0 here on a measurement, recorded in
+# workflows-core's next-phase-offer.md (what the gate cannot see, item 2): this edition's prose
+# offers take six shapes, and a reader keyed on their introducers fires on correct text.
+CHECK11_PROSE=0                      # internal editions: 1
+
+# The repo-root instruction tiers, as globs relative to the root. Checks 1 and 2 resolve their
+# links and anchors -- a why-link must land on a real rationale heading -- and check 13 reads
+# them for vendor tokens.
+INSTRUCTION_TIERS="CLAUDE.md .claude/rules/*.md docs/maintainers/*.md"
+                                     # copilot: .github/copilot-instructions.md
+                                     # .github/instructions/*.md docs/maintainers/*.md
+
+# Check 22: space-separated `<original>:<copy>` pairs, repo-relative, of a file one plugin
+# ships as a byte copy of another plugin's. An absent copy is skipped; one that differs fails.
+VENDORED_COPIES=""                   # internal Claude edition: the two scripts one of its
+                                     # plugins vendors from another
 
 FAILURES=0
 
