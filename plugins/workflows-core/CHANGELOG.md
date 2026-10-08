@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.36.3] — 2026-10-08
+
+### Fixed
+- **A grounding line is printed before the configure question, not only in the final report.** "Show the line verbatim" now says what showing is: text in the reply before the step's next question or dispatch — a line that only went into a question, an agent prompt or the final report was never seen at configure time. `docs-grounding.md` and `architecture-grounding.md` alike.
+
 ## [1.36.2] — 2026-10-08
 
 ### Changed
