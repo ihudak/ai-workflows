@@ -41,8 +41,9 @@ are always fully qualified. Direct users to `/workflows-core:statusline`.
    backup — suffix `-2`, `-3`, … ).
 3. If `~/.claude/dev-workflows/statusline-command.sh` already exists, back it up
    the same way (`.bak`, then `-2`, … ) before overwriting.
-4. Verify `bash` and `jq` are available; if `jq` is missing, do the Phase 4 JSON
-   merge with `python3` instead — never hand-edit `settings.json` blindly.
+4. Verify `bash` and `jq` are available (`command -v`); if `jq` is missing, do
+   the Phase 4 JSON merge with `python3` instead — never hand-edit
+   `settings.json` blindly — and carry `jq_missing: true` to Phases 4 and 5.
 
 ## Phase 3 — Install the script
 
@@ -52,7 +53,11 @@ non-empty and begins with a `#!` shebang.
 ## Phase 4 — Merge the settings block (confirm first)
 
 Show the user the exact change and ask to confirm
-(`choices: ["Install", "Cancel"]`) BEFORE writing settings.
+(`choices: ["Install", "Cancel"]`) BEFORE writing settings. Where `jq_missing`
+is true, print this line above the choice, so it is read before the answer:
+`jq is not on your PATH — the status line reads every field Claude Code hands it with jq, so until you install jq it renders empty and writes no cost snapshot. Install jq and it works from its next render, with nothing to re-run.`
+Install still goes ahead on that answer: nothing about the install changes once
+`jq` arrives.
 On confirm, MERGE (never clobber sibling keys) so that:
 
 ```json
@@ -72,5 +77,7 @@ place, so a failed merge never truncates `settings.json`. Preserve all other key
 
 Confirm the install path, the settings change, and any backups created. Tell the
 user the status line takes effect on the next render / new session, and that the
-per-session cost snapshot (Option B) is now enabled. This command NEVER commits
+per-session cost snapshot (Option B) is now enabled — or, where `jq_missing` is
+true, print Phase 4's `jq` line again instead: neither the line nor the snapshot
+works until `jq` is installed. This command NEVER commits
 and writes only under `~/.claude/`.

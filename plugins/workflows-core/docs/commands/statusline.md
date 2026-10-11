@@ -19,11 +19,11 @@ Takes no arguments. None of the three run flags apply to this command ([`environ
 ## What it needs
 
 - **Local access to `~/.claude/settings.json`** and write access under `~/.claude/dev-workflows/` — nothing else. This command reads no `$SPECS_PATH`, runs no specs-repo preflight, and creates no branch.
-- **`bash` and `jq`** — if `jq` is missing, the Phase 4 settings merge falls back to `python3` rather than hand-editing the JSON.
+- **`bash` and `jq`** — the installed script reads every field Claude Code hands it with `jq`, and renders nothing and writes no cost snapshot without it. Where `jq` is missing the command says so above the Phase 4 confirmation and again in its report, still installs on confirm — the line works from its next render once `jq` is installed — and does the settings merge with `python3` rather than hand-editing the JSON.
 
 ## What it produces
 
-Installs the vendored script to a stable per-user path (`~/.claude/dev-workflows/statusline-command.sh`, `chmod +x`'d) and merges a `statusLine` block into `~/.claude/settings.json`, preserving every other key. **It is idempotent and backs up anything it would overwrite** — an existing `statusLine` block, or an existing installed script — suffixing `-2`, `-3`, … rather than clobbering a prior backup. Installing it also enables the per-session **cost snapshot** ("Option B") that [Session cost](../reference/session-cost.md) reads when computing `cost_statusline_usd`. **This is the only settings change the command makes**, and it never commits anything; every write stays under `~/.claude/` — though enabling the cost snapshot does change what every cost-emitting command's Session cost line reports.
+Installs the vendored script to a stable per-user path (`~/.claude/dev-workflows/statusline-command.sh`, `chmod +x`'d) and merges a `statusLine` block into `~/.claude/settings.json`, preserving every other key. **It is idempotent and backs up anything it would overwrite** — an existing `statusLine` block, or an existing installed script — suffixing `-2`, `-3`, … rather than clobbering a prior backup. Installing it also enables — given `jq`, as *What it needs* says — the per-session **cost snapshot** ("Option B") that [Session cost](../reference/session-cost.md) reads when computing `cost_statusline_usd`. **This is the only settings change the command makes**, and it never commits anything; every write stays under `~/.claude/` — though enabling the cost snapshot does change what every cost-emitting command's Session cost line reports.
 
 ## Gates
 

@@ -11,7 +11,7 @@ Loaded when a file under `plugins/workflows-core/`, or any plugin's command or a
 
 Split out for the 20,000-character budget: the git authorities (`specs-repo-git`, `phase-handoff`) and the specs-repo git invariants → `.claude/rules/workflows-core-git.md`, with `read-only-repos` split out of that in turn → `.claude/rules/workflows-core-read-only.md`, both which also loads with every command, reference and agent file: every `$SPECS_PATH` writer, its references and its agents invoke those entry points. `instruction-file-maintenance` binds hand edits to `CLAUDE.md` and is stated there, in § Editing discipline.
 
-Split out for the same budget: the `finding-triage` authority → `.claude/rules/workflows-core-triage.md`, which loads with that reference and with every command and agent that cites it.
+Split out for the same budget: the `finding-triage` authority → `.claude/rules/workflows-core-triage.md`, which loads with that reference and with every command and agent that cites it; and the `bounded-run` authority → `.claude/rules/workflows-core-bounded-run.md`, which loads with every copy of `scripts/bounded.py` and every command, agent and reference file.
 
 ## Plugin facts
 

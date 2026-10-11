@@ -22,6 +22,8 @@ claude plugin update workflows-core@shipwright
 
 It does ship seven commands of its own, and one of them is worth running first — see below. Type them: each is typed-only (`disable-model-invocation: true`), which keeps it out of the list of skills the model picks from and that list inside Claude Code's budget, so asking in prose does not start one. The same holds for every command of `dev-workflows` and `product-workflows`, and for those of `docs-workflows` save `/docs-profile` and `/docs-brand`, which other commands run for you. Every getting-started page's *Claude Code's skill-listing budget* section says what to set so the list fits.
 
+**What you also need, and it is not a plugin.** Claude Code itself — no other agent runs these plugins — with a session started on Opus 5.5 or later, on macOS, Linux or WSL2 rather than native Windows, and `git`, `bash` 5 and `python3` 3.11 on your `PATH`, plus `jq` for the status line; the repo-root [Prerequisites](../../../README.md#prerequisites) give each one's minimum version and the reason for it.
+
 ## What you set on your machine
 
 `workflows-core` reads nine environment variables, and every one of them is read by a reference this plugin ships — for eight of the nine, the only read anywhere in this plugin. `SPECS_PATH` is the exception: `/frames` gates on it in its own Phase 0 and refuses to run without it. One is required for anything in the family to have somewhere to write (`SPECS_PATH`); the rest are optional and each degrades to a documented default or a silent skip. [Environment](reference/environment.md) has the exact defaults and failure behaviour.

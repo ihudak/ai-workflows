@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.36.4] — 2026-10-11
+
+### Fixed
+- **The status line shows the session's duration again — on Linux and on macOS.** It read the session's start out of the transcript with a pattern that matched the `":"` between `"timestamp"` and its value before the value itself, so the start was always `:` and the duration never rendered anywhere; the value is now cut out of the field by position. On macOS it then parsed that start with GNU `date -d`, which BSD `date` does not have; it now falls back to `date -j -f`, in UTC, as the timestamp's trailing `Z` says it is.
+- **`/workflows-core:statusline` says when `jq` is missing.** The status line reads every field with `jq`, so without it the line rendered empty and wrote no cost snapshot, while the installer, which merged the settings with `python3` instead, reported the snapshot enabled. It now prints a line saying so above the Install/Cancel confirmation and again in its report, in place of that claim; it still installs, since the line works from its next render once `jq` is installed.
+
+### Changed
+- **The getting-started page says what you need before you install, and the repo-root README's *Prerequisites* now lists it in full**: Claude Code and no other agent; a session started on Opus 5.5 or later, which is every command's orchestrator, on a plan that includes Opus; macOS, Linux or WSL2, never native Windows; `git` 2.23 or newer (2.38 for session-branch mode), `bash` 5 or newer, `python3` 3.11 or newer, and `jq` for the status line. `bounded-run.md` states the same `python3` floor, and the `/statusline` page says the status line renders nothing without `jq`.
+
 ## [1.36.3] — 2026-10-08
 
 ### Fixed
