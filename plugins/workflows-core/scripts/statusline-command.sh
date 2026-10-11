@@ -138,11 +138,15 @@ if [ -n "$transcript" ] && [ "$transcript" != "null" ] && [ -f "$transcript" ]; 
   [ -n "$la" ] && lines_added="$la"
   [ -n "$lr" ] && lines_removed="$lr"
 
-  # session start: first timestamp in transcript (ISO or unix)
-  # Linux uses `date -d` for parsing ISO timestamps
-  first_ts=$(grep -oE '"timestamp":"[^"]*"' "$transcript" 2>/dev/null | head -1 | grep -oE '"[0-9T:Z.+-]+"' | tr -d '"')
+  # session start: first timestamp in transcript, the value of `"timestamp":"…"`
+  # (cut takes the fourth `"`-field; a pattern over the quoted pair would match
+  # the `":"` between key and value first). GNU date parses it with `-d`; BSD date
+  # (macOS) has no `-d`, so parse the seconds part with `-j -f`, in UTC, which the
+  # trailing Z says it is
+  first_ts=$(grep -oE '"timestamp":"[0-9T:Z.+-]+"' "$transcript" 2>/dev/null | head -1 | cut -d'"' -f4)
   if [ -n "$first_ts" ]; then
-    session_start_ts=$(date -d "$first_ts" "+%s" 2>/dev/null)
+    session_start_ts=$(date -d "$first_ts" "+%s" 2>/dev/null) \
+      || session_start_ts=$(TZ=UTC date -j -f '%Y-%m-%dT%H:%M:%S' "${first_ts%%[.Z]*}" "+%s" 2>/dev/null)
   fi
 fi
 

@@ -19,7 +19,7 @@ Takes no arguments. None of the three run flags apply to this command ([`environ
 ## What it needs
 
 - **Local access to `~/.claude/settings.json`** and write access under `~/.claude/dev-workflows/` — nothing else. This command reads no `$SPECS_PATH`, runs no specs-repo preflight, and creates no branch.
-- **`bash` and `jq`** — if `jq` is missing, the Phase 4 settings merge falls back to `python3` rather than hand-editing the JSON.
+- **`bash` and `jq`** — the installed script reads every field Claude Code hands it with `jq`, and renders nothing without it. Only the Phase 4 settings merge falls back to `python3` when `jq` is missing, rather than hand-editing the JSON.
 
 ## What it produces
 
