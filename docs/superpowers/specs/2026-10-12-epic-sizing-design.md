@@ -49,6 +49,7 @@ choices: ["Split it along its stories (Recommended)", "Keep it whole — give th
 - **Split** re-dispatches `epic-writer` on that Epic to split it (D3), then counts again. A split result still over the limit is asked about once more, without *Split*: `["Keep it whole — give the reason", "Cancel"]`.
 - **Keep it whole** asks for the reason in plain text and records it (D8).
 - **Cancel** ends the run as the command's other cancels do.
+- **The counted set is the final set.** Phase 6.1's leftover fold-back is counted the same way, so an Epic it creates or re-drafts is asked about before style, review and handoff; a review's *Epic size* finding is never handed to a fixer — it is reported with `/epics <EPIC-KEY>` to split it.
 - A typed answer is acted on as the option it expresses; anything else is asked again.
 
 **D6 — The reviewer checks size.** `epic-reviewer` gains a conditional *Epic size* dimension, active when the brief carries `size_limit`:
