@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.30.5] — 2026-10-12
+
+Needs `workflows-core` 1.36.6, whose `key-summary` the three missing-key stops below print (3.30.4's needed 1.36.5).
+
+### Fixed
+- **`/create-prd` lists the keys already in the specs tree beneath `CREATE_PRD_NEEDS_KEY`**, as `/idea` and `/brd-intake` do: it is the third command that creates the folder its address names. Its docs page now names the stop's `<ADDRESS>` form, which it had given as `<KEY> @<idea.md>`.
+- **`/brd-intake`'s defect walk no longer tells the operator to confirm a restated defect.** A candidate restating an entry on file is answered *Reject — not a defect*, as its *On file* line says, and the fixed *Reject* description and the preamble now say so too; they read before as though only a non-defect or an answered point could be rejected. The preamble names the candidates documentation grounding raised beside `brd-reader`'s, and says the reason is what `/brd-interview`'s later question to the customer is built from, rather than "later questions".
+
 ## [3.30.4] — 2026-10-12
 
 ### Changed

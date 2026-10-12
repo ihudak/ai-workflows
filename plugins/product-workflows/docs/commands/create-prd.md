@@ -44,7 +44,7 @@ Four subagents are dispatched — three of them unconditionally, `docs-grounder`
 
 ## What it needs
 
-- **`<KEY>`** — mandatory; absent or malformed stops the run with `CREATE_PRD_NEEDS_KEY`, naming the required `/product-workflows:create-prd <KEY> @<idea.md>` form.
+- **`<KEY>`** — mandatory; absent or malformed stops the run with `CREATE_PRD_NEEDS_KEY`, which names the `/product-workflows:create-prd <ADDRESS>` form and lists beneath it the keys the specs tree already holds — one line per prefix, its highest top-level key and how many top-level and nested keys use it, ten prefixes at most; it proposes none.
 - **`idea.md`**, resolved by a five-rung ladder that stops at the first hit (Phase 0). **The first two rungs gate differently, and the difference is easy to miss:**
   - **In-contract — `<KEY>`'s own feature folder.** This is the default when no `@path` is given. It is gated via `require-on-main`: absent falls through to the next rung without stopping ([`/idea`](idea.md) is not a prerequisite for `/create-prd`); present and merged onto the specs repo's default branch is used as-is, never relocated — [`/idea`](idea.md) wrote it into that folder on its first write and never moves it afterwards (D7); present on an unmerged plugin branch is a hard stop, naming the branch and any open pull request.
   - **Out-of-contract — an explicit `@<path>` argument.** Read exactly where it sits — never relocated, never gated via `require-on-main` at all — and reported once as out-of-contract.

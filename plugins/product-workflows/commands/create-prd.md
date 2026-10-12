@@ -49,6 +49,7 @@ Usage: `/create-prd <ADDRESS> [@idea.md] [--from-prd <PRD-KEY|path>] [--lean|--h
    no `brd-link.md` to read one off, so the run is on the **idea route**; step 5 says what happens
    then, and it is not a stop. A token `read-key` (§1) finds `invalid` stops with
    `CREATE_PRD_NEEDS_KEY: /create-prd needs an address (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. EPIC-008 or the slice EPIC-008-01) — re-run '/product-workflows:create-prd <ADDRESS>'.`
+   Beneath it, print the lines `key-summary` returns (`Skill(skill: "workflows-core:reference", args: "addressing key-summary")`, §1), so the operator typing an address sees the keys this specs tree already holds; it proposes none.
 
 2. **Profile.** `--lean | --hybrid | --full`; default `--hybrid` — **or `--full` when the BRD route is present** and no profile flag was given, per the design's *Profile default* section (§7.4): that profile is the one carrying `## Functional requirements` (`[FR#N]`), `## API specification`, `## UX prototype / UI mockups` and the full `## Assumptions & open questions` Contradictions Log, so considerably more BRD-derived content has a legitimate **product-altitude** home than `--hybrid` allows. An explicit `--lean`/`--hybrid` still wins: the default is a default, not an override.
 2a. **`--from-prd <PRD-KEY|path>` (optional seed).** When present, this run authors a **new** PRD (the

@@ -69,7 +69,7 @@ ON when `$DOCS_PATH` resolves, advisory, never a gate) and `workflows-core:impl-
 
 - **`<BRD-KEY>`** — mandatory; absent or malformed stops the run with `BRD_INTAKE_NEEDS_KEY`, which
   lists beneath it the keys the specs tree already holds — one line per prefix, its highest top-level
-  key and how many keys use it, ten prefixes at most — so the next one is easy to pick; it proposes
+  key and how many top-level and nested keys use it, ten prefixes at most — so the next one is easy to pick; it proposes
   none. A key
   that resolves to a **slice** stops the run with `BRD_INTAKE_SLICE`, naming the parent to re-intake
   instead: a slice has no source document of its own — the source and the records beside it under
@@ -282,7 +282,8 @@ offers to branch, commit, push, and open a pull request.
 - [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
 - `workflows-core:addressing` — the `<BRD-KEY>` grammar and folder
-  resolution this command uses by name (`read-key`, `resolve-address`).
+  resolution this command uses by name (`read-key`, `resolve-address`, and `key-summary` beneath its
+  missing-key stop).
 - [`brd-format.md`](../../references/brd-format.md) — the `[BR#n]` row shape, the immutability rule,
   §1.1's account of what `brd/source/` and `brd/source-external/` hold and of the link log beside
   them, §1.2's figures file, and the six defect classes this command confirms against.

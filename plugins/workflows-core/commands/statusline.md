@@ -1,6 +1,6 @@
 ---
 name: statusline
-description: Install the plugin family's multi-line status line (session identity, git, context bar, cost, tokens, rate limits) into your Claude Code settings. Vendors the script to a stable per-user path, backs up anything it would overwrite, and enables the Option B cost snapshot used by session cost reporting.
+description: Install the plugin family's multi-line status line (session identity, git, context bar, cost, tokens, rate limits) into your Claude Code settings. Vendors the script to a stable per-user path, backs up anything it would overwrite, and — given jq — enables the Option B cost snapshot used by session cost reporting.
 allowed-tools: Read Write Edit Bash Skill
 disable-model-invocation: true
 ---
@@ -8,8 +8,8 @@ disable-model-invocation: true
 Install the plugin family's status line: $ARGUMENTS
 
 `/workflows-core:statusline` installs the plugin's multi-line, truecolor status
-line and wires it into `~/.claude/settings.json`. The shipped script also
-writes the per-session **cost snapshot** that enables Option B of session cost
+line and wires it into `~/.claude/settings.json`. Given `jq` (Phase 2), the shipped
+script also writes the per-session **cost snapshot** that enables Option B of session cost
 reporting (see `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md` §5).
 Installation is **idempotent** and **backs up** anything it would overwrite.
 This is the only change the command makes; it changes no workflow-command
@@ -75,9 +75,10 @@ place, so a failed merge never truncates `settings.json`. Preserve all other key
 
 ## Phase 5 — Report
 
-Confirm the install path, the settings change, and any backups created. Tell the
-user the status line takes effect on the next render / new session, and that the
-per-session cost snapshot (Option B) is now enabled — or, where `jq_missing` is
-true, print Phase 4's `jq` line again instead: neither the line nor the snapshot
-works until `jq` is installed. This command NEVER commits
+Confirm the install path, the settings change, and any backups created. Where
+`jq_missing` is not set, tell the user the status line takes effect on the next
+render / new session, and that the per-session cost snapshot (Option B) is now
+enabled. Where it is set, say neither: print Phase 4's `jq` line again, since
+neither the line nor the snapshot works until `jq` is installed, and both start on
+the first render after it is. This command NEVER commits
 and writes only under `~/.claude/`.
