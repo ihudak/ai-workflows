@@ -906,11 +906,13 @@ choices: ["Re-read — re-dispatch brd-reader over the whole set and reconcile<r
   by accounting for it, or by converting or capturing the file and re-running this intake.
 
   **A section's own words are checked for a binding word before anything is recommended.** Take
-  each section the set question names — its text as the re-read test above takes it, cut at the
-  same ends — and find every piece holding a word from `brd-format.md` §2.2's list, matched as that
-  list says. A section with such a piece is **flagged**, whichever read is standing, since the check
-  reads the source and not the read: the set question quotes each such piece beside the section, as
-  the source writes it — *Binding word: "The vendor must notify the account owner …"* — and its
+  each section the account question names — the set question's, or, after an `OK` re-read, each one
+  that run's check names, which goes straight to the per-item questions — its text as the re-read
+  test above takes it, cut at the same ends, and find every piece holding a word from
+  `brd-format.md` §2.2's list, matched as that list says; where the cut cannot be made confidently,
+  quote the source line holding the word instead. A section with such a piece is **flagged**,
+  whichever read is standing, since the check reads the source and not the read: the set question,
+  where it is put, quotes each such piece beside the section, as the source writes it — *Binding word: "The vendor must notify the account owner …"* — and its
   per-item question carries no marker (below). **It never changes what `<recommended>` resolves
   to**: the remedy for a flagged sentence that does bind is to quote it at that question, which adds
   a row from exactly that sentence and leaves the rest of the read alone, where a re-read would
@@ -955,9 +957,9 @@ choices: ["Re-read — re-dispatch brd-reader over the whole set and reconcile<r
 choices: ["They hold no obligation — record that (Recommended)", "Quote the sentence that binds (you'll be prompted)", "Cancel"]
 ```
 
-  **A flagged section's question carries no marker**, and quotes its flagged pieces again under the
-  reader's reason, so recording that it holds nothing is a choice made against the sentence rather
-  than a default accepted:
+  **A flagged section's question carries no marker, in any form**, and quotes its flagged pieces
+  under the reader's reason — again, where the set question quoted them — so recording that it holds
+  nothing is a choice made against the sentence rather than a default accepted:
 
 ```
 choices: ["They hold no obligation — record that", "Quote the sentence that binds (you'll be prompted)", "Cancel"]
@@ -971,10 +973,17 @@ choices: ["They hold no obligation — record that (Recommended)", "Cancel"]
 ```
 
   Once the item holds a row a quote added, its question takes a third form, the rows it holds shown
-  under it, each by its text:
+  under it, each by its text — and, for a flagged section, each flagged piece no span of the item's
+  rows falls within, so a binding word not yet quoted stays in front of the operator:
 
 ```
 choices: ["Finished with this item — the rows shown are all it binds (Recommended)", "Quote another sentence that binds (you'll be prompted)", "Cancel"]
+```
+
+  A flagged section's third form, unmarked:
+
+```
+choices: ["Finished with this item — the rows shown are all it binds", "Quote another sentence that binds (you'll be prompted)", "Cancel"]
 ```
 
   - ***They hold no obligation*** records the item's account in the answer's substance, never the
@@ -1053,7 +1062,7 @@ choices: ["Finished with this item — the rows shown are all it binds (Recommen
   - **A span that does not occur, or repeats one the item has already given a row, is never written
     through** — a row holding it would be an obligation the customer never stated. Put the item's
     own question again, in the form it stands at — the first while it holds no row, the third once
-    it holds one — with the failed span shown beside it and why it failed, so that form's own way
+    it holds one, each unmarked for a flagged section — with the failed span shown beside it and why it failed, so that form's own way
     out stays in reach beside *Cancel*: *They hold no obligation* in the first, *Finished* in the
     third. A span the operator cannot make match — markdown they did not retype, a sentence running
     across a table's cells — is never a dead end.
