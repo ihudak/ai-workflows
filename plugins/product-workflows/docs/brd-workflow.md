@@ -249,8 +249,8 @@ never reaches this phase at all: `/brd-reconcile` refuses a resolved root at its
 slice first — so the level question is already settled by the time this next-step phase runs.
 
 That phase then resolves an `advance_ready`: a reopened decision, a `[C]` still held for the
-customer, a finding the review left to re-derive, or a write into another BRD it could only record
-— a dependent's sweep, or a defect resolution in the parent's log — all drop the three advance
+customer, a finding the review left to re-derive, or a dependent's sweep or a defect resolution in the parent's log it
+could only record all drop the three advance
 options: a `reopened` record may not be consumed downstream and all three consume the register, and
 a write only recorded leaves another BRD reading a position the customer has since settled. On an advancing slice run, `/create-prd` on the BRD route carries one further condition —
 the reconciled ledger leaves no row `unallocated` and at least one `covered-here` (the two refusals
@@ -348,7 +348,7 @@ specifications/BRD-<BRD-KEY>-<slug>/
 └── PRD-<CHILD-KEY>-<child-slug>/ # a slice /brd-split confirmed — where its PRD, ARD and spec are authored
     ├── brd-link.md              # parent, claims and depends-on; /brd-split writes it, /prd-ground, /brd-package and /brd-reconcile add depends-on
     ├── brd/brd-inventory.md     # the parent's rows this slice claims, copied verbatim, /brd-split
-    ├── coverage-ledger.md       # one row per claimed [BR#n]; /brd-split seeds and resolves it, /prd-ground fills evidence, /brd-reconcile moves a row on a [CD#n] that is not open
+    ├── coverage-ledger.md       # one row per claimed [BR#n]; /brd-split seeds and resolves it, /prd-ground fills evidence, /brd-reconcile moves a row on a decided [CD#n]
     ├── grounding/
     │   ├── baselines.md         # one dated entry per pinned repository, /prd-ground
     │   ├── code-grounding.md    # [CG#n] findings, /prd-ground

@@ -133,7 +133,7 @@ allocation that says which of them the slice claims.
 `/brd-split` walks every `unallocated` row to a terminal disposition (§4), and it is the only command
 that may write `covered-here` or `covered-by`: allocation — which BRD builds a requirement — is that
 walk and nothing else. `commands/brd-reconcile.md` moves a row to `deferred-to`, `rejected` or
-`superseded-by` when a `[CD#n]` that is not `open` settles the requirement's fate differently; it never
+`superseded-by` when a `decided` `[CD#n]` settles the requirement's fate differently; it never
 allocates, because a customer decision is not a statement about which BRD in the delivery
 organisation owns the work, and **no command moves a row back to `unallocated`, save one** — that is
 the initial state, and returning a row to it reopens a gate that has already been satisfied. The one

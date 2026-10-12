@@ -14,9 +14,10 @@ is the route's last command in the ordinary case, but not the end of every slice
 decision sends the slice back to [`/brd-interview`](brd-interview.md), a question still held for the
 customer to [`/brd-package`](brd-package.md), and a challenged code claim to
 [`/prd-ground --rebaseline`](prd-ground.md), each of which leads back here. It runs again on the
-same review itself in three cases: to finish a run cancelled or stopped partway, where the re-run
+same review itself in four cases: to finish a run cancelled or stopped partway, where the re-run
 skips what the earlier pass already froze and offers the rest; to sweep a dependent it could only
-record, once that dependent has its own register on the default branch; and, on a slice reconciled
+record, once that dependent has its own register on the default branch; to land a defect resolution
+it could only record, once the parent's defect log is on the default branch; and, on a slice reconciled
 before 3.33.1, to close the questions raised only about the defects of a requirement the customer
 withdrew.
 
@@ -118,7 +119,7 @@ flowchart TD
     p14 -.->|"advance_ready + no unallocated row and one covered-here"| prd["/create-prd (PM)"]
     p14 -.->|"advance_ready"| ard["/create-ard (PA, optional)"]
     p14 -.->|"advance_ready"| spec["/specify (PE)"]
-    p14 -.->|"advance_ready: no — reopened decision, held customer question, unre-derived finding, or a write into another BRD only recorded"| reentry["/brd-interview, /brd-package, /prd-ground --rebaseline, or /brd-reconcile on the same review, on this same &lt;BRD-KEY&gt; (PM)"]
+    p14 -.->|"advance_ready: no — reopened decision, held customer question, unre-derived finding, or a dependent's sweep or defect resolution only recorded"| reentry["/brd-interview, /brd-package, /prd-ground --rebaseline, or /brd-reconcile on the same review, on this same &lt;BRD-KEY&gt; (PM)"]
 ```
 
 `customer-review-reader` is dispatched once, on the detection chain. `workflows-core:impl-maintenance` runs in the
@@ -560,7 +561,7 @@ written down.
   named with `--rebaseline` as the fix; a supersession written here would have nothing on the other
   side of it.
 - **It never allocates.** It may move a ledger row to `deferred-to`, `rejected` or `superseded-by`
-  on a customer decision that is not `open` — a withdrawn requirement is `rejected`, citing the
+  on a customer decision that reads `decided` — a withdrawn requirement is `rejected`, citing the
   defect-log entry resolved `withdrawn`, or, where no entry was written so, the `[CD#n]` that
   withdrew it; where two of the run's decisions would move one row, a withdrawal wins, and any other
   disagreement writes nothing and is named for a person — but `covered-here`
@@ -641,8 +642,8 @@ in that log could only be recorded — that pass writes it.
 
 **Advancing and re-entering are two lists, and a run gets exactly one of them.** Phase 14 resolves
 `advance_ready` from what the run left behind — any reopened decision, any `[C]` still held for the
-customer, any finding the review left to re-derive, any write into another BRD it could only
-record — a dependent's sweep, or a defect resolution in the parent's log — and where
+customer, any finding the review left to re-derive, any dependent's sweep or a defect resolution in
+the parent's log it could only record — and where
 any of those is true the three the BRD route options are **dropped**, not annotated. That is a
 refusal only this phase can make, unlike the level refusal above, which each of the three now makes
 for itself: `/create-ard` on the BRD route and `/specify` on the BRD route run no gate
@@ -685,7 +686,7 @@ and every other dependent starting with its `conditional_on` positions, sweeps e
 position, and writes `reconciliation-<date>.md`.
 
 Phase 14 then hands the route over. Nothing this run left behind reopened a decision, held a `[C]`
-for the customer, left a finding to re-derive, or left a write into another BRD only recorded — so
+for the customer, left a finding to re-derive, or left a dependent's sweep or a defect resolution only recorded — so
 `advance_ready` is `yes` — and this slice's ledger leaves no row `unallocated` and at least one
 `covered-here`, so all three exits are offered off the same key:
 
