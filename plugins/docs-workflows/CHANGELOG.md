@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.15.0] — 2026-10-12
+## [1.15.0] — 2026-10-13
 
 Needs `workflows-core` 1.39.0, whose session commit no longer stages `release-notes.md`.
 

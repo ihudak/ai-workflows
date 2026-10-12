@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.33.1] — 2026-10-12
+## [3.33.1] — 2026-10-13
 
 ### Fixed
 - **`/brd-reconcile`'s *Reject* no longer reads as doubting the customer.** Both pickers in *Confirm every candidate* said *"Reject — not a customer decision at all, a declared refusal to answer included"*, and the walk explained a decline as *"not a customer decision"*, which an operator read as the plugin disputing that the review came from the customer. The option now reads *"Reject — no decision to freeze: the customer declined to answer, or the row is not an answer (context, thanks, scheduling); record why"*, and the walk says the customer declined, so there is no decision to freeze. The routing is unchanged: a decline is still neither *Confirm* nor *Ask the customer*.
@@ -14,7 +14,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ### Docs
 - **The workflow diagrams draw `/prd-ground` as the PM's, in the PM lanes.** It sat in a box of its own labelled *PA or PE where the PM cannot clone the code*, which made a recommendation read like a separate role; roles are a recommendation and one person may run every product command, so the box is gone and the note stays in the text. The proposals are drawn from both routes: `/prd-proposal` from the idea route's PRD folder and from each BRD slice, and `/brd-proposal` after it on the BRD route only. Before, `/prd-proposal` looked idea-route-only while `/brd-proposal` followed it. The BRD workflow diagram now shows the two proposal commands too.
 
-## [3.33.0] — 2026-10-12
+## [3.33.0] — 2026-10-13
 
 Needs `workflows-core` 1.38.2 for `phase-handoff`'s row naming the customer's committed review.
 
