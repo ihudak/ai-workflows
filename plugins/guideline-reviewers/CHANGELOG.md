@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.2.3] — 2026-10-12
 
 ### Changed
-- **The getting-started page's skill-listing note is current again**: `/prd-ground` (product-workflows 3.31.0) is now model-invocable, so the marketplace's share of the listing is about 6,100 characters, not 5,600, and "commands are typed-only" now says "nearly all" — the few another command runs for you take room too.
+- **The getting-started page's skill-listing note is current again**: `/prd-ground` (product-workflows 3.31.0) is now model-invocable, so the marketplace's share of the listing is about 5,800 characters, not 5,600, and "commands are typed-only" now says "nearly all" — the few another command runs for you take room too.
 
 ## [1.2.2] — 2026-10-12
 

@@ -605,7 +605,7 @@ split then finishes as it always does — its cost entry, its session commit, it
 **you merge its pull request**, the plugin never does, and tell it so; it checks the merge, squash
 and rebase included, and asks again if it finds none. Then it runs
 [`/prd-ground`](prd-ground.md) once per chosen child, one after another, each a complete run with
-its own pull request in that child's folder and its own cost entry under that child's key. *Ground
+its own pull request in that child's folder and its own cost entry under that child's key. Each grounding run asks its own questions — the repository it cannot find, its handoff, its next step — and a *Stop here* or *Cancel* there ends the children not yet ground; the split tells you so before the first run. *Ground
 each child later* names the command and runs nothing, as this phase always did; on an outcome that
 opened no pull request — a declined handoff, no remote, a failed push — *Ground now* is not offered,
 and the run says what has to happen first.

@@ -1,6 +1,6 @@
 ---
 name: prd-ground
-description: "Grounds a folder's requirement claims against code and an exported design frame set at pinned commits, and has every finding independently re-derived by grounding-verifier (Opus): a BRD slice's [BR#n] rows on the BRD route, where findings also get a current/will-change horizon against --depends-on, or a PRD's [AC#n]/[FR#n]/[US#n] rows, optionally, on the idea route. Read-only against every repository; documentation is a lead, never evidence. --no-code, --derivation-matrix, --rebaseline. Next: /brd-split, or /create-ard and /specify."
+description: "Grounds a BRD slice's [BR#n] rows, or an idea-route PRD's own requirements, against code and design at pinned commits; every finding is re-derived blind by grounding-verifier. Type it, or let /brd-split's Ground now run it — any other model-started run stops. Next: /brd-split."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 ---
 
