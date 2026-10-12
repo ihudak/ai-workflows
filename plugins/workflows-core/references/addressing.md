@@ -7,8 +7,8 @@ defined once rather than reinvented per caller. Design authority:
 
 **Consumed by every command that addresses a folder in the specs tree.** Each calls `resolve-address`
 (§3) and, where it reads its address before touching the filesystem, `read-key` (§1) — or, where it
-mints a key, `key-valid`; the two that start a folder from nothing print `key-summary` (§1) on a
-missing key. Those commands
+mints a key, `key-valid`; the three that create the folder their address names print `key-summary`
+(§1) on a missing key. Those commands
 are what `grep -l resolve-address plugins/*/commands/*.md` returns — re-run it rather than keeping a
 list or a count here, since both went stale in this paragraph — and they, with the one shared
 authority §7 names, all reach the tree through this file; `product-workflows:brd-format` and
@@ -98,48 +98,94 @@ and a whole name of any kind with the stop above, since its folder was there bef
 
 ### Entry point: `key-summary`
 
-**What a missing-key stop prints beneath itself, so the person picking a new key sees the keys
-already taken.** Called by the stops of the two commands that start a folder from nothing —
-`/product-workflows:idea` (`IDEA_NEEDS_KEY`) and `/product-workflows:brd-intake`
+**What a missing-key stop prints beneath itself, so the person typing a key sees the keys already
+taken.** Called by the stops of the three commands that create the folder their address names where
+resolution returns `absent` (above) — `/product-workflows:idea` (`IDEA_NEEDS_KEY`),
+`/product-workflows:create-prd` (`CREATE_PRD_NEEDS_KEY`) and `/product-workflows:brd-intake`
 (`BRD_INTAKE_NEEDS_KEY`) — where the key is absent or invalid. **It proposes no key and validates
 none**: the operator still types the key, and `read-key` reads it as any other. A key read off this
-tree need not be the next one free on a branch it cannot see, and the prefix a new document takes is
-the team's to choose.
+checkout need not be the next one free on a branch it cannot see, and the prefix a new document takes
+is the team's to choose.
 
-1. **No tree.** Where `$SPECS_PATH/specifications/` is not a directory, return one line:
-   `No specs tree to list keys from — $SPECS_PATH is unset or holds no specifications/.`
-2. **Read every key off its frontmatter, never out of a folder name** (§4): the `key:` field between
-   the opening `---` lines of each markdown file in a folder at most three levels below
-   `specifications/` (§3's bound), each distinct value `key-valid` finds valid counted once, then
-   one line per leading token — its count of distinct top-level keys (the token and its first
-   numeric segment), its count of the keys below them, the token, and its highest top-level key by
-   that segment's number:
+**It reads keys as §3 resolves them, never out of a name or a key's shape.** Every folder at most
+three levels below `specifications/` (§3's bound), passing over §2's reserved subdirectories and
+everything below them, has its key read off its carrier (§4) — never off a document that is not one,
+such as a customer's source copied under `brd/` or a vendored attachment. A symbolic link, a hidden
+directory and an unreadable one are passed over. A folder directly under
+`specifications/` counts as **top-level**, one below another folder as **nested**: where the folder
+sits decides it, never how many segments its key carries (§1, *Shape is not depth*). Within one
+leading token, the highest top-level key is the one whose numeric segments, compared in order as
+numbers, come last — a key read, never one built. Run it and print what it prints:
 
-   ```bash
-   find "$SPECS_PATH/specifications" -mindepth 2 -maxdepth 4 -name '*.md' -exec awk '
-       FNR == 1 { if ($0 != "---") nextfile; next }
-       $0 == "---" { nextfile }
-       /^key:/ { sub(/^key:[ \t]*/, ""); gsub(/["\047\r]/, ""); sub(/[ \t]+$/, ""); print; nextfile }' {} + 2>/dev/null \
-     | grep -E '^[A-Z][A-Z0-9_]*(-[0-9]+)+$' | sort -u \
-     | awk -F- '{ all[$1]++; t = $1 "-" $2; if (!(t in seen)) { seen[t] = 1; tops[$1]++ }
-                if (!($1 in top) || $2 + 0 > top[$1] + 0) top[$1] = $2 }
-         END { for (p in all) print tops[p], all[p] - tops[p], p, p "-" top[p] }' \
-     | sort -k1,1nr -k2,2nr -k3,3
-   ```
+```bash
+python3 - "$SPECS_PATH" <<'EOF'
+import os, re, sys
+KEY = re.compile(r"[A-Z][A-Z0-9_]*(-[0-9]+)+")
+RESERVED = {"brd", "grounding", "interview", "dev-workflows", "design", "attachments", "revisions", "Doc screenshots"}
+root = os.path.join(sys.argv[1], "specifications") if len(sys.argv) > 1 and sys.argv[1] else ""
+if not root or not os.path.isdir(root):
+    print("No specs tree to list keys from — $SPECS_PATH is unset or holds no specifications/.")
+    sys.exit(0)
+def frontmatter(path):
+    try:
+        with open(path, encoding="utf-8-sig", errors="replace") as fh:
+            if fh.readline().strip() != "---":
+                return {}
+            fields = {}
+            for line in fh:
+                if line.strip() == "---":
+                    return fields
+                name, sep, value = line.partition(":")
+                if sep and name.strip() in ("key", "kind"):
+                    fields[name.strip()] = value.strip().strip("\"'")
+    except OSError:
+        pass
+    return {}
+def listing(folder):  # an unreadable folder is passed over, never a traceback under the stop
+    try:
+        return os.listdir(folder)
+    except OSError:
+        return []
+def carrier_key(folder):  # §4: top-level files in byte-wise order, else brd/brd-inventory.md
+    names = sorted((n for n in listing(folder) if os.path.isfile(os.path.join(folder, n))), key=os.fsencode)
+    for name in names + [os.path.join("brd", "brd-inventory.md")]:
+        fields = frontmatter(os.path.join(folder, name))
+        if fields.get("kind") in ("brd", "prd", "epic") and KEY.fullmatch(fields.get("key", "")):
+            return fields["key"]
+    return None
+top, nested, best = {}, {}, {}
+def walk(folder, depth):
+    for name in sorted(listing(folder)):
+        path = os.path.join(folder, name)
+        if name.startswith(".") or os.path.islink(path) or not os.path.isdir(path) or name in RESERVED or name.startswith(("bundle-", "customer-sent-")):
+            continue
+        key = carrier_key(path)
+        if key:
+            token, numbers = key.split("-")[0], tuple(int(n) for n in key.split("-")[1:])
+            if depth == 1:
+                top[token] = top.get(token, 0) + 1
+                if token not in best or numbers > best[token][0]:
+                    best[token] = (numbers, key)
+            else:
+                nested[token] = nested.get(token, 0) + 1
+        if depth < 3:
+            walk(path, depth + 1)
+walk(root, 1)
+tokens = sorted(set(top) | set(nested), key=lambda t: (-top.get(t, 0), -nested.get(t, 0), t))
+if not tokens:
+    print("No key is in this specs tree yet.")
+    sys.exit(0)
+print("Keys already in this specs tree, by prefix — this checkout as it stands; another branch may hold more:")
+for t in tokens[:10]:
+    highest = "highest " + best[t][1] if t in best else "no top-level key"
+    print(f"  {t} — {highest} ({top.get(t, 0)} top-level, {nested.get(t, 0)} nested)")
+if len(tokens) > 10:
+    print(f"  …and {len(tokens) - 10} more prefixes")
+EOF
+```
 
-   Splitting a key that passed `key-valid` at its hyphens is reading the grammar above, not
-   extracting by pattern: its leading token holds no hyphen and every segment after it is numeric.
-3. **Return** `No key is in this specs tree yet.` where nothing is read; otherwise a heading line and
-   one line per token, in the order the command prints them, **at most ten**, and where there are
-   more a last line naming how many were left out:
-
-   ```text
-   Keys already in this specs tree, by prefix — a teammate's unmerged branch may hold more:
-     <TOKEN> — highest <highest top-level key> (<n> top-level, <m> nested)
-     …and <k> more prefixes
-   ```
-
-   Hundreds of keys come to a handful of lines, since a team's keys share few prefixes.
+At most ten prefixes are listed, most top-level keys first, so hundreds of keys come to a handful of
+lines.
 
 ## 2. Directory naming
 
@@ -182,7 +228,8 @@ round is), `dev-workflows/` is `references/specs-repo-git.md` §2.1's, `design/`
 `attachments/` is `idea-format.md`'s, and each other name is the owner cited beside it in the list
 above; a name added here without an authority to cite is a name two files will disagree about.
 `specs-repo-git.md` §2.1's classifier excludes every name in the list but `dev-workflows/`, so that
-a file a run copied in is never committed as a session file, and a name added here is added there too.
+a file a run copied in is never committed as a session file, and a name added here is added there too —
+and to `key-summary`'s `RESERVED` set and prefixes (§1), so it never reads a key off a file a run copied in.
 
 **A user whose own key begins with a kind token gets `PRD-PRD-1234-…`.** That is a documented
 consequence of a documented convention, not a defect, and it is not hypothetical: a key like

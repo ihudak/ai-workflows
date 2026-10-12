@@ -230,7 +230,8 @@ work look cheaper now and dearer later, distorting efficiency comparisons).
 An authoritative cross-check, available only when the plugin statusline is
 installed (via `/workflows-core:statusline`):
 
-- The shipped statusline writes a snapshot each render:
+- The shipped statusline writes a snapshot each render, given `jq` on the `PATH` it runs with (it
+  reads its input with `jq`, and writes nothing without it):
   `~/.claude/dev-workflows/cost-snapshots/<session_id>.json = { ts, cost_usd }`
   from its stdin `.cost.total_cost_usd` (an overwrite of a single object each
   render — bounded size).

@@ -1208,10 +1208,10 @@ defect in the customer's text, and an operator who reads it as a request to reso
 answering a question it does not ask:
 
 ```text
-These questions triage the defects brd-reader proposed. They resolve none of them. Each one asks: is this a real defect in the customer's text?
+These questions triage the defects proposed for this document — by brd-reader, and by documentation grounding where it ran. They resolve none of them. Each one asks: is this a real defect in the customer's text?
 - Confirm as written logs it as an open [DEF#n] in brd/brd-defect-log.md. The customer's document is never edited. An open defect is settled later, never here: by the customer's answer, which /product-workflows:brd-interview asks and /product-workflows:brd-reconcile records, or by a grounding finding from /product-workflows:prd-ground, which a person records.
-- Confirm with an edited reason logs it the same way, with a reason you narrow first. Later questions are built from the reason, so keep only what is actually open.
-- Reject — not a defect drops it, with no record that it was raised. A later re-run of this intake can raise it again.
+- Confirm with an edited reason logs it the same way, with a reason you narrow first. Where /product-workflows:brd-interview later puts the defect to the customer, its question is built from this reason, so keep only what is actually open.
+- Reject — not a defect drops it, with no record that it was raised: the answer where the document already answers it, where it is no defect, or where it restates an entry already on file (an On file line says so). A later re-run of this intake can raise it again.
 - Cancel ends the run here, before any defect is logged.
 ```
 
@@ -1258,8 +1258,8 @@ marker is unconditional*). **Each option carries this description, word for word
 question**, so no candidate is put with wording of the run's own:
 
 - *Confirm as written* — "Log it as an open [DEF#n] with this reason. It is settled later, never here."
-- *Confirm with an edited reason* — "Log it as open with a reason you narrow first. Later questions are built from the reason."
-- *Reject — not a defect* — "The document already answers it, or it is no defect. It is dropped, and nothing records it."
+- *Confirm with an edited reason* — "Log it as open with a reason you narrow first. A later question to the customer is built from it."
+- *Reject — not a defect* — "The document already answers it, it is no defect, or it restates an entry on file. It is dropped, and nothing records it."
 - *Cancel* — "End the run here, before any defect is logged."
 
 **A candidate on a row drawn from an image is put with its picture.** Show the image's path relative

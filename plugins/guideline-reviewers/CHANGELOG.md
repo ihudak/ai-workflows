@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.2.2] — 2026-10-12
+
+### Changed
+- **The getting-started page says the plugin runs in Claude Code only, and that `/guideline-reviewer`'s automated checks need `python3` 3.11**, pointing to the repo-root README's *Prerequisites* for the rest of the marketplace.
+
 ## [1.2.1] — 2026-10-08
 
 ### Fixed
