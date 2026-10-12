@@ -434,13 +434,14 @@ a frame set is real spend on a real artifact in the specs tree, which is why thi
 command emits at all — the alternative is not "unmeasured" but *misattributed*, per
 §3's semantics rolling it into whatever command runs next.
 
-**`/conformance` inference (whose run it is).** The discriminator is the
-**resolved folder's own `kind`**, which the run read off its frontmatter
-(`${CLAUDE_PLUGIN_ROOT}/references/addressing.md` §4) to address it at all —
-re-derivable from disk, as `/frames`'s is. `kind: epic` -> `phase: conformance`,
-`role: dev` (an Epic run is the Dev's). `kind: prd` -> `phase: conformance`,
-`role: pe` (a PRD run is the PE's, a BRD-route slice included). The command
-refuses a `BRD-` container, so there is no third branch.
+**`/conformance` inference (whose run it is).** The discriminator is
+where `workflows-core:addressing` §4.1 places the resolved folder — by its
+prefix, never by the kind it asserts, since a BRD-route slice is a `PRD-` folder
+whose `brd-link.md` asserts `kind: brd` — re-derivable from the folder's name and
+carrier, as `/frames`'s is. An Epic folder -> `phase: conformance`, `role: dev`
+(an Epic run is the Dev's). A PRD folder, a BRD-route slice included ->
+`phase: conformance`, `role: pe` (a PRD run is the PE's). The command refuses a
+BRD container, so there is no third branch.
 
 **`/diagnose-session` passes `target_command: n/a` on every run**, so the bullet below for a target of `n/a` charges it to `plugin-feedback`/`n/a`: a diagnosis is about the plugin itself, whichever command it reads, so it inherits nothing.
 
@@ -649,8 +650,8 @@ Inputs:
   - `/frames` — resolved from the resolved folder's own `kind` (§7's `/frames`
     inference), re-derivable from the folder `key` names. `emit-cost` reads that
     itself; nothing is passed beyond the `key`.
-  - `/conformance` — resolved from the resolved folder's own `kind` (§7's
-    `/conformance` inference), as `/frames`'s is. `emit-cost` reads that itself;
+  - `/conformance` — resolved from where `addressing` §4.1 places the resolved
+    folder (§7's `/conformance` inference), never from its asserted `kind`. `emit-cost` reads that itself;
     nothing is passed beyond the `key`.
   - The four feedback commands — resolved from `target_command`, which **cannot**
     be re-derived from disk (it lives in the run's own context). It is passed in:

@@ -4,6 +4,7 @@ paths:
   - "plugins/dev-workflows/commands/design.md"
   - "plugins/dev-workflows/commands/ready.md"
   - "plugins/dev-workflows/commands/implement.md"
+  - "plugins/dev-workflows/commands/conformance.md"
   - "plugins/workflows-core/references/addressing.md"
   - "plugins/workflows-core/commands/frames.md"
   - "plugins/docs-workflows/commands/document.md"
@@ -12,7 +13,7 @@ paths:
 
 # BRD route — map lines and folder-kind invariants
 
-Loaded for every file under `plugins/product-workflows/`, plus the named files outside it that carry a kind or container gate these invariants bind — `dev-workflows`' `/design`, `/ready` and `/implement`, `docs-workflows`' `/document` and `/release-notes`, `workflows-core`'s `/frames`, and `workflows-core:addressing`. That cross-plugin list is not a census: a kind gate added elsewhere needs its file added to these `paths:`. Find them with two greps and add every file outside `plugins/product-workflows/` that either returns: `grep -l '_BRD_NOT_SLICED: <' plugins/*/commands/*.md` (the container refusals) and `grep -lE 'kind it asserts|asserted kind|asserts .kind: brd|asserting .brd' plugins/*/commands/*.md plugins/*/references/*.md` (every file that places a folder by prefix rather than by its asserted kind, or reads the asserted kind on purpose). The rest of `product-workflows`' rules are in `.claude/rules/product-workflows.md`; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
+Loaded for every file under `plugins/product-workflows/`, plus the named files outside it that carry a kind or container gate these invariants bind — `dev-workflows`' `/design`, `/ready`, `/implement` and `/conformance`, `docs-workflows`' `/document` and `/release-notes`, `workflows-core`'s `/frames`, and `workflows-core:addressing`. That cross-plugin list is not a census: a kind gate added elsewhere needs its file added to these `paths:`. Find them with two greps and add every file outside `plugins/product-workflows/` that either returns: `grep -l '_BRD_NOT_SLICED: <' plugins/*/commands/*.md` (the container refusals) and `grep -lE 'kind it asserts|asserted kind|asserts .kind: brd|asserting .brd' plugins/*/commands/*.md plugins/*/references/*.md` (every file that places a folder by prefix rather than by its asserted kind, or reads the asserted kind on purpose). The rest of `product-workflows`' rules are in `.claude/rules/product-workflows.md`; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
 ## Workflow map
 

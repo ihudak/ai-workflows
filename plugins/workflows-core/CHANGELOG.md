@@ -9,9 +9,9 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Added
 - **An eleventh specs-repo branch prefix, `conformance/`**, for `/dev-workflows:conformance`'s record and notes — in `phase-handoff` §1 rule 3, §2.9 and §3.2, `specs-repo-git` §2.1 and row G2, and `branch-naming`'s identity heuristic with `scripts/session-branch.py`'s copy of its skip list; `_conformance.md` is classed advisory in `phase-handoff` §4.0.
-- **`followup-emission` § *Withdrawing a follow-up***: a PRD run of `/conformance` that overrules an Epic's *fix the code* ticks that follow-up and appends `— withdrawn: <PRD-KEY>/[DD#n]`, so `/implement` no longer reads it back as open.
+- **`followup-emission` § *Withdrawing a follow-up***: where an Epic's *fix the code* decision no longer stands — the PE overrules it, or its requirement is withdrawn or gone from its document — `/conformance` ticks that follow-up and appends why (`— withdrawn: <PRD-KEY>/[DD#n]`, or `(requirement withdrawn)` / `(orphaned)`), so `/implement` no longer reads it back as open.
 - **A tenth closed-vocabulary picker in `escalation-rules`**, `/conformance`'s decision question, whose free-text answers are normalised into fix-code / amend-document / accept.
-- **`/conformance` is the eighth inferred cost exception** (`cost-emission` §7, §11): phase `conformance`, role `dev` for an Epic folder and `pe` for a PRD folder; a feedback run targeting it inherits that.
+- **`/conformance` is the eighth inferred cost exception** (`cost-emission` §7, §11): phase `conformance`, role `dev` for an Epic folder and `pe` for a PRD folder — placed by its prefix, so a BRD-route slice, which asserts `kind: brd`, is a PRD; a feedback run targeting it inherits that.
 
 ### Changed
 - The family map draws `/conformance` in both the Dev lane (an Epic, pull request open) and the PE lane (the PRD, every Epic merged). The command namespace map lists it; `feedback-emission` and `followup-emission` count it among their callers.

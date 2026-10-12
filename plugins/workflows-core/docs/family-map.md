@@ -129,6 +129,7 @@ flowchart TD
     conformanceepic -.->|"fix the code — a follow-up"| implement
     conformanceepic -.->|"the Dev's proposed decisions"| conformanceprd
     conformanceprd -.->|"PRD: the PE, every Epic merged — amend the document"| specify
+    conformanceprd -.->|"amend the PRD"| updateprd
     implement -.->|"implementation.md — diff grounding on"| rnfinal
 
     docsinit -.->|"a new docs repo + profile"| document

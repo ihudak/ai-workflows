@@ -24,10 +24,14 @@ key: <the folder's key>
 
 - **Run:** <Epic | PRD> — role `<dev | pe>` — <YYYY-MM-DD>
 - **Code checked:** <repo slug> at <branch or default branch> @ <commit>, one line per repository
-- **Verdicts:** <n> satisfied · <n> partial · <n> missing · <n> contradicts · <n> not-checkable
+- **Verdicts:** <n> satisfied · <n> partial · <n> missing · <n> contradicts · <n> not-checkable · <n> unverified
+
+## Satisfied
+
+- <requirement id, or its quoted text> — <file:line@commit>, one per evidence location
 ```
 
-A re-run rewrites the header. A reader that compares the commit recorded here with the repository's default branch can say how far the code has moved since.
+A re-run rewrites the header and the `## Satisfied` list. A reader that compares the commit recorded here with the repository's default branch can say how far the code has moved since. **`## Satisfied` is what a later PRD run's drift check reads**: it re-traces a requirement listed there only where the code at its evidence paths changed between the commit the header names for that repository and the default branch, so a record without the list has every requirement re-traced.
 
 ## 3. An entry
 
@@ -55,9 +59,10 @@ One entry per discrepancy, in id order:
 - `proposed` — an Epic run's decision, the Dev's.
 - `final` — a PRD run's decision, the PE's. It wins over `proposed` wherever both exist.
 - `resolved` — the code now satisfies the requirement. A re-run sets it; so does the PE marking a `stale` entry resolved.
-- `stale` — a Dev entry whose requirement the merged code now satisfies, though the decision still stands (the code was fixed later without the record changing).
+- `stale` — an `amend-document` or `accept` entry whose requirement the merged code now satisfies, though the decision still stands: the code was changed later without the record changing. The PE marks it resolved or keeps it.
 - `orphaned` — a Dev entry whose requirement text is no longer in its document (an edited `epic.md` bullet, which has no id).
-- `fixed` / `still open` — a Dev `fix-code` entry, as the PRD run found it on the merged code.
+- `fixed` — a `fix-code` entry whose requirement the merged code now satisfies: the fix happened, and the PRD run lists it and records it `resolved` without asking.
+- `still open` — a `fix-code` entry whose requirement the merged code still does not satisfy; the PE confirms or overrules it.
 - `requirement withdrawn` — the requirement was superseded or withdrawn after the entry was recorded (`workflows-core:prd-format`).
 - `unverified` — the re-check could not settle the verdict either way; the entry says what would.
 
@@ -69,6 +74,8 @@ A `[DD#n]` is permanent: never renumbered or reused, and its entry is never dele
 - marks an entry `resolved` once the code satisfies its requirement — which is how a fix is confirmed;
 - marks an entry `requirement withdrawn` where its requirement is superseded or withdrawn, carries it forward, never asks about it again, and never counts it as an open fix;
 - numbers new discrepancies after the highest id on file, and asks only about those.
+
+A `requirement withdrawn` or `orphaned` entry is listed, never asked again. Where it was a `fix-code`, its follow-up is withdrawn per `workflows-core:followup-emission` § *Withdrawing a follow-up*, with the reason `(requirement withdrawn)` or `(orphaned)`.
 
 A PRD run writes `superseded-by: <PRD-KEY>/[DD#n]` into each Epic entry it overrules, and never deletes or rewrites any other field of an Epic record.
 

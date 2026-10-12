@@ -23,19 +23,19 @@ Type it as `/dev-workflows:conformance`. It takes one address, resolved against 
 
 ```mermaid
 flowchart TD
-    p0["Phase 0 — Resolve the address"] --> p1["Phase 1 — Inventory"]
-    p1 --> d0{"PRD run: every Epic merged?"}
+    p0["Phase 0 — Resolve the address and gate the documents"] --> p1["Phase 1 — Inventory"]
+    p1 --> d0{"PRD run: every Epic shown merged?"}
     d0 -->|"yes, or an Epic run"| p15["Phase 1.5 — Classify"]
-    d0 -->|"not shown merged — Stop / Trace anyway / Cancel"| p15
-    p15 --> p2["Phase 2 — Gate the documents traced"]
-    p2 --> p3["Phase 3 — Trace (conformance-tracer, one per repository)"]
-    p3 --> p4["Phase 4 — Re-check before asking"]
-    p4 --> p5["Phase 5 — The walk"]
-    p5 --> p6["Phase 6 — Effects and the record"]
-    p6 --> d1{"Hand off the record and notes? (consent choice)"}
-    d1 -->|"Branch + commit + push + PR"| p8["Phase 8 — Report"]
-    d1 -->|"Write only — no commit"| p8
-    p8 --> p910["Phase 9 — Maintenance, feedback, follow-ups / Phase 10 — Session cost and commit"]
+    d0 -->|"Trace anyway"| p15
+    d0 -->|"Stop until it is merged / Cancel"| stop(["Run ends — nothing traced"])
+    p15 --> p2["Phase 2 — Trace (conformance-tracer, one per repository)"]
+    p2 --> p3["Phase 3 — Re-check before asking"]
+    p3 --> p4["Phase 4 — The walk"]
+    p4 --> p5["Phase 5 — Effects and the record"]
+    p5 --> d1{"Hand off the record and notes? (consent choice)"}
+    d1 -->|"Branch + commit + push + PR"| p7["Phase 7 — Report"]
+    d1 -->|"Write only — no commit"| p7
+    p7 --> p89["Phase 8 — Maintenance, feedback, follow-ups / Phase 9 — Session cost and commit"]
 ```
 
 ## What it reads, and the code it checks
@@ -45,9 +45,11 @@ flowchart TD
 **Code.** It reads code at a ref and never switches a branch:
 
 - **An Epic run** checks the Epic's own branch — the branch its latest `/implement` run recorded in `implementation.md` for each repository, at its current tip, so review fixes pushed later are included. Where that branch is gone because it merged, it checks the default branch; where it is gone without merging, it stops with `CONFORMANCE_NO_CODE`.
-- **A PRD run** checks each repository's default branch. First it confirms every Epic merged — its recorded commit is in the branch's history, or a default-branch commit's subject carries the Epic's key, which a squash keeps — and asks before tracing where one is not shown merged.
+- **A PRD run** checks each repository's default branch. First it confirms every Epic merged, in every repository it touched — its recorded commit is in the branch's history, or a default-branch commit made after it carries the Epic's key in its subject, which a squash keeps — and asks before tracing where one is not shown merged.
 
-**A PRD run does not re-trace every Epic.** It traces the PRD-level requirements in full, and any Epic with no record. For an Epic with a record, it re-checks each of the Dev's entries against the merged code — flagging one *stale* where the code now satisfies the requirement, which is how a Dev who fixed the code later without updating the decision is caught — and re-traces a requirement the Epic run found satisfied only where the code at its evidence has changed since.
+Before reading, it fetches each writable clone's remote refs (never switching or pulling), and on a read-only mount prints the age of any ref older than fourteen days. A repository with no clone under `$REPOS_PATH` is named, and its requirements are listed as not traced. The documents it traces are gated onto the specs repo's default branch first, before anything is read.
+
+**A PRD run does not re-trace every Epic.** It traces the PRD-level requirements in full, and any Epic with no record — after looking for a record a Dev left on an unmerged `conformance/` branch, which it offers to read from there. For an Epic with a record, it re-checks each of the Dev's entries against the merged code: an *amend* or *accept* the code now satisfies is flagged *stale* — how a Dev who fixed the code later without updating the decision is caught — and a *fix the code* the merged code satisfies is *fixed*, listed and resolved without asking. A requirement the Epic run found satisfied, which the record lists with its evidence, is re-traced only where the code at that evidence has changed since. A re-run of either kind asks only about what is new.
 
 Before tracing, every run prints how many requirements it will trace across how many repositories.
 
@@ -86,6 +88,6 @@ The Dev finishes `/implement BOOK-1-02`, its pull request open, and runs `/confo
 ## See also
 
 - [`/implement`](implement.md) — offers this command as its next step after an Epic.
-- [`/ready`](ready.md) — the readiness gate before implementation; this command closes it.
+- [`/ready`](ready.md) — the readiness gate before implementation; this command is the check after it.
 - [Follow-up tasks](../reference/follow-ups.md) — where *fix the code* follow-ups land, and how a withdrawn one is marked.
 - [Roles and phases](../roles-and-phases.md) — the Dev's Epic run and the PE's PRD run.

@@ -25,11 +25,11 @@ One section per requirement, in input order:
 
 - verdict: <satisfied | partial | missing | contradicts | not-checkable>
 - shipped: <one sentence on what the code does>
-- evidence: <file:line@commit>, one per place relied on
+- evidence: <file:line@commit>, one per place relied on — or, for `missing`, `evidence: none — searched <the searches run>`
 - reason: <not-checkable only: why no code can show it>
 ```
 
-**Every verdict cites evidence, `satisfied` included** — save `not-checkable`, which gives its `reason` instead. A section with neither is read by the caller as *unverified*.
+**Every verdict cites evidence, `satisfied` included** — save `not-checkable`, which gives its `reason` instead, and `missing`, whose evidence is `evidence: none — searched …`, the searches that found nothing. A `satisfied` with no `file:line` is read by the caller as *unverified*.
 
 ## How the caller merges repositories
 

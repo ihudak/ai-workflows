@@ -4,6 +4,7 @@ paths:
   - "plugins/dev-workflows/commands/design.md"
   - "plugins/dev-workflows/commands/ready.md"
   - "plugins/dev-workflows/commands/implement.md"
+  - "plugins/dev-workflows/commands/conformance.md"
   - "plugins/workflows-core/references/addressing.md"
   - "plugins/workflows-core/commands/frames.md"
   - "plugins/docs-workflows/commands/document.md"

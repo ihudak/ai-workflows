@@ -69,6 +69,7 @@ flowchart TD
     conformanceepic -.->|"the Dev's proposed decisions"| conformanceprd
     conformanceprd -.->|"amend the document"| specify
     conformanceprd -.->|"amend the document"| epics
+    conformanceprd -.->|"amend the PRD"| updatevi
     brdsplitroot -->|"each confirmed slice — claims are its [BR#n] rows"| groundbrd
     groundbrd -->|"verified [CG#n]/[DG#n] — required before the walk"| brdsplitslice
     createvi -.->|"idea route only — optional, PRD's own [AC#n]/[FR#n]"| groundprd

@@ -12,7 +12,7 @@ A long-running command ends by doing two separate things: it flushes a small poi
 - **Last completed:** <command> <args> — <phase or 'command complete'> (<ISO datetime>)
 - **Artifact:** <relative path to the deliverable just written/committed, or 'none (read-only)'>
 - **Next step:** <the exact next command from ### Next step, or 'PRD fully processed'>
-- **Suggested session name:** <KEY>-<slug>-<role>   (omit this line on a run whose own `### Context hygiene` block carries no `/rename` suggestion — never the case for this plugin's own five commands: the three that write a `resume.md` at all, `/design`, `/ready` and `/implement`, each print the line, and `/vuln` and `/upgrade` write no pointer; the companion `product-workflows` plugin's `/create-prd` is the family's worked example of a command that writes the file and omits the line, and it is omitted for its phase length rather than for want of a key, which it takes as a mandatory argument)
+- **Suggested session name:** <KEY>-<slug>-<role>   (omit this line on a run whose own `### Context hygiene` block carries no `/rename` suggestion — never the case for this plugin's own six commands: the four that write a `resume.md` at all, `/design`, `/ready`, `/implement` and `/conformance`, each print the line, and `/vuln` and `/upgrade` write no pointer; the companion `product-workflows` plugin's `/create-prd` is the family's worked example of a command that writes the file and omits the line, and it is omitted for its phase length rather than for want of a key, which it takes as a mandatory argument)
 - **Carry-forward decisions:** <0–N one-line decisions the next phase needs that are NOT already in the artifact; 'none' if none>
 ```
 
