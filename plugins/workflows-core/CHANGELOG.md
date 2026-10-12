@@ -10,6 +10,9 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ### Changed
 - **`phase-handoff` §4.0 has a row for the customer's committed review** (product-workflows 3.33.0): on the repository route the customer commits `<KEY> Customer Review <date>.md` beside the bundle by pull request, and `/brd-reconcile` reads it on the default branch and declares its path only to stage its deletion once it has moved it to `customer-review-<date>.md`. Advisory, gated by nothing.
 
+### Docs
+- **The family map draws `/prd-ground` in the PM lanes** — the BRD slice's in the BRD route, the idea PRD's in the idea route — instead of in a box of its own that read as a separate role, and draws `/prd-proposal` from both routes, with `/brd-proposal` after it on the BRD route only.
+
 ## [1.38.1] — 2026-10-12
 
 ### Fixed

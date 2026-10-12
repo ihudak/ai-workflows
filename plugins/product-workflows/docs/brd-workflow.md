@@ -23,9 +23,11 @@ flowchart TD
         interview["/brd-interview &lt;SLICE&gt;"]:::prod
         package["/brd-package &lt;SLICE&gt;"]:::prod
         reconcile["/brd-reconcile &lt;SLICE&gt;"]:::prod
-    end
-    subgraph PAD["PM — grounding (PA or PE where the PM cannot clone the code)"]
         ground["/prd-ground &lt;SLICE&gt;"]:::prod
+    end
+    subgraph EST["PM — effort proposals (optional, gate nothing)"]
+        prdproposal["/prd-proposal &lt;SLICE&gt;"]:::prod
+        brdproposal["/brd-proposal &lt;BRD&gt;"]:::prod
     end
     subgraph OFF["Off-platform — the customer, with a vanilla agent and nothing installed"]
         review["the customer reviews the bundle"]:::cust
@@ -52,6 +54,8 @@ flowchart TD
     interview -.->|nothing for the customer to review, PRD-eligible — no reconciliation needed| createprd
     interview -.->|nothing for the customer to review — no reconciliation needed| createard
     interview -.->|nothing for the customer to review — no reconciliation needed| specify
+    splitroot -.->|"each slice, at any readiness"| prdproposal
+    prdproposal -->|"each included slice's proposal.md, rolled up"| brdproposal
 
     classDef prod fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
     classDef cust fill:#f3f4f6,stroke:#6b7280,color:#1f2937
@@ -66,6 +70,11 @@ under `$DOCS_PATH` and, for `/create-ard` and `/specify`, the code under `$REPOS
 `consumed_by` on what it took. The one record any of them adds to the route's own is
 `/create-prd`'s: an `[AS#n]` in `decisions.md` for a gap only the customer can settle, which
 `/brd-package` then carries to the customer.
+
+**The proposals box is not part of the route either.** `/prd-proposal` prices one slice — any slice
+the split carved, at whatever readiness it has reached — and `/brd-proposal` rolls the included
+slices' proposals up into one for the BRD. Both are optional, and neither gates a step of the
+route.
 
 **The `Off-platform` box is the route's defining feature, not a decoration.** Everything else in
 the diagram is a command this plugin runs; that box is a wait, and nothing in the plugin can

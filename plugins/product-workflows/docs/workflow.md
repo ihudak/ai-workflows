@@ -11,19 +11,17 @@ flowchart TD
         createvi -.->|prd.md| rnpm["/docs-workflows:release-notes (PRD draft / refresh)"]:::docs
         createvi -.->|PRD exists| updatevi["/update-prd"]:::prod
         updatevi -.->|updated prd.md — existing release note| rnpm
+        groundprd["/prd-ground (idea PRD)"]:::prod
     end
     subgraph BRD["PM — BRD-to-PRD route (alt. entry)"]
         brdintake["▶ start — /brd-intake"]:::prod -->|inventory + ledger| brdsplitroot["/brd-split (root)"]:::prod
         brdsplitslice["/brd-split (slice)"]:::prod -->|allocated ledger| brdinterview["/brd-interview"]:::prod
         brdinterview -->|"decisions.md + held [C] questions"| brdpackage["/brd-package"]:::prod
         brdreconcile["/brd-reconcile"]:::prod
+        groundbrd["/prd-ground (BRD slice)"]:::prod
     end
     subgraph CUST["Off-platform — the customer, nothing installed"]
         brdreview["the customer reviews the bundle"]:::cust
-    end
-    subgraph GR["PM — grounding (one command, both routes; PA or PE where the PM cannot clone the code)"]
-        groundbrd["/prd-ground (BRD slice)"]:::prod
-        groundprd["/prd-ground (idea PRD)"]:::prod
     end
     subgraph PA["PA — architecture (optional)"]
         createard["/create-ard"]:::prod
@@ -75,8 +73,9 @@ flowchart TD
     groundbrd -->|"verified [CG#n]/[DG#n] — required before the walk"| brdsplitslice
     createvi -.->|"idea route only — optional, PRD's own [AC#n]/[FR#n]"| groundprd
     groundprd -.->|"a claim came back CONFIRMED — recommended"| updatevi
-    createvi -.->|optional — priced from whatever readiness the folder has reached| prdproposal
-    prdproposal -->|each included slice's proposal.md| brdproposal
+    createvi -.->|"idea route — the PRD folder, at any readiness"| prdproposal
+    brdsplitroot -.->|"BRD route — each slice, a PRD- folder, at any readiness"| prdproposal
+    prdproposal -->|"BRD route — each included slice's proposal.md, rolled up for the BRD"| brdproposal
     groundprd -.->|"verified [CG#n]/[DG#n]"| createard
     groundprd -.->|"verified [CG#n]/[DG#n]"| specify
     brdpackage -->|bundle sent| brdreview
