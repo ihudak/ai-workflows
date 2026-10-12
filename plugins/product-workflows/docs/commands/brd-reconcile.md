@@ -367,15 +367,20 @@ command removes none of them; the next `/brd-interview` run does.
   that supersedes it. An answer whose live record is `withdrawn` freezes nothing: the operator
   records it for a human or rejects it, and either way a held question it answers is closed,
   naming the withdrawal, so its round can close and no later package carries it. **A held question
-  whose requirement defects were all withdrawn closes the same way** — every `Requirement defect`
-  line on it names a defect the parent's defect log resolves `withdrawn`, or one raised against a
-  requirement this run's frozen decisions withdraw. It closes *answered by the customer*, naming the
-  withdrawing decision and defects, with nothing frozen from any reply to it, whatever the reply was
-  and whichever order the walk took the two answers in, since the closure is decided once every
-  decision is frozen; a reply is kept, with the customer's condition for asking again, under *what
-  still needs a human*. One defect still standing keeps the question held. A slice reconciled before
-  3.33.1 closes such questions when you re-run `/brd-reconcile <KEY>` on the review it already took,
-  passing its `customer-review-<date>.md`. A live record `open` for want of its reason is **completed**,
+  whose requirement defects are all withdrawn closes too**, once this run has resolved the defects:
+  every `Requirement defect` line on it names a defect the parent's defect log now resolves
+  `withdrawn` — by an earlier run, or by this one on a decision it froze — and nothing was frozen
+  against the question this run. It closes *answered by the customer — nothing frozen*, naming the
+  withdrawn defects and, where this run withdrew them, the decision that did, whichever order the
+  walk took the answers in. That line is never read as the question's own record, so a later answer
+  cannot supersede the other question's withdrawal through it. A reply — a decline included — is kept,
+  with the customer's condition for asking again, under *what still needs a human*. One defect still
+  standing keeps the question held, and a withdrawal frozen `open` withdraws nothing yet. Where the
+  defects were already withdrawn before this review, the walk offers such a reply the two record-or-
+  reject options only. A slice reconciled before 3.33.1 closes such questions when you re-run
+  `/brd-reconcile <KEY>` on the review it already took, passing its `customer-review-<date>.md` —
+  a full pass otherwise, which offers again every answer the earlier pass rejected or sent back and
+  every section-12 correction. A live record `open` for want of its reason is **completed**,
   minting nothing, by an answer with its own `chosen` and a reason now stated — never on an entry
   that puts a record again on a `- **Re-puts:**` line, where it is superseded (step 3) — and
   superseded by one choosing differently. A record

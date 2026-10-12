@@ -455,7 +455,7 @@ them **terminal dispositions**:
 |---|---|
 | *answered from findings* | a verified finding settled a `[G]` |
 | *decided* | a `[V]` produced a `[VD#n]` with its argumentation |
-| *answered by the customer* | a `[C]`'s answer came back and an operator confirmed it (D14) |
+| *answered by the customer* | a `[C]`'s answer came back and an operator confirmed it (D14) — or, written by `/brd-reconcile` with nothing frozen, the question stopped applying: the record it put again was withdrawn, or every requirement defect it carries was withdrawn with its requirement |
 | *re-tagged* | a `[G]` grounding could not settle changed tag, naming its cause; the re-tagged question then carries its own disposition |
 | *split* | the question became parts, named; the parts carry their own dispositions |
 
@@ -1688,8 +1688,9 @@ it leaves is materially different from the one that would have been asked withou
 
 Each `[C]` is recorded in the round with the **holding state** *held for the customer*. **Holding a
 question is not an answer to it**: the terminal disposition *answered by the customer* is reached
-only when the answer comes back and an operator confirms it, so a round holding a `[C]` stays open
-until `/brd-reconcile` closes it with the customer's answer, as the paragraph after next says.
+only when the answer comes back and an operator confirms it, or when `/brd-reconcile` finds the
+question has stopped applying, so a round holding a `[C]` stays open until `/brd-reconcile` closes
+it, as the paragraph after next says.
 
 **No `[CD#n]` is written here, and none may be.** A customer decision enters the register only when
 the customer has actually answered and an operator has confirmed the answer (D14,
@@ -1700,8 +1701,9 @@ two separate acts, and normalising prose into a decision is inference, not autho
 review package the `[C]` questions travel in, and it is a separate, consented run — writing the file
 is not sending it. A `[C]` this run holds stays held until a package goes out and an answer
 comes back, and the round that contains it stays open throughout (`interview-tagging.md` §5) until
-`/brd-reconcile` ingests that answer and an operator confirms it — that command writes the terminal
-disposition *answered by the customer*, and it is the only thing that closes such a round. Report
+`/brd-reconcile` ingests that answer and an operator confirms it, or finds the question has stopped
+applying — that command writes the terminal disposition *answered by the customer*, and it is the
+only command that closes such a round. Report
 that as the plain sequence it is: this run holds, `/brd-package` carries, the customer answers, and
 `/brd-reconcile` records.
 

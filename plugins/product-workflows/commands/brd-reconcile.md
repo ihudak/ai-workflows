@@ -853,19 +853,20 @@ in this run's own reconciliation record and in the rejection's recorded reason. 
 state does not move**: a held one keeps the *held for the customer* holding state `/brd-interview`
 gave it, and the next package puts it to the customer again, an answer frozen from a later review
 being its only exit save the two exceptions below; one an earlier review already answered stays *answered by the customer*, its record
-untouched. **Two held questions are the exception**, each closed on *Reject* as on any other answer:
-an entry whose `- **Re-puts:**` line put again a record since withdrawn (*A live record reading
-`withdrawn`*, below), and an entry whose requirement defects were all withdrawn (*A held entry whose
-requirement defects were all withdrawn*, below).
+untouched. **Two held questions are the exception**, each closed with nothing frozen whatever the
+answer, *Reject* included: an entry whose `- **Re-puts:**` line put again a record since withdrawn
+(*A live record reading `withdrawn`*, below), and an entry whose requirement defects are all
+withdrawn (the *Resolve the defects the review settled* phase's last step).
 **Nothing writes "declined" anywhere**, and that is the point rather than an omission — it is in
 neither vocabulary `/brd-interview` fixes (five terminal dispositions, four holding states, and
 everything else a holding state and never a disposition), so a run that recorded it as a terminal
 disposition would let the round's closure test see every question settled and **close a round on a
 question the customer expressly refused to answer**, which is the D14 failure this disposition
 exists to prevent, arriving quietly. *Reject* mints no `[C]` and writes nothing into the question
-set, save to close the two exceptions above, whose questions ask for no decision the register could
-take any more: the record one put again is withdrawn, and the requirement the other's defects were
-raised against is withdrawn, so no customer decision is left for their round to wait on.
+set, save to close the first exception above; the second is closed by the defect phase whatever the
+answer. Neither question asks for a decision the register could take any more: the record one put
+again is withdrawn, and the requirement the other's defects were raised against is withdrawn, so no
+customer decision is left for their round to wait on.
 
 **This is not an escalation choice list** — its four options are the four fates a candidate
 answering a question the package put can take in this command (one answering none takes the two
@@ -1007,7 +1008,12 @@ candidate onto it was rejected or sent back to the customer — is offered again
 **Every target resolves to its question's live record before any candidate is shown.** Start from
 the earliest record frozen against the target:
 
-- **a `[C]` entry**: the `[CD#n]` its first *answered by the customer* names; or, where an answer to
+- **a `[C]` entry**: the `[CD#n]` its first *answered by the customer* names — never one written
+  `answered by the customer — nothing frozen` because its requirement defects were all withdrawn
+  (the *Resolve the defects the review settled* phase's last step): the decision that line names
+  withdrew a requirement, is no record of this entry's, and starts no chain, so a later answer to the
+  entry finds no live record and, its question having stopped applying, takes the two-option array;
+  or, where an answer to
   it was frozen `open` for want of its reason before any answer closed it — step 1 of the *Freeze
   the customer decisions* phase leaves such an entry held and writes nothing on it — that record,
   found where an earlier reconciliation record lists it, as *What changed* does every `[CD#n]`
@@ -1118,25 +1124,26 @@ stands is a judgement this run does not take — and, where the answered entry i
 step 1 closes that entry *answered by the customer*, naming the withdrawn record and that nothing
 was frozen from the answer, so its round can close. ***Reject* closes such an entry the same way**,
 naming the withdrawn record, that nothing was frozen from the reply and why the reply was rejected —
-one of the two places *Reject* moves a question's state (the *Reject* paragraph above). Left held, it would
+the one place *Reject* itself moves a question's state (the *Reject* paragraph above). Left held, it would
 hold its round open for a customer answer that can settle nothing, and every later package would
 put it again for a record nothing can revive. So such an entry closes on the first review that
 answers it, whichever option the operator takes, and no later package carries it:
 `/product-workflows:brd-package` renders held entries alone.
 
-**A held entry whose requirement defects were all withdrawn takes no answer either, where the walk
-can already tell.** Its every `- **Requirement defect:**` line names a defect withdrawn by the test
-the *Freeze the customer decisions* phase's step 1 applies — resolved `withdrawn` in the parent's
-defect log already, or raised against a requirement a candidate confirmed earlier in this walk
-withdraws — so its question stopped applying: the candidate is shown on the two-option array an
-answer matching no question takes (above), with the withdrawal beside it, and the walk says the entry
-will close with nothing frozen. **Where the walk cannot tell yet** — the candidate withdrawing the
-requirement comes later in the walk — the candidate takes the four-option array like any other, and
-the walk says that its closure is decided when the decisions are frozen, from the whole confirmed
-set, so the order the candidates are walked in changes nothing. Whatever it takes there, that step
-freezes nothing from it where it closes the entry. A decline on a question whose requirement still
-stands is not this case: it takes *Reject*, stays *held for the customer*, and the next package puts
-it again.
+**A held entry whose requirement defects were all withdrawn earlier takes no answer either.** Where
+the entry carries at least one `- **Requirement defect:**` line and every one names a defect the
+parent's `brd/brd-defect-log.md` already resolves `withdrawn` — an earlier run's resolution, read off
+the log and never out of the customer's words — its question stopped applying: the candidate is
+shown on the two-option array an answer matching no question takes (above), the withdrawn defects
+beside it, and the walk says the entry will close with nothing frozen (the *Resolve the defects the
+review settled* phase, its last step). **A withdrawal this same review makes is not known yet** — a
+defect is resolved only once the decisions are frozen, and a withdrawal frozen `open` resolves
+nothing — so a candidate answering such an entry takes the four-option array like any other, and
+the walk says that, where this review's frozen decisions withdraw every requirement the entry's
+defects were raised against and nothing is frozen against the entry, it is closed once the defects
+are resolved, whichever order the candidates are walked in. An entry with no `- **Requirement
+defect:**` line is not this case, and neither is a decline on a question whose requirement still
+stands: that takes *Reject*, stays *held for the customer*, and the next package puts it again.
 
 **Completing an `open` record is not minting a new one — and only a record open for want of its
 reason, answered with its own `chosen`, is completed.** Where a later review supplies the reason a
@@ -1189,18 +1196,17 @@ operator has already sent that question back, and a candidate walked later does 
 **The gate.** Any decision in the digest still unconfirmed when this phase would end → stop. A
 candidate skipped as already reconciled by the same-review rule is disposed and does not count; one
 the operator confirmed and the re-affirmation test then recorded is confirmed, and one whose live
-record reads `withdrawn` takes record-for-a-human | reject like an answer matching no question:
-`BRD_RECONCILE_UNCONFIRMED: N decisions from the returned review are still unconfirmed — every one takes confirm | correct | reject | ask-the-customer, or, answering no question the package put, record-for-a-human | reject, before a [CD#n] is written.`
+record reads `withdrawn`, or that answers a held entry whose requirement defects were all withdrawn
+earlier, takes record-for-a-human | reject like an answer matching no question:
+`BRD_RECONCILE_UNCONFIRMED: N decisions from the returned review are still unconfirmed — every one takes confirm | correct | reject | ask-the-customer, or, answering no question the package put or one that has stopped applying, record-for-a-human | reject, before a [CD#n] is written.`
 
 ---
 
 ## Phase 5 — Freeze the customer decisions as `[CD#n]`
 
 Write one `[CD#n]` per confirmed candidate **that is not completing a record that already exists**,
-none for one that re-affirms its question's live record, none for one the *Confirm every
-candidate* phase set aside as a conflicting answer, and none for one answering a held entry step 1
-closes because its requirement defects were all withdrawn — that answer goes under *what still
-needs a human* instead, with the customer's words.
+none for one that re-affirms its question's live record, and none for one the *Confirm every
+candidate* phase set aside as a conflicting answer.
 The *Confirm every candidate* phase's rule is the carve-out and it is repeated here because the mint
 and the exception live in two different phases, which is precisely where this would regress: a
 candidate confirmed against a target whose live record is an **`open`** `[CD#n]` **open for want of
@@ -1343,7 +1349,9 @@ Then, in the same phase and from the same confirmed set:
    holding state *held for the customer* to the terminal disposition **answered by the customer**,
    naming the `[CD#n]` it produced. Append it; never rewrite what the round originally asked, or
    anything else an earlier write of the record holds. **This is the only thing that can close such
-   a round**, and it is why the round stays open from the moment `/brd-interview` holds a `[C]`
+   a round**, save the two closures of a question that has stopped applying — a withdrawn record put
+   again (below), and requirement defects all withdrawn (the *Resolve the defects the review
+   settled* phase's last step) — and it is why the round stays open from the moment `/brd-interview` holds a `[C]`
    until this command runs: holding a question is not the customer answering it, and the customer
    answering it is not the register recording an answer (`interview-tagging.md` §5, `decision-register-format.md` §1). Mark the same question answered in
    `interview/customer-questions.md`, naming the `[CD#n]`. **A question an earlier review already
@@ -1361,27 +1369,10 @@ Then, in the same phase and from the same confirmed set:
    closing its round as below. Held, it would be put to the
    customer again in every package for a record nothing can revive.
 
-   **A held entry whose requirement defects were all withdrawn closes too, with nothing frozen** —
-   on every run, whatever this run confirmed, and whether or not the review answered it. The test is
-   structured and never read out of the customer's words ("moot", "withdrawn"): the entry carries at
-   least one `- **Requirement defect:**` line, and every `- **Requirement defect:**` line names a defect
-   the parent's `brd/brd-defect-log.md` resolves `withdrawn`, or one raised against a requirement
-   that a `[CD#n]` frozen from this run's confirmed set withdraws — the test the *Resolve the defects
-   the review settled* phase applies to write `withdrawn`, so the two never disagree. One defect left
-   standing keeps the entry held: part of its question still applies. The entry moves to *answered by
-   the customer*, naming the withdrawing `[CD#n]`, each withdrawn `[DEF#n]` and that nothing was
-   frozen from it, in the round record and in `interview/customer-questions.md` alike, and counts
-   toward closing its round as below. Where the review answered it — a decline or anything else —
-   the reconciliation record names it under *what still needs a human* with the customer's words and
-   their reason, so the customer's condition for asking again — *re-ask when the requirement
-   returns* — is not lost with the question. Held, it would keep its round open for an answer that
-   can settle nothing — `/product-workflows:brd-interview` would resume that round and never propose
-   the next — and every later package would put the customer a question about a requirement they no
-   longer ask for. An entry with no `- **Requirement defect:**` line — an assumption, or a question
-   linked to its requirement through findings alone — is not this case. A tree reconciled before
-   this rule existed is closed by re-running this command on the review it already took
-   (`@<BRD-dir>/customer-review-<YYYYMMDD>.md`, read in place): the same-review rule skips what it
-   froze, and this step closes the entry.
+   **A held entry whose requirement defects were all withdrawn closes later, not here** — by the
+   *Resolve the defects the review settled* phase's last step, once the defects are resolved, since
+   what this run withdraws is not known until then. Its round's `Status:` line is written there, by
+   the rule below.
 
    **Where that leaves every question in the round with a terminal disposition** — its last held
    question closed, and no question in another holding state — append
@@ -1818,6 +1809,38 @@ Because the log belongs to another BRD, **the cross-BRD write guard applies here
 the resolutions rather than writing them, naming the parent's branch/PR state. A parent whose defect
 log is mid-review is a parent somebody is editing, and a resolution written over it is a defect
 classification lost without trace.
+
+**Last, close every held question whose requirement defects are now all withdrawn.** On every run,
+whatever this run confirmed and whether or not the review answered it, a held `[C]` entry closes,
+with nothing frozen, where it carries at least one `- **Requirement defect:**` line, every one names
+a defect the parent's `brd/brd-defect-log.md` now resolves `withdrawn` — resolved by an earlier run,
+or written by this phase; one this phase only recorded, the parent's log being under review, is not
+on file and closes nothing — and no `[CD#n]` was frozen against it this run. The test reads those
+lines and the log, never the customer's words ("moot", "withdrawn"), and one defect left standing
+keeps the entry held: part of its question still applies. The entry moves to the terminal disposition
+*answered by the customer*, written as `answered by the customer — nothing frozen: its requirement
+defects <[DEF#n], …> were withdrawn`, adding `by <SLICE-KEY>/[CD#n]` for each this phase resolved on
+that decision and naming no decision for one an earlier run resolved, whose log entry records none —
+in the round record and in `interview/customer-questions.md` alike. It counts toward closing its
+round by the *Freeze the customer decisions* phase's step 1 rule, a `Status: closed` line included
+where it was the round's last held question. **That line starts no chain** (*Confirm every
+candidate*, *Every target resolves to its question's live record*): the decision it names is another
+question's withdrawal, never this entry's record. Where the review answered the entry — a decline, or
+anything else this run did not freeze — the reconciliation record names it under *what still needs a
+human* with the customer's words and their reason, so the customer's condition for asking again —
+*re-ask when the requirement returns* — is not lost with the question; one the review did not answer
+is listed there too, as closed with no reply. Held, it would keep its round open for an answer that
+can settle nothing — `/product-workflows:brd-interview` would resume that round and never propose
+the next — and every later package would put the customer a question about a requirement they no
+longer ask for. An entry with no `- **Requirement defect:**` line — an assumption, or a question
+linked to its requirement through findings alone — is not this case.
+
+**A tree reconciled before this step existed is closed by re-running this command on the review it
+already took** (`@<BRD-dir>/customer-review-<YYYYMMDD>.md`, read in place): the same-review rule
+skips what an earlier pass froze, and this step closes the entry. That re-run is a full pass over
+the review in every other respect — it offers again every candidate the earlier pass rejected or
+sent back, and puts every section-12 correction again — so the operator answers those as the
+earlier pass did.
 
 ---
 
@@ -2323,7 +2346,11 @@ changed, why, which ids, and what still needs a human:
   because it was not `decided`, with the `[CD#n]` that contradicts or constrains it; every
   candidate whose target's live record reads `withdrawn`, with the customer's words and that record,
   nothing frozen from it, and the held entry closed for it where there was one (*Confirm every
-  candidate*); every record this run's answers reached more
+  candidate*); every held entry closed because its requirement defects were all withdrawn (the
+  *Resolve the defects the review settled* phase's last step), with each withdrawn `[DEF#n]`, the
+  decision that withdrew it where this run did, and, where the review answered it, the customer's
+  words and their reason — their condition for asking again — or that it was closed with no reply;
+  every record this run's answers reached more
   than once, with every `[CD#n]` that reached it; every candidate *Confirm every candidate* set
   aside as a conflicting answer, with the customer's words and the candidate frozen in its place,
   or that the one kept went back to the customer for its reason; every propagation-sweep item whose

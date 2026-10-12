@@ -167,7 +167,9 @@ them, and the round holding a part is not necessarily the round that held the or
 **A round does not close early because the interesting questions are answered.** The remaining
 questions are typically the tedious ones, and the rule exists to resist exactly the pressure to
 leave them. A round with an outstanding `[C]` stays open until that answer comes back through the
-package — the customer's turnaround is not a reason to declare the round finished around them.
+package, or until its question stops applying — the record it put again withdrawn, or every
+requirement defect it carries withdrawn with its requirement — and the customer's turnaround is not
+a reason to declare the round finished around them.
 
 **Resumability is a property of the record, not of the session.** Because a round is a set of
 questions each of which either has a disposition or does not, an interrupted run resumes at the

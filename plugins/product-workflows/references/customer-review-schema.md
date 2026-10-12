@@ -201,7 +201,9 @@ and the delivery team re-adjudicates.
 team unable to tell an instruction from a preference, and unable to defend the position when it is
 challenged later. A question the customer declines to answer this round still gets a row, saying so
 and saying what they would need in order to answer it: silence is otherwise indistinguishable from
-oversight, and it will be re-asked.
+oversight, and it will be re-asked — unless the customer withdraws, in section 4, the requirement it
+is about, when it is not asked again: the row then says when it should be, should that requirement
+return.
 
 **Section 8 — every assumption the package surfaced gets exactly one row**, marked accepted,
 corrected, or cannot-say. Cannot-say is a real answer and is not a failure to respond. An assumption
