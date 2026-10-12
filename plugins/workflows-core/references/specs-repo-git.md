@@ -549,7 +549,7 @@ session to another skill, or opens an open-ended interactive stretch, this step
 runs immediately **before** that hand-off instead, and prints its §6 outcome line
 there. `/prompt-brainstorm` (whose Phase 3 hands off to
 `superpowers:brainstorming`) and `/prompt-grill-me` (whose Phase 3 is a long
-interactive grill) are the cases. "Last" is protective only while the run still
+interactive grill) are two of the cases; `/product-workflows:brd-split`'s *Ground now* is the third — its continuation waits on the operator's merge of the pull request this step's commit has to ride in, then runs other commands, so the commit comes before it. "Last" is protective only while the run still
 reaches its own end: a commit placed after control has left the command never
 executes, and the artifacts it was meant to persist are stranded uncommitted —
 the exact loss this reference exists to prevent. The exception is deliberately

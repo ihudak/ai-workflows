@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ### Changed
 - **`/prd-ground`'s cost entries read `role: pm`** (`cost-emission` §7's role table): the command runs as PM now, with a PA or PE running it where the PM cannot clone the code (product-workflows 3.31.0). Entries already written keep `pa`.
 - **`next-phase-offer` rule 1 has one operator-elected exception**: an option the operator picks from the offer itself may run the command it names as a complete run of its own — today only `/brd-split`'s *Ground now*, which runs `/prd-ground` after the split's pull request merges. Every other option of every offer stays guidance. The routing graph tags `/prd-ground` `(PM)`.
-- **`session-hygiene` §2 suggests `/clear` for a same-role step that reads nothing the run established** — `/brd-split` on a root → `/prd-ground` on a child, PM to PM, re-reads everything from disk.
+- **`specs-repo-git` §4 names `/brd-split`'s *Ground now* as a third case whose `commit-artifacts` runs before a phase that cedes control**: its commit has to ride in the pull request the continuation then waits on.
 
 ### Added
 - **`session-cost.py --selftest` covers split → ground → ground in one session**: three windows — the split's, then two Skill-started `/prd-ground` runs — each holding its own spend and its subagents', summing to the session with nothing counted twice or dropped, and each Skill-started run cutting its window as a typed command does.

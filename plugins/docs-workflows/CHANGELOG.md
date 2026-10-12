@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.14.3] — 2026-10-12
+
+### Changed
+- **The getting-started page's skill-listing note is current again**: `/prd-ground` (product-workflows 3.31.0) is now model-invocable, so the marketplace's share of the listing is about 6,200 characters, not 5,600, and "commands are typed-only" now says "nearly all" — the few another command runs for you take room too.
+
 ## [1.14.2] — 2026-10-12
 
 ### Changed

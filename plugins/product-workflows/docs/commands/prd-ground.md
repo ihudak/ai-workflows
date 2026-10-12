@@ -74,9 +74,8 @@ and there it is **optional and ungated**: nothing in [`/create-ard`](create-ard.
   [`/brd-split`](brd-split.md) as the way to carve one; a resolved `EPIC-` folder stops with
   `PRD_GROUND_EPIC_LEVEL`, naming the PRD folder it sits in.
 - **`--repos <name>[,<name>…]`** (optional) — the repositories to ground against, as one
-  comma-separated token, so the run asks nothing about them; without it the run lists every clone
-  under `$REPOS_PATH` as candidates and asks. Refused with `--no-code` (`PRD_GROUND_REPOS_NO_CODE`),
-  which grounds no code.
+  comma-separated token — a slug, or an absolute path to a clone — so the run asks nothing about
+  them; without it the run lists every clone under `$REPOS_PATH` as candidates and asks.
 - **`--from-split <BRD-KEY>`** (set by [`/brd-split`](brd-split.md)'s *Ground now*) — the root that
   run split. This command runs only when you type it, or from that continuation: a run the model
   starts on its own, without this flag, stops with `PRD_GROUND_TYPED_ONLY`, and the flag must name
@@ -530,7 +529,7 @@ baseline finding the run writes per repository is `CONFIRMED` too, and is not on
 
 ## See also
 
-- [Roles and phases](../roles-and-phases.md) — what the `pa` role owns and hands off, on either
+- [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off, on either
   route.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
 - `workflows-core:addressing` — the `<KEY>` grammar and folder

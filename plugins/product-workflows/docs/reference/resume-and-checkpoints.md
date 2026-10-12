@@ -33,7 +33,7 @@ Every next-step option a command offers already carries a role label — see [Ro
 - **The next step could go either way** (`/create-prd` → PM `/docs-workflows:release-notes`, or handing off to PA/PE) → both branches are named explicitly: continuing as the same role suggests `/compact`, handing off — even to yourself — suggests `/clear`.
 - **You're done, or ending the session** → no suggestion at all.
 
-`/prd-ground` runs as PM like every other command on this route, even where a PA or PE runs it for a PM who cannot clone the code: the suggestion follows the *next* command's role, exactly as every other transition does. From a root `/brd-split`, typing it later is PM to PM, yet it is a **`/clear`** — it re-reads from disk all it needs and none of the split's walk; *Ground now* runs it in the same session instead.
+`/prd-ground` runs as PM like every other command on this route, even where a PA or PE runs it for a PM who cannot clone the code: the suggestion follows the *next* command's role, exactly as every other transition does. So `/brd-split` on a root → `/prd-ground` on a child, and `/prd-ground` → `/brd-split` on that slice, are both PM to PM → **`/compact`**; only a PA or PE who grounded for a PM hands the next step to someone else's fresh session.
 
 ## The `/rename` aid
 

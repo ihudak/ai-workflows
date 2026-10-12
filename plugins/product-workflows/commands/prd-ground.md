@@ -61,11 +61,12 @@ behaviour, not the behaviour.
    that shape is its own defect and is refused rather than silently degraded:
    `PRD_GROUND_NO_PREREQUISITES: --depends-on names a prerequisite BRD whose frozen decisions set a finding's will-change horizon, and <KEY> is on the idea route, which has no decision register to read. Drop the flag and re-run; every finding on this route is horizon: current.`
    `--repos <name>[,<name>…]` — one token, the names comma-separated: the repositories Phase 1
-   step 1 would otherwise prompt for, resolved by its steps 2–4 exactly as typed names are. One
-   token, never a list running to the next flag, so the key typed after it is never taken for a
-   repository. **Refused with `--no-code`**, which grounds no code and resolves no repository —
-   checked here, as the `--no-code` refusals below are:
-   `PRD_GROUND_REPOS_NO_CODE: --repos names the repositories to ground code against, and --no-code grounds no code — drop one and re-run '/product-workflows:prd-ground <KEY>'.`
+   step 1 would otherwise prompt for, resolved by its steps 2–4 exactly as typed names are — under
+   `--no-code` too, where Phases 1 and 3 still run in full (above). One token, never a list running
+   to the next flag, so the key typed after it is never taken for a repository; **an entry beginning
+   `/` is an absolute path to a clone**, taken as step 3's *Specify a different absolute path for
+   this repo* answer is, and named by its remote slug, or by its directory's basename where its
+   `origin` does not read.
    `--from-split <BRD-KEY>` — consumes the next token, read with `read-key`: the root
    `/product-workflows:brd-split`'s *Ground now* ran this command from (step 0). It changes nothing
    else in the run; step 9 checks it.
@@ -98,7 +99,7 @@ behaviour, not the behaviour.
 
    **Every flag but `--depends-on` carries over unchanged, on either route, including every refusal
    combination above** — stated here rather than left for a reader to infer from silence;
-   `--depends-on` is the one route-bound flag, refused on `route: idea` at the top of this step. `--no-design`,
+   `--depends-on` and `--from-split` are the two route-bound flags — the first refused on `route: idea` at the top of this step, the second stopped there by step 9, since that route has no parent. `--no-design`,
    `--no-docs`, `--docs <path>`, `--rebaseline`, and `--derivation-matrix`/`--no-derivation-matrix`
    test only one another and the resolved folder's own grounding files, never a BRD-route artifact,
    so none of them needs a route branch of its own. The one worth looking at rather than assuming is
@@ -1983,8 +1984,10 @@ choices: ["Write the missing frame-set index — /workflows-core:frames <BRD-KEY
 
 The resume pointer is written in the terminal cost phase (Phase 11), per
 `workflows-core:session-hygiene` §1. Grounding another repository or
-prerequisite in the same BRD? → run **`/compact`**. Handing off to `/brd-split`, even yourself? →
-run **`/clear`** (`route: brd`). Grounding another repository for the same PRD? → run
+prerequisite in the same BRD? → run **`/compact`**. Continuing as PM into `/brd-split` on this slice? → run **`/compact`**
+(`route: brd`) — the same role, and its walk allocates against the findings this run just wrote;
+handing it to the PM you ran this for, as a PA or PE? → run **`/clear`**: they pick it up in their own
+session. Grounding another repository for the same PRD? → run
 **`/compact`**. Handing off to `/create-ard` or `/specify`, even yourself? → run **`/clear`**
 (`route: idea`). Guidance only — nothing is auto-run.
 
