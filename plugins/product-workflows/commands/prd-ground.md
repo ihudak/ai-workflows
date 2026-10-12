@@ -677,7 +677,7 @@ the manual path:
    under each entry of `$REPOS_PATH`, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -C <dir> remote get-url origin
    2>/dev/null` (`workflows-core:bounded-run`), strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git` or whose `git remote` call fails/times out. **Never
    assume a `<base>/<slug>` directory name** — resolution is always by remote slug.
-3. Resolve each named repo against the map: one match → use it; multiple matches → auto-prefer
+3. **An entry beginning `/` is an absolute path to a clone** — from `--repos`, or typed at step 1 — and is never matched against the map: it is resolved as *Specify a different absolute path for this repo* resolves one below. Resolve each other named repo against the map: one match → use it; multiple matches → auto-prefer
    basename ending `-repo`, then `_repo`/`_fast`, then alphabetically last (show candidates before
    proceeding); zero matches → escalate per the `Repo unresolved (zero matches) — /prd-ground` rule
    in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`:
@@ -687,7 +687,7 @@ the manual path:
    A clone reached through *Specify a different absolute path for this repo* is named by its own
    remote slug, read as step 2 reads one, where its `origin` reads; where it does not — the one way
    this phase resolves a clone with no readable `origin` — it is named by the name the operator
-   typed for it in step 1's prompt. That name is the slug Phase 3 compares and Phase 8 records in
+   typed for it in step 1's prompt — or, for a path `--repos` or step 1's answer gave, which carries no name of its own, by its directory's basename. That name is the slug Phase 3 compares and Phase 8 records in
    `grounding/baselines.md` (`workflows-core:grounding-format` §4 step 1).
 4. Empty final list (every repo skipped or missing) → escalate per the `No repos derivable — /epics`
    rule in `workflows-core:escalation-rules`, whose `/prd-ground` variant

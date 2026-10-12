@@ -1483,7 +1483,7 @@ On *Ground now*, record the commit Phase 6's handoff pushed — `git -C "$SPECS_
 later* would — Phase 8 included. On *Ground now — <S> slice(s)*, tell the operator to **merge it only
 when this run asks**: its own session commit (Phase 8) rides in the same pull request, and a merge
 before it strands that commit on a merged branch. A typed answer is acted on as the option it expresses; anything else is asked again.
-Hold what was confirmed — the children, the repositories' slugs, and this run's own run flags — for
+Hold what was confirmed — the children, the repositories' names (a slug each, or the absolute path a clone was named by), and this run's own run flags — for
 the continuation.
 
 **A donor that gained no row is not in that set and is not offered anything here — and that is the condition, not "being a donor".** It lost a row and gained none, so its remaining findings still cover everything it still claims, and the findings it holds about the row it gave up stay on file as a record of what it saw (`workflows-core:grounding-format` §8) — they are not stale grounding to repair, and re-running `/prd-ground` on it would re-derive work nothing asked for. **A donor that also gained a row is in the set like any other receiver**, which is reachable whenever two donors are involved: A's row lands on C while C's own row goes elsewhere, and C is then a child that gained a row and needs its grounding re-derived for it. Stating the rule as "a donor is never offered" would drop C out of the offer on the strength of a label. A donor left claiming nothing at all was resolved in Phase 4.5 and is not here either.
@@ -1533,8 +1533,7 @@ Per `workflows-core:session-hygiene`, the resume pointer is written in the
 terminal cost phase (Phase 8), after the cost entry and before the commit step. On `full`,
 grounding a child is PM work too — PM to PM, so → run **`/compact`** before typing it, or let
 *Ground now* run it in this session; a PA or PE grounding it for a PM who cannot clone the code
-picks it up in their own session. This BRD's own key has no further step, so no
-`/compact` branch applies here. On `allocate-only`, continuing as PM into
+picks it up in their own session. This BRD's own key has no step of its own. On `allocate-only`, continuing as PM into
 `/product-workflows:brd-interview <BRD-KEY>` on this same slice keeps the context relevant → run
 **`/compact`**. Guidance only — nothing is auto-run.
 
@@ -1703,17 +1702,17 @@ this section waits for the operator's merge and checks it.
      reading unmerged for ever (§3.5: a commit made after the merge). Merged → step 2. Not merged → say so, name the pull request again,
      and put the same question again: never re-check silently in a loop, and never take an answer
      for a merge the test did not find. *Stop here* ends the continuation, printing
-     `/product-workflows:prd-ground <CHILD-KEY> --repos <slug>,…` for each chosen child, to type once
+     `/product-workflows:prd-ground <CHILD-KEY> --repos <name>,…` for each chosen child, to type once
      the pull request merges.
 
    Phase 7 offered *Ground now* on no other outcome.
 2. **Run `/product-workflows:prd-ground` once per chosen child, in the order Phase 7 named them, one after
    another**, each through the Skill tool:
-   `Skill(skill: "product-workflows:prd-ground", args: "<CHILD-KEY> --repos <slug>,… --from-split <BRD-KEY> <this run's run flags>")`
-   — the repositories as their slugs in one comma-separated token, and the run flags this run was
+   `Skill(skill: "product-workflows:prd-ground", args: "<CHILD-KEY> --repos <name>,… --from-split <BRD-KEY> <this run's run flags>")`
+   — the repositories as their names, slugs or absolute paths, in one comma-separated token, and the run flags this run was
    given (`--skip-costs`, `--skip-feedback`, `--enforce-model=<model>`) passed through as typed, so a
    grounding run honours what the operator asked of this one. **Each is a complete run, never an
-   `--inline` one**: its own Phase 0 gates — its preflight's B2 row switches the specs repository off
+   `--inline` one**: its own Phase 0 gates — its preflight's B2 row — or B4, after an early merge — switches the specs repository off
    this run's merged branch onto the default branch and pulls (`workflows-core:specs-repo-git` §3) —
    its own handoff and pull request in that child's folder, its own cost entry under that child's
    key, its own resume pointer and final report. An inline run would fold its cost into this run's
@@ -1724,6 +1723,8 @@ this section waits for the operator's merge and checks it.
    them. A run whose handoff is declined still completes as its own Phase 9 says, and the
    continuation goes on. An answer that ends there — *Stop here* at a run's next-step offer, or
    *Cancel* at any of its questions — ends the continuation after that run, as step 3 reports.
+   **Say both once, before the first run**: that each run asks its own questions, and that such an
+   answer ends the children not yet ground.
 3. **A run that stops ends the continuation.** Say which children were ground, which run stopped and
-   with what, and print `/product-workflows:prd-ground <CHILD-KEY> --repos <slug>,…` for every chosen
+   with what, and print `/product-workflows:prd-ground <CHILD-KEY> --repos <name>,…` for every chosen
    child not yet ground.
