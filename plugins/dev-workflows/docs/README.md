@@ -9,6 +9,7 @@
 | build the thing | [`/implement`](commands/implement.md) |
 | document it, then announce it | `/docs-workflows:document`, `/docs-workflows:release-notes` — both ship in the companion `docs-workflows` plugin |
 | check whether a ticket is really ready | [`/ready`](commands/ready.md) |
+| check that what shipped matches what was specified | [`/conformance`](commands/conformance.md) |
 | fix a CVE or upgrade a dependency | [`/vuln`](commands/vuln.md), [`/upgrade`](commands/upgrade.md) |
 | find out whether my test stack is covered | [Test suite detection](reference/test-suite-detection.md) |
 | understand what a run cost | [Session cost](reference/session-cost.md) |
@@ -21,6 +22,7 @@ Three pages orient you before you touch a command: [Getting started](getting-sta
 - [`/design`](commands/design.md) — take over a merged specification and author a reviewed engineering design, grounded strictly in the mounted code.
 - [`/implement`](commands/implement.md) — classify, plan, implement, test, and review a code change end to end.
 - [`/ready`](commands/ready.md) — derive the workflow phase from the ARD/spec/design record and report what is missing to leave it; `--claimed` checks a status you declare against it.
+- [`/conformance`](commands/conformance.md) — trace every requirement of an Epic (the Dev, before its pull request merges) or a PRD (the PE, once every Epic has merged) against the code, and settle each discrepancy: fix the code, amend the document, or accept.
 - [`/upgrade`](commands/upgrade.md) — plan and execute a library, framework, runtime, or build-tool upgrade.
 - [`/vuln`](commands/vuln.md) — research and fix a CVE, one dependency or code change at a time.
 

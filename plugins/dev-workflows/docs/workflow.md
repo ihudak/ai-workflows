@@ -12,6 +12,7 @@ flowchart TD
     subgraph DEV["Dev — build, verify & deliver"]
         design["/design"]:::dev -->|design.md| implement["/implement"]:::dev
         ready["/ready"]:::dev
+        conformance["/conformance"]:::dev
     end
     subgraph ANY["Anytime — standalone maintenance & utilities"]
         maint["/vuln · /dev-workflows:upgrade"]:::dev
@@ -22,6 +23,9 @@ flowchart TD
     harvest -.->|team decisions| design
     design -.->|design.md + specification.md| ready
     ready -.->|_readiness.md — advisory| implement
+    implement -->|"Epic: the Dev, pull request open"| conformance
+    conformance -.->|"fix the code — a follow-up"| implement
+    conformance -.->|"PRD: the PE, every Epic merged — amend the document"| specify
     implement -.->|code + implementation.md, in docs-workflows| docsplugin["/docs-workflows:document · /docs-workflows:release-notes"]:::docs
 
     classDef prod fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
@@ -41,7 +45,7 @@ The diagram above shows where each command sits in the pipeline; [Roles and phas
 
 | Role | Runs | Produces → lands at |
 |---|---|---|
-| **Dev** | `/design`, `/implement`, `/ready` (then `/docs-workflows:document` and a final `/docs-workflows:release-notes`); off the spine, `docs-workflows`' `/docs-init`, `/docs-brand` and `/docs-audit` | `design.md` on the specs repo's default branch; code committed on a branch in `$REPOS_PATH`, the push and the pull request behind a consent choice; a read-only readiness verdict that sets no status |
+| **Dev** | `/design`, `/implement`, `/ready`, `/conformance` (then `docs-workflows`' `/document` and a final `/release-notes`); off the spine, `docs-workflows`' `/docs-init`, `/docs-brand` and `/docs-audit` | `design.md` on the specs repo's default branch; code committed on a branch in `$REPOS_PATH`, the push and the pull request behind a consent choice; a read-only readiness verdict that sets no status |
 | **Anytime** | `/vuln`, `/upgrade` | a fixed CVE or a completed upgrade, committed on a feature branch in `$REPOS_PATH` |
 
 The PM, PA, and PE roles that produce this plugin's own input — `specification.md` — ship in the companion `product-workflows` plugin; see [Roles and phases](roles-and-phases.md) for where this plugin's spine picks up and that plugin's own Roles and phases page for what each of those three roles owns.

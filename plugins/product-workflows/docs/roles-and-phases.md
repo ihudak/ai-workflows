@@ -34,11 +34,11 @@ The companion `dev-workflows` plugin's `/dev-workflows:ready` is the one caller 
 ## PE — product engineering
 
 - **Owns:** breaking a PRD into Epics, and writing an org-standard specification for one item — an Epic, or, for a small PRD, the whole PRD.
-- **Runs:** `/epics`, `/specify`.
+- **Runs:** `/epics`, `/specify`, and, once every Epic has merged, `/dev-workflows:conformance <PRD-KEY>`, which closes the implementation phase those two opened.
 - **Consumes:** the PRD, plus the ARD when one exists and any Epics already drafted.
-- **Produces:** one `EPIC-<PRD-KEY>-NN-<eslug>/epic.md` per Epic under the PRD folder, plus a PRD-holistic `_coverage.md` beside `prd.md`, landed on the specs repo's default branch; `specification.md`, landed the same way.
+- **Produces:** one `EPIC-<PRD-KEY>-NN-<eslug>/epic.md` per Epic under the PRD folder, plus a PRD-holistic `_coverage.md` beside `prd.md`, landed on the specs repo's default branch; `specification.md`, landed the same way; and, from `/dev-workflows:conformance` on the PRD, `_conformance.md` with the PE's final decision on every discrepancy, the Dev's proposals included.
 - **Hands over at the seam:** `/specify` gates on the PRD the same way `/create-ard` does — an absent PRD falls back to the resolved folder, and is reported rather than silent, and the hard stop is an unmerged PRD, never a missing one. `/epics` has no PRD gate at all, but it does gate two other inputs: an optional PRD-level `specification.md`, whose absence is a silent skip (`vi_spec_present: false`) — save on a multi-component PRD, where `/epics` asks for it — and the applicable ARD, where `status: unmerged` stops the run. `/epics` lands its Epic drafts on an `epics/` branch with a pull request, and `/specify` — like `/create-ard` at Epic altitude — stops while an Epic it reads sits there unmerged; an Epic on no branch is read from the folder as it stands, and reported. `/specify` lands `specification.md` onto the specs repo's default branch, and the companion plugin's `/dev-workflows:design` refuses to start until it finds that specification there.
-- **Cost phase(s):** `epic-refinement` (`/epics`), `specification` (`/specify`) — both role `pe`.
+- **Cost phase(s):** `epic-refinement` (`/epics`), `specification` (`/specify`) and `conformance` (`/dev-workflows:conformance` on a PRD) — all role `pe`.
 
 ## Where Dev picks up
 

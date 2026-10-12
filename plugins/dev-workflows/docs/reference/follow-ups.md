@@ -34,6 +34,10 @@ misplaced, so nothing is written under it, and the notice says that is the reaso
 That is the whole ladder. It used to have four rungs, the first of which was a vault; with no vault
 and no import, two of them described places that no longer exist.
 
+## A withdrawn follow-up
+
+One command edits a follow-up after writing it: `/conformance`'s PRD run, when the PE overrules a Dev's *fix the code* decision whose follow-up the Epic run already wrote. It ticks the line and appends `— withdrawn: <PRD-KEY>/[DD#n]`, and never deletes it. A ticked line counts as done, so a later `/implement` of the Epic does not read it back as open.
+
 ## What no longer becomes a follow-up
 
 The three chores this emitter mostly used to carry are gone, so do not go looking for them: *paste

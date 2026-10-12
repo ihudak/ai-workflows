@@ -51,11 +51,13 @@ flowchart TD
     subgraph PE["PE — breakdown and specification"]
         epics["/epics"]:::prod
         specify["/specify"]:::prod
+        conformanceprd["/dev-workflows:conformance (PRD)"]:::dev
     end
     subgraph DEV["Dev — build and verify"]
         design["/dev-workflows:design"]:::dev
         ready["/ready"]:::dev
         implement["/implement"]:::dev
+        conformanceepic["/conformance (Epic)"]:::dev
     end
     subgraph DOC["Dev — documentation and release notes"]
         document["/document (keyed)"]:::docs
@@ -123,6 +125,10 @@ flowchart TD
     design -.->|"design.md + specification.md"| ready
     ready -.->|"_readiness.md — advisory"| implement
     implement -->|"code + implementation.md"| document
+    implement -->|"Epic: the Dev, pull request open"| conformanceepic
+    conformanceepic -.->|"fix the code — a follow-up"| implement
+    conformanceepic -.->|"the Dev's proposed decisions"| conformanceprd
+    conformanceprd -.->|"PRD: the PE, every Epic merged — amend the document"| specify
     implement -.->|"implementation.md — diff grounding on"| rnfinal
 
     docsinit -.->|"a new docs repo + profile"| document
@@ -162,6 +168,7 @@ flowchart TD
 - **The audit backlog has a manual implementation stage.** Select an actionable unit, write its page, maintain its `unit:` metadata and backlog `page_path` / `status`, verify its claims, and publish it. `/document` direct mode can help with a described prose edit, but it never reads the backlog or manages unit status; keyed mode remains the feature-documentation route. `/docs-write` is planned, not shipped. The `docs-workflows` documentation route page describes the manual procedure; `--refresh` re-audits coverage and does not replace verification.
 - **The PA lane keeps its own decisions.** `/harvest-decisions` turns the decisions of merged ARDs into team records that `/create-ard`, `/specify` and `/dev-workflows:design` ground on; `/promote-decisions`, run in the architecture repository, proposes organisation ADRs from them, and once one is accepted grounding cites the ADR instead of the record. The product-workflows Workflow overview page draws the whole loop.
 - **`/ready` sits beside the spine, not on it.** Its verdict is advice `/implement` reads; it blocks nothing.
+- **`/dev-workflows:conformance` is drawn twice, once per role.** In the Dev lane the Dev checks an Epic while its pull request is open, and the decisions are proposals; in the PE lane the PE checks the whole PRD once every Epic has merged, ruling on every Dev decision, and the PE's decisions are final.
 - **The Anytime lane hands no deliverable to the pipeline** except `/frames`' frame-set index, which `/prd-ground`'s design grounding needs. The portal lane prepares the documentation repository `/document` writes into, and `/docs-serve` only previews it.
 
 ## The detail, per plugin
