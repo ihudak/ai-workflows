@@ -126,12 +126,12 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
 - **`<BRD-KEY>`, and a review** — a key absent or malformed stops with `BRD_RECONCILE_NEEDS_KEY`; an
   `@<review-file>` that is not a readable file, or no path and no review committed beside the
   bundle, stops with `BRD_RECONCILE_NEEDS_REVIEW`.
-- **No handed-off bundle changed.** A file in a `bundle-<date>/` on the default branch that a later
-  commit modified or deleted — a customer's pull request that edited a package document, say — is
-  shown to you with the commits, and you choose: stop and restore it (recommended, ending with
-  `BRD_RECONCILE_BUNDLE_CHANGED` and a restore command per file), or continue, where the changes are
-  your own, such as a never-sent bundle you renamed aside. A file merely added to a bundle is not a
-  change.
+- **A committed review's pull request changed no bundle file.** Where the review came in by the
+  customer's pull request, the run checks what that pull request modified or deleted in a
+  `bundle-<date>/` folder and is still changed on the default branch. Any such file is shown to you,
+  and you choose: stop and restore it (recommended, ending with `BRD_RECONCILE_BUNDLE_CHANGED` and the
+  restore command), or continue. A file the pull request only added is not a change; a review the
+  customer committed inside a bundle by mistake is moved out.
 - **A slice, not a root and not an idea-route PRD folder.** The moment the folder resolves, its
   prefix is tested — `BRD-` is a root, `EPIC-` an Epic folder, `PRD-` a slice or an idea-route PRD folder — never the
   folder's asserted `kind:`. An `EPIC-` folder stops with `BRD_RECONCILE_EPIC_LEVEL` before any gate runs: an Epic holds none of what this command reads, so the stop names `/brd-reconcile <SLICE-KEY>` on the slice above it where there is one, and no command where there is none. A `PRD-` folder carrying no `brd-link.md` was never carved from a BRD
