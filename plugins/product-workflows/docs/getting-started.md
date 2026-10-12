@@ -53,7 +53,7 @@ Your shipped product documentation's clone — **read-only** in its role as a gr
 
 ### Claude Code's skill-listing budget
 
-**Set this once, in `~/.claude/settings.json`, whichever plugins you install.** Claude Code shows the model one list of every installed plugin's skills and model-invocable commands, and gives that list 1% of the context window — 8,000 characters in a 200K-token session, and in every subagent on a 200K model. Past that it shortens every description in the list, and the model can no longer tell which skill fits a task. This marketplace's commands are typed-only and take no room in the list, but its skills do, and so does every other plugin, Claude Code's own skills and your personal ones: every plugin of the `shipwright` marketplace, installed together, takes about 5,600 characters. Add this top-level key to the settings file:
+**Set this once, in `~/.claude/settings.json`, whichever plugins you install.** Claude Code shows the model one list of every installed plugin's skills and model-invocable commands, and gives that list 1% of the context window — 8,000 characters in a 200K-token session, and in every subagent on a 200K model. Past that it shortens every description in the list, and the model can no longer tell which skill fits a task. This marketplace's commands are nearly all typed-only and take no room in the list — the few another command runs for you, such as `/prd-ground`, do — and its skills do too, and so does every other plugin, Claude Code's own skills and your personal ones: every plugin of the `shipwright` marketplace, installed together, takes about 5,800 characters. Add this top-level key to the settings file:
 
 ```json
 "skillListingBudgetFraction": 0.025
@@ -69,7 +69,7 @@ That gives 20,000 characters at 200K and 100,000 at 1M; a session pays only for 
 /idea ACME-77 a lightweight way for on-call engineers to silence a noisy alert for one hour without editing the alerting rule
 ```
 
-**Type the command.** Every command in this plugin is typed-only (`disable-model-invocation: true`): it stays out of the list of skills the model picks from, which keeps that list inside Claude Code's budget, so asking in prose — "turn this idea into a brief" — does not start it.
+**Type the command.** Every command in this plugin but one is typed-only (`disable-model-invocation: true`): it stays out of the list of skills the model picks from, which keeps that list inside Claude Code's budget, so asking in prose — "turn this idea into a brief" — does not start it. The one is `/prd-ground`, which `/brd-split`'s *Ground now* runs for you; it refuses to start any other way you did not type it.
 
 `ACME-77` is yours to invent — nothing looks it up, and no tracker is read. It only has to match `^[A-Z][A-Z0-9_]*(-\d+)+$`.
 

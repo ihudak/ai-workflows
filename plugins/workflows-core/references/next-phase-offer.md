@@ -7,7 +7,7 @@ commands so the routing graph and the offer rules live in ONE place (the same sh
 
 ## The offer contract (7 rules)
 
-1. **Guidance-only** — the offer NAMES the next command(s); it NEVER auto-invokes anything.
+1. **Guidance-only** — the offer NAMES the next command(s); it NEVER auto-invokes anything. **One exception, operator-elected:** an option the operator picks from the offer itself may run the command it names, as a complete run of its own — today only `/product-workflows:brd-split`'s *Ground now*, which runs `/product-workflows:prd-ground` on the children the operator chooses, after the split's pull request has merged (that command's *Ground now — the operator-elected continuation*). Nothing runs unless that option is chosen, the merge stays the operator's act, and every other option of every offer stays guidance. It exists because the operator would otherwise retype a command whose arguments the run already holds, with no decision between the two runs that the offer could not ask.
 2. **Role-labeled** — it names the concrete command(s) for the next step, tagged with the owning
    role (PM / PA / PE / Dev), even on a handoff — one person may wear several hats and just keep
    going. Never a bare "hand off to PA".
@@ -118,19 +118,19 @@ array carries every option.
   *(optional)* → `/product-workflows:create-ard <PRD>`; or hand to PE → `/product-workflows:epics <PRD>` (or `/product-workflows:specify <PRD>`).
 - `/product-workflows:update-prd <KEY>` — re-entry, not a linear node: reached when `/product-workflows:create-prd` redirects an existing-PRD call, or when a later phase forces a PRD refresh. Its Phase 6 offers re-runs only for existing downstream artifacts, recommends those affected by the update, and skips the picker when none exist, without skipping terminal bookkeeping. Candidate routes are `/docs-workflows:release-notes <PRD>` (PM), `/product-workflows:create-ard <PRD>` (PA), `/product-workflows:epics <PRD>` (PE), and `/product-workflows:specify <PRD>` (PE).
 
-**PM / PA — the BRD-to-PRD route**
+**PM — the BRD-to-PRD route**
 
 - `/product-workflows:brd-intake <BRD-KEY> @<brd-file>` — the route's entry point → hand to PM →
   `/product-workflows:brd-split <BRD-KEY> "<how to cut it>"` (PM; the instruction is mandatory on a
   root, since a root is never ground and carries no finding to cluster by).
-- `/product-workflows:brd-split <BRD-KEY>` on a root (`split_mode: full`) → `/product-workflows:prd-ground <CHILD-KEY>` (PA) once per child that **gained a row this run** — the slices the run keyed and still claiming at least one `[BR#n]`, plus any standing child its walk newly resolved a row to — each such child re-entering the route at grounding. **The set is what the run did, never what the tree looks like afterwards**, and both directions of that matter: a non-empty child that gained nothing has grounding that still covers everything it claims, so offering a re-run for it asks an operator to re-derive work nothing needs; and a **standing receiver** — a child that already stood and has just been given a row, the one whose grounding demonstrably no longer covers what it claims — is the child that most needs the offer and is exactly what a set defined over emptiness would miss. A child whose `claims:` list is empty — including one the parent's walk emptied by withdrawing a claim, **provisional or committed**, leaving it holding only orphan rows — is a standing empty child (`/product-workflows:brd-split` Phase 7), and grounding it stops at `PRD_GROUND_EMPTY_INVENTORY`, so it is not offered either. The root's own key is offered no further: `/product-workflows:brd-interview` refuses any root outright.
-- `/product-workflows:prd-ground <CHILD-KEY>` (PA) → `/product-workflows:brd-split <CHILD-KEY>` (PM),
+- `/product-workflows:brd-split <BRD-KEY>` on a root (`split_mode: full`) → `/product-workflows:prd-ground <CHILD-KEY>` (PM) once per child that **gained a row this run** — run here by the offer's *Ground now* where the operator elects it (rule 1's exception), or typed later — the slices the run keyed and still claiming at least one `[BR#n]`, plus any standing child its walk newly resolved a row to — each such child re-entering the route at grounding. **The set is what the run did, never what the tree looks like afterwards**, and both directions of that matter: a non-empty child that gained nothing has grounding that still covers everything it claims, so offering a re-run for it asks an operator to re-derive work nothing needs; and a **standing receiver** — a child that already stood and has just been given a row, the one whose grounding demonstrably no longer covers what it claims — is the child that most needs the offer and is exactly what a set defined over emptiness would miss. A child whose `claims:` list is empty — including one the parent's walk emptied by withdrawing a claim, **provisional or committed**, leaving it holding only orphan rows — is a standing empty child (`/product-workflows:brd-split` Phase 7), and grounding it stops at `PRD_GROUND_EMPTY_INVENTORY`, so it is not offered either. The root's own key is offered no further: `/product-workflows:brd-interview` refuses any root outright.
+- `/product-workflows:prd-ground <CHILD-KEY>` (PM) → `/product-workflows:brd-split <CHILD-KEY>` (PM),
   which always runs `allocate-only` here (`/product-workflows:prd-ground` never resolves a root) and
   creates no further child → `/product-workflows:brd-interview <CHILD-KEY>` (PM).
 - `/product-workflows:brd-interview <BRD-KEY>` → `/product-workflows:brd-package <BRD-KEY>` (PM), offered
   only where this run's own state is one `/product-workflows:brd-package` would accept
   (`/product-workflows:brd-package` Phase 0 owns that test); otherwise → another
-  `/product-workflows:brd-interview <BRD-KEY>` round (PM), or `/product-workflows:prd-ground <BRD-KEY>` (PA)
+  `/product-workflows:brd-interview <BRD-KEY>` round (PM), or `/product-workflows:prd-ground <BRD-KEY>` (PM)
   for a question no finding bears on yet. Where nothing is left for the customer to review, the slice is
   decided and hands over from here, with no reconciliation: → `/product-workflows:create-ard <BRD-KEY>`
   (PA, optional) or `/product-workflows:specify <BRD-KEY>` (PE), and `/product-workflows:create-prd <BRD-KEY>`

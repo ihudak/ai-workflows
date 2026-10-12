@@ -107,7 +107,7 @@ flowchart TD
     p14 -.->|"advance_ready + no unallocated row and one covered-here"| prd["/create-prd (PM)"]
     p14 -.->|"advance_ready"| ard["/create-ard (PA, optional)"]
     p14 -.->|"advance_ready"| spec["/specify (PE)"]
-    p14 -.->|"advance_ready: no — reopened decision, held customer question, unre-derived finding, or an unswept dependent"| reentry["/brd-interview, /brd-package, or /prd-ground --rebaseline, on this same &lt;BRD-KEY&gt; (PM/PA)"]
+    p14 -.->|"advance_ready: no — reopened decision, held customer question, unre-derived finding, or an unswept dependent"| reentry["/brd-interview, /brd-package, or /prd-ground --rebaseline, on this same &lt;BRD-KEY&gt; (PM)"]
 ```
 
 `customer-review-reader` is dispatched once, on the detection chain. `workflows-core:impl-maintenance` runs in the

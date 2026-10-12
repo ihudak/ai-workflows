@@ -1555,6 +1555,79 @@ def _selftest_body(tmp):
     check(whole.get("compactions") == 0,
           "a window with no compaction reports 0, so a caller never branches on absence")
 
+    # split -> ground -> ground: /brd-split's Ground now runs /prd-ground through the Skill
+    # tool, once per chosen slice, after the split has emitted its own entry. Each run's
+    # window must open where the one before closed (section 3), every Skill-started run
+    # must cut as a typed one does, and the three windows must sum to the session with no
+    # segment counted twice or dropped -- including each run's subagents, which a window
+    # takes by timestamp in (last_ts, now], not by line.
+    _gns = os.path.join(tmp, "ground-namespaces.json")
+    with open(_gns, "w", encoding="utf-8") as fh:
+        json.dump({"product-workflows": ["brd-split", "prd-ground"]}, fh)
+    def _gsk(ts, tid):
+        return {"type": "assistant", "timestamp": ts, "message": {"content": [
+            {"type": "tool_use", "name": "Skill", "id": tid,
+             "input": {"skill": "product-workflows:prd-ground",
+                       "args": "BOOK-2-1 --repos bookstore --from-split BOOK-2"}}]}}
+    def _gres(ts, tid):
+        return {"type": "user", "timestamp": ts, "message": {"content": [
+            {"type": "tool_result", "tool_use_id": tid,
+             "content": "Launching skill: product-workflows:prd-ground"}]}}
+    _stages = [
+        [_st_plugin_cmd("2026-09-01T10:00:00.000Z", "/product-workflows:brd-split"),
+         _st_asst("2026-09-01T10:00:10.000Z", 1000),          # the walk
+         _st_asst("2026-09-01T10:00:50.000Z", 200)],          # its Phase 8
+        [_st_asst("2026-09-01T10:01:10.000Z", 50),            # waiting on the merge
+         _gsk("2026-09-01T10:01:20.000Z", "toolu_g1"), _gres("2026-09-01T10:01:21.000Z", "toolu_g1"),
+         _st_asst("2026-09-01T10:02:00.000Z", 2000)],
+        [_gsk("2026-09-01T10:02:40.000Z", "toolu_g2"), _gres("2026-09-01T10:02:41.000Z", "toolu_g2"),
+         _st_asst("2026-09-01T10:03:00.000Z", 1500)],
+    ]
+    _ends = ["2026-09-01T10:01:00.000Z", "2026-09-01T10:02:30.000Z", "2026-09-01T10:03:30.000Z"]
+    _gsub = os.path.join(tmp, "ground-subagents")
+    os.makedirs(_gsub)
+    with open(os.path.join(_gsub, "agent-g.jsonl"), "w", encoding="utf-8") as fh:
+        for ts, out in (("2026-09-01T10:00:20.000Z", 300),     # the split's maintenance agent
+                        ("2026-09-01T10:01:40.000Z", 5000),    # ground #1's grounder
+                        ("2026-09-01T10:02:10.000Z", 4000),    # ground #1's verifier
+                        ("2026-09-01T10:03:10.000Z", 6000)):   # ground #2's grounder
+            fh.write(json.dumps({"timestamp": ts, "message": {
+                "role": "assistant", "model": "claude-opus-5",
+                "usage": {"input_tokens": 0, "output_tokens": out,
+                          "cache_read_input_tokens": 0,
+                          "cache_creation_input_tokens": 0}}}) + "\n")
+    def _grun(path, now, ck):
+        out = subprocess.run([sys.executable, os.path.abspath(__file__), "--transcript", path,
+                              "--prices", ppath, "--now-ts", now, "--subagents-dir", _gsub,
+                              "--namespaces", _gns, "--snapshot", snap, "--checkpoint", ck],
+                             capture_output=True, text=True)
+        return json.loads(out.stdout) if out.returncode == 0 else None
+    _gck = os.path.join(tmp, "ground-ck.json")
+    _gpath = os.path.join(tmp, "ground.jsonl")
+    _gwin = []
+    for _i, (_rows, _now) in enumerate(zip(_stages, _ends)):
+        with open(_gpath, "a", encoding="utf-8") as fh:        # the transcript grows
+            for r in _rows:
+                fh.write(json.dumps(r) + "\n")
+        _w = _grun(_gpath, _now, _gck)
+        _gwin.append(_w)
+        if _w is not None:                                     # emit-cost writes it back
+            with open(_gck, "w", encoding="utf-8") as fh:
+                json.dump(_w["new_checkpoint"], fh)
+    _gall = _grun(_gpath, _ends[-1], os.path.join(tmp, "ground-no-ck.json"))
+    check(None not in _gwin and _gall is not None
+          and [tokens(w["models"]) for w in _gwin] == [1500, 11050, 7500]
+          and tokens(_gall["models"]) == 20050,
+          "split -> ground -> ground: each window holds its own run's spend and its "
+          "subagents', and the three sum to the session (got %r of %r)"
+          % ([tokens(w["models"]) for w in _gwin if w], _gall and tokens(_gall["models"])))
+    check(None not in _gwin and [[b["command"].lstrip("/") for b in w["command_boundaries"]]
+                                 for w in _gwin]
+          == [["brd-split"], ["prd-ground"], ["prd-ground"]],
+          "split -> ground -> ground: a Skill-started /prd-ground cuts its window as the "
+          "typed /brd-split does (got %r)"
+          % ([[b.get("command") for b in w["command_boundaries"]] for w in _gwin if w],))
+
     if failures:
         print("SELFTEST FAIL (%d)" % len(failures))
         return 1

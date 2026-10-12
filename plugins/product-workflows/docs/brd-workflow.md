@@ -7,10 +7,10 @@ handed over as-is — typically long, internally inconsistent in places, and not
 could build against without first finding out which of its claims are actually still true. This
 route exists to turn that document into a requirement inventory every row of which has been
 checked against real code and design, given a recorded fate, decided, and put back in front of the
-customer who wrote it — before a PRD is ever written from it. It is PM-owned end to end: five of
-its six commands run as PM, and one, `/prd-ground`, is PM-initiated but PA/Dev-executed — it is the
-step that actually opens the mounted repositories and design assets to check a claim, work that
-sits with PA/Dev rather than PM.
+customer who wrote it — before a PRD is ever written from it. It is PM-owned end to end: all six of its commands run as PM.
+`/prd-ground` is the step that opens the mounted repositories and design assets to check a claim,
+so it needs the code cloned, which a PM often does not have; where so, a PA or PE runs it instead where the PM cannot clone the code repositories — both have them cloned for their own work, and teams have fewer PAs than PEs, so either may. The
+entry is `pm` either way.
 
 ## The six commands, and where they hand over
 
@@ -24,7 +24,7 @@ flowchart TD
         package["/brd-package &lt;SLICE&gt;"]:::prod
         reconcile["/brd-reconcile &lt;SLICE&gt;"]:::prod
     end
-    subgraph PAD["PA/Dev — grounding, PM-initiated"]
+    subgraph PAD["PM — grounding (PA or PE where the PM cannot clone the code)"]
         ground["/prd-ground &lt;SLICE&gt;"]:::prod
     end
     subgraph OFF["Off-platform — the customer, with a vanilla agent and nothing installed"]
@@ -38,6 +38,7 @@ flowchart TD
 
     intake -->|inventory + ledger| splitroot
     splitroot -->|each confirmed slice, a PRD- folder| ground
+    splitroot -.->|"Ground now (operator-elected, after the split PR merges)"| ground
     ground -->|"verified [CG#n]/[DG#n] — required before the walk"| splitslice
     splitslice -->|allocated ledger| interview
     interview -->|"decisions.md + held [C] questions"| package

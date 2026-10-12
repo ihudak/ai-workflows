@@ -1,15 +1,14 @@
 ---
 name: prd-ground
-description: "Grounds a folder's requirement claims against code and an exported design frame set at pinned commits, and has every finding independently re-derived by grounding-verifier (Opus): a BRD slice's [BR#n] rows on the BRD route, where findings also get a current/will-change horizon against --depends-on, or a PRD's [AC#n]/[FR#n]/[US#n] rows, optionally, on the idea route. Read-only against every repository; documentation is a lead, never evidence. --no-code, --derivation-matrix, --rebaseline. Next: /brd-split, or /create-ard and /specify."
+description: "Grounds a BRD slice's [BR#n] rows, or an idea-route PRD's own requirements, against code and design at pinned commits; every finding is re-derived blind by grounding-verifier. Type it, or let /brd-split's Ground now run it — any other model-started run stops. Next: /brd-split."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
-disable-model-invocation: true
 ---
 
 Ground the BRD's requirement inventory against code and design: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
-`/prd-ground` is the **BRD-to-PRD route's grounding step** (PA phase), run once per slice
+`/prd-ground` is the **BRD-to-PRD route's grounding step** (a PM phase — a PA or PE runs it where the PM cannot clone the code repositories), run once per slice
 `/brd-split` carves — and **again on an already-ground slice a later re-cut gave a new row**, the third of the three cases `commands/brd-split.md` Phase 7 distinguishes when it offers this command, because no `[CG#n]` on file was derived against a row that arrived after them — it takes the `[BR#n]` inventory that slice's own `brd/brd-inventory.md`
 holds and checks its premises against real code and real design assets, at pinned commits, rather
 than letting a plausible-sounding claim stand unverified. Every
@@ -17,7 +16,7 @@ finding is independently re-derived by a different agent before it counts as evi
 (`workflows-core:grounding-format` §8) — this command's whole job is to make
 that discipline happen, not to ground anything itself.
 
-Usage: `/prd-ground <KEY> [--depends-on <BRD-KEY>…] [--derivation-matrix|--no-derivation-matrix] [--no-code] [--no-design] [--no-docs] [--docs <path>] [--rebaseline] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
+Usage: `/prd-ground <KEY> [--repos <name>[,<name>…]] [--from-split <BRD-KEY>] [--depends-on <BRD-KEY>…] [--derivation-matrix|--no-derivation-matrix] [--no-code] [--no-design] [--no-docs] [--docs <path>] [--rebaseline] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 `<BRD-KEY>` still resolves through `resolve-address`, which searches every level
 `workflows-core:addressing` §3 bounds — three below `specifications/` — and so returns a BRD that owns
@@ -38,7 +37,18 @@ behaviour, not the behaviour.
 
 ## Phase 0 — Resolve inputs and gate on main
 
-1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--depends-on` and `--docs` each consume the token after them (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
+0. **Typed, or `/brd-split`'s *Ground now* — nothing else starts this run.** This command is
+   model-invocable for one caller only: `/product-workflows:brd-split`'s *Ground now* continuation,
+   which runs it through the Skill tool with `--from-split <BRD-KEY>` naming the root it has just
+   split, once that run's pull request has merged. **Where this run was started through the Skill
+   tool** — the session's model invoked it, and the user typed no `/product-workflows:prd-ground`
+   this turn — **and its arguments carry no `--from-split`, stop before anything else**, writing
+   nothing: a grounding run costs Opus time on every claim against every repository, and a prose
+   request is not the operator electing it.
+   `PRD_GROUND_TYPED_ONLY: /prd-ground runs when you type it, or from /brd-split's Ground now — type '/product-workflows:prd-ground <KEY>' to ground <KEY>.`
+   A typed run is never stopped here, with or without the flag, and step 9 checks the flag against
+   the slice's own parent on every run that carries it.
+1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--depends-on`, `--docs`, `--repos` and `--from-split` each consume the token after them (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
    (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix or a folder's whole name, and carries the bare key from then on. On `needs-tree` (`$SPECS_PATH` unset), take step 3's `$SPECS_PATH` stop now — answered with a path, read the token again from the top of this step. If absent or invalid, stop:
    `PRD_GROUND_NEEDS_KEY: /prd-ground needs a key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) — re-run '/product-workflows:prd-ground <KEY>'.`
 2. **Flags.** `--depends-on <BRD-KEY>` — repeatable, each consuming the next token; read each with `read-key`, carry the key each reads and never the token typed, and drop (warn, do not stop the run) any that fail shape — a `needs-tree` value is read again once step 3 has settled `$SPECS_PATH`, and dropped with a warning if it still fails. **Refused outright on
@@ -50,6 +60,16 @@ behaviour, not the behaviour.
    doing nothing with it would leave a documented flag with a stated effect that never happens —
    that shape is its own defect and is refused rather than silently degraded:
    `PRD_GROUND_NO_PREREQUISITES: --depends-on names a prerequisite BRD whose frozen decisions set a finding's will-change horizon, and <KEY> is on the idea route, which has no decision register to read. Drop the flag and re-run; every finding on this route is horizon: current.`
+   `--repos <name>[,<name>…]` — one token, the names comma-separated: the repositories Phase 1
+   step 1 would otherwise prompt for, resolved by its steps 2–4 exactly as typed names are — under
+   `--no-code` too, where Phases 1 and 3 still run in full (above). One token, never a list running
+   to the next flag, so the key typed after it is never taken for a repository; **an entry beginning
+   `/` is an absolute path to a clone**, taken as step 3's *Specify a different absolute path for
+   this repo* answer is, and named by its remote slug, or by its directory's basename where its
+   `origin` does not read.
+   `--from-split <BRD-KEY>` — consumes the next token, read with `read-key`: the root
+   `/product-workflows:brd-split`'s *Ground now* ran this command from (step 0). It changes nothing
+   else in the run; step 9 checks it.
    `--no-design` —
    boolean, skips Phase 5's `design-grounder` step. `--no-docs` — boolean, turns documentation
    grounding off for this run (Phase 1 step 0, Phase 4.5). `--docs <path>` — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`; **strip the flag and its value together** before any remaining-argument classification, or the path is read as part of the address. Declared for every consumer by `workflows-core:docs-grounding` *Procedure* step 1 (*Flags first*), which resolves it; this command only has to recognise it and pass the invocation through. `--rebaseline` — boolean, see Phase 3. `--derivation-matrix`
@@ -79,7 +99,7 @@ behaviour, not the behaviour.
 
    **Every flag but `--depends-on` carries over unchanged, on either route, including every refusal
    combination above** — stated here rather than left for a reader to infer from silence;
-   `--depends-on` is the one route-bound flag, refused on `route: idea` at the top of this step. `--no-design`,
+   `--depends-on` and `--from-split` are the two route-bound flags — the first refused on `route: idea` at the top of this step, the second stopped there by step 9, since that route has no parent. `--no-design`,
    `--no-docs`, `--docs <path>`, `--rebaseline`, and `--derivation-matrix`/`--no-derivation-matrix`
    test only one another and the resolved folder's own grounding files, never a BRD-route artifact,
    so none of them needs a route branch of its own. The one worth looking at rather than assuming is
@@ -590,18 +610,23 @@ behaviour, not the behaviour.
      `coverage-ledger.md` and `brd/brd-inventory.md` are both on main — positive evidence 5a's
      legacy-fallback test would have refused had this BRD been a root — and `/brd-split` always
      writes `parent:` into a genuine slice. Carried forward for the messages elsewhere in this run
-     that name `<PARENT-KEY>` (steps 6 and 8's stops, when reached).
+     that name `<PARENT-KEY>` (steps 6 and 8's stops, when reached). **Where `--from-split` was
+     given, it must name this `parent:`** — the root *Ground now* split is this slice's own parent,
+     or the run is not the continuation it says it is — else stop:
+     `PRD_GROUND_NOT_FROM_SPLIT: --from-split names <FROM-KEY>, and <KEY>'s parent is <PARENT-KEY> — /brd-split's Ground now runs this only on a slice of the root it split. Type '/product-workflows:prd-ground <KEY>' to ground it.`
 
    **On `route: idea`, this step is a no-op.** There is no `brd-link.md` on this route to hold
    either field — 5a's own route fork tested for its absence to reach `route: idea` at all — and
    step 2 already refuses `--depends-on` outright before this step could ever be asked to persist
-   one. Nothing here is carried forward because nothing here exists to carry.
+   one. Nothing here is carried forward because nothing here exists to carry — save a
+   `--from-split`, which names a parent this route has none of, so it stops with
+   `PRD_GROUND_NOT_FROM_SPLIT`, `<PARENT-KEY>` read as `none (idea route)`.
 
 ---
 
 ## Phase 1 — Resolve repositories
 
-**State the cost first — the first output of this phase**, on every run that grounds code (never under `--no-code`, which produces no `[CG#n]` and verifies none, so the K×N arithmetic does not apply), **whether or not step 1 then prompts for repositories**. A run handed its repositories up front — headless, or by an operator who named them in the invocation — never reaches the prompt, and a statement tied to the prompt went unprinted on exactly those runs. N is the claim count — Phase 0 step 8's on `route: brd`, step 8i's (after its exclusions) on `route: idea`. M is the number of claim findings already on file: every `[CG#n]` in `grounding/code-grounding.md` that does not read `SUPERSEDED` and that no `grounding/baselines.md` entry records — 0 on a first run. A baseline finding is never among them, since a run that mints a fresh baseline supersedes the earlier ones rather than re-verifying them (Phase 8, *Supersede the earlier baselines*). M is an upper bound because Phase 1 runs before Phase 3: Phase 3 then excludes the findings of any repository that has moved, and Phase 7 re-verifies only those at an unmoved pin. MODEL is the review model, which Phase 2 resolves after this phase, so print `Opus` for it, or the enforced id where `run_flags.enforced_model` is set (Phase 0 step 1 resolved it), and never a chain row or a degradation, which Phase 2 reports when it finds one. Print, with N, M and MODEL replaced by their values:
+**State the cost first — the first output of this phase**, on every run that grounds code (never under `--no-code`, which produces no `[CG#n]` and verifies none, so the K×N arithmetic does not apply), **whether or not step 1 then prompts for repositories**. A run handed its repositories up front — by `--repos`, which `/brd-split`'s *Ground now* passes and a headless run or an operator may type — never reaches the prompt, and a statement tied to the prompt went unprinted on exactly those runs. N is the claim count — Phase 0 step 8's on `route: brd`, step 8i's (after its exclusions) on `route: idea`. M is the number of claim findings already on file: every `[CG#n]` in `grounding/code-grounding.md` that does not read `SUPERSEDED` and that no `grounding/baselines.md` entry records — 0 on a first run. A baseline finding is never among them, since a run that mints a fresh baseline supersedes the earlier ones rather than re-verifying them (Phase 8, *Supersede the earlier baselines*). M is an upper bound because Phase 1 runs before Phase 3: Phase 3 then excludes the findings of any repository that has moved, and Phase 7 re-verifies only those at an unmoved pin. MODEL is the review model, which Phase 2 resolves after this phase, so print `Opus` for it, or the enforced id where `run_flags.enforced_model` is set (Phase 0 step 1 resolved it), and never a chain row or a degradation, which Phase 2 reports when it finds one. Print, with N, M and MODEL replaced by their values:
 
 > This requirement set has N claims. Each repository you name is ground against all N, and every finding is verified on MODEL in two steps, in batches of up to 25: K repositories → K×N claim findings plus K baseline findings, in K×⌈(N+1)/25⌉ batches and K×⌈(N+1)/25⌉×2 verification dispatches, plus ⌈D/25⌉×2 dispatches for each frame set whose design pass returns D findings. A re-run re-verifies every claim finding already on file for a repository that has not moved (up to M today).
 
@@ -631,13 +656,28 @@ the manual path:
    route-sequencing gate, which must stay first so a BRD whose inventory never merged is refused
    before anything else happens at all, and an index build is a durable, run-independent artifact
    that a later stop does not waste.
-1. Prompt for the repos in scope for this BRD's claims — a free-text list of short names, one per
-   line or space-separated.
+1. **Name the repositories in scope.** **Where `--repos` named them, take those names and skip the prompt.**
+   Otherwise build step 2's map first and put the prompt with its candidates beside it: every clone
+   the map holds, one line each — its slug and its path — so an operator who does not know the code
+   layout confirms a list rather than recalling names. Where the map holds one to three clones:
+   ```
+   choices: ["Ground against all <K> listed (Recommended)", "Only some — type their names", "Cancel"]
+   ```
+   Where it holds more, grounding all of them is rarely what is meant, and each multiplies the cost
+   stated above, so no option is marked:
+   ```
+   choices: ["Type the names in scope (from the list above)", "Ground against all <K> listed — each multiplies the cost above", "Cancel"]
+   ```
+   *Only some* and *Type the names* ask, in plain text, for short names, one per line or
+   space-separated; a typed answer to the array is taken as that list. Names resolve by step 3 —
+   a name the map does not hold is still a name, and step 3's zero-match escalation answers it.
+   *Cancel* ends the run before anything is written. Where the map holds no clone, skip the
+   question: step 4's escalation is the answer.
 2. **Build a slug→clone map**, exactly as `/epics` Phase 4 does: for each top-level directory
    under each entry of `$REPOS_PATH`, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -C <dir> remote get-url origin
    2>/dev/null` (`workflows-core:bounded-run`), strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git` or whose `git remote` call fails/times out. **Never
    assume a `<base>/<slug>` directory name** — resolution is always by remote slug.
-3. Resolve each named repo against the map: one match → use it; multiple matches → auto-prefer
+3. **An entry beginning `/` is an absolute path to a clone** — from `--repos`, or typed at step 1 — and is never matched against the map: it is resolved as *Specify a different absolute path for this repo* resolves one below. Resolve each other named repo against the map: one match → use it; multiple matches → auto-prefer
    basename ending `-repo`, then `_repo`/`_fast`, then alphabetically last (show candidates before
    proceeding); zero matches → escalate per the `Repo unresolved (zero matches) — /prd-ground` rule
    in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`:
@@ -647,7 +687,7 @@ the manual path:
    A clone reached through *Specify a different absolute path for this repo* is named by its own
    remote slug, read as step 2 reads one, where its `origin` reads; where it does not — the one way
    this phase resolves a clone with no readable `origin` — it is named by the name the operator
-   typed for it in step 1's prompt. That name is the slug Phase 3 compares and Phase 8 records in
+   typed for it in step 1's prompt — or, for a path `--repos` or step 1's answer gave, which carries no name of its own, by its directory's basename. That name is the slug Phase 3 compares and Phase 8 records in
    `grounding/baselines.md` (`workflows-core:grounding-format` §4 step 1).
 4. Empty final list (every repo skipped or missing) → escalate per the `No repos derivable — /epics`
    rule in `workflows-core:escalation-rules`, whose `/prd-ground` variant
@@ -1944,8 +1984,10 @@ choices: ["Write the missing frame-set index — /workflows-core:frames <BRD-KEY
 
 The resume pointer is written in the terminal cost phase (Phase 11), per
 `workflows-core:session-hygiene` §1. Grounding another repository or
-prerequisite in the same BRD? → run **`/compact`**. Handing off to `/brd-split`, even yourself? →
-run **`/clear`** (`route: brd`). Grounding another repository for the same PRD? → run
+prerequisite in the same BRD? → run **`/compact`**. Continuing as PM into `/brd-split` on this slice? → run **`/compact`**
+(`route: brd`) — the same role, and its walk allocates against the findings this run just wrote;
+handing it to the PM you ran this for, as a PA or PE? → run **`/clear`**: they pick it up in their own
+session. Grounding another repository for the same PRD? → run
 **`/compact`**. Handing off to `/create-ard` or `/specify`, even yourself? → run **`/clear`**
 (`route: idea`). Guidance only — nothing is auto-run.
 
@@ -1986,7 +2028,7 @@ fire `emit-block`. The one exception is a halt on a tool the ai-containers image
    the run's `key` (the `<BRD-KEY>`), `source`, and `plugin_version` (read from
    `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or "no
    plugin-facing signal — nothing persisted").
-3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /prd-ground`, `phase: brd-to-prd`, `role: pa`,
+3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /prd-ground`, `phase: brd-to-prd`, `role: pm`,
    the run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the
    report-only notice).
 4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the

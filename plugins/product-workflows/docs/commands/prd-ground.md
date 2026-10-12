@@ -47,21 +47,24 @@ exactly the folder this command must accept, so a kind-based test would refuse e
 
 ## Who runs it
 
-`/prd-ground` runs in the [pa](../roles-and-phases.md#pa--product-architecture) role,
-cost-attribution phase `brd-to-prd`, on either route. On the BRD route it is the phase shared by
-every command of the route, and the only one of the six that does not run as
-[pm](../roles-and-phases.md#pm--product-management): a slice reaches it already carved by
-[`/brd-split`](brd-split.md), which is also what its own findings hand back to, for that same
-slice's ledger to be allocated. On the idea route it is PM-initiated the same way — typically run
-by whoever just ran [`/create-prd`](create-prd.md) — but PA/Dev-executed identically: it is the
-step that actually opens the mounted repositories and design assets to check a claim, work that
-sits with PA/Dev rather than PM. On this route it is **optional and ungated**: nothing in
-[`/create-ard`](create-ard.md) or [`/specify`](specify.md) requires it to have run.
+`/prd-ground` runs in the [pm](../roles-and-phases.md#pm--product-management) role,
+cost-attribution phase `brd-to-prd`, on either route — the same role and phase as every other
+command of the BRD route, so the route is PM's end to end. **The PM runs it by default**: its only
+inputs are the repositories to ground against, which it proposes from the clones under
+`$REPOS_PATH`, and the handoff answer — neither needs an architect, since `code-grounder` and the
+blind `grounding-verifier` do the grounding. **What it does need is the code cloned**, which a PM
+often does not have; where so, a PA or PE runs it instead where the PM cannot clone the code repositories — both have them cloned for their own work, and teams have fewer PAs than PEs, so either may. Whoever runs it, its cost entry reads `pm`. A PA
+may still review the grounding pull request. A slice reaches it already carved by
+[`/brd-split`](brd-split.md) — whose *Ground now* can run it straight after the split's pull
+request merges — and its findings hand back to `/brd-split`, for that same slice's ledger to be
+allocated. On the idea route it is run the same way, typically after [`/create-prd`](create-prd.md),
+and there it is **optional and ungated**: nothing in [`/create-ard`](create-ard.md) or
+[`/specify`](specify.md) requires it to have run.
 
 ## Synopsis
 
 ```
-/prd-ground <KEY> [--depends-on <BRD-KEY>…] [--derivation-matrix|--no-derivation-matrix] [--no-code] [--no-design] [--no-docs] [--docs <path>] [--rebaseline] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
+/prd-ground <KEY> [--repos <name>[,<name>…]] [--from-split <BRD-KEY>] [--depends-on <BRD-KEY>…] [--derivation-matrix|--no-derivation-matrix] [--no-code] [--no-design] [--no-docs] [--docs <path>] [--rebaseline] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 - **`<KEY>`** (mandatory) — the folder to ground, on either route. `resolve-address` searches every
@@ -70,6 +73,13 @@ sits with PA/Dev rather than PM. On this route it is **optional and ungated**: n
   folder is ground**: a resolved `BRD-` root stops with `PRD_GROUND_ROOT_LEVEL`, naming
   [`/brd-split`](brd-split.md) as the way to carve one; a resolved `EPIC-` folder stops with
   `PRD_GROUND_EPIC_LEVEL`, naming the PRD folder it sits in.
+- **`--repos <name>[,<name>…]`** (optional) — the repositories to ground against, as one
+  comma-separated token — a slug, or an absolute path to a clone — so the run asks nothing about
+  them; without it the run lists every clone under `$REPOS_PATH` as candidates and asks.
+- **`--from-split <BRD-KEY>`** (set by [`/brd-split`](brd-split.md)'s *Ground now*) — the root that
+  run split. This command runs only when you type it, or from that continuation: a run the model
+  starts on its own, without this flag, stops with `PRD_GROUND_TYPED_ONLY`, and the flag must name
+  the slice's own parent (`PRD_GROUND_NOT_FROM_SPLIT`). Typed by hand it changes nothing.
 - **`--depends-on <BRD-KEY>`** (optional, repeatable, **BRD route only**) — declares a prerequisite
   BRD. Persisted to `brd-link.md` additively across runs; the file may also be edited by hand. A
   prerequisite contributes a `will-change` horizon only through its **frozen** decisions, and frozen
@@ -519,7 +529,7 @@ baseline finding the run writes per repository is `CONFIRMED` too, and is not on
 
 ## See also
 
-- [Roles and phases](../roles-and-phases.md) — what the `pa` role owns and hands off, on either
+- [Roles and phases](../roles-and-phases.md) — what the `pm` role owns and hands off, on either
   route.
 - [Model routing](../reference/model-routing.md) — the classification rules this command applies.
 - `workflows-core:addressing` — the `<KEY>` grammar and folder

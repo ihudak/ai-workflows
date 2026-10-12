@@ -41,9 +41,11 @@ flowchart TD
         prdproposal["/prd-proposal"]:::prod
         brdproposal["/brd-proposal"]:::prod
     end
-    subgraph PA["PA — grounding and architecture"]
+    subgraph GRD["PM — grounding (PA or PE where the PM cannot clone the code)"]
         groundbrd["/prd-ground (BRD slice)"]:::prod
         groundprd["/prd-ground (idea PRD)"]:::prod
+    end
+    subgraph PA["PA — architecture"]
         createard["/create-ard"]:::prod
         harvest["/harvest-decisions"]:::prod
         promote["/promote-decisions"]:::prod
@@ -82,6 +84,7 @@ flowchart TD
 
     brdintake -->|"inventory + ledger"| splitroot
     splitroot -->|"a PRD- slice folder"| groundbrd
+    splitroot -.->|"Ground now (operator-elected, after the split PR merges)"| groundbrd
     groundbrd -->|"verified [CG#n]/[DG#n]"| splitslice
     splitslice -->|"allocated ledger"| brdinterview
     brdinterview -->|"decisions.md + held [C] questions"| brdpackage
