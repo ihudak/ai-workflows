@@ -10,6 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ### Changed
 - **`/brd-intake`'s defect walk says it triages and resolves nothing.** Its questions listed a candidate's class, row and reason and never asked anything, so an operator could read them as a request to resolve the ambiguity. The walk now opens, once, by saying what each question asks — is this a real defect in the customer's text? — what each answer does, and how an open defect is settled later: by the customer's answer, which `/brd-interview` asks and `/brd-reconcile` records, or by a grounding finding a person records. Every question closes with that question, and each option carries a fixed description rather than one the run improvises.
 - **No defect-walk option is marked `(Recommended)` any more.** *Confirm as written* carried the marker on every candidate, which pushed toward logging every flag `brd-reader` raised; whether a candidate is a real defect is what the question asks, so no answer is right on every showing.
+- **`/idea` and `/brd-intake` list the keys already in the specs tree when the key is missing.** `IDEA_NEEDS_KEY` and `BRD_INTAKE_NEEDS_KEY` now print, beneath the stop, one line per prefix with its highest top-level key and how many keys use it (`workflows-core:addressing`'s `key-summary`), so the next key is easy to pick. Neither command proposes or invents one: the key stays the operator's to type.
 
 ## [3.30.3] — 2026-10-08
 

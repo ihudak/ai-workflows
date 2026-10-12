@@ -31,6 +31,7 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
    run creates a `BRD-` folder. On `needs-tree` (`$SPECS_PATH` unset), take step 5's `$SPECS_PATH`
    stop now — answered with a path, return here and read the token again before steps 2–4. If absent or invalid, **stop gracefully**:
    `BRD_INTAKE_NEEDS_KEY: /brd-intake needs a BRD key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-001) — pick a short stable identifier for this business requirements document, then re-run '/product-workflows:brd-intake <KEY> @<brd-file>'.`
+   Beneath it, print the lines `key-summary` returns (`Skill(skill: "workflows-core:reference", args: "addressing key-summary")`, §1), so the operator picking a key sees the keys this specs tree already holds; it proposes none.
 2. **`@<brd-file>` (mandatory).** The customer's source file argument. If absent, **stop**:
    `BRD_INTAKE_NEEDS_SOURCE: /brd-intake needs the customer's source as an @-argument — re-run '/product-workflows:brd-intake <KEY> @<path-to-brd>'.`
 3. **Reject a PDF — do not convert it.** If the resolved source does not end in `.md`/`.markdown`

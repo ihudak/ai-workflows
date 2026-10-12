@@ -67,7 +67,10 @@ ON when `$DOCS_PATH` resolves, advisory, never a gate) and `workflows-core:impl-
 
 ## What it needs
 
-- **`<BRD-KEY>`** — mandatory; absent or malformed stops the run with `BRD_INTAKE_NEEDS_KEY`. A key
+- **`<BRD-KEY>`** — mandatory; absent or malformed stops the run with `BRD_INTAKE_NEEDS_KEY`, which
+  lists beneath it the keys the specs tree already holds — one line per prefix, its highest top-level
+  key and how many keys use it, ten prefixes at most — so the next one is easy to pick; it proposes
+  none. A key
   that resolves to a **slice** stops the run with `BRD_INTAKE_SLICE`, naming the parent to re-intake
   instead: a slice has no source document of its own — the source and the records beside it under
   `brd/` are the parent's, one hop up, while the slice's own `brd/brd-inventory.md` and

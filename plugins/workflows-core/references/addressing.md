@@ -7,7 +7,8 @@ defined once rather than reinvented per caller. Design authority:
 
 **Consumed by every command that addresses a folder in the specs tree.** Each calls `resolve-address`
 (§3) and, where it reads its address before touching the filesystem, `read-key` (§1) — or, where it
-mints a key, `key-valid`. Those commands
+mints a key, `key-valid`; the two that start a folder from nothing print `key-summary` (§1) on a
+missing key. Those commands
 are what `grep -l resolve-address plugins/*/commands/*.md` returns — re-run it rather than keeping a
 list or a count here, since both went stale in this paragraph — and they, with the one shared
 authority §7 names, all reach the tree through this file; `product-workflows:brd-format` and
@@ -94,6 +95,51 @@ returns `absent`** — `/product-workflows:idea` and `/product-workflows:create-
 `/product-workflows:brd-intake` a `BRD-` one — creates it only where `prefix` is `none` or that kind and the token was not a whole name, and otherwise stops before creating anything — a key behind a prefix of another kind with:
 `'<TOKEN>' names a <prefix>- folder, and this command creates a <its kind>- folder — re-run it with the bare key <key>.`
 and a whole name of any kind with the stop above, since its folder was there before the preflight.
+
+### Entry point: `key-summary`
+
+**What a missing-key stop prints beneath itself, so the person picking a new key sees the keys
+already taken.** Called by the stops of the two commands that start a folder from nothing —
+`/product-workflows:idea` (`IDEA_NEEDS_KEY`) and `/product-workflows:brd-intake`
+(`BRD_INTAKE_NEEDS_KEY`) — where the key is absent or invalid. **It proposes no key and validates
+none**: the operator still types the key, and `read-key` reads it as any other. A key read off this
+tree need not be the next one free on a branch it cannot see, and the prefix a new document takes is
+the team's to choose.
+
+1. **No tree.** Where `$SPECS_PATH/specifications/` is not a directory, return one line:
+   `No specs tree to list keys from — $SPECS_PATH is unset or holds no specifications/.`
+2. **Read every key off its frontmatter, never out of a folder name** (§4): the `key:` field between
+   the opening `---` lines of each markdown file in a folder at most three levels below
+   `specifications/` (§3's bound), each distinct value `key-valid` finds valid counted once, then
+   one line per leading token — its count of distinct top-level keys (the token and its first
+   numeric segment), its count of the keys below them, the token, and its highest top-level key by
+   that segment's number:
+
+   ```bash
+   find "$SPECS_PATH/specifications" -mindepth 2 -maxdepth 4 -name '*.md' -exec awk '
+       FNR == 1 { if ($0 != "---") nextfile; next }
+       $0 == "---" { nextfile }
+       /^key:/ { sub(/^key:[ \t]*/, ""); gsub(/["\047\r]/, ""); sub(/[ \t]+$/, ""); print; nextfile }' {} + 2>/dev/null \
+     | grep -E '^[A-Z][A-Z0-9_]*(-[0-9]+)+$' | sort -u \
+     | awk -F- '{ all[$1]++; t = $1 "-" $2; if (!(t in seen)) { seen[t] = 1; tops[$1]++ }
+                if (!($1 in top) || $2 + 0 > top[$1] + 0) top[$1] = $2 }
+         END { for (p in all) print tops[p], all[p] - tops[p], p, p "-" top[p] }' \
+     | sort -k1,1nr -k2,2nr -k3,3
+   ```
+
+   Splitting a key that passed `key-valid` at its hyphens is reading the grammar above, not
+   extracting by pattern: its leading token holds no hyphen and every segment after it is numeric.
+3. **Return** `No key is in this specs tree yet.` where nothing is read; otherwise a heading line and
+   one line per token, in the order the command prints them, **at most ten**, and where there are
+   more a last line naming how many were left out:
+
+   ```text
+   Keys already in this specs tree, by prefix — a teammate's unmerged branch may hold more:
+     <TOKEN> — highest <highest top-level key> (<n> top-level, <m> nested)
+     …and <k> more prefixes
+   ```
+
+   Hundreds of keys come to a handful of lines, since a team's keys share few prefixes.
 
 ## 2. Directory naming
 
