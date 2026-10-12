@@ -49,12 +49,12 @@ to protect that by omitting the free-text option. **Under §0 they cannot** — 
 whatever the array says — so the protection moves from the array's shape to the run's handling of the
 answer:
 
-**A free-text answer on one of the nine arrays below is normalised into that array's own vocabulary,
+**A free-text answer on one of the ten arrays below is normalised into that array's own vocabulary,
 or the question is re-asked. It is never written through as a new value.** `/document`'s image
 disposition is the shipped worked example: its free text *"resolves to one of the three dispositions
 above … There is no fourth disposition and no 'skip on my own judgement' path here."*
 
-**The nine:**
+**The ten:**
 
 | Array | Its closed vocabulary | Owner |
 |---|---|---|
@@ -67,6 +67,7 @@ above … There is no fourth disposition and no 'skip on my own judgement' path 
 | the customer-content ruling picker | ship the package, or hold it — the two outcomes `product-workflows:bundle-packaging` §6.3's *The operator's ruling* fixes | `/product-workflows:brd-package`, once per pass that reports a hit |
 | the `engagement_model` picker | `time-and-material` / `fixed-price` | `/product-workflows:prd-proposal` Phase 2, over the two shapes `product-workflows:proposal-format` §4 sections 16–18 fixes; `/product-workflows:brd-proposal` re-asks the same question over the same committed profile |
 | the conflicting-answer picker | freeze this candidate / keep the earlier one / ask the customer — the one not frozen set aside as a conflicting answer, never a second freeze | `/product-workflows:brd-reconcile`, *Confirm every candidate* |
+| the `/conformance` decision picker, with its PRD-run confirm form and its stale-entry form | `fix-code` / `amend-document` / `accept`; on the stale-entry form, mark it resolved or keep Dev's decision — never a fourth decision | `/dev-workflows:conformance`, *The walk* |
 
 **The eighth is the one whose value is re-read as configuration by later runs of the same commands**,
 which is why it is here rather than left to the command: the answer is written to a committed
@@ -75,13 +76,13 @@ which of `product-workflows:proposal-format` §4's two section shapes to render 
 written through would be re-read indefinitely by two commands with no shape to render for it. It is
 never consumed once and closed.
 
-**Outliving its own run is not what distinguishes it, and six other rows falsify that weaker
+**Outliving its own run is not what distinguishes it, and seven other rows falsify that weaker
 property** — it was claimed here once and was wrong. Row 5's `[SR#n]` disposition is read by a later
 run of a **different** command, as the defect-remediation sweep's third source
 (`product-workflows:proposal-format` §7). Rows 1, 2, 4 and 9 write into `decisions.md`, whose frozen
 `[VD#n]`s and `[CD#n]`s are read on later runs by `/create-prd`, `/create-ard` and `/specify`, each
 filtering them by altitude. Row 3's disposition is written onto a dependent BRD's register row and
-read there the same way. Every one of those is a **record** of what was decided, read back as evidence
+read there the same way. Row 10's decisions are written into `_conformance.md` and read back by later runs of `/conformance` (`dev-workflows:conformance-format` §5). Every one of those is a **record** of what was decided, read back as evidence
 about one finding or one requirement; only the eighth is a **setting** that shapes what a later run
 renders. Rows 6 and 7 are the two genuinely spent inside their run — row 6's tier is recorded as a
 fact about that dated bundle, never reloaded to shape a later one, and row 7's ruling binds the
@@ -102,10 +103,10 @@ re-opened by an adjustment made in good faith against this file. A rule contradi
 authority is not a rule, so the carve-out is written here, by name, rather than left to each command
 to assert against a reference that overrules it.
 
-**No operator is trapped, and the reason is no longer `Cancel`.** Three of the nine carried a
+**No operator is trapped, and the reason is no longer `Cancel`.** Three of the first nine carried a
 trailing `Cancel` until the four-option cap was enforced, and it was dropped from each — a fifth slot
 the harness would not render. The escape that replaces it is the free-text option, which is always
-present and, on these nine, is normalised rather than frozen. Where aborting has a consequence the
+present and, on these ten, is normalised rather than frozen. The tenth keeps its `Cancel` within the cap. Where aborting has a consequence the
 operator must see before choosing, the command states it in the prose introducing the walk rather
 than in an option: `/brd-package`'s and `/brd-reconcile`'s walks both do.
 

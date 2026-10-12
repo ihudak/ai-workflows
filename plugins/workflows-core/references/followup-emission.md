@@ -75,6 +75,8 @@ finding's identity: `key` + (file path | gap-id | signal-type | other repository
 match as `SKIP — already exists` (mirrors `/wiki-tasks-extract` Step 5); for the other-repository identity a match is a line set naming every change this run found there, and a partial one is previewed as the new line with `SKIP — already exists: <the changes a line names>` beside it; never
 re-insert.
 
+**Withdrawing a follow-up.** One caller edits a line this emitter wrote: `/dev-workflows:conformance`'s PRD run, when the PE overrules an Epic's `fix-code` decision whose follow-up the Epic run emitted (that command's record format, `dev-workflows:conformance-format`). It ticks the line and appends the ruling, `- [x] <the line as written> — withdrawn: <PRD-KEY>/[DD#n]`, and never deletes it. A ticked line counts as done, so a later `/implement` of the unit does not read it back as open. No other caller edits a line, and this emitter itself never does.
+
 ## 6. Qualifying predicate — what becomes a follow-up
 
 Emit a task ONLY for signals whose action lands OUTSIDE the current change or

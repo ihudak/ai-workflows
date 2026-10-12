@@ -1,5 +1,6 @@
 {
   "dev-workflows": [
+    "conformance",
     "design",
     "implement",
     "ready",

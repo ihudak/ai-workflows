@@ -25,7 +25,7 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
    fire; a `cd` would corrupt their git state.
 2. **Bounded paths.** Only §2.1 paths are ever staged. `git add -A` is never
    issued at repository scope — always `git add -A -- <literal paths>`.
-3. **Bounded branches.** Only branches matching `^(idea|prd|ard|spec|epics|design|ready|brd|frames|kb)/`
+3. **Bounded branches.** Only branches matching `^(idea|prd|ard|spec|epics|design|ready|brd|frames|kb|conformance)/`
    are the plugin's to switch away from or delete (§2.2). They, the default
    branch and §8's session branch are the only branches it pushes, only to
    `origin`, and only while the push would publish nothing but its own
@@ -223,7 +223,7 @@ do not justify it by claiming plain `git add` cannot stage the deletion.
 ### 2.2 Branches
 
 **The plugin manages only branches it created.** A branch is plugin-owned when
-its name matches `^(idea|prd|ard|spec|epics|design|ready|brd|frames|kb)/`. The session
+its name matches `^(idea|prd|ard|spec|epics|design|ready|brd|frames|kb|conformance)/`. The session
 branch §8 creates is the plugin's too, for commit and push only (§1 rule 3).
 
 Any other **named** branch save the default branch — the user's own work, a
@@ -362,7 +362,7 @@ notice, never a quiet line.
 |---|---|---|
 | G0 | **HEAD is detached** | **Hand off, and set `specs_git: blocked` for the whole run** — `commit-artifacts` (§4) must also skip. §5 notice at **blocking** severity. See §3.7. |
 | G1 | Any dirty **OTHER** path (§2.1) | **Hand off** — no commit, no branch switch, no push. §5 notice at **advisory** severity, listing the paths. Those files are not the plugin's, and switching branches would carry them. **This does NOT set `specs_git: blocked`**: the terminal `commit-artifacts` still runs, because it stages only artifact paths and is safe beside unrelated dirt. Losing the artifacts to protect files the step never touches would be the worse failure. |
-| G2 | On a **named** branch that is neither the default branch nor a match for `^(idea\|prd\|ard\|spec\|epics\|design\|ready\|brd\|frames\|kb)/` | **Leave it; stay on it.** §5 notice at **advisory** severity, naming the branch, so the user knows where this run's artifacts will land — on that branch, or, on a direct `/dev-workflows:implement` run from inside the specs repository, on the code branch the run cuts (§5). The commit is safe — a named branch cannot be lost — so `commit-artifacts` proceeds, and leaves its commit unpushed (§4 step 5). The plugin manages only branches it created (§2.2). In session-branch mode the commit lands on the session branch instead, and is pushed (§8). |
+| G2 | On a **named** branch that is neither the default branch nor a match for `^(idea\|prd\|ard\|spec\|epics\|design\|ready\|brd\|frames\|kb\|conformance)/` | **Leave it; stay on it.** §5 notice at **advisory** severity, naming the branch, so the user knows where this run's artifacts will land — on that branch, or, on a direct `/dev-workflows:implement` run from inside the specs repository, on the code branch the run cuts (§5). The commit is safe — a named branch cannot be lost — so `commit-artifacts` proceeds, and leaves its commit unpushed (§4 step 5). The plugin manages only branches it created (§2.2). In session-branch mode the commit lands on the session branch instead, and is pushed (§8). |
 
 ### 3.4 Stage 2 — flush leftovers
 
