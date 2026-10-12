@@ -184,9 +184,11 @@ exemptions being the customer's own words and naming, which §6.3 defines:
 documents are written long before it runs**, by earlier commands of the route, and a token one of
 them writes stops the package days later, where the only repair is a hand edit to a record the
 operator did not write. A writer can hold its documents to these classes when it writes them instead.
-One writer does so today: `commands/prd-ground.md` scans what it is about to write into the three
-grounding files against this table, and rewrites a sentence that hits rather than deleting its token
-(`workflows-core:grounding-format` §2.3 is the writing rule). That write-time check is a
+One writer checks what it writes against this whole table today: `commands/prd-ground.md` scans
+what it is about to write into the three grounding files, and rewrites a sentence that hits rather
+than deleting its token (`workflows-core:grounding-format` §2.3 is the writing rule).
+`commands/brd-interview.md` guards the one class its customer questions meet, writing a customer's
+section as `source/<basename> › § <n>` (§6.3 rule 1). That write-time check is a
 first line, never a substitute: `commands/brd-package.md` still runs its own scan over the finished
 bundle, exactly as strictly, because it is the last point at which anything is still ours.
 

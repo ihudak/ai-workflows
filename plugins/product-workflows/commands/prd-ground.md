@@ -1149,8 +1149,10 @@ would have written.** Under `--no-code` an on-file `[CG#n]` is this run's input 
 without that mode moves it. And an on-file `[DG#n]` the frame-set placement (Phase 8, *A set this
 run re-ground*) cannot place in exactly one frame set **is superseded with no successor**: the
 block takes `verdict: SUPERSEDED` and its `prior_verdict` as above, and its note names the horizon
-this phase would have written and says why no successor can be placed — Phase 7 could not hand the
-verifier the `frame_set_dir` a successor needs. A stale horizon is never left standing for a
+this phase would have written and says in words why no successor can be placed — *its frames
+could not be placed in exactly one frame set, so it could not be checked again* (Phase 8, point 1);
+the reason behind those words is that Phase 7 could not hand the verifier the `frame_set_dir` a
+successor needs. A stale horizon is never left standing for a
 downstream reader to consume: a plain decision resting on the finding reads a finding with no
 successor and is reopened, and a held one is put again, its finding's source being one that cannot
 be decided (`/product-workflows:brd-interview`, *A decision the re-grounding moved*).
@@ -1392,7 +1394,10 @@ this step settles, plus `outcome` and any `notes` — never a second verdict bes
 Act on `outcome`:
 - **`agree`** — keep the finding as written; record the outcome alongside it.
 - **`extend`** — keep the finding's verdict; append the verifier's additional evidence to the
-  finding's `evidence` list; record the outcome.
+  finding's `evidence` list — each `own_evidence` entry whose `path` and `lines` match no entry the
+  finding's `evidence` already holds, an entry with no `path` compared whole; a set difference over
+  the structured fields, never read out of `notes`, which name the additions for a reader; record
+  the outcome.
 - **`unprovable`** — keep the finding's verdict unchanged (the verifier's own search settling
   nothing either way is not the same as it being wrong); record the outcome and flag the finding
   in the report as verification-inconclusive — on one a dispute settled `unprovable`, as **two
@@ -1541,7 +1546,8 @@ writing it** (`workflows-core:grounding-format` §2.3). On `route: brd` every gr
 phase writes — `grounding/code-grounding.md`, `grounding/design-grounding.md`,
 `grounding/baselines.md` — goes to the customer in the review bundle as written, and
 `/product-workflows:brd-package` stops the package on a plugin token it finds in them, days after
-this run, where the only repair is a hand edit. So:
+this run, where the only repair is a hand edit. So, on both routes — the idea route bundles nothing,
+but the same agents write both:
 
 1. **What this run writes names no command, agent, skill, phase or rule, and none of an agent's
    return fields** (`own_verdict`, `own_control`, `blind_disputed` and the rest — reword a
@@ -1571,14 +1577,17 @@ this run, where the only repair is a hand edit. So:
    its trailing `path:line` or `— no match` — `outcome` and every other field stay exactly as they
    are, the line Phase 7 draws when it calls a reworded note no difference, so a rewrite settles
    nothing again and dispatches nothing. **A hit inside the customer's own naming that a block records
-   is theirs, not the plugin's** — an evidence entry's path and lines, a command
-   recorded in `evidence` or `control` and run against the repository, a frame path, a class-1
-   finding's field label, and the `claim`, which quotes the requirement as the inventory gives it:
-   a `references/` directory of theirs, a `§ 4.3` in their requirement. Rewording any of them would
-   break the record, so leave it as written and name it in the Final report as one
-   `/product-workflows:brd-package` will stop on — that command's exemptions
-   (`bundle-packaging.md` §6.3) cover no code or frame naming and no finding's `claim`, so it is
-   found here rather than days later. Record every rewrite for the Final report, by finding id, or
+   is theirs, not the plugin's** — a path and line in the code repository or the frame set, wherever
+   the block records it (an evidence entry's `path` and `lines`, one named inside a note,
+   `control`'s trailing `path:line`), a command run against the repository, a documentation page's
+   path, a class-1 finding's field label, and the `claim`, which quotes the requirement as the
+   inventory gives it: a `references/` directory of theirs, a `§ 4.3` in their requirement. The
+   sentence around such naming is still reworded where it carries a token of the plugin's own; the
+   naming itself would break the record if reworded, so leave it as written and name it in the Final
+   report — on `route: brd` as one `/product-workflows:brd-package` will stop on, that command's
+   exemptions (`bundle-packaging.md` §6.3) covering no code or frame naming and no finding's
+   `claim`, so it is found here rather than days later; on `route: idea`, as left standing, that
+   route bundling nothing. Record every rewrite for the Final report, by finding id, or
    by file and section for this run's own prose.
 
 **Append Phase 3's held `grounding/baselines.md` entries** once the two finding files below are
@@ -2142,7 +2151,7 @@ re-checked and left standing, and, where it did nothing, which of the three reas
 empty set; a non-empty one over which this phase rewrote no `[CG#n]` at all; or a non-empty one
 where `[CG#n]` **were** rewritten and no finding in the set cites one of them; every class-4
 `[DG#n]` Phase 8's cascade marked `SUPERSEDED`, each with the `[CG#n]` that took it there, the route
-that superseded that `[CG#n]` and the command that replaces it — `/product-workflows:prd-ground <KEY> --no-code` where that `[CG#n]` has a successor, a plain `/product-workflows:prd-ground <KEY>` where it has none — which its note describes in words (Phase 8); every sentence Phase 8 rewrote before writing it, by finding id or by file and section, and every hit it left standing, each one `/product-workflows:brd-package` will stop on, by finding id and field — or an explicit "none" for each; the `docs grounding:` line from Phase 1 step 0 verbatim, any repository a Phase 4.5 lead added,
+that superseded that `[CG#n]` and the command that replaces it — `/product-workflows:prd-ground <KEY> --no-code` where that `[CG#n]` has a successor, a plain `/product-workflows:prd-ground <KEY>` where it has none — which its note describes in words (Phase 8); every sentence Phase 8 rewrote before writing it, by finding id or by file and section, and every hit it left standing — on `route: brd` each one `/product-workflows:brd-package` will stop on — by finding id and field, or an explicit "none" for each; the `docs grounding:` line from Phase 1 step 0 verbatim, any repository a Phase 4.5 lead added,
 and the count of documentation divergences recorded (each named by the `[CG#n]` it diverges from —
 never by an identifier of its own, because it has none); whether the derivation matrix ran and why; any `design-grounder` class-4 gap deferred for want
 of a settling `[CG#n]`; **on `route: idea`, the claim-exclusion count and prefixes step 8i

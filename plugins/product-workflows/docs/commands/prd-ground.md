@@ -365,8 +365,7 @@ changing no id, verdict, outcome, evidence path or line, or control result. The 
 every rewrite. A token inside naming a finding records rather than prose — a path or command in your
 code repository, a frame path or label, the requirement text a finding quotes — is left as written,
 since rewording it would break the record; the final report names it, because `/brd-package` will
-still stop on it. This covers what the run writes; a note an earlier run left on file stays as it
-is, and you can reword its free text by hand.
+still stop on it. This covers what the run writes: the notes, opening lines and run headings an earlier run left on file stay as they are, and you can reword their free text by hand.
 
 Behind Phase 9's consent choice, these are committed, pushed, and a pull request opened against the
 specs repo's default branch — under the shared `brd/<KEY>-<slug>` branch prefix on the BRD route

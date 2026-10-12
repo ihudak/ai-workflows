@@ -162,7 +162,7 @@ scan reported 140 findings missing that were on the page.
 **Write each evidence `note`, `control` and `prerequisite` for a reader with no plugin**
 (`workflows-core:grounding-format` §2.3). Your caller writes them into `grounding/code-grounding.md`,
 which on the BRD route goes to the customer as written. Name no command, agent or skill, no section
-or rule number of a reference, no phase or step, and no decision-row id — say what a rule requires rather than where it
+or rule number of a reference, no phase or step, no decision-row id, and no reference file's name or path — say what a rule requires rather than where it
 is written. Identifiers, paths and lines in the repository, and the `git` commands you ran, stay.
 
 ```yaml
@@ -196,8 +196,8 @@ notes: |
   which (`workflows-core:grounding-format` §2.2). Where the control does not fire, the verdict is
   `NOT-PROVABLE` and the failed control is recorded — never a `REWRITTEN` or an `AMENDED` resting
   on a search that was never shown to work.
-- NEVER write a command, agent or skill name, a `§` or rule number, a phase or a decision-row id
-  into an evidence `note`, `control` or `prerequisite`. Those fields go to the customer as written
+- NEVER write a command, agent or skill name, a `§` or rule number, a phase, a decision-row id or
+  a reference file's name into an evidence `note`, `control` or `prerequisite`. Those fields go to the customer as written
   (`workflows-core:grounding-format` §2.3).
 - NEVER report a `FALSE-FRIEND` as though it were the claim's real support. When a plausibly-named
   decoy is the only thing found, the verdict names it as a decoy, not as confirmation.
