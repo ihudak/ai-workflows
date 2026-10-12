@@ -991,7 +991,7 @@ mandatory field exists to prevent, arriving through the one door the field canno
 **A re-run never re-asks what an earlier pass over the same review already settled.** Every earlier
 `reconciliation-<YYYYMMDD>.md` was read in the *Resolve inputs and gate the sent package* phase, and
 each pass in one sits under a heading naming the review file it reconciled — or, in an older record,
-above its first heading, identified by its *The review* line (*Write the reconciliation record*) and lists the `[CD#n]`
+is the text above its first pass heading (*Write the reconciliation record*) and lists the `[CD#n]`
 ids it froze, completed or re-decided in place (*Canonicalise the returned review*, step 3). A
 candidate whose target's chain — below — holds a record an earlier pass over **this same review**,
 the same canonicalised file with its suffix, froze, completed or re-decided in place is skipped and
@@ -1611,9 +1611,8 @@ carried out — or refused, on the record.
 
 **A row an earlier pass over this same review already applied or refused is not put again, where
 its record names the row by position.** Each pass sits under a heading naming the canonical review
-file it reconciled, suffix included (*Canonicalise the returned review*, step 3) — text above an
-older record's first pass heading being a pass of its own (*Write the reconciliation record*) — and
-records each correction by its position in the
+file it reconciled, suffix included (*Canonicalise the returned review*, step 3) — or, in an older
+record, is the text above its first pass heading (*Write the reconciliation record*) — and records each correction by its position in the
 review's section 12 with the document and section it names (*Write the reconciliation record*);
 the review is the same file, so a row at that position is the same row. Such a row disposed
 `applied`, `applied-with-deviation` or `refused-with-reason` is reported as *already disposed*, with
@@ -1842,9 +1841,13 @@ now stands beside a defect another act already settled, and whether both can sta
 call. **And in either order within this run**: a record this run froze, completed or re-decided
 whose `settles` names a defect this phase resolves `withdrawn` on another answer goes there too,
 the decision being about a requirement the same review withdraws. **Withdrawals are resolved
-first**: every defect raised against a requirement a `[CD#n]` this run froze withdraws is written
-`withdrawn` before any `resolved-by` of this run, so such a defect reads `withdrawn` whichever answer
-the walk took first, and the other record is the one sent to a human.
+first**: every `open` defect raised against a requirement that a `[CD#n]` this run froze, completed
+or re-decided, and did not leave `open`, withdraws is written `withdrawn` before any `resolved-by` of
+this run, so such a defect reads `withdrawn` whichever answer the walk took first, and the other
+record is the one sent to a human. **Where two of this run's records, answering two questions, would
+each resolve one `open` defect `resolved-by`**, the one answering the question that comes first in
+the round record — by round, then position — is named, and the other goes to a human, so that too
+turns on the record and never on the walk.
 
 **The amendment stays in the returned review it came from — this slice's, as the resolution's key
 says — and is never written into `brd/source/`** (D11, `brd-format.md` §4). A resolution changes the
@@ -2403,6 +2406,10 @@ changed, why, which ids, and what still needs a human:
   with its state; per stale-reference hit, the file, what was found, and its outcome.
 - **What still needs a human** — every `[SR#n]` answer carried `unmatched` because the package the
   review answers could not be determined (*Ingest the review*), with the customer's words; every
+  record the *Resolve the defects the review settled* phase sent here — one whose `settles` names a
+  defect already resolved outside its own chain, with the resolution it found; one whose defect this
+  run withdrew on another answer; and each held entry with a record of its own whose requirement was
+  withdrawn, with that record; every
   question the review did not answer, in **all three** of the id shapes the package put to it, so
   an escalated `[SR#n]` the customer passed over is not lost
   behind the `[C]` questions that were; every candidate not frozen; every correction deferred or
@@ -2453,8 +2460,8 @@ changed, why, which ids, and what still needs a human:
 included — the heading the same-review rules of the *Confirm every candidate* and *Apply the
 required corrections* phases key on. **A record written before every pass carried one** gave a
 heading only to a pass appended on the same day, so where the file opens with text above its first
-pass heading, that text is one pass of its own, identified by its *The review* line; both rules
-read it so. **A second reconciliation on the same day appends, and never
+pass heading, that text — the whole file, where it has no pass heading at all — is one pass of its
+own, identified by its *The review* line; both rules read it so. **A second reconciliation on the same day appends, and never
 overwrites.** Where
 `reconciliation-<YYYYMMDD>.md` already exists, this run adds a new pass beneath what is there, under
 its own heading naming the review file that caused it. Two reviews ingested on one day are two

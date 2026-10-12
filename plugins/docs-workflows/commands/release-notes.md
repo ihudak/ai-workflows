@@ -226,7 +226,7 @@ run — the terminal `commit-artifacts` step skips on it.
 
   **NEVER write into a docs repo, a code repo, or the current working directory, where it is not the specs repository.** The PRD
   folder is in `$SPECS_PATH`, which is where Phase 8's handoff commits it, on a `prd/` branch with a
-  pull request, behind the operator's consent — unless the run carries `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), when the handoff refuses and it is written and not committed.
+  pull request, behind the operator's consent — unless the run carries `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), when the handoff refuses, or `$SPECS_PATH` is unset on an `@<path>` run, when none is offered; either way it is written and not committed.
 
 
 - **Style check** (default ON):
@@ -567,8 +567,11 @@ Outside that one case there is no question to ask and no option that replaces th
    stages it (`workflows-core:specs-repo-git` §2.1). **Say what a declined handoff costs**: beyond the
    clause §4.1's *Declined by the user* line carries, an uncommitted draft costs what any path outside
    the bounded artifact set does — `workflows-core:specs-repo-git` §3.3's G1 advisory fires on every
-   later run of any command until it is committed or removed — and a later run of this command reads
-   it only while the checkout stays where it was written. On every choice, the report below carries
+   later run of any command until it is committed or removed, and while it does, each preflight skips
+   its leftover flush, catch-up and branch settling — a later run of this command reads it only while
+   the checkout stays where it was written, and `/docs-workflows:docs-audit`, which reads the drafts
+   at `HEAD`, does not see it at all, whatever the array's and the *Declined* line's working-copy
+   wording says. On every choice, the report below carries
    §4.1's outcome line.
 
 2. **Report:**
@@ -740,7 +743,7 @@ current working directory, where it is not the specs repository; no user name is
 - The run has **no worthiness gate**: every PRD is relevant for release notes, so there is no content state in which this command refuses to draft. `relevant_for_release_notes` is retired (`workflows-core:prd-format`) and a value left in an existing PRD is read by nothing. Whether a note is drafted is the decision of whoever runs the command.
 - NEVER write into a docs repo. The draft's one destination is `release-notes.md` in the resolved PRD folder, which is persistent (never `/tmp`), and it is appended to, never overwritten: no earlier section is ever rewritten or removed (Phase 8). The style gate's scratch copy is removed in every case, with `command rm -f --` (Phase 7).
 - ALWAYS use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0).
-- Light gate only — no Opus review, no tests, and no branch but the `prd/` branch Phase 8's handoff cuts in the specs repository behind the operator's consent (`specs-preflight`, its same-run re-run after a slice key is entered included (`workflows-core:specs-repo-git` §3.5), switches `$SPECS_PATH` only between branches that already exist, and only plugin-created ones (§2.2); it creates none), and no commit of anything in a docs/code repo or the current working directory, where it is not the specs repository. The draft, `release-notes.md` in the resolved PRD folder, is committed by that handoff, in the specs repository and nowhere else; the terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded session paths (`workflows-core:specs-repo-git` §2.1), never the draft — and under `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1) neither commits, and the draft is written and not committed.
+- Light gate only — no Opus review, no tests, and no branch but the `prd/` branch Phase 8's handoff cuts in the specs repository behind the operator's consent (`specs-preflight`, its same-run re-run after a slice key is entered included (`workflows-core:specs-repo-git` §3.5), switches `$SPECS_PATH` only between branches that already exist, and only plugin-created ones (§2.2); it creates none), and no commit of anything in a docs/code repo or the current working directory, where it is not the specs repository. The draft, `release-notes.md` in the resolved PRD folder, is committed by that handoff, in the specs repository and nowhere else; the terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded session paths (`workflows-core:specs-repo-git` §2.1), never the draft — and under `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), or with `$SPECS_PATH` unset on an `@<path>` run, neither commits, and the draft is written and not committed.
 - ALWAYS run `specs-preflight` at Phase 0 — again, with the slice's key set, where step 1 re-enters for a slice the operator entered at `RELEASE_NOTES_BRD_NOT_SLICED` — and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`) — bounded to `$SPECS_PATH`'s artifact paths (§2.1), switching only branches the plugin created (§2.2) and pushing only what §4 step 5 allows, always `git -C "$SPECS_PATH"` and never a `cd` (§1 rule 1), never force-pushing, and never failing the run
 - ALWAYS end the Phase 8 report with a `### Next step` recommendation (per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")`) — guidance only, never auto-invoked; the pipeline leaf (adaptive: continue any pending PA/PE phase, else the PRD is fully processed).
 - ALWAYS end the Phase 8 report with a `### Context hygiene` block per `workflows-core:session-hygiene` — prepare-first (the `resume.md` write runs later, in the terminal cost phase, per `workflows-core:session-hygiene` §1 — this block prints the guidance only), then a leaf-aware suggestion (done → nothing; pending role → `/clear`) + `/rename <PRD-ID>-<slug>-<role>` using this run's inferred lane (`pm` or `dev`, per the Phase 6 inference); guidance only, never auto-run.
