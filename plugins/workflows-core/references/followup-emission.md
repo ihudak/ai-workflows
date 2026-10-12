@@ -4,7 +4,7 @@ Single source of truth for the family's follow-up emitter. A terminal
 "Emit follow-up tasks" phase in each of its callers cites this file and executes its steps inline —
 the orchestrator owns every prompt. The callers are the commands that load it, which is a recipe
 rather than a list, because a list here went stale as callers were added:
-`grep -l 'args: "followup-emission")' plugins/*/commands/*.md` — ten today (`/implement`, `/ready`,
+`grep -l 'args: "followup-emission")' plugins/*/commands/*.md` — eleven today (`/implement`, `/ready`, `/conformance`,
 `/epics`, `/prd-proposal`, `/brd-proposal`, `/document`, `/release-notes`, `/docs-init`, `/docs-brand`,
 `/docs-audit`).
 
