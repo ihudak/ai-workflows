@@ -20,7 +20,7 @@ record, once that dependent has its own register on the default branch.
 ## Synopsis
 
 ```
-/brd-reconcile <BRD-KEY> @<review-file> [--sent <path>…] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
+/brd-reconcile <BRD-KEY> [@<review-file>] [--sent <path>…] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 - **`<BRD-KEY>`** (mandatory) — the slice this review answers. `resolve-address` searches every
@@ -30,10 +30,15 @@ record, once that dependent has its own register on the default branch.
   folder no BRD carved, carrying no `brd-link.md` — stops with `BRD_RECONCILE_NOT_A_SLICE`, naming
   [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way that route goes on. An `EPIC-` folder stops with `BRD_RECONCILE_EPIC_LEVEL`, naming the slice the Epic sits in where it sits in one. `--sent`
   does not lift it.
-- **`@<review-file>`** (mandatory) — the file the customer sent back, **at whatever path it arrived
-  on**. It does not have to be inside `$SPECS_PATH`, and it is never searched for: the operator says
-  which file is the review, because a file the command picked is a file nobody submitted as the
-  customer's answer.
+- **`@<review-file>`** (optional) — the file the customer sent back, **at whatever path it arrived
+  on**, when the package went out as an archive and the review came back as a file. It does not
+  have to be inside `$SPECS_PATH`. **Leave it off when the customer pulled the specs repository**:
+  their delivery note asked them to commit the review beside the bundle, named exactly as the prompt
+  names it, and open a pull request. Once you merge it, the run finds that file on the default
+  branch, in the slice's folder and nowhere else, and asks you to confirm it; a file that is there
+  but not merged yet stops with `BRD_RECONCILE_REVIEW_NOT_MERGED`. Either way you say which file is
+  the review — by naming it, or by confirming the one found — and a committed review is moved to its
+  canonical name rather than copied, so the folder holds it once. `--sent` needs the path.
 - **`--sent <path>`** (optional, repeatable) — the material the customer was *actually* sent, for a
   review that answers a package this plugin did not build: one authored by hand before the route
   existed, or sent out of band. Each path may be a file or a directory and may sit anywhere. The
@@ -115,8 +120,13 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
 
 ## What it needs
 
-- **`<BRD-KEY>` and `@<review-file>`** — either absent or malformed stops the run with
-  `BRD_RECONCILE_NEEDS_KEY` or `BRD_RECONCILE_NEEDS_REVIEW`.
+- **`<BRD-KEY>`, and a review** — a key absent or malformed stops with `BRD_RECONCILE_NEEDS_KEY`; an
+  `@<review-file>` that is not a readable file, or no path and no review committed beside the
+  bundle, stops with `BRD_RECONCILE_NEEDS_REVIEW`.
+- **Every handed-off bundle unchanged.** Each `bundle-<date>/` on the default branch must still be
+  exactly what its package's handoff committed; one a later commit changed — a customer's pull
+  request that edited a package document, say — stops with `BRD_RECONCILE_BUNDLE_CHANGED`, naming the
+  files and commits, because the review is checked against what the customer was actually sent.
 - **A slice, not a root and not an idea-route PRD folder.** The moment the folder resolves, its
   prefix is tested — `BRD-` is a root, `EPIC-` an Epic folder, `PRD-` a slice or an idea-route PRD folder — never the
   folder's asserted `kind:`. An `EPIC-` folder stops with `BRD_RECONCILE_EPIC_LEVEL` before any gate runs: an Epic holds none of what this command reads, so the stop names `/brd-reconcile <SLICE-KEY>` on the slice above it where there is one, and no command where there is none. A `PRD-` folder carrying no `brd-link.md` was never carved from a BRD

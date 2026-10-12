@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.33.0] — 2026-10-12
+
+### Changed
+- **The customer's review comes back the way the package went out.** When the customer pulls the specs repository, the delivery note now asks them to commit their review beside the `bundle-<date>/` folder — under the exact name the prompt gives it — on a branch of their own, open a pull request, and change nothing else (a change they want made to the package goes in the review's section 12); where they cannot push, they send the file back instead. Before, nothing told them where to put it or to open a pull request. Once you merge that pull request, **`/brd-reconcile <KEY>` needs no `@<review-file>`**: it looks for that file on the default branch, in the slice's folder only, and asks you to confirm it — a file that is there but not merged yet stops with `BRD_RECONCILE_REVIEW_NOT_MERGED`, and two waiting reviews are put to you to pick. The committed review is moved to its canonical name (`customer-review-<date>.md`), not copied, so the folder holds it once. When the package went out as an archive, nothing changes: pass the file's path, from Downloads or wherever it landed. `--sent` still needs the path.
+- **`/brd-reconcile` checks that every handed-off bundle is unchanged.** A bundle is written once and never rewritten; one a later commit changed — a customer's pull request that edited a package document, say — stops the run with `BRD_RECONCILE_BUNDLE_CHANGED`, naming the files, the commits and how to restore it, because the review's quotations are checked against what the customer was actually sent.
+
 ## [3.32.1] — 2026-10-12
 
 Needs `workflows-core` 1.38.1, whose `grounding-format` §2.3 is the writing rule the grounding agents and `/prd-ground` now cite.

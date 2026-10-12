@@ -1252,7 +1252,7 @@ sent. The *Assemble the bundle* phase does not copy it in, and the manifest does
 
 It states only: which BRD this is; **how the customer gets the bundle**, shaped by the route just settled (`bundle-packaging.md` §4) — on the **repository** route, the repository to pull, the committed `bundle-<YYYYMMDD>/` directory by path, and the instruction to open the prompt file there and paste it; on the **archive** route, what is attached. This is the one document that names a delivery route, and the only one that may: it is written to a customer whose situation the operator knows, where the prompt is handed on to a reader the run cannot see (§5); which repositories, at which commits; **which
 file is the prompt** — the one file to paste; **which file comes back** — the one file to send,
-named exactly; any prerequisite whose decisions are still provisional and that positions resting on
+named exactly, and, on the **repository** route, where it goes: committed into the folder that holds `bundle-<YYYYMMDD>/`, under exactly that name, on a branch of the customer's own with a pull request against the default branch, changing nothing else — a correction the customer wants made to the package goes in the review's section 12, never into the bundle — or, where they cannot push, sent back instead (`bundle-packaging.md` §5, *The review comes back the way the bundle went out*); any prerequisite whose decisions are still provisional and that positions resting on
 it could move (D20); and anything else that must not sit buried inside a document. The two bolded
 items are bolded in the rendered note too, because the single most common failure of this loop is a
 reviewer who reads the documents, forms a view, and writes it into an email of their own devising —
@@ -1607,8 +1607,13 @@ on `/create-ard` and `/specify`, which read the architecture- and implementation
 alongside the same register. So the honest offer is the state this run actually leaves behind:
 
 ```
-choices: ["Stop here — the package is written and, if you handed it off, committed", "Send it — the delivery note is printed above, with whatever has to hold first where anything does", "Reconcile the review once it comes back — /product-workflows:brd-reconcile <BRD-KEY> @<review-file> <merge-clause>", "Package another BRD or slice"]
+choices: ["Stop here — the package is written and, if you handed it off, committed", "Send it — the delivery note is printed above, with whatever has to hold first where anything does", "Reconcile the review once it comes back — /product-workflows:brd-reconcile <BRD-KEY> <review-clause> <merge-clause>", "Package another BRD or slice"]
 ```
+
+`<review-clause>` is `@<review-file>` on the archive route, the review coming back as a file whose
+path only the operator will know; on the repository route it is `(once you merge the customer's
+pull request)`, since `/product-workflows:brd-reconcile` then finds the review committed beside the
+bundle and takes no path. The route is the one the *Render the delivery note* phase settled.
 
 **What *Send it* means on the repository route, before the handoff's pull request merges.** The note
 sends the customer to pull the specs repository, and a customer pulling its default branch finds no

@@ -340,6 +340,13 @@ attack.
 - **Phase 7 — the delivery note's 200-word ceiling.** A ceiling, not a target. Over it, the note is
   shortened and re-rendered; the two facts that are never trimmed are which file is the prompt and
   which file comes back.
+- **Phase 7 — the review comes back the way the bundle went out.** On the repository route the note
+  asks the customer to commit their review beside the bundle, under the exact name the prompt gives
+  it, on a branch of their own with a pull request — changing nothing else, since a change they want
+  made to the package goes in the review's section 12 — or to send it back where they cannot push.
+  Once you merge that pull request, [`/brd-reconcile`](brd-reconcile.md) finds the review without a
+  path; on the archive route you pass the path of the file that came back. The prompt itself names
+  no route, since it is handed on to whoever does the review, so the note is where this is said.
 - **Phase 8 — the citation-resolution check.** Run over every document in the assembled bundle,
   after the plugin-free scan, because both of its inputs — the identifier corpus and the set of
   bundle filenames — are facts about the bundle only once it is assembled. Three relations: every
