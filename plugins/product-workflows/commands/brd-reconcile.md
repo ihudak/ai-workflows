@@ -1643,7 +1643,7 @@ Any row still undisposed when this phase would end → stop:
    |---|---|
    | `slices.md`, a seed file, and the **prose** of any document below | Corrected in place. Nothing else owns these |
    | `coverage-ledger.md` — a row's `disposition` | **`refused-with-reason`**, naming the ledger phase as where a `[CD#n]` may move a row and `/product-workflows:brd-split` as the only allocator (`coverage-ledger-format.md` §3, §4). A customer asking for a row to be built here is asking for an allocation, and this command writes exactly three dispositions and never `covered-here` or `covered-by`. **Name no command for a row that already carries a fate**: `/brd-split` on this slice walks only `unallocated` rows, and its sibling re-cut runs on the parent, moving only a row a slice deferred and only on an instruction a person gives (`coverage-ledger-format.md` §3.2), so no run this record could name allocates it, and the row goes to *what still needs a human* with the customer's words (*Update the coverage ledger*). Only a row still `unallocated` is `/product-workflows:brd-split <BRD-KEY>`'s — a slice this route interviewed never holds one, `/brd-interview` refusing an unallocated ledger, but a `--sent` review of a slice never interviewed can find one |
-   | `brd/brd-inventory.md` — a row's `id`, `text` or `source_anchor` | **`refused-with-reason`**, for the reason class 3 gives about `brd/source/` itself: `text` is the requirement **verbatim** from the immutable source — on a row drawn from an image, the element it quotes from that image's transcription — and `source_anchor` locates it there (`${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §1, §2), so rewriting the row edits the customer's document in the one place it is mirrored. The amendment is a `customer-amended` defect resolution, which the *Resolve the defects the review settled* phase writes |
+   | `brd/brd-inventory.md` — a row's `id`, `text` or `source_anchor` | **`refused-with-reason`**, for the reason class 3 gives about `brd/source/` itself: `text` is the requirement **verbatim** from the immutable source — on a row drawn from an image, the element it quotes from that image's transcription — and `source_anchor` locates it there (`${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §1, §2), so rewriting the row edits the customer's document in the one place it is mirrored. The amendment is carried by a `customer-amended` defect resolution where the *Resolve the defects the review settled* phase writes one, and is otherwise named under *what still needs a human* — where this run withdrew that requirement, or no defect on it was still open |
    | `brd/brd-figures.md` — a section's *Text*, *Annotations*, *Flow*, *Illegible* or *Depicts* — **the parent's on a slice**, one hop, as the defect log is (`${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §2.1) | **`applied`**, in place: it is the plugin's reading of the customer's image, not the customer's document, and the reviewer is the reader certain to know what their own picture says — text the transcription recorded as illegible is the likeliest correction. The corrected part is written in the form `${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §1.2 fixes for it — *Text* the image's own strings only, inside its fenced `text` block, *Flow* one list item per edge in `figure-reader`'s notation, a label with no mark around it — so a corrected labelled edge cannot bring a bracketed label back. The image itself is class 3 below and never touched. On a slice this write takes the cross-BRD write guard above, and **where the guard stops it the row is `deferred-to-next-round`**, naming the branch/PR state the gate reported — never `applied`, because a row marked `applied` whose artifact is unchanged is not applied. A later `/product-workflows:brd-intake` run keeps the corrected section while the image's bytes are unchanged, since its Phase 2.5 re-uses a section whose content hash still matches; a changed image is re-transcribed and the correction does not carry over. **Where the correction changes the element an image-drawn inventory row quotes, that row is not rewritten and no defect is closed**: a corrected transcription is not corrected requirement text, so the *Resolve the defects the review settled* phase writes nothing for it, and any defect the row carries — typically an `ambiguity` about whether the image binds at all — stays open for its own question. The row goes to *what still needs a human*, named with the corrected element. A section-12 row asking to edit the inventory row itself still takes the row above's `refused-with-reason` |
    | `brd/brd-figures.md` — a section's *Read*, *Appearance*, *Content hash*, *Linked from* or *Rows* line | **`refused-with-reason`**, naming `/product-workflows:brd-intake` as their writer: *Read* and *Appearance* record what `figure-reader` could open and what the image looks like, the hash is of the image's bytes, and *Linked from* and *Rows* are written by every intake from its own walk and the final inventory — *Rows* kept as it stood only by an `EMPTY` read, which extracted nothing to write it from (`${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §1.2) — none of them is a reading of the picture a customer can correct, and an edit to the last two says something a later intake overwrites |
    | `decisions.md` — **any field of a record**: the complete set `decision-register-format.md` §4 names, all thirteen, `argumentation` among them | **`refused-with-reason`** where the row asks for a direct edit — the set is cited rather than listed, so a field §4 adds is refused on the day it is added and no field of §1's thirteen falls through this row as prose. Those move only through this command's own freeze, §4's two reopening causes, the propagation sweep's four dispositions, or — for `consumed_by` alone — the stamp `/product-workflows:create-prd`, `/product-workflows:create-ard` and `/product-workflows:specify` each write on a record they drew on. A customer who wants a decision changed has already changed it: their answer is a `[CD#n]`, frozen in the *Freeze the customer decisions* phase, which reopens what it contradicts |
@@ -1679,7 +1679,9 @@ Any row still undisposed when this phase would end → stop:
    the customer's document destroys the ability to say precisely what they gave us and what we
    changed, and a review row asking for it is asking for something this workflow does not do —
    refuse it with that reason, and say that the amendment is held in the returned review this run
-   reconciled, which the defect's `customer-amended <SLICE-KEY> <date>` resolution names.
+   reconciled, which the defect's `customer-amended <SLICE-KEY> <date>` resolution names where the
+   *Resolve the defects the review settled* phase writes one, and which is otherwise named under
+   *what still needs a human*.
 
 **A correction that would change a `[CG#n]` or a `[DG#n]` is not applied here.** The review's
 sections 5 and 6 challenge code and design claims, and the delivery side re-adjudicates them
@@ -1844,9 +1846,16 @@ the decision being about a requirement the same review withdraws. **Withdrawals 
 first**: every `open` defect raised against a requirement that a `[CD#n]` this run froze, completed
 or re-decided, and did not leave `open`, withdraws is written `withdrawn` before any other
 resolution of this run — `customer-amended` or `resolved-by` — so such a defect reads `withdrawn`
-whichever answer the walk took first, and the other record is the one sent to a human; where the
-review also supplied corrected text for that withdrawn requirement, the amendment goes there too,
-with the customer's words, the defect reading `withdrawn`. **Where two of this run's records,
+whichever answer the walk took first. The record sent to a human is one whose `settles` names that
+defect and whose own answer does not withdraw the requirement — a record that withdraws it is never
+sent, however many do; where the review also supplied corrected text for that withdrawn requirement,
+the amendment goes there too, with the customer's words, the defect reading `withdrawn`. **A row
+dropped by a `conflict` or `duplicate` settlement in favour of the row kept is not withdrawn** — it
+takes `superseded-by` or what its bullet gives it — and its other open defects are named under *what
+still needs a human* rather than resolved. **A `customer-amended` this run writes is this run's own
+resolution**, never one a record of this run finds already resolved, and an `open` record's defect
+is not amended: an amendment resolves only a defect still `open` that no record of this run left
+`open` settles. **Where two of this run's records,
 answering two questions, would each resolve one `open` defect** some way other than `withdrawn`, the
 one answering the question that comes first in the round record — by round, then position — decides
 its resolution, and the other goes to a human, naming the record that decided it, so that too turns
@@ -1884,8 +1893,8 @@ or re-decided nothing against it. The test reads those lines and the log, never 
 words ("moot", "withdrawn"), and one defect left standing keeps the entry held: part of its question
 still applies. Such an entry moves to the terminal disposition
 *answered by the customer*, written as `answered by the customer — nothing frozen: its requirement
-defects <[DEF#n], …> were withdrawn`, adding `by <SLICE-KEY>/[CD#n]` for each this phase resolved on
-that decision and naming no decision for one an earlier run resolved, whose log entry records none —
+defects <[DEF#n], …> were withdrawn`, adding `by <SLICE-KEY>/[CD#n]`, `…` — every decision of this
+run that withdrew the requirement — for each this phase resolved and naming no decision for one an earlier run resolved, whose log entry records none —
 in the round record and in `interview/customer-questions.md` alike. It counts toward closing its
 round by the *Freeze the customer decisions* phase's step 1 rule — where it leaves every question
 in the round with a terminal disposition, its last held question closed and no question in another
@@ -1930,7 +1939,7 @@ this phase is the translation between the two.
 | Disposition | Written when |
 |---|---|
 | `deferred-to: <this BRD>` | a `[CD#n]` defers the requirement — a live obligation, not built now |
-| `rejected: [DEF#n]` | a `[CD#n]` withdrew it, citing the defect-log entry the previous phase resolved `withdrawn` |
+| `rejected: [DEF#n]` | a `[CD#n]` withdrew it, citing the defect-log entry the previous phase resolved `withdrawn` — the lowest-numbered, where it resolved several on the row |
 | `rejected: <SLICE-KEY>/[CD#n]` | a `[CD#n]` withdrew it and the previous phase resolved no entry `withdrawn` for it — no defect still `open` was raised on the requirement, since the previous phase resolves every such one `withdrawn` whatever the answer's `settles` names — citing that decision, qualified by this slice's key exactly as `resolved-by` is (`coverage-ledger-format.md` §3) |
 | `superseded-by: [BR#n]` | a `[CD#n]` replaced it with another requirement — a `[BR#n]` of the parent's inventory, which this slice need not claim or hold a row for, so a sibling slice's row qualifies (`coverage-ledger-format.md` §3) |
 

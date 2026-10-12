@@ -1145,9 +1145,12 @@ record reopened with it) in the next one opened. The question:
   customer the second time — as the question its earlier answer could not close, never as a second
   question beside one still standing. A reopened record's question carries no
   `- **Requirement defect:**` line, whichever source puts it: its `settles` stands under §4, and the defect it names keeps the resolution
-  `/product-workflows:brd-reconcile`'s *Resolve the defects the review settled* phase wrote when the
-  record was first written `decided` (frozen so, or completed from `open`) — `resolved-by: <SLICE-KEY>/[CD#n]` naming this record or another question's, or a `withdrawn` or
-  `customer-amended` resolution naming no id at all (`brd-format.md` §4).
+  it held once the record was first written `decided` (frozen so, or completed from `open`) —
+  `resolved-by: <SLICE-KEY>/[CD#n]` naming this record, an earlier record of its own question or
+  another question's, a hand-written `resolved-by: <SLICE-KEY>/[CG#n]`, a `withdrawn` or
+  `customer-amended` resolution naming no id at all (`brd-format.md` §4), or still `open` where
+  `/product-workflows:brd-reconcile` only recorded its resolution, the parent's log being under
+  review.
 
 **What the answer does turns on the record's `status` as the answer's writer reads it**, read off
 the record and never judged. For a `[V]`, that is when this command writes the answer — or, for a

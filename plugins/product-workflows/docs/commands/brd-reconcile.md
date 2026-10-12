@@ -309,7 +309,8 @@ command removes none of them; the next `/brd-interview` run does.
   fixed by a rule this command does not own, and the customer cannot be expected to know which; a
   proposal moves only by a revision, which archives the prior and classifies what moved, so it is
   never edited at all. The refusal names the channel that *does* carry the substance: a `[CD#n]`, a
-  `customer-amended` defect resolution, a later [`/brd-interview`](brd-interview.md) round, whose
+  `customer-amended` defect resolution where one is written (otherwise the reconciliation record's
+  *what still needs a human*), a later [`/brd-interview`](brd-interview.md) round, whose
   operator owns every code-defect disposition, the next [`/brd-intake`](brd-intake.md) run, a re-run
   of the command that wrote the proposal ([`/prd-proposal`](prd-proposal.md) for a slice's,
   [`/brd-proposal`](brd-proposal.md) for the umbrella's, none for a row naming only an archived
@@ -576,7 +577,8 @@ written down.
   with the customer. No command logs an amendment for a requirement the inventory never held.
 - **It never edits `brd/source/`.** The customer's document stays immutable; an amendment stays in
   the slice's returned review it came from, which the defect's `customer-amended <SLICE-KEY> <date>`
-  resolution names.
+  resolution names where one is written — not where the same review withdrew the requirement, when
+  the amendment is named for a person instead.
 - **It never banners inside `bundle-<date>/`.** That directory is the permanent record of exactly
   what was sent and its whole value is that it is byte-identical to the customer's copy. An
   overturned bundle document is named in the reconciliation record instead.
