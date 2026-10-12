@@ -355,7 +355,7 @@ Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission
 `/conformance` inference resolves the phase to `conformance` and the role from where
 `workflows-core:addressing` §4.1 places the folder: `dev` for an Epic, `pe` for a PRD.
 
-**Then write the resume pointer** per `Skill(skill: "workflows-core:reference", args: "session-hygiene")` §1, and
+**Then write the resume pointer** per `Skill(skill: "workflows-core:reference", args: "session-hygiene")` §1 — not on a run that ended early (Phase 1, *Ending early*), which writes none — and
 **then commit session artifacts (terminal)**: invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. Print its §6 outcome line, prefixed `Specs repo:`, as the run's last output.
 
 ---
