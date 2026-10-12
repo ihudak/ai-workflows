@@ -382,7 +382,7 @@ Fixed per-command labels, with eight inferred exceptions:
 | `/frames` | **inferred** | **inferred** |
 | `/conformance` | **inferred** | **inferred** |
 | `/brd-intake` | brd-to-prd | pm |
-| `/prd-ground` | brd-to-prd | pa |
+| `/prd-ground` | brd-to-prd | pm |
 | `/brd-split` | brd-to-prd | pm |
 | `/brd-interview` | brd-to-prd | pm |
 | `/brd-package` | brd-to-prd | pm |

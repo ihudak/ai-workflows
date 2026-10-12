@@ -175,7 +175,7 @@ declaration.
 | Phase 4 Step 2R — the re-cut walk | runs **in place of** the walk above on a fully allocated ledger an instruction found a re-cuttable row on | never — the candidate set is built in `full` mode only |
 | Phase 4.5 — resolve standing empty children | runs | skipped — a slice has no children |
 | `rejected: [DEF#n]` resolves in | this BRD's own defect log | the **parent's** log, one hop ([`brd-format.md`](../../references/brd-format.md) §4) |
-| Phase 7 — next steps | ground each child that **gained a row this run**, never every non-empty one | **the route does not end here** — [`/brd-interview`](brd-interview.md) on this slice, Recommended; *Stop here* is the other option, not the only one |
+| Phase 7 — next steps | ground each child that **gained a row this run**, never every non-empty one — *Ground now* runs it here, after the pull request merges | **the route does not end here** — [`/brd-interview`](brd-interview.md) on this slice, Recommended; *Stop here* is the other option, not the only one |
 | Announced? | no — the ordinary case | yes, `BRD_SPLIT_ON_SLICE`, a **notice, not a stop**, at Phase 0 and again in the final report |
 
 A slice's walk offers no `covered-by`, and the reason is about **who writes** it, not about whether
@@ -595,6 +595,20 @@ for it, a donor that gained no row included. **This BRD's own next step is nothi
 offered here. It is each such child's own re-entry at `/prd-ground` and then, in
 `allocate-only` mode, `/brd-split` again that carries the route forward — and that second
 `/brd-split` run is what offers `/brd-interview` next, on the child's own key.
+
+**_Ground now_ runs that grounding for you, in the same session — only when you choose it.** It is
+the recommended option on a root run whose pull request is open (or that had nothing to commit):
+you pick the children — all of them by default, or the ones you will work on soon, since grounding
+a slice nobody touches for weeks spends Opus time on a baseline that goes stale — name the
+repositories once, from the clones it lists, and see each child's cost before you confirm. The
+split then finishes as it always does — its cost entry, its session commit, its report — and waits:
+**you merge its pull request**, the plugin never does, and tell it so; it checks the merge, squash
+and rebase included, and asks again if it finds none. Then it runs
+[`/prd-ground`](prd-ground.md) once per chosen child, one after another, each a complete run with
+its own pull request in that child's folder and its own cost entry under that child's key. *Ground
+each child later* names the command and runs nothing, as this phase always did; on an outcome that
+opened no pull request — a declined handoff, no remote, a failed push — *Ground now* is not offered,
+and the run says what has to happen first.
 
 ## See also
 

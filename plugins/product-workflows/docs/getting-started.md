@@ -69,7 +69,7 @@ That gives 20,000 characters at 200K and 100,000 at 1M; a session pays only for 
 /idea ACME-77 a lightweight way for on-call engineers to silence a noisy alert for one hour without editing the alerting rule
 ```
 
-**Type the command.** Every command in this plugin is typed-only (`disable-model-invocation: true`): it stays out of the list of skills the model picks from, which keeps that list inside Claude Code's budget, so asking in prose — "turn this idea into a brief" — does not start it.
+**Type the command.** Every command in this plugin but one is typed-only (`disable-model-invocation: true`): it stays out of the list of skills the model picks from, which keeps that list inside Claude Code's budget, so asking in prose — "turn this idea into a brief" — does not start it. The one is `/prd-ground`, which `/brd-split`'s *Ground now* runs for you; it refuses to start any other way you did not type it.
 
 `ACME-77` is yours to invent — nothing looks it up, and no tracker is read. It only has to match `^[A-Z][A-Z0-9_]*(-\d+)+$`.
 

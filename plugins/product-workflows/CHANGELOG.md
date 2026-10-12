@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.31.0] — 2026-10-12
+
+Needs `workflows-core` 1.38.0, whose `next-phase-offer` rule 1 sanctions *Ground now* and whose cost role table reads `/prd-ground` as `pm`.
+
+### Changed
+- **`/prd-ground` runs as PM.** Its only inputs are the repositories to ground against and the handoff answer; `code-grounder` and the blind `grounding-verifier` do the work, so nothing in it needs an architect, and the BRD route no longer goes PM → PA → PM. What it does need is the code cloned, which a PM often does not have: where so, a PA or a PE runs it instead — both have the repositories cloned for their own work, and most teams have fewer PAs than PEs, so either may. Every new cost entry reads `role: pm`, whoever runs it; **entries already written keep `pa` as recorded** — history is not rewritten. A PA may still review the grounding pull request. The docs, the roles page, the README and the diagrams (`brd-workflow.md`, `workflow.md`, and `workflows-core`'s family map) say so.
+- **`/prd-ground` proposes the repositories.** Without `--repos`, Phase 1 lists every clone under `$REPOS_PATH` — slug and path — and asks you to confirm all of them (recommended where there are three or fewer) or name the ones in scope, instead of recalling short names from memory.
+
+### Added
+- **`--repos <name>[,<name>…]` on `/prd-ground`** names the repositories up front, as one comma-separated token, so a headless run or a caller skips the question; refused with `--no-code`.
+- **`/brd-split`'s *Ground now*.** A root split that carved or fed children now recommends grounding them here, in the same session, instead of retyping a command whose arguments it already knows. You choose the children (all, or the ones you will work on soon), name the repositories once from the clones it lists, and see each child's cost before confirming. The split finishes as before — its own cost entry, session commit and report — then waits for **you** to merge its pull request (the plugin never merges), checks the merge (squash and rebase included), and runs `/prd-ground` once per chosen child: each a complete run with its own pull request in that child's folder and its own cost entry under that child's key. *Ground each child later* and *Stop here* behave exactly as before. On an outcome with no pull request on its way to main — a declined handoff, no remote, a failed push — *Ground now* is not offered.
+- **`/prd-ground` is model-invocable for that one caller.** It no longer carries `disable-model-invocation`, so `/brd-split` can run it through the Skill tool; a run the model starts without `--from-split <BRD-KEY>` stops at once (`PRD_GROUND_TYPED_ONLY`), and the flag must name the slice's own parent (`PRD_GROUND_NOT_FROM_SPLIT`). Typed by hand, nothing changes.
+
 ## [3.30.6] — 2026-10-12
 
 ### Changed

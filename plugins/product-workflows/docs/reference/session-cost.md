@@ -11,13 +11,13 @@ Every cost-emitting command passes a `phase` and a `role` label at the point it 
 | `/idea`, `/create-prd` | `prd-creation` | `pm` |
 | `/update-prd` | `prd-update` | `pm` |
 | `/brd-intake`, `/brd-split`, `/brd-interview`, `/brd-package`, `/brd-reconcile` | `brd-to-prd` | `pm` |
-| `/prd-ground` | `brd-to-prd` | `pa` |
+| `/prd-ground` | `brd-to-prd` | `pm` |
 | `/create-ard` | `architecture` | `pa` |
 | `/epics` | `epic-refinement` | `pe` |
 | `/specify` | `specification` | `pe` |
 | `/prd-proposal`, `/brd-proposal` | `proposal` | `pm` |
 
-`brd-to-prd` is the one phase shared across two roles: every command of the BRD-to-PRD route runs as PM except `/prd-ground`, which is PM-initiated but PA/Dev-executed, and both roles tag their cost line `brd-to-prd`. [Roles and phases](../roles-and-phases.md) defines what each phase means and what a run in it is accountable for; this page states only what each command passes.
+`brd-to-prd` is one role's phase: every command of the BRD-to-PRD route runs as PM, `/prd-ground` included — whoever runs it, a PA or PE among them where the PM cannot clone the code. An entry written before product-workflows 3.31.0 reads `pa` and stays as recorded. [Roles and phases](../roles-and-phases.md) defines what each phase means and what a run in it is accountable for; this page states only what each command passes.
 
 ## Skipping cost (`--skip-costs`)
 

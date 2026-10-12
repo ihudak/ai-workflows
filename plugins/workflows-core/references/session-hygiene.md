@@ -83,6 +83,10 @@ each next option the offer names, compare its role to the just-finished command'
 
 - **Same role** (e.g. `/design E1 → /design E2`, Dev→Dev) → suggest **`/compact`** —
   context still relevant, keep the thread.
+- **Same role, but the next command reads nothing this run established** — it re-reads from disk
+  everything it needs, and this run's reasoning bears on none of it (e.g. `/brd-split` on a root →
+  `/prd-ground` on a child it carved, PM→PM) → suggest **`/clear`**: the thread `/compact` would
+  keep is noise to it.
 - **Different role** (e.g. `/epics` PE → `/design` Dev) → suggest **`/clear`** as the
   better choice when one person keeps wearing both hats (the prior role's reasoning is
   now noise). `/compact` still works if continuing right away; a genuinely different
