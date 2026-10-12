@@ -281,12 +281,33 @@ Where more routes apply than a prompt can carry, the offer's overflow rule appli
 
 ## Phase 9 — Maintenance, feedback, follow-ups
 
-Mirror `/dev-workflows:ready` Phase 6, with `Command run: /conformance`, `Change type: docs` and the
-verdict counts in the change summary block. **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` in place of Agent 4 (`workflows-core:impl-maintenance`), as that phase says. Persist plugin feedback through `emit-auto`, as it does.
+Terminal: runs after the Phase 8 report and NEVER interrupts an earlier phase. Compose a **change
+summary block**:
 
-Then persist the follow-ups by invoking `Skill(skill: "workflows-core:reference", args: "followup-emission")` and executing its steps inline, with `unit_folder` = the Epic's folder for an Epic item and the PRD folder for a PRD-level one: every `fix-code` item Phase 6 produced. **An Epic run emits its `fix-code` items here, at once** — the Dev owns that code; the PE's later ruling withdraws one it overrules.
+```
+Implementation: [one sentence: conformance check of <KEY> — <Epic run (Dev) | PRD run (PE)>, N discrepancies settled]
+Change type: docs
+Classification: [MODERATE | SIGNIFICANT]
+Files changed:
+<absolute path of each file Phase 6 wrote: the record, any Epic record marked superseded-by, each annotated document>
+Notable additions/removals: _conformance.md written; [N follow-ups, N notes, N overrules]
+Conformance verdicts: [the Phase 8 counts]
+```
 
-Each step NEVER fails the run and NEVER commits its own output.
+**Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` in place of Agent 4 below, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing, and surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects`.
+
+Then spawn all four maintenance agents in a **single Agent message**, each with `model: <detection_model>`:
+
+- **Agent 1 — Documentation** (general-purpose): given the change summary, check the specs repo's own internal documentation for an index of conformance records or per-PRD artifacts; apply a minimal edit where one is warranted, and otherwise return "no update required (reason)".
+- **Agent 2 — Knowledge base** (general-purpose): given the change summary, check `~/.claude/memory/` and `.claude/memory/` for a fitting file and append an entry only for a recurring or non-obvious conformance pattern this run surfaced, in the `### [Short title]` / Context / Insight / When it applies / Date / Ref format; otherwise return "no update required".
+- **Agent 3 — Instructions** (general-purpose): given the change summary, check `CLAUDE.md` in the project root and `~/.claude/CLAUDE.md` for a missing rule this run revealed; apply a minimal, additive, scoped change only where one is warranted.
+- **Agent 4 — Session maintenance** (`workflows-core:impl-maintenance`): "Analyse this session and return a Lessons Learned report. Session handoff: Command run: /conformance; What was done: [one paragraph]; Key events: [code not found, Epics not shown merged, re-check drops, overrules, or 'none']; Workarounds used: [or 'none']; Review verdict: [the Phase 8 counts]; Test result: N/A (read-only conformance check); Project root: $SPECS_PATH."
+
+**Persist plugin feedback (automatic).** After Agent 4 returns, invoke `Skill(skill: "workflows-core:reference", args: "feedback-emission emit-auto")` and call its `emit-auto` entry point (§6) with Agent 4's Lessons Learned report, `command: /conformance`, the run's `key` and `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`).
+
+**Then persist the follow-ups** by invoking `Skill(skill: "workflows-core:reference", args: "followup-emission")` and executing its steps inline, with `unit_folder` = the Epic's folder for an Epic item and the PRD folder for a PRD-level one: every `fix-code` item Phase 6 produced, previewed and confirmed per its §7. **An Epic run emits its `fix-code` items here, at once** — the Dev owns that code; the PE's later ruling withdraws one it overrules.
+
+Emit this phase's short output — each agent's result, the feedback persisted, and `N follow-ups written to <target>` or `none`. This phase NEVER fails the run and NEVER commits its own output: the terminal `commit-artifacts` step in Phase 10 commits it.
 
 ---
 
