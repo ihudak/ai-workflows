@@ -77,6 +77,8 @@ re-insert.
 
 **Withdrawing a follow-up.** One caller edits a line this emitter wrote: `/dev-workflows:conformance`, when a `fix-code` decision whose follow-up an Epic run emitted no longer stands (that command's record format, `dev-workflows:conformance-format`) — the PE overrules it, or its requirement is withdrawn or no longer in its document. It ticks the line and appends why, never deleting it: `- [x] <the line as written> — withdrawn: <PRD-KEY>/[DD#n]` for an overrule, and `- [x] <the line as written> — withdrawn: <KEY>/[DD#n] (requirement withdrawn)` or `(orphaned)` otherwise. A ticked line counts as done, so a later `/implement` of the unit does not read it back as open. No other caller edits a line, and this emitter itself never does.
 
+**Re-queuing a confirmed fix.** One caller writes a line §5 would skip: `/dev-workflows:conformance`'s PRD run, when the PE confirms a `fix-code` decision whose follow-up is no longer open — ticked, or never written because the Epic run's preview cancelled it. Its line ends `— confirmed: <PRD-KEY>/[DD#n]`, and §5's match against a line naming the same change does not apply to it: the PE's confirmation is a new request for that change, not a restatement of the old one. A line already carrying that same `— confirmed:` suffix is still a match, so a re-run does not write it twice.
+
 ## 6. Qualifying predicate — what becomes a follow-up
 
 Emit a task ONLY for signals whose action lands OUTSIDE the current change or
