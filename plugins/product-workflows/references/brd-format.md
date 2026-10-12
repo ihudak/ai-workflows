@@ -541,6 +541,23 @@ granularity below, so the nine-odd, not the fifty — and neither is kept or is 
 gave a reason for every item a re-read could change (`commands/brd-intake.md` Phase 3), and the
 operator's answer is still what `accounts:` records.
 
+**The binding words.** `/brd-intake` Phase 3 does not let a reason stand unexamined where a
+section's own text carries a word that typically binds: `must`, `shall`, `should`, `required`, `requires`,
+`mandatory`, `need to`, `needs to`, `has to`, `have to`, `responsible for` — matched
+case-insensitively, as whole words, every run of whitespace collapsed to one space. This list is
+the one place they are fixed. It is a tripwire, never a test of whether a sentence binds: a hit
+quotes the sentence beside the reader's reason and takes the marker off that section's own
+question, so recording that it holds nothing is a deliberate answer, and the remedy for a sentence
+that does bind is to quote it, which adds that row and leaves the rest of the read alone. A hit
+never changes which of the two is recommended, a re-read or accounting: a false hit — a conventions
+section saying what *must* means, *"the old system must be restarted nightly"* — then costs one
+deliberate answer, where flipping the recommendation would bring back a whole-set re-read on most
+real BRDs. A miss — an obligation stated with no such word, or in another language — leaves the
+section's question as it was. `will` is left out on purpose: it is the future tense of every
+background description, and a name (*Will Turner, product owner*) in the very contact lists a reason
+is meant to settle, so it would flag nearly every such section, making an unmarked question the norm
+and the quoted sentence noise.
+
 Three relations — the first two over the **top-level section** of the document and of every
 linked markdown file Phase 2 copied, as defined below the list, the third over the images:
 

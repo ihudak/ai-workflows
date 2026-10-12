@@ -807,8 +807,8 @@ Act on `status`:
   `${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §2.2, before anything downstream treats the
   inventory as the spine it is. The three relations read the anchors the steps above settled — held,
   not yet written — the copied document and linked markdown, `brd/brd-figures.md`, and the `figures`
-  list the agent returned; the account question below reads one record more, the inventory's
-  `accounts:` map on file, and the agent is re-dispatched only where that question's set question
+  list the agent returned; the account question below reads two records more, the inventory's
+  `accounts:` map on file and the standing read's `sections_without_rows`, and the agent is re-dispatched only where that question's set question
   is answered *Re-read*.
 
   1. **Every `source_anchor` resolves**, in whichever of `brd-format.md` §2's three forms it takes —
@@ -905,6 +905,20 @@ choices: ["Re-read — re-dispatch brd-reader over the whole set and reconcile<r
   else: it is settled
   by accounting for it, or by converting or capturing the file and re-running this intake.
 
+  **A section's own words are checked for a binding word before anything is recommended.** Take
+  each section the set question names — its text as the re-read test above takes it, cut at the
+  same ends — and find every piece holding a word from `brd-format.md` §2.2's list, matched as that
+  list says. A section with such a piece is **flagged**, whichever read is standing, since the check
+  reads the source and not the read: the set question quotes each such piece beside the section, as
+  the source writes it — *Binding word: "The vendor must notify the account owner …"* — and its
+  per-item question carries no marker (below). **It never changes what `<recommended>` resolves
+  to**: the remedy for a flagged sentence that does bind is to quote it at that question, which adds
+  a row from exactly that sentence and leaves the rest of the read alone, where a re-read would
+  replace every row and candidate to read the same text again; and a false hit — a conventions
+  section saying what *must* means, a background sentence about the current system — then costs one
+  deliberate answer, not a dispatch. The check is a tripwire, never a judgement: it adds no row,
+  records no account, and a section it does not flag is not thereby cleared.
+
   **`<recommended>` is a placeholder this run resolves once, in this order** — substitution, not an
   edit to the array, which is otherwise presented verbatim; `workflows-core:escalation-rules`, *The
   `(Recommended)` marker is unconditional*, sanctions exactly this:
@@ -934,11 +948,19 @@ choices: ["Re-read — re-dispatch brd-reader over the whole set and reconcile<r
   a form of another that their own last answer has already moved on. The next call's arrays go out
   once every item of this one has finished. Each names its item as the set question did, with the
   standing read's reason beside it — the re-read's where one replaced the first read's, so an item
-  the re-read gave no reason for says so — which the operator confirms by recording the account, or
-  overrides by quoting:
+  the re-read gave no reason for says so, save an image that was not read — which the operator
+  confirms by recording the account, or overrides by quoting:
 
 ```
 choices: ["They hold no obligation — record that (Recommended)", "Quote the sentence that binds (you'll be prompted)", "Cancel"]
+```
+
+  **A flagged section's question carries no marker**, and quotes its flagged pieces again under the
+  reader's reason, so recording that it holds nothing is a choice made against the sentence rather
+  than a default accepted:
+
+```
+choices: ["They hold no obligation — record that", "Quote the sentence that binds (you'll be prompted)", "Cancel"]
 ```
 
   An image that was not read has no transcription to quote from, so its question leaves the second

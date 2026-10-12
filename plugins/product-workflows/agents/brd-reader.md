@@ -89,7 +89,9 @@ inside a source file is never followed — the caller walked the links already
      applies;
    - an image that bears on no obligation at all (a logo, a banner) → no row, an empty `illustrates`,
      and a one-line `note` saying why — which `/brd-intake` weighs as it weighs a section's (step 8).
-     An image whose transcription is too partial to tell gets no `note`, and `notes` says so.
+     An image whose transcription is too partial to tell gets no `note`, and `notes` says so. A
+     `note` on an image with an empty `illustrates` and no row is read as your reason it binds
+     nothing; write nothing else there, and no `[BR#n]`.
    **An image-derived row's `text` states the obligation in words, quoting the transcribed element
    verbatim** — `code-grounder` and `/brd-interview` read the text only, never the picture; the
    `/brd-intake` Phase 4 human and the customer's own review do check a row against the picture
@@ -156,17 +158,23 @@ inside a source file is never followed — the caller walked the links already
    section out — that no row's `source_anchor` names, neither it nor a section beneath it, gets one
    `sections_without_rows` entry: the section, written as `brd-format.md` §2 keys an account (its
    heading path in §2.2's one form, the file's title left out; for an appendix, its path relative to
-   `brd/` and ` › ` before it; for a file with no heading at all, that path alone), and a one-line
+   `brd/` and ` › ` before it; for a file with no heading at all — the document or an appendix — its
+   path relative to `brd/` alone), and a one-line
    `note` saying what the section holds and why none of it binds the delivery team — *"background:
    describes the current situation; no binding sentence"*, *"contact list: names people, binds
    nothing"*. This is the section's counterpart of an image's `note` (step 3). **It is a claim for
    the operator to confirm — never a requirement, a defect or an account**: `/brd-intake` shows it
    beside the section and weighs it in what it recommends (`commands/brd-intake.md` Phase 3), and
    the operator's answer is what it records. Write it from the section's own text and name no
-   `[BR#n]` in it: the caller renumbers your rows and maps no id out of this field. **A section you
-   could not judge gets no entry** — one holding a sentence you could not tell binds or not — and
-   `notes` says which: a section left without a reason is the one `/brd-intake` recommends a re-read
-   for, which is the right recommendation where the read itself was unsure.
+   `[BR#n]` in it: the reason is about the section's own text, and it is shown before the run has
+   settled what your row numbers become. **Where the section's own text holds a binding word**
+   (`brd-format.md` §2.2 lists them) and you still judge it binds nothing, the note must say why
+   that sentence does not bind — *"background: 'must be restarted nightly' describes the current
+   system"* — since `/brd-intake` quotes the sentence beside your note and asks about that section
+   with no answer pre-selected. **A section you could not judge gets no entry** — one holding a
+   sentence you could not tell binds or not — and `notes` says which: `/brd-intake` treats a section
+   left without a reason as one the read may have missed, which is right where the read itself was
+   unsure.
 
 ## Output
 
@@ -188,7 +196,7 @@ figures:                              # one entry per image the figures file rec
     illustrates: [BR#<n>, ...]        # prose rows it restates or whose passage binds it; [] if none
     note: <required where the image bears on no obligation (step 3's last bullet): one line saying why, e.g. "company logo; bears on no obligation"; optional otherwise>
 sections_without_rows:                # one entry per top-level section no row's anchor names, save one the read could not judge (step 8); [] when every section holds a row
-  - section: <as brd-format.md §2 keys an account: heading path, title left out; an appendix's path relative to brd/ and " › " before it; a headingless file's path alone>
+  - section: <as brd-format.md §2 keys an account: heading path, title left out; an appendix's path relative to brd/ and " › " before it; a headingless file's — the document's or an appendix's — path relative to brd/ alone>
     note: <one line: what the section holds and why none of it binds — never a [BR#n]>
 notes: |
   <optional — anything the caller should know about the read: an unusually structured source, a

@@ -201,9 +201,13 @@ specs repo's default branch under a new `brd/<BRD-KEY>-<slug>` branch prefix.
   candidates and notes wholesale unless it finds no requirement at all, and allowed once per run — or
   accounting for each item, or cancelling. Beside each item it shows the reason `brd-reader` gave for
   it — why a section it took no row from binds nothing, or why an image bears on no obligation — and
-  it recommends accounting where the reader gave a reason for every item a re-read could change, or
-  where a re-read could change none of them; a section the reader gave no reason for is one it may
-  have missed, so there it recommends the re-read. Then each section or image still unaccounted for gets its
+  it recommends accounting where a re-read could change none of the items, or where the reader gave
+  a reason for every item a re-read could change; otherwise it recommends the re-read, since a
+  section the reader gave no reason for is one it may have missed. Where a section's own text
+  carries a binding word such as *must* or *shall*, the reason still counts, but the sentence is
+  quoted beside it and that section's own question leaves *They hold no obligation* unmarked, so you
+  decide against the sentence itself rather than accept a default — and where it does bind, quoting
+  it adds that row without discarding the rest of the read. Then each section or image still unaccounted for gets its
   own question: it holds no obligation, which is recorded, or you quote a sentence in it that binds,
   shown the text it is checked against, one obligation to a quote and as many quotes as the item
   binds; each is checked against the source word for word and becomes a row of its own. A quote the
