@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.39.0] — 2026-10-12
 
 ### Changed
-- **`release-notes.md` is a deliverable, not a session file** (docs-workflows 1.15.0). `specs-repo-git` §2.1's bounded set drops it — eight shapes, four of them single files — so the prompt-free session commit no longer stages it, and `/docs-workflows:release-notes` hands it off through `handoff-to-main` behind the consent choice, on the `prd/` prefix that `phase-handoff`'s `prefix` row now lists it under. `phase-handoff` §4.0 classes it **advisory**: a later `/release-notes` run reads it, as do `/update-prd` and `/docs-audit`, and none gates on it.
+- **`release-notes.md` is a deliverable, not a session file** (docs-workflows 1.15.0). `specs-repo-git` §2.1's bounded set drops it — eight shapes, four of them single files — so the prompt-free session commit no longer stages it, and `/docs-workflows:release-notes` hands it off through `handoff-to-main` behind the consent choice, on the `prd/` prefix that `phase-handoff`'s `prefix` row now lists it under. `phase-handoff` §4.0 classes it **advisory**: a later `/release-notes` run reads it, as do `/update-prd` and `/docs-audit` (at `HEAD`), and none gates on it. **Update `docs-workflows` to 1.15.0 with this release**: an older `/release-notes` still relies on the session commit to commit its draft, so beside this release its drafts are left uncommitted with no offer. In session-branch mode, a `release-notes.md` commit the session branch made before this release and has not pushed holds that branch's push back until it is pushed or merged by hand.
 
 ## [1.38.2] — 2026-10-12
 

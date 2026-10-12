@@ -382,12 +382,12 @@ command removes none of them; the next `/brd-interview` run does.
   standing keeps the question held, and a withdrawal frozen `open` withdraws nothing yet. A question
   that does carry a record — an answer frozen `open` for its reason, say — stays held, is named under
   *what still needs a human*, and a later answer to it is walked against that record — one that
-  completes or replaces it closes the question. Where the
+  completes or replaces it with a reason closes the question. Where the
   defects were already withdrawn before this review and the question has no record of its own, the
   walk offers such a reply the two record-or-reject options only. A slice reconciled before 3.33.1 closes such questions when you re-run
   `/brd-reconcile <KEY>` on the review it already took, passing its `customer-review-<date>.md`. That
   re-run skips every decision the earlier pass froze, and offers again every answer to a question it
-  froze nothing for. Its section-12 corrections are put again with the earlier pass's listing beside
+  froze nothing for. Its section-12 corrections are put again with every earlier pass's listing beside
   each, since a record from before 3.33.1 names no row by position: point each to the listing that
   applied or refused it, and it is reported already disposed; one matched to a deferral, or to none, is
   disposed again. A live record `open` for want of its reason is **completed**,

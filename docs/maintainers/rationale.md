@@ -405,7 +405,7 @@ A duplicate commit on another session's branch is theirs to resolve and, where t
 
 **Refused, with the reason:**
 
-- *A second checkout of the session branch.* Every reader of `implementation.md`, `follow-ups.md` and the release-notes draft would learn a second root, and the operator's drafts would sit in a hidden directory.
+- *A second checkout of the session branch.* Every reader of `implementation.md` and `follow-ups.md` would learn a second root, and the operator's drafts would sit in a hidden directory.
 - *Per-session files.* It changes the format every reader depends on.
 - *Opening the pull request, or asking once.* These steps are prompt-free and never open one.
 - *Moving the user's default branch to drop the stranded commits.* A `reset` the plugin never runs (§1 rule 4); the line names it.

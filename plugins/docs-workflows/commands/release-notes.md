@@ -26,7 +26,7 @@ Usage: `/release-notes <ADDRESS> [--version <v>] [--no-docs] [--docs <path>] [--
 
 For full feature documentation use `/document`; for Epic drafting use `/epics`.
 
-This command makes **no external API calls but key discovery's optional, read-only `gh search prs` and `gh pr view`** — with diff grounding on, where a scanned clone is on GitHub and `gh` is installed and logged in — and **never writes into the docs repo**.
+This command makes **no external API calls but two**: key discovery's optional, read-only `gh search prs` and `gh pr view` — with diff grounding on, where a scanned clone is on GitHub and `gh` is installed and logged in — and, on the operator's consent, the draft's handoff, whose `gh` calls (its authentication check, its open-pull-request probe and `gh pr create`) are `workflows-core:phase-handoff` §2.6–§2.7's. It **never writes into the docs repo**.
 
 ---
 
@@ -546,10 +546,13 @@ Outside that one case there is no question to ask and no option that replaces th
 
 1a. **Hand off the draft** (commit-when-asked — never automatic). It is content a team reviews before
    it is published, so it lands on the specs repository's default branch by pull request, like any
-   deliverable, and never through the terminal session commit. Invoke
+   deliverable, and never through the terminal session commit. **Where `$SPECS_PATH` is unset** — an
+   `@<path>` run, which needs no specs tree — there is no specs repository to hand it to: the offer
+   is never made, the draft stays where it was written, and the report says so. Otherwise invoke
    `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and present its §4.3 consent
    choice verbatim — the **advisory** array, `release-notes.md` being read by a later run of this
-   command and by others and gated by none (§4.0):
+   command and by others and gated by none (§4.0) — `/docs-workflows:docs-audit` excepted, which reads
+   the drafts at the specs repository's `HEAD` and so misses one left uncommitted:
    ```
    choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (no command stops on this; what reads it reads your working copy)", "Cancel"]
    ```
@@ -559,15 +562,26 @@ Outside that one case there is no question to ask and no option that replaces th
    in it, its one literal path; `title: <KEY> Release-notes draft <version | Unreleased>`, `<KEY>`
    being `focus_key` where it is set and the PRD's key where it is null; and `body_facts` = the
    version and Change Type section the draft was filed under, its shape, and whether it superseded
-   an earlier `# Unreleased` note. Emit its §4.1 outcome line in the report below. **Options 2 and 3
-   decline the handoff and nothing else**: the draft stays appended in the PRD folder, uncommitted,
-   and the terminal `commit-artifacts` step never stages it (`workflows-core:specs-repo-git` §2.1).
+   an earlier `# Unreleased` note. **Options 2 and 3 decline the handoff and nothing else**: the draft
+   stays appended in the PRD folder, uncommitted, and the terminal `commit-artifacts` step never
+   stages it (`workflows-core:specs-repo-git` §2.1). **Say what a declined handoff costs**: beyond the
+   clause §4.1's *Declined by the user* line carries, an uncommitted draft costs what any path outside
+   the bounded artifact set does — `workflows-core:specs-repo-git` §3.3's G1 advisory fires on every
+   later run of any command until it is committed or removed — and a later run of this command reads
+   it only while the checkout stays where it was written. On every choice, the report below carries
+   §4.1's outcome line.
 
 2. **Report:**
    ```
    ## Release-notes draft — <KEY>
    - Appended to: <the resolved PRD folder>/release-notes.md, under <version | Unreleased> → <## Breaking changes | ## Feature updates | ## Fixes>
-   - Phase handoff: <the §4.1 outcome line step 1a emitted>
+
+   ### Phase handoff
+   [step 1a's §4.1 outcome line, with §4.1's **advisory** <downstream-clause>, and the paths it lists
+   beneath it — or the declined/no-remote/gate-failed/nothing-to-commit variant, or, where
+   `$SPECS_PATH` is unset, that no handoff was offered and the draft is written and uncommitted.
+   Never the gated clause: nothing runs require-on-main on release-notes.md]
+
    - Shaped as: <Feature update | Breaking change | Fix>  (source: <PRD | inferred>)
    - Category label: <the value | none — omitted from the draft>
    - Title: <N characters — over 80 is worth shortening (never blocking) | — (fixes)>
@@ -718,7 +732,7 @@ current working directory, where it is not the specs repository; no user name is
 ## Invariants (always enforced)
 
 - ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation, and Phase 0 step 1's named stops on a folder that resolved — `RELEASE_NOTES_BRD_NOT_SLICED`, `RELEASE_NOTES_FOLDER_NOT_PLACED`, `RELEASE_NOTES_PRD_NO_KEY` and `RELEASE_NOTES_NO_PRD`, each reporting the operator's own tree). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
-- No external API call but two — key discovery's optional, read-only `gh search prs` and `gh pr view`, where a scanned clone is on GitHub and `gh` is installed and logged in (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md`), and Phase 8's handoff opening the draft's pull request, on the operator's consent (`workflows-core:phase-handoff` §2.7); `gh` wraps the API. This run has no forge URL to resolve: Phase 3 builds `refs[]` from `implementation.md` and the commit scan, which a merged pull request's landed commits join, and `diff-summarizer` takes a ref's diff with pure local `git`.
+- No external API call but two — key discovery's optional, read-only `gh search prs` and `gh pr view`, where a scanned clone is on GitHub and `gh` is installed and logged in (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md`), and Phase 8's handoff, on the operator's consent, whose `gh` calls — its authentication check, its open-pull-request probe and `gh pr create` — are `workflows-core:phase-handoff` §2.6–§2.7's; `gh` wraps the API. This run has no forge URL to resolve: Phase 3 builds `refs[]` from `implementation.md` and the commit scan, which a merged pull request's landed commits join, and `diff-summarizer` takes a ref's diff with pure local `git`.
 - Every read of the specs tree is read-only.
 - The draft contains NO identifiers, NO PR links, and NO `{{#internal-note}}` block. The scope comment Phase 8 writes above it names a key and the commits the run read, and is not part of the draft (`${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §1).
 - The draft is EXACTLY one Summary, shaped by its destination per `${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §1/§3 — a plain **Category:** label + `### title` + prose for `breaking-changes` / `feature-updates`, or one or two bare past-tense sentences, opening with a past-tense verb, for `fixes`. It carries NO `Change type:` line and NO `Release-notes category:` line, and its **prose** names a release version only where the heading cannot say it — the version is the `#` heading the draft is filed under (Phase 1, `release-note-types.md` §1), which is the only thing that says which release a section belongs to now that the three destinations are three sections of one file. A breaking note that takes effect in a later release names that release, from the source or the user and never invented, or a far-off deprecation's end-of-life date (`release-note-types.md` §6), and every breaking note carries its remediation under a literal `**Action plan:**` label (§4). When the change deprecates something the Summary carries a deprecation note (end-of-life date required, end-of-support optional). A Change Type switch at the Phase 6 prompt re-dispatches the writer.
