@@ -29,7 +29,7 @@ cited by `agents/brd-package-reviewer.md` for what the customer will actually be
 for why nothing inside that committed directory is ever bannered or rewritten afterwards. Commands
 upstream of the package cite it too, for what they write that a bundle will later carry —
 `commands/brd-interview.md` (§1.1, §6.2's cross-BRD id spelling and relation 1, §6.3 rule 1) and
-`commands/prd-ground.md` (§6.2 relation 2) — as do several of this plugin's references; `grep -l
+`commands/prd-ground.md` (§1.2's classes, which it scans what it writes against, and §6.2 relation 2) — as do several of this plugin's references; `grep -l
 bundle-packaging commands/*.md agents/*.md references/*.md` lists every file that cites it.
 
 ## 1. Plugin-free by construction (D12)
@@ -159,10 +159,38 @@ filename alone:
   `customer-review-<YYYYMMDD>.md`, and `dev-workflows/`. No prompt part sends the reviewer to any of
   them.
 
-**The plugin-free scan does not cover this.** It hunts plugin-internal tokens (§1 rules 1–2), and
+**The plugin-free scan does not cover this.** It hunts plugin-internal tokens (§1 rules 1–2, of
+the classes §1.2 tabulates), and
 every document above is free of them whether or not it belongs in a customer's hands. Nothing
 mechanical stands behind this allow-list, which is why it is written out rather than left to
 "the package's own documents".
+
+### 1.2 The plugin-free scan's classes
+
+`commands/brd-package.md`'s plugin-free scan stops on a token of any of these classes, over the
+finished prompt, the finished delivery note and every document in the finished bundle — the only
+exemptions being the customer's own words and naming, which §6.3 defines:
+
+| Class | Examples |
+|---|---|
+| A path rooted at the plugin's install directory | the plugin-root variable, in any form |
+| A reference-file citation | `references/…`, a bare `workflows-core:<name>` loader argument, the `Skill(skill: "workflows-core:reference", …)` call itself, `docs/superpowers/…` |
+| A numbered cross-reference in this plugin's notation | any `§` |
+| A slash command | `/brd-…`, `/dev-workflows:…`, `/workflows-core:…`, any leading-slash command name |
+| An agent, subagent type or skill name | `subagent_type`, any `<plugin>:<name>` prefix (`dev-workflows:`, `workflows-core:`, and any namespace a later split adds), any agent filename |
+| A decision-row reference | `D12`, `D13`, `D18`, `D20`, or any other bare `D<n>` row id |
+
+**The table is here, rather than in the command that runs the scan, because most of the bundle's
+documents are written long before it runs**, by earlier commands of the route, and a token one of
+them writes stops the package days later, where the only repair is a hand edit to a record the
+operator did not write. A writer can hold its documents to these classes when it writes them instead.
+One writer checks what it writes against this whole table today: `commands/prd-ground.md` scans
+what it is about to write into the three grounding files, and rewrites a sentence that hits rather
+than deleting its token (`workflows-core:grounding-format` §2.3 is the writing rule).
+`commands/brd-interview.md` guards the one class its customer questions meet, writing a customer's
+section as `source/<basename> › § <n>` (§6.3 rule 1). That write-time check is a
+first line, never a substitute: `commands/brd-package.md` still runs its own scan over the finished
+bundle, exactly as strictly, because it is the last point at which anything is still ours.
 
 ## 2. De-Obsidianising
 

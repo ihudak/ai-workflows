@@ -356,6 +356,17 @@ Under the resolved folder — the `PRD-<SLICE-KEY>-<slug>/` slice folder inside 
 - `brd-link.md` — **BRD route only.** The `depends-on:` list, merged additively across runs. Never
   written on the idea route, since `--depends-on` is refused there before Phase 4 could persist one.
 
+**The three grounding files are written for a reader with no plugin.** On the BRD route they go to
+the customer in the review bundle as written, and [`/brd-package`](brd-package.md) stops on any
+command, agent or skill name, `§` reference or decision-row id it finds in them. So every note,
+heading and lead-in the run writes says what happened in plain words, and before writing, Phase 8
+scans everything it is about to write for those tokens and rewrites a sentence that has one,
+changing no id, verdict, outcome, evidence path or line, or control result. The final report lists
+every rewrite. A token inside naming a finding records rather than prose — a path or command in your
+code repository, a frame path or label, a documentation page's path, the requirement text a finding
+quotes — is left as written, since rewording it would break the record; the final report names it,
+because on the BRD route, `/brd-package` will still stop on it. This covers what the run writes: the notes, opening lines and run headings an earlier run left on file stay as they are, and you can reword their free text by hand.
+
 Behind Phase 9's consent choice, these are committed, pushed, and a pull request opened against the
 specs repo's default branch — under the shared `brd/<KEY>-<slug>` branch prefix on the BRD route
 (shared by every `/brd-*` command), or `prd/<KEY>-<slug>` on the idea route (shared with
@@ -455,8 +466,9 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   `prior_verdict`, and appends a successor with the next id carrying the verifier's verdict, so an
   existing citation keeps resolving and [`/brd-interview`](brd-interview.md) sees the change as it
   sees any re-grounding; a class-4 `[DG#n]` citing a code finding superseded this way is superseded
-  with it, naming the run that re-derives it: `--no-code` where the code finding has a successor,
-  and a plain re-run where it has none, since that re-grounds a claim nothing on file answers. An `agree`/`extend`/`unprovable` outcome
+  with it, its note saying in words which re-grounding re-derives it and the final report giving the
+  command: `--no-code` where the code finding has a successor, and a plain re-run where it has none,
+  since that re-grounds a claim nothing on file answers. An `agree`/`extend`/`unprovable` outcome
   is recorded alongside the finding unchanged (`extend` also
   appends the additional evidence the verifier's own search turned up). Which anchor each finding
   is verified against depends on what it rests on: a `[CG#n]` and a class-4 `[DG#n]` are re-derived
