@@ -225,8 +225,8 @@ run — the terminal `commit-artifacts` step skips on it.
   operator declined appends under `# Unreleased`.
 
   **NEVER write into a docs repo, a code repo, or the current working directory, where it is not the specs repository.** The PRD
-  folder is in `$SPECS_PATH`, which is where the terminal `commit-artifacts` step commits it with the
-  rest of the run's artifacts — unless the run carries `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), when it is written and not committed.
+  folder is in `$SPECS_PATH`, which is where Phase 8's handoff commits it, on a `prd/` branch with a
+  pull request, behind the operator's consent — unless the run carries `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), when the handoff refuses and it is written and not committed.
 
 
 - **Style check** (default ON):
@@ -544,10 +544,30 @@ Two notes for the **same key** under `# Unreleased` is the trigger, not two note
 
 Outside that one case there is no question to ask and no option that replaces the file. NEVER write into a docs repo.
 
+1a. **Hand off the draft** (commit-when-asked — never automatic). It is content a team reviews before
+   it is published, so it lands on the specs repository's default branch by pull request, like any
+   deliverable, and never through the terminal session commit. Invoke
+   `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and present its §4.3 consent
+   choice verbatim — the **advisory** array, `release-notes.md` being read by a later run of this
+   command and by others and gated by none (§4.0):
+   ```
+   choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (no command stops on this; what reads it reads your working copy)", "Cancel"]
+   ```
+   On the first choice, execute `handoff-to-main`
+   (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with
+   `prefix: prd`; `feature_folder` the resolved PRD folder; `deliverable_paths` = `release-notes.md`
+   in it, its one literal path; `title: <KEY> Release-notes draft <version | Unreleased>`, `<KEY>`
+   being `focus_key` where it is set and the PRD's key where it is null; and `body_facts` = the
+   version and Change Type section the draft was filed under, its shape, and whether it superseded
+   an earlier `# Unreleased` note. Emit its §4.1 outcome line in the report below. **Options 2 and 3
+   decline the handoff and nothing else**: the draft stays appended in the PRD folder, uncommitted,
+   and the terminal `commit-artifacts` step never stages it (`workflows-core:specs-repo-git` §2.1).
+
 2. **Report:**
    ```
    ## Release-notes draft — <KEY>
    - Appended to: <the resolved PRD folder>/release-notes.md, under <version | Unreleased> → <## Breaking changes | ## Feature updates | ## Fixes>
+   - Phase handoff: <the §4.1 outcome line step 1a emitted>
    - Shaped as: <Feature update | Breaking change | Fix>  (source: <PRD | inferred>)
    - Category label: <the value | none — omitted from the draft>
    - Title: <N characters — over 80 is worth shortening (never blocking) | — (fixes)>
@@ -679,18 +699,17 @@ guidance already appeared in the Phase 8 report.
 **Then commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It
 stages ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits
 `<KEY> Add dev-workflows session artifacts (/release-notes)`, and pushes per
-§4 step 5. **The draft is one of those paths**: `release-notes.md` in the
-resolved PRD folder is §2.1's `/release-notes` draft, so this step commits
-and pushes it with the rest of the run's artifacts, and edits nothing in it.
+§4 step 5. **The draft is not one of those paths**: Phase 8 step 1a handed
+`release-notes.md` off behind the consent choice, and this step neither stages
+nor edits it.
 It NEVER writes into a docs repo, NEVER touches a code repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run;
 and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Because the Phase 8 report was composed before this
 phase, **print its §6 outcome line here**, as the run's last output — prefixed
 `Specs repo:`, with any guard notice repeated in full.
 
 ADDITIVE — this phase NEVER fails the run and makes no deliverable handoff
-commit: it opens no branch and no pull request for the draft, which the
-terminal step above commits in the specs repository as one of `$SPECS_PATH`'s
-bounded paths (§2.1), and never in a docs or code repository. It
+commit — the draft's is Phase 8's, in the specs repository and never in a docs
+or code repository. It
 NEVER makes an external API call, and NEVER writes into a docs repo or the
 current working directory, where it is not the specs repository; no user name is ever written (§10).
 
@@ -699,7 +718,7 @@ current working directory, where it is not the specs repository; no user name is
 ## Invariants (always enforced)
 
 - ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a **plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked) — so a run abandoned at the block still records it. NEVER for a work-quality review BLOCK or an environment / user halt (repo-missing, dirty-tree, key-not-found, cancellation, and Phase 0 step 1's named stops on a folder that resolved — `RELEASE_NOTES_BRD_NOT_SLICED`, `RELEASE_NOTES_FOLDER_NOT_PLACED`, `RELEASE_NOTES_PRD_NO_KEY` and `RELEASE_NOTES_NO_PRD`, each reporting the operator's own tree). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
-- No external API call but one — key discovery's optional, read-only `gh search prs` and `gh pr view`, where a scanned clone is on GitHub and `gh` is installed and logged in (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md`); `gh` wraps the API. This run has no forge URL to resolve: Phase 3 builds `refs[]` from `implementation.md` and the commit scan, which a merged pull request's landed commits join, and `diff-summarizer` takes a ref's diff with pure local `git`.
+- No external API call but two — key discovery's optional, read-only `gh search prs` and `gh pr view`, where a scanned clone is on GitHub and `gh` is installed and logged in (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md`), and Phase 8's handoff opening the draft's pull request, on the operator's consent (`workflows-core:phase-handoff` §2.7); `gh` wraps the API. This run has no forge URL to resolve: Phase 3 builds `refs[]` from `implementation.md` and the commit scan, which a merged pull request's landed commits join, and `diff-summarizer` takes a ref's diff with pure local `git`.
 - Every read of the specs tree is read-only.
 - The draft contains NO identifiers, NO PR links, and NO `{{#internal-note}}` block. The scope comment Phase 8 writes above it names a key and the commits the run read, and is not part of the draft (`${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §1).
 - The draft is EXACTLY one Summary, shaped by its destination per `${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §1/§3 — a plain **Category:** label + `### title` + prose for `breaking-changes` / `feature-updates`, or one or two bare past-tense sentences, opening with a past-tense verb, for `fixes`. It carries NO `Change type:` line and NO `Release-notes category:` line, and its **prose** names a release version only where the heading cannot say it — the version is the `#` heading the draft is filed under (Phase 1, `release-note-types.md` §1), which is the only thing that says which release a section belongs to now that the three destinations are three sections of one file. A breaking note that takes effect in a later release names that release, from the source or the user and never invented, or a far-off deprecation's end-of-life date (`release-note-types.md` §6), and every breaking note carries its remediation under a literal `**Action plan:**` label (§4). When the change deprecates something the Summary carries a deprecation note (end-of-life date required, end-of-support optional). A Change Type switch at the Phase 6 prompt re-dispatches the writer.
@@ -707,7 +726,7 @@ current working directory, where it is not the specs repository; no user name is
 - The run has **no worthiness gate**: every PRD is relevant for release notes, so there is no content state in which this command refuses to draft. `relevant_for_release_notes` is retired (`workflows-core:prd-format`) and a value left in an existing PRD is read by nothing. Whether a note is drafted is the decision of whoever runs the command.
 - NEVER write into a docs repo. The draft's one destination is `release-notes.md` in the resolved PRD folder, which is persistent (never `/tmp`), and it is appended to, never overwritten: no earlier section is ever rewritten or removed (Phase 8). The style gate's scratch copy is removed in every case, with `command rm -f --` (Phase 7).
 - ALWAYS use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0).
-- Light gate only — no Opus review, no tests, no branch (still true — `specs-preflight`, its same-run re-run after a slice key is entered included (`workflows-core:specs-repo-git` §3.5), switches `$SPECS_PATH` only between branches that already exist, and only plugin-created ones (§2.2); it creates none), and no commit of anything in a docs/code repo or the current working directory, where it is not the specs repository. The terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded artifact paths (`workflows-core:specs-repo-git` §2.1) — the draft, `release-notes.md` in the resolved PRD folder, among them, so it is committed in the specs repository and nowhere else — unless the run carries `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), when it is written and not committed.
+- Light gate only — no Opus review, no tests, and no branch but the `prd/` branch Phase 8's handoff cuts in the specs repository behind the operator's consent (`specs-preflight`, its same-run re-run after a slice key is entered included (`workflows-core:specs-repo-git` §3.5), switches `$SPECS_PATH` only between branches that already exist, and only plugin-created ones (§2.2); it creates none), and no commit of anything in a docs/code repo or the current working directory, where it is not the specs repository. The draft, `release-notes.md` in the resolved PRD folder, is committed by that handoff, in the specs repository and nowhere else; the terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded session paths (`workflows-core:specs-repo-git` §2.1), never the draft — and under `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1) neither commits, and the draft is written and not committed.
 - ALWAYS run `specs-preflight` at Phase 0 — again, with the slice's key set, where step 1 re-enters for a slice the operator entered at `RELEASE_NOTES_BRD_NOT_SLICED` — and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`) — bounded to `$SPECS_PATH`'s artifact paths (§2.1), switching only branches the plugin created (§2.2) and pushing only what §4 step 5 allows, always `git -C "$SPECS_PATH"` and never a `cd` (§1 rule 1), never force-pushing, and never failing the run
 - ALWAYS end the Phase 8 report with a `### Next step` recommendation (per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")`) — guidance only, never auto-invoked; the pipeline leaf (adaptive: continue any pending PA/PE phase, else the PRD is fully processed).
 - ALWAYS end the Phase 8 report with a `### Context hygiene` block per `workflows-core:session-hygiene` — prepare-first (the `resume.md` write runs later, in the terminal cost phase, per `workflows-core:session-hygiene` §1 — this block prints the guidance only), then a leaf-aware suggestion (done → nothing; pending role → `/clear`) + `/rename <PRD-ID>-<slug>-<role>` using this run's inferred lane (`pm` or `dev`, per the Phase 6 inference); guidance only, never auto-run.

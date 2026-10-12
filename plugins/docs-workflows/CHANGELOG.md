@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.15.0] — 2026-10-12
+
+Needs `workflows-core` 1.39.0, whose session commit no longer stages `release-notes.md`.
+
+### Changed
+- **`/release-notes` hands its draft off by pull request.** The draft, `release-notes.md` in the PRD folder, used to ride in the run's session commit, pushed straight to whatever branch the specs checkout was on — usually the default branch — with no review and no way to ask for one. A release note is content a team reviews before it is published, so the run now asks, once the draft is appended, whether to branch, commit, push and open a pull request for it (recommended) or leave the file written for you to handle, exactly as every other phase's output is handed off. The branch takes the existing `prd/` prefix. Declining leaves the draft written and uncommitted: no command stops on it, and a later run reads your working copy. The session commit still carries the run's cost, feedback and follow-ups, and never the draft.
+
 ## [1.14.3] — 2026-10-12
 
 ### Changed

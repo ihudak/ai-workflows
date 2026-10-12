@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.39.0] — 2026-10-12
+
+### Changed
+- **`release-notes.md` is a deliverable, not a session file** (docs-workflows 1.15.0). `specs-repo-git` §2.1's bounded set drops it — eight shapes, four of them single files — so the prompt-free session commit no longer stages it, and `/docs-workflows:release-notes` hands it off through `handoff-to-main` behind the consent choice, on the `prd/` prefix that `phase-handoff`'s `prefix` row now lists it under. `phase-handoff` §4.0 classes it **advisory**: a later `/release-notes` run reads it, as do `/update-prd` and `/docs-audit`, and none gates on it.
+
 ## [1.38.2] — 2026-10-12
 
 ### Changed
