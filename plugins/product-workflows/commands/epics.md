@@ -645,7 +645,7 @@ The drafting is delegated to the **`epic-writer`** subagent (pinned to the §2.1
   >
   > handoff_file: [absolute path of the temp handoff file from step 1]"
 
-3. **Handle the return.** `status: DONE` → record `files_written` for Phase 6.1 onward. `status: BLOCKED` → surface the named gap:
+3. **Handle the return.** `status: DONE` → record `files_written` as **the run's written Epics** — the one list Phases 6.1 to 7.5 read, which step 4's splits and Phase 6.1's fold-back add to. `status: BLOCKED` → surface the named gap:
    ```
    choices: ["Provide the missing input (you'll be prompted)", "Cancel"]
    ```
@@ -659,7 +659,7 @@ The drafting is delegated to the **`epic-writer`** subagent (pinned to the §2.1
      ```
      choices: ["Split it along its stories (Recommended)", "Keep it whole — give the reason", "Cancel"]
      ```
-     **Split** re-dispatches `epic-writer` once for that Epic as step 2 dispatches it, its handoff step 1's save that `mode` is `both`, `refinement_targets` is that Epic, `scope` is in-scope to it alone, `split_by_size` names it, and `existing_epics` and `existing_epic_themes` also carry every other Epic this run has written — so the writer's `_coverage.md` rebuild counts them and its duplicate check sees them: the writer keeps the Epic's key and its first slice — the one the others depend on — writes each other slice as a net-new Epic on the same `target:`, each keyed by the writer with the next unused two-digit segment under this PRD (`<PRD-KEY>-NN`), in slice order — not proposed, since nothing between the dispatch and its return can ask: validate each with `key-valid` (`workflows-core:addressing` §1) and report it — and updates `_coverage.md`. Merge the return into step 3's records: its `files_written` into the run's written Epics, its `clarifications_needed[]` into Phase 6.1's, its `coverage_file` replacing step 3's; a `BLOCKED` return is handled as step 3 handles one. Count the result again; a slice still over the limit is asked about once more, without *Split*, and is never re-dispatched for it a second time:
+     **Split** re-dispatches `epic-writer` once for that Epic as step 2 dispatches it, writing a fresh handoff file for it — step 1's fields, never step 1's file — save that `mode` is `both`, `refinement_targets` is that Epic, `scope` is in-scope to it alone, `split_by_size` names it, and `existing_epics` and `existing_epic_themes` also carry every other Epic this run has written — so the writer's `_coverage.md` rebuild counts them and its duplicate check sees them: the writer keeps the Epic's key and its first slice — the one the others depend on — writes each other slice as a net-new Epic on the same `target:`, each keyed by the writer with the next unused two-digit segment under this PRD (`<PRD-KEY>-NN`), in slice order — not proposed, since nothing between the dispatch and its return can ask: validate each with `key-valid` (`workflows-core:addressing` §1) and report it — and updates `_coverage.md`. Merge the return into step 3's records: its `files_written` into the run's written Epics, its `clarifications_needed[]` into Phase 6.1's, its `coverage_file` replacing step 3's; a `BLOCKED` return is handled as step 3 handles one. Every other dispatch of the writer, Phase 6.1's included, carries no `split_by_size`. A slice key that fails `key-valid` is put to the operator — re-prompted, never coerced, as Phase 1 mints one — and the slice's folder, its `key:` line and its `_coverage.md` rows are renamed to the key given. Count the result again; a slice still over the limit is asked about once more, without *Split*, and is never re-dispatched for it a second time:
      ```
      choices: ["Keep it whole — give the reason", "Cancel"]
      ```
@@ -690,27 +690,27 @@ re-dispatch `epic-writer` once with the resolutions), and **keep, for Phases 6.2
 and 7, the text each answer put into an Epic** — the user's answer, which no
 fixer rewrites (*User-resolved text*, below). Markers the user chooses to
 **leave unresolved** stay visible in the draft and become `epic-reviewer`
-BLOCKERs in Phase 7. If `clarifications_needed[]` is empty, this phase is a
+BLOCKERs in Phase 7. If `clarifications_needed[]` is empty, this step is a
 **silent no-op** (byte-identical to a run without it).
 
 **Leftover disposition (refine / both only).** After the writer returns, read `_coverage.md`; every `❌ gap` row is a PRD requirement no refinement target covers. In ONE batched prompt, ask per gap:
 ```
 choices: ["Assign to Epic <KEY> (re-drafts that Epic to include it)", "Propose as a new (net-new) Epic", "Defer (leave as an uncovered row)"]
 ```
-Fold the results back: *assign* → re-dispatch `epic-writer` once (or Edit inline) to add the requirement to the named target's `## Covers` + scope; *new Epic* → add a net-new draft in its own `EPIC-<PRD-KEY>-NN-<eslug>/`, its key minted exactly as Phase 1 mints one — never a slug-named file, which the Invariants forbid; *defer* → the row stays `❌ gap` in `_coverage.md` and is listed in the Phase 9 report. Reuses the same batched-gate pattern as the clarification resolution above; no gaps → silent no-op.
+Fold the results back: *assign* → re-dispatch `epic-writer` once (or Edit inline) to add the requirement to the named target's `## Covers` + scope; *new Epic* → add a net-new draft in its own `EPIC-<PRD-KEY>-NN-<eslug>/`, added to the run's written Epics, its key minted exactly as Phase 1 mints one — never a slug-named file, which the Invariants forbid; *defer* → the row stays `❌ gap` in `_coverage.md` and is listed in the Phase 9 report. Reuses the same batched-gate pattern as the clarification resolution above; no gaps → silent no-op.
 
-Count each Epic the fold-back re-drafted or created as Phase 6 step 4 counts, and put that step's question for any over the limit and not settled, before Phase 6.2 — the set the rest of the run reviews and hands off is the counted one.
+Count each Epic the fold-back re-drafted or created as Phase 6 step 4 counts, and put that step's question for any over the limit and not settled, before Phase 6.2 — the set the rest of the run reviews and hands off is the counted one. A split at this recount merges into the run's written Epics as step 4's does, and puts its slices' `clarifications_needed[]` through this phase's clarification step once more, so no marker reaches review unasked.
 
 ---
 
 ## Phase 6.2 — Prose style check
 
-Invoke `prose-style-checker` on the files written in Phase 6. Unlike `/document` (keyed mode), this does NOT use `docs-style-checker` (no repo linter for specs-tree content). Instead, the prose style checker validates terminology, trademarks, voice/tone, and inclusive language.
+Invoke `prose-style-checker` on the run's written Epics (Phase 6 step 3). Unlike `/document` (keyed mode), this does NOT use `docs-style-checker` (no repo linter for specs-tree content). Instead, the prose style checker validates terminology, trademarks, voice/tone, and inclusive language.
 
 → Agent (subagent_type: "prose-style:prose-style-checker", model: `<detection_model — §9 / §2.1 Sonnet chain>`):
   > "Run the style check for this brief:
   >
-  > files:    [absolute paths of every Epic file written in Phase 6]
+  > files:    [absolute paths of the run's written Epics (Phase 6 step 3)]
   > doc_type: epic
   > emphasis: terminology and customer-facing captions, labels, messages, and text
   > fixed_headings: [the text of every heading `workflows-core:pre-lint`'s Epic block requires per Epic file, verbatim, plus `## Contract` where an Epic carries one]"
@@ -762,7 +762,7 @@ Invoke `epic-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no
   > "Review the Epic drafts for this brief:
   >
   > Task description: [one-paragraph: PRD key, PRD goal, number of Epics drafted]
-  > Written Epic file paths: [absolute paths of every Epic file written in Phase 6]
+  > Written Epic file paths: [absolute paths of the run's written Epics (Phase 6 step 3)]
   > existing_epics: [one entry per EPIC- folder already under the resolved PRD folder, as read in Phase 3 — its asserted key, its title, and the absolute path of its epic.md; when focus_key is set, the *other* Epics, excluding the focus one]
   > code-scanner output:  [paste array of per-repo scanner outputs from Phase 5, or 'N/A — code scan off']
   > requirements:        [paste the requirements[] array from Phase 3]
@@ -778,7 +778,7 @@ Act on the verdict (same shape as `/document` keyed mode Phase 7):
 
 **Triage sub-step** (before any fixer dispatch, and on every re-review): invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")` and follow it. For each finding, verify its claimed consequence at the location it names; keep it, mark it unverified, or dismiss it; record every dismissal and every unverified finding with its reason; and raise a grade only by effect. Hand the fixer **survivors only** — and none on user-resolved text, which the user settles instead (Phase 6.2's *User-resolved text*) — and carry every disposition into this run's report. A re-review — the one the fix cycle allows, or one you chose at the first settle prompt — is triaged under that reference's § On re-review: it carries forward what this run already ruled — save, on a re-review you chose at the first settle prompt, the dismissed and unverified findings it re-verifies — and no survivor of it is handed to a fixer. At either of that reference's settle prompts, **Keep the verdict** means the review **stayed blocked** (below) — on a kept verdict that is not `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run, as the escalation's own *Cancel the whole run* does.
 
-**An *Epic size* finding never reaches `doc-fixer`.** Splitting an Epic, or recording why it stays whole, is the operator's to decide (Phase 6 step 4), and a fixer can do neither: hold every *Epic size* finding that survives triage out of the fixer's set, report it in Phase 9's `### Sizing` with `/product-workflows:epics <EPIC-KEY>` to split it, and count it among the findings this review leaves open.
+**An *Epic size* finding never reaches `doc-fixer`.** Splitting an Epic, or recording why it stays whole, is the operator's to decide (Phase 6 step 4), and a fixer can do neither: hold every *Epic size* finding that survives triage out of the fixer's set, report it in Phase 9's `### Sizing` with `/product-workflows:epics <EPIC-KEY>`, which re-drafts the Epic — splitting one over the limit, or unbundling a criterion or story that bundles several behaviours — and count it among the findings this review leaves open; where holding them out leaves the fixer's set empty, dispatch no fixer, as `workflows-core:finding-triage` says of a set triage emptied.
 
 - **BLOCK** — invoke `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain>`) with `Severities to fix: BLOCKER and MAJOR`. Write the `doc-fixer` Fix Report to a temp file (`command mktemp -t dw-epics-claims-XXXXXX`, never inside a repo tree or the specs tree), record its path as `claims_file`, then **check `doc-fixer`'s `Stop condition flag` before re-invoking anything**. If it is `NEEDS HUMAN`, the fixer deferred at least one BLOCKER as needing a human decision: do NOT re-invoke `epic-reviewer` — a re-review can only re-find the BLOCKER the fixer has just reported it could not resolve — and instead surface each deferred BLOCKER with the reason the fixer gave, then escalate it individually per the `Review verdict BLOCK (unresolved after one fix cycle) — /epics` rule in `workflows-core:escalation-rules`, which names this entry point alongside a review that stayed blocked. Only when the flag is `CLEAR` do you re-invoke `epic-reviewer` once **passing `claims_file`** — so the re-review falsifies the fixer's account rather than assuming it. Triage the re-review under `workflows-core:finding-triage` § On re-review (the triage sub-step above); on that section's **Proceed**, continue as after a verdict that is not BLOCK — to this phase's closing paragraphs, then Phase 7.5. If the review **stayed blocked** — a BLOCKER survives that triage, or you keep the verdict at either settle prompt — escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — /epics` rule in `workflows-core:escalation-rules` for each unresolved BLOCKER individually:
   ```
@@ -984,6 +984,7 @@ MODERATE — Epic drafting for a single PRD
 - [<EPIC-KEY>] — <n> criteria, <m> stories — _then, where it applies:_ split from [<EPIC-KEY>] | kept whole: "<reason>" | over the limit, not splittable: <file> describes the whole Epic
 - ...
 - Existing Epics over the limit: [<EPIC-KEY>] (<n> criteria, <m> stories) — `/product-workflows:epics <EPIC-KEY>` | not splittable: <file> — _full PRD runs only; omit where none_
+- Review finding held open: [<EPIC-KEY>] — <over the limit | bundles: the behaviours named> — `/product-workflows:epics <EPIC-KEY>` — _only where Phase 7 held an *Epic size* finding out of the fixer's set; omit otherwise_
 
 ### Epic review verdict
 [PASS | PASS WITH RECOMMENDATIONS | BLOCK] — [1-line summary of findings applied / deferred]
