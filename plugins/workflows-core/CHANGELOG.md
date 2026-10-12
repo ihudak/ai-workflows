@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.38.2] — 2026-10-12
+
+### Changed
+- **`phase-handoff` §4.0 has a row for the customer's committed review** (product-workflows 3.33.0): on the repository route the customer commits `<KEY> Customer Review <date>.md` beside the bundle by pull request, and `/brd-reconcile` reads it on the default branch and declares its path only to stage its deletion once it has moved it to `customer-review-<date>.md`. Advisory, gated by nothing.
+
 ## [1.38.1] — 2026-10-12
 
 ### Fixed

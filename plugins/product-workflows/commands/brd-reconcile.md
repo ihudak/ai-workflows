@@ -153,8 +153,8 @@ write would re-ask a question already answered.
    a readable file → stop:
    `BRD_RECONCILE_NEEDS_REVIEW: /brd-reconcile needs the returned review — re-run '/product-workflows:brd-reconcile <KEY> @<review-file>' with the path the customer's file actually sits at, or, where the customer committed it beside the bundle, merge their pull request and re-run '/product-workflows:brd-reconcile <KEY>'.`
    **`--sent` needs `@<review-file>`**: a package this plugin did not build came with no note telling
-   the customer where to commit a review, so step 6a has nothing to find. `--sent` without it → stop
-   with the same message.
+   the customer where to commit a review, so step 6a has nothing to find. `--sent` without it → stop:
+   `BRD_RECONCILE_SENT_NEEDS_REVIEW: --sent names what the customer was sent, and the review answering it has to be named too — re-run '/product-workflows:brd-reconcile <KEY> @<review-file> --sent <path>…' with the path the customer's file sits at.`
 
    **`--sent <path>` (optional, repeatable), each consuming the next token.** The material the
    customer was *actually sent* — the other half of the pair this command reconciles. It is for a
@@ -299,19 +299,7 @@ write would re-ask a question already answered.
    this command's own second stop below sends an operator down a hand-committed one: files landed by
    hand can land in any grouping, or partially. So once the gate passes, **verify the siblings rather
    than inferring them** — check that `self-review-<YYYYMMDD>.md` and `bundle-<YYYYMMDD>/` of the same
-   date are present, and report by name any that are not. **Then check that every handed-off bundle
-   is still what was handed off**, whichever route the review came back by: for each
-   `customer-review-prompt-<YYYYMMDD>.md` on `<default-ref>` whose `bundle-<YYYYMMDD>/` is there too,
-   take the commit that added the prompt — the last line of
-   `git -C "$SPECS_PATH" log --diff-filter=A --format=%H <default-ref> -- <BRD-dir>/customer-review-prompt-<YYYYMMDD>.md`,
-   the oldest — and test
-   `git -C "$SPECS_PATH" diff --quiet <that commit> <default-ref> -- <BRD-dir>/bundle-<YYYYMMDD>/`.
-   `/product-workflows:brd-package` writes a dated bundle once and nothing rewrites it
-   (`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §5), so a difference means something
-   changed it after it was handed off — most likely a customer's pull request that edited a package
-   document instead of asking for the change in its section 12 — and a quotation checked against it
-   would be checked against a document the customer was never sent. Stop:
-   `BRD_RECONCILE_BUNDLE_CHANGED: <BRD-dir>/bundle-<YYYYMMDD>/ has changed since it was handed off in <commit> — <files>, changed by <commits, each with its author and subject>. A review is checked against the bundle the customer received, so restore it — git -C "$SPECS_PATH" checkout <commit> -- <BRD-dir>/bundle-<YYYYMMDD>/, then commit and merge that — and re-run. A change the customer wants made to the package belongs in their review's section 12.` A missing sibling never stops the run — the
+   date are present, and report by name any that are not. A missing sibling never stops the run — the
    customer's answer is still their answer — but it is carried into the reconciliation record and the
    final report as a limit on what this run could check the review against, because a returned
    quotation with no committed bundle behind it cannot be matched to the document it came from
@@ -333,6 +321,27 @@ write would re-ask a question already answered.
      `BRD_RECONCILE_PACKAGE_NOT_HANDED_OFF: <BRD-KEY>'s package is written at <path> but is on no branch — its handoff was declined. Commit and merge the package's files to the specs repo's default branch, then re-run; do not re-run /product-workflows:brd-package, which will not rewrite a dated bundle.`
      This is the state `--sent` is **not** for: the package exists and is the right one, so landing it is the fix. Admitting a copy of it under `--sent` would put the same document in the folder twice under two names.
 
+   **Once the gate has passed, check that no handed-off bundle was changed after it landed.** A
+   bundle's files are only ever added — `/product-workflows:brd-package` writes a dated bundle once
+   (`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §5) — so for each `bundle-<YYYYMMDD>/` on
+   `<default-ref>`, list every commit that modified, deleted or retyped a file in it:
+   `git -C "$SPECS_PATH" log --name-status --format='%h %an %s' --diff-filter=MDT --no-renames <default-ref> -- <BRD-dir>/bundle-<YYYYMMDD>/`.
+   A file merely added is not listed, and is not a change: a package landed by hand in several
+   commits adds its files late and alters none, and a review the customer committed inside the
+   bundle by mistake is step 6a's to find and move out. A listed commit changed a file the customer
+   may already have received — a customer's pull request that edited a package document instead of
+   asking for the change in its section 12, or the operator's own rename of a never-sent bundle
+   aside before a same-date re-package (`/product-workflows:brd-package`'s
+   `BRD_PACKAGE_BUNDLE_EXISTS`). The run cannot tell which, so print each commit with its files and
+   ask:
+   ```
+   choices: ["Stop — restore the bundle to what the customer was sent first (Recommended)", "Continue — these changes are ours, not the customer's"]
+   ```
+   *Stop* ends the run, writing nothing:
+   `BRD_RECONCILE_BUNDLE_CHANGED: <BRD-dir>/bundle-<YYYYMMDD>/ was changed after it landed — <files>, by <commits, each with its author and subject>. A review is checked against the bundle the customer received, so restore each changed file — git -C "$SPECS_PATH" restore --source=<the first commit that changed it>^ --staged --worktree -- <file> — commit and merge that, and re-run. A change the customer wants made to the package belongs in their review's section 12.`
+   *Continue* proceeds, and the reconciliation record and the final report name every listed commit:
+   a quotation is then checked against the file as it now stands. No changed bundle, no question.
+
    **Why the gate is the prompt and not the register.** The committed package is what makes a
    returned review checkable at all: when the review quotes a sentence, there has to be a committed
    copy of the document that sentence came from, at the version the customer actually received (D18,
@@ -343,23 +352,31 @@ write would re-ask a question already answered.
    where one was. The repository route's delivery note asks the customer to commit their review into
    this slice's folder, beside the bundle, as `<BRD-KEY> Customer Review <YYYYMMDD>.md`, `<BRD-KEY>` being this slice's resolved key
    — the exact name the prompt gives the file — and to open a pull request, which the operator
-   merges. So look on `<default-ref>`, the ref step 6's gate resolved, and in this folder only:
-   list its entries there (`git -C "$SPECS_PATH" ls-tree -z --name-only <default-ref> -- <BRD-dir>/`)
-   and keep each whose name is exactly that one, with eight digits for the date. That is a lookup
-   in one folder's listing by one fixed name built from a key this run already holds — never a
-   pattern widened to whatever looks like a review.
-   - **None on `<default-ref>`, but one in the working tree** → the customer's pull request is not
-     merged yet, or the file was put there by hand:
-     `BRD_RECONCILE_REVIEW_NOT_MERGED: <file> is in <BRD-dir> but not on <default-ref> — merge the customer's pull request that adds it, then re-run '/product-workflows:brd-reconcile <KEY>'. Where you put the file there yourself, re-run with '@<path to it>' instead.`
-   - **None at all** → stop with step 2's `BRD_RECONCILE_NEEDS_REVIEW`.
+   merges. **Where step 6's gate returned `unmanaged`, no `<default-ref>` was resolved**, so there is
+   no merged state to look in: stop with step 2's `BRD_RECONCILE_NEEDS_REVIEW`, which names the
+   `@<review-file>` form. Otherwise look on `<default-ref>`, the ref step 6's gate resolved — in this
+   folder, and in each of its `bundle-<YYYYMMDD>/` folders, where a customer's agent working inside the
+   bundle may have put it: list them (`git -C "$SPECS_PATH" ls-tree -z -r --name-only <default-ref> -- <BRD-dir>/`)
+   and keep each entry in one of those folders whose name is exactly that one, with eight digits for
+   the date. That is a lookup in one folder's listing by one fixed name built from a key this run
+   already holds — never a pattern widened to whatever looks like a review.
+   - **None on `<default-ref>`** → look for the same name, in the same folders, on every other branch
+     of `origin` (`git -C "$SPECS_PATH" for-each-ref --format='%(refname:short)' refs/remotes/origin`,
+     the default and `origin/HEAD` left out, each listed as above) and in the working tree. Found on a
+     branch, or only in the working tree — the customer's pull request is not merged yet, or the file
+     was put there by hand:
+     `BRD_RECONCILE_REVIEW_NOT_MERGED: <file> is <on branch <branch>[, <branch>…] | in the working tree> but not on <default-ref> — merge the customer's pull request that adds it, then re-run '/product-workflows:brd-reconcile <KEY>'. Where you put the file there yourself, re-run with '@<path to it>' instead.`
+     Found nowhere → stop with step 2's `BRD_RECONCILE_NEEDS_REVIEW`: a pull request from a fork of
+     the repository is on none of `origin`'s branches, and shows up here only once merged.
    - **More than one** → ask which, every one printed above the question with the commit that added
      it, most recent first: `choices: ["<file-1>", "<file-2>", "None of these — stop"]`, with a
-     third file before the decline where there is one; four or more, the three most recent and
-     `"Another one from the list above — name it"`, declining being a free-text answer, as
-     `workflows-core:epic-picker`'s *The cap* sets out. No option is marked `(Recommended)`: which
-     review to reconcile first is the operator's to say. A free-text answer is resolved against the
-     listed names only. A decline stops the run, writing nothing; the others wait for their own run.
-   - **Exactly one** → print its name and the commit that added it
+     third file before the decline where there is one; four or more, the two most recent, then
+     `choices: ["<file-1>", "<file-2>", "Another one from the list above — name it", "None of these — stop"]`
+     — the decline being an option this picker adds, which `workflows-core:epic-picker`'s *The cap*
+     counts against the four and never drops. No option is marked `(Recommended)`: which review to
+     reconcile first is the operator's to say. A free-text answer is resolved against the listed
+     names only. A decline stops the run, writing nothing; the others wait for their own run.
+   - **Exactly one** → print its name, the folder it is in, and the commit that added it
      (`git -C "$SPECS_PATH" log --diff-filter=A -1 --format='%h %an %ad' <default-ref> -- "<path>"`),
      and ask:
      ```
@@ -368,9 +385,14 @@ write would re-ask a question already answered.
      The recommendation stands because it is the file the route asked the customer to commit and the
      operator merged. *Cancel* stops the run, writing nothing.
 
-   The review's bytes are the ones on `<default-ref>` — `git -C "$SPECS_PATH" show "<default-ref>:<path>"`
-   — never a working copy that may differ, and the *Canonicalise the returned
-   review* phase moves the file rather than copying it (its step 3).
+   Print beside the question, where either holds: that a byte-identical
+   `customer-review-<YYYYMMDD>[-<suffix>].md` is already in the working tree — an earlier run moved
+   it and its handoff is not merged yet, so reconciling it again resumes that run; and that this
+   checkout's `HEAD` does not carry the file — it stands on a branch cut before the customer's pull
+   request merged — so the *Canonicalise the returned review* phase copies it rather than moving it,
+   and switching to the default branch first moves it. The review's bytes are the ones on
+   `<default-ref>` — `git -C "$SPECS_PATH" show "<default-ref>:./<path>"` — never a working copy that
+   may differ, and that phase moves the file rather than copying it where it can (its step 3).
 7. **Do not re-gate allocation, and do not re-gate the rounds.** Read `coverage-ledger.md` for the
    rows this run may move and for the final report's ledger line, but do not gate on it:
    `/brd-interview` already refused to run against an unallocated ledger, `/brd-package` refused to
@@ -413,7 +435,9 @@ write would re-ask a question already answered.
    `[CG#n]`/`[DG#n]` with its `horizon`; and, when this is not the first reconciliation, every
    earlier `reconciliation-<YYYYMMDD>.md` and every earlier canonicalised review. Every one of those
    is an input, never scratch: nothing below deletes, renames or rewrites a dated artifact another
-   run wrote. **The register, the log and the question set are read through
+   run wrote — save the customer's committed `<BRD-KEY> Customer Review <YYYYMMDD>.md`, which no run
+   wrote and which the *Canonicalise the returned review* phase moves to its canonical name (its
+   step 3). **The register, the log and the question set are read through
    `decision-register-format.md` §8, in this BRD's folder and in every folder the propagation sweep
    reaches**: a **torn write** — an item a `/brd-interview` run left when it stopped before writing
    the round record that would name it — counts for nothing. A torn entry or a torn `[AS#n]` matches
@@ -543,11 +567,18 @@ path nobody else can reproduce; the copy is the record.
 3. **Copy the source to the resolved canonical name**, byte for byte. Everything below reads that
    copy, cites that copy, and names that copy — including the suffix, where one was taken.
 
-   **Where the source is a file committed in this BRD folder, the copy is a move** — the one Phase 0
-   step 6a found, or an `@<review-file>` naming that same committed file: write the canonical copy
-   from the review's bytes (for one step 6a found, those on `<default-ref>`), then delete the
-   committed file from the working tree, so the folder holds the review once and its commit keeps
-   the customer's original in history. The no-overwrite rule above is unchanged — the move lands at
+   **Where the source is the customer's committed review, the copy is a move** — the file Phase 0
+   step 6a found, or an `@<review-file>` naming a file committed in this BRD folder or in one of its
+   `bundle-<YYYYMMDD>/` folders whose name is exactly `<BRD-KEY> Customer Review <YYYYMMDD>.md`.
+   **Never any other file**: an `@<review-file>` naming a `customer-review-<YYYYMMDD>[-<suffix>].md`
+   already in the folder — the canonical copy of a review an earlier run took, which a re-run on that
+   same review passes — is read in place and never deleted. Write the canonical copy from the
+   review's bytes (for one step 6a found, those on `<default-ref>`), then delete the committed file
+   from the working tree, so the folder holds the review once — and a bundle the customer committed
+   it into holds again exactly what was sent — while its commit keeps the customer's original in
+   history. Where the checkout's `HEAD` does not carry the file, a branch cut before the customer's
+   pull request merged, there is nothing here to delete: the run copies it and says so, and a run
+   from the default branch moves it. The no-overwrite rule above is unchanged — the move lands at
    whichever name step 2 resolved, suffix included — and on the byte-identical case, a resumed run,
    the committed file is deleted here where it is still in the working tree.
 
@@ -591,8 +622,8 @@ path nobody else can reproduce; the copy is the record.
    On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with `prefix: brd` (§2.9's
    table, where `brd` is the prefix every `/brd-*` command shares), `feature_folder` as resolved in
    the *Resolve inputs and gate the sent package* phase, `deliverable_paths` = the canonicalised
-   review at the name step 2 resolved, plus — where step 3 moved a committed file — that file's
-   path, whose deletion `handoff-to-main` stages (`workflows-core:phase-handoff` §2.3 step 3), plus —
+   review at the name step 2 resolved, plus the customer's committed review's path wherever HEAD carries it and the working tree no longer does — step 3's move —
+   so `handoff-to-main` stages its deletion (`workflows-core:phase-handoff` §2.3 step 3), plus —
    where step 4 wrote any — **every file beneath
    `customer-sent-<YYYYMMDD>/`, one literal repo-relative path each, never the directory**. §2.3
    stages by enumeration and classifies anything it was not handed as OTHER, so a declaration naming
@@ -626,7 +657,7 @@ path nobody else can reproduce; the copy is the record.
    **Declining does not stop the ingest.** Options 2 and 3 both decline the handoff (§4.3), the copy
    stays written, and the run proceeds — the copy-before-ingest ordering this phase exists for is
    satisfied by the copy, and what a decline costs is the push, which the run's own handoff offers
-   again with this file still first in `deliverable_paths`. Refusing to ingest here would leave an
+   again with this file still first in `deliverable_paths` and the move's deletion declared beside it. Refusing to ingest here would leave an
    operator holding a review this plugin will not process until they run git themselves, which is
    precisely the wrong place to put a wall in a workflow whose whole shape is a human in the loop.
 
@@ -2263,9 +2294,11 @@ choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write 
 
 On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with `prefix: brd` (§2.9's
 table), `feature_folder` as resolved in the *Resolve inputs and gate the sent package* phase,
-`deliverable_paths` = the canonicalised review at its resolved name and, where `--sent` was given,
-every file beneath `customer-sent-<YYYYMMDD>/`, one literal path each and never the directory (both
-still listed, so a run whose first handoff was declined lands them here), `decisions.md`, `interview/round-<N>.md` and
+`deliverable_paths` = the canonicalised review at its resolved name, the customer's committed
+review's path wherever HEAD carries it and the working tree no longer does (the *Canonicalise the
+returned review* phase's move) and, where `--sent` was given, every file beneath
+`customer-sent-<YYYYMMDD>/`, one literal path each and never the directory (all still listed, so a
+run whose first handoff was declined lands them here), `decisions.md`, `interview/round-<N>.md` and
 `interview/customer-questions.md` where on file (a slice never interviewed holds neither, and a
 `--sent` run admits one — Phase 0 step 2), `coverage-ledger.md`, the requirement defect log's path
 (**the parent's**, on a slice — the slice-owned `code-defect-log.md` is written by nothing here),

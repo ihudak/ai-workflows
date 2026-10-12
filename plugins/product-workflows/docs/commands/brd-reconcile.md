@@ -32,11 +32,14 @@ record, once that dependent has its own register on the default branch.
   does not lift it.
 - **`@<review-file>`** (optional) — the file the customer sent back, **at whatever path it arrived
   on**, when the package went out as an archive and the review came back as a file. It does not
-  have to be inside `$SPECS_PATH`. **Leave it off when the customer pulled the specs repository**:
+  have to be inside `$SPECS_PATH`. **Leave it off when the customer pulled the specs repository and
+  committed their review** (one who could not push sends the file back, and then you pass it):
   their delivery note asked them to commit the review beside the bundle, named exactly as the prompt
   names it, and open a pull request. Once you merge it, the run finds that file on the default
-  branch, in the slice's folder and nowhere else, and asks you to confirm it; a file that is there
-  but not merged yet stops with `BRD_RECONCILE_REVIEW_NOT_MERGED`. Either way you say which file is
+  branch, in the slice's folder or one of its bundle folders and nowhere else, and asks you to
+  confirm it; a review on a branch of the repository not merged yet stops with
+  `BRD_RECONCILE_REVIEW_NOT_MERGED`, naming the branch — a pull request from a fork shows up only once
+  merged. Either way you say which file is
   the review — by naming it, or by confirming the one found — and a committed review is moved to its
   canonical name rather than copied, so the folder holds it once. `--sent` needs the path.
 - **`--sent <path>`** (optional, repeatable) — the material the customer was *actually* sent, for a
@@ -123,10 +126,12 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
 - **`<BRD-KEY>`, and a review** — a key absent or malformed stops with `BRD_RECONCILE_NEEDS_KEY`; an
   `@<review-file>` that is not a readable file, or no path and no review committed beside the
   bundle, stops with `BRD_RECONCILE_NEEDS_REVIEW`.
-- **Every handed-off bundle unchanged.** Each `bundle-<date>/` on the default branch must still be
-  exactly what its package's handoff committed; one a later commit changed — a customer's pull
-  request that edited a package document, say — stops with `BRD_RECONCILE_BUNDLE_CHANGED`, naming the
-  files and commits, because the review is checked against what the customer was actually sent.
+- **No handed-off bundle changed.** A file in a `bundle-<date>/` on the default branch that a later
+  commit modified or deleted — a customer's pull request that edited a package document, say — is
+  shown to you with the commits, and you choose: stop and restore it (recommended, ending with
+  `BRD_RECONCILE_BUNDLE_CHANGED` and a restore command per file), or continue, where the changes are
+  your own, such as a never-sent bundle you renamed aside. A file merely added to a bundle is not a
+  change.
 - **A slice, not a root and not an idea-route PRD folder.** The moment the folder resolves, its
   prefix is tested — `BRD-` is a root, `EPIC-` an Epic folder, `PRD-` a slice or an idea-route PRD folder — never the
   folder's asserted `kind:`. An `EPIC-` folder stops with `BRD_RECONCILE_EPIC_LEVEL` before any gate runs: an Epic holds none of what this command reads, so the stop names `/brd-reconcile <SLICE-KEY>` on the slice above it where there is one, and no command where there is none. A `PRD-` folder carrying no `brd-link.md` was never carved from a BRD
@@ -273,7 +278,7 @@ command removes none of them; the next `/brd-interview` run does.
   interview rounds are **not** re-gated: both were gated upstream, and a second differently-worded
   copy of either rule would eventually disagree with the first.
 - **Phase 2 — the date is derived from the review, not from the package.** The ladder reads the
-  review's own section 1 date first, then a `<YYYYMMDD>` in the supplied filename, then prompts. The
+  review's own section 1 date first, then a `<YYYYMMDD>` in the review's filename, supplied or found, then prompts. The
   filename rung is **rejected when its date equals the packaging date** of the prompt this run gated
   on: the two matching is the signature of a reviewer echoing the stamp already printed in the
   package rather than dating their own work, and a date that records when the package was *sent*

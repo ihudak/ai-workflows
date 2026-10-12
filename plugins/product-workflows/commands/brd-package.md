@@ -1254,7 +1254,7 @@ It states only: which BRD this is; **how the customer gets the bundle**, shaped 
 file is the prompt** — the one file to paste; **which file comes back** — the one file to send,
 named exactly, and, on the **repository** route, where it goes: committed into the folder that holds `bundle-<YYYYMMDD>/`, under exactly that name, on a branch of the customer's own with a pull request against the default branch, changing nothing else — a correction the customer wants made to the package goes in the review's section 12, never into the bundle — or, where they cannot push, sent back instead (`bundle-packaging.md` §5, *The review comes back the way the bundle went out*); any prerequisite whose decisions are still provisional and that positions resting on
 it could move (D20); and anything else that must not sit buried inside a document. The two bolded
-items are bolded in the rendered note too, because the single most common failure of this loop is a
+items are bolded in the rendered note too — the repository route's return instruction is part of that item and is not trimmed either — because the single most common failure of this loop is a
 reviewer who reads the documents, forms a view, and writes it into an email of their own devising —
 having been told, in the first thirty seconds, neither that there was a prompt to paste nor that
 there was a named file to return.
@@ -1612,8 +1612,9 @@ choices: ["Stop here — the package is written and, if you handed it off, commi
 
 `<review-clause>` is `@<review-file>` on the archive route, the review coming back as a file whose
 path only the operator will know; on the repository route it is `(once you merge the customer's
-pull request)`, since `/product-workflows:brd-reconcile` then finds the review committed beside the
-bundle and takes no path. The route is the one the *Render the delivery note* phase settled.
+pull request — or @<review-file> where they sent it back instead)`, since
+`/product-workflows:brd-reconcile` then finds the review committed beside the bundle and takes no
+path, while a customer who could not push sent a file back after all. The route is the one the *Render the delivery note* phase settled.
 
 **What *Send it* means on the repository route, before the handoff's pull request merges.** The note
 sends the customer to pull the specs repository, and a customer pulling its default branch finds no

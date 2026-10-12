@@ -73,8 +73,9 @@ shorten it. `/brd-package` renders a self-contained prompt and a de-Obsidianised
 because the person on the other side has a vanilla agent and nothing installed — no plugin, no
 skills, no MCP server — and cannot ask what a path means. Between the two solid edges crossing that
 boundary, the package has to physically reach a customer and the customer has to answer, which is
-why `/brd-reconcile` takes the returned file as an argument rather than looking for it: the route
-resumes when somebody says *this file is the answer*, and not before.
+why `/brd-reconcile` runs only once somebody says *this file is the answer* — by passing its path,
+or by confirming the one the customer's merged pull request committed beside the bundle — and not
+before.
 
 **`/brd-split` runs at least twice, and grounding sits between the first two runs.** The first run stands on the
 root: a root is never ground, so it carves candidate slices from a mandatory slicing instruction
