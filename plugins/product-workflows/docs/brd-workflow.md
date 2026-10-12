@@ -23,9 +23,11 @@ flowchart TD
         interview["/brd-interview &lt;SLICE&gt;"]:::prod
         package["/brd-package &lt;SLICE&gt;"]:::prod
         reconcile["/brd-reconcile &lt;SLICE&gt;"]:::prod
-    end
-    subgraph PAD["PM — grounding (PA or PE where the PM cannot clone the code)"]
         ground["/prd-ground &lt;SLICE&gt;"]:::prod
+    end
+    subgraph EST["PM — effort proposals (optional, gate nothing)"]
+        prdproposal["/prd-proposal &lt;SLICE&gt;"]:::prod
+        brdproposal["/brd-proposal &lt;BRD&gt;"]:::prod
     end
     subgraph OFF["Off-platform — the customer, with a vanilla agent and nothing installed"]
         review["the customer reviews the bundle"]:::cust
@@ -52,6 +54,8 @@ flowchart TD
     interview -.->|nothing for the customer to review, PRD-eligible — no reconciliation needed| createprd
     interview -.->|nothing for the customer to review — no reconciliation needed| createard
     interview -.->|nothing for the customer to review — no reconciliation needed| specify
+    splitroot -.->|"BRD route — each slice, a PRD- folder, at any readiness"| prdproposal
+    prdproposal -->|"BRD route — each included slice's proposal.md, rolled up for the BRD"| brdproposal
 
     classDef prod fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
     classDef cust fill:#f3f4f6,stroke:#6b7280,color:#1f2937
@@ -67,14 +71,20 @@ under `$DOCS_PATH` and, for `/create-ard` and `/specify`, the code under `$REPOS
 `/create-prd`'s: an `[AS#n]` in `decisions.md` for a gap only the customer can settle, which
 `/brd-package` then carries to the customer.
 
+**The proposals box is not part of the route either.** `/prd-proposal` prices one slice — any slice
+the split carved, at whatever readiness it has reached — and `/brd-proposal` rolls the included
+slices' proposals up into one for the BRD. Both are optional, and neither gates a step of the
+route.
+
 **The `Off-platform` box is the route's defining feature, not a decoration.** Everything else in
 the diagram is a command this plugin runs; that box is a wait, and nothing in the plugin can
 shorten it. `/brd-package` renders a self-contained prompt and a de-Obsidianised bundle precisely
 because the person on the other side has a vanilla agent and nothing installed — no plugin, no
 skills, no MCP server — and cannot ask what a path means. Between the two solid edges crossing that
 boundary, the package has to physically reach a customer and the customer has to answer, which is
-why `/brd-reconcile` takes the returned file as an argument rather than looking for it: the route
-resumes when somebody says *this file is the answer*, and not before.
+why `/brd-reconcile` runs only once somebody says *this file is the answer* — by passing its path,
+or by confirming the one the customer's merged pull request committed beside the bundle — and not
+before.
 
 **`/brd-split` runs at least twice, and grounding sits between the first two runs.** The first run stands on the
 root: a root is never ground, so it carves candidate slices from a mandatory slicing instruction
@@ -270,7 +280,7 @@ each of those three also has a keyed form that this route never uses.
 | `/brd-split` | `<BRD-KEY> [<instruction>]` | — | No flags. Mandatory on a root still holding an unallocated row (`BRD_SPLIT_NEEDS_INSTRUCTION`), optional on a slice (allocate-only there), and on a fully allocated root it means the sibling re-cut |
 | `/brd-interview` | `<BRD-KEY>` | `--round N` | Only a slice is interviewed — a root stops with `BRD_INTERVIEW_ROOT_LEVEL`. No flag continues at the first open question; `--round N` resumes or re-opens one, cause recorded |
 | `/brd-package` | `<BRD-KEY>` | `--depends-on <BRD-KEY>…` | Only a slice is packaged — a root stops with `BRD_PACKAGE_ROOT_LEVEL`. `--depends-on` is repeatable; a mistyped key is warned and dropped, never fatal |
-| `/brd-reconcile` | `<BRD-KEY> @<review-file>` | `--sent <path>…` | Only a slice is reconciled — a root stops with `BRD_RECONCILE_ROOT_LEVEL`. The review is taken at whatever path it arrived on and is never searched for |
+| `/brd-reconcile` | `<BRD-KEY> [@<review-file>]` | `--sent <path>…` | Only a slice is reconciled — a root stops with `BRD_RECONCILE_ROOT_LEVEL`. The review is a path you give, or the one the customer committed beside the bundle, once you confirm it |
 | `/create-prd` | `<SLICE-KEY>` | `--lean`/`--hybrid`/`--full`, `--no-docs`, `--docs <path>`, `@<idea.md>` | A `BRD-` container is refused. Otherwise offered only where the slice's own claimed rows leave none `unallocated` and one `covered-here`. Profile defaults to `--full`; `--from-prd` accepted |
 | `/create-ard` | `<SLICE-KEY>` | `--no-docs`, `--docs <path>` | A `BRD-` container is refused. Otherwise offered on any advancing slice run; gates `prd.md` as on the idea route, never authors from the ledger. One address (`CREATE_ARD_ONE_ADDRESS`) |
 | `/specify` | `<SLICE-KEY>` | `--no-docs`, `--docs <path>` | A `BRD-` container is refused. Otherwise offered on the same terms as `/create-ard`. One address; a second token stops it (`SPECIFY_ONE_ADDRESS`) |

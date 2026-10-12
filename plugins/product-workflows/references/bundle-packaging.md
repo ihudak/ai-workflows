@@ -332,7 +332,8 @@ It states only:
 - **how the customer gets the bundle** — what is attached, or where it is committed and how to reach it. This is the one document that names a delivery route, and it can, because it is written to a specific customer whose situation the operator knows
 - which repositories, at which commits
 - **which file is the prompt** — the one file to paste
-- **which file comes back** — the one file to send, named exactly
+- **which file comes back** — the one file to send, named exactly, and, on the repository route,
+  where to commit it (§5, *The review comes back the way the bundle went out*)
 - any prerequisite whose decisions are still provisional, and that positions resting on it could
   move (D20)
 - anything else that must not sit buried inside a document
@@ -397,6 +398,20 @@ the outcome the handoff got — the branch and pull request it pushed, any decla
 nothing for, or what must happen first — is settled by the handoff and printed beside the note,
 in the delivery-route item that stands between the printed note and the offer to send it
 (`commands/brd-package.md`'s *Render the delivery note*, *Handoff* and *Next steps*).
+
+**The review comes back the way the bundle went out.** On the repository route the customer can
+reach the specs repository, so the note asks them to return their review there too: committed into
+the folder that holds `bundle-<YYYYMMDD>/`, under the exact name the prompt gives it, on a branch of
+their own with a pull request against the default branch — one added file and nothing else, since a
+correction they want made to the package goes in the review's section 12, never into the bundle.
+`commands/brd-reconcile.md` then finds it there once the operator merges that pull request, asks the
+operator to confirm it, and moves it to its canonical name. Before that confirmation it lists
+anything else the pull request changed in the slice's folder — a package document edited there
+would leave the customer's quotations checked against a document they were never sent — and then
+does not recommend going ahead, leaving the operator to reconcile or to restore first. A customer who cannot
+push sends the file back instead, as on the archive route, where the review arrives as a file and
+the operator passes its path. The prompt says none of this — it names no route (above) — so the
+note is where the return route is stated, beside the delivery route it mirrors.
 
 **The committed copy is the permanent record of exactly what was sent.** This is the point of D18
 and the reason the cost is worth paying: it is what makes the byte-identical property behind the

@@ -27,6 +27,7 @@ flowchart TD
         brdinterview["/brd-interview"]:::prod
         brdpackage["/brd-package"]:::prod
         brdreconcile["/brd-reconcile"]:::prod
+        groundbrd["/prd-ground (BRD slice)"]:::prod
     end
     subgraph CUST["Customer — off-platform, nothing installed"]
         review["reviews the bundle"]:::cust
@@ -36,14 +37,11 @@ flowchart TD
         createprd["/create-prd"]:::prod
         updateprd["/update-prd"]:::prod
         rnearly["/docs-workflows:release-notes (PRD draft / refresh)"]:::docs
+        groundprd["/prd-ground (idea PRD)"]:::prod
     end
     subgraph EST["PM — effort proposals (gate nothing)"]
         prdproposal["/prd-proposal"]:::prod
         brdproposal["/brd-proposal"]:::prod
-    end
-    subgraph GRD["PM — grounding (PA or PE where the PM cannot clone the code)"]
-        groundbrd["/prd-ground (BRD slice)"]:::prod
-        groundprd["/prd-ground (idea PRD)"]:::prod
     end
     subgraph PA["PA — architecture"]
         createard["/create-ard"]:::prod
@@ -111,8 +109,9 @@ flowchart TD
     createprd -->|"prd.md"| epics
     createprd -->|"prd.md"| specify
     createprd -.->|"prd.md"| rnearly
-    createprd -.->|"prd.md"| prdproposal
-    prdproposal -->|"each slice's proposal.md"| brdproposal
+    createprd -.->|"idea route — the PRD folder, at any readiness"| prdproposal
+    splitroot -.->|"BRD route — each slice, at any readiness"| prdproposal
+    prdproposal -->|"BRD route — each slice's proposal.md, rolled up for the BRD"| brdproposal
     createard -.->|"ard.md"| epics
     epics -->|"epic.md"| specify
     specify -.->|"optional PRD-level specification.md"| epics

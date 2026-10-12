@@ -455,7 +455,7 @@ them **terminal dispositions**:
 |---|---|
 | *answered from findings* | a verified finding settled a `[G]` |
 | *decided* | a `[V]` produced a `[VD#n]` with its argumentation |
-| *answered by the customer* | a `[C]`'s answer came back and an operator confirmed it (D14) |
+| *answered by the customer* | a `[C]`'s answer came back and an operator confirmed it (D14) — or, written by `/brd-reconcile` with nothing frozen, the question stopped applying: the record it put again was withdrawn, or every requirement defect it carries was withdrawn with its requirement while it had no record of its own — no answer frozen against it and no `Re-puts:` line |
 | *re-tagged* | a `[G]` grounding could not settle changed tag, naming its cause; the re-tagged question then carries its own disposition |
 | *split* | the question became parts, named; the parts carry their own dispositions |
 
@@ -472,12 +472,15 @@ and a holding state keeps the round open:
 **Why the distinction is load-bearing rather than tidy.** Every rule that reads a question's state
 — this phase's resume rule, the *Write the register and the round record* phase's closure rule,
 `/product-workflows:brd-package`'s gate on the rounds, and `/product-workflows:brd-reconcile`'s
-closing of a round its answers settle — is stated in this one vocabulary, so they cannot drift
-apart. Were a holding state counted as a disposition, a round whose remainder sat in any holding
+closing of a round its answers settle or whose questions stopped applying — is stated in this one
+vocabulary, so they cannot drift apart. Were a holding state counted as a disposition, a round whose remainder sat in any holding
 state — *deferred* or *needs grounding*, say — would close, and the resume rule would then skip past
 the very question this run promised to return to. §5 sides with the holding states: *"A round with
-an outstanding `[C]` stays open until that answer comes back through the package — the customer's
-turnaround is not a reason to declare the round finished around them."*
+an outstanding `[C]` stays open until that answer comes back through the package, or until its
+question stops applying — the record it put again withdrawn, or every requirement defect it carries
+withdrawn with its requirement while it has no record of its own —
+no answer frozen against it and no `Re-puts:` line — and the customer's turnaround is not a reason to declare the round
+finished around them."*
 
 A round is **open** while any question in it lacks a **terminal** disposition, and **closed** once
 every one has one. **A question's state is the last one its record records at that question's
@@ -1142,9 +1145,12 @@ record reopened with it) in the next one opened. The question:
   customer the second time — as the question its earlier answer could not close, never as a second
   question beside one still standing. A reopened record's question carries no
   `- **Requirement defect:**` line, whichever source puts it: its `settles` stands under §4, and the defect it names keeps the resolution
-  `/product-workflows:brd-reconcile`'s *Resolve the defects the review settled* phase wrote when the
-  record was first written `decided` (frozen so, or completed from `open`) — `resolved-by: <SLICE-KEY>/[CD#n]` naming this record, or a `withdrawn` or
-  `customer-amended` resolution naming no id at all (`brd-format.md` §4).
+  it held once the record was first written `decided` (frozen so, or completed from `open`) —
+  `resolved-by: <SLICE-KEY>/[CD#n]` naming this record, an earlier record of its own question or
+  another question's, a hand-written `resolved-by: <SLICE-KEY>/[CG#n]`, a `withdrawn` or
+  `customer-amended` resolution naming no id at all (`brd-format.md` §4), or still `open` where
+  `/product-workflows:brd-reconcile` only recorded its resolution, the parent's log being under
+  review.
 
 **What the answer does turns on the record's `status` as the answer's writer reads it**, read off
 the record and never judged. For a `[V]`, that is when this command writes the answer — or, for a
@@ -1688,8 +1694,9 @@ it leaves is materially different from the one that would have been asked withou
 
 Each `[C]` is recorded in the round with the **holding state** *held for the customer*. **Holding a
 question is not an answer to it**: the terminal disposition *answered by the customer* is reached
-only when the answer comes back and an operator confirms it, so a round holding a `[C]` stays open
-until `/brd-reconcile` closes it with the customer's answer, as the paragraph after next says.
+only when the answer comes back and an operator confirms it, or when `/brd-reconcile` finds the
+question has stopped applying, so a round holding a `[C]` stays open until `/brd-reconcile` closes
+it, as the paragraph after next says.
 
 **No `[CD#n]` is written here, and none may be.** A customer decision enters the register only when
 the customer has actually answered and an operator has confirmed the answer (D14,
@@ -1700,8 +1707,9 @@ two separate acts, and normalising prose into a decision is inference, not autho
 review package the `[C]` questions travel in, and it is a separate, consented run — writing the file
 is not sending it. A `[C]` this run holds stays held until a package goes out and an answer
 comes back, and the round that contains it stays open throughout (`interview-tagging.md` §5) until
-`/brd-reconcile` ingests that answer and an operator confirms it — that command writes the terminal
-disposition *answered by the customer*, and it is the only thing that closes such a round. Report
+`/brd-reconcile` ingests that answer and an operator confirms it, or finds the question has stopped
+applying — that command writes the terminal disposition *answered by the customer*, and it is the
+only command that closes such a round. Report
 that as the plain sequence it is: this run holds, `/brd-package` carries, the customer answers, and
 `/brd-reconcile` records.
 
@@ -2292,7 +2300,7 @@ grounded BRD*, step 6), which this run never writes either.
 Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")` — names only,
 never behaviour a command of its own owns: a round still holding a `[C]` stays open, because the
 answer arrives through a package and is recorded by `/product-workflows:brd-reconcile` once it comes
-back. A
+back — or that command finds the question has stopped applying. A
 question in the *needs grounding* holding state — the one the *Resolve the round* phase defines as
 movable only by a grounding run — is answered by re-running `/product-workflows:prd-ground <BRD-KEY>`
 and returning to this round, which is a real next step and is named as one. A requirement defect this

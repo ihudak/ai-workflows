@@ -78,7 +78,7 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
 
 ### 2.1 Paths
 
-Exactly nine shapes, derived from the emission ladders and from the drafts the family writes for the operator — four directory shapes and the five single files §2.1 names below. Nothing outside this
+Exactly eight shapes, derived from the emission ladders and from the drafts the family writes for the operator — four directory shapes and the four single files §2.1 names below. Nothing outside this
 set is ever staged.
 
 ```
@@ -87,7 +87,6 @@ set is ever staged.
 <specs-root>/dev-workflows-feedback/**                        # feedback-emission.md §2 tier 2 (keyless runs)
 <specs-root>/dev-workflows-cost/**                            # cost-emission.md §9 pending files (keyless runs)
 <specs-root>/{specs|specifications|vis}/**/implementation.md  # implementation-format.md §1, appended by /implement
-<specs-root>/{specs|specifications|vis}/**/release-notes.md   # the /release-notes draft
 <specs-root>/{specs|specifications|vis}/**/follow-ups.md      # followup-emission.md §2, appended per PRD/Epic folder
 <specs-root>/{specs|specifications|vis}/**/pr-draft.md        # the /document (keyed mode) pull-request draft
 <specs-root>/{specs|specifications|vis}/**/*-implementation-gaps.md  # the <KEY>-implementation-gaps.md draft (source-truth.md §7.5)
@@ -102,28 +101,32 @@ set is ever staged.
 
 So `git@github.com:acme/docs.git` gives `acme-docs`, and `ssh://git@git.example.com/team/docs.git` gives `git.example.com-team-docs`. **Every such byte is flattened, not only `/`,** because a directory name is the operator's to choose and may carry a space or a non-ASCII letter, and a substitution that admits no exception is what lets two implementations reproduce this directory byte for byte. **It is no longer flattened to keep the path out of the classifier's quoting, and that half of the reason is retired rather than the rule**: `git status --porcelain` does wrap such a path in double quotes (with a non-ASCII byte octal-escaped), and step 2's classifier, reading the path as reported, would have seen `"documentation/…` and never staged it — but step 1 above now reads `-z`, whose records are never quoted, so that is a form this procedure no longer meets. The flattening stands unnarrowed, because **the one-segment property is the whole point, and it is why the flattening is not cosmetic**: step 2's classifier below admits exactly one segment between `documentation/` and `dev-workflows/` (`^documentation/[^/]+/dev-workflows/`), while an unflattened `OWNER_REPO` is two segments on GitHub and three anywhere else. An entry written under one would be classified OTHER — never staged, left dirty, and firing §3.3's G1 on every later preflight of every caller, which is exactly the failure each of the single-file shapes below was once found to cause. Every site that fills the placeholder — `feedback-emission.md` §2, `cost-emission.md` §8, and the `docs-workflows` commands whose runs emit there — cites this definition rather than restating the derivation; a second derivation is how two sites come to disagree about where one repository's record lives. The flattening can in principle map two remotes to one name (`a-b/c` and `a/b-c` both become `a-b-c`); that is accepted, since the alternative is a second derivation or a path the classifier cannot stage.
 
-**The inner `dev-workflows/` in that path names the *family*, not the plugin — do not "correct" it per-plugin.** The shipped persistence ladder writes `<PRD-dir>/dev-workflows/cost/<sid8>.md` regardless of which plugin emitted the entry, and this shape is the same directory one level out. Renaming it to match the emitting plugin would fragment one repository's cost record across four directories and break every reader of it. **No new branch prefix goes with this shape**: §2.2's prefix authority governs branches the plugin creates *in* `$SPECS_PATH`, and the documentation family creates none there — its deliverable is the docs repository, where it branches, commits and drafts a pull request it never pushes.
+**The inner `dev-workflows/` in that path names the *family*, not the plugin — do not "correct" it per-plugin.** The shipped persistence ladder writes `<PRD-dir>/dev-workflows/cost/<sid8>.md` regardless of which plugin emitted the entry, and this shape is the same directory one level out. Renaming it to match the emitting plugin would fragment one repository's cost record across four directories and break every reader of it. **No new branch prefix goes with this shape**: §2.2's prefix authority governs branches the plugin creates *in* `$SPECS_PATH`, and the documentation family's one branch there is `/release-notes`', which hands its draft off under the existing `prd/` prefix — `/document`'s deliverable is the docs repository, where it branches, commits and drafts a pull request it never pushes.
 
-**The five single-file shapes name files, never their folder, and the distinction is the
-whole safety property.** All five sit in the feature folder rather than under `dev-workflows/`. The
-first three are read by *key* rather than by session — `implementation.md` is read by `/document` and
+**The four single-file shapes name files, never their folder, and the distinction is the
+whole safety property.** All four sit in the feature folder rather than under `dev-workflows/`. The
+first two are read by *key* rather than by session — `implementation.md` is read by `/document` and
 `/release-notes` (their two-source read), by `/ready` (a unit's derived phase and its repositories), by
 `/epics` and `/specify` (repository names) and by `epic-picker.md`'s ● marker — every command
 `grep -l 'implementation\.md' plugins/*/commands/*.md` returns but `/implement`, which writes it — and
 a record only one machine holds is a record the next run cannot use; `follow-ups.md` is `followup-emission.md` §2's "alongside the artifacts the
 follow-ups are about", which §3 makes explicit is about where a *reader* looking at the folder finds
-them. The last two are drafts for the operator, as `release-notes.md` is, written where the operator
-looks for them: `/docs-workflows:document` (keyed mode) writes `pr-draft.md` for the pull request it
+them. The last two are drafts for the operator, written where the operator looks for them: `/docs-workflows:document` (keyed mode) writes `pr-draft.md` for the pull request it
 never opens itself, and it and `/docs-workflows:release-notes` write `<KEY>-implementation-gaps.md`,
 the bug-report draft `source-truth.md` §7.5 fixes — its name carries the key, so it is matched as
 `*-implementation-gaps.md`. But that same folder holds the phase deliverables (`prd.md`, `ard.md`, `specification.md`,
 `design.md`, `idea.md`, `_readiness.md`), which are `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md`'s
 to commit behind its own consent choice. Widening a shape to the folder would sweep them into a
-prompt-free bookkeeping commit and take the operator's choice away, so the five files are named
-literally and nothing else in that directory is ever staged here.
+prompt-free bookkeeping commit and take the operator's choice away, so the four files are named
+literally and nothing else in that directory is ever staged here. **The `/release-notes` draft,
+`release-notes.md`, left this set**: it is content a team reviews before it is published, not a
+draft one operator pastes once, so that command hands it off behind the consent choice like any
+deliverable (`phase-handoff.md` §4.0), and this commit never stages it.
 
-**The first three were outside this set until a review found them**, while `/implement` and `/release-notes`
-each told the operator the terminal step committed them. It did not: step 2 below classified each as
+**Three single files were outside this set until a review found them** — `implementation.md`, the
+`/release-notes` draft, which has since left the set again for a pull request of its own, and
+`follow-ups.md` — while `/implement` and `/release-notes` each told the operator the terminal step
+committed theirs. It did not: step 2 below classified each as
 OTHER, step 3 skipped it, and the file then sat permanently dirty — which fired §3.3's G1 dirty-tree
 guard on every later run of any of its callers, suppressing the leftover flush and the
 branch disposition for the rest of the session. **`follow-ups.md` was the third instance and it was
@@ -187,7 +190,7 @@ fragile to express and to review. The procedure is:
    `^(specs|specifications|vis)/.+/dev-workflows/` or
    `^documentation/[^/]+/dev-workflows/` or `^dev-workflows-feedback/`
    or `^dev-workflows-cost/` or
-   `^(specs|specifications|vis)/.+/(implementation|release-notes|follow-ups|pr-draft|[^/]+-implementation-gaps)\.md$`,
+   `^(specs|specifications|vis)/.+/(implementation|follow-ups|pr-draft|[^/]+-implementation-gaps)\.md$`,
    **and** it does not match
    `^(specs|specifications|vis)/(.+/)?(brd|grounding|interview|design|attachments|revisions|bundle-[0-9]{8}|customer-sent-[0-9]{8}|Doc screenshots)/`;
    **OTHER** otherwise.
@@ -279,7 +282,7 @@ Still **never fatal** (§1): each notice reports and the run continues. **Where 
 
 **The preflight itself performs no write under the flag**: no leftover flush, no push retry, no branch switch, creation or deletion, no pull, no commit and no push. Where the gate passed, it still reads, because `workflows-core:phase-handoff`'s `require-on-main` runs on what it reads. §3.2 runs in full, its best-effort fetch included, which refreshes the remote-tracking refs every `<default-ref>` test reads and moves no checkout. §3.5 classifies the branch, and a row that would switch stays and reports instead. §3.3's guards and §3.4's flush do not run, and each section says why. §4's `commit-artifacts` skips, as it does on `specs_git: blocked`. `workflows-core:phase-handoff` §2.1's `handoff-to-main` refuses the handoff, its §4.3 says so above the consent array, and its row C offers no repair. **So none of `specs-preflight`, `commit-artifacts`, `handoff-to-main` and `require-on-main` switches a branch or commits under the flag.** That bound is those four entry points', not the run's. A command that changes code still cuts its own branch and commits on it in the code repository it changed (`dev-workflows:code-handoff`), and a documentation command does the same in its docs repository. Where the specs tree sits inside that same repository, that branch moves the specs checkout too, which is one reason that layout is unsupported.
 
-**What the flag leaves alone is what the command itself writes.** A run a notice let continue still writes its deliverable where the command puts it, and any of §2.1's single files it writes beside it: `implementation.md`, the `release-notes.md` draft, `pr-draft.md` or the implementation-gaps draft. They stay there, written and uncommitted, for the operator to move or commit once `$SPECS_PATH` is right. A run stopped at resolution writes nothing under the path at all. What changes is that the condition is now *said*.
+**What the flag leaves alone is what the command itself writes.** A run a notice let continue still writes its deliverable where the command puts it, and any of §2.1's single files it writes beside it: `implementation.md`, `pr-draft.md` or the implementation-gaps draft. They stay there, written and uncommitted, for the operator to move or commit once `$SPECS_PATH` is right. A run stopped at resolution writes nothing under the path at all. What changes is that the condition is now *said*.
 
 ### 3.2 Resolution inputs
 
@@ -849,7 +852,7 @@ to state.
 - **In session-branch mode** (§8) — on the session branch, whatever the
   checkout stands on, and a deliverable branch carries no session file. The
   bullets below hold outside the mode.
-- **A command that opened a specs-repo branch at handoff** (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/epics`, `/design`, `/implement`, `/ready`, `/frames`, `/prd-ground`, `/prd-proposal`, `/harvest-decisions`, `/promote-decisions`, `/conformance`, and every `/brd-*` command — every command that offers `phase-handoff.md`'s `handoff-to-main`, `/promote-decisions` through `architecture-promotion.md` §11.2) — on that `idea|prd|ard|spec|epics|design|ready|brd|frames|kb|conformance/*` branch, so the push updates the pull request already open. Two commits on one branch: the deliverable, then the artifacts — save where the deliverable's commit failed (`phase-handoff.md` §4.1's *Commit failed*), when the artifacts' commit alone lands on that branch and its push opens no pull request. Every `/brd-*` command opens on the shared `brd` prefix (`phase-handoff.md` §2.9); `/prd-ground` opens on that same shared `brd` prefix on the BRD route, or on the shared `prd` prefix (with `/create-prd`, `/update-prd` and `/prd-proposal`) on the idea route — it left the `/brd-*` glob the day its own rename shipped, but not the prefix sharing, which is why it is named here rather than folded into "every `/brd-*` command". A later `/brd-*` run — or `/prd-ground`, on the BRD route — that reuses the branch a prior phase of the same BRD opened lands there rather than on the default branch.
+- **A command that opened a specs-repo branch at handoff** (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/epics`, `/design`, `/implement`, `/ready`, `/frames`, `/prd-ground`, `/prd-proposal`, `/harvest-decisions`, `/promote-decisions`, `/conformance`, `/docs-workflows:release-notes`, and every `/brd-*` command — every command that offers `phase-handoff.md`'s `handoff-to-main`, `/promote-decisions` through `architecture-promotion.md` §11.2) — on that `idea|prd|ard|spec|epics|design|ready|brd|frames|kb|conformance/*` branch, so the push updates the pull request already open. Two commits on one branch: the deliverable, then the artifacts — save where the deliverable's commit failed (`phase-handoff.md` §4.1's *Commit failed*), when the artifacts' commit alone lands on that branch and its push opens no pull request. Every `/brd-*` command opens on the shared `brd` prefix (`phase-handoff.md` §2.9); `/prd-ground` opens on that same shared `brd` prefix on the BRD route, or on the shared `prd` prefix (with `/create-prd`, `/update-prd`, `/prd-proposal` and `/docs-workflows:release-notes`) on the idea route — it left the `/brd-*` glob the day its own rename shipped, but not the prefix sharing, which is why it is named here rather than folded into "every `/brd-*` command". A later `/brd-*` run — or `/prd-ground`, on the BRD route — that reuses the branch a prior phase of the same BRD opened lands there rather than on the default branch.
 - **The same command when the user declined git at handoff** ("just write the
   files — I'll handle git") — the repo is still on the default branch and the
   deliverable is uncommitted there. `commit-artifacts` still runs and commits

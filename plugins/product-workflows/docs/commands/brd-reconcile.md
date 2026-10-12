@@ -3,7 +3,8 @@
 Takes the customer's returned review, freezes what they actually decided as `[CD#n]` records, and
 then goes looking for everything in the tree that still asserts a position their answer overturned.
 It is the command that closes the customer loop: the `[C]` questions `/brd-interview` held and
-`/brd-package` sent stay open until this run confirms an answer to them.
+`/brd-package` sent stay open until this run confirms an answer to them, or finds their question
+has stopped applying.
 
 ## Who runs it
 
@@ -13,14 +14,16 @@ is the route's last command in the ordinary case, but not the end of every slice
 decision sends the slice back to [`/brd-interview`](brd-interview.md), a question still held for the
 customer to [`/brd-package`](brd-package.md), and a challenged code claim to
 [`/prd-ground --rebaseline`](prd-ground.md), each of which leads back here. It runs again on the
-same review itself in two cases: to finish a run cancelled or stopped partway, where the re-run skips
-what the earlier pass already froze and offers the rest, and to sweep a dependent it could only
-record, once that dependent has its own register on the default branch.
+same review itself in three cases: to finish a run cancelled or stopped partway, where the re-run
+skips what the earlier pass already froze and offers the rest; to sweep a dependent it could only
+record, once that dependent has its own register on the default branch; and, on a slice reconciled
+before 3.33.1, to close the questions raised only about the defects of a requirement the customer
+withdrew.
 
 ## Synopsis
 
 ```
-/brd-reconcile <BRD-KEY> @<review-file> [--sent <path>…] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
+/brd-reconcile <BRD-KEY> [@<review-file>] [--sent <path>…] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 - **`<BRD-KEY>`** (mandatory) — the slice this review answers. `resolve-address` searches every
@@ -30,10 +33,18 @@ record, once that dependent has its own register on the default branch.
   folder no BRD carved, carrying no `brd-link.md` — stops with `BRD_RECONCILE_NOT_A_SLICE`, naming
   [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way that route goes on. An `EPIC-` folder stops with `BRD_RECONCILE_EPIC_LEVEL`, naming the slice the Epic sits in where it sits in one. `--sent`
   does not lift it.
-- **`@<review-file>`** (mandatory) — the file the customer sent back, **at whatever path it arrived
-  on**. It does not have to be inside `$SPECS_PATH`, and it is never searched for: the operator says
-  which file is the review, because a file the command picked is a file nobody submitted as the
-  customer's answer.
+- **`@<review-file>`** (optional) — the file the customer sent back, **at whatever path it arrived
+  on**, when the package went out as an archive and the review came back as a file. It does not
+  have to be inside `$SPECS_PATH`. **Leave it off when the customer pulled the specs repository and
+  committed their review** (one who could not push sends the file back, and then you pass it):
+  their delivery note asked them to commit the review beside the bundle, named exactly as the prompt
+  names it, and open a pull request. Once you merge it, the run finds that file on the default
+  branch, in the slice's folder or one of its bundle folders and nowhere else, and asks you to
+  confirm it; a review on a branch of the repository not merged yet stops with
+  `BRD_RECONCILE_REVIEW_NOT_MERGED`, naming the branch — a pull request from a fork shows up only once
+  merged. Either way you say which file is
+  the review — by naming it, or by confirming the one found — and a committed review is moved to its
+  canonical name rather than copied, so the folder holds it once. `--sent` needs the path.
 - **`--sent <path>`** (optional, repeatable) — the material the customer was *actually* sent, for a
   review that answers a package this plugin did not build: one authored by hand before the route
   existed, or sent out of band. Each path may be a file or a directory and may sit anywhere. The
@@ -115,8 +126,17 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
 
 ## What it needs
 
-- **`<BRD-KEY>` and `@<review-file>`** — either absent or malformed stops the run with
-  `BRD_RECONCILE_NEEDS_KEY` or `BRD_RECONCILE_NEEDS_REVIEW`.
+- **`<BRD-KEY>`, and a review** — a key absent or malformed stops with `BRD_RECONCILE_NEEDS_KEY`; an
+  `@<review-file>` that is not a readable file, or no path and no review committed beside the
+  bundle, stops with `BRD_RECONCILE_NEEDS_REVIEW`.
+- **What else a committed review's pull request changed.** Where the review came in by the
+  customer's pull request, the run lists anything else that pull request changed in the slice's
+  folder — a package document, the register, the ledger — with the commits that changed it and
+  whether each is restored, unchanged or changed again on the default branch now, beside the
+  question asking you to confirm the review: you reconcile knowing what came in, or cancel and
+  revert that change first. That question never carries a recommendation, because what the run can
+  see depends on how the pull request was merged: after a squash, a fast-forward or a rebase it sees
+  only the commit that added the review, and it never looks outside the slice's folder.
 - **A slice, not a root and not an idea-route PRD folder.** The moment the folder resolves, its
   prefix is tested — `BRD-` is a root, `EPIC-` an Epic folder, `PRD-` a slice or an idea-route PRD folder — never the
   folder's asserted `kind:`. An `EPIC-` folder stops with `BRD_RECONCILE_EPIC_LEVEL` before any gate runs: an Epic holds none of what this command reads, so the stop names `/brd-reconcile <SLICE-KEY>` on the slice above it where there is one, and no command where there is none. A `PRD-` folder carrying no `brd-link.md` was never carved from a BRD
@@ -263,7 +283,7 @@ command removes none of them; the next `/brd-interview` run does.
   interview rounds are **not** re-gated: both were gated upstream, and a second differently-worded
   copy of either rule would eventually disagree with the first.
 - **Phase 2 — the date is derived from the review, not from the package.** The ladder reads the
-  review's own section 1 date first, then a `<YYYYMMDD>` in the supplied filename, then prompts. The
+  review's own section 1 date first, then a `<YYYYMMDD>` in the review's filename, supplied or found, then prompts. The
   filename rung is **rejected when its date equals the packaging date** of the prompt this run gated
   on: the two matching is the signature of a reviewer echoing the stamp already printed in the
   package rather than dating their own work, and a date that records when the package was *sent*
@@ -289,7 +309,8 @@ command removes none of them; the next `/brd-interview` run does.
   fixed by a rule this command does not own, and the customer cannot be expected to know which; a
   proposal moves only by a revision, which archives the prior and classifies what moved, so it is
   never edited at all. The refusal names the channel that *does* carry the substance: a `[CD#n]`, a
-  `customer-amended` defect resolution, a later [`/brd-interview`](brd-interview.md) round, whose
+  `customer-amended` defect resolution where one is written (otherwise the reconciliation record's
+  *what still needs a human*), a later [`/brd-interview`](brd-interview.md) round, whose
   operator owns every code-defect disposition, the next [`/brd-intake`](brd-intake.md) run, a re-run
   of the command that wrote the proposal ([`/prd-proposal`](prd-proposal.md) for a slice's,
   [`/brd-proposal`](brd-proposal.md) for the umbrella's, none for a row naming only an archived
@@ -314,9 +335,14 @@ command removes none of them; the next `/brd-interview` run does.
   is unconfirmed. The four values are `confirm`, `correct`, `reject` and `ask-the-customer`, and a
   candidate answering no question the package put takes one of two instead — recorded for a human,
   quoting the customer, or rejected — and is never frozen on that form, save that a free-text answer
-  naming the question it does answer re-points it onto the four; the picker carries no bulk
+  naming the question it does answer re-points it onto the array its target takes; the picker carries no bulk
   confirmation, and a free-text answer is otherwise **normalised into those values or the candidate
-  is re-asked** — never written through as another.
+  is re-asked** — never written through as another. *Reject* reads **no decision to freeze**: the
+  customer declined to answer, or the row is not an answer at all (context, thanks, scheduling). It
+  never says the review is not the customer's — a decline is theirs, and it is clear; it simply holds
+  nothing the register can take, so it is neither confirmed nor sent back to the customer, and a
+  held question it answers stays held, to be put again by the next package, save the two cases
+  below where the question has stopped applying.
   `workflows-core:escalation-rules` names this picker for that reason:
   the prompt's free-text option is supplied by the harness and no picker can decline it, so a picker through which customer authority enters the register — this one, the missing-reason picker, the conflicting-answer picker and the propagation sweep's — is protected by what the run does with
   the answer rather than by what the array leaves out. Aborting the walk stops the run with **nothing
@@ -344,7 +370,28 @@ command removes none of them; the next `/brd-interview` run does.
   that record, once frozen — the same option with a different reason included — is a new answer
   that supersedes it. An answer whose live record is `withdrawn` freezes nothing: the operator
   records it for a human or rejects it, and either way a held question it answers is closed,
-  naming the withdrawal, so its round can close and no later package carries it. A live record `open` for want of its reason is **completed**,
+  naming the withdrawal, so its round can close and no later package carries it. **A held question
+  whose requirement defects are all withdrawn closes too**, once this run has resolved the defects:
+  every `Requirement defect` line on it names a defect the parent's defect log now resolves
+  `withdrawn` — by an earlier run, or by this one on a decision it froze — and the question has no
+  record of its own: none frozen against it, by this run or an earlier one, and no `Re-puts:` line.
+  Such a question closes *answered by the customer — nothing frozen*, naming the withdrawn defects
+  and, where this run withdrew them, the decision that did, whichever order the walk took the
+  answers in. The `answered by the customer — nothing frozen` line is never read as the question's own record, so a later answer
+  cannot supersede the other question's withdrawal through it. A reply — a decline included — is kept,
+  with the customer's condition for asking again, under *what still needs a human*. One defect still
+  standing keeps the question held, and a withdrawal frozen `open` withdraws nothing yet. A question
+  that does carry a record — an answer frozen `open` for its reason, say — stays held, is named under
+  *what still needs a human*, and a later answer to it is walked against that record — one that
+  completes or replaces it with a reason closes the question. Where the
+  defects were already withdrawn before this review and the question has no record of its own, the
+  walk offers such a reply the two record-or-reject options only. A slice reconciled before 3.33.1 closes such questions when you re-run
+  `/brd-reconcile <KEY>` on the review it already took, passing its `customer-review-<date>.md`. That
+  re-run skips every decision the earlier pass froze, and offers again every answer to a question it
+  froze nothing for. Its section-12 corrections are put again with every earlier pass's listing beside
+  each, since a record from before 3.33.1 names no row by position: point each to the listing that
+  applied or refused it, and it is reported already disposed; one matched to a deferral, or to none, is
+  disposed again. A live record `open` for want of its reason is **completed**,
   minting nothing, by an answer with its own `chosen` and a reason now stated — never on an entry
   that puts a record again on a `- **Re-puts:**` line, where it is superseded (step 3) — and
   superseded by one choosing differently. A record
@@ -530,7 +577,8 @@ written down.
   with the customer. No command logs an amendment for a requirement the inventory never held.
 - **It never edits `brd/source/`.** The customer's document stays immutable; an amendment stays in
   the slice's returned review it came from, which the defect's `customer-amended <SLICE-KEY> <date>`
-  resolution names.
+  resolution names where one is written — not where the same review withdrew the requirement, when
+  the amendment is named for a person instead.
 - **It never banners inside `bundle-<date>/`.** That directory is the permanent record of exactly
   what was sent and its whole value is that it is byte-identical to the customer's copy. An
   overturned bundle document is named in the reconciliation record instead.

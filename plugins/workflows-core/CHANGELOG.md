@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.39.0] — 2026-10-13
+
+### Changed
+- **`release-notes.md` is a deliverable, not a session file** (docs-workflows 1.15.0). `specs-repo-git` §2.1's bounded set drops it — eight shapes, four of them single files — so the prompt-free session commit no longer stages it, and `/docs-workflows:release-notes` hands it off through `handoff-to-main` behind the consent choice, on the `prd/` prefix that `phase-handoff`'s `prefix` row now lists it under. `phase-handoff` §4.0 classes it **advisory**: a later `/release-notes` run reads it, as do `/update-prd` and `/docs-audit` (at `HEAD`), and none gates on it. **Update `docs-workflows` to 1.15.0 with this release**: an older `/release-notes` still relies on the session commit to commit its draft, so beside this release its drafts are left uncommitted with no offer. In session-branch mode, a `release-notes.md` change the session branch carries from before this release holds that branch's push back until the session branch's pull request merges — pushed first, where the commit is still local — since its change against the default branch must list session files only; and until then the draft in the working copy is no longer a session file, so every run reports it.
+
+## [1.38.2] — 2026-10-13
+
+### Changed
+- **`phase-handoff` §4.0 has a row for the customer's committed review** (product-workflows 3.33.0): on the repository route the customer commits `<KEY> Customer Review <date>.md` beside the bundle by pull request, and `/brd-reconcile` reads it on the default branch and declares its path only to stage its deletion once it has moved it to `customer-review-<date>.md`. Advisory, gated by nothing.
+
+### Docs
+- **The family map draws `/prd-ground` in the PM lanes** — the BRD slice's in the BRD route, the idea PRD's in the idea route — instead of in a box of its own that read as a separate role, and draws `/prd-proposal` from both routes, with `/brd-proposal` after it on the BRD route only.
+- **`next-phase-offer`'s BRD-route note says a held customer question's round stays open until the answer comes back *or the question stops applying*** — its requirement withdrawn (product-workflows 3.33.1).
+
 ## [1.38.1] — 2026-10-12
 
 ### Fixed

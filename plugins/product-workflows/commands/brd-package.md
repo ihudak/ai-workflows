@@ -383,7 +383,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
    **Why *held for the customer* is admitted and the other three are not.** The design's
    precondition for this command is that the interview's open rounds are closed, and read literally
    that is a deadlock: a round holding a `[C]` stays open **until the answer comes back through the
-   package** (`${CLAUDE_PLUGIN_ROOT}/references/interview-tagging.md` §5), and the package is what
+   package**, or its question stops applying (`${CLAUDE_PLUGIN_ROOT}/references/interview-tagging.md` §5), and the package is what
    this command builds. So the only reading under which the route can run at all is the one taken
    here — everything the delivery team can settle is settled, and what remains is exactly the set
    this package is being built to carry. The other three holding states are the opposite case: each
@@ -1252,9 +1252,9 @@ sent. The *Assemble the bundle* phase does not copy it in, and the manifest does
 
 It states only: which BRD this is; **how the customer gets the bundle**, shaped by the route just settled (`bundle-packaging.md` §4) — on the **repository** route, the repository to pull, the committed `bundle-<YYYYMMDD>/` directory by path, and the instruction to open the prompt file there and paste it; on the **archive** route, what is attached. This is the one document that names a delivery route, and the only one that may: it is written to a customer whose situation the operator knows, where the prompt is handed on to a reader the run cannot see (§5); which repositories, at which commits; **which
 file is the prompt** — the one file to paste; **which file comes back** — the one file to send,
-named exactly; any prerequisite whose decisions are still provisional and that positions resting on
+named exactly, and, on the **repository** route, where it goes: committed into the folder that holds `bundle-<YYYYMMDD>/`, under exactly that name, on a branch of the customer's own with a pull request against the default branch, changing nothing else — a correction the customer wants made to the package goes in the review's section 12, never into the bundle — or, where they cannot push, sent back instead (`bundle-packaging.md` §5, *The review comes back the way the bundle went out*); any prerequisite whose decisions are still provisional and that positions resting on
 it could move (D20); and anything else that must not sit buried inside a document. The two bolded
-items are bolded in the rendered note too, because the single most common failure of this loop is a
+items are bolded in the rendered note too — the repository route's return instruction is part of that item and is not trimmed either — because the single most common failure of this loop is a
 reviewer who reads the documents, forms a view, and writes it into an email of their own devising —
 having been told, in the first thirty seconds, neither that there was a prompt to paste nor that
 there was a named file to return.
@@ -1607,8 +1607,14 @@ on `/create-ard` and `/specify`, which read the architecture- and implementation
 alongside the same register. So the honest offer is the state this run actually leaves behind:
 
 ```
-choices: ["Stop here — the package is written and, if you handed it off, committed", "Send it — the delivery note is printed above, with whatever has to hold first where anything does", "Reconcile the review once it comes back — /product-workflows:brd-reconcile <BRD-KEY> @<review-file> <merge-clause>", "Package another BRD or slice"]
+choices: ["Stop here — the package is written and, if you handed it off, committed", "Send it — the delivery note is printed above, with whatever has to hold first where anything does", "Reconcile the review once it comes back — /product-workflows:brd-reconcile <BRD-KEY> <review-clause> <merge-clause>", "Package another BRD or slice"]
 ```
+
+`<review-clause>` is `@<review-file>` on the archive route, the review coming back as a file whose
+path only the operator will know; on the repository route it is `(once you merge the customer's
+pull request — or @<review-file> where they sent it back instead)`, since
+`/product-workflows:brd-reconcile` then finds the review committed beside the bundle and takes no
+path, while a customer who could not push sent a file back after all. The route is the one the *Render the delivery note* phase settled.
 
 **What *Send it* means on the repository route, before the handoff's pull request merges.** The note
 sends the customer to pull the specs repository, and a customer pulling its default branch finds no
@@ -1629,7 +1635,8 @@ orchestrator would then have to evaluate.
 
 Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")` — names only,
 never behaviour a command of its own owns: the round holding each `[C]` stays open until the
-customer's answer comes back and `/product-workflows:brd-reconcile` records it, and what happens between
+customer's answer comes back and `/product-workflows:brd-reconcile` records it, or finds its question
+has stopped applying, and what happens between
 this run and that one is not the plugin's to do — the package has to reach a customer and the
 customer has to answer.
 

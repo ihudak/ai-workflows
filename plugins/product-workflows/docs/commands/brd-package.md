@@ -257,7 +257,7 @@ attack.
 - **Phase 0 — the register merged, the rounds settled, something to review.** All three run before
   anything else is read. The rounds gate admits exactly one holding state, *held for the customer*,
   and refuses the other three. That reading is forced: a round holding a `[C]` stays open **until the
-  answer comes back through the package**, and the package is what this command builds, so requiring
+  answer comes back through the package**, or the question stops applying, and the package is what this command builds, so requiring
   every round to be closed would deadlock the route. The other three holding states each name work
   that is still the delivery team's.
 - **Phase 0 — a dated bundle is never rewritten.** A `bundle-<date>/` that already exists stops the
@@ -340,6 +340,13 @@ attack.
 - **Phase 7 — the delivery note's 200-word ceiling.** A ceiling, not a target. Over it, the note is
   shortened and re-rendered; the two facts that are never trimmed are which file is the prompt and
   which file comes back.
+- **Phase 7 — the review comes back the way the bundle went out.** On the repository route the note
+  asks the customer to commit their review beside the bundle, under the exact name the prompt gives
+  it, on a branch of their own with a pull request — changing nothing else, since a change they want
+  made to the package goes in the review's section 12 — or to send it back where they cannot push.
+  Once you merge that pull request, [`/brd-reconcile`](brd-reconcile.md) finds the review without a
+  path; on the archive route you pass the path of the file that came back. The prompt itself names
+  no route, since it is handed on to whoever does the review, so the note is where this is said.
 - **Phase 8 — the citation-resolution check.** Run over every document in the assembled bundle,
   after the plugin-free scan, because both of its inputs — the identifier corpus and the set of
   bundle filenames — are facts about the bundle only once it is assembled. Three relations: every
@@ -399,7 +406,8 @@ attack.
   note is printed for pasting. Delivery is the operator's.
 - **It writes no `[CD#n]`, and it ingests no returned review.**
   [`/brd-reconcile`](brd-reconcile.md) is what turns a returned answer into a confirmed customer
-  decision, so the round holding each `[C]` stays open until that run records it.
+  decision, so the round holding each `[C]` stays open until that run records it, or finds its
+  question has stopped applying.
 - **It changes no ledger disposition.** The final report's ledger line reports where allocation
   stands; allocation itself is `/brd-split`'s walk. Two other runs may move a row afterwards, and
   neither is this one: [`/brd-reconcile`](brd-reconcile.md) freezes a customer decision that settles

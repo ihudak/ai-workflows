@@ -45,7 +45,7 @@ ARTIFACT = [
     r"^documentation/[^/]+/dev-workflows/",
     r"^dev-workflows-feedback/",
     r"^dev-workflows-cost/",
-    r"^(specs|specifications|vis)/.+/(implementation|release-notes|follow-ups|pr-draft|[^/]+-implementation-gaps)\.md$",
+    r"^(specs|specifications|vis)/.+/(implementation|follow-ups|pr-draft|[^/]+-implementation-gaps)\.md$",
 ]
 EXCLUDED = (r"^(specs|specifications|vis)/(.+/)?(brd|grounding|interview|design|attachments|revisions"
             r"|bundle-[0-9]{8}|customer-sent-[0-9]{8}|Doc screenshots)/")
@@ -67,7 +67,6 @@ ATTRIBUTES = [
     "dev-workflows-feedback/** merge=union",
     "dev-workflows-cost/** merge=union",
     "**/implementation.md merge=union",
-    "**/release-notes.md merge=union",
     "**/follow-ups.md merge=union",
     "**/*-implementation-gaps.md merge=union",
     "**/dev-workflows/resume.md -merge",
@@ -715,6 +714,7 @@ def selftest():
             ("documentation/acme-docs/dev-workflows/cost/s.md", True),
             ("dev-workflows-cost/pending-2026-10-06-abcd1234.md", True),
             ("specifications/BRD-B-1-y/brd/source/implementation.md", False),
+            ("specifications/PRD-A-1-x/release-notes.md", False),
             ("specifications/PRD-A-1-x/attachments/release-notes.md", False),
             ("specifications/PRD-A-1-x/Doc screenshots/release-notes.md", False),
             ("specifications/PRD-A-1-x/prd.md", False),
@@ -1245,7 +1245,7 @@ def selftest():
                                ("dev-workflows-cost/pending-x.md", "union"),
                                ("documentation/acme/dev-workflows/feedback/x.md", "union"),
                                ("specifications/PRD-A-1-x/implementation.md", "union"),
-                               ("specifications/PRD-A-1-x/release-notes.md", "union"),
+                               ("specifications/PRD-A-1-x/release-notes.md", "unspecified"),
                                ("specifications/PRD-A-1-x/follow-ups.md", "union"),
                                ("specifications/PRD-A-1-x/PRD-A-1-implementation-gaps.md", "union"),
                                (rs, "unset"), (pr, "unset")]:
