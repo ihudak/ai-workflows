@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.36.5] — 2026-10-12
+
+### Added
+- **`addressing` §1's `key-summary`: the keys a specs tree already holds, one line per prefix.** Each line names the prefix, its highest top-level key and how many top-level and nested keys use it — ten prefixes at most, then how many more — read off each folder's `key:` frontmatter, never out of a folder name. `/product-workflows:idea` and `/product-workflows:brd-intake` print it beneath their missing-key stops, so the person picking a new key sees what is taken. It proposes no key and validates none, and it says that a teammate's unmerged branch may hold more.
+
 ## [1.36.4] — 2026-10-11
 
 ### Fixed

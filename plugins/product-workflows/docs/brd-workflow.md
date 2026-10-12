@@ -133,7 +133,8 @@ it copies the document in verbatim and immutably together with every file they t
 outside its folder into `brd/source-external/` — since no later command writes under either directory, and a
 screenshot left uncaptured stays out of the record until the document is intaken again. It reads the
 linked markdown beside the document and has every linked image it takes transcribed, extracts a
-`[BR#n]` requirement inventory from all of it, confirms candidate defects with a human, and writes a
+`[BR#n]` requirement inventory from all of it, has a human triage its candidate defects — logging
+the real ones as open, to be settled later, never resolving any — and writes a
 coverage ledger with every row `unallocated`. `/brd-split`, run on the root, proposes candidate
 slices from a mandatory slicing instruction — a root is never ground, so the instruction is the only
 grouping signal there is — and walks every unallocated ledger row to one of four recorded fates:
