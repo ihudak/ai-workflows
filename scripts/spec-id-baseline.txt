@@ -54,11 +54,11 @@
 #     --include='*.md' --exclude='CHANGELOG.md' plugins/ CLAUDE.md .claude/rules/ docs/maintainers/ 2>/dev/null | sort | uniq -c \
 #   | diff <(grep -v '^#' scripts/spec-id-baseline.txt) -
       2 [AC01]
-      1 [AC03]
-     18 [ACxx]
+      2 [AC03]
+     23 [ACxx]
       2 [TC01]
       1 [TC07]
-     17 [TCxx]
+     19 [TCxx]
       2 [U01]
-      1 [U02]
-     20 [Uxx]
+      2 [U02]
+     26 [Uxx]

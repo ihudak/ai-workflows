@@ -15,7 +15,7 @@ Three extractions took content out of `dev-workflows` and none is coming back: t
 
 ## Docs tree
 
-`dev-workflows` carries 20 pages — `docs/README.md` (the index), `getting-started.md`, `workflow.md` and `roles-and-phases.md`, 5 per-command pages under `docs/commands/`, and 11 reference pages under `docs/reference/` — with the plugin README reduced to a role-indexed pointer table. Re-derive with `find plugins/dev-workflows/docs -type f -name '*.md' | wc -l`, and the same command scoped to `plugins/dev-workflows/docs/commands` and `plugins/dev-workflows/docs/reference` for the two subtotals.
+`dev-workflows` carries 21 pages — `docs/README.md` (the index), `getting-started.md`, `workflow.md` and `roles-and-phases.md`, 6 per-command pages under `docs/commands/`, and 11 reference pages under `docs/reference/` — with the plugin README reduced to a role-indexed pointer table. Re-derive with `find plugins/dev-workflows/docs -type f -name '*.md' | wc -l`, and the same command scoped to `plugins/dev-workflows/docs/commands` and `plugins/dev-workflows/docs/reference` for the two subtotals.
 
 ## Authorities
 
@@ -35,6 +35,7 @@ The `dev-workflows` commands' lines of the family workflow map, and the caller l
 /upgrade             → upgrade-planner → [risk-planner@Opus] → upgrade-executor → [code-review@Opus] → [triage: verify each finding] → review-fixer → [upgrade-executor verify-resume: tests vs the baseline — reviewed path; the unreviewed path tests inside the first executor call] → [finish-code-branch §2.1–§2.3: commit this component] ⟲ (a commit that does not land ends the loop) → [finish-code-branch: push/PR once for the batch] → impl-maintenance → commit-artifacts
 /design              → [require-on-main: specification.md; a multi-component PRD's flat spec goes to the Epic picker, designed whole only by the 0-Epic override] → [an Epic's target: its repository alone] → [code-scanner×N (parallel, cap 4, STRICT gate)] → [architecture-grounder@Opus (when either root resolves)] → (embedded grilling, challenges spec) → [interface-designer×3 (offered on a contested interface; --design-twice forces the fan-out, no offer)] → [design-reviewer@Opus] → write design.md → [handoff-to-main: design.md] → impl-maintenance → commit-artifacts
 /ready               → [require-on-main: spec/design paths — gates as a finding capping PARTIAL, never stops] → read the resolved folder → verify ARD/spec/design → [multi-component PRD: multi-component-prereqs at ready scope — targets + contract coverage] → [readiness-reviewer@Opus] → SUPPORTED/PARTIAL/NOT-SUPPORTED → [handoff-to-main: _readiness.md] → impl-maintenance + emit-auto → commit-artifacts
+/conformance         → [resolve-address: an EPIC- folder — the Dev, pull request open — or a PRD- folder — the PE, every Epic merged; a BRD- container refused] → specs-preflight → [require-on-main: the documents traced] → [clones: fetch each writable clone's remote refs; read-only-repos §5 ages on a read-only mount] → [inventory: every requirement — spec [Uxx]/[ACxx], epic.md criteria and ## Contract lines, the applicable [AD#n] Rules; on a PRD run prd.md's live [AC#n]/[FR#n], the PRD-level spec and every Epic's — an Epic with a record re-checked, its ## Satisfied re-traced only where the evidence moved, a Dev record on an unmerged conformance/ branch probed for] → [code: an Epic run reads its own branch tip from implementation.md; a PRD run the default branch, after the merged test — ancestry, or a [<EPIC-KEY>] subject since the block's date, else ask] → [conformance-tracer×N, one per repository, parallel, cap 4] → synthesis → [re-check each finding at its evidence, and each entry on file] → (the walk: fix the code / amend the document / accept, no answer recommended, decided entries carried forward; on a PRD run Dev's implementation-wins entries first) → [effects: a follow-up; an ## Engineering review note on a PRD run; superseded-by and a withdrawn follow-up on an overrule] → write _conformance.md, ## Satisfied included → [handoff-to-main: the record and the notes, on conformance/] → impl-maintenance → follow-ups → commit-artifacts
                       └── test-baseliner                        (used by /implement, and by /upgrade and /vuln both directly and via upgrade-executor / vuln-fixer)
                       └── test-writer                           (used by /implement only)
                       └── risk-planner                          (used by /implement plan critique, /upgrade)
@@ -42,6 +43,7 @@ The `dev-workflows` commands' lines of the family workflow map, and the caller l
                       └── design-reviewer                       (used by /design)
                       └── interface-designer                    (used by /design)
                       └── readiness-reviewer                    (used by /ready)
+                      └── conformance-tracer                    (used by /conformance)
 ```
 
 ## Invariants

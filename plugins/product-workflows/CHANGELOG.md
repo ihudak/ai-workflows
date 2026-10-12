@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.30.6] — 2026-10-12
+
+### Changed
+- **The PE's role now closes the implementation phase it opens**: the roles page and the workflow diagram add `/dev-workflows:conformance <PRD-KEY>`, run once every Epic has merged, with its `conformance` cost phase, and draw the Dev's Epic-level run feeding it.
+
 ## [3.30.5] — 2026-10-12
 
 Needs `workflows-core` 1.36.6, whose `key-summary` the three missing-key stops below print (3.30.4's needed 1.36.5).

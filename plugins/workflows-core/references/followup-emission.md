@@ -4,7 +4,7 @@ Single source of truth for the family's follow-up emitter. A terminal
 "Emit follow-up tasks" phase in each of its callers cites this file and executes its steps inline —
 the orchestrator owns every prompt. The callers are the commands that load it, which is a recipe
 rather than a list, because a list here went stale as callers were added:
-`grep -l 'args: "followup-emission")' plugins/*/commands/*.md` — ten today (`/implement`, `/ready`,
+`grep -l 'args: "followup-emission")' plugins/*/commands/*.md` — eleven today (`/implement`, `/ready`, `/conformance`,
 `/epics`, `/prd-proposal`, `/brd-proposal`, `/document`, `/release-notes`, `/docs-init`, `/docs-brand`,
 `/docs-audit`).
 
@@ -74,6 +74,10 @@ section and SKIP any whose stable key already appears. **Stable key** = the
 finding's identity: `key` + (file path | gap-id | signal-type | other repository + unit). The other repository is compared in §6's ``repository `<name>` `` form — the name between the backticks after `repository `, exactly, any `(not given)` after it ignored — so `api` matches neither `api-gateway` nor a `src/api/` path; and the unit is compared as the whole address inside the line's `` `/dev-workflows:implement …` `` span, exactly, so `/dev-workflows:implement ACME-90-01` matches neither `/dev-workflows:implement ACME-90-01-02` nor an `ACME-90-01` named elsewhere on the line. **For that identity a match is change by change**: a run from that repository can implement exactly what its open tasks list — on an Epic whose target is another repository, `/dev-workflows:implement`'s companion run (§6) — so a match on repository and unit skips only the changes a line for that pair already names, in any words, whether the line is open or ticked (a ticked line's change is done). The rest go on a new line for the pair, worded as §6 says, so no change this run found there is lost, and a ticked line blocks nothing it does not name. Report a
 match as `SKIP — already exists` (mirrors `/wiki-tasks-extract` Step 5); for the other-repository identity a match is a line set naming every change this run found there, and a partial one is previewed as the new line with `SKIP — already exists: <the changes a line names>` beside it; never
 re-insert.
+
+**Withdrawing a follow-up.** One caller edits a line this emitter wrote: `/dev-workflows:conformance`, when a `fix-code` decision whose follow-up an Epic run emitted no longer stands (that command's record format, `dev-workflows:conformance-format`) — the PE overrules it, or its requirement is withdrawn or no longer in its document. It ticks the line and appends why, never deleting it: `- [x] <the line as written> — withdrawn: <PRD-KEY>/[DD#n]` for an overrule, and `- [x] <the line as written> — withdrawn: <KEY>/[DD#n] (requirement withdrawn)` or `(orphaned)` otherwise. A ticked line counts as done, so a later `/implement` of the unit does not read it back as open. The suffix does not change which task the line is: `/dev-workflows:implement`'s read-back compares a line's changes without it, so a copy at the default branch still unticked and this ticked one are one task, ticked in one. No other caller edits a line, and this emitter itself never does.
+
+**Re-queuing a confirmed fix.** One caller writes a line §5 would skip: `/dev-workflows:conformance`'s PRD run, when the PE confirms a `fix-code` decision whose follow-up is no longer open — ticked, or never written because the Epic run's preview cancelled it. Its line ends `— confirmed: <PRD-KEY>/[DD#n]`, and §5's match against a line naming the same change does not apply to it: the PE's confirmation is a new request for that change, not a restatement of the old one. A line already carrying that same `— confirmed:` suffix is still a match, so a re-run does not write it twice.
 
 ## 6. Qualifying predicate — what becomes a follow-up
 

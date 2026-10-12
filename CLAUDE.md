@@ -30,7 +30,7 @@ plugins/
 
 ## Active plugins: dev-workflows, product-workflows, docs-workflows, and their shared dependency workflows-core
 
-`plugins/dev-workflows/` provides five slash commands — `/design`, `/implement`, `/ready`, `/upgrade`, and `/vuln` — plus twelve reusable subagents, one hook, sixteen reference files, and no bundled skill. It depends only on `workflows-core`, and does not use `prose-style` at all.
+`plugins/dev-workflows/` provides six slash commands — `/design`, `/implement`, `/ready`, `/conformance`, `/upgrade`, and `/vuln` — plus thirteen reusable subagents, one hook, eighteen reference files, and no bundled skill. It depends only on `workflows-core`, and does not use `prose-style` at all.
 
 `plugins/product-workflows/` provides sixteen slash commands — the idea→PRD→ARD→specification ladder (`/idea` → `/create-prd` → `/update-prd` → `/create-ard` → `/specify`), `/epics`, `/harvest-decisions`, `/promote-decisions`, a six-command BRD-to-PRD route (`/brd-intake`, `/brd-split`, `/prd-ground`, `/brd-interview`, `/brd-package`, `/brd-reconcile`), and the effort proposals `/prd-proposal` and `/brd-proposal` — plus fourteen subagents, twelve reference files, one hook, no bundled skill, and three environment variables (`SPECS_PATH`, `REPOS_PATH`, `DOCS_PATH`). It depends on `workflows-core` and `prose-style`, with no absent case for the second (S12). `dev-workflows` does not depend on `product-workflows`.
 
@@ -84,7 +84,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `dev-workflows-implement.md` | `dev-workflows/**` | `/implement` invariants |
 | `dev-workflows-tests.md` | `dev-workflows/`: `commands/implement.md`, `agents/test-*.md`, `docs/commands/implement.md`, `references/handoff/test-*.md`, `docs/reference/test-suite-detection.md`, `references/code-handoff.md` | test-writing requirement |
 | `product-workflows.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `docs-workflows/commands/release-notes.md`; `workflows-core/references/`: `addressing.md`, `grilling-technique.md`, `prd-format.md` | invariants, map, callers |
-| `brd-route.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`; `workflows-core/references/addressing.md`; `workflows-core/commands/frames.md`; `docs-workflows/commands/`: `document.md`, `release-notes.md` | BRD-route map lines, folder-kind invariants |
+| `brd-route.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`, `conformance.md`; `workflows-core/references/addressing.md`; `workflows-core/commands/frames.md`; `docs-workflows/commands/`: `document.md`, `release-notes.md` | BRD-route map lines, folder-kind invariants |
 | `brd-route-detection.md` | as `brd-route.md` | BRD-route detection |
 | `prd-ground-verification.md` | as `brd-route.md` | `/prd-ground`'s blind verification |
 | `docs-workflows.md` | `docs-workflows/**`; `product-workflows/`: `commands/epics.md`, `agents/epic-*.md`, `docs/commands/epics.md` | invariants, map, callers |

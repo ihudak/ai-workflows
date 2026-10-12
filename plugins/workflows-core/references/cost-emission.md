@@ -1,7 +1,7 @@
 # Session Cost Emission — Shared Reference
 
-Single source of truth for the plugin family's session-cost subsystem. Twenty-six of
-the twenty-eight commands with an §7 row cite this file from their terminal
+Single source of truth for the plugin family's session-cost subsystem. Twenty-seven of
+the twenty-nine commands with an §7 row cite this file from their terminal
 "Session cost" phase and execute its steps inline through the single `emit-cost`
 entry point (§11). The other two — `/prompt-brainstorm` and `/prompt-grill-me` —
 cede the session before such a phase could run, call `emit-cost` never, and
@@ -364,7 +364,7 @@ that model exactly as before).
 
 ## 7. Attribution (phase / role / keys)
 
-Fixed per-command labels, with seven inferred exceptions:
+Fixed per-command labels, with eight inferred exceptions:
 
 | Command | phase | role |
 |---------|-------|------|
@@ -380,6 +380,7 @@ Fixed per-command labels, with seven inferred exceptions:
 | `/update-prd` | prd-update | pm |
 | `/create-ard` | architecture | pa |
 | `/frames` | **inferred** | **inferred** |
+| `/conformance` | **inferred** | **inferred** |
 | `/brd-intake` | brd-to-prd | pm |
 | `/prd-ground` | brd-to-prd | pa |
 | `/brd-split` | brd-to-prd | pm |
@@ -433,6 +434,15 @@ a frame set is real spend on a real artifact in the specs tree, which is why thi
 command emits at all — the alternative is not "unmeasured" but *misattributed*, per
 §3's semantics rolling it into whatever command runs next.
 
+**`/conformance` inference (whose run it is).** The discriminator is
+where `workflows-core:addressing` §4.1 places the resolved folder — by its
+prefix, never by the kind it asserts, since a BRD-route slice is a `PRD-` folder
+whose `brd-link.md` asserts `kind: brd` — re-derivable from the folder's name and
+carrier, as `/frames`'s is. An Epic folder -> `phase: conformance`, `role: dev`
+(an Epic run is the Dev's). A PRD folder, a BRD-route slice included ->
+`phase: conformance`, `role: pe` (a PRD run is the PE's). The command refuses a
+BRD container, so there is no third branch.
+
 **`/diagnose-session` passes `target_command: n/a` on every run**, so the bullet below for a target of `n/a` charges it to `plugin-feedback`/`n/a`: a diagnosis is about the plugin itself, whichever command it reads, so it inherits nothing.
 
 **`/prompt`, `/feedback`, `/prompt-brainstorm` and `/prompt-grill-me` inference
@@ -459,9 +469,9 @@ not attempt to infer it from anything else.
   `role: n/a`.** The second case covers `/vuln`, `/upgrade`, `/docs-profile`,
   `/docs-serve`, `/statusline`, `/harvest-decisions` and `/promote-decisions`, none of which emits cost and so has
   nothing to inherit.
-- **Target is `/frames` -> resolve ITS inference first**, then inherit the result,
-  exactly as for `/release-notes`. One level only. Where no folder resolves — which
-  for `/frames` means the run never started — treat it as the `n/a` case.
+- **Target is `/frames` or `/conformance` -> resolve ITS inference first**, then inherit
+  the result, exactly as for `/release-notes`. One level only. Where no folder resolves
+  — which for either means the run never started — treat it as the `n/a` case.
 - **Target is `/feedback`, `/prompt`, `/prompt-brainstorm`, `/prompt-grill-me` or `/diagnose-session` -> treat as `n/a`.**
   A correction to a correction, or to a diagnosis, has no lifecycle phase of its own, and inheriting
   from an inferred row would regress without a base case. This is the one rule the
@@ -616,10 +626,11 @@ and acceptable.
 
 ## 11. Caller contract — `emit-cost`
 
-One entry point, called by the twenty-six commands that measure themselves (§1) and by
+One entry point, called by the
+twenty-seven commands that measure themselves (§1) and by
 whichever of them replays a §13 record (never by the two that defer — they call
 nothing). Every caller supplies `command`, `phase`, `role` (or the
-`inferred` marker — `/release-notes`, `/frames`, the four feedback commands and
+`inferred` marker — `/release-notes`, `/frames`, `/conformance`, the four feedback commands and
 `/diagnose-session`), `key` (or `null`), `source`, and `plugin_version`; the four
 feedback commands and `/diagnose-session` additionally supply `target_command` — `/prompt` and `/feedback` directly, `/prompt-brainstorm`
 and `/prompt-grill-me` through the §13 record a replay reads it from. `emit-cost` does the rest; it NEVER commits, NEVER writes
@@ -631,7 +642,7 @@ run. The cost entry is committed later, once, by the run's terminal
 Inputs:
 - `command` — the exact slash-command name (e.g. `/implement`,
   `/document (keyed mode)`, `/document (direct mode)`).
-- `phase`, `role` — the §7 labels, or the `inferred` marker for the seven
+- `phase`, `role` — the §7 labels, or the `inferred` marker for the eight
   commands §7 resolves. They resolve from **different** data, and each must
   therefore be given it:
   - `/release-notes` — resolved from `specification.md` / `design.md` presence
@@ -639,6 +650,9 @@ Inputs:
   - `/frames` — resolved from the resolved folder's own `kind` (§7's `/frames`
     inference), re-derivable from the folder `key` names. `emit-cost` reads that
     itself; nothing is passed beyond the `key`.
+  - `/conformance` — resolved from where `addressing` §4.1 places the resolved
+    folder (§7's `/conformance` inference), never from its asserted `kind`. `emit-cost` reads that itself;
+    nothing is passed beyond the `key`.
   - The four feedback commands — resolved from `target_command`, which **cannot**
     be re-derived from disk (it lives in the run's own context). It is passed in:
     directly by `/prompt` and `/feedback`, and out of the §13.1 record for the two
@@ -809,7 +823,7 @@ exists to catch.
 
 ### 13.3 The replay
 
-`emit-cost` step 2 (§11). **No deferred file ⇒ nothing changes**; the twenty-six
+`emit-cost` step 2 (§11). **No deferred file ⇒ nothing changes**; the twenty-seven
 commands that measure themselves (§1) never take this path.
 
 Otherwise the run passes one `--claim <command>` per deferred record, oldest

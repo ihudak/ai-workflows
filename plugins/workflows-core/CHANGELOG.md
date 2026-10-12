@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.37.0] — 2026-10-12
+
+### Added
+- **An eleventh specs-repo branch prefix, `conformance/`**, for `/dev-workflows:conformance`'s record and notes — in `phase-handoff` §1 rule 3, §2.9 and §3.2, `specs-repo-git` §2.1 and row G2, and `branch-naming`'s identity heuristic with `scripts/session-branch.py`'s copy of its skip list; `_conformance.md` is classed advisory in `phase-handoff` §4.0.
+- **`followup-emission` § *Withdrawing a follow-up***: where an Epic's *fix the code* decision no longer stands — the PE overrules it, or its requirement is withdrawn or gone from its document — `/conformance` ticks that follow-up and appends why (`— withdrawn: <PRD-KEY>/[DD#n]`, or `(requirement withdrawn)` / `(orphaned)`), so `/implement` no longer reads it back as open. Beside it, § *Re-queuing a confirmed fix* lets a PE-confirmed fix whose follow-up is no longer open be written again, past §5's dedupe.
+- **A tenth closed-vocabulary picker in `escalation-rules`**, `/conformance`'s decision question, whose free-text answers are normalised into fix-code / amend-document / accept.
+- **`/conformance` is the eighth inferred cost exception** (`cost-emission` §7, §11): phase `conformance`, role `dev` for an Epic folder and `pe` for a PRD folder — placed by its prefix, so a BRD-route slice, which asserts `kind: brd`, is a PRD; a feedback run targeting it inherits that.
+
+### Changed
+- The family map draws `/conformance` in both the Dev lane (an Epic, pull request open) and the PE lane (the PRD, every Epic merged). The command namespace map lists it; `feedback-emission` and `followup-emission` count it among their callers.
+
 ## [1.36.6] — 2026-10-12
 
 ### Fixed

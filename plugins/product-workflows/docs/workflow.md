@@ -33,6 +33,7 @@ flowchart TD
     subgraph PE["PE — breakdown & specification"]
         epics["/epics"]:::prod
         specify["/specify"]:::prod
+        conformanceprd["/dev-workflows:conformance — the PRD, every Epic merged"]:::dev
     end
     subgraph EST["PM — effort proposals (optional, gates nothing on the build ladder)"]
         prdproposal["/prd-proposal"]:::prod
@@ -40,6 +41,7 @@ flowchart TD
     end
     subgraph DEV["Dev — build, verify & deliver (dev-workflows)"]
         design["/dev-workflows:design"]:::dev -->|design.md| implement["/dev-workflows:implement"]:::dev
+        conformanceepic["/dev-workflows:conformance — an Epic, pull request open"]:::dev
         ready["/dev-workflows:ready"]:::dev
     end
 
@@ -62,6 +64,12 @@ flowchart TD
     createard -.->|Epic-level ARD| design
     design -.->|design.md + specification.md| ready
     ready -.->|_readiness.md — advisory| implement
+    implement -->|"each Epic — the Dev"| conformanceepic
+    conformanceepic -.->|"fix the code — a follow-up"| implement
+    conformanceepic -.->|"the Dev's proposed decisions"| conformanceprd
+    conformanceprd -.->|"amend the document"| specify
+    conformanceprd -.->|"amend the document"| epics
+    conformanceprd -.->|"amend the PRD"| updatevi
     brdsplitroot -->|"each confirmed slice — claims are its [BR#n] rows"| groundbrd
     groundbrd -->|"verified [CG#n]/[DG#n] — required before the walk"| brdsplitslice
     createvi -.->|"idea route only — optional, PRD's own [AC#n]/[FR#n]"| groundprd
