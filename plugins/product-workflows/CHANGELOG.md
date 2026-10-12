@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.30.6] — 2026-10-12
+
+### Fixed
+- **`/brd-intake`'s coverage question no longer recommends a re-read for every real BRD.** A section the first read took no row from — *About this document*, *Background*, *Contacts* — is prose the reader was handed, so the question recommended *Re-read* almost every time, even where the reader had read that prose and rightly found nothing binding; a re-read costs a full Opus dispatch and replaces the first read wholesale, defect candidates included. `brd-reader` now returns `sections_without_rows`: one entry per top-level section it took no row from, with a one-line reason why it binds nothing — the section's counterpart of the `note` it already gave an image that bears on no obligation, now required there. The question shows the reader's reason beside each item, and the per-item questions show it again, so you confirm or override it; it recommends *Account for each section and image* where every item a re-read could change carries a reason, and still recommends *Re-read* for a section the reader gave no reason for, which is the one it may have missed. The question is still asked, a re-read is still allowed once per run and still replaces the first read wholesale, and what `accounts:` records is still your answer.
+
 ## [3.30.5] — 2026-10-12
 
 Needs `workflows-core` 1.36.6, whose `key-summary` the three missing-key stops below print (3.30.4's needed 1.36.5).

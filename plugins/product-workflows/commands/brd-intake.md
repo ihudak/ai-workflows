@@ -585,7 +585,8 @@ handed the same shape. Remove the directory once this phase's last read has retu
 
 Act on `status`:
 - **`OK`** — **hold what the read returned, and write nothing to the inventory yet**: the rows, each
-  row's candidates, the `figures` entries with their `illustrates`, and the `notes` are this read's,
+  row's candidates, the `figures` entries with their `illustrates`, the `sections_without_rows` and
+  the `notes` are this read's,
   and the coverage step below can replace every one of them with a re-read's and add a row from a
   sentence the operator quotes. **Whatever that step leaves is the standing read's: the last read
   whose result was not discarded, an `EMPTY` re-read discarding its own** (below) — this read where
@@ -853,7 +854,13 @@ Act on `status`:
   afresh — §2's carry rule and drop, read off the map alone: an image's *Rows* line shows an account
   and is never read back as one. Where nothing is left, nothing is asked. Otherwise put one question
   for the whole set, naming each item — a section by its heading path, with what the source has
-  under it; an image by its path, with its *Depicts* sentence, or its reason where it was not read:
+  under it; an image by its path, with its *Depicts* sentence, or its reason where it was not read —
+  and, under each, the reason the read gave for it, marked as the reader's, a claim the operator
+  confirms or overrides: a section's `sections_without_rows` note, its entry matched by key exactly
+  as `brd-format.md` §2 keys an account, or the `note` on a read image's `figures` entry — *Reader:
+  background: describes the current situation; no binding sentence* — and *Reader: no reason given*
+  where the read gave none, save for an image that was not read, which the read never saw. An entry
+  whose key names no section the question names counts for nothing:
 
 ```
 choices: ["Re-read — re-dispatch brd-reader over the whole set and reconcile<recommended>", "Account for each section and image<recommended>", "Cancel"]
@@ -863,7 +870,8 @@ choices: ["Re-read — re-dispatch brd-reader over the whole set and reconcile<r
   `brd-reader` with the same inputs and the same `model:` as the first dispatch (under §10, `run_flags.enforced_model`) — it takes the whole set, the document, every linked markdown
   file Phase 2 copied and the figures copy, and numbers from `BR#1` on every read, so there is no
   narrower re-dispatch — and **the re-read's result replaces this read's wholesale**: its rows, its
-  candidates, its `figures` entries with their `illustrates`, and its `notes`, the first read's
+  candidates, its `figures` entries with their `illustrates`, its `sections_without_rows` and its
+  `notes`, the first read's
   kept nowhere. Act on its `status` as on the first read's, **save `EMPTY`, which replaces
   nothing**: a read of the same set that finds no requirement has not shown the first read's rows
   gone, so the first read's result stands, the run says so, and the re-read is spent — what the
@@ -897,13 +905,22 @@ choices: ["Re-read — re-dispatch brd-reader over the whole set and reconcile<r
   else: it is settled
   by accounting for it, or by converting or capturing the file and re-running this intake.
 
-  **`<recommended>` is a placeholder this run resolves once** — substitution, not an edit to the
-  array, which is otherwise presented verbatim; `workflows-core:escalation-rules`, *The
-  `(Recommended)` marker is unconditional*, sanctions exactly this. Where any item the question
-  names is one a re-read can change, it resolves to ` (Recommended)` on the first option and the
-  empty string on the second. Where every one it names is of the kind above, it resolves to the
-  empty string on the first and ` (Recommended — a re-read returns the same result for every one
-  named)` on the second: a re-read that cannot change the result spends a dispatch on nothing.
+  **`<recommended>` is a placeholder this run resolves once, in this order** — substitution, not an
+  edit to the array, which is otherwise presented verbatim; `workflows-core:escalation-rules`, *The
+  `(Recommended)` marker is unconditional*, sanctions exactly this:
+
+  1. **Every item the question names is one a re-read cannot change** (above) → the empty string on
+     the first option and ` (Recommended — a re-read returns the same result for every one named)`
+     on the second: a re-read that cannot change the result spends a dispatch on nothing.
+  2. **Otherwise, every item a re-read can change carries a reason from the read** — a section a
+     `sections_without_rows` entry names, matched by key as above, and a read image whose `figures`
+     entry carries a `note` → the empty string on the first and ` (Recommended — the read gave a
+     reason for each one a re-read could change)` on the second. A re-read replaces the read
+     wholesale (above): a read that already said why each item binds nothing would most likely say
+     it again, at the cost of a dispatch and of churning the defect candidates the operator triages
+     next, and the operator still confirms or overrides each reason, item by item, below.
+  3. **Otherwise** → ` (Recommended)` on the first and the empty string on the second: a section the
+     read gave no reason for is one it may have missed, and a re-read is how a miss is caught.
 
   **Then each item still unaccounted for gets a question of its own**, sections in reading order
   (`brd-format.md` §2) and then images in Phase 2's capture order, at most four to an
@@ -915,7 +932,10 @@ choices: ["Re-read — re-dispatch brd-reader over the whole set and reconcile<r
   before the second item's ask is put at all. A re-put question and a third-form question each go
   out on their own, never beside another item's, so no operator answers one item's question next to
   a form of another that their own last answer has already moved on. The next call's arrays go out
-  once every item of this one has finished. Each names its item as the set question did:
+  once every item of this one has finished. Each names its item as the set question did, with the
+  standing read's reason beside it — the re-read's where one replaced the first read's, so an item
+  the re-read gave no reason for says so — which the operator confirms by recording the account, or
+  overrides by quoting:
 
 ```
 choices: ["They hold no obligation — record that (Recommended)", "Quote the sentence that binds (you'll be prompted)", "Cancel"]

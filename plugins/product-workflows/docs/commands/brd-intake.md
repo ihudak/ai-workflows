@@ -199,7 +199,11 @@ specs repo's default branch under a new `brd/<BRD-KEY>-<slug>` branch prefix.
   is asked once, for the whole set; accounting is asked per item.** The set question offers a re-read
   — `brd-reader` dispatched again over everything, its result replacing the first read's rows,
   candidates and notes wholesale unless it finds no requirement at all, and allowed once per run — or
-  accounting for each item, or cancelling. Then each section or image still unaccounted for gets its
+  accounting for each item, or cancelling. Beside each item it shows the reason `brd-reader` gave for
+  it — why a section it took no row from binds nothing, or why an image bears on no obligation — and
+  it recommends accounting where the reader gave a reason for every item a re-read could change, or
+  where a re-read could change none of them; a section the reader gave no reason for is one it may
+  have missed, so there it recommends the re-read. Then each section or image still unaccounted for gets its
   own question: it holds no obligation, which is recorded, or you quote a sentence in it that binds,
   shown the text it is checked against, one obligation to a quote and as many quotes as the item
   binds; each is checked against the source word for word and becomes a row of its own. A quote the

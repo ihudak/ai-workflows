@@ -88,7 +88,8 @@ inside a source file is never followed — the caller walked the links already
      passage that only shows the image — a logo, a banner — binds nothing, and the bullet below
      applies;
    - an image that bears on no obligation at all (a logo, a banner) → no row, an empty `illustrates`,
-     and a one-line `note`.
+     and a one-line `note` saying why — which `/brd-intake` weighs as it weighs a section's (step 8).
+     An image whose transcription is too partial to tell gets no `note`, and `notes` says so.
    **An image-derived row's `text` states the obligation in words, quoting the transcribed element
    verbatim** — `code-grounder` and `/brd-interview` read the text only, never the picture; the
    `/brd-intake` Phase 4 human and the customer's own review do check a row against the picture
@@ -150,6 +151,23 @@ inside a source file is never followed — the caller walked the links already
 7. **Never rewrite, normalise, reflow, or "clean up" any text you quote.** `text` and `source_anchor`
    quote and locate the source as it stands, typos and all.
 
+8. **Say why each top-level section you took no row from binds nothing.** A top-level section of
+   the document or of an appendix — `brd-format.md` §2.2 defines one, and leaves a file's lead
+   section out — that no row's `source_anchor` names, neither it nor a section beneath it, gets one
+   `sections_without_rows` entry: the section, written as `brd-format.md` §2 keys an account (its
+   heading path in §2.2's one form, the file's title left out; for an appendix, its path relative to
+   `brd/` and ` › ` before it; for a file with no heading at all, that path alone), and a one-line
+   `note` saying what the section holds and why none of it binds the delivery team — *"background:
+   describes the current situation; no binding sentence"*, *"contact list: names people, binds
+   nothing"*. This is the section's counterpart of an image's `note` (step 3). **It is a claim for
+   the operator to confirm — never a requirement, a defect or an account**: `/brd-intake` shows it
+   beside the section and weighs it in what it recommends (`commands/brd-intake.md` Phase 3), and
+   the operator's answer is what it records. Write it from the section's own text and name no
+   `[BR#n]` in it: the caller renumbers your rows and maps no id out of this field. **A section you
+   could not judge gets no entry** — one holding a sentence you could not tell binds or not — and
+   `notes` says which: a section left without a reason is the one `/brd-intake` recommends a re-read
+   for, which is the right recommendation where the read itself was unsure.
+
 ## Output
 
 Return this exact YAML shape (no preamble, no chatter):
@@ -168,7 +186,10 @@ inventory:
 figures:                              # one entry per image the figures file records as read and does not mark "Not captured by the current run"; [] when figures_path was omitted
   - path: <the image's path relative to brd/, as the figures file heads it>
     illustrates: [BR#<n>, ...]        # prose rows it restates or whose passage binds it; [] if none
-    note: <optional — e.g. "company logo; bears on no obligation">
+    note: <required where the image bears on no obligation (step 3's last bullet): one line saying why, e.g. "company logo; bears on no obligation"; optional otherwise>
+sections_without_rows:                # one entry per top-level section no row's anchor names, save one the read could not judge (step 8); [] when every section holds a row
+  - section: <as brd-format.md §2 keys an account: heading path, title left out; an appendix's path relative to brd/ and " › " before it; a headingless file's path alone>
+    note: <one line: what the section holds and why none of it binds — never a [BR#n]>
 notes: |
   <optional — anything the caller should know about the read: an unusually structured source, a
   passage that could not be confidently split, an image whose transcription was too partial to judge>

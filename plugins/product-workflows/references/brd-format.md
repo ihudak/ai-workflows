@@ -533,7 +533,13 @@ are checked from `source_anchor`, the document and its linked markdown, and the 
 kept is the operator's answer about each section or image the check names, in §2's `accounts:`, so
 an unchanged file is not asked about twice. A first design had the reader account for every heading
 it passed; measured against real intakes that is fifty-odd
-accounts of "this section holds context", which buries the one case worth seeing.
+accounts of "this section holds context", which buries the one case worth seeing. **`brd-reader`
+does give a one-line reason for each top-level section it took no row from** (its
+`sections_without_rows`), as it gives an image that bears on no obligation a `note` — at the
+granularity below, so the nine-odd, not the fifty — and neither is kept or is an account:
+`/brd-intake` shows each beside its item and recommends accounting over a re-read where the read
+gave a reason for every item a re-read could change (`commands/brd-intake.md` Phase 3), and the
+operator's answer is still what `accounts:` records.
 
 Three relations — the first two over the **top-level section** of the document and of every
 linked markdown file Phase 2 copied, as defined below the list, the third over the images:
