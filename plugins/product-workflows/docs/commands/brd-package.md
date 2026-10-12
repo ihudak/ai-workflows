@@ -268,7 +268,8 @@ attack.
   is keyed on **every finding carrying a non-`undisposed` value**, and on nothing else: the reviewer
   agent returns no severity and no PASS/BLOCK verdict by design, so the disposition is the only gate
   there is. The four values are `fixed`, `accepted-risk`, `escalated-to-customer` and
-  `rejected-with-reason`, and the array carries those four and nothing else. The harness always
+  `rejected-with-reason`, and each of its two arrays carries those four and nothing else — the
+  second array's *Agreed* option is `accepted-risk` with a `fixed-by:` marker, below. The harness always
   supplies a free-text option, so the picker cannot decline one — what protects the closed vocabulary
   is what the run *does* with the answer: a free-text reply is normalised into one of the four, or the
   finding is re-asked. It is never written through, because a fifth disposition is one nothing
@@ -276,9 +277,12 @@ attack.
 - **Phase 4 — what `fixed` may name.** Only what this command itself writes: the prompt, the
   delivery note, the self-review, the bundle's rendered copies and an `[SR#n]`'s own record. Never a
   register record, a held `[C]` entry, a ledger disposition or a verified finding — those belong to
-  other commands, and a finding the team agrees with but cannot act on here takes `accepted-risk`
-  with a `fixed-by:` marker — naming the command that fixes it, or, where no command writes that
-  artifact at all, the person who must write it by hand. The marker is written either way: part 9
+  other commands. The gate checks this before it asks: where a finding names anything else, the gate
+  asks without it, and offers *Agreed — repaired outside this package* first instead. That option
+  records `accepted-risk` with a `fixed-by:` marker — naming the command that fixes it, or, where no
+  command writes that artifact at all, the person who must write it by hand. *Escalated to the
+  customer* is checked the same way and left out, with a line saying why, where the code or a
+  delivery-side trade-off settles the finding rather than the customer. The marker is written either way: part 9
   renders the customer's *we agree, this is ours to repair* sentence from its presence, so a finding
   left unmarked reads on the page as a risk the team weighed and accepted. Two of the five exist when the gate
   runs; the other three are written by later phases, so a correction against one of those is

@@ -622,22 +622,52 @@ inside each record rather than continuing a sequence across dates.
 
 **No bundle is built while any `[SR#n]` is undisposed.** Present each finding to the operator, one
 at a time, never batched, with its class, its target, its attack and its `what_would_settle_it`
-statement, and take exactly one disposition:
+statement, and take exactly one disposition.
+
+**Settle what this finding can take before asking, never after the answer.** Two of the four
+dispositions are admissible only on a condition the table below states, and both are tested here,
+from the finding itself:
+
+- **Can `fixed` apply?** Only where the finding's `target` names one of the five artifacts this
+  command may change (the `fixed` row) — a test of membership in the five, never a judgement.
+- **Can it be escalated?** Only where `interview-tagging.md` §2's test holds of what would settle it:
+  an authority only the customer holds (the `escalated-to-customer` row).
+
+Where `fixed` can apply, ask:
 
 ```
 choices: ["Fixed — the package has been corrected; say what changed", "Accepted risk — ship it, and show this finding to the customer", "Escalated to the customer — turn it into something the package asks them", "Rejected with reason — the attack does not hold; say why"]
 ```
 
-**This is not an escalation choice list**, and it is not one of the arrays
-`workflows-core:escalation-rules` owns: its four options are the four
-disposition values `agents/brd-package-reviewer.md` fixes, drawn from that agent's own contract the
+Where it cannot, ask this instead. Its first option is the agreed-not-actionable route below, with
+`<writer>` filled in as the `fixed-by:` value that route gives the finding's artifact — the command
+that writes it, or `hand (say who)` where no command does:
+
+```
+choices: ["Agreed — repaired outside this package, by <writer>; the customer sees it with that said", "Accepted risk — a risk we weighed and take; ship it, and show this finding to the customer", "Escalated to the customer — turn it into something the package asks them", "Rejected with reason — the attack does not hold; say why"]
+```
+
+**Where escalation cannot apply, either array is presented without *Escalated to the customer*,**
+and say in one line above the question what settles the finding instead — *the code at the pinned
+commit*, *a delivery-side trade-off* — so the operator sees why it is not offered. Nothing else
+changes: the survivors keep their order and their wording, three options are rendered where four
+were, and the finding still takes exactly one. A free-text answer naming a withheld option is
+answered with that reason and the question is asked again; it never becomes the withheld value.
+**Offering an option the command will then refuse costs the operator a round for each:** a live run
+put one finding three times, refusing *Fixed* and then *Escalated* after each was chosen, before the
+third answer could stand.
+
+**These are not escalation choice lists**, and neither is one of the arrays
+`workflows-core:escalation-rules` owns: their options are the four
+disposition values `agents/brd-package-reviewer.md` fixes — the second array's *Agreed* option
+being `accepted-risk` with its `fixed-by:` marker (below), not a fifth — drawn from that agent's own contract the
 same way `/brd-interview`'s will-change picker draws its three resolutions from
 `decision-register-format.md` §6. Its vocabulary is closed, and holding it closed is
 required rather than merely permitted: the disposition vocabulary is exactly four values, and a
 fifth would be a disposition nothing downstream can read — which is why `workflows-core:escalation-rules` names
 this picker in its *Closed-vocabulary pickers must normalise the free-text answer* section, so a
 free-text answer that lands on none of the four re-asks rather than becoming a value no consumer
-handles. The array is those four values
+handles. Each array is those values
 and nothing else: **there is no listed `Cancel`**, because the harness always supplies a free-text
 option and an abort is reachable through it without spending one of the four slots
 (`workflows-core:escalation-rules` §0). Aborting the walk stops the run with
@@ -648,15 +678,17 @@ Each disposition carries a recorded reason, and each has a consequence the later
 
 | Disposition | What it obliges |
 |---|---|
-| `fixed` | **Admissible only where the named artifact is one this command may change** — the prompt, the delivery note, the self-review, the bundle's own rendered copies, and a `[SR#n]`'s own record. **That list is closed and its complement is not enumerated**: `fixed` is unavailable against every other artifact a finding can name, and the test is membership of the five, never absence from a list of exclusions. Four are worth the reason: a ledger disposition, an `interview/customer-questions.md` entry, a register record and a verified `[CG#n]`/`[DG#n]` — this command mints no `[C]`, writes nothing into the question set (*Render the customer prompt*), changes no ledger disposition (the Final report), and a verified finding is `/prd-ground`'s. A `brd/brd-defect-log.md` entry and `brd/brd-inventory.md`'s `accounts:` record are outside it on the same rule and are named because a live run met both, not because naming them completes anything. Where the artifact is not one of the five, `fixed` is unavailable and the finding takes the agreed-not-actionable route below. **Two of the five admissible artifacts exist when this gate runs and three do not**, so *corrected* means something different for each half and the row says which: the self-review and an `[SR#n]`'s own record are corrected here, before this phase ends; the prompt, the delivery note and the bundle's own rendered copies are written by *Render the customer prompt*, *Render the delivery note* and *Assemble the bundle*, so the correction is recorded against the finding now, in the words the render must carry, and the phase that writes that artifact carries it out — which is the only point at which it can be, and is why no correction here is ever a write into a package document. A `fixed` disposition whose artifact is unchanged — or whose recorded correction the phase that writes that artifact did not carry out — is not `fixed` |
+| `fixed` | **Admissible only where the named artifact is one this command may change** — the prompt, the delivery note, the self-review, the bundle's own rendered copies, and a `[SR#n]`'s own record. **That list is closed and its complement is not enumerated**: `fixed` is unavailable against every other artifact a finding can name, and the test is membership of the five, never absence from a list of exclusions. Four are worth the reason: a ledger disposition, an `interview/customer-questions.md` entry, a register record and a verified `[CG#n]`/`[DG#n]` — this command mints no `[C]`, writes nothing into the question set (*Render the customer prompt*), changes no ledger disposition (the Final report), and a verified finding is `/prd-ground`'s. A `brd/brd-defect-log.md` entry and `brd/brd-inventory.md`'s `accounts:` record are outside it on the same rule and are named because a live run met both, not because naming them completes anything. Where the artifact is not one of the five, `fixed` is unavailable: the gate asks with its second array, whose first option is the agreed-not-actionable route below. **Two of the five admissible artifacts exist when this gate runs and three do not**, so *corrected* means something different for each half and the row says which: the self-review and an `[SR#n]`'s own record are corrected here, before this phase ends; the prompt, the delivery note and the bundle's own rendered copies are written by *Render the customer prompt*, *Render the delivery note* and *Assemble the bundle*, so the correction is recorded against the finding now, in the words the render must carry, and the phase that writes that artifact carries it out — which is the only point at which it can be, and is why no correction here is ever a write into a package document. A `fixed` disposition whose artifact is unchanged — or whose recorded correction the phase that writes that artifact did not carry out — is not `fixed` |
 | `accepted-risk` | The finding is listed to the customer under *where to attack us hardest*, in the reviewer's own words — which that agent writes for a customer to read, with no plugin token in them (`agents/brd-package-reviewer.md`). There is no drawer this puts it in |
-| `escalated-to-customer` | The finding is put to the customer in the prompt's *decisions the customer must make* part, carried by its own `[SR#n]`. Admissible **only** where `interview-tagging.md` §2's test says so — what would settle it is an authority only the customer holds. Where a delivery-side trade-off would settle it, this is the wrong disposition and the finding takes another |
+| `escalated-to-customer` | The finding is put to the customer in the prompt's *decisions the customer must make* part, carried by its own `[SR#n]`. Admissible **only** where `interview-tagging.md` §2's test says so — what would settle it is an authority only the customer holds. Where a delivery-side trade-off would settle it, this is the wrong disposition, and the gate does not offer it (above) |
 | `rejected-with-reason` | The reason is recorded in the self-review and stays inside the delivery organisation. Nothing rejected reaches the customer |
 
 **A finding the team agrees with and cannot act on here takes `accepted-risk` and carries a
 structured marker saying where it is fixed.** The vocabulary is four values and a fifth would be one
 nothing downstream reads, so this case shares a value with a genuine acceptance and is told apart by
-a field rather than by prose: record **`fixed-by:`** on the finding — the same device as
+a field rather than by prose. **The operator chooses it, as the second array's *Agreed* option, which
+is `accepted-risk` with its `fixed-by:` marker** — the run never infers it from another answer. Record
+**`fixed-by:`** on the finding — the same device as
 the `restates:` marker below — naming **the command that writes the named
 artifact**, with what a re-run here would then show. **The marker is written on every finding that
 takes this route, and its value has exactly two shapes**: a command, where one writes the named
