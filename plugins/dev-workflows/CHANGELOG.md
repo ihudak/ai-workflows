@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.24.2] — 2026-10-12
+
+### Changed
+- **`workflow-states.md` names the size split among the reasons `/epics <EPIC-KEY>` splits an Epic** (product-workflows 3.32.0): an Epic over the size limit and not yet specified, designed or implemented is split along its stories into Epics on the same component, the operator choosing.
+
 ## [4.24.1] — 2026-10-12
 
 ### Changed
