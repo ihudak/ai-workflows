@@ -16,7 +16,7 @@ carves nothing and instead takes the findings `/prd-ground` already verified, fo
 in its own ledger to a recorded fate through the same four-way choice — with `covered-here` standing
 in `covered-by`'s place: built here, deferred, rejected, or superseded. This is
 the only place either BRD's fate is decided **by allocation** — `/product-workflows:brd-reconcile`
-re-dispositions a row to `deferred-to`, `rejected` or `superseded-by` when a frozen `[CD#n]` settles
+re-dispositions a row to `deferred-to`, `rejected` or `superseded-by` when a `[CD#n]` that is not `open` settles
 the requirement differently, and `rejected: <SLICE-KEY>/[CD#n]` is a spelling only it ever writes, so
 *the only place a fate is ever decided* (which this sentence used to claim) is false of a slice
 (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md`
@@ -1652,8 +1652,7 @@ orphan row (§2) — never as a property of being a slice.
 
 `/brd-split` is the only `/brd-*` command that puts a row into this line's `unallocated` term as
 written on **a slice's** ledger, or allocates one out of it. `/product-workflows:brd-reconcile` can
-also take one out — its ledger phase moves a row to `deferred-to`, `rejected` or `superseded-by` on
-a frozen `[CD#n]`, and a `--sent` review of a slice never interviewed can meet a row still
+also take one out — its ledger phase moves a row to `deferred-to`, `rejected` or `superseded-by` on a `[CD#n]` that is not `open`, and a `--sent` review of a slice never interviewed can meet a row still
 `unallocated` — but never puts one in. On a source-owning BRD a row can move back, and the
 exception is the one `coverage-ledger-format.md` §3 states: a `/product-workflows:brd-intake` re-run
 whose read finds a requirement rewrites that BRD's ledger with every row `unallocated`, which is the

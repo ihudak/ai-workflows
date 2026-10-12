@@ -101,7 +101,7 @@ Exactly six. Only the last one blocks the gate in §4.
 | `covered-here` | This folder builds it; a `PRD-` slice folder carrying one is therefore PRD-eligible (§5). Never written on a root: a container builds nothing itself |
 | `covered-by: <BRD-KEY>` | A named BRD owns it. On a BRD that owns its source document the key is a **child**; on a slice it is a **sibling under the same parent, or that parent** — never a child, because none can exist below a slice (see below) |
 | `deferred-to: <this BRD>` | Kept as a live obligation of this BRD, not built now |
-| `rejected: [DEF#n]` · `rejected: <SLICE-KEY>/[CD#n]` | Not built, citing what justifies it: the `[DEF#n]` a rejection rests on, or the customer decision that withdrew the requirement. The second is written only by `commands/brd-reconcile.md`, onto its own slice's ledger, where a customer withdrew a requirement and no defect-log entry was resolved `withdrawn` for it — qualified by that slice's key, as a `resolved-by` value is (`references/brd-format.md` §4), because the row is also read from other folders: one hop from its parent's line (§6.1) and from a sibling's interview |
+| `rejected: [DEF#n]` · `rejected: <SLICE-KEY>/[CD#n]` | Not built, citing what justifies it: the `[DEF#n]` a rejection rests on, or the customer decision that withdrew the requirement. The second is written only by `commands/brd-reconcile.md`, onto its own slice's ledger, where a customer withdrew a requirement and no defect-log entry was written `withdrawn` for it — none was raised on it, or the parent's log was under review, so that the withdrawal is only recorded there and a `[DEF#n]` would cite an entry still `open` — qualified by that slice's key, as a `resolved-by` value is (`references/brd-format.md` §4), because the row is also read from other folders: one hop from its parent's line (§6.1) and from a sibling's interview |
 | `superseded-by: [BR#n]` | Replaced by another requirement, named by its `[BR#n]` |
 | `unallocated` | The initial state; the only one of the six that blocks §4 |
 
@@ -133,7 +133,7 @@ allocation that says which of them the slice claims.
 `/brd-split` walks every `unallocated` row to a terminal disposition (§4), and it is the only command
 that may write `covered-here` or `covered-by`: allocation — which BRD builds a requirement — is that
 walk and nothing else. `commands/brd-reconcile.md` moves a row to `deferred-to`, `rejected` or
-`superseded-by` when a frozen `[CD#n]` settles the requirement's fate differently; it never
+`superseded-by` when a `[CD#n]` that is not `open` settles the requirement's fate differently; it never
 allocates, because a customer decision is not a statement about which BRD in the delivery
 organisation owns the work, and **no command moves a row back to `unallocated`, save one** — that is
 the initial state, and returning a row to it reopens a gate that has already been satisfied. The one

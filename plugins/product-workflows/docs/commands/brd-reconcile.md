@@ -559,8 +559,10 @@ written down.
   named with `--rebaseline` as the fix; a supersession written here would have nothing on the other
   side of it.
 - **It never allocates.** It may move a ledger row to `deferred-to`, `rejected` or `superseded-by`
-  on a frozen customer decision — a withdrawn requirement is `rejected`, citing the defect-log entry
-  resolved `withdrawn`, or, where no entry was, the `[CD#n]` that withdrew it — but `covered-here`
+  on a customer decision that is not `open` — a withdrawn requirement is `rejected`, citing the
+  defect-log entry resolved `withdrawn`, or, where no entry was written so, the `[CD#n]` that
+  withdrew it; where two of the run's decisions would move one row, a withdrawal wins, and any other
+  disagreement writes nothing and is named for a person — but `covered-here`
   and `covered-by` stay `/brd-split`'s walk — a customer decision is not a statement about which BRD
   in the delivery organisation owns the work — and no row of its ledger ever returns to
   `unallocated`. So a row the customer asks to be built after it was rejected, deferred or
@@ -633,11 +635,13 @@ is named as waiting behind the re-package, since `/brd-interview` puts its quest
 it opens — [`/brd-package`](brd-package.md) where questions remain for
 the customer, [`/prd-ground --rebaseline`](prd-ground.md) where the review challenged a code claim,
 and a second `/brd-reconcile` pass on this same review once a dependent recorded-not-written has its
-own register on the default branch.
+own register on the default branch, or once the parent's defect log is, where a defect resolution
+in that log could only be recorded — that pass writes it.
 
 **Advancing and re-entering are two lists, and a run gets exactly one of them.** Phase 14 resolves
 `advance_ready` from what the run left behind — any reopened decision, any `[C]` still held for the
-customer, any finding the review left to re-derive, any dependent it could only record — and where
+customer, any finding the review left to re-derive, any write into another BRD it could only
+record — a dependent's sweep, or a defect resolution in the parent's log — and where
 any of those is true the three the BRD route options are **dropped**, not annotated. That is a
 refusal only this phase can make, unlike the level refusal above, which each of the three now makes
 for itself: `/create-ard` on the BRD route and `/specify` on the BRD route run no gate
@@ -680,7 +684,7 @@ and every other dependent starting with its `conditional_on` positions, sweeps e
 position, and writes `reconciliation-<date>.md`.
 
 Phase 14 then hands the route over. Nothing this run left behind reopened a decision, held a `[C]`
-for the customer, left a finding to re-derive, or left a dependent only recorded — so
+for the customer, left a finding to re-derive, or left a write into another BRD only recorded — so
 `advance_ready` is `yes` — and this slice's ledger leaves no row `unallocated` and at least one
 `covered-here`, so all three exits are offered off the same key:
 

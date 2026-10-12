@@ -249,9 +249,10 @@ never reaches this phase at all: `/brd-reconcile` refuses a resolved root at its
 slice first — so the level question is already settled by the time this next-step phase runs.
 
 That phase then resolves an `advance_ready`: a reopened decision, a `[C]` still held for the
-customer, a finding the review left to re-derive, or a dependent it could only record all drop the
-three advance options, because a `reopened` record may not be consumed downstream and all three
-consume the register. On an advancing slice run, `/create-prd` on the BRD route carries one further condition —
+customer, a finding the review left to re-derive, or a write into another BRD it could only record
+— a dependent's sweep, or a defect resolution in the parent's log — all drop the three advance
+options: a `reopened` record may not be consumed downstream and all three consume the register, and
+a write only recorded leaves another BRD reading a position the customer has since settled. On an advancing slice run, `/create-prd` on the BRD route carries one further condition —
 the reconciled ledger leaves no row `unallocated` and at least one `covered-here` (the two refusals
 its own Phase 0 raises) — while `/create-ard` on the BRD route and `/specify` on the BRD route carry none of
 their own, since neither reads the ledger as an authoring input, and the PRD gate both run reports an absent PRD rather than stopping on it.

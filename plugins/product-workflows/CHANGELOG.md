@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.33.2] — 2026-10-13
+
+### Fixed
+- **`/brd-reconcile` no longer moves a coverage-ledger row on a decision frozen `open`.** A withdrawal given with no reason, frozen `open` for want of it, moved its row to `rejected` at once, which no later run can undo, while the same decision resolved no defect and kept its question held for the customer. A row now moves only on a decision the run froze, completed or re-decided and did not leave `open`, as the defect log already did: one held open for want of its reason moves on the run that completes it, and one the will-change rule held open no sooner than the sequence that closes it.
+- **Two answers that move one ledger row no longer leave it to whichever the walk took last.** Where two of a run's decisions would give one row different dispositions, a withdrawal wins, as it does in the defect log, and two withdrawals cite the one answering the question first in the round record. Any other disagreement — deferred against superseded, or two different replacements — writes nothing for the row, and every decision set aside is named under *what still needs a human* with the disposition it would have written. Decisions that agree write it once.
+- **A defect resolution that could only be recorded is no longer lost.** Where the parent's defect log was under review, `/brd-reconcile` records a resolution rather than writing it, and no later run ever wrote it: the same-review rule skipped the decision that made it. A re-run on the same review now writes every resolution an earlier pass only recorded, once the log is on the default branch, under the run's usual order — withdrawals first — and the record lists each one with that re-run as the fix. Until then the run does not offer to advance to the PRD: the trigger that held it back for a dependent BRD recorded-not-written now covers the parent's log too, and its re-entry reads *Land what was recorded*. A decision re-decided in place over a defect still `open` for that reason resolves it as a newly frozen one would. A row withdrawn while its defects were only recorded is written `rejected: <SLICE-KEY>/[CD#n]`, never `rejected: [DEF#n]`: the log still reads that entry `open`, and `/brd-interview` would take a row citing it for the delivery side's rejection and put it to the customer again.
+
 ## [3.33.1] — 2026-10-13
 
 ### Fixed
