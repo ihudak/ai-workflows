@@ -641,8 +641,9 @@ choices: ["Fixed — the package has been corrected; say what changed", "Accepte
 
 Where it cannot, ask this instead. Its first option is the agreed-not-actionable route below, with
 `<writer>` filled in as the `fixed-by:` value that route gives the finding's artifact — the command
-that writes it, or `hand (say who)` where no command does — on that answer, ask who, and record
-`fixed-by: <that person or role>`, the reason saying no command writes the artifact:
+that writes it, or `hand (say who)` where no command does — where it reads `hand (say who)` and the
+operator takes it, ask who, and record `fixed-by: <that person or role>`, the reason saying no
+command writes the artifact:
 
 ```
 choices: ["Agreed — repaired outside this package, by <writer>; the customer sees it with that said", "Accepted risk — a risk we weighed and take; ship it, and show this finding to the customer", "Escalated to the customer — turn it into something the package asks them", "Rejected with reason — the attack does not hold; say why"]
@@ -669,7 +670,7 @@ required rather than merely permitted: the disposition vocabulary is exactly fou
 fifth would be a disposition nothing downstream can read — which is why `workflows-core:escalation-rules` names
 this picker in its *Closed-vocabulary pickers must normalise the free-text answer* section, so a
 free-text answer that lands on none of the values this finding was offered re-asks rather than
-becoming a value no consumer handles. Each array is those values
+becoming a fifth value no consumer handles, or a withheld one this finding cannot take (above). Each array is those values
 and nothing else: **there is no listed `Cancel`**, because the harness always supplies a free-text
 option and an abort is reachable through it without spending one of the four slots
 (`workflows-core:escalation-rules` §0). Aborting the walk stops the run with

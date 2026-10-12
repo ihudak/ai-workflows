@@ -1394,13 +1394,15 @@ this step settles, plus `outcome` and any `notes` — never a second verdict bes
 Act on `outcome`:
 - **`agree`** — keep the finding as written; record the outcome alongside it.
 - **`extend`** — keep the finding's verdict; append the verifier's additional evidence to the
-  finding's `evidence` list — each `own_evidence` entry the finding does not already hold, where
-  an entry is already held where an entry of the finding's `evidence` on the same `path` covers all
-  of its `lines` (an entry with no `lines`, a whole-file read, covers every line), and an entry with
-  no `path`, a baseline finding's command output, is held where one carries the same command and
-  output, its note never compared. This is read off the structured fields, never out of `notes`,
-  which name the same entries for a reader. Where nothing is left to append, the finding keeps its
-  `evidence` as it stands and the Final report records *extend, nothing new to append* for it;
+  finding's `evidence` list — each `own_evidence` entry the finding does not already hold. An entry
+  is already held where the finding's entries on that `path` together cover all of its `lines` (an
+  entry with no `lines`, a whole-file read, covers every line); its note is never compared. **An
+  entry with no `path` is never appended** — a statement of what was searched, or a baseline
+  finding's integrity-command output (`workflows-core:grounding-format` §2, §4.1): what an `extend`
+  adds is a place in the source the blind search cited, and neither of those names one; the
+  verifier's `notes` say what such an entry adds. The set is read off the structured fields, never
+  out of `notes`, which the verifier writes by the same test. Where nothing is left to append, the
+  finding keeps its `evidence` as it stands and the Final report records *extend, nothing new to append* for it;
   record the outcome.
 - **`unprovable`** — keep the finding's verdict unchanged (the verifier's own search settling
   nothing either way is not the same as it being wrong); record the outcome and flag the finding

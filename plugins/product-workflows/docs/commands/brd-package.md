@@ -273,8 +273,8 @@ attack.
   *Escalated* where the customer's authority does not settle the finding. The harness always
   supplies a free-text option, so the picker cannot decline one — what protects the closed vocabulary
   is what the run *does* with the answer: a free-text reply is normalised into a value this finding
-  was offered, or the finding is re-asked. It is never written through, because a fifth disposition is one nothing
-  downstream can read ([`workflows-core:escalation-rules`](../reference/references.md) §0).
+  was offered, or the finding is re-asked. It is never written through, because a fifth disposition
+  is one nothing downstream can read, or a value this finding was not offered is one it cannot take ([`workflows-core:escalation-rules`](../reference/references.md) §0).
 - **Phase 4 — what `fixed` may name.** Only what this command itself writes: the prompt, the
   delivery note, the self-review, the bundle's rendered copies and an `[SR#n]`'s own record. Never a
   register record, a held `[C]` entry, a ledger disposition or a verified finding — those belong to
