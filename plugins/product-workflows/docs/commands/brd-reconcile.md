@@ -14,9 +14,10 @@ is the route's last command in the ordinary case, but not the end of every slice
 decision sends the slice back to [`/brd-interview`](brd-interview.md), a question still held for the
 customer to [`/brd-package`](brd-package.md), and a challenged code claim to
 [`/prd-ground --rebaseline`](prd-ground.md), each of which leads back here. It runs again on the
-same review itself in two cases: to finish a run cancelled or stopped partway, where the re-run skips
-what the earlier pass already froze and offers the rest, and to sweep a dependent it could only
-record, once that dependent has its own register on the default branch.
+same review itself in three cases: to finish a run cancelled or stopped partway, where the re-run
+skips what the earlier pass already froze and offers the rest; to sweep a dependent it could only
+record, once that dependent has its own register on the default branch; and, on a slice reconciled
+before 3.33.1, to close the questions whose requirement the customer withdrew.
 
 ## Synopsis
 
@@ -374,17 +375,19 @@ command removes none of them; the next `/brd-interview` run does.
   record of its own: none frozen against it, by this run or an earlier one, and no `Re-puts:` line.
   Such a question closes *answered by the customer — nothing frozen*, naming the withdrawn defects
   and, where this run withdrew them, the decision that did, whichever order the walk took the
-  answers in. A question that does carry a record — an answer frozen `open` for its reason, say —
-  stays held, is named under *what still needs a human* for a person to settle, and a later answer
-  to it is walked against that record as any other is. That line is never read as the question's own record, so a later answer
+  answers in. The `answered by the customer — nothing frozen` line is never read as the question's own record, so a later answer
   cannot supersede the other question's withdrawal through it. A reply — a decline included — is kept,
   with the customer's condition for asking again, under *what still needs a human*. One defect still
-  standing keeps the question held, and a withdrawal frozen `open` withdraws nothing yet. Where the
+  standing keeps the question held, and a withdrawal frozen `open` withdraws nothing yet. A question
+  that does carry a record — an answer frozen `open` for its reason, say — stays held, is named under
+  *what still needs a human*, and a later answer to it is walked against that record and closes it. Where the
   defects were already withdrawn before this review and the question has no record of its own, the
   walk offers such a reply the two record-or-reject options only. A slice reconciled before 3.33.1 closes such questions when you re-run
   `/brd-reconcile <KEY>` on the review it already took, passing its `customer-review-<date>.md`. That
-  re-run skips every decision the earlier pass froze and every section-12 correction it applied or
-  refused, and offers again every answer it froze nothing for. A live record `open` for want of its reason is **completed**,
+  re-run skips every decision the earlier pass froze, and offers again every answer to a question it
+  froze nothing for. Its section-12 corrections are put again with the earlier pass's listing beside
+  each, since a record from before 3.33.1 names no row by position: point each to the listing that
+  disposed it, and it is reported already disposed. A live record `open` for want of its reason is **completed**,
   minting nothing, by an answer with its own `chosen` and a reason now stated — never on an entry
   that puts a record again on a `- **Re-puts:**` line, where it is superseded (step 3) — and
   superseded by one choosing differently. A record

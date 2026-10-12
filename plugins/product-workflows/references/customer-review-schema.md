@@ -204,8 +204,8 @@ and saying what they would need in order to answer it: silence is otherwise indi
 oversight, and it will be re-asked. To drop the requirement it is about instead, give the
 withdrawal as the answer to a question the package put about that requirement — this one, where it
 is the only one — and say when it should be asked again, should the requirement return: a question
-raised about a defect in a requirement dropped that way is closed; another that touches it may
-still be asked. A requirement marked withdrawn in section 4
+raised only about defects in a requirement dropped that way is closed, unless it already holds an
+earlier answer of yours; any other that touches it may still be asked. A requirement marked withdrawn in section 4
 alone is passed to the delivery team and drops nothing until they act on it.
 
 **Section 8 — every assumption the package surfaced gets exactly one row**, marked accepted,

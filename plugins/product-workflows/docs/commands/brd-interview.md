@@ -501,7 +501,8 @@ option is picked.
 - **It sends nothing to a customer.** The `[C]` questions are written to a file and held there;
   [`/brd-package`](brd-package.md) is the separate, consented run that carries them out, and
   [`/brd-reconcile`](brd-reconcile.md) is what records the answer once it comes back. A round holding
-  a `[C]` stays open across both, because holding a question is not the customer answering it and the
+  a `[C]` stays open across both — until the answer is recorded, or `/brd-reconcile` finds its
+  question has stopped applying — because holding a question is not the customer answering it and the
   customer answering it is not the register recording an answer.
 - **It changes no ledger disposition.** The final report's ledger line reports where allocation
   stands; allocation itself is `/brd-split`'s walk. Two other runs may move a row afterwards, and
