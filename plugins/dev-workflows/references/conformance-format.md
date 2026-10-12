@@ -31,7 +31,7 @@ key: <the folder's key>
 - <requirement id, or its quoted text> — <file:line@commit>, one per evidence location
 ```
 
-A re-run rewrites the header and the `## Satisfied` list. A reader that compares the commit recorded here with the repository's default branch can say how far the code has moved since. **`## Satisfied` is what a later PRD run's drift check reads**: it re-traces a requirement listed there only where the code at its evidence paths changed between the commit the header names for that repository and the default branch, so a record without the list has every requirement re-traced.
+A re-run rewrites the header and the `## Satisfied` list. A reader that compares the commit recorded here with the repository's default branch can say how far the code has moved since. **`## Satisfied` lists every requirement the run found satisfied, those whose discrepancy the re-check dropped included, with the evidence that settled it — and it is what a later PRD run's drift check reads**: it re-traces a requirement listed there only where the code at its evidence paths changed between the commit the header names for that repository and the default branch, so a record without the list has every requirement re-traced.
 
 ## 3. An entry
 
@@ -41,7 +41,7 @@ One entry per discrepancy, in id order:
 ### [DD#<n>] <requirement id, or the quoted text where the requirement has no id>
 
 - **document:** <specification.md | epic.md | prd.md | ard.md>, in <KEY>
-- **verdict:** <partial | missing | contradicts>
+- **verdict:** <partial | missing | contradicts | satisfied (an entry now resolved)>
 - **shipped:** <one sentence on what the code does>
 - **evidence:** <file:line@commit>, one per repository it was found in
 - **decision:** <fix-code | amend-document | accept> — **status:** <proposed | final | resolved>

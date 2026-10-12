@@ -1,6 +1,6 @@
 # conformance-tracer — input and output
 
-## Input (from `/dev-workflows:conformance` Phase 3)
+## Input (from `/dev-workflows:conformance` Phase 2)
 
 ```yaml
 repo_path: <absolute path of the local clone>

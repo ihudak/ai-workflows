@@ -52,29 +52,32 @@ Usage: `/conformance <EPIC-KEY | PRD-KEY> [--skip-costs] [--skip-feedback] [--en
 
 **Rule: Ask, don't guess.** Use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0).
 
-**(a) Requirements** (spec D4). List every requirement to trace, each with its `key`, its id (or quoted text), its document and its text:
+**Ending early.** Every *Stop* and *Cancel* in this command ends the run with its report only: no record, note or follow-up is written, and the report says what was decided before it. Phase 9 still runs — its cost entry and the terminal commit of the run's bookkeeping — as for any run that stopped after the preflight (`workflows-core:specs-repo-git` §4).
+
+**(a) Clones and freshness.** Do this before any step below reads a ref. The repositories are every one an Epic's `target:` names (`workflows-core:components`: the id up to its `:`) and every one an `implementation.md` in scope names. Resolve each to a clone under `${REPOS_PATH:-/workspace}`, one directory or a colon-separated list, by the `<repo-slug>` rule `workflows-core:components` §1 defines, applied to each top-level directory's `origin` (`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -C <dir> remote get-url origin 2>/dev/null`); where two clones share a slug, prefer the one whose name ends `-repo`, then `_repo` or `_fast`, then the alphabetically last. A repository with **no clone of** it under `$REPOS_PATH` is named in the report, and its requirements are listed as not traced — never guessed. On a writable clone (`workflows-core:read-only-repos` §1), refresh its remote refs: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 30 git -C <repo> fetch --quiet origin` — refs only, never a switch, a pull or a working-tree write. On a read-only mount, fetch nothing, and apply that reference's §5 instead, printing the age of each ref read where it is older than fourteen days.
+
+**(b) Requirements** (spec D4). List every requirement to trace, each with its `key`, its id (or quoted text), its document and its text:
 - **Epic run.** The Epic's `specification.md`: each `[Uxx]`, and each `[ACxx]` as the pair `[Uxx]/[ACxx]`, since `[ACxx]` restarts per story. The Epic's `epic.md`: each `## Acceptance criteria` bullet, identified by its quoted text, since it carries no id; each `Produces:` / `Consumes: [AD#n]` line of its `## Contract`, traced on this Epic's own side only — the other side is another Epic's, and the PRD run traces both. The ARD: resolve it with `workflows-core:ard-resolution` and take the `Rule` of each `[AD#n]` it returns as applicable. The Epic's `design.md` is context: its `## Requirements coverage` notes are carried to the walk beside the requirement they name.
-- **PRD run.** `prd.md`: every live `[AC#n]` and `[FR#n]`, and every live `[US#n]` with no `[AC#n]` beneath it; never `[UC#n]`, `[SM#n]` or `[SMC#n]`, and never a superseded or withdrawn id (`workflows-core:prd-format`). The PRD-level `specification.md`, as above. Every Epic's set as on an Epic run, both sides of each `## Contract` line included, in the depth (d) sets.
+- **PRD run.** `prd.md`: every live `[AC#n]` and `[FR#n]`, and every live `[US#n]` with no `[AC#n]` beneath it; never `[UC#n]`, `[SM#n]` or `[SMC#n]`, and never a superseded or withdrawn id (`workflows-core:prd-format`). The PRD-level `specification.md`, as above. Every Epic's set as on an Epic run, both sides of each `## Contract` line included, in the depth (e) sets.
 - Never trace `[TCxx]`: a test case says how a criterion is verified, not what the code does.
 
-**(b) The code — Epic run** (spec D5). The Epic's work lives on its own branch, whose pull request has normally not merged. Read the Epic's `implementation.md` (`workflows-core:implementation-format`) and, for **each** repository it names, take **the latest block that names that repository** — never only the newest block overall, since a companion run in a second repository or a re-run in the same one each adds a block. Read that block's `branch` at its current tip: `origin/<branch>` where the block says `pushed`, the local branch otherwise.
-- **Where the branch is gone**, run (c)'s merged test on that block. Where it passes, the work merged: read the default branch. Where it fails, the pull request was closed without merging, and the run stops:
+**(c) The code — Epic run** (spec D5). The Epic's work lives on its own branch, whose pull request has normally not merged. Read the Epic's `implementation.md` (`workflows-core:implementation-format`) and, for **each** repository it names, take **the latest block that names that repository** — never only the newest block overall, since a companion run in a second repository or a re-run in the same one each adds a block. Read that block's `branch` at its current tip: `origin/<branch>` where the block says `pushed`, the local branch otherwise.
+- **Where the branch is gone**, run (d)'s merged test on that block. Where it passes, the work merged: read the default branch. Where it fails, the pull request was closed without merging, and the run stops:
   `CONFORMANCE_NO_CODE: <EPIC-KEY>'s implementation.md records <branch> in <repo>, and that branch is gone without its work reaching <default branch> — nothing to check. Re-run '/dev-workflows:implement <EPIC-KEY>', or restore the branch.`
 - **Where no block names any repository** — the Epic was never implemented — take the same stop, naming the empty record.
 
-**(c) The code — PRD run** (spec D6). Read each repository's **default branch**, which is what shipped: every repository an Epic's `target:` names (`workflows-core:components`: the id up to its `:`) and every repository an `implementation.md` in the PRD's tree names. Before tracing, test that each Epic's recorded work reached it. An Epic is **merged** where, for **each** repository its `implementation.md` names, the latest block's commit is an ancestor of the default branch (`git -C <repo> merge-base --is-ancestor <commit> <default-ref>`), or a commit on the default branch made no earlier than that block's commit carries `[<EPIC-KEY>]` in its subject as a whole token (`git -C <repo> log <default-ref> --no-merges --since="$(git -C <repo> show -s --format=%cI <commit>)" --format=%s`, matched as `workflows-core:implementation-format` §4 matches a key). A squash or a rebase keeps that subject, because `/dev-workflows:implement`'s pull-request title is its commit subject, and tying it to the block's own time keeps an earlier run's squash from standing in for a later run's unmerged work. Where the recorded commit cannot be resolved in the clone, neither test can run, and the Epic is not shown merged. **A PRD with no Epic folder**, implemented whole, has its blocks in the PRD folder: run the merged test on those, and trace its requirements in full. An Epic whose work is not shown to be merged is never assumed merged: name it, and ask —
+**(d) The code — PRD run** (spec D6). Read each repository's **default branch**, which is what shipped. Before tracing, test that each Epic's recorded work reached it. An Epic is **merged** where, for **each** repository its `implementation.md` names, the latest block's commit is an ancestor of the default branch (`git -C <repo> merge-base --is-ancestor <commit> <default-ref>`), or a commit on the default branch made no earlier than that block carries `[<EPIC-KEY>]` in its subject as a whole token (`git -C <repo> log <default-ref> --no-merges --since=<date> --format=%s`, matched as `workflows-core:implementation-format` §4 matches a key). `<date>` is the block's own `## <YYYY-MM-DD> — /implement` heading — or, where the recorded commit resolves in the clone, that commit's committer date (`git -C <repo> show -s --format=%cI <commit>`), which is finer. A squash or a rebase keeps that subject, because `/dev-workflows:implement`'s pull-request title is its commit subject; and the date keeps an earlier run's squash from standing in for a later run's unmerged work. A recorded commit that does not resolve — a squashed branch deleted before this clone fetched it — leaves the subject leg to show the merge. **A PRD with no Epic folder**, implemented whole, has its blocks in the PRD folder: run the merged test on those, and trace its requirements in full. An Epic whose work is not shown to be merged is never assumed merged: name it, and ask —
 ```
 choices: ["Stop until it is merged (Recommended)", "Trace anyway — that Epic's requirements will likely show as missing", "Cancel"]
 ```
 **Stop until it is merged** ends the run, naming each Epic not shown merged and what would show it. **Trace anyway** reads the default branch as it stands, and the report marks each of those Epics' requirements as traced before its merge. **Cancel** ends the run with nothing traced.
 
-**(d) The PRD run's scope** (spec D3). A PRD run re-traces nothing in depth that an Epic run already traced:
+**(e) The PRD run's scope** (spec D3). A PRD run re-traces nothing in depth that an Epic run already traced:
 - the PRD-level requirements and the PRD-level spec are traced in full;
-- an Epic with no `_conformance.md` is traced in full, as an Epic run would — but first **probe the plugin branches for an Epic's record** a Dev left unmerged, with `workflows-core:phase-handoff` §3.2's read-only primitives: `git -C "$SPECS_PATH" for-each-ref --format='%(refname:short)' refs/heads refs/remotes/origin` filtered to `(origin/)?conformance/*`, then `git -C "$SPECS_PATH" cat-file -e "<ref>:./<the record's path>"`. Where one carries it, name the branch and ask `choices: ["Read the Dev's record from <branch> (Recommended)", "Trace this Epic in full instead", "Cancel"]`. Read from a branch, the record comes through `git show <ref>:<path>`, and this run writes nothing to that branch: an entry it would mark superseded there, or a follow-up it would withdraw there, is named in the report for the Dev to settle once the branch merges;
+- an Epic with no `_conformance.md` is traced in full, as an Epic run would — but first **probe the plugin branches for an Epic's record** a Dev left unmerged, with `workflows-core:phase-handoff` §3.2's read-only primitives: `git -C "$SPECS_PATH" for-each-ref --format='%(refname:short)' refs/heads refs/remotes/origin` filtered to `(origin/)?conformance/*`, then `git -C "$SPECS_PATH" cat-file -e "<ref>:./<the record's path>"`. Where one carries it, name the branch and ask `choices: ["Read the Dev's record from <branch> (Recommended)", "Trace this Epic in full instead", "Cancel"]` — *Cancel* ends the run with nothing traced. Read from a branch, the record comes through `git show <ref>:<path>`, and this run writes nothing to that branch: an entry it would mark superseded there, or a follow-up it would withdraw there, is named in the report for the Dev to settle once the branch merges;
 - an Epic with a record has each entry re-checked in Phase 3 against the merged code at the evidence it recorded;
-- a requirement an Epic record lists under `## Satisfied` is re-traced only where the code at its evidence paths changed between the commit that record's header names for its repository and the default branch (`git -C <repo> diff --quiet <that commit> <default-ref> -- <the evidence paths>` exits non-zero). Where the header names no commit for a repository, every requirement of that Epic in that repository is re-traced.
-
-**(e) Clones and freshness.** Resolve each repository to a clone under `${REPOS_PATH:-/workspace}`, one directory or a colon-separated list: for each top-level directory there, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -C <dir> remote get-url origin 2>/dev/null` and take the URL's last path segment, less `.git`, as its slug; where two clones share a slug, prefer the one whose name ends `-repo`, then `_repo` or `_fast`, then the alphabetically last. A repository with **no clone of** it under `$REPOS_PATH` is named in the report, and its requirements are listed as not traced — never guessed. On a writable clone (`workflows-core:read-only-repos` §1), refresh its remote refs before reading any: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 30 git -C <repo> fetch --quiet origin` — refs only, never a switch, a pull or a working-tree write. On a read-only mount, fetch nothing, and apply that reference's §5 instead, printing the age of each ref read where it is older than fourteen days.
+- a requirement an Epic record lists under `## Satisfied` is re-traced only where the code at its evidence paths changed between the commit that record's header names for its repository and the default branch (`git -C <repo> diff --quiet <that commit> <default-ref> -- <the evidence paths>` exits non-zero). Where the header names no commit for a repository, every requirement of that Epic in that repository is re-traced;
+- a requirement of that Epic that is neither one of its entries nor under its `## Satisfied` — added since the Epic run, `not-checkable` there, or left unverified — is traced in full.
 
 **(f) The record on file.** Read the unit's own `_conformance.md`, where one exists: its decided entries, which Phase 4 carries forward rather than asks again (`conformance-format.md` §5); its `## Satisfied` list; and the commit each repository was traced at.
 
@@ -119,10 +122,11 @@ fixes: the clone's `repo_path`, the `ref` Phase 1 chose, the `commit` it resolve
 whose code lives there, and the `hints` — the files the recorded commits touched and the target
 component's paths.
 
-**Synthesise** what the tracers return: one verdict per requirement. On a PRD run a requirement handed to
-more than one repository is `satisfied` only where every repository it needs satisfies it — a `## Contract`
-line needs its producer's and each consumer's; otherwise it takes the weakest of their verdicts
-(`contradicts` before `missing` before `partial`), with each repository's evidence.
+**Synthesise** what the tracers return: one verdict per requirement. A requirement handed to more than
+one repository — a companion run's second repository on an Epic run, or both sides of a `## Contract`
+line on a PRD run — is `satisfied` only where every repository it needs satisfies it; otherwise it takes
+the weakest of their verdicts (`contradicts` before `missing` before `partial`), with each repository's
+evidence.
 
 ---
 
@@ -138,9 +142,10 @@ Verify each `partial`, `missing` and `contradicts` verdict at the location it ci
   never see. A `missing` verdict's evidence is the search it ran — `evidence: none — searched …` — which
   is what absence rests on.
 
-**On a PRD run, re-check each entry of each Epic record** against the merged code at the evidence it
-recorded, reading its requirement's current text in its document, and flag it per
-`conformance-format.md` §4: `stale` — an `amend-document` or `accept` entry whose requirement the merged
+**On a re-run, and on a PRD run for each Epic record, re-check each entry on file** against the code at
+the evidence it recorded, reading its requirement's current text in its document, and flag it per
+`conformance-format.md` §4 — on a re-run, an entry the code now satisfies is `resolved`, and one whose
+requirement is gone or withdrawn is `orphaned` or `requirement withdrawn`; on a PRD run, for Epic entries: `stale` — an `amend-document` or `accept` entry whose requirement the merged
 code now satisfies; `fixed` or `still open` — a `fix-code` entry, as the merged code stands; `orphaned` —
 an entry whose requirement text is no longer in its document; `requirement withdrawn` — one whose id is
 now superseded or withdrawn.
@@ -190,8 +195,9 @@ deletes a requirement.
 - **Fix the code** → a follow-up item for Phase 8, in the shape
   ``Run `/dev-workflows:implement <EPIC-KEY>` from repository `<slug>`: <requirement> — <what shipped>``,
   which the next `/dev-workflows:implement` of that Epic reads back at its Phase 1. A PRD-level
-  requirement no Epic covers names `<PRD-KEY>`. A `still open` Dev entry the PE confirms keeps the
-  follow-up the Epic run wrote; no second one is queued.
+  requirement no Epic covers names `<PRD-KEY>`. A `still open` Dev entry the PE confirms keeps its
+  follow-up where that line is still open in `follow-ups.md`; where it is not — cancelled at the Epic
+  run's preview, or ticked — a new one is queued.
 - **Amend the document — on a PRD run** → add a `- [ ]` note under an `## Engineering review` heading
   (created at the end of the document where it has none) on the document holding the requirement —
   `specification.md`, `prd.md`, `epic.md`, or `ard.md` for an `[AD#n]` Rule — naming the requirement,
@@ -210,10 +216,11 @@ deletes a requirement.
 
 **Write `_conformance.md`** into the unit's folder per `conformance-format.md`: §2's header — with the
 commit each repository was traced at, and the counts, `unverified` included — then the `## Satisfied`
-list, one line per satisfied requirement with its evidence paths, then §3's entries. On a re-run, apply
+list, one line per satisfied requirement with its evidence paths — those whose discrepancy the re-check dropped included, with the evidence that settled it — then §3's entries. On a re-run, apply
 §5: carry each decided entry forward while its discrepancy persists, mark it `resolved` once the code
 satisfies its requirement, mark it `requirement withdrawn` where its requirement is superseded or
-withdrawn, and number new discrepancies after the highest id on file. A PRD run's record lists every
+withdrawn and `orphaned` where its text is no longer in its document, withdrawing a `fix-code`
+entry's follow-up for either, and number new discrepancies after the highest id on file. A PRD run's record lists every
 Epic entry it ruled on, with the ruling — `confirms`, `overrules` or `resolved` — and every one it only
 listed, with its flag.
 
