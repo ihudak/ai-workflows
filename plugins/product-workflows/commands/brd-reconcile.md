@@ -335,7 +335,9 @@ write would re-ask a question already answered.
    no merged state to look in: stop with step 2's `BRD_RECONCILE_NEEDS_REVIEW`, which names the
    `@<review-file>` form. Otherwise look on `<default-ref>`, the ref step 6's gate resolved — in this
    folder, and in each of its `bundle-<YYYYMMDD>/` folders, where a customer's agent working inside the
-   bundle may have put it: list them (`git -C "$SPECS_PATH" ls-tree -z -r --name-only <default-ref> -- <BRD-dir>/`)
+   bundle may have put it: list them (`git -C "$SPECS_PATH" ls-tree -z -r --name-only <default-ref> -- <BRD-dir>/`,
+   `<BRD-dir>` written relative to `$SPECS_PATH` — `specifications/…` — here and in step 6b, since
+   git takes an absolute path through a symlinked `$SPECS_PATH` as outside the repository)
    and keep each entry in one of those folders whose name is exactly that one, with eight digits for
    the date. That is a lookup in one folder's listing by one fixed name built from a key this run
    already holds — never a pattern widened to whatever looks like a review.
@@ -350,7 +352,9 @@ write would re-ask a question already answered.
      Found nowhere → stop with step 2's `BRD_RECONCILE_NEEDS_REVIEW`: a pull request from a fork of
      the repository, or a branch the fetch could not reach, is on none of the branches this clone
      holds, and shows up here only once merged.
-   Before asking, take step 6b's list for each file found, and print it with that file.
+
+   Wherever a file was found on `<default-ref>`, take step 6b's list for each before asking, and
+   print it with that file.
    - **More than one** → ask which, every one printed above the question with the commit that added
      it, most recent first: `choices: ["<file-1>", "<file-2>", "None of these — stop"]`, with a
      third file before the decline where there is one; four or more, the two most recent, then
@@ -361,17 +365,15 @@ write would re-ask a question already answered.
      names only. A decline stops the run, writing nothing; the others wait for their own run.
    - **Exactly one** → print its name, the folder it is in, and the commit that added it
      (`git -C "$SPECS_PATH" log --diff-filter=A -1 --format='%h %an %ad' <default-ref> -- "<path>"`),
-     and ask, where step 6b's list is empty:
-     ```
-     choices: ["Reconcile this review (Recommended)", "Cancel"]
-     ```
-     and, where it lists anything or could not be made:
+     with step 6b's list, and ask:
      ```
      choices: ["Reconcile this review", "Cancel"]
      ```
-     The recommendation stands only in the first case: the file is the one the route asked the
-     customer to commit, and the operator merged it with nothing else beside it. *Cancel* stops the
-     run, writing nothing.
+     No option is marked `(Recommended)`: what step 6b can see of a pull request depends on how it
+     was merged — a fast-forward, a squash or a rebase leaves only the commit that added the review to
+     look at — so an empty list does not show that nothing else came in, and whether this file is the
+     customer's answer to reconcile is the operator's to confirm. *Cancel* stops the run, writing
+     nothing.
 
    Print beside the question, where either holds: that a byte-identical
    `customer-review-<YYYYMMDD>[-<suffix>].md` is already in the working tree, so reconciling it again
@@ -397,19 +399,26 @@ write would re-ask a question already answered.
    that changed it (`git -C "$SPECS_PATH" log --format='%h %an %s' <M>^1..<M> -- "<file>"` — under a
    merge-commit merge `M`'s own author is whoever merged it, not who made the change).
 
+   Beside each listed file, say where it stands on `<default-ref>` now: **restored since** where
+   `git -C "$SPECS_PATH" diff --quiet <M>^1 <default-ref> -- "<file>"` succeeds, **unchanged since
+   the pull request** where `git -C "$SPECS_PATH" diff --quiet <M> <default-ref> -- "<file>"` does, and
+   **changed again since** otherwise.
+
    **The run reports this list and decides nothing.** The delivery note asked the pull request to add
    the review and change nothing else, so whatever is listed is something changed in the delivery
    side's own records — a package document the review's quotations are checked against, or a
-   register or ledger whose every customer decision has to pass an operator. So the confirmation is
-   asked without its `(Recommended)` marker wherever the list is not empty: step 6a's question, or,
-   for an `@<review-file>`, its second array asked here, *Cancel* stopping the run with nothing
-   written. The operator either reconciles knowing what else came in, or cancels, restores those
-   files from `<M>^1` on a branch cut from the default branch, and re-runs. **Where `M` has one
-   parent** — a squash, or a pull request rebased onto the branch — the list is that commit's change
-   alone, and the run says so: a pull request rebased as several commits is listed only at the one
-   that added the review. **Where `M` or `<M>^1` does not resolve** — a shallow clone, say — say the
-   list could not be made, and why, and ask without the marker likewise. The reconciliation record
-   and the final report repeat the list, or that it was empty or could not be made.
+   register or ledger whose every customer decision has to pass an operator. The confirmation is
+   asked with the list beside it: step 6a's question, or, for an `@<review-file>`, the same array
+   asked here, `["Reconcile this review", "Cancel"]` — unmarked, for the reason step 6a gives —
+   *Cancel* stopping the run with nothing written. The operator either reconciles knowing what else
+   came in, or cancels, reverts the pull request's change to those files, and re-runs. **The list
+   says what it could not see**, every time: it covers this slice's folder alone, never the parent's
+   files or a sibling's; and **where `M` has one parent** — a squash, a fast-forward, or a pull
+   request rebased onto the branch — it is that commit's change alone, so an earlier commit of the
+   same pull request is not in it. **Where any of this step's commands fails** — `M` or `<M>^1` not
+   resolving in a shallow clone, say — say the list could not be made, and why, and ask the same
+   array. The reconciliation record and the final report repeat the list, with each file's state, or
+   that it was empty or could not be made, and its limits.
 7. **Do not re-gate allocation, and do not re-gate the rounds.** Read `coverage-ledger.md` for the
    rows this run may move and for the final report's ledger line, but do not gate on it:
    `/brd-interview` already refused to run against an unallocated ledger, `/brd-package` refused to
@@ -593,11 +602,13 @@ path nobody else can reproduce; the copy is the record.
    review's bytes (for one step 6a found, those on `<default-ref>`), then delete the committed file
    from the working tree, so the folder holds the review once — and a bundle the customer committed
    it into holds again exactly what was sent — while its commit keeps the customer's original in
-   history. Where the checkout's `HEAD` does not carry the file there is nothing here to delete, and
-   Phase 0 step 6a's note has already said which of two causes it is: an earlier run moved it on this
-   branch, so this run resumes that one and moves nothing; or the branch was cut before the
-   customer's pull request merged, so the run copies it, says so, and a run from the default branch
-   moves it. The no-overwrite rule above is unchanged — the move lands at
+   history. Where the checkout's `HEAD` does not carry the file there is nothing here to delete — for
+   a review step 6a found, its note has already said which of two causes it is, and for an
+   `@<review-file>` run the same `git -C "$SPECS_PATH" log -1 --format=%h --diff-filter=D HEAD -- "<path>"`
+   test is taken here and its answer reported: an earlier run moved it on this branch, so this run
+   resumes that one and moves nothing; or the branch was cut before the customer's pull request
+   merged, so the run copies it, says so, and a run from the default branch moves it. A file in the
+   working tree that `HEAD` does not carry is left where it is, and the run says so. The no-overwrite rule above is unchanged — the move lands at
    whichever name step 2 resolved, suffix included — and on the byte-identical case, a resumed run,
    the committed file is deleted here where it is still in the working tree.
 
@@ -2273,7 +2284,9 @@ changed, why, which ids, and what still needs a human:
   reader worked in and what decided it, the verdict, the readiness statement **quoted verbatim** (it
   is one sentence long precisely so it can be quoted without being softened), the twelve sections'
   states, the evidence limitations as stated — or the plain fact that they were not stated — and
-  every anomaly, unrepaired.
+  every anomaly, unrepaired. For a review that came in by the customer's pull request, Phase 0
+  step 6b's list as well — every other file that pull request changed, with its state on the default
+  branch now — or that it was empty or could not be made, with the limits that step names.
 - **What changed** — every `[CD#n]` frozen, with its quotation, its status, what it answers — a
   `[C]` by round and position, an `[AS#n]`, or an `[SR#n]` with the self-review file named above —
   and how it was confirmed, and, where its `altitude` had nothing to copy, that this run decided
@@ -2734,7 +2747,8 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
 
 Report: the BRD folder and which level it sits at; the classification and model routing
 (+ any Opus degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); **the review** — the canonicalised path, the original path, the mode and
-what decided it, the verdict, the readiness statement quoted verbatim, and the evidence limitations
+what decided it, for a review that came in by pull request Phase 0 step 6b's list with each file's
+state and its limits, the verdict, the readiness statement quoted verbatim, and the evidence limitations
 as stated or the fact that they were not; **every anomaly**, unrepaired, because each one changes how
 the rest of the review should be read; every torn write found (`decision-register-format.md` §8), by
 id or heading, with `/product-workflows:brd-interview` as the run that removes it, and every answer

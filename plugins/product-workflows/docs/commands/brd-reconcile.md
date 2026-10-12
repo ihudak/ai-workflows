@@ -128,10 +128,12 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   bundle, stops with `BRD_RECONCILE_NEEDS_REVIEW`.
 - **What else a committed review's pull request changed.** Where the review came in by the
   customer's pull request, the run lists anything else that pull request changed in the slice's
-  folder — a package document, the register, the ledger — with the commits that changed it, beside
-  the question asking you to confirm the review, and that question then carries no recommendation:
-  you reconcile knowing what came in, or cancel and restore those files first. A pull request
-  rebased as several commits is listed only at the commit that added the review.
+  folder — a package document, the register, the ledger — with the commits that changed it and
+  whether each is restored, unchanged or changed again on the default branch now, beside the
+  question asking you to confirm the review: you reconcile knowing what came in, or cancel and
+  revert that change first. That question never carries a recommendation, because what the run can
+  see depends on how the pull request was merged: after a squash, a fast-forward or a rebase it sees
+  only the commit that added the review, and it never looks outside the slice's folder.
 - **A slice, not a root and not an idea-route PRD folder.** The moment the folder resolves, its
   prefix is tested — `BRD-` is a root, `EPIC-` an Epic folder, `PRD-` a slice or an idea-route PRD folder — never the
   folder's asserted `kind:`. An `EPIC-` folder stops with `BRD_RECONCILE_EPIC_LEVEL` before any gate runs: an Epic holds none of what this command reads, so the stop names `/brd-reconcile <SLICE-KEY>` on the slice above it where there is one, and no command where there is none. A `PRD-` folder carrying no `brd-link.md` was never carved from a BRD
