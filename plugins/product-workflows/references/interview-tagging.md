@@ -16,7 +16,7 @@ once in `workflows-core:grounding-format` §3 — cited here, not restated; requ
 test to a question already routed, and by `commands/brd-package.md`, which routes the `[C]` questions
 into the customer review prompt and reads §5's round vocabulary at its gate, and by
 `commands/brd-reconcile.md`, which writes §5's terminal disposition *answered by the customer* when
-an operator confirms a returned answer — the only thing that ever closes a round holding a `[C]`.
+an operator confirms a returned answer, or where the question has stopped applying — a record it put again since withdrawn, or every requirement defect it carries withdrawn with its requirement — the only command that ever closes a round holding a `[C]`.
 `commands/create-prd.md` applies §2's test outside any round, to triage a gap its grill could not
 close by who could settle it, and `agents/customer-review-reader.md` cites §2 for why an escalated
 `[SR#n]` reaches the customer under its own id rather than as a `[C]`.

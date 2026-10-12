@@ -331,7 +331,12 @@ command removes none of them; the next `/brd-interview` run does.
   quoting the customer, or rejected — and is never frozen on that form, save that a free-text answer
   naming the question it does answer re-points it onto the four; the picker carries no bulk
   confirmation, and a free-text answer is otherwise **normalised into those values or the candidate
-  is re-asked** — never written through as another.
+  is re-asked** — never written through as another. *Reject* reads **no decision to freeze**: the
+  customer declined to answer, or the row is not an answer at all (context, thanks, scheduling). It
+  never says the review is not the customer's — a decline is theirs, and it is clear; it simply holds
+  nothing the register can take, so it is neither confirmed nor sent back to the customer, and a
+  held question it answers stays held, to be put again by the next package, save the two cases
+  below where the question has stopped applying.
   `workflows-core:escalation-rules` names this picker for that reason:
   the prompt's free-text option is supplied by the harness and no picker can decline it, so a picker through which customer authority enters the register — this one, the missing-reason picker, the conflicting-answer picker and the propagation sweep's — is protected by what the run does with
   the answer rather than by what the array leaves out. Aborting the walk stops the run with **nothing
@@ -359,7 +364,16 @@ command removes none of them; the next `/brd-interview` run does.
   that record, once frozen — the same option with a different reason included — is a new answer
   that supersedes it. An answer whose live record is `withdrawn` freezes nothing: the operator
   records it for a human or rejects it, and either way a held question it answers is closed,
-  naming the withdrawal, so its round can close and no later package carries it. A live record `open` for want of its reason is **completed**,
+  naming the withdrawal, so its round can close and no later package carries it. **A held question
+  whose requirement defects were all withdrawn closes the same way** — every `Requirement defect`
+  line on it names a defect the parent's defect log resolves `withdrawn`, or one raised against a
+  requirement this run's frozen decisions withdraw. It closes *answered by the customer*, naming the
+  withdrawing decision and defects, with nothing frozen from any reply to it, whatever the reply was
+  and whichever order the walk took the two answers in, since the closure is decided once every
+  decision is frozen; a reply is kept, with the customer's condition for asking again, under *what
+  still needs a human*. One defect still standing keeps the question held. A slice reconciled before
+  3.33.1 closes such questions when you re-run `/brd-reconcile <KEY>` on the review it already took,
+  passing its `customer-review-<date>.md`. A live record `open` for want of its reason is **completed**,
   minting nothing, by an answer with its own `chosen` and a reason now stated — never on an entry
   that puts a record again on a `- **Re-puts:**` line, where it is superseded (step 3) — and
   superseded by one choosing differently. A record
