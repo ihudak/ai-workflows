@@ -1842,12 +1842,15 @@ call. **And in either order within this run**: a record this run froze, complete
 whose `settles` names a defect this phase resolves `withdrawn` on another answer goes there too,
 the decision being about a requirement the same review withdraws. **Withdrawals are resolved
 first**: every `open` defect raised against a requirement that a `[CD#n]` this run froze, completed
-or re-decided, and did not leave `open`, withdraws is written `withdrawn` before any `resolved-by` of
-this run, so such a defect reads `withdrawn` whichever answer the walk took first, and the other
-record is the one sent to a human. **Where two of this run's records, answering two questions, would
-each resolve one `open` defect `resolved-by`**, the one answering the question that comes first in
-the round record — by round, then position — is named, and the other goes to a human, so that too
-turns on the record and never on the walk.
+or re-decided, and did not leave `open`, withdraws is written `withdrawn` before any other
+resolution of this run — `customer-amended` or `resolved-by` — so such a defect reads `withdrawn`
+whichever answer the walk took first, and the other record is the one sent to a human; where the
+review also supplied corrected text for that withdrawn requirement, the amendment goes there too,
+with the customer's words, the defect reading `withdrawn`. **Where two of this run's records,
+answering two questions, would each resolve one `open` defect** some way other than `withdrawn`, the
+one answering the question that comes first in the round record — by round, then position — decides
+its resolution, and the other goes to a human, naming the record that decided it, so that too turns
+on the record and never on the walk.
 
 **The amendment stays in the returned review it came from — this slice's, as the resolution's key
 says — and is never written into `brd/source/`** (D11, `brd-format.md` §4). A resolution changes the
@@ -2408,8 +2411,10 @@ changed, why, which ids, and what still needs a human:
   review answers could not be determined (*Ingest the review*), with the customer's words; every
   record the *Resolve the defects the review settled* phase sent here — one whose `settles` names a
   defect already resolved outside its own chain, with the resolution it found; one whose defect this
-  run withdrew on another answer; and each held entry with a record of its own whose requirement was
-  withdrawn, with that record; every
+  run withdrew on another answer; one that lost the round-and-position rule, naming the record that
+  decided the defect in its place; corrected text the review supplied for a requirement this run
+  withdrew, with the customer's words; and each held entry with a record of its own whose requirement
+  was withdrawn, with that record; every
   question the review did not answer, in **all three** of the id shapes the package put to it, so
   an escalated `[SR#n]` the customer passed over is not lost
   behind the `[C]` questions that were; every candidate not frozen; every correction deferred or
