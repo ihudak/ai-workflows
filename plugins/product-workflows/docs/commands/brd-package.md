@@ -268,11 +268,12 @@ attack.
   is keyed on **every finding carrying a non-`undisposed` value**, and on nothing else: the reviewer
   agent returns no severity and no PASS/BLOCK verdict by design, so the disposition is the only gate
   there is. The four values are `fixed`, `accepted-risk`, `escalated-to-customer` and
-  `rejected-with-reason`, and each of its two arrays carries those four and nothing else — the
-  second array's *Agreed* option is `accepted-risk` with a `fixed-by:` marker, below. The harness always
+  `rejected-with-reason`, and each array draws only on those four values — the second offers
+  *Agreed* (`accepted-risk` with a `fixed-by:` marker, below) in place of `fixed`, and either drops
+  *Escalated* where the customer's authority does not settle the finding. The harness always
   supplies a free-text option, so the picker cannot decline one — what protects the closed vocabulary
-  is what the run *does* with the answer: a free-text reply is normalised into one of the four, or the
-  finding is re-asked. It is never written through, because a fifth disposition is one nothing
+  is what the run *does* with the answer: a free-text reply is normalised into a value this finding
+  was offered, or the finding is re-asked. It is never written through, because a fifth disposition is one nothing
   downstream can read ([`workflows-core:escalation-rules`](../reference/references.md) §0).
 - **Phase 4 — what `fixed` may name.** Only what this command itself writes: the prompt, the
   delivery note, the self-review, the bundle's rendered copies and an `[SR#n]`'s own record. Never a

@@ -1394,10 +1394,14 @@ this step settles, plus `outcome` and any `notes` — never a second verdict bes
 Act on `outcome`:
 - **`agree`** — keep the finding as written; record the outcome alongside it.
 - **`extend`** — keep the finding's verdict; append the verifier's additional evidence to the
-  finding's `evidence` list — each `own_evidence` entry whose `path` and `lines` match no entry the
-  finding's `evidence` already holds, an entry with no `path` compared whole; a set difference over
-  the structured fields, never read out of `notes`, which name the additions for a reader; record
-  the outcome.
+  finding's `evidence` list — each `own_evidence` entry the finding does not already hold, where
+  an entry is already held where an entry of the finding's `evidence` on the same `path` covers all
+  of its `lines` (an entry with no `lines`, a whole-file read, covers every line), and an entry with
+  no `path`, a baseline finding's command output, is held where one carries the same command and
+  output, its note never compared. This is read off the structured fields, never out of `notes`,
+  which name the same entries for a reader. Where nothing is left to append, the finding keeps its
+  `evidence` as it stands and the Final report records *extend, nothing new to append* for it;
+  record the outcome.
 - **`unprovable`** — keep the finding's verdict unchanged (the verifier's own search settling
   nothing either way is not the same as it being wrong); record the outcome and flag the finding
   in the report as verification-inconclusive — on one a dispute settled `unprovable`, as **two
@@ -2119,7 +2123,8 @@ every earlier baseline finding Phase 8 superseded, with the fresh one that repla
 earlier `baselines.md` entry that named no id, or an id no block carries;
 finding counts by verdict for `[CG#n]` and `[DG#n]`
 separately, and the verifier
-tally (`agree` / `extend` / `contradict` / `unprovable`), opened by the run's verification
+tally (`agree` / `extend` / `contradict` / `unprovable`) — naming every `extend` that left nothing
+new to append (Phase 7, *Act on outcome*) — opened by the run's verification
 arithmetic — Phase 1's cost statement as this run actually came out, printed as this one block with
 every value filled in (`none` for a part the run had nothing in), because a headless orchestrator
 may compress Phase 1's printed lines and the Final report is the output a reader always sees:

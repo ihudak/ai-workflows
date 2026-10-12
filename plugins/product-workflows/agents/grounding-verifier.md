@@ -128,7 +128,7 @@ The row is chosen **per finding**, in both modes. On a `[CG#n]` batch `repo_path
 
 6. **Decide the outcome** from the closed set in `workflows-core:grounding-format` §8:
    - **`agree`** — your blind result reaches the same verdict.
-   - **`extend`** — the claim holds at the same verdict, but your blind search surfaced evidence the original finding missed. Name, in `notes`, which `own_evidence` entries are the additions.
+   - **`extend`** — the claim holds at the same verdict, but your blind search surfaced evidence the original finding missed. Name, in `notes`, by path and line, the `own_evidence` entries the original's `evidence` does not already hold — an entry is held where an original entry on the same path covers all of its lines — and your caller appends exactly those.
    - **`contradict`** — your blind result reaches a *different* verdict. **This is the outcome to return when the original finding is wrong — never soften a contradiction into an `extend`.** Filing `extend` over a finding whose verdict your blind search does not support is the exact failure mode this agent exists to prevent: it launders a wrong finding into evidence by dressing the correction up as an addition. If the two verdicts disagree, the outcome is `contradict`, full stop, regardless of how confident the original finding reads or how much of its evidence turned out to be real.
    - **`unprovable`** — your blind search could not settle the claim either way. This is independent of what the original finding concluded — report it even when the original was `CONFIRMED`.
 
@@ -189,8 +189,8 @@ findings:                    # one entry per finding in the batch, on status: OK
       # differs. It revises nothing: own_* and outcome are returned exactly as they would be without it.
     commit: <the commit step 1 resolved for this finding's repository — omitted on a class-1/2/3 [DG#n]>
     notes: |
-      <optional — where the blind search diverged from the original's approach, which own_evidence
-      entries an extend adds, why blind_disputed is true where it is, anything the caller should
+      <optional — where the blind search diverged from the original's approach, which entries an
+      extend adds that the original does not already hold, why blind_disputed is true where it is, anything the caller should
       know before recording this outcome>
 ```
 

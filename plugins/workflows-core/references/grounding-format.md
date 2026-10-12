@@ -336,8 +336,10 @@ change. Three notes a verified run wrote, and what each should have said:
 
 **What stays.** Identifiers — `[BR#n]`, `[CG#n]`, `[DG#n]` and the rest — which the bundle carries the
 files to resolve, and which are how a reviewer cites a finding; a path and line in the code
-repository, and a command run against it (`git grep …`), which a reviewer holding the repository can
-run again; and the record's own field names and values, which are the record being read. A section
+repository or a frame set, wherever a finding records it — an evidence entry, a note, `control`'s
+result — and a command run against the repository (`git grep …`), which a reviewer holding it can
+run again; a documentation page's path; a class-1 finding's field label as the frame shows it; and
+the record's own field names and values, which are the record being read. A section
 of the customer's own document is written `source/<basename> › § <n>` — its captured path, then the
 section — never a bare `§ <n>`, which reads as one of the plugin's (`product-workflows:bundle-packaging`
 §6.3 rule 1). What stays may still match a class there — a `references/` directory of the customer's,

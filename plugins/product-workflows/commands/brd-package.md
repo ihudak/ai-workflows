@@ -641,7 +641,8 @@ choices: ["Fixed — the package has been corrected; say what changed", "Accepte
 
 Where it cannot, ask this instead. Its first option is the agreed-not-actionable route below, with
 `<writer>` filled in as the `fixed-by:` value that route gives the finding's artifact — the command
-that writes it, or `hand (say who)` where no command does:
+that writes it, or `hand (say who)` where no command does — on that answer, ask who, and record
+`fixed-by: <that person or role>`, the reason saying no command writes the artifact:
 
 ```
 choices: ["Agreed — repaired outside this package, by <writer>; the customer sees it with that said", "Accepted risk — a risk we weighed and take; ship it, and show this finding to the customer", "Escalated to the customer — turn it into something the package asks them", "Rejected with reason — the attack does not hold; say why"]
@@ -651,14 +652,15 @@ choices: ["Agreed — repaired outside this package, by <writer>; the customer s
 and say in one line above the question what settles the finding instead — *the code at the pinned
 commit*, *a delivery-side trade-off* — so the operator sees why it is not offered. Nothing else
 changes: the survivors keep their order and their wording, three options are rendered where four
-were, and the finding still takes exactly one. A free-text answer naming a withheld option is
-answered with that reason and the question is asked again; it never becomes the withheld value.
+were, and the finding still takes exactly one. **A free-text answer naming an option this finding
+was not offered** — *Fixed* where the second array was asked, *Escalated* where it was left out — is
+answered with why it was not offered and the question is asked again; it never becomes that value.
 **Offering an option the command will then refuse costs the operator a round for each:** a live run
 put one finding three times, refusing *Fixed* and then *Escalated* after each was chosen, before the
 third answer could stand.
 
 **These are not escalation choice lists**, and neither is one of the arrays
-`workflows-core:escalation-rules` owns: their options are the four
+`workflows-core:escalation-rules` owns: their options draw only on the four
 disposition values `agents/brd-package-reviewer.md` fixes — the second array's *Agreed* option
 being `accepted-risk` with its `fixed-by:` marker (below), not a fifth — drawn from that agent's own contract the
 same way `/brd-interview`'s will-change picker draws its three resolutions from
@@ -666,8 +668,8 @@ same way `/brd-interview`'s will-change picker draws its three resolutions from
 required rather than merely permitted: the disposition vocabulary is exactly four values, and a
 fifth would be a disposition nothing downstream can read — which is why `workflows-core:escalation-rules` names
 this picker in its *Closed-vocabulary pickers must normalise the free-text answer* section, so a
-free-text answer that lands on none of the four re-asks rather than becoming a value no consumer
-handles. Each array is those values
+free-text answer that lands on none of the values this finding was offered re-asks rather than
+becoming a value no consumer handles. Each array is those values
 and nothing else: **there is no listed `Cancel`**, because the harness always supplies a free-text
 option and an abort is reachable through it without spending one of the four slots
 (`workflows-core:escalation-rules` §0). Aborting the walk stops the run with
