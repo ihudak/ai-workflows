@@ -1201,6 +1201,19 @@ individually via `AskUserQuestion`. **A split is one candidate, confirmed once**
 proposes the one `duplicate` a split records on the first row it produced (`brd-format.md` §2), so
 the walk never asks about each part.
 
+**Before the first question, print once what the walk is for** — after the notes above, and only
+where at least one candidate is walked. Each question asks one thing, whether a candidate is a real
+defect in the customer's text, and an operator who reads it as a request to resolve the ambiguity is
+answering a question it does not ask:
+
+```text
+These questions triage the defects brd-reader proposed. They resolve none of them. Each one asks: is this a real defect in the customer's text?
+- Confirm as written logs it as an open [DEF#n] in brd/brd-defect-log.md. The customer's document is never edited. An open defect is settled later, never here: by the customer's answer, which /product-workflows:brd-interview asks and /product-workflows:brd-reconcile records, or by a grounding finding from /product-workflows:prd-ground, which a person records.
+- Confirm with an edited reason logs it the same way, with a reason you narrow first. Later questions are built from the reason, so keep only what is actually open.
+- Reject — not a defect drops it, with no record that it was raised. A later re-run of this intake can raise it again.
+- Cancel ends the run here, before any defect is logged.
+```
+
 **The question's text is fixed, so every candidate reaches the operator with the same facts**, each
 `[BR#n]` in it as Phase 3 numbered it (by its reconciliation on a re-run, by its numbering on a
 first intake), each row's text decoded (`brd-format.md` §2.3):
@@ -1214,9 +1227,11 @@ Element: <the element the row's anchor names, verbatim, by the kind it is>
 Also raised: [BR#m] — <that folded candidate's reason>, …
 On file: [DEF#k] — <that entry's reason> (<its resolution>), … — if this candidate is one of these, answer "Reject — not a defect".
 On file: [DEF#k] — <that entry's reason> (<its resolution>), joining [BR#a] and [BR#b], … — logged already; confirming records only [BR#n] with [BR#m], …, the pairs none of these joins, so answer for those pairs alone.
+Question: is this a real defect in the customer's text? Nothing is resolved here.
 ```
 
-The *Names* line is written for a `conflict` or `duplicate` only, one entry per counterpart the
+The *Question* line closes every question, unchanged, so the form states what it asks even after
+the preamble has scrolled away. The *Names* line is written for a `conflict` or `duplicate` only, one entry per counterpart the
 candidate names — for a group walked as one, every other row the group joins; the *Image* and
 *Element* lines only for a row drawn from an image (below); the *Also raised* line only for a
 candidate another was folded into, one item per folded candidate, naming the row it was raised on;
@@ -1233,8 +1248,18 @@ raised from documentation ends its first line with `(raised from documentation)`
 Then present:
 
 ```
-choices: ["Confirm as written (Recommended)", "Confirm with an edited reason", "Reject — not a defect", "Cancel"]
+choices: ["Confirm as written", "Confirm with an edited reason", "Reject — not a defect", "Cancel"]
 ```
+
+**No option carries `(Recommended)`**: whether a candidate is a real defect is the question itself,
+so no answer is right on every showing (`workflows-core:escalation-rules`, *The `(Recommended)`
+marker is unconditional*). **Each option carries this description, word for word, on every
+question**, so no candidate is put with wording of the run's own:
+
+- *Confirm as written* — "Log it as an open [DEF#n] with this reason. It is settled later, never here."
+- *Confirm with an edited reason* — "Log it as open with a reason you narrow first. Later questions are built from the reason."
+- *Reject — not a defect* — "The document already answers it, or it is no defect. It is dropped, and nothing records it."
+- *Cancel* — "End the run here, before any defect is logged."
 
 **A candidate on a row drawn from an image is put with its picture.** Show the image's path relative
 to `brd/`, the *Depicts* sentence of its section in `brd/brd-figures.md`, and the part of that

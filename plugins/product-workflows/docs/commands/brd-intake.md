@@ -220,8 +220,10 @@ specs repo's default branch under a new `brd/<BRD-KEY>-<slug>` branch prefix.
   `docs_references` — what the product already ships and documents — is reported for `/prd-ground`
   to check against code, and written nowhere; the ledger's `evidence` column stays empty until
   grounding runs, and [`/prd-ground`](prd-ground.md) fills it when it does.
-- **Phase 4 — interactive defect confirmation**, not an agent gate: every `defect_candidates` entry
-  not already logged (below) is walked one class at a time, in the fixed order
+- **Phase 4 — interactive defect confirmation**, not an agent gate, and a triage that resolves
+  nothing: the walk opens by saying so, every question closes by asking whether its candidate is a
+  real defect in the customer's text, and no option is marked recommended. Every `defect_candidates`
+  entry not already logged (below) is walked one class at a time, in the fixed order
   [`brd-format.md`](../../references/brd-format.md) §3 lists its six classes, via `AskUserQuestion`,
   each put with the same facts — its class, its row and that row's text, its reason, the rows a
   `conflict` or `duplicate` names, and an image-drawn row's picture. A split of one requirement into
@@ -230,7 +232,10 @@ specs repo's default branch under a new `brd/<BRD-KEY>-<slug>` branch prefix.
   among three or more rows as several candidates — they are asked as one question, naming every row
   they join. Only a confirmed candidate is assigned a `[DEF#n]` id,
   once the walk ends, in the order of the row it was raised on — never in the order the questions
-  were asked. A rejected candidate is dropped, not recorded. **A re-run does not ask again about a defect already logged**: a candidate with the same
+  were asked. A rejected candidate is dropped, not recorded. A confirmed one is logged `open`, and
+  the customer's document is never edited: the customer's answer settles it later — asked by
+  [`/brd-interview`](brd-interview.md), recorded by [`/brd-reconcile`](brd-reconcile.md) — or a
+  person records a [`/prd-ground`](prd-ground.md) finding that does. **A re-run does not ask again about a defect already logged**: a candidate with the same
   class and row as an entry on file is that entry — a `conflict` or `duplicate` matching where the
   entries on file already join the same rows, raised from either end — keeping its id, reason and
   resolution; where several share one class and row they pair in order, and a candidate left over is
