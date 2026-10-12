@@ -322,7 +322,7 @@ So a finding's free text never carries:
 - a section or rule number of a plugin reference, or a phase or step number of a command — `§2.2`,
   `§4.1 rule 4`, `Phase 4.5`;
 - an agent's return-field name — `own_verdict`, `own_control`, `blind_disputed`;
-- a reference file's name or path.
+- a reference file's name or path, or a decision-row id such as `D12`.
 
 **Say what the rule requires, never where it is written — and a token they cannot resolve is not
 fixed by deleting it.** A sentence that cited a rule leaned on it, so the sentence is what has to
@@ -340,12 +340,15 @@ repository, and a command run against it (`git grep …`), which a reviewer hold
 run again; and the record's own field names and values, which are the record being read. A section
 of the customer's own document is written `source/<basename> › § <n>` — its captured path, then the
 section — never a bare `§ <n>`, which reads as one of the plugin's (`product-workflows:bundle-packaging`
-§6.3 rule 1).
+§6.3 rule 1). What stays may still match a class there — a `references/` directory of the customer's,
+a `§` inside the requirement a `claim` quotes — and it stays all the same, since rewording it would
+break the record; but the package's scan has no exemption for it, so the run that writes it reports
+it rather than leaving it to be found at packaging.
 
 **Who holds a writer to it.** `product-workflows:code-grounder`, `product-workflows:design-grounder`
 and `product-workflows:grounding-verifier` each carry the rule for the fields they return.
-`/product-workflows:prd-ground`, which writes the files, scans what it is about to write against the
-§1.2 table and rewrites a sentence that hits before writing it. A rewritten sentence changes nothing a
+`/product-workflows:prd-ground`, which writes the files, scans what it is about to write against
+`product-workflows:bundle-packaging` §1.2's table and rewrites a sentence that hits before writing it. A rewritten sentence changes nothing a
 reader acts on — no id, verdict, evidence path or line, control result or outcome — so the run makes
 it without dispatching anything again. A finding already on file is not rewritten by a later run; a
 hand edit to its free text is sanctioned (§2.1) and touches none of those fields either.

@@ -180,13 +180,13 @@ exemptions being the customer's own words and naming, which §6.3 defines:
 | An agent, subagent type or skill name | `subagent_type`, any `<plugin>:<name>` prefix (`dev-workflows:`, `workflows-core:`, and any namespace a later split adds), any agent filename |
 | A decision-row reference | `D12`, `D13`, `D18`, `D20`, or any other bare `D<n>` row id |
 
-**The table is here, rather than in the command that runs the scan, because the bundle's documents
-are written long before it runs.** Every file §1.1 admits is written by an earlier command of the
-route, and a token any of them writes stops the package days later, where the only repair is a hand
-edit to a record the operator did not write. So a command that writes a bundled document holds it
-to these classes when it writes it: `commands/prd-ground.md` scans what it is about to write into
-the three grounding files against this table, and rewrites a sentence that hits rather than deleting
-its token (`workflows-core:grounding-format` §2.3 is the writing rule). That write-time check is a
+**The table is here, rather than in the command that runs the scan, because most of the bundle's
+documents are written long before it runs**, by earlier commands of the route, and a token one of
+them writes stops the package days later, where the only repair is a hand edit to a record the
+operator did not write. A writer can hold its documents to these classes when it writes them instead.
+One writer does so today: `commands/prd-ground.md` scans what it is about to write into the three
+grounding files against this table, and rewrites a sentence that hits rather than deleting its token
+(`workflows-core:grounding-format` §2.3 is the writing rule). That write-time check is a
 first line, never a substitute: `commands/brd-package.md` still runs its own scan over the finished
 bundle, exactly as strictly, because it is the last point at which anything is still ours.
 

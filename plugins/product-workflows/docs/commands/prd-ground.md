@@ -361,9 +361,12 @@ the customer in the review bundle as written, and [`/brd-package`](brd-package.m
 command, agent or skill name, `§` reference or decision-row id it finds in them. So every note,
 heading and lead-in the run writes says what happened in plain words, and before writing, Phase 8
 scans everything it is about to write for those tokens and rewrites a sentence that has one,
-changing no id, verdict, evidence, control result or outcome. The final report lists every rewrite.
-This covers what the run writes; a note an earlier run left on file stays as it is, and you can
-reword it by hand.
+changing no id, verdict, outcome, evidence path or line, or control result. The final report lists
+every rewrite. A token inside naming a finding records rather than prose — a path or command in your
+code repository, a frame path or label, the requirement text a finding quotes — is left as written,
+since rewording it would break the record; the final report names it, because `/brd-package` will
+still stop on it. This covers what the run writes; a note an earlier run left on file stays as it
+is, and you can reword its free text by hand.
 
 Behind Phase 9's consent choice, these are committed, pushed, and a pull request opened against the
 specs repo's default branch — under the shared `brd/<KEY>-<slug>` branch prefix on the BRD route
