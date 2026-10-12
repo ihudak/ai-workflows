@@ -46,13 +46,15 @@ One entry per discrepancy, in id order:
 - **evidence:** <file:line@commit>, one per repository it was found in
 - **decision:** <fix-code | amend-document | accept> — **status:** <proposed | final | resolved>
 - **rationale:** <the person's own words>
-- **effect:** <the follow-up line, the note's location, or "recorded">
+- **effect:** <"follow-up proposed: " and the follow-up line, the note's location, or "recorded">
 - **ruling:** <PRD run only: confirms <EPIC-KEY>/[DD#k] | overrules <EPIC-KEY>/[DD#k] | resolved <EPIC-KEY>/[DD#k]>
 - **flags:** <any of stale, orphaned, fixed, still open, requirement withdrawn, unverified>
 - superseded-by: <PRD-KEY>/[DD#n]   ← written into an Epic entry by the PRD run that overruled it
 ```
 
 `[DD#n]` is cited outside its record as `<KEY>/[DD#n]`.
+
+**`effect:` on a `fix-code` entry records the follow-up proposed, never one written.** The record is committed at the run's handoff, and the follow-up preview that comes after it can still cancel the line, so whether the follow-up was written is read from `follow-ups.md` — where the next run's re-check reads it — never from this field. Nothing rewrites the field after the preview.
 
 ## 4. Statuses and flags
 
