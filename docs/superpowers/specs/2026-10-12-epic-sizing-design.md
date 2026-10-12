@@ -23,6 +23,8 @@ Downstream does not split a big Epic for the agent. `/design` writes one `design
 
 ## 2. Decisions
 
+**D0 — Components first, size second.** The component split is unchanged and comes first: a capability landing in two or more components — two repositories, or two modules of one repository where the PRD's component set lists them (the ARD's `components:`, or `/epics` Phase 5.5's confirmed set) — becomes one Epic per component, however small each is. The size limit then applies to each Epic on its own and only ever splits further **within one component**: it never merges Epics, and never moves work across components. A PRD whose 4 criteria and 4 stories land in the `books` and `web` modules gives two Epics, each under the limit.
+
 **D1 — The limit.** An Epic holds at most **5 acceptance criteria** and at most **4 suggested stories**. It is over the limit where it has more than 5 or more than 4. Each is counted as the top-level `- ` bullets directly under `## Acceptance criteria` and `## Suggested stories` — a guard criterion counts like any other. A count, never a judgement.
 
 **D2 — One authority for the numbers.** `/epics` owns them, as `size_limit: {criteria: 5, stories: 4}`, and hands them to `epic-writer` and `epic-reviewer` in their briefs. Neither agent states the numbers itself; the docs page states them as the current values. Calibrating the limit later is one edit.
