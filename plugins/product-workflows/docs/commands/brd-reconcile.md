@@ -3,7 +3,8 @@
 Takes the customer's returned review, freezes what they actually decided as `[CD#n]` records, and
 then goes looking for everything in the tree that still asserts a position their answer overturned.
 It is the command that closes the customer loop: the `[C]` questions `/brd-interview` held and
-`/brd-package` sent stay open until this run confirms an answer to them.
+`/brd-package` sent stay open until this run confirms an answer to them, or finds their question
+has stopped applying.
 
 ## Who runs it
 
@@ -331,7 +332,7 @@ command removes none of them; the next `/brd-interview` run does.
   is unconfirmed. The four values are `confirm`, `correct`, `reject` and `ask-the-customer`, and a
   candidate answering no question the package put takes one of two instead — recorded for a human,
   quoting the customer, or rejected — and is never frozen on that form, save that a free-text answer
-  naming the question it does answer re-points it onto the four; the picker carries no bulk
+  naming the question it does answer re-points it onto the array its target takes; the picker carries no bulk
   confirmation, and a free-text answer is otherwise **normalised into those values or the candidate
   is re-asked** — never written through as another. *Reject* reads **no decision to freeze**: the
   customer declined to answer, or the row is not an answer at all (context, thanks, scheduling). It
@@ -370,19 +371,20 @@ command removes none of them; the next `/brd-interview` run does.
   whose requirement defects are all withdrawn closes too**, once this run has resolved the defects:
   every `Requirement defect` line on it names a defect the parent's defect log now resolves
   `withdrawn` — by an earlier run, or by this one on a decision it froze — and the question has no
-  record of its own: none frozen against it, by this run or an earlier one, and no `Re-puts:` line. A
-  question that does carry one — an answer frozen `open` for its reason, say — stays held, and is
-  named under *what still needs a human* for a person to settle. It closes *answered by the customer — nothing frozen*, naming the
-  withdrawn defects and, where this run withdrew them, the decision that did, whichever order the
-  walk took the answers in. That line is never read as the question's own record, so a later answer
+  record of its own: none frozen against it, by this run or an earlier one, and no `Re-puts:` line.
+  Such a question closes *answered by the customer — nothing frozen*, naming the withdrawn defects
+  and, where this run withdrew them, the decision that did, whichever order the walk took the
+  answers in. A question that does carry a record — an answer frozen `open` for its reason, say —
+  stays held, is named under *what still needs a human* for a person to settle, and a later answer
+  to it is walked against that record as any other is. That line is never read as the question's own record, so a later answer
   cannot supersede the other question's withdrawal through it. A reply — a decline included — is kept,
   with the customer's condition for asking again, under *what still needs a human*. One defect still
   standing keeps the question held, and a withdrawal frozen `open` withdraws nothing yet. Where the
-  defects were already withdrawn before this review, the walk offers such a reply the two record-or-
-  reject options only. A slice reconciled before 3.33.1 closes such questions when you re-run
+  defects were already withdrawn before this review and the question has no record of its own, the
+  walk offers such a reply the two record-or-reject options only. A slice reconciled before 3.33.1 closes such questions when you re-run
   `/brd-reconcile <KEY>` on the review it already took, passing its `customer-review-<date>.md`. That
-  re-run skips every decision and every section-12 correction the earlier pass already settled, and
-  offers again only the answers it rejected or sent back. A live record `open` for want of its reason is **completed**,
+  re-run skips every decision the earlier pass froze and every section-12 correction it applied or
+  refused, and offers again every answer it froze nothing for. A live record `open` for want of its reason is **completed**,
   minting nothing, by an answer with its own `chosen` and a reason now stated — never on an entry
   that puts a record again on a `- **Re-puts:**` line, where it is superseded (step 3) — and
   superseded by one choosing differently. A record

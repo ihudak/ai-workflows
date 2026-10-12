@@ -257,7 +257,7 @@ attack.
 - **Phase 0 — the register merged, the rounds settled, something to review.** All three run before
   anything else is read. The rounds gate admits exactly one holding state, *held for the customer*,
   and refuses the other three. That reading is forced: a round holding a `[C]` stays open **until the
-  answer comes back through the package**, and the package is what this command builds, so requiring
+  answer comes back through the package**, or the question stops applying, and the package is what this command builds, so requiring
   every round to be closed would deadlock the route. The other three holding states each name work
   that is still the delivery team's.
 - **Phase 0 — a dated bundle is never rewritten.** A `bundle-<date>/` that already exists stops the
@@ -406,7 +406,8 @@ attack.
   note is printed for pasting. Delivery is the operator's.
 - **It writes no `[CD#n]`, and it ingests no returned review.**
   [`/brd-reconcile`](brd-reconcile.md) is what turns a returned answer into a confirmed customer
-  decision, so the round holding each `[C]` stays open until that run records it.
+  decision, so the round holding each `[C]` stays open until that run records it, or finds its
+  question has stopped applying.
 - **It changes no ledger disposition.** The final report's ledger line reports where allocation
   stands; allocation itself is `/brd-split`'s walk. Two other runs may move a row afterwards, and
   neither is this one: [`/brd-reconcile`](brd-reconcile.md) freezes a customer decision that settles

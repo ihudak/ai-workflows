@@ -1635,7 +1635,8 @@ orchestrator would then have to evaluate.
 
 Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")` — names only,
 never behaviour a command of its own owns: the round holding each `[C]` stays open until the
-customer's answer comes back and `/product-workflows:brd-reconcile` records it, and what happens between
+customer's answer comes back and `/product-workflows:brd-reconcile` records it, or finds its question
+has stopped applying, and what happens between
 this run and that one is not the plugin's to do — the package has to reach a customer and the
 customer has to answer.
 
