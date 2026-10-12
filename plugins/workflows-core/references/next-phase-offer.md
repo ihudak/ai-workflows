@@ -137,7 +137,8 @@ array carries every option.
   (PM) where the slice is PRD-eligible — the same conditions `/product-workflows:brd-reconcile`'s
   advancing list applies (`/product-workflows:brd-interview`'s next-step phase owns that list).
 - `/product-workflows:brd-package <BRD-KEY>` → *(the customer reviews it off-platform, and the round
-  holding each customer question stays open until the answer comes back)* →
+  holding each customer question stays open until the answer comes back, or the question stops
+  applying)* →
   `/product-workflows:brd-reconcile <BRD-KEY> @<review-file>` (PM).
 - `/product-workflows:brd-reconcile <BRD-KEY> @<review-file>` → the route's hand-over into the PRD
   pipeline for a slice the customer reviewed (a slice needing no review hands over from

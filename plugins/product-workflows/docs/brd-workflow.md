@@ -54,8 +54,8 @@ flowchart TD
     interview -.->|nothing for the customer to review, PRD-eligible — no reconciliation needed| createprd
     interview -.->|nothing for the customer to review — no reconciliation needed| createard
     interview -.->|nothing for the customer to review — no reconciliation needed| specify
-    splitroot -.->|"each slice, at any readiness"| prdproposal
-    prdproposal -->|"each included slice's proposal.md, rolled up"| brdproposal
+    splitroot -.->|"BRD route — each slice, a PRD- folder, at any readiness"| prdproposal
+    prdproposal -->|"BRD route — each included slice's proposal.md, rolled up for the BRD"| brdproposal
 
     classDef prod fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
     classDef cust fill:#f3f4f6,stroke:#6b7280,color:#1f2937

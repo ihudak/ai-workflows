@@ -369,8 +369,10 @@ command removes none of them; the next `/brd-interview` run does.
   naming the withdrawal, so its round can close and no later package carries it. **A held question
   whose requirement defects are all withdrawn closes too**, once this run has resolved the defects:
   every `Requirement defect` line on it names a defect the parent's defect log now resolves
-  `withdrawn` — by an earlier run, or by this one on a decision it froze — and nothing was frozen
-  against the question this run. It closes *answered by the customer — nothing frozen*, naming the
+  `withdrawn` — by an earlier run, or by this one on a decision it froze — and the question has no
+  record of its own: none frozen against it, by this run or an earlier one, and no `Re-puts:` line. A
+  question that does carry one — an answer frozen `open` for its reason, say — stays held, and is
+  named under *what still needs a human* for a person to settle. It closes *answered by the customer — nothing frozen*, naming the
   withdrawn defects and, where this run withdrew them, the decision that did, whichever order the
   walk took the answers in. That line is never read as the question's own record, so a later answer
   cannot supersede the other question's withdrawal through it. A reply — a decline included — is kept,
@@ -378,9 +380,9 @@ command removes none of them; the next `/brd-interview` run does.
   standing keeps the question held, and a withdrawal frozen `open` withdraws nothing yet. Where the
   defects were already withdrawn before this review, the walk offers such a reply the two record-or-
   reject options only. A slice reconciled before 3.33.1 closes such questions when you re-run
-  `/brd-reconcile <KEY>` on the review it already took, passing its `customer-review-<date>.md` —
-  a full pass otherwise, which offers again every answer the earlier pass rejected or sent back and
-  every section-12 correction. A live record `open` for want of its reason is **completed**,
+  `/brd-reconcile <KEY>` on the review it already took, passing its `customer-review-<date>.md`. That
+  re-run skips every decision and every section-12 correction the earlier pass already settled, and
+  offers again only the answers it rejected or sent back. A live record `open` for want of its reason is **completed**,
   minting nothing, by an answer with its own `chosen` and a reason now stated — never on an entry
   that puts a record again on a `- **Re-puts:**` line, where it is superseded (step 3) — and
   superseded by one choosing differently. A record

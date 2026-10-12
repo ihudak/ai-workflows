@@ -12,6 +12,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Docs
 - **The family map draws `/prd-ground` in the PM lanes** — the BRD slice's in the BRD route, the idea PRD's in the idea route — instead of in a box of its own that read as a separate role, and draws `/prd-proposal` from both routes, with `/brd-proposal` after it on the BRD route only.
+- **`next-phase-offer`'s BRD-route note says a held customer question's round stays open until the answer comes back *or the question stops applying*** — its requirement withdrawn (product-workflows 3.33.1).
 
 ## [1.38.1] — 2026-10-12
 

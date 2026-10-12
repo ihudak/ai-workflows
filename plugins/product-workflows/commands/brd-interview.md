@@ -472,12 +472,14 @@ and a holding state keeps the round open:
 **Why the distinction is load-bearing rather than tidy.** Every rule that reads a question's state
 — this phase's resume rule, the *Write the register and the round record* phase's closure rule,
 `/product-workflows:brd-package`'s gate on the rounds, and `/product-workflows:brd-reconcile`'s
-closing of a round its answers settle — is stated in this one vocabulary, so they cannot drift
-apart. Were a holding state counted as a disposition, a round whose remainder sat in any holding
+closing of a round its answers settle or whose questions stopped applying — is stated in this one
+vocabulary, so they cannot drift apart. Were a holding state counted as a disposition, a round whose remainder sat in any holding
 state — *deferred* or *needs grounding*, say — would close, and the resume rule would then skip past
 the very question this run promised to return to. §5 sides with the holding states: *"A round with
-an outstanding `[C]` stays open until that answer comes back through the package — the customer's
-turnaround is not a reason to declare the round finished around them."*
+an outstanding `[C]` stays open until that answer comes back through the package, or until its
+question stops applying — the record it put again withdrawn, or every requirement defect it carries
+withdrawn with its requirement — and the customer's turnaround is not a reason to declare the round
+finished around them."*
 
 A round is **open** while any question in it lacks a **terminal** disposition, and **closed** once
 every one has one. **A question's state is the last one its record records at that question's

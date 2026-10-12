@@ -383,7 +383,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
    **Why *held for the customer* is admitted and the other three are not.** The design's
    precondition for this command is that the interview's open rounds are closed, and read literally
    that is a deadlock: a round holding a `[C]` stays open **until the answer comes back through the
-   package** (`${CLAUDE_PLUGIN_ROOT}/references/interview-tagging.md` §5), and the package is what
+   package**, or its question stops applying (`${CLAUDE_PLUGIN_ROOT}/references/interview-tagging.md` §5), and the package is what
    this command builds. So the only reading under which the route can run at all is the one taken
    here — everything the delivery team can settle is settled, and what remains is exactly the set
    this package is being built to carry. The other three holding states are the opposite case: each
