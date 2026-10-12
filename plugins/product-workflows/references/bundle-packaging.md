@@ -405,9 +405,10 @@ the folder that holds `bundle-<YYYYMMDD>/`, under the exact name the prompt give
 their own with a pull request against the default branch — one added file and nothing else, since a
 correction they want made to the package goes in the review's section 12, never into the bundle.
 `commands/brd-reconcile.md` then finds it there once the operator merges that pull request, asks the
-operator to confirm it, and moves it to its canonical name; it also checks what that pull request
-changed in a bundle, since one that edited a package document would leave the customer's quotations
-checked against a document they were never sent. A customer who cannot
+operator to confirm it, and moves it to its canonical name. Before that confirmation it lists
+anything else the pull request changed in the slice's folder — a package document edited there
+would leave the customer's quotations checked against a document they were never sent — and then
+does not recommend going ahead, leaving the operator to reconcile or to restore first. A customer who cannot
 push sends the file back instead, as on the archive route, where the review arrives as a file and
 the operator passes its path. The prompt says none of this — it names no route (above) — so the
 note is where the return route is stated, beside the delivery route it mirrors.

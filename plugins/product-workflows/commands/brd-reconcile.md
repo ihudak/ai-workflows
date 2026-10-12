@@ -350,6 +350,7 @@ write would re-ask a question already answered.
      Found nowhere → stop with step 2's `BRD_RECONCILE_NEEDS_REVIEW`: a pull request from a fork of
      the repository, or a branch the fetch could not reach, is on none of the branches this clone
      holds, and shows up here only once merged.
+   Before asking, take step 6b's list for each file found, and print it with that file.
    - **More than one** → ask which, every one printed above the question with the commit that added
      it, most recent first: `choices: ["<file-1>", "<file-2>", "None of these — stop"]`, with a
      third file before the decline where there is one; four or more, the two most recent, then
@@ -360,12 +361,17 @@ write would re-ask a question already answered.
      names only. A decline stops the run, writing nothing; the others wait for their own run.
    - **Exactly one** → print its name, the folder it is in, and the commit that added it
      (`git -C "$SPECS_PATH" log --diff-filter=A -1 --format='%h %an %ad' <default-ref> -- "<path>"`),
-     and ask:
+     and ask, where step 6b's list is empty:
      ```
      choices: ["Reconcile this review (Recommended)", "Cancel"]
      ```
-     The recommendation stands because it is the file the route asked the customer to commit and the
-     operator merged. *Cancel* stops the run, writing nothing.
+     and, where it lists anything or could not be made:
+     ```
+     choices: ["Reconcile this review", "Cancel"]
+     ```
+     The recommendation stands only in the first case: the file is the one the route asked the
+     customer to commit, and the operator merged it with nothing else beside it. *Cancel* stops the
+     run, writing nothing.
 
    Print beside the question, where either holds: that a byte-identical
    `customer-review-<YYYYMMDD>[-<suffix>].md` is already in the working tree, so reconciling it again
@@ -378,32 +384,32 @@ write would re-ask a question already answered.
    the default branch first moves it. The review's bytes are the ones on
    `<default-ref>` — `git -C "$SPECS_PATH" show "<default-ref>:./<path>"` — never a working copy that
    may differ, and that phase moves the file rather than copying it where it can (its step 3).
-6b. **Check what the customer's pull request changed in a bundle.** Run this where the review is
-   the customer's committed one — found by step 6a, or an `@<review-file>` naming a file committed in
-   this folder or one of its `bundle-<YYYYMMDD>/` folders whose name is exactly
-   `<BRD-KEY> Customer Review <YYYYMMDD>.md` — and on no other run: a review that came back as a file
-   came with no pull request, and where step 6's gate returned `unmanaged` there is no history to
-   read. The delivery note asked that pull request to add one file and change nothing else, and a
-   change it made to a package document instead of asking for it in the review's section 12 would
-   leave the review's quotations checked against a document the customer was never sent. Take `M`,
-   the commit that brought the review onto `<default-ref>` — the merge, squash or rebased commit, by
-   `git -C "$SPECS_PATH" log --first-parent --diff-filter=A -1 --format=%H <default-ref> -- "<path>"` —
-   and list what it changed in a bundle: `git -C "$SPECS_PATH" diff --name-status --no-renames <M>^1 <M> -- <BRD-dir>/`,
-   keeping the entries that modified, deleted or retyped (`M`, `D`, `T`) a file in a
-   `bundle-<YYYYMMDD>/` folder. Of those, keep each file whose blob on `<default-ref>` differs from its blob at `<M>^1`, a file missing
-   from `<default-ref>` counting as differing: one restored since is no longer a change. A file the
-   pull request only added is not listed — the review itself, committed inside a bundle by mistake, is
-   moved out by the *Canonicalise the returned review* phase, and an added file alters no document
-   the customer was sent. A pull request merged by rebasing several commits is checked at the one that
-   added the review, and that limit is reported. Nothing left → go on, silently. Otherwise print each
-   file with `M`, its author and its subject, and ask:
-   ```
-   choices: ["Stop — restore those files first (Recommended)", "Continue — keep them as they stand"]
-   ```
-   The recommendation stands because these are changes the customer's own pull request made to what
-   they were sent, which the route asked it not to make. *Stop* ends the run, writing nothing:
-   `BRD_RECONCILE_BUNDLE_CHANGED: the pull request that brought in <file> (<M>, <author>) also changed <files> in <BRD-dir>/bundle-<YYYYMMDD>/. A review is checked against the bundle the customer was sent, so restore them — git -C "$SPECS_PATH" restore --source=<M>^1 --staged --worktree -- <files> — commit and merge that, and re-run. A change the customer wants made to the package belongs in their review's section 12.`
-   *Continue* proceeds, and the reconciliation record and the final report name every file it kept.
+6b. **List what else the customer's pull request changed.** This runs where the review is the
+   customer's committed one — found by step 6a, which takes this list before its question, or an
+   `@<review-file>` naming a file on `<default-ref>` in this folder or one of its
+   `bundle-<YYYYMMDD>/` folders whose name is exactly `<BRD-KEY> Customer Review <YYYYMMDD>.md` — and
+   on no other run: a review that came back as a file came with no pull request, and where step 6's
+   gate returned `unmanaged` there is no history to read. Take `M`, the commit that brought the review
+   onto `<default-ref>` — `git -C "$SPECS_PATH" log --first-parent -m --diff-filter=A -1 --format=%H <default-ref> -- "<path>"`
+   — and list everything it changed in this folder save the review: every entry of
+   `git -C "$SPECS_PATH" diff -z --relative --name-status --no-renames <M>^1 <M> -- <BRD-dir>/`
+   whose path is not named exactly `<BRD-KEY> Customer Review <YYYYMMDD>.md`, each with the commits
+   that changed it (`git -C "$SPECS_PATH" log --format='%h %an %s' <M>^1..<M> -- "<file>"` — under a
+   merge-commit merge `M`'s own author is whoever merged it, not who made the change).
+
+   **The run reports this list and decides nothing.** The delivery note asked the pull request to add
+   the review and change nothing else, so whatever is listed is something changed in the delivery
+   side's own records — a package document the review's quotations are checked against, or a
+   register or ledger whose every customer decision has to pass an operator. So the confirmation is
+   asked without its `(Recommended)` marker wherever the list is not empty: step 6a's question, or,
+   for an `@<review-file>`, its second array asked here, *Cancel* stopping the run with nothing
+   written. The operator either reconciles knowing what else came in, or cancels, restores those
+   files from `<M>^1` on a branch cut from the default branch, and re-runs. **Where `M` has one
+   parent** — a squash, or a pull request rebased onto the branch — the list is that commit's change
+   alone, and the run says so: a pull request rebased as several commits is listed only at the one
+   that added the review. **Where `M` or `<M>^1` does not resolve** — a shallow clone, say — say the
+   list could not be made, and why, and ask without the marker likewise. The reconciliation record
+   and the final report repeat the list, or that it was empty or could not be made.
 7. **Do not re-gate allocation, and do not re-gate the rounds.** Read `coverage-ledger.md` for the
    rows this run may move and for the final report's ledger line, but do not gate on it:
    `/brd-interview` already refused to run against an unallocated ledger, `/brd-package` refused to
@@ -587,9 +593,11 @@ path nobody else can reproduce; the copy is the record.
    review's bytes (for one step 6a found, those on `<default-ref>`), then delete the committed file
    from the working tree, so the folder holds the review once — and a bundle the customer committed
    it into holds again exactly what was sent — while its commit keeps the customer's original in
-   history. Where the checkout's `HEAD` does not carry the file, a branch cut before the customer's
-   pull request merged, there is nothing here to delete: the run copies it and says so, and a run
-   from the default branch moves it. The no-overwrite rule above is unchanged — the move lands at
+   history. Where the checkout's `HEAD` does not carry the file there is nothing here to delete, and
+   Phase 0 step 6a's note has already said which of two causes it is: an earlier run moved it on this
+   branch, so this run resumes that one and moves nothing; or the branch was cut before the
+   customer's pull request merged, so the run copies it, says so, and a run from the default branch
+   moves it. The no-overwrite rule above is unchanged — the move lands at
    whichever name step 2 resolved, suffix included — and on the byte-identical case, a resumed run,
    the committed file is deleted here where it is still in the working tree.
 
@@ -2310,7 +2318,10 @@ On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:re
 table), `feature_folder` as resolved in the *Resolve inputs and gate the sent package* phase,
 `deliverable_paths` = the canonicalised review at its resolved name, the customer's committed
 review's path wherever HEAD carries it and the working tree no longer does (the *Canonicalise the
-returned review* phase's move) and, where `--sent` was given, every file beneath
+returned review* phase's move — where this handoff reuses an unmerged `brd/` branch cut before the
+customer's pull request merged, that path is reported declared but staged by nothing, as that
+phase's step 5 says, and the review stays on the default branch until a run from it moves the file)
+and, where `--sent` was given, every file beneath
 `customer-sent-<YYYYMMDD>/`, one literal path each and never the directory (all still listed, so a
 run whose first handoff was declined lands them here), `decisions.md`, `interview/round-<N>.md` and
 `interview/customer-questions.md` where on file (a slice never interviewed holds neither, and a
