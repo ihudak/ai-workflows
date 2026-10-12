@@ -110,7 +110,8 @@ is the team's to choose.
 **It reads keys as §3 resolves them, never out of a name or a key's shape.** Every folder at most
 three levels below `specifications/` (§3's bound), passing over §2's reserved subdirectories and
 everything below them, has its key read off its carrier (§4) — never off a document that is not one,
-such as a customer's source copied under `brd/` or a vendored attachment. A folder directly under
+such as a customer's source copied under `brd/` or a vendored attachment. A symbolic link, a hidden
+directory and an unreadable one are passed over. A folder directly under
 `specifications/` counts as **top-level**, one below another folder as **nested**: where the folder
 sits decides it, never how many segments its key carries (§1, *Shape is not depth*). Within one
 leading token, the highest top-level key is the one whose numeric segments, compared in order as
@@ -127,7 +128,7 @@ if not root or not os.path.isdir(root):
     sys.exit(0)
 def frontmatter(path):
     try:
-        with open(path, encoding="utf-8", errors="replace") as fh:
+        with open(path, encoding="utf-8-sig", errors="replace") as fh:
             if fh.readline().strip() != "---":
                 return {}
             fields = {}
@@ -140,8 +141,13 @@ def frontmatter(path):
     except OSError:
         pass
     return {}
+def listing(folder):  # an unreadable folder is passed over, never a traceback under the stop
+    try:
+        return os.listdir(folder)
+    except OSError:
+        return []
 def carrier_key(folder):  # §4: top-level files in byte-wise order, else brd/brd-inventory.md
-    names = sorted((n for n in os.listdir(folder) if os.path.isfile(os.path.join(folder, n))), key=os.fsencode)
+    names = sorted((n for n in listing(folder) if os.path.isfile(os.path.join(folder, n))), key=os.fsencode)
     for name in names + [os.path.join("brd", "brd-inventory.md")]:
         fields = frontmatter(os.path.join(folder, name))
         if fields.get("kind") in ("brd", "prd", "epic") and KEY.fullmatch(fields.get("key", "")):
@@ -149,9 +155,9 @@ def carrier_key(folder):  # §4: top-level files in byte-wise order, else brd/br
     return None
 top, nested, best = {}, {}, {}
 def walk(folder, depth):
-    for name in sorted(os.listdir(folder)):
+    for name in sorted(listing(folder)):
         path = os.path.join(folder, name)
-        if name.startswith(".") or not os.path.isdir(path) or name in RESERVED or name.startswith(("bundle-", "customer-sent-")):
+        if name.startswith(".") or os.path.islink(path) or not os.path.isdir(path) or name in RESERVED or name.startswith(("bundle-", "customer-sent-")):
             continue
         key = carrier_key(path)
         if key:
@@ -222,7 +228,8 @@ round is), `dev-workflows/` is `references/specs-repo-git.md` §2.1's, `design/`
 `attachments/` is `idea-format.md`'s, and each other name is the owner cited beside it in the list
 above; a name added here without an authority to cite is a name two files will disagree about.
 `specs-repo-git.md` §2.1's classifier excludes every name in the list but `dev-workflows/`, so that
-a file a run copied in is never committed as a session file, and a name added here is added there too.
+a file a run copied in is never committed as a session file, and a name added here is added there too —
+and to `key-summary`'s `RESERVED` set and prefixes (§1), so it never reads a key off a file a run copied in.
 
 **A user whose own key begins with a kind token gets `PRD-PRD-1234-…`.** That is a documented
 consequence of a documented convention, not a defect, and it is not hypothetical: a key like

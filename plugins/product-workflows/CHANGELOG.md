@@ -13,6 +13,9 @@ Needs `workflows-core` 1.36.6, whose `key-summary` the three missing-key stops b
 - **`/create-prd` lists the keys already in the specs tree beneath `CREATE_PRD_NEEDS_KEY`**, as `/idea` and `/brd-intake` do: it is the third command that creates the folder its address names. Its docs page now names the stop's `<ADDRESS>` form, which it had given as `<KEY> @<idea.md>`.
 - **`/brd-intake`'s defect walk no longer tells the operator to confirm a restated defect.** A candidate restating an entry on file is answered *Reject — not a defect*, as its *On file* line says, and the fixed *Reject* description and the preamble now say so too; they read before as though only a non-defect or an answered point could be rejected. The preamble names the candidates documentation grounding raised beside `brd-reader`'s, and says the reason is what `/brd-interview`'s later question to the customer is built from, rather than "later questions".
 
+### Changed
+- **The getting-started page says what you need before you install**: Claude Code and no other agent, a session started on Opus 5.5 or later, macOS, Linux or WSL2 rather than native Windows, and `git`, `bash` 5 and `python3` 3.11 on your `PATH`, plus `jq` for the status line and `/workflows-core:diagnose-session` — the repo-root README's *Prerequisites* gives each one's minimum version and reason. It replaces the page's claim that nothing beyond `gh` was needed.
+
 ## [3.30.4] — 2026-10-12
 
 ### Changed

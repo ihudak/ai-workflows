@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.23.1] — 2026-10-12
+
+### Changed
+- **The getting-started page says what you need before you install**: Claude Code and no other agent, a session started on Opus 5.5 or later, macOS, Linux or WSL2 rather than native Windows, and `git`, `bash` 5 and `python3` 3.11 on your `PATH`, plus `jq` for the status line and `/workflows-core:diagnose-session` — the repo-root README's *Prerequisites* gives each one's minimum version and reason. It replaces the page's claim that nothing beyond `gh` was needed.
+- **The Session cost page says the Option B cross-check needs `jq`** as well as the status line: the status line writes no snapshot without it.
+
 ## [4.23.0] — 2026-10-08
 
 ### Changed
