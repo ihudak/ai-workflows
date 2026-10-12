@@ -455,7 +455,7 @@ them **terminal dispositions**:
 |---|---|
 | *answered from findings* | a verified finding settled a `[G]` |
 | *decided* | a `[V]` produced a `[VD#n]` with its argumentation |
-| *answered by the customer* | a `[C]`'s answer came back and an operator confirmed it (D14) — or, written by `/brd-reconcile` with nothing frozen, the question stopped applying: the record it put again was withdrawn, or every requirement defect it carries was withdrawn with its requirement while it held no answer of its own |
+| *answered by the customer* | a `[C]`'s answer came back and an operator confirmed it (D14) — or, written by `/brd-reconcile` with nothing frozen, the question stopped applying: the record it put again was withdrawn, or every requirement defect it carries was withdrawn with its requirement while it had no record of its own — no answer frozen against it and no `Re-puts:` line |
 | *re-tagged* | a `[G]` grounding could not settle changed tag, naming its cause; the re-tagged question then carries its own disposition |
 | *split* | the question became parts, named; the parts carry their own dispositions |
 
@@ -478,8 +478,8 @@ state — *deferred* or *needs grounding*, say — would close, and the resume r
 the very question this run promised to return to. §5 sides with the holding states: *"A round with
 an outstanding `[C]` stays open until that answer comes back through the package, or until its
 question stops applying — the record it put again withdrawn, or every requirement defect it carries
-withdrawn with its requirement while it holds no answer of its own —
-and the customer's turnaround is not a reason to declare the round
+withdrawn with its requirement while it has no record of its own —
+no answer frozen against it and no `Re-puts:` line — and the customer's turnaround is not a reason to declare the round
 finished around them."*
 
 A round is **open** while any question in it lacks a **terminal** disposition, and **closed** once

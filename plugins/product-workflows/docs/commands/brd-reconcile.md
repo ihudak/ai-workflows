@@ -17,7 +17,8 @@ customer to [`/brd-package`](brd-package.md), and a challenged code claim to
 same review itself in three cases: to finish a run cancelled or stopped partway, where the re-run
 skips what the earlier pass already froze and offers the rest; to sweep a dependent it could only
 record, once that dependent has its own register on the default branch; and, on a slice reconciled
-before 3.33.1, to close the questions whose requirement the customer withdrew.
+before 3.33.1, to close the questions raised only about the defects of a requirement the customer
+withdrew.
 
 ## Synopsis
 
@@ -380,14 +381,16 @@ command removes none of them; the next `/brd-interview` run does.
   with the customer's condition for asking again, under *what still needs a human*. One defect still
   standing keeps the question held, and a withdrawal frozen `open` withdraws nothing yet. A question
   that does carry a record — an answer frozen `open` for its reason, say — stays held, is named under
-  *what still needs a human*, and a later answer to it is walked against that record and closes it. Where the
+  *what still needs a human*, and a later answer to it is walked against that record — one that
+  completes or replaces it closes the question. Where the
   defects were already withdrawn before this review and the question has no record of its own, the
   walk offers such a reply the two record-or-reject options only. A slice reconciled before 3.33.1 closes such questions when you re-run
   `/brd-reconcile <KEY>` on the review it already took, passing its `customer-review-<date>.md`. That
   re-run skips every decision the earlier pass froze, and offers again every answer to a question it
   froze nothing for. Its section-12 corrections are put again with the earlier pass's listing beside
   each, since a record from before 3.33.1 names no row by position: point each to the listing that
-  disposed it, and it is reported already disposed. A live record `open` for want of its reason is **completed**,
+  applied or refused it, and it is reported already disposed; one matched to a deferral, or to none, is
+  disposed again. A live record `open` for want of its reason is **completed**,
   minting nothing, by an answer with its own `chosen` and a reason now stated — never on an entry
   that puts a record again on a `- **Re-puts:**` line, where it is superseded (step 3) — and
   superseded by one choosing differently. A record

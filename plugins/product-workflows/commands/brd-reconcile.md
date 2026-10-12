@@ -1157,7 +1157,7 @@ the walk says that, where this review's frozen decisions withdraw every requirem
 defects were raised against, the entry has no record of its own and nothing is frozen against it,
 it is closed once the defects are resolved — unless the parent's defect log is under review, when the resolution is only recorded
 and the entry stays held — whichever order the candidates are walked in. **A substantive reply to
-such an entry is kept for a human by *Reject***, whose words the reconciliation record keeps: *Confirm*
+such an entry, where it has no record of its own, is kept for a human by *Reject***, whose words the reconciliation record keeps: *Confirm*
 would freeze a decision about a requirement this same review withdraws. An entry with no `- **Requirement
 defect:**` line is not this case, and neither is a decline on a question whose requirement still
 stands: that takes *Reject*, stays *held for the customer*, and the next package puts it again.
@@ -1363,9 +1363,10 @@ freeze.
 Then, in the same phase and from the same confirmed set:
 
 1. **Close each `[C]` in the round record.** A question whose answer this run froze — or whose
-   `open` record this run completed, or re-decided in place — moves from the holding state *held for
-   the customer* to the terminal disposition **answered by the customer**, naming the `[CD#n]` it
-   produced or completed. Append it; never rewrite what the round originally asked, or
+   live record this run completed from `open`, or re-decided in place, unless it is left `open` for
+   want of its reason — moves from the holding state *held for the customer* to the terminal
+   disposition **answered by the customer**, naming the `[CD#n]` it produced, completed or
+   re-decided. Append it; never rewrite what the round originally asked, or
    anything else an earlier write of the record holds. **This is the only thing that can close such
    a round**, save the two closures of a question that has stopped applying — a withdrawn record put
    again (below), and requirement defects all withdrawn (the *Resolve the defects the review
@@ -1528,7 +1529,8 @@ Then, in the same phase and from the same confirmed set:
      (`decision-register-format.md` §4). The defect its `settles` names keeps the resolution Phase 8
      wrote when the record was first written `decided` — frozen so, or completed from `open` — and
      *Resolve the defects the review settled* writes none for it. Step 1 closes the question naming
-     this `[CD#n]`.
+     this `[CD#n]` — unless the re-decided record is left `open` for want of its reason, when the
+     question stays held, as step 1's carve-out sets out.
    - **`superseded`** — another answer replaced the record while the question putting it again
      travelled, a corrected resend's among them → nothing on it is written, and the answer acts on
      its **live record** (*Confirm every candidate*) by that record's status, under these bullets,
@@ -1606,17 +1608,19 @@ carried out — or refused, on the record.
 | `refused-with-reason` | The reason is recorded and travels into the reconciliation record. A refusal the customer never sees is a refusal they will re-request next round |
 | `deferred-to-next-round` | The change is real and cannot be made now; what blocks it is named, and the row is carried into the reconciliation record's *what still needs a human* |
 
-**A row an earlier pass over this same review already applied or refused is not put again.** Each
-pass sits under a heading naming the canonical review file it reconciled, suffix included
-(*Canonicalise the returned review*, step 3), and records each correction by its position in the
+**A row an earlier pass over this same review already applied or refused is not put again, where
+its record names the row by position.** Each pass sits under a heading naming the canonical review
+file it reconciled, suffix included (*Canonicalise the returned review*, step 3) — a record written
+before every pass carried one holds one pass, identified by its *The review* line — and records each correction by its position in the
 review's section 12 with the document and section it names (*Write the reconciliation record*);
 the review is the same file, so a row at that position is the same row. Such a row disposed
 `applied`, `applied-with-deviation` or `refused-with-reason` is reported as *already disposed*, with
 that disposition, counts as disposed for the gate below, and is neither applied nor refused a second
 time. A row it **deferred** is put again, since what blocked it may have cleared. **Where the record
 cannot name the row by position** — one written before rows were recorded so — the row is put with
-that pass's corrections, as its record lists them, printed beside it, and the operator says which of
-them is this row, if any: a row the operator matches to one that pass applied or refused is reported
+the corrections of every earlier pass over this review, as their records list them, printed beside
+it, and the operator says which of them is this row, if any: a row the operator matches to one a
+pass applied or refused is reported
 *already disposed*, naming the listing the operator pointed to, exactly as above; one matched to
 none, or to a deferral, takes a disposition like any other. A disposition is never attributed to a
 pass whose record the operator did not point to. That is what makes re-running an earlier review — for a
@@ -1736,7 +1740,7 @@ That is why the list above names no round record.
 |---|---|
 | `customer-amended <SLICE-KEY> <date>` | the review supplies corrected text for the requirement the defect was raised against. `<SLICE-KEY>` is this run's own slice, whose returned review holds the text, and the `<date>` is the **review's**, not this run's — the amendment is the customer's act |
 | `withdrawn` | the customer withdrew the requirement the defect was raised against — every `open` defect raised against it, whether or not the withdrawing `[CD#n]`'s `settles` names it: a requirement no longer asked for leaves nothing for its defect to be about |
-| `resolved-by: <SLICE-KEY>/[CD#n]` | a `[CD#n]` this run froze, or completed from `open`, `settles` the defect, and neither row above applies — the customer said which reading they meant. The `[CD#n]` named is the one whose `settles` names the defect, never one that merely looks related, and `<SLICE-KEY>` is this run's own slice |
+| `resolved-by: <SLICE-KEY>/[CD#n]` | a `[CD#n]` this run froze, or completed from `open`, `settles` the defect, the defect is still `open`, and neither row above applies — the customer said which reading they meant. The `[CD#n]` named is the one whose `settles` names the defect, never one that merely looks related, and `<SLICE-KEY>` is this run's own slice |
 
 **`resolved-by` and `customer-amended` are always written qualified, with this slice's key** —
 `resolved-by: <SLICE-KEY>/[CD#n]` and `customer-amended <SLICE-KEY> <date>`, the one spelling each
@@ -1826,10 +1830,12 @@ its own record.
 `resolved-by: <SLICE-KEY>/[CG#n]` is a grounding outcome and this command produces no finding, so it
 is never written here. `open` is the state a defect is already in and is never written *back* over a
 resolution — a resolution recorded is not un-recorded by a later reading of it. **Nor is one
-replaced by another**: a `[CD#n]` whose `settles` names a defect already resolved — `withdrawn` while
-its question waited, say — writes nothing over it, and the record goes under the reconciliation
-record's *what still needs a human*, since it decides a question about a requirement the customer
-no longer asks for.
+replaced by another**: a `[CD#n]` whose `settles` names a defect already resolved writes nothing over
+it. Where that resolution is `resolved-by` an earlier record of the same question — one this
+`[CD#n]` supersedes, completes or re-decides — the defect keeps it silently, the chain from that
+record reaching this one. Where it is `withdrawn` — withdrawn while the question waited, say — the
+record also goes under the reconciliation record's *what still needs a human*, since it decides a
+question about a requirement the customer no longer asks for.
 
 **The amendment stays in the returned review it came from — this slice's, as the resolution's key
 says — and is never written into `brd/source/`** (D11, `brd-format.md` §4). A resolution changes the
@@ -2379,7 +2385,8 @@ changed, why, which ids, and what still needs a human:
   the review supplied; every record *Freeze the customer decisions* step 3 left at its status, with
   the `[CD#n]` that contradicts or constrains it; every correction with its disposition, each by its
   position in the review's section 12 with the document and section it names, and every row reported
-  *already disposed* by an earlier pass over this review; every banner added; every defect
+  *already disposed* by an earlier pass over this review, by its position, with that pass's
+  disposition and, where the operator matched it, the listing the operator pointed to; every banner added; every defect
   resolution, with the log's path; every ledger row moved.
 - **The sweeps** — the changed-id set as fixed; per dependent BRD, every `conditional_on` position
   and every citing item with its disposition and reason, each id in the qualified prose form the
