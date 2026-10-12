@@ -118,7 +118,7 @@ flowchart TD
     p14 -.->|"advance_ready + no unallocated row and one covered-here"| prd["/create-prd (PM)"]
     p14 -.->|"advance_ready"| ard["/create-ard (PA, optional)"]
     p14 -.->|"advance_ready"| spec["/specify (PE)"]
-    p14 -.->|"advance_ready: no — reopened decision, held customer question, unre-derived finding, or an unswept dependent"| reentry["/brd-interview, /brd-package, or /prd-ground --rebaseline, on this same &lt;BRD-KEY&gt; (PM)"]
+    p14 -.->|"advance_ready: no — reopened decision, held customer question, unre-derived finding, or a write into another BRD only recorded"| reentry["/brd-interview, /brd-package, /prd-ground --rebaseline, or /brd-reconcile on the same review, on this same &lt;BRD-KEY&gt; (PM)"]
 ```
 
 `customer-review-reader` is dispatched once, on the detection chain. `workflows-core:impl-maintenance` runs in the
@@ -373,7 +373,8 @@ command removes none of them; the next `/brd-interview` run does.
   naming the withdrawal, so its round can close and no later package carries it. **A held question
   whose requirement defects are all withdrawn closes too**, once this run has resolved the defects:
   every `Requirement defect` line on it names a defect the parent's defect log now resolves
-  `withdrawn` — by an earlier run, or by this one on a decision it froze — and the question has no
+  `withdrawn` — by an earlier run, or by this one, on a decision it froze, completed or re-decided,
+or one an earlier pass over this review could only record — and the question has no
   record of its own: none frozen against it, by this run or an earlier one, and no `Re-puts:` line.
   Such a question closes *answered by the customer — nothing frozen*, naming the withdrawn defects
   and, where this run withdrew them, the decision that did, whichever order the walk took the

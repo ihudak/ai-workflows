@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.39.1] — 2026-10-13
+
+### Fixed
+- **`next-phase-offer`'s account of `/brd-reconcile`'s advance options names every write it could only record.** It said the three advance options drop where the run could only record a dependent's sweep; since product-workflows 3.33.2 they drop too where a defect resolution in the parent's log could only be recorded, and the sentence now says so, with why.
+
 ## [1.39.0] — 2026-10-13
 
 ### Changed

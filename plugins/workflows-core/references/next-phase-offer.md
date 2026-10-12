@@ -158,9 +158,10 @@ array carries every option.
   **The three are offered only on a run that left nothing to re-enter for.** Advance and re-entry are
   separate arrays, not one: where that run reopened a
   decision, left a `[C]` held for the customer, left a finding for a `--rebaseline` pass, or could
-  only record a dependent's sweep, all three advance options are dropped, because a `reopened` record
-  may not be consumed downstream (`product-workflows:decision-register-format` §3) and all three consume
-  the register. On an advancing slice run, `/product-workflows:create-prd <SLICE-KEY>` carries the further
+  only record a write into another BRD — a dependent's sweep, or a defect resolution in the parent's
+  log — all three advance options are dropped: a `reopened` record may not be consumed downstream
+  (`product-workflows:decision-register-format` §3) and all three consume the register, and a write
+  only recorded leaves another BRD reading a position the customer has since settled. On an advancing slice run, `/product-workflows:create-prd <SLICE-KEY>` carries the further
   condition that the reconciled ledger leaves no row `unallocated` and at least one `covered-here`
   (`product-workflows:coverage-ledger-format` §5, the two refusals its Phase 0 raises); the other two
   carry none of their own: neither reads the ledger as an authoring input, and although both now run the PRD gate on every

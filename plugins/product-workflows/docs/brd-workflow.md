@@ -348,7 +348,7 @@ specifications/BRD-<BRD-KEY>-<slug>/
 └── PRD-<CHILD-KEY>-<child-slug>/ # a slice /brd-split confirmed — where its PRD, ARD and spec are authored
     ├── brd-link.md              # parent, claims and depends-on; /brd-split writes it, /prd-ground, /brd-package and /brd-reconcile add depends-on
     ├── brd/brd-inventory.md     # the parent's rows this slice claims, copied verbatim, /brd-split
-    ├── coverage-ledger.md       # one row per claimed [BR#n]; /brd-split seeds and resolves it, /prd-ground fills evidence, /brd-reconcile moves a row on a frozen [CD#n]
+    ├── coverage-ledger.md       # one row per claimed [BR#n]; /brd-split seeds and resolves it, /prd-ground fills evidence, /brd-reconcile moves a row on a [CD#n] that is not open
     ├── grounding/
     │   ├── baselines.md         # one dated entry per pinned repository, /prd-ground
     │   ├── code-grounding.md    # [CG#n] findings, /prd-ground
