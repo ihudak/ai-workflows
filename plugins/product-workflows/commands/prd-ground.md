@@ -1536,6 +1536,43 @@ a raw finding and one a downstream command may cite.
 
 ## Phase 8 — Write findings
 
+**Write every grounding file for a reader with no plugin, and check what this run writes before
+writing it** (`workflows-core:grounding-format` §2.3). On `route: brd` every grounding file this
+phase writes — `grounding/code-grounding.md`, `grounding/design-grounding.md`,
+`grounding/baselines.md` — goes to the customer in the review bundle as written, and
+`/product-workflows:brd-package` stops the package on a plugin token it finds in them, days after
+this run, where the only repair is a hand edit. So:
+
+1. **What this run writes names no command, agent, skill, phase or rule, and none of an agent's
+   return fields** (`own_verdict`, `own_control`, `blind_disputed` and the rest — reword a
+   verifier's `notes` that carries one, as point 3 rewords a hit). A file's opening lines
+   say what was ground, against which repository and commit, and that every finding was re-derived
+   blind and compared before it was written — never which command or agent did it. A run's heading
+   in `design-grounding.md` is its date. The note saying design grounding was skipped gives its
+   reason in plain words; the derivation matrix's lead-in names its classes by what each means; and
+   the documentation divergences and every note this run adds to a block — a pre-rewrite verdict
+   (Phase 7), a supersession (below) — say what happened, never which rule made it happen. This command's instructions cite rules by section
+   and phase so the run can find them; what the run writes never does.
+2. **Scan everything this phase is about to write against
+   `${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1.2's classes** — the prose of point 1,
+   and every free-text value this run writes into a block: each evidence entry's note, `control`'s
+   method text, `prerequisite` and `notes`, whether this run wrote it or transcribed it from an
+   agent's return. Text already on file is not scanned, even in a block this run supersedes: it is
+   an earlier run's record, which this run leaves as it stands (`workflows-core:grounding-format`
+   §2.3 sanctions a hand edit to it instead). A `§` that opens what follows ` › ` after a captured path —
+   `source/<basename> › § 3.1`, the customer's own section — is no hit (`bundle-packaging.md` §6.3
+   rule 1).
+3. **On a hit, rewrite the sentence in plain language before writing it, and change nothing else.**
+   Never delete the token alone: the sentence leaned on the rule it cited, and without it says less
+   than it did. The id, `verdict`, every evidence entry's `path` and `lines`, `control`'s result —
+   its trailing `path:line` or `— no match` — `outcome` and every other field stay exactly as they
+   are, the line Phase 7 draws when it calls a reworded note no difference, so a rewrite settles
+   nothing again and dispatches nothing. **A hit inside a path in the code repository, or inside a
+   command run against it, is the customer's code and not the plugin's** — a `references/` directory
+   of theirs, say — and cannot be reworded without breaking the command: leave it as written and
+   name it in the Final report. Record every rewrite for the Final report, by finding id, or by file
+   and section for this run's own prose.
+
 **Append Phase 3's held `grounding/baselines.md` entries** once the two finding files below are
 written, and before the ledger's `evidence` column — never under `--no-code`, which holds none (Phase
 3). The pins land in the same phase as the findings pinned to them, so no stop of this run leaves one
@@ -1625,9 +1662,11 @@ place.
 
 **Marked `SUPERSEDED` means**: id retained, the verdict it carried written as `prior_verdict`, and a
 one-line note naming the `[CG#n]` that took it there, the verdict that finding carried, the verdict
-its successor carries — or that it has none — and the run that replaces it:
-`/product-workflows:prd-ground <KEY> --no-code` where that `[CG#n]` has a successor, and a plain
-`/product-workflows:prd-ground <KEY>` where it has none. **Where it has one, it has to be that mode
+its successor carries — or that it has none — and the run that replaces it, in words and never as a
+command (this phase's opening rule, point 1): *a design-only re-grounding of this slice* where that `[CG#n]` has a
+successor, and *a full re-grounding of this slice* where it has none. The command itself —
+`/product-workflows:prd-ground <KEY> --no-code`, or a plain `/product-workflows:prd-ground <KEY>` —
+goes in the Final report (below). **Where it has one, it has to be that mode
 rather than a plain re-run**: on a plain re-run `HEAD` still matches the pin and the successor
 answers the claim there, so Phase 5 does not re-ground it, and a `design-grounder` handed no
 `[CG#n]` for a claim **does not emit a class-4 finding for it**. Under `--no-code` the `[CG#n]` set
@@ -2095,7 +2134,7 @@ re-checked and left standing, and, where it did nothing, which of the three reas
 empty set; a non-empty one over which this phase rewrote no `[CG#n]` at all; or a non-empty one
 where `[CG#n]` **were** rewritten and no finding in the set cites one of them; every class-4
 `[DG#n]` Phase 8's cascade marked `SUPERSEDED`, each with the `[CG#n]` that took it there, the route
-that superseded that `[CG#n]` and the run its note names as replacing it; the `docs grounding:` line from Phase 1 step 0 verbatim, any repository a Phase 4.5 lead added,
+that superseded that `[CG#n]` and the command that replaces it — `/product-workflows:prd-ground <KEY> --no-code` where that `[CG#n]` has a successor, a plain `/product-workflows:prd-ground <KEY>` where it has none — which its note describes in words (Phase 8); every sentence Phase 8 rewrote before writing it, by finding id or by file and section, and every hit it left standing inside a repository path or command, or an explicit "none"; the `docs grounding:` line from Phase 1 step 0 verbatim, any repository a Phase 4.5 lead added,
 and the count of documentation divergences recorded (each named by the `[CG#n]` it diverges from —
 never by an identifier of its own, because it has none); whether the derivation matrix ran and why; any `design-grounder` class-4 gap deferred for want
 of a settling `[CG#n]`; **on `route: idea`, the claim-exclusion count and prefixes step 8i

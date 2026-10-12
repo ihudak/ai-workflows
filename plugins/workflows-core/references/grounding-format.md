@@ -302,6 +302,54 @@ this method finds attribution where attribution is written, so the absence it re
 second, that it finds nothing even where attribution is known to be there, so it has established
 nothing about the repository at all. An omitted `control` is indistinguishable from either.
 
+### 2.3 Free text is written for a reader with no plugin
+
+**Every free-text value in a finding, and every line of prose a run writes into a grounding file, is
+written so that a reader with no plugin installed can follow it.** That is an evidence entry's note,
+`control`'s method text, `prerequisite` and `notes`, and the prose around the blocks: a file's
+opening lines, a run's heading, the note saying design grounding was skipped, a supersession note, a
+documentation-divergence entry, the derivation matrix's lead-in. On the BRD route
+`grounding/code-grounding.md`, `grounding/design-grounding.md` and `grounding/baselines.md` go to the
+customer in the review bundle as written (`product-workflows:bundle-packaging` §1.1), and that
+bundle's plugin-free scan stops the package on any token of a class
+`product-workflows:bundle-packaging` §1.2 tabulates. A token found there is found days after the run
+that wrote it, in a record the operator then has to edit by hand. The idea route bundles nothing, and
+the rule holds there too: the same agents write both routes.
+
+So a finding's free text never carries:
+
+- a command, agent or skill name — `/prd-ground`, `grounding-verifier`, `workflows-core:grounding-format`;
+- a section or rule number of a plugin reference, or a phase or step number of a command — `§2.2`,
+  `§4.1 rule 4`, `Phase 4.5`;
+- an agent's return-field name — `own_verdict`, `own_control`, `blind_disputed`;
+- a reference file's name or path.
+
+**Say what the rule requires, never where it is written — and a token they cannot resolve is not
+fixed by deleting it.** A sentence that cited a rule leaned on it, so the sentence is what has to
+change. Three notes a verified run wrote, and what each should have said:
+
+| Written | Plain |
+|---|---|
+| *under §2.2 the control is owed and missing* | *it says something is absent, and nothing in the record shows the search could find it where it does exist* |
+| *a documentation page is never evidence for a [CG#n] (/prd-ground Phase 4.5)* | *repository documentation is not evidence about the code; only the code is* |
+| *a baseline finding, so it owes no control (§2.2, §4.1 rule 4)* | *git reported on every file of the checkout, so nothing was searched for and there is no search to test* |
+
+**What stays.** Identifiers — `[BR#n]`, `[CG#n]`, `[DG#n]` and the rest — which the bundle carries the
+files to resolve, and which are how a reviewer cites a finding; a path and line in the code
+repository, and a command run against it (`git grep …`), which a reviewer holding the repository can
+run again; and the record's own field names and values, which are the record being read. A section
+of the customer's own document is written `source/<basename> › § <n>` — its captured path, then the
+section — never a bare `§ <n>`, which reads as one of the plugin's (`product-workflows:bundle-packaging`
+§6.3 rule 1).
+
+**Who holds a writer to it.** `product-workflows:code-grounder`, `product-workflows:design-grounder`
+and `product-workflows:grounding-verifier` each carry the rule for the fields they return.
+`/product-workflows:prd-ground`, which writes the files, scans what it is about to write against the
+§1.2 table and rewrites a sentence that hits before writing it. A rewritten sentence changes nothing a
+reader acts on — no id, verdict, evidence path or line, control result or outcome — so the run makes
+it without dispatching anything again. A finding already on file is not rewritten by a later run; a
+hand edit to its free text is sanctioned (§2.1) and touches none of those fields either.
+
 
 ## 3. Verdicts
 

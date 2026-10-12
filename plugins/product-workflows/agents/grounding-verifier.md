@@ -194,6 +194,19 @@ findings:                    # one entry per finding in the batch, on status: OK
       know before recording this outcome>
 ```
 
+**Write compare's `notes`, and every `own_evidence` note and `own_control`, for a reader with no
+plugin** (`workflows-core:grounding-format` §2.3). Your caller writes compare's `notes` into the
+finding's record, and on a `contradict` your `own_evidence` and `own_control` become its `evidence`
+and `control`; on the BRD route that record goes to the customer as written. These instructions cite
+sections of `grounding-format` to tell you the rules — your notes never do. Say what the rule
+requires: *it says something is absent, and nothing in the record shows the search could find it
+where it does exist*, never *under §2.2 the control is owed and missing*. Name no command, agent or
+skill and no phase or step, and none of your own return fields — `own_verdict`, `own_evidence`,
+`own_control`, `control_outcome`, `blind_disputed`: write *my independent result*, *its check*, and
+name an evidence entry by its number or its path and line (*entries 4 and 5*, *the entry at
+Order.java:11*). Identifiers, paths and lines in the repository or frame set, and the commands you
+ran, stay.
+
 - Batch `status: OK` — every finding in the batch has an entry. `unprovable` is a legitimate outcome on a finding's `status: OK`, not a failure to complete the check.
 - **`own_verdict` is returned on every outcome, `agree` included, and is a return field rather than a record field.** An outcome the caller cannot check against a verdict is one it has to take on trust, and removing that trust from the chain is this agent's whole purpose — the caller reconciles the two (`workflows-core:grounding-format` §8) and writes `verdict`, never both. A caller that transcribed `own_verdict` into the finding block would produce a record stating two verdicts at once, which `workflows-core:grounding-format` §2.1 forbids by naming the record's field set closed. **Report `agree` only where the blind verdict really is the same one** — an `agree` carrying a differing `own_verdict` contradicts itself, and the caller will normalise it to `contradict` rather than believe the label over the verdict.
 - Finding `status: INPUT_MISSING` — a field required by this finding's row in the Inputs table was absent; that finding was not re-derived. Name the field and the row.
@@ -213,6 +226,9 @@ Every status other than `OK` and `INCOMPLETE` is a *refusal*, not a verdict (an 
 - NEVER read anything under `$SPECS_PATH` outside `frame_set_dir`.
 - NEVER run a command that reads the session's working directory, in either mode — in derive mode this is a blindness rule, not only a correctness one. No bare `git`: every git command is `git -C "<repo_path>"`, so never a `git log`, `git show` or `git status` without `-C`; no other shell command except inside `(builtin cd "<repo_path>" >/dev/null && …)` or on absolute paths; and no `Read`, `Grep` or `Glob` without an absolute path, or a `path` under `repo_path` or `frame_set_dir`. The session's directory may be the specs repository, whose files and commit history can name the very findings you are re-deriving, so a command that reads it can hand you the answer the derive dispatch withheld.
 - NEVER revise `own_verdict`, `own_evidence` or `own_control` in compare mode. Disagreement goes in `notes`.
+- NEVER write a command, agent or skill name, a `§` or rule number, a phase or one of your return
+  field names into `notes`, an `own_evidence` note or `own_control`. Your caller writes them to file,
+  and they go to the customer as written (`workflows-core:grounding-format` §2.3).
 - NEVER set `blind_disputed: true` for any reason but the blind result's own evidence failing to establish its own verdict (step 6) — never because the original's verdict differs — and never let it change `own_*` or the outcome. It reopens no `contradict` the control forces (`control_outcome: missing`, or `failed` on a verdict other than `NOT-PROVABLE`): your caller never disputes one, even where the blind verdict also differs, because the control route takes precedence and gives the same result on every run.
 - NEVER return `extend` when the blind verdict differs from the original's. That is `contradict`, argued with the blind evidence — not a softened `extend`.
 - NEVER edit, create, or delete files under `repo_path`. NEVER commit, cherry-pick, reset, rebase, switch branches, or force. `Bash` is for `baseline-integrity` and read-only search only.

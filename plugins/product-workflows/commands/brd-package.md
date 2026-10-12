@@ -1114,17 +1114,11 @@ scope is still open — which is cheaper for both sides than meeting it after de
 ### The plugin-free scan
 
 The last thing this phase does, over the **finished** prompt text — not over the templates, and not
-over the schema alone. Stop the run on any hit, naming the token, the part it landed in, and the
-artifact it was interpolated from:
-
-| Class | Examples |
-|---|---|
-| A path rooted at the plugin's install directory | the plugin-root variable, in any form |
-| A reference-file citation | `references/…`, a bare `workflows-core:<name>` loader argument, the `Skill(skill: "workflows-core:reference", …)` call itself, `docs/superpowers/…` |
-| A numbered cross-reference in this plugin's notation | any `§` |
-| A slash command | `/brd-…`, `/dev-workflows:…`, `/workflows-core:…`, any leading-slash command name |
-| An agent, subagent type or skill name | `subagent_type`, any `<plugin>:<name>` prefix (`dev-workflows:`, `workflows-core:`, and any namespace a later split adds), any agent filename |
-| A decision-row reference | `D12`, `D13`, `D18`, `D20`, or any other bare `D<n>` row id |
+over the schema alone. Stop the run on any hit of a class
+`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1.2 tabulates, naming the token, the part it
+landed in, and the artifact it was interpolated from. **The classes are that table's and are not
+copied here**: `/product-workflows:prd-ground` scans what it writes into the grounding files against
+the same table, and two copies of one list drift.
 
 `BRD_PACKAGE_PROMPT_LEAK: the rendered prompt carries <token> in part <n>, interpolated from <artifact> — the prompt is read by somebody with no plugin, and a token they cannot resolve is not fixed by deleting it. Where <token> is a § quoting the customer's own section number with no captured path, write it as the path and the section, source/<basename> › § <n>, which bundle-packaging.md §6.3 rule 1 exempts.`
 

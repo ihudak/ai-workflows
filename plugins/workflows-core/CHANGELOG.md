@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.38.1] — 2026-10-12
+
+### Fixed
+- **`grounding-format` §2.3: a grounding file's free text is written for a reader with no plugin.** Every evidence note, `control` method, `prerequisite` and `notes` value, and every line of prose a run writes around the finding blocks, names no command, agent or skill, no section or phase number and no agent return field, and says what a rule requires rather than where it is written. On the BRD route these files go to the customer in the review bundle as written, and the bundle's plugin-free scan stops on those tokens (product-workflows 3.32.1). Identifiers, code paths and lines, and the commands run against the repository stay; a section of the customer's own document is written `source/<file> › § <n>`. The section gives three before-and-after examples from a real run.
+
 ## [1.38.0] — 2026-10-12
 
 ### Changed

@@ -178,6 +178,12 @@ others is what produces a file whose scan reports findings missing that are on t
 `cites` sit after `horizon` for that reason and not for emphasis — they were first in this template,
 which put every `[DG#n]` on disk in a different key order from every `[CG#n]` beside it.
 
+**Write each evidence `note`, `control` and `prerequisite` for a reader with no plugin**
+(`workflows-core:grounding-format` §2.3). Your caller writes them into `design-grounding.md`, which
+on the BRD route goes to the customer as written. Name no command, agent or skill, no section or
+rule number of a reference, and no phase or step — say what a rule requires rather than where it is
+written. Identifiers, frame paths, and a class-1 field's label exactly as the frame shows it all stay.
+
 - `status: OK` — the frame set was indexed and every requirement/frame was reconciled, including a
   run that produced zero findings because everything agreed.
 - `status: INPUT_MISSING` — `frame_set_dir` or `inventory` was missing; no reconciliation performed.
@@ -207,6 +213,8 @@ which put every `[DG#n]` on disk in a different key order from every `[CG#n]` be
   When no such finding exists yet, report the gap in `notes` and emit nothing for that divergence —
   never assert the code limitation on this agent's own authority, and never borrow a `[CG#n]` that
   does not actually settle the specific capture in question.
+- NEVER write a command, agent or skill name, a `§` or rule number, or a phase into a field your
+  caller writes to file. Those fields go to the customer as written (`workflows-core:grounding-format` §2.3).
 - NEVER cite a frame without having read what it actually shows. A filename or index caption that
   merely sounds like it matches the requirement is a lead, not evidence.
 - NEVER report agreement between a requirement and a frame as a finding. Findings exist only for

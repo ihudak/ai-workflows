@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.32.1] — 2026-10-12
+
+Needs `workflows-core` 1.38.1, whose `grounding-format` §2.3 is the writing rule the grounding agents and `/prd-ground` now cite.
+
+### Fixed
+- **`/brd-package` no longer stops on the plugin's own vocabulary in the grounding files.** `grounding/code-grounding.md`, `grounding/design-grounding.md` and `grounding/baselines.md` go to the customer as written, and the package's plugin-free scan stops on any command, agent or skill name, `§` reference or decision-row id it finds in them — yet nothing told the writers who reads those files. The verifier's notes cited its rules by section (*under §2.2 the control is owed and missing*), `/prd-ground`'s own prose named itself and its agents (*Ground by `/product-workflows:prd-ground`*, *(/prd-ground Phase 4.5)*, a `— /prd-ground` heading), and one note was required to carry a command: a design finding retired with the code finding it cites had to name `/product-workflows:prd-ground <KEY> --no-code`, which stopped every package holding one. The first real package stopped on it, days after grounding, with a hand edit to verified records as the only way through. Now `code-grounder`, `design-grounder` and `grounding-verifier` write every free-text field in plain language, and the verifier never names its own return fields (`own_control` and the rest). `/prd-ground` keeps its own prose — opening lines, headings, the derivation matrix's lead-in, every note — free of commands, agents, phases and rule numbers, and before writing it scans everything it is about to write for the tokens the package's scan stops on, rewriting a sentence that has one and changing no id, verdict, evidence, control result or outcome. Its final report lists every rewrite. The retired design finding's note now says in words which re-grounding replaces it, and the final report gives the command. A hit inside a path or command in your own code repository is left as written and reported, since rewording it would break it. `/brd-package`'s scan is exactly as strict as before; its list of token classes moved to `bundle-packaging.md` §1.2, so `/prd-ground` checks against the same list. **Findings already on file are not rewritten**: a slice ground before this release keeps its notes, which you reword by hand before packaging — only the free text, never an id, verdict, evidence, control or outcome line.
+
 ## [3.32.0] — 2026-10-12
 
 ### Changed
