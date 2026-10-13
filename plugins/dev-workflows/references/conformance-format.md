@@ -15,7 +15,7 @@ key: <the folder's key>
 ---
 ```
 
-`conformance-record` is not a folder kind, so `workflows-core:addressing` §4 never reads this file as the folder's carrier. The record is a phase deliverable: it lands on the specs repository's default branch through `workflows-core:phase-handoff` `handoff-to-main`, on a `conformance/` branch, behind the run's consent choice.
+`conformance-record` is not a folder kind, so `workflows-core:addressing` §4 never reads this file as the folder's carrier. The record is a phase deliverable: it lands on the specs repository's default branch through `workflows-core:phase-handoff` `handoff-to-main`, on a `conformance/` branch, behind the run's consent choice. Until that branch merges, a later run finds the record there and acts on it before it reads anything else (`/dev-workflows:conformance` Phase 0 step 5).
 
 ## 2. The header
 
@@ -23,7 +23,7 @@ key: <the folder's key>
 # Conformance: <KEY>
 
 - **Run:** <Epic | PRD> — role `<dev | pe>` — <YYYY-MM-DD>
-- **Code checked:** <repo slug> at <branch or default branch> @ <commit>, one line per repository
+- **Code checked:** <repo slug> at <its default branch> @ <commit>, one line per repository
 - **Verdicts:** <n> satisfied · <n> partial · <n> missing · <n> contradicts · <n> not-checkable · <n> unverified
 
 ## Satisfied
@@ -33,15 +33,17 @@ key: <the folder's key>
 ## Unverified
 
 - <requirement id, or its quoted text> — <the verdict the re-check could not settle> — <what would settle it>
+
+## Discrepancies
 ```
 
-A re-run rewrites the header and both lists. A reader that compares the commit recorded here with the repository's default branch can say how far the code has moved since. **`## Satisfied` lists every requirement the run found satisfied, those whose discrepancy the re-check dropped included, with the evidence that settled it — and it is what a later PRD run's drift check reads**: it re-traces a requirement listed there only where the code at its evidence paths changed between the commit the header names for that repository and the default branch, so a record without the list has every requirement re-traced.
+A re-run rewrites the header and both lists. A reader that compares the commit recorded here with the repository's default branch can say how far the code has moved since. A record an Epic run wrote before `dev-workflows` 4.26.0 may name the Epic's own branch under **Code checked** instead, its commit that branch's tip at the time, which a squash merge leaves out of the default branch's history; every run since traces the default branch alone. **`## Satisfied` lists every requirement the run found satisfied, those whose discrepancy the re-check dropped included, with the evidence that settled it — and it is what a later PRD run's drift check reads**: it re-traces a requirement listed there only where the code at its evidence paths changed between the commit the header names for that repository and the default branch, so a record without the list has every requirement re-traced.
 
 **`## Unverified` lists every requirement the re-check could settle neither way** — a `satisfied` citing no `file:line` among them — with what would settle it. It is neither satisfied nor an entry: it takes no `[DD#n]`, nobody is asked about it, and a later run of either kind traces it in full, since it is not under `## Satisfied`.
 
 ## 3. An entry
 
-One entry per discrepancy, in id order:
+One entry per discrepancy, in id order, under the header's `## Discrepancies` heading — its own heading, so no entry reads as part of `## Unverified`, which a later run traces in full. A record written before `dev-workflows` 4.26.0 has no such heading, its entries following `## Unverified`: a reader takes each `### [DD#n]` heading as an entry wherever it sits, and `## Unverified` as its `- ` lines alone.
 
 ```markdown
 ### [DD#<n>] <requirement id, or the quoted text where the requirement has no id>
@@ -86,7 +88,7 @@ A `[DD#n]` is permanent: never renumbered or reused, and its entry is never dele
 
 A `requirement withdrawn` or `orphaned` entry is listed, never asked again. Where it was a `fix-code`, its follow-up is withdrawn per `workflows-core:followup-emission` § *Withdrawing a follow-up*, with the reason `(requirement withdrawn)` or `(orphaned)`.
 
-A PRD run writes `superseded-by: <PRD-KEY>/[DD#n]` into each Epic entry it overrules, and never deletes or rewrites any other field of an Epic record.
+A PRD run writes `superseded-by: <PRD-KEY>/[DD#n]` into each Epic entry it overrules — save while an unmerged `conformance/` branch carries that Epic's newer record, when it names the entry in its report instead — and never deletes or rewrites any other field of an Epic record.
 
 ## 6. Readers
 

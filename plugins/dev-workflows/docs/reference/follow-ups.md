@@ -36,7 +36,7 @@ and no import, two of them described places that no longer exist.
 
 ## A withdrawn follow-up
 
-One command edits a follow-up after writing it: `/conformance`, when a *fix the code* decision whose follow-up an earlier run of it wrote no longer stands — the PE's PRD run overrules a Dev's, or, on any run — a PRD run's own lines on its re-run included — the decision's requirement has been withdrawn or its text is no longer in its document. It ticks the line and appends `— withdrawn: <KEY>/[DD#n]`, with `(requirement withdrawn)` or `(orphaned)` after it in the second case, and never deletes it. A ticked line counts as done, so a later `/implement` of the unit does not read it back as open.
+One command edits a follow-up after writing it: `/conformance`, when a *fix the code* decision whose follow-up an earlier run of it wrote no longer stands — the PE's PRD run overrules a Dev's, or, on any run — a PRD run's own lines on its re-run included — the decision's requirement has been withdrawn or its text is no longer in its document — save on a PRD run while an unmerged `conformance/` branch carries that Epic's newer record, when the run names the line in its report for the Dev to settle once that branch merges. It ticks the line and appends `— withdrawn: <KEY>/[DD#n]`, with `(requirement withdrawn)` or `(orphaned)` after it in the second case, and never deletes it. A ticked line counts as done, so a later `/implement` of the unit does not read it back as open.
 
 ## A re-queued follow-up
 

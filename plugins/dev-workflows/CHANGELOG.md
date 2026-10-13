@@ -5,6 +5,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.26.0] — 2026-10-13
+
+Needs `workflows-core` 1.40.1, whose `next-phase-offer` offers an Epic's `/conformance` once the Epic's pull request has merged.
+
+### Changed
+- **`/conformance` on an Epic checks merged code only.** An Epic run traces each repository's default branch, as a PRD run does, once every pull request the Epic's `implementation.md` records has merged — tested as the PRD run tests each Epic: the recorded commit in the default branch's history, or a later default-branch commit carrying the Epic's key in its subject. Where any has not merged, or the Epic records no `/implement` run, it stops with `CONFORMANCE_NOT_MERGED` before writing anything, naming each repository and branch and saying where one was never pushed or is gone without merging. It no longer reads the Epic's own branch. `/implement` offers it once the Epic's pull request has merged, and `/conformance` offers a fix's re-check once that fix has merged.
+
+### Fixed
+- **A record on an unmerged `conformance/` branch is found on every run, and first.** Phase 0 fetches the `conformance/` branches from the specs repo's remote — best-effort, refs only, pruned — and checks the unit's record, and on a PRD run each Epic's, before Phase 1 reads a requirement, asks a question or scans a clone. The PE's clone used to see no record a Dev had pushed, and a re-run whose checkout had moved off its own unmerged record renumbered every decision from `[DD#1]`, queued its follow-ups twice and collided with that branch at handoff. An unmerged branch that changed the unit's record since it forked now stops the run with `CONFORMANCE_RECORD_UNMERGED`: merge it, resume on it or delete it where it is the unit's own, and merge it where it is another run's. A checkout that lacks or predates the record the default branch holds stops with `CONFORMANCE_RECORD_BEHIND`, whose remedy on the default branch itself is `git pull --ff-only`. A branch that only inherited the record, or has merged, does not count.
+- **A PRD run puts a Dev's newer unmerged Epic record to the PE beside a merged one**, not only where the checkout held none, and while that branch is open writes nothing into the Epic's record and withdraws none of its follow-ups, whichever copy it read; the report names each overrule it could not mark.
+- **A record read from a branch is read as `<ref>:./<path>`**, the base `ls-tree` lists from, so a specs tree inside a larger repository is read too; and an Epic whose record is read from a branch counts as an Epic with a record.
+- **A record's entries sit under their own `## Discrepancies` heading**, so none reads as part of `## Unverified`, which a later run traces in full. An older record without it is read by its `### [DD#n]` headings.
+- **`conformance-tracer` heads each section with the requirement's key and its id.** On a PRD run the PRD-level spec and every Epic's carry their own `[U01]/[AC01]`, so an id alone could not say which requirement a verdict was for.
+- **`/conformance` stops rather than write a record that says nothing**: `CONFORMANCE_NO_REQUIREMENTS` where nothing is left to trace, and `CONFORMANCE_NO_CODE` where no repository has a clone with a default branch to read. Two Epic folders under a PRD asserting one key stop with `CONFORMANCE_EPIC_FOLDERS`.
+- **`/conformance` floors a run over more than one repository at `SIGNIFICANT` by classification §1.1's more-than-one-repository clause alone.** It cited §8, whose folder-input shapes would floor every run, a single-repository Epic run included.
+- Phase 0 gates the documents the run reads, `design.md` named as context rather than as traced, and the command page, the record format, the workflow, roles and index pages and the design's D5 say when an Epic run happens and what it reads.
+
 ## [4.25.0] — 2026-10-13
 
 Needs `workflows-core` 1.40.0, whose `escalation-rules` *Required path environment variable unset* says what its *Set* option asks next and names `/design` among its `REPOS_PATH` citers.
