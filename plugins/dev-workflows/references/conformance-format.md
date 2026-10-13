@@ -15,7 +15,7 @@ key: <the folder's key>
 ---
 ```
 
-`conformance-record` is not a folder kind, so `workflows-core:addressing` §4 never reads this file as the folder's carrier. The record is a phase deliverable: it lands on the specs repository's default branch through `workflows-core:phase-handoff` `handoff-to-main`, on a `conformance/` branch, behind the run's consent choice.
+`conformance-record` is not a folder kind, so `workflows-core:addressing` §4 never reads this file as the folder's carrier. The record is a phase deliverable: it lands on the specs repository's default branch through `workflows-core:phase-handoff` `handoff-to-main`, on a `conformance/` branch, behind the run's consent choice. Until that branch merges, a later run finds the record there and acts on it before it reads a requirement (`/dev-workflows:conformance` Phase 0 step 5).
 
 ## 2. The header
 
@@ -23,7 +23,7 @@ key: <the folder's key>
 # Conformance: <KEY>
 
 - **Run:** <Epic | PRD> — role `<dev | pe>` — <YYYY-MM-DD>
-- **Code checked:** <repo slug> at <branch or default branch> @ <commit>, one line per repository
+- **Code checked:** <repo slug> at <its default branch> @ <commit>, one line per repository
 - **Verdicts:** <n> satisfied · <n> partial · <n> missing · <n> contradicts · <n> not-checkable · <n> unverified
 
 ## Satisfied
@@ -33,15 +33,17 @@ key: <the folder's key>
 ## Unverified
 
 - <requirement id, or its quoted text> — <the verdict the re-check could not settle> — <what would settle it>
+
+## Discrepancies
 ```
 
-A re-run rewrites the header and both lists. A reader that compares the commit recorded here with the repository's default branch can say how far the code has moved since. **`## Satisfied` lists every requirement the run found satisfied, those whose discrepancy the re-check dropped included, with the evidence that settled it — and it is what a later PRD run's drift check reads**: it re-traces a requirement listed there only where the code at its evidence paths changed between the commit the header names for that repository and the default branch, so a record without the list has every requirement re-traced.
+A re-run rewrites the header and both lists. A reader that compares the commit recorded here with the repository's default branch can say how far the code has moved since. A record an Epic run wrote before `dev-workflows` 4.26.0 may name the Epic's own branch under **Code checked** instead, its commit that branch's tip at the time, which a squash merge leaves out of the default branch's history; every run since traces the default branch alone. **`## Satisfied` lists every requirement the run found satisfied, those whose discrepancy the re-check dropped included, with the evidence that settled it — and it is what a later PRD run's drift check reads**: it re-traces a requirement listed there only where the code at its evidence paths changed between the commit the header names for that repository and the default branch, so a record without the list has every requirement re-traced.
 
 **`## Unverified` lists every requirement the re-check could settle neither way** — a `satisfied` citing no `file:line` among them — with what would settle it. It is neither satisfied nor an entry: it takes no `[DD#n]`, nobody is asked about it, and a later run of either kind traces it in full, since it is not under `## Satisfied`.
 
 ## 3. An entry
 
-One entry per discrepancy, in id order:
+One entry per discrepancy, in id order, under the header's `## Discrepancies` heading — its own heading, so no entry reads as part of `## Unverified`, which a later run traces in full. A record written before `dev-workflows` 4.26.0 has no such heading, its entries following `## Unverified`: a reader takes each `### [DD#n]` heading as an entry wherever it sits, and `## Unverified` as its `- ` lines alone.
 
 ```markdown
 ### [DD#<n>] <requirement id, or the quoted text where the requirement has no id>
@@ -55,12 +57,18 @@ One entry per discrepancy, in id order:
 - **effect:** <"follow-up proposed: " and the follow-up line, the note's location, or "recorded">
 - **ruling:** <PRD run only: confirms <EPIC-KEY>/[DD#k] | overrules <EPIC-KEY>/[DD#k] | resolved <EPIC-KEY>/[DD#k]>
 - **flags:** <any of stale, orphaned, fixed, still open, requirement withdrawn>
+- **lists:** <PRD run only, in place of ruling: <EPIC-KEY>/[DD#k] — an Epic entry the run only listed>
+- **withdraws:** <PRD run only: a follow-up line, verbatim — one field per line>
 - superseded-by: <PRD-KEY>/[DD#n]   ← written into an Epic entry by the PRD run that overruled it
 ```
 
 `[DD#n]` is cited outside its record as `<KEY>/[DD#n]`.
 
-**`effect:` on a `fix-code` entry records the follow-up proposed, never one written.** The record is committed at the run's handoff, and the follow-up preview that comes after it can still cancel the line, so whether the follow-up was written is read from `follow-ups.md` — where the next run's re-check reads it — never from this field. Nothing rewrites the field after the preview.
+**An entry for an Epic entry a PRD run only listed** takes its heading, `document:`, `verdict:`, `shipped:`, `evidence:`, `decision:` and `status:` from that Epic entry, carries the run's `flags:` for it and any `withdraws:`, and names it in `lists:` in place of `ruling:`, so Phase 4 of `/dev-workflows:conformance` never takes it as ruled. While its flag holds, a later PRD run lists that Epic entry again, never asks about it, and carries this entry forward under §5 rather than adding another. Once its flag has cleared and the PE rules on it, that run writes `ruling:` in place of `lists:`, with the PE's `decision:` at `status: final`, `rationale:` and `effect:`.
+
+**`withdraws:` carries a follow-up line a PRD run ruled must not be built**, on that run's entry for the Epic entry it rules on or lists, or, on a re-run, on the record's own `fix-code` entry it marks `requirement withdrawn` or `orphaned`: the line of an overruled `fix-code` entry, or of one whose requirement was withdrawn or is gone from its document. It is that entry's `effect:` text — the Epic entry's, or the record's own — after `follow-up proposed: `, read from whichever copy of that record the run read — a Dev's unmerged branch included — and written verbatim, never paraphrased, one field per line. It is written whether or not the run could tick the line in its checkout: `/dev-workflows:implement`'s follow-up read-back skips an open task whose line equals a `withdraws:` value of the PRD folder's record, so a line that reaches a checkout before the tick, or without it — from a Dev's branch, or a session branch — is still not built. It is never rewritten.
+
+**`effect:` on a `fix-code` entry records the follow-up proposed, never one written.** The record is committed at the run's handoff, and the follow-up preview that comes after it can still cancel the line, so whether the follow-up was written is read from `follow-ups.md` — where the next run's re-check reads it — never from this field. Nothing rewrites the field after the preview — save where a later PRD run's ruling on an entry it only listed writes the PE's own (§3 above).
 
 ## 4. Statuses and flags
 
@@ -86,7 +94,7 @@ A `[DD#n]` is permanent: never renumbered or reused, and its entry is never dele
 
 A `requirement withdrawn` or `orphaned` entry is listed, never asked again. Where it was a `fix-code`, its follow-up is withdrawn per `workflows-core:followup-emission` § *Withdrawing a follow-up*, with the reason `(requirement withdrawn)` or `(orphaned)`.
 
-A PRD run writes `superseded-by: <PRD-KEY>/[DD#n]` into each Epic entry it overrules, and never deletes or rewrites any other field of an Epic record.
+A PRD run writes `superseded-by: <PRD-KEY>/[DD#n]` into each Epic entry it overrules — save while an unmerged `conformance/` branch carries that Epic's newer record, when it names the entry in its report and keeps the overrule in its own entry's `ruling:`, which a later PRD run applies once no `conformance/` branch carries that Epic's record, and only to an Epic entry whose heading names the same requirement, with the same `document:` — and never deletes or rewrites any other field of an Epic record.
 
 ## 6. Readers
 

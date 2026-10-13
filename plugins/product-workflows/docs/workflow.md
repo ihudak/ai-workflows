@@ -39,7 +39,7 @@ flowchart TD
     end
     subgraph DEV["Dev — build, verify & deliver (dev-workflows)"]
         design["/dev-workflows:design"]:::dev -->|design.md| implement["/dev-workflows:implement"]:::dev
-        conformanceepic["/dev-workflows:conformance — an Epic, pull request open"]:::dev
+        conformanceepic["/dev-workflows:conformance — an Epic, once merged"]:::dev
         ready["/dev-workflows:ready"]:::dev
     end
 

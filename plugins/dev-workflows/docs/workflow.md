@@ -23,7 +23,7 @@ flowchart TD
     harvest -.->|team decisions| design
     design -.->|design.md + specification.md| ready
     ready -.->|_readiness.md — advisory| implement
-    implement -->|"Epic: the Dev, pull request open"| conformance
+    implement -->|"Epic: the Dev, once its pull request has merged"| conformance
     conformance -.->|"fix the code — a follow-up"| implement
     conformance -.->|"PRD: the PE, every Epic merged — amend the document"| specify
     implement -.->|code + implementation.md, in docs-workflows| docsplugin["/docs-workflows:document · /docs-workflows:release-notes"]:::docs

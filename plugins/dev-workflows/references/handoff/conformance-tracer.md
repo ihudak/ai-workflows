@@ -4,7 +4,7 @@
 
 ```yaml
 repo_path: <absolute path of the local clone>
-ref: <the ref to read: origin/<branch>, <branch>, or the default branch's ref>
+ref: <the ref to read: the repository's default branch, origin/<default>>
 commit: <the full commit id <ref> resolves to, for the evidence>
 requirements:
   - key: <the folder key the requirement belongs to>
@@ -18,10 +18,10 @@ hints:
 
 ## Output
 
-One section per requirement, in input order:
+One section per requirement, in input order, headed by the requirement's `key` and `id` as the input gives them — the `id` alone repeats on a PRD run, where the PRD-level `specification.md` and every Epic's carry their own `[U01]` and `[U01]/[AC01]`:
 
 ```markdown
-### <id>
+### <key> <id>
 
 - verdict: <satisfied | partial | missing | contradicts | not-checkable>
 - shipped: <one sentence on what the code does>

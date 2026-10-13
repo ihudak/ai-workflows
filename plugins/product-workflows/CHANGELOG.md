@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.34.1] — 2026-10-13
+
+### Changed
+- **The workflow page draws the Dev's `/dev-workflows:conformance` on an Epic once its pull request has merged** (dev-workflows 4.26.0), not while it is open.
+- **The PE is told to install `dev-workflows`.** `/dev-workflows:conformance <PRD-KEY>`, the PE's check of a PRD once every Epic has merged, is a `dev-workflows` command and the only one the PE role runs; the getting-started install section and the PE's roles entry now say so. `dev-workflows` stays no dependency of this plugin.
+
 ## [3.34.0] — 2026-10-13
 
 Needs `workflows-core` 1.40.0, whose `escalation-rules` §0 carries *A selection carries no text*, cited by `/prd-proposal` and `/brd-proposal`, and whose *Required path environment variable unset* says what its *Set* option asks next and names `/specify`, `/create-ard` and `/epics` among its `REPOS_PATH` citers.

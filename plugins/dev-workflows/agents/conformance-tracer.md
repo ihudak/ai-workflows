@@ -14,6 +14,8 @@ Trace each requirement you are handed against **one** repository at **one** ref.
 
 **Start from the hints, never stop at them.** `hints.files` are the files the recorded commits touched and `hints.paths` the component's paths: look there first, then search the repository for anything else the requirement names.
 
+**One section per requirement, headed `### <key> <id>`** with the `key` and `id` the input gives it, never the id alone: on a PRD run the same id recurs across documents, and the caller matches each section to its requirement by that heading.
+
 **One verdict per requirement:**
 
 - `satisfied` — the code does what the requirement says, as written.
