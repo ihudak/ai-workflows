@@ -169,9 +169,10 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   any other date.
 - **The parent's defect log, settled.** On a slice the run writes its defect resolutions into the
   parent's `brd/brd-defect-log.md`, so `require-on-main` runs against that log before anything is
-  confirmed. Where it stops — the log edited in the checkout, or on a branch the default branch does
-  not have — the run names what it found and waits for you to settle it and check again, or cancels
-  with `BRD_RECONCILE_PARENT_LOG_UNSETTLED`; it checks once more before its first write. A resolution
+  confirmed. Where it stops — the log edited in the checkout and not handed off, not on the default
+  branch at all, or a repository the gate cannot check — the run names what it found and waits for
+  you to settle it and check again, or cancels with `BRD_RECONCILE_PARENT_LOG_UNSETTLED`. It tests
+  once: after the review's handoff the run stands on its own branch, where the gate passes. A resolution
   is never left recorded for a later run: no later run would write it, and the questions it closes
   would stay held.
 - **`$SPECS_PATH`** (required) — if unset, the run stops naming `SPECS_PATH`.

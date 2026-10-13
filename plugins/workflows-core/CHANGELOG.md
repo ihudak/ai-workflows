@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.39.1] — 2026-10-13
 
 ### Fixed
-- **`next-phase-offer`'s re-entry list for `/brd-reconcile` names its re-run on the same review.** That re-run sweeps a dependent the run could only record, and since product-workflows 3.33.2 the run's next-step picker offers it; the list named only the other three re-entries. The sentence on why the advance options drop now gives the dependent's reason too.
+- **`next-phase-offer`'s re-entry list for `/brd-reconcile` names its re-run on the same review.** That re-run sweeps a dependent the run could only record, and since product-workflows 3.33.2 the run's next-step picker offers it; the list named only the other three re-entries. The sentence on why the advance options drop now gives the dependent's reason too. `phase-handoff` §3.7, which names the stopping rows `/brd-reconcile` records rather than stops on, now excepts a slice's parent defect log, which that command gates before confirming anything and never records.
 
 ## [1.39.0] — 2026-10-13
 
