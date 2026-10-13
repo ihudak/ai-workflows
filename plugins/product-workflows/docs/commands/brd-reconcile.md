@@ -168,7 +168,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   that command will not rewrite a dated bundle, so it stops today and builds a *different* package on
   any other date.
 - **The parent's defect log, settled.** On a slice the run writes its defect resolutions into the
-  parent's `brd/brd-defect-log.md`, so `require-on-main` runs against that log before anything is
+  parent's `brd/brd-defect-log.md`, so `require-on-main` runs against that log before any answer is
   confirmed. Where it stops — the log edited in the checkout and not handed off, not on the default
   branch at all, or a repository the gate cannot check — the run names what it found and waits for
   you to settle it and check again, or cancels with `BRD_RECONCILE_PARENT_LOG_UNSETTLED`. It tests
@@ -483,7 +483,7 @@ command removes none of them; the next `/brd-interview` run does.
   cross-BRD writes, and each runs `require-on-main` against the
   target first. Any stopping row — including the artifact being on no branch the commands cut — means **record,
   never write**, naming the intended change and the branch/PR state — save the parent's defect log,
-  which the run settles before confirming anything and waits on rather than record (above).
+  which the run settles before confirming any answer and waits on rather than record (above).
   Recording never stops the run: letting
   a dependent's open pull request block the prerequisite's own customer loop is the D20 failure
   arriving from the other direction.

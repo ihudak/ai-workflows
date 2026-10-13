@@ -1453,8 +1453,13 @@ line in the final report.
 
 **On the second or third choice `handoff-to-main` does not run, and the final report still carries
 an outcome line**: §4.1's *Declined by the user* row, its `<artifacts>` the `deliverable_paths` set
-above as that row counts it, and its `<next-phase-clause>` the **advisory** one, which is what the
-array's parenthetical promised (`workflows-core:phase-handoff` §4.1, §4.3). Either way the run goes
+above as that row counts it, and its `<next-phase-clause>` the **gated — stopping** one (`The next phase will stop until it is.`),
+which is what the array's parenthetical promised (`workflows-core:phase-handoff` §4.1, §4.3).
+**On either path, name beside the outcome line the command that phase is**: each slice's
+`/product-workflows:brd-reconcile`, at its Phase 0 step 6c, after the customer's review —
+`/product-workflows:brd-split`, `/product-workflows:prd-ground`, `/product-workflows:brd-interview`
+and `/product-workflows:brd-package` read this handoff's files from the worktree and stop on none
+of them. Either way the run goes
 on to Phase 8 and Phase 9's emitter tail.
 
 `brd` is the branch prefix `workflows-core:phase-handoff` §2.9's `prefix` row lists as shared by

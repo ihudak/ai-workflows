@@ -112,14 +112,13 @@ record, and the parent's defect log waits (below).** They are:
 | *The propagation sweep* | sweep dispositions into a **dependent BRD's** `decisions.md` |
 | *The stale cross-reference sweep* | `updated` corrections into any artifact under the parent, including a **sibling slice's** |
 
-**The rule, once, for all four.** Before writing into an artifact that belongs to a BRD other than
+**The rule, once, for the three that record.** Before writing into an artifact that belongs to a BRD other than
 the one this run was given, execute `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against that artifact. Any **stopping** row → **record, never write**: the intended change, the
 artifact, and the concrete branch/PR state the gate reported all go into the reconciliation record
 and the final report, and the file is left exactly as it was. Row F (`absent` — the artifact is on no
 ref at all) is treated the same way and for the same reason: an artifact nobody has handed off is an
 artifact somebody is still working on. `pass`, `pass_amending` and `unmanaged` → write. **The parent's defect log is the one exception: the run waits for it rather than record.**
-The *Resolve inputs and gate the sent package* phase's step 6c settles it before anything is
-confirmed, and the *Resolve the defects the review settled* phase writes into it without a second
+The *Resolve inputs and gate the sent package* phase's step 6c settles it before any answer is confirmed, and the *Resolve the defects the review settled* phase writes into it without a second
 test; no resolution is recorded for a later run to write.
 
 **Recording never stops the run.** The reconciliation is the *prerequisite's* customer loop, and
@@ -134,8 +133,7 @@ whose requirement defects are all withdrawn; the coverage ledger's `rejected: [D
 And no later run would write it, since the same-review rule skips the decision that made it. Waiting
 costs nothing D20 guards against: the parent is not downstream of this slice but the BRD its
 requirements come from, and what the gate stops on is its log as this checkout holds it — edited and
-not handed off, or not on the default branch at all. **The test is made once, before anything is
-confirmed, and not again before the write.** After the canonicalised review's handoff the run
+not handed off, or not on the default branch at all. **The test is made once, before any answer is confirmed, and not again before the write.** After the canonicalised review's handoff the run
 stands on its own branch, where the gate passes — or, where that handoff was declined, on the
 checkout step 6c has just passed, which nothing before the write touches the log in — so a second
 test would almost never stop — and
@@ -440,7 +438,7 @@ write would re-ask a question already answered.
    resolving in a shallow clone, say — say the list could not be made, and why, and ask the same
    array. The reconciliation record and the final report repeat the list, with each file's state, or
    that it was empty or could not be made, and its limits.
-6c. **Settle the parent's defect log before anything is confirmed.** The *Resolve the defects the
+6c. **Settle the parent's defect log before any answer is confirmed.** The *Resolve the defects the
    review settled* phase writes this run's defect resolutions into the parent's
    `brd/brd-defect-log.md` — a slice holds no log of its own (`brd-format.md` §2.1) — and that write
    never falls back to recording (*The cross-BRD write guard*). So execute `require-on-main` against
@@ -457,8 +455,8 @@ write would re-ask a question already answered.
    ```
    On *I've settled it*, run
    `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 30 git -C "$SPECS_PATH" fetch --quiet origin`
-   (`workflows-core:bounded-run`) and `require-on-main` again: a pass → go on; a stopping row → say
-   so, name what it reported again, and put the same question again — never re-check silently in a
+   (`workflows-core:bounded-run`) and `require-on-main` again: a pass → go on; a stopping row or
+   `absent` → say so, name what it reported again, and put the same question again — never re-check silently in a
    loop, and never take an answer for a state the gate did not find. *Cancel* stops the run before
    anything is written: `BRD_RECONCILE_PARENT_LOG_UNSETTLED: <path> — <what the gate reported>.
    Settle it, then re-run /product-workflows:brd-reconcile <BRD-KEY> with the same arguments.`
@@ -2749,7 +2747,7 @@ Where this run can go next:
   • Work another round      — /product-workflows:brd-interview <BRD-KEY>        (<trigger, with the id>)
   • Package again           — /product-workflows:brd-package <BRD-KEY> <merge-clause>   (<trigger, with the id>)
   • Re-ground a moved claim — /product-workflows:prd-ground <BRD-KEY> --rebaseline <merge-clause>  (<trigger, with the id>)
-  • Sweep a dependent       — /product-workflows:brd-reconcile <BRD-KEY> @<review-file>  (<trigger, with the id>)
+  • Sweep a dependent       — /product-workflows:brd-reconcile <BRD-KEY> @<review-file> <merge-clause>  (<trigger, with the id>)
 ```
 
 ```
@@ -2758,7 +2756,7 @@ choices: ["Stop here — this run's changes are recorded; the route resumes when
 
 **Where the fourth trigger fired, its option joins the array** after the options above whose
 triggers fired, under the cap below: *"Sweep a dependent — /product-workflows:brd-reconcile <BRD-KEY>
-@<review-file>, once <each dependent's register> is on the default branch"*, naming each dependent
+@<review-file> <merge-clause>, once <each dependent's register> is on the default branch"*, naming each dependent
 whose register the run could only record into. A
 run where that trigger alone fired is therefore offered *Stop here* and this option, never *Stop
 here* alone, which no picker may hold (`workflows-core:escalation-rules` §0).
@@ -2838,8 +2836,10 @@ that survives carries is the reason it was offered — in its own label, and for
 the trigger and id printed beside the list — and its wait, the `<merge-clause>`, wherever it names a
 gate this run feeds.
 
-**The dependent-sweep option names its own wait, and deliberately not `<merge-clause>`.** What it
-waits on is the *dependent's* register reaching the default branch, while the placeholder
+**The dependent-sweep option names two waits: `<merge-clause>`, and one of its own written beside
+it.** The re-run's Phase 0 step 6c gates the parent's defect log, which this run's *Handoff* phase
+carries, so it waits on this run's merge like every option that names a gate this run feeds. And it
+waits on the *dependent's* register reaching the default branch, while the placeholder
 `workflows-core:next-phase-offer` defines resolves from **this** run's own
 `Phase handoff:` outcome line — a different merge, which is why the condition is written in the
 option's own text like every other one in the list.
