@@ -74,7 +74,7 @@ On a PRD run, the Dev's decisions where the implementation won come first, then 
 
 - `_conformance.md` in the checked folder: the default-branch commit it checked in each repository, the counts by verdict, and one `[DD#n]` entry per discrepancy with its decision and status. Its ids are permanent, and a re-run asks only about what is new, marking an entry resolved once the code satisfies it.
 - Follow-up tasks for *fix the code*, and `## Engineering review` notes for *amend the document* on a PRD run.
-- A handoff of the record and the notes on a `conformance/` branch, behind the usual consent choice.
+- A handoff of the record and the notes on a `conformance/` branch, behind the usual consent choice. On a PRD run whose record withdraws follow-ups, the choice first says how many: `/implement` on another clone skips them only once the record is on the default branch, so declining keeps them in your working copy alone.
 
 ## Gates
 
