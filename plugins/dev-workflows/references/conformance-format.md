@@ -57,10 +57,13 @@ One entry per discrepancy, in id order, under the header's `## Discrepancies` he
 - **effect:** <"follow-up proposed: " and the follow-up line, the note's location, or "recorded">
 - **ruling:** <PRD run only: confirms <EPIC-KEY>/[DD#k] | overrules <EPIC-KEY>/[DD#k] | resolved <EPIC-KEY>/[DD#k]>
 - **flags:** <any of stale, orphaned, fixed, still open, requirement withdrawn>
+- **withdraws:** <PRD run only: a follow-up line, verbatim — one field per line>
 - superseded-by: <PRD-KEY>/[DD#n]   ← written into an Epic entry by the PRD run that overruled it
 ```
 
 `[DD#n]` is cited outside its record as `<KEY>/[DD#n]`.
+
+**`withdraws:` carries a follow-up line a PRD run ruled must not be built**, on that run's entry for the Epic entry it rules on or lists: the line of an overruled `fix-code` entry, or of one whose requirement was withdrawn or is gone from its document. It is the Epic entry's `effect:` text after `follow-up proposed: `, read from whichever copy of that record the run read — a Dev's unmerged branch included — and written verbatim, never paraphrased, one field per line. It is written whether or not the run could tick the line in its checkout: `/dev-workflows:implement`'s follow-up read-back skips an open task whose line equals a `withdraws:` value of the PRD folder's record, so a line that reaches a checkout before the tick, or without it — from a Dev's branch, or a session branch — is still not built. Like the rest of an entry it is never rewritten.
 
 **`effect:` on a `fix-code` entry records the follow-up proposed, never one written.** The record is committed at the run's handoff, and the follow-up preview that comes after it can still cancel the line, so whether the follow-up was written is read from `follow-ups.md` — where the next run's re-check reads it — never from this field. Nothing rewrites the field after the preview.
 

@@ -109,7 +109,7 @@ choices: ["Stop until it is merged (Recommended)", "Trace anyway — that Epic's
 
 **(d) The PRD run's scope** (spec D3). A PRD run re-traces nothing in depth that an Epic run already traced:
 - the PRD-level requirements and the PRD-level spec are traced in full;
-- **an Epic whose record a `conformance/` branch carries unmerged** (Phase 0 step 5.4) — a Dev's record, newer than any the default branch holds — is put to the PE, naming the branch (each, where several carry it, the question reading the one whose tip commit is newest). A branch carries no newer record where its pull request merged with its record combined with another change to it, or was closed without merging, yet it still reads as a carrier (Phase 0 step 5.4): where the PE knows that, *Use the merged record instead* — or, where the checkout holds no record of that Epic, *Trace this Epic in full instead* — is the answer, and deleting the branch, on the remote and locally, clears it for later runs. Where the checkout holds no record of that Epic: `choices: ["Read the Dev's record from <branch> (Recommended)", "Trace this Epic in full instead", "Cancel"]`; where it holds the merged one: `choices: ["Read the Dev's newer record from <branch> (Recommended)", "Use the merged record instead", "Cancel"]`. *Cancel* ends the run with nothing traced. Read from a branch, the record comes through `git -C "$SPECS_PATH" show <carrier>:./<path>`, `<carrier>` that branch's ref as Phase 0 step 5.4 listed it and `<path>` as step 5.2's `ls-tree` listed it, and this run writes nothing to that branch. **While a branch carries that Epic's newer record, this run writes nothing into that Epic's record, whichever answer was picked** — a write to the merged copy would put the PE's pull request and the Dev's open one on the same record file. Each entry it would mark superseded is named in the report, and this run's own record keeps the overrule, which a later PRD run applies once no `conformance/` branch carries that Epic's record (Phase 5). **A follow-up is another file, and is withdrawn all the same** wherever the checkout's `follow-ups.md` holds its line (Phase 5); a line the checkout does not hold yet — a fix the Dev's newer record queued — is named in the report, `/dev-workflows:implement`'s read-back treats it as overruled (its Phase 1), and a later PRD run withdraws it once the checkout holds it. **An Epic whose record is read from a branch, or from the checkout, is an Epic with a record** for the bullets below; an Epic with neither — no record anywhere, or *Trace this Epic in full instead* — is traced in full, as an Epic run would;
+- **an Epic whose record a `conformance/` branch carries unmerged** (Phase 0 step 5.4) — a Dev's record, newer than any the default branch holds — is put to the PE, naming the branch (each, where several carry it, the question reading the one whose tip commit is newest). A branch carries no newer record where its pull request merged with its record combined with another change to it, or was closed without merging, yet it still reads as a carrier (Phase 0 step 5.4): where the PE knows that, *Use the merged record instead* — or, where the checkout holds no record of that Epic, *Trace this Epic in full instead* — is the answer, and deleting the branch, on the remote and locally, clears it for later runs. Where the checkout holds no record of that Epic: `choices: ["Read the Dev's record from <branch> (Recommended)", "Trace this Epic in full instead", "Cancel"]`; where it holds the merged one: `choices: ["Read the Dev's newer record from <branch> (Recommended)", "Use the merged record instead", "Cancel"]`. *Cancel* ends the run with nothing traced. Read from a branch, the record comes through `git -C "$SPECS_PATH" show <carrier>:./<path>`, `<carrier>` that branch's ref as Phase 0 step 5.4 listed it and `<path>` as step 5.2's `ls-tree` listed it, and this run writes nothing to that branch. **While a branch carries that Epic's newer record, this run writes nothing into that Epic's record, whichever answer was picked** — a write to the merged copy would put the PE's pull request and the Dev's open one on the same record file. Each entry it would mark superseded is named in the report, and this run's own record keeps the overrule, which a later PRD run applies once no `conformance/` branch carries that Epic's record (Phase 5). **A follow-up is another file, and is withdrawn all the same** wherever the checkout's `follow-ups.md` holds its line (Phase 5); a line the checkout does not hold yet — a fix the Dev's newer record queued — is named in the report and recorded on this run's entry as `withdraws:`, which `/dev-workflows:implement`'s read-back honours wherever the line turns up (its Phase 1), and a later PRD run ticks it once the checkout holds it. **An Epic whose record is read from a branch, or from the checkout, is an Epic with a record** for the bullets below; an Epic with neither — no record anywhere, or *Trace this Epic in full instead* — is traced in full, as an Epic run would;
 - an Epic with a record has each entry re-checked in Phase 3 against the merged code at the evidence it recorded;
 - a requirement an Epic record lists under `## Satisfied` is re-traced only where the code at its evidence paths changed between the commit that record's header names for its repository and the default branch (`git -C <repo> diff --quiet <that commit> <ref> -- <the evidence paths>` exits non-zero). Where the header names no commit for a repository, every requirement of that Epic in that repository is re-traced;
 - a requirement of that Epic that is neither one of its entries nor under its `## Satisfied` — added since the Epic run, `not-checkable` there, or listed under its `## Unverified` — is traced in full.
@@ -267,20 +267,27 @@ deletes a requirement.
   the PM's; the PE's PRD run writes the note when it confirms the proposal.
 - **Accept** → recorded with its rationale.
 - **An Epic entry the PE overrules** → write `superseded-by: <PRD-KEY>/[DD#n]` into that Epic's
-  `_conformance.md`, changing no other field there; where the overruled decision was `fix-code`,
-  withdraw its follow-up per `workflows-core:followup-emission` § *Withdrawing a follow-up*. An Epic
-  whose newer record an unmerged `conformance/` branch carries (Phase 1 (d)) takes no `superseded-by`,
-  whether its record was read from that branch or the merged one was used instead: the report names
-  the entry, and this run's record keeps the overrule (`ruling: overrules`), which a later PRD run
-  applies once no `conformance/` branch carries that Epic's record (below). Its follow-up is withdrawn
-  all the same wherever the checkout's `follow-ups.md` holds the line, since
-  `/dev-workflows:implement` reads that file back; a line the checkout does not hold yet is named in
-  the report, and `/dev-workflows:implement`'s read-back treats it as overruled meanwhile (its
-  Phase 1). Outside session-branch mode the Dev's branch may change that `follow-ups.md` too — its
-  run's session commit lands there (`workflows-core:specs-repo-git` §4.1; in session-branch mode it
-  lands on the Dev's session branch instead, §8 there) — and where the withdrawn line is the file's
-  last, the second of the two pull requests to merge meets a line conflict whose resolution keeps
-  both edits.
+  `_conformance.md`, changing no other field there; where the overruled decision was `fix-code`, its
+  follow-up is one this run rules must not be built (below). An Epic whose newer record an unmerged
+  `conformance/` branch carries (Phase 1 (d)) takes no `superseded-by`, whether its record was read
+  from that branch or the merged one was used instead: the report names the entry, and this run's
+  record keeps the overrule (`ruling: overrules`), which a later PRD run applies once no
+  `conformance/` branch carries that Epic's record (below).
+- **A follow-up this run rules must not be built** — an overruled `fix-code` entry's, and a
+  `requirement withdrawn` or `orphaned` Dev `fix-code` entry's — → record its line on this run's entry
+  for that Epic entry as `withdraws: <line>` (`conformance-format.md` §3): the Epic entry's `effect:`
+  text after `follow-up proposed: `, verbatim, from whichever copy of its record this run read — the
+  Dev's branch included — one field per line, whether or not this run can tick it. Then withdraw it
+  per `workflows-core:followup-emission` § *Withdrawing a follow-up* wherever the checkout's
+  `follow-ups.md` holds the line, with the reason `(requirement withdrawn)` or `(orphaned)` where one
+  applies. A line the checkout does not hold yet — on a Dev's unmerged branch, or a session branch
+  (`workflows-core:specs-repo-git` §8) — is named in the report: `/dev-workflows:implement`'s read-back
+  skips it by its `withdraws:` until then (its Phase 1), and a later PRD run ticks it once the checkout
+  holds it (below). Outside session-branch mode the Dev's branch may change that `follow-ups.md` too —
+  its run's session commit lands there (`workflows-core:specs-repo-git` §4.1; in session-branch mode
+  it lands on the Dev's session branch instead, §8 there) — and where the withdrawn line is the
+  file's last, the second of the two pull requests to merge meets a line conflict whose resolution
+  keeps both edits.
 - **An overrule held back, on a later PRD run** → an entry of the record on file whose ruling
   `overrules <EPIC-KEY>/[DD#k]` while that Epic's entry carries no `superseded-by` is applied once no
   `conformance/` branch carries that Epic's record (Phase 0 step 5.4), without asking again — the
@@ -289,16 +296,12 @@ deletes a requirement.
   PE's own needs no mark. Where the requirement differs, the ruling was on a record that never merged
   and whose numbers were reused: the report lists the ruling as not applied, and Phase 4 puts the
   Epic's entry to the PE as any other.
-- **Every PRD run, an overruled fix's line** → each Epic `fix-code` entry this run's record overrules
-  under the same requirement heading — marked `superseded-by`, or held back as above — has its
-  follow-up, the line its `effect:` proposed, withdrawn wherever the checkout's `follow-ups.md` now holds the line open: one that
-  reached the checkout after the overrule, as a merged branch or a session branch brings it.
+- **Every PRD run, each `withdraws:` line** → each `withdraws:` value of this run's record, those
+  carried forward included, is ticked wherever the checkout's `follow-ups.md` now holds that line
+  open: one that reached the checkout after its ruling, as a merged branch or a session branch
+  brings it.
 - **A `stale` entry the PE marks resolved, and every `fixed` entry** → `resolved` on the PRD record's
   entry, ruling `resolved <EPIC-KEY>/[DD#k]`.
-- **A `requirement withdrawn` or `orphaned` Dev `fix-code` entry** → withdraw its follow-up the same way,
-  with the reason `(requirement withdrawn)` or `(orphaned)`, wherever the checkout's `follow-ups.md`
-  holds the line; a line the checkout does not hold yet is named in the report, and a later run that
-  re-checks the entry once the checkout holds it withdraws it.
 
 **Write `_conformance.md`** into the unit's folder per `conformance-format.md`: §2's header — with the
 default-branch commit each repository was traced at, and the counts, `unverified` included — then the `## Satisfied`
@@ -324,7 +327,8 @@ verbatim:
   choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]
   ```
 - **The record alone, or with Epic records it marked `superseded-by`,** is **advisory**: later runs of
-  this command read it, and none runs `require-on-main` on it. A later run stops on it only where it
+  this command read it, and so does `/dev-workflows:implement`'s follow-up read-back, a PRD record's
+  `withdraws:` lines, and none runs `require-on-main` on it. A later run stops on it only where it
   sits on a branch unmerged, or where the default branch holds a copy the checkout lacks or predates
   (Phase 0 step 5) — states this array's first option can leave and a decline never does: a declined
   record stays in the working copy, where the next run reads it:
@@ -370,7 +374,7 @@ Emit the terminal report:
 [each [DD#n]: requirement, verdict, what shipped, decision and status — carried-forward entries marked so]
 
 ### Dev's entries — PRD run only
-[every Epic entry with the PE's ruling and its flag, the listed-only ones included; each entry this run could not mark because an unmerged `conformance/` branch carries that Epic's newer record — read from that branch, or overruled on the merged copy under *Use the merged record instead* — and each follow-up line the checkout does not hold yet, naming the branch: a later PRD run applies them once no `conformance/` branch carries that Epic's record, and `/dev-workflows:implement` reads such a line back as overruled meanwhile; each held-back ruling a later run found on a reused `[DD#k]` naming another requirement, as not applied; omit on an Epic run]
+[every Epic entry with the PE's ruling and its flag, the listed-only ones included; each entry this run could not mark because an unmerged `conformance/` branch carries that Epic's newer record — read from that branch, or overruled on the merged copy under *Use the merged record instead* — and each follow-up line the checkout does not hold yet, naming the branch it is on where known: a later PRD run applies each held-back overrule once no `conformance/` branch carries that Epic's record, and ticks each such line once the checkout holds it — its `withdraws:` field keeps `/dev-workflows:implement` from building it meanwhile; each held-back ruling a later run found on a reused `[DD#k]` naming another requirement, as not applied; omit on an Epic run]
 
 ### Unverified
 [each requirement the re-check could not settle, and what would settle it — or "none"]
