@@ -275,7 +275,7 @@ deletes a requirement.
   record keeps the overrule (`ruling: overrules`), which a later PRD run applies once no
   `conformance/` branch carries that Epic's record (below).
 - **A follow-up this run rules must not be built** — an overruled `fix-code` entry's, and a
-  `requirement withdrawn` or `orphaned` `fix-code` entry's, a Dev's or, on a re-run, this record's own —
+  `requirement withdrawn` or `orphaned` `fix-code` entry's, a Dev's or, on a PRD re-run, this record's own —
   → record its line as `withdraws: <line>` (`conformance-format.md` §3), on this run's entry for that
   Epic entry, or on this record's own entry itself: that entry's `effect:` text after
   `follow-up proposed: `, verbatim, from whichever copy of its record this run read — the
@@ -314,8 +314,8 @@ withdrawn and `orphaned` where its text is no longer in its document, withdrawin
 entry's follow-up for either, and number new discrepancies after the highest id on file. A PRD run's record lists every
 Epic entry it ruled on, with the ruling — `confirms`, `overrules` or `resolved` — and every one it only
 listed, with its flag, each as an entry of its own (`conformance-format.md` §3) — one it only listed
-without a `ruling:` — so a `withdraws:` and the `Withdrawn by <PRD-KEY>/[DD#n]` it prints always have
-an entry to name.
+naming it in `lists:` rather than `ruling:` — so a `withdraws:`, and the `Withdrawn by <PRD-KEY>/[DD#n]`
+line `/dev-workflows:implement` prints, always have an entry to name.
 
 ---
 
@@ -335,13 +335,15 @@ verbatim:
   `withdraws:` lines, and none runs `require-on-main` on it. A later run stops on it only where it
   sits on a branch unmerged, or where the default branch holds a copy the checkout lacks or predates
   (Phase 0 step 5) — states this array's first option can leave and a decline never does: a declined
-  record stays in the working copy, where the next run reads it. On a PRD run whose record carries a
-  `withdraws:`, print one line above the array first, verbatim with the count filled in: `This record
-  withdraws <N> follow-up line(s) — /implement on another clone skips them only once the record is on
-  the default branch; declined, it keeps them in this working copy alone.`
+  record stays in the working copy, where the next run reads it:
   ```
   choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (no command stops on this; what reads it reads your working copy)", "Cancel"]
   ```
+
+On a PRD run whose record carries a `withdraws:`, print one line above whichever array this phase
+presents, verbatim with the count filled in: `This record withdraws <N> follow-up line(s) — /implement
+on another clone skips them only once the record is on the default branch; declined, it keeps them in
+this working copy alone.`
 
 On its first option, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with
 `prefix: conformance`; `feature_folder` = the unit's folder; `deliverable_paths` = the set above, one
