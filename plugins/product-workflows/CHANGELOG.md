@@ -9,6 +9,8 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Changed
 - **`/prd-ground` says which missing slice file its gate passes**: one on the default branch since before the run's own branch was cut, which `PRD_GROUND_RESTORE_FROM_DEFAULT` then tells you to restore. One that reached the default branch after the cut stops at `require-on-main`'s row B′ instead (workflows-core 1.41.0), which names the merge that brings it in.
+- **`/create-prd`, `/create-ard` and `/specify` give their `*_REGISTER_NOT_ON_MAIN` stop a form of its own for row B′** — a slice's `decisions.md` that changed on the default branch after the run's own branch was cut. The general form's consequence ("records that are not on `<default>`") is false there: the copy's records were merged, and what it lacks are the newer ones, so the B′ form says that and names the merge of the default branch into the branch. The three docs pages list the state.
+- **`/brd-reconcile`'s parent-log gate names row B′** among the states its stop reports, and its "test once" rationale says where a second test would stop: a reused branch of the run's own cut before the log last changed on the default branch. `/epics`' stop rationale for `specification.md` covers an older copy too.
 
 ## [3.34.1] — 2026-10-13
 
