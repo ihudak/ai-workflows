@@ -15,7 +15,7 @@ key: <the folder's key>
 ---
 ```
 
-`conformance-record` is not a folder kind, so `workflows-core:addressing` §4 never reads this file as the folder's carrier. The record is a phase deliverable: it lands on the specs repository's default branch through `workflows-core:phase-handoff` `handoff-to-main`, on a `conformance/` branch, behind the run's consent choice. Until that branch merges, a later run finds the record there and acts on it before it reads anything else (`/dev-workflows:conformance` Phase 0 step 5).
+`conformance-record` is not a folder kind, so `workflows-core:addressing` §4 never reads this file as the folder's carrier. The record is a phase deliverable: it lands on the specs repository's default branch through `workflows-core:phase-handoff` `handoff-to-main`, on a `conformance/` branch, behind the run's consent choice. Until that branch merges, a later run finds the record there and acts on it before it reads a requirement (`/dev-workflows:conformance` Phase 0 step 5).
 
 ## 2. The header
 
@@ -88,7 +88,7 @@ A `[DD#n]` is permanent: never renumbered or reused, and its entry is never dele
 
 A `requirement withdrawn` or `orphaned` entry is listed, never asked again. Where it was a `fix-code`, its follow-up is withdrawn per `workflows-core:followup-emission` § *Withdrawing a follow-up*, with the reason `(requirement withdrawn)` or `(orphaned)`.
 
-A PRD run writes `superseded-by: <PRD-KEY>/[DD#n]` into each Epic entry it overrules — save while an unmerged `conformance/` branch carries that Epic's newer record, when it names the entry in its report instead — and never deletes or rewrites any other field of an Epic record.
+A PRD run writes `superseded-by: <PRD-KEY>/[DD#n]` into each Epic entry it overrules — save while an unmerged `conformance/` branch carries that Epic's newer record, when it names the entry in its report and keeps the overrule in its own entry's `ruling:`, which the next PRD run applies once that branch has merged — and never deletes or rewrites any other field of an Epic record.
 
 ## 6. Readers
 
