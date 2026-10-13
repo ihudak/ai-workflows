@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.39.1] — 2026-10-13
+
+### Fixed
+- **`next-phase-offer`'s re-entry list for `/brd-reconcile` names its re-run on the same review.** That re-run sweeps a dependent the run could only record, and since product-workflows 3.33.2 the run's next-step picker offers it; the list named only the other three re-entries. The sentence on why the advance options drop now gives the dependent's reason too. `phase-handoff` §3.7, which names the stopping rows `/brd-reconcile` records rather than stops on, now excepts a slice's parent defect log, which that command gates before confirming any answer and never records. That gate is a new §3.4 row — it stops, row F included — and §4.0 moves `brd/brd-defect-log.md` from *advisory* to *gated*, so `/brd-intake`, which writes the log, presents the stopping array (product-workflows 3.33.2).
+
 ## [1.39.0] — 2026-10-13
 
 ### Changed

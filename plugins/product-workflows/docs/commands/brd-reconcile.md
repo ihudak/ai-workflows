@@ -118,7 +118,7 @@ flowchart TD
     p14 -.->|"advance_ready + no unallocated row and one covered-here"| prd["/create-prd (PM)"]
     p14 -.->|"advance_ready"| ard["/create-ard (PA, optional)"]
     p14 -.->|"advance_ready"| spec["/specify (PE)"]
-    p14 -.->|"advance_ready: no — reopened decision, held customer question, unre-derived finding, or an unswept dependent"| reentry["/brd-interview, /brd-package, or /prd-ground --rebaseline, on this same &lt;BRD-KEY&gt; (PM)"]
+    p14 -.->|"advance_ready: no — reopened decision, held customer question, unre-derived finding, or an unswept dependent"| reentry["/brd-interview, /brd-package, /prd-ground --rebaseline, or /brd-reconcile on the same review, on this same &lt;BRD-KEY&gt; (PM)"]
 ```
 
 `customer-review-reader` is dispatched once, on the detection chain. `workflows-core:impl-maintenance` runs in the
@@ -167,6 +167,15 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   files that are already on disk). The second must **not** send the operator back to `/brd-package`:
   that command will not rewrite a dated bundle, so it stops today and builds a *different* package on
   any other date.
+- **The parent's defect log, settled.** On a slice the run writes its defect resolutions into the
+  parent's `brd/brd-defect-log.md`, so `require-on-main` runs against that log before any answer is
+  confirmed. Where it stops — the log edited in the checkout and not handed off, not on the default
+  branch at all, or a repository the gate cannot check — the run names what it found and waits for
+  you to settle it and check again, or cancels with `BRD_RECONCILE_PARENT_LOG_UNSETTLED`. It tests
+  once: after the review's handoff the run stands on its own branch, where the gate passes, and
+  where that handoff was declined nothing before the write touches the log. A resolution
+  is never left recorded for a later run: no later run would write it, and the questions it closes
+  would stay held.
 - **`$SPECS_PATH`** (required) — if unset, the run stops naming `SPECS_PATH`.
 - **No repository, and no `$REPOS_PATH`.** Every finding this run reads was pinned and independently
   re-derived by `/prd-ground`.
@@ -373,7 +382,7 @@ command removes none of them; the next `/brd-interview` run does.
   naming the withdrawal, so its round can close and no later package carries it. **A held question
   whose requirement defects are all withdrawn closes too**, once this run has resolved the defects:
   every `Requirement defect` line on it names a defect the parent's defect log now resolves
-  `withdrawn` — by an earlier run, or by this one on a decision it froze — and the question has no
+  `withdrawn` — by an earlier run, or by this one, on a decision it froze, completed or re-decided — and the question has no
   record of its own: none frozen against it, by this run or an earlier one, and no `Re-puts:` line.
   Such a question closes *answered by the customer — nothing frozen*, naming the withdrawn defects
   and, where this run withdrew them, the decision that did, whichever order the walk took the
@@ -468,12 +477,14 @@ command removes none of them; the next `/brd-interview` run does.
   it changes. Rewriting a dated prompt or self-review to match a later position falsifies the record
   the customer's review responds to, and every quotation in that review then points at a sentence
   that no longer exists.
-- **Every phase that writes into another BRD — one guard, not four.** A transcription correction
+- **Every phase that writes into another BRD is guarded.** A transcription correction
   into a parent's figures file, defect resolutions into a parent's log, sweep dispositions into a
   dependent's register, and stale-reference corrections into a sibling slice's artifacts are all
   cross-BRD writes, and each runs `require-on-main` against the
   target first. Any stopping row — including the artifact being on no branch the commands cut — means **record,
-  never write**, naming the intended change and the branch/PR state. It never stops the run: letting
+  never write**, naming the intended change and the branch/PR state — save the parent's defect log,
+  which the run settles before confirming any answer and waits on rather than record (above).
+  Recording never stops the run: letting
   a dependent's open pull request block the prerequisite's own customer loop is the D20 failure
   arriving from the other direction.
 - **Phase 10 — the sweep gate.** Every position the propagation sweep reaches takes
@@ -559,8 +570,10 @@ written down.
   named with `--rebaseline` as the fix; a supersession written here would have nothing on the other
   side of it.
 - **It never allocates.** It may move a ledger row to `deferred-to`, `rejected` or `superseded-by`
-  on a frozen customer decision — a withdrawn requirement is `rejected`, citing the defect-log entry
-  resolved `withdrawn`, or, where no entry was, the `[CD#n]` that withdrew it — but `covered-here`
+  on a customer decision that reads `decided` — a withdrawn requirement is `rejected`, citing the
+  defect-log entry resolved `withdrawn`, or, where no entry was written so, the `[CD#n]` that
+  withdrew it; where two of the run's decisions would move one row, a withdrawal wins, and any other
+  disagreement writes nothing and is named for a person — but `covered-here`
   and `covered-by` stay `/brd-split`'s walk — a customer decision is not a statement about which BRD
   in the delivery organisation owns the work — and no row of its ledger ever returns to
   `unallocated`. So a row the customer asks to be built after it was rejected, deferred or
