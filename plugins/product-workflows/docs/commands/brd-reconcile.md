@@ -40,7 +40,9 @@ withdrew.
   their delivery note asked them to commit the review beside the bundle, named exactly as the prompt
   names it, and open a pull request. Once you merge it, the run finds that file on the default
   branch, in the slice's folder or one of its bundle folders and nowhere else, and asks you to
-  confirm it; a review on a branch of the repository not merged yet stops with
+  confirm it — or, where several are waiting, lists them oldest first and asks which: a review
+  reconciled later supersedes an earlier one's answer wherever the two differ, so a corrected resend
+  goes last; a review on a branch of the repository not merged yet stops with
   `BRD_RECONCILE_REVIEW_NOT_MERGED`, naming the branch — a pull request from a fork shows up only once
   merged. Either way you say which file is
   the review — by naming it, or by confirming the one found — and a committed review is moved to its

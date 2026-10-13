@@ -75,11 +75,14 @@ and there it is **optional and ungated**: nothing in [`/create-ard`](create-ard.
   `PRD_GROUND_EPIC_LEVEL`, naming the PRD folder it sits in.
 - **`--repos <name>[,<name>…]`** (optional) — the repositories to ground against, as one
   comma-separated token — a slug, or an absolute path to a clone — so the run asks nothing about
-  them; without it the run lists every clone under `$REPOS_PATH` as candidates and asks.
+  them; without it the run lists the clones under `$REPOS_PATH` as candidates and asks — all but
+  the specs repository and the documentation root, which are no code, though either may still be
+  named.
 - **`--from-split <BRD-KEY>`** (set by [`/brd-split`](brd-split.md)'s *Ground now*) — the root that
   run split. This command runs only when you type it, or from that continuation: a run the model
-  starts on its own, without this flag, stops with `PRD_GROUND_TYPED_ONLY`, and the flag must name
-  the slice's own parent (`PRD_GROUND_NOT_FROM_SPLIT`). Typed by hand it changes nothing.
+  starts on its own, without this flag, stops with `PRD_GROUND_TYPED_ONLY`. Wherever the flag is
+  given, typed by hand included, it must name the slice's own parent, and on the idea route, which
+  has no parent, it always stops — both with `PRD_GROUND_NOT_FROM_SPLIT`. It changes nothing else.
 - **`--depends-on <BRD-KEY>`** (optional, repeatable, **BRD route only**) — declares a prerequisite
   BRD. Persisted to `brd-link.md` additively across runs; the file may also be edited by hand. A
   prerequisite contributes a `will-change` horizon only through its **frozen** decisions, and frozen

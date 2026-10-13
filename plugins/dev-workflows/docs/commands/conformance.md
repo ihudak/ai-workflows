@@ -47,7 +47,9 @@ flowchart TD
 - **An Epic run** checks the Epic's own branch — the branch its latest `/implement` run recorded in `implementation.md` for each repository, at its current tip, so review fixes pushed later are included. Where that branch is gone because it merged, it checks the default branch; where it is gone without merging, it stops with `CONFORMANCE_NO_CODE`.
 - **A PRD run** checks each repository's default branch. First it confirms every Epic merged, in every repository it touched — its recorded commit is in the branch's history, or a default-branch commit made after it carries the Epic's key in its subject, which a squash keeps — and asks before tracing where one is not shown merged.
 
-Before reading, it fetches each writable clone's remote refs (never switching or pulling), and on a read-only mount prints the age of any ref older than fourteen days. A repository with no clone under `$REPOS_PATH` is named, and its requirements are listed as not traced. The documents it traces are gated onto the specs repo's default branch first, before anything is read.
+Before reading, it fetches each writable clone's remote refs (never switching or pulling), and on a read-only mount prints the age of any ref older than fourteen days. A repository with no clone under `$REPOS_PATH` is named, and its requirements are listed as not traced. The documents it traces are gated onto the specs repo's default branch first, before anything is read, and so is the ARD: the run stops while it sits on an unmerged branch.
+
+Each requirement is traced where its code can live: an Epic's in its target repository and in any other repository its implementation record names, a `## Contract` line on a PRD run on both sides, and a PRD-level requirement, which names no repository, in every one. A contract line is satisfied only where both sides satisfy it, a side through any of its Epic's repositories; any other requirement is satisfied where one repository satisfies it and none contradicts it, so a repository that does not implement it is no discrepancy.
 
 **A PRD run does not re-trace every Epic.** It traces the PRD-level requirements in full, and any Epic with no record — after looking for a record a Dev left on an unmerged `conformance/` branch, which it offers to read from there. For an Epic with a record, it re-checks each of the Dev's entries against the merged code: an *amend* or *accept* the code now satisfies is flagged *stale* — how a Dev who fixed the code later without updating the decision is caught — and a *fix the code* the merged code satisfies is *fixed*, listed and resolved without asking. A requirement the Epic run found satisfied, which the record lists with its evidence, is re-traced only where the code at that evidence has changed since. A re-run of either kind asks only about what is new.
 
@@ -57,11 +59,11 @@ Before tracing, every run prints how many requirements it will trace across how 
 
 Every discrepancy the re-check confirms is put to you, one question at a time, with no answer recommended — which one is right is the question itself:
 
-- **Fix the code** — the document is right. A follow-up task goes to the Epic's folder in the form the next `/implement` of that Epic reads back on its own. On an Epic run it goes out at once.
+- **Fix the code** — the document is right. A follow-up task goes to the Epic's folder in the form the next `/implement` of that Epic reads back on its own. On an Epic run it goes out at once. On a PRD run, a PRD-level requirement no Epic covers needs an Epic to carry the fix, and you are asked which; only a PRD with no Epics takes the task in its own folder, for `/implement <PRD-KEY>`.
 - **Amend the document** — the code is right. On a PRD run the run adds a note under `## Engineering review` on the spec, PRD, `epic.md` or ARD, recommending the command that changes it. On an Epic run it is recorded as a proposal only, for the PE.
 - **Accept as shipped** — the difference stands, recorded with your rationale.
 
-On a PRD run, the Dev's decisions where the implementation won come first, then the Dev's *fix the code* decisions, then anything no Epic recorded. Overruling a Dev decision marks it superseded in the Epic's record and withdraws its follow-up.
+On a PRD run, the Dev's decisions where the implementation won come first, then the Dev's *fix the code* decisions, then anything no Epic recorded. Overruling a Dev decision marks it superseded in the Epic's record and withdraws its follow-up; confirming a *fix the code* whose follow-up is no longer open — done, or cancelled at the Epic run's preview — queues it again. A *fix the code* whose requirement has since been withdrawn, or whose text is gone from its document, has its follow-up withdrawn on any run.
 
 ## What it produces
 
@@ -71,11 +73,11 @@ On a PRD run, the Dev's decisions where the implementation won come first, then 
 
 ## Gates
 
-No agent decides anything. Each discrepancy a tracer reports is re-checked at the location it cites before you see it; one that does not hold is dropped, with the reason in the report, and a "satisfied" without evidence is shown as unverified. The documents it traces must be on the specs repo's default branch.
+No agent decides anything. Each discrepancy a tracer reports is re-checked at the location it cites before you see it; one that does not hold is dropped, with the reason in the report. One the re-check can settle neither way — a "satisfied" without evidence among them — is unverified: listed in the report and the record with what would settle it, never put to you, and traced again in full by the next run. The documents it traces must be on the specs repo's default branch.
 
 ## Cost
 
-Each run is charged to phase `conformance`, with the role taken from the folder: `dev` for an Epic run, `pe` for a PRD run. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips the cost entry; see [Session cost](../reference/session-cost.md).
+Each run is charged to phase `conformance`, with the role taken from the folder: `dev` for an Epic run, `pe` for a PRD run, and `pe` too for a `BRD-` container it refuses. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips the cost entry; see [Session cost](../reference/session-cost.md).
 
 ## Session feedback
 

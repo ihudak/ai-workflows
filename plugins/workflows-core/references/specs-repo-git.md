@@ -448,7 +448,7 @@ Ancestry alone was the test, and a pull request merged by squash or by rebase ne
 *against the run key set*, by testing the keys the run already holds. It is never
 extracted from the branch name as free text.
 
-1. Strip the `idea/`, `prd/`, `ard/`, `spec/`, `epics/`, `design/`, `ready/`, `brd/`, `frames/` or `kb/`
+1. Strip the `idea/`, `prd/`, `ard/`, `spec/`, `epics/`, `design/`, `ready/`, `brd/`, `frames/`, `kb/` or `conformance/`
    prefix (a `kb/harvest-<date>` name holds no key, so it resolves to B4). Call the remainder `R`. No prefix matches → not a plugin
    branch, and no row here applies (§3.3 G2 already kept the run on it).
 2. A key `K` in the run key set (§3.2) is a **candidate** when `R` is exactly `K`,
@@ -576,7 +576,7 @@ is each member's own rather than a new condition here:
 - **Follow-ups are a no-op.** No signal qualifies, so that phase resolves no
   target, writes nothing and ends silently (`followup-emission.md` §6).
 
-- **The cost entry is written, unless `--skip-costs`, in which case `workflows-core:run-flags` `skip-cost` advances the checkpoint and writes nothing, or unless the run carries `specs_git: misrooted` (§3.1), in which case `cost-emission.md` §8 reports it in the run's output and writes nothing.** `cost-emission.md` §11 settles it already —
+- **The cost entry is written, unless `--skip-costs`, in which case `workflows-core:run-flags` `skip-cost` advances the checkpoint and writes nothing, or unless the run carries `specs_git: misrooted` (§3.1), in which case `cost-emission.md` §8 reports it in the run's output and writes nothing** — and on the one stop that is no run at all, named below, none of this tail runs. `cost-emission.md` §11 settles it already —
   *Cost runs unless the user skipped it* — and it is the member that makes this tail matter on a
   refusal: the run spent the session's tokens whether or not it wrote a file,
   and a keyless one has a home under that file's §9 pending ladder. A refusal
@@ -606,7 +606,10 @@ keyed mode is one, its Phase 0 having cut a docs-repository branch and
 committed the generated profile on it wherever it profiled that repository
 inline, before its later Phase 0 stops. Such a run, like one that stops in a
 later phase, has written something, and what its tail does is that command's
-to state.
+to state. **One stop is no run at all, and takes no tail**: `/product-workflows:prd-ground`'s
+`PRD_GROUND_TYPED_ONLY`, where the model started the command without `/brd-split`'s
+`--from-split` — nobody elected a run, so a cost entry would bill one that never was, and the
+spend before it is the conversation's.
 
 1. **Gate.** All of §3.1's environment conditions, **plus** the run must not
    carry `specs_git: blocked` from §3.3 G0 or `specs_git: misrooted` from §3.1.
@@ -940,7 +943,7 @@ If ignored: nothing is lost — your files stay uncommitted, and this run's
 
 Found:    <SPECS_PATH> is on branch `<branch>`, which is neither the default
           branch (`<default>`) nor a plugin branch (idea/ prd/ ard/ spec/
-          epics/ design/ ready/ brd/ frames/ kb/).
+          epics/ design/ ready/ brd/ frames/ kb/ conformance/).
 Not done: the preflight did not switch away from it — the plugin manages only
           branches it created. This run's artifacts WILL be committed on
           `<branch>`, and not pushed.

@@ -22,7 +22,7 @@ summarising it — a summary in two places is one that drifts in one of them.
 ## Where it lands
 
 **`follow-ups.md` in the folder the run resolved**, appended, alongside the artifacts the follow-ups
-are about — save that `/dev-workflows:implement` writes into the folder of the unit it implemented, the Epic's whether you named the Epic or its picker chose it under a PRD, so one unit's follow-ups land in one file. Verbose context — a table, a multi-step note, a paste-ready draft — goes in the same file
+are about — save that `/dev-workflows:implement` writes into the folder of the unit it implemented, the Epic's whether you named the Epic or its picker chose it under a PRD, so one unit's follow-ups land in one file, and `/dev-workflows:conformance` writes each follow-up into the folder of the unit whose `/implement` run it asks for — an Epic's, or the PRD's where the PRD has no Epics — even on a PRD run. Verbose context — a table, a multi-step note, a paste-ready draft — goes in the same file
 as a section below the checklist, and the line links it.
 
 **No folder resolved → report-only.** The follow-ups stay in the Final Report and the run says so.
@@ -36,7 +36,11 @@ and no import, two of them described places that no longer exist.
 
 ## A withdrawn follow-up
 
-One command edits a follow-up after writing it: `/conformance`'s PRD run, when the PE overrules a Dev's *fix the code* decision whose follow-up the Epic run already wrote. It ticks the line and appends `— withdrawn: <PRD-KEY>/[DD#n]`, and never deletes it. A ticked line counts as done, so a later `/implement` of the Epic does not read it back as open.
+One command edits a follow-up after writing it: `/conformance`, when a *fix the code* decision whose follow-up an earlier run of it wrote no longer stands — the PE's PRD run overrules a Dev's, or, on any run — a PRD run's own lines on its re-run included — the decision's requirement has been withdrawn or its text is no longer in its document. It ticks the line and appends `— withdrawn: <KEY>/[DD#n]`, with `(requirement withdrawn)` or `(orphaned)` after it in the second case, and never deletes it. A ticked line counts as done, so a later `/implement` of the unit does not read it back as open.
+
+## A re-queued follow-up
+
+The same command writes one line the duplicate check below would skip: when the PE confirms a Dev's *fix the code* decision whose follow-up is no longer open — ticked, or never written because it was cancelled at the Epic run's preview — the PRD run queues a new line ending `— confirmed: <PRD-KEY>/[DD#n]`. The PE's confirmation is a new request for that change, so a ticked line naming it does not block it; a line already carrying the same `— confirmed:` suffix does, so a re-run does not write it twice.
 
 ## What no longer becomes a follow-up
 

@@ -52,12 +52,14 @@ Usage: `/conformance <EPIC-KEY | PRD-KEY> [--skip-costs] [--skip-feedback] [--en
 
 **Rule: Ask, don't guess.** Use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0).
 
-**Ending early.** Every stop in this command — Phase 0's (`CONFORMANCE_NEEDS_KEY`, the `$SPECS_PATH` *Cancel*, step 3's `CONFORMANCE_BRD_NOT_SLICED`, step 4's gate), (c)'s `CONFORMANCE_NO_CODE` — and every run-ending answer — (d)'s *Stop until it is merged* and *Cancel*, (e)'s probe *Cancel*, Phase 4's walk *Cancel* — takes `workflows-core:specs-repo-git` §4's refusal tail: the cost entry (unless `--skip-costs`) and `commit-artifacts`, with no `resume.md` and no maintenance phase. Phase 0's address stops (steps 1–2) skip only the preflight (§3 there). A run-ending answer writes no record, note or follow-up, and the stop message says what was decided before it. Phase 6's *Cancel* is not one of these: it declines the handoff per `workflows-core:phase-handoff` §4.3, the record stays written, and the run goes on through Phases 7–9. A *cancel* at Phase 8's follow-up preview drops only the items it names.
+**Ending early.** Every stop in this command — Phase 0's (`CONFORMANCE_NEEDS_KEY`, the `$SPECS_PATH` *Cancel*, step 3's `CONFORMANCE_BRD_NOT_SLICED`, step 4's gate), (b)'s ARD stops (`CONFORMANCE_ARD_NOT_ON_MAIN`, and the gate's own), (c)'s `CONFORMANCE_NO_CODE` — and every run-ending answer — (d)'s *Stop until it is merged* and *Cancel*, (e)'s probe *Cancel*, Phase 4's walk *Cancel* — takes `workflows-core:specs-repo-git` §4's refusal tail: the cost entry (unless `--skip-costs`) and `commit-artifacts`, with no `resume.md` and no maintenance phase. Phase 0's address stops (steps 1–2) skip only the preflight (§3 there). A run-ending answer writes no record, note or follow-up, and the stop message says what was decided before it. Phase 6's *Cancel* is not one of these: it declines the handoff per `workflows-core:phase-handoff` §4.3, the record stays written, and the run goes on through Phases 7–9. A *cancel* at Phase 8's follow-up preview drops only the items it names.
 
 **(a) Clones and freshness.** Do this before any step below reads a ref. The repositories are every one an Epic's `target:` names (`workflows-core:components`: the id up to its `:`) and every one an `implementation.md` in scope names. Resolve each to a clone under `${REPOS_PATH:-/workspace}`, one directory or a colon-separated list, by the `<repo-slug>` rule `workflows-core:components` §1 defines, applied to each top-level directory's `origin` (`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -C <dir> remote get-url origin 2>/dev/null`); where two clones share a slug, prefer the one whose name ends `-repo`, then `_repo` or `_fast`, then the alphabetically last. A repository with **no clone of** it under `$REPOS_PATH` is named in the report, and its requirements are listed as not traced — never guessed. On a writable clone (`workflows-core:read-only-repos` §1), refresh its remote refs: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 30 git -C <repo> fetch --quiet origin` — refs only, never a switch, a pull or a working-tree write. On a read-only mount, fetch nothing, and apply that reference's §5 instead, printing the age of each ref read where it is older than fourteen days.
 
 **(b) Requirements** (spec D4). List every requirement to trace, each with its `key`, its id (or quoted text), its document and its text:
-- **Epic run.** The Epic's `specification.md`: each `[Uxx]`, and each `[ACxx]` as the pair `[Uxx]/[ACxx]`, since `[ACxx]` restarts per story. The Epic's `epic.md`: each `## Acceptance criteria` bullet, identified by its quoted text, since it carries no id; each `Produces:` / `Consumes: [AD#n]` line of its `## Contract`, traced on this Epic's own side only — the other side is another Epic's, and the PRD run traces both. The ARD: resolve it with `workflows-core:ard-resolution` and take the `Rule` of each `[AD#n]` it returns as applicable. The Epic's `design.md` is context: its `## Requirements coverage` notes are carried to the walk beside the requirement they name.
+- **Epic run.** The Epic's `specification.md`: each `[Uxx]`, and each `[ACxx]` as the pair `[Uxx]/[ACxx]`, since `[ACxx]` restarts per story. The Epic's `epic.md`: each `## Acceptance criteria` bullet, identified by its quoted text, since it carries no id; each `Produces:` / `Consumes: [AD#n]` line of its `## Contract`, traced on this Epic's own side only — the other side is another Epic's, and the PRD run traces both. The ARD: resolve it with `workflows-core:ard-resolution` and take the `Rule` of each `[AD#n]` it returns as applicable. On `status: unmerged`, stop, adding the returned `pr` after `<branch>` where there is one:
+  `CONFORMANCE_ARD_NOT_ON_MAIN: <KEY>'s ARD is on <branch>, not on the default branch — merge it, then re-run '/dev-workflows:conformance <KEY>'.`
+  Any other stopping state of its gate — a working copy that differs from the merged ARD — stops the run on that state's own message, as that reference says. The Epic's `design.md` is context: its `## Requirements coverage` notes are carried to the walk beside the requirement they name.
 - **PRD run.** `prd.md`: every live `[AC#n]` and `[FR#n]`, and every live `[US#n]` with no `[AC#n]` beneath it; never `[UC#n]`, `[SM#n]` or `[SMC#n]`, and never a superseded or withdrawn id (`workflows-core:prd-format`). The PRD-level `specification.md`, as above. Every Epic's set as on an Epic run, both sides of each `## Contract` line included, in the depth (e) sets.
 - Never trace `[TCxx]`: a test case says how a criterion is verified, not what the code does.
 
@@ -77,7 +79,7 @@ choices: ["Stop until it is merged (Recommended)", "Trace anyway — that Epic's
 - an Epic with no `_conformance.md` is traced in full, as an Epic run would — but first **probe the plugin branches for an Epic's record** a Dev left unmerged, with `workflows-core:phase-handoff` §3.2's read-only primitives: `git -C "$SPECS_PATH" for-each-ref --format='%(refname:short)' refs/heads refs/remotes/origin` filtered to `(origin/)?conformance/*`, then `git -C "$SPECS_PATH" cat-file -e "<ref>:./<the record's path>"`. Where one carries it, name the branch and ask `choices: ["Read the Dev's record from <branch> (Recommended)", "Trace this Epic in full instead", "Cancel"]` — *Cancel* ends the run with nothing traced. Read from a branch, the record comes through `git show <ref>:<path>`, and this run writes nothing to that branch: an entry it would mark superseded there, or a follow-up it would withdraw there, is named in the report for the Dev to settle once the branch merges;
 - an Epic with a record has each entry re-checked in Phase 3 against the merged code at the evidence it recorded;
 - a requirement an Epic record lists under `## Satisfied` is re-traced only where the code at its evidence paths changed between the commit that record's header names for its repository and the default branch (`git -C <repo> diff --quiet <that commit> <default-ref> -- <the evidence paths>` exits non-zero). Where the header names no commit for a repository, every requirement of that Epic in that repository is re-traced;
-- a requirement of that Epic that is neither one of its entries nor under its `## Satisfied` — added since the Epic run, `not-checkable` there, or left unverified — is traced in full.
+- a requirement of that Epic that is neither one of its entries nor under its `## Satisfied` — added since the Epic run, `not-checkable` there, or listed under its `## Unverified` — is traced in full.
 
 **(f) The record on file.** Read the unit's own `_conformance.md`, where one exists: its decided entries, which Phase 4 carries forward rather than asks again (`conformance-format.md` §5); its `## Satisfied` list; and the commit each repository was traced at.
 
@@ -119,14 +121,24 @@ Dispatch `subagent_type: "dev-workflows:conformance-tracer"` once per repository
 response**, at most four at a time (`workflows-core:model-routing/classification` §8), with
 `model: <detection_model>`. Hand each the input `${CLAUDE_PLUGIN_ROOT}/references/handoff/conformance-tracer.md`
 fixes: the clone's `repo_path`, the `ref` Phase 1 chose, the `commit` it resolves to, the requirements
-whose code lives there, and the `hints` — the files the recorded commits touched and the target
-component's paths.
+routed to it, and the `hints` — the files the recorded commits touched and the target component's
+paths.
 
-**Synthesise** what the tracers return: one verdict per requirement. A requirement handed to more than
-one repository — a companion run's second repository on an Epic run, or both sides of a `## Contract`
-line on a PRD run — is `satisfied` only where every repository it needs satisfies it; otherwise it takes
-the weakest of their verdicts (`contradicts` before `missing` before `partial`), with each repository's
-evidence.
+**Route each requirement** to the repositories its code can live in, of those Phase 1 (a) resolved:
+- an Epic's requirement → the Epic's `target:` repository and every other repository its
+  `implementation.md` names, a companion run's included; an Epic with neither, every repository;
+- a `## Contract` line → on an Epic run, as any requirement of its Epic; on a PRD run, both sides —
+  the producing Epic's repositories and each consuming Epic's;
+- a PRD-level requirement — `prd.md`'s, or the PRD-level spec's — states no home, so every repository.
+
+**Synthesise** what the tracers return: one verdict per requirement, with each repository's evidence.
+A requirement handed to more than one repository needs only one of them: it is `contradicts` where
+any repository returned that, and otherwise takes the strongest of their verdicts (`satisfied` before
+`partial` before `missing` before `not-checkable`) — a `missing` in one repository is no discrepancy
+where another satisfies the requirement. A `## Contract` line traced on both sides merges each side
+that way first, over that side's Epic's repositories, and then needs every side: it is `satisfied`
+only where every side is, and otherwise takes the weakest of the sides' verdicts (`contradicts`
+before `missing` before `partial`).
 
 ---
 
@@ -135,12 +147,15 @@ evidence.
 Verify each `partial`, `missing` and `contradicts` verdict at the location it cites, in the manner of
 `workflows-core:finding-triage`'s verification step: read the evidence yourself, at the ref.
 - **Confirmed** → a discrepancy, numbered `[DD#n]` when the record is written (`conformance-format.md` §5).
-- **Could not be settled either way** → shown to the person as *unverified*, with what would settle it.
+- **Could not be settled either way** → *unverified*: neither a discrepancy nor satisfied. It is never
+  asked about — no decision can rest on a verdict nobody could confirm — and takes no `[DD#n]`: the
+  report and the record's `## Unverified` list it with what would settle it, and a later run, of
+  either kind, traces it in full.
 - **Does not hold** → dropped; the report names it and why.
-- **A `satisfied` verdict that cites no `file:line`** is not taken as satisfied: it is shown as
-  *unverified*, since a tracer that misses a discrepancy is the one error this re-check would otherwise
-  never see. A `missing` verdict's evidence is the search it ran — `evidence: none — searched …` — which
-  is what absence rests on.
+- **A `satisfied` verdict that cites no `file:line`** is not taken as satisfied: it is *unverified*,
+  since a tracer that misses a discrepancy is the one error this re-check would otherwise never see.
+  A `missing` verdict's evidence is the search it ran — `evidence: none — searched …` — which is what
+  absence rests on.
 
 **On a re-run, and on a PRD run for each Epic record, re-check each entry on file** against the code at
 the evidence it recorded, reading its requirement's current text in its document, and flag it per
@@ -185,6 +200,8 @@ choices: ["Mark it resolved — the code now matches", "Keep Dev's decision — 
 
 A free-text answer is normalised into one of the three decisions or the question is asked again — on the stale-entry form, into marking it resolved or keeping Dev's decision — and it is never written through as a new value (`workflows-core:escalation-rules`, the `/conformance` decision picker). Ask for the rationale in the person's own words after each decision; where they give none, record `—`. *Cancel* ends the run there: no record, note or follow-up is written, and the report says how many items were decided before it.
 
+**On a PRD run, *Fix the code* on a PRD-level requirement no Epic covers also asks which Epic carries the fix**, where the PRD has Epic folders: `/dev-workflows:implement` reads a follow-up back only on a run of the unit it names, and on a PRD with Epics that unit is an Epic, save a broad slice it offers only beside a flat `specification.md`. With one Epic, name it in a one-line notice. With more, print every Epic — key and title — and ask, with no `(Recommended)` marker, one row per Epic where there are four or fewer and otherwise `choices: ["<EPIC-KEY-1> <title>", "<EPIC-KEY-2> <title>", "<EPIC-KEY-3> <title>", "Another Epic from the list above — name its key"]`, a typed key resolved only against the keys printed (`workflows-core:epic-picker` *The cap*). A PRD with no Epic folder has none to name, and its follow-up names the PRD.
+
 ---
 
 ## Phase 5 — Effects and the record
@@ -194,8 +211,12 @@ deletes a requirement.
 
 - **Fix the code** → a follow-up item for Phase 8, in the shape
   ``Run `/dev-workflows:implement <EPIC-KEY>` from repository `<slug>`: <requirement> — <what shipped>``,
-  which the next `/dev-workflows:implement` of that Epic reads back at its Phase 1. A PRD-level
-  requirement no Epic covers names `<PRD-KEY>`. A `still open` Dev entry the PE confirms keeps its
+  which the next `/dev-workflows:implement` of that unit reads back at its Phase 1 — from the
+  repository the line names, since that read-back matches the repository as well as the unit.
+  `<slug>` is the repository whose verdict the merge kept; where several returned that verdict, the
+  named Epic's `target:` repository if it is one of them, else the first of them Phase 1 (a) resolved. A PRD-level
+  requirement no Epic covers names the Epic Phase 4 chose for it, or `<PRD-KEY>` on a PRD with no
+  Epic folder. A `still open` Dev entry the PE confirms keeps its
   follow-up where that line is still open in `follow-ups.md`; where it is not — cancelled at the Epic
   run's preview, or ticked — a new one is queued, ending `— confirmed: <PRD-KEY>/[DD#n]`, which `workflows-core:followup-emission`
   § *Re-queuing a confirmed fix* writes where its §5 dedupe would otherwise skip it.
@@ -217,7 +238,7 @@ deletes a requirement.
 
 **Write `_conformance.md`** into the unit's folder per `conformance-format.md`: §2's header — with the
 commit each repository was traced at, and the counts, `unverified` included — then the `## Satisfied`
-list, one line per satisfied requirement with its evidence paths — those whose discrepancy the re-check dropped included, with the evidence that settled it — then §3's entries. On a re-run, apply
+list, one line per satisfied requirement with its evidence paths — those whose discrepancy the re-check dropped included, with the evidence that settled it — then the `## Unverified` list, one line per unverified requirement with what would settle it, then §3's entries. On a re-run, apply
 §5: carry each decided entry forward while its discrepancy persists, mark it `resolved` once the code
 satisfies its requirement, mark it `requirement withdrawn` where its requirement is superseded or
 withdrawn and `orphaned` where its text is no longer in its document, withdrawing a `fix-code`
@@ -283,6 +304,9 @@ Emit the terminal report:
 ### Dev's entries — PRD run only
 [every Epic entry with the PE's ruling and its flag, the listed-only ones included; each entry on an unmerged branch that this run could not mark there; omit on an Epic run]
 
+### Unverified
+[each requirement the re-check could not settle, and what would settle it — or "none"]
+
 ### Dropped at the re-check
 [each verdict the re-check dropped, and why — or "none"]
 
@@ -300,14 +324,24 @@ Written to: <absolute path>.
 ```
 
 The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer")`:
-- an Epic run with a `fix-code` decision → `/dev-workflows:implement <EPIC-KEY>`, then re-run
+- an Epic run with a `fix-code` decision → `/dev-workflows:implement <EPIC-KEY>` from repository
+  `<slug>` — the repository its follow-up names, since `/implement` reads it back only there — then re-run
   `/dev-workflows:conformance <EPIC-KEY>`; an Epic run with none → the PE's
   `/dev-workflows:conformance <PRD-KEY>` once every Epic has merged;
-- a PRD run → for a `fix-code` decision, `/dev-workflows:implement <EPIC-KEY>` (or `<PRD-KEY>` for a
-  PRD-level requirement no Epic covers); for an `amend-document` decision,
+- a PRD run → for a `fix-code` decision, `/dev-workflows:implement <EPIC-KEY>` from repository
+  `<slug>`, as its follow-up names it — for a PRD-level
+  requirement no Epic covers, the Epic Phase 4 chose, or `<PRD-KEY>` where the PRD has no Epics; for
+  an `amend-document` decision,
   `/product-workflows:update-prd <PRD-KEY>`, `/product-workflows:specify <KEY>`,
   `/product-workflows:epics <PRD-KEY>` or `/product-workflows:create-ard <KEY>`, as the note names; once
   settled, `/docs-workflows:document <PRD-KEY>` and `/docs-workflows:release-notes <PRD-KEY>`.
+
+An offer carries `<merge-clause>`, in a span of its own after the command's, resolved from Phase 6's
+`Phase handoff:` line per `workflows-core:next-phase-offer`, where Phase 6 handed off a document the
+offered command gates — one its own `require-on-main` runs on, or the ARD for a command that resolves
+one through `workflows-core:ard-resolution`. An annotated document is
+the only such path: `/product-workflows:update-prd` and the two documentation commands gate none, and
+an Epic run hands off only its record, which no command gates, so its offers carry none.
 
 Where more routes apply than a prompt can carry, the offer's overflow rule applies.
 
@@ -330,16 +364,16 @@ Conformance verdicts: [the Phase 7 counts]
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` in place of Agent 4 below, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing, and surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects`.
 
-Then spawn all four maintenance agents in a **single Agent message**, each with `model: <detection_model>`:
+Then spawn all four maintenance agents in a **single Agent message**, each with `model: <detection_model>` and told that the project root is `$SPECS_PATH`, as `/dev-workflows:ready` tells its own: that is where this run wrote, while the working directory may be a code checkout, which this command never writes.
 
 - **Agent 1 — Documentation** (general-purpose): given the change summary, check the specs repo's own internal documentation for an index of conformance records or per-PRD artifacts; apply a minimal edit where one is warranted, and otherwise return "no update required (reason)".
-- **Agent 2 — Knowledge base** (general-purpose): given the change summary, check `~/.claude/memory/` and `.claude/memory/` for a fitting file and append an entry only for a recurring or non-obvious conformance pattern this run surfaced, in the `### [Short title]` / Context / Insight / When it applies / Date / Ref format; otherwise return "no update required".
+- **Agent 2 — Knowledge base** (general-purpose): given the change summary, check `~/.claude/memory/` and the project root's `.claude/memory/` for a fitting file and append an entry only for a recurring or non-obvious conformance pattern this run surfaced, in the `### [Short title]` / Context / Insight / When it applies / Date / Ref format; otherwise return "no update required".
 - **Agent 3 — Instructions** (general-purpose): given the change summary, check `CLAUDE.md` in the project root and `~/.claude/CLAUDE.md` for a missing rule this run revealed; apply a minimal, additive, scoped change only where one is warranted.
 - **Agent 4 — Session maintenance** (`workflows-core:impl-maintenance`): "Analyse this session and return a Lessons Learned report. Session handoff: Command run: /conformance; What was done: [one paragraph]; Key events: [code not found, Epics not shown merged, re-check drops, overrules, or 'none']; Workarounds used: [or 'none']; Review verdict: [the Phase 7 counts]; Test result: N/A (read-only conformance check); Project root: $SPECS_PATH."
 
 **Persist plugin feedback (automatic).** After Agent 4 returns, invoke `Skill(skill: "workflows-core:reference", args: "feedback-emission emit-auto")` and call its `emit-auto` entry point (§6) with Agent 4's Lessons Learned report, `command: /conformance`, the run's `key` and `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`).
 
-**Then persist the follow-ups** by invoking `Skill(skill: "workflows-core:reference", args: "followup-emission")` and executing its steps inline, with `unit_folder` = the Epic's folder for an Epic item and the PRD folder for a PRD-level one: every `fix-code` item Phase 5 queued, previewed and confirmed per its §7. **An Epic run emits its `fix-code` items here, at once** — the Dev owns that code; the PE's later ruling withdraws one it overrules. Where the preview cancels an item, the report says so beside its `[DD#n]` — its record's `effect:` reads *proposed*, which stays true (`dev-workflows:conformance-format`).
+**Then persist the follow-ups** by invoking `Skill(skill: "workflows-core:reference", args: "followup-emission")` and executing its steps inline on every `fix-code` item Phase 5 queued, previewed and confirmed per its §7, each with its own `unit_folder` and `key` (its §8) — the folder and key of the unit its line names, an Epic's or, on a PRD with no Epic folder, the PRD's. **An Epic run emits its `fix-code` items here, at once** — the Dev owns that code; the PE's later ruling withdraws one it overrules. Where the preview cancels an item, the report says so beside its `[DD#n]` — its record's `effect:` reads *proposed*, which stays true (`dev-workflows:conformance-format`).
 
 Emit this phase's short output — each agent's result, the feedback persisted, and `N follow-ups written to <target>` or `none`. This phase NEVER fails the run and NEVER commits its own output: the terminal `commit-artifacts` step in Phase 9 commits it.
 

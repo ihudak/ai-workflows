@@ -34,8 +34,10 @@ in two places is a summary that drifts in one of them.
 **`follow-ups.md` in the folder the run resolved**, appended — or, where the caller names the
 folder of the unit its run worked on, that folder (§8): `/dev-workflows:implement`, whose Epic
 picker can choose an Epic under a PRD address, names the folder its implementation record goes in,
-so every run of one unit writes into one file however the unit was addressed. One file per PRD or
-Epic folder, alongside the artifacts the follow-ups are about.
+so every run of one unit writes into one file however the unit was addressed; and
+`/dev-workflows:conformance`, whose PRD run queues items for several units, names one folder per
+item, so each lands in the file of the unit its line asks a run of. One file per PRD or Epic folder,
+alongside the artifacts the follow-ups are about.
 
 **No folder resolved, or the run carries `specs_git: misrooted` (`specs-repo-git.md` §3.1) → report-only.** The follow-ups stay in the Final Report and the phase emits a
 one-line notice naming its reason: `⚠ No resolved folder — N follow-up(s) kept in this report only.`, or,
@@ -75,7 +77,7 @@ finding's identity: `key` + (file path | gap-id | signal-type | other repository
 match as `SKIP — already exists` (mirrors `/wiki-tasks-extract` Step 5); for the other-repository identity a match is a line set naming every change this run found there, and a partial one is previewed as the new line with `SKIP — already exists: <the changes a line names>` beside it; never
 re-insert.
 
-**Withdrawing a follow-up.** One caller edits a line this emitter wrote: `/dev-workflows:conformance`, when a `fix-code` decision whose follow-up an Epic run emitted no longer stands (that command's record format, `dev-workflows:conformance-format`) — the PE overrules it, or its requirement is withdrawn or no longer in its document. It ticks the line and appends why, never deleting it: `- [x] <the line as written> — withdrawn: <PRD-KEY>/[DD#n]` for an overrule, and `- [x] <the line as written> — withdrawn: <KEY>/[DD#n] (requirement withdrawn)` or `(orphaned)` otherwise. A ticked line counts as done, so a later `/implement` of the unit does not read it back as open. The suffix does not change which task the line is: `/dev-workflows:implement`'s read-back compares a line's changes without it, so a copy at the default branch still unticked and this ticked one are one task, ticked in one. No other caller edits a line, and this emitter itself never does.
+**Withdrawing a follow-up.** One caller edits a line this emitter wrote: `/dev-workflows:conformance`, when a `fix-code` decision whose follow-up an earlier run of it emitted — an Epic run's, or on a re-run a PRD run's own — no longer stands (that command's record format, `dev-workflows:conformance-format`): the PE's PRD run overrules a Dev's, or, on any run, its requirement is withdrawn or no longer in its document. It ticks the line and appends why, never deleting it: `- [x] <the line as written> — withdrawn: <PRD-KEY>/[DD#n]` for an overrule, and `- [x] <the line as written> — withdrawn: <KEY>/[DD#n] (requirement withdrawn)` or `(orphaned)` otherwise. A ticked line counts as done, so a later `/implement` of the unit does not read it back as open. The suffix does not change which task the line is: `/dev-workflows:implement`'s read-back compares a line's changes without it, so a copy at the default branch still unticked and this ticked one are one task, ticked in one. No other caller edits a line, and this emitter itself never does.
 
 **Re-queuing a confirmed fix.** One caller writes a line §5 would skip: `/dev-workflows:conformance`'s PRD run, when the PE confirms a `fix-code` decision whose follow-up is no longer open — ticked, or never written because the Epic run's preview cancelled it. Its line ends `— confirmed: <PRD-KEY>/[DD#n]`, and §5's match against a line naming the same change does not apply to it: the PE's confirmation is a new request for that change, not a restatement of the old one. A line already carrying that same `— confirmed:` suffix is still a match, so a re-run does not write it twice.
 
@@ -126,7 +128,10 @@ The calling phase provides:
 - `key` — the run's resolved key, or `null`.
 - `unit_folder` — optional: the folder of the unit the run worked on, where the caller names one;
   §2 writes there in place of the resolved folder, and the caller passes that folder's key as `key`,
-  so §5's stable key is the same for every run of the unit however it was addressed.
+  so §5's stable key is the same for every run of the unit however it was addressed. A caller whose
+  items belong to different units — `/dev-workflows:conformance`'s PRD run, whose items are each an
+  Epic's or the PRD's — names `unit_folder` and its `key` on each item instead: §2 writes each item
+  into its own folder's file, and §5 dedupes it against that file under that key.
 
 The phase applies §6 (filter) → §2 (resolve target) → §1–§3 (render + place) →
 §5 (dedupe) → §7 (confirm), then writes. It is ADDITIVE: the follow-ups always

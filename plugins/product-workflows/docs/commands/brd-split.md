@@ -341,6 +341,9 @@ reads was already independently verified by `/prd-ground`'s own agents.
   [`/create-prd`](create-prd.md) on the same key, which accepts the folder and writes the `prd.md`
   that turns a re-run into the idea-route refusal above.
 - **`$SPECS_PATH`** (required) — if unset, the run stops naming `SPECS_PATH`.
+- **`$REPOS_PATH`** (*Ground now* only) — resolved as [`/prd-ground`](prd-ground.md) resolves it,
+  to list the clones once for every child; where no entry resolves, the run asks for it, and
+  *Cancel* there drops the continuation, not the split.
 
 ## What it produces
 
@@ -605,7 +608,7 @@ split then finishes as it always does — its cost entry, its session commit, it
 **you merge its pull request**, the plugin never does, and tell it so; it checks the merge, squash
 and rebase included, and asks again if it finds none. Then it runs
 [`/prd-ground`](prd-ground.md) once per chosen child, one after another, each a complete run with
-its own pull request in that child's folder and its own cost entry under that child's key. Each grounding run asks its own questions — the repository it cannot find, its handoff, its next step — and a *Stop here* or *Cancel* there ends the children not yet ground; the split tells you so before the first run. *Ground
+its own pull request in that child's folder and its own cost entry under that child's key. Each grounding run asks its own questions — the repository it cannot find, its handoff, its next step — and a *Stop here* or *Cancel* there, its handoff's *Cancel* included, ends the children not yet ground, while *Just write the files* at its handoff lets the next child run; the split tells you so before the first run. *Ground
 each child later* names the command and runs nothing, as this phase always did; on an outcome that
 opened no pull request — a declined handoff, no remote, a failed push — *Ground now* is not offered,
 and the run says what has to happen first.

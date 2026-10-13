@@ -959,7 +959,12 @@ choices: ["They hold no obligation — record that (Recommended)", "Quote the se
 
   **A flagged section's question carries no marker, in any form**, and quotes its flagged pieces
   under the reader's reason — again, where the set question quoted them — so recording that it holds
-  nothing is a choice made against the sentence rather than a default accepted:
+  nothing is a choice made against the sentence rather than a default accepted. **Nor does the
+  first question of an item the standing read gave no reason for** — *Reader: no reason given*, on
+  a section or a read image: as the third `<recommended>` rule above says, an item the read gave no
+  reason for is one it may have missed, so recording that it holds nothing is never the default —
+  whether a re-read was declined, could not change it, or still gave no reason. Both take the
+  unmarked array:
 
 ```
 choices: ["They hold no obligation — record that", "Quote the sentence that binds (you'll be prompted)", "Cancel"]

@@ -364,23 +364,37 @@ write would re-ask a question already answered.
      then look for the same name, in the same folders, on every other branch of `origin`
      (`git -C "$SPECS_PATH" for-each-ref --format='%(refname)' refs/remotes/origin`, leaving out
      `refs/remotes/origin/HEAD` and the default branch's own ref, each listed as above) and in the
-     working tree. Found on a branch, or only in the working tree — the customer's pull request is
-     not merged yet, or the file was put there by hand:
+     working tree. **Pass over a branch hit holding the very file `<default-ref>`'s history already
+     removed** — where `git -C "$SPECS_PATH" log --no-renames --diff-filter=D --format=%H <default-ref> -- "<path>"`
+     names commits, and for any one of them, `<D>`, `git -C "$SPECS_PATH" rev-parse "<branch>:<path>"`
+     prints the same object as `git -C "$SPECS_PATH" rev-parse "<D>^:<path>"` — every removal, not
+     only the latest, since a same-name resend moved later leaves the original's branch behind too: that branch is the head of a pull
+     request already merged, which the forge keeps after an earlier run moved the review it brought,
+     not one waiting to merge. A file of the same name whose bytes no removal took — a resend not yet merged — is not passed
+     over. Found on a branch
+     not passed over, or in the working tree with no such branch — the customer's pull request is not
+     merged yet, or the file was put there by hand:
      `BRD_RECONCILE_REVIEW_NOT_MERGED: <file> is <on branch <branch>[, <branch>…] | in the working tree> but not on <default-ref> — merge the customer's pull request that adds it, then re-run '/product-workflows:brd-reconcile <KEY>'. Where that pull request was closed unmerged, ask the customer to send the file and re-run with '@<path to it>'; where you put the file there yourself, re-run with '@<path to it>' too.`
-     Found nowhere → stop with step 2's `BRD_RECONCILE_NEEDS_REVIEW`: a pull request from a fork of
+     Found nowhere, or only on branches passed over → stop with step 2's `BRD_RECONCILE_NEEDS_REVIEW`: a pull request from a fork of
      the repository, or a branch the fetch could not reach, is on none of the branches this clone
      holds, and shows up here only once merged.
 
    Wherever a file was found on `<default-ref>`, take step 6b's list for each before asking, and
    print it with that file.
    - **More than one** → ask which, every one printed above the question with the commit that added
-     it, most recent first: `choices: ["<file-1>", "<file-2>", "None of these — stop"]`, with a
-     third file before the decline where there is one; four or more, the two most recent, then
+     it, oldest first — by the date its section 1 states (Phase 2 step 1's first rung, read from
+     `<default-ref>`'s copy), else the date its name carries, and two of one date in the order of the
+     commits that added them: `choices: ["<file-1>", "<file-2>", "None of these — stop"]`, with a
+     third file before the decline where there is one; four or more, the two oldest, then
      `choices: ["<file-1>", "<file-2>", "Another one from the list above — name it", "None of these — stop"]`
      — the decline being an option this picker adds, which `workflows-core:epic-picker`'s *The cap*
-     counts against the four and never drops. No option is marked `(Recommended)`: which review to
-     reconcile first is the operator's to say. A free-text answer is resolved against the listed
-     names only. A decline stops the run, writing nothing; the others wait for their own run.
+     counts against the four and never drops. **Say above the question that the order matters**: a
+     review reconciled later supersedes an earlier one's answer wherever the two differ (*Confirm
+     every candidate*), so the reviews go in the order the customer sent them, a corrected resend last —
+     reconciled first, it would be superseded by the very answers it corrected. No option is marked
+     `(Recommended)`: taking one confirms it as the customer's answer, which step 6b's list beside it
+     cannot vouch for, for the reason *Exactly one* gives. A free-text answer is resolved against the
+     listed names only. A decline stops the run, writing nothing; the others wait for their own run.
    - **Exactly one** → print its name, the folder it is in, and the commit that added it
      (`git -C "$SPECS_PATH" log --diff-filter=A -1 --format='%h %an %ad' <default-ref> -- "<path>"`),
      with step 6b's list, and ask:
@@ -404,6 +418,11 @@ write would re-ask a question already answered.
    the default branch first moves it. The review's bytes are the ones on
    `<default-ref>` — `git -C "$SPECS_PATH" show "<default-ref>:./<path>"` — never a working copy that
    may differ, and that phase moves the file rather than copying it where it can (its step 3).
+   And where the slice's folder already holds a `customer-review-<YYYYMMDD>[-<suffix>].md` dated
+   later than this file — by the date *More than one* orders by, its section 1's, else its name's —
+   say so beside the question too: it was reconciled before this older
+   review, and reconciling this one now supersedes its answers wherever the two differ (*More than
+   one*, above, gives why the order matters).
 6b. **List what else the customer's pull request changed.** This runs where the review is the
    customer's committed one — found by step 6a, which takes this list before its question, or an
    `@<review-file>` naming a file on `<default-ref>` in this folder or one of its
@@ -1653,13 +1672,19 @@ carried out — or refused, on the record.
 **A row an earlier pass over this same review already applied or refused is not put again, where
 its record names the row by position.** Each pass sits under a heading naming the canonical review
 file it reconciled, suffix included (*Canonicalise the returned review*, step 3) — or, in an older
-record, is the text above its first pass heading (*Write the reconciliation record*) — and records each correction by its position in the
-review's section 12 with the document and section it names (*Write the reconciliation record*);
-the review is the same file, so a row at that position is the same row. Such a row disposed
-`applied`, `applied-with-deviation` or `refused-with-reason` is reported as *already disposed*, with
+record, is the text above its first pass heading (*Write the reconciliation record*) — and records the mode the reader worked in, and each correction by its position in the
+review's section 12 with the document and section it names (*Write the reconciliation record*).
+**A position names the same row only where that pass and this one both read the review in schema
+mode, and the document and section recorded at it are the ones the row now there names**: schema
+mode parses the customer's own rows, so the same file gives the same rows in the same order, while
+free-text mode drafts them from prose on every dispatch, and two drafts can split, merge or reorder
+them. A row named so, which that pass disposed
+`applied`, `applied-with-deviation` or `refused-with-reason`, is reported as *already disposed*, with
 that disposition, counts as disposed for the gate below, and is neither applied nor refused a second
 time. A row it **deferred** is put again, since what blocked it may have cleared. **Where the record
-cannot name the row by position** — one written before rows were recorded so — the row is put with
+cannot name the row by position** — one written before rows were recorded so, that pass or this
+one reading the review in free-text mode, or a position recorded with another document or section —
+the row is put with
 the corrections of every earlier pass over this review, as their records list them, printed beside
 it, and the operator says which of them is this row, if any: a row the operator matches to one a
 pass applied or refused is reported

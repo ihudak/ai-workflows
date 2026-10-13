@@ -8,7 +8,8 @@ disable-model-invocation: true
 Install the plugin family's status line: $ARGUMENTS
 
 `/workflows-core:statusline` installs the plugin's multi-line, truecolor status
-line and wires it into `~/.claude/settings.json`. Given `jq` (Phase 2), the shipped
+line and wires it into `~/.claude/settings.json`. Given `jq` on the `PATH` it runs
+with — which Phase 2 can test only in this run's shell (Phase 5) — the shipped
 script also writes the per-session **cost snapshot** that enables Option B of session cost
 reporting (see `${CLAUDE_PLUGIN_ROOT}/references/cost-emission.md` §5).
 Installation is **idempotent** and **backs up** anything it would overwrite.
@@ -78,7 +79,9 @@ place, so a failed merge never truncates `settings.json`. Preserve all other key
 Confirm the install path, the settings change, and any backups created. Where
 `jq_missing` is not set, tell the user the status line takes effect on the next
 render / new session, and that the per-session cost snapshot (Option B) is now
-enabled. Where it is set, say neither: print Phase 4's `jq` line again, since
+enabled — both given `jq` on the `PATH` the status line runs with, which is the
+one Claude Code started with and not necessarily the one Phase 2 found `jq` on,
+since this run's shell loads the user's profile. Where it is set, say neither: print Phase 4's `jq` line again, since
 neither the line nor the snapshot works until `jq` is installed, and both start on
 the first render after it is. This command NEVER commits
 and writes only under `~/.claude/`.

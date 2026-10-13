@@ -23,7 +23,7 @@ Read-only discovery and grounding — each returns a structured digest rather th
 |---|---|---|---|---|
 | `vuln-research` | per routing | Read, Glob, Grep, WebFetch, Skill | Read-only CVE research phase — NVD lookup, library detection in the repository, current-version discovery, and minimum-safe-version resolution. Has no side effects. | `/vuln` |
 | `test-baseliner` | per routing | Bash, Read, Glob | Runs every test suite its [detection table](test-suite-detection.md) covers, or else the test command the repository declares, in two modes: capture a baseline, or verify a later run against one. | `/implement`, `/upgrade`, `/vuln` |
-| `conformance-tracer` | per routing | Read, Glob, Grep, Bash | Traces requirements against one repository at one ref, read-only: one verdict per requirement, with `file:line@commit` evidence. Never decides. | `/conformance` |
+| `conformance-tracer` | per routing | Read, Glob, Grep, Bash, Skill | Traces requirements against one repository at one ref, read-only: one verdict per requirement, with `file:line@commit` evidence. Never decides. | `/conformance` |
 
 ## Writers
 

@@ -29,9 +29,15 @@ key: <the folder's key>
 ## Satisfied
 
 - <requirement id, or its quoted text> — <file:line@commit>, one per evidence location
+
+## Unverified
+
+- <requirement id, or its quoted text> — <the verdict the re-check could not settle> — <what would settle it>
 ```
 
-A re-run rewrites the header and the `## Satisfied` list. A reader that compares the commit recorded here with the repository's default branch can say how far the code has moved since. **`## Satisfied` lists every requirement the run found satisfied, those whose discrepancy the re-check dropped included, with the evidence that settled it — and it is what a later PRD run's drift check reads**: it re-traces a requirement listed there only where the code at its evidence paths changed between the commit the header names for that repository and the default branch, so a record without the list has every requirement re-traced.
+A re-run rewrites the header and both lists. A reader that compares the commit recorded here with the repository's default branch can say how far the code has moved since. **`## Satisfied` lists every requirement the run found satisfied, those whose discrepancy the re-check dropped included, with the evidence that settled it — and it is what a later PRD run's drift check reads**: it re-traces a requirement listed there only where the code at its evidence paths changed between the commit the header names for that repository and the default branch, so a record without the list has every requirement re-traced.
+
+**`## Unverified` lists every requirement the re-check could settle neither way** — a `satisfied` citing no `file:line` among them — with what would settle it. It is neither satisfied nor an entry: it takes no `[DD#n]`, nobody is asked about it, and a later run of either kind traces it in full, since it is not under `## Satisfied`.
 
 ## 3. An entry
 
@@ -48,7 +54,7 @@ One entry per discrepancy, in id order:
 - **rationale:** <the person's own words>
 - **effect:** <"follow-up proposed: " and the follow-up line, the note's location, or "recorded">
 - **ruling:** <PRD run only: confirms <EPIC-KEY>/[DD#k] | overrules <EPIC-KEY>/[DD#k] | resolved <EPIC-KEY>/[DD#k]>
-- **flags:** <any of stale, orphaned, fixed, still open, requirement withdrawn, unverified>
+- **flags:** <any of stale, orphaned, fixed, still open, requirement withdrawn>
 - superseded-by: <PRD-KEY>/[DD#n]   ← written into an Epic entry by the PRD run that overruled it
 ```
 
@@ -66,7 +72,8 @@ One entry per discrepancy, in id order:
 - `fixed` — a `fix-code` entry whose requirement the merged code now satisfies: the fix happened, and the PRD run lists it and records it `resolved` without asking.
 - `still open` — a `fix-code` entry whose requirement the merged code still does not satisfy; the PE confirms or overrules it.
 - `requirement withdrawn` — the requirement was superseded or withdrawn after the entry was recorded (`workflows-core:prd-format`).
-- `unverified` — the re-check could not settle the verdict either way; the entry says what would.
+
+A verdict the re-check could not settle is no flag: it is listed under `## Unverified` (§2), never as an entry.
 
 ## 5. Re-runs
 

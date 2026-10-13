@@ -59,7 +59,7 @@ changes for it, and an Epic, which can hold an `epic.md`, is read from `Open` as
 > **Refine — two ways in, one mode.** `/epics` re-refines an Epic that already exists rather than
 > partitioning the PRD again, and it reaches that mode from either end. **Named:** address the
 > `EPIC-` folder itself (`/epics <EPIC-KEY>`) and the run re-grounds and sharpens that one Epic's
-> `epic.md` in place — or, where the user names work that moves to another component at its plan approval, or the Epic's scope already spans components, splits it into one Epic per component; and, where the Epic is over `/epics`' size limit and its folder holds no `specification.md`, `design.md` or `implementation.md`, splits it along its stories into Epics on the same component, the operator choosing. **Detected:** run `/epics <PRD>` where Epics under that PRD carry
+> `epic.md` in place — or, where the user names work that moves to another component at its plan approval, or the Epic's scope already spans components, splits it into one Epic per component; and, where the Epic is over `/epics`' size limit and its folder holds no `specification.md`, `design.md`, `implementation.md`, or Epic-level ARD (`ard.md` or an `ard-<area>.md`), splits it along its stories into Epics on the same component, the operator choosing. **Detected:** run `/epics <PRD>` where Epics under that PRD carry
 > `refinement_candidate: true` — near-empty drafts left as placeholders — and the run offers
 > to fill them in and partition the PRD's scope across them, instead of drafting net-new; the offer
 > is confirmable, and declining it gives the ordinary net-new run. Either way it is the same
