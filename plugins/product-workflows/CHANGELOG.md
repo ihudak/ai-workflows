@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.34.2] — 2026-10-13
+
+### Changed
+- **`/prd-ground` says which missing slice file its gate passes**: one on the default branch since before the run's own branch was cut, which `PRD_GROUND_RESTORE_FROM_DEFAULT` then tells you to restore. One that reached the default branch after the cut stops at `require-on-main`'s row B′ instead (workflows-core 1.41.0), which names the merge that brings it in.
+
 ## [3.34.1] — 2026-10-13
 
 ### Changed

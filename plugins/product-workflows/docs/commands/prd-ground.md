@@ -225,8 +225,9 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   `PRD_GROUND_NO_INVENTORY`, and under that order the ledger was always written when it does, so
   on a slice the inventory was written and then lost: its remedy turns on the slice's `claims:` and
   the parent's ledger — a slice claiming nothing gets the empty-inventory remedy; a slice whose
-  ledger is on the default branch but missing from the working tree is told to restore it from
-  there; and otherwise the inventory is restored from the ref that carried it, or reported, since a parent `/brd-split` writes nothing into a slice
+  ledger is on the default branch but missing from the working tree — on the default branch since
+  before the run's own branch was cut — is told to restore it from there (a ledger that arrived
+  after the cut stops at the gate, which tells you to merge the default branch in); and otherwise the inventory is restored from the ref that carried it, or reported, since a parent `/brd-split` writes nothing into a slice
   with a file missing and never re-creates one — and on a folder naming no
   parent it names a fresh intake under a new key, and also `/create-prd` on the same key where the
   folder holds an `idea.md` and no `prd.md`. An inventory in the folder and on no ref, with a `coverage-ledger.md` there too, stops with
@@ -279,7 +280,9 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   container, and every container has already been refused as a root.
 - **This slice in step with its parent.** Once both gates pass, both files must be in the working
   tree: a gate passes a file that is on the default branch and missing from a working tree on a
-  branch this run reuses, and there the run stops with `PRD_GROUND_RESTORE_FROM_DEFAULT`, naming the
+  branch this run reuses, where the file was on the default branch already when that branch was
+  cut (one that arrived after the cut stops the gate itself, which names the merge that brings it
+  in), and there the run stops with `PRD_GROUND_RESTORE_FROM_DEFAULT`, naming the
   restore, rather than reading a missing inventory as an empty set and sending the operator to a
   `/brd-split` run that writes nothing into a slice with a file missing. Both must also be readable:
   one in the folder that the run cannot read stops with `PRD_GROUND_SLICE_FILE_UNREADABLE`, naming

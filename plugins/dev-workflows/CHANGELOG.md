@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.27.0] — 2026-10-13
+
+Needs `workflows-core` 1.41.0, whose `require-on-main` adds the stopping row B′.
+
+### Changed
+- **`/ready` maps `require-on-main`'s new row B′** — a branch of the run's own that still holds the copy it was cut with after the default branch changed the document — to its "local checkout is stale or dirty" finding for a specification or a design, naming the merge that catches the branch up, and to an "ARD changed on `<default>`, not in this checkout" finding for the ARD, skipping the ARD-conformance dimension as it does for an edit not landed. Each of the eight stopping rows lands in exactly one reason.
+
 ## [4.26.0] — 2026-10-13
 
 Needs `workflows-core` 1.40.1, whose `next-phase-offer` offers an Epic's `/conformance` once the Epic's pull request has merged.
