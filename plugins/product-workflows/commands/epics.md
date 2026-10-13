@@ -535,7 +535,7 @@ choices: ["Refine these N (partition the PRD across them) (Recommended)", "Gener
 ```
 choices: ["<adaptive default> (Recommended)", "<the other setting>", "Keep my Phase 1 choice"]
 ```
-with a one-line rationale ("2+ refinement targets → code context helps draw the boundary" / "single Epic → no boundary to draw; scan off is faster" — save a focus run that splits (Phase 2), which has a boundary to draw, so its default is ON). This runs ONLY in the refine branch, so the generate / no-candidate path never sees it (no-regression).
+with a one-line rationale ("2+ refinement targets → code context helps draw the boundary" / "single Epic → no boundary to draw; scan off is faster" — save a focus run that splits (Phase 2), which has a boundary to draw, so its default is ON). This runs ONLY in the refine branch, so the generate / no-candidate path never sees it (no-regression). **Where Phase 1 turned the scan off through its `$REPOS_PATH` question's *Turn code scan off*, this question is not put** — no base resolved, so there is nothing to scan — and the scan stays off. **Where this question turns the scan on and Phase 1 had it off**, resolve `$REPOS_PATH` here as Phase 1 does — its `Repos:` line, and its question only where no entry is an existing directory — and ask Phase 1's repo refresh policy, which Phase 1 skipped.
 
 ---
 

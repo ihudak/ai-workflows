@@ -764,6 +764,9 @@ Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:referenc
 
 ## Phase 3 — Derive repos + soft gate
 
+**Where Phase 1 step 4 took *Proceed without code scan*, skip this phase**: no repository is
+derived, resolved or gated, and Phase 4 dispatches no `code-scanner`.
+
 1. **Auto-derive candidate repos.** **An Epic with a target first:** where `focus_key` is set and the Epic's `epic.md` carries a `target:` (`Skill(skill: "workflows-core:reference", args: "components")` §1), the candidate list is that target's repository alone, and the rest of this step — the derivation below and its empty-list escalation — does not run: what the Epic needs from another component is the interface the PRD-level ARD's `contracts` fixes, read there and never by scanning its producer. Phase 4's scan of the repository passes the target's `paths` (the ARD's `components` entry for it, else the id's own path, or the whole repository for a bare slug) as `search_hints.paths`. Otherwise, from the Phase 2 capability themes and any repositories the
    `implementation.md` records in the folders Step B read name
    (`workflows-core:implementation-format` §1 — their `repo` entries; a record lives in the folder
@@ -808,6 +811,9 @@ Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:referenc
 ---
 
 ## Phase 4 — Light code scan
+
+Where Phase 1 step 4 took *Proceed without code scan*, dispatch no `code-scanner`; the documentation
+and architecture grounding below still run.
 
 Spawn `code-scanner` instances in **batches of up to 4 concurrent agents** per Agent message, on the
 mounted candidates resolved in Phase 3. Wait for each batch before spawning the next. This is

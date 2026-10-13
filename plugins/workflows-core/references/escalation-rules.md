@@ -279,12 +279,12 @@ capabilities, and skipping it leaves that repository's claims ungrounded rather 
 `choices: ["List repos to scan manually (you'll be prompted)", "Proceed without code scan", "Cancel"]`
 
 Used in `/idea` Phase 2.6 when the proposed theme → repo mapping is empty (no
-theme matches any mounted repo), and in `/epics` Phase 4 when the final
-resolved repo list is empty (every repo was skipped or missing — "Use case B
-with no repos derivable"). The `— /epics` suffix on this heading is historical
-— `/epics` was its first citer — not a scope restriction; the rule now serves
-both commands listed above, and any future citer with the same empty-repo-set
-shape uses it too. *List repos to scan manually* is followed by one plain-text question for the
+theme matches any mounted repo), in `/specify` Phase 3 step 1 when its candidate list is empty,
+and in `/epics` Phase 4 when the final resolved repo list is empty (every repo was skipped or
+missing — "Use case B with no repos derivable"). The `— /epics` suffix on this heading is
+historical — `/epics` was its first citer — not a scope restriction; the rule serves every
+command whose repo set comes up empty this way, the three above among them, and any future
+citer with the same empty-repo-set shape uses it too. *List repos to scan manually* is followed by one plain-text question for the
 repositories' names, each resolved as the citing command resolves a derived one.
 
 In `/prd-ground` Phase 1 step 4 the *Proceed without code scan* entry is omitted:
@@ -382,9 +382,9 @@ Used by every branch-creating command (`/implement`, `/document` (keyed mode onl
 
 **Identity variant.** When the value is filling an **identity** placeholder in a convention documented by the repo itself (`<your-name-or-initials>`, `<user>`, …), the fallback choice is omitted — a generic prefix is not a name, and the documented convention requires a real identity — and so is the picker: an answer that is text with no default is asked in plain text (§0, *A selection carries no text*), as `branch-naming.md` §2.5 asks it, in one prompt whose opening line names the convention:
 
-`"This repo's documented convention starts the branch with your name or initials, and I couldn't infer one. Enter your initials (lowercase; 2–8 characters from [a-z0-9-], starting with a letter or digit, e.g. `iv-gu` or `ivgu`), or leave it blank to cancel:"`
+`"This repo's documented convention starts the branch with your name or initials, and I couldn't infer one. Enter your initials (lowercase; 2–8 characters from [a-z0-9-], starting with a letter or digit, e.g. `iv-gu` or `ivgu`), or type `cancel`:"`
 
-A blank answer, or `cancel`, ends the run before any branch is created, as *Cancel* does elsewhere. After *Use my initials*, prompt for the value with: `"Enter your initials (lowercase; 2–8 characters from [a-z0-9-], starting with a letter or digit, e.g. `iv-gu` or `ivgu`):"`. Either way, then suggest, without persisting, `GIT_USER_INITIALS` or `git config --global user.initials`.
+A `cancel` answer — or a blank one, where the host sends it — ends the run before any branch is created, as *Cancel* does elsewhere. After *Use my initials*, prompt for the value with: `"Enter your initials (lowercase; 2–8 characters from [a-z0-9-], starting with a letter or digit, e.g. `iv-gu` or `ivgu`):"`. Either way, then suggest, without persisting, `GIT_USER_INITIALS` or `git config --global user.initials`.
 
 ## Refresh blocked
 

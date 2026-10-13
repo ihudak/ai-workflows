@@ -1478,18 +1478,21 @@ auto_other = sys.argv[3] == '1'
 # Each family is a regex over the label lowercased, its typographic apostrophes read as straight
 # ones and every run of whitespace collapsed to one space (a phrase can wrap inside a label).
 PROMISES = (
-    ("I'll <verb>", r"\bi'll (enter|paste|describe|take|name|say|provide|give|type|tell)\b"),
-    ("I will <verb>", r"\bi will (enter|paste|describe|take|name|say|provide|give|type|tell)\b"),
+    ("I'll <verb>", r"\bi'll (enter|paste|describe|name|say|provide|give|type|tell)\b"),
+    ("I'll take them from the list", r"\bi'll take (them|it) from (the|this) list\b"),
+    ("I will <verb>", r"\bi will (enter|paste|describe|name|say|provide|give|type|tell)\b"),
     ("you'll <verb>", r"\byou'll (name|provide|enter|say|type)\b"),
-    ("say/record/give why|what|who|which", r"\b(say|record|give) (why|what|who|which)\b"),
+    ("say/give why|what|who|which", r"\b(say|give) (why|what|who|which)\b"),
+    ("record why|who, record what changed", r"\brecord (why|who)\b|\brecord what (changed|was decided)\b"),
     ("give the/a reason", r"\bgive (the|a) reason\b"),
     ("type the names", r"\btype (their|the) names?\b"),
     ("give me / let me give", r"\b(give me|let me give)\b"),
     ("the rows I name", r"\b(rows|ones) i name\b"),
     ("supply the", r"\bsupply (the|a)\b"),
     ("(enter", r"\(enter\b"),
-    ("name it", "(?:^|[\\s\u2014\u2013-])name its?\\b"),
-    ("Enter / Re-enter / Describe / Edit first", r"^(re-enter|enter|describe|edit)\b"),
+    ("name it", "(?:^|[\u2014\u2013-]\\s*)name its?\\b"),
+    ("Enter / Re-enter / Describe first", r"^(re-enter|enter|describe)\b"),
+    ("Edit the/a/one/it/name first", r"^edit (the|a|an|one|it|name)\b"),
     ("Specify a path or command", r"^specify\b[^\u2014]*\b(path|command)\b"),
     ("List ... manually", r"^list\b[^\u2014]*\bmanually\b"),
 )
@@ -3330,9 +3333,11 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf -- '\nchoices: [\"One\", \"Two\", \"Other… (describe)\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   # The promised-text part, which no switch turns off. Red cases asserting this part's own
   # message -- a verb family one per verb a relabelled label used, the name-it family one per dash
-  # and one with none, every other family one -- then the green forms: the prompted label, a promise phrase beside
-  # the marker (the marker is the exemption, not the phrase's absence), and one case per ordinary
-  # label of the tree that sits nearest a family and must not fire. The bracketed option ahead of
+  # and one opening the label, every other family one -- then the green forms: the prompted
+  # label, a promise phrase beside the marker (the marker is the exemption, not the phrase's
+  # absence), one case per ordinary label of the tree that sits nearest a family, and one per
+  # correct label a looser family once fired on ("record what's left", "the name it has",
+  # "I'll take it from here", "Edit nothing") -- none may fire. The bracketed option ahead of
   # one red case is the parser pair again, the wrapped label proves whitespace is collapsed before
   # matching, and the both-switches-off case proves the part is config-free.
   expect_fail_msg "an option promising \"I'll say\" is rejected" 12 "promises text" \
@@ -3381,8 +3386,8 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf -- '\nchoices: [\"One\", \"Another repo from the list above – name it\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "an option asking to \"- name its\" (hyphen) is rejected" 12 "promises text" \
     "printf -- '\nchoices: [\"One\", \"Another Epic from the list above - name its key\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
-  expect_fail_msg "an option asking to \"name it\" with no dash is rejected" 12 "promises text" \
-    "printf -- '\nchoices: [\"One\", \"Pick another and name it\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option opening \"Name it\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"One\", \"Name it from the list above\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "an option opening \"Enter\" is rejected" 12 "promises text" \
     "printf -- '\nchoices: [\"Use cwd anyway\", \"Enter the docs repo path\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "an option opening \"Re-enter\" is rejected" 12 "promises text" \
@@ -3430,6 +3435,14 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf -- '\nchoices: [\"Assign to a named slice — covered-by\", \"Defer\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after "\"... and let me fix manually\" is accepted" \
     "printf -- '\nchoices: [\"Apply safe fixes\", \"Show remaining violations and let me fix manually\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "\"Defer — record what's left in the report\" is accepted" \
+    "printf -- '\nchoices: [\"Fix it now\", \"Defer — record what\047s left in the report\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "\"Keep the name it has\" is accepted" \
+    "printf -- '\nchoices: [\"Rename it\", \"Keep the name it has\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "\"Stop — I'll take it from here\" is accepted" \
+    "printf -- '\nchoices: [\"Continue\", \"Stop — I\047ll take it from here\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "\"Edit nothing — continue\" is accepted" \
+    "printf -- '\nchoices: [\"Edit nothing — continue\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after "a promised-text option quoted in CHANGELOG.md is accepted" \
     "printf -- '\nchoices: [\"Split it\", \"Keep it whole — give the reason\"]\n' >> $PLUGIN_REL/CHANGELOG.md"
 

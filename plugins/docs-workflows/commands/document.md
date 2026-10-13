@@ -507,7 +507,8 @@ From the **implementation record** — the `implementation.md` blocks Phase 3 re
      ```
      Resolved <M>/<N> repositories from the implementation record.
      ```
-   - **`missing` is non-empty** — present ONE consolidated gate (not one prompt per slug):
+   - **`missing` is non-empty, and Phase 1 took *Proceed without the repos*** — put no gate: take *Proceed without them* below for the whole set, as Phase 1's answer already did.
+   - **`missing` is non-empty** otherwise — present ONE consolidated gate (not one prompt per slug):
      ```
      This PRD's implementation record spans <N> repositories. <M> mounted, <K> missing:
 
@@ -565,7 +566,7 @@ After the batch returns, handle each per-repo status:
 - `prep.read_only: true` — not a failure. The scan ran at `prep.scanned_ref`. Escalate per the `Read-only mount — ref stale or diverged` rule in `workflows-core:escalation-rules` **only** when `prep.ref_committed_at` is more than 14 days old or `prep.head_divergence.ahead > 0`; otherwise proceed silently and cite evidence at `prep.scanned_ref`.
 - `NO_PRS_RESOLVED` — the agent's own declared return status, whatever the elements were called; record all that repo's refs as unresolved and continue.
 
-After every batch completes, if **every ref across every repo** is unresolved, present a single aggregate gate (not per-ref):
+After every batch completes, if **every ref across every repo** is unresolved, present a single aggregate gate (not per-ref) — save where Phase 1 took *Proceed without the repos*, which already chose PRD-only content: there, put no gate and go on as its first option does:
 ```
 choices: ["Proceed with PRD-only content (Recommended — writer/planner draw from the folder read output; final report notes missing diff content)", "Cancel"]
 ```

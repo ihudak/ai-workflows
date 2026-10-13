@@ -551,7 +551,7 @@ There are no PRs at ARD time, so repos are **architect-driven**, not PR-derived:
    any other. A finding's evidence is cited at the commit that finding is pinned to
    (`workflows-core:grounding-format` §2), which is not necessarily the commit a
    fresh scan reads; where the two differ, say so beside the claim rather than silently re-dating it.
-3. **Missing repo → consolidated mount-or-descope gate:** `choices: ["Mount now & re-scan", "Ground only the confirmed-mounted set (record the rest as open questions)", "Specify an absolute path for this repo (you'll be prompted)", "Cancel"]` — *Specify an absolute path* asks for the clone's path in plain text and takes it as that repo's clone.
+3. **Missing repo → consolidated mount-or-descope gate** — not put where Phase 1 step 3 took *Ground only the confirmed-mounted set*, which already answered it: record every confirmed component as an open question and go on. Otherwise: `choices: ["Mount now & re-scan", "Ground only the confirmed-mounted set (record the rest as open questions)", "Specify an absolute path for this repo (you'll be prompted)", "Cancel"]` — *Specify an absolute path* asks for the clone's path in plain text and takes it as that repo's clone.
 4. **Ground the confirmed set.** Spawn `code-scanner` in batches of up to 4 concurrent agents per Agent message on the confirmed repos (wait for each batch), scoped by the themes:
 
    → Agent (subagent_type: "workflows-core:code-scanner", model: `<detection_model — §2.1 Sonnet chain>`):
