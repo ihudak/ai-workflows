@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.39.3] — 2026-10-13
+
+### Fixed
+- **`epic-picker` describes the commands that use its picker rules without making the Epic pick, rather than listing them.** The list named four documentation commands and had missed `/product-workflows:brd-reconcile` and, since 1.39.2, `/dev-workflows:conformance`, which picks the Epic that carries a fix; a description cannot go stale as members join, and the `grep` beside it still re-derives the set.
+
 ## [1.39.2] — 2026-10-13
 
 ### Fixed
