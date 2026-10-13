@@ -1424,13 +1424,16 @@ grounding has actually run. When `--sort-existing` was not given, this phase is 
 
 ## Phase 7 — Handoff
 
-Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and present its §4.3 choice array verbatim — the **advisory** array: `/product-workflows:brd-split` on a root reads this
-handoff's artifacts with a plain worktree read at its own step 8, never a `require-on-main` gate
-(steps 6 and 7 run only in `split_mode: allocate-only`), so nothing downstream gates any of them any
-more:
+Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and present its §4.3 choice array verbatim — the **gated — stopping** array: every slice's
+`/product-workflows:brd-reconcile` executes `require-on-main` on this BRD's `brd/brd-defect-log.md`
+before it confirms anything, and stops while the log is on no ref (`workflows-core:phase-handoff`
+§3.4), since it writes its defect resolutions into that file. Every other artifact of this handoff
+is read from the worktree — `/product-workflows:brd-split` on a root reads them with a plain worktree
+read at its own step 8, never a `require-on-main` gate (steps 6 and 7 run only in
+`split_mode: allocate-only`) — but one stopping consumer decides the array:
 
 ```
-choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (no command stops on this; what reads it reads your working copy)", "Cancel"]
+choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]
 ```
 
 On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with `prefix: brd`, `feature_folder` as resolved in Phase 0, `deliverable_paths` = **every file under

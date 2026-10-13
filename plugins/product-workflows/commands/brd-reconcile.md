@@ -102,8 +102,8 @@ the customer's own voice.
 
 ## The cross-BRD write guard
 
-**Four phases below write outside the BRD folder this run was given, and all four take the same
-guard.** They are:
+**Four phases below write outside the BRD folder this run was given, and all four are guarded: three
+record, and the parent's defect log waits (below).** They are:
 
 | Phase | What it writes, and where |
 |---|---|
@@ -136,12 +136,14 @@ costs nothing D20 guards against: the parent is not downstream of this slice but
 requirements come from, and what the gate stops on is its log as this checkout holds it — edited and
 not handed off, or not on the default branch at all. **The test is made once, before anything is
 confirmed, and not again before the write.** After the canonicalised review's handoff the run
-stands on its own branch, where the gate passes, so a second test would almost never stop — and
+stands on its own branch, where the gate passes — or, where that handoff was declined, on the
+checkout step 6c has just passed, which nothing before the write touches the log in — so a second
+test would almost never stop — and
 where it did, the stop would come after the *Freeze the customer decisions* phase, leaving records
 frozen that no reconciliation record names: a re-run would find each re-affirmed, freeze nothing,
 and resolve no defect for it.
 
-**Why the guard is one rule and not one per path.** Writing over a register, a defect log or a value
+**Why every path is guarded, and not only one.** Writing over a register, a defect log or a value
 document that is sitting on somebody else's branch silently overwrites an in-flight run, and the
 person whose work is lost finds out at their next `git status`, not here. That failure does not care
 which of the paths reached it, so neither does the guard: a rule written once for the propagation
@@ -443,9 +445,9 @@ write would re-ask a question already answered.
    `brd/brd-defect-log.md` — a slice holds no log of its own (`brd-format.md` §2.1) — and that write
    never falls back to recording (*The cross-BRD write guard*). So execute `require-on-main` against
    that log — the parent's, which `brd-link.md`'s `parent:` names, one hop — now, while nothing is written: `pass`, `pass_amending` and `unmanaged` → go on. Any stopping
-   row, `absent` among them, means this run cannot write the log safely: it is edited in this
-   checkout and not handed off — a run whose handoff was declined leaves it so — or on a branch
-   the default branch does not have, or nowhere on it at all, or the repository itself cannot be
+   row, or `absent`, means this run cannot write the log safely: it is edited in this checkout and
+   not handed off — a run whose handoff was declined leaves it so — or on a branch the default
+   branch does not have, or on no branch at all, or the repository itself cannot be
    checked (no default branch, a detached HEAD). Say what the gate reported — the files, branch or
    pull request it named, or the repository state — say that this run writes its defect resolutions
    into that file and waits rather than write over an edit or leave them unwritten, and say that
@@ -1918,9 +1920,7 @@ Because the log belongs to another BRD, **the cross-BRD write guard applies here
 waits**: the *Resolve inputs and gate the sent package* phase's step 6c settled the parent's
 `brd/brd-defect-log.md` before anything was confirmed, so this phase writes, and tests it no
 second time (*The cross-BRD write guard* says why). A resolution is never recorded for a later run
-to write. A parent whose defect
-log is mid-review is a parent somebody is editing, and a resolution written over it is a defect
-classification lost without trace.
+to write.
 
 **Last, close every held question whose requirement defects are now all withdrawn and that has no
 record of its own.** On every run,

@@ -172,7 +172,8 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   confirmed. Where it stops — the log edited in the checkout and not handed off, not on the default
   branch at all, or a repository the gate cannot check — the run names what it found and waits for
   you to settle it and check again, or cancels with `BRD_RECONCILE_PARENT_LOG_UNSETTLED`. It tests
-  once: after the review's handoff the run stands on its own branch, where the gate passes. A resolution
+  once: after the review's handoff the run stands on its own branch, where the gate passes, and
+  where that handoff was declined nothing before the write touches the log. A resolution
   is never left recorded for a later run: no later run would write it, and the questions it closes
   would stay held.
 - **`$SPECS_PATH`** (required) — if unset, the run stops naming `SPECS_PATH`.
@@ -476,7 +477,7 @@ command removes none of them; the next `/brd-interview` run does.
   it changes. Rewriting a dated prompt or self-review to match a later position falsifies the record
   the customer's review responds to, and every quotation in that review then points at a sentence
   that no longer exists.
-- **Every phase that writes into another BRD — one guard, not four.** A transcription correction
+- **Every phase that writes into another BRD is guarded.** A transcription correction
   into a parent's figures file, defect resolutions into a parent's log, sweep dispositions into a
   dependent's register, and stale-reference corrections into a sibling slice's artifacts are all
   cross-BRD writes, and each runs `require-on-main` against the
