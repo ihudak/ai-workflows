@@ -1426,7 +1426,7 @@ grounding has actually run. When `--sort-existing` was not given, this phase is 
 
 Invoke `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and present its §4.3 choice array verbatim — the **gated — stopping** array: every slice's
 `/product-workflows:brd-reconcile` executes `require-on-main` on this BRD's `brd/brd-defect-log.md`
-before it confirms anything, and stops while the log is on no ref (`workflows-core:phase-handoff`
+before it confirms any answer, and stops while the log is on no ref (`workflows-core:phase-handoff`
 §3.4), since it writes its defect resolutions into that file. Every other artifact of this handoff
 is read from the worktree — `/product-workflows:brd-split` on a root reads them with a plain worktree
 read at its own step 8, never a `require-on-main` gate (steps 6 and 7 run only in
@@ -1455,12 +1455,14 @@ line in the final report.
 an outcome line**: §4.1's *Declined by the user* row, its `<artifacts>` the `deliverable_paths` set
 above as that row counts it, and its `<next-phase-clause>` the **gated — stopping** one (`The next phase will stop until it is.`),
 which is what the array's parenthetical promised (`workflows-core:phase-handoff` §4.1, §4.3).
-**On either path, name beside the outcome line the command that phase is**: each slice's
-`/product-workflows:brd-reconcile`, at its Phase 0 step 6c, after the customer's review —
+Either way the run goes on to Phase 8 and Phase 9's emitter tail.
+
+**On every path, name beside the outcome line the command its clause calls the next phase** — the
+pushed rows' `<downstream-clause>` and the declined row's `<next-phase-clause>` alike: each slice's
+`/product-workflows:brd-reconcile`, at its Phase 0 step 6c, after the customer's review.
 `/product-workflows:brd-split`, `/product-workflows:prd-ground`, `/product-workflows:brd-interview`
 and `/product-workflows:brd-package` read this handoff's files from the worktree and stop on none
-of them. Either way the run goes
-on to Phase 8 and Phase 9's emitter tail.
+of them, which is why Phase 8 offers `/product-workflows:brd-split` with no wait.
 
 `brd` is the branch prefix `workflows-core:phase-handoff` §2.9's `prefix` row lists as shared by
 every `/brd-*` command and, on the BRD route, `/prd-ground` (the way that row shares `prd` among the

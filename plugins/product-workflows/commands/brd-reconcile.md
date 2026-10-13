@@ -455,7 +455,8 @@ write would re-ask a question already answered.
    ```
    On *I've settled it*, run
    `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 30 git -C "$SPECS_PATH" fetch --quiet origin`
-   (`workflows-core:bounded-run`) and `require-on-main` again: a pass → go on; a stopping row or
+   (`workflows-core:bounded-run`) — best-effort, its failure or timeout ignored, as step 6a's is —
+   and `require-on-main` again: `pass`, `pass_amending` or `unmanaged` → go on; a stopping row or
    `absent` → say so, name what it reported again, and put the same question again — never re-check silently in a
    loop, and never take an answer for a state the gate did not find. *Cancel* stops the run before
    anything is written: `BRD_RECONCILE_PARENT_LOG_UNSETTLED: <path> — <what the gate reported>.
@@ -1915,8 +1916,7 @@ reconciliation record names it by path so nobody looks for a resolution in the f
 pointed at.
 
 Because the log belongs to another BRD, **the cross-BRD write guard applies here, in the form that
-waits**: the *Resolve inputs and gate the sent package* phase's step 6c settled the parent's
-`brd/brd-defect-log.md` before anything was confirmed, so this phase writes, and tests it no
+waits**: the *Resolve inputs and gate the sent package* phase's step 6c settled the parent's `brd/brd-defect-log.md` before any answer was confirmed, so this phase writes, and tests it no
 second time (*The cross-BRD write guard* says why). A resolution is never recorded for a later run
 to write.
 
