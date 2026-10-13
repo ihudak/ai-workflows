@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 Needs `workflows-core` 1.41.0, whose `require-on-main` adds the stopping row B′.
 
 ### Changed
-- **`/ready` maps `require-on-main`'s new row B′** — a branch of the run's own that still holds the copy it was cut with after the default branch changed the document — to its "local checkout is stale or dirty" finding for a specification or a design, naming the merge that catches the branch up, and to an "ARD changed on `<default>`, not in this checkout" finding for the ARD, skipping the ARD-conformance dimension as it does for an edit not landed. Each of the eight stopping rows lands in exactly one reason.
+- **`/ready` maps `require-on-main`'s new row B′** — a branch of the run's own that holds the copy it was cut with, or none, after the default branch changed the document — to its "local checkout is stale or dirty" finding for a specification or a design, naming the merge that catches the branch up, and to an "ARD changed on `<default>`, not in this checkout" finding for the ARD, skipping the ARD-conformance dimension as it does for an edit not landed. Each of the eight stopping rows lands in exactly one reason.
 
 ## [4.26.0] — 2026-10-13
 

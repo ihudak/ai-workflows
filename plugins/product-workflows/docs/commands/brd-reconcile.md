@@ -177,7 +177,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   waits for you to settle it and check again, or cancels with `BRD_RECONCILE_PARENT_LOG_UNSETTLED`.
   It tests once: after the review's handoff the run stands on its own branch, where the gate passes
   unless the handoff reused an older branch of the run's own, cut before the log last changed on the
-  default branch and still holding the copy it was cut with — the write then goes into that older copy, and the newer entries meet it
+  default branch and holding the copy it was cut with or none — the write then lands on what that branch holds, and the newer entries meet it
   when that branch's pull request merges — and where that handoff was declined nothing before the write
   touches the log. A resolution
   is never left recorded for a later run: no later run would write it, and the questions it closes
