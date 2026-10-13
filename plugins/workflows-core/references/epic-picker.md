@@ -9,13 +9,14 @@ tracker-specific.
 makes that pick**: `/epics`, `/document` and `/release-notes` operate on the PRD as a whole and must keep
 working for a PRD with no Epics at all.
 
-**A second, larger set consumes the *picker rules* without picking an Epic, and this file used to deny
-it existed.** `/docs-workflows:docs-init`, `/docs-brand`, `/docs-serve` and `/docs-audit` each build a
-picker from a directory listing and cite *The cap* — and, in `/docs-brand`'s case, load this file
-through the loader skill and apply the auto-select-at-one and typed-answer rules by name. None of them
-resolves a PRD folder at all, so *PRD-level commands never use it* was true of the Epic pick and false
-of the file. **Re-derive both sets** with `grep -l epic-picker plugins/*/commands/*.md
-plugins/*/agents/*.md`, reading each hit for which of the two it is: the paragraphs a change to the
+**A second, larger set consumes the *picker rules* without making that pick, and this file used to deny
+it existed**: every command that builds a picker from a listing of its own — directories, waiting
+files, or a PRD's Epics for some other purpose than choosing the unit to work on — and cites *The cap*,
+some of them the auto-select-at-one and typed-answer rules too. Several resolve no PRD folder at all,
+so *PRD-level commands never use it* was true of the Epic pick and false of the file. **This set is
+described rather than listed**, because a list of its members went stale twice as members joined.
+**Re-derive both sets** with `grep -l epic-picker plugins/*/commands/*.md plugins/*/agents/*.md`,
+reading each hit for which of the two it is: the paragraphs a change to the
 `AskUserQuestion` arity constraint would touch — *The cap*, and the rule resolving a typed answer
 against the printed list — are read by every file that grep returns, not only by the three above.
 
