@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.16.0] — 2026-10-13
+
+Needs `workflows-core` 1.40.0, whose `escalation-rules` *Required path environment variable unset* says what its *Set* option asks next and names `/document` and `/release-notes` among its `REPOS_PATH` citers.
+
+### Changed
+- **`/document` and `/release-notes` no longer ask for `$REPOS_PATH` on every run.** Each resolves `${REPOS_PATH:-/workspace}` (a colon-separated list allowed) without a question — `/release-notes` only with diff grounding on — and prints `Repos: <value> (from REPOS_PATH | REPOS_PATH unset — the default) — another base is set through REPOS_PATH or named at the plan's approval`; each asks only where no entry is an existing directory, as `Set REPOS_PATH (you'll be prompted for the path)` or `Cancel`.
+- **Options that need your text say so, and the run asks for it.** Choosing an option returns only its label, so labels that read as if you typed with the selection are relabelled to `… (you'll be prompted…)` and each is followed by a plain-text question — among them `Replace (you'll be prompted for the new screenshot, staged via Phase 6.1)`, `Upload now (you'll be prompted for the CDN links)`, `Adjust (you'll be prompted)` and `Enter a slice key (you'll be prompted)` (`/document`), `Enter corrected wording (you'll be prompted)` (`/release-notes`), `Describe the fix yourself (you'll be prompted)` (`/docs-audit`, `/docs-brand`, `/docs-init`), the colour, logo and repo options of `/docs-brand`, the gap options of `/docs-profile`, and the overflow options of `/docs-serve`.
+
 ## [1.15.1] — 2026-10-13
 
 ### Fixed

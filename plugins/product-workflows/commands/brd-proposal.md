@@ -75,7 +75,7 @@ not work: a flag is a token, so `--redo` would arrive as the address.
 
 1. **`$SPECS_PATH` (required).** If unset, stop naming `SPECS_PATH`, per the
    `Required path environment variable unset` rule in `workflows-core:escalation-rules`:
-   `choices: ["Set SPECS_PATH (enter the path)", "Cancel"]`.
+   `choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]`.
 
 2. **Resolve the address.** Resolve the single positional `<ADDRESS>` — a `<KEY>`, or an `@<path>`
    naming a folder — with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3).
@@ -450,18 +450,22 @@ this run reads it rather than defining a second one.
   its confirmation gate, and write it. **The depth is relentless**: no cap and no `Q<n>/<cap>` numbering — the grill is done
   when every field of the profile `/prd-proposal` Phase 2 defines has been asked and none is left as a recorded gap, and it cannot
   close while `roles`, `productivity` or `calendar` lacks an answer — a proposal cannot state a
-  team, a schedule or a productivity basis without them. `engagement_model` **restructures the engagement-governance, change-control and
+  team, a schedule or a productivity basis without them. A field only the operator holds, with no
+  default — `vendor.name`, `vendor.footer_note`, `client.name` — is asked in plain text, with no
+  recommended answer and no options (`workflows-core:escalation-rules` §0, *A selection carries no
+  text*). `engagement_model` **restructures the engagement-governance, change-control and
   priced-options sections wholesale** (§4 sections 16, 17 and 18), so it is asked rather than assumed:
   `choices: ["time-and-material", "fixed-price"]`.
 - **Present** — **show it back for confirmation, every run, never read silently.** A productivity
   basis captured once and never revisited silently mis-scales every later proposal, which is the
   second of the two limits `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §13 states:
-  `choices: ["Use it as shown (Recommended)", "Correct a field — I'll say which", "Re-grill the whole profile"]`.
+  `choices: ["Use it as shown (Recommended)", "Correct a field (you'll be prompted)", "Re-grill the whole profile"]` —
+  *Correct a field* asks in plain text which field to correct and its new value.
 - **`--profile`** — re-grill it in full regardless of what is on disk, then continue the run.
 
 **`engagement_model` is a closed vocabulary here too, and for a stronger reason: this run reads the
 same committed file every slice was priced under.** A free-text answer to either picker — the grill's
-own, or a `"Correct a field — I'll say which"` answer naming `engagement_model` — is normalised into
+own, or a *Correct a field* answer naming `engagement_model` — is normalised into
 `time-and-material` or `fixed-price`, or the question is re-asked; it is never written through as a
 third value (`workflows-core:escalation-rules`, *Closed-vocabulary pickers must normalise the
 free-text answer*, whose table carries this picker). §0 of that file makes the free-text option
@@ -541,7 +545,7 @@ This phase performs all of them; it does not re-express any of them.
    every included slice's `[ED#n]` table, index the evidence identifiers it cites, and flag every
    identifier claimed by more than one included slice. Present each flag with both slices' driver rows
    quoted verbatim, so the operator rules on the record rather than on a summary of it:
-   `choices: ["Genuinely two pieces of work — keep both", "One piece of work priced twice — deduct it, and name the deduction"]`
+   `choices: ["Genuinely two pieces of work — keep both", "One piece of work priced twice — deduct it; the umbrella names the deduction"]`
    §14 fixes what a deduction is and what the document must disclose about the check's own limit;
    render both.
 5. **Sequencing** — §14's third adjustment. Compute peak concurrency from the programme schedule,

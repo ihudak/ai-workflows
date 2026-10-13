@@ -1406,7 +1406,7 @@ check_handoff_applicability() {
 
 # ------------------------------------------------------------------ check 12
 # Every `choices:` array the plugin writes is a call to the host's prompt tool, and this
-# check holds two things about it, each under its own edition switch.
+# check holds three things about it, the first two each under its own edition switch.
 #
 # THE ARITY CAP (HAS_CHOICE_CAP). AskUserQuestion's schema is `minItems: 2, maxItems: 4`.
 # A five-option array is not a long prompt -- it is a tool call rejected at validation, so
@@ -1428,6 +1428,17 @@ check_handoff_applicability() {
 # such options until 2026-10-08, unseen, because check 12 was then one switch and the cap had
 # turned it off there. Hence two switches.
 #
+# NO PROMISED TEXT (no switch: every edition's prompt tool returns the chosen label and nothing
+# else). An option whose label words the operator's text as arriving with the selection --
+# "Correct a field — I'll say which", "Keep it whole — give the reason", "Set <VAR> (enter the
+# path)", "Another one from the list above — name it" -- makes a promise the selection cannot
+# keep: the run receives the bare label and reads it as a refusal, or as a promise the operator
+# broke. Such a label fails unless the same label also carries "(you'll be prompted", the form
+# the edition's escalation-rules reference prescribes in its §0 (*A selection carries no
+# text*). The phrases below are matched case-insensitively, a typographic apostrophe read as
+# a straight one. "I'll" alone is not a phrase: "Just write the files — I'll handle git"
+# promises an action outside the prompt, not text, and passes.
+#
 # The parser is bracket-matched and quote-aware, NOT a non-greedy regex. A naive
 # `choices:\s*\[(.*?)\]` stops at the first `]` -- including one inside an option string
 # ("Use <PRD dir> [+ <Epic subdir>]") -- and silently skips that array. The census that
@@ -1443,16 +1454,20 @@ check_handoff_applicability() {
 # assembled from a table of rows -- has no literal options to count or read. Its cap lives in
 # the edition's own picker reference (*The cap*) and `escalation-rules.md` §0, and is held by
 # review, not by this gate. Nor is an option list written without the `choices:` key read --
-# a table cell's bare array; review holds those too.
+# a table cell's bare array; review holds those too. And the promised-text part reads a label,
+# never the prose after its array: an option that needs text without wording a promise, and a
+# run that never asks for the text a marked option names, are review's.
 check_choices_arity() {
   local root="$1" hits
-  [ "$HAS_CHOICE_CAP" = 1 ] || [ "$HAS_AUTO_OTHER" = 1 ] || return 0
-  [ "$HAVE_PY" = 1 ] || { note "python3 not found; check 12 (choices arity, authored Other) skipped"; return 0; }
+  [ "$HAVE_PY" = 1 ] || { note "python3 not found; check 12 (choices arity, authored Other, promised text) skipped"; return 0; }
   hits=$(python3 - "$root/$PLUGIN_REL" "$HAS_CHOICE_CAP" "$HAS_AUTO_OTHER" <<'PYEOF'
 import re, sys, io, glob, os
 root = sys.argv[1]
 cap = sys.argv[2] == '1'
 auto_other = sys.argv[3] == '1'
+PROMISES = ("i'll say", "i'll provide", "i will provide", "you'll provide", "give the reason",
+            "give a reason", "(enter ", "— name it", "— name its")
+PROMPTED = "(you'll be prompted"
 START = re.compile(r'choices:\s*\[')
 def arrays(text):
     for m in START.finditer(text):
@@ -1485,10 +1500,14 @@ for f in sorted(glob.glob(os.path.join(root, '**', '*.md'), recursive=True)):
             print("%s:%d has %d options (AskUserQuestion renders at most 4)" % (rel, n, len(opts)))
         if cap and len(opts) < 2:
             print("%s:%d has %d option(s) (AskUserQuestion needs at least 2)" % (rel, n, len(opts)))
-        if not auto_other: continue
         for o in opts:
-            if o.strip().lower().startswith('other'):
+            if auto_other and o.strip().lower().startswith('other'):
                 print("%s:%d authors its own \"%s\" option (the harness supplies it)" % (rel, n, o[:40]))
+            low = o.replace('’', "'").lower()
+            if PROMPTED in low: continue
+            hit = next((p for p in PROMISES if p in low), None)
+            if hit:
+                print("%s:%d option \"%s\" promises text the selection cannot carry (\"%s\"); label it \"... (you'll be prompted)\"" % (rel, n, o[:60], hit.strip()))
 PYEOF
 )
   [ -n "$hits" ] || return 0
@@ -3247,8 +3266,8 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # tree stops being examined while the build stays green.
   expect_fail "a corpus CORE_PLUGIN_REL does not point at is rejected" 11 "relocate_corpus"
 
-  # Check 12 -- two halves, each under its own edition switch, one case per failure mode. The
-  # arity half carries the bracket-matching pair that is the whole reason this check parses
+  # Check 12 -- three parts, the first two each under its own edition switch, one case per
+  # failure mode. The arity half carries the bracket-matching pair that is the whole reason this check parses
   # rather than regexes: a naive non-greedy `\[(.*?)\]` stops at the `]` inside the option text
   # and skips the array entirely, so an over-long array hidden behind one would pass -- and a
   # skipping parser passes the over-long case and the legal case below for the same wrong
@@ -3283,6 +3302,42 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf -- '\nchoices: [\"One\", \"Two\", \"Other… (describe)\"]\n' >> $PLUGIN_REL/CHANGELOG.md"
   expect_pass_after_env "an authored Other is accepted where the host supplies no free-text answer" "HAS_AUTO_OTHER=0" \
     "printf -- '\nchoices: [\"One\", \"Two\", \"Other… (describe)\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  # The promised-text part, which no switch turns off. One red case per phrase family, each
+  # asserting this part's own message, then the green forms: the prompted label, a promise
+  # phrase beside the marker (the marker is the exemption, not the phrase's absence), and an
+  # "I'll" that promises an action rather than text. The bracketed option ahead of one red case
+  # is the parser pair again, and the both-switches-off case proves the part is config-free.
+  expect_fail_msg "an option promising \"I'll say\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Use it as shown\", \"Correct a field — I\047ll say which\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option promising \"I'll provide\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Replace — I\047ll provide a new screenshot\", \"Leave as is\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option promising \"I will provide\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Use <dir> [+ <sub>]\", \"I will provide the path\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option promising \"you'll provide\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Point me at a directory (you\047ll provide the path)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option asking to \"give the reason\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Split it\", \"Keep it whole — give the reason\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option asking to \"give a reason\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Split it\", \"Keep it whole — Give a reason\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option asking to \"(enter ...)\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Set SPECS_PATH (enter the path)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option asking to \"— name it\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"One\", \"Two\", \"Three\", \"Another one from the list above — name it\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option asking to \"— name its\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"One\", \"Another Epic from the list above — name its key\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "a promise with a typographic apostrophe is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Use it as shown\", \"Correct a field — I’ll say which\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_env "a promised-text option is rejected with both edition switches off" 12 \
+    "HAS_CHOICE_CAP=0; HAS_AUTO_OTHER=0" \
+    "printf -- '\nchoices: [\"Split it\", \"Keep it whole — give the reason\"]\n' >> $(cmd_file $PLUGIN_REL alpha)" "promises text"
+  expect_pass_after "prompted labels are accepted" \
+    "printf -- '\nchoices: [\"Keep it whole (you\047ll be prompted for the reason)\", \"Set SPECS_PATH (you\047ll be prompted for the path)\", \"Another Epic from the list above (you\047ll be prompted for its key)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "a promise phrase beside the prompted marker is accepted" \
+    "printf -- '\nchoices: [\"Correct a field — I\047ll say which (you\047ll be prompted)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "an \"I'll\" that promises an action, not text, is accepted" \
+    "printf -- '\nchoices: [\"Branch + commit + push + open PR (Recommended)\", \"Just write the files — I\047ll handle git\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "a promised-text option quoted in CHANGELOG.md is accepted" \
+    "printf -- '\nchoices: [\"Split it\", \"Keep it whole — give the reason\"]\n' >> $PLUGIN_REL/CHANGELOG.md"
 
   # Check 13 -- vendor-token quarantine. Four cases, in two discriminating pairs. The first
   # pair proves the check fires on an unmarked vendor name and stays quiet on a marked one --

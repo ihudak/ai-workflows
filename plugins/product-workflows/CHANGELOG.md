@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.34.0] — 2026-10-13
+
+Needs `workflows-core` 1.40.0, whose `escalation-rules` §0 carries *A selection carries no text*, cited by `/prd-proposal` and `/brd-proposal`, and whose *Required path environment variable unset* says what its *Set* option asks next and names `/specify`, `/create-ard` and `/epics` among its `REPOS_PATH` citers.
+
+### Changed
+- **`/specify`, `/create-ard` and `/epics` no longer ask for `$REPOS_PATH` on every run.** Each resolves `${REPOS_PATH:-/workspace}` (a colon-separated list allowed) without a question and prints `Repos: <value> (from REPOS_PATH | REPOS_PATH unset — the default)`, adding that another base is set through `REPOS_PATH` — or, for `/epics`, named at its plan's approval; each asks only where no entry is an existing directory, as `Set REPOS_PATH (you'll be prompted for the path)` or `Cancel`. `/epics` still resolves it only with code examination on, and still asks which repos to scan.
+- **Options that need your text say so, and the run asks for it.** Choosing an option returns only its label, so labels that read as if you typed with the selection are relabelled to `… (you'll be prompted…)` and each is followed by a plain-text question — among them `Keep it whole (you'll be prompted for the reason)` (`/epics`), `Correct a field (you'll be prompted)` (`/prd-proposal`, `/brd-proposal`), `Another one from the list above (you'll be prompted for its name)` and `Another package from the list above (you'll be prompted for its date)` (`/brd-reconcile`), `Set SPECS_PATH (you'll be prompted for the path)` and `Set REPOS_PATH (you'll be prompted for the path)` everywhere, `Re-enter the path (you'll be prompted)` and `Re-enter the source (you'll be prompted)` (`/idea`), and the disposition options of `/brd-package` and `/brd-reconcile` that asked you to *say why* or *supply* a row. `/brd-reconcile`'s *Record it for a human* now describes what it records rather than instructing you to name it.
+- **The proposal profile asks a fact only you hold in plain text.** `/prd-proposal` and `/brd-proposal` ask `vendor.name`, `vendor.footer_note` and `client.name` with no recommended answer and no options, rather than a picker with an "I'll provide it" choice.
+
 ## [3.33.3] — 2026-10-13
 
 Needs `workflows-core` 1.39.2, whose `grounding-format` §4 names a clone without an `origin` the way `/prd-ground` now does.

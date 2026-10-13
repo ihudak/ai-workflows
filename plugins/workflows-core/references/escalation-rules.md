@@ -27,6 +27,17 @@ unfollowable.
    `${CLAUDE_PLUGIN_ROOT}/references/next-phase-offer.md`'s overflow rule applies: the prose carries
    every route, the array carries the likeliest, and the run says the list is longer than the prompt.
 
+**A selection carries no text.** Choosing an option returns its label and nothing else. An option
+that needs text from the operator — a name, a path, a key, a reason, a correction — is followed at
+once by one plain-text question asking for that text, and the run never reads the bare selection as
+a refusal or as a promise the operator broke. A label that asks for or promises that text is
+written `… (you'll be prompted)` or `… (you'll be prompted for <what>)`, never as a promise or an
+instruction the selection itself would have to carry out (`— name it`, `I'll say which`, `give the
+reason`, `(enter the path)`). A free-text answer in the harness's own field that already carries
+the text is taken as given, and nothing is asked again. A question whose whole answer is text with
+no default — a name, a URL, a reason — is asked in plain text: never as a picker built for it, and
+never with an "I'll provide it" option.
+
 ## Choice lists are presented verbatim
 
 **A choice list written into a command phase is presented to the user verbatim. Its options, their
@@ -173,10 +184,12 @@ This rule binds every command in the family — this plugin's own and those of e
 
 ## key dir not found
 
-`choices: ["Re-enter key", "Cancel"]`
+`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`
 
 Used when the address resolved to no folder — `resolve-address` returned `status: absent`, or a
-folder that resolved earlier in the run is gone when a later phase reads it.
+folder that resolved earlier in the run is gone when a later phase reads it. *Re-enter key* is
+followed by one plain-text question for the key, which is read and resolved as the original address
+was (`workflows-core:addressing` §1, §3).
 **A folder that is there is never this case, whatever it holds**: re-entering a key that resolved
 cannot help. A command that stops on what such a folder holds — a BRD container, a folder placed at
 no level, a PRD folder carrying no key, a PRD folder with no `prd.md` — raises a named stop of its
@@ -187,11 +200,15 @@ described a dispatch that no longer exists.)
 
 ## Required path environment variable unset
 
-`choices: ["Set <VAR> (enter the path)", "Cancel"]`
+`choices: ["Set <VAR> (you'll be prompted for the path)", "Cancel"]`
 
-Used when a command stops in Phase 0 because a path environment variable it requires is unset, or
-resolves to nothing that exists. `<VAR>` is that variable's own name, written out — the list names
-the variable the run is missing, never a generic placeholder.
+Used when a command stops because a path environment variable it requires is unset, or resolves to
+nothing that exists. `<VAR>` is that variable's own name, written out — the list names the variable
+the run is missing, never a generic placeholder. *Set <VAR>* is followed at once by one plain-text
+question for the path (§0, *A selection carries no text*); the answer — for `REPOS_PATH` one
+directory or a colon-separated list — is carried as `$<VAR>` for the rest of the run once it names
+an existing directory (for a list, once one of its entries does), and the question is asked again
+where it does not.
 
 `/brd-intake` (Phase 0 step 5), `/prd-ground` (Phase 0 step 3 for `SPECS_PATH` and Phase 0 step 7
 for `REPOS_PATH`), `/brd-split` (Phase 0 step 2, and for `REPOS_PATH` Phase 7's *Ground now*
@@ -200,12 +217,17 @@ ending the run), `/brd-interview` (Phase 0 step 3), `/brd-package`
 (Phase 0 step 3), `/brd-reconcile` (Phase 0 step 3), `/frames` (Phase 0 step 0), `/prd-proposal`
 (Phase 0 step 1), `/brd-proposal` (Phase 0 step 1), `/idea` (Phase 0 step 1), `/implement` (Phase 0
 *Address resolution*, on a `<KEY>` address only), `/document` (*Mode detection*, keyed mode on a
-`<KEY>` address only) and `/release-notes` (Phase 0 step 1, on a `<KEY>` address only) cite this
-rule by name — for every one of them but `/prd-ground` and `/brd-split`'s *Ground now*, `SPECS_PATH` is the only path variable it
-requires, since none of the others requires a repository root (`/idea --ground-code`, `/document`
-and `/release-notes`' opt-in diff grounding read `${REPOS_PATH:-/workspace}` with its default and
-never stop on it unset; a `$DOCS_PATH` that does not resolve only skips documentation grounding, or, in
-`/document`, one rung of its docs-repository ladder, and stops nothing). **State the set by its
+`<KEY>` address only, and for `REPOS_PATH` keyed mode's Phase 1) and `/release-notes` (Phase 0
+step 1, on a `<KEY>` address only, and for `REPOS_PATH` Phase 1, with diff grounding on), and — for
+`REPOS_PATH` alone — `/design` (Phase 1 step 4), `/specify` (Phase 1 step 4), `/create-ard` (Phase 1
+step 3) and `/epics` (Phase 1, with code examination on) cite this rule by name. **`REPOS_PATH` is
+asked for only where no entry of `${REPOS_PATH:-/workspace}` is an existing directory**: a value
+that resolves is used without a question, and `/design`, `/specify`, `/create-ard`, `/epics`,
+`/document` and `/release-notes` print it on a `Repos:` line instead. A citer not named for
+`REPOS_PATH` above requires `SPECS_PATH` alone (`/idea --ground-code` reads
+`${REPOS_PATH:-/workspace}` with its default and never stops on it; a `$DOCS_PATH` that does not
+resolve only skips documentation grounding, or, in `/document`, one rung of its docs-repository
+ladder, and stops nothing). **State the set by its
 property, not by counting from the end of the list, nor by naming a subset**: the clause read "for
 the last four" until the list grew, at which point it silently described a different set, and a
 named subset that replaced it then left `/brd-split` and `/brd-intake` out of it. Derive the set
@@ -217,7 +239,7 @@ list inline without naming the rule; a citer that names the rule uses the list w
 
 ## Repo unresolved (zero matches) — /document
 
-`choices: ["Skip and continue without its refs", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo"]`
+`choices: ["Skip and continue without its refs", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo (you'll be prompted)"]`
 
 Used in `/document` Phase 4 when a repo slug has zero matches in the
 slug→clone map. The first option names **refs**, not PRs: that command builds
@@ -226,14 +248,19 @@ and reads a pull request only as the commits a merged one landed (`/document` Ph
 
 ## Repo unresolved (zero matches) — /epics
 
-`choices: ["Skip and continue without this repo's scan", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo"]`
+`choices: ["Skip and continue without this repo's scan", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo (you'll be prompted)"]`
 
 Used in `/epics` Phase 4 when a repo slug has zero matches in the
 slug→clone map.
 
+In every *Repo unresolved (zero matches)* variant, and in *Repo missing (after resolution)* below,
+*Specify a different absolute path for this repo* is followed by one plain-text question for the
+path, which the citing command takes as that repo's clone the way its own text after the array says;
+a path that is not a directory is asked for again.
+
 ## Repo unresolved (zero matches) — /prd-ground
 
-`choices: ["Skip and continue without this repo", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo"]`
+`choices: ["Skip and continue without this repo", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo (you'll be prompted)"]`
 
 Used in `/prd-ground` Phase 1 step 3 when a repo the operator named has zero matches in the
 slug→clone map. Same options, same order as the `/epics` variant above; the first one drops
@@ -242,7 +269,7 @@ capabilities, and skipping it leaves that repository's claims ungrounded rather 
 
 ## No repos derivable — /epics
 
-`choices: ["List repos to scan manually", "Proceed without code scan", "Cancel"]`
+`choices: ["List repos to scan manually (you'll be prompted)", "Proceed without code scan", "Cancel"]`
 
 Used in `/idea` Phase 2.6 when the proposed theme → repo mapping is empty (no
 theme matches any mounted repo), and in `/epics` Phase 4 when the final
@@ -250,10 +277,11 @@ resolved repo list is empty (every repo was skipped or missing — "Use case B
 with no repos derivable"). The `— /epics` suffix on this heading is historical
 — `/epics` was its first citer — not a scope restriction; the rule now serves
 both commands listed above, and any future citer with the same empty-repo-set
-shape uses it too.
+shape uses it too. *List repos to scan manually* is followed by one plain-text question for the
+repositories' names, each resolved against the slug→clone map like a derived one.
 
 In `/prd-ground` Phase 1 step 4 the *Proceed without code scan* entry is omitted:
-`choices: ["List repos to check manually", "Cancel"]`
+`choices: ["List repos to check manually (you'll be prompted)", "Cancel"]`
 
 and *scan* reads *check*, for the reason the `— /prd-ground` heading above gives. The dropped
 option is not a shortening: grounding has nothing to check a claim against without at least one
@@ -263,7 +291,7 @@ outcome the command cannot deliver.
 
 ## Repo missing (after resolution)
 
-`choices: ["Skip this repo", "I'll clone it — wait", "Specify a different absolute path for this repo", "Cancel"]`
+`choices: ["Skip this repo", "I'll clone it — wait", "Specify a different absolute path for this repo (you'll be prompted)", "Cancel"]`
 
 Used when a diff-summarizer or code-scanner batch returns `REPO_MISSING` at
 Phase 5 after Phase 4 already checked, in `/idea` Phase 2.6, which has no
@@ -341,14 +369,13 @@ left it, and asks nothing, save a Stash that stashed nothing (§ *Stashing the u
 
 ## Branch prefix undetected
 
-`choices: ["Use `<fallback>` (default for this command)", "Use my initials — I'll enter them"]`
+`choices: ["Use `<fallback>` (default for this command)", "Use my initials (you'll be prompted for them)"]`
 
 Used by every branch-creating command (`/implement`, `/document` (keyed mode only — a direct-mode run creates no branch), `/docs-profile`, `/docs-init`, `/docs-brand` standalone, `/upgrade`, `/vuln`) when the `branch-naming.md` §2 identity ladder — `$GIT_USER_INITIALS`, `git config user.initials`, then inference from existing branches — yields nothing. `<fallback>` is that command's own default (`feat/`, `docs/`, `fix/`, `chore/`).
 
-**Identity variant.** When the value is filling an **identity** placeholder in a convention documented by the repo itself (`<your-name-or-initials>`, `<user>`, …), the fallback choice is omitted — a generic prefix is not a name, and the documented convention requires a real identity:
+**Identity variant.** When the value is filling an **identity** placeholder in a convention documented by the repo itself (`<your-name-or-initials>`, `<user>`, …), the fallback choice is omitted — a generic prefix is not a name, and the documented convention requires a real identity — and so is the picker: an answer that is text with no default is asked in plain text (§0, *A selection carries no text*), as `branch-naming.md` §2.5 asks it:
 
 `"This repo's documented convention starts the branch with your name or initials, and I couldn't infer one. What should I use?"`
-`choices: ["Enter my initials", "Cancel"]`
 
 Either way, prompt for the value with: `"Enter your initials (lowercase; 2–8 characters from [a-z0-9-], starting with a letter or digit, e.g. `iv-gu` or `ivgu`):"` — then suggest, without persisting, `GIT_USER_INITIALS` or `git config --global user.initials`.
 

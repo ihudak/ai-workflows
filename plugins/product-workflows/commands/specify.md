@@ -204,7 +204,8 @@ nothing.
 
 2. **Resolve `$SPECS_PATH`.** `/specify` writes specifications under `$SPECS_PATH/specifications/`
    (exact layout resolved in step 3) — the specs repo. If `$SPECS_PATH` is unset, stop
-   with a clear error naming `SPECS_PATH` (`choices: ["Set SPECS_PATH (enter the path)", "Cancel"]`) —
+   with a clear error naming `SPECS_PATH` (`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]`;
+   *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` for the run) —
    there is no fallback for this write target the way there is for reads.
 
 3. **Resolve the feature folder.** Derive provisional kebab-case slugs from the relevant
@@ -396,6 +397,7 @@ Use `choices` arrays; 2–4 options, and never author an "Other" option — the 
    ```
    choices: ["Use <feature_folder> (Recommended)", "Use a different path (you'll be prompted)", "Cancel"]
    ```
+   A different path is asked for in plain text and resolved as Phase 0 resolves an `@<path>` address.
    - **Resolve documentation grounding here, then show its line.** Run `resolve-docs-grounding specify` per `Skill(skill: "workflows-core:reference", args: "docs-grounding resolve-docs-grounding")` — its step 3.5 index prompt included — and show the `docs grounding:` line from what it returns, in the form that reference fixes — `ON <root> (retrieval: …)` or `OFF (<reason>)` — verbatim, including any index-build, staleness, or shadowing clause it carries (off switch: --no-docs). It runs here, before any agent is dispatched, because step 3.5 asks its one-time index question before the run's real work; this is the run's one resolution (`workflows-core:docs-grounding`, *Invariants*), and Phase 4 dispatches on the state it returns without resolving again.
 
 2. **Resume vs fresh** (only if Phase 0 found a `_session.md`). Read it back and summarise which
@@ -413,18 +415,20 @@ Use `choices` arrays; 2–4 options, and never author an "Other" option — the 
    (`refresh.switch_to_default_branch: true, refresh.pull: true`) — grounding wants present-day code,
    the same rationale `/epics` uses.
 
-4. **Repos search base (`$REPOS_PATH`)**. Read `${REPOS_PATH:-/workspace}`. `$REPOS_PATH` may be a
-   single directory or a colon-separated list:
+4. **Repos search base (`$REPOS_PATH`) — resolved, never asked.** Resolve `${REPOS_PATH:-/workspace}`
+   (a single directory or a colon-separated list) and carry it as `$REPOS_PATH`; it is shown on the
+   `Repos:` line below. **Only where no entry is an existing directory**, stop naming `REPOS_PATH`,
+   per the `Required path environment variable unset` rule in `workflows-core:escalation-rules`:
    ```
-   choices: ["Use $REPOS_PATH (default /workspace) (Recommended)", "Use a different path (you'll be prompted)", "Cancel"]
+   choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Cancel"]
    ```
-   If "different path", validate that at least one directory exists under the given value before
-   recording it.
+   *Set REPOS_PATH* asks for the path in plain text and carries the answer as `$REPOS_PATH` once an
+   entry of it is an existing directory.
    - **Resolve architecture grounding next, then show its line.** Run `resolve-architecture-grounding specify` per `Skill(skill: "workflows-core:reference", args: "architecture-grounding resolve-architecture-grounding")` and show the `architecture grounding:` and `team decisions:` lines from what it returns, verbatim, in the form that reference fixes (off switch: --no-arch). This is the run's one resolution; Phase 4 dispatches `architecture-grounder` on the state it returns without resolving again.
 
 Also display (for user context): resolved feature folder; resolved `prd_dir`; resolved
-`key` (PRD); resolved `focus_key` (Epic, or 'none — PRD-level'); resolved `$REPOS_PATH`; resolved
-`$SPECS_PATH`.
+`key` (PRD); resolved `focus_key` (Epic, or 'none — PRD-level'); resolved `$SPECS_PATH`; and the
+line `Repos: <value> (from REPOS_PATH | REPOS_PATH unset — the default) — another base is set through REPOS_PATH`.
 
 **Wherever `prd_dir` holds `grounding/`, on either route, display in addition** which of
 `<prd_dir>/grounding/code-grounding.md` and `<prd_dir>/grounding/design-grounding.md` are present — a stat, not a read; the
@@ -506,13 +510,13 @@ own frontmatter (`workflows-core:addressing` §4).
 
 **A missing folder and a folder holding no `prd.md` are two different states, and only the first is a
 stop.** If the folder is missing, surface the `key dir not found` rule in
-`workflows-core:escalation-rules` (`["Re-enter key", "Cancel"]`) — reachable only
+`workflows-core:escalation-rules` (`["Re-enter key (you'll be prompted)", "Cancel"]`) — reachable only
 through a folder deleted between Phase 0 and here, since Phase 0 step 3 already stopped on `absent`. If
 the folder is there but holds **no `prd.md`**, do not stop and do not re-report: the Phase 0 gate has
 already returned `absent` and printed the line naming the folder this run specifies from instead. That is
 the ordinary state on the BRD route, where `/product-workflows:create-prd` is not a prerequisite for this
 command, and a supported one on the keyed route; escalating it here would contradict the gate's own
-`absent` branch two steps earlier and offer a "Re-enter key" for a key that resolved correctly. Enumerate
+`absent` branch two steps earlier and offer a "Re-enter key (you'll be prompted)" for a key that resolved correctly. Enumerate
 the `EPIC-` subfolders exactly as below and carry on with whatever the folder holds.
 
 Otherwise take the type from the resolved folder's own `prd.md` (`kind: prd`) and enumerate its **child
@@ -548,8 +552,8 @@ is the only command that writes one at all.
   Default cursor = the first actionable row (in-progress before not-started). Render per
   `Skill(skill: "workflows-core:reference", args: "epic-picker")`: every Epic listed as prose above the prompt, and
   the array carrying **at most two** Epic rows (marker + key + title), the explicit
-  **"Author one broad PRD-level spec instead"** choice, and *"Another Epic from the list above — name
-  its key"*. That file's *The cap* section is why the Epic rows are the ones that give way: the
+  **"Author one broad PRD-level spec instead"** choice, and *"Another Epic from the list above (you'll be
+  prompted for its key)"*. That file's *The cap* section is why the Epic rows are the ones that give way: the
   broad-spec choice is the alternative to picking any Epic at all, so hiding it would force a choice
   this command means to leave open.
   - On selecting an Epic → set `focus_key` = that Epic; re-point the feature folder to its per-Epic
@@ -615,7 +619,7 @@ PRD is thin the grill has less to work from and must ask more; that is a real ch
 detail comes from, and it belongs to the operator's answers rather than to an import.
 
 The same two states apply here as in Step A: a **missing** folder surfaces the `key dir not found` rule
-in `workflows-core:escalation-rules` (`["Re-enter key", "Cancel"]`); a folder holding
+in `workflows-core:escalation-rules` (`["Re-enter key (you'll be prompted)", "Cancel"]`); a folder holding
 **no `prd.md`** is not a stop — the Phase 0 gate reported it already, and the grill works from what the
 folder does hold. Then:
 
@@ -775,7 +779,7 @@ Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:referenc
    empty, escalate per the `No repos derivable — /epics` rule in
    `workflows-core:escalation-rules`:
    ```
-   choices: ["List repos to scan manually", "Proceed without code scan", "Cancel"]
+   choices: ["List repos to scan manually (you'll be prompted)", "Proceed without code scan", "Cancel"]
    ```
 
 2. **Build the slug→clone map** (`/epics`-style). For each top-level directory under each entry of
@@ -786,7 +790,7 @@ Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:referenc
    matches) or zero matches both escalate per the `Repo unresolved (zero matches) — /epics` rule in
    `workflows-core:escalation-rules`:
    ```
-   choices: ["Skip and continue without this repo's scan", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo"]
+   choices: ["Skip and continue without this repo's scan", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo (you'll be prompted)"]
    ```
 
 4. **Cross-check mounted status — soft gate.** A resolved repo slug that is not actually mounted under

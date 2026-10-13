@@ -51,7 +51,7 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
 5. **`$SPECS_PATH` (required).** If unset, stop naming `SPECS_PATH`, per the
    `Required path environment variable unset` rule in `workflows-core:escalation-rules`:
    ```
-   choices: ["Set SPECS_PATH (enter the path)", "Cancel"]
+   choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]
    ```
 6. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal
@@ -310,7 +310,9 @@ choices: ["Proceed with <folder> (Recommended)", "Use a different key or path (y
 ```
 
 `<folder>` is the folder's **name**, as Phase 0 step 7 resolved or derived it and the first bullet
-above shows it — `BRD-<BRD-KEY>-<slug>` for a new one — never its path.
+above shows it — `BRD-<BRD-KEY>-<slug>` for a new one — never its path. *Use a different key or path*, on
+either question in this phase, asks in plain text for the key or the `@<brd-file>` to use instead, and
+re-runs Phase 0 with it in place of the one it replaces.
 
 ---
 
@@ -1305,7 +1307,7 @@ raised from documentation ends its first line with `(raised from documentation)`
 Then present:
 
 ```
-choices: ["Confirm as written", "Confirm with an edited reason", "Reject — not a defect", "Cancel"]
+choices: ["Confirm as written", "Confirm with an edited reason (you'll be prompted)", "Reject — not a defect", "Cancel"]
 ```
 
 **No option carries `(Recommended)`**: whether a candidate is a real defect is the question itself,
@@ -1314,7 +1316,7 @@ marker is unconditional*). **Each option carries this description, word for word
 question**, so no candidate is put with wording of the run's own:
 
 - *Confirm as written* — "Log it as an open [DEF#n] with this reason. It is settled later, never here."
-- *Confirm with an edited reason* — "Log it as open with a reason you narrow first. A later question to the customer is built from it."
+- *Confirm with an edited reason (you'll be prompted)* — "Log it as open with a reason you narrow first. A later question to the customer is built from it."
 - *Reject — not a defect* — "The document already answers it, it is no defect, or it restates an entry on file. It is dropped, and nothing records it."
 - *Cancel* — "End the run here, before any defect is logged."
 
@@ -1329,7 +1331,8 @@ plugin's reading of the customer's picture (`brd-format.md` §1.2), and the pict
 candidate is about.
 
 On confirmation, the candidate is **confirmed** — with its reason as written, or as the operator
-edited it — and waits for its id. On rejection, the candidate is simply dropped — it never becomes a
+edited it, *Confirm with an edited reason* asking for the narrowed reason in plain text first — and
+waits for its id. On rejection, the candidate is simply dropped — it never becomes a
 `[DEF#n]`, so nothing further records that it was proposed.
 
 When every class has been walked, **assign ids to the confirmed candidates in the one order

@@ -35,7 +35,7 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
 
    **The key is an argument because there is nowhere keyless to write.** `idea.md` lands in its final
    folder on the first write — `PRD-<KEY>-<slug>/` under `$SPECS_PATH/specifications/`. **So `$SPECS_PATH`
-   comes first:** if it is unset, stop naming it (`choices: ["Set SPECS_PATH (enter the path)", "Cancel"]`,
+   comes first:** if it is unset, stop naming it (`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]`,
    `workflows-core:escalation-rules` *Required path environment variable unset*) — resolution and Phase 4's
    write both need it, and an empty one would aim `idea.md` at `/specifications/` under the filesystem root.
    **Then run the specs-repo preflight below**, its run key set the one key this step read (`workflows-core:specs-repo-git` §3.2), before the folder is resolved or anything in it is read. (A key typed as a folder's whole name is the one exception: `read-key` has read that folder's carrier already, and `workflows-core:addressing` §1 says what keeps it safe.) The preflight goes first because a
@@ -156,8 +156,9 @@ types to disambiguate.
 
 **B — the argument is path-like (contains `/`, ends in `.md`, or starts with `@`) but resolved to no existing file.** Without this gate it falls through precedence rule 2 to **prompt** and the path string itself becomes the raw idea text — a mistyped path silently ingested as prose:
 ```
-choices: ["Re-enter the path (Recommended)", "Read the argument as a prompt — the literal text is the idea", "Cancel"]
+choices: ["Re-enter the path (you'll be prompted) (Recommended)", "Read the argument as a prompt — the literal text is the idea", "Cancel"]
 ```
+*Re-enter the path* asks for the path in plain text and classifies the answer again, from precedence rule 1.
 
 **Everything else** — a `.md` path that resolves, and plain prose — is unambiguous. State the resolution in one line that invites correction and **proceed without waiting**; the list would have one plausible answer. (A dedicated `--as prompt|markdown|prd` override is future work — this inline confirmation covers a mis-detection.)
 
@@ -302,9 +303,9 @@ the operator is not told was partial reads as a complete one.
 
 Wait for the digest. If `status: NOT_FOUND` (a missing or unreadable file), surface:
 ```
-choices: ["Re-enter the source", "Cancel"]
+choices: ["Re-enter the source (you'll be prompted)", "Cancel"]
 ```
-This is an environment/user halt — do NOT `emit-block`. On `OK`, carry forward `raw_context`,
+*Re-enter the source* asks for it in plain text and runs Phase 1's classification on the answer again. This is an environment/user halt — do NOT `emit-block`. On `OK`, carry forward `raw_context`,
 `stated_scope` (the settled scope Phase 3 grills against), `signals`, `images`, `candidate_title`, `candidate_slug`, `source_refs`, `provenance`, `tracked` (a
 `prd` source only), all three wikilink lists — `wikilinks_followed`, `wikilinks_not_followed`,
 `wikilinks_broken` — and `links_other`. `source_refs`/`provenance` feed the `sources:` frontmatter
@@ -371,6 +372,7 @@ Runs only when `--ground-code` was given; otherwise take the OFF branch at the e
   ```
   choices: ["Ground the proposed set (Recommended)", "Ground a different set (you'll be prompted)", "Ground nothing — continue without a code scan", "Cancel"]
   ```
+  *Ground a different set* asks in plain text for the repositories' names, each resolved against the directories just listed.
 - **Empty proposal — do not show that list.** When no theme matches any mounted repo its first option names a set that does not exist. Escalate instead per the `No repos derivable — /epics` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Every option in a shown list must name something that exists.
 - **"Ground nothing — continue without a code scan"** ends this phase for the run: no scanner is dispatched, Phase 4 writes no `## Feasibility grounding` section, and the Final report shows `code grounding: declined at the repo gate` — distinct from `code grounding: off`, which means the flag was never given at all.
 

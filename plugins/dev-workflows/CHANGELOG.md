@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.25.0] — 2026-10-13
+
+Needs `workflows-core` 1.40.0, whose `escalation-rules` *Required path environment variable unset* says what its *Set* option asks next and names `/design` among its `REPOS_PATH` citers.
+
+### Changed
+- **`/design` no longer asks for `$REPOS_PATH` on every run.** Phase 1 resolves `${REPOS_PATH:-/workspace}` (a colon-separated list allowed) without a question and prints `Repos: <value> (from REPOS_PATH | REPOS_PATH unset — the default) — another base is set through REPOS_PATH`; it asks only where no entry is an existing directory, as `Set REPOS_PATH (you'll be prompted for the path)` or `Cancel`.
+- **Options that need your text say so, and the run asks for it.** Choosing an option returns only its label, so labels that read as if you typed with the selection are relabelled to `… (you'll be prompted…)` and each is followed by a plain-text question: `Set SPECS_PATH (you'll be prompted for the path)`, `Re-enter key (you'll be prompted)`, `Re-enter the Epic key (you'll be prompted)`, `Another Epic from the list above (you'll be prompted for its key)`, `Point me at a specs directory (you'll be prompted for the path)`, `Specify test command to use (you'll be prompted)`, `Specify a different absolute path for this repo (you'll be prompted)`, across `/design`, `/implement`, `/ready`, `/conformance`, `/upgrade` and `/vuln`.
+
 ## [4.24.3] — 2026-10-13
 
 Needs `workflows-core` 1.39.2, whose `followup-emission` §8 takes a unit folder per item.

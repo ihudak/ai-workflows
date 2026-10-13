@@ -83,7 +83,7 @@ four-resolution one.
 2. **`$SPECS_PATH` (required).** If unset, stop naming `SPECS_PATH`, per the
    `Required path environment variable unset` rule in `workflows-core:escalation-rules`:
    ```
-   choices: ["Set SPECS_PATH (enter the path)", "Cancel"]
+   choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]
    ```
 3. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the terminal
@@ -534,7 +534,7 @@ Read `<BRD-dir>/brd/brd-inventory.md` and `coverage-ledger.md`. A root carries n
 
 Present the candidate slices — each: a short working name, its `[BR#n]` rows, and the one-line rationale, what in the instruction placed it.
 
-**On the re-cut path each proposed group also carries a target** — the child its rows would move to. A target is one of two things and never a third: the **new slice** the group proposes, named by its working name and keyed in Phase 3, or a **named standing child** from the eligible receiver set (Phase 0 step 9a). **This phase's confirmation is what fixes the receiver**; Phase 4's Step 2R offers what was fixed here and chooses none of its own, which is why the target belongs in the proposal the operator confirms rather than in a picker they meet later. Changing a target is what the *"Edit one or more slices (rename, merge, move a row)"* answer below is for — moving a row between groups moves it between targets — and no option is added for it.
+**On the re-cut path each proposed group also carries a target** — the child its rows would move to. A target is one of two things and never a third: the **new slice** the group proposes, named by its working name and keyed in Phase 3, or a **named standing child** from the eligible receiver set (Phase 0 step 9a). **This phase's confirmation is what fixes the receiver**; Phase 4's Step 2R offers what was fixed here and chooses none of its own, which is why the target belongs in the proposal the operator confirms rather than in a picker they meet later. Changing a target is what the *"Edit one or more slices — rename, merge, move a row (you'll be prompted)"* answer below is for — moving a row between groups moves it between targets — and no option is added for it.
 
 **The two per-row clauses constrain which standing children may be proposed as a target, and this consequence is not obvious.** The eligible receiver set is global while both exclusions are per row, and a group carries several rows — so **a standing child cannot be a group's target where it is the donor of any row in that group, or where it already holds a ledger row for any `[BR#n]` in it** (Phase 0 step 9a), even though it is eligible and even though it may be a legitimate target for a different group. Where an instruction clusters rows from several donors together, or clusters a row some standing child already holds a row for, either the group takes a new slice as its target — which is nobody's donor and holds no row for anything, by construction — or it is split until no group is aimed at a child either clause excludes for one of its own rows. Propose it that way rather than presenting a target the confirmation would have to refuse.
 
@@ -545,8 +545,10 @@ Present the candidate slices — each: a short working name, its `[BR#n]` rows, 
 Confirm before anything is created:
 
 ```
-choices: ["Accept these slices as proposed (Recommended)", "Edit one or more slices (rename, merge, move a row)", "Replace with a different slice list entirely", "Make this whole BRD one slice"]
+choices: ["Accept these slices as proposed (Recommended)", "Edit one or more slices — rename, merge, move a row (you'll be prompted)", "Replace with a different slice list entirely (you'll be prompted)", "Make this whole BRD one slice"]
 ```
+
+*Edit one or more slices* asks in plain text for the edits, and *Replace with a different slice list entirely* for the new list; either shows the proposal again and asks this question again.
 
 **Zero confirmed slices is not an outcome this phase can reach on an ordinary run.** A BRD is a container, never
 something implementable in its own right, so **this command always produces at least one slice** —
@@ -798,19 +800,19 @@ two-to-four cap, with the free-text answer the harness supplies handled below.
 **`split_mode: full`, `recut_mode` false:**
 
 ```
-choices: ["Write covered-by: <CHILD-KEY> on all <N> rows now", "Write it on all but the rows I name — I'll walk those one at a time", "Walk every remaining row one at a time — decide each row"]
+choices: ["Write covered-by: <CHILD-KEY> on all <N> rows now", "Write it on all but some rows — those are walked one at a time (you'll be prompted for them)", "Walk every remaining row one at a time — decide each row"]
 ```
 
 **`split_mode: allocate-only`:**
 
 ```
-choices: ["Write covered-here on all <N> rows now (Recommended — every row this walk stands on is a row the parent allocated here, which is the marker the per-row picker carries on each of them, made once)", "Write it on all but the rows I name — I'll walk those one at a time", "Walk every remaining row one at a time — decide each row"]
+choices: ["Write covered-here on all <N> rows now (Recommended — every row this walk stands on is a row the parent allocated here, which is the marker the per-row picker carries on each of them, made once)", "Write it on all but some rows — those are walked one at a time (you'll be prompted for them)", "Walk every remaining row one at a time — decide each row"]
 ```
 
 **`split_mode: full`, `recut_mode: true`:**
 
 ```
-choices: ["Re-point all <N> rows to <B-KEY> now — each was deferred by the slice that holds it", "Re-point all but the rows I name — I'll walk those one at a time", "Walk every candidate one at a time — decide each row"]
+choices: ["Re-point all <N> rows to <B-KEY> now — each was deferred by the slice that holds it", "Re-point all but some rows — those are walked one at a time (you'll be prompted for them)", "Walk every candidate one at a time — decide each row"]
 ```
 
 **Why one list carries a marker and the other two do not** — the same rule all three times, applied to what
@@ -1070,7 +1072,7 @@ them against this BRD's ledger, and `/product-workflows:prd-ground` refuses such
 
 **The set it walks.** Every row in the **re-cut candidate set** (Phase 0 step 9a) that a group Phase 2 confirmed **with a target** carries when Phase 2 ends — the target being a slice Phase 3 keyed this run, or a standing child from the eligible receiver set — **minus** any row Step 1's offer already wrote. That target is the row's receiver, and this step **offers it rather than choosing it**: Phase 1.5 read the instruction and Phase 2's confirmation fixed the target per group, so by the time this walk opens the receiver is settled and the only open question is whether this row moves at all.
 
-**"Placed" here is the post-Phase-2 sense, and taking the narrower one silently discards an operator's own edit.** Phase 1.5 states that the word carries two senses and that this phase consumes the later one: a row that phase's own reading could not place is a residue **Phase 2 may still cluster**, and Phase 2's *"Edit one or more slices (rename, merge, move a row)"* answer is exactly how the operator moves such a row into a confirmed group. A set defined as *what Phase 1.5's reading placed* would drop that row and leave it with its donor — undoing an explicit instruction the operator gave two phases ago, silently, and reporting it as a candidate nothing could place. So membership is decided by the confirmed groups as they stand at the end of Phase 2, however each row reached one.
+**"Placed" here is the post-Phase-2 sense, and taking the narrower one silently discards an operator's own edit.** Phase 1.5 states that the word carries two senses and that this phase consumes the later one: a row that phase's own reading could not place is a residue **Phase 2 may still cluster**, and Phase 2's *"Edit one or more slices — rename, merge, move a row (you'll be prompted)"* answer is exactly how the operator moves such a row into a confirmed group. A set defined as *what Phase 1.5's reading placed* would drop that row and leave it with its donor — undoing an explicit instruction the operator gave two phases ago, silently, and reporting it as a candidate nothing could place. So membership is decided by the confirmed groups as they stand at the end of Phase 2, however each row reached one.
 
 **A candidate the placement left unplaced is not in this set, and is not walked.** Nor is one whose confirmed target no longer stands — a slice dropped when the operator cancelled mid-key-taking in Phase 3. **Say why, so no later edit "completes" the walk by showing them:** such a row already carries a fate at both levels, `covered-by: <A-KEY>` on this BRD and `deferred-to: <A-KEY>` on A, so a picker shown for it would be a prompt whose only available answer is *leave it* — a blank picker has nothing to resolve a row to that the row does not already have. It stays with its donor, this step passes over it, the final report names it, and Phase 5 records it. **Those are three roles and not three reporters** (Phase 1.5): this step's part is to decline to walk it and to carry it into what this step hands on, deciding nothing about it — the naming to the operator is the final report's and the writing down is `slices.md`'s.
 
@@ -1221,7 +1223,7 @@ Read the child's `brd-link.md` for a `reason:` field:
 **No `reason:` recorded** — nobody has yet decided this folder should exist while claiming nothing:
 
 ```
-choices: ["Remove the empty child folder — it claims nothing (Recommended)", "Keep it, and record why (e.g. reserved for related future scope)"]
+choices: ["Remove the empty child folder — it claims nothing (Recommended)", "Keep it (you'll be prompted for why — e.g. reserved for related future scope)"]
 ```
 
 **A `reason:` already recorded** — an earlier run asked this question and the operator answered it.
@@ -1230,7 +1232,7 @@ a state that decision deliberately created. Print the recorded reason verbatim b
 **A recorded reason can be stale in one specific way, and where it is, say so beside it rather than presenting it as a standing answer.** A child kept empty against a reason is uninterviewed, so it is an eligible receiver: a later run may fix it as a target and Step 2R may give it a row, at which point the recomputation above correctly drops it from this phase's set and its `reason:` — which describes a folder claiming nothing — is left describing a state it is no longer in. Nothing rewrites it there, because keeping the operator's own words is the point of the field. If that child later empties again and reaches this picker, the reason on file was answered about a different situation: print it with the note that the child has since been given a row and emptied again, so the recommendation to keep is read for what it is rather than as the earlier decision still standing:
 
 ```
-choices: ["Keep it — the recorded reason still stands (Recommended)", "Remove it now — it claims nothing, and nothing on the route can act on it", "Update the recorded reason"]
+choices: ["Keep it — the recorded reason still stands (Recommended)", "Remove it now — it claims nothing, and nothing on the route can act on it", "Update the recorded reason (you'll be prompted)"]
 ```
 
 Removing deletes the child's folder — `brd-link.md`, `brd/brd-inventory.md`, and
@@ -1253,8 +1255,8 @@ it does not contradict `coverage-ledger-format.md` §2.
 
 **Where no such row exists anywhere, the original claim still holds for that removal and nothing extra is written** — which is every removal on a tree no re-cut has ever touched, and not "every removal on an ordinary run": both routes above run their course across several runs, so the run that meets the dangling key is rarely the run that created it. That is the reason this repair is stated as conditional rather than as a new unconditional step: a read that finds nothing writes nothing, and reporting it as a removal that re-pointed no row is the honest form of the guarantee this phase used to assert outright.
 
-Keeping it, meanwhile, writes or leaves a
-one-line `reason:` field in its `brd-link.md` beside the empty
+Keeping it, meanwhile — the first picker's *Keep it* and the second's *Update the recorded reason*
+each asking for the reason in plain text — writes or leaves a one-line `reason:` field in its `brd-link.md` beside the empty
 `claims:` list, and leaves the empty inventory and the ledger — orphan rows and all — in place, so
 the folder is still a well-formed BRD rather than a half-built one. Either way, Phase 7's next-step recommendation never
 offers to ground a child still claiming nothing.

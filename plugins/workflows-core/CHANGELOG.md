@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.40.0] — 2026-10-13
+
+### Changed
+- **A selection carries no text** — a new rule in `escalation-rules` §0. Choosing an option returns its label and nothing else, so an option that needs the operator's text (a name, a path, a key, a reason, a correction) is followed at once by one plain-text question for it, and the run never reads the bare selection as a refusal or a broken promise; a label that asks for or promises that text is written `… (you'll be prompted)` or `… (you'll be prompted for <what>)`, a free-text answer that already carries the text is taken as given, and a question whose whole answer is text with no default is asked in plain text, never as a picker. The shared arrays follow it: *Required path environment variable unset* offers `Set <VAR> (you'll be prompted for the path)` and says what the answer becomes, *key dir not found* offers `Re-enter key (you'll be prompted)`, the repo-escalation and branch-prefix arrays are relabelled, and the branch-prefix identity variant asks for initials in plain text with no picker, as `branch-naming` §2.5 already did. `epic-picker`'s remainder option reads `Another Epic from the list above (you'll be prompted for its key)`.
+- **The REPOS_PATH question is gone where the path resolves** (dev-workflows 4.25.0, product-workflows 3.34.0, docs-workflows 1.16.0): *Required path environment variable unset* now lists `/design`, `/specify`, `/create-ard`, `/epics`, `/document` and `/release-notes` among its `REPOS_PATH` citers, which ask only where no entry of `${REPOS_PATH:-/workspace}` is an existing directory and otherwise print a `Repos:` line.
+- **`grilling-technique` recommends an answer only where one exists**: a fact only the operator holds, with no default — a company name, a person, a URL — is asked in plain text with no recommendation and no options. `/prompt-grill-me` says the same.
+
 ## [1.39.3] — 2026-10-13
 
 ### Fixed

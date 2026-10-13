@@ -109,7 +109,7 @@ Interrogate the correction directly, following
   right shape is, and what should change so the mistake does not recur.
 
 Follow the technique's mechanics (one question at a time, a recommended answer
-each time, fact-vs-decision split, ask from the frontier, and its confirmation gate before the fix
+where one exists, fact-vs-decision split, ask from the frontier, and its confirmation gate before the fix
 is acted on). This command NEVER
 commits into a docs/code repo or the current working directory, where it is not the specs repository.
 The Phase 2 `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded

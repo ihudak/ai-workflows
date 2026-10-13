@@ -42,12 +42,12 @@ This command makes **no external API calls but two**: key discovery's optional, 
 1. **Resolve the address.** Parse the **single positional address** from `$ARGUMENTS` — a `<KEY>`, or an `@<path>` naming a
    folder or a file inside one. **On an address that is not an `@<path>`, `$SPECS_PATH` comes first:** if it is unset, stop
    naming it before resolving anything or running the specs-repo preflight below
-   (`choices: ["Set SPECS_PATH (enter the path)", "Cancel"]`, `workflows-core:escalation-rules`
+   (`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]`, `workflows-core:escalation-rules`
    *Required path environment variable unset*) — a key is found only by searching the specs tree, so
    with no tree the `absent` stop below would name the wrong cause and offer a re-enter that cannot
    succeed. An `@<path>` address needs no specs tree to resolve and runs on, exactly as `/document`'s
    *Mode detection* does. Then resolve the address with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). Carry the resolved `path`, `kind` and
-   `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `RELEASE_NOTES_NEEDS_KEY` below, naming the token `read-key` (§1) did not read — a key, a key behind its folder's kind prefix, or a folder's whole name — which the `$SPECS_PATH` test above has already let through. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
+   `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `RELEASE_NOTES_NEEDS_KEY` below, naming the token `read-key` (§1) did not read — a key, a key behind its folder's kind prefix, or a folder's whole name — which the `$SPECS_PATH` test above has already let through. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
 
    **Then settle the specs checkout, before the placement below reads anything.** Fix the run key
    set (`workflows-core:specs-repo-git` §3.2), reading only carrier frontmatter (`key:`, `kind:`) as
@@ -85,8 +85,8 @@ This command makes **no external API calls but two**: key discovery's optional, 
      its `@<path>` with `(no key — give it a carrier, workflows-core:addressing §5)` and is not
      enterable. Stop:
      `RELEASE_NOTES_BRD_NOT_SLICED: <KEY> resolves to a BRD container at <path>, which holds no PRD — its PRDs are authored in its PRD- slices: <each slice key, found by workflows-core:addressing §4.1's positive test>.`
-     `choices: ["Enter a slice key", "Cancel"]`. **The key the operator types — after "Enter a slice
-     key", or in the harness's free-text option — is resolved against the keyed slices this stop
+     `choices: ["Enter a slice key (you'll be prompted)", "Cancel"]`. **The key the operator types — at the
+     plain-text question *Enter a slice key* asks, or in the harness's free-text option — is resolved against the keyed slices this stop
      listed, and never parsed or resolved on its own.** An answer equal to one listed key
      re-enters this step's address resolution with that slice's `@<path>`, which the listing already
      holds, so no key is searched for again and `$SPECS_PATH` is not needed for it.
@@ -183,13 +183,13 @@ run — the terminal `commit-artifacts` step skips on it.
   ```
   choices: ["PRD content only (Recommended)", "Also ground in the recorded refs' diffs (you'll pick repos)", "Cancel"]
   ```
-  If the user also grounds in diffs, additionally ask the `$REPOS_PATH` sub-question below.
+  If the user also grounds in diffs, additionally resolve `$REPOS_PATH` as the next bullet says.
 
-- **Repos search base (`$REPOS_PATH`)** (only if diff grounding is ON). Read `${REPOS_PATH:-/workspace}`; may be a colon-separated list. Ask:
+- **Repos search base (`$REPOS_PATH`)** (only if diff grounding is ON) — **resolved, never asked.** Resolve `${REPOS_PATH:-/workspace}` (one directory or a colon-separated list) and record it as `$REPOS_PATH`. **Only where no entry is an existing directory**, stop naming `REPOS_PATH`, per the `Required path environment variable unset` rule in `workflows-core:escalation-rules`:
   ```
-  choices: ["Use $REPOS_PATH (default /workspace) (Recommended)", "Use a different path (you'll be prompted)", "Cancel"]
+  choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Cancel"]
   ```
-  Clones are located in Phase 4 by matching `git remote` against each repo slug the Phase 3 implementation record and its commit scan named — not by assuming a `<base>/<slug>` directory name. Nothing here asks which pull-request statuses to include: Phase 3 builds its refs from `implementation.md` and the commit scan, and a pull request reaches them only as the commits a merged one landed (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §4); `refs[]` is the only element list `diff-summarizer` takes.
+  *Set REPOS_PATH* asks for the path in plain text and records the answer as `$REPOS_PATH` once an entry of it is an existing directory; a base named at Phase 2's plan approval replaces it the same way. Clones are located in Phase 4 by matching `git remote` against each repo slug the Phase 3 implementation record and its commit scan named — not by assuming a `<base>/<slug>` directory name. Nothing here asks which pull-request statuses to include: Phase 3 builds its refs from `implementation.md` and the commit scan, and a pull request reaches them only as the commits a merged one landed (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §4); `refs[]` is the only element list `diff-summarizer` takes.
 
 - **Output destination — derived, not asked.** The draft lands in **`release-notes.md` in the
   resolved PRD folder**, appended as a section. There is one home now, so the destination question
@@ -234,7 +234,7 @@ run — the terminal `commit-artifacts` step skips on it.
   choices: ["Run prose-style-checker then apply safe fixes (Recommended)", "Run prose-style-checker, report only (no auto-fix)", "Skip style check"]
   ```
 
-Also display: the resolved PRD folder, its `key`, `$REPOS_PATH` (or "N/A — PRD-only"), and the version this draft will be filed under.
+Also display: the resolved PRD folder, its `key`, the line `Repos: <value> (from REPOS_PATH | REPOS_PATH unset — the default) — another base is set through REPOS_PATH or named at the plan's approval` (or "Repos: N/A — PRD-only"), and the version this draft will be filed under.
 
 ---
 
@@ -360,9 +360,9 @@ from anything, and the PRD's `release_versions`, where `/create-prd` wrote one, 
 
 Take the slug→clone map Phase 3 built with the diff sources — this phase and that step run under the same one condition, diff grounding ON, so the map is always in hand here and is never built twice. Resolve each in-scope `repo` slug — the ones the Phase 3 implementation record and its commit scan named — against the map: one match → use it; multiple → auto-prefer basename ending `-repo`, then `_repo`/`_fast`, then alphabetically last; zero matches → escalate:
 ```
-choices: ["Skip and continue without its refs", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo"]
+choices: ["Skip and continue without its refs", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo (you'll be prompted)"]
 ```
-"I'll clone it — wait" and a specified path run key discovery again once the clone is there (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1, *A clone mounted mid-run*).
+*Specify a different absolute path for this repo* asks for the path in plain text. "I'll clone it — wait" and a specified path run key discovery again once the clone is there (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1, *A clone mounted mid-run*).
 
 ---
 
@@ -465,7 +465,7 @@ end-of-life date is unclear), ask the user:
 ```
 choices: ["Enter the end-of-life date (you'll be prompted; end-of-support optional)", "Leave the <!-- TODO: end-of-life date --> marker in the draft", "This isn't a deprecation — drop the note"]
 ```
-On a supplied date, replace the `<!-- TODO: end-of-life date -->` placeholder with the
+*Enter the end-of-life date* asks for the date, and an optional end-of-support date, in plain text. On a supplied date, replace the `<!-- TODO: end-of-life date -->` placeholder with the
 end-of-life date (and end-of-support date when given), formatted per the prose-style
 (e.g. `November 30, 2026`).
 
@@ -481,7 +481,7 @@ release this note is filed under" below means whichever release ships the change
 ```
 choices: ["Enter the release it takes effect in (you'll be prompted)", "It takes effect in the release this note is filed under — drop the clause", "Leave the <!-- TODO: effective version --> marker in the draft"]
 ```
-On a release, replace the placeholder with it as the note should read it (`version 3.0`); a release
+*Enter the release it takes effect in* asks for the release in plain text. On a release, replace the placeholder with it as the note should read it (`version 3.0`); a release
 that is the one the draft is filed under is the second answer. On the second, remove the
 `Starting with <!-- TODO: effective version -->, ` clause and capitalize what follows. Never write a
 release the user did not supply.
@@ -489,10 +489,10 @@ release the user did not supply.
 **Of the discrepancy gaps, acceptance-criteria ones first.** For each `kind: acceptance-criteria` gap, show `draft_phrasing`, `criteria_phrasing` and `criteria_location` under those labels, then ask:
 
 ```
-choices: ["Use the acceptance criteria (Recommended)", "Enter corrected wording", "Omit this claim"]
+choices: ["Use the acceptance criteria (Recommended)", "Enter corrected wording (you'll be prompted)", "Omit this claim"]
 ```
 
-On the first choice, correct the claim to match the cited criterion. On the second, ask for the wording and check it against that criterion; if it still contradicts the criterion, surface the remaining contradiction and re-ask rather than publishing it as PRD intent. On the third, remove the claim. Re-render `release_notes_block.prose` and `combined_rendered` together in the selected destination's shape. Record the disposition in the run report; **do not write `<KEY>-implementation-gaps.md` for this gap**, because it establishes an authoring discrepancy and says nothing about the code. A free-text answer is resolved to one of these actions or clarified, never treated as permission to relabel the draft as the PRD.
+On the first choice, correct the claim to match the cited criterion. On the second, ask for the wording in plain text and check it against that criterion; if it still contradicts the criterion, surface the remaining contradiction and re-ask rather than publishing it as PRD intent. On the third, remove the claim. Re-render `release_notes_block.prose` and `combined_rendered` together in the selected destination's shape. Record the disposition in the run report; **do not write `<KEY>-implementation-gaps.md` for this gap**, because it establishes an authoring discrepancy and says nothing about the code. A free-text answer is resolved to one of these actions or clarified, never treated as permission to relabel the draft as the PRD.
 
 **Code discrepancies second.** For `kind: source-truth` gaps carrying `prd_phrasing`, `source_phrasing` and a verified code `source_location`, present the discrepancy table and per-claim prompt as in `/document` (keyed mode) Phase 5.8. If the criteria handler omitted the same claim, exclude it from this table and record the omission plus its code evidence in the run report; do not restore it, ask about it again, or treat that earlier omission as a `skip-and-report` decision. Apply the following steps to the remaining code gaps only; with none, skip this prompt and report-writing step:
 

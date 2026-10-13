@@ -34,7 +34,7 @@ Usage: `/design <ADDRESS> [--design-twice] [--no-arch] [--skip-costs] [--skip-fe
    never an address.
 
    Parse the **single positional address** from the stripped `$ARGUMENTS` — a `<KEY>`, or an
-   `@<path>` naming a folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind` and `key` forward; `ambiguous` → stop, naming every match and `@<path>` as the way through; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `DESIGN_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree, and designs only against a specification already in one. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command. Then carry forward:
+   `@<path>` naming a folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind` and `key` forward; `ambiguous` → stop, naming every match and `@<path>` as the way through; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `DESIGN_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree, and designs only against a specification already in one. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command. Then carry forward:
    - `<PRD>` — the resolved **PRD folder's** `key`: the folder itself when the address named a
      `PRD-` folder, its parent when the address named an `EPIC-` folder.
    - `<EPIC>` — the resolved `EPIC-` folder's `key`, or `null` when the address named a `PRD-`
@@ -77,7 +77,7 @@ Usage: `/design <ADDRESS> [--design-twice] [--no-arch] [--skip-costs] [--skip-fe
 
 2. **Resolve `$SPECS_PATH`.** `/design` reads `specification.md` and writes `design.md` under
    `$SPECS_PATH/specifications/`. If `$SPECS_PATH` is unset, stop with a clear error naming `SPECS_PATH`
-   (`choices: ["Set SPECS_PATH (enter the path)", "Cancel"]`). **Take this test before step 1
+   (`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set SPECS_PATH* asks for the path in plain text and carries it as `$SPECS_PATH` for the run). **Take this test before step 1
    resolves anything**: a key is found only by searching the specs tree, and the preflight step 1
    ends with needs the variable.
 
@@ -109,7 +109,7 @@ it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), ca
      - it holds a **flat `specification.md`** (a broad PRD-level spec — the only shape that puts one at PRD level, now that a top-level `EPIC-` folder with no PRD above it is retired: `/product-workflows:epics` writes every `EPIC-` folder under a PRD folder and is the only command that writes one) → one design; the feature folder is the PRD dir itself. Skip the picker; go to step 5 (step 3's gate re-applies against this flat path). **This bullet is taken first after the multi-component bullet above, so a single-component PRD folder holding a flat `specification.md` *and* Epic subfolders designs the slice and never reaches the picker** — `/design <PRD>` offers no Epic on that shape, and each Epic's own `design.md` is reached by addressing that Epic, `/dev-workflows:design <EPIC-KEY>`. That is the shape `references/workflow-states.md`'s *Ready for Implementation* row calls **both**, and its expected artifacts are each in-scope Epic *and* the slice carrying `specification.md` AND `design.md` — so a PRD of that shape reaches that rung through one `/design` per Epic plus this one, never through `/design <PRD>` alone.
      - it holds **Epic subfolders** → enumerate the **spec'd** ones using the ref test `git -C "$SPECS_PATH" cat-file -e "<default-ref>:./specifications/<PRD>-<vslug>/<epic-subfolder>/specification.md" 2>/dev/null`, `<epic-subfolder>` being each Epic subfolder's own name, since `<EPIC>` is still null here (exit 0 = present on `<default>`; the `2>/dev/null` is required — git writes `fatal:` to stderr on absence; the `./` reads the path from `$SPECS_PATH`, and `workflows-core:phase-handoff` §3.2 says why) — never a worktree file-existence check, which would list a branch-only Epic as designable for a user to select before step 3's gate stops on it. A subfolder that fails the test is excluded from the actionable set and counted in the excluded-count report, with the reason distinguished: *"N Epic(s) excluded — no specification.md; M excluded — specification.md not yet merged to `<default>`."* Then branch on count — this is the reusable **progress-aware Epic-picker pattern** in `workflows-core:epic-picker`, applied here with `/design`'s own done-predicate and enumerated from the specs repo, which is now the only place any command enumerates Epics from:
        - **exactly 1 spec'd Epic** → no picker; auto-select it — set `<EPIC>` to that Epic's key, so Phase 2.5, Phase 3's target and Phase 6's brief read it — re-point the feature folder to its per-Epic subfolder; emit a one-line notice.
-       - **≥2 spec'd Epics** → render the picker per `Skill(skill: "workflows-core:reference", args: "epic-picker")`, listing every spec'd Epic as prose and, **where more than four are spec'd**, letting the array carry at most three rows plus *"Another Epic from the list above — name its key"* (that file's *The cap* section — `/design` appends no option of its own, so the array is one row per Epic against `workflows-core:escalation-rules` §0's ceiling of four: four or fewer are carried in full with no remainder row, and **five** spec'd Epics are what overflow the prompt. `/specify` and `/implement` append an option of their own and so overflow at four — that is the difference, not a different cap. A typed key is resolved against the keys just listed, never parsed). Compute each Epic's state from `/design`'s **done-predicate** against that Epic's resolved folder:
+       - **≥2 spec'd Epics** → render the picker per `Skill(skill: "workflows-core:reference", args: "epic-picker")`, listing every spec'd Epic as prose and, **where more than four are spec'd**, letting the array carry at most three rows plus *"Another Epic from the list above (you'll be prompted for its key)"* (that file's *The cap* section — `/design` appends no option of its own, so the array is one row per Epic against `workflows-core:escalation-rules` §0's ceiling of four: four or fewer are carried in full with no remainder row, and **five** spec'd Epics are what overflow the prompt. `/specify` and `/implement` append an option of their own and so overflow at four — that is the difference, not a different cap. A typed key is resolved against the keys just listed, never parsed). Compute each Epic's state from `/design`'s **done-predicate** against that Epic's resolved folder:
          - **○ not started** — a `specification.md` exists there but no `design.md` and no `_design-session.md` → selectable.
          - **◐ in progress** — a `_design-session.md` exists there but no `design.md` → selectable as a resume (per-Epic stage resume then runs in Phase 5 from that `_design-session.md`).
          - **● done** — a `design.md` exists there → shown greyed, **not** default-selectable; selecting offers *revise*.
@@ -130,18 +130,25 @@ scans repos under `$REPOS_PATH`; cwd need not be inside either.
 **Rule: Ask, don't guess. This rule is absolute.** Use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`Skill(skill: "workflows-core:reference", args: "escalation-rules")` §0).
 
 1. **Feature folder.** Confirm the path resolved in Phase 0:
-   `choices: ["Use <feature_folder> (Recommended)", "Use a different path (you'll be prompted)", "Cancel"]`
+   `choices: ["Use <feature_folder> (Recommended)", "Use a different path (you'll be prompted)", "Cancel"]` — a different
+   path is asked for in plain text and resolved as Phase 0 resolves an `@<path>` address.
 2. **Resume vs fresh** (only if step 5 found a `_design-session.md`): read it back and summarise which
    stages are settled:
    `choices: ["Resume — skip settled stages (Recommended)", "Start fresh — discard the prior design session", "Cancel"]`
 3. **Repo refresh policy** (governs Phase 4's `code-scanner` dispatches):
    `choices: ["fetch + pull default branch (Recommended)", "fetch only", "no refresh"]`
-4. **Repos search base (`$REPOS_PATH`).** Read `${REPOS_PATH:-/workspace}` (may be colon-separated):
-   `choices: ["Use $REPOS_PATH (default /workspace) (Recommended)", "Use a different path (you'll be prompted)", "Cancel"]`
+4. **Repos search base (`$REPOS_PATH`) — resolved, never asked.** Resolve `${REPOS_PATH:-/workspace}`
+   (one directory or a colon-separated list) and carry it as `$REPOS_PATH`; it is shown on the
+   `Repos:` line below. **Only where no entry is an existing directory**, stop naming `REPOS_PATH`,
+   per the `Required path environment variable unset` rule in `workflows-core:escalation-rules`:
+   `choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set REPOS_PATH* asks
+   for the path in plain text and carries the answer as `$REPOS_PATH` once an entry of it is an
+   existing directory.
    - **Resolve architecture grounding next, then show its line.** Run `resolve-architecture-grounding design` per `Skill(skill: "workflows-core:reference", args: "architecture-grounding resolve-architecture-grounding")` and show the `architecture grounding:` and `team decisions:` lines from what it returns, verbatim, in the form that reference fixes (off switch: --no-arch). This is the run's one resolution; Phase 4 dispatches `architecture-grounder` on the state it returns without resolving again.
 
 Also display (context): resolved feature folder; resolved `<PRD>` / `<EPIC>` (or 'none — PRD-level');
-resolved `$SPECS_PATH`; resolved `$REPOS_PATH`.
+resolved `$SPECS_PATH`; and the line
+`Repos: <value> (from REPOS_PATH | REPOS_PATH unset — the default) — another base is set through REPOS_PATH`.
 
 ---
 
@@ -208,6 +215,7 @@ Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:referenc
 2. **Confirm the complete set — the developer owns it.** Present the derived candidates and ask the
    developer to confirm the **complete** list of implementation repos this design must span:
    `choices: ["Confirm this set (Recommended)", "Add repos (you'll be prompted)", "Remove repos (you'll be prompted)", "Cancel"]`
+   — *Add repos* and *Remove repos* each ask in plain text for the repositories' names.
    **On an Epic with a target, "Add repos" takes the repositories, then asks**, because a second repository makes the design span two components:
    `choices: ["<Re-split — /product-workflows:epics <EPIC> | Add the component first — /product-workflows:create-ard <PRD>> (Recommended)", "Add anyway (recorded as a Target span)", "Cancel"]`
    — *Re-split* where every added repository holds a component of the PRD-level ARD's set: stop, telling the user to run `/epics <EPIC>` and, at its plan approval, choose *Revise* and name the work that moves and the component it moves to, which makes that focus run split this Epic (`/epics` Phase 2 and Phase 6), and then `/product-workflows:specify <EPIC>`, whose specification still holds the work that moved; *Add the component first* otherwise — no ARD, or an ARD whose set lacks one — since the PRD now spans a component no set records, and `/create-ard` is where it is recorded and its contract fixed (`workflows-core:components` §3).
@@ -215,7 +223,7 @@ Resolve any ARD for this item by invoking `Skill(skill: "workflows-core:referenc
 3. **Resolve each confirmed repo against the map.** One match → use it. Ambiguous or zero matches
    escalate per the `Repo unresolved (zero matches) — /epics` rule in
    `workflows-core:escalation-rules`:
-   `choices: ["Skip and continue without this repo's scan", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo"]`
+   `choices: ["Skip and continue without this repo's scan", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo (you'll be prompted)"]`
 4. **STRICT mounted gate — hard-stop.** Any repo in the confirmed set that is **not mounted** under
    `$REPOS_PATH` **hard-stops** `/design` (unlike `/specify`'s soft gate): describe the missing
    capability and why the design needs it (you cannot name or link an unmounted repo's code), then:

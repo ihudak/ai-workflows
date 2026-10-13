@@ -84,7 +84,7 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
 
 1. **`$SPECS_PATH` (required).** If unset, stop naming `SPECS_PATH`, per the
    `Required path environment variable unset` rule in `workflows-core:escalation-rules`:
-   `choices: ["Set SPECS_PATH (enter the path)", "Cancel"]`.
+   `choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]`.
 
 2. **Resolve the address.** Resolve the single positional `<ADDRESS>` — a `<KEY>`, or an `@<path>`
    naming a folder — with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3).
@@ -312,13 +312,17 @@ calendar:
   its confirmation gate, and write it. **The depth is relentless**: no cap and no `Q<n>/<cap>` numbering — the grill is done
   when every field of the profile above has been asked and none is left as a recorded gap, and it cannot
   close while `roles`, `productivity` or `calendar` lacks an answer — a proposal cannot state a
-  team, a schedule or a productivity basis without them. `engagement_model` **restructures the engagement-governance, change-control and
+  team, a schedule or a productivity basis without them. A field only the operator holds, with no
+  default — `vendor.name`, `vendor.footer_note`, `client.name` — is asked in plain text, with no
+  recommended answer and no options (`workflows-core:escalation-rules` §0, *A selection carries no
+  text*). `engagement_model` **restructures the engagement-governance, change-control and
   priced-options sections wholesale** (§4 sections 16, 17 and 18), so it is asked rather than assumed:
   `choices: ["time-and-material", "fixed-price"]`.
 - **Present** — **show it back for confirmation, every run, never read silently.** A productivity
   basis captured once and never revisited silently mis-scales every later proposal, which is the
   second of the two limits `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §13 states:
-  `choices: ["Use it as shown (Recommended)", "Correct a field — I'll say which", "Re-grill the whole profile"]`.
+  `choices: ["Use it as shown (Recommended)", "Correct a field (you'll be prompted)", "Re-grill the whole profile"]` —
+  *Correct a field* asks in plain text which field to correct and its new value.
 - **`--profile`** — re-grill it in full regardless of what is on disk, then continue the run.
 
 **A profile correction reaches every proposal in the specs repository.** The profile is one file for
@@ -336,7 +340,7 @@ array cannot protect the field by omitting one, and the two values are the only 
 renders: §4 sections 16, 17 and 18 are built from this field, the answer is written to a committed
 `proposal-profile.yml`, and every later run of this command and of `/product-workflows:brd-proposal`
 reads it back. **Both routes into the field are the same route** — the grill's own answer, and a
-`"Correct a field — I'll say which"` answer that names `engagement_model` — and both are normalised
+*Correct a field* answer that names `engagement_model` — and both are normalised
 or re-asked. Nothing else in the profile is closed this way: a productivity basis or an
 hours-per-week figure is a value the operator supplies, not one chosen from a set.
 

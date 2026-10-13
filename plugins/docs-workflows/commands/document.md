@@ -25,7 +25,7 @@ Usage: `/document <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-mode
 
 `/document` has **two modes**, selected by the first argument token:
 
-- **Keyed mode (Mode A)** — the first token is a **single positional address**: a `<KEY>` that `workflows-core:addressing` §1's `read-key` reads — a bare key, one behind its folder's kind prefix, or its folder's whole name, which the run carries as the bare key from then on; with `$SPECS_PATH` unset a whole name cannot be looked up, and reads as prose — or an `@<path>` naming a folder in the specs tree. **On a `<KEY>`, `$SPECS_PATH` comes first:** if it is unset, stop naming it before resolving anything or running the preflight below (`choices: ["Set SPECS_PATH (enter the path)", "Cancel"]`, `workflows-core:escalation-rules` *Required path environment variable unset*) — a key is found only by searching the specs tree, so with no tree the `absent` stop below would name the wrong cause and offer a re-enter that cannot succeed. An `@<path>` address needs no specs tree and runs on, and direct mode is unaffected. `resolve-address` (§3) turns the address into a folder; `ambiguous` is a stop naming every match, and `misrooted` a stop with §3's `SPECS_PATH_INSIDE_TREE` message. **`status: absent` is a stop, not a folder to create** — it surfaces the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key", "Cancel"]`) and names what creates a folder this command reads — **all three creators, not one**: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command. Naming only `/create-prd` is wrong on the BRD route, where that command refuses the container above the slice, and wrong for an `EPIC-` address, which it never mints — the same list `/dev-workflows:ready`, `/docs-workflows:release-notes`, `/product-workflows:epics` and `/product-workflows:create-ard` each print in their own `absent` stops. It never falls through to direct mode: an address that resolved to nothing is a typo to correct, not a prose prompt to document. An address that resolves but leads to no `prd.md` the run can read is not this rule's: it takes one of Mode A Phase 0 step 1's named stops — `DOCUMENT_BRD_NOT_SLICED`, `DOCUMENT_FOLDER_NOT_PLACED` or `DOCUMENT_NO_PRD` — and so does one whose PRD folder carries no key, which takes `DOCUMENT_PRD_NO_KEY`.
+- **Keyed mode (Mode A)** — the first token is a **single positional address**: a `<KEY>` that `workflows-core:addressing` §1's `read-key` reads — a bare key, one behind its folder's kind prefix, or its folder's whole name, which the run carries as the bare key from then on; with `$SPECS_PATH` unset a whole name cannot be looked up, and reads as prose — or an `@<path>` naming a folder in the specs tree. **On a `<KEY>`, `$SPECS_PATH` comes first:** if it is unset, stop naming it before resolving anything or running the preflight below (`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]`, `workflows-core:escalation-rules` *Required path environment variable unset*) — a key is found only by searching the specs tree, so with no tree the `absent` stop below would name the wrong cause and offer a re-enter that cannot succeed. An `@<path>` address needs no specs tree and runs on, and direct mode is unaffected. `resolve-address` (§3) turns the address into a folder; `ambiguous` is a stop naming every match, and `misrooted` a stop with §3's `SPECS_PATH_INSIDE_TREE` message. **`status: absent` is a stop, not a folder to create** — it surfaces the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`) and names what creates a folder this command reads — **all three creators, not one**: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command. Naming only `/create-prd` is wrong on the BRD route, where that command refuses the container above the slice, and wrong for an `EPIC-` address, which it never mints — the same list `/dev-workflows:ready`, `/docs-workflows:release-notes`, `/product-workflows:epics` and `/product-workflows:create-ard` each print in their own `absent` stops. It never falls through to direct mode: an address that resolved to nothing is a typo to correct, not a prose prompt to document. An address that resolves but leads to no `prd.md` the run can read is not this rule's: it takes one of Mode A Phase 0 step 1's named stops — `DOCUMENT_BRD_NOT_SLICED`, `DOCUMENT_FOLDER_NOT_PLACED` or `DOCUMENT_NO_PRD` — and so does one whose PRD folder carries no key, which takes `DOCUMENT_PRD_NO_KEY`.
 - **Direct mode (Mode B)** — no positional address: a leading `@file` token, free-text prose, or a directory that is not in the specs tree, which Mode B handles via its existing "anything else" path.
 
 **The mode test is the presence of an address**, which is what replaces the retired shared front-end's own mode return. Mode B is unchanged in every other respect — a direct-mode run is byte-identical to before.
@@ -87,8 +87,8 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
      its `@<path>` with `(no key — give it a carrier, workflows-core:addressing §5)` and is not
      enterable. Stop:
      `DOCUMENT_BRD_NOT_SLICED: <KEY> resolves to a BRD container at <path>, which holds no PRD — its PRDs are authored in its PRD- slices: <each slice key, found by workflows-core:addressing §4.1's positive test>.`
-     `choices: ["Enter a slice key", "Cancel"]`. **The key the operator types — after "Enter a slice
-     key", or in the harness's free-text option — is resolved against the keyed slices this stop
+     `choices: ["Enter a slice key (you'll be prompted)", "Cancel"]`. **The key the operator types — at the
+     plain-text question *Enter a slice key* asks, or in the harness's free-text option — is resolved against the keyed slices this stop
      listed, and never parsed or resolved on its own.** An answer equal to one listed key
      re-enters step 1's address resolution with that slice's `@<path>`, which the listing already
      holds, so no key is searched for again and `$SPECS_PATH` is not needed for it.
@@ -178,9 +178,9 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
       - .docstack/, mkdocs.yml, docusaurus.config.js, antora.yml, a Vale configuration (.vale, _vale, vale.ini, .vale.ini or _vale.ini), DOCUMENTATION-GUIDELINES.md
       - any _snippets/ directory under the repo root
       Where should I write the documentation?"
-     choices: ["Use cwd anyway — I confirm this is a docs repo (Recommended)", "Enter the docs repo path", "Cancel — switch to a docs repo first"]
+     choices: ["Use cwd anyway — I confirm this is a docs repo (Recommended)", "Enter the docs repo path (you'll be prompted)", "Cancel — switch to a docs repo first"]
      ```
-     "Use cwd anyway" sets `docs_repo_path` = the git root of cwd (or cwd itself if not a git tree) and carries the user's confirmation forward. "Enter the docs repo path" takes a free-text absolute path and validates it exists.
+     "Use cwd anyway" sets `docs_repo_path` = the git root of cwd (or cwd itself if not a git tree) and carries the user's confirmation forward. "Enter the docs repo path" asks for an absolute path in plain text and validates it exists.
 
    **Then take it to its top level.** Record the directory the rung answered with as `docs_repo_resolved`, and set `docs_repo_path` to its git work-tree top level — `git -C <docs_repo_resolved> rev-parse --show-toplevel`, or `docs_repo_resolved` itself where it is in no git work tree. That top level is where the profile lives, where every path it records is rooted and where every command it records runs (`${CLAUDE_PLUGIN_ROOT}/references/docs-profiles/docs-profile-schema.md`, **Where the profile lives**), so every later use of `docs_repo_path` in this command means it. Rungs (a) and (b), and "Use cwd anyway", already answer with a top level; `$DOCS_PATH` at (a.5) and a path entered at (c) can name a site below one — a monorepo's `website/` — whose profile step 4 would otherwise look for in the wrong place. `docs_repo_resolved` is kept for what the site's own directory decides: step 4(c) hands it to inline profiling, step 6's `.obsidian/` walk starts from it, and step 7's preflight and Phase 6.4's style check look there, and in each directory above it, before the top level, for the configuration a site keeps beside itself or above it.
 
@@ -312,11 +312,11 @@ Ask about:
   choices: ["fetch only (Recommended)", "fetch + pull default branch", "no refresh — resolve refs from local objects only; a ref not yet fetched will not resolve, and a dirty clone stops blocking"]
   ```
   The `fetch only` default matches the `diff-summarizer` default (`refresh.fetch: true, refresh.pull: false`) — the diffs of refs the implementation record already named don't need the current branch tip, and pulling risks moving HEAD away from the commit we want to reach.
-- **Repos search base (`$REPOS_PATH`)**. Read `${REPOS_PATH:-/workspace}` (the container mounts every repo under `/workspace`). `$REPOS_PATH` may be a single directory or a colon-separated list. Ask:
+- **Repos search base (`$REPOS_PATH`) — resolved, never asked.** Resolve `${REPOS_PATH:-/workspace}` (the container mounts every repo under `/workspace`; a single directory or a colon-separated list) and record it as `$REPOS_PATH`; Phase 2's plan shows it on its `Repos:` line. **Only where no entry is an existing directory**, stop naming `REPOS_PATH`, per the `Required path environment variable unset` rule in `workflows-core:escalation-rules`:
   ```
-  choices: ["Use $REPOS_PATH (default /workspace) (Recommended)", "Use a different path (you'll be prompted)", "Cancel"]
+  choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Cancel"]
   ```
-  If "different path", take free-text input (single dir or colon-separated list) and validate that at least one directory exists under it. Record the resolved value as `$REPOS_PATH`. Individual clones are located in Phase 4 by matching their `git remote` against each in-scope `repo` slug the implementation record and the commit scan named — not by assuming a `<base>/<slug>` directory name.
+  *Set REPOS_PATH* asks for the path in plain text and records the answer as `$REPOS_PATH` once an entry of it is an existing directory. A base named at Phase 2's *Revise plan* replaces it the same way. Individual clones are located in Phase 4 by matching their `git remote` against each in-scope `repo` slug the implementation record and the commit scan named — not by assuming a `<base>/<slug>` directory name.
 - **Screenshots** — this question seeds the **add-list** only; it never skips Phase 5.6. The candidate list itself is built later in **Phase 5.6** (by which point `specs_dir`, the folder read `attachments[]`, and the resolved repos are all available), and Phase 5.6 **always** runs — it also reviews the images already on the pages this run is about to edit, regardless of this answer:
   ```
   choices: ["Yes — I have new screenshots to add (you'll pick the sources in Phase 5.6) (Recommended)", "No new screenshots", "Cancel"]
@@ -332,13 +332,12 @@ Ask about:
     ```
     choices: ["Enter an absolute staging directory (you'll be prompted)", "Skip — only needed if the docs repo turns out to be cdn_upload_required", "Cancel"]
     ```
-    Reject `/tmp` and any path inside the docs repo. Record the result as `<screenshot_staging_dir>` (or null if skipped).
+    *Enter an absolute staging directory* asks for the path in plain text; reject `/tmp` and any path inside the docs repo. Record the result as `<screenshot_staging_dir>` (or null if skipped).
 
 Also display (for user context):
 - Resolved cwd absolute path
 - Write context (`obsidian` / `docs_repo` / `non_docs_repo` / `plain_dir`)
 - Whether branching will happen (only when context is `docs_repo` — confirmed at plan approval)
-- Resolved `$REPOS_PATH`
 - The resolved address and folder
 
 ---
@@ -387,7 +386,7 @@ Present a concise plan:
 
 - The resolved address and the folder it resolved to
 - Output filename / path under the resolved `docs_repo_path` (from Phase 1)
-- `$REPOS_PATH` — the repositories to examine are resolved in Phase 4, after the folder read and the commit scan; a repository with several clones is asked about there
+- `Repos: <value> (from REPOS_PATH | REPOS_PATH unset — the default) — another base is set through REPOS_PATH or named at the plan's approval` — the repositories to examine are resolved in Phase 4, after the folder read and the commit scan; a repository with several clones is asked about there
 - Parallelism plan (up to 4 `diff-summarizer` instances per batch; up to 4 repos per Agent message)
 - Write context + whether branching will happen
 - Screenshots: `new_images_wanted` (yes/no, from Phase 1). Phase 5.6 always runs: when yes, its add-list candidates are gathered and confirmed there (specs scan + folder `attachments[]` + manual paths) — list "candidates resolved in Phase 5.6"; either way, Phase 5.6 also reviews the images already on the edited pages for staleness.
@@ -500,9 +499,9 @@ From the **implementation record** — the `implementation.md` blocks Phase 3 re
 5. **Consolidated repo gate.** From step 4, compute `expected` = the unique in-scope repo slugs, `mounted` = those that resolved to a path, and `missing` = the zero-match slugs. This is the earliest point the repo set is known (it depends on the implementation record read at the top of this phase) and it runs before any diff work.
    - **A repository with several clones — first, and only where one has `alternates`.** Show each such slug as `<slug> → <chosen path> (also: <alternate path>, …)`, then ask once:
      ```
-     choices: ["Use the preferred clones (Recommended)", "Use another clone for a repository (you'll name the slug and the path)", "Cancel"]
+     choices: ["Use the preferred clones (Recommended)", "Use another clone for a repository (you'll be prompted for the slug and the path)", "Cancel"]
      ```
-     *Use another* takes `<slug> <path>` for each change. A path that is not one of that slug's `alternates` is refused with one line naming them, and the question asked again. Each path named becomes the slug's `repo_path` and its **chosen clone**, the clone it replaces taking its place among the `alternates`; then key discovery runs again (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1, *A clone mounted mid-run*), which scans a slug's chosen clone and passes every other as `--owner-of` — on every later run in this run too — so the scan and the diff read the same clone. *Cancel* aborts the run, as the missing-repository gate's *Cancel* below does. Then the rest of this step runs. No slug with `alternates` → nothing is asked; after a re-scan below, it is asked again for a slug whose `alternates` it has not shown yet.
+     *Use another* asks in plain text for `<slug> <path>`, one per change. A path that is not one of that slug's `alternates` is refused with one line naming them, and the question asked again. Each path named becomes the slug's `repo_path` and its **chosen clone**, the clone it replaces taking its place among the `alternates`; then key discovery runs again (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1, *A clone mounted mid-run*), which scans a slug's chosen clone and passes every other as `--owner-of` — on every later run in this run too — so the scan and the diff read the same clone. *Cancel* aborts the run, as the missing-repository gate's *Cancel* below does. Then the rest of this step runs. No slug with `alternates` → nothing is asked; after a re-scan below, it is asked again for a slug whose `alternates` it has not shown yet.
    - **`missing` is empty** — print one line and continue with no gate:
      ```
      Resolved <M>/<N> repositories from the implementation record.
@@ -517,13 +516,13 @@ From the **implementation record** — the `implementation.md` blocks Phase 3 re
      Missing repos are skipped: their code won't be diff-summarised or checked
      against the PRD's requirements, so the discrepancy analysis will be partial.
 
-     choices: ["Mount the missing repo(s) now — I'll wait, then re-scan (Recommended)", "Proceed without them — PRD-only for the missing repos", "Cancel", "Specify a different absolute path for a missing repo"]
+     choices: ["Mount the missing repo(s) now — I'll wait, then re-scan (Recommended)", "Proceed without them — PRD-only for the missing repos", "Cancel", "Specify a different absolute path for a missing repo (you'll be prompted)"]
      ```
      Choice semantics follow the `Repo unresolved (zero matches) — /document` rule in `workflows-core:escalation-rules`, applied to the whole missing set at once:
      - **Mount now & re-scan** (≈ the rule's "I'll clone it — wait") — pause until the user confirms the clones are present under `$REPOS_PATH`, then rebuild the map and run key discovery again (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1, *A clone mounted mid-run*) and re-render this gate. Loop until `missing` is empty or the user picks another option. This is how the operator gets per-repo control: mount whichever repos are available, re-scan, then choose "Proceed" for whatever remains.
      - **Proceed without them** (≈ the rule's "Skip and continue without its refs") — record every currently-missing repo's refs as `unresolved`, out of scope; continue. Identical downstream state to the previous per-slug skip.
      - **Cancel** — abort the run.
-     - **Specify a different absolute path for a missing repo** (≈ the rule's "Specify a different absolute path") — record the given path as that slug's `repo_path`, move it from `missing` to `mounted`, run key discovery again with it (`key-discovery.md` §1, *A clone mounted mid-run*), and re-render.
+     - **Specify a different absolute path for a missing repo** (≈ the rule's "Specify a different absolute path") — ask in plain text for the slug and its path, record the given path as that slug's `repo_path`, move it from `missing` to `mounted`, run key discovery again with it (`key-discovery.md` §1, *A clone mounted mid-run*), and re-render.
 6. A `refs[]` element carries no host and needs none — the diff is taken locally, and `refs[]` is the only element list `diff-summarizer` takes. Nothing here resolves a host; a report of this run names refs, and names a pull request only where key discovery found one (Phase 9's *Pull requests*).
 
 ---
@@ -590,16 +589,17 @@ Handle the return:
   ```
   choices: ["Accept all proposed locations (Recommended)", "Adjust individual locations (you'll be prompted per item)", "Cancel"]
   ```
+  *Adjust individual locations*, here and below, walks the targets one at a time and asks in plain text for each one's correction — its `path`, `kind` or `section`, or to drop it.
 - **`status: LOW_CONFIDENCE`** — display `confidence_notes` alongside the targets so the user sees what was ambiguous:
   ```
-  choices: ["Adjust individual locations (Recommended)", "Accept all proposed locations", "Cancel"]
+  choices: ["Adjust individual locations (you'll be prompted per item) (Recommended)", "Accept all proposed locations", "Cancel"]
   ```
   (The default flips to "Adjust" because confidence is low.)
 - **`status: EMPTY`** — skip the accept/adjust flow:
   ```
   choices: ["Specify locations manually (you'll be prompted)", "Cancel"]
   ```
-  The manual path takes a free-text entry per target (`path` + `kind` + `section`) and validates path existence for `extend-existing` targets.
+  The manual path asks in plain text for one entry per target (`path` + `kind` + `section`) and validates path existence for `extend-existing` targets.
 
 The confirmed target list (from any of the three paths above) is the **authoritative write-target set** for Phase 6.3 and is handed to `doc-planner` in Phase 5.7.
 
@@ -626,7 +626,7 @@ Build this list only when `new_images_wanted` is `true` (Phase 1); when `false`,
      \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.gif" -o -iname "*.svg" -o -iname "*.webp" \) 2>/dev/null
    ```
    This surfaces images you keep in the project folder (custom diagrams, curated screenshots). When `<project_dir>` is null, this source contributes nothing.
-4. **Manual paths** — the user-provided "I'll provide screenshot paths" option (free text, see the `choices` below).
+4. **Manual paths** — the paths the operator types after choosing *Use all auto-discovered + add manual paths* or *Provide screenshot paths manually only* (plain text, see the `choices` below).
 
 **Dedupe** by resolved absolute path (collapse mixed separators / trailing-slash differences); when the same image appears in more than one source, keep one entry and note its origins.
 
@@ -652,18 +652,18 @@ When both lists are empty, skip presenting this prompt — there is nothing to s
   - **Add list**, if non-empty, asks:
     ```
     "Found <N> candidate image(s): <count> from specs scan, <count> from folder attachments, <count> from the project folder. How would you like to source screenshots?"
-    choices: ["Use all auto-discovered + add manual paths (Recommended)", "Use all auto-discovered only", "Select a subset (you'll pick per candidate)", "Provide screenshot paths manually only (you'll be prompted)"]
+    choices: ["Use all auto-discovered + add manual paths (you'll be prompted) (Recommended)", "Use all auto-discovered only", "Select a subset (you'll pick per candidate)", "Provide screenshot paths manually only (you'll be prompted)"]
     ```
     - **Use all auto-discovered + add manual** → take every deduped candidate, then prompt for additional free-text absolute paths to append.
     - **Use all auto-discovered only** → take every deduped candidate; no manual prompt.
     - **Select a subset** → present the deduped candidates and let the user pick which to keep.
-    - **Provide screenshot paths manually only** → ignore the auto-discovered candidates; take free text only.
+    - **Provide screenshot paths manually only** → ignore the auto-discovered candidates; ask for the paths in plain text and take only those.
     - **No images after all** is not listed — the outer prompt already offered *Nothing to do — no image work this run*, and a user who changes their mind here says so through the harness's own free-text option, which resolves to this: leave `screenshots[]` empty; the add list contributes nothing further.
   - **Existing-image list**, if non-empty, walks each occurrence in order — showing `target`, `section`, and `old_url` — and asks per item (no default is safe to recommend across arbitrary items, so no `(Recommended)` marker):
     ```
-    choices: ["Replace — I'll provide a new screenshot (staged via Phase 6.1)", "Leave as is — still accurate", "Cancel"]
+    choices: ["Replace (you'll be prompted for the new screenshot, staged via Phase 6.1)", "Leave as is — still accurate", "Cancel"]
     ```
-    "Replace" appends an `existing_image_decisions[]` entry `{target, occurrence, old_url, new_url, section, decision: accepted}` with `new_url` left pending (Phase 6.1 resolves it) and records the replacement's source (a path from the add list just reviewed, or a new free-text path). "Leave as is" appends the same shape with `decision: declined` and no `new_url`.
+    "Replace" asks in plain text for the replacement's source, then appends an `existing_image_decisions[]` entry `{target, occurrence, old_url, new_url, section, decision: accepted}` with `new_url` left pending (Phase 6.1 resolves it) and records the replacement's source (a path from the add list just reviewed, or a new free-text path). "Leave as is" appends the same shape with `decision: declined` and no `new_url`.
 - **Add-list only — existing images are current** → run the add-list sub-flow above (if non-empty); `existing_image_decisions[] = []` — the user's verbatim choice is the record of the (skipped) existing-image review, not a per-item entry.
 - **Nothing to do — no image work this run** → `screenshots[] = []`, `existing_image_decisions[] = []`.
 - **Cancel** → stop and summarise.
@@ -721,8 +721,9 @@ Handle the `status` and `gaps`:
 
 Present the checklist (with any gaps + dispositions, and — when the planner returned a non-empty `repo_authoring_guidance` — the repo-specific authoring rules it extracted from the repo's own guidance files, so the user sees "this repo's CONTRIBUTING.md / CLAUDE.md requires …" before approving):
 ```
-choices: ["Approve & write (Recommended)", "Adjust (describe)", "Cancel"]
+choices: ["Approve & write (Recommended)", "Adjust (you'll be prompted)", "Cancel"]
 ```
+*Adjust* asks in plain text what to change in the checklist, applies it, and presents the checklist again.
 
 ---
 
@@ -792,10 +793,10 @@ Run this phase when, in the checklist Phase 5.7 settled, **any** screenshot has 
 
 2. **Ask how to handle the upload:**
    ```
-   choices: ["Upload now — I'll paste the CDN links (Recommended)", "Defer — stage with TODO placeholders + Phase 9 list", "Cancel"]
+   choices: ["Upload now (you'll be prompted for the CDN links) (Recommended)", "Defer — stage with TODO placeholders + Phase 9 list", "Cancel"]
    ```
 
-   - **Upload now** → collect one CDN URL per image (prompt per image, or one URL per line in image order). Validate each pasted value looks like a URL (e.g. starts with `http://` / `https://`); re-prompt for any that don't. Record `cdn_urls[<image>]` for a regular screenshot, or the entry's `new_url` for an existing-image replacement. Phase 6.3 then writes the **real CDN URL** into each markdown image reference instead of a TODO placeholder — for an existing-image replacement, it swaps that occurrence in place. Nothing is staged and the Phase 9 "Screenshots to upload manually" section stays empty for these images.
+   - **Upload now** → ask in plain text for one CDN URL per image (prompt per image, or one URL per line in image order). Validate each pasted value looks like a URL (e.g. starts with `http://` / `https://`); re-prompt for any that don't. Record `cdn_urls[<image>]` for a regular screenshot, or the entry's `new_url` for an existing-image replacement. Phase 6.3 then writes the **real CDN URL** into each markdown image reference instead of a TODO placeholder — for an existing-image replacement, it swaps that occurrence in place. Nothing is staged and the Phase 9 "Screenshots to upload manually" section stays empty for these images.
    - **Defer** → the existing async behavior for regular screenshots: stage each image under `<screenshot_staging_dir>` (the staging directory resolved in Phase 1), Phase 6.3 inserts the `TODO-upload` placeholder reference, and every staged image is listed in the Phase 9 `### Screenshots to upload manually` section. Existing-image replacements are exempt from this path (see above) — their `new_url` is still collected now.
    - **Cancel** → stop and summarise.
 
@@ -828,6 +829,7 @@ Every git call in this phase, and in Phase 6.3's commit and Phase 8.5, runs as `
    ```
    choices: ["Use proposed name: <name>", "Edit name (you'll be prompted)", "Cancel"]
    ```
+   *Edit name* asks for the branch name in plain text and confirms it the same way.
    **Cancel** stops the run; where Phase 0 step 4(c) committed a generated profile, it ends with that step's left-on-a-branch notice.
    Fallback default when no convention is found: `<prefix>/<key>-<slug>`, where `<prefix>` comes from `workflows-core:branch-naming` §2 (fallback `docs/`).
 
@@ -864,7 +866,7 @@ The writing is delegated to the **`doc-writer`** subagent (pinned to the §2 Opu
      ```
      choices: ["Provide the missing input (you'll be prompted)", "Cancel"]
      ```
-     On a provided value, rewrite the handoff file and re-dispatch once. **Where the gap is a target left `ambiguous` with a screenshot planned for it** — one Phase 5.7's single planner re-invocation newly returned, which that phase does not ask about — the value is that target's image policy: ask Phase 5.7's **Ambiguous image policy** question for each such target the writer names, taking each answer as that step takes one, then rewrite the run's checklist as the planner would have planned it — the `doc_planner_checklist` the handoff file carries, which is also the checklist Phase 7 hands `doc-reviewer`, so the reviewer judges each page against the plan as this loop leaves it — **Copy them into the repository beside the page**: set the target's `image_policy` to `local` and each screenshot's `dest` under the target's `image_dir`, the idiomatic directory `doc-planner` step 5 found among its sibling pages' local image references, where the checklist records one, and under `<page-dir>/img/` otherwise, as `doc-planner` step 6 plans one; **Stage for manual upload**: set `cdn_upload_required` and each screenshot's `staging` under `<screenshot_staging_dir>`, taking one from the user first where it is null, as Phase 5.7's step does, keeping the `upload_note` the planner wrote for each screenshot, which Phase 9's `### Screenshots to upload manually` quotes, and settle their upload as Phase 6.1 settles one — under the run's `cdn_handoff_decision` where Phase 6.1 made one, collecting each screenshot's `cdn_urls` entry as its **Upload now** does where that decision is `upload-now`, and asking Phase 6.1's question for them where it made none; **Leave these screenshots off this page**: remove the target's `screenshots:` entries and list each screenshot in Phase 9's `### Deferred items` — and re-dispatch once.
+     *Provide the missing input* asks for it in plain text — save the image-policy gap below, which takes Phase 5.7's question instead. On a provided value, rewrite the handoff file and re-dispatch once. **Where the gap is a target left `ambiguous` with a screenshot planned for it** — one Phase 5.7's single planner re-invocation newly returned, which that phase does not ask about — the value is that target's image policy: ask Phase 5.7's **Ambiguous image policy** question for each such target the writer names, taking each answer as that step takes one, then rewrite the run's checklist as the planner would have planned it — the `doc_planner_checklist` the handoff file carries, which is also the checklist Phase 7 hands `doc-reviewer`, so the reviewer judges each page against the plan as this loop leaves it — **Copy them into the repository beside the page**: set the target's `image_policy` to `local` and each screenshot's `dest` under the target's `image_dir`, the idiomatic directory `doc-planner` step 5 found among its sibling pages' local image references, where the checklist records one, and under `<page-dir>/img/` otherwise, as `doc-planner` step 6 plans one; **Stage for manual upload**: set `cdn_upload_required` and each screenshot's `staging` under `<screenshot_staging_dir>`, taking one from the user first where it is null, as Phase 5.7's step does, keeping the `upload_note` the planner wrote for each screenshot, which Phase 9's `### Screenshots to upload manually` quotes, and settle their upload as Phase 6.1 settles one — under the run's `cdn_handoff_decision` where Phase 6.1 made one, collecting each screenshot's `cdn_urls` entry as its **Upload now** does where that decision is `upload-now`, and asking Phase 6.1's question for them where it made none; **Leave these screenshots off this page**: remove the target's `screenshots:` entries and list each screenshot in Phase 9's `### Deferred items` — and re-dispatch once.
 
 Write context governs branch/commit (Phase 0 step 6); **the orchestrator commits the writer's output in the docs repository** (the writer never commits (still true — `doc-writer` runs no git at all; it only writes files)):
 
@@ -1082,7 +1084,7 @@ Act on the verdict:
   ```
   choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding", "Cancel the whole run"]
   ```
-  "Manual fix notes" → take free-text from the user; apply via `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`) in a bounded one-shot pass (no further re-review cycle). "Defer" → record in Phase 9 `### Deferred items` without an override flag. "Override" → record in `### Deferred items` with the user's rationale. "Cancel" aborts.
+  "Manual fix notes" → ask for the notes in plain text; apply them via `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`) in a bounded one-shot pass (no further re-review cycle). "Defer" → record in Phase 9 `### Deferred items` without an override flag. "Override" → record in `### Deferred items` with the user's rationale. "Cancel" aborts.
 
 - **PASS WITH RECOMMENDATIONS** — invoke `doc-fixer` for MAJOR findings only:
 

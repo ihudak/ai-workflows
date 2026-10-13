@@ -135,7 +135,7 @@ and nothing downstream can tell the difference afterwards.
    `Required path environment variable unset` rule in
    `workflows-core:escalation-rules`:
    ```
-   choices: ["Set SPECS_PATH (enter the path)", "Cancel"]
+   choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]
    ```
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one,
@@ -1486,7 +1486,7 @@ The options presented are that question's own `options_considered`
 one trailing entry for an option the operator supplies themselves and the two standing exits:
 
 ```
-choices: ["<the strongest option considered>", "<the next strongest, where a second was weighed>", "Defer this question — record why it is not answerable yet"]
+choices: ["<the strongest option considered>", "<the next strongest, where a second was weighed>", "Defer this question (you'll be prompted for why it is not answerable yet)"]
 ```
 
 **The array is bounded at four and authors no escape of its own, like every other array in the plugin** (`workflows-core:escalation-rules` §0): `AskUserQuestion` renders `maxItems: 4`, so an uncapped `one entry per option considered` prompt cannot be presented at all once three options were weighed — and this phase is required to present its array verbatim. **The entries are two options at most, plus the defer entry: three, never four.** The two option slots are **one entry each**, substituted from the options weighed — not two entries per option, which is the reading that would put a four-option question past the cap on its own — and where only one was weighed the second slot is dropped, leaving two entries. **List every option considered as prose above the prompt**, in the order they were weighed and with the argumentation each carries, and let the harness's own free-text option carry the rest — §0 forbids an array from authoring that escape, and an authored `Another option from the list above` both duplicated it and spent a slot. Where one option was weighed, its entry is the only one beside defer.
@@ -1607,8 +1607,8 @@ waited — is neither, and
 takes the list above as a held one another run left terminal does: its answer mints a new `[VD#n]`,
 the terminal record does not move, and the run names both under what still needs a human.
 
-**Deferring is a recorded holding state, not a disposition and not a skip.** It records the reason
-the question is not answerable yet, keeps the round **open**, and never converts the question to
+**Deferring is a recorded holding state, not a disposition and not a skip.** It asks in plain text
+why the question is not answerable yet, records that reason, keeps the round **open**, and never converts the question to
 another tag on the way out. It does **not** move the question into a later round: the question stays
 where it was raised (the *Generate the round's question set* phase fixes that), and the resume rule
 in *Resolve the round* returns to it. A round whose remaining questions are all deferred is an open

@@ -38,14 +38,14 @@ resolve it, as typed, with `resolve-address` (`Skill(skill: "workflows-core:refe
 is **keyed**; absent → the run is **direct** (free-text / `@file`, this command's existing flow).
 That is the whole mode test, and it unifies the input grammar with `/document`. **On a `<KEY>`,
 `$SPECS_PATH` comes first:** if it is unset, stop naming it before resolving anything
-(`choices: ["Set SPECS_PATH (enter the path)", "Cancel"]`, `workflows-core:escalation-rules`
+(`choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]`, `workflows-core:escalation-rules`
 *Required path environment variable unset*) — a key is found only by searching the specs tree, so
 with no tree the `absent` stop below would name the wrong cause and offer a re-enter that cannot
 succeed. An `@<path>` address needs no specs tree: it is resolved without the variable and runs on,
 its record written into the folder it names, and a direct run is unaffected. `ambiguous` and
 `misrooted` are §3's two hard stops, the first naming every match and the second, on either address form,
 a `$SPECS_PATH` set inside the specs tree. **`status: absent` is a stop, never a fall-through to direct mode**
-— the `key dir not found` rule in `workflows-core:escalation-rules` (`["Re-enter key", "Cancel"]`),
+— the `key dir not found` rule in `workflows-core:escalation-rules` (`["Re-enter key (you'll be prompted)", "Cancel"]`),
 naming what creates a folder this command reads: a `PRD-` folder comes from
 `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from
 `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder from
@@ -120,7 +120,7 @@ folder and what it carries — and, where it holds an `idea.md` and no `prd.md`,
     unit nothing specified: offering it unconditionally let an operator pick one, and the Phase 0
     gate below does not catch that, an absent in-scope spec being `absent` rather than a stop. So:
     every Epic listed as prose, and the array carrying **at most two** Epic rows, that broad-slice
-    choice and *"Another Epic from the list above — name its key"* where the flat `specification.md`
+    choice and *"Another Epic from the list above (you'll be prompted for its key)"* where the flat `specification.md`
     stands; where it does not, the choice is omitted and the freed row goes back to the Epics —
     **at most three** Epic rows plus that same remainder option, which is *The cap*'s own shape for
     a picker appending nothing of its own. **`/implement`'s
@@ -183,8 +183,8 @@ Rules:
 - Note any embedded images as "referenced image: <path>".
 - **Specs are required for keyed runs.** When `mode: keyed` and the resolution found
   `specs: []`, do not plan blind — prompt:
-  `choices: ["Point me at a specs directory (you'll provide the path)", "Proceed without specs — not recommended", "Cancel"]`
-  "Point me…" takes a path, classifies it as a spec-folder, and re-resolves
+  `choices: ["Point me at a specs directory (you'll be prompted for the path)", "Proceed without specs — not recommended", "Cancel"]`
+  "Point me…" asks for the path in plain text, classifies it as a spec-folder, and re-resolves
   `specs`. "Proceed without specs" is logged in the Phase 5 report's
   `### Assumptions & limitations`. Direct-mode runs (no address) are exempt —
   the prompt/spec file is the instruction.
@@ -478,7 +478,7 @@ verbatim and ask:
 choices: ["Help construct a repro (you'll be prompted for what to try)", "Proceed without a repro (recorded in the Phase 5 report)", "Cancel"]
 ```
 
-- **Help construct a repro** → take the user's suggestion, re-dispatch `risk-planner` with it carried in the brief, and handle the new return as above, every arm included.
+- **Help construct a repro** → ask in plain text what to try, re-dispatch `risk-planner` with it carried in the brief, and handle the new return as above, every arm included.
 - **Proceed without a repro** → record it in the Phase 5 report's `### Assumptions & limitations` as `No repro: <what the planner tried>` and continue to the normal full-plan gate below.
 - **Cancel** → stop.
 
@@ -554,10 +554,10 @@ Store the returned `## Test Baseline` block verbatim — it will be passed to `t
 - `PARTIAL` → continue, and record every suite `### Suites` does not mark `OK` or `NO_TESTS`, with the command that failed, in the Phase 5 `### Deferred items` section — this run's verification will not cover them and the Final Report says so. A suite whose runner is not installed is not a reason to stop work on the suites that do run. **Surface the block's `### Notes` lines here as well, and carry what they say about a deferred suite into that suite's entry.** A watch carve-out the capture declined lands the run in this arm wherever its own suite produced no counts and some other suite did — the `RUN_FAILED` arm below is where it lands when none did — and a suite left unmarked because its watcher ran to the per-suite bound is not a suite whose runner failed, though the `Status` and the `### Suites` rows alone cannot tell the two apart (`dev-workflows:test-baseliner` capture step 1). Naming the reason is what keeps the Final Report from reporting a runner failure this run never saw.
 - `COMMAND_NOT_FOUND` (`Framework: not detected`) or `RUN_FAILED` → nothing was captured at all. **Surface the block's `### Notes` lines and its `### Suites` rows before asking** — the Phase 3.5 arm handling these same two values already does that for `### Suites`, and `### Notes` is where capture reports a watch carve-out it could not fire: which script it was, and what in it could not be resolved or rebuilt (`dev-workflows:test-baseliner` capture step 1). From the `Status` and the rows alone that state is indistinguishable from a suite that genuinely failed, and it is the state in which *Specify test command to use* has an answer to give — the runner's own single-run command, which the note has just named the script for. The section reads `none` where there is nothing to say, so on every other cause this costs one line. Then ask the user:
   ```
-  choices: ["Specify test command to use", "Skip tests for this run (documented in the Phase 5 report's Deferred items)", "Cancel"]
+  choices: ["Specify test command to use (you'll be prompted)", "Skip tests for this run (documented in the Phase 5 report's Deferred items)", "Cancel"]
   ```
   - **Specify test command** → when asking, tell the user that a command matching a suite the capture detected runs in that suite's own directory and any other from the repository's top level (name it), so one meant for a subdirectory with no detected suite begins `cd <dir> &&` (`dev-workflows:test-baseliner` capture step 1, *Scope*); take free-text and record it verbatim as `test_command_hint`, and re-dispatch the capture above **immediately**, adding the line `command_hint: [the answer]` to the prompt. Act on the returned block's `Status` by this same list. Ask at most twice in a run; after that record `test_decision: skip` with the last failure as its reason, **marked as the run's own record rather than the operator's answer**. The two provenances are not the same decision and Phase 4.6 reads which one this is: here the operator asked twice for a working command and never agreed to skip, so the run finishes `clean_finish: false` (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.9), where the *"Skip tests"* answer below finishes `true`.
-  - **Skip tests** → take free-text rationale; record `test_decision: skip` with that rationale in the Phase 5 `### Deferred items` section.
+  - **Skip tests** → ask for the rationale in plain text; record `test_decision: skip` with that rationale in the Phase 5 `### Deferred items` section.
   - **Cancel** → stop and summarize.
 
 **Every `### Notes` line the block opens with `CAVEAT: ` is surfaced here, and recorded in the Phase 5 `### Deferred items` section where the run reaches one, whatever the `Status` was** — `OK` and `NO_TESTS` included, which is the one arm above that carries no obligation of its own and is an arm three of the five marked kinds can arrive on (`dev-workflows:test-baseliner` capture step 5). A marked line says the baseline is not what its own numbers claim: a qualifying suite nothing ran because the candidate containing it does not recurse over it, counts a `Make` indirection may have summed twice, or an identifier list a `Make` fold leaves unattributed to what printed it — none of which the `Status` or the `### Suites` rows state. **The mark is the agent's and is not re-judged here**, and it is also the whole of the test: an unmarked note records where a command ran, and surfacing those on every run is how an operator learns to skip the section. The `PARTIAL` and `RUN_FAILED` / `COMMAND_NOT_FOUND` arms above still surface the **whole** section, marked lines included — more than this rule asks, and not narrowed by it.
