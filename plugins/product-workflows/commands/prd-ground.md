@@ -1,6 +1,6 @@
 ---
 name: prd-ground
-description: "Grounds a BRD slice's [BR#n] rows, or an idea-route PRD's own requirements, against code and design at pinned commits; every finding is re-derived blind by grounding-verifier. Type it, or let /brd-split's Ground now run it — any other model-started run stops. Next: /brd-split."
+description: "Grounds a BRD slice's [BR#n] rows, or an idea-route PRD's own requirements, against code and design at pinned commits; every finding is re-derived blind by grounding-verifier. Type it, or let /brd-split's Ground now run it — any other model-started run stops. Next: /brd-split; on the idea route, /create-ard or /specify."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 ---
 
@@ -46,6 +46,10 @@ behaviour, not the behaviour.
    nothing: a grounding run costs Opus time on every claim against every repository, and a prose
    request is not the operator electing it.
    `PRD_GROUND_TYPED_ONLY: /prd-ground runs when you type it, or from /brd-split's Ground now — type '/product-workflows:prd-ground <KEY>' to ground <KEY>.`
+   **This stop skips the refusal tail on purpose** — no cost entry and no `commit-artifacts`,
+   as `workflows-core:specs-repo-git` §4 names, though it runs both after every other Phase 0 refusal — because
+   no `/prd-ground` run has started: nobody elected one, so what was spent before this stop is the
+   conversation's, not this command's, and a cost entry would bill a run that never was.
    A typed run is never stopped here, with or without the flag, and step 9 checks the flag against
    the slice's own parent on every run that carries it.
 1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--depends-on`, `--docs`, `--repos` and `--from-split` each consume the token after them (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
@@ -97,7 +101,7 @@ behaviour, not the behaviour.
      design pass that still could not split:
      `PRD_GROUND_NO_CODE_UNGROUNDED: --no-code adds design grounding over an existing code grounding, and <KEY> has <no code grounding on file | no [CG#n] findings | N of M [CG#n] findings carrying no verifier outcome> — re-run '/product-workflows:prd-ground <KEY>' without --no-code.`
 
-   **Every flag but `--depends-on` carries over unchanged, on either route, including every refusal
+   **Every flag but `--depends-on` and `--from-split` carries over unchanged, on either route, including every refusal
    combination above** — stated here rather than left for a reader to infer from silence;
    `--depends-on` and `--from-split` are the two route-bound flags — the first refused on `route: idea` at the top of this step, the second stopped there by step 9, since that route has no parent. `--no-design`,
    `--no-docs`, `--docs <path>`, `--rebaseline`, and `--derivation-matrix`/`--no-derivation-matrix`
@@ -659,7 +663,13 @@ the manual path:
 1. **Name the repositories in scope.** **Where `--repos` named them, take those names and skip the prompt.**
    Otherwise build step 2's map first and put the prompt with its candidates beside it: every clone
    the map holds, one line each — its slug and its path — so an operator who does not know the code
-   layout confirms a list rather than recalling names. Where the map holds one to three clones:
+   layout confirms a list rather than recalling names. **Leave two of them off the list, and say so
+   beside it**: the specs repository (`git -C "$SPECS_PATH" rev-parse --show-toplevel`) and the
+   documentation root (`--docs <path>`, else `${DOCS_PATH:-/workspace/docs}`, under `--no-docs`
+   too). Both sit under the default `$REPOS_PATH` in the recommended layout, and neither is code:
+   the specs tree holds the requirements' own text, which would confirm each claim by itself, and a document is never
+   evidence for a `[CG#n]` (this file's standing rule, above Phase 0). Either is still a name the
+   operator may type, here or in `--repos`. Where the list holds one to three clones:
    ```
    choices: ["Ground against all <K> listed (Recommended)", "Only some — type their names", "Cancel"]
    ```
@@ -671,7 +681,7 @@ the manual path:
    *Only some* and *Type the names* ask, in plain text, for short names, one per line or
    space-separated; a typed answer to the array is taken as that list. Names resolve by step 3 —
    a name the map does not hold is still a name, and step 3's zero-match escalation answers it.
-   *Cancel* ends the run before anything is written. Where the map holds no clone, skip the
+   *Cancel* ends the run before anything is written. Where the list holds no clone, skip the
    question: step 4's escalation is the answer.
 2. **Build a slug→clone map**, exactly as `/epics` Phase 4 does: for each top-level directory
    under each entry of `$REPOS_PATH`, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -C <dir> remote get-url origin
@@ -686,8 +696,9 @@ the manual path:
    ```
    A clone reached through *Specify a different absolute path for this repo* is named by its own
    remote slug, read as step 2 reads one, where its `origin` reads; where it does not — the one way
-   this phase resolves a clone with no readable `origin` — it is named by the name the operator
-   typed for it in step 1's prompt — or, for a path `--repos` or step 1's answer gave, which carries no name of its own, by its directory's basename. That name is the slug Phase 3 compares and Phase 8 records in
+   this phase resolves a clone with no readable `origin` — it is named by its directory's basename,
+   however the path reached this phase, and never by a name typed beside it: `/brd-split`'s *Ground
+   now* passes such a clone to `--repos` as its bare path, so a typed run and that one name it alike. That name is the slug Phase 3 compares and Phase 8 records in
    `grounding/baselines.md` (`workflows-core:grounding-format` §4 step 1).
 4. Empty final list (every repo skipped or missing) → escalate per the `No repos derivable — /epics`
    rule in `workflows-core:escalation-rules`, whose `/prd-ground` variant

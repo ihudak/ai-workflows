@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.24.3] — 2026-10-13
+
+Needs `workflows-core` 1.39.2, whose `followup-emission` §8 takes a unit folder per item.
+
+### Fixed
+- **`/implement`'s two `/conformance` offers carry `<merge-clause>`**, and so does its offer of a run from another repository: a run that handed `specification.md` or `design.md` off on a branch offered commands that gate them with no word on the pull request carrying them. `/conformance`'s own offers carry it where its PRD run annotated a document the offered command gates.
+- **`/conformance` on a PRD with Epics asks which Epic carries a fix for a PRD-level requirement no Epic covers.** Its follow-up named the PRD, which `/implement` reads back only on a broad PRD-level run it does not offer where Epics exist, so the PE's decision reached no run. A PRD with no Epics still takes it in its own folder. Every follow-up, and the next-step offer that goes with it, now names the repository whose verdict the merge kept — of several, the Epic's target where it is one of them — since `/implement` reads a task back only from the repository it names.
+- **`/conformance` routes each requirement to the repositories its code can live in, and merges their verdicts by kind.** An Epic's requirement goes to its target repository and any other its implementation record names; a `## Contract` line on a PRD run to both sides, each side satisfied through any of its Epic's repositories and the line only where both are; a PRD-level requirement, which names no repository, to every one, where one repository satisfying it is enough — a repository that does not implement it is no longer a `missing` discrepancy.
+- **A verdict `/conformance`'s re-check cannot settle is listed under a new `## Unverified` in the record and the report**, with what would settle it, never put to anyone and traced in full by the next run. The record format listed it as an entry flag, which the command never wrote.
+- **`/conformance` stops on an ARD that is not on the default branch** (`CONFORMANCE_ARD_NOT_ON_MAIN`), through the same refusal tail as its other stops; it had no message for it.
+- **`/conformance`'s maintenance agents treat `$SPECS_PATH` as the project root**, as `/ready`'s do, so a Dev running it from a code checkout gets no edit to that repository's `CLAUDE.md` or memory.
+- **An Epic-level ARD blocks a size split** in `workflow-states.md` (product-workflows 3.33.3).
+- The agents page lists `Skill` among `conformance-tracer`'s tools; the follow-ups page says where `/conformance` writes each follow-up, when it withdraws one, and how a PE-confirmed fix is queued again.
+
 ## [4.24.2] — 2026-10-12
 
 ### Changed

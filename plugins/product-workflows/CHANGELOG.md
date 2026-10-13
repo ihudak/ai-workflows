@@ -5,6 +5,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.33.3] — 2026-10-13
+
+Needs `workflows-core` 1.39.2, whose `grounding-format` §4 names a clone without an `origin` the way `/prd-ground` now does.
+
+### Fixed
+- **`/epics`' size gate holds from the count to the handoff.**
+  - `epic-reviewer`'s output has an `#### Epic size` section, which `/epics` reads to keep an over-limit finding from `doc-fixer`; before, a size finding had nowhere to go but another dimension, where the fixer took it.
+  - A criterion or story that bundles several behaviours is an edit, so it goes to `doc-fixer` with the other MAJORs; it used to be held back and sent to a re-run of `/epics <EPIC-KEY>` that kept the bundled text.
+  - Every Epic the run hands off is counted once more after the last fixer pass and any clarification it folded in, and one over the limit is put to you as the first count does — `### Sizing` prints those final counts. A size finding is settled by that count, so it no longer also leaves a `[NEEDS CLARIFICATION]` marker in the Epic. `epic-writer` keeps a `kept_whole:` line in every mode, so a re-dispatch no longer re-splits an Epic you kept whole.
+  - **An Epic-level ARD blocks a split**, beside a specification, design and implementation: a split would leave it, and its `[AD#N]` Rules, with the first slice only.
+  - A split's clarification questions replace the split Epic's, so a marker that moved to a slice is asked once; another Epic whose `## Dependencies` names the split Epic for work that moved is re-pointed where this run wrote it, and named under `### Sizing` otherwise.
+  - `kept_whole` is a double-quoted YAML string with `"` and `\` escaped, so a reason quoting someone no longer breaks the Epic's frontmatter.
+- **`/prd-ground` leaves the specs repository and the documentation root out of the clones it proposes.** In the recommended layout both sit under `$REPOS_PATH`, and the run recommended grounding against them — the customer's own text as evidence, and documentation, which is never evidence. You can still name either.
+- **`/brd-split`'s *Ground now* resolves `REPOS_PATH` with its default**, as `/prd-ground` does; it read the variable unset and found no clone. At a child's handoff, *Just write the files* lets the continuation go on and *Cancel* ends it, and the docs page says the same.
+- **A clone with no readable `origin` is named by its directory's basename** whether you typed its path or *Ground now* passed it, so a later re-run does not record it as a second repository.
+- `/prd-ground`'s description names the idea route's next step too; a model-started run it refuses says it writes no cost entry on purpose, since no run started; the flag-carrying sentence names `--from-split` as route-bound; the docs page says a typed `--from-split` is checked as well; and the BRD workflow page's parameter table lists `--repos` and `--from-split`.
+- **`/brd-intake` marks no answer on an item the reader gave no reason for**, once you declined the re-read or it still gave none — the item it may have missed.
+- **`/brd-reconcile` lists two waiting customer reviews oldest first — by the date each review states in its section 1, else its file name's — and says why the order matters**: a review reconciled later supersedes an earlier one's answers, so a corrected resend reconciled first was undone by the original. A single waiting review older, by that same date, than one already reconciled is flagged the same way.
+- **`/brd-reconcile`'s re-run skips a section-12 correction by its recorded position only where both passes read the review in schema mode and the document and section still match**; a free-text review's rows are redrafted on every read, so a correction could be skipped as done or applied twice. Every other case takes the matching question older records already get.
+- **`/brd-reconcile` no longer stops `BRD_RECONCILE_REVIEW_NOT_MERGED` on a customer branch whose review the default branch has already moved away** — a merged pull request's head branch is kept by default — and gives the missing-review stop instead. Only a branch holding the very file it moved is passed over; an unmerged resend under the same name is still reported as waiting to merge.
+- **The `/brd-intake` docs page says `/brd-reconcile` gates on the defect log intake writes**, which is why declining its handoff stops that phase, and that every command of the route runs as PM, `/prd-ground` included.
+
 ## [3.33.2] — 2026-10-13
 
 Needs `workflows-core` 1.39.1 for `phase-handoff`'s §3.4 row and §4.0 class for the parent's defect log, and for `next-phase-offer`'s re-entry list naming the *Sweep a dependent* re-run.

@@ -52,7 +52,7 @@ worked by 23 teams) and **no dedup / no prose** (pure measurement, append-only).
 No dedup or cross-reference between the three. This subsystem does NOT use the
 `impl-maintenance` agent.
 
-**Cost runs unless the user skipped it.** Unlike feedback (which writes nothing when there is no plugin signal), the cost phase always computes and always advances the checkpoint (§3) — even when it can only report-only — except under `--skip-costs`, where `workflows-core:run-flags` `skip-cost` advances the checkpoint without loading this file and writes no entry. A silent write with no interaction is the norm; the sole interactive moment is pending reconciliation (§9), and only when pending files exist.
+**Cost runs unless the user skipped it.** Unlike feedback (which writes nothing when there is no plugin signal), the cost phase always computes and always advances the checkpoint (§3) — even when it can only report-only — except under `--skip-costs`, where `workflows-core:run-flags` `skip-cost` advances the checkpoint without loading this file and writes no entry, and except where no run started at all — `/product-workflows:prd-ground`'s `PRD_GROUND_TYPED_ONLY`, the one such stop (`workflows-core:specs-repo-git` §4). A silent write with no interaction is the norm; the sole interactive moment is pending reconciliation (§9), and only when pending files exist.
 
 ## 1. Session-artifact resolution
 
@@ -440,8 +440,11 @@ prefix, never by the kind it asserts, since a BRD-route slice is a `PRD-` folder
 whose `brd-link.md` asserts `kind: brd` — re-derivable from the folder's name and
 carrier, as `/frames`'s is. An Epic folder -> `phase: conformance`, `role: dev`
 (an Epic run is the Dev's). A PRD folder, a BRD-route slice included ->
-`phase: conformance`, `role: pe` (a PRD run is the PE's). The command refuses a
-BRD container, so there is no third branch.
+`phase: conformance`, `role: pe` (a PRD run is the PE's). A BRD container ->
+`phase: conformance`, `role: pe`: the command refuses one
+(`CONFORMANCE_BRD_NOT_SLICED`), and the refusal still writes its cost entry under
+the container's key; an address above PRD level is one only a PE's run aims at,
+since an Epic run's address is an Epic.
 
 **`/diagnose-session` passes `target_command: n/a` on every run**, so the bullet below for a target of `n/a` charges it to `plugin-feedback`/`n/a`: a diagnosis is about the plugin itself, whichever command it reads, so it inherits nothing.
 
@@ -637,7 +640,7 @@ and `/prompt-grill-me` through the §13 record a replay reads it from. `emit-cos
 into a docs/code repo or the current working directory, where it is not the specs repository, and NEVER fails the
 run. The cost entry is committed later, once, by the run's terminal
 `commit-artifacts` step (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md`
-§4). Cost runs unless the user skipped it — under `--skip-costs` the calling command runs `workflows-core:run-flags`' `skip-cost` in place of this entry point, and `emit-cost` is never called at all.
+§4). Cost runs unless the user skipped it — under `--skip-costs` the calling command runs `workflows-core:run-flags`' `skip-cost` in place of this entry point, and `emit-cost` is never called at all — or no run started (`/product-workflows:prd-ground`'s `PRD_GROUND_TYPED_ONLY`, `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §4).
 
 Inputs:
 - `command` — the exact slash-command name (e.g. `/implement`,

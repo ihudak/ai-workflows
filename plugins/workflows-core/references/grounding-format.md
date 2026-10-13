@@ -420,8 +420,10 @@ git -C "<repo>" status --porcelain                  # any entry -> line-count co
    pin standing (`product-workflows:prd-ground` Phase 3). **An entry names its repository by slug**:
    the last path segment of the clone's `origin` remote URL — what follows its last `/` or `:`, once any trailing `/` and then a trailing `.git` are stripped — the identifier
    `product-workflows:prd-ground` Phase 1 resolves a named repository by — or, for a clone with no
-   readable `origin`, which Phase 1 reaches only through its zero-match escalation's *Specify a
-   different absolute path* option, the name the operator typed for it in Phase 1's repo prompt. Never a directory name or a path: a slug
+   readable `origin`, which Phase 1 reaches only through an absolute path (its zero-match
+   escalation's *Specify a different absolute path* option, or a path `--repos` or its repo prompt
+   gave), the basename of that clone's directory, the one name a typed run and `product-workflows:brd-split`'s
+   *Ground now*, which passes the bare path, both have for it. Otherwise never a directory name, and never a path: a slug
    is the same in every clone of a repository and at every mount point, so an entry still names its
    repository after the clone moves, and two entries name one repository exactly where their slugs
    are equal. Every reader that compares entries, or an entry with a resolved repository, compares

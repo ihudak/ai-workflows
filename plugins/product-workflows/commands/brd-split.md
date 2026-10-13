@@ -1464,11 +1464,14 @@ On *Ground now*, record the commit Phase 6's handoff pushed — `git -C "$SPECS_
    why *All* is an answer of its own. A key naming no child of the set is asked about again.
    **Choose deliberately**: grounding a slice nobody will work on soon spends Opus time on a
    baseline that goes stale before anyone reads it.
-2. **The repositories, once.** Build the slug→clone map and put the repository question exactly as
-   `${CLAUDE_PLUGIN_ROOT}/commands/prd-ground.md` Phase 1 steps 1–4 build and put them — its
+2. **The repositories, once.** Resolve `${REPOS_PATH:-/workspace}` first, exactly as
+   `${CLAUDE_PLUGIN_ROOT}/commands/prd-ground.md` Phase 0 step 7 resolves it — the one place this
+   command reads that variable — putting that step's `REPOS_PATH` question where no entry resolves
+   to an existing directory. Then build the slug→clone map and put the repository question exactly as
+   that file's Phase 1 steps 1–4 build and put them — its
    candidate list, its two arrays and its zero-match escalation — once for every child chosen:
    they are slices of one root, ground against the same code. **Borrowed into this run, every
-   *Cancel* it carries means *Stop here — ground later by hand*** — never "end the run before
+   *Cancel* these carry means *Stop here — ground later by hand*** — never "end the run before
    anything is written", which here would skip Phase 8's cost entry and commit. A clone named
    through *Specify a different absolute path for this repo* is carried as that absolute path, which
    `--repos` takes as it takes a slug. Then print that phase's cost
@@ -1719,11 +1722,12 @@ this section waits for the operator's merge and checks it.
    (`/product-workflows:prd-ground` Phase 0 step 0), and its step 9 checks it names this root.
    **Each run asks its own questions** — a repository escalation, its handoff consent, its
    next-step offer — and the operator answers them as on a typed run; this section answers none of
-   them. A run whose handoff is declined still completes as its own Phase 9 says, and the
-   continuation goes on. An answer that ends there — *Stop here* at a run's next-step offer, or
-   *Cancel* at any of its questions — ends the continuation after that run, as step 3 reports.
+   them. A run whose handoff is declined with *Just write the files* still completes as its own
+   Phase 9 says, and the continuation goes on. An answer that ends there — *Stop here* at a run's
+   next-step offer, or *Cancel* at any of its questions, its handoff's included, where that run
+   still completes with its handoff declined — ends the continuation after that run, as step 3 reports.
    **Say both once, before the first run**: that each run asks its own questions, and that such an
    answer ends the children not yet ground.
-3. **A run that stops ends the continuation.** Say which children were ground, which run stopped and
+3. **A run that stops ends the continuation.** Say which children were ground, which run stopped or ended it, and
    with what, and print `/product-workflows:prd-ground <CHILD-KEY> --repos <name>,…` for every chosen
    child not yet ground.

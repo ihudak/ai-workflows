@@ -13,14 +13,18 @@ phase `brd-to-prd` — the phase shared by every command of the BRD-to-PRD route
 `/create-prd` share `prd-creation`. It is the route's entry point, and the only command in it that
 is handed a customer-supplied source document: later commands read the copies and the inventory this
 run made, and none extracts requirements from the customer's files again. Downstream, each command
-of the route gates on whatever the command immediately before it in the chain produced, not on this
-one directly. Nothing gates on this command's own inventory and ledger at all: `/brd-split`, run on
+of the route gates on what an earlier command in the chain produced, and only one on anything this
+command wrote. Nothing gates on this command's own inventory and ledger at all: `/brd-split`, run on
 the root, reads both from the working tree and stops on what they contain rather than on where they
 have been merged. Every command after that gates on a later hop (`/prd-ground` on the slice's own
 ledger `/brd-split` copied, `/brd-split` again on `/prd-ground`'s findings, `/brd-interview` on that
 ledger and those findings, `/brd-package` on `/brd-interview`'s register, and `/brd-reconcile` on
-`/brd-package`'s sent prompt). Every one of them runs as pm except [`/prd-ground`](prd-ground.md),
-which runs as [pa](../roles-and-phases.md#pa--product-architecture).
+`/brd-package`'s sent prompt). The one exception is this command's defect log: each slice's
+[`/brd-reconcile`](brd-reconcile.md) writes its defect resolutions into `brd/brd-defect-log.md`, so
+it gates on that log too, before it confirms any answer from the customer's review, and waits while
+the log is anywhere but the specs repo's default branch, or edited in the checkout and not handed
+off. Every command of the route runs as pm,
+[`/prd-ground`](prd-ground.md) included.
 
 ## Synopsis
 
@@ -164,7 +168,9 @@ two are decoded, which every reader does before it shows, hands over or compares
 ([`brd-format.md`](../../references/brd-format.md) §2.3).
 
 Behind Phase 7's consent choice, these are committed, pushed, and a pull request opened against the
-specs repo's default branch under a new `brd/<BRD-KEY>-<slug>` branch prefix.
+specs repo's default branch under a new `brd/<BRD-KEY>-<slug>` branch prefix. Declining leaves them
+for you to land, and that option says the next phase will stop until they are on main: it is each
+slice's `/brd-reconcile`, which waits at its gate on the defect log.
 
 ## Gates
 
@@ -207,7 +213,9 @@ specs repo's default branch under a new `brd/<BRD-KEY>-<slug>` branch prefix.
   carries a binding word such as *must* or *shall*, the reason still counts, but the sentence is
   quoted beside it and that section's own question leaves *They hold no obligation* unmarked, so you
   decide against the sentence itself rather than accept a default — and where it does bind, quoting
-  it adds that row without discarding the rest of the read. Then each section or image still unaccounted for gets its
+  it adds that row without discarding the rest of the read. An item the reader gave no reason for is
+  left unmarked the same way, once you have declined the re-read or the re-read still gave none, since
+  that is the item it may have missed. Then each section or image still unaccounted for gets its
   own question: it holds no obligation, which is recorded, or you quote a sentence in it that binds,
   shown the text it is checked against, one obligation to a quote and as many quotes as the item
   binds; each is checked against the source word for word and becomes a row of its own. A quote the

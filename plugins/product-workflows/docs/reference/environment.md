@@ -18,7 +18,7 @@
 
 - **`$REPOS_PATH`** — where your mounted implementation and code clones live; defaults to `/workspace` when unset.
 
-**Resolution.** `${REPOS_PATH:-/workspace}`, read fresh by each run that grounds against code — `/create-ard`'s mandatory repo discovery, `/idea`'s optional `--ground-code`, `/specify`'s light feasibility scan, `/epics`'s optional code scan, and `/prd-ground`'s pinned-commit grounding. It may be a single directory or a colon-separated list; a repo is a top-level directory carrying a `.git` entry directly under it.
+**Resolution.** `${REPOS_PATH:-/workspace}`, read fresh by each run that grounds against code — `/create-ard`'s mandatory repo discovery, `/idea`'s optional `--ground-code`, `/specify`'s light feasibility scan, `/epics`'s optional code scan, and `/prd-ground`'s pinned-commit grounding — and by `/brd-split`'s *Ground now*, which lists the clones once for the `/prd-ground` runs it starts. It may be a single directory or a colon-separated list; a repo is a top-level directory carrying a `.git` entry directly under it.
 
 **When unset.** The `/workspace` default takes over silently — safe, because this is only ever a read/scan base, so a wrong or empty default finds nothing to scan rather than writing anywhere unexpected.
 

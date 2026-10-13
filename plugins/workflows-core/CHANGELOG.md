@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.39.2] — 2026-10-13
+
+### Fixed
+- **`next-phase-offer`'s routing graph draws `/dev-workflows:conformance`.** Since dev-workflows 4.24.0 `/implement` offers it after an Epic and the PE runs it on the PRD before `/document`, but the graph went from `/implement` straight to `/document`. It now names the Dev's Epic run, while the Epic's pull request is open, the PE's PRD run once every Epic has merged, and each run's own next steps; the `<merge-clause>` rule names `/implement` and `/conformance` among its adopters.
+- **`specs-repo-git` reads a `conformance/` branch as a plugin branch everywhere.** 1.37.0 added the prefix to §2.1 and row G2 but not to `branch-key`'s strip list, so a key was never read off a `conformance/` branch, nor to the G2 notice's list of plugin prefixes.
+- **`followup-emission` states what `/conformance` does with a follow-up.** §2 and §8 let a caller whose items belong to different units name `unit_folder` and `key` per item — a PRD run queues for several Epics at once — and § *Withdrawing a follow-up* covers a PRD run's own lines on a re-run, and a withdrawal on a requirement withdrawn or gone on any run, not only the PE's overrule of a Dev's.
+- **`cost-emission` labels a `/conformance` refusal on a BRD container** `conformance`/`pe`. The refusal writes its cost entry under the container's key, and the inference said there was no such case.
+- **`grounding-format` §4 names a clone with no readable `origin` by its directory's basename however its path arrived** — typed, given to `--repos`, or passed by `/brd-split`'s *Ground now* — so a later typed re-run records the same name in `baselines.md` rather than a second repository (product-workflows 3.33.3). A clone with an `origin` is still named by its slug, never by a directory.
+- **`escalation-rules`' missing-path rule names `/brd-split`'s *Ground now* as a reader of `REPOS_PATH`.**
+- **`specs-repo-git` §4 and `cost-emission` name the one stop that takes no refusal tail**: `/prd-ground`'s `PRD_GROUND_TYPED_ONLY`, where the model started it without *Ground now* — no run started, so there is no cost entry to write (product-workflows 3.33.3).
+- **`/workflows-core:statusline`'s report says the snapshot is enabled given `jq` on the `PATH` the status line runs with** — the one Claude Code started with — rather than the one its own check ran in, which loads your profile and can differ.
+
+### Upgrading from 1.39.0 in session-branch mode
+- A `release-notes.md` change your session branch carried from before 1.39.0 keeps being reported after that branch's pull request merges: the draft the overlay placed stays modified against your local `HEAD`, which no step returns to it any more, so every preflight skips its catch-up. Once that pull request has merged, check that `git -C "$SPECS_PATH" diff --quiet origin/<default> -- <PRD folder>/release-notes.md` succeeds — the working copy holds nothing the merge did not land — then run `git -C "$SPECS_PATH" restore -- <PRD folder>/release-notes.md`; the next run catches up and stops reporting it.
+
 ## [1.39.1] — 2026-10-13
 
 ### Fixed

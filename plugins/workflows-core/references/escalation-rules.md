@@ -194,12 +194,14 @@ resolves to nothing that exists. `<VAR>` is that variable's own name, written ou
 the variable the run is missing, never a generic placeholder.
 
 `/brd-intake` (Phase 0 step 5), `/prd-ground` (Phase 0 step 3 for `SPECS_PATH` and Phase 0 step 7
-for `REPOS_PATH`), `/brd-split` (Phase 0 step 2), `/brd-interview` (Phase 0 step 3), `/brd-package`
+for `REPOS_PATH`), `/brd-split` (Phase 0 step 2, and for `REPOS_PATH` Phase 7's *Ground now*
+step 2, borrowing `/prd-ground`'s step 7, where *Cancel* drops the continuation rather than
+ending the run), `/brd-interview` (Phase 0 step 3), `/brd-package`
 (Phase 0 step 3), `/brd-reconcile` (Phase 0 step 3), `/frames` (Phase 0 step 0), `/prd-proposal`
 (Phase 0 step 1), `/brd-proposal` (Phase 0 step 1), `/idea` (Phase 0 step 1), `/implement` (Phase 0
 *Address resolution*, on a `<KEY>` address only), `/document` (*Mode detection*, keyed mode on a
 `<KEY>` address only) and `/release-notes` (Phase 0 step 1, on a `<KEY>` address only) cite this
-rule by name — for every one of them but `/prd-ground`, `SPECS_PATH` is the only path variable it
+rule by name — for every one of them but `/prd-ground` and `/brd-split`'s *Ground now*, `SPECS_PATH` is the only path variable it
 requires, since none of the others requires a repository root (`/idea --ground-code`, `/document`
 and `/release-notes`' opt-in diff grounding read `${REPOS_PATH:-/workspace}` with its default and
 never stop on it unset; a `$DOCS_PATH` that does not resolve only skips documentation grounding, or, in

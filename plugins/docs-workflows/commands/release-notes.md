@@ -225,8 +225,8 @@ run — the terminal `commit-artifacts` step skips on it.
   operator declined appends under `# Unreleased`.
 
   **NEVER write into a docs repo, a code repo, or the current working directory, where it is not the specs repository.** The PRD
-  folder is in `$SPECS_PATH`, which is where Phase 8's handoff commits it, on a `prd/` branch with a
-  pull request, behind the operator's consent — unless the run carries `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), when the handoff refuses, or `$SPECS_PATH` is unset on an `@<path>` run, when none is offered; either way it is written and not committed.
+  folder is in `$SPECS_PATH` — always on a `<KEY>`, and on an `@<path>` that leads there — which is where Phase 8's handoff commits it, on a `prd/` branch with a
+  pull request, behind the operator's consent — unless the run carries `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), when the handoff refuses, or `$SPECS_PATH` is unset on an `@<path>` run or the `@<path>` leads outside its work tree, when none is offered (Phase 8 step 1a); either way it is written and not committed.
 
 
 - **Style check** (default ON):
@@ -546,13 +546,27 @@ Outside that one case there is no question to ask and no option that replaces th
 
 1a. **Hand off the draft** (commit-when-asked — never automatic). It is content a team reviews before
    it is published, so it lands on the specs repository's default branch by pull request, like any
-   deliverable, and never through the terminal session commit. **Where `$SPECS_PATH` is unset** — an
-   `@<path>` run, which needs no specs tree — there is no specs repository to hand it to: the offer
-   is never made, the draft stays where it was written, and the report says so. Otherwise invoke
+   deliverable, and never through the terminal session commit. **Where `$SPECS_PATH` is unset, or the
+   resolved PRD folder lies outside its work tree, the offer is never made**: there is no specs
+   repository to hand the draft to, and a handoff would cut a `prd/` branch in `$SPECS_PATH`, stage
+   nothing there, and leave the checkout on that branch for the terminal session commit. The draft
+   stays where it was written, and the report says no offer was made and why. The first case is an
+   `@<path>` run, which needs no specs tree; the second is an `@<path>` to a folder in another tree —
+   a second clone of the specs repository, say — which `resolve-address`'s path branch accepts
+   (`workflows-core:addressing` §3). Outside means `git -C "$SPECS_PATH" rev-parse --show-toplevel`
+   prints a directory and the folder's `realpath` is neither that directory's `realpath` nor beneath
+   it; where that command fails there is no work tree to be outside of, and the offer goes ahead for
+   `handoff-to-main`'s gate to refuse (`workflows-core:phase-handoff` §2.1). On every other run, invoke
    `Skill(skill: "workflows-core:reference", args: "phase-handoff")` and present its §4.3 consent
    choice verbatim — the **advisory** array, `release-notes.md` being read by a later run of this
    command and by others and gated by none (§4.0) — `/docs-workflows:docs-audit` excepted, which reads
-   the drafts at the specs repository's `HEAD` and so misses one left uncommitted:
+   the drafts at the specs repository's `HEAD` and so misses one left uncommitted. **Say what a
+   declined handoff costs, before the choice**, since neither the array nor §4.1's *Declined by the
+   user* line says it: print this one line above the array — immediately above it, or above §4.3's
+   flag or no-remote line where that section prints one — then present the array itself unchanged:
+   ```
+   If you decline, this draft stays uncommitted: every later run of any command reports it as a dirty path that is not its own and skips its leftover flush, catch-up and branch settling until you commit or remove it; a later /release-notes run reads it only while the checkout stays where it was written; and /docs-workflows:docs-audit, which reads the drafts at HEAD, does not see it at all, whatever the second option says about your working copy.
+   ```
    ```
    choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (no command stops on this; what reads it reads your working copy)", "Cancel"]
    ```
@@ -564,15 +578,10 @@ Outside that one case there is no question to ask and no option that replaces th
    version and Change Type section the draft was filed under, its shape, and whether it superseded
    an earlier `# Unreleased` note. **Options 2 and 3 decline the handoff and nothing else**: the draft
    stays appended in the PRD folder, uncommitted, and the terminal `commit-artifacts` step never
-   stages it (`workflows-core:specs-repo-git` §2.1). **Say what a declined handoff costs**: beyond the
-   clause §4.1's *Declined by the user* line carries, an uncommitted draft costs what any path outside
-   the bounded artifact set does — `workflows-core:specs-repo-git` §3.3's G1 advisory fires on every
-   later run of any command until it is committed or removed, and while it does, each preflight skips
-   its leftover flush, catch-up and branch settling — a later run of this command reads it only while
-   the checkout stays where it was written, and `/docs-workflows:docs-audit`, which reads the drafts
-   at `HEAD`, does not see it at all, whatever the array's and the *Declined* line's working-copy
-   wording says. On every choice, the report below carries
-   §4.1's outcome line.
+   stages it (`workflows-core:specs-repo-git` §2.1) — so it costs what any path outside the bounded
+   artifact set does, that reference's §3.3 G1 advisory, as the line above the array said; the report does not
+   repeat that line, its `### Phase handoff` slot carrying §4.1's line alone. On every choice, the
+   report below carries §4.1's outcome line.
 
 2. **Report:**
    ```
@@ -581,8 +590,9 @@ Outside that one case there is no question to ask and no option that replaces th
 
    ### Phase handoff
    [step 1a's §4.1 outcome line, with §4.1's **advisory** <downstream-clause>, and the paths it lists
-   beneath it — or the declined/no-remote/gate-failed/nothing-to-commit variant, or, where
-   `$SPECS_PATH` is unset, that no handoff was offered and the draft is written and uncommitted.
+   beneath it — or the declined/no-remote/gate-failed/nothing-to-commit variant, or, where step 1a
+   made no offer, that no handoff was offered, why (`$SPECS_PATH` unset | <the folder> outside
+   `$SPECS_PATH`'s work tree), and that the draft is written and uncommitted.
    Never the gated clause: nothing runs require-on-main on release-notes.md]
 
    - Shaped as: <Feature update | Breaking change | Fix>  (source: <PRD | inferred>)
@@ -743,7 +753,7 @@ current working directory, where it is not the specs repository; no user name is
 - The run has **no worthiness gate**: every PRD is relevant for release notes, so there is no content state in which this command refuses to draft. `relevant_for_release_notes` is retired (`workflows-core:prd-format`) and a value left in an existing PRD is read by nothing. Whether a note is drafted is the decision of whoever runs the command.
 - NEVER write into a docs repo. The draft's one destination is `release-notes.md` in the resolved PRD folder, which is persistent (never `/tmp`), and it is appended to, never overwritten: no earlier section is ever rewritten or removed (Phase 8). The style gate's scratch copy is removed in every case, with `command rm -f --` (Phase 7).
 - ALWAYS use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0).
-- Light gate only — no Opus review, no tests, and no branch but the `prd/` branch Phase 8's handoff cuts in the specs repository behind the operator's consent (`specs-preflight`, its same-run re-run after a slice key is entered included (`workflows-core:specs-repo-git` §3.5), switches `$SPECS_PATH` only between branches that already exist, and only plugin-created ones (§2.2); it creates none), and no commit of anything in a docs/code repo or the current working directory, where it is not the specs repository. The draft, `release-notes.md` in the resolved PRD folder, is committed by that handoff, in the specs repository and nowhere else; the terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded session paths (`workflows-core:specs-repo-git` §2.1), never the draft — and under `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), or with `$SPECS_PATH` unset on an `@<path>` run, neither commits, and the draft is written and not committed.
+- Light gate only — no Opus review, no tests, and no branch but the `prd/` branch Phase 8's handoff cuts in the specs repository behind the operator's consent (`specs-preflight`, its same-run re-run after a slice key is entered included (`workflows-core:specs-repo-git` §3.5), switches `$SPECS_PATH` only between branches that already exist, and only plugin-created ones (§2.2); it creates none), and no commit of anything in a docs/code repo or the current working directory, where it is not the specs repository. The draft, `release-notes.md` in the resolved PRD folder, is committed by that handoff, in the specs repository and nowhere else; the terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded session paths (`workflows-core:specs-repo-git` §2.1), never the draft — and under `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), or with `$SPECS_PATH` unset on an `@<path>` run, neither commits, and the draft is written and not committed — as it is where the `@<path>` leads outside `$SPECS_PATH`'s work tree, which is offered no handoff (Phase 8 step 1a).
 - ALWAYS run `specs-preflight` at Phase 0 — again, with the slice's key set, where step 1 re-enters for a slice the operator entered at `RELEASE_NOTES_BRD_NOT_SLICED` — and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`) — bounded to `$SPECS_PATH`'s artifact paths (§2.1), switching only branches the plugin created (§2.2) and pushing only what §4 step 5 allows, always `git -C "$SPECS_PATH"` and never a `cd` (§1 rule 1), never force-pushing, and never failing the run
 - ALWAYS end the Phase 8 report with a `### Next step` recommendation (per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")`) — guidance only, never auto-invoked; the pipeline leaf (adaptive: continue any pending PA/PE phase, else the PRD is fully processed).
 - ALWAYS end the Phase 8 report with a `### Context hygiene` block per `workflows-core:session-hygiene` — prepare-first (the `resume.md` write runs later, in the terminal cost phase, per `workflows-core:session-hygiene` §1 — this block prints the guidance only), then a leaf-aware suggestion (done → nothing; pending role → `/clear`) + `/rename <PRD-ID>-<slug>-<role>` using this run's inferred lane (`pm` or `dev`, per the Phase 6 inference); guidance only, never auto-run.

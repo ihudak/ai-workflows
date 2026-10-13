@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.15.1] — 2026-10-13
+
+### Fixed
+- **`/release-notes` says what declining the handoff costs before you choose**, in one line above the choice: the draft stays a dirty path every run reports, a later `/release-notes` run reads it only from the same checkout, and `/docs-workflows:docs-audit` does not see it at all. It was said only after the choice, beside an option that reads "what reads it reads your working copy".
+- **`/release-notes` makes no handoff offer for a folder outside `$SPECS_PATH`'s work tree** — an `@<path>` into a second clone, say — as for an unset `$SPECS_PATH`. Taken, the offer cut a `prd/` branch in `$SPECS_PATH`, staged nothing, and left the session commit to push that branch with no pull request. The report says no offer was made and why.
+
 ## [1.15.0] — 2026-10-13
 
 Needs `workflows-core` 1.39.0, whose session commit no longer stages `release-notes.md`.
