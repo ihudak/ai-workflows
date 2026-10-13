@@ -88,7 +88,7 @@ A `[DD#n]` is permanent: never renumbered or reused, and its entry is never dele
 
 A `requirement withdrawn` or `orphaned` entry is listed, never asked again. Where it was a `fix-code`, its follow-up is withdrawn per `workflows-core:followup-emission` § *Withdrawing a follow-up*, with the reason `(requirement withdrawn)` or `(orphaned)`.
 
-A PRD run writes `superseded-by: <PRD-KEY>/[DD#n]` into each Epic entry it overrules — save while an unmerged `conformance/` branch carries that Epic's newer record, when it names the entry in its report and keeps the overrule in its own entry's `ruling:`, which the next PRD run applies once that branch has merged — and never deletes or rewrites any other field of an Epic record.
+A PRD run writes `superseded-by: <PRD-KEY>/[DD#n]` into each Epic entry it overrules — save while an unmerged `conformance/` branch carries that Epic's newer record, when it names the entry in its report and keeps the overrule in its own entry's `ruling:`, which a later PRD run applies once no `conformance/` branch carries that Epic's record, and only to an Epic entry whose heading names the same requirement, with the same `document:` — and never deletes or rewrites any other field of an Epic record.
 
 ## 6. Readers
 

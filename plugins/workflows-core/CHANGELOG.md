@@ -9,7 +9,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Changed
 - **`next-phase-offer` offers an Epic's `/dev-workflows:conformance` once the Epic's code pull request has merged**, not while it is open, and a fix's re-check once that fix has merged (dev-workflows 4.26.0, which checks an Epic's merged code only). The family map draws the Dev's Epic run the same way.
-- **`followup-emission`'s *Withdrawing a follow-up* says where `/dev-workflows:conformance` ticks a line**: wherever the checkout's copy holds it. A line only a Dev's unmerged `conformance/` branch holds is named in the run's report and ticked by the next PRD run once that branch has merged.
+- **`followup-emission`'s *Withdrawing a follow-up* says where `/dev-workflows:conformance` ticks a line**: wherever the checkout's copy holds it. A line the checkout does not hold yet — on a Dev's unmerged `conformance/` branch, or on a session branch — is named in the run's report and ticked by a later PRD run once the checkout holds it; until then `/dev-workflows:implement`'s read-back treats an overruled line as overruled (dev-workflows 4.26.0).
 - **`phase-handoff` §4.0's `_conformance.md` row says what a later run does with a handed-off record**: `/dev-workflows:conformance` now stops while a `conformance/` branch carries the unit's record unmerged, so the row no longer says no run gates on it — and says why the record stays advisory: a declined handoff leaves it in the working copy, which the next run reads.
 
 ## [1.40.0] — 2026-10-13
