@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.34.2] — 2026-10-13
+
+### Changed
+- **`/prd-ground` says which missing slice file its gate passes**: one on the default branch since before the run's own branch was cut, which `PRD_GROUND_RESTORE_FROM_DEFAULT` then tells you to restore. One that reached the default branch after the cut stops at `require-on-main`'s row B′ instead (workflows-core 1.41.0), which names the merge that brings it in.
+- **`/create-prd`, `/create-ard` and `/specify` give their `*_REGISTER_NOT_ON_MAIN` stop a form of its own for row B′** — a slice's `decisions.md` that changed on the default branch after the run's own branch was cut. The general form's consequence ("records that are not on `<default>`") is false there: the branch holds the copy it was cut with, or none where the register reached the default branch only after the cut, and what it lacks is what has merged on `<default>` since, so the B′ form says that and names the merge of the default branch into the branch. The three docs pages list the state.
+- **`/brd-reconcile`'s parent-log gate names row B′** among the states its stop reports, and its "test once" rationale says where a second test would stop: a reused branch of the run's own cut before the log last changed on the default branch. `/epics`' stop rationale for `specification.md` covers that state too.
+
 ## [3.34.1] — 2026-10-13
 
 ### Changed

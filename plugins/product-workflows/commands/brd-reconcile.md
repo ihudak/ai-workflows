@@ -133,10 +133,14 @@ whose requirement defects are all withdrawn; the coverage ledger's `rejected: [D
 And no later run would write it, since the same-review rule skips the decision that made it. Waiting
 costs nothing D20 guards against: the parent is not downstream of this slice but the BRD its
 requirements come from, and what the gate stops on is its log as this checkout holds it — edited and
-not handed off, or not on the default branch at all. **The test is made once, before any answer is confirmed, and not again before the write.** After the canonicalised review's handoff the run
-stands on its own branch, where the gate passes — or, where that handoff was declined, on the
-checkout step 6c has just passed, which nothing before the write touches the log in — so a second
-test would almost never stop — and
+not handed off, not on the default branch at all, or changed on the default branch after this run's
+own branch was cut, that branch holding the copy it was cut with or none (`require-on-main`'s row B′). **The test is made once, before any answer is confirmed, and not again before the write.** After the canonicalised review's handoff the run
+stands on its own branch, where the gate passes — save where that handoff reused a branch of this
+run's own (`workflows-core:phase-handoff` §2.2 rule 3) cut before the log last changed on the default
+branch, and holding the copy it was cut with or none: there a second test would stop at row B′, and the write lands on what that branch holds,
+the default branch's newer entries meeting it when the branch's pull request merges — or, where that handoff
+was declined, on the checkout step 6c has just passed, which nothing before the write touches the
+log in — so a second test would rarely stop — and
 where it did, the stop would come after the *Freeze the customer decisions* phase, leaving records
 frozen that no reconciliation record names: a re-run would find each re-affirmed, freeze nothing,
 and resolve no defect for it.
@@ -465,9 +469,11 @@ write would re-ask a question already answered.
    row, or `absent`, means this run cannot write the log safely: it is edited in this checkout and
    not handed off — a run whose handoff was declined leaves it so — or on a branch the default
    branch does not have, or on no branch at all, or the repository itself cannot be
-   checked (no default branch, a detached HEAD). Say what the gate reported — the files, branch or
+   checked (no default branch, a detached HEAD), or it changed on `<default>` after this run's own
+   branch was cut and that branch holds the copy it was cut with, or none (row B′, whose message names the merge
+   of `<default>` into the branch). Say what the gate reported — the files, branch or
    pull request it named, or the repository state — say that this run writes its defect resolutions
-   into that file and waits rather than write over an edit or leave them unwritten, and say that
+   into that file and waits rather than write over an edit, into a copy that lacks what has merged on `<default>` since, or leave them unwritten, and say that
    this plugin never commits, merges or discards anything for it. Then ask:
    ```
    choices: ["I've settled it — check again", "Cancel — re-run once the log is settled"]
