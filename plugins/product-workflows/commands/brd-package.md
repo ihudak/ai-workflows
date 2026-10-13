@@ -636,17 +636,17 @@ from the finding itself:
 Where `fixed` can apply, ask:
 
 ```
-choices: ["Fixed — the package has been corrected (you'll be prompted for what changed)", "Accepted risk — ship it, and show this finding to the customer", "Escalated to the customer — turn it into something the package asks them", "Rejected with reason — the attack does not hold (you'll be prompted for why)"]
+choices: ["Fixed — the package has been corrected (you'll be prompted for what changed)", "Accepted risk — ship it, and show this finding to the customer (you'll be prompted for the reason)", "Escalated to the customer — turn it into something the package asks them (you'll be prompted for the reason)", "Rejected with reason — the attack does not hold (you'll be prompted for why)"]
 ```
 
 Where it cannot, ask this instead. Its first option is the agreed-not-actionable route below, with
 `<writer>` filled in as the `fixed-by:` value that route gives the finding's artifact — the command
-that writes it, or `hand (say who)` where no command does — where it reads `hand (say who)` and the
-operator takes it, ask who, and record `fixed-by: <that person or role>`, the reason saying no
+that writes it, or `hand (you'll be prompted for who)` where no command does — where it reads that and
+the operator takes it, ask who in plain text, and record `fixed-by: <that person or role>`, the reason saying no
 command writes the artifact:
 
 ```
-choices: ["Agreed — repaired outside this package, by <writer>; the customer sees it with that said", "Accepted risk — a risk we weighed and take; ship it, and show this finding to the customer", "Escalated to the customer — turn it into something the package asks them", "Rejected with reason — the attack does not hold (you'll be prompted for why)"]
+choices: ["Agreed — repaired outside this package, by <writer>; the customer sees it with that said (you'll be prompted for the reason)", "Accepted risk — a risk we weighed and take; ship it, and show this finding to the customer (you'll be prompted for the reason)", "Escalated to the customer — turn it into something the package asks them (you'll be prompted for the reason)", "Rejected with reason — the attack does not hold (you'll be prompted for why)"]
 ```
 
 **Where escalation cannot apply, either array is presented without *Escalated to the customer*,**

@@ -393,11 +393,10 @@ as before this gate.
 
 Use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`Skill(skill: "workflows-core:reference", args: "escalation-rules")` §0).
 
-1. **Feature folder.** Confirm the path resolved in Phase 0:
-   ```
-   choices: ["Use <feature_folder> (Recommended)", "Use a different path (you'll be prompted)", "Cancel"]
-   ```
-   A different path is asked for in plain text and resolved as Phase 0 resolves an `@<path>` address.
+1. **Feature folder — resolved, never asked.** Phase 0 resolved it from the address, and every later
+   command — `/design`, `/implement`, `/ready`, `/conformance`, the handoff's branch name — finds this
+   specification by resolving the same address, so there is no other folder to offer; it is shown on
+   the display below, and Phase 2 Step A may still re-point it to an Epic.
    - **Resolve documentation grounding here, then show its line.** Run `resolve-docs-grounding specify` per `Skill(skill: "workflows-core:reference", args: "docs-grounding resolve-docs-grounding")` — its step 3.5 index prompt included — and show the `docs grounding:` line from what it returns, in the form that reference fixes — `ON <root> (retrieval: …)` or `OFF (<reason>)` — verbatim, including any index-build, staleness, or shadowing clause it carries (off switch: --no-docs). It runs here, before any agent is dispatched, because step 3.5 asks its one-time index question before the run's real work; this is the run's one resolution (`workflows-core:docs-grounding`, *Invariants*), and Phase 4 dispatches on the state it returns without resolving again.
 
 2. **Resume vs fresh** (only if Phase 0 found a `_session.md`). Read it back and summarise which
@@ -417,16 +416,20 @@ Use `choices` arrays; 2–4 options, and never author an "Other" option — the 
 
 4. **Repos search base (`$REPOS_PATH`) — resolved, never asked.** Resolve `${REPOS_PATH:-/workspace}`
    (a single directory or a colon-separated list) and carry it as `$REPOS_PATH`; it is shown on the
-   `Repos:` line below. **Only where no entry is an existing directory**, stop naming `REPOS_PATH`,
-   per the `Required path environment variable unset` rule in `workflows-core:escalation-rules`:
+   `Repos:` line below. **Only where no entry is an existing directory**, ask, naming `REPOS_PATH`,
+   per the `Required path environment variable unset` rule in `workflows-core:escalation-rules` — with
+   this command's own way on without code beside it, and no option marked, since whether the code is
+   reachable is the operator's to know:
    ```
-   choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Cancel"]
+   choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Proceed without code scan", "Cancel"]
    ```
+   *Proceed without code scan* is Phase 3's answer of the same name, taken now: Phase 3 derives,
+   resolves and gates no repository and Phase 4 scans none.
    *Set REPOS_PATH* asks for the path in plain text and carries the answer as `$REPOS_PATH` once an
    entry of it is an existing directory.
    - **Resolve architecture grounding next, then show its line.** Run `resolve-architecture-grounding specify` per `Skill(skill: "workflows-core:reference", args: "architecture-grounding resolve-architecture-grounding")` and show the `architecture grounding:` and `team decisions:` lines from what it returns, verbatim, in the form that reference fixes (off switch: --no-arch). This is the run's one resolution; Phase 4 dispatches `architecture-grounder` on the state it returns without resolving again.
 
-Also display (for user context): resolved feature folder; resolved `prd_dir`; resolved
+Also display (for user context): `Feature folder: <path>`; resolved `prd_dir`; resolved
 `key` (PRD); resolved `focus_key` (Epic, or 'none — PRD-level'); resolved `$SPECS_PATH`; and the
 line `Repos: <value> (from REPOS_PATH | REPOS_PATH unset — the default) — another base is set through REPOS_PATH`.
 
@@ -590,9 +593,9 @@ is the only command that writes one at all.
 **Re-pointing the feature folder after the picker.** When Step A sets `focus_key` to an Epic (the
 single-Epic and ≥2-Epic-selection cases), the feature folder becomes that Epic's per-Epic subfolder
 `specifications/<PRD>-<vslug>/EPIC-<EPIC>-<eslug>/` (Phase 0 step 3's `focus_key`-set case), superseding the
-provisional PRD-level folder confirmed in Phase 1 — Phase 0 already marks that folder provisional until
+provisional PRD-level folder Phase 0 resolved — Phase 0 already marks that folder provisional until
 the folder read runs. Re-detect a prior run there (a `_session.md` → a resume is available for that
-Epic). The broad-PRD-spec case — the only other one left — leaves the folder Phase 1 confirmed unchanged.
+Epic). The broad-PRD-spec case — the only other one left — leaves the folder Phase 0 resolved unchanged.
 
 ### Step B — Full Epic-scoped read
 
@@ -856,7 +859,7 @@ Handle per-repo status after the batch returns:
 
 ## Phase 5 — Author via grill
 
-**Interview technique (grilling — embedded; no runtime dependency).** Conduct each stage as a **relentless** interview per `Skill(skill: "workflows-core:reference", args: "grilling-technique")` — one question at a time, recommend each answer, explore the Phase 4 code scan / PRD content to self-answer (fact-vs-decision), ask from the frontier, and clear the confirmation gate before writing that stage's section.
+**Interview technique (grilling — embedded; no runtime dependency).** Conduct each stage as a **relentless** interview per `Skill(skill: "workflows-core:reference", args: "grilling-technique")` — one question at a time, recommend each answer where one exists, explore the Phase 4 code scan / PRD content to self-answer (fact-vs-decision), ask from the frontier, and clear the confirmation gate before writing that stage's section.
 
 Walk the stages in order, authoring `specification.md` live against `${CLAUDE_PLUGIN_ROOT}/references/specification-format.md`, applying the no-hard-wrap prose convention in `Skill(skill: "workflows-core:reference", args: "prose-formatting")`:
 
@@ -961,7 +964,7 @@ the grill/author. **Advisory** — never blocks; proceed to Phase 6 once finding
      `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` rule in
      `workflows-core:escalation-rules` for each unresolved BLOCKER individually:
      ```
-     choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding", "Cancel the whole run"]
+     choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]
      ```
      Manual fix notes are read against what they overlap before the handoff, as the fix cycle was,
      since no review follows them. "Defer" means appending a `## Refinement notes` section to
@@ -987,7 +990,7 @@ Cap: one fix cycle + one re-review maximum. A finding applied at that offer afte
 
 ## Phase 7 — Handoff
 
-Write `specification.md` (`Published: no`), `_session.md` and `_glossary.md` — never an `idea.md`, on either route (Phase 2) — into the run's feature folder: the folder Phase 1 confirmed (by default the PRD folder, the slice folder on the BRD route, or the `EPIC-` subfolder an Epic address resolved), unless Step A then re-pointed the run to an Epic, whose `EPIC-` subfolder supersedes it (*Re-pointing the feature folder after the picker*).
+Write `specification.md` (`Published: no`), `_session.md` and `_glossary.md` — never an `idea.md`, on either route (Phase 2) — into the run's feature folder: the folder Phase 0 resolved (the PRD folder, the slice folder on the BRD route, or the `EPIC-` subfolder an Epic address resolved), unless Step A then re-pointed the run to an Epic, whose `EPIC-` subfolder supersedes it (*Re-pointing the feature folder after the picker*).
 
 **Wherever `prd_dir` holds `grounding/`, on either route, close the consumption loop before
 the offer.** The design's *Consumption tracking* section (§7.3) has every finding and decision record

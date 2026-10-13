@@ -314,10 +314,11 @@ Ask about:
   ```
   The `fetch + pull default branch` default matches `code-scanner`'s default (`refresh.switch_to_default_branch: true, refresh.pull: true`) — capability scans target present-day code and want the default-branch tip. This is deliberately different from `/document` (keyed mode), which keeps `pull: false` because historical merged commits must not move.
 
-- **Repos search base (`$REPOS_PATH`)** (only if code scan is ON) — **resolved, never asked.** Resolve `${REPOS_PATH:-/workspace}` (the container mounts every repo under `/workspace`; a single directory or a colon-separated list) and record it as `$REPOS_PATH`. **Only where no entry is an existing directory**, stop naming `REPOS_PATH`, per the `Required path environment variable unset` rule in `workflows-core:escalation-rules`:
+- **Repos search base (`$REPOS_PATH`)** (only if code scan is ON) — **resolved, never asked.** Resolve `${REPOS_PATH:-/workspace}` (the container mounts every repo under `/workspace`; a single directory or a colon-separated list) and record it as `$REPOS_PATH`. **Only where no entry is an existing directory**, ask, naming `REPOS_PATH`, per the `Required path environment variable unset` rule in `workflows-core:escalation-rules` — with this command's own way on without code beside it, and no option marked, since whether the code is reachable is the operator's to know:
   ```
-  choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Cancel"]
+  choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Turn code scan off — produce Epic drafts from PRD content alone", "Cancel"]
   ```
+  *Turn code scan off* answers the code-examination question above again, as its own option of that name does, and the refresh policy answered above goes unused.
   *Set REPOS_PATH* asks for the path in plain text and records the answer as `$REPOS_PATH` once an entry of it is an existing directory. A base named at Phase 2's *Revise plan* replaces it the same way. Individual clones are located in Phase 4 by matching their `git remote` against each repo slug — not by assuming a `<base>/<slug>` directory name.
 
 Also display (for user context):
@@ -372,7 +373,7 @@ Present a concise plan:
 Ask:
 ```
 "Epic drafting plan ready. What would you like to do?"
-choices: ["Approve & continue (Recommended)", "Revise plan", "Cancel"]
+choices: ["Approve & continue (Recommended)", "Revise plan (you'll be prompted)", "Cancel"]
 ```
 
 - **Approve** → proceed to Phase 3
@@ -783,14 +784,14 @@ Act on the verdict (same shape as `/document` keyed mode Phase 7):
 
 - **BLOCK** — invoke `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain>`) with `Severities to fix: BLOCKER and MAJOR`. Write the `doc-fixer` Fix Report to a temp file (`command mktemp -t dw-epics-claims-XXXXXX`, never inside a repo tree or the specs tree), record its path as `claims_file`, then **check `doc-fixer`'s `Stop condition flag` before re-invoking anything**. If it is `NEEDS HUMAN`, the fixer deferred at least one BLOCKER as needing a human decision: do NOT re-invoke `epic-reviewer` — a re-review can only re-find the BLOCKER the fixer has just reported it could not resolve — and instead surface each deferred BLOCKER with the reason the fixer gave, then escalate it individually per the `Review verdict BLOCK (unresolved after one fix cycle) — /epics` rule in `workflows-core:escalation-rules`, which names this entry point alongside a review that stayed blocked. Only when the flag is `CLEAR` do you re-invoke `epic-reviewer` once **passing `claims_file`** — so the re-review falsifies the fixer's account rather than assuming it. Triage the re-review under `workflows-core:finding-triage` § On re-review (the triage sub-step above); on that section's **Proceed**, continue as after a verdict that is not BLOCK — to this phase's closing paragraphs, then Phase 7.5. If the review **stayed blocked** — a BLOCKER survives that triage, or you keep the verdict at either settle prompt — escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — /epics` rule in `workflows-core:escalation-rules` for each unresolved BLOCKER individually:
   ```
-  choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding", "Cancel the whole run"]
+  choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]
   ```
   "Manual fix notes" → take free-text from the user, then apply it via `doc-fixer`
   (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain>`) in a bounded one-shot pass, with no further
   re-review cycle — the same resolution `/document`'s identical option takes. Stating it is not
   redundant: every other option in this array has a resolution line and this one had none, so an
   operator who picked it reached undefined behaviour.
-  For `/epics`, "Defer" means the finding goes into an Epic-refinement note in the draft itself (appended as a `## Refinement notes` section, one plain `- ` bullet per finding) in addition to the Phase 9 report. A deferred finding whose fix needs a decision also gets a marker (below).
+  "Override" → ask for the operator's rationale in plain text and record the finding, with it, in the Phase 9 report. For `/epics`, "Defer" means the finding goes into an Epic-refinement note in the draft itself (appended as a `## Refinement notes` section, one plain `- ` bullet per finding) in addition to the Phase 9 report. A deferred finding whose fix needs a decision also gets a marker (below).
 
 - **PASS WITH RECOMMENDATIONS** — invoke `doc-fixer` for MAJOR findings only:
 

@@ -312,10 +312,11 @@ Ask about:
   choices: ["fetch only (Recommended)", "fetch + pull default branch", "no refresh — resolve refs from local objects only; a ref not yet fetched will not resolve, and a dirty clone stops blocking"]
   ```
   The `fetch only` default matches the `diff-summarizer` default (`refresh.fetch: true, refresh.pull: false`) — the diffs of refs the implementation record already named don't need the current branch tip, and pulling risks moving HEAD away from the commit we want to reach.
-- **Repos search base (`$REPOS_PATH`) — resolved, never asked.** Resolve `${REPOS_PATH:-/workspace}` (the container mounts every repo under `/workspace`; a single directory or a colon-separated list) and record it as `$REPOS_PATH`; Phase 2's plan shows it on its `Repos:` line. **Only where no entry is an existing directory**, stop naming `REPOS_PATH`, per the `Required path environment variable unset` rule in `workflows-core:escalation-rules`:
+- **Repos search base (`$REPOS_PATH`) — resolved, never asked.** Resolve `${REPOS_PATH:-/workspace}` (the container mounts every repo under `/workspace`; a single directory or a colon-separated list) and record it as `$REPOS_PATH`; Phase 2's plan shows it on its `Repos:` line. **Only where no entry is an existing directory**, ask, naming `REPOS_PATH`, per the `Required path environment variable unset` rule in `workflows-core:escalation-rules` — with this command's own way on without code beside it, and no option marked, since whether the code is reachable is the operator's to know:
   ```
-  choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Cancel"]
+  choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Proceed without the repos — PRD-only for every repo", "Cancel"]
   ```
+  *Proceed without the repos* is Phase 4's *Proceed without them — PRD-only for the missing repos*, taken now for every repo: Phase 3's slug→clone map holds no clone, so every in-scope repo is missing, and Phase 4 records each one's refs as `unresolved` without putting its gate.
   *Set REPOS_PATH* asks for the path in plain text and records the answer as `$REPOS_PATH` once an entry of it is an existing directory. A base named at Phase 2's *Revise plan* replaces it the same way. Individual clones are located in Phase 4 by matching their `git remote` against each in-scope `repo` slug the implementation record and the commit scan named — not by assuming a `<base>/<slug>` directory name.
 - **Screenshots** — this question seeds the **add-list** only; it never skips Phase 5.6. The candidate list itself is built later in **Phase 5.6** (by which point `specs_dir`, the folder read `attachments[]`, and the resolved repos are all available), and Phase 5.6 **always** runs — it also reviews the images already on the pages this run is about to edit, regardless of this answer:
   ```
@@ -394,7 +395,7 @@ Present a concise plan:
 Ask:
 ```
 "Documentation plan ready. What would you like to do?"
-choices: ["Approve & continue (Recommended)", "Revise plan", "Cancel"]
+choices: ["Approve & continue (Recommended)", "Revise plan (you'll be prompted)", "Cancel"]
 ```
 
 - **Approve** → proceed to Phase 3
@@ -1082,9 +1083,9 @@ Act on the verdict:
 
 - **BLOCK** — invoke `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`) with `Severities to fix: BLOCKER and MAJOR`. Write the `doc-fixer` Fix Report to a temp file (`command mktemp -t dw-doc-claims-XXXXXX`, never inside a repo tree or the specs tree), record its path as `claims_file`, then **check `doc-fixer`'s `Stop condition flag` before re-invoking anything**. If it is `NEEDS HUMAN`, the fixer deferred at least one BLOCKER as needing a human decision: do NOT re-invoke `doc-reviewer` — a re-review can only re-find the BLOCKER the fixer has just reported it could not resolve — and instead surface each deferred BLOCKER with the reason the fixer gave, then escalate it individually per the `Review verdict BLOCK (unresolved after one fix cycle) — /document` rule in `workflows-core:escalation-rules`, which names this entry point alongside a review that stayed blocked. Only when the flag is `CLEAR` do you re-invoke `doc-reviewer` once **passing `claims_file`** — so the re-review falsifies the fixer's account rather than assuming it. Triage the re-review under `workflows-core:finding-triage` § On re-review (the triage sub-step above); on that section's **Proceed**, continue to Phase 8 as after a verdict that is not BLOCK. If the review **stayed blocked** — a BLOCKER survives that triage, or you keep the verdict at either settle prompt — escalate for each unresolved BLOCKER individually per the `Review verdict BLOCK (unresolved after one fix cycle) — /document` rule in `workflows-core:escalation-rules`:
   ```
-  choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding", "Cancel the whole run"]
+  choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]
   ```
-  "Manual fix notes" → ask for the notes in plain text; apply them via `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`) in a bounded one-shot pass (no further re-review cycle). "Defer" → record in Phase 9 `### Deferred items` without an override flag. "Override" → record in `### Deferred items` with the user's rationale. "Cancel" aborts.
+  "Manual fix notes" → ask for the notes in plain text; apply them via `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`) in a bounded one-shot pass (no further re-review cycle). "Defer" → record in Phase 9 `### Deferred items` without an override flag. "Override" → ask for the user's rationale in plain text and record the finding in `### Deferred items` with it. "Cancel" aborts.
 
 - **PASS WITH RECOMMENDATIONS** — invoke `doc-fixer` for MAJOR findings only:
 
@@ -1574,7 +1575,7 @@ Before producing a plan, list the candidate ambiguities in the description:
 - **Left open, and a reader would not notice the answer** — settle it yourself and list it in the plan's Assumptions.
 
 Ask every decision. Rules:
-- Use `choices` arrays for every question — never plain text questions
+- Use `choices` arrays for every decision with options; a question whose whole answer is text with no default is asked in plain text (`workflows-core:escalation-rules` §0, *A selection carries no text*)
 - Every `choices` array carries 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0), which is what allows free-text
 - When a clearly superior default exists, make it the first choice and label it `"(Recommended)"`
 - Group related decisions into a single question (minimize total questions)
@@ -1638,7 +1639,7 @@ Produce a written plan with these sections:
 Then ask:
 ```
 "Doc-edit plan ready. What would you like to do?"
-choices: ["Approve & implement now (Recommended)", "Revise plan", "Cancel"]
+choices: ["Approve & implement now (Recommended)", "Revise plan (you'll be prompted)", "Cancel"]
 ```
 
 - **Approve** → proceed to Phase 3

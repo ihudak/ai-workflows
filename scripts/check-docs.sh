@@ -1431,13 +1431,25 @@ check_handoff_applicability() {
 # NO PROMISED TEXT (no switch: every edition's prompt tool returns the chosen label and nothing
 # else). An option whose label words the operator's text as arriving with the selection --
 # "Correct a field — I'll say which", "Keep it whole — give the reason", "Set <VAR> (enter the
-# path)", "Another one from the list above — name it" -- makes a promise the selection cannot
-# keep: the run receives the bare label and reads it as a refusal, or as a promise the operator
-# broke. Such a label fails unless the same label also carries "(you'll be prompted", the form
-# the edition's escalation-rules reference prescribes in its §0 (*A selection carries no
-# text*). The phrases below are matched case-insensitively, a typographic apostrophe read as
-# a straight one. "I'll" alone is not a phrase: "Just write the files — I'll handle git"
-# promises an action outside the prompt, not text, and passes.
+# path)", "Another one from the list above — name it" -- or asks for it outright ("Enter the
+# docs repo path") makes a promise the selection cannot keep: the run receives the bare label
+# and reads it as a refusal, or as a promise the operator broke. Such a label fails unless the
+# same label also carries "(you'll be prompted", the form the edition's escalation-rules
+# reference prescribes in its §0 (*A selection carries no text*). The families in PROMISES
+# below were measured on the 65 labels the upstream edition's first pass at that rule relabelled
+# for promising or asking for text (the labels of commands/, references/ and agents/ at the
+# commit before it, less those still in the tree after it): they match 55 of them, where the
+# first form of this part -- nine literal phrases -- matched 14, and they fire on no label of the
+# tree after it. The labels a second pass relabelled because their follow-up needs text their
+# wording never mentions ("Revise plan") match none, by construction. "I'll"
+# alone is not a phrase: "Just write the files — I'll handle git" promises an action outside
+# the prompt, not text, and passes.
+#
+# What this part cannot see: a label that needs text without asking for or promising it in
+# words a family matches -- "Revise plan", "Choose a different value", "Confirm with an
+# edited reason" -- passes, marked or not, and so does a marked option whose run never asks
+# for the text. The rule binds those too; the label alone cannot show them, so they are
+# review's.
 #
 # The parser is bracket-matched and quote-aware, NOT a non-greedy regex. A naive
 # `choices:\s*\[(.*?)\]` stops at the first `]` -- including one inside an option string
@@ -1454,9 +1466,7 @@ check_handoff_applicability() {
 # assembled from a table of rows -- has no literal options to count or read. Its cap lives in
 # the edition's own picker reference (*The cap*) and `escalation-rules.md` §0, and is held by
 # review, not by this gate. Nor is an option list written without the `choices:` key read --
-# a table cell's bare array; review holds those too. And the promised-text part reads a label,
-# never the prose after its array: an option that needs text without wording a promise, and a
-# run that never asks for the text a marked option names, are review's.
+# a table cell's bare array; review holds those too.
 check_choices_arity() {
   local root="$1" hits
   [ "$HAVE_PY" = 1 ] || { note "python3 not found; check 12 (choices arity, authored Other, promised text) skipped"; return 0; }
@@ -1465,8 +1475,24 @@ import re, sys, io, glob, os
 root = sys.argv[1]
 cap = sys.argv[2] == '1'
 auto_other = sys.argv[3] == '1'
-PROMISES = ("i'll say", "i'll provide", "i will provide", "you'll provide", "give the reason",
-            "give a reason", "(enter ", "— name it", "— name its")
+# Each family is a regex over the label lowercased, its typographic apostrophes read as straight
+# ones and every run of whitespace collapsed to one space (a phrase can wrap inside a label).
+PROMISES = (
+    ("I'll <verb>", r"\bi'll (enter|paste|describe|take|name|say|provide|give|type|tell)\b"),
+    ("I will <verb>", r"\bi will (enter|paste|describe|take|name|say|provide|give|type|tell)\b"),
+    ("you'll <verb>", r"\byou'll (name|provide|enter|say|type)\b"),
+    ("say/record/give why|what|who|which", r"\b(say|record|give) (why|what|who|which)\b"),
+    ("give the/a reason", r"\bgive (the|a) reason\b"),
+    ("type the names", r"\btype (their|the) names?\b"),
+    ("give me / let me give", r"\b(give me|let me give)\b"),
+    ("the rows I name", r"\b(rows|ones) i name\b"),
+    ("supply the", r"\bsupply (the|a)\b"),
+    ("(enter", r"\(enter\b"),
+    ("name it", "(?:^|[\\s\u2014\u2013-])name its?\\b"),
+    ("Enter / Re-enter / Describe / Edit first", r"^(re-enter|enter|describe|edit)\b"),
+    ("Specify a path or command", r"^specify\b[^\u2014]*\b(path|command)\b"),
+    ("List ... manually", r"^list\b[^\u2014]*\bmanually\b"),
+)
 PROMPTED = "(you'll be prompted"
 START = re.compile(r'choices:\s*\[')
 def arrays(text):
@@ -1503,11 +1529,11 @@ for f in sorted(glob.glob(os.path.join(root, '**', '*.md'), recursive=True)):
         for o in opts:
             if auto_other and o.strip().lower().startswith('other'):
                 print("%s:%d authors its own \"%s\" option (the harness supplies it)" % (rel, n, o[:40]))
-            low = o.replace('’', "'").lower()
+            low = re.sub(r'\s+', ' ', o.replace('’', "'")).strip().lower()
             if PROMPTED in low: continue
-            hit = next((p for p in PROMISES if p in low), None)
+            hit = next((name for name, rx in PROMISES if re.search(rx, low)), None)
             if hit:
-                print("%s:%d option \"%s\" promises text the selection cannot carry (\"%s\"); label it \"... (you'll be prompted)\"" % (rel, n, o[:60], hit.strip()))
+                print("%s:%d option \"%s\" asks for or promises text the selection cannot carry (%s); label it \"... (you'll be prompted)\"" % (rel, n, re.sub(r'\s+', ' ', o)[:60], hit))
 PYEOF
 )
   [ -n "$hits" ] || return 0
@@ -3302,29 +3328,77 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf -- '\nchoices: [\"One\", \"Two\", \"Other… (describe)\"]\n' >> $PLUGIN_REL/CHANGELOG.md"
   expect_pass_after_env "an authored Other is accepted where the host supplies no free-text answer" "HAS_AUTO_OTHER=0" \
     "printf -- '\nchoices: [\"One\", \"Two\", \"Other… (describe)\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
-  # The promised-text part, which no switch turns off. One red case per phrase family, each
-  # asserting this part's own message, then the green forms: the prompted label, a promise
-  # phrase beside the marker (the marker is the exemption, not the phrase's absence), and an
-  # "I'll" that promises an action rather than text. The bracketed option ahead of one red case
-  # is the parser pair again, and the both-switches-off case proves the part is config-free.
+  # The promised-text part, which no switch turns off. Red cases asserting this part's own
+  # message -- a verb family one per verb a relabelled label used, the name-it family one per dash
+  # and one with none, every other family one -- then the green forms: the prompted label, a promise phrase beside
+  # the marker (the marker is the exemption, not the phrase's absence), and one case per ordinary
+  # label of the tree that sits nearest a family and must not fire. The bracketed option ahead of
+  # one red case is the parser pair again, the wrapped label proves whitespace is collapsed before
+  # matching, and the both-switches-off case proves the part is config-free.
   expect_fail_msg "an option promising \"I'll say\" is rejected" 12 "promises text" \
     "printf -- '\nchoices: [\"Use it as shown\", \"Correct a field — I\047ll say which\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "an option promising \"I'll provide\" is rejected" 12 "promises text" \
     "printf -- '\nchoices: [\"Replace — I\047ll provide a new screenshot\", \"Leave as is\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option promising \"I'll enter\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Use the default\", \"Use my initials — I\047ll enter them\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option promising \"I'll paste\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Upload now — I\047ll paste the CDN links\", \"Defer\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option promising \"I'll describe\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Record it\", \"Add a prerequisite I\047ll describe\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option promising \"I'll take\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"All of them\", \"Name the ones to include — I\047ll take them from the list above\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "an option promising \"I will provide\" is rejected" 12 "promises text" \
     "printf -- '\nchoices: [\"Use <dir> [+ <sub>]\", \"I will provide the path\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "an option promising \"you'll provide\" is rejected" 12 "promises text" \
     "printf -- '\nchoices: [\"Point me at a directory (you\047ll provide the path)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option promising \"you'll name\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Use the preferred clones\", \"Use another clone (you\047ll name the slug and the path)\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option asking to \"say why\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Fixed\", \"Rejected with reason — the attack does not hold; say why\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option asking to \"say what\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Fixed — say what changed\", \"Rejected\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option asking to \"record why\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Remove it\", \"Keep it, and record why\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "an option asking to \"give the reason\" is rejected" 12 "promises text" \
     "printf -- '\nchoices: [\"Split it\", \"Keep it whole — give the reason\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "an option asking to \"give a reason\" is rejected" 12 "promises text" \
     "printf -- '\nchoices: [\"Split it\", \"Keep it whole — Give a reason\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option asking to \"type their names\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"All listed\", \"Only some — type their names\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option asking \"give me\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Exclude it\", \"Give me the clone\047s absolute path\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option promising \"let me give\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Use the proposed name\", \"Let me give you the product name\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option promising \"the rows I name\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Write it on all rows\", \"Write it on all but the rows I name\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option asking to \"supply the\" row is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Confirm\", \"Correct it — supply the row that does\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "an option asking to \"(enter ...)\" is rejected" 12 "promises text" \
     "printf -- '\nchoices: [\"Set SPECS_PATH (enter the path)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "an option asking to \"— name it\" is rejected" 12 "promises text" \
     "printf -- '\nchoices: [\"One\", \"Two\", \"Three\", \"Another one from the list above — name it\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
-  expect_fail_msg "an option asking to \"— name its\" is rejected" 12 "promises text" \
-    "printf -- '\nchoices: [\"One\", \"Another Epic from the list above — name its key\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option asking to \"– name it\" (en dash) is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"One\", \"Another repo from the list above – name it\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option asking to \"- name its\" (hyphen) is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"One\", \"Another Epic from the list above - name its key\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option asking to \"name it\" with no dash is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"One\", \"Pick another and name it\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option opening \"Enter\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Use cwd anyway\", \"Enter the docs repo path\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option opening \"Re-enter\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Re-enter key\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option opening \"Describe\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Describe the fix yourself\", \"Defer\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option opening \"Edit\" is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Use proposed branch\", \"Edit the name\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option to \"Specify\" a path is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Skip this repo\", \"Specify a different absolute path for this repo\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option to \"Specify\" a command is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Specify test command to use\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option to \"List\" repos manually is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"List repos to scan manually\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "a promise phrase wrapped across lines is rejected" 12 "promises text" \
+    "printf -- '\nchoices: [\"Use it as shown\", \"Correct a field — I\047ll\n    say which\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "a promise with a typographic apostrophe is rejected" 12 "promises text" \
     "printf -- '\nchoices: [\"Use it as shown\", \"Correct a field — I’ll say which\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_env "a promised-text option is rejected with both edition switches off" 12 \
@@ -3334,8 +3408,28 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf -- '\nchoices: [\"Keep it whole (you\047ll be prompted for the reason)\", \"Set SPECS_PATH (you\047ll be prompted for the path)\", \"Another Epic from the list above (you\047ll be prompted for its key)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after "a promise phrase beside the prompted marker is accepted" \
     "printf -- '\nchoices: [\"Correct a field — I\047ll say which (you\047ll be prompted)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
-  expect_pass_after "an \"I'll\" that promises an action, not text, is accepted" \
+  expect_pass_after "\"Name the clone's absolute path (you'll be prompted)\" is accepted" \
+    "printf -- '\nchoices: [\"Name the clone\047s absolute path (you\047ll be prompted)\", \"Exclude it\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "\"Just write the files — I'll handle git\" is accepted" \
     "printf -- '\nchoices: [\"Branch + commit + push + open PR (Recommended)\", \"Just write the files — I\047ll handle git\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "\"I'll clone it — wait\" is accepted" \
+    "printf -- '\nchoices: [\"Skip this repo\", \"I\047ll clone it — wait\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "\"Stop — I'll pull first\" is accepted" \
+    "printf -- '\nchoices: [\"Continue\", \"Stop — I\047ll pull first\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "\"Keep the commit local — I'll push it\" is accepted" \
+    "printf -- '\nchoices: [\"Push it now\", \"Keep the commit local — I\047ll push it\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "\"I'll relaunch ... on Opus\" is accepted" \
+    "printf -- '\nchoices: [\"I\047ll relaunch on Opus (Recommended)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "\"... I'll merge the profile PR separately\" is accepted" \
+    "printf -- '\nchoices: [\"Stop\", \"Proceed — the run uses the in-memory profile; I\047ll merge the profile PR separately\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "\"Specify it — <next command>\" is accepted" \
+    "printf -- '\nchoices: [\"Specify it — <KEY> (PE)\", \"Stop here\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "\"Use proposed name: <name>\" is accepted" \
+    "printf -- '\nchoices: [\"Use proposed name: <name>\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "\"Assign to a named slice\" is accepted" \
+    "printf -- '\nchoices: [\"Assign to a named slice — covered-by\", \"Defer\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "\"... and let me fix manually\" is accepted" \
+    "printf -- '\nchoices: [\"Apply safe fixes\", \"Show remaining violations and let me fix manually\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after "a promised-text option quoted in CHANGELOG.md is accepted" \
     "printf -- '\nchoices: [\"Split it\", \"Keep it whole — give the reason\"]\n' >> $PLUGIN_REL/CHANGELOG.md"
 

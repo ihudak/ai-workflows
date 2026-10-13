@@ -251,7 +251,7 @@ Before producing a plan, list the candidate ambiguities in the description:
 What the run settles reaches the plan either way: Phase 2A writes it into its own plan, and on the Phase 2B path the `risk-planner` brief carries it on its `Settled by the run:` line.
 
 Ask every decision. Rules:
-- Use `choices` arrays for every question — never plain text questions
+- Use `choices` arrays for every decision with options; a question whose whole answer is text with no default is asked in plain text (`workflows-core:escalation-rules` §0, *A selection carries no text*)
 - Every `choices` array carries 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`Skill(skill: "workflows-core:reference", args: "escalation-rules")` §0), which is what allows free-text
 - When a clearly superior default exists, make it the first choice and label it `"(Recommended)"`
 - Group related decisions into a single question (minimize total questions)
@@ -418,7 +418,7 @@ Produce a written implementation plan:
 
 ```
 "This plan changes no file in this repository. What would you like to do?"
-choices: ["Stop here, nothing written (Recommended)", "Revise plan"]
+choices: ["Stop here, nothing written (Recommended)", "Revise plan (you'll be prompted)"]
 ```
 
 - **Stop** → name one follow-up per other code repository the plan puts a change in, if any — a `/dev-workflows:implement` run from there, addressed as Phase 3A/3B step 2 says, listing its changes — and stop as **Cancel** does, nothing having been written.
@@ -427,7 +427,7 @@ choices: ["Stop here, nothing written (Recommended)", "Revise plan"]
 Otherwise, ask:
 ```
 "Implementation plan ready. What would you like to do?"
-choices: ["Approve & implement now (Recommended)", "Revise plan", "Cancel"]
+choices: ["Approve & implement now (Recommended)", "Revise plan (you'll be prompted)", "Cancel"]
 ```
 
 - **Approve** → write the approved plan to a temp file (`command mktemp -t dw-impl-plan-XXXXXX`, never inside a repo tree) and record its absolute path as `plan_file`; proceed to Phase 3A
@@ -486,7 +486,7 @@ choices: ["Help construct a repro (you'll be prompted for what to try)", "Procee
 
 ```
 "Opus-planned. What would you like to do?"
-choices: ["Approve & implement now (Recommended)", "Revise plan", "Cancel"]
+choices: ["Approve & implement now (Recommended)", "Revise plan (you'll be prompted)", "Cancel"]
 ```
 
 - **Approve** → write the approved plan to a temp file (`command mktemp -t dw-impl-plan-XXXXXX`, never inside a repo tree) and record its absolute path as `plan_file`; proceed to Phase 3B
@@ -554,7 +554,7 @@ Store the returned `## Test Baseline` block verbatim — it will be passed to `t
 - `PARTIAL` → continue, and record every suite `### Suites` does not mark `OK` or `NO_TESTS`, with the command that failed, in the Phase 5 `### Deferred items` section — this run's verification will not cover them and the Final Report says so. A suite whose runner is not installed is not a reason to stop work on the suites that do run. **Surface the block's `### Notes` lines here as well, and carry what they say about a deferred suite into that suite's entry.** A watch carve-out the capture declined lands the run in this arm wherever its own suite produced no counts and some other suite did — the `RUN_FAILED` arm below is where it lands when none did — and a suite left unmarked because its watcher ran to the per-suite bound is not a suite whose runner failed, though the `Status` and the `### Suites` rows alone cannot tell the two apart (`dev-workflows:test-baseliner` capture step 1). Naming the reason is what keeps the Final Report from reporting a runner failure this run never saw.
 - `COMMAND_NOT_FOUND` (`Framework: not detected`) or `RUN_FAILED` → nothing was captured at all. **Surface the block's `### Notes` lines and its `### Suites` rows before asking** — the Phase 3.5 arm handling these same two values already does that for `### Suites`, and `### Notes` is where capture reports a watch carve-out it could not fire: which script it was, and what in it could not be resolved or rebuilt (`dev-workflows:test-baseliner` capture step 1). From the `Status` and the rows alone that state is indistinguishable from a suite that genuinely failed, and it is the state in which *Specify test command to use* has an answer to give — the runner's own single-run command, which the note has just named the script for. The section reads `none` where there is nothing to say, so on every other cause this costs one line. Then ask the user:
   ```
-  choices: ["Specify test command to use (you'll be prompted)", "Skip tests for this run (documented in the Phase 5 report's Deferred items)", "Cancel"]
+  choices: ["Specify test command to use (you'll be prompted)", "Skip tests for this run (you'll be prompted for the reason; documented in the Phase 5 report's Deferred items)", "Cancel"]
   ```
   - **Specify test command** → when asking, tell the user that a command matching a suite the capture detected runs in that suite's own directory and any other from the repository's top level (name it), so one meant for a subdirectory with no detected suite begins `cd <dir> &&` (`dev-workflows:test-baseliner` capture step 1, *Scope*); take free-text and record it verbatim as `test_command_hint`, and re-dispatch the capture above **immediately**, adding the line `command_hint: [the answer]` to the prompt. Act on the returned block's `Status` by this same list. Ask at most twice in a run; after that record `test_decision: skip` with the last failure as its reason, **marked as the run's own record rather than the operator's answer**. The two provenances are not the same decision and Phase 4.6 reads which one this is: here the operator asked twice for a working command and never agreed to skip, so the run finishes `clean_finish: false` (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.9), where the *"Skip tests"* answer below finishes `true`.
   - **Skip tests** → ask for the rationale in plain text; record `test_decision: skip` with that rationale in the Phase 5 `### Deferred items` section.
@@ -632,10 +632,10 @@ Runs after Phase 3A step 5 completes (all code changes written), before the outc
    - After each fix attempt, re-capture the diff (`( i=$(command mktemp -t dw-index-XXXXXX) && trap 'command rm -f -- "$i"' EXIT && { command cp -- "$(git rev-parse --git-path index)" "$i" 2>/dev/null || command rm -f -- "$i"; } && export GIT_INDEX_FILE="$i" && git add -N --ignore-removal :/ && git -c diff.relative=false diff --no-ext-diff --no-color "$(git rev-parse -q --verify HEAD || git hash-object -t tree /dev/null)" )`) and re-run `test-baseliner` in verify mode against the **original** baseline (never re-baseline mid-loop — a mid-loop re-baseline would silently absorb a regression as the new normal).
    - Cap at **2 fix attempts**. If any regression or new failure remains after the second attempt, surface to the user:
      ```
-     choices: ["Investigate further", "Accept the remaining failures and proceed (document in Phase 5 report)", "Cancel"]
+     choices: ["Investigate further", "Accept the remaining failures and proceed (you'll be prompted for the reason; documented in the Phase 5 report)", "Cancel"]
      ```
      - **Investigate further** → stop the automated loop; the session model diagnoses manually and re-runs verify when ready.
-     - **Accept the remaining failures** → record each regression and each new failure in the Phase 5 `### Deferred items` section with the user's rationale; proceed.
+     - **Accept the remaining failures** → ask for the user's rationale in plain text, then record each regression and each new failure in the Phase 5 `### Deferred items` section with it; proceed.
      - **Cancel** → stop and summarize.
 
 Once Phase 3.5 returns (passed, skipped, or accepted with failures kept or without a comparison), return to Phase 3A step 7 (Verify outcome).

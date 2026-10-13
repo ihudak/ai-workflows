@@ -884,7 +884,7 @@ it being shown and answered.
 **`split_mode: full` — four resolutions:**
 
 ```
-choices: ["Assign to a named slice — covered-by<recommended>", "Defer to this BRD — deferred-to (a real allocation, not a shortcut)<recommended>", "Reject — citing a [DEF#n]<recommended>", "Mark superseded by another [BR#n]<recommended>"]
+choices: ["Assign to a named slice — covered-by (you'll be prompted for its key)<recommended>", "Defer to this BRD — deferred-to (a real allocation, not a shortcut) (you'll be prompted for a one-line rationale)<recommended>", "Reject — citing a [DEF#n] (you'll be prompted for it)<recommended>", "Mark superseded by another [BR#n] (you'll be prompted for it)<recommended>"]
 ```
 
 **No option on that picker carries a `(Recommended)` marker, and the omission is required rather
@@ -913,7 +913,7 @@ inconsistency: on a slice every row the walk stands on is a row the parent alloc
 placeholder the `full` picker uses, for the reason given below the table:
 
 ```
-choices: ["Build here — covered-here<recommended>", "Defer to this slice — deferred-to (a real allocation, not a shortcut)<recommended>", "Reject — citing a [DEF#n] in the parent's defect log<recommended>", "Mark superseded by another [BR#n]<recommended>"]
+choices: ["Build here — covered-here<recommended>", "Defer to this slice — deferred-to (a real allocation, not a shortcut) (you'll be prompted for a one-line rationale)<recommended>", "Reject — citing a [DEF#n] in the parent's defect log (you'll be prompted for it)<recommended>", "Mark superseded by another [BR#n] (you'll be prompted for it)<recommended>"]
 ```
 
 State once, before the first row of an `allocate-only` walk: *"`covered-by` is not offered here.
@@ -1458,7 +1458,7 @@ On *Ground now*, record the commit Phase 6's handoff pushed — `git -C "$SPECS_
 1. **Which children.** One child → that child, unasked. Two or more → name each with its case
    (above) and ask:
    ```
-   choices: ["All <N> children (Recommended)", "Choose which", "Stop here — ground later by hand"]
+   choices: ["All <N> children (Recommended)", "Choose which (you'll be prompted)", "Stop here — ground later by hand"]
    ```
    *Choose which* asks again with one option per child and `multiSelect: true` where there are at
    most four, and above four lists them and takes their keys in plain text — `AskUserQuestion`

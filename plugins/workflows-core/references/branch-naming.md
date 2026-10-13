@@ -134,13 +134,13 @@ When the ladder yields nothing, the command MUST ask before creating the branch 
 choices: ["Use `<fallback>` (default for this command)", "Use my initials (you'll be prompted for them)"]
 ```
 
-When an **identity** placeholder is being filled, the fallback choice is omitted — the documented convention requires a real identity, so ask for it directly:
+When an **identity** placeholder is being filled, the fallback choice is omitted — the documented convention requires a real identity, so ask for it directly, in plain text and in one prompt whose opening line names the convention:
 
 ```
-"This repo's documented convention starts the branch with your name or initials, and I couldn't infer one. What should I use?"
+"This repo's documented convention starts the branch with your name or initials, and I couldn't infer one. Enter your initials (lowercase; 2–8 characters from [a-z0-9-], starting with a letter or digit, e.g. `iv-gu` or `ivgu`), or leave it blank to cancel:"
 ```
 
-Either way, prompt for the value with:
+A blank answer, or `cancel`, ends the run before any branch is created. After *Use my initials*, prompt for the value with:
 
 ```
 "Enter your initials (lowercase; 2–8 characters from [a-z0-9-], starting with a letter or digit, e.g. `iv-gu` or `ivgu`):"

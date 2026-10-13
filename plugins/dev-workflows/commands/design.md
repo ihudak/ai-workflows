@@ -129,9 +129,10 @@ scans repos under `$REPOS_PATH`; cwd need not be inside either.
 
 **Rule: Ask, don't guess. This rule is absolute.** Use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`Skill(skill: "workflows-core:reference", args: "escalation-rules")` §0).
 
-1. **Feature folder.** Confirm the path resolved in Phase 0:
-   `choices: ["Use <feature_folder> (Recommended)", "Use a different path (you'll be prompted)", "Cancel"]` — a different
-   path is asked for in plain text and resolved as Phase 0 resolves an `@<path>` address.
+1. **Feature folder — resolved, never asked.** Phase 0 resolved it from the address, and every
+   later command — `/implement`, `/ready`, `/conformance`, the handoff's branch name — finds this
+   design by resolving the same address, so there is no other folder to offer; it is shown on the
+   display below.
 2. **Resume vs fresh** (only if step 5 found a `_design-session.md`): read it back and summarise which
    stages are settled:
    `choices: ["Resume — skip settled stages (Recommended)", "Start fresh — discard the prior design session", "Cancel"]`
@@ -146,7 +147,7 @@ scans repos under `$REPOS_PATH`; cwd need not be inside either.
    existing directory.
    - **Resolve architecture grounding next, then show its line.** Run `resolve-architecture-grounding design` per `Skill(skill: "workflows-core:reference", args: "architecture-grounding resolve-architecture-grounding")` and show the `architecture grounding:` and `team decisions:` lines from what it returns, verbatim, in the form that reference fixes (off switch: --no-arch). This is the run's one resolution; Phase 4 dispatches `architecture-grounder` on the state it returns without resolving again.
 
-Also display (context): resolved feature folder; resolved `<PRD>` / `<EPIC>` (or 'none — PRD-level');
+Also display (context): `Feature folder: <path>`; resolved `<PRD>` / `<EPIC>` (or 'none — PRD-level');
 resolved `$SPECS_PATH`; and the line
 `Repos: <value> (from REPOS_PATH | REPOS_PATH unset — the default) — another base is set through REPOS_PATH`.
 
@@ -277,7 +278,7 @@ Handle per-repo status after the batch returns:
 
 ## Phase 5 — Grill: challenge + design
 
-**Interview technique (grilling — embedded; no runtime dependency).** Conduct the design as a **relentless** interview per `Skill(skill: "workflows-core:reference", args: "grilling-technique")` — one question at a time, recommend each answer, explore the Phase 4 code scan / spec to self-answer (fact-vs-decision), ask from the frontier, and clear the confirmation gate before writing each section.
+**Interview technique (grilling — embedded; no runtime dependency).** Conduct the design as a **relentless** interview per `Skill(skill: "workflows-core:reference", args: "grilling-technique")` — one question at a time, recommend each answer where one exists, explore the Phase 4 code scan / spec to self-answer (fact-vs-decision), ask from the frontier, and clear the confirmation gate before writing each section.
 
 Run **two intertwined tracks**, authoring `design.md` live against
 `${CLAUDE_PLUGIN_ROOT}/references/design-format.md`, applying the no-hard-wrap prose convention in `Skill(skill: "workflows-core:reference", args: "prose-formatting")`, sections scaled by the Phase 1.5 classification:
@@ -397,7 +398,7 @@ Dispatch `design-reviewer` (Opus):
   or push it onto the spec (Phase 5) before handoff. If still `BLOCK`, escalate per the
   `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline` rule in
   `workflows-core:escalation-rules`, per unresolved BLOCKER individually:
-  `choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding", "Cancel the whole run"]`
+  `choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]`
 - **`MAJOR` / `MINOR` / `NIT`**, whatever verdict carried them — no mandatory fix cycle. After the
   first review and after the re-review alike, where a verdict that is not `BLOCK` leaves open at
   least one finding whose fix is only an edit, offer to apply them before going on, per the `Findings a review leaves open — the offer to apply them` rule in `workflows-core:escalation-rules`:

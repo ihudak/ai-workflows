@@ -28,12 +28,12 @@ unfollowable.
    every route, the array carries the likeliest, and the run says the list is longer than the prompt.
 
 **A selection carries no text.** Choosing an option returns its label and nothing else. An option
-that needs text from the operator — a name, a path, a key, a reason, a correction — is followed at
-once by one plain-text question asking for that text, and the run never reads the bare selection as
-a refusal or as a promise the operator broke. A label that asks for or promises that text is
-written `… (you'll be prompted)` or `… (you'll be prompted for <what>)`, never as a promise or an
-instruction the selection itself would have to carry out (`— name it`, `I'll say which`, `give the
-reason`, `(enter the path)`). A free-text answer in the harness's own field that already carries
+that needs text from the operator — a name, a path, a key, a reason, a correction — is labelled
+`… (you'll be prompted)` or `… (you'll be prompted for <what>)`, whatever the rest of its wording,
+and choosing it is followed at once by one plain-text question asking for that text; the run never
+reads the bare selection as a refusal or as a promise the operator broke. Its label never words the
+text as a promise or an instruction the selection itself would have to carry out (`— name it`,
+`I'll say which`, `give the reason`, `(enter the path)`). A free-text answer in the harness's own field that already carries
 the text is taken as given, and nothing is asked again. A question whose whole answer is text with
 no default — a name, a URL, a reason — is asked in plain text: never as a picker built for it, and
 never with an "I'll provide it" option.
@@ -202,8 +202,8 @@ described a dispatch that no longer exists.)
 
 `choices: ["Set <VAR> (you'll be prompted for the path)", "Cancel"]`
 
-Used when a command stops because a path environment variable it requires is unset, or resolves to
-nothing that exists. `<VAR>` is that variable's own name, written out — the list names the variable
+Used when a command stops — or, for `REPOS_PATH`, asks — because a path environment variable it
+requires is unset, or resolves to nothing that exists. `<VAR>` is that variable's own name, written out — the list names the variable
 the run is missing, never a generic placeholder. *Set <VAR>* is followed at once by one plain-text
 question for the path (§0, *A selection carries no text*); the answer — for `REPOS_PATH` one
 directory or a colon-separated list — is carried as `$<VAR>` for the rest of the run once it names
@@ -223,7 +223,12 @@ step 1, on a `<KEY>` address only, and for `REPOS_PATH` Phase 1, with diff groun
 step 3) and `/epics` (Phase 1, with code examination on) cite this rule by name. **`REPOS_PATH` is
 asked for only where no entry of `${REPOS_PATH:-/workspace}` is an existing directory**: a value
 that resolves is used without a question, and `/design`, `/specify`, `/create-ard`, `/epics`,
-`/document` and `/release-notes` print it on a `Repos:` line instead. A citer not named for
+`/document` and `/release-notes` print it on a `Repos:` line instead. **Where a citer's run can go on
+without code, its array carries that run's own way on between the two options** — `/specify` *Proceed without code scan*, `/create-ard` *Ground only the
+confirmed-mounted set (record the rest as open questions)*, `/epics` *Turn code scan off — produce
+Epic drafts from PRD content alone*, `/document` *Proceed without the repos — PRD-only for every
+repo*, `/release-notes` *PRD content only* — and no option is marked; `/design`, `/prd-ground` and
+`/brd-split`'s *Ground now* cannot run without code, and keep the two-option list. A citer not named for
 `REPOS_PATH` above requires `SPECS_PATH` alone (`/idea --ground-code` reads
 `${REPOS_PATH:-/workspace}` with its default and never stops on it; a `$DOCS_PATH` that does not
 resolve only skips documentation grounding, or, in `/document`, one rung of its docs-repository
@@ -233,9 +238,11 @@ the last four" until the list grew, at which point it silently described a diffe
 named subset that replaced it then left `/brd-split` and `/brd-intake` out of it. Derive the set
 rather than trusting this list:
 `grep -rl 'Required path environment variable unset' plugins/*/commands/*.md`, run from the
-repository root. It is a stop, not a degradation: there is no "continue without it" option, because
-the path is where the run's inputs and outputs live. Other commands reproduce the same two-option
-list inline without naming the rule; a citer that names the rule uses the list written here.
+repository root. For `SPECS_PATH` it is a stop, not a degradation: there is no "continue without
+it" option, because that path is where the run's inputs and outputs live. `REPOS_PATH` holds only
+code a run reads, which is why a citer whose run can go on without it offers that way on. Other
+commands reproduce the same two-option list inline without naming the rule; a citer that names the
+rule uses the list written here, save the `REPOS_PATH` way on above.
 
 ## Repo unresolved (zero matches) — /document
 
@@ -278,7 +285,7 @@ with no repos derivable"). The `— /epics` suffix on this heading is historical
 — `/epics` was its first citer — not a scope restriction; the rule now serves
 both commands listed above, and any future citer with the same empty-repo-set
 shape uses it too. *List repos to scan manually* is followed by one plain-text question for the
-repositories' names, each resolved against the slug→clone map like a derived one.
+repositories' names, each resolved as the citing command resolves a derived one.
 
 In `/prd-ground` Phase 1 step 4 the *Proceed without code scan* entry is omitted:
 `choices: ["List repos to check manually (you'll be prompted)", "Cancel"]`
@@ -373,11 +380,11 @@ left it, and asks nothing, save a Stash that stashed nothing (§ *Stashing the u
 
 Used by every branch-creating command (`/implement`, `/document` (keyed mode only — a direct-mode run creates no branch), `/docs-profile`, `/docs-init`, `/docs-brand` standalone, `/upgrade`, `/vuln`) when the `branch-naming.md` §2 identity ladder — `$GIT_USER_INITIALS`, `git config user.initials`, then inference from existing branches — yields nothing. `<fallback>` is that command's own default (`feat/`, `docs/`, `fix/`, `chore/`).
 
-**Identity variant.** When the value is filling an **identity** placeholder in a convention documented by the repo itself (`<your-name-or-initials>`, `<user>`, …), the fallback choice is omitted — a generic prefix is not a name, and the documented convention requires a real identity — and so is the picker: an answer that is text with no default is asked in plain text (§0, *A selection carries no text*), as `branch-naming.md` §2.5 asks it:
+**Identity variant.** When the value is filling an **identity** placeholder in a convention documented by the repo itself (`<your-name-or-initials>`, `<user>`, …), the fallback choice is omitted — a generic prefix is not a name, and the documented convention requires a real identity — and so is the picker: an answer that is text with no default is asked in plain text (§0, *A selection carries no text*), as `branch-naming.md` §2.5 asks it, in one prompt whose opening line names the convention:
 
-`"This repo's documented convention starts the branch with your name or initials, and I couldn't infer one. What should I use?"`
+`"This repo's documented convention starts the branch with your name or initials, and I couldn't infer one. Enter your initials (lowercase; 2–8 characters from [a-z0-9-], starting with a letter or digit, e.g. `iv-gu` or `ivgu`), or leave it blank to cancel:"`
 
-Either way, prompt for the value with: `"Enter your initials (lowercase; 2–8 characters from [a-z0-9-], starting with a letter or digit, e.g. `iv-gu` or `ivgu`):"` — then suggest, without persisting, `GIT_USER_INITIALS` or `git config --global user.initials`.
+A blank answer, or `cancel`, ends the run before any branch is created, as *Cancel* does elsewhere. After *Use my initials*, prompt for the value with: `"Enter your initials (lowercase; 2–8 characters from [a-z0-9-], starting with a letter or digit, e.g. `iv-gu` or `ivgu`):"`. Either way, then suggest, without persisting, `GIT_USER_INITIALS` or `git config --global user.initials`.
 
 ## Refresh blocked
 
@@ -607,24 +614,26 @@ own open questions must be resolved before its gate passes, so a finding it leav
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline
 
-`choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding", "Cancel the whole run"]`
+`choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]`
 
 Used by the commands that fix their own reviewer's findings inline, with no delegated writer — `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and `/brd-proposal` — when the one re-review returns `BLOCK`, whether it followed a `BLOCK`'s fix cycle or was the unspent re-review offered after a verdict that was not (above); for `/prd-proposal` and `/brd-proposal`, which triage their re-review, when the review stayed blocked (`finding-triage.md` § On re-review).
-Escalate per unresolved BLOCKER individually. "Manual fix notes" → take free-text from the user and apply it inline in one bounded pass, with no further re-review, reading it first per `An inline fix is read against what it overlaps`. "Defer" → record the finding as deferred in the run's final report; `/specify` also appends it to a `## Refinement notes` section of `specification.md`, as one plain `- ` bullet per finding. Never a `- [ ]` item there: `pre-lint` counts every `- [ ]` in the file against the header's `Open questions` count, while `specification-format.md` counts only those under its Open questions sub-headings, so a checkbox in the notes would put the two at odds. "Override" → record it in the run's final report with the user's rationale. "Cancel" aborts the run.
+Escalate per unresolved BLOCKER individually. "Manual fix notes" → take free-text from the user and apply it inline in one bounded pass, with no further re-review, reading it first per `An inline fix is read against what it overlaps`. "Defer" → record the finding as deferred in the run's final report; `/specify` also appends it to a `## Refinement notes` section of `specification.md`, as one plain `- ` bullet per finding. Never a `- [ ]` item there: `pre-lint` counts every `- [ ]` in the file against the header's `Open questions` count, while `specification-format.md` counts only those under its Open questions sub-headings, so a checkbox in the notes would put the two at odds. "Override" → ask for the user's rationale in plain text and record the finding, with it, in the run's final report. "Cancel" aborts the run.
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — /document
 
-`choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding", "Cancel the whole run"]`
+`choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]`
 
 Used in `/document` Phase 7 at either of two points: when `doc-fixer` returns `Stop condition flag: NEEDS HUMAN` — it deferred a BLOCKER as needing a human decision, so no re-review runs — or when the review stayed blocked (`finding-triage.md` § On re-review).
-Escalate per unresolved BLOCKER individually.
+Escalate per unresolved BLOCKER individually. "Override" asks for the rationale in plain text, which
+`/document` records with the finding in `### Deferred items`.
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — /epics
 
-`choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding", "Cancel the whole run"]`
+`choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]`
 
 Used in `/epics` Phase 7 at either of two points: when `doc-fixer` returns `Stop condition flag: NEEDS HUMAN` — it deferred a BLOCKER as needing a human decision, so no re-review runs — or when the review stayed blocked (`finding-triage.md` § On re-review).
-Escalate per unresolved BLOCKER individually. "Defer" means the finding goes
+Escalate per unresolved BLOCKER individually. "Override" asks for the rationale in plain text, which
+the Phase 9 report records with the finding. "Defer" means the finding goes
 into an Epic-refinement note in the draft itself (appended as a
 `## Refinement notes` section, one plain `- ` bullet per finding) in addition to the Phase 9 report;
 a deferred finding whose fix needs a decision also becomes a marker in the Epic (*A finding left

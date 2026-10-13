@@ -185,10 +185,11 @@ run — the terminal `commit-artifacts` step skips on it.
   ```
   If the user also grounds in diffs, additionally resolve `$REPOS_PATH` as the next bullet says.
 
-- **Repos search base (`$REPOS_PATH`)** (only if diff grounding is ON) — **resolved, never asked.** Resolve `${REPOS_PATH:-/workspace}` (one directory or a colon-separated list) and record it as `$REPOS_PATH`. **Only where no entry is an existing directory**, stop naming `REPOS_PATH`, per the `Required path environment variable unset` rule in `workflows-core:escalation-rules`:
+- **Repos search base (`$REPOS_PATH`)** (only if diff grounding is ON) — **resolved, never asked.** Resolve `${REPOS_PATH:-/workspace}` (one directory or a colon-separated list) and record it as `$REPOS_PATH`. **Only where no entry is an existing directory**, ask, naming `REPOS_PATH`, per the `Required path environment variable unset` rule in `workflows-core:escalation-rules` — with this command's own way on without code beside it, and no option marked, since whether the code is reachable is the operator's to know:
   ```
-  choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Cancel"]
+  choices: ["Set REPOS_PATH (you'll be prompted for the path)", "PRD content only", "Cancel"]
   ```
+  *PRD content only* answers the diff-grounding question above again, as its own option of that name does: diff grounding is OFF for the run.
   *Set REPOS_PATH* asks for the path in plain text and records the answer as `$REPOS_PATH` once an entry of it is an existing directory; a base named at Phase 2's plan approval replaces it the same way. Clones are located in Phase 4 by matching `git remote` against each repo slug the Phase 3 implementation record and its commit scan named — not by assuming a `<base>/<slug>` directory name. Nothing here asks which pull-request statuses to include: Phase 3 builds its refs from `implementation.md` and the commit scan, and a pull request reaches them only as the commits a merged one landed (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §4); `refs[]` is the only element list `diff-summarizer` takes.
 
 - **Output destination — derived, not asked.** The draft lands in **`release-notes.md` in the
@@ -248,8 +249,11 @@ Invoke the `model-routing` skill (Skill tool, `skill: "workflows-core:model-rout
 
 1. **Plan.** Before presenting the plan, run `resolve-docs-grounding release-notes` per `Skill(skill: "workflows-core:reference", args: "docs-grounding resolve-docs-grounding")` — this is the run's only consent-bearing step (an index build or a capped refresh), so it must resolve here, before Phase 3's folder read and Phase 4/5's diff resolution do any of the run's real work. Present: resolved `key`, destination, diff-grounding on/off (+ `$REPOS_PATH` and repos to scan when on), style-check choice, and the `docs grounding:` line that `resolve-docs-grounding` returned, verbatim — including its `retrieval:` value and any index-build, staleness, or shadowing clause (off switch: --no-docs). Ask:
    ```
-   choices: ["Approve & continue (Recommended)", "Revise plan", "Cancel"]
+   choices: ["Approve & continue (Recommended)", "Revise plan (you'll be prompted)", "Cancel"]
    ```
+   - **Approve** → proceed to Phase 3.
+   - **Revise** → ask in plain text what to change — diff grounding, the repos base (taken as Phase 1 takes a base set through *Set REPOS_PATH*), the style check, the version — update the plan, re-show it and ask again.
+   - **Cancel** → stop and summarise what was planned.
 
 ---
 
@@ -752,7 +756,7 @@ current working directory, where it is not the specs repository; no user name is
 - The category label IS the PRD's `release_notes_category`, used verbatim; when the PRD carries none the line is OMITTED. Change Type is sourced `change_type` → infer, and is confirmed with the user ONLY when it was inferred with low confidence — by shape and destination, never by enum label. Neither field is ever asked for by enum label.
 - The run has **no worthiness gate**: every PRD is relevant for release notes, so there is no content state in which this command refuses to draft. `relevant_for_release_notes` is retired (`workflows-core:prd-format`) and a value left in an existing PRD is read by nothing. Whether a note is drafted is the decision of whoever runs the command.
 - NEVER write into a docs repo. The draft's one destination is `release-notes.md` in the resolved PRD folder, which is persistent (never `/tmp`), and it is appended to, never overwritten: no earlier section is ever rewritten or removed (Phase 8). The style gate's scratch copy is removed in every case, with `command rm -f --` (Phase 7).
-- ALWAYS use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0).
+- ALWAYS use `choices` arrays for decision points; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0).
 - Light gate only — no Opus review, no tests, and no branch but the `prd/` branch Phase 8's handoff cuts in the specs repository behind the operator's consent (`specs-preflight`, its same-run re-run after a slice key is entered included (`workflows-core:specs-repo-git` §3.5), switches `$SPECS_PATH` only between branches that already exist, and only plugin-created ones (§2.2); it creates none), and no commit of anything in a docs/code repo or the current working directory, where it is not the specs repository. The draft, `release-notes.md` in the resolved PRD folder, is committed by that handoff, in the specs repository and nowhere else; the terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded session paths (`workflows-core:specs-repo-git` §2.1), never the draft — and under `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), or with `$SPECS_PATH` unset on an `@<path>` run, neither commits, and the draft is written and not committed — as it is where the `@<path>` leads outside `$SPECS_PATH`'s work tree, which is offered no handoff (Phase 8 step 1a).
 - ALWAYS run `specs-preflight` at Phase 0 — again, with the slice's key set, where step 1 re-enters for a slice the operator entered at `RELEASE_NOTES_BRD_NOT_SLICED` — and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`) — bounded to `$SPECS_PATH`'s artifact paths (§2.1), switching only branches the plugin created (§2.2) and pushing only what §4 step 5 allows, always `git -C "$SPECS_PATH"` and never a `cd` (§1 rule 1), never force-pushing, and never failing the run
 - ALWAYS end the Phase 8 report with a `### Next step` recommendation (per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")`) — guidance only, never auto-invoked; the pipeline leaf (adaptive: continue any pending PA/PE phase, else the PRD is fully processed).

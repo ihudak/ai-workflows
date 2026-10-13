@@ -1486,7 +1486,7 @@ The options presented are that question's own `options_considered`
 one trailing entry for an option the operator supplies themselves and the two standing exits:
 
 ```
-choices: ["<the strongest option considered>", "<the next strongest, where a second was weighed>", "Defer this question (you'll be prompted for why it is not answerable yet)"]
+choices: ["<the strongest option considered> (you'll be prompted for why)", "<the next strongest, where a second was weighed> (you'll be prompted for why)", "Defer this question (you'll be prompted for why it is not answerable yet)"]
 ```
 
 **The array is bounded at four and authors no escape of its own, like every other array in the plugin** (`workflows-core:escalation-rules` §0): `AskUserQuestion` renders `maxItems: 4`, so an uncapped `one entry per option considered` prompt cannot be presented at all once three options were weighed — and this phase is required to present its array verbatim. **The entries are two options at most, plus the defer entry: three, never four.** The two option slots are **one entry each**, substituted from the options weighed — not two entries per option, which is the reading that would put a four-option question past the cap on its own — and where only one was weighed the second slot is dropped, leaving two entries. **List every option considered as prose above the prompt**, in the order they were weighed and with the argumentation each carries, and let the harness's own free-text option carry the rest — §0 forbids an array from authoring that escape, and an authored `Another option from the list above` both duplicated it and spent a slot. Where one option was weighed, its entry is the only one beside defer.
