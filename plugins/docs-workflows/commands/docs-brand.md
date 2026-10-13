@@ -78,9 +78,9 @@ Resolve **one** code repository to read from, in order:
 3. **Else `ls ${REPOS_PATH:-/workspace}`, one level deep, and confirm with the operator.** The listing is unbounded, so apply `workflows-core:epic-picker`'s pattern (`Skill(skill: "workflows-core:reference", args: "epic-picker")`) rather than rendering one option per entry — the same shape `/docs-workflows:docs-serve`'s own Phase 1 step 3 already uses for an unbounded servable-space list. Print every candidate directory as prose above the prompt, one line each, then:
    - **Exactly one candidate** — no picker; auto-select it, with a one-line notice naming it, per `epic-picker`'s own "auto-select at one" rule — never a one-option `choices:` array, which is below the harness's `minItems: 2`.
    - **Two or three candidates** — the array carries them all: `choices: ["<repo-1> (Recommended)", "<repo-2>", "<repo-3>"]` (2 or 3 options, matching however many are recorded).
-   - **Four or more candidates** — the array carries the first three plus the overflow option: `choices: ["<repo-1> (Recommended)", "<repo-2>", "<repo-3>", "Another repo from the list above — name it"]`.
+   - **Four or more candidates** — the array carries the first three plus the overflow option: `choices: ["<repo-1> (Recommended)", "<repo-2>", "<repo-3>", "Another repo from the list above (you'll be prompted for its name)"]`.
 
-   The typed answer is resolved against the directory names just printed — never parsed out of the free text.
+   Choosing the last option asks for the name in plain text, and the typed answer is resolved against the directory names just printed — never parsed out of the free text.
 
 Nothing resolves and the operator declines to name one → stop: `DOCS_BRAND_NO_CODE_REPO: no code repository resolved to extract from (checked --from, the docs profile's source-repo set, and ${REPOS_PATH:-/workspace}). Pass --from <path> explicitly, or mount the product's code repo under $REPOS_PATH.`
 
@@ -105,8 +105,10 @@ Walk this precedence in order; **first hit wins, and the source — file and lin
 **No colour source matches any of the five rules** → ask:
 ```
 "No brand colour was found in <code-repo> (checked Tailwind config, CSS custom properties, a MUI theme, manifest theme_color, and SCSS/LESS variables). How should I proceed?"
-choices: ["Enter a primary colour myself", "Skip colour branding — logo only", "Cancel"]
+choices: ["Enter a primary colour (you'll be prompted)", "Skip colour branding — logo only", "Cancel"]
 ```
+
+*Enter a primary colour* asks for the hex value in plain text and carries it forward as the primary colour, confirmed and contrast-checked like an extracted one.
 
 ---
 
@@ -118,15 +120,17 @@ Rank every candidate found **SVG over PNG over any other format, and — within 
 
 - **Exactly one candidate** — no picker; carry it forward as the proposal, with a one-line notice naming it, per `epic-picker`'s own "auto-select at one" rule.
 - **Two or three candidates** — print each as prose above the prompt (path, format, size), then offer them literally: `choices: ["<candidate-1> — <format>, <size> (Recommended — ranks first)", "<candidate-2> — <format>, <size>", "<candidate-3> — <format>, <size>"]`.
-- **Four or more candidates** — the same prose listing, capped per `workflows-core:epic-picker` *The cap*: `choices: ["<candidate-1> — <format>, <size> (Recommended — ranks first)", "<candidate-2> — <format>, <size>", "<candidate-3> — <format>, <size>", "Another candidate from the list above — name it"]`.
+- **Four or more candidates** — the same prose listing, capped per `workflows-core:epic-picker` *The cap*: `choices: ["<candidate-1> — <format>, <size> (Recommended — ranks first)", "<candidate-2> — <format>, <size>", "<candidate-3> — <format>, <size>", "Another candidate from the list above (you'll be prompted for it)"]`.
 
-The typed answer is resolved against the candidates just printed — never parsed out of the free text.
+Choosing the last option asks for the candidate in plain text, and the typed answer is resolved against the candidates just printed — never parsed out of the free text.
 
 **No logo candidate found** → ask:
 ```
 "No logo was found in <code-repo> (checked public/, src/assets/, static/, logo*/brand*/icon* filenames, favicon.*, and manifest icons[]). How should I proceed?"
-choices: ["Enter a logo path myself", "Skip logo — colour only", "Cancel"]
+choices: ["Enter a logo path (you'll be prompted)", "Skip logo — colour only", "Cancel"]
 ```
+
+*Enter a logo path* asks for the path in plain text and carries the file it names forward as the proposed logo.
 
 **Both colour and logo end up absent or declined** → stop: `DOCS_BRAND_NOTHING_TO_APPLY: no colour and no logo to apply — Phase 3 and Phase 4 both came back empty or declined. There is nothing for this run to brand.`
 
@@ -142,10 +146,10 @@ Print every value Phases 3–4 settled on, each with the file and line (or path)
   accent:  #1565C0  (defaulted from primary — no --accent / secondary.main / $accent found)
   logo:    src/assets/logo.svg  (296 KB, ranked over 2 smaller PNG candidates)
 Apply these to <docs-repo>?"
-choices: ["Apply as shown (Recommended)", "Edit a value before applying", "Cancel"]
+choices: ["Apply as shown (Recommended)", "Edit a value before applying (you'll be prompted)", "Cancel"]
 ```
 
-"Edit a value" re-asks per value as free text — the harness's own escape — and the typed answer becomes the new value rather than being parsed out of anything. A wrong brand colour applied quietly is worse than no branding, which is the whole reason this phase exists as its own step rather than folding confirmation into Phase 8.
+"Edit a value" asks in plain text for each value to change, and the typed answer becomes the new value rather than being parsed out of anything. A wrong brand colour applied quietly is worse than no branding, which is the whole reason this phase exists as its own step rather than folding confirmation into Phase 8.
 
 ---
 
@@ -158,8 +162,10 @@ Check every derived colour against `#FFFFFF`, the scaffold's one light backgroun
 For each colour that **fails**:
 ```
 "<label> #<hex> on white measures <ratio>:1 against contrast.md §1's body-text minimum — it will read as low-contrast text. Apply it anyway?"
-choices: ["Apply anyway — it's the brand", "Choose a different value", "Cancel"]
+choices: ["Apply anyway — it's the brand", "Choose a different value (you'll be prompted)", "Cancel"]
 ```
+
+*Choose a different value* asks for the replacement hex value in plain text and checks it against the same minimum.
 
 A confirmed failing colour is **still applied** — never silently corrected — and the finding (the ratio, the pair, the criterion) is carried into the Phase 10 PR message and the Phase 11 report. A **passing** colour produces no prompt at all — it is applied without a confirmation — but its ratio is still reported beside the failing ones, in the PR message and in the report, because the number is the interface (`contrast.md` §2, §3). Where Phase 3 ended in "Skip colour branding — logo only", there is no colour to check: record that in place of the four ratios rather than reporting a pass.
 
@@ -171,7 +177,7 @@ A confirmed failing colour is **still applied** — never silently corrected —
 
 **Standalone** creates the branch here, **before Phase 8 writes anything** — the family invariant that a branch is created before any file is touched, and the same order `/docs-workflows:docs-profile`'s own Phase 5 uses (branch at step 2, write at step 3):
 
-1. **Resolve the branch name.** When the resolved `.dev-workflows/docs-profile.yml` carries `branch_naming.pattern`, fill its placeholders — the identity placeholder from `Skill(skill: "workflows-core:reference", args: "branch-naming")` §2's ladder, and the issue-key segment takes that pattern's documented no-issue literal, since branding has no ticket. Otherwise use `<prefix>/NOISSUE-docs-brand`, `<prefix>` from the same §2 ladder, fallback `docs/`. Always confirm the final name: `choices: ["Use proposed branch <name> (Recommended)", "Edit the name"]`.
+1. **Resolve the branch name.** When the resolved `.dev-workflows/docs-profile.yml` carries `branch_naming.pattern`, fill its placeholders — the identity placeholder from `Skill(skill: "workflows-core:reference", args: "branch-naming")` §2's ladder, and the issue-key segment takes that pattern's documented no-issue literal, since branding has no ticket. Otherwise use `<prefix>/NOISSUE-docs-brand`, `<prefix>` from the same §2 ladder, fallback `docs/`. Always confirm the final name: `choices: ["Use proposed branch <name> (Recommended)", "Edit the name (you'll be prompted)"]` — *Edit the name* asks for the branch name in plain text and confirms it the same way.
 2. **Prepare the working tree.** `git -C <repo-root> status --porcelain`; nothing of this run has written anything yet, so a non-empty result here genuinely is pre-existing dirt: `choices: ["Stash changes and continue (Recommended)", "Proceed anyway — pre-existing changes will appear in the diff", "Cancel"]`. A stash runs `workflows-core:escalation-rules` § *Stashing the user's changes*: named, recorded by commit, never applied by the run, and named with its restore commands wherever the run ends. Base the branch on the repo's default branch. `<base>` is that branch's **name**, never its `origin/<name>` ref, which `git switch` refuses: resolve it by `workflows-core:read-only-repos` §3's chain, run against `<repo-root>`, and its **A switch takes the name** rule — rung 1 prints `origin/<name>` and `<base>` is what follows `origin/`; where rung 1 fails — `origin/HEAD` unset, or naming a ref that no longer exists (§3 rung 1) — `<base>` is the literal `main` or `master` whose ref rungs 2–3 find. Then `git -C <repo-root> switch <base>` + `git -C <repo-root> pull --ff-only`. Where the chain is exhausted — no `origin`, or one holding neither branch — this command's own fallback applies: `<base>` is the local `main`, then `master`, whichever `git -C <repo-root> rev-parse --verify --quiet refs/heads/<name> >/dev/null` finds, switched to without the pull, there being no remote branch to bring it up to; with neither, `<base>` is the branch HEAD is on and nothing is switched. Then create the branch (`git -C <repo-root> switch -c <name>`, or `git -C <repo-root> switch <name>` if it already exists).
 
 **Cancel here ends the standalone run with nothing written and nothing committed.** Skip Phase 8 (Apply), Phase 9 (Review gate), and Phase 10 (Finish) entirely — there is nothing to write, review, or commit — and go straight to Phase 11's report, which states plainly that Phase 7 was cancelled. The emitter tail (Phases 12–14) still runs regardless, so this run's cost and any feedback are still recorded.
@@ -228,8 +234,9 @@ Dispatch `docs-scaffold-reviewer` — pinned to Opus by its own frontmatter, per
 **There is no dedicated fixer for this diff (D17, D25) — the orchestrator applies survivors itself**, editing the named file directly, bound by `finding-triage.md`'s patch gate: fix only a defect a finding actually demonstrated, never guard state it did not show, and never edit an instruction file the gate names that this run did not itself write. A survivor whose fix is not a safe mechanical patch is surfaced rather than guessed at:
 ```
 "docs-scaffold-reviewer flagged <finding> as <SEVERITY>, and the fix isn't a safe mechanical patch: <why>. How should I proceed?"
-choices: ["Describe the fix yourself — I'll apply it", "Defer — note it in the report, run continues", "Override — accept the finding as-is", "Cancel this run"]
+choices: ["Describe the fix yourself (you'll be prompted)", "Defer — note it in the report, run continues", "Override — accept the finding as-is", "Cancel this run"]
 ```
+*Describe the fix yourself* asks for the fix in plain text, and the orchestrator applies it under the same patch gate.
 **A stop at this gate — Cancel at the settle prompt or this one, or Keep the verdict at the settle prompt — ends the run here**: skip Phase 10 and go straight to Phase 11's report, which names the stop — the review cancelled, or its verdict kept for a human decision. The branding Phase 8 applied stays on disk on its branch, uncommitted, and the emitter tail (Phases 12–14) still runs, so this run's cost and any feedback are still recorded.
 
 A **BLOCKER** left deferred (neither fixed nor overridden) stops the run before Phase 10: `DOCS_BRAND_UNRESOLVED_BLOCKER: a BLOCKER finding from docs-scaffold-reviewer was neither fixed nor overridden — resolve it and re-run.` A BLOCKER that is fixed, or explicitly overridden by the operator, proceeds. MAJOR survivors are applied the same way; MINOR / NIT are deferred to the report without a prompt.

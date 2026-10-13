@@ -314,16 +314,17 @@ Ask about:
   ```
   The `fetch + pull default branch` default matches `code-scanner`'s default (`refresh.switch_to_default_branch: true, refresh.pull: true`) — capability scans target present-day code and want the default-branch tip. This is deliberately different from `/document` (keyed mode), which keeps `pull: false` because historical merged commits must not move.
 
-- **Repos search base (`$REPOS_PATH`)** (only if code scan is ON). Read `${REPOS_PATH:-/workspace}` (the container mounts every repo under `/workspace`). `$REPOS_PATH` may be a single directory or a colon-separated list. Ask:
+- **Repos search base (`$REPOS_PATH`)** (only if code scan is ON) — **resolved, never asked.** Resolve `${REPOS_PATH:-/workspace}` (the container mounts every repo under `/workspace`; a single directory or a colon-separated list) and record it as `$REPOS_PATH`. **Only where no entry is an existing directory**, ask, naming `REPOS_PATH`, per the `Required path environment variable unset` rule in `workflows-core:escalation-rules` — with this command's own way on without code beside it, and no option marked, since whether the code is reachable is the operator's to know:
   ```
-  choices: ["Use $REPOS_PATH (default /workspace) (Recommended)", "Use a different path (you'll be prompted)", "Cancel"]
+  choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Turn code scan off — produce Epic drafts from PRD content alone", "Cancel"]
   ```
-  If "different path", take free-text input (single dir or colon-separated list) and validate that at least one directory exists under it. Record the resolved value as `$REPOS_PATH`. Individual clones are located in Phase 4 by matching their `git remote` against each repo slug — not by assuming a `<base>/<slug>` directory name.
+  *Turn code scan off* answers the code-examination question above again, as its own option of that name does, and the refresh policy answered above goes unused.
+  *Set REPOS_PATH* asks for the path in plain text and records the answer as `$REPOS_PATH` once an entry of it is an existing directory. A base named at Phase 2's *Revise plan* replaces it the same way. Individual clones are located in Phase 4 by matching their `git remote` against each repo slug — not by assuming a `<base>/<slug>` directory name.
 
 Also display (for user context):
 - Resolved cwd absolute path
 - Resolved output directory
-- Resolved `$REPOS_PATH` (or "N/A — code scan off")
+- `Repos: <value> (from REPOS_PATH | REPOS_PATH unset — the default) — another base is set through REPOS_PATH or named at the plan's approval` (or "Repos: N/A — code scan off")
 - Resolved `prd_dir`, `key` and `focus_key` (or "none — PRD-level")
 
 No branching context is shown here: the one branch this run may create is the `epics/` branch Phase 7.5's handoff cuts behind its consent choice, and `specs-preflight` only switches `$SPECS_PATH` between branches that already exist, and only ones the plugin created (`workflows-core:specs-repo-git` §2.2).
@@ -372,7 +373,7 @@ Present a concise plan:
 Ask:
 ```
 "Epic drafting plan ready. What would you like to do?"
-choices: ["Approve & continue (Recommended)", "Revise plan", "Cancel"]
+choices: ["Approve & continue (Recommended)", "Revise plan (you'll be prompted)", "Cancel"]
 ```
 
 - **Approve** → proceed to Phase 3
@@ -528,13 +529,13 @@ Detected N near-empty Epic drafts under <KEY>:
   ...
 choices: ["Refine these N (partition the PRD across them) (Recommended)", "Generate net-new Epics (ignore the drafts)", "Both — refine the drafts and draft net-new for leftover scope", "Let me adjust which drafts to refine (you'll be prompted)"]
 ```
-Record `mode` (`refine` | `generate` | `both`) and the confirmed `refinement_targets` (empty for `generate`).
+*Let me adjust which drafts to refine* asks in plain text which drafts to take, each resolved against the drafts listed above. Record `mode` (`refine` | `generate` | `both`) and the confirmed `refinement_targets` (empty for `generate`).
 
 **Adaptive code-scan default (refine / both only).** Re-surface the code-examination choice now that the target count is known — the Phase 1 answer was given before detection. Default **ON when `len(refinement_targets) >= 2`** (a real scope boundary to draw), **OFF when == 1**:
 ```
 choices: ["<adaptive default> (Recommended)", "<the other setting>", "Keep my Phase 1 choice"]
 ```
-with a one-line rationale ("2+ refinement targets → code context helps draw the boundary" / "single Epic → no boundary to draw; scan off is faster" — save a focus run that splits (Phase 2), which has a boundary to draw, so its default is ON). This runs ONLY in the refine branch, so the generate / no-candidate path never sees it (no-regression).
+with a one-line rationale ("2+ refinement targets → code context helps draw the boundary" / "single Epic → no boundary to draw; scan off is faster" — save a focus run that splits (Phase 2), which has a boundary to draw, so its default is ON). This runs ONLY in the refine branch, so the generate / no-candidate path never sees it (no-regression). **Where Phase 1 turned the scan off through its `$REPOS_PATH` question's *Turn code scan off*, this question is not put** — no base resolved, so there is nothing to scan — and the scan stays off. **Where this question turns the scan on and Phase 1 had it off**, resolve `$REPOS_PATH` here as Phase 1 does — its `Repos:` line, and its question only where no entry is an existing directory, whose *Turn code scan off* turns the scan off again — and ask Phase 1's repo refresh policy, which Phase 1 skipped.
 
 ---
 
@@ -558,18 +559,18 @@ If code scan is ON:
 
 2. Build a slug→clone map. For each top-level directory under each entry of `$REPOS_PATH`, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -C <dir> remote get-url origin 2>/dev/null` (`workflows-core:bounded-run`), strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git` or whose `git remote` call fails/times out. Resolve each in-scope repo slug against the map: one match → use it; multiple matches → auto-prefer basename ending `-repo`, then `_repo`/`_fast`, then alphabetically last, and record the slug's other clones as its `alternates` (asked about below, once every slug is resolved); zero matches → escalate per the `Repo unresolved (zero matches) — /epics` rule in `workflows-core:escalation-rules`:
    ```
-   choices: ["Skip and continue without this repo's scan", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo"]
+   choices: ["Skip and continue without this repo's scan", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo (you'll be prompted)"]
    ```
 
    **A repository with several clones.** Once every slug is resolved, where any has `alternates`, show each such slug as `<slug> → <chosen path> (also: <alternate path>, …)` and ask once:
    ```
-   choices: ["Use the preferred clones (Recommended)", "Use another clone for a repository (you'll name the slug and the path)", "Cancel"]
+   choices: ["Use the preferred clones (Recommended)", "Use another clone for a repository (you'll be prompted for the slug and the path)", "Cancel"]
    ```
-   *Use another* takes `<slug> <path>` for each change. A path that is not one of that slug's `alternates` is refused with one line naming them, and the question asked again. Each path named becomes the slug's resolved path, the clone it replaces taking its place among the `alternates`. *Cancel* → stop and summarise what was planned. No slug with `alternates` → nothing is asked.
+   *Use another* asks in plain text for `<slug> <path>`, one per change. A path that is not one of that slug's `alternates` is refused with one line naming them, and the question asked again. Each path named becomes the slug's resolved path, the clone it replaces taking its place among the `alternates`. *Cancel* → stop and summarise what was planned. No slug with `alternates` → nothing is asked.
 
 3. If the final resolved repo list is empty (every repo was skipped or missing), escalate per the `No repos derivable — /epics` rule in `workflows-core:escalation-rules`:
    ```
-   choices: ["List repos to scan manually", "Proceed without code scan", "Cancel"]
+   choices: ["List repos to scan manually (you'll be prompted)", "Proceed without code scan", "Cancel"]
    ```
 
 ---
@@ -649,7 +650,7 @@ The drafting is delegated to the **`epic-writer`** subagent (pinned to the §2.1
    ```
    choices: ["Provide the missing input (you'll be prompted)", "Cancel"]
    ```
-   On a provided value, rewrite the handoff and re-dispatch once. Nothing is committed here; Phase 7.5 hands the drafts off.
+   *Provide the missing input* asks for it in plain text. On a provided value, rewrite the handoff and re-dispatch once. Nothing is committed here; Phase 7.5 hands the drafts off.
 
    Also record `coverage_file` (the `_coverage.md` path) and `clarifications_needed[]` for Phases 6.1 and 7.
 
@@ -657,11 +658,11 @@ The drafting is delegated to the **`epic-writer`** subagent (pinned to the §2.1
    - **Where the Epic's folder holds `specification.md`, `design.md`, `implementation.md`, or an Epic-level ARD (`ard.md` or an `ard-<area>.md`)** — a focus Epic or a refinement target already specified, designed, implemented or given its own ARD — that file describes the whole Epic, and a split would leave it with the first slice alone, an ARD's `[AD#N]` Rules binding none of the others, so no split is offered: record it for Phase 9's `### Sizing` as over the limit and not splittable, naming the file, and ask nothing.
    - **Otherwise ask:**
      ```
-     choices: ["Split it along its stories (Recommended)", "Keep it whole — give the reason", "Cancel"]
+     choices: ["Split it along its stories (Recommended)", "Keep it whole (you'll be prompted for the reason)", "Cancel"]
      ```
      **Split** re-dispatches `epic-writer` once for that Epic as step 2 dispatches it, writing a fresh handoff file for it — step 1's fields, never step 1's file — save that `mode` is `both`, `refinement_targets` is that Epic, `scope` is in-scope to it alone, `split_by_size` names it, and `existing_epics` and `existing_epic_themes` also carry every other Epic this run has written — so the writer's `_coverage.md` rebuild counts them and its duplicate check sees them: the writer keeps the Epic's key and its first slice — the one the others depend on — writes each other slice as a net-new Epic on the same `target:`, each keyed by the writer with the next unused two-digit segment under this PRD (`<PRD-KEY>-NN`), in slice order — not proposed, since nothing between the dispatch and its return can ask: validate each with `key-valid` (`workflows-core:addressing` §1) and report it — and updates `_coverage.md`. Merge the return into step 3's records: its `files_written` into the run's written Epics, its `clarifications_needed[]` replacing the split Epic's entries in Phase 6.1's — the writer re-lists every marker that Epic carried, under the slice that now holds it — its `coverage_file` replacing step 3's; a `BLOCKED` return is handled as step 3 handles one. Then read the `## Dependencies` of every other Epic under the PRD folder, the slices aside, for the split Epic's key: a line naming it for work that moved to a later slice is re-pointed to that slice where the Epic holding the line is one of the run's written Epics, and otherwise recorded for Phase 9's `### Sizing`, for the operator to re-point. Every other dispatch of the writer, Phase 6.1's included, carries no `split_by_size`. A slice key that fails `key-valid` is put to the operator — re-prompted, never coerced, as Phase 1 mints one — and the slice is renamed to the key given — its folder, its `key:` line, its `_coverage.md` rows, its entry in the run's written Epics, any sibling slice's `## Dependencies` or `## Contract` line naming the old key, and the split's record for Phase 9. Count the result again; a slice still over the limit is asked about once more, without *Split*, and is never re-dispatched for it a second time:
      ```
-     choices: ["Keep it whole — give the reason", "Cancel"]
+     choices: ["Keep it whole (you'll be prompted for the reason)", "Cancel"]
      ```
      **Keep it whole** asks for the reason in plain text and writes it, in the operator's words, as that Epic's `kept_whole:` frontmatter — a double-quoted YAML string, so a `"` in it is written `\"` and a `\` is written `\\`, and nothing else in it is escaped. **Cancel** stops the run with the drafts written so far left on disk and uncommitted — nothing is handed off — and the final report names every Epic left over the limit. A typed answer is acted on as the option it expresses; anything else is asked again.
 
@@ -685,6 +686,7 @@ Present ONE batched prompt listing every marker grouped by Epic; for each:
 ```
 choices: ["Use the writer's suggested answer", "I'll answer (you'll be prompted)", "Leave unresolved"]
 ```
+*I'll answer* asks for that marker's answer in plain text.
 Fold each resolved answer into the affected Epic draft (Edit the file inline, or
 re-dispatch `epic-writer` once with the resolutions), and **keep, for Phases 6.2
 and 7, the text each answer put into an Epic** — the user's answer, which no
@@ -782,14 +784,14 @@ Act on the verdict (same shape as `/document` keyed mode Phase 7):
 
 - **BLOCK** — invoke `doc-fixer` (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain>`) with `Severities to fix: BLOCKER and MAJOR`. Write the `doc-fixer` Fix Report to a temp file (`command mktemp -t dw-epics-claims-XXXXXX`, never inside a repo tree or the specs tree), record its path as `claims_file`, then **check `doc-fixer`'s `Stop condition flag` before re-invoking anything**. If it is `NEEDS HUMAN`, the fixer deferred at least one BLOCKER as needing a human decision: do NOT re-invoke `epic-reviewer` — a re-review can only re-find the BLOCKER the fixer has just reported it could not resolve — and instead surface each deferred BLOCKER with the reason the fixer gave, then escalate it individually per the `Review verdict BLOCK (unresolved after one fix cycle) — /epics` rule in `workflows-core:escalation-rules`, which names this entry point alongside a review that stayed blocked. Only when the flag is `CLEAR` do you re-invoke `epic-reviewer` once **passing `claims_file`** — so the re-review falsifies the fixer's account rather than assuming it. Triage the re-review under `workflows-core:finding-triage` § On re-review (the triage sub-step above); on that section's **Proceed**, continue as after a verdict that is not BLOCK — to this phase's closing paragraphs, then Phase 7.5. If the review **stayed blocked** — a BLOCKER survives that triage, or you keep the verdict at either settle prompt — escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — /epics` rule in `workflows-core:escalation-rules` for each unresolved BLOCKER individually:
   ```
-  choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding", "Cancel the whole run"]
+  choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]
   ```
   "Manual fix notes" → take free-text from the user, then apply it via `doc-fixer`
   (`subagent_type: "workflows-core:doc-fixer"`, model: `<detection_model — §9 / §2.1 Sonnet chain>`) in a bounded one-shot pass, with no further
   re-review cycle — the same resolution `/document`'s identical option takes. Stating it is not
   redundant: every other option in this array has a resolution line and this one had none, so an
   operator who picked it reached undefined behaviour.
-  For `/epics`, "Defer" means the finding goes into an Epic-refinement note in the draft itself (appended as a `## Refinement notes` section, one plain `- ` bullet per finding) in addition to the Phase 9 report. A deferred finding whose fix needs a decision also gets a marker (below).
+  "Override" → ask for the operator's rationale in plain text and record the finding, with it, in the Phase 9 report. For `/epics`, "Defer" means the finding goes into an Epic-refinement note in the draft itself (appended as a `## Refinement notes` section, one plain `- ` bullet per finding) in addition to the Phase 9 report. A deferred finding whose fix needs a decision also gets a marker (below).
 
 - **PASS WITH RECOMMENDATIONS** — invoke `doc-fixer` for MAJOR findings only:
 

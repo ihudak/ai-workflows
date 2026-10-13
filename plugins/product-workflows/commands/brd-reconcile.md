@@ -194,7 +194,7 @@ write would re-ask a question already answered.
    `Required path environment variable unset` rule in
    `workflows-core:escalation-rules`:
    ```
-   choices: ["Set SPECS_PATH (enter the path)", "Cancel"]
+   choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]
    ```
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one,
@@ -386,15 +386,15 @@ write would re-ask a question already answered.
      `<default-ref>`'s copy), else the date its name carries, and two of one date in the order of the
      commits that added them: `choices: ["<file-1>", "<file-2>", "None of these — stop"]`, with a
      third file before the decline where there is one; four or more, the two oldest, then
-     `choices: ["<file-1>", "<file-2>", "Another one from the list above — name it", "None of these — stop"]`
+     `choices: ["<file-1>", "<file-2>", "Another one from the list above (you'll be prompted for its name)", "None of these — stop"]`
      — the decline being an option this picker adds, which `workflows-core:epic-picker`'s *The cap*
      counts against the four and never drops. **Say above the question that the order matters**: a
      review reconciled later supersedes an earlier one's answer wherever the two differ (*Confirm
      every candidate*), so the reviews go in the order the customer sent them, a corrected resend last —
      reconciled first, it would be superseded by the very answers it corrected. No option is marked
      `(Recommended)`: taking one confirms it as the customer's answer, which step 6b's list beside it
-     cannot vouch for, for the reason *Exactly one* gives. A free-text answer is resolved against the
-     listed names only. A decline stops the run, writing nothing; the others wait for their own run.
+     cannot vouch for, for the reason *Exactly one* gives. *Another one* asks for the file's name in
+     plain text; that answer, and a free-text one, is resolved against the listed names only. A decline stops the run, writing nothing; the others wait for their own run.
    - **Exactly one** → print its name, the folder it is in, and the commit that added it
      (`git -C "$SPECS_PATH" log --diff-filter=A -1 --format='%h %an %ad' <default-ref> -- "<path>"`),
      with step 6b's list, and ask:
@@ -798,9 +798,10 @@ the package is resolved against it, reading section 1 as this command reads it f
    with a third package before the decline where there is one. Four or more: the three most recent
    and the overflow option, the full list staying in the prose above it as
    `workflows-core:epic-picker`'s *The cap* sets out —
-   `choices: ["<BRD-KEY> package <YYYYMMDD-1>", "<BRD-KEY> package <YYYYMMDD-2>", "<BRD-KEY> package <YYYYMMDD-3>", "Another package from the list above — name its date"]`,
+   `choices: ["<BRD-KEY> package <YYYYMMDD-1>", "<BRD-KEY> package <YYYYMMDD-2>", "<BRD-KEY> package <YYYYMMDD-3>", "Another package from the list above (you'll be prompted for its date)"]`,
    where declining is a free-text answer. No option is marked `(Recommended)`: which package the
-   customer answered is theirs to know, and the run has nothing to rank by. A free-text answer is
+   customer answered is theirs to know, and the run has nothing to rank by. *Another package* asks for
+   its date in plain text; that answer, and a free-text one, is
    resolved only against the dated prompts on file, never parsed into a date that names none; one
    that names no package on file, or declines, leaves the package undetermined.
 
@@ -899,8 +900,10 @@ the operator, **one at a time, never batched**, with:
   candidate this one pulls against.
 
 ```
-choices: ["Confirm — this is what the customer decided; freeze it", "Correct it — the row does not match the quotation; supply the row that does, and freeze that", "Reject — no decision to freeze: the customer declined to answer, or the row is not an answer (context, thanks, scheduling); record why", "Ask the customer — the answer is not clear enough to freeze; the question is left as it stands"]
+choices: ["Confirm — this is what the customer decided; freeze it", "Correct it — the row does not match the quotation; freeze the row that does (you'll be prompted for it)", "Reject — no decision to freeze: the customer declined to answer, or the row is not an answer (context, thanks, scheduling) (you'll be prompted for why)", "Ask the customer — the answer is not clear enough to freeze; the question is left as it stands"]
 ```
+
+*Correct it* asks in plain text for the row that does match the quotation — its `chosen` and its reason — and *Reject* asks in plain text why there is no decision to freeze; neither is read from the bare selection.
 
 **A customer who explicitly declines to answer takes *Reject*, and the schema guarantees that case
 exists** (`${CLAUDE_PLUGIN_ROOT}/references/customer-review-schema.md` §5): the reader returns it as
@@ -993,7 +996,7 @@ to answer: nothing records what it was offered, what it settles or which round i
 same facts and put instead of the array above:
 
 ```
-choices: ["Record it for a human — name the requirement it bears on and quote the customer (Recommended)", "Reject — no decision to freeze: the customer declined to answer, or the row is not an answer (context, thanks, scheduling); record why"]
+choices: ["Record it for a human — with the requirement its row names and the customer's words (Recommended)", "Reject — no decision to freeze: the customer declined to answer, or the row is not an answer (context, thanks, scheduling) (you'll be prompted for why)"]
 ```
 
 The first writes it into the reconciliation record's *what still needs a human*: the `[BR#n]` or
@@ -2222,8 +2225,10 @@ this run left alone is exactly the one an operator can dispose in a sentence, an
 "what changed" reads as a run that failed to work it out:
 
 ```
-choices: ["Inherited unchanged — the change does not move this position; say why", "Reverted — the position returns to what it stood at before the prerequisite moved it", "Reopened — this must be decided again; status: reopened, naming this cause", "Withdrawn — the question this answered has stopped applying"]
+choices: ["Inherited unchanged — the change does not move this position (you'll be prompted for why)", "Reverted — the position returns to what it stood at before the prerequisite moved it", "Reopened — this must be decided again; status: reopened, naming this cause", "Withdrawn — the question this answered has stopped applying"]
 ```
+
+*Inherited unchanged* asks in plain text why the change does not move the position, and records it.
 
 **Not an escalation array either**: the four options are the four dispositions the design fixes for
 this sweep, in that order, and a fifth would be a disposition nothing downstream can read — which is

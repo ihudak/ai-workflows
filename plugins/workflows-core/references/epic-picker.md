@@ -71,10 +71,12 @@ remainder**:
       ○ EPIC-ACME-77-05  refund path
       ● EPIC-ACME-77-01  catalogue sync     (done — selecting it offers to revise)
 
-    choices: ["◐ EPIC-ACME-77-02 order intake (Recommended)", "○ EPIC-ACME-77-03 billing hand-off", "○ EPIC-ACME-77-05 refund path", "Another Epic from the list above — name its key"]
+    choices: ["◐ EPIC-ACME-77-02 order intake (Recommended)", "○ EPIC-ACME-77-03 billing hand-off", "○ EPIC-ACME-77-05 refund path", "Another Epic from the list above (you'll be prompted for its key)"]
 
-The last option is answered through the harness's free-text option, and the run resolves the typed
-key **against the keys it just listed** — never by parsing one out of the answer
+Choosing the last option asks for the key in plain text, and a key typed straight into the
+harness's free-text option is taken as given (`${CLAUDE_PLUGIN_ROOT}/references/escalation-rules.md`
+§0, *A selection carries no text*); either way the run resolves the typed key **against the keys it
+just listed** — never by parsing one out of the answer
 (`${CLAUDE_PLUGIN_ROOT}/references/addressing.md` §1). Four or fewer Epics need none of this: the
 array carries them all, and the prose list is still printed because a greyed ● row reads better
 there.

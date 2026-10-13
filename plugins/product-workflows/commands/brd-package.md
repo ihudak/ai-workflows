@@ -124,7 +124,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
    `Required path environment variable unset` rule in
    `workflows-core:escalation-rules`:
    ```
-   choices: ["Set SPECS_PATH (enter the path)", "Cancel"]
+   choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]
    ```
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one,
@@ -636,17 +636,17 @@ from the finding itself:
 Where `fixed` can apply, ask:
 
 ```
-choices: ["Fixed — the package has been corrected; say what changed", "Accepted risk — ship it, and show this finding to the customer", "Escalated to the customer — turn it into something the package asks them", "Rejected with reason — the attack does not hold; say why"]
+choices: ["Fixed — the package has been corrected (you'll be prompted for what changed)", "Accepted risk — ship it, and show this finding to the customer (you'll be prompted for the reason)", "Escalated to the customer — turn it into something the package asks them (you'll be prompted for the reason)", "Rejected with reason — the attack does not hold (you'll be prompted for why)"]
 ```
 
 Where it cannot, ask this instead. Its first option is the agreed-not-actionable route below, with
 `<writer>` filled in as the `fixed-by:` value that route gives the finding's artifact — the command
-that writes it, or `hand (say who)` where no command does — where it reads `hand (say who)` and the
-operator takes it, ask who, and record `fixed-by: <that person or role>`, the reason saying no
+that writes it, or `hand (you'll be prompted for who)` where no command does — where it reads that and
+the operator takes it, ask who in plain text, and record `fixed-by: <that person or role>`, the reason saying no
 command writes the artifact:
 
 ```
-choices: ["Agreed — repaired outside this package, by <writer>; the customer sees it with that said", "Accepted risk — a risk we weighed and take; ship it, and show this finding to the customer", "Escalated to the customer — turn it into something the package asks them", "Rejected with reason — the attack does not hold; say why"]
+choices: ["Agreed — repaired outside this package, by <writer>; the customer sees it with that said (you'll be prompted for the reason)", "Accepted risk — a risk we weighed and take; ship it, and show this finding to the customer (you'll be prompted for the reason)", "Escalated to the customer — turn it into something the package asks them (you'll be prompted for the reason)", "Rejected with reason — the attack does not hold (you'll be prompted for why)"]
 ```
 
 **Where escalation cannot apply, either array is presented without *Escalated to the customer*,**
@@ -677,7 +677,7 @@ option and an abort is reachable through it without spending one of the four slo
 every disposition already taken still written, so nobody is trapped and nothing is lost — say that
 where the walk is introduced, not in an option nobody can be shown.
 
-Each disposition carries a recorded reason, and each has a consequence the later phases execute:
+Each disposition carries a recorded reason, asked for in plain text once the disposition is chosen, and each has a consequence the later phases execute:
 
 | Disposition | What it obliges |
 |---|---|

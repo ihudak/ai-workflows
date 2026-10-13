@@ -117,7 +117,7 @@ behaviour, not the behaviour.
 3. **`$SPECS_PATH` (required).** If unset, stop naming `SPECS_PATH`, per the
    `Required path environment variable unset` rule in `workflows-core:escalation-rules`:
    ```
-   choices: ["Set SPECS_PATH (enter the path)", "Cancel"]
+   choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]
    ```
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort
@@ -523,7 +523,7 @@ behaviour, not the behaviour.
    `workflows-core:escalation-rules` — grounding has nothing to check a claim
    against without at least one mounted repository:
    ```
-   choices: ["Set REPOS_PATH (enter the path)", "Cancel"]
+   choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Cancel"]
    ```
 8. **On `route: brd`, read the claim list, and stop if there is none.** (The idea route's own claim
    list is step 8i, immediately below — this whole step is the `route: brd` branch, unchanged.)
@@ -671,14 +671,14 @@ the manual path:
    evidence for a `[CG#n]` (this file's standing rule, above Phase 0). Either is still a name the
    operator may type, here or in `--repos`. Where the list holds one to three clones:
    ```
-   choices: ["Ground against all <K> listed (Recommended)", "Only some — type their names", "Cancel"]
+   choices: ["Ground against all <K> listed (Recommended)", "Only some (you'll be prompted for their names)", "Cancel"]
    ```
    Where it holds more, grounding all of them is rarely what is meant, and each multiplies the cost
    stated above, so no option is marked:
    ```
-   choices: ["Type the names in scope (from the list above)", "Ground against all <K> listed — each multiplies the cost above", "Cancel"]
+   choices: ["Name the ones in scope from the list above (you'll be prompted)", "Ground against all <K> listed — each multiplies the cost above", "Cancel"]
    ```
-   *Only some* and *Type the names* ask, in plain text, for short names, one per line or
+   *Only some* and *Name the ones in scope* ask, in plain text, for short names, one per line or
    space-separated; a typed answer to the array is taken as that list. Names resolve by step 3 —
    a name the map does not hold is still a name, and step 3's zero-match escalation answers it.
    *Cancel* ends the run before anything is written. Where the list holds no clone, skip the
@@ -692,7 +692,7 @@ the manual path:
    proceeding); zero matches → escalate per the `Repo unresolved (zero matches) — /prd-ground` rule
    in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`:
    ```
-   choices: ["Skip and continue without this repo", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo"]
+   choices: ["Skip and continue without this repo", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo (you'll be prompted)"]
    ```
    A clone reached through *Specify a different absolute path for this repo* is named by its own
    remote slug, read as step 2 reads one, where its `origin` reads; where it does not — the one way
@@ -704,7 +704,7 @@ the manual path:
    rule in `workflows-core:escalation-rules`, whose `/prd-ground` variant
    this is:
    ```
-   choices: ["List repos to check manually", "Cancel"]
+   choices: ["List repos to check manually (you'll be prompted)", "Cancel"]
    ```
 
 Read-only throughout (`workflows-core:read-only-repos`) — this command never

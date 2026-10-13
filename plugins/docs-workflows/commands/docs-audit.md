@@ -39,20 +39,20 @@ Read `<top>/.dev-workflows/docs-profile.yml`. **Three states, and the third is n
 
      ```
      "source_repos[] names <name>, and neither its recorded path (<path>) nor its origin (<origin, or "none recorded">) resolves to a clone on this machine. How should I proceed?"
-     choices: ["Give me the clone's absolute path", "Exclude it from this audit — the report will say the denominator is short by one repository", "Cancel this run"]
+     choices: ["Name the clone's absolute path (you'll be prompted)", "Exclude it from this audit — the report will say the denominator is short by one repository", "Cancel this run"]
      ```
 
-     **No `(Recommended)` marker, deliberately**: which option is right depends entirely on why the clone is not there — a workspace laid out differently from the machine that wrote the profile, a repository genuinely retired, or a profile entry that was wrong when it was written — and the run cannot tell those apart.
+     **No `(Recommended)` marker, deliberately**: which option is right depends entirely on why the clone is not there — a workspace laid out differently from the machine that wrote the profile, a repository genuinely retired, or a profile entry that was wrong when it was written — and the run cannot tell those apart. *Name the clone's absolute path* asks for the path in plain text and resolves the entry to it where it is a git work tree, asking again where it is not.
 
    - **Where the profile records the key as an empty list**, that is a positive claim rather than an absent one: `docs-profile-schema.md` says an empty `source_repos[]` asserts that this portal documents nothing, which is why `/docs-workflows:docs-init` omits the key instead of writing one. Honour it — scan no code repository, say in the report that the profile asserts none, and fall to step 6, which is where a run with no specs tree either is refused. Do not silently re-ask: the operator's own file has answered.
 
    - **Where the profile does not record the key at all** — a repository profiled by `/docs-workflows:docs-profile`, or scaffolded before that field existed — confirm the set with the operator and **record it**. List `${REPOS_PATH:-/workspace}` one level deep for directories that are git work trees, and add any the operator named. Print **every** candidate as prose above the prompt, one line each — its directory name and its `origin` slug where it has one — then:
 
      ```
-     choices: ["Audit all of the repositories listed above (Recommended)", "Name the ones to include — I'll take them from the list above", "None — audit the specs-tree surfaces only"]
+     choices: ["Audit all of the repositories listed above (Recommended)", "Name the ones to include from the list above (you'll be prompted)", "None — audit the specs-tree surfaces only"]
      ```
 
-     A typed answer is **resolved against the list just printed, never parsed out of the free text** — the rule `workflows-core:epic-picker` *The cap* states for its own directory-listing picker, and the reason the candidates are printed as prose rather than rendered as one option per repository: `${REPOS_PATH:-/workspace}` is unbounded, so an array sized to it is a tool call the harness rejects the moment a workspace holds five clones. Load that reference with `Skill(skill: "workflows-core:reference", args: "epic-picker")` where the cap's wording is wanted. **The array above is fixed-arity by construction**, so no overflow row is needed: the set travels in the prose, and only the *disposition* is picked. Write the confirmed set into the profile as `source_repos[]`, one `{name, path, origin}` entry per repository, `origin` omitted where the clone has none — **and where step 4 found no profile at all, record nothing and say so**, naming `/docs-workflows:docs-profile` as the command that writes one; this run then confirms the set again next time, which is worth saying in the report rather than leaving to be discovered.
+     Choosing the middle option asks for the names in plain text. A typed answer is **resolved against the list just printed, never parsed out of the free text** — the rule `workflows-core:epic-picker` *The cap* states for its own directory-listing picker, and the reason the candidates are printed as prose rather than rendered as one option per repository: `${REPOS_PATH:-/workspace}` is unbounded, so an array sized to it is a tool call the harness rejects the moment a workspace holds five clones. Load that reference with `Skill(skill: "workflows-core:reference", args: "epic-picker")` where the cap's wording is wanted. **The array above is fixed-arity by construction**, so no overflow row is needed: the set travels in the prose, and only the *disposition* is picked. Write the confirmed set into the profile as `source_repos[]`, one `{name, path, origin}` entry per repository, `origin` omitted where the clone has none — **and where step 4 found no profile at all, record nothing and say so**, naming `/docs-workflows:docs-profile` as the command that writes one; this run then confirms the set again next time, which is worth saying in the report rather than leaving to be discovered.
 
 6. **Refuse a run with nothing to enumerate from.** Test `$SPECS_PATH` here rather than deferring to Phase 2.5 — is it set, a readable directory, and does it hold a specifications tree — because a refusal is only worth anything while the operator is still being asked things. Where the confirmed source-repo set is empty **and** that test fails, so Phase 2.5 will skip, stop: `DOCS_AUDIT_NO_SOURCES: no code repository resolved and no specs tree to read, so there is nothing to enumerate surfaces from. Confirm a source-repo set, or set $SPECS_PATH.` Then take the stop route. This is the refusal `docs-auditor` would return as `INPUT_MISSING`, taken here where the operator can still answer it.
 
@@ -252,17 +252,17 @@ For a **MAJOR** survivor:
 
 ```
 "docs-audit-reviewer flagged <finding> as MAJOR, and the fix isn't a safe mechanical patch: <why>. How should I proceed?"
-choices: ["Describe the fix yourself — I'll apply it", "Defer — leave it open, recorded in the report, and continue", "Proceed despite it — I've judged the backlog fit as it stands", "Cancel this run"]
+choices: ["Describe the fix yourself (you'll be prompted)", "Defer — leave it open, recorded in the report, and continue", "Proceed despite it — I've judged the backlog fit as it stands", "Cancel this run"]
 ```
 
 For a **BLOCKER** survivor:
 
 ```
 "docs-audit-reviewer flagged <finding> as BLOCKER, and the fix isn't a safe mechanical patch: <why>. How should I proceed?"
-choices: ["Describe the fix yourself — I'll apply it", "Proceed despite it — I've judged the backlog fit as it stands; the run continues", "Defer — leave it open; the run then stops with DOCS_AUDIT_UNRESOLVED_BLOCKER", "Cancel this run"]
+choices: ["Describe the fix yourself (you'll be prompted)", "Proceed despite it — I've judged the backlog fit as it stands; the run continues", "Defer — leave it open; the run then stops with DOCS_AUDIT_UNRESOLVED_BLOCKER", "Cancel this run"]
 ```
 
-**Cancel, on either array, ends the run here.** The backlog Phase 5 wrote stays on disk — reviewed, with this finding open and nothing applied — and the run takes the stop route, with the Phase 6 report naming the review as cancelled rather than as passed. Nothing rolls the file back: a written backlog with a known open finding is more use than none, and deleting it would discard the scan that produced it.
+*Describe the fix yourself*, on either array, asks for the fix in plain text, and the orchestrator applies it to `docs-backlog.yml` under the same patch gate. **Cancel, on either array, ends the run here.** The backlog Phase 5 wrote stays on disk — reviewed, with this finding open and nothing applied — and the run takes the stop route, with the Phase 6 report naming the review as cancelled rather than as passed. Nothing rolls the file back: a written backlog with a known open finding is more use than none, and deleting it would discard the scan that produced it.
 
 **Neither *Proceed despite it* option agrees with the finding.** It records that the operator read it, did not dispute it, and chose to go on — the finding stays in the report at its own severity, unfixed and attributed to them. An operator who thinks the finding is *wrong* says so through the harness's free-text escape, and that is a triage dismissal with a reason, which belongs above this prompt rather than in it.
 

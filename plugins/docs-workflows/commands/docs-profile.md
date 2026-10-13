@@ -135,20 +135,22 @@ Typical gaps:
 
 - **Exact build / start command** when a script was ambiguous:
   ```
-  choices: ["Use detected `<cmd>` (Recommended)", "Enter the correct command", "Leave unset"]
+  choices: ["Use detected `<cmd>` (Recommended)", "Enter the correct command (you'll be prompted)", "Leave unset"]
   ```
 - **Prerequisites** such as the `.docstack` shim (e.g. an axios>=1.16 pin) that must be in place before `*:start` boots:
   ```
-  choices: ["Record detected prerequisite(s) (Recommended)", "Add a prerequisite I'll describe", "No prerequisites"]
+  choices: ["Record detected prerequisite(s) (Recommended)", "Add a prerequisite (you'll be prompted to describe it)", "No prerequisites"]
   ```
 - **Ambiguous space mapping** (a content root with no obvious `id` / `base_path`):
   ```
-  choices: ["Accept proposed space mapping (Recommended)", "Edit a space's id/base_path", "Drop this space"]
+  choices: ["Accept proposed space mapping (Recommended)", "Edit a space's id/base_path (you'll be prompted)", "Drop this space"]
   ```
 - **Branch-naming convention** when none was documented (drives Phase 5):
   ```
-  choices: ["Use repo convention if detected, else `<prefix>/NOISSUE-docs-profile` (Recommended)", "Enter a different pattern"]
+  choices: ["Use repo convention if detected, else `<prefix>/NOISSUE-docs-profile` (Recommended)", "Enter a different pattern (you'll be prompted)"]
   ```
+
+Each `(you'll be prompted…)` option above asks for its value in plain text — the command, the prerequisite, the space's `id` and `base_path`, the pattern — and records the answer as `user-supplied`.
 
 **Idempotent refresh.** Before writing, check whether `<repo-root>/.dev-workflows/docs-profile.yml` already exists:
 - **Exists** → this run is a **refresh**, and it builds the new profile **from the existing one**, never from the draft alone. Phase 2 detects only what it looks for — a repository `/docs-workflows:docs-init` scaffolded has no `package.json` `*:start` script and no `*/_content` root, and nothing in Phase 2 looks for `builds[]` or `generator` at all — so the draft is a partial view of the repo, and a diff against it would read everything detection missed as a deletion. Build the refreshed profile by these rules:
@@ -170,7 +172,7 @@ Typical gaps:
   "Apply the diff" changes exactly the fields listed as changed or added and nothing listed as kept. Do not overwrite without this confirmation. Where each choice goes:
   - **"Apply the diff — change the listed fields, keep the rest"** → Phase 5, which writes the existing profile with those changes applied.
   - **"Keep existing, write nothing"** → this run writes nothing. Skip Phase 5 entirely — no branch, no stash offer, no commit, and no CLAUDE.md additions — and go straight to Phase 6, whose report reads "kept — nothing written". In inline mode, which has no Phase 6 report of its own, control returns to `/document` with the existing profile unchanged and no branch or commit to hand back (Phase 6), and `/document` proceeds with that profile (its Phase 0 step 4(c)).
-  - **"Edit specific fields first (you'll be prompted)"** → take the edits and fold them into the diff; where it now lists no change and no addition, end the run as the paragraph above says, and otherwise show the diff again and ask this question again.
+  - **"Edit specific fields first (you'll be prompted)"** → ask for the edits in plain text and fold them into the diff; where it now lists no change and no addition, end the run as the paragraph above says, and otherwise show the diff again and ask this question again.
 - **Absent** → bootstrap: proceed to Phase 5 with the confirmed draft.
 
 Record the final, confirmed `docs-profile.yml` — on a refresh, the existing profile with the confirmed changes applied, or, where the operator kept it or the refresh found nothing to change, the existing profile as it stands — and the CLAUDE.md additions, and tag each field `detected`, `user-supplied`, or, on a refresh, `kept, not detected` for the Phase 6 report.
@@ -187,12 +189,13 @@ Produce a reviewable PR in the **target repo** (never the plugin). **Never push 
    - Else (no convention documented, §1.4) use `<prefix>/NOISSUE-docs-profile`, where `<prefix>` comes from the same §2 ladder with fallback `docs/`. If the ladder yields nothing, run its §2.5 escalation:
      ```
      "I couldn't infer a branch prefix from $GIT_USER_INITIALS, `git config user.initials`, or existing branches. This command's default is `docs/`. What prefix should I use?"
-     choices: ["Use `docs/` (default for this command)", "Use my initials — I'll enter them"]
+     choices: ["Use `docs/` (default for this command)", "Use my initials (you'll be prompted for them)"]
      ```
    Always confirm the final name (initials/slugs are subjective):
    ```
-   choices: ["Use proposed branch `<name>` (Recommended)", "Edit the name"]
+   choices: ["Use proposed branch `<name>` (Recommended)", "Edit the name (you'll be prompted)"]
    ```
+   *Edit the name* asks for the branch name in plain text and confirms it the same way.
 
 2. **Prepare the working tree.** `git -C <repo-root> status --porcelain`; if non-empty:
    ```

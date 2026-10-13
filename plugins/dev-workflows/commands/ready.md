@@ -34,7 +34,7 @@ Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback]
 
 1. **Resolve the address.** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. **Strip `--claimed` next, together with the token after it** — its value, one token however many words a quoted status holds — before the address is parsed: unstripped, the flag is read as the positional address and its value as a second token. Step 1a reads the value set aside. Parse the **single positional address** from what is left — a `<KEY>`, or an `@<path>` naming a
    folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind`
-   and `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `READY_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
+   and `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `READY_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
 
    **Then settle the specs checkout, before the placement below reads anything.** Fix the run key
    set (`workflows-core:specs-repo-git` §3.2), reading only carrier frontmatter (`key:`, `kind:`) as
@@ -95,7 +95,8 @@ Usage: `/ready <ADDRESS> [--claimed "<status>"] [--skip-costs] [--skip-feedback]
 
 2. **Resolve `$SPECS_PATH`.** `/ready` reads the ARD/spec/design artifacts and writes `_readiness.md`
    under `$SPECS_PATH/specifications/`. If `$SPECS_PATH` is unset, stop with a clear error naming
-   `SPECS_PATH`: `choices: ["Set SPECS_PATH (enter the path)", "Cancel"]`. **Take this test before
+   `SPECS_PATH`: `choices: ["Set SPECS_PATH (you'll be prompted for the path)", "Cancel"]` — *Set SPECS_PATH* asks for
+   the path in plain text and carries it as `$SPECS_PATH` for the run. **Take this test before
    step 1 resolves anything**: a key is found only by searching the specs tree, so with no tree
    step 1's `absent` stop would name the wrong cause, and the preflight step 1 ends with needs the
    variable.
@@ -133,8 +134,9 @@ best-effort-checks repos under `$REPOS_PATH`; cwd need not be inside either.
 
 **Rule: Ask, don't guess. This rule is absolute.** Use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0).
 
-1. **Confirm the resolved scope.**
-   `choices: ["Use <PRD dir> [+ <Epic subdir>] (Recommended)", "Use a different path (you'll be prompted)", "Cancel"]`
+1. **The resolved scope — shown, never asked.** Print `Scope: <PRD dir> [+ <Epic subdir>]`, the folder
+   Phase 0 resolved from the address. The address fixes it, and every other command finds these
+   artifacts by resolving the same address, so there is no other folder to offer.
 
 2. **Artifact inventory (mechanical presence + handoff check — no content judgment yet).** By mode:
    - **PRD-level** (`focus_key` null) — locate `<PRD-dir>/ard.md` (resolved via Phase 2.5, not here) and `<PRD-dir>/specification.md` (a PRD-level spec is optional per `workflow-states.md`, save on a multi-component PRD). **On a multi-component PRD** — `multi-component-test` (`Skill(skill: "workflows-core:reference", args: "components multi-component-test")`, §3) run on `<PRD-dir>` returns `multi_component: true` — that `specification.md` is a requirements source and not a slice (`${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`, *Ready for Implementation*): no `design.md` is located for it, Phase 2 carries no slice row for it, and it counts instead among the PRD row's own expected artifacts. Carry `multi_component: true` to Phase 3, whose (0) and (b) read *Ready for Implementation*'s multi-component clause — **save where the PRD was built whole by the 0-Epic override** `/dev-workflows:design` and `/dev-workflows:implement` offer, which the PRD folder shows by holding a `design.md` or an `implementation.md` with at least one block: then set `multi_component: false` for the rest of this run, name the override on `_readiness.md`'s `- Derived phase:` line (`PRD=<phase> (built whole by the 0-Epic override)`) and in the terminal report's `### Derived phase` section, and carry the slice row exactly as on a single-component PRD, labelled `broad slice (multi-component override)` — every later phase, Phase 3(d) included, then reads the PRD as single-component. **Otherwise, where that `specification.md` is present, the PRD folder is a broad PRD-level slice beside its Epics** — the unit `/dev-workflows:design` designs and `/dev-workflows:implement` implements as one — so locate `<PRD-dir>/design.md` too: the slice is one more row of the per-Epic inventory, judged as an Epic's row is (Phase 2), never a check of its own. In either case, then enumerate **every** `EPIC-` folder directly under `<PRD-dir>` — a directory listing, the same Epic set Phase 2 judges, never a name matched against a key pattern — and for each locate `{ard.md, specification.md, design.md}` — this is per-Epic and plural, because a PRD's "Ready for Implementation" status requires **every in-scope Epic**, and the broad slice where one stands, to carry spec + design (`workflow-states.md`'s PRD row).
@@ -251,7 +253,8 @@ already is. Nothing is read out of the PRD's title for it, and no title is inven
 
 When `focus_key` is set, validate it names one of those folders; if not, surface
 `READY_FOCUS_NOT_FOUND: <focus_key> is not an Epic of <PRD>.` with
-`choices: ["Check PRD-level readiness instead (the whole PRD)", "Re-enter the Epic key", "Cancel"]`.
+`choices: ["Check PRD-level readiness instead (the whole PRD)", "Re-enter the Epic key (you'll be prompted)", "Cancel"]` —
+*Re-enter the Epic key* asks for the key in plain text and tests it against `<PRD>`'s Epics again.
 
 **Nothing here reads a declared phase, because nothing in the tree declares one** — `prd.md`'s
 frontmatter `status:` is not read as one. The phase is
