@@ -14,10 +14,9 @@ is the route's last command in the ordinary case, but not the end of every slice
 decision sends the slice back to [`/brd-interview`](brd-interview.md), a question still held for the
 customer to [`/brd-package`](brd-package.md), and a challenged code claim to
 [`/prd-ground --rebaseline`](prd-ground.md), each of which leads back here. It runs again on the
-same review itself in four cases: to finish a run cancelled or stopped partway, where the re-run
+same review itself in three cases: to finish a run cancelled or stopped partway, where the re-run
 skips what the earlier pass already froze and offers the rest; to sweep a dependent it could only
-record, once that dependent has its own register on the default branch; to land a defect resolution
-it could only record, once the parent's defect log is on the default branch; and, on a slice reconciled
+record, once that dependent has its own register on the default branch; and, on a slice reconciled
 before 3.33.1, to close the questions raised only about the defects of a requirement the customer
 withdrew.
 
@@ -119,7 +118,7 @@ flowchart TD
     p14 -.->|"advance_ready + no unallocated row and one covered-here"| prd["/create-prd (PM)"]
     p14 -.->|"advance_ready"| ard["/create-ard (PA, optional)"]
     p14 -.->|"advance_ready"| spec["/specify (PE)"]
-    p14 -.->|"advance_ready: no — reopened decision, held customer question, unre-derived finding, or a dependent's sweep or defect resolution only recorded"| reentry["/brd-interview, /brd-package, /prd-ground --rebaseline, or /brd-reconcile on the same review, on this same &lt;BRD-KEY&gt; (PM)"]
+    p14 -.->|"advance_ready: no — reopened decision, held customer question, unre-derived finding, or an unswept dependent"| reentry["/brd-interview, /brd-package, /prd-ground --rebaseline, or /brd-reconcile on the same review, on this same &lt;BRD-KEY&gt; (PM)"]
 ```
 
 `customer-review-reader` is dispatched once, on the detection chain. `workflows-core:impl-maintenance` runs in the
@@ -168,6 +167,13 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   files that are already on disk). The second must **not** send the operator back to `/brd-package`:
   that command will not rewrite a dated bundle, so it stops today and builds a *different* package on
   any other date.
+- **The parent's defect log, settled.** On a slice the run writes its defect resolutions into the
+  parent's `brd/brd-defect-log.md`, so `require-on-main` runs against that log before anything is
+  confirmed. Where it stops — the log edited in the checkout, or on a branch the default branch does
+  not have — the run names what it found and waits for you to settle it and check again, or cancels
+  with `BRD_RECONCILE_PARENT_LOG_UNSETTLED`; it checks once more before its first write. A resolution
+  is never left recorded for a later run: no later run would write it, and the questions it closes
+  would stay held.
 - **`$SPECS_PATH`** (required) — if unset, the run stops naming `SPECS_PATH`.
 - **No repository, and no `$REPOS_PATH`.** Every finding this run reads was pinned and independently
   re-derived by `/prd-ground`.
@@ -374,8 +380,7 @@ command removes none of them; the next `/brd-interview` run does.
   naming the withdrawal, so its round can close and no later package carries it. **A held question
   whose requirement defects are all withdrawn closes too**, once this run has resolved the defects:
   every `Requirement defect` line on it names a defect the parent's defect log now resolves
-  `withdrawn` — by an earlier run, or by this one, on a decision it froze, completed or re-decided,
-or one an earlier pass over this review could only record — and the question has no
+  `withdrawn` — by an earlier run, or by this one, on a decision it froze, completed or re-decided — and the question has no
   record of its own: none frozen against it, by this run or an earlier one, and no `Re-puts:` line.
   Such a question closes *answered by the customer — nothing frozen*, naming the withdrawn defects
   and, where this run withdrew them, the decision that did, whichever order the walk took the
@@ -475,7 +480,9 @@ or one an earlier pass over this review could only record — and the question h
   dependent's register, and stale-reference corrections into a sibling slice's artifacts are all
   cross-BRD writes, and each runs `require-on-main` against the
   target first. Any stopping row — including the artifact being on no branch the commands cut — means **record,
-  never write**, naming the intended change and the branch/PR state. It never stops the run: letting
+  never write**, naming the intended change and the branch/PR state — save the parent's defect log,
+  which the run settles before confirming anything and waits on rather than record (above).
+  Recording never stops the run: letting
   a dependent's open pull request block the prerequisite's own customer loop is the D20 failure
   arriving from the other direction.
 - **Phase 10 — the sweep gate.** Every position the propagation sweep reaches takes
@@ -637,13 +644,11 @@ is named as waiting behind the re-package, since `/brd-interview` puts its quest
 it opens — [`/brd-package`](brd-package.md) where questions remain for
 the customer, [`/prd-ground --rebaseline`](prd-ground.md) where the review challenged a code claim,
 and a second `/brd-reconcile` pass on this same review once a dependent recorded-not-written has its
-own register on the default branch, or once the parent's defect log is, where a defect resolution
-in that log could only be recorded — that pass writes it.
+own register on the default branch.
 
 **Advancing and re-entering are two lists, and a run gets exactly one of them.** Phase 14 resolves
 `advance_ready` from what the run left behind — any reopened decision, any `[C]` still held for the
-customer, any finding the review left to re-derive, any dependent's sweep or a defect resolution in
-the parent's log it could only record — and where
+customer, any finding the review left to re-derive, any dependent it could only record — and where
 any of those is true the three the BRD route options are **dropped**, not annotated. That is a
 refusal only this phase can make, unlike the level refusal above, which each of the three now makes
 for itself: `/create-ard` on the BRD route and `/specify` on the BRD route run no gate
@@ -686,7 +691,7 @@ and every other dependent starting with its `conditional_on` positions, sweeps e
 position, and writes `reconciliation-<date>.md`.
 
 Phase 14 then hands the route over. Nothing this run left behind reopened a decision, held a `[C]`
-for the customer, left a finding to re-derive, or left a dependent's sweep or a defect resolution only recorded — so
+for the customer, left a finding to re-derive, or left a dependent only recorded — so
 `advance_ready` is `yes` — and this slice's ledger leaves no row `unallocated` and at least one
 `covered-here`, so all three exits are offered off the same key:
 

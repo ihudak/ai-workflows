@@ -1149,8 +1149,8 @@ record reopened with it) in the next one opened. The question:
   `resolved-by: <SLICE-KEY>/[CD#n]` naming this record, an earlier record of its own question or
   another question's, a hand-written `resolved-by: <SLICE-KEY>/[CG#n]`, a `withdrawn` or
   `customer-amended` resolution naming no id at all (`brd-format.md` §4), or still `open` where
-  `/product-workflows:brd-reconcile` only recorded its resolution, the parent's log being under
-  review.
+  `/product-workflows:brd-reconcile`, before 3.33.2, only recorded its resolution, the parent's log
+  being under review.
 
 **What the answer does turns on the record's `status` as the answer's writer reads it**, read off
 the record and never judged. For a `[V]`, that is when this command writes the answer — or, for a

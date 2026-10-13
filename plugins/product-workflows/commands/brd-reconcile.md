@@ -117,11 +117,23 @@ the one this run was given, execute `require-on-main` (`Skill(skill: "workflows-
 artifact, and the concrete branch/PR state the gate reported all go into the reconciliation record
 and the final report, and the file is left exactly as it was. Row F (`absent` — the artifact is on no
 ref at all) is treated the same way and for the same reason: an artifact nobody has handed off is an
-artifact somebody is still working on. `pass`, `pass_amending` and `unmanaged` → write.
+artifact somebody is still working on. `pass`, `pass_amending` and `unmanaged` → write. **The parent's defect log is the one exception: the run waits for it rather than record.**
+The *Resolve inputs and gate the sent package* phase's step 6c settles it before anything is
+confirmed, and the *Resolve the defects the review settled* phase tests it again before its first
+write; neither records a resolution for a later run to write.
 
-**None of this ever stops the run.** The reconciliation is the *prerequisite's* customer loop, and
+**Recording never stops the run.** The reconciliation is the *prerequisite's* customer loop, and
 letting a dependent's open pull request block it would let any downstream BRD stall the BRD its own
 positions rest on — the D20 failure, arriving from the other direction.
+
+**Why the parent's defect log waits instead.** A defect resolution recorded and not written is a
+state every reader of the log would have to know about, and none of them reads a reconciliation
+record: the *Resolve the defects the review settled* phase's last step, which closes a question
+whose requirement defects are all withdrawn; the coverage ledger's `rejected: [DEF#n]` citation;
+`/product-workflows:brd-interview`'s test of which defects are still open to put to the customer.
+And no later run would write it, since the same-review rule skips the decision that made it. Waiting
+costs nothing D20 guards against: the parent is not downstream of this slice but the BRD its
+requirements come from, and what the gate stops on is a change to its log somebody is making now.
 
 **Why the guard is one rule and not one per path.** Writing over a register, a defect log or a value
 document that is sitting on somebody else's branch silently overwrites an in-flight run, and the
@@ -420,6 +432,25 @@ write would re-ask a question already answered.
    resolving in a shallow clone, say — say the list could not be made, and why, and ask the same
    array. The reconciliation record and the final report repeat the list, with each file's state, or
    that it was empty or could not be made, and its limits.
+6c. **Settle the parent's defect log before anything is confirmed.** The *Resolve the defects the
+   review settled* phase writes this run's defect resolutions into the parent's
+   `brd/brd-defect-log.md` — a slice holds no log of its own (`brd-format.md` §2.1) — and that write
+   never falls back to recording (*The cross-BRD write guard*). So execute `require-on-main` against
+   that log — the parent's, which `brd-link.md`'s `parent:` names, one hop — now, while nothing is written: `pass`, `pass_amending` and `unmanaged` → go on. Any stopping
+   row, `absent` among them, means the log is changing where this run cannot see past it: say what
+   the gate reported — the files, branch or pull request it named — say that this run will write
+   into that file and waits rather than write over that change or leave its resolutions unwritten,
+   and say that this plugin never commits, merges or discards it. Then ask:
+   ```
+   choices: ["I've settled it — check again", "Cancel — re-run once the log is settled"]
+   ```
+   On *I've settled it*, run
+   `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 30 git -C "$SPECS_PATH" fetch --quiet origin`
+   (`workflows-core:bounded-run`) and `require-on-main` again: a pass → go on; a stopping row → say
+   so, name what it reported again, and put the same question again — never re-check silently in a
+   loop, and never take an answer for a state the gate did not find. *Cancel* stops the run before
+   anything is written: `BRD_RECONCILE_PARENT_LOG_UNSETTLED: <path> — <what the gate reported>.
+   Settle it, then re-run /product-workflows:brd-reconcile <BRD-KEY> with the same arguments.`
 7. **Do not re-gate allocation, and do not re-gate the rounds.** Read `coverage-ledger.md` for the
    rows this run may move and for the final report's ledger line, but do not gate on it:
    `/brd-interview` already refused to run against an unallocated ledger, `/brd-package` refused to
@@ -866,7 +897,7 @@ disposition would let the round's closure test see every question settled and **
 question the customer expressly refused to answer**, which is the D14 failure this disposition
 exists to prevent, arriving quietly. *Reject* mints no `[C]` and writes nothing into the question
 set, save to close the first exception above; the second is closed by the defect phase whatever
-this run did not freeze, unless the parent's defect log is under review. Neither question asks for a decision the register could take any more: the record one put
+this run did not freeze. Neither question asks for a decision the register could take any more: the record one put
 again is withdrawn, and the requirement the other's defects were raised against is withdrawn, so no
 customer decision is left for their round to wait on.
 
@@ -978,8 +1009,7 @@ choices: ["Ask the customer for the reason — nothing is frozen; a held [C] sta
 
 *Ask the customer for the reason* keeps a held question held save one whose question stops applying
 this run — its requirement withdrawn by another answer — and that carries no record of its own,
-which the *Resolve the defects the review settled* phase's last step closes all the same unless the
-parent's defect log is under review.
+which the *Resolve the defects the review settled* phase's last step closes all the same.
 
 The second is not a workaround: `open` means raised and not yet settled, and a decision may not be
 consumed downstream while it is open (`decision-register-format.md` §3), so the answer is on the
@@ -999,7 +1029,7 @@ reported as *already reconciled*, never re-offered, **whatever that record's sta
 review's answer is on the record already, and where something has since moved the question — a later
 review's answer superseding that record, or a propagation sweep withdrawing it — offering the
 earlier review's answer again would revert that move: re-running an earlier review, which a
-dependent's sweep or a defect resolution recorded and not written makes an ordinary step (*Write the reconciliation record*), never
+recorded-not-written dependent makes an ordinary step (*Write the reconciliation record*), never
 supersedes a later review's answer. Where the live record is no longer that pass's record, the
 report says which it is instead: *already reconciled, superseded since by* `[CD#m]`, or *already
 reconciled, withdrawn since*. Without this rule a run cancelled halfway and restarted would mint a
@@ -1156,8 +1186,7 @@ defect is resolved only once the decisions are frozen, and a withdrawal frozen `
 nothing — so a candidate answering such an entry takes the four-option array like any other, and
 the walk says that, where this review's frozen decisions withdraw every requirement the entry's
 defects were raised against, the entry has no record of its own and nothing is frozen against it,
-it is closed once the defects are resolved — unless the parent's defect log is under review, when the resolution is only recorded
-and the entry stays held — whichever order the candidates are walked in. **A substantive reply to
+it is closed once the defects are resolved, whichever order the candidates are walked in. **A substantive reply to
 such an entry, where it has no record of its own, is kept for a human by *Reject***, whose words the reconciliation record keeps: *Confirm*
 would freeze a decision about a requirement this same review withdraws. An entry with no `- **Requirement
 defect:**` line is not this case, and neither is a decline on a question whose requirement still
@@ -1529,9 +1558,9 @@ Then, in the same phase and from the same confirmed set:
      it answers; `consumed_by` returns to `none`; `id`, `altitude` and `settles` stand
      (`decision-register-format.md` §4). The defect its `settles` names keeps the resolution Phase 8
      wrote when the record was first written `decided` — frozen so, or completed from `open` — and
-     *Resolve the defects the review settled* writes none over it; one still `open`, its resolution
-     only recorded then because the parent's log was under review, that phase resolves as it does
-     for a record this run froze. Step 1 closes the question naming
+     *Resolve the defects the review settled* writes none over it; one still `open` — its resolution only
+     recorded, by a release before 3.33.2, while the parent's log was under review — that phase
+     resolves as it does for a record this run froze. Step 1 closes the question naming
      this `[CD#n]` — unless the re-decided record is left `open` for want of its reason, when the
      question stays held, as step 1's carve-out sets out.
    - **`superseded`** — another answer replaced the record while the question putting it again
@@ -1627,8 +1656,8 @@ pass applied or refused is reported
 *already disposed*, naming the listing the operator pointed to, exactly as above; one matched to
 none, or to a deferral, takes a disposition like any other. A disposition is never attributed to a
 pass whose record the operator did not point to. That is what makes re-running an earlier review — for a
-recorded-not-written dependent, for a defect resolution only recorded, or to close the questions
-the *Resolve the defects the review settled* phase's last step closes — an ordinary step.
+recorded-not-written dependent, or to close the questions the *Resolve the defects the review
+settled* phase's last step closes — an ordinary step.
 
 Any row still undisposed when this phase would end → stop:
 `BRD_RECONCILE_UNDISPOSED_CORRECTION: N required changes from the review are still undisposed — every row takes applied | applied-with-deviation | refused-with-reason | deferred-to-next-round.`
@@ -1758,8 +1787,7 @@ there — never one read out of a folder name.
 
 **Which of the three a settled defect takes is read off the answer, in this order:** `withdrawn`
 where the `[CD#n]` drops the requirement the defect was raised against, obligation and all — the
-*Update the coverage ledger* phase then writes `rejected: [DEF#n]`, or
-`rejected: <SLICE-KEY>/[CD#n]` where the withdrawal could only be recorded, which is how *"it was only a
+*Update the coverage ledger* phase then writes `rejected: [DEF#n]`, which is how *"it was only a
 sketch"* ends for an obligation only an image stated, and a row dropped while its obligation
 survives in another is not this case (below); `customer-amended <SLICE-KEY> <date>` where the review
 supplied corrected text for it; otherwise `resolved-by: <SLICE-KEY>/[CD#n]`. **A `[CD#n]` frozen
@@ -1788,8 +1816,7 @@ and only one of them lists the defect. **`withdrawn` — and the *Update the cov
 what survives:
 
 - a **`conflict`** whose **listed** row is dropped: that requirement is gone — `withdrawn`, and the
-  row takes `rejected: [DEF#n]`, or `rejected: <SLICE-KEY>/[CD#n]` where the withdrawal is only
-  recorded;
+  row takes `rejected: [DEF#n]`;
 - a **`duplicate`** whose two rows **restate** each other, whichever of them is dropped: the
   obligation survives in the row kept, so the defect is `resolved-by: <SLICE-KEY>/[CD#n]`, and the
   dropped row takes `superseded-by: [BR#kept]`, because a `[CD#n]` replaced it with the requirement
@@ -1878,46 +1905,29 @@ source document and the log. The parent's log therefore joins this run's `delive
 reconciliation record names it by path so nobody looks for a resolution in the folder the command was
 pointed at.
 
-Because the log belongs to another BRD, **the cross-BRD write guard applies here in full**: run
-`require-on-main` against the parent's `brd/brd-defect-log.md` first, and on any stopping row record
-the resolutions rather than writing them, naming the parent's branch/PR state. A parent whose defect
+Because the log belongs to another BRD, **the cross-BRD write guard applies here, in the form that
+waits**: the *Resolve inputs and gate the sent package* phase's step 6c settled the parent's
+`brd/brd-defect-log.md` before anything was confirmed, and this phase executes `require-on-main`
+against it once more before its first write, since confirmation can take long enough for somebody
+to start changing it. A pass → write. A stopping row → the same report as step 6c, and this question,
+put again on every answer the gate does not bear out, exactly as there:
+
+```
+choices: ["I've settled it — check again", "Stop here — what this run wrote so far stays uncommitted"]
+```
+
+*Stop here* stops the run with `BRD_RECONCILE_PARENT_LOG_UNSETTLED`, naming every file this run has
+written so far, as the run's other gates stop it. A
+resolution is never recorded for a later run to write (*The cross-BRD write guard*). A parent whose defect
 log is mid-review is a parent somebody is editing, and a resolution written over it is a defect
 classification lost without trace.
-
-**A re-run over the same review writes what an earlier pass only recorded.** Every defect resolution
-a pass over this same review recorded and did not write is taken up again on every re-run, behind the
-same guard. That pass's record names each — under its heading, or, in a record written before every
-pass carried one, in the text above the first (*Write the reconciliation record*) — with the
-parent's branch or pull-request state beside it, as the guard has always required. Where the log has
-resolved the defect since — with the resolution recorded, or by a record of that decision's own
-chain, a successor of the `[CD#n]` that made it or that record re-decided — that resolution stands,
-silently; where it has resolved it any
-other way, the recorded resolution goes under *what still needs a human* with the resolution the log
-holds. **One is written only where the decision that made it still stands** and the defect is
-still `open`: its `[CD#n]` is still its question's live record (*Confirm every candidate*) and has
-not been reopened, re-decided or withdrawn since that pass — a `customer-amended`, which corrected text makes and no decision, needs the open defect alone. It then joins this run's resolutions as
-though a record of this run had made it, under the order above — withdrawals first, then the
-round-and-position rule — and is written. Where the decision no longer stands, nothing is written
-and the recorded resolution goes under *what still needs a human* with the live record: the answer
-that made it has been overtaken, and writing it would let an earlier review's answer outlast a
-later one. **And where more than one pass of this BRD recorded a resolution of one defect, they land in the order the passes were made**
-— by the date of their reconciliation records, then their order within one — as the log would have
-taken them had each pass been able to write: one is written only where no earlier pass recorded a
-resolution of that defect that is still unwritten and still stands by the tests above, so a re-run
-reads every reconciliation record of this BRD for the defects it takes up, not only this review's.
-One behind such a pass is not written; it goes under *what still needs a human* as waiting behind
-that pass, whose review's re-run lands it first, and whichever review is re-run first the log ends
-the same. Where the guard stops again, each that would otherwise be written is recorded again. Without this the recorded state would be permanent: the same-review rule skips the
-record that made the resolution, so no later pass would reach it, and the operator merges the
-parent's pull request precisely so that it can land.
 
 **Last, close every held question whose requirement defects are now all withdrawn and that has no
 record of its own.** On every run,
 whatever this run confirmed and whether or not the review answered it, a held `[C]` entry closes,
 with nothing frozen, where it carries at least one `- **Requirement defect:**` line, every one names
 a defect the parent's `brd/brd-defect-log.md` now resolves `withdrawn` — resolved by an earlier run,
-or written by this phase; one this phase only recorded, the parent's log being under review, is not
-on file and closes nothing — and the entry has no record of its own: it resolves to no live record
+or written by this phase — and the entry has no record of its own: it resolves to no live record
 (*Confirm every candidate*, *Every target resolves to its question's live record*) — no `open`
 record frozen against it by any run, and no `- **Re-puts:**` line — and this run froze, completed
 or re-decided nothing against it. The test reads those lines and the log, never the customer's
@@ -1962,9 +1972,8 @@ phase says how), and the operator answers the rest as the earlier pass did.
 
 **A returned review never sets a disposition** (`customer-review-schema.md` §5 — the review does not
 set the delivery team's coverage bookkeeping). What moves a row here is a `[CD#n]` this run froze,
-completed from `open` or re-decided in place, and did not leave `open` — never one an earlier pass
-froze, whose recorded resolution a re-run only lands: that pass moved its row — and this phase is
-the translation between the two. **One frozen `open` moves no row**, for that phase's reason: one open for want of
+completed from `open` or re-decided in place, and did not leave `open`, and this phase is the
+translation between the two. **One frozen `open` moves no row**, for that phase's reason: one open for want of
 its reason keeps its question held for the customer, and the row moves on the run that completes
 it; one the will-change rule held open moves its row no sooner than the sequence that closes the
 record — an answer not yet usable downstream settles nothing in the ledger either.
@@ -1976,7 +1985,7 @@ record — an answer not yet usable downstream settles nothing in the ledger eit
 |---|---|
 | `deferred-to: <this BRD>` | a `[CD#n]` defers the requirement — a live obligation, not built now |
 | `rejected: [DEF#n]` | a `[CD#n]` withdrew it, citing the defect-log entry the previous phase wrote `withdrawn` — the lowest-numbered, where it wrote several on the row |
-| `rejected: <SLICE-KEY>/[CD#n]` | a `[CD#n]` withdrew it and the previous phase wrote no entry `withdrawn` for it: no defect still `open` was raised on the requirement — that phase resolves every such one `withdrawn` for a record that did not leave it `open`, whatever the answer's `settles` names — or that phase only recorded them. A row withdrawn while its defects were only recorded `withdrawn`, the parent's log being under review then, cites the `[CD#n]` and never a `[DEF#n]`: the log still reads that entry `open`, and a row `rejected: [DEF#n]` citing an `open` defect is the delivery side's rejection, which `/product-workflows:brd-interview` would put to the customer as a question still open. Either way it cites that decision, qualified by this slice's key exactly as `resolved-by` is (`coverage-ledger-format.md` §3) |
+| `rejected: <SLICE-KEY>/[CD#n]` | a `[CD#n]` withdrew it and the previous phase wrote no entry `withdrawn` for it — no defect still `open` was raised on the requirement, since that phase resolves every such one `withdrawn` for a record that did not leave it `open`, whatever the answer's `settles` names — citing that decision, qualified by this slice's key exactly as `resolved-by` is (`coverage-ledger-format.md` §3) |
 | `superseded-by: [BR#n]` | a `[CD#n]` replaced it with another requirement — a `[BR#n]` of the parent's inventory, which this slice need not claim or hold a row for, so a sibling slice's row qualifies (`coverage-ledger-format.md` §3) |
 
 **A row this ledger already reads `rejected` is never rewritten here**, whatever the answer: the
@@ -2459,8 +2468,7 @@ changed, why, which ids, and what still needs a human:
   position in the review's section 12 with the document and section it names, and every row reported
   *already disposed* by an earlier pass over this review, by its position, with that pass's
   disposition and, where the operator matched it, the listing the operator pointed to; every banner added; every defect
-  resolution, with the log's path, and every one written that an earlier pass over this review had
-  only recorded, with that pass named; every ledger row moved.
+  resolution, with the log's path; every ledger row moved.
 - **The sweeps** — the changed-id set as fixed; per dependent BRD, every `conditional_on` position
   and every citing item with its disposition and reason, each id in the qualified prose form the
   propagation sweep fixes, and every dependent recorded-not-written
@@ -2472,13 +2480,7 @@ changed, why, which ids, and what still needs a human:
   run withdrew on another answer; one that lost the round-and-position rule, naming the record that
   decided the defect in its place; corrected text the review supplied for a requirement this run
   withdrew, with the customer's words; and each held entry with a record of its own whose requirement
-  was withdrawn, with that record; every defect resolution this run recorded and did not write, the
-  parent's defect log being under review, with that log's branch or pull-request state and a re-run
-  of `/product-workflows:brd-reconcile <BRD-KEY> @<review-file>` on this same review as the fix, once
-  that log is on the default branch; every resolution an earlier pass over this review only
-  recorded that this run did not write, with why — its decision overtaken, with the live record; the
-  defect resolved since another way, with that resolution; or waiting behind an earlier pass's,
-  with that pass named; every ledger row two of this run's
+  was withdrawn, with that record; every ledger row two of this run's
   records would have moved differently, with the row, every record set aside and the disposition
   each would have written (*Update the coverage ledger*); every
   question the review did not answer, in **all three** of the id shapes the package put to it, so
@@ -2528,9 +2530,8 @@ changed, why, which ids, and what still needs a human:
   run the record could name allocates it (*Update the coverage ledger*).
 
 **Every pass sits under a heading naming the canonical review file it reconciled**, suffix
-included — the heading every same-review rule keys on: the *Confirm every candidate* and *Apply
-the required corrections* phases', and the *Resolve the defects the review settled* phase's re-run
-rule. **A record written before every pass carried one** gave a
+included — the heading every same-review rule keys on, the *Confirm every candidate* and *Apply
+the required corrections* phases' among them. **A record written before every pass carried one** gave a
 heading only to a pass appended on the same day, so where the file opens with text above its first
 pass heading, that text — the whole file, where it has no pass heading at all — is one pass of its
 own, identified by its *The review* line; every same-review rule reads it so. **A second reconciliation on the same day appends, and never
@@ -2656,7 +2657,7 @@ rather than a judgement:
 | this run **reopened** a `[VD#n]` or `[CD#n]` | a `reopened` record "may not be consumed downstream" while it stands (`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §3), and all three BRD-route runs consume the register |
 | a `[C]` is still **held for the customer** | the customer has not answered it, so a PRD authored now states a scope they were never asked about |
 | the review **challenged a code claim**, leaving a finding to re-derive | the findings a downstream artifact would cite are known-stale, and only a `--rebaseline` pass replaces them |
-| a dependent BRD's sweep, or a defect resolution in the parent's log, could only be **recorded, not written** | another BRD still carries a position this run's `[CD#n]` overturns, or a defect the customer settled still reads `open` in the parent's log, and nothing in it says so yet |
+| a dependent BRD's sweep could only be **recorded, not written** | another BRD still carries a position this run's `[CD#n]` overturns, and nothing in it says so yet |
 
 **A `[CD#n]` the will-change rule held open fires none of the four, and that is deliberate.** Its
 question is answered, not held (*Freeze the customer decisions*, step 1), so the second trigger does
@@ -2670,8 +2671,8 @@ runs read it and route it to their own open-questions section, as they route a `
 `/product-workflows:brd-interview` deferred under the same rule. It is named in what remains
 (below) and in the reconciliation record's *what still needs a human*, with the sequence that
 closes it. **One the rule wrote `conditional_on` its prerequisite fires none of the four either** —
-save the fourth where its defect resolution, or a dependent's sweep it reaches, could only be
-recorded, as for any record —
+save the fourth where a dependent's sweep it reaches could only be recorded, as for any
+record —
 for the same first two reasons, but it is `decided`, not `open`: the BRD-route runs consume it as
 decided, the propagation sweep reaches it by that field when the prerequisite's decision moves, and
 it is named in *what still needs a human* alone.
@@ -2700,8 +2701,8 @@ choices: ["Stop here — the decisions are frozen and both sweeps are recorded",
 **And, in prose beside the array — either array — what this run may have changed commercially.**
 **This paragraph is scoped by its own condition and not by the array it sits under**: it is printed
 wherever this run froze at least one `[CD#n]`, on an `advance_ready: no` run as much as on a `yes`
-one. What makes a run `no` is a reopened decision, an open question, an unre-derived finding or a
-dependent's sweep or defect resolution only recorded —
+one. What makes a run `no` is a reopened decision, an open question, an unre-derived finding or an
+unswept dependent —
 none of which bears on whether a customer decision landed, and a run that froze two `[CD#n]` and
 then took `advance_ready: no` has changed exactly what this paragraph is about. **It is not the
 tier** — `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §5 fixes *a settled register* as the
@@ -2747,7 +2748,7 @@ Where this run can go next:
   • Work another round      — /product-workflows:brd-interview <BRD-KEY>        (<trigger, with the id>)
   • Package again           — /product-workflows:brd-package <BRD-KEY> <merge-clause>   (<trigger, with the id>)
   • Re-ground a moved claim — /product-workflows:prd-ground <BRD-KEY> --rebaseline <merge-clause>  (<trigger, with the id>)
-  • Land what was recorded  — /product-workflows:brd-reconcile <BRD-KEY> @<review-file>  (<trigger, with the id>)
+  • Sweep a dependent       — /product-workflows:brd-reconcile <BRD-KEY> @<review-file>  (<trigger, with the id>)
 ```
 
 ```
@@ -2755,9 +2756,9 @@ choices: ["Stop here — this run's changes are recorded; the route resumes when
 ```
 
 **Where the fourth trigger fired, its option joins the array** after the options above whose
-triggers fired, under the cap below: *"Land what was recorded — /product-workflows:brd-reconcile
-<BRD-KEY> @<review-file>, once <what it waits on> is on the default branch"*, `<what it waits on>`
-naming each dependent's register and the parent's defect log the run could only record into. A
+triggers fired, under the cap below: *"Sweep a dependent — /product-workflows:brd-reconcile <BRD-KEY>
+@<review-file>, once <each dependent's register> is on the default branch"*, naming each dependent
+whose register the run could only record into. A
 run where that trigger alone fired is therefore offered *Stop here* and this option, never *Stop
 here* alone, which no picker may hold (`workflows-core:escalation-rules` §0).
 
@@ -2786,13 +2787,6 @@ pass, then the resume, then the package — since `/product-workflows:brd-packag
 still holding a *deferred*, *needs grounding* or *untagged* question (`BRD_PACKAGE_ROUND_UNSETTLED`).
 That state is reachable here: a `--sent` run, for one, reconciles a review no package gate of this
 route checked.
-
-***Package again* does not fire on a question held only for want of a write.** A held entry the
-*Resolve the defects the review settled* phase's last step would have closed but for a `withdrawn`
-it could only record is no question for the customer: its requirement is withdrawn, and the re-run
-that lands the resolution closes it. It counts as held for the customer neither for the second
-trigger nor for *Package again*; name it beside the list as waiting behind *Land what was
-recorded* — packaging now would put the customer a question about a requirement they withdrew.
 
 **The trigger filter runs first and the four-option cap applies to what survives it**
 (`workflows-core:next-phase-offer`'s overflow rule). Typically two or three
@@ -2843,9 +2837,8 @@ that survives carries is the reason it was offered — in its own label, and for
 the trigger and id printed beside the list — and its wait, the `<merge-clause>`, wherever it names a
 gate this run feeds.
 
-**The *Land what was recorded* option names its own wait, and deliberately not `<merge-clause>`.**
-What it waits on is a *dependent's* register, or the parent's defect log, reaching the default
-branch, while the placeholder
+**The dependent-sweep option names its own wait, and deliberately not `<merge-clause>`.** What it
+waits on is the *dependent's* register reaching the default branch, while the placeholder
 `workflows-core:next-phase-offer` defines resolves from **this** run's own
 `Phase handoff:` outcome line — a different merge, which is why the condition is written in the
 option's own text like every other one in the list.
@@ -2864,8 +2857,7 @@ recorded-not-written has no such line, since nothing was reopened there yet.
 Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")` — names only,
 never behaviour a command of its own owns: a `[C]` the review did not answer keeps its round open and
 travels in the next package, save one whose question stopped applying and which had no record of
-its own, which this run closed, or waits behind *Land what was recorded* where the withdrawal that
-closes it could only be recorded; a decision this run reopened is settled by another interview round,
+its own, which this run closed; a decision this run reopened is settled by another interview round,
 once every round is closed; a record the sweep reopened in a dependent, by that dependent's own
 interview round; a
 challenged code claim is settled by a grounding pass and by nothing here, and a decision any
@@ -2874,9 +2866,8 @@ finding of which that pass supersedes is reopened or put again by the next
 says so; a `[CD#n]` the
 will-change rule held open stays `open` until its prerequisite ships, a `--rebaseline` grounding
 pass supersedes the findings it rests on with successors no longer `will-change`, and a later
-interview round puts its question against them; a dependent BRD recorded-not-written stays unswept until its own register is on the
-default branch; and a defect resolution recorded-not-written stays unwritten until the parent's
-defect log is on the default branch and this command runs again on this same review.
+interview round puts its question against them; and a dependent BRD recorded-not-written stays unswept until its own register is on the
+default branch.
 
 ### Context hygiene
 
@@ -2912,8 +2903,8 @@ well-formed return over the customer's own file, which the stop's own text puts 
 parse that failed or a review that contradicts itself, and nothing in the run tells those apart; it
 is not a dispatch the agent refused, the file is the customer's rather than one of the plugin's own
 records, and the operator settles it by opening that file and re-running with it read as prose; and
-`BRD_RECONCILE_UNCONFIRMED`, `BRD_RECONCILE_UNDISPOSED_CORRECTION` and `BRD_RECONCILE_UNSWEPT` are
-the gates working. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
+`BRD_RECONCILE_UNCONFIRMED`, `BRD_RECONCILE_UNDISPOSED_CORRECTION`, `BRD_RECONCILE_UNSWEPT` and
+`BRD_RECONCILE_PARENT_LOG_UNSETTLED` are the gates working. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 
@@ -2921,7 +2912,7 @@ the gates working. The one exception is a halt on a tool the ai-containers image
    `<detection_model>`) with a compact handoff: command `/brd-reconcile`; what was produced (the
    canonicalised review, the frozen `[CD#n]`, the banners, the reconciliation record); key events
    (the mode the review arrived in, a candidate sent back to the customer, a reason left `not
-   stated`, a refused correction, a dependent or a defect resolution recorded-not-written, a stale-reference hit needing a
+   stated`, a refused correction, a dependent recorded-not-written, a stale-reference hit needing a
    human — or "none"); workarounds; test result N/A; project root = the BRD folder.
 2. **Persist plugin feedback (automatic).** Invoke `Skill(skill: "workflows-core:reference", args: "feedback-emission emit-auto")` and call its `emit-auto` entry point (§6)
    with the Lessons Learned report, `command: /brd-reconcile`, the run's `key` (the
@@ -2963,7 +2954,7 @@ the operator re-pointed onto a question, with the target the reader returned; th
 questions closed and every one still open, with the round each sits in; every `[AS#n]` superseded and
 every `[VD#n]` or `[CD#n]` reopened or superseded here, and every `[CD#n]` re-decided in place; the corrections grouped by disposition, with every refusal's reason
 stated in full; every dated artifact bannered, and every overturned bundle document named rather than
-bannered; the defect resolutions with the log's path, and every one recorded-not-written with that log's concrete state; the ledger rows moved; **the propagation
+bannered; the defect resolutions with the log's path; the ledger rows moved; **the propagation
 sweep** — per dependent BRD, the `conditional_on` positions first, then the citing items, each with
 its disposition, plus every dependent recorded-not-written with its concrete state; **the
 stale cross-reference sweep** — the hit counts by outcome and every `needs-a-human` hit named;
