@@ -74,7 +74,7 @@ Security requirements in specifications are no separate sub-project: `spec-revie
 
 ## Decisions
 
-### D1. A new plugin, with Claude Security as a declared dependency
+### D1. A new plugin, installed together with `workflows-core` and Claude Security
 
 `plugins/security-workflows/` contains:
 
@@ -85,7 +85,12 @@ Security requirements in specifications are no separate sub-project: `spec-revie
 
 There are no agents and no hooks. The orchestrator runs triage; the plugin writes patches.
 
-`.claude-plugin/marketplace.json` gains the plugin's entry and the top-level `"allowCrossMarketplaceDependenciesOn": ["claude-plugins-official"]`. Claude Code then installs Claude Security with the plugin. Without that line the install completes without the dependency, and the plugin fails to load.
+**Installing `security-workflows` installs both dependencies automatically.** Claude Code installs any missing declared dependency at `claude plugin install`, and again at `/reload-plugins`, at an auto-update of the marketplace, and at a re-run of the install. The two dependencies get there by different routes:
+
+- **`workflows-core`** is a bare name. It resolves in `security-workflows`' own marketplace and installs with no further configuration, the same way `dev-workflows`, `product-workflows` and `docs-workflows` declare it in their `plugin.json`.
+- **`claude-security@claude-plugins-official`** is in another marketplace. Claude Code installs it only when the root marketplace allowlists that marketplace, so `.claude-plugin/marketplace.json` gains the plugin's entry and the top-level `"allowCrossMarketplaceDependenciesOn": ["claude-plugins-official"]`. Without that line the install completes without Claude Security, and `security-workflows` then fails to load.
+
+Either dependency later disabled or uninstalled disables `security-workflows` with Claude Code's own error naming it; there is no degraded mode, as for the rest of the family. The end-to-end verification installs `security-workflows` on a machine that has neither dependency and confirms both arrive.
 
 **Why not `dev-workflows`.** An unsatisfied dependency disables the plugin that named it. Anyone who removed or disabled Claude Security would lose `/design`, `/implement` and the rest. Every `dev-workflows` user would also get Claude Security's hooks, its `python3` requirement, and its dynamic-workflows requirement. No other family plugin needs Claude Security.
 
@@ -332,6 +337,7 @@ It needs Claude Security installed in the session and a `git fetch` in `/workspa
 
 - **`register.py` tests,** with fixture JSONL and stamps for every D8 case: new, reported again, possibly-same (confirmed and rejected), missing with the file unchanged, `fixing` → `fixed`, `open` → `fixed` on confirmation, reopened, the unverified scan, an ancestor import, repeated import, and `[SEC#n]` never reused.
 - **The gates as one `&&` chain,** read by its own exit code.
+- **A clean install,** in a scratch Claude Code configuration with neither `workflows-core` nor Claude Security installed: `claude plugin install security-workflows@shipwright` must bring in both, and the plugin must load.
 - **An end-to-end run on the bookstore demo,** with `SPECS_PATH=/workspace/bookstore-specs`, covering the key, path, `--import` and `--triage` routes.
 
 ## Risks
