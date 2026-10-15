@@ -79,8 +79,8 @@ command** recorded above, per §7: a target with a fixed `phase`/`role` is
 inherited outright, so correcting a `/specify` output is priced as
 `specification`/`pe`; a target of `n/a`, a target with no §7 row, or a target
 that is itself one of the four feedback commands or `/diagnose-session` resolves to
-`phase: plugin-feedback`, `role: n/a`. A keyless run lands in §9's pending file
-exactly as `/idea`'s does. Surface the persisted path (or the report-only
+`phase: plugin-feedback`, `role: n/a`. A keyless run lands in §9's pending file,
+as §8 tier 2's `Otherwise` sends it. Surface the persisted path (or the report-only
 notice). This runs BEFORE the commit step below, per the emitter tail in
 `${CLAUDE_PLUGIN_ROOT}/references/session-hygiene.md` §5 (feedback -> follow-ups ->
 cost -> `resume.md` -> `commit-artifacts`; this command has no follow-ups or

@@ -391,22 +391,24 @@ Each runs this entry point for that, never a guess. The branch is the one this f
 **Steps:**
 
 1. **The block.** Take the latest block whose `repo:` is `<repo-slug>`. Never take only the newest block overall, since a companion run in a second repository and a re-run in the same one each add a block. Where there is none, the state is `none`.
-2. **Merged?** The state is `merged` where the merged test below passes on that block **and**, where `<branch>` or `origin/<branch>` still resolves, `workflows-core:specs-repo-git` §3.5's `branch-merged` finds that ref's tip merged: its three tests — ancestry, a rebase, a squash — run as written there, in `<repo>` in place of `$SPECS_PATH` and against `<ref>` in place of `<default-ref>`, on `<branch>` where it resolves and otherwise on `origin/<branch>`. Where neither resolves, the merged test alone decides. Every `branch-merged` test reads the tip, so a commit made on the branch after its pull request merged makes it read unmerged again, and step 3 then places the branch: the unit's work goes on there.
+2. **Merged?** Run the merged test below on that block, and let `M` be the newest default-branch commit it found: `<ref>` itself where the ancestry leg passed, otherwise the newest commit the subject leg found. The tip is the commit `<branch>` resolves to — or `origin/<branch>`'s, where `<branch>` does not resolve, or where it does and is an ancestor of `origin/<branch>` (`git -C <repo> merge-base --is-ancestor <branch> origin/<branch>`), a local copy that missed commits pushed from elsewhere. The state is `merged` where the merged test passes **and**, where either ref resolves, the tip adds nothing to `M` or adds nothing to `<ref>`: for `<X>` = `M`, then `<ref>`, `git -C <repo> merge-tree --write-tree <X> <tip>` exits 0 and prints `<X>`'s own tree, `git -C <repo> rev-parse <X>^{tree}` — at most two calls. Where neither ref resolves, the merged test alone decides. Where the merged test passes but the tip adds work both lack, the state is step 3's and `after_merge` is true. That is a commit made on the branch after its pull request merged — or, deliberately, a rebase-merged branch whose review commit carried no `[<key>]` and whose line `<ref>` has since rewritten, a miss that errs toward asking and never claims an open pull request. `merge-tree --write-tree` is the form `workflows-core:specs-repo-git` §8.2 already relies on, and needs the git that does; where this git lacks it, the merged test alone decides, `after_merge` is false, and the run says it did not compare the tip.
 3. **Where the branch is.**
    - `git -C <repo> branch --show-current` prints `<branch>`: `checked-out`.
    - Otherwise, `git -C <repo> rev-parse --verify --quiet refs/heads/<branch>` succeeds: `local`.
    - Otherwise, `refs/remotes/origin/<branch>` resolves: `remote`.
    - Otherwise: `missing`. The branch is gone, or was never pushed from the machine that ran `/implement`.
 
-**Output:** `{state, branch, base, commit, tip}`. `branch`, `base` and `commit` are the block's. `tip` is the commit `<branch>`, or else `origin/<branch>`, resolves to, or null.
+**Output:** `{state, branch, base, commit, tip, after_merge}`. `branch`, `base` and `commit` are the block's. `tip` is the commit step 2 calls the tip, or null where neither ref resolves.
 
-**A consumer works on the tip.** Review commits move the tip past the recorded commit, and a rebase moves it off. Neither is an error, and a consumer that reports what it scanned or traced names the tip.
+**`after_merge`** is true exactly where step 2 found the merged test passing and the tip adding work both `M` and `<ref>` lack, and false everywhere else. The unit's pull request has then merged while its branch carries more work, and the state alone reads as it would for an open pull request, so a consumer that needs to know whether the branch's pull request is still open reads `after_merge`.
+
+**A consumer works on the tip.** Review commits move the tip past the recorded commit, and a rebase moves it off. Neither is an error, and a consumer that reports what it scanned or traced names the tip. Work added to the tip after the merge is `after_merge`'s case.
 
 **Steps 2 and 3 read local refs only.** A run that needs `origin`'s current state, of `<ref>` or of the branch, fetches first, best effort, and says so.
 
 **The merged test.** A block of an `implementation.md` is **merged** where either holds:
 - its commit is an ancestor of the default branch (`git -C <repo> merge-base --is-ancestor <commit> <ref>`); or
-- a commit on the default branch made no earlier than that block carries `[<key>]` in its subject as a whole token, `<key>` being the key of the folder whose `implementation.md` holds the block (`git -C <repo> log <ref> --no-merges --since=<date> --format=%s`, matched as §4 matches a key).
+- a commit on the default branch made no earlier than that block carries `[<key>]` in its subject as a whole token, `<key>` being the key of the folder whose `implementation.md` holds the block (`git -C <repo> log <ref> --no-merges --since=<date> --format='%H %s'`, each subject matched as §4 matches a key; git lists the newest first).
 
 `<date>` comes from the block's own `## <YYYY-MM-DD> — /implement` heading, as `--since="<the day before that date> 00:00"`. Git fills a bare date with the current time of day, which would cut off a squash merged earlier on the same day, and the heading is the Dev's local date. Where the recorded commit resolves in the clone, that commit's committer date (`git -C <repo> show -s --format=%cI <commit>`) replaces it, being exact.
 

@@ -24,7 +24,7 @@ $SPECS_PATH/security/<repo-slug>/
                                      beside the register, never part of it
 ```
 
-`$SPECS_PATH/security/` belongs to the register and to those cost entries, and holds nothing else. A team's own security documents go elsewhere in the specs tree: `workflows-core:specs-repo-git` §2.1's shape commits everything under `security/` as bookkeeping.
+`$SPECS_PATH/security/` belongs to the register and to those cost entries, and holds nothing else. A team's own security documents go elsewhere in the specs tree: `workflows-core:specs-repo-git` §2.1's shape commits everything in a subdirectory of `security/` as bookkeeping.
 
 **The run records and the scan folders are the source of truth.** Every run rebuilds `register.json` and `register.md` from them with `register.py rebuild`, replaying the records in `(seq, at, file name)` order. No run reads the derived files back as its state, because `register.py` rebuilds them from the records every time. They are for people and for the readers §6 names, so a stale or conflicted copy is harmless until the next rebuild overwrites it.
 
