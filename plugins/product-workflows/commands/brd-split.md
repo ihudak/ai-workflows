@@ -1039,9 +1039,7 @@ them against this BRD's ledger, and `/product-workflows:prd-ground` refuses such
   label promises, which says again that no child is eligible; no key can be accepted there, so the
   answer is not re-prompted — this row's picker is put again. **Defer to this BRD** is always available;
   **reject** and **mark superseded** are available wherever the `[DEF#n]` or the replacing `[BR#n]`
-  exists, and where this BRD's `brd/brd-defect-log.md` holds no `[DEF#n]`, or its
-  `brd/brd-inventory.md` no other `[BR#n]`, that is said beside the picker as well: the option taken anyway still asks for its id, as its label says, and
-  an answer naming none that exists puts this row's picker again. A **newly keyed slice** is how the row is built instead: this run's
+  exists, and their own bullets below say what is said where none does. A **newly keyed slice** is how the row is built instead: this run's
   Phase 2 proposes one wherever the instruction placed the row, and otherwise a `Cancel` here,
   followed by a run whose instruction places the row, reaches Phase 2 with the row still
   `unallocated` and keys a new slice for it — a slice holding no row at all, and so eligible by
@@ -1067,10 +1065,15 @@ them against this BRD's ledger, and `/product-workflows:prd-ground` refuses such
   it there via the `parent:`
   key Phase 0 step 5 already read — **one hop, never a chase**, because the one-level cap makes a
   slice's parent always the BRD that owns the source document. A row with no qualifying defect is
-  not rejected this way; resolve or raise the defect first. Write
+  not rejected this way; resolve or raise the defect first. Where that log holds no `[DEF#n]` at
+  all, say so beside the picker before it is put, in either mode; the option taken anyway still asks
+  for its id, as its label says, and an answer naming no `[DEF#n]` that log holds — there being
+  none, or a mistyped one — puts this row's picker again. Write
   `disposition: rejected: [DEF#n]`.
 - **Mark superseded** → prompt for the replacing `[BR#n]`; it must already exist in
-  `brd/brd-inventory.md`. Write `disposition: superseded-by: [BR#n]`.
+  `brd/brd-inventory.md`. Where that inventory holds no `[BR#n]` but this row's, say so beside the
+  picker before it is put; an answer naming no other `[BR#n]` it holds puts this row's picker again.
+  Write `disposition: superseded-by: [BR#n]`.
 
 ### Step 2R — the re-cut walk
 

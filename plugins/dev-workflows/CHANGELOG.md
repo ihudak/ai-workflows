@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.27.2] — 2026-10-15
+
+### Fixed
+- **The preload hook no longer prints `REPOS_PATH` for `/implement`**, which reads no `REPOS_PATH`; 4.27.1's line said the command uses it without asking. The hooks docs page says the same.
+
 ## [4.27.1] — 2026-10-15
 
 ### Fixed

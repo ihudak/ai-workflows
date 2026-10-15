@@ -33,12 +33,15 @@ convention live in ONE place.
 
    Collect them **in the working tree and on `<default-ref>`** — the ref `phase-handoff.md` §3.2
    resolves — listing each folder there with `git -C "$SPECS_PATH" ls-tree --name-only
-   "<default-ref>" -- "./<folder>/"`, `<folder>` relative to `$SPECS_PATH`: a filename above that the
-   ref holds and the working tree does not is a candidate too. An ARD that reached the default branch
-   after the run's own branch was cut is in no working-tree listing, so without the ref's the run
-   would resolve `none` and never ask the gate, which stops there on row B′. A ref-only candidate
-   goes through `require-on-main` like any other; where the gate passes it — the run's own branch
-   deleted the file — there is nothing to read, and it is not used.
+   "<default-ref>" -- "./<folder>/" 2>/dev/null`, `<folder>` relative to `$SPECS_PATH`: a filename
+   above that the ref holds and the working tree does not is a candidate too. A listing that fails —
+   `$SPECS_PATH` no git repository, or no `<default-ref>` (§3.3 rows H and G there) — adds none. An
+   ARD that reached the default branch after the run's own branch was cut is in no working-tree
+   listing, so without the ref's the run would resolve `none` and never ask the gate, which stops
+   there on row B′. A ref-only candidate goes through `require-on-main` like any other: row B′
+   stops on it; row C's repair, where it is taken, brings the file into the working tree, and it is
+   read as any found ARD is; and only row B passes it with nothing to read — the run's own branch
+   deleted the file — where it is not used.
 3. Parse each file's `## Architecture decisions` into `AD#N {id, binds, prevents, rule, source}` where
    `source` ∈ `prd | epic | area`. PRD-level `AD#N` are the inherited base; Epic/area `AD#N` layer on top
    (Epic/area wins on any conflict — contradictions were already blocked by `ard-reviewer` at authoring).

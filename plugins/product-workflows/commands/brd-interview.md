@@ -1524,7 +1524,8 @@ choices: ["No — this position does not turn on a code defect (Recommended)", "
 
 *Yes* is followed at once by one plain-text question for the entry — its `statement`, its `intent`
 and its `intent_basis` (`code-defect-log-format.md` §2–§3), its `disposition`, one of §4's five,
-and, where this decision's `evidence` holds more than one finding §2 lets an entry cite, which
+where that `disposition` is `conditional`, its `blocked_on` in one of §5's two spellings, and,
+where this decision's `evidence` holds more than one finding §2 lets an entry cite, which
 of them is its `behaviour`; nothing of the entry is read from the bare selection.
 
 **The offer is a convenience, not the gate.** An operator may raise a `[CDF#n]` at any point in this
@@ -1738,8 +1739,10 @@ choices: ["Re-base it on a current finding — the decision's evidence list chan
 
 *Re-base it on a current finding* is followed at once by one plain-text question for the finding
 the decision now rests on: a `[CG#n]` or `[DG#n]` id resolved against this BRD's own grounding
-files, where it must be on file with `horizon: current`, and asked again where the answer names none
-that is; the bare selection names no finding.
+files, where it must be on file with `horizon: current` and a verdict other than `SUPERSEDED` — a
+superseded finding is ground no longer on file — and asked again where the answer names none that is;
+the bare selection names no finding. Where no finding on file meets that test, say so and put this
+picker again, since only the other two resolutions can then close the decision.
 
 Record the outcome as that table prescribes: a changed `evidence` list, a `conditional_on` naming one
 specific decision of the prerequisite (`EPIC-008/[VD#3]`, never `EPIC-008` alone — §5), or
