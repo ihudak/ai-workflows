@@ -1519,8 +1519,13 @@ command matches, and none is wanted — the tree carries no corpus of real regis
 candidate pattern against, which is the evidence this repository requires before a prose proxy ships.
 
 ```
-choices: ["No — this position does not turn on a code defect (Recommended)", "Yes — record a defect and cite it here"]
+choices: ["No — this position does not turn on a code defect (Recommended)", "Yes — record a defect and cite it here (you'll be prompted for the defect)"]
 ```
+
+*Yes* is followed at once by one plain-text question for the entry — its `statement`, its `intent`
+and its `intent_basis` (`code-defect-log-format.md` §2–§3), its `disposition`, one of §4's five,
+and, where this decision's `evidence` holds more than one finding §2 lets an entry cite, which
+of them is its `behaviour`; nothing of the entry is read from the bare selection.
 
 **The offer is a convenience, not the gate.** An operator may raise a `[CDF#n]` at any point in this
 phase without being asked, and a decision whose evidence holds only `CONFIRMED` findings gets no
@@ -1728,8 +1733,13 @@ Where it fires, the decision may not be closed. Offer the three resolutions §6 
 three, drawn from that section's own table the way the `[V]` picker draws its options from §1:
 
 ```
-choices: ["Re-base it on a current finding — the decision's evidence list changes", "Make it explicitly conditional on the prerequisite — conditional_on: <BRD-KEY>/<decision-id>", "Defer it until the prerequisite ships — status: open, with the blocking prerequisite named", "Cancel"]
+choices: ["Re-base it on a current finding — the decision's evidence list changes (you'll be prompted for the finding)", "Make it explicitly conditional on the prerequisite — conditional_on: <BRD-KEY>/<decision-id>", "Defer it until the prerequisite ships — status: open, with the blocking prerequisite named", "Cancel"]
 ```
+
+*Re-base it on a current finding* is followed at once by one plain-text question for the finding
+the decision now rests on: a `[CG#n]` or `[DG#n]` id resolved against this BRD's own grounding
+files, where it must be on file with `horizon: current`, and asked again where the answer names none
+that is; the bare selection names no finding.
 
 Record the outcome as that table prescribes: a changed `evidence` list, a `conditional_on` naming one
 specific decision of the prerequisite (`EPIC-008/[VD#3]`, never `EPIC-008` alone — §5), or

@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.16.1] — 2026-10-15
+
+### Fixed
+- **The preload hook no longer says the command "will confirm or ask" `REPOS_PATH`.** It was injected ahead of every keyed `/document` and `/release-notes` run after both stopped asking for a `REPOS_PATH` that resolves, and it labelled a set value "(default …)". It now prints the value as set, or the `/workspace` default with no promise of a question.
+- **`/release-notes`' diff-grounding option no longer promises "(you'll pick repos)"** — no question follows it: the repositories come from the implementation record and its commit scan, and `$REPOS_PATH` is resolved without asking.
+- **`/document`'s docs page names the case with no missing-repo gate**: where Phase 1 took *Proceed without the repos*, every repo's refs are recorded unresolved and no gate is put.
+
 ## [1.16.0] — 2026-10-13
 
 Needs `workflows-core` 1.40.0, whose `escalation-rules` *Required path environment variable unset* says what its *Set* option asks next and names `/document` and `/release-notes` among its `REPOS_PATH` citers.

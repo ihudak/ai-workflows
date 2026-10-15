@@ -1032,10 +1032,16 @@ them against this BRD's ledger, and `/product-workflows:prd-ground` refuses such
   child's own walk wrote before a `/product-workflows:brd-intake` re-run over this BRD reset this
   ledger's row. Re-assigning it to that child seeds nothing and moves no row back: Step 3 finds the
   child already in step for that row and writes nothing, and its own row stands. **Where no child is eligible for this row** —
-  a parent with one child, say, holding an orphan row for it — do not prompt for a key: say so beside the picker, naming each child and
-  the row that excludes it, and take one of the other three, each terminal. **Defer to this BRD** is
-  always available; **reject** and **mark superseded** are available wherever the `[DEF#n]` or the
-  replacing `[BR#n]` exists. A **newly keyed slice** is how the row is built instead: this run's
+  a parent with one child, say, holding an orphan row for it — say so beside the picker before it is put, naming each child and
+  the row that excludes it: the row takes one of the other three, each terminal. The picker is still
+  put as written (`workflows-core:escalation-rules`' *Choice lists are presented verbatim*), so
+  *Assign to a named slice* is still on it, and taken anyway it is followed by the key question its
+  label promises, which says again that no child is eligible; no key can be accepted there, so the
+  answer is not re-prompted — this row's picker is put again. **Defer to this BRD** is always available;
+  **reject** and **mark superseded** are available wherever the `[DEF#n]` or the replacing `[BR#n]`
+  exists, and where this BRD's `brd/brd-defect-log.md` holds no `[DEF#n]`, or its
+  `brd/brd-inventory.md` no other `[BR#n]`, that is said beside the picker as well: the option taken anyway still asks for its id, as its label says, and
+  an answer naming none that exists puts this row's picker again. A **newly keyed slice** is how the row is built instead: this run's
   Phase 2 proposes one wherever the instruction placed the row, and otherwise a `Cancel` here,
   followed by a run whose instruction places the row, reaches Phase 2 with the row still
   `unallocated` and keys a new slice for it — a slice holding no row at all, and so eligible by

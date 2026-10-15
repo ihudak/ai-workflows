@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.41.1] — 2026-10-15
+
+### Fixed
+- **`ard-resolution` brings an ARD that reached the default branch after the run's own branch was cut to `require-on-main`**, which stops on row B′. Step 2 collected candidate ARD files from the working tree alone, so a `/specify`, `/design` or `/ready` run resuming on a branch cut before the ARD merged resolved `status: none` and skipped ARD conformance without a word — the case 1.41.0's "missing from the branch's working tree, stops the same way" claimed and did not reach for the ARD. Step 2 now lists each folder on `<default-ref>` too (`git ls-tree --name-only`); a candidate only the ref holds goes through the gate like any other.
+- **Row B′'s stop says how to settle the merge it asks for outside session-branch mode.** There the branch carries the run's session files, and `dev-workflows/resume.md`, which every run rewrites, has commonly changed on both sides, so `git merge <default-ref>` stopped on a conflict the message never mentioned — and a re-run on the unfinished merge could not commit. The plain form now says to keep both sides of an appended session file and either side of `resume.md`, then commit the merge before re-running.
+
 ## [1.41.0] — 2026-10-13
 
 ### Changed

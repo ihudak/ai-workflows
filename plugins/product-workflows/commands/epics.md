@@ -307,6 +307,7 @@ Ask about:
   choices: ["Scan repos referenced by sibling/parent Epics under this PRD (Recommended — auto-derived)", "Let me list the repos manually (you'll be prompted)", "Turn code scan off — produce Epic drafts from PRD content alone"]
   ```
   When "auto-derived" is chosen, inspect the sibling/parent Epics' `implementation.md` records (if any) for repo references; Phase 4 adds the repositories of an ARD's components, and asks the user to list repos only if the list is still empty.
+  *Let me list the repos manually* is followed at once by one plain-text question for the repo short names to scan (one per line or space-separated). Take them as typed — Phase 2's plan shows them, and Phase 4 resolves each against the `$REPOS_PATH` slug→clone map without asking for the list again.
 
 - **Repo refresh policy** (only if code scan is ON):
   ```
@@ -363,7 +364,7 @@ Present a concise plan:
 
 - Resolved `key` and the `prd_dir` path
 - Existing Epics identified under this PRD (will NOT be duplicated)
-- Repos to scan (or "code scan off")
+- Repos to scan — the names Phase 1's manual list took, as typed, or, on the auto-derived choice, that Phase 4 derives them (or "code scan off")
 - Docs grounding: the `docs grounding:` line that `resolve-docs-grounding` returned, verbatim — including its `retrieval:` value and any index-build, staleness, or shadowing clause (off switch: --no-docs)
 - Output directory with one file per new Epic; propose a name stub per Epic if the themes already suggest them
 - Parallelism plan (up to 4 `code-scanner` instances per batch, single Agent message per batch)
@@ -555,7 +556,7 @@ If code scan is ON:
 
 1. Derive the repo list:
    - **Auto-derived** (Phase 1 default) — walk the `EPIC-` folders under the PRD folder; for each `epic.md` (already read during Phase 3), collect repo names from the `implementation.md` beside it, where one exists. **Where Phase 2.5 supplied a known set**, add its components' repositories, so every component the ARD names is scanned, and carry each component's `paths` to that repository's Phase 5 brief. Dedupe. If the list is still empty, fall back to asking the user.
-   - **Manual list** — prompt for a free-text list of repo short names (one per line or space-separated). Resolve each against the `$REPOS_PATH` slug→clone map built in step 2 below.
+   - **Manual list** — the repo short names Phase 1 took in plain text when *Let me list the repos manually* was chosen, as Phase 2's plan was approved with them; nothing is asked again here. Resolve each against the `$REPOS_PATH` slug→clone map built in step 2 below.
 
 2. Build a slug→clone map. For each top-level directory under each entry of `$REPOS_PATH`, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -C <dir> remote get-url origin 2>/dev/null` (`workflows-core:bounded-run`), strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git` or whose `git remote` call fails/times out. Resolve each in-scope repo slug against the map: one match → use it; multiple matches → auto-prefer basename ending `-repo`, then `_repo`/`_fast`, then alphabetically last, and record the slug's other clones as its `alternates` (asked about below, once every slug is resolved); zero matches → escalate per the `Repo unresolved (zero matches) — /epics` rule in `workflows-core:escalation-rules`:
    ```

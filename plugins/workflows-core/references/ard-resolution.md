@@ -30,6 +30,15 @@ convention live in ONE place.
      file when `area` is given, else every per-area ARD) **plus** the PRD folder's own `ard.md` for
      inherited invariants.
    - **PRD-level** (`epic` null): only the PRD folder's `ard.md`.
+
+   Collect them **in the working tree and on `<default-ref>`** — the ref `phase-handoff.md` §3.2
+   resolves — listing each folder there with `git -C "$SPECS_PATH" ls-tree --name-only
+   "<default-ref>" -- "./<folder>/"`, `<folder>` relative to `$SPECS_PATH`: a filename above that the
+   ref holds and the working tree does not is a candidate too. An ARD that reached the default branch
+   after the run's own branch was cut is in no working-tree listing, so without the ref's the run
+   would resolve `none` and never ask the gate, which stops there on row B′. A ref-only candidate
+   goes through `require-on-main` like any other; where the gate passes it — the run's own branch
+   deleted the file — there is nothing to read, and it is not used.
 3. Parse each file's `## Architecture decisions` into `AD#N {id, binds, prevents, rule, source}` where
    `source` ∈ `prd | epic | area`. PRD-level `AD#N` are the inherited base; Epic/area `AD#N` layer on top
    (Epic/area wins on any conflict — contradictions were already blocked by `ard-reviewer` at authoring).
@@ -79,7 +88,7 @@ contracts:           # the PRD-level ARD's `## Contracts` (step 4), or null
 
 **An ARD file no plugin branch carries is not `unmerged`.** There `require-on-main` returns row F — `on_main: absent`, with no branch to pass through — which is the state a declined handoff of a new ARD leaves, or that an ARD committed only on a branch of the person's own leaves, and it is `status: none`, exactly as `phase-handoff.md` §3.4's ARD row records it: the file is not read, and the no-regression rule below applies unchanged. Reading it as `unmerged` would stop every consumer but `/ready`, naming no branch, in a state §3.4 lets them proceed past.
 
-**Any other stopping state of that gate stops the caller as `unmerged` does.** `require-on-main` also stops on an ARD the default branch already carries whose working copy differs from it — §3.3's rows C′ and C″, and row C once its repair offer is declined or fails — which is what a declined `/create-ard` refinement of a merged ARD leaves, and what a hand edit leaves; and row B′, where the run stands on a branch of its own that still holds the copy it was cut with while the default branch has changed the ARD since. There is no status for it here and none is owed: the caller stops on that row's own §4.4 message, naming the files, and `/ready` records it as a readiness finding capping the verdict at `PARTIAL`, as it records `unmerged`. Reading that copy as `found` would ground the run on an edit nobody landed, or on B′'s copy the default branch has superseded, and reading it as `none` would drop a decision the default branch holds.
+**Any other stopping state of that gate stops the caller as `unmerged` does.** `require-on-main` also stops on an ARD the default branch already carries whose working copy differs from it — §3.3's rows C′ and C″, and row C once its repair offer is declined or fails — which is what a declined `/create-ard` refinement of a merged ARD leaves, and what a hand edit leaves; and row B′, where the run stands on a branch of its own that still holds the copy it was cut with, or none, while the default branch has changed or added the ARD since (step 2's ref listing is what brings an added one to the gate). There is no status for it here and none is owed: the caller stops on that row's own §4.4 message, naming the files, and `/ready` records it as a readiness finding capping the verdict at `PARTIAL`, as it records `unmerged`. Reading that copy as `found` would ground the run on an edit nobody landed, or on B′'s copy the default branch has superseded, and reading it as `none` would drop a decision the default branch holds.
 
 **`unmerged` is reachable only when an ARD file resolves.** An absent ARD is `none`, unchanged — see the no-regression rule below. This status does not make `/create-ard` a prerequisite for anything.
 
