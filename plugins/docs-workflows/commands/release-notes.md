@@ -181,7 +181,7 @@ run — the terminal `commit-artifacts` step skips on it.
 
 - **Diff grounding** (default OFF — the PRD is usually enough for release notes):
   ```
-  choices: ["PRD content only (Recommended)", "Also ground in the recorded refs' diffs (you'll pick repos)", "Cancel"]
+  choices: ["PRD content only (Recommended)", "Also ground in the recorded refs' diffs", "Cancel"]
   ```
   If the user also grounds in diffs, additionally resolve `$REPOS_PATH` as the next bullet says.
 

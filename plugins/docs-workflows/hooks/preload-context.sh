@@ -76,7 +76,11 @@ emit_git_branch_if_repo() {
 
 emit_specs_context() {
     echo "=== Auto-injected project context (specs workflow) ==="
-    echo "repos_path: ${REPOS_PATH:-/workspace} (default — the command will confirm or ask)"
+    if [[ -n "${REPOS_PATH:-}" ]]; then
+        echo "repos_path: $REPOS_PATH"
+    else
+        echo "repos_path: /workspace (REPOS_PATH unset — the default, which the command uses without asking wherever it exists)"
+    fi
     if [[ -n "${SPECS_PATH:-}" ]]; then
         echo "SPECS_PATH: $SPECS_PATH"
     else

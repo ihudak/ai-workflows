@@ -87,10 +87,11 @@ them is.
    quotation is the entire mechanism — it is what lets a human check the agent's reading in one
    glance against the customer's own sentence.
 5. **A reason nobody gave is never supplied.** `argumentation` is mandatory
-   (`decision-register-format.md` §2) and on a `[CD#n]` it is the **customer's** reason. A candidate
-   returned with `reason: not stated` cannot be frozen as `decided` by anybody in this run, and the
-   two resolutions the *Confirm every candidate* phase offers both leave the reason where it belongs
-   — with the customer.
+   (`decision-register-format.md` §2) and on a `[CD#n]` it is the **customer's** reason. A row
+   confirmed or corrected with `reason: not stated` cannot be frozen as `decided` by anybody in this
+   run — *Correct it* takes a reason only as the quotation's own words, never as the operator's — and
+   the two resolutions the *Confirm every candidate* phase offers both leave the reason where it
+   belongs — with the customer.
 
 The failure all five exist to prevent is stated once, in `agents/customer-review-reader.md`, and is
 not restated here: **normalising prose into a register row *is* inference**, a `[CD#n]` reads
@@ -909,7 +910,7 @@ the operator, **one at a time, never batched**, with:
 choices: ["Confirm — this is what the customer decided; freeze it", "Correct it — the row does not match the quotation; freeze the row that does (you'll be prompted for it)", "Reject — no decision to freeze: the customer declined to answer, or the row is not an answer (context, thanks, scheduling) (you'll be prompted for why)", "Ask the customer — the answer is not clear enough to freeze; the question is left as it stands"]
 ```
 
-*Correct it* asks in plain text for the row that does match the quotation — its `chosen` and its reason — and *Reject* asks in plain text why there is no decision to freeze; neither is read from the bare selection.
+*Correct it* asks in plain text for the row that does match the quotation: its `chosen`, and, where the quotation states the customer's reason, the words of the quotation that state it, copied out of it. **The operator never writes the reason**: a corrected row's reason is the customer's own, quoted — words not found in the quotation, once every run of whitespace on either side is collapsed to one space, are not taken, and the plain-text question is asked again — or `not stated` where the quotation states none, and a corrected row with no reason takes the missing-reason picker below as a *Confirm* on a `not stated` candidate does. *Reject* asks in plain text why there is no decision to freeze; neither is read from the bare selection.
 
 **A customer who explicitly declines to answer takes *Reject*, and the schema guarantees that case
 exists** (`${CLAUDE_PLUGIN_ROOT}/references/customer-review-schema.md` §5): the reader returns it as
@@ -1037,9 +1038,9 @@ answer that is unclear; an answer outside the options is neither.
 
 **A candidate whose reason is `not stated` cannot be frozen as `decided`, by anyone in this run.**
 `argumentation` is mandatory (`decision-register-format.md` §2) and on a `[CD#n]` it is the
-customer's own reason for their own decision. Where *Confirm* is chosen on such a candidate — and it
-does not re-affirm its question's live record, which takes it out of this picker's reach (below) —
-exactly two resolutions follow:
+customer's own reason for their own decision. Where *Confirm* is chosen on such a candidate, or
+*Correct it* leaves the corrected row with no reason — and the row does not re-affirm its question's
+live record, which takes it out of this picker's reach (below) — exactly two resolutions follow:
 
 ```
 choices: ["Ask the customer for the reason — nothing is frozen; a held [C] stays held for the customer, and its round open, until it is answered or stops applying", "Freeze the answer as [CD#n] with status: open, naming the absent reason — nothing downstream may consume it until the reason arrives", "Cancel"]
@@ -1150,8 +1151,8 @@ is shown on the four-option array like any other, its live record beside it; the
 operator takes *Confirm* or *Correct it*, after the conflicting-answer picker below where that
 picker is put, on the row that choice confirmed: its `chosen` as the *Freeze* phase would write it,
 and its reason — in free-text mode a `reason: not stated` included, which the operator confirms with
-the row, since the reader may have missed a reason the quotation holds and *Correct it* is where one
-is supplied. An unconfirmed row never skips. The confirmed candidate **re-affirms** its live record,
+the row, since the reader may have missed a reason the quotation holds and *Correct it* is where the
+quotation's own words for it are taken. An unconfirmed row never skips. The confirmed candidate **re-affirms** its live record,
 and is recorded rather than frozen, where:
 
 - the live record is **`decided`**, with or without `conditional_on`, and the candidate's `chosen`

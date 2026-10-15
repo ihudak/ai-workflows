@@ -95,8 +95,9 @@ record that a sentence of prose was read into it by an agent.
 - Every candidate is put **one at a time, with its verbatim quotation**. There is no bulk
   confirmation, and that omission is required rather than permitted — the quotation is the whole
   mechanism, and batching turns a confirmation into a formality.
-- A reason nobody gave is **never supplied**. A candidate returned `reason: not stated` cannot be
-  frozen as `decided` by anyone in the run.
+- A reason nobody gave is **never supplied**. A row confirmed or corrected with `reason: not stated`
+  cannot be frozen as `decided` by anyone in the run, and a correction takes a reason only as the
+  customer's own words, copied out of the quotation — never one the operator writes.
 
 ## How it runs
 
