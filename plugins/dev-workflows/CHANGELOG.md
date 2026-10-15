@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.27.2] — 2026-10-15
+
+### Fixed
+- **The preload hook no longer prints `REPOS_PATH` for `/implement`**, which reads no `REPOS_PATH`; 4.27.1's line said the command uses it without asking. The hooks docs page says the same.
+
+## [4.27.1] — 2026-10-15
+
+### Fixed
+- **The preload hook no longer says the command "will confirm or ask" `REPOS_PATH`.** It was injected ahead of every keyed `/implement` run after the family stopped asking for a `REPOS_PATH` that resolves, and it labelled a set value "(default …)". It now prints the value as set, or the `/workspace` default with no promise of a question.
+- **`/ready`'s row-B′ ARD finding covers an ARD the branch does not hold at all** — one that reached the default branch after the branch was cut, which `workflows-core` 1.41.1's `ard-resolution` now brings to the gate. The command and its docs page said only "still holds the ARD it was cut with".
+
 ## [4.27.0] — 2026-10-13
 
 Needs `workflows-core` 1.41.0, whose `require-on-main` adds the stopping row B′.

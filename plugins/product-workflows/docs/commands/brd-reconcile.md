@@ -95,8 +95,10 @@ record that a sentence of prose was read into it by an agent.
 - Every candidate is put **one at a time, with its verbatim quotation**. There is no bulk
   confirmation, and that omission is required rather than permitted — the quotation is the whole
   mechanism, and batching turns a confirmation into a formality.
-- A reason nobody gave is **never supplied**. A candidate returned `reason: not stated` cannot be
-  frozen as `decided` by anyone in the run.
+- A reason nobody gave is **never supplied**. A row confirmed or corrected with `reason: not stated`
+  cannot be frozen as `decided` by anyone in the run, and a correction takes a reason — or an answer
+  outside the options put — only as the customer's own words, copied out of the returned review, never
+  ones the operator writes, and never a reason that only restates the answer.
 
 ## How it runs
 
@@ -241,7 +243,9 @@ as assumed"]` for an assumption, which puts no options. **An answer matching no 
 put is never frozen**: the operator records it for a human, quoting the customer, or rejects it —
 or, where the reader mis-matched it, names the question it does answer, which re-points it and puts
 it to the operator again on the full confirmation picker, the re-point recorded in the
-reconciliation record.
+reconciliation record. A row corrected through *Correct it* is recorded there too — what the reader
+returned, the corrected answer and reason, and where in the review each was copied from — since
+which of the customer's sentences is their reason is a reading the run cannot test.
 
 The run makes **two** handoff offers, and they are two different questions: the first hands off the
 customer's document, the second hands off what the run decided about it. Both land on one `brd/`
@@ -435,8 +439,8 @@ command removes none of them; the next `/brd-interview` run does.
   candidate is confirmed onto a question another candidate of the walk already took, the operator is
   shown both and picks one to freeze — or asks the customer and freezes neither; the one set aside is
   named under what still needs a human as a conflicting answer, beside the one frozen in its place (or noting that the one kept went back to the customer for its reason); a later candidate onto a question the operator sent back to the customer goes back with it.
-- **Phase 4 — a reason nobody gave.** A confirmed candidate whose reason is `not stated` takes one
-  of exactly two routes: ask the customer and freeze nothing, or freeze it `status: open`, which
+- **Phase 4 — a reason nobody gave.** A confirmed candidate, or a corrected row, whose reason is
+  `not stated` takes one of exactly two routes: ask the customer and freeze nothing, or freeze it `status: open`, which
   puts the answer on the record and makes it unusable downstream until the reason arrives. Supplying
   the reason is not on the list — a supplied reason is the delivery team's argument recorded as the
   customer's, and it will be defended later as theirs. A held question whose `[CD#n]` is `open` for

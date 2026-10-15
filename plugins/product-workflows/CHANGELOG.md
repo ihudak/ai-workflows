@@ -5,6 +5,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.34.5] — 2026-10-15
+
+### Changed
+- **`/brd-reconcile` records every row taken through *Correct it*** — the row the reader returned, the corrected `chosen` and reason, and where in the canonicalised review each copied passage sits — in the reconciliation record, as it already recorded a re-point. Copying the words out of the review proves they are the customer's; which of their sentences is the reason is a reading no test can make, so the pick is left where a later reader can check it.
+
+## [3.34.4] — 2026-10-15
+
+### Fixed
+- **`/brd-reconcile`'s *Correct it* takes no operator-written customer words in either field.** An answer outside the options put, which 3.34.3 still took as typed into `chosen`'s marked form, is now copied out of the returned review like the reason; the reason may come from anywhere in the review, not only the quotation shown; and a reason that only restates the answer is refused. The *Phase 4* bullet of its docs page names a corrected row beside a confirmed one.
+- **`/brd-interview`'s defect question asks for `blocked_on` where the disposition is `conditional`**, and *Re-base it on a current finding* refuses a superseded finding and puts its picker again where no finding on file qualifies, instead of asking again with no way out.
+- **`/brd-split`'s notice for a missing `[DEF#n]` or replacing `[BR#n]` reaches the slice walk too**, where *Reject* cites the parent's defect log, and a mistyped id puts the row's picker again; 3.34.3 said so on the root walk alone.
+- **The row-B′ forms of `/create-prd`'s, `/create-ard`'s and `/specify`'s `*_REGISTER_NOT_ON_MAIN` carry row B′'s whole remedy**, its session-file conflict advice included, and name the re-run once.
+
+## [3.34.3] — 2026-10-15
+
+### Fixed
+- **`/brd-reconcile`'s *Correct it* no longer lets the operator write the customer's reason.** It asked for the corrected row's `chosen` and its reason, so an operator-typed reason could be frozen as a `[CD#n]`'s argumentation — the customer's own, by the register's rule. A corrected row's reason is now the quotation's own words, copied out of it and refused where they are not in it, or `not stated`, which takes the row to the missing-reason picker exactly as a *Confirm* on a `not stated` candidate does.
+- **The preload hook no longer says the command "will confirm or ask" `REPOS_PATH`.** It was injected ahead of every keyed `/epics` run after the family stopped asking for a `REPOS_PATH` that resolves, and it labelled a set value "(default …)". It now prints the value as set, or the `/workspace` default with no promise of a question.
+- **Options that need your text say so wherever the run asks for it.** `/brd-interview`'s *Yes — record a defect and cite it here* and *Re-base it on a current finding* now carry `(you'll be prompted for …)` and are followed at once by the question. `/epics`' *Let me list the repos manually* asks for the list right after the selection instead of in Phase 4, and the plan shows it. `/brd-split` says beside a row's picker, before it is put, when no child is eligible or no `[DEF#n]` or other `[BR#n]` exists, and an option taken anyway still asks what its label promises.
+- **The row-B′ forms of `/create-prd`'s, `/create-ard`'s and `/specify`'s `*_REGISTER_NOT_ON_MAIN` say that a run of that command stops the same way**, not every run of all three: row B′ applies only to the command whose prefix the branch carries.
+- **Docs pages:** `/epics` no longer says it asks for the output directory or derives repos from sibling Epics' pull-request links, and `/create-ard`'s says its mount-or-descope gate is not put once Phase 1 took *Ground only the confirmed-mounted set*.
+
 ## [3.34.2] — 2026-10-13
 
 ### Changed

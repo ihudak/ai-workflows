@@ -293,7 +293,7 @@ CREATE_ARD_REGISTER_NOT_ON_MAIN: <SLICE-KEY>'s decision register <path> is <the 
 ```
 On row B′ — the register changed on `<default>` after the branch this run stands on was cut, and that branch holds the copy it was cut with, or none where the register reached `<default>` only after the cut — `CREATE_ARD_REGISTER_NOT_ON_MAIN` takes this form instead, since what that branch lacks is what has merged on `<default>` since:
 ```
-CREATE_ARD_REGISTER_NOT_ON_MAIN: <SLICE-KEY>'s decision register <path> changed on <default> after <branch> was cut, and <branch> holds <the copy it was cut with | no copy, as the register reached <default> only after the cut>. This run read none of it and wrote nothing: an ARD frozen from this branch would miss what has merged on <default> since. <the remedy row B′'s message names, $SPECS_PATH substituted — merge <default> into <branch>, lifting the session files first in session-branch mode>, then re-run '/product-workflows:create-ard <ADDRESS>'. Ignored, every /create-prd, /create-ard and /specify run on this slice from <branch> stops here the same way.
+CREATE_ARD_REGISTER_NOT_ON_MAIN: <SLICE-KEY>'s decision register <path> changed on <default> after <branch> was cut, and <branch> holds <the copy it was cut with | no copy, as the register reached <default> only after the cut>. This run read none of it and wrote nothing: an ARD frozen from this branch would miss what has merged on <default> since. <the remedy row B′'s message names, $SPECS_PATH substituted and its closing re-run left out — merge <default> into <branch>, settling a session-file conflict and committing the merge as it says, lifting the session files first in session-branch mode>, then re-run '/product-workflows:create-ard <ADDRESS>'. Ignored, every /create-ard run on this slice from <branch> stops here the same way.
 ```
 ```
 CREATE_ARD_REGISTER_NOT_HANDED_OFF: <SLICE-KEY>'s decision register is written at <path> but is on no branch — the run that wrote it had its handoff declined. This run read none of it and wrote nothing. Commit and merge decisions.md to the specs repo's default branch (git -C "<SPECS_PATH>" add, commit and push it, then open and merge its pull request), then re-run '/product-workflows:create-ard <ADDRESS>'. Ignored, every /create-prd, /create-ard and /specify run on this slice stops here the same way.
@@ -551,8 +551,8 @@ There are no PRs at ARD time, so repos are **architect-driven**, not PR-derived:
    `baselines.md` and the register's decisions are the whole of the starting set, and that is still a
    better one than a theme guess. Either way it
    is only a proposal: the architect confirms, corrects and adds exactly as above, and a repo
-   `baselines.md` names but `$REPOS_PATH` does not hold reaches step 3's mount-or-descope gate like
-   any other. A finding's evidence is cited at the commit that finding is pinned to
+   `baselines.md` names but `$REPOS_PATH` does not hold reaches step 3 like any other — its
+   mount-or-descope gate, or the answer Phase 1 step 3 already gave it. A finding's evidence is cited at the commit that finding is pinned to
    (`workflows-core:grounding-format` §2), which is not necessarily the commit a
    fresh scan reads; where the two differ, say so beside the claim rather than silently re-dating it.
 3. **Missing repo → consolidated mount-or-descope gate** — not put where Phase 1 step 3 took *Ground only the confirmed-mounted set*, which already answered it: record every confirmed component as an open question and go on. Otherwise: `choices: ["Mount now & re-scan", "Ground only the confirmed-mounted set (record the rest as open questions)", "Specify an absolute path for this repo (you'll be prompted)", "Cancel"]` — *Specify an absolute path* asks for the clone's path in plain text and takes it as that repo's clone.
