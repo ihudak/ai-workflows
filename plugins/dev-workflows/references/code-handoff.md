@@ -137,6 +137,7 @@ There is deliberately no `Cancel`: the commit has already happened, so there is 
 - **No `origin` remote** → nothing to push; the call ends and §3.1's `no origin remote` row is the line (§2.1 already established this is not a failure).
 - **Non-fast-forward rejection** → reported, never resolved by rebasing, resetting, or forcing. The branch is the run's own, so this means somebody else pushed to it; that is a human's call. Server-side rejections (protected-branch pattern, `pre-receive` hook, size or LFS limits) report the same way, through §3.1's `push FAILED (<reason>)` row.
 - **A failed push never undoes the commit and never starts a retry loop.** The commit is the durable half and it survives every push failure — which is the whole reason §1 rule 5 puts it first.
+- **Push only, on a blocked run.** Where §2.4's answer was *Push the branch only* and `clean_finish` is false, the push may just have put blocked work on a pull request already open for `<branch>`, and §2.6, which that answer skips, is where one is found. So once the push has landed, derive `<owner_repo>`, run the `gh auth status` check and test the slug, all as §2.6 does, then run its probe. Where it finds one open, turn it back into a draft and post the body file on it exactly as §2.6's blocked-run paragraph says, and report through that paragraph's *run blocked* existing-PR row. Where it finds none, nothing more is done — no pull request is opened — and the line is §3.1's *Pushed, no PR requested* row. Where the probe cannot run — `gh` absent or unauthenticated, the slug test failing, or the probe failing — say so: that row carries the *Open pull request not checked* append.
 
 ### 2.6 Open the pull request
 
@@ -228,7 +229,7 @@ An exhausted ladder (or no `origin`) means no pull request can be opened: report
 
 - opened with `--draft`, so it cannot be merged by reflex;
 - the body file's **first line** is `> ⚠ DO NOT MERGE — <blocking facts>.`, listing **every** blocking fact when a batch has more than one, semicolon-separated. One slot, all the facts.
-- where §2.6 finds one already open, which the push has just updated, it is turned back into a draft, and the body file, banner first, is posted on it as a comment (§2.6).
+- where §2.6's probe finds one already open, which the push has just updated — on a push-only answer too (§2.5) — it is turned back into a draft, and the body file, banner first, is posted on it as a comment (§2.6).
 - where §2.6 fell back, §3.2 carries the same banner as its own first line **and** appends `--draft` to the copy-paste `gh` command it offers, and its web-UI wording says to open the pull request as a draft. A fallback that quietly produces a mergeable pull request for blocked work defeats this whole section.
 
 ### 2.10 Failure discipline
@@ -285,6 +286,7 @@ Exactly one per **full** call, prefixed `Code repo:`. A caller that finishes sev
 | Banner comment posted (§2.6) | append `; DO-NOT-MERGE comment posted.` |
 | Banner comment not posted (§2.6) | append `; DO-NOT-MERGE comment NOT posted (<reason>) — post its DO NOT MERGE line on the pull request by hand.` |
 | Pushed, no PR requested | `Code repo: <what> — pushed. No pull request opened (not requested).` |
+| Open pull request not checked (§2.5) | append `; whether <branch> has an open pull request was not checked (<reason>) — if it has one, mark it as a draft and post on it: > ⚠ DO NOT MERGE — <blocking facts>.` |
 | Pushed, PR not opened | `Code repo: <what> — pushed, PR NOT opened (<reason>). Open it manually.` |
 | Pushed, PR opened but unparseable | `Code repo: <what> — pushed, pull request opened but `gh` returned no usable number or URL; check the branch on the host.` |
 | Pushed, PR not opened, run blocked | `Code repo: <what> — pushed, PR NOT opened (<reason>) — <blocking facts>. Open it manually as a DRAFT.` |
@@ -303,7 +305,7 @@ Exactly one per **full** call, prefixed `Code repo:`. A caller that finishes sev
 | Possible secrets committed (§2.2) | append `; <n> possible secret(s) the scan flagged were committed as not secret, at your request (<unit>, …).` |
 | Secret scan not run (§2.2) | append `; the secret scan did not run (<unit>: <reason>; …).` |
 
-A *run blocked* existing-PR line carries one draft append and one banner append, each the one that says what §2.6's command did.
+A *run blocked* existing-PR line carries one draft append and one banner append, each the one that says what §2.6's command did, after either push answer (§2.5).
 
 The `push FAILED` line states the surviving commit explicitly. A user reading "FAILED" needs to know in the same sentence that their work is not gone.
 
