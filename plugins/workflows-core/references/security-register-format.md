@@ -128,4 +128,4 @@ A false positive overrules a finding Claude Security's three-voter panel confirm
 
 ## 6. Readers
 
-The commands and agents that load this reference are what `grep -rl 'args: "security-register-format' plugins` lists. Each reads `register.json`, and reads a finding's text as §3 says.
+The commands and agents that load this reference are what `grep -l 'args: "security-register-format' plugins/*/commands/*.md plugins/*/agents/*.md` lists — a scope this file is outside. Each reads `register.json`, and reads a finding's text as §3 says.
