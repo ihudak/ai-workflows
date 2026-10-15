@@ -9,29 +9,39 @@
   register.py --selftest
 
 The register lives at <specs>/security/<repo-slug>/: scans/<folder>/ holds a Claude Security scan's
-products, unchanged; runs/<seq>-<UTC>.json holds one run record per run that changed the register;
-register.json and register.md are rebuilt from the run records, in (seq, at, file name) order, and the
-scan folders they name -- every run rebuilds them, and nothing reads them back. Every status change is a
-decision in a run record, the automatic ones included, so a rebuild needs no git. The register is
-bookkeeping, committed by the specs repository's own session-file commit, so two runs on two
-machines can record before either has seen the other: --reserve-dir hands plan the run records other
-branches hold, and a rebuild that still finds one [SEC#n] allocated twice moves the later record's to
-the next free number and reports it. The format is workflows-core's security-register-format reference.
+products, unchanged; runs/<seq>-<UTC>-<hash8>.json holds one run record per run that changed the
+register, <hash8> being the start of the record file's own sha256; register.json and register.md are
+rebuilt from the run records, in (seq, at, file name) order, and the scan folders they name -- every
+run rebuilds them, and nothing reads them back. Every status change is a decision in a run record, the
+automatic ones included, so a rebuild needs no git. A record is replayed with the ones already held
+before it is written, and is never written where that replay fails. The register is bookkeeping,
+committed by the specs repository's own session-file commit, so two runs on two machines can record
+before either has seen the other: --reserve-dir hands plan the run records other branches hold, and a
+rebuild that still finds one [SEC#n] allocated twice moves the later record's allocation to the lowest
+number above it that no record allocates and no earlier move took, so no other record's number moves
+and no later allocation moves it again. The moved finding's follow-up line is built again with its new
+number, naming the register's slug as its repository. The first run to meet a move reports it and
+writes it into its own record's renumbered, so no later run reports it again. The format is
+workflows-core's security-register-format reference.
 
 plan: reads the register and, with --scan, the scan folder's products; prints what the scan means
 for the register -- new findings, findings reported again, possibly-same matches to confirm, findings
 a covering scan closes or proposes closing, findings it did not report, findings to reopen, findings
-whose file is gone -- plus the open findings and the accepted risks past their review-by date. Git
-is run on --repo for ancestry and file changes. Without --scan it plans a triage.
+whose file is gone, and, as unverifiable, the findings whose last sighting this clone cannot place
+(the last-seen commit absent and no squash of the finding's unit found), about which nothing is
+recorded -- plus the open findings, the accepted risks past their review-by date, and, as renumbered,
+the moves no run record has reported yet. Git is run on --repo, which must hold the scan's commit, for
+ancestry, a unit's squash commit, and the finding's file blob. Without --scan it plans a triage.
 ids: prints the [SEC#n] each new or matched finding takes, from a plan and the triage decisions.
 commit: writes the run record and rebuilds; refuses a plan the register has moved past. With
 --repo-name it also builds, for each finding the decisions mark fix, its follow-up line (with --unit)
 or /implement prompt line (without) -- from structured fields only, never a finding's text -- records
 the finding as fixing with that line, and prints the lines for the caller to emit. --role dev records
 a false positive or an accepted risk as awaiting security review; --role sec confirms it.
-rebuild: regenerates register.json and register.md from the run records.
-verify-scope: prints the files of the findings being fixed whose file changed between when each
-was last seen and --ref, and the ids whose file is gone at --ref.
+rebuild: regenerates register.json and register.md from the run records; prints the moves no run
+record has reported yet.
+verify-scope: prints the files of the findings being fixed whose file blob at --ref differs from the
+one last seen, and the ids whose file is gone at --ref.
 
 Exit 0: it ran. Exit 2: it could not run; the cause is on stderr, led by its stop code.
 Python standard library only.
@@ -39,6 +49,7 @@ Python standard library only.
 
 import argparse
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -60,8 +71,14 @@ SLUG_RE = re.compile(r"^[A-Za-z0-9._-]+$")
 CWE_RE = re.compile(r"^CWE-\d+$")
 FID_RE = re.compile(r"^F\d+$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+AT_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+COMMIT_RE = re.compile(r"^[0-9a-f]{7,40}$")
+LOCATION_RE = re.compile(r"\S+:\d+")
 SAFE_PATH_RE = re.compile(r"^[A-Za-z0-9._@+][A-Za-z0-9._/@+-]*$")
-GIT_ENV = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_OPTIONAL_LOCKS="0")
+LINKS = ("followup", "patch", "fixed_in_scan")
+SCAN_KEYS = ("folder", "id", "commit", "date", "mode", "scope", "effort", "verified", "dirty", "counted", "complete",
+             "covering", "id_version", "ancestor")
+GIT_ENV = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_OPTIONAL_LOCKS="0", GIT_LITERAL_PATHSPECS="1")
 
 
 class Unrunnable(Exception):
@@ -70,11 +87,16 @@ class Unrunnable(Exception):
 
 # ==== implementation begins: Task 3 Step 3 adds everything from here to the end marker ====
 
-# ---- paths and files ----
+# ---- paths, files and arguments ----
+
+def _segment(name):
+    """Whether name is one path component of [A-Za-z0-9._-]: never `.` or `..`, never a separator."""
+    return isinstance(name, str) and bool(SLUG_RE.match(name)) and name not in (".", "..")
+
 
 def regdir(specs, slug):
-    if not SLUG_RE.match(slug):
-        raise Unrunnable("REGISTER_BAD_SLUG: %r is not one path segment of [A-Za-z0-9._-]" % slug)
+    if not _segment(slug):
+        raise Unrunnable("REGISTER_BAD_SLUG: %r is not one path segment of [A-Za-z0-9._-]" % (slug,))
     return os.path.join(specs, "security", slug)
 
 
@@ -96,28 +118,99 @@ def _dump(obj):
     return json.dumps(obj, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
 
+def _is_date(s):
+    """A real calendar date written YYYY-MM-DD."""
+    if not isinstance(s, str) or not DATE_RE.match(s):
+        return False
+    try:
+        datetime.date.fromisoformat(s)
+    except ValueError:
+        return False
+    return True
+
+
+def _check_at(at):
+    ok = isinstance(at, str) and bool(AT_RE.match(at))
+    if ok:
+        try:
+            datetime.datetime.strptime(at, "%Y-%m-%dT%H:%M:%SZ")
+        except ValueError:
+            ok = False
+    if not ok:
+        raise Unrunnable("REGISTER_BAD_ARGS: --at %r is not an ISO-8601 UTC time written YYYY-MM-DDTHH:MM:SSZ" % (at,))
+
+
 # ---- git, on the code repository ----
 
 def _git(repo, *args):
     return subprocess.run(["git", "-C", repo] + list(args), capture_output=True, text=True, env=GIT_ENV)
 
 
+def _git_fail(what, repo, r):
+    return Unrunnable("REGISTER_GIT: %s in %s: %s" % (what, repo, r.stderr.strip() or "exit %d" % r.returncode))
+
+
+def _rev(repo, rev, what):
+    """The commit rev names in repo; REGISTER_GIT, naming it, where it names none."""
+    r = _git(repo, "rev-parse", "--verify", "--quiet", "--end-of-options", rev + "^{commit}")
+    if r.returncode != 0 or not r.stdout.strip():
+        why = r.stderr.strip()
+        raise Unrunnable("REGISTER_GIT: %s %r is not a commit in %s%s" % (what, rev, repo, (": " + why) if why else ""))
+    return r.stdout.strip()
+
+
+def present(repo, commit):
+    """Whether a recorded commit is in this clone. Another clone can hold one this clone never fetched."""
+    r = _git(repo, "rev-parse", "--verify", "--quiet", "--end-of-options", "%s^{commit}" % commit)
+    if r.returncode in (0, 1):
+        return r.returncode == 0
+    raise _git_fail("rev-parse %s" % commit, repo, r)
+
+
 def is_ancestor(repo, a, b):
     r = _git(repo, "merge-base", "--is-ancestor", a, b)
     if r.returncode in (0, 1):
         return r.returncode == 0
-    raise Unrunnable("REGISTER_GIT: merge-base --is-ancestor %s %s in %s: %s" % (a, b, repo, r.stderr.strip()))
+    raise _git_fail("merge-base --is-ancestor %s %s" % (a, b), repo, r)
 
 
 def file_changed(repo, a, b, path):
     r = _git(repo, "diff", "--quiet", a, b, "--", path)
     if r.returncode in (0, 1):
         return r.returncode == 1
-    raise Unrunnable("REGISTER_GIT: diff %s %s -- %s in %s: %s" % (a, b, path, repo, r.stderr.strip()))
+    raise _git_fail("diff %s %s -- %s" % (a, b, path), repo, r)
 
 
 def file_exists(repo, commit, path):
+    """Whether path exists at commit. The commit is verified first, so any failure here means it does not."""
     return _git(repo, "cat-file", "-e", "%s:%s" % (commit, path)).returncode == 0
+
+
+def blob(repo, commit, path):
+    """The git object path names at commit, or None where it cannot be read there."""
+    r = _git(repo, "rev-parse", "--verify", "--quiet", "--end-of-options", "%s:%s" % (commit, path))
+    return (r.stdout.strip() or None) if r.returncode == 0 else None
+
+
+def commit_date(repo, commit):
+    r = _git(repo, "show", "-s", "--format=%cI", commit, "--")
+    if r.returncode != 0 or not r.stdout.strip():
+        raise _git_fail("show -s --format=%%cI %s" % commit, repo, r)
+    return r.stdout.strip()
+
+
+def squashed(repo, commit, units, date):
+    """Whether commit carries a squash of a unit's work: a commit made no earlier than the day before date,
+    whose subject holds `[<key>]` for a key in units -- the merged test's subject leg. The brackets are not
+    key characters, so `[<key>]` matches only the whole key, never the start of a longer one."""
+    if not units or not isinstance(date, str) or not _is_date(date[:10]):
+        return False
+    since = (datetime.date.fromisoformat(date[:10]) - datetime.timedelta(days=1)).isoformat() + " 00:00"
+    r = _git(repo, "log", "--no-merges", "--since=" + since, "--format=%s", commit, "--")
+    if r.returncode != 0:
+        raise _git_fail("log --no-merges --since=%s %s" % (since, commit), repo, r)
+    tokens = ["[%s]" % k for k in units]
+    return any(t in s for s in r.stdout.splitlines() for t in tokens)
 
 
 # ---- the scan's products ----
@@ -140,6 +233,9 @@ def load_scan(folder):
     stamp = _json(os.path.join(folder, where))
     revision = _need(stamp, "revision", dict, where)
     verification = _need(stamp, "verification", dict, where)
+    commit = _need(revision, "commit", str, where + ": revision")
+    if not COMMIT_RE.match(commit):
+        raise Unrunnable("SCAN_PRODUCTS_UNREADABLE: %s: revision: commit %r is not a commit id" % (where, commit))
     run_shape = stamp.get("run_shape") if isinstance(stamp.get("run_shape"), dict) else {}
     rc = run_shape.get("research_coverage")
     meta = {
@@ -147,7 +243,7 @@ def load_scan(folder):
         "mode": _need(stamp, "mode", str, where),
         "scope": [s for s in _need(stamp, "scope", list, where) if isinstance(s, str)],
         "effort": _need(stamp, "effort", str, where),
-        "commit": _need(revision, "commit", str, where + ": revision"),
+        "commit": commit,
         "dirty": revision.get("dirty") is not False,
         "verified": _need(verification, "status", str, where + ": verification") == "verified",
         # Claude Security counts what its researchers read only where it keeps its component matrix:
@@ -159,7 +255,7 @@ def load_scan(folder):
     path = os.path.join(folder, JSONL)
     if not os.path.isfile(path):
         raise Unrunnable("SCAN_PRODUCTS_UNREADABLE: %s has no %s" % (folder, JSONL))
-    findings = []
+    findings, seen = [], {}
     with open(path, encoding="utf-8") as fh:
         for n, raw in enumerate(fh, 1):
             if not raw.strip():
@@ -172,12 +268,17 @@ def load_scan(folder):
             pid = _need(rec, "claudeSecurityPluginFindingId", str, w)
             if ":" not in pid:
                 raise Unrunnable("SCAN_PRODUCTS_UNREADABLE: %s: claudeSecurityPluginFindingId has no ID_VERSION prefix" % w)
+            fid = _need(rec, "id", str, w)
+            if pid in seen:
+                raise Unrunnable("SCAN_PRODUCTS_UNREADABLE: %s: %s and %s carry the same claudeSecurityPluginFindingId %s"
+                                 % (JSONL, seen[pid], fid, pid))
+            seen[pid] = fid
             severity = _need(rec, "severity", str, w).strip().upper()
             if severity not in SEVERITIES:
                 raise Unrunnable("SCAN_PRODUCTS_UNREADABLE: %s: severity %r is not one of %s" % (w, severity, ", ".join(SEVERITIES)))
             others = rec.get("other_cwe_ids") if isinstance(rec.get("other_cwe_ids"), list) else []
             findings.append({
-                "pid": pid, "version": pid.split(":", 1)[0], "fid": _need(rec, "id", str, w),
+                "pid": pid, "version": pid.split(":", 1)[0], "fid": fid,
                 "title": _need(rec, "title", str, w), "path": _need(rec, "file", str, w),
                 "line": _need(rec, "line", int, w), "severity": severity,
                 "confidence": _need(rec, "confidence", str, w), "cwe": _need(rec, "cwe_id", str, w),
@@ -204,6 +305,19 @@ def covers(scan, path):
     return scan["complete"] and any(path.startswith(s + "/") for s in scope)
 
 
+# ---- follow-up lines ----
+
+def _followup_line(n, cwe, path, line, patch, repo_name, unit):
+    """A follow-up line (with a unit) or an /implement prompt line (without), from structured fields only."""
+    loc = ("`%s:%d`" % (path, line)) if SAFE_PATH_RE.match(path) else "the location register.md records"
+    cwe = cwe if CWE_RE.match(cwe) else "CWE unknown"
+    start = (", starting from `%s`" % patch) if patch else ", with no patch from the scan"
+    if unit:
+        return ("- [ ] Run `/dev-workflows:implement %s` from repository `%s`: fix [SEC#%d] (%s) at %s%s"
+                " — raised by /security-workflows:scan" % (unit, repo_name, n, cwe, loc, start))
+    return "Fix [SEC#%d] (%s) at %s in repository `%s`%s." % (n, cwe, loc, repo_name, start)
+
+
 # ---- replay ----
 
 def _load_records(d):
@@ -227,44 +341,53 @@ def records(specs, slug):
     return _load_records(os.path.join(regdir(specs, slug), "runs"))
 
 
-def _new_finding(n, f, scan, unit):
-    seen = {"scan": scan["id"], "commit": scan["commit"]}
+def _seen(scan, b):
+    return {"scan": scan["id"], "commit": scan["commit"], "date": scan.get("date"), "blob": b}
+
+
+def _new_finding(n, f, scan, unit, b):
     return {"id": n, "plugin_id": f["pid"], "plugin_id_version": f["version"], "title": f["title"],
             "cwe": f["cwe"], "other_cwes": f["other_cwes"], "severity": f["severity"],
             "confidence": f["confidence"], "path": f["path"], "line": f["line"],
-            "first_seen": dict(seen), "last_seen": dict(seen), "reported_by": [scan["id"]],
+            "first_seen": _seen(scan, b), "last_seen": _seen(scan, b), "reported_by": [scan["id"]],
             "not_reported_by": [], "units": [unit] if unit else [], "status": "new", "owner": None,
             "review_by": None, "confirmed": None, "history": [], "links": {}}
 
 
-def _apply(specs, slug, st, r):
+def _apply(specs, slug, st, r, taken, moved):
     seq, unit, scan = r["seq"], r.get("unit"), r.get("scan")
     fs = st["findings"]
-    # A record that allocated a number an earlier record already holds was planned on another branch
-    # before either saw the other. Its allocation moves to the next free number, and the move is reported.
+    # A record that allocated a number an earlier record already holds was planned on another branch before
+    # either saw the other. Its allocation moves to the lowest number above it that no record allocates and no
+    # earlier move took: no other record's number moves, and no later allocation can move it again.
     remap = {}
-    taken = set(fs) | {e["id"] for e in r.get("allocated", [])}
     for e in r.get("allocated", []):
         if e["id"] in fs:
-            new = max(taken | set(remap.values())) + 1
+            new = e["id"] + 1
+            while new in taken or new in moved:
+                new += 1
+            moved.add(new)
             remap[e["id"]] = new
             st["renumbered"].append({"run": r["_file"], "from": e["id"], "to": new})
     rid = lambda n: remap.get(n, n)
     if scan:
+        if not _segment(scan.get("folder")):
+            raise Unrunnable("REGISTER_UNREADABLE: run %s names scan folder %r, which is not one path component"
+                             % (r["_file"], scan.get("folder")))
         st["scans"].append(dict(scan, seq=seq))
         _, found = load_scan(os.path.join(regdir(specs, slug), "scans", scan["folder"]))
         placed = {}
         for e in r.get("allocated", []):
-            placed[e["plugin_id"]] = ("allocated", rid(e["id"]))
+            placed[e["plugin_id"]] = ("allocated", rid(e["id"]), e.get("blob"))
         for how in ("matched", "again"):
             for e in r.get(how, []):
-                placed[e["plugin_id"]] = (how, e["id"])
+                placed[e["plugin_id"]] = (how, e["id"], e.get("blob"))
         for f in found:
             if f["pid"] not in placed:
                 raise Unrunnable("REGISTER_UNREADABLE: run %d leaves finding %s of scan %s unplaced" % (seq, f["pid"], scan["id"]))
-            how, n = placed[f["pid"]]
+            how, n, b = placed[f["pid"]]
             if how == "allocated":
-                fs[n] = _new_finding(n, f, scan, unit)
+                fs[n] = _new_finding(n, f, scan, unit, b)
                 continue
             g = fs.get(n)
             if g is None:
@@ -274,13 +397,15 @@ def _apply(specs, slug, st, r):
             if scan["id"] not in g["reported_by"]:
                 g["reported_by"].append(scan["id"])
             if not scan.get("ancestor"):
-                g["last_seen"] = {"scan": scan["id"], "commit": scan["commit"]}
+                g["last_seen"] = _seen(scan, b)
                 for k, v in (("title", f["title"]), ("severity", f["severity"]), ("confidence", f["confidence"]),
                              ("cwe", f["cwe"]), ("other_cwes", f["other_cwes"]), ("path", f["path"]), ("line", f["line"])):
                     g[k] = v
                 if unit and unit not in g["units"]:
                     g["units"].append(unit)
         for n in r.get("not_reported", []):
+            if n not in fs:
+                raise Unrunnable("REGISTER_UNREADABLE: run %d names [SEC#%d], which no earlier run allocated" % (seq, n))
             if scan["id"] not in fs[n]["not_reported_by"]:
                 fs[n]["not_reported_by"].append(scan["id"])
     for d in r.get("decisions", []):
@@ -288,62 +413,115 @@ def _apply(specs, slug, st, r):
         g = fs.get(n)
         if g is None:
             raise Unrunnable("REGISTER_UNREADABLE: run %d decides [SEC#%d], which does not exist" % (seq, d["id"]))
+        links = dict(d.get("links") or {})
+        if n != d["id"] and "followup" in links:
+            # The line cites the number the record allocated. It is built again, as it was first built, with the
+            # new number; it names the register's slug, which is what /security-workflows:scan passes as --repo-name.
+            links["followup"] = _followup_line(n, g["cwe"], g["path"], g["line"], links.get("patch"), st["repo"], unit)
         g["status"] = d["status"]
         g["owner"] = d.get("owner") if d["status"] == "accepted-risk" else None
         g["review_by"] = d.get("review_by") if d["status"] == "accepted-risk" else None
         g["confirmed"] = bool(d.get("confirmed")) if d["status"] in REVIEWED else None
+        if d["status"] == "reopened":
+            for k in LINKS:  # what the fix left behind no longer holds; the history keeps it
+                g["links"].pop(k, None)
+        g["links"].update(links)
         g["history"].append({"status": d["status"], "at": r["at"], "by": r["by"], "reason": d.get("reason", ""),
-                             "evidence": d.get("evidence", ""), "role": r.get("role"), "run": seq})
-        g["links"].update(d.get("links") or {})
-        if d["status"] == "fixed" and scan:
-            g["links"]["fixed_in_scan"] = scan["id"]
+                             "evidence": d.get("evidence", ""), "role": r.get("role"), "run": seq, "links": links})
     if fs:
         st["next_id"] = max(fs) + 1
     st["next_seq"] = max(st["next_seq"], seq + 1)
     st["last_at"] = r["at"]
 
 
-def replay(specs, slug):
+def _replay(specs, slug, recs):
     st = {"format": 1, "repo": slug, "next_id": 1, "next_seq": 1, "last_at": None, "scans": [], "findings": {},
           "renumbered": []}
-    for r in records(specs, slug):
-        _apply(specs, slug, st, r)
+    taken = {e["id"] for r in recs for e in r.get("allocated", [])}
+    moved = set()
+    for r in recs:
+        _apply(specs, slug, st, r, taken, moved)
     return st
+
+
+def replay(specs, slug):
+    return _replay(specs, slug, records(specs, slug))
+
+
+def _unacked(recs, moves):
+    """The moves no record's renumbered acknowledges yet: the ones the next run reports, and records."""
+    acked = {(m.get("run"), m.get("from"), m.get("to")) for r in recs for m in (r.get("renumbered") or [])
+             if isinstance(m, dict)}
+    return [m for m in moves if (m["run"], m["from"], m["to"]) not in acked]
 
 
 # ---- plan ----
 
+def _later(repo, g, commit):
+    """True or False where the clone can place the finding's last sighting against commit; None where it cannot."""
+    last = g["last_seen"]
+    here = present(repo, last["commit"])
+    if here and is_ancestor(repo, last["commit"], commit):
+        return True
+    if squashed(repo, commit, g["units"], last.get("date")):
+        return True
+    return False if here else None
+
+
+def _changed(repo, g, commit):
+    """Whether the finding's file changed between its last sighting and commit; None where that cannot be told."""
+    last = g["last_seen"]
+    if last.get("blob") is not None:
+        return blob(repo, commit, g["path"]) != last["blob"]
+    if present(repo, last["commit"]):
+        return file_changed(repo, last["commit"], commit, g["path"])
+    return None
+
+
 def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None):
     if unit is not None and not KEY_RE.match(unit):
         raise Unrunnable("REGISTER_BAD_UNIT: %r is not a key" % unit)
-    st = replay(specs, slug)
+    if not _is_date(today):
+        raise Unrunnable("REGISTER_BAD_ARGS: --today %r is not a date written YYYY-MM-DD" % (today,))
+    if scan_folder is not None and not _segment(scan_folder):
+        raise Unrunnable("REGISTER_BAD_ARGS: --scan %r is not one path component of [A-Za-z0-9._-]" % (scan_folder,))
+    recs = records(specs, slug)
+    st = _replay(specs, slug, recs)
     fs = st["findings"]
     # Run records another branch holds and this checkout lacks: their numbers are taken already.
-    local = {r["_file"] for r in records(specs, slug)}
+    local = {r["_file"] for r in recs}
     reserved = [r for r in _load_records(reserve_dir) if r["_file"] not in local] if reserve_dir else []
     next_id = max([st["next_id"]] + [e["id"] + 1 for r in reserved for e in r.get("allocated", [])])
     next_seq = max([st["next_seq"]] + [r["seq"] + 1 for r in reserved])
     out = {"format": 1, "repo": slug, "unit": unit, "today": today, "base_id": st["next_id"],
            "base_seq": st["next_seq"], "next_id": next_id, "next_seq": next_seq, "reserved": len(reserved),
+           "renumbered": _unacked(recs, st["renumbered"]),
            "scan": None, "already_recorded": False, "id_version_changed": False,
            "new": [], "again": [], "possibly_same": [], "closable": [], "not_reported": [], "reopen": [],
-           "gone": [], "open": [], "review_due": [], "unconfirmed": []}
+           "gone": [], "unverifiable": [], "open": [], "review_due": [], "unconfirmed": []}
     ordered = [fs[k] for k in sorted(fs)]
     if scan_folder:
         meta, found = load_scan(os.path.join(regdir(specs, slug), "scans", scan_folder))
         if any(s["id"] == meta["id"] for s in st["scans"]):
             out["already_recorded"] = True
             return out
+        sha = meta["commit"]
+        _rev(repo, sha, "the scan's commit")  # it must be in the clone; every later git question depends on it
+        meta["date"] = commit_date(repo, sha)
         versions = {f["version"] for f in found}
         if len(versions) > 1:
             raise Unrunnable("SCAN_PRODUCTS_UNREADABLE: %s mixes finding-ID versions %s" % (scan_folder, sorted(versions)))
         version = versions.pop() if versions else None
-        ancestor = any(is_ancestor(repo, meta["commit"], s["commit"]) for s in st["scans"] if s["commit"] != meta["commit"])
+        # A recorded commit this clone lacks is passed over: it says nothing about this clone's history.
+        ancestor = any(present(repo, s["commit"]) and is_ancestor(repo, sha, s["commit"])
+                       for s in st["scans"] if s["commit"] != sha)
         scan = dict(meta, folder=scan_folder, id_version=version, ancestor=ancestor)
         scan["covering"] = covering(scan)
         out["scan"] = scan
-        changed_version = version is not None and any(g["plugin_id_version"] != version for g in ordered)
-        out["id_version_changed"] = changed_version
+        out["id_version_changed"] = version is not None and any(
+            g["status"] in ACTIVE and g["plugin_id_version"] != version for g in ordered)
+        for f in found:
+            f["blob"] = blob(repo, sha, f["path"])
         by_pid = {g["plugin_id"]: g for g in ordered if g["plugin_id_version"] == version}
         claimed = set()
         for f in found:
@@ -352,14 +530,15 @@ def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None):
                 continue
             claimed.add(g["id"])
             out["again"].append({"plugin_id": f["pid"], "id": g["id"], "fid": f["fid"], "cwe": f["cwe"],
-                                 "path": f["path"], "line": f["line"]})
+                                 "path": f["path"], "line": f["line"], "blob": f["blob"]})
             if g["status"] == "fixed" and not ancestor:
                 out["reopen"].append(g["id"])
         for f in found:
             if f["pid"] in by_pid:
                 continue
             entry = {"plugin_id": f["pid"], "fid": f["fid"], "title": f["title"], "severity": f["severity"],
-                     "confidence": f["confidence"], "cwe": f["cwe"], "path": f["path"], "line": f["line"]}
+                     "confidence": f["confidence"], "cwe": f["cwe"], "path": f["path"], "line": f["line"],
+                     "blob": f["blob"]}
             cands = [g["id"] for g in ordered if g["id"] not in claimed and g["path"] == f["path"]
                      and g["cwe"] == f["cwe"] and abs(g["line"] - f["line"]) <= NEAR]
             if cands:
@@ -373,14 +552,22 @@ def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None):
             for g in ordered:
                 if g["status"] not in ACTIVE or g["id"] in claimed or g["id"] in cand_ids:
                     continue
-                if not file_exists(repo, meta["commit"], g["path"]):
+                if not file_exists(repo, sha, g["path"]):
                     out["gone"].append(g["id"])
                     continue
-                if changed_version or not covers(scan, g["path"]):
+                # Rule 3, per finding: one recorded under another ID_VERSION is not judged by this scan. A scan
+                # that reported nothing has no version to compare, so it judges every finding.
+                if version is not None and g["plugin_id_version"] != version:
                     continue
-                last = g["last_seen"]["commit"]
-                moved = is_ancestor(repo, last, meta["commit"]) and file_changed(repo, last, meta["commit"], g["path"])
-                if moved:
+                if not covers(scan, g["path"]):
+                    continue
+                later = _later(repo, g, sha)
+                if later is False:
+                    continue  # not later than its last sighting: no evidence about it either way
+                changed = _changed(repo, g, sha) if later else None
+                if later is None or changed is None:
+                    out["unverifiable"].append(g["id"])
+                elif changed:
                     out["closable"].append({"id": g["id"], "auto": g["status"] == "fixing"})
                 else:
                     out["not_reported"].append(g["id"])
@@ -398,12 +585,53 @@ def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None):
 
 # ---- decisions ----
 
+def _check_decisions(dec):
+    """The decisions file's shape, entry by entry; TRIAGE_INVALID names the first entry that is wrong."""
+    def bad(what, entry=None):
+        shown = "" if entry is None else ": " + json.dumps(entry, ensure_ascii=False, sort_keys=True)[:200]
+        return Unrunnable("TRIAGE_INVALID: the decisions file's %s%s" % (what, shown))
+    if not isinstance(dec, dict):
+        raise bad("top level is not an object")
+    for key in ("matches", "rejects", "decisions"):
+        if not isinstance(dec.get(key, []), list):
+            raise bad("%s is not a list" % key)
+    for i, m in enumerate(dec.get("matches", [])):
+        if not (isinstance(m, dict) and isinstance(m.get("plugin_id"), str) and isinstance(m.get("id"), int)
+                and not isinstance(m.get("id"), bool)):
+            raise bad("matches[%d] is not {plugin_id: string, id: integer}" % i, m)
+    for i, pid in enumerate(dec.get("rejects", [])):
+        if not isinstance(pid, str):
+            raise bad("rejects[%d] is not a string" % i, pid)
+    for i, d in enumerate(dec.get("decisions", [])):
+        where = "decisions[%d]" % i
+        if not isinstance(d, dict):
+            raise bad(where + " is not an object", d)
+        for k in ("target", "status"):
+            if not isinstance(d.get(k), str):
+                raise bad("%s: %s is missing or not a string" % (where, k), d)
+        for k in ("reason", "evidence"):
+            if k in d and not isinstance(d[k], str):
+                raise bad("%s: %s is not a string" % (where, k), d)
+        if d.get("review_by") is not None and not isinstance(d["review_by"], str):
+            raise bad("%s: review_by is not a string" % where, d)
+        links = d.get("links")
+        if links is not None and not (isinstance(links, dict) and all(isinstance(v, str) for v in links.values())):
+            raise bad("%s: links is not an object of strings" % where, d)
+        if links and "fixed_in_scan" in links:
+            raise bad("%s: links.fixed_in_scan is register.py's to set, from the scan that closed the finding" % where, d)
+
+
 def allocate(p, dec):
     """(allocated, matched): the [SEC#n] each new finding takes, in plan order, and each confirmed match."""
+    _check_decisions(dec)
     if not p["scan"]:
         return [], []
     ps = {e["plugin_id"]: e for e in p["possibly_same"]}
-    matches = {m["plugin_id"]: m["id"] for m in dec.get("matches", [])}
+    matches = {}
+    for m in dec.get("matches", []):
+        if m["plugin_id"] in matches:
+            raise Unrunnable("TRIAGE_INVALID: %s is matched twice" % m["plugin_id"])
+        matches[m["plugin_id"]] = m["id"]
     rejects = set(dec.get("rejects", []))
     for pid in list(matches) + list(rejects):
         if pid not in ps:
@@ -417,10 +645,10 @@ def allocate(p, dec):
         raise Unrunnable("TRIAGE_INVALID: two findings are matched to one [SEC#n]")
     n, allocated = p["next_id"], []
     for e in p["new"] + [e for e in p["possibly_same"] if e["plugin_id"] in rejects]:
-        allocated.append({"plugin_id": e["plugin_id"], "id": n})
+        allocated.append({"plugin_id": e["plugin_id"], "id": n, "blob": e.get("blob")})
         n += 1
-    matched = [{"plugin_id": e["plugin_id"], "id": matches[e["plugin_id"]]} for e in p["possibly_same"]
-               if e["plugin_id"] in matches]
+    matched = [{"plugin_id": e["plugin_id"], "id": matches[e["plugin_id"]], "blob": e.get("blob")}
+               for e in p["possibly_same"] if e["plugin_id"] in matches]
     return allocated, matched
 
 
@@ -429,25 +657,31 @@ def resolve(p, dec, st, allocated, matched, role):
     known = set(st["findings"]) | set(ids.values())
     out = []
     for d in dec.get("decisions", []):
-        t = str(d.get("target", ""))
+        t = d["target"]
         if t.startswith("plugin:") and t[7:] in ids:
             n = ids[t[7:]]
         elif t.startswith("id:") and t[3:].isdigit() and int(t[3:]) in known:
             n = int(t[3:])
         else:
             raise Unrunnable("TRIAGE_INVALID: decision target %r names no finding of this register or plan" % t)
-        s = d.get("status")
+        s = d["status"]
         if s not in STATUSES:
             raise Unrunnable("TRIAGE_INVALID: [SEC#%d]: status %r is not one of %s" % (n, s, ", ".join(STATUSES)))
-        reason, evidence, review_by = str(d.get("reason", "")), str(d.get("evidence", "")), d.get("review_by")
-        if s == "false-positive" and not evidence.strip():
-            raise Unrunnable("TRIAGE_INVALID: [SEC#%d]: a false positive names its evidence" % n)
-        if s == "accepted-risk" and (not reason.strip() or not isinstance(review_by, str) or not DATE_RE.match(review_by)):
+        reason, evidence, review_by = d.get("reason", ""), d.get("evidence", ""), d.get("review_by")
+        if s == "false-positive" and not LOCATION_RE.search(evidence):
+            raise Unrunnable("TRIAGE_INVALID: [SEC#%d]: a false positive names its evidence, the file:line of the guard"
+                             " that defeats the exploit" % n)
+        if s == "accepted-risk" and (not reason.strip() or not _is_date(review_by)):
             raise Unrunnable("TRIAGE_INVALID: [SEC#%d]: an accepted risk names a reason and a review-by date (YYYY-MM-DD)" % n)
         out.append({"id": n, "status": s, "reason": reason, "evidence": evidence,
                     "review_by": review_by if s == "accepted-risk" else None, "owner": None,
-                    "confirmed": (role == "sec") if s in REVIEWED else None, "links": d.get("links") or {}})
+                    "confirmed": (role == "sec") if s in REVIEWED else None, "links": dict(d.get("links") or {})})
     return out
+
+
+def _auto(n, status, reason, links=None):
+    return {"id": n, "status": status, "reason": reason, "evidence": "", "review_by": None, "owner": None,
+            "confirmed": None, "links": links or {}}
 
 
 def commit(specs, slug, p, dec, by, kind, unit, at, role="sec", repo_name=None):
@@ -455,32 +689,45 @@ def commit(specs, slug, p, dec, by, kind, unit, at, role="sec", repo_name=None):
         raise Unrunnable("REGISTER_BAD_KIND: %r is not one of %s" % (kind, ", ".join(KINDS)))
     if role not in ROLES:
         raise Unrunnable("REGISTER_BAD_ROLE: %r is not one of %s" % (role, ", ".join(ROLES)))
+    _check_at(at)
+    if unit is not None and not KEY_RE.match(unit):
+        raise Unrunnable("REGISTER_BAD_UNIT: %r is not a key" % unit)
     if p.get("already_recorded"):
         raise Unrunnable("SCAN_ALREADY_RECORDED: this scan is in the register already; nothing to commit")
-    st = replay(specs, slug)
+    recs = records(specs, slug)
+    st = _replay(specs, slug, recs)
     if st["next_seq"] != p["base_seq"] or st["next_id"] != p["base_id"]:
         raise Unrunnable("REGISTER_MOVED: the register gained a run since this run planned -- plan again")
     allocated, matched = allocate(p, dec)
     scan = p["scan"]
+    user = resolve(p, dec, st, allocated, matched, role)
+    decided = {d["id"] for d in user}
     auto = []
     for c in p["closable"]:
         if c["auto"]:
-            auto.append({"id": c["id"], "status": "fixed", "reason": "covering scan %s no longer reports it, and its file"
-                         " changed since it was last seen" % scan["id"], "evidence": "", "review_by": None, "owner": None, "links": {}})
-    reopen = list(p["reopen"]) + [m["id"] for m in matched
-                                  if st["findings"][m["id"]]["status"] == "fixed" and not scan["ancestor"]]
+            auto.append(_auto(c["id"], "fixed", "covering scan %s no longer reports it, and its file changed since"
+                              " it was last seen" % scan["id"], {"fixed_in_scan": scan["id"]}))
+    reopen = list(p["reopen"])
+    for m in matched:
+        if scan["ancestor"]:
+            continue
+        status = st["findings"][m["id"]]["status"]
+        if status == "fixed":
+            reopen.append(m["id"])
+        elif status in REVIEWED and m["id"] not in decided:
+            # A possibly-same match is changed code: the judgement no longer covers it.
+            auto.append(_auto(m["id"], "open", "a possibly-same match in scan %s: its code changed" % scan["id"]))
     for n in reopen:
-        auto.append({"id": n, "status": "reopened", "reason": "reported again by scan %s" % scan["id"],
-                     "evidence": "", "review_by": None, "owner": None, "links": {}})
-    user = resolve(p, dec, st, allocated, matched, role)
-    decided = {d["id"] for d in user}
+        auto.append(_auto(n, "reopened", "reported again by scan %s" % scan["id"]))
     for a in allocated:
         if a["id"] not in decided:
-            auto.append({"id": a["id"], "status": "open", "reason": "decide later", "evidence": "",
-                         "review_by": None, "owner": None, "links": {}})
+            auto.append(_auto(a["id"], "open", "decide later"))
+    closing = ({c["id"] for c in p["closable"]} | set(p["gone"])) if scan else set()
     for d in user:
         if d["status"] == "accepted-risk":
             d["owner"] = by
+        if d["status"] == "fixed" and d["id"] in closing:
+            d["links"]["fixed_in_scan"] = scan["id"]
     lines = []
     if repo_name is not None:
         for d, line, patch in _followups(specs, slug, p, st, allocated, matched, user, repo_name, unit):
@@ -488,20 +735,28 @@ def commit(specs, slug, p, dec, by, kind, unit, at, role="sec", repo_name=None):
             links = {"followup": line}
             if patch:
                 links["patch"] = patch
-            user.append({"id": d["id"], "status": "fixing", "reason": "follow-up written", "evidence": "",
-                         "review_by": None, "owner": None, "confirmed": None, "links": links})
+            user.append(_auto(d["id"], "fixing", "follow-up written", links))
     rec = {"format": 1, "seq": p["next_seq"], "at": at, "by": by, "kind": kind, "role": role, "unit": unit,
-           "scan": ({k: scan[k] for k in ("folder", "id", "commit", "mode", "scope", "effort", "verified", "dirty",
-                                          "counted", "complete", "covering", "id_version", "ancestor")} if scan else None),
+           "scan": {k: scan[k] for k in SCAN_KEYS} if scan else None,
            "allocated": allocated, "matched": matched,
-           "again": [{"plugin_id": e["plugin_id"], "id": e["id"]} for e in p["again"]] if scan else [],
-           "not_reported": list(p["not_reported"]) if scan else [], "decisions": auto + user}
-    stamp = at.replace("-", "").replace(":", "")
-    rel = os.path.join("runs", "%04d-%s.json" % (rec["seq"], stamp))
-    _write(os.path.join(regdir(specs, slug), rel), _dump(rec))
-    st = rebuild(specs, slug)
+           "again": [{"plugin_id": e["plugin_id"], "id": e["id"], "blob": e.get("blob")} for e in p["again"]] if scan else [],
+           "not_reported": list(p["not_reported"]) if scan else [], "decisions": auto + user,
+           "renumbered": _unacked(recs, st["renumbered"])}
+    text = _dump(rec)
+    name = "%04d-%s-%s.json" % (rec["seq"], at.replace("-", "").replace(":", ""),
+                                hashlib.sha256(text.encode("utf-8")).hexdigest()[:8])
+    # Replay the record with the ones already held before anything is written: a record that cannot be
+    # replayed would stop the register loading for every later run.
+    try:
+        _replay(specs, slug, sorted(recs + [dict(json.loads(text), _file=name)],
+                                    key=lambda r: (r["seq"], r["at"], r["_file"])))
+    except Unrunnable as e:
+        raise Unrunnable("%s (the run record was not written)" % e)
+    rel = os.path.join("runs", name)
+    _write(os.path.join(regdir(specs, slug), rel), text)
+    rebuild(specs, slug)
     return {"record": os.path.join("security", slug, rel), "ids": {e["plugin_id"]: e["id"] for e in allocated + matched},
-            "followups": lines, "renumbered": st["renumbered"]}
+            "followups": lines, "renumbered": rec["renumbered"]}
 
 
 # ---- follow-ups ----
@@ -524,20 +779,12 @@ def _followups(specs, slug, p, st, allocated, matched, user, repo_name, unit):
         if d["status"] != "fix":
             continue
         cwe, path, line, fid = info[d["id"]]
-        loc = ("`%s:%d`" % (path, line)) if SAFE_PATH_RE.match(path) else "the location register.md records"
-        cwe = cwe if CWE_RE.match(cwe) else "CWE unknown"
         patch = None
         if p["scan"] and fid and FID_RE.match(fid):
             rel = "security/%s/scans/%s/patches/%s.patch" % (slug, p["scan"]["folder"], fid)
             if os.path.isfile(os.path.join(specs, rel)):
                 patch = rel
-        start = (", starting from `%s`" % patch) if patch else ", with no patch from the scan"
-        if unit:
-            line_text = ("- [ ] Run `/dev-workflows:implement %s` from repository `%s`: fix [SEC#%d] (%s) at %s%s"
-                         " — raised by /security-workflows:scan" % (unit, repo_name, d["id"], cwe, loc, start))
-        else:
-            line_text = "Fix [SEC#%d] (%s) at %s in repository `%s`%s." % (d["id"], cwe, loc, repo_name, start)
-        out.append((d, line_text, patch))
+        out.append((d, _followup_line(d["id"], cwe, path, line, patch, repo_name, unit), patch))
     return out
 
 
@@ -552,15 +799,18 @@ def followup_lines(specs, slug, p, dec, repo_name, unit, role="dev"):
 # ---- verify-fixes scope ----
 
 def verify_scope(specs, slug, repo, ref, unit):
+    if unit is not None and not KEY_RE.match(unit):
+        raise Unrunnable("REGISTER_BAD_UNIT: %r is not a key" % unit)
+    sha = _rev(repo, ref, "--ref")
     st = replay(specs, slug)
     files, gone = [], []
     for n in sorted(st["findings"]):
         g = st["findings"][n]
         if g["status"] != "fixing" or (unit is not None and unit not in g["units"]):
             continue
-        if not file_exists(repo, ref, g["path"]):
+        if not file_exists(repo, sha, g["path"]):
             gone.append(n)
-        elif file_changed(repo, g["last_seen"]["commit"], ref, g["path"]):
+        elif _changed(repo, g, sha):  # the blob decides; a change that cannot be told is not listed
             files.append(g["path"])
     return {"files": sorted(set(files)), "gone": gone}
 
@@ -604,15 +854,15 @@ def render(st):
     table("Being fixed", ["ID", "Severity", "CWE", "Location", "Patch"],
           [["[SEC#%d]" % g["id"], g["severity"], g["cwe"], _loc(g), g["links"].get("patch", "none")]
            for g in sorted(by("fix", "fixing"), key=lambda g: (sev(g), g["id"]))])
+    table("Awaiting security review", ["ID", "Status", "CWE", "Location", "Decided by", "Reason or evidence"],
+          [["[SEC#%d]" % g["id"], g["status"], g["cwe"], _loc(g), g["history"][-1]["by"] if g["history"] else "",
+            (g["history"][-1]["evidence"] or g["history"][-1]["reason"]) if g["history"] else ""]
+           for g in fs if g["status"] in REVIEWED and g.get("confirmed") is False])
     today = (st["last_at"] or "")[:10]  # the last run's date, so a rebuild never depends on the clock
     table("Risk register", ["ID", "Severity", "CWE", "Location", "Owner", "Review by", "Reason"],
           [["[SEC#%d]" % g["id"], g["severity"], g["cwe"], _loc(g), g["owner"] or "",
             (g["review_by"] or "") + (" (review due)" if g["review_by"] and g["review_by"] < today else ""),
             g["history"][-1]["reason"] if g["history"] else ""] for g in by("accepted-risk")])
-    table("Awaiting security review", ["ID", "Status", "CWE", "Location", "Decided by", "Reason or evidence"],
-          [["[SEC#%d]" % g["id"], g["status"], g["cwe"], _loc(g), g["history"][-1]["by"] if g["history"] else "",
-            (g["history"][-1]["evidence"] or g["history"][-1]["reason"]) if g["history"] else ""]
-           for g in fs if g["status"] in REVIEWED and g.get("confirmed") is False])
     table("False-positive log", ["ID", "CWE", "Location", "Evidence", "Decided by"],
           [["[SEC#%d]" % g["id"], g["cwe"], _loc(g), g["history"][-1]["evidence"] if g["history"] else "",
             g["history"][-1]["by"] if g["history"] else ""] for g in by("false-positive")])
@@ -668,14 +918,22 @@ def _repo(tmp):
     return repo, _g(repo, "rev-parse", "HEAD")
 
 
-def _change(repo, rel, text):
+def _change(repo, rel, text, msg=None):
     if text is None:
         _g(repo, "rm", "-q", rel)
     else:
         _wf(repo, rel, text)
         _g(repo, "add", "-A")
-    _g(repo, "commit", "-q", "-m", "change " + rel)
+    _g(repo, "commit", "-q", "-m", msg or "change " + rel)
     return _g(repo, "rev-parse", "HEAD")
+
+
+def _clone(tmp, repo, name):
+    dst = os.path.join(tmp, name)
+    _g(tmp, "clone", "-q", repo, dst)
+    _g(dst, "config", "user.email", "t@example.invalid")
+    _g(dst, "config", "user.name", "T")
+    return dst
 
 
 def _scan(specs, folder, commit, findings, mode="scan", scope=(), verified=True, dirty=False, complete=True,
@@ -707,7 +965,7 @@ _AT = [0]
 def _run(specs, repo, folder, dec=None, unit=None, kind="scan", today="2026-10-16"):
     p = plan(specs, "code", repo, folder, unit, today)
     _AT[0] += 1
-    at = "2026-10-16T09:%02d:00Z" % _AT[0]
+    at = (datetime.datetime(2026, 10, 16, 9) + datetime.timedelta(minutes=_AT[0])).strftime("%Y-%m-%dT%H:%M:%SZ")
     res = commit(specs, "code", p, dec or {}, "Tester", kind, unit, at)
     return p, res
 
@@ -721,6 +979,29 @@ def _setup(tmp):
     os.makedirs(specs)
     repo, c1 = _repo(tmp)
     return specs, repo, c1
+
+
+def _runs(specs):
+    d = os.path.join(specs, "security", "code", "runs")
+    return sorted(os.listdir(d)) if os.path.isdir(d) else []
+
+
+def _refuses(code, fn, *args):
+    try:
+        fn(*args)
+    except Unrunnable as e:
+        assert str(e).startswith(code), e
+        return str(e)
+    raise AssertionError("%s%r must refuse with %s" % (fn.__name__, args[3:5], code))
+
+
+def _copy_register(src, dst):
+    for sub_ in ("runs", "scans"):
+        top = os.path.join(src, "security", "code", sub_)
+        for root, _, files in os.walk(top):
+            for n in files:
+                rel = os.path.relpath(os.path.join(root, n), top)
+                _wf(os.path.join(dst, "security", "code", sub_), rel, open(os.path.join(root, n), encoding="utf-8").read())
 
 
 def case_new_findings_allocated_and_suggested(tmp):
@@ -1139,15 +1420,413 @@ def case_triage_only_run(tmp):
     assert plan(specs, "code", repo, None, "ACME-2-01", "2026-10-16")["open"] == []
 
 
+def case_possibly_same_candidate_blocks_closure(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    _run(specs, repo, "s1", {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]})
+    c2 = _change(repo, "src/a.py", "".join("changed %d\n" % i for i in range(1, 41)))
+    _scan(specs, "s2", c2, [("v3:a2", "src/a.py", 14, "CWE-89", "HIGH")], scope=["src"])
+    p = plan(specs, "code", repo, "s2", None, "2026-10-16")
+    assert p["possibly_same"][0]["candidates"] == [1], p
+    assert not p["closable"] and not p["not_reported"], "a possibly-same candidate is never closed by the scan that raised it"
+    _run(specs, repo, "s2", {"rejects": ["v3:a2"]})
+    assert _state(specs)[1]["status"] == "fixing" and _state(specs)[2]["status"] == "open"
+
+
+def case_matching_window_negative_side(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    _run(specs, repo, "s1")
+    _scan(specs, "s2", c1, [("v3:far", "src/a.py", 21, "CWE-89", "HIGH"), ("v3:cwe", "src/a.py", 12, "CWE-79", "HIGH"),
+                            ("v3:file", "src/b.py", 10, "CWE-89", "HIGH"), ("v3:edge", "src/a.py", 20, "CWE-89", "HIGH")])
+    p = plan(specs, "code", repo, "s2", None, "2026-10-16")
+    assert [e["plugin_id"] for e in p["new"]] == ["v3:far", "v3:cwe", "v3:file"], "11 lines away, another CWE, another file"
+    assert [(e["plugin_id"], e["candidates"]) for e in p["possibly_same"]] == [("v3:edge", [1])], "10 lines away is a candidate"
+
+
+def case_id_version_change_judges_each_finding(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH"), ("v3:bb", "src/b.py", 1, "CWE-79", "LOW")])
+    _run(specs, repo, "s1")
+    _scan(specs, "s2", c1, [("v4:aa", "src/a.py", 11, "CWE-89", "HIGH")])
+    _run(specs, repo, "s2", {"matches": [{"plugin_id": "v4:aa", "id": 1}],
+                             "decisions": [{"target": "plugin:v4:aa", "status": "fixing"}]})
+    _change(repo, "src/a.py", "fixed\n")
+    c3 = _change(repo, "src/b.py", "x = 5\n")
+    _scan(specs, "s3", c3, [("v4:zz", "srcx/a.py", 1, "CWE-20", "LOW")])
+    p, _ = _run(specs, repo, "s3")
+    assert p["id_version_changed"], "[SEC#2] is still active under v3"
+    assert p["closable"] == [{"id": 1, "auto": True}], "a finding already under the new version is judged as usual"
+    assert 2 not in p["not_reported"] and not p["unverifiable"], p
+    fs = _state(specs)
+    assert fs[1]["status"] == "fixed" and fs[2]["status"] == "open" and fs[2]["not_reported_by"] == []
+    # A scan with no findings has no ID_VERSION to compare, so every finding is judged normally.
+    _scan(specs, "s4", c3, [])
+    p = plan(specs, "code", repo, "s4", None, "2026-10-16")
+    assert not p["id_version_changed"] and p["closable"] == [{"id": 2, "auto": False}] and p["not_reported"] == [3], p
+
+
+def case_possibly_same_match_reopens_a_fixed_finding(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    _run(specs, repo, "s1", {"decisions": [{"target": "plugin:v3:aa", "status": "fixed", "reason": "r"}]})
+    c2 = _change(repo, "src/a.py", "".join("changed %d\n" % i for i in range(1, 41)))
+    _scan(specs, "s2", c2, [("v3:a2", "src/a.py", 12, "CWE-89", "HIGH")])
+    p, _ = _run(specs, repo, "s2", {"matches": [{"plugin_id": "v3:a2", "id": 1}]})
+    assert p["possibly_same"][0]["candidates"] == [1], p
+    g = _state(specs)[1]
+    assert g["status"] == "reopened" and g["plugin_id"] == "v3:a2", g
+
+
+def case_triage_invalid_branches(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    _run(specs, repo, "s1")
+    _scan(specs, "s2", c1, [("v3:a2", "src/a.py", 12, "CWE-89", "HIGH"), ("v3:a3", "src/a.py", 13, "CWE-89", "HIGH"),
+                            ("v3:nn", "src/b.py", 1, "CWE-79", "LOW")])
+    p = plan(specs, "code", repo, "s2", None, "2026-10-16")
+    before = _runs(specs)
+    both = {"rejects": ["v3:a2", "v3:a3"]}
+    fix = lambda **kw: dict(both, decisions=[dict({"target": "plugin:v3:nn", "status": "fix"}, **kw)])
+    bad = [
+        ({"matches": [{"plugin_id": "v3:a2", "id": 7}], "rejects": ["v3:a3"]}, "not one of its candidates"),
+        ({"matches": [{"plugin_id": "v3:a2", "id": 1}, {"plugin_id": "v3:a3", "id": 1}]}, "one [SEC#n]"),
+        ({"matches": [{"plugin_id": "v3:a2", "id": 1}, {"plugin_id": "v3:a2", "id": 1}], "rejects": ["v3:a3"]}, "twice"),
+        (dict(both, decisions=[{"target": "id:42", "status": "fix"}]), "names no finding"),
+        (fix(status="done"), "status"),
+        (fix(links="see the follow-up"), "links"),
+        (fix(links={"followup": 3}), "links"),
+        (fix(status="fixed", links={"fixed_in_scan": "s2"}), "fixed_in_scan"),
+        (fix(reason=5), "decisions[0]"),
+        (fix(review_by=20261101), "decisions[0]"),
+        (dict(both, decisions=[{"status": "fix"}]), "decisions[0]"),
+        (dict(both, decisions="fix them"), "decisions"),
+        ({"matches": [{"plugin_id": "v3:a2", "id": "1"}], "rejects": ["v3:a3"]}, "matches[0]"),
+        ({"matches": [{"plugin_id": "v3:a2", "id": True}], "rejects": ["v3:a3"]}, "matches[0]"),
+        ({"rejects": "v3:a2"}, "rejects"),
+        ([], "object"),
+    ]
+    for dec, words in bad:
+        e = _refuses("TRIAGE_INVALID", commit, specs, "code", p, dec, "T", "scan", None, "2026-10-16T10:00:00Z")
+        assert words in e, (words, e)
+    assert _runs(specs) == before, "a refused triage writes nothing"
+
+
+def case_main_exits_2_with_the_stop_code_leading_stderr(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    me = os.path.realpath(__file__)
+    run = lambda *a: subprocess.run([sys.executable, "-I", me] + list(a), capture_output=True, text=True)
+    base = ["--specs", specs, "--slug", "code"]
+    r = run("plan", *base, "--repo", repo, "--scan", "s1", "--today", "2026-10-16")
+    assert r.returncode == 0, r.stderr
+    _wf(tmp, "plan.json", r.stdout)
+    _wf(tmp, "bad.json", json.dumps({"decisions": [{"target": "plugin:v3:aa", "status": "fix", "links": ["x"]}]}))
+    _wf(tmp, "empty.json", "{}")
+    args = base + ["--plan", os.path.join(tmp, "plan.json"), "--by", "T", "--kind", "scan", "--role", "sec",
+                   "--at", "2026-10-16T10:00:00Z"]
+    r = run("commit", *args, "--decisions", os.path.join(tmp, "bad.json"))
+    assert r.returncode == 2 and r.stderr.startswith("TRIAGE_INVALID"), (r.returncode, r.stderr)
+    assert "Traceback" not in r.stderr and _runs(specs) == []
+    r = run("commit", *base, "--plan", os.path.join(tmp, "empty.json"), "--decisions", os.path.join(tmp, "empty.json"),
+            "--by", "T", "--kind", "scan", "--role", "sec")
+    assert r.returncode == 2 and r.stderr.startswith("REGISTER_INTERNAL: KeyError"), (r.returncode, r.stderr)
+    r = run("plan", *base, "--repo", repo, "--no-such-flag")
+    assert r.returncode == 2 and r.stderr.startswith("REGISTER_BAD_ARGS"), (r.returncode, r.stderr)
+    r = run("commit", *args, "--decisions", os.path.join(tmp, "empty.json"))
+    assert r.returncode == 0, r.stderr
+    r = run("rebuild", *base)
+    assert r.returncode == 0 and json.loads(r.stdout) == {"findings": 1, "runs": 1, "renumbered": []}, r.stdout
+
+
+def case_squash_merge_closes_a_units_finding(tmp):
+    specs, repo, c1 = _setup(tmp)
+    dev = _clone(tmp, repo, "dev")
+    _g(dev, "switch", "-q", "-c", "feat/ACME-1-01-orders")
+    b = _change(dev, "src/b.py", "x = 2\n")
+    _scan(specs, "s1", b, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    p = plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16")
+    commit(specs, "code", p, {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, "Dev", "scan", "ACME-1-01",
+           "2026-10-16T10:00:00Z", "dev")
+    seen = _state(specs)[1]["last_seen"]
+    assert seen["commit"] == b and seen["date"] and seen["blob"] == _g(dev, "rev-parse", b + ":src/a.py"), seen
+    assert _git(repo, "cat-file", "-e", b).returncode != 0, "the branch commit is only in the Dev's clone"
+    near = _change(repo, "src/a.py", "unrelated\n", "chore: other work [ACME-1-012]")
+    assert verify_scope(specs, "code", repo, near, "ACME-1-01") == {"files": ["src/a.py"], "gone": []}, \
+        "verify-scope needs no last-seen commit: the blob decides"
+    _scan(specs, "s2", near, [], scope=["src"])
+    p = plan(specs, "code", repo, "s2", None, "2026-10-16")
+    assert p["unverifiable"] == [1] and not p["closable"] and not p["not_reported"], "a longer key is no squash"
+    sq = _change(repo, "src/a.py", "guarded\n", "fix(orders): guard the query [ACME-1-01] (#12)")
+    _scan(specs, "s3", sq, [], scope=["src"])
+    p, _ = _run(specs, repo, "s3", kind="verify")
+    assert p["closable"] == [{"id": 1, "auto": True}] and not p["unverifiable"] and not p["scan"]["ancestor"], p
+    assert _state(specs)[1]["status"] == "fixed"
+
+
+def case_missing_last_seen_commit_without_units_is_unverifiable(tmp):
+    specs, repo, c1 = _setup(tmp)
+    dev = _clone(tmp, repo, "dev")
+    b = _change(dev, "src/b.py", "x = 2\n")
+    _scan(specs, "s1", b, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    p = plan(specs, "code", dev, "s1", None, "2026-10-16")
+    commit(specs, "code", p, {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, "T", "scan", None,
+           "2026-10-16T10:00:00Z")
+    c2 = _change(repo, "src/a.py", "fixed\n", "fix the query [ACME-1-01]")
+    _scan(specs, "s2", c2, [])
+    p, _ = _run(specs, repo, "s2")
+    assert p["unverifiable"] == [1] and not p["closable"] and not p["not_reported"], p
+    g = _state(specs)[1]
+    assert g["status"] == "fixing" and g["not_reported_by"] == [] and g["last_seen"]["commit"] == b, g
+
+
+def case_bad_repo_or_ref_stops_with_register_git(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    _run(specs, repo, "s1", {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]})
+    plain = os.path.join(tmp, "plain")
+    os.makedirs(plain)
+    _scan(specs, "s2", c1, [])
+    e = _refuses("REGISTER_GIT", plan, specs, "code", plain, "s2", None, "2026-10-16")
+    assert c1 in e, e
+    _scan(specs, "s3", "0123456789abcdef0123456789abcdef01234567", [])
+    _refuses("REGISTER_GIT", plan, specs, "code", repo, "s3", None, "2026-10-16")
+    for ref in ("no-such-branch", "--all", "HEAD:src/a.py"):
+        _refuses("REGISTER_GIT", verify_scope, specs, "code", repo, ref, None)
+    _refuses("REGISTER_GIT", verify_scope, specs, "code", plain, "main", None)
+    assert verify_scope(specs, "code", repo, "main", None) == {"files": [], "gone": []}
+
+
+def case_renumbering_moves_only_the_colliding_record(tmp):
+    repo, c1 = _repo(tmp)
+    a, b = os.path.join(tmp, "a"), os.path.join(tmp, "b")
+    os.makedirs(a)
+    _scan(a, "s0", c1, [("v3:p0", "src/b.py", 1, "CWE-79", "LOW")])
+    commit(a, "code", plan(a, "code", repo, "s0", None, "2026-10-16"), {}, "Z", "scan", None, "2026-10-16T08:00:00Z")
+    _copy_register(a, b)
+    # A and B record #2 at once, on two branches; B writes a follow-up citing [SEC#2].
+    _scan(a, "sA", c1, [("v3:pa", "src/a.py", 1, "CWE-89", "HIGH")])
+    commit(a, "code", plan(a, "code", repo, "sA", None, "2026-10-16"), {}, "A", "scan", None, "2026-10-16T09:00:00Z")
+    _scan(b, "sB", c1, [("v3:pb", "src/a.py", 30, "CWE-22", "HIGH")])
+    res_b = commit(b, "code", plan(b, "code", repo, "sB", "ACME-1-01", "2026-10-16"),
+                   {"decisions": [{"target": "plugin:v3:pb", "status": "fix"}]}, "B", "scan", "ACME-1-01",
+                   "2026-10-16T09:05:00Z", "dev", "code")
+    assert res_b["ids"] == {"v3:pb": 2} and "[SEC#2]" in res_b["followups"][0], res_b
+    # C plans in A's checkout with B's record reserved, and takes #3.
+    _scan(a, "sC", c1, [("v3:pc", "src/b.py", 30, "CWE-20", "LOW")])
+    p = plan(a, "code", repo, "sC", None, "2026-10-16", os.path.join(b, "security", "code", "runs"))
+    assert (p["next_id"], p["reserved"]) == (3, 1), p
+    commit(a, "code", p, {}, "C", "scan", None, "2026-10-16T09:10:00Z")
+    _copy_register(b, a)  # B's record reaches A's checkout through a merge
+    st = rebuild(a, "code")
+    fs = st["findings"]
+    assert [(n, fs[n]["plugin_id"]) for n in sorted(fs)] == [(1, "v3:p0"), (2, "v3:pa"), (3, "v3:pc"), (4, "v3:pb")], fs
+    move = {"run": os.path.basename(res_b["record"]), "from": 2, "to": 4}
+    assert st["renumbered"] == [move], st["renumbered"]
+    assert fs[4]["status"] == "fixing" and fs[4]["links"]["followup"] == res_b["followups"][0].replace("[SEC#2]", "[SEC#4]"), \
+        "the moved finding's follow-up is rebuilt with its new number"
+    assert plan(a, "code", repo, None, None, "2026-10-16")["renumbered"] == [move]
+    # The first commit after the merge reports the move and records it; it allocates a new finding as well.
+    _scan(a, "sD", c1, [("v3:pd", "srcx/a.py", 1, "CWE-20", "LOW")])
+    res = commit(a, "code", plan(a, "code", repo, "sD", None, "2026-10-16"), {}, "D", "scan", None, "2026-10-16T10:00:00Z")
+    assert res["renumbered"] == [move] and res["ids"] == {"v3:pd": 5}, res
+    assert json.loads(open(os.path.join(a, res["record"]), encoding="utf-8").read())["renumbered"] == [move]
+    # A later unrelated commit allocates too: [SEC#4] stays where it is, and no move is reported.
+    _scan(a, "sE", c1, [("v3:pe", "srcx/a.py", 1, "CWE-79", "LOW")])
+    res = commit(a, "code", plan(a, "code", repo, "sE", None, "2026-10-16"), {}, "E", "scan", None, "2026-10-16T10:05:00Z")
+    assert res["renumbered"] == [] and res["ids"] == {"v3:pe": 6}, res
+    fs = _state(a)
+    assert (fs[3]["plugin_id"], fs[4]["plugin_id"], fs[6]["plugin_id"]) == ("v3:pc", "v3:pb", "v3:pe"), fs
+    assert plan(a, "code", repo, None, None, "2026-10-16")["renumbered"] == []
+
+
+def case_duplicate_plugin_id_refuses_and_writes_nothing(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH"), ("v3:bb", "src/b.py", 1, "CWE-79", "LOW"),
+                            ("v3:aa", "src/a.py", 30, "CWE-89", "HIGH")])
+    e = _refuses("SCAN_PRODUCTS_UNREADABLE", plan, specs, "code", repo, "s1", None, "2026-10-16")
+    assert "F1" in e and "F3" in e, e
+    assert _runs(specs) == [] and not os.path.exists(os.path.join(specs, "security", "code", "register.json"))
+
+
+def case_unreplayable_record_is_never_written(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    p = plan(specs, "code", repo, "s1", None, "2026-10-16")
+    # The scan's products changed after the run planned: the record would leave a finding unplaced.
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH"), ("v3:bb", "src/b.py", 1, "CWE-79", "LOW")])
+    e = _refuses("REGISTER_UNREADABLE", commit, specs, "code", p, {}, "T", "scan", None, "2026-10-16T10:00:00Z")
+    assert "not written" in e and _runs(specs) == [], e
+    assert replay(specs, "code")["findings"] == {}, "the register still loads"
+    _run(specs, repo, "s1")
+    assert sorted(_state(specs)) == [1, 2]
+
+
+def case_possibly_same_match_returns_a_reviewed_finding_to_open(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-79", "LOW"), ("v3:bb", "src/a.py", 30, "CWE-89", "MEDIUM"),
+                            ("v3:cc", "src/b.py", 1, "CWE-20", "LOW")])
+    _run(specs, repo, "s1", {"decisions": [
+        {"target": "plugin:v3:aa", "status": "false-positive", "evidence": "src/a.py:3 escapes it"},
+        {"target": "plugin:v3:bb", "status": "accepted-risk", "reason": "internal only", "review_by": "2026-12-01"},
+        {"target": "plugin:v3:cc", "status": "false-positive", "evidence": "src/b.py:1 is a constant"}]})
+    c2 = _change(repo, "src/a.py", "".join("changed %d\n" % i for i in range(1, 41)))
+    _scan(specs, "s2", c2, [("v3:a2", "src/a.py", 12, "CWE-79", "LOW"), ("v3:b2", "src/a.py", 31, "CWE-89", "MEDIUM"),
+                            ("v3:c2", "src/b.py", 2, "CWE-20", "LOW")])
+    _run(specs, repo, "s2", {"matches": [{"plugin_id": "v3:a2", "id": 1}, {"plugin_id": "v3:b2", "id": 2},
+                                         {"plugin_id": "v3:c2", "id": 3}],
+                             "decisions": [{"target": "id:3", "status": "false-positive", "evidence": "src/b.py:2 is a constant"}]})
+    fs = _state(specs)
+    assert fs[1]["status"] == "open" and fs[2]["status"] == "open", "a match on changed code returns it to triage"
+    assert fs[1]["confirmed"] is None and fs[2]["owner"] is None and fs[2]["review_by"] is None
+    assert [h["status"] for h in fs[3]["history"]] == ["false-positive", "false-positive"], "the same run decided it"
+
+
+def case_inputs_are_validated(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    for folder in ("..", ".", "a/b", "s 1"):
+        _refuses("REGISTER_BAD_ARGS", plan, specs, "code", repo, folder, None, "2026-10-16")
+    for slug in ("..", "."):
+        _refuses("REGISTER_BAD_SLUG", plan, specs, slug, repo, None, None, "2026-10-16")
+    for today in ("2026-02-30", "2026-10-16T00:00:00Z", "tomorrow"):
+        _refuses("REGISTER_BAD_ARGS", plan, specs, "code", repo, None, None, today)
+    p = plan(specs, "code", repo, "s1", None, "2026-10-16")
+    for at in ("2026-10-16 10:00:00", "2026-10-16T10:00:00+02:00", "2026-02-30T10:00:00Z", "2026-10-16T25:00:00Z"):
+        _refuses("REGISTER_BAD_ARGS", commit, specs, "code", p, {}, "T", "scan", None, at)
+    _refuses("TRIAGE_INVALID", commit, specs, "code", p, {"decisions": [{"target": "plugin:v3:aa", "status": "accepted-risk",
+             "reason": "r", "review_by": "2026-02-30"}]}, "T", "scan", None, "2026-10-16T10:00:00Z")
+    assert _runs(specs) == []
+    res = commit(specs, "code", p, {}, "T", "scan", None, "2026-10-16T10:00:00Z")
+    name, text = os.path.basename(res["record"]), open(os.path.join(specs, res["record"]), encoding="utf-8").read()
+    assert re.match(r"^0001-20261016T100000Z-[0-9a-f]{8}\.json$", name), name
+    assert name[-13:-5] == hashlib.sha256(text.encode("utf-8")).hexdigest()[:8], "the name carries the record's own hash"
+    rec = json.loads(text)
+    assert rec["decisions"] and all("confirmed" in d and d["confirmed"] is None for d in rec["decisions"]), rec["decisions"]
+    assert rec["scan"]["date"] and rec["allocated"][0]["blob"] == _g(repo, "rev-parse", c1 + ":src/a.py"), rec
+    _scan(specs, "s2", "HEAD", [])
+    _refuses("SCAN_PRODUCTS_UNREADABLE", plan, specs, "code", repo, "s2", None, "2026-10-16")
+
+
+def case_false_positive_evidence_names_a_location(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-79", "LOW")])
+    p = plan(specs, "code", repo, "s1", None, "2026-10-16")
+    for ev in ("the template escapes it", "src/a.py escapes it", "see line:x"):
+        _refuses("TRIAGE_INVALID", commit, specs, "code", p, {"decisions": [{"target": "plugin:v3:aa",
+                 "status": "false-positive", "evidence": ev}]}, "T", "scan", None, "2026-10-16T10:00:00Z")
+    commit(specs, "code", p, {"decisions": [{"target": "plugin:v3:aa", "status": "false-positive",
+                                             "evidence": "the template escapes it at src/a.py:3"}]}, "T", "scan", None,
+           "2026-10-16T10:01:00Z")
+    assert _state(specs)[1]["status"] == "false-positive"
+
+
+def case_reopen_clears_links_and_history_keeps_them(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH"), ("v3:bb", "src/b.py", 1, "CWE-79", "LOW")])
+    _wf(specs, "security/code/scans/s1/patches/F1.patch", "diff\n")
+    p = plan(specs, "code", repo, "s1", None, "2026-10-16")
+    res = commit(specs, "code", p, {"decisions": [{"target": "plugin:v3:aa", "status": "fix"}]}, "T", "scan", None,
+                 "2026-10-16T10:00:00Z", "sec", "code")
+    c2 = _change(repo, "src/a.py", "fixed\n")
+    _scan(specs, "s2", c2, [("v3:bb", "src/b.py", 1, "CWE-79", "LOW")], scope=["src"])
+    p = plan(specs, "code", repo, "s2", None, "2026-10-16")
+    assert p["closable"] == [{"id": 1, "auto": True}], p
+    commit(specs, "code", p, {"decisions": [{"target": "id:2", "status": "fixed", "reason": "fixed by hand"}]}, "T", "scan",
+           None, "2026-10-16T10:05:00Z")
+    fs = _state(specs)
+    patch = "security/code/scans/s1/patches/F1.patch"
+    assert fs[1]["links"] == {"followup": res["followups"][0], "patch": patch, "fixed_in_scan": "s2"}, fs[1]["links"]
+    assert fs[2]["status"] == "fixed" and "fixed_in_scan" not in fs[2]["links"], "an unrelated fixed decision is not stamped"
+    c3 = _change(repo, "src/b.py", "x = 7\n")
+    _scan(specs, "s3", c3, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    p, _ = _run(specs, repo, "s3")
+    assert p["reopen"] == [1], p
+    g = _state(specs)[1]
+    assert g["status"] == "reopened" and g["links"] == {}, g["links"]
+    kept = {}
+    for h in g["history"]:
+        kept.update(h["links"])
+    assert kept == {"followup": res["followups"][0], "patch": patch, "fixed_in_scan": "s2"}, kept
+
+
+def case_last_sighting_on_a_branch_this_clone_holds(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _g(repo, "switch", "-q", "-c", "feat/ACME-1-01-orders")
+    b = _change(repo, "src/b.py", "x = 2\n")
+    _scan(specs, "s1", b, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    _run(specs, repo, "s1", {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, unit="ACME-1-01")
+    _scan(specs, "s2", b, [("v3:bb", "src/b.py", 1, "CWE-79", "LOW")])
+    _run(specs, repo, "s2", {"decisions": [{"target": "plugin:v3:bb", "status": "fixing"}]})
+    _g(repo, "switch", "-q", "main")
+    _change(repo, "src/a.py", "guarded\n", "fix(orders): guard the query [ACME-1-01] (#12)")
+    c3 = _change(repo, "src/b.py", "x = 3\n")
+    _scan(specs, "s3", c3, [])
+    p, _ = _run(specs, repo, "s3")
+    assert p["closable"] == [{"id": 1, "auto": True}], "a squash is later even while the branch commit is in the clone"
+    assert not p["not_reported"] and not p["unverifiable"], "decidably not later: nothing is recorded about [SEC#2]"
+    assert _state(specs)[2]["status"] == "fixing" and _state(specs)[2]["not_reported_by"] == []
+
+
+def case_unreadable_blob_and_absent_commit_is_unverifiable(tmp):
+    specs, repo, c1 = _setup(tmp)
+    dev = _clone(tmp, repo, "dev")
+    b = _change(dev, "src/b.py", "x = 2\n")
+    _scan(specs, "s1", b, [("v3:aa", "src/z.py", 3, "CWE-89", "HIGH")])  # a file the scanned commit does not hold
+    commit(specs, "code", plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16"),
+           {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, "Dev", "scan", "ACME-1-01",
+           "2026-10-16T10:00:00Z", "dev")
+    assert _state(specs)[1]["last_seen"]["blob"] is None
+    c2 = _change(repo, "src/z.py", "guarded\n", "fix(orders): guard the query [ACME-1-01]")
+    _scan(specs, "s2", c2, [])
+    p = plan(specs, "code", repo, "s2", None, "2026-10-16")
+    assert p["unverifiable"] == [1] and not p["closable"] and not p["not_reported"], "later, but no way to tell a change"
+    assert verify_scope(specs, "code", repo, c2, None) == {"files": [], "gone": []}, "a change that cannot be told is not listed"
+
+
+def case_history_match_never_returns_a_reviewed_finding(tmp):
+    specs, repo, c1 = _setup(tmp)
+    c2 = _change(repo, "src/b.py", "x = 2\n")
+    _scan(specs, "s1", c2, [("v3:aa", "src/a.py", 10, "CWE-79", "LOW")])
+    _run(specs, repo, "s1", {"decisions": [{"target": "plugin:v3:aa", "status": "false-positive",
+                                            "evidence": "src/a.py:3 escapes it"}]})
+    _scan(specs, "old", c1, [("v3:a0", "src/a.py", 12, "CWE-79", "LOW")])
+    p, _ = _run(specs, repo, "old", {"matches": [{"plugin_id": "v3:a0", "id": 1}]}, kind="import")
+    assert p["scan"]["ancestor"] and _state(specs)[1]["status"] == "false-positive"
+
+
+def case_confirmed_closure_names_its_scan(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH"), ("v3:bb", "src/b.py", 1, "CWE-79", "LOW")])
+    _run(specs, repo, "s1")
+    _change(repo, "src/a.py", "fixed\n")
+    c3 = _change(repo, "src/b.py", None)
+    _scan(specs, "s2", c3, [])
+    p, _ = _run(specs, repo, "s2", {"decisions": [{"target": "id:1", "status": "fixed", "reason": "confirmed"},
+                                                  {"target": "id:2", "status": "fixed", "reason": "file removed"}]})
+    assert p["closable"] == [{"id": 1, "auto": False}] and p["gone"] == [2], p
+    fs = _state(specs)
+    assert fs[1]["links"] == {"fixed_in_scan": "s2"} and fs[2]["links"] == {"fixed_in_scan": "s2"}, (fs[1]["links"], fs[2]["links"])
+
+
+def case_register_md_sections_follow_the_spec(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    _run(specs, repo, "s1")
+    md = open(os.path.join(specs, "security", "code", "register.md"), encoding="utf-8").read()
+    assert [l[3:] for l in md.splitlines() if l.startswith("## ")] == [
+        "Open", "Being fixed", "Awaiting security review", "Risk register", "False-positive log", "Fixed", "Scan output"], md
+
+
 def selftest():
-    os.environ["GIT_CONFIG_GLOBAL"] = os.devnull
-    os.environ["GIT_CONFIG_NOSYSTEM"] = "1"
+    for env in (os.environ, GIT_ENV):  # the fixtures' git and register.py's own both see none of the user's config
+        env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
     cases = sorted((name, fn) for name, fn in globals().items() if name.startswith("case_"))
     failed = 0
     for name, fn in cases:
         with tempfile.TemporaryDirectory() as tmp:
             tmp = os.path.realpath(tmp)
-            os.environ["GIT_CEILING_DIRECTORIES"] = tmp
+            os.environ["GIT_CEILING_DIRECTORIES"] = GIT_ENV["GIT_CEILING_DIRECTORIES"] = tmp
             try:
                 fn(tmp)
                 print("ok   " + name)
@@ -1166,13 +1845,35 @@ def _dir(path, flag):
     return os.path.realpath(path)
 
 
+class _Parser(argparse.ArgumentParser):
+    """argparse, with its refusal led by a stop code like every other."""
+
+    def error(self, message):
+        sys.stderr.write("REGISTER_BAD_ARGS: %s\n" % message)
+        self.print_usage(sys.stderr)
+        sys.exit(2)
+
+
+HELP = {
+    "plan": "Print what a scan means for the register, or plan a triage without --scan. Keys: base_id, base_seq, next_id,"
+            " next_seq, reserved; renumbered (the moves no run record has reported yet); scan, already_recorded,"
+            " id_version_changed; new, again, possibly_same, closable, not_reported, reopen, gone; unverifiable (the"
+            " findings whose last sighting this clone cannot place: no closure and no not_reported is recorded for"
+            " them); open, review_due, unconfirmed.",
+    "ids": "Print the [SEC#n] each new or matched finding takes.",
+    "commit": "Write the run record and rebuild. Prints {record, ids, followups, renumbered}.",
+    "rebuild": "Rebuild register.json and register.md. Prints {findings, runs, renumbered}.",
+    "verify-scope": "Print the files of the findings being fixed whose file changed by --ref, and the ids whose file is gone.",
+}
+
+
 def main(argv):
     if argv == ["--selftest"]:
         return selftest()
-    ap = argparse.ArgumentParser(prog="register.py", description=__doc__.splitlines()[0])
+    ap = _Parser(prog="register.py", description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="command", required=True)
     for name in ("plan", "ids", "commit", "rebuild", "verify-scope"):
-        sp = sub.add_parser(name)
+        sp = sub.add_parser(name, help=HELP[name], description=HELP[name])
         sp.add_argument("--specs", required=True)
         sp.add_argument("--slug", required=True)
         if name in ("plan", "verify-scope"):
@@ -1184,7 +1885,7 @@ def main(argv):
             sp.add_argument("--unit")
         if name == "plan":
             sp.add_argument("--scan")
-            sp.add_argument("--today", default=datetime.date.today().isoformat())
+            sp.add_argument("--today", default=datetime.datetime.now(datetime.timezone.utc).date().isoformat())
             sp.add_argument("--reserve-dir")
         if name == "commit":
             sp.add_argument("--by", required=True)
@@ -1202,7 +1903,8 @@ def main(argv):
                        _dir(a.reserve_dir, "--reserve-dir") if a.reserve_dir else None)
         elif a.command == "rebuild":
             st = rebuild(specs, a.slug)
-            out = {"findings": len(st["findings"]), "runs": st["next_seq"] - 1}
+            recs = records(specs, a.slug)
+            out = {"findings": len(st["findings"]), "runs": len(recs), "renumbered": _unacked(recs, st["renumbered"])}
         elif a.command == "verify-scope":
             out = verify_scope(specs, a.slug, _dir(a.repo, "--repo"), a.ref, a.unit)
         else:
@@ -1214,10 +1916,13 @@ def main(argv):
                 out = commit(specs, a.slug, p, dec, a.by, a.kind, a.unit, a.at, a.role, a.repo_name)
         print(json.dumps(out, indent=2, ensure_ascii=False))
     except Unrunnable as e:
-        print("register.py: %s" % e, file=sys.stderr)
+        print(str(e), file=sys.stderr)
         return 2
     except (OSError, UnicodeError) as e:
-        print("register.py: REGISTER_IO: %s: %s" % (type(e).__name__, e), file=sys.stderr)
+        print("REGISTER_IO: %s: %s" % (type(e).__name__, e), file=sys.stderr)
+        return 2
+    except Exception as e:  # anything else is a defect here, still reported under the exit-code contract
+        print("REGISTER_INTERNAL: %s: %s" % (type(e).__name__, e), file=sys.stderr)
         return 2
     return 0
 
