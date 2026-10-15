@@ -18,15 +18,19 @@ $SPECS_PATH/security/<repo-slug>/
                                      the SARIF, the revision stamp, and patches/ where patches were made
   runs/<seq>-<UTC>-<hash8>.json      one run record per run that changed the register; <seq> has four digits,
                                      and <hash8> is the start of the record's own sha256, so two records never share a name
-  register.json                      the folded state: derived, never edited, never read back
+  register.json                      the folded state: derived, never edited, never read back as a run's state
   register.md                        rendered from it for people to read: derived, never edited
+  dev-workflows/cost/<sid8>.md       a keyless run's session-cost entry (workflows-core:cost-emission §8):
+                                     beside the register, never part of it
 ```
 
-**The run records and the scan folders are the source of truth.** Every run rebuilds `register.json` and `register.md` from them with `register.py rebuild`, replaying the records in `(seq, at, file name)` order. Nothing reads the derived files back, so a stale or conflicted copy is harmless until the next rebuild overwrites it.
+`$SPECS_PATH/security/` belongs to the register and to those cost entries, and holds nothing else. A team's own security documents go elsewhere in the specs tree: `workflows-core:specs-repo-git` §2.1's shape commits everything under `security/` as bookkeeping.
+
+**The run records and the scan folders are the source of truth.** Every run rebuilds `register.json` and `register.md` from them with `register.py rebuild`, replaying the records in `(seq, at, file name)` order. No run reads the derived files back as its state, because `register.py` rebuilds them from the records every time. They are for people and for the readers §6 names, so a stale or conflicted copy is harmless until the next rebuild overwrites it.
 
 A rebuild needs no git. Every status change is a decision in a record, the automatic ones included, together with the `not_reported_by` entries and whether the scan was an ancestor. Computing those needed git on the code repository when the run recorded them; the replay does not.
 
-**The register is bookkeeping.** Its files, and a unit's `_security.md`, are among `workflows-core:specs-repo-git` §2.1's bounded paths, so `commit-artifacts` commits and pushes them with the run's other session files. They are never handed off by pull request. Where the default branch takes no push, §8's session-branch mode carries them on the user's session branch. No run waits on another run's register changes.
+**The register is bookkeeping.** Its files, and a unit's `_security.md`, are among `workflows-core:specs-repo-git` §2.1's bounded paths, so `commit-artifacts` commits and pushes them with the run's other session files. They are never handed off by pull request. Where the default branch takes no push, that reference's §8 session-branch mode carries them on the user's session branch. No run waits on another run's register changes.
 
 ## 2. The run record
 
@@ -36,7 +40,7 @@ One JSON object per run, with these fields:
 - `at`: ISO-8601 UTC.
 - `by`: the specs repository's git `user.name`.
 - `kind`: `scan`, `import`, `triage` or `verify`.
-- `role`: `dev` for a run addressed by a key (the Dev's pre-merge scan, or an import for a unit), `sec` for any other run.
+- `role`: `dev` for a key run without `--triage` or `--verify-fixes` (the Dev's pre-merge scan, or an `--import` for a unit); `sec` otherwise.
 - `unit`: the key the run was addressed by, or `null`.
 - `scan`: the scan the run recorded, or `null` on a triage. It holds `folder`, `id`, `commit`, `date` (the commit's committer date), `base` (the commit it shares with the default branch, or `null`), `mode`, `scope`, `effort`, `verified`, `dirty`, `counted`, `complete`, `covering`, `id_version` and `ancestor`.
 - `allocated`: each new finding's plugin ID, the `[SEC#n]` it took, and its file's `blob` at the scanned commit.

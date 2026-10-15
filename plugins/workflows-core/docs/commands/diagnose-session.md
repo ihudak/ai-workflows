@@ -19,7 +19,7 @@ Only the first token can name the session: an existing `.jsonl` file is its tran
 ## What it needs
 
 - **A problem statement you agree to.** Phase 1 asks one question at a time until it can name the session, the turn range if you know it, what you expected, what happened, and what you care about — wall-clock, tokens, repeated actions, or one specific action. *"It took too long"* is where that starts, not where it ends. A request already scoped to one event, to what a running session is doing now, or to named dimensions is its own statement. Nothing is read until you have answered.
-- **The session's transcripts**, readable on this machine. For Claude Code they are under `~/.claude/projects/<cwd-slug>/`, with each session's subagent transcripts beside it; the current session is the newest transcript there that holds this run's own invocation, so another session running in the same directory is not mistaken for it. A past session is confirmed by quoting its first prompt and timestamp, never by recency alone.
+- **The session's transcripts**, readable on this machine. For Claude Code they are under `~/.claude/projects/<cwd-slug>/`, with each session's subagent transcripts beside it, a `Workflow` run's agents among them; the current session is the newest transcript there that holds this run's own invocation, so another session running in the same directory is not mistaken for it. A past session is confirmed by quoting its first prompt and timestamp, never by recency alone.
 
 ## What it produces
 

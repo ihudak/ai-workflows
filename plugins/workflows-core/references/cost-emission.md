@@ -451,8 +451,8 @@ since an Epic run's address is an Epic.
 
 **`/scan` inference (whose run it is).** The discriminator is the run's role, which cannot be read from disk: the run record that carries it (`${CLAUDE_PLUGIN_ROOT}/references/security-register-format.md` §2's `role`) is written only by a run that changed the register. So `/security-workflows:scan` passes it as `run_role` (§11), as the feedback commands pass `target_command`.
 
-- **`run_role: dev` -> `phase: security-audit`, `role: dev`** (a run addressed by a key, the Dev's pre-merge scan).
-- **`run_role: sec` -> `phase: security-audit`, `role: sec`** (a repository, `--triage` or `--verify-fixes` run, the Security Engineer's).
+- **`run_role: dev` -> `phase: security-audit`, `role: dev`** (a key run without `--triage` or `--verify-fixes`: the Dev's pre-merge scan, or an `--import` for a unit).
+- **`run_role: sec` -> `phase: security-audit`, `role: sec`** (every other run — one addressed by a repository path, or a `--triage` or `--verify-fixes` run, even one addressed by a key — the Security Engineer's).
 - **`run_role` missing, or any other value -> `phase: security-audit`, `role: n/a`.** It is a caller error, and the role is recorded as absent rather than guessed.
 
 **`/diagnose-session` passes `target_command: n/a` on every run**, so the bullet below for a target of `n/a` charges it to `plugin-feedback`/`n/a`: a diagnosis is about the plugin itself, whichever command it reads, so it inherits nothing.
@@ -498,7 +498,7 @@ not attempt to infer it from anything else.
 than guessed, and aggregation should treat it as unattributed rather than folding
 it into `dev`.
 
-**`/vuln`, `/upgrade`, `/docs-profile`, `/docs-serve`, `/harvest-decisions` and `/promote-decisions` emit no cost entry, and that is a decision about what the number is for.** A cost entry measures **AI investment in a product increment**, and the rule is: *a cost entry attaches to a run that advances a PRD- or BRD-scoped artifact — or builds the documentation repository a product is documented in, which is the `docs-workflows` family's unit of attribution and which §8 rung 2 files per docs repo — or records a code repository's security findings in the register `/security-workflows:scan` keeps for it.* That second clause is what `/docs-init` and a standalone `/docs-brand` satisfy, and why they have §7 rows; the third is what a `/scan` run with no key satisfies. A CVE remediation, a library version bump, a docs-profile refresh, a dev-server start and a decision harvest into the team architecture knowledge base, or the promotion of its records, advance none — they are noise against a PRD, a BRD or a docs repository, and a metric that averages the two answers a question nobody asked.
+**`/vuln`, `/upgrade`, `/docs-profile`, `/docs-serve`, `/harvest-decisions` and `/promote-decisions` emit no cost entry, and that is a decision about what the number is for.** A cost entry measures **AI investment in a product increment**, and the rule is: *a cost entry attaches to a run that advances a PRD- or BRD-scoped artifact — or builds the documentation repository a product is documented in, which is the `docs-workflows` family's unit of attribution and which §8 rung 2 files per docs repo — or records a code repository's security findings in the register `/security-workflows:scan` keeps for it, which §8 rung 2 files per code repository.* That second clause is what `/docs-init` and a standalone `/docs-brand` satisfy, and why they have §7 rows; the third is what a `/scan` run with no key satisfies. A CVE remediation, a library version bump, a docs-profile refresh, a dev-server start and a decision harvest into the team architecture knowledge base, or the promotion of its records, advance none — they are noise against a PRD, a BRD or a docs repository, and a metric that averages the two answers a question nobody asked.
 
 **This is restated here because it lived only on the command pages.** `docs/commands/vuln.md` and
 `docs/commands/upgrade.md` have carried the reason all along — *"runs outside the PRD pipeline: no
@@ -561,18 +561,21 @@ subdir. Walk top-down; stop at the first tier that applies:
 1. `$SPECS_PATH` writable **and** the PRD dir exists (matched by
    `$SPECS_PATH/{specs|specifications|vis}/…/<KEY>{-|_}<slug>/…`) ->
    `<PRD-dir>/dev-workflows/cost/<sid8>.md`. *[primary]*
-2. `$SPECS_PATH` writable but no PRD dir (or no key resolved) — two destinations,
-   and the documentation branch is tried first:
+2. `$SPECS_PATH` writable but no PRD dir (or no key resolved) — three destinations,
+   and the documentation and security branches are tried first:
    - **The run is `/docs-init`, `/docs-audit`, `/docs-brand` on its standalone path, or `/document` in direct mode**, and it resolved the target it writes into (design D19) -> `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/cost/<sid8>.md`, where `<docs-repo-slug>` is the one-segment name `specs-repo-git.md` §2.1 defines for that repo — for direct mode, the write target its own Phase 0 step 3 resolved, which every direct-mode run holds from that step on — cited, never re-derived here, because the staging classifier admits exactly one segment there. **Per docs repo, not one flat bucket**, for the same reason the PRD-directory rung exists for the pipeline: a person documenting two products must still be able to answer what documenting each one cost. The inner `dev-workflows/` names the *family*, not the emitting plugin — `specs-repo-git.md` §2.1 says why — and that section's `<specs-root>/documentation/*/dev-workflows/**` shape is what stages it.
+   - **The run is `/security-workflows:scan` with no key** — one addressed by a repository path, whatever its mode -> `$SPECS_PATH/security/<repo-slug>/dev-workflows/cost/<sid8>.md`, where `<repo-slug>` is the one-segment name that repository's register lives under (`${CLAUDE_PLUGIN_ROOT}/references/security-register-format.md` §1), cited, never re-derived here. **Per code repository, not one flat bucket**, as the documentation branch is per docs repo: a repository scan has no PRD and never will, and the register is the unit a Security Engineer's spend is asked about. The layout below `<repo-slug>/` is the documentation branch's, its inner `dev-workflows/` naming the *family*. It sits beside the register's `runs/` and `scans/`, the only directories `register.py` reads, so the register never sees it, and `specs-repo-git.md` §2.1's `<specs-root>/security/*/**` shape stages it. A `/scan` run with a key resolves its folder and is tier 1's.
    - **Otherwise** -> **pending** (§9).
 
    **Why this rung is inserted before pending rather than folded into it.**
-   Documentation work frequently has no PRD and never will, so a pending entry
-   from such a run awaits a reconciliation that is never coming and accumulates
-   forever. §9's opportunistic reconciliation is built for a *keyless* run that
-   will later acquire a key; this one will not.
+   Documentation work frequently has no PRD and never will, and a repository scan
+   never has one, so a pending entry from either awaits a reconciliation that is
+   never coming and accumulates forever — or, worse, §9 offers it to whatever PRD
+   the next keyed run in that session resolves, pre-selected. §9's opportunistic
+   reconciliation is built for a *keyless* run that will later acquire a key; these
+   will not.
 
-   **The branch names the runs it serves rather than testing "did the run resolve a
+   **The documentation branch names the runs it serves rather than testing "did the run resolve a
    docs repo".** Each of the four works against a target it resolved — a repository,
    or a path that is not one (`specs-repo-git.md` §2.1 names the runs that meet
    that case) — and resolves no PRD folder: `/docs-init`, `/docs-audit` and a standalone `/docs-brand` never resolve one, and
@@ -595,8 +598,8 @@ mount / permission) drops to the next tier with the same notice.
 
 ## 9. Pending & reconciliation (keyless runs)
 
-When no PRD key resolves and §8 tier 2's documentation branch does not apply,
-and the run does not carry `specs_git: misrooted` (§8), write the entry to a pending file:
+When no PRD key resolves and neither of §8 tier 2's named branches — documentation
+or security — applies, and the run does not carry `specs_git: misrooted` (§8), write the entry to a pending file:
 
 ```
 $SPECS_PATH/dev-workflows-cost/pending-<date>-<sid8>.md
@@ -688,7 +691,8 @@ Inputs:
   source for it, and the entry would silently fall back to
   `plugin-feedback`/`n/a`, quietly mis-attributing every correction.
 - `run_role` — **required for `/scan`**, and supplied by `/security-workflows:scan`
-  directly: `dev` for a run addressed by a key, `sec` for any other, the `role` the
+  directly: `dev` for a key run without `--triage` or `--verify-fixes` (the Dev's
+  pre-merge scan, or an `--import` for a unit); `sec` otherwise — the `role` the
   run's record carries (`${CLAUDE_PLUGIN_ROOT}/references/security-register-format.md`
   §2). Omitting it is a caller error, which §7 records as `role: n/a`.
 - `key` (or `null`), `source` (`specs | directory | none`).
@@ -709,7 +713,7 @@ Behavior:
    tier, and a claim dominated by an unpriced model is exactly as misleading as
    this run's would be.
 5. Resolve the target via the ladder (§8) — on a keyless run, the documentation
-   branch where it applies and pending (§9) otherwise; on a keyed run, run §9's
+   or security branch where one applies and pending (§9) otherwise; on a keyed run, run §9's
    opportunistic reconciliation of any pending files.
 6. Append the entry (create the file with frontmatter on first write), then
    append one entry per **matched claim** as §13.3 describes.

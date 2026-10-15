@@ -73,6 +73,8 @@ ATTRIBUTES = [
     "**/*-implementation-gaps.md merge=union",
     "**/dev-workflows/resume.md -merge",
     "**/pr-draft.md -merge",
+    "security/*/register.json -merge",
+    "security/*/register.md -merge",
 ]
 ZERO = "0" * 40
 
@@ -859,6 +861,12 @@ def selftest():
             attrs = a.read(".git/info/attributes")
             check(attrs is not None and attrs.count(ATTR_BEGIN) == 1 and "**/dev-workflows/** merge=union" in attrs,
                   "the attributes block is written once (%r)" % attrs)
+            # A register's derived files are overwritten whole by every rebuild, so a merge keeps one side
+            # whole rather than splicing two; a unit's scan note is appended, so both sides' entries survive.
+            for path, want in (("security/acme-api/register.json", "unset"), ("security/acme-api/register.md", "unset"),
+                               ("specifications/PRD-A-1-x/EPIC-A-1-1-y/_security.md", "union")):
+                got = a.git("check-attr", "merge", "--", path).rsplit(": ", 1)[-1]
+                check(got == want, "the attributes block gives %s merge %s (got %r)" % (path, want, got))
             a.run("sync", "--branch", "session/aa", "--default-ref", "origin/main")
             check(a.read(".git/info/attributes").count(ATTR_BEGIN) == 1, "and stays one block on a second sync")
         with tempfile.TemporaryDirectory() as tmp:

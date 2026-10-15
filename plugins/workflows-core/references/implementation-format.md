@@ -391,7 +391,7 @@ Each runs this entry point for that, never a guess. The branch is the one this f
 **Steps:**
 
 1. **The block.** Take the latest block whose `repo:` is `<repo-slug>`. Never take only the newest block overall, since a companion run in a second repository and a re-run in the same one each add a block. Where there is none, the state is `none`.
-2. **Merged?** Run the merged test below on that block. Where it passes, and the branch carries no commit `<ref>` lacks, the state is `merged`. The branch is `<branch>` or `origin/<branch>`, and the check applies only where it still resolves; `git -C <repo> log --oneline <ref>..<that ref>` must print nothing.
+2. **Merged?** The state is `merged` where the merged test below passes on that block **and**, where `<branch>` or `origin/<branch>` still resolves, `workflows-core:specs-repo-git` §3.5's `branch-merged` finds that ref's tip merged: its three tests — ancestry, a rebase, a squash — run as written there, in `<repo>` in place of `$SPECS_PATH` and against `<ref>` in place of `<default-ref>`, on `<branch>` where it resolves and otherwise on `origin/<branch>`. Where neither resolves, the merged test alone decides. Every `branch-merged` test reads the tip, so a commit made on the branch after its pull request merged makes it read unmerged again, and step 3 then places the branch: the unit's work goes on there.
 3. **Where the branch is.**
    - `git -C <repo> branch --show-current` prints `<branch>`: `checked-out`.
    - Otherwise, `git -C <repo> rev-parse --verify --quiet refs/heads/<branch>` succeeds: `local`.
@@ -402,7 +402,7 @@ Each runs this entry point for that, never a guess. The branch is the one this f
 
 **A consumer works on the tip.** Review commits move the tip past the recorded commit, and a rebase moves it off. Neither is an error, and a consumer that reports what it scanned or traced names the tip.
 
-**Step 3 reads local refs only.** A run that needs `origin`'s current state fetches first, best effort, and says so.
+**Steps 2 and 3 read local refs only.** A run that needs `origin`'s current state, of `<ref>` or of the branch, fetches first, best effort, and says so.
 
 **The merged test.** A block of an `implementation.md` is **merged** where either holds:
 - its commit is an ancestor of the default branch (`git -C <repo> merge-base --is-ancestor <commit> <ref>`); or

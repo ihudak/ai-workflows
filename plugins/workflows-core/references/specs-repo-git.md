@@ -86,7 +86,7 @@ set is ever staged.
 <specs-root>/documentation/*/dev-workflows/**                 # the documentation run with no PRD (D19): feedback, cost
 <specs-root>/dev-workflows-feedback/**                        # feedback-emission.md §2 tier 2 (keyless runs)
 <specs-root>/dev-workflows-cost/**                            # cost-emission.md §9 pending files (keyless runs)
-<specs-root>/security/*/**                                    # security-register-format.md §1: the register of one code repository (/security-workflows:scan)
+<specs-root>/security/*/**                                    # security-register-format.md §1: the register of one code repository (/security-workflows:scan), and its keyless scans' cost (cost-emission.md §8)
 <specs-root>/{specs|specifications|vis}/**/implementation.md  # implementation-format.md §1, appended by /implement
 <specs-root>/{specs|specifications|vis}/**/follow-ups.md      # followup-emission.md §2, appended per PRD/Epic folder
 <specs-root>/{specs|specifications|vis}/**/_security.md       # security-register-format.md §1: a unit's scan note, appended
@@ -94,7 +94,7 @@ set is ever staged.
 <specs-root>/{specs|specifications|vis}/**/*-implementation-gaps.md  # the <KEY>-implementation-gaps.md draft (source-truth.md §7.5)
 ```
 
-**The security register is bookkeeping**: its records are a run's own and must not wait on anyone's review, so `commit-artifacts` (§4) commits them and no pull request hands them off, as `${CLAUDE_PLUGIN_ROOT}/references/security-register-format.md` §1 says.
+**The security register is bookkeeping**: its records are a run's own and must not wait on anyone's review, so `commit-artifacts` (§4) commits them and no pull request hands them off, as `${CLAUDE_PLUGIN_ROOT}/references/security-register-format.md` §1 says. The same directory holds a keyless scan's cost entry, under `dev-workflows/cost/` beside the register, filed per code repository as the `documentation/` shape files a documentation run's (`cost-emission.md` §8).
 
 **The `documentation/` shape is the `docs-workflows` family's, and it exists because that family's normal run has no PRD and never will.** A documentation run against a repository nobody has written a PRD for would otherwise park every entry as *pending*, awaiting a reconciliation into a PRD directory that is never coming — so those entries accumulate forever and reconcile against nothing. The rung `feedback-emission.md` §2 and `cost-emission.md` §8 insert before pending writes instead to `<specs-root>/documentation/<docs-repo-slug>/dev-workflows/{cost,feedback}/`, where `<docs-repo-slug>` is the one-segment name the next paragraph defines. **Per docs repo, not one flat `documentation/` bucket**, for exactly the reason the PRD-directory rung exists for the pipeline: a person documenting two products must still be able to answer what documenting each one cost. The docs repo is that family's unit of attribution.
 
@@ -162,8 +162,8 @@ here stages or touches it. A staging directory the operator names outside `$SPEC
 this reference's scope.
 
 Sources: `feedback-emission.md` §2 tiers 1–2 including tier 2's documentation
-branch, `cost-emission.md` §8 tier 1, tier 2's documentation branch and
-§9 pending, `followup-emission.md` §2 (where it lands, per PRD/Epic folder),
+branch, `cost-emission.md` §8 tier 1, tier 2's documentation and security
+branches and §9 pending, `followup-emission.md` §2 (where it lands, per PRD/Epic folder),
 `session-hygiene.md` §1 (resume tier 1), `source-truth.md` §7.5 (the
 implementation-gaps draft), `docs-workflows:finish-and-handoff` §5 (the
 pull-request draft) and `security-register-format.md` §1 (the security register
@@ -439,7 +439,7 @@ First matching row applies.
 
 **In session-branch mode** (§8), B2's and B4's switch and pull, and the re-run's switch back below, are each wrapped in `lift` and `put-back` (§8.3), and the preflight ends with `put-back`. HEAD on the session branch is not a row's subject: G2 has already kept the run there.
 
-**Merged — `branch-merged <ref>`.** Whether the work on a branch is on the default branch, asked against `<default-ref>` (§3.2). B2 asks it of `HEAD`, `phase-handoff.md` §2.2 rule 3 of the ref it resolves, and §3.4's retry of each branch it lists. The first test that holds answers **merged**; none holding answers **unmerged**:
+**Merged — `branch-merged <ref>`.** Whether the work on a branch is on the default branch, asked against `<default-ref>` (§3.2). B2 asks it of `HEAD`, `phase-handoff.md` §2.2 rule 3 of the ref it resolves, and §3.4's retry of each branch it lists; `workflows-core:implementation-format` §5's `unit-branch` asks it of a unit's branch in a code repository, running these read-only tests there itself, against that repository's own default ref — no entry point here runs in that repository. The first test that holds answers **merged**; none holding answers **unmerged**:
 
 1. **A merge or a fast-forward:** `git -C "$SPECS_PATH" merge-base --is-ancestor <ref> <default-ref> 2>/dev/null` exits 0.
 2. **A rebase merge:** `git -C "$SPECS_PATH" cherry <default-ref> <ref>` prints at least one line, every line it prints begins `-`, which marks a commit whose change the default branch already holds under another commit, and `git -C "$SPECS_PATH" rev-list --merges <default-ref>..<ref>` prints nothing. `cherry` passes over merge commits, so a branch whose only change of its own sat in a merge commit would otherwise read merged, and B2 would name `branch -D` on it.
@@ -1062,7 +1062,7 @@ In the mode nothing in this reference commits a session file on the checked-out 
 
 1. creates the session branch where it does not exist, at the commit the checkout's files come from (`git merge-base HEAD <default-ref>`);
 2. commits every session file the overlay holds (§8.3) — each path `git status` reports dirty and each where the branch differs from HEAD, by §2.1's classifier, a deleted one as a deletion — onto it through a temporary index. A working copy that is HEAD's version, or the version this worktree was last given, is not committed — save the files `--include-ahead` carries, which HEAD holds: the overlay is simply not in place there (a `lift` not yet put back, a second worktree, a switch back from the session branch, a file removed by hand), or another worktree moved the branch on, and the branch keeps its own. An absent session file is a deletion only under `dev-workflows-cost/` — `cost-emission.md` §9 relocates a pending cost file and deletes it, the one session file a run deletes — and only where HEAD holds it or this worktree held it, which the script records per worktree (path and version, in `session-branch-placed.json` under the git directory); any other absent session file is put back; a working copy of an appended shape (the `union` ones of step 3) that differs from the branch's version is first merged with it, `git merge-file --union` from the version at `git merge-base HEAD <session branch>`, and written back, so an entry only the branch holds survives a hand edit or a lift nobody put back; and with `--include-ahead` also the files of the commits on the local default branch that `<default-ref>` lacks, where every one of them is a session-file commit (the ones a refused push left there); it moves neither the checkout, the index nor HEAD;
-3. then merges in `<default-ref>`, and `origin`'s copy of the session branch where one exists (another clone pushed it under the same identity), each where the branch lacks it, as `NOISSUE Merge <ref> into <session branch>` — a fast-forward where the branch holds nothing of its own, else `git merge-tree --write-tree -X ours` with git's `union` driver for the appended shapes, kept as one marked block in the repository's own `info/attributes`, which no commit carries — so a teammate's entries and this run's both survive, and an overwritten file (`resume.md`, `pr-draft.md`, unset there) keeps this run's version whole;
+3. then merges in `<default-ref>`, and `origin`'s copy of the session branch where one exists (another clone pushed it under the same identity), each where the branch lacks it, as `NOISSUE Merge <ref> into <session branch>` — a fast-forward where the branch holds nothing of its own, else `git merge-tree --write-tree -X ours` with git's `union` driver for the appended shapes, kept as one marked block in the repository's own `info/attributes`, which no commit carries — so a teammate's entries and this run's both survive, and an overwritten file (`resume.md`, `pr-draft.md`, and a security register's `register.json` and `register.md`, unset there) keeps this run's version whole;
 4. and brings each working copy that still matches the branch's previous version up to the merged one.
 
 It prints `{committed, files, paths, created, stranded, ahead_not_session, sync}`. `committed: null` is §4 step 3's *nothing to commit*. A non-empty `sync.conflict` names files the merge could not settle, and `sync.error` says the merge could not run at all: either way the commit stands, its push goes ahead, and §6's line says so. The commit is built with `git commit-tree`, signed where `commit.gpgSign` is set, and runs no `pre-commit` or `commit-msg` hook: those judge a change staged in a checkout, and this one is neither; a rule on `origin` still judges its push.
