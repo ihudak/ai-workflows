@@ -103,3 +103,8 @@ Two independent reviewers re-read the fix wave after it was merged as `c231cb9f`
 Noted by the re-review and deferred with the rest:
 
 - **D14 — after the operator merges the default branch into a plugin branch as row B′ asks, the next `commit-artifacts` does not push that branch**: `push-scope` measures against `origin/<branch>` alone, so the default branch's commits and the merge read as non-session commits. A later deliverable handoff push clears it. Older than this review.
+
+## Open items after both fix waves
+
+- **Which of the customer's sentences is the reason** a *Correct it* copies out of the review is a reading no test can make. product-workflows 3.34.5 records every *Correct it* pick in the reconciliation record — the reader's row, the corrected `chosen` and reason, and where in the review each was copied from — so the pick can be checked, as a re-point already is. That is the whole of what this repository can do about it.
+- **The edition ports, and D14's decision**, are in `docs/superpowers/to-fix.md` — E1 (`check-docs.sh`'s shared body to the internal Claude and Copilot editions), E2 (this review's plugin fixes to the editions that carry the same text), E3 (re-review C1–C7 and D1–D14 once the `/conformance` rework lands), and D14 with its two options.
