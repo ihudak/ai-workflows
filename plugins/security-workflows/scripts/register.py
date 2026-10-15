@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """register.py — a code repository's security findings register, kept in SPECS.
 
-  register.py plan         --specs <root> --slug <repo-slug> --repo <clone> [--scan <folder>] [--unit <KEY>] [--today <YYYY-MM-DD>] [--reserve-dir <dir>]
+  register.py plan         --specs <root> --slug <repo-slug> --repo <clone> [--scan <folder>] [--unit <KEY>] [--today <YYYY-MM-DD>] [--reserve-dir <dir>] [--default-ref <ref>]
   register.py ids          --specs <root> --slug <repo-slug> --plan <plan.json> --decisions <decisions.json>
   register.py commit       --specs <root> --slug <repo-slug> --plan <plan.json> --decisions <decisions.json> --by <name> --kind scan|import|triage|verify --role dev|sec [--unit <KEY>] [--repo-name <name>] [--at <ISO-8601 UTC>]
   register.py rebuild      --specs <root> --slug <repo-slug>
@@ -28,24 +28,33 @@ earlier move took, so no other record's number moves and no later allocation mov
 allocated twice -- the same origin (one scan recorded on two machines), or the same plugin ID under the
 same ID_VERSION (scans on two branches each reporting it as new) -- is one finding: the later number gives
 way to the earlier, the later origin becomes another name for it, and its decisions apply to it in record
-order. A moved finding's follow-up line is built again with its new number, naming the register's slug as
-its repository. The first run to meet a move reports it, from the number last reported for that record's
-allocation, and writes it into its own record's renumbered, so no later run reports it again. The format
-is workflows-core's security-register-format reference.
+order; the number it gave way from stays held, so a later record's collision with it moves as it did before.
+A confirmed match moves a finding's plugin ID, so an ID reported again after a match moved it away is a new
+finding; where several findings carry one ID -- two branches each recorded it before seeing the other, one by
+a match and one as new -- a scan reporting it reports each of them again, and an allocation of an ID that an
+earlier allocation still carries gives way to the earliest of the findings carrying it. A moved finding's
+follow-up line is built again with its new number, naming the register's slug as its repository. The first
+run to meet a move reports it, from the number last reported for that record's allocation, and writes it
+into its own record's renumbered, so no later run reports it again; where a record that arrives later
+undoes a reported move, the return is reported the same way. The format is workflows-core's
+security-register-format reference.
 
 plan: reads the register and, with --scan, the scan folder's products; prints what the scan means
 for the register (or, as already_recorded with recorded_on, that this register or a run record on another
-branch holds the scan already) -- new findings, findings reported again, possibly-same matches to confirm, findings
-a covering scan closes or proposes closing, findings it did not report, findings to reopen, findings
-whose file is gone, and, as unverifiable, the findings about which nothing is recorded because this
-clone cannot place their last sighting (the last-seen commit absent and no squash of the finding's unit
-found after it), or because the scan is later but whether the file changed cannot be told (no blob
-recorded, and one of the two commits absent) -- plus the open findings, the accepted risks past their
-review-by date, as renumbered the moves no run record has reported yet, and as origins the origin of
-every [SEC#n] it saw, through which commit names the findings decided on. Git is run on --repo, which
-must hold the scan's commit, for ancestry, a unit's squash commit, the finding's file blob, and its floor:
-the newest commit in the scanned commit's history whose subject holds one of the finding's unit keys, so a
-later squash is never one the branch was cut after. Without --scan it plans a triage.
+branch holds the scan already) -- new findings, findings reported again (each finding carrying a reported
+plugin ID), possibly-same matches to confirm, findings a covering scan closes (auto: a fixing finding whose
+last-seen commit the scan descends from) or proposes closing (every other: a squash names the unit, not the
+fix), findings it did not report, findings to reopen, findings whose file is gone, and, as unverifiable, the
+findings about which nothing is recorded because this clone cannot place their last sighting (the last-seen
+commit absent and no squash of the finding's unit found after it), or because the scan is later but whether
+the file changed cannot be told (no blob recorded, and one of the two commits absent) -- plus the open
+findings, the accepted risks past their review-by date, as renumbered the moves no run record has reported
+yet, and as origins the origin of every [SEC#n] it saw, through which commit names the findings decided on.
+Git is run on --repo, which must hold the scan's commit, for ancestry, a unit's squash commit, the finding's
+file blob, and, with --default-ref, the scan's base: the commit it shares with the default branch (git
+merge-base), recorded with each sighting, so the squash leg skips a [<key>] commit that is in the base --
+one the branch was cut after, whatever any clock said -- and never guesses the default branch; without the
+flag, or where no base is found, the base is null and no squash counts. Without --scan it plans a triage.
 ids: prints the [SEC#n] each new or matched finding takes, from a plan and the triage decisions.
 commit: writes the run record and rebuilds; refuses a plan the register has moved past. With
 --repo-name it also builds, for each finding the decisions mark fix, its follow-up line (with --unit)
@@ -95,7 +104,7 @@ DIGITS_RE = re.compile(r"^[0-9]+\Z", re.ASCII)
 LOCATION_RE = re.compile(r"\S+:\d+", re.ASCII)
 SAFE_PATH_RE = re.compile(r"^[A-Za-z0-9._@+][A-Za-z0-9._/@+-]*\Z", re.ASCII)
 LINKS = ("followup", "patch", "fixed_in_scan")
-SCAN_KEYS = ("folder", "id", "commit", "date", "mode", "scope", "effort", "verified", "dirty", "counted", "complete",
+SCAN_KEYS = ("folder", "id", "commit", "date", "base", "mode", "scope", "effort", "verified", "dirty", "counted", "complete",
              "covering", "id_version", "ancestor")
 GIT_ENV = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_OPTIONAL_LOCKS="0", GIT_LITERAL_PATHSPECS="1")
 
@@ -218,21 +227,13 @@ def commit_date(repo, commit):
     return r.stdout.strip()
 
 
-def _unit_log(repo, commit):
-    """(sha, subject) of every non-merge commit in commit's history, newest first, as git log lists them."""
-    r = _git(repo, "log", "--no-merges", "--format=%H%x00%s", commit, "--")
-    if r.returncode != 0:
-        raise _git_fail("log --no-merges %s" % commit, repo, r)
-    return [tuple(row.split("\x00", 1)) for row in r.stdout.splitlines() if "\x00" in row]
-
-
-def _floor(log, keys):
-    """The newest commit in a unit log whose subject holds `[<key>]` for one of keys, or None."""
-    tokens = ["[%s]" % k for k in keys if k]
-    for sha, subject in log if tokens else ():
-        if any(t in subject for t in tokens):
-            return sha
-    return None
+def merge_base(repo, commit, ref):
+    """The commit that commit shares with ref -- a scan's base -- or None where no ref is given, where it names
+    nothing, or where the two share no history. The caller names the default branch; it is never guessed."""
+    if not ref:
+        return None
+    r = _git(repo, "merge-base", "--end-of-options", commit, ref)
+    return (r.stdout.strip() or None) if r.returncode == 0 else None
 
 
 def _instant(text):
@@ -247,16 +248,16 @@ def _instant(text):
 def squashed(repo, commit, units, last, here):
     """Whether commit carries a squash of a unit's work after the finding's last sighting -- the merged test's
     subject leg, held to that sighting: a commit whose subject holds `[<key>]` for a key in units, whose
-    committer date is no earlier than last_seen.date, which is neither last_seen.floor nor one of its ancestors
-    where the floor is in the clone, and which, where the last-seen commit is in the clone (here), is not one of
-    its ancestors -- so an earlier squash of the unit, which the branch was cut after, never counts: the floor
-    names it by its commit, whatever any clock said. The brackets are not key characters, so `[<key>]` matches
+    committer date is no earlier than last_seen.date, which is neither last_seen.base nor one of its ancestors,
+    and which, where the last-seen commit is in the clone (here), is not one of its ancestors. The base is the
+    commit the sighting shares with the default branch, which every clone of that branch holds, so an earlier
+    squash of the unit, which the branch was cut after, never counts, whatever any clock said; where the base
+    is null or not in the clone, no squash counts. The brackets are not key characters, so `[<key>]` matches
     only the whole key."""
     seen = _instant(last.get("date"))
-    if not units or seen is None:
+    base = last.get("base")
+    if not units or seen is None or not isinstance(base, str) or not present(repo, base):
         return False
-    floor = last.get("floor")
-    floor_here = isinstance(floor, str) and present(repo, floor)
     # git's --since only bounds the walk, a day early so a skewed clock cuts nothing; the exact test is below.
     since = (seen - datetime.timedelta(days=1)).astimezone(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S +0000")
     r = _git(repo, "log", "--no-merges", "--since=" + since, "--format=%H%x09%cI%x09%s", commit, "--")
@@ -270,7 +271,7 @@ def squashed(repo, commit, units, last, here):
         made = _instant(when)
         if made is None or made < seen:
             continue
-        if floor_here and is_ancestor(repo, sha, floor):
+        if is_ancestor(repo, sha, base):
             continue
         if here and is_ancestor(repo, sha, last["commit"]):
             continue
@@ -406,8 +407,9 @@ def records(specs, slug):
     return _load_records(os.path.join(regdir(specs, slug), "runs"))
 
 
-def _seen(scan, b, floor):
-    return {"scan": scan["id"], "commit": scan["commit"], "date": scan.get("date"), "blob": b, "floor": floor}
+def _seen(scan, b):
+    """A sighting: the scan, its commit and committer date, the finding's file blob there, and the scan's base."""
+    return {"scan": scan["id"], "commit": scan["commit"], "date": scan.get("date"), "blob": b, "base": scan.get("base")}
 
 
 def _origin(scan_id, plugin_id):
@@ -415,21 +417,22 @@ def _origin(scan_id, plugin_id):
     return "%s:%s" % (scan_id, plugin_id)
 
 
-def _new_finding(n, origin, f, scan, unit, b, floor):
+def _new_finding(n, origin, f, scan, unit, b):
     return {"id": n, "origin": origin, "plugin_id": f["pid"], "plugin_id_version": f["version"], "title": f["title"],
             "cwe": f["cwe"], "other_cwes": f["other_cwes"], "severity": f["severity"],
             "confidence": f["confidence"], "path": f["path"], "line": f["line"],
-            "first_seen": _seen(scan, b, floor), "last_seen": _seen(scan, b, floor), "reported_by": [scan["id"]],
+            "first_seen": _seen(scan, b), "last_seen": _seen(scan, b), "reported_by": [scan["id"]],
             "not_reported_by": [], "units": [unit] if unit else [], "status": "new", "owner": None,
             "review_by": None, "confirmed": None, "history": [], "links": {}}
 
 
 def _numbering(recs):
-    """(num, canon, moves, taken), the replay's numbering on its own, from the allocations alone, so it needs no
-    scan folder and can take records another branch holds: num maps every origin to its finding's [SEC#n], canon
-    maps every origin to the origin of the finding it names, moves lists each allocation that did not keep its
-    number, and taken is every number any record allocated, a number that gave way included. Numbers are for
-    display; records name findings by origin, so a move never points a record at another finding."""
+    """(num, canon, moves, taken, allocs), the replay's numbering on its own, from the allocations and the confirmed
+    matches alone, so it needs no scan folder and can take records another branch holds: num maps every origin to
+    its finding's [SEC#n], canon maps every origin to the origin of the finding it names, moves lists each
+    allocation that did not keep its number, taken is every number any record allocated, a number that gave way
+    included, and allocs lists every allocation as (run, origin, the number it allocated, the number it has now).
+    Numbers are for display; records name findings by origin, so a move never points a record at another finding."""
     taken = set()
     for r in recs:
         for e in r.get("allocated", []):
@@ -437,20 +440,37 @@ def _numbering(recs):
                 raise Unrunnable("REGISTER_UNREADABLE: run record %s allocates a finding without an origin and a number"
                                  % r["_file"])
             taken.add(e["id"])
-    num, canon, by_pid, held, moved, moves = {}, {}, {}, set(), set(), []
+        for e in r.get("matched", []):
+            if not isinstance(e, dict) or not isinstance(e.get("origin"), str) or not isinstance(e.get("plugin_id"), str):
+                raise Unrunnable("REGISTER_UNREADABLE: run record %s confirms a match without an origin and a plugin ID"
+                                 % r["_file"])
+    num, canon, held, moved, moves, allocs = {}, {}, set(), set(), [], []
+    # Each finding's current plugin ID, as the confirmed matches move it: carriers maps a plugin ID to the findings
+    # (canonical origins) carrying it, in the order they came to, and how says whether each came to by allocation or
+    # by a match. An allocation of an ID that an earlier allocation still carries names that finding -- scans on
+    # two branches each reported it as new -- and gives way to the earliest of the findings carrying it; an ID a
+    # match moved away, allocated again, is a new finding.
+    carriers, pid_of, how = {}, {}, {}
     for r in recs:
         for e in r.get("allocated", []):
             o, n, pid = e["origin"], e["id"], e.get("plugin_id")
-            first = canon.get(o) or (by_pid.get(pid) if isinstance(pid, str) else None)
+            first = canon.get(o)
+            if first is None and isinstance(pid, str):
+                carrying = carriers.get(pid, [])
+                if any(how.get(c) == "allocated" for c in carrying):
+                    first = carrying[0]
             if first is not None:
                 # One finding allocated twice, before either run saw the other: the same origin (one scan recorded
                 # on two machines), or the same plugin ID under the same ID_VERSION (scans on two branches each
                 # reported it as new). The later allocation gives way to the earlier one, and its origin becomes
-                # another name for that finding.
+                # another name for that finding. The number it gave way from stays held, so a later record's
+                # collision with it moves as it did before this record arrived, and no reported move vanishes.
                 canon[o] = first
                 num[o] = num[first]
                 if n != num[first]:
                     moves.append({"run": r["_file"], "origin": o, "from": n, "to": num[first]})
+                held.add(n)
+                allocs.append((r["_file"], o, n, num[first]))
                 continue
             if n in held:
                 # Planned on another branch before either saw the other: the lowest number above it that no record
@@ -461,12 +481,29 @@ def _numbering(recs):
                     to += 1
                 moved.add(to)
                 moves.append({"run": r["_file"], "origin": o, "from": n, "to": to})
+                allocs.append((r["_file"], o, n, to))
                 n = to
+            else:
+                allocs.append((r["_file"], o, n, n))
             num[o], canon[o] = n, o
             held.add(n)
             if isinstance(pid, str):
-                by_pid.setdefault(pid, o)
-    return num, canon, moves, taken
+                carriers.setdefault(pid, []).append(o)
+                pid_of[o], how[o] = pid, "allocated"
+        scan = r.get("scan") if isinstance(r.get("scan"), dict) else None
+        if scan and not scan.get("ancestor"):  # a match confirmed from a history scan leaves the ID as it is
+            for e in r.get("matched", []):
+                c = canon.get(e["origin"])
+                if c is None:
+                    raise Unrunnable("REGISTER_UNREADABLE: run %s names finding %r ([SEC#%s] when it ran), which no"
+                                     " earlier run recorded" % (r["_file"], e["origin"], e.get("id")))
+                old, new = pid_of.get(c), e["plugin_id"]
+                if old != new:
+                    if old is not None and c in carriers.get(old, []):
+                        carriers[old].remove(c)
+                    carriers.setdefault(new, []).append(c)
+                    pid_of[c], how[c] = new, "matched"
+    return num, canon, moves, taken, allocs
 
 
 def _apply(specs, slug, st, r, num, canon, by_origin):
@@ -488,45 +525,45 @@ def _apply(specs, slug, st, r, num, canon, by_origin):
         if not any(s["id"] == scan["id"] for s in st["scans"]):
             st["scans"].append(dict(scan, seq=seq))
         _, found = load_scan(os.path.join(regdir(specs, slug), "scans", scan["folder"]))
-        placed = {}
+        placed = {}  # a plugin ID is placed once as new or matched, and once per finding carrying it as again
         for how in ("allocated", "matched", "again"):
             for e in r.get(how, []):
-                placed[e["plugin_id"]] = (how, e)
+                placed.setdefault(e["plugin_id"], []).append((how, e))
         for f in found:
             if f["pid"] not in placed:
                 raise Unrunnable("REGISTER_UNREADABLE: run %d leaves finding %s of scan %s unplaced" % (seq, f["pid"], scan["id"]))
-            how, e = placed[f["pid"]]
-            b, floor = e.get("blob"), e.get("floor")
-            if how == "allocated":
-                o = e["origin"]
-                if canon[o] == o and o not in by_origin:
-                    g = _new_finding(num[o], o, f, scan, unit, b, floor)
-                    by_origin[o] = fs[g["id"]] = g
+            for how, e in placed[f["pid"]]:
+                b = e.get("blob")
+                if how == "allocated":
+                    o = e["origin"]
+                    if canon[o] == o and o not in by_origin:
+                        g = _new_finding(num[o], o, f, scan, unit, b)
+                        by_origin[o] = fs[g["id"]] = g
+                        continue
+                    # One finding allocated again (§2): the later allocation's origin becomes another name for it,
+                    # and only who reported it, and for which units, merges.
+                    g = by_origin.get(canon[o])
+                    if g is None:
+                        raise Unrunnable("REGISTER_UNREADABLE: run %s allocates %r as finding %r, which no earlier run"
+                                         " recorded" % (r["_file"], o, canon[o]))
+                    by_origin[o] = g
+                    if scan["id"] not in g["reported_by"]:
+                        g["reported_by"].append(scan["id"])
+                    if unit and unit not in g["units"]:
+                        g["units"].append(unit)
                     continue
-                # One finding allocated again (§2): the later allocation's origin becomes another name for it, and
-                # only who reported it, and for which units, merges.
-                g = by_origin.get(canon[o])
-                if g is None:
-                    raise Unrunnable("REGISTER_UNREADABLE: run %s allocates %r as finding %r, which no earlier run"
-                                     " recorded" % (r["_file"], o, canon[o]))
-                by_origin[o] = g
+                g = find(e, "names")
                 if scan["id"] not in g["reported_by"]:
                     g["reported_by"].append(scan["id"])
-                if unit and unit not in g["units"]:
-                    g["units"].append(unit)
-                continue
-            g = find(e, "names")
-            if scan["id"] not in g["reported_by"]:
-                g["reported_by"].append(scan["id"])
-            if not scan.get("ancestor"):
-                if how == "matched":  # a match confirmed from a history scan leaves the ID and version as they are
-                    g["plugin_id"], g["plugin_id_version"] = f["pid"], f["version"]
-                g["last_seen"] = _seen(scan, b, floor)
-                for k, v in (("title", f["title"]), ("severity", f["severity"]), ("confidence", f["confidence"]),
-                             ("cwe", f["cwe"]), ("other_cwes", f["other_cwes"]), ("path", f["path"]), ("line", f["line"])):
-                    g[k] = v
-                if unit and unit not in g["units"]:
-                    g["units"].append(unit)
+                if not scan.get("ancestor"):
+                    if how == "matched":  # a match confirmed from a history scan leaves the ID and version as they are
+                        g["plugin_id"], g["plugin_id_version"] = f["pid"], f["version"]
+                    g["last_seen"] = _seen(scan, b)
+                    for k, v in (("title", f["title"]), ("severity", f["severity"]), ("confidence", f["confidence"]),
+                                 ("cwe", f["cwe"]), ("other_cwes", f["other_cwes"]), ("path", f["path"]), ("line", f["line"])):
+                        g[k] = v
+                    if unit and unit not in g["units"]:
+                        g["units"].append(unit)
         for e in r.get("not_reported", []):
             g = find(e, "names")
             if scan["id"] not in g["not_reported_by"]:
@@ -558,7 +595,7 @@ def _next_id(num, taken):
 
 
 def _replay(specs, slug, recs):
-    num, canon, moves, taken = _numbering(recs)
+    num, canon, moves, taken, _ = _numbering(recs)
     st = {"format": 1, "repo": slug, "next_id": _next_id(num, taken), "next_seq": 1, "last_at": None, "scans": [],
           "findings": {}, "renumbered": moves}
     by_origin = {}
@@ -571,33 +608,36 @@ def replay(specs, slug):
     return _replay(specs, slug, records(specs, slug))
 
 
-def _unacked(recs, moves):
-    """The moves a run reports: each allocation that did not keep its number, from the number last reported for
-    it in any record's renumbered (else the number it allocated) to the number it has now. One that stands where
-    it was last reported is acknowledged, and is not reported again."""
+def _unacked(recs):
+    """The moves a run reports: every allocation any record made whose number now differs from the number last
+    reported for it in any record's renumbered, else from the number it allocated -- from that number to the one
+    it has now. One that stands where it was last reported is acknowledged, and is not reported again; one that a
+    later record returned to its allocated number is reported as that return, though it is no move."""
     last = {}
     for r in recs:
         for m in r.get("renumbered") or []:
             if isinstance(m, dict) and isinstance(m.get("to"), int):
                 last[(m.get("run"), m.get("origin"))] = m["to"]
     out = []
-    for m in moves:
-        start = last.get((m["run"], m["origin"]), m["from"])
-        if start != m["to"]:
-            out.append({"run": m["run"], "origin": m["origin"], "from": start, "to": m["to"]})
+    for run, o, n, now in _numbering(recs)[4]:
+        start = last.get((run, o), n)
+        if start != now:
+            out.append({"run": run, "origin": o, "from": start, "to": now})
     return out
 
 
 # ---- plan ----
 
 def _later(repo, g, commit):
-    """True or False where the clone can place the finding's last sighting against commit; None where it cannot."""
+    """How commit is later than the finding's last sighting: "ancestor" where it descends from the last-seen commit,
+    "squash" where it carries a squash of the finding's unit after the sighting instead; False where it is neither
+    and the clone holds the last-seen commit, None where the clone cannot place the sighting at all."""
     last = g["last_seen"]
     here = present(repo, last["commit"])
     if here and is_ancestor(repo, last["commit"], commit):
-        return True
+        return "ancestor"
     if squashed(repo, commit, g["units"], last, here):
-        return True
+        return "squash"
     return False if here else None
 
 
@@ -611,7 +651,7 @@ def _changed(repo, g, commit):
     return None
 
 
-def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None):
+def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None, default_ref=None):
     if unit is not None and not KEY_RE.match(unit):
         raise Unrunnable("REGISTER_BAD_UNIT: %r is not a key" % unit)
     if not _is_date(today):
@@ -625,12 +665,12 @@ def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None):
     # number their merge will move a finding to. Number them with this checkout's, as the replay will.
     local = {r["_file"] for r in recs}
     reserved = [r for r in _load_records(reserve_dir) if r["_file"] not in local] if reserve_dir else []
-    num, _, _, taken = _numbering(sorted(recs + reserved, key=lambda r: (r["seq"], r["at"], r["_file"])))
+    num, _, _, taken, _ = _numbering(sorted(recs + reserved, key=lambda r: (r["seq"], r["at"], r["_file"])))
     next_id = max(st["next_id"], _next_id(num, taken))
     next_seq = max([st["next_seq"]] + [r["seq"] + 1 for r in reserved])
     out = {"format": 1, "repo": slug, "unit": unit, "today": today, "base_id": st["next_id"],
            "base_seq": st["next_seq"], "next_id": next_id, "next_seq": next_seq, "reserved": len(reserved),
-           "renumbered": _unacked(recs, st["renumbered"]),
+           "renumbered": _unacked(recs),
            "origins": {str(n): g["origin"] for n, g in sorted(fs.items())},
            "scan": None, "already_recorded": False, "recorded_on": None, "id_version_changed": False,
            "new": [], "again": [], "possibly_same": [], "closable": [], "not_reported": [], "reopen": [],
@@ -647,6 +687,7 @@ def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None):
         sha = meta["commit"]
         _rev(repo, sha, "the scan's commit")  # it must be in the clone; every later git question depends on it
         meta["date"] = commit_date(repo, sha)
+        meta["base"] = merge_base(repo, sha, default_ref)  # null without --default-ref, or where none is found
         versions = {f["version"] for f in found}
         if len(versions) > 1:
             raise Unrunnable("SCAN_PRODUCTS_UNREADABLE: %s mixes finding-ID versions %s" % (scan_folder, sorted(versions)))
@@ -661,37 +702,30 @@ def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None):
             g["status"] in ACTIVE and g["plugin_id_version"] != version for g in ordered)
         for f in found:
             f["blob"] = blob(repo, sha, f["path"])
-        log = []
-
-        def floor(keys):  # the floor of a sighting at this commit, for a finding raised for these units
-            keys = sorted({k for k in keys if k})
-            if keys and not log:
-                log.append(_unit_log(repo, sha))
-            return _floor(log[0], keys) if keys else None
-        mine = [unit] if unit else []
-        by_pid = {g["plugin_id"]: g for g in ordered if g["plugin_id_version"] == version}
+        # Rule 1: a reported plugin ID names every finding carrying it under the scan's ID_VERSION -- more than one
+        # where two branches each recorded it before seeing the other -- and each of them is reported again.
+        by_pid = {}
+        for g in ordered:
+            if g["plugin_id_version"] == version:
+                by_pid.setdefault(g["plugin_id"], []).append(g)
         claimed = set()
         for f in found:
-            g = by_pid.get(f["pid"])
-            if g is None:
-                continue
-            claimed.add(g["id"])
-            out["again"].append({"plugin_id": f["pid"], "id": g["id"], "fid": f["fid"], "cwe": f["cwe"],
-                                 "path": f["path"], "line": f["line"], "blob": f["blob"], "floor": floor(g["units"] + mine)})
-            if g["status"] == "fixed" and not ancestor:
-                out["reopen"].append(g["id"])
+            for g in by_pid.get(f["pid"], []):
+                claimed.add(g["id"])
+                out["again"].append({"plugin_id": f["pid"], "id": g["id"], "fid": f["fid"], "cwe": f["cwe"],
+                                     "path": f["path"], "line": f["line"], "blob": f["blob"]})
+                if g["status"] == "fixed" and not ancestor:
+                    out["reopen"].append(g["id"])
         for f in found:
             if f["pid"] in by_pid:
                 continue
             entry = {"plugin_id": f["pid"], "fid": f["fid"], "title": f["title"], "severity": f["severity"],
                      "confidence": f["confidence"], "cwe": f["cwe"], "path": f["path"], "line": f["line"],
-                     "blob": f["blob"], "floor": floor(mine)}
+                     "blob": f["blob"]}
             cands = [g["id"] for g in ordered if g["id"] not in claimed and g["path"] == f["path"]
                      and g["cwe"] == f["cwe"] and abs(g["line"] - f["line"]) <= NEAR]
             if cands:
                 entry["candidates"] = cands
-                # A confirmed match takes the candidate's units with this run's, so its floor is computed for those.
-                entry["match_floors"] = {str(n): floor(fs[n]["units"] + mine) for n in cands}
                 out["possibly_same"].append(entry)
             else:
                 entry["suggested"] = "fix" if f["severity"] in ("CRITICAL", "HIGH") else "open"
@@ -717,7 +751,9 @@ def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None):
                 if later is None or changed is None:
                     out["unverifiable"].append(g["id"])
                 elif changed:
-                    out["closable"].append({"id": g["id"], "auto": g["status"] == "fixing"})
+                    # Automatic only where the scan descends from the sighting: a squash names the unit, not the
+                    # fix, so a closure reached only through one is proposed, for a person to confirm.
+                    out["closable"].append({"id": g["id"], "auto": g["status"] == "fixing" and later == "ancestor"})
                 else:
                     out["not_reported"].append(g["id"])
     for g in ordered:
@@ -806,11 +842,10 @@ def allocate(p, dec):
     n, allocated = p["next_id"], []
     for e in p["new"] + [e for e in p["possibly_same"] if e["plugin_id"] in rejects]:
         allocated.append({"plugin_id": e["plugin_id"], "id": n, "origin": _origin(p["scan"]["id"], e["plugin_id"]),
-                          "blob": e.get("blob"), "floor": e.get("floor")})
+                          "blob": e.get("blob")})
         n += 1
     matched = [{"plugin_id": e["plugin_id"], "id": matches[e["plugin_id"]], "origin": origins[matches[e["plugin_id"]]],
-                "blob": e.get("blob"), "floor": (e.get("match_floors") or {}).get(str(matches[e["plugin_id"]]))}
-               for e in p["possibly_same"] if e["plugin_id"] in matches]
+                "blob": e.get("blob")} for e in p["possibly_same"] if e["plugin_id"] in matches]
     return allocated, matched
 
 
@@ -912,10 +947,10 @@ def commit(specs, slug, p, dec, by, kind, unit, at, role="sec", repo_name=None):
     rec = {"format": 1, "seq": p["next_seq"], "at": at, "by": by, "kind": kind, "role": role, "unit": unit,
            "scan": {k: scan[k] for k in SCAN_KEYS} if scan else None,
            "allocated": allocated, "matched": matched,
-           "again": [{"plugin_id": e["plugin_id"], "id": e["id"], "origin": of(e["id"]), "blob": e.get("blob"),
-                      "floor": e.get("floor")} for e in p["again"]] if scan else [],
+           "again": [{"plugin_id": e["plugin_id"], "id": e["id"], "origin": of(e["id"]), "blob": e.get("blob")}
+                     for e in p["again"]] if scan else [],
            "not_reported": [{"id": n, "origin": of(n)} for n in p["not_reported"]] if scan else [],
-           "decisions": auto + user, "renumbered": _unacked(recs, st["renumbered"])}
+           "decisions": auto + user, "renumbered": _unacked(recs)}
     text = _dump(rec)
     name = "%04d-%s-%s.json" % (rec["seq"], at.replace("-", "").replace(":", ""),
                                 hashlib.sha256(text.encode("utf-8")).hexdigest()[:8])
@@ -1138,8 +1173,8 @@ def _scan(specs, folder, commit, findings, mode="scan", scope=(), verified=True,
 _AT = [0]
 
 
-def _run(specs, repo, folder, dec=None, unit=None, kind="scan", today="2026-10-16"):
-    p = plan(specs, "code", repo, folder, unit, today)
+def _run(specs, repo, folder, dec=None, unit=None, kind="scan", today="2026-10-16", default_ref=None):
+    p = plan(specs, "code", repo, folder, unit, today, **({"default_ref": default_ref} if default_ref else {}))
     _AT[0] += 1
     at = (datetime.datetime(2026, 10, 16, 9) + datetime.timedelta(minutes=_AT[0])).strftime("%Y-%m-%dT%H:%M:%SZ")
     res = commit(specs, "code", p, dec or {}, "Tester", kind, unit, at)
@@ -1723,11 +1758,12 @@ def case_squash_merge_closes_a_units_finding(tmp):
     _g(dev, "switch", "-q", "-c", "feat/ACME-1-01-orders")
     b = _change(dev, "src/b.py", "x = 2\n")
     _scan(specs, "s1", b, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
-    p = plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16")
+    p = plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16", default_ref="origin/main")
     commit(specs, "code", p, {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, "Dev", "scan", "ACME-1-01",
            "2026-10-16T10:00:00Z", "dev")
     seen = _state(specs)[1]["last_seen"]
-    assert seen["commit"] == b and seen["date"] and seen["blob"] == _g(dev, "rev-parse", b + ":src/a.py"), seen
+    assert seen["commit"] == b and seen["date"] and seen["base"] == c1, seen
+    assert seen["blob"] == _g(dev, "rev-parse", b + ":src/a.py"), seen
     assert _git(repo, "cat-file", "-e", b).returncode != 0, "the branch commit is only in the Dev's clone"
     near = _change(repo, "src/a.py", "unrelated\n", "chore: other work [ACME-1-012]")
     assert verify_scope(specs, "code", repo, near, "ACME-1-01") == {"files": ["src/a.py"], "gone": []}, \
@@ -1738,8 +1774,13 @@ def case_squash_merge_closes_a_units_finding(tmp):
     sq = _change(repo, "src/a.py", "guarded\n", "fix(orders): guard the query [ACME-1-01] (#12)")
     _scan(specs, "s3", sq, [], scope=["src"])
     p, _ = _run(specs, repo, "s3", kind="verify")
-    assert p["closable"] == [{"id": 1, "auto": True}] and not p["unverifiable"] and not p["scan"]["ancestor"], p
-    assert _state(specs)[1]["status"] == "fixed"
+    assert p["closable"] == [{"id": 1, "auto": False}] and not p["unverifiable"] and not p["scan"]["ancestor"], p
+    assert _state(specs)[1]["status"] == "fixing", "later only through a squash: proposed, never automatic"
+    _scan(specs, "s4", sq, [], scope=["src"])
+    p, _ = _run(specs, repo, "s4", {"decisions": [{"target": "id:1", "status": "fixed", "reason": "confirmed"}]}, kind="verify")
+    assert p["closable"] == [{"id": 1, "auto": False}], p
+    g = _state(specs)[1]
+    assert g["status"] == "fixed" and g["links"]["fixed_in_scan"] == "s4", g["links"]
 
 
 def case_missing_last_seen_commit_without_units_is_unverifiable(tmp):
@@ -1934,7 +1975,7 @@ def case_last_sighting_on_a_branch_this_clone_holds(tmp):
     _g(repo, "switch", "-q", "-c", "feat/ACME-1-01-orders")
     b = _change(repo, "src/b.py", "x = 2\n")
     _scan(specs, "s1", b, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
-    _run(specs, repo, "s1", {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, unit="ACME-1-01")
+    _run(specs, repo, "s1", {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, unit="ACME-1-01", default_ref="main")
     _scan(specs, "s2", b, [("v3:bb", "src/b.py", 1, "CWE-79", "LOW")])
     _run(specs, repo, "s2", {"decisions": [{"target": "plugin:v3:bb", "status": "fixing"}]})
     _g(repo, "switch", "-q", "main")
@@ -1942,9 +1983,11 @@ def case_last_sighting_on_a_branch_this_clone_holds(tmp):
     c3 = _change(repo, "src/b.py", "x = 3\n")
     _scan(specs, "s3", c3, [])
     p, _ = _run(specs, repo, "s3")
-    assert p["closable"] == [{"id": 1, "auto": True}], "a squash is later even while the branch commit is in the clone"
+    assert p["closable"] == [{"id": 1, "auto": False}], "a squash is later even while the branch commit is in the clone"
     assert not p["not_reported"] and not p["unverifiable"], "decidably not later: nothing is recorded about [SEC#2]"
-    assert _state(specs)[2]["status"] == "fixing" and _state(specs)[2]["not_reported_by"] == []
+    fs = _state(specs)
+    assert fs[1]["status"] == "fixing" and fs[1]["last_seen"]["base"] == c1, "proposed through the squash, not closed"
+    assert fs[2]["status"] == "fixing" and fs[2]["not_reported_by"] == []
 
 
 def case_unreadable_blob_and_absent_commit_is_unverifiable(tmp):
@@ -1952,7 +1995,7 @@ def case_unreadable_blob_and_absent_commit_is_unverifiable(tmp):
     dev = _clone(tmp, repo, "dev")
     b = _change(dev, "src/b.py", "x = 2\n")
     _scan(specs, "s1", b, [("v3:aa", "src/z.py", 3, "CWE-89", "HIGH")])  # a file the scanned commit does not hold
-    commit(specs, "code", plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16"),
+    commit(specs, "code", plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16", default_ref="origin/main"),
            {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, "Dev", "scan", "ACME-1-01",
            "2026-10-16T10:00:00Z", "dev")
     assert _state(specs)[1]["last_seen"]["blob"] is None
@@ -2114,17 +2157,17 @@ def case_decisions_follow_their_finding_through_a_race(tmp):
 
 def case_earlier_squash_of_the_unit_never_closes(tmp):
     # The Dev's branch is cut from c1. Another part of the unit lands on main as [ACME-1-01] half an hour before the
-    # branch commit: it is in neither the branch's history nor its floor, so only its date keeps it from counting.
+    # branch commit: it is after the base and not in the branch's history, so only its date keeps it from counting.
     specs, repo, c1 = _setup(tmp)
     dev = _clone(tmp, repo, "dev")
     _g(dev, "switch", "-q", "-c", "feat/ACME-1-01-part-2")
     _change(repo, "src/b.py", "x = 9\n", "feat(orders): intake [ACME-1-01] (#11)", "2026-10-15T09:30:00+00:00")
     b = _change(dev, "src/a.py", "".join("second pr %d\n" % i for i in range(1, 41)), None, "2026-10-15T10:00:00+00:00")
     _scan(specs, "s1", b, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
-    commit(specs, "code", plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16"),
+    commit(specs, "code", plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16", default_ref="origin/main"),
            {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, "Dev", "scan", "ACME-1-01",
            "2026-10-16T10:00:00Z", "dev")
-    assert _state(specs)[1]["last_seen"]["floor"] is None, "the branch's history holds no [ACME-1-01] commit"
+    assert _state(specs)[1]["last_seen"]["base"] == c1, "the branch was cut before that part landed"
     m = _change(repo, "src/b.py", "x = 3\n", "chore: unrelated", "2026-10-15T11:00:00+00:00")
     _scan(specs, "s2", m, [], scope=["src"])
     p = plan(specs, "code", repo, "s2", None, "2026-10-16")
@@ -2132,45 +2175,45 @@ def case_earlier_squash_of_the_unit_never_closes(tmp):
     _g(dev, "fetch", "-q", "origin")
     p = plan(specs, "code", dev, "s2", None, "2026-10-16")
     assert not p["closable"] and not p["unverifiable"] and not p["not_reported"], "nor in the Dev's clone"
-    # The unit's own squash lands after the sighting: both clones close it.
+    # The unit's own squash lands after the sighting: both clones find the scan later, and propose the closure.
     sq = _change(repo, "src/a.py", "guarded\n", "fix(orders): guard the query [ACME-1-01] (#12)", "2026-10-15T12:00:00+00:00")
     _scan(specs, "s3", sq, [], scope=["src"])
-    assert plan(specs, "code", repo, "s3", None, "2026-10-16")["closable"] == [{"id": 1, "auto": True}]
+    assert plan(specs, "code", repo, "s3", None, "2026-10-16")["closable"] == [{"id": 1, "auto": False}]
     _g(dev, "fetch", "-q", "origin")
-    assert plan(specs, "code", dev, "s3", None, "2026-10-16")["closable"] == [{"id": 1, "auto": True}]
+    assert plan(specs, "code", dev, "s3", None, "2026-10-16")["closable"] == [{"id": 1, "auto": False}]
 
 
 def case_earlier_squash_on_a_merged_side_line_is_held_by_ancestry(tmp):
-    # The unit's side part X reaches main through a merge, beside its first part F. The Dev's branch is cut after
-    # both, and its commit is dated before either, by a slow clock. The floor is F, the newer; X is neither F nor
-    # its ancestor and is dated after the sighting, so in the Dev's clone only ancestry keeps it from counting.
+    # The Dev's branch, cut from c1, carries the unit's step X ([ACME-1-01]) and then the sighting commit b, dated
+    # before X by a slow clock. X alone is merged into main after the sighting was recorded. In a clone holding b,
+    # X is after the base, dated no earlier than the sighting, and reachable from main: only its being b's own
+    # ancestor keeps it from counting as a squash after the sighting.
     specs, repo, c1 = _setup(tmp)
-    _g(repo, "switch", "-q", "-c", "side")
-    _change(repo, "src/b.py", "x = 8\n", "feat(orders): side part [ACME-1-01] (#10)", "2026-10-15T10:10:00+00:00")
-    _g(repo, "switch", "-q", "main")
-    f = _change(repo, "srcx/a.py", "y = 2\n", "feat(orders): intake [ACME-1-01] (#11)", "2026-10-15T10:20:00+00:00")
-    when = "2026-10-15T10:21:00+00:00"
-    _g(repo, "merge", "-q", "--no-ff", "-m", "Merge side", "side",
-       env=dict(os.environ, GIT_COMMITTER_DATE=when, GIT_AUTHOR_DATE=when))
     dev = _clone(tmp, repo, "dev")
     _g(dev, "switch", "-q", "-c", "feat/ACME-1-01-part-2")
+    x = _change(dev, "src/b.py", "x = 8\n", "feat(orders): part two, step one [ACME-1-01]", "2026-10-15T10:10:00+00:00")
     b = _change(dev, "src/a.py", "".join("second pr %d\n" % i for i in range(1, 41)), None, "2026-10-15T10:00:00+00:00")
     _scan(specs, "s1", b, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
-    commit(specs, "code", plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16"),
+    commit(specs, "code", plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16", default_ref="origin/main"),
            {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, "Dev", "scan", "ACME-1-01",
            "2026-10-16T10:00:00Z", "dev")
-    assert _state(specs)[1]["last_seen"]["floor"] == f, _state(specs)[1]["last_seen"]
-    m = _change(repo, "src/b.py", "x = 3\n", "chore: unrelated", "2026-10-15T11:00:00+00:00")
+    assert _state(specs)[1]["last_seen"]["base"] == c1, _state(specs)[1]["last_seen"]
+    _g(dev, "push", "-q", "origin", x + ":refs/heads/step-one")
+    when = "2026-10-15T10:30:00+00:00"
+    _g(repo, "merge", "-q", "--no-ff", "-m", "Merge step one", "step-one",
+       env=dict(os.environ, GIT_COMMITTER_DATE=when, GIT_AUTHOR_DATE=when))
+    m = _change(repo, "srcx/a.py", "y = 3\n", "chore: unrelated", "2026-10-15T11:00:00+00:00")
     _scan(specs, "s2", m, [], scope=["src"])
     _g(dev, "fetch", "-q", "origin")
     p = plan(specs, "code", dev, "s2", None, "2026-10-16")
-    assert not p["closable"] and not p["unverifiable"] and not p["not_reported"], "the side part is the branch's base"
+    assert not p["closable"] and not p["unverifiable"] and not p["not_reported"], "X is the sighting's own ancestor"
 
 
-def case_slow_clock_sighting_is_held_by_the_floor(tmp):
+def case_slow_clock_sighting_is_held_by_the_base(tmp):
     # The unit's first part F is squashed onto main; the Dev's branch is cut from it, and its commit is dated two
     # minutes before F by a clock that runs behind. A clone without the branch commit cannot use ancestry, and F's
-    # date passes; the floor names F by its commit.
+    # date passes; the base -- the commit the sighting shares with the default branch -- is F, and every clone of
+    # the default branch holds it.
     specs, repo, c1 = _setup(tmp)
     f = _change(repo, "src/a.py", "".join("first pr %d\n" % i for i in range(1, 41)), "feat(orders): intake [ACME-1-01] (#11)",
                 "2026-10-15T10:00:00+00:00")
@@ -2178,27 +2221,293 @@ def case_slow_clock_sighting_is_held_by_the_floor(tmp):
     _g(dev, "switch", "-q", "-c", "feat/ACME-1-01-part-2")
     b = _change(dev, "src/a.py", "".join("second pr %d\n" % i for i in range(1, 41)), None, "2026-10-15T09:58:00+00:00")
     _scan(specs, "s1", b, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
-    res = commit(specs, "code", plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16"),
-                 {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, "Dev", "scan", "ACME-1-01",
+    p = plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16", default_ref="origin/main")
+    assert p["scan"]["base"] == f, p["scan"]
+    res = commit(specs, "code", p, {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, "Dev", "scan", "ACME-1-01",
                  "2026-10-16T10:00:00Z", "dev")
     g = _state(specs)[1]
-    assert g["first_seen"]["floor"] == f and g["last_seen"]["floor"] == f, g["last_seen"]
-    assert json.loads(open(os.path.join(specs, res["record"]), encoding="utf-8").read())["allocated"][0]["floor"] == f
+    assert g["first_seen"]["base"] == f and g["last_seen"]["base"] == f, g["last_seen"]
+    assert json.loads(open(os.path.join(specs, res["record"]), encoding="utf-8").read())["scan"]["base"] == f
     m = _change(repo, "src/b.py", "x = 3\n", "chore: unrelated", "2026-10-15T11:00:00+00:00")
     _scan(specs, "s2", m, [], scope=["src"])
     p = plan(specs, "code", repo, "s2", None, "2026-10-16")
-    assert not p["closable"] and p["unverifiable"] == [1], "the floor names the earlier squash, whatever the clock said"
-    # A sighting reported again, or matched, carries its floor too.
-    _scan(specs, "s3", b, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH"), ("v3:a2", "src/a.py", 30, "CWE-22", "LOW")])
-    _scan(specs, "s4", b, [("v3:a4", "src/a.py", 12, "CWE-89", "HIGH")])
-    res = commit(specs, "code", plan(specs, "code", dev, "s3", "ACME-1-01", "2026-10-16"), {}, "Dev", "scan", "ACME-1-01",
-                 "2026-10-16T10:05:00Z", "dev")
-    rec = json.loads(open(os.path.join(specs, res["record"]), encoding="utf-8").read())
-    assert [e["floor"] for e in rec["again"]] == [f] and [e["floor"] for e in rec["allocated"]] == [f], rec
-    res = commit(specs, "code", plan(specs, "code", dev, "s4", None, "2026-10-16"), {"matches": [{"plugin_id": "v3:a4", "id": 1}]},
-                 "T", "scan", None, "2026-10-16T10:06:00Z")
-    rec = json.loads(open(os.path.join(specs, res["record"]), encoding="utf-8").read())
-    assert [e["floor"] for e in rec["matched"]] == [f], rec["matched"]
+    assert not p["closable"] and p["unverifiable"] == [1], "the base holds the earlier squash, whatever the clock said"
+    # A later sighting carries its own scan's base: the Dev merges main, and the base moves up to it.
+    _g(dev, "fetch", "-q", "origin")
+    when = "2026-10-15T11:30:00+00:00"
+    _g(dev, "merge", "-q", "-m", "Merge main", "origin/main", env=dict(os.environ, GIT_COMMITTER_DATE=when, GIT_AUTHOR_DATE=when))
+    b2 = _g(dev, "rev-parse", "HEAD")
+    _scan(specs, "s3", b2, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    p = plan(specs, "code", dev, "s3", "ACME-1-01", "2026-10-16", default_ref="origin/main")
+    assert p["scan"]["base"] == m and [e["id"] for e in p["again"]] == [1], p
+    commit(specs, "code", p, {}, "Dev", "scan", "ACME-1-01", "2026-10-16T10:05:00Z", "dev")
+    g = _state(specs)[1]
+    assert (g["first_seen"]["base"], g["last_seen"]["commit"], g["last_seen"]["base"]) == (f, b2, m), g["last_seen"]
+
+
+def case_branch_commit_carrying_the_key_is_held_by_the_base(tmp):
+    # As the slow-clock case, but the Dev's branch commit ends in [ACME-1-01], as /implement's commits do. A floor
+    # taken from the branch's own history would be that commit, which a clone without the branch cannot use; the
+    # base is F, which every clone holds.
+    specs, repo, c1 = _setup(tmp)
+    f = _change(repo, "src/a.py", "".join("first pr %d\n" % i for i in range(1, 41)), "feat(orders): intake [ACME-1-01] (#11)",
+                "2026-10-15T10:00:00+00:00")
+    dev = _clone(tmp, repo, "dev")
+    _g(dev, "switch", "-q", "-c", "feat/ACME-1-01-part-2")
+    b = _change(dev, "src/a.py", "".join("second pr %d\n" % i for i in range(1, 41)), "feat(orders): part two [ACME-1-01]",
+                "2026-10-15T09:58:00+00:00")
+    _scan(specs, "s1", b, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    commit(specs, "code", plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16", default_ref="origin/main"),
+           {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, "Dev", "scan", "ACME-1-01",
+           "2026-10-16T10:00:00Z", "dev")
+    assert _state(specs)[1]["last_seen"]["base"] == f
+    m = _change(repo, "src/b.py", "x = 3\n", "chore: unrelated", "2026-10-15T11:00:00+00:00")
+    _scan(specs, "s2", m, [], scope=["src"])
+    p = plan(specs, "code", repo, "s2", None, "2026-10-16")
+    assert not p["closable"] and p["unverifiable"] == [1], "F is the base; the keyed branch commit is not in this clone"
+    _g(dev, "fetch", "-q", "origin")
+    p = plan(specs, "code", dev, "s2", None, "2026-10-16")
+    assert not p["closable"] and not p["unverifiable"] and not p["not_reported"], "nor does the Dev's clone find it later"
+
+
+def case_side_line_merged_into_the_base_before_the_cut_is_held_by_the_base(tmp):
+    # The unit's side step X reaches main through a merge, beside its first part F; the Dev's branch is cut from that
+    # merge, and its commit is dated before either by a slow clock. X is neither F nor F's ancestor, so a floor would
+    # not hold it; it is in the base, and a clone without the branch commit excludes it there.
+    specs, repo, c1 = _setup(tmp)
+    _g(repo, "switch", "-q", "-c", "side")
+    x = _change(repo, "src/b.py", "x = 8\n", "feat(orders): side part [ACME-1-01] (#10)", "2026-10-15T10:10:00+00:00")
+    _g(repo, "switch", "-q", "main")
+    f = _change(repo, "srcx/a.py", "y = 2\n", "feat(orders): intake [ACME-1-01] (#11)", "2026-10-15T10:20:00+00:00")
+    when = "2026-10-15T10:21:00+00:00"
+    _g(repo, "merge", "-q", "--no-ff", "-m", "Merge side", "side",
+       env=dict(os.environ, GIT_COMMITTER_DATE=when, GIT_AUTHOR_DATE=when))
+    cut = _g(repo, "rev-parse", "HEAD")
+    assert not is_ancestor(repo, x, f), "the shape only the base reaches"
+    dev = _clone(tmp, repo, "dev")
+    _g(dev, "switch", "-q", "-c", "feat/ACME-1-01-part-2")
+    b = _change(dev, "src/a.py", "".join("second pr %d\n" % i for i in range(1, 41)), None, "2026-10-15T10:00:00+00:00")
+    _scan(specs, "s1", b, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    commit(specs, "code", plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16", default_ref="origin/main"),
+           {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, "Dev", "scan", "ACME-1-01",
+           "2026-10-16T10:00:00Z", "dev")
+    assert _state(specs)[1]["last_seen"]["base"] == cut
+    m = _change(repo, "src/b.py", "x = 3\n", "chore: unrelated", "2026-10-15T11:00:00+00:00")
+    _scan(specs, "s2", m, [], scope=["src"])
+    p = plan(specs, "code", repo, "s2", None, "2026-10-16")
+    assert not p["closable"] and p["unverifiable"] == [1], "X is in the base, though it is not F's ancestor"
+
+
+def case_no_base_means_no_squash_counts(tmp):
+    # Without --default-ref, or where the ref names nothing, the scan records no base, and no squash counts: a clone
+    # without the branch commit cannot place the sighting, and the Dev's clone finds the scan not later.
+    specs, repo, c1 = _setup(tmp)
+    dev = _clone(tmp, repo, "dev")
+    _g(dev, "switch", "-q", "-c", "feat/ACME-1-01-orders")
+    b = _change(dev, "src/b.py", "x = 2\n")
+    _scan(specs, "s1", b, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    p = plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16")
+    assert p["scan"]["base"] is None, "no --default-ref: no base"
+    for ref in ("no-such-branch", "--all", "HEAD:src/a.py"):
+        assert plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16", default_ref=ref)["scan"]["base"] is None, ref
+    commit(specs, "code", p, {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, "Dev", "scan", "ACME-1-01",
+           "2026-10-16T10:00:00Z", "dev")
+    assert _state(specs)[1]["last_seen"]["base"] is None
+    sq = _change(repo, "src/a.py", "guarded\n", "fix(orders): guard the query [ACME-1-01] (#12)")
+    _scan(specs, "s2", sq, [], scope=["src"])
+    p = plan(specs, "code", repo, "s2", None, "2026-10-16", default_ref="main")
+    assert p["unverifiable"] == [1] and not p["closable"], "no base: the squash does not count, and nothing places the sighting"
+    _g(dev, "fetch", "-q", "origin")
+    p = plan(specs, "code", dev, "s2", None, "2026-10-16", default_ref="origin/main")
+    assert not p["closable"] and not p["unverifiable"] and not p["not_reported"], "nor in the Dev's clone"
+
+
+def case_squash_only_closure_of_a_sibling_part_is_proposed(tmp):
+    # Two parts of the unit are in flight at once, both cut from c1. Part 2's Dev records a finding on its branch;
+    # part 1 then squash-lands on main, and a covering scan of main follows. Main never held the flaw, yet the
+    # sibling squash makes the scan later than the sighting: a closure reached only through a squash is proposed.
+    specs, repo, c1 = _setup(tmp)
+    dev = _clone(tmp, repo, "dev")
+    _g(dev, "switch", "-q", "-c", "feat/ACME-1-01-part-2")
+    b = _change(dev, "src/a.py", "".join("second pr %d\n" % i for i in range(1, 41)), "feat(orders): part 2 [ACME-1-01]",
+                "2026-10-15T10:00:00+00:00")
+    _scan(specs, "s1", b, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    commit(specs, "code", plan(specs, "code", dev, "s1", "ACME-1-01", "2026-10-16", default_ref="origin/main"),
+           {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, "Dev", "scan", "ACME-1-01",
+           "2026-10-16T10:00:00Z", "dev")
+    _change(repo, "src/b.py", "x = 7\n", "feat(orders): part 1 [ACME-1-01] (#11)", "2026-10-15T10:30:00+00:00")
+    m = _change(repo, "srcx/a.py", "y = 3\n", "chore: unrelated", "2026-10-15T11:00:00+00:00")
+    _scan(specs, "s2", m, [], scope=["src"])
+    p, _ = _run(specs, repo, "s2", default_ref="main")
+    assert p["closable"] == [{"id": 1, "auto": False}] and not p["unverifiable"], p
+    assert _state(specs)[1]["status"] == "fixing", "proposed, never automatic: a squash names the unit, not the fix"
+    _scan(specs, "s3", m, [], scope=["src"])
+    p, _ = _run(specs, repo, "s3", {"decisions": [{"target": "id:1", "status": "fixed", "reason": "confirmed"}]}, default_ref="main")
+    assert p["closable"] == [{"id": 1, "auto": False}], p
+    g = _state(specs)[1]
+    assert g["status"] == "fixed" and g["links"]["fixed_in_scan"] == "s3", g["links"]
+
+
+def case_several_findings_carry_one_plugin_id(tmp):
+    # [SEC#1] is v3:aa. Branch A confirms v3:a2 as [SEC#1], which then carries v3:a2; branch B rejects the same match
+    # and allocates v3:a2 as new. Merged, two findings carry v3:a2 whichever record sorts first: a scan reporting it
+    # reports both again and closes neither, and a third branch's allocation of it gives way to the earliest of them.
+    for order, (ra_at, rb_at) in enumerate((("2026-10-16T09:00:00Z", "2026-10-16T09:05:00Z"),
+                                            ("2026-10-16T09:05:00Z", "2026-10-16T09:00:00Z"))):
+        sub = os.path.join(tmp, "o%d" % order)
+        repo, c1 = _repo(sub)
+        a, b, c = (os.path.join(sub, n) for n in "abc")
+        os.makedirs(a)
+        _scan(a, "s0", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+        commit(a, "code", plan(a, "code", repo, "s0", None, "2026-10-16"),
+               {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, "Z", "scan", None, "2026-10-16T08:00:00Z")
+        _copy_register(a, b)
+        _copy_register(a, c)
+        cA = _change(repo, "src/a.py", "".join("A %d\n" % i for i in range(1, 41)), "chore: a", "2026-10-15T10:00:00+00:00")
+        _scan(a, "sA", cA, [("v3:a2", "src/a.py", 12, "CWE-89", "HIGH")])
+        commit(a, "code", plan(a, "code", repo, "sA", None, "2026-10-16"), {"matches": [{"plugin_id": "v3:a2", "id": 1}]},
+               "A", "scan", None, ra_at)
+        _scan(b, "sB", c1, [("v3:a2", "src/a.py", 12, "CWE-89", "HIGH")])
+        commit(b, "code", plan(b, "code", repo, "sB", None, "2026-10-16"), {"rejects": ["v3:a2"]}, "B", "scan", None, rb_at)
+        _copy_register(b, a)
+        fs = rebuild(a, "code")["findings"]
+        assert {n: (g["origin"], g["plugin_id"], g["status"]) for n, g in fs.items()} == {
+            1: ("s0:v3:aa", "v3:a2", "fixing"), 2: ("sB:v3:a2", "v3:a2", "open")}, (order, fs)
+        m = _change(repo, "src/a.py", "".join("M %d\n" % i for i in range(1, 41)), "chore: m", "2026-10-15T11:00:00+00:00")
+        _scan(a, "s3", m, [("v3:a2", "src/a.py", 12, "CWE-89", "HIGH")], scope=["src"])
+        p = plan(a, "code", repo, "s3", None, "2026-10-16", default_ref="main")
+        assert [e["id"] for e in p["again"]] == [1, 2] and not p["new"] and not p["possibly_same"], (order, p)
+        assert not p["closable"] and not p["not_reported"] and not p["unverifiable"], (order, p)
+        res = commit(a, "code", p, {}, "S", "scan", None, "2026-10-16T09:30:00Z")
+        rec = json.loads(open(os.path.join(a, res["record"]), encoding="utf-8").read())
+        assert [(e["plugin_id"], e["id"], e["origin"]) for e in rec["again"]] == [("v3:a2", 1, "s0:v3:aa"), ("v3:a2", 2, "sB:v3:a2")]
+        fs = _state(a)
+        assert fs[1]["reported_by"] == ["s0", "sA", "s3"] and fs[2]["reported_by"] == ["sB", "s3"], (order, fs)
+        assert fs[1]["status"] == "fixing" and fs[2]["status"] == "open", (order, fs)
+        # A third branch, cut before either, rejects the same match and allocates v3:a2 as well. Its allocation gives
+        # way to the earliest finding carrying v3:a2 -- [SEC#1] where A's match sorts first, [SEC#2] where B's
+        # allocation does -- and its decisions, decide-later included, apply to that finding in record order.
+        _scan(c, "sC", c1, [("v3:a2", "src/a.py", 12, "CWE-89", "HIGH")])
+        rc = commit(c, "code", plan(c, "code", repo, "sC", None, "2026-10-16"), {"rejects": ["v3:a2"]}, "C", "scan", None,
+                    "2026-10-16T09:10:00Z")
+        assert rc["ids"] == {"v3:a2": 2}, rc
+        _copy_register(c, a)
+        st = rebuild(a, "code")
+        fs = st["findings"]
+        earliest = 1 if order == 0 else 2
+        assert sorted(fs) == [1, 2] and "sC" in fs[earliest]["reported_by"], (order, fs)
+        assert fs[1]["status"] == ("open" if order == 0 else "fixing") and fs[2]["status"] == "open", (order, fs)
+        assert [(e["origin"], e["from"], e["to"]) for e in st["renumbered"]] == ([("sC:v3:a2", 2, 1)] if order == 0 else []), \
+            (order, st["renumbered"])
+
+
+def case_plugin_id_reappearing_after_a_match_is_new(tmp):
+    # [SEC#1] was allocated as v3:aa, and a confirmed match moved it to v3:a2. A scan reporting v3:aa again names no
+    # finding carrying it: plan offers it as possibly the same, and, rejected, the replay allocates it too.
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    _run(specs, repo, "s1")
+    _scan(specs, "s2", c1, [("v3:a2", "src/a.py", 12, "CWE-89", "HIGH")])
+    _run(specs, repo, "s2", {"matches": [{"plugin_id": "v3:a2", "id": 1}]})
+    assert _state(specs)[1]["plugin_id"] == "v3:a2"
+    _scan(specs, "s3", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    p = plan(specs, "code", repo, "s3", None, "2026-10-16")
+    assert not p["again"] and [(e["plugin_id"], e["candidates"]) for e in p["possibly_same"]] == [("v3:aa", [1])], p
+    p, res = _run(specs, repo, "s3", {"rejects": ["v3:aa"]})
+    assert res["ids"] == {"v3:aa": 2}, res
+    fs = _state(specs)
+    assert sorted(fs) == [1, 2] and (fs[1]["plugin_id"], fs[2]["plugin_id"]) == ("v3:a2", "v3:aa"), fs
+    assert fs[2]["origin"] == "s3:v3:aa" and fs[1]["reported_by"] == ["s1", "s2"] and fs[2]["reported_by"] == ["s3"], fs
+    assert replay(specs, "code")["renumbered"] == [], "no allocation gave way"
+
+
+def case_reported_move_never_vanishes(tmp):
+    # D, a lagging branch, allocates v3:pz as #2. B and C each plan with D's record reserved: B's scan reports v3:pz,
+    # new to B's register, as #3, and C's reports v3:pc as #3. M merges B and C, reports C's move 3->4 and records it.
+    # When D's record arrives, B's #3 gives way to D's #2 -- and the number it gave way from stays held, so C stays
+    # at #4 as M reported, and the next allocation takes #5.
+    repo, c1 = _repo(tmp)
+    a, b, c, d, m = (os.path.join(tmp, n) for n in "abcdm")
+    os.makedirs(a)
+    _scan(a, "s0", c1, [("v3:p0", "src/b.py", 1, "CWE-79", "LOW")])
+    commit(a, "code", plan(a, "code", repo, "s0", None, "2026-10-16"), {}, "Z", "scan", None, "2026-10-16T08:00:00Z")
+    for x in (b, c, d, m):
+        _copy_register(a, x)
+    _scan(d, "sD", c1, [("v3:pz", "src/a.py", 5, "CWE-89", "HIGH")])
+    commit(d, "code", plan(d, "code", repo, "sD", None, "2026-10-16"), {}, "D", "scan", None, "2026-10-16T08:30:00Z")
+    rd = os.path.join(d, "security", "code", "runs")
+    _scan(b, "sB", c1, [("v3:pz", "src/a.py", 5, "CWE-89", "HIGH")])
+    rb = commit(b, "code", plan(b, "code", repo, "sB", None, "2026-10-16", rd), {"decisions": [{"target": "plugin:v3:pz", "status": "fix"}]},
+                "B", "scan", "ACME-1-01", "2026-10-16T09:10:00Z", "dev", "code")
+    _scan(c, "sC", c1, [("v3:pc", "srcx/a.py", 1, "CWE-20", "HIGH")])
+    rc = commit(c, "code", plan(c, "code", repo, "sC", None, "2026-10-16", rd), {"decisions": [{"target": "plugin:v3:pc", "status": "fix"}]},
+                "C", "scan", "ACME-1-02", "2026-10-16T09:20:00Z", "dev", "code")
+    assert rb["ids"] == {"v3:pz": 3} and rc["ids"] == {"v3:pc": 3}, (rb, rc)
+    _copy_register(b, m)
+    _copy_register(c, m)
+    pm = plan(m, "code", repo, None, None, "2026-10-16")
+    move = {"run": os.path.basename(rc["record"]), "origin": "sC:v3:pc", "from": 3, "to": 4}
+    assert pm["renumbered"] == [move] and pm["next_id"] == 5, pm
+    commit(m, "code", pm, {}, "M", "triage", None, "2026-10-16T09:30:00Z")
+    assert _state(m)[4]["links"]["followup"] == rc["followups"][0].replace("[SEC#3]", "[SEC#4]")
+    _copy_register(d, m)
+    st = rebuild(m, "code")
+    fs = st["findings"]
+    assert [(n, fs[n]["origin"]) for n in sorted(fs)] == [(1, "s0:v3:p0"), (2, "sD:v3:pz"), (4, "sC:v3:pc")], fs
+    assert st["next_id"] == 5 and [(e["origin"], e["from"], e["to"]) for e in st["renumbered"]] == [("sB:v3:pz", 3, 2), ("sC:v3:pc", 3, 4)], st
+    assert fs[4]["links"]["followup"] == rc["followups"][0].replace("[SEC#3]", "[SEC#4]"), "C's line stands as M corrected it"
+    assert fs[2]["links"]["followup"] == rb["followups"][0].replace("[SEC#3]", "[SEC#2]") and fs[2]["status"] == "fixing"
+    pm = plan(m, "code", repo, None, None, "2026-10-16")
+    assert pm["renumbered"] == [{"run": os.path.basename(rb["record"]), "origin": "sB:v3:pz", "from": 3, "to": 2}], \
+        "only B's move is new; C's stands where M reported it"
+    _scan(m, "sN", c1, [("v3:pn", "src/b.py", 1, "CWE-1", "LOW")])
+    rn = commit(m, "code", plan(m, "code", repo, "sN", None, "2026-10-16"), {}, "N", "scan", None, "2026-10-16T10:00:00Z")
+    assert rn["ids"] == {"v3:pn": 5}, "[SEC#4] is C's, as reported; the next allocation takes #5"
+    assert [(e["origin"], e["from"], e["to"]) for e in rn["renumbered"]] == [("sB:v3:pz", 3, 2)], rn["renumbered"]
+    assert plan(m, "code", repo, None, None, "2026-10-16")["renumbered"] == []
+
+
+def case_undone_move_is_reported_as_a_return(tmp):
+    # D allocates v3:pz as #2; B, planning with D's record reserved, reports v3:pz as new and takes #3. Merged, B's
+    # #3 gives way to D's #2, and M reports and records the move 3->2. Then L, a record on D's branch that sorts
+    # between them, arrives: it confirmed a match that moved D's finding from v3:pz to v3:pq, so B's allocation no
+    # longer names it and keeps #3. That undoes a reported move, and the return 2->3 is reported, once.
+    repo, c1 = _repo(tmp)
+    a, b, d, m = (os.path.join(tmp, n) for n in "abdm")
+    os.makedirs(a)
+    _scan(a, "s0", c1, [("v3:p0", "src/b.py", 1, "CWE-79", "LOW")])
+    commit(a, "code", plan(a, "code", repo, "s0", None, "2026-10-16"), {}, "Z", "scan", None, "2026-10-16T08:00:00Z")
+    for x in (b, d, m):
+        _copy_register(a, x)
+    _scan(d, "sD", c1, [("v3:pz", "src/a.py", 5, "CWE-89", "HIGH")])
+    commit(d, "code", plan(d, "code", repo, "sD", None, "2026-10-16"), {}, "D", "scan", None, "2026-10-16T08:30:00Z")
+    _scan(b, "sB", c1, [("v3:pz", "src/a.py", 5, "CWE-89", "HIGH")])
+    rb = commit(b, "code", plan(b, "code", repo, "sB", None, "2026-10-16", os.path.join(d, "security", "code", "runs")),
+                {"decisions": [{"target": "plugin:v3:pz", "status": "fix"}]}, "B", "scan", "ACME-1-01", "2026-10-16T09:10:00Z", "dev", "code")
+    assert rb["ids"] == {"v3:pz": 3} and "[SEC#3]" in rb["followups"][0], rb
+    _copy_register(b, m)
+    _copy_register(d, m)
+    run_b = os.path.basename(rb["record"])
+    pm = plan(m, "code", repo, None, None, "2026-10-16")
+    assert pm["renumbered"] == [{"run": run_b, "origin": "sB:v3:pz", "from": 3, "to": 2}], pm["renumbered"]
+    commit(m, "code", pm, {}, "M", "triage", None, "2026-10-16T09:30:00Z")
+    assert plan(m, "code", repo, None, None, "2026-10-16")["renumbered"] == []
+    # L, on D's branch before any merge: v3:pq is possibly the same as D's #2, and the Dev confirms it.
+    _scan(d, "sL", c1, [("v3:pq", "src/a.py", 7, "CWE-89", "HIGH")])
+    commit(d, "code", plan(d, "code", repo, "sL", None, "2026-10-16"), {"matches": [{"plugin_id": "v3:pq", "id": 2}]}, "L", "scan",
+           None, "2026-10-16T08:45:00Z")
+    _copy_register(d, m)
+    st = rebuild(m, "code")
+    fs = st["findings"]
+    assert [(n, fs[n]["origin"], fs[n]["plugin_id"]) for n in sorted(fs)] == [
+        (1, "s0:v3:p0", "v3:p0"), (2, "sD:v3:pz", "v3:pq"), (3, "sB:v3:pz", "v3:pz")], fs
+    assert st["renumbered"] == [] and st["next_id"] == 4, "B kept its number: no allocation moved"
+    assert fs[3]["status"] == "fixing" and fs[3]["links"]["followup"] == rb["followups"][0], "its line cites [SEC#3] again"
+    ret = {"run": run_b, "origin": "sB:v3:pz", "from": 2, "to": 3}
+    p = plan(m, "code", repo, None, None, "2026-10-16")
+    assert p["renumbered"] == [ret], "the undone move is reported as a return, from the number last reported"
+    res = commit(m, "code", p, {}, "M", "triage", None, "2026-10-16T09:40:00Z")
+    assert res["renumbered"] == [ret] and plan(m, "code", repo, None, None, "2026-10-16")["renumbered"] == []
 
 
 def case_number_that_gave_way_is_never_reused(tmp):
@@ -2395,12 +2704,15 @@ class _Parser(argparse.ArgumentParser):
 
 HELP = {
     "plan": "Print what a scan means for the register, or plan a triage without --scan. Keys: base_id, base_seq, next_id,"
-            " next_seq, reserved; renumbered (the moves no run record has reported yet); scan, already_recorded,"
-            " id_version_changed; new, again, possibly_same, closable, not_reported, reopen, gone; unverifiable (the"
-            " findings this scan records nothing about: their last sighting cannot be placed in this clone, or the"
-            " scan is later but whether the file changed cannot be told); open, review_due, unconfirmed; origins"
-            " (the origin of every [SEC#n] the plan saw). already_recorded comes with recorded_on: \"this register\", or"
-            " \"another branch\" where a reserved run record holds the scan.",
+            " next_seq, reserved; renumbered (the moves no run record has reported yet, a return to a number last"
+            " reported included); scan (with base: the commit it shares with --default-ref, or null without the flag"
+            " or where none is found), already_recorded, id_version_changed; new, again (one entry per finding"
+            " carrying a reported plugin ID), possibly_same, closable (auto only for a fixing finding whose last-seen"
+            " commit the scan descends from; one later only through a squash of its unit is proposed), not_reported,"
+            " reopen, gone; unverifiable (the findings this scan records nothing about: their last sighting cannot be"
+            " placed in this clone, or the scan is later but whether the file changed cannot be told); open,"
+            " review_due, unconfirmed; origins (the origin of every [SEC#n] the plan saw). already_recorded comes with"
+            " recorded_on: \"this register\", or \"another branch\" where a reserved run record holds the scan.",
     "ids": "Print the [SEC#n] each new or matched finding takes.",
     "commit": "Write the run record and rebuild. Prints {record, ids, followups, renumbered}.",
     "rebuild": "Rebuild register.json and register.md. Prints {findings, runs, renumbered}.",
@@ -2429,6 +2741,7 @@ def main(argv):
             sp.add_argument("--scan")
             sp.add_argument("--today", default=datetime.datetime.now(datetime.timezone.utc).date().isoformat())
             sp.add_argument("--reserve-dir")
+            sp.add_argument("--default-ref", help="the repository's default ref, for the scan's base; never guessed")
         if name == "commit":
             sp.add_argument("--by", required=True)
             sp.add_argument("--kind", required=True)
@@ -2442,11 +2755,11 @@ def main(argv):
         specs = _dir(a.specs, "--specs")
         if a.command == "plan":
             out = plan(specs, a.slug, _dir(a.repo, "--repo"), a.scan, a.unit, a.today,
-                       _dir(a.reserve_dir, "--reserve-dir") if a.reserve_dir else None)
+                       _dir(a.reserve_dir, "--reserve-dir") if a.reserve_dir else None, a.default_ref)
         elif a.command == "rebuild":
             st = rebuild(specs, a.slug)
             recs = records(specs, a.slug)
-            out = {"findings": len(st["findings"]), "runs": len(recs), "renumbered": _unacked(recs, st["renumbered"])}
+            out = {"findings": len(st["findings"]), "runs": len(recs), "renumbered": _unacked(recs)}
         elif a.command == "verify-scope":
             out = verify_scope(specs, a.slug, _dir(a.repo, "--repo"), a.ref, a.unit)
         else:
