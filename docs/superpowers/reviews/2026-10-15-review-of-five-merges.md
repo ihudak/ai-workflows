@@ -59,33 +59,12 @@ Outside session-branch mode the plugin branch carries the run's session files (`
 - The B′ forms of `*_REGISTER_NOT_ON_MAIN` in `/create-prd` (`:365`), `/create-ard` (`:296`) and `/specify` (`:342`) said every run of all three commands from the branch stops the same way; B′ applies only to the command whose prefix the branch carries.
 - Docs pages: `docs-workflows/docs/commands/document.md:63` (every missing repo gets a gate — not after *Proceed without the repos*), `product-workflows/docs/commands/epics.md:87` (asks for the output directory; derives repos from sibling Epics' PR links), `product-workflows/docs/commands/create-ard.md:49` (the mount gate is skipped after *Ground only the confirmed-mounted set*).
 
-## Deferred — `/conformance`, pending the Epic-on-unmerged-branches rework
+## Deferred
 
-Re-review each against the rework before acting on it; several may be moot.
+Every finding this review left unfixed — C1–C7 (`/conformance`, waiting for the rework that lets an Epic run trace unmerged branches) and D1–D13 (design-level) — is tracked, in full and with its line numbers at `7c13ce05`, in **`docs/superpowers/to-fix.md`**, which is the one list of known unfixed issues; this record keeps only what was found and how it was disposed of. Titles, for the history:
 
-- **C1 — MAJOR — an Epic run can be stuck for good after a keyless squash merge.** The merged test (`conformance.md:95`) needs the recorded commit to be an ancestor of the default branch, or a later default-branch subject carrying `[<key>]`. A squash whose title was edited, or a forge whose default squash subject is not the pull-request title, passes neither; the Epic run then stops `CONFORMANCE_NOT_MERGED` (`:99-100`) with no override, while the PRD run asks (`:104-108`) and the design spec's Risks line (`docs/superpowers/specs/2026-10-12-conformance-design.md:102`) promises both runs ask. The *gone without merging* note (`:101`) also mislabels this case when the branch was deleted.
-- **C2 — MINOR — any later commit carrying the key counts as the merge.** `:95`'s date only excludes commits before the block; `implementation-format.md:140` asks people outside the plugin to use the key, so a teammate's `[<key>]` commit, or an earlier pull request merging after a later run, reads the latest block as merged.
-- **C3 — MINOR — "asks and scans nothing first" (`:56`) is false**: step 4's `require-on-main` row C offers its switch-and-pull repair, and step 2's `SPECS_PATH` prompt, before step 5's record check. The step order is right; the sentence and the merge title overclaim.
-- **C4 — MINOR — *gone without merging* (`:101`) fires on a `pushed: false` block traced from another clone**, telling the operator a pull request closed when none was opened.
-- **C5 — MINOR — confirming a Dev fix-code line not yet in the checkout is undefined** (`:257-261`): it can re-queue a duplicate `— confirmed:` line beside the original once the Dev's branch merges.
-- **C6 — MINOR — the design spec contradicts the amended D5**: its worked example says "while its pull request is still open (D5)" (`:72`) and "traces the branch tip" (`:75`).
-- **C7 — MINOR — "no Epic covers" is never defined** (`conformance.md:241`, `:255-257`, `:415`) though *Fix the code*'s Epic question now turns on it; the command never reads an Epic's `## Covers` or `_coverage.md`.
-
-## Deferred — design-level MINORs
-
-- **D1 — row B still reads a stale copy where both sides changed the path** (`phase-handoff.md:232`): `/design` amended the spec on its branch, a refine merged on the default branch, B passes and reads the copy without it. `git diff --quiet <merge-base> <default-ref> -- ./<path>` exits 1 exactly there.
-- **D2 — row B′ prints its merge command under `specs_git: misrooted` and on a read-only mount**, where row C withholds its own write remedy (`phase-handoff.md:221`, `:301`; `specs-repo-git.md:445`).
-- **D3 — artifacts other than the ARD that a consumer finds by listing the working tree share F1's class**: a `specification.md` that merged after `/ready`'s own `ready/` branch was cut is reported missing rather than stopping on B′. Measure which consumers list rather than gate before widening.
-- **D4 — `/document`: a base named at *Revise plan* does not undo Phase 1's *Proceed without the repos*** (`document.md:320` against `:510`, `:569`), and the plan's `Repos:` line (`:390`) has no PRD-only form.
-- **D5 — *Set SPECS_PATH* in `/design` (`:80`), `/ready` (`:98-99`) and `/conformance` (`:38`) carries any typed path** without citing the rule that re-asks until it names an existing directory (`escalation-rules.md:209-211`).
-- **D6 — the refresh-policy question is asked after a no-code answer** — `/create-ard` Phase 1 step 4 (`:350`), `/epics` Phase 3.5 (`:538`), `/specify` step 3 before step 4.
-- **D7 — a REPOS_PATH answered at `/brd-split`'s *Ground now* does not reach the child `/prd-ground` runs** (`brd-split.md:1469-1472`, `:1715`; `prd-ground.md:522-529`), so each child asks again.
-- **D8 — `/epics`' final count can split an Epic after the review** (`epics.md:783`, `:814`) with no re-review offer, against `escalation-rules.md:488-497`.
-- **D9 — renaming an origin-less clone loops** between `PRD_GROUND_AMBIGUOUS_PIN` and the path question, or records it twice (`prd-ground.md:699-704`, `:820-837`; `grounding-format.md` §4); 3.33.3 carries no upgrade note.
-- **D10 — `/prd-ground` matches the specs and docs repos by bare path** (`prd-ground.md:668-671`), with no `realpath` as `release-notes.md:551` uses.
-- **D11 — `epic-writer`'s `kept_whole` sentence** (`epic-writer.md:40`) reads as blocking a component split; "never split it by size" would remove the ambiguity.
-- **D12 — check 12's marker-loss blind spot**: with the marker removed, 74 of the 100 distinct marked labels at `7c13ce05` still pass. Cheap additions that fire on nothing there: `\(describe\b`, `^provide\b`, `^name\b`, `^quote\b` (`^add\b` fires on four correct labels).
-- **D13 — §0's "never a picker built for text" was applied to one picker**: 41 two-option text-plus-Cancel arrays remain (`escalation-rules.md:187`, `:203`, `epics.md:665` among them). Either say an array with a real alternative is not "built for" the text, or convert them.
+- C1 MAJOR, an Epic run stuck after a keyless squash merge · C2 any later key-carrying commit counts as the merge · C3 "asks and scans nothing first" overclaims · C4 *gone without merging* on a never-pushed block · C5 confirming a fix line not yet in the checkout · C6 the design spec contradicts the amended D5 · C7 "no Epic covers" undefined.
+- D1 row B reads a stale copy where both sides changed · D2 B′'s merge command under `misrooted` or a read-only mount · D3 other worktree-listed artifacts share F1's class · D4 `/document`'s *Revise plan* base vs *Proceed without the repos* · D5 *Set SPECS_PATH* takes any path · D6 refresh policy asked after a no-code answer · D7 *Ground now*'s REPOS_PATH not passed to children · D8 `/epics`' final-count split skips re-review · D9 origin-less clone rename loops · D10 `/prd-ground` bare-path match · D11 `epic-writer`'s `kept_whole` ambiguity · D12 check 12's marker-loss blind spot · D13 §0's text-picker rule applied once.
 
 ## Re-review of the fix commit `cb19fa38`
 
@@ -100,11 +79,8 @@ Two independent reviewers re-read the fix wave after it was merged as `c231cb9f`
 - `/brd-split`'s missing-id notice reached the root walk alone; a mistyped id was undefined.
 - `/brd-reconcile`'s docs page still said only a *confirmed* `not stated` candidate takes the missing-reason routes.
 
-Noted by the re-review and deferred with the rest:
-
-- **D14 — after the operator merges the default branch into a plugin branch as row B′ asks, the next `commit-artifacts` does not push that branch**: `push-scope` measures against `origin/<branch>` alone, so the default branch's commits and the merge read as non-session commits. A later deliverable handoff push clears it. Older than this review.
+Noted by the re-review and deferred with the rest, in `docs/superpowers/to-fix.md`: **D14**, the next `commit-artifacts` after the operator's B′ merge does not push that branch — a decision owed, with two options there. Three more known issues the reviewers saw and did not report, recorded there too so the list is whole: **C8**, `/conformance`'s `## Contract` merge order has no slot for `not-checkable`; **D15**, B′ fires on a git-ignored copy at a gated path; **D16**, the non-B′ `*_REGISTER_NOT_ON_MAIN` forms' "every … run stops here the same way", unverified.
 
 ## Open items after both fix waves
 
-- **Which of the customer's sentences is the reason** a *Correct it* copies out of the review is a reading no test can make. product-workflows 3.34.5 records every *Correct it* pick in the reconciliation record — the reader's row, the corrected `chosen` and reason, and where in the review each was copied from — so the pick can be checked, as a re-point already is. That is the whole of what this repository can do about it.
-- **The edition ports, and D14's decision**, are in `docs/superpowers/to-fix.md` — E1 (`check-docs.sh`'s shared body to the internal Claude and Copilot editions), E2 (this review's plugin fixes to the editions that carry the same text), E3 (re-review C1–C7 and D1–D14 once the `/conformance` rework lands), and D14 with its two options.
+All of them — the edition ports (E1, E2), every deferred finding (C1–C8, D1–D16, D14's decision included) and the one accepted residual (which of the customer's sentences a *Correct it* takes as the reason, recorded since product-workflows 3.34.5 rather than tested) — are in `docs/superpowers/to-fix.md`.
