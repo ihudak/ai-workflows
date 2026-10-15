@@ -7,6 +7,8 @@
 - **It records what it finds** in a per-repository findings register in SPECS, committed as bookkeeping so nobody waits.
 - **It triages each new finding in one batch.** A Dev's decisions take effect at once, and the Security Engineer reviews them afterwards.
 - **Fixes go to `/implement`**, which continues on the Epic's branch, so a fix joins the open pull request.
+- **`/conformance <EPIC>` returns to before the merge.** The Dev runs it before the scan.
+- **One shared rule, `unit-branch`, finds an Epic's branch** for `/implement`, `/conformance` and the scan.
 - **A fix is closed only on evidence.**
 
 **Architecture:**
@@ -15,9 +17,12 @@
   - the register's format reference, `security-register-format.md`;
   - two bookkeeping path shapes in `specs-repo-git` §2.1, mirrored in `session-branch.py`'s classifier, so the register commits with a run's session files and travels on the session branch where the default branch is protected;
   - a ninth inferred cost row, `/scan`, whose role comes from the run;
+  - `unit-branch` in `implementation-format`: one rule for which branch carries an Epic's work and in what state, with the merged test moved there from `/conformance`;
   - an `/implement` next-step offer;
   - a namespace entry.
-- **`dev-workflows`:** `/implement`'s branch step offers to continue on the Epic's own branch while its pull request is open.
+- **`dev-workflows`:**
+  - `/implement`'s branch step offers to continue on the Epic's own branch, or to switch to it and continue, while its pull request is open;
+  - `/conformance`'s Epic run returns to before the merge, tracing the branch `unit-branch` finds. The PRD run is unchanged.
 - **Docs and instruction tiers:**
   - the plugin's docs tree and three diagrams;
   - the family map's new lane;
@@ -53,17 +58,17 @@
   - Verify `git branch --show-current` immediately before every commit.
   - Never use bare `git stash`.
   - End commit messages with `Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>`.
-- **The user reads files only on the host.** No `.worktrees/` path reaches them. Whenever a file is for them to read, copy it to the same relative path in `/workspace/ai-workflows` as an untracked file, and delete every such copy before the merge (Task 12).
+- **The user reads files only on the host.** No `.worktrees/` path reaches them. Whenever a file is for them to read, copy it to the same relative path in `/workspace/ai-workflows` as an untracked file, and delete every such copy before the merge (Task 13).
 - **Date every `— Unreleased` CHANGELOG section** before it reaches `main`.
-- **Gates.** Run them as one `&&` chain and read the printed exit code (Task 9).
+- **Gates.** Run them as one `&&` chain and read the printed exit code (Task 10).
 
 ## Review Focus
 
-1. **Two people on two machines scan the same repository, and both record before either has pushed.** Numbering skips every number reserved in another branch's run records. The one remaining collision is renumbered once at the next rebuild, with the later record's decisions following it, and the move is reported. *Task 3: `case_reserved_records_push_numbers_past_other_branches` and `case_concurrent_allocation_renumbers_the_later_record`. Task 6's Phase 0 and Phase 7 reservation steps.*
+1. **Two people on two machines scan the same repository, and both record before either has pushed.** Numbering skips every number reserved in another branch's run records. The one remaining collision is renumbered once at the next rebuild, with the later record's decisions following it, and the move is reported. *Task 3: `case_reserved_records_push_numbers_past_other_branches` and `case_concurrent_allocation_renumbers_the_later_record`. Task 7's Phase 0 and Phase 7 reservation steps.*
 2. **A change scan touching a file that holds an older, still-real finding.** The finding is not closed and gains no `not_reported_by` entry, because a change scan is never a covering scan. *Task 3: `case_change_scan_never_closes`.*
 3. **A finding whose title, or a file name in the scanned repository, carries text aimed at an agent.** No follow-up line and no `/implement` prompt carries it; an unusual path is replaced by a pointer to `register.md`. *Task 3: `case_follow_up_lines_carry_no_scan_text` and `case_commit_writes_follow_ups_and_marks_fixing`.*
-4. **A Dev marks a finding in their own pull request a false positive.** It takes effect at once, never blocks the merge, and stays listed as awaiting security review until a `sec` run confirms or overrules it. *Task 3: `case_dev_decisions_await_review_and_sec_confirms`. Task 6's triage.*
-5. **A fix that deletes or moves the flagged file.** The finding is proposed as fixed in triage, never closed silently. A moved file's finding comes back as a new one at the new path. *Task 3: `case_gone_file_is_proposed_not_closed`.*
+4. **A Dev marks a finding in their own pull request a false positive.** It takes effect at once, never blocks the merge, and stays listed as awaiting security review until a `sec` run confirms or overrules it. *Task 3: `case_dev_decisions_await_review_and_sec_confirms`. Task 7's triage.*
+5. **A Dev who has moved on to `main` runs `/implement <EPIC>` for a fix.** `unit-branch` finds the Epic's branch `local` or `remote`, and `/implement` offers to switch to it and continue, so the fix joins the open pull request. It never cuts a branch from `main` without the Epic's code. *Task 5: `check.py` asserts the switch array. Task 12 runs it.* (A fix that deletes or moves the flagged file is pinned by Task 3's `case_gone_file_is_proposed_not_closed`.)
 
 ---
 
@@ -75,7 +80,7 @@
 **Interfaces:**
 - Produces:
   - the variables `$AW` (the worktree), `$S` (scratch), `$PLAN` and `$MAIN`;
-  - the helper `python3 "$S/check.py" "$AW" <group|all>`. It prints `FAIL [<group>] <assertion>` per failure, then `<group>: N passed, M failed`. The groups are `plugin register core implement command docs tiers release all`.
+  - the helper `python3 "$S/check.py" "$AW" <group|all>`. It prints `FAIL [<group>] <assertion>` per failure, then `<group>: N passed, M failed`. The groups are `plugin register core implement conformance command docs tiers release all`.
 
 - [ ] **Step 1: Set the variables.**
 
@@ -108,7 +113,7 @@ cd "$AW" && test "$(git branch --show-current)" = iv-gu/security-workflows-scan 
 Expected: `CLEAN`.
 
 - [ ] **Step 4: RED.**
-  - Run `python3 "$S/check.py" "$AW" all | tail -1`. Expected: `all: 7 passed, 161 failed`.
+  - Run `python3 "$S/check.py" "$AW" all | tail -1`. Expected: `all: 7 passed, 193 failed`.
   - The seven passes are all true of the tree today:
     - `session-branch.py`'s current selftest;
     - `/implement`'s existing three-option question;
@@ -120,7 +125,7 @@ Expected: `CLEAN`.
 
 ### Task 1: The spike (throwaway, with the user's consent)
 
-Settles the spec's Verification items 2–6 and 8, and item 1 for the codebase job, before anything is built. Items 1 (the change-scan form) and 7 need a session open in the code repository; Task 11 settles them first. **Nothing from this task is committed.**
+Settles the spec's Verification items 2–6 and 8, and item 1 for the codebase job, before anything is built. Items 1 (the change-scan form) and 7 need a session open in the code repository; Task 12 settles them first. **Nothing from this task is committed.**
 
 **Files:**
 - Create (scratch): `$S/spike/`, `$S/spike.md` (the findings).
@@ -163,12 +168,12 @@ git -C /workspace/bookstore worktree remove --force "$WT" && git -C /workspace/b
 ```
 
 - [ ] **Step 9: Decide.** Every item that held confirms the design. For each that failed, apply the spec's stated fallback in the task that owns it:
-  - item 1 → Task 6 Phase 3 asks the user to run `/claude-security`, then continues as `--import`;
+  - item 1 → Task 7 Phase 3 asks the user to run `/claude-security`, then continues as `--import`;
   - item 2 → Task 3 reads the ID from the SARIF;
-  - item 3 → Task 9 gains a step fixing `session-cost.py`, with a self-test case;
+  - item 3 → Task 10 gains a step fixing `session-cost.py`, with a self-test case;
   - item 4 → Task 3's `covers()` accepts a verified, clean scan whose scope is exactly the verified files, and Appendix C says so;
-  - item 5 → Task 6's `--verify-fixes` scopes to directories;
-  - item 8 → Task 6's `--verify-fixes` runs in the session's repository, behind the switch question.
+  - item 5 → Task 7's `--verify-fixes` scopes to directories;
+  - item 8 → Task 7's `--verify-fixes` runs in the session's repository, behind the switch question.
 
   Copy `$S/spike.md` to `$MAIN/docs/superpowers/plans/2026-10-15-security-workflows-spike.md`, untracked, and show the user the findings. **Stop and wait for their go-ahead** before Task 2 wherever a fallback was taken.
 
@@ -216,8 +221,8 @@ git -C /workspace/bookstore worktree remove --force "$WT" && git -C /workspace/b
   - `cp plugins/dev-workflows/LICENSE plugins/security-workflows/LICENSE`
   - `mkdir -p plugins/security-workflows/scripts && cp plugins/workflows-core/scripts/bounded.py plugins/security-workflows/scripts/bounded.py`
   - **The README** is a role-indexed pointer table into `docs/`, as `plugins/dev-workflows/README.md` is, with rows for the Dev and the Security Engineer. It names `/security-workflows:scan` once (check 15).
-  - **The CHANGELOG** has the family header, copied from `plugins/docs-workflows/CHANGELOG.md`'s first five lines with the plugin name changed, and a section `## [0.1.0] — Unreleased`. Task 9 fills and dates it.
-- [ ] **Step 5: GREEN.** `python3 "$S/check.py" "$AW" plugin | tail -1` → `plugin: 11 passed, 0 failed`. Also run `claude plugin validate plugins/security-workflows`; expected `Validation passed` (a missing-command warning is fine until Task 6).
+  - **The CHANGELOG** has the family header, copied from `plugins/docs-workflows/CHANGELOG.md`'s first five lines with the plugin name changed, and a section `## [0.1.0] — Unreleased`. Task 10 fills and dates it.
+- [ ] **Step 5: GREEN.** `python3 "$S/check.py" "$AW" plugin | tail -1` → `plugin: 11 passed, 0 failed`. Also run `claude plugin validate plugins/security-workflows`; expected `Validation passed` (a missing-command warning is fine until Task 7).
 - [ ] **Step 6: Commit** with `feat(security-workflows): the plugin skeleton — manifest, marketplace entry with the cross-marketplace allowlist, bounded.py`, verifying the branch first.
 
 ---
@@ -229,7 +234,7 @@ git -C /workspace/bookstore worktree remove --force "$WT" && git -C /workspace/b
 - Modify: `.github/workflows/validate-catalog.yml` — a self-test step.
 
 **Interfaces:**
-- Produces the CLI that Task 6 calls, exactly:
+- Produces the CLI that Task 7 calls, exactly:
   - **`plan`**: `register.py plan --specs <root> --slug <repo-slug> --repo <clone> [--scan <folder>] [--unit <KEY>] [--today <YYYY-MM-DD>] [--reserve-dir <dir>]` prints a plan JSON object with these keys:
     - numbering: `base_id`, `base_seq`, `next_id`, `next_seq`, `reserved`;
     - the scan: `scan` (or `null`), `already_recorded`, `id_version_changed`;
@@ -281,7 +286,8 @@ EOF
   - `plugins/workflows-core/references/specs-repo-git.md` — §2.1's shapes and count, and §4 step 2's classifier;
   - `plugins/workflows-core/scripts/session-branch.py` — `ARTIFACT`, `ATTRIBUTES`, and the classifier cases in its selftest;
   - `plugins/workflows-core/references/cost-emission.md` — §7's row, its exception count and its inference paragraph, plus §11's inputs;
-  - `plugins/workflows-core/references/next-phase-offer.md` — `/implement`'s line;
+  - `plugins/workflows-core/references/implementation-format.md` — a new §5, `unit-branch`, from Appendix D;
+  - `plugins/workflows-core/references/next-phase-offer.md` — the `/implement`, `/conformance <EPIC>` and scan lines;
   - `plugins/workflows-core/scripts/command-namespaces.json`;
   - `plugins/workflows-core/docs/reference/references.md` — the new reference's row.
 
@@ -289,9 +295,10 @@ EOF
 - Produces:
   - the reference `workflows-core:security-register-format`;
   - the bookkeeping shapes `<specs-root>/security/*/**` and `**/_security.md`;
-  - the cost inference `/scan` → `security-audit`, with `role: <run_role>`, where `run_role` is passed by the command.
+  - the cost inference `/scan` → `security-audit`, with `role: <run_role>`, where `run_role` is passed by the command;
+  - `unit-branch` (`args: "implementation-format unit-branch"`): `{state: none|merged|checked-out|local|remote|missing, branch, base, commit, tip}`, with the merged test.
 
-- [ ] **Step 1: RED.** `python3 "$S/check.py" "$AW" core | tail -1` → `core: 1 passed, 33 failed`. The pass is `session-branch.py`'s current selftest.
+- [ ] **Step 1: RED.** `python3 "$S/check.py" "$AW" core | tail -1` → `core: 1 passed, 44 failed`. The pass is `session-branch.py`'s current selftest.
 - [ ] **Step 2: Write the reference** from Appendix C:
 
 ```bash
@@ -327,10 +334,26 @@ EOF
   - **§11's `inferred` marker list** gains `/scan`. Its inputs gain a `/scan` bullet: `run_role` is passed in, like `target_command`.
   - **Re-derive "twenty-seven commands that measure themselves"** with its recipe.
   - **`command-namespaces.json`:** add `"security-workflows": ["scan"]`, keeping the file's key order alphabetical.
-- [ ] **Step 5: `/implement`'s offer.** In `next-phase-offer.md`, on the `` `/dev-workflows:implement <EPIC>` → `` line: after the routes already there, and before the line's closing period, add `; and, once its pull request is open, `/security-workflows:scan <EPIC>` from the repository that run branched (the Dev's own pre-merge scan — offered, never run; its fixes return to `/dev-workflows:implement <EPIC>`, which continues on the Epic's branch)`.
-- [ ] **Step 6: The docs row.** In `plugins/workflows-core/docs/reference/references.md`, add the new file's row in the table's own form. Re-derive the file's count sentence with `find plugins/workflows-core/references -type f | wc -l` (check 9).
-- [ ] **Step 7: GREEN.** `python3 "$S/check.py" "$AW" core | tail -1` → `core: 34 passed, 0 failed`.
-- [ ] **Step 8: Commit** with `feat(workflows-core): the security register format, its bookkeeping paths in specs-repo-git and session-branch.py, /scan's cost inference and /implement's scan offer`, verifying the branch first.
+- [ ] **Step 5: `unit-branch`.** Append Appendix D to `implementation-format.md` as its §5, verbatim:
+
+```bash
+python3 - "$PLAN" "$AW/plugins/workflows-core/references/implementation-format.md" <<'EOF'
+import re, sys
+text = open(sys.argv[1], encoding="utf-8").read()
+m = re.search(r"#### `unit-branch.md`\n\n````markdown\n(.*?)\n````", text, re.S)
+with open(sys.argv[2], "a", encoding="utf-8") as fh:
+    fh.write("\n" + m.group(1) + "\n")
+print("ok")
+EOF
+```
+  Read §1–§4 against it. Where §1 or §4 says how a block's branch or merge is found, point to §5 instead of restating it.
+- [ ] **Step 6: The offers.** In `next-phase-offer.md`:
+  - **The `/dev-workflows:implement <EPIC>` → line.** Replace "then `/dev-workflows:conformance <EPIC>` once the Epic's code pull request has merged" with "then, before its pull request merges, `/dev-workflows:conformance <EPIC>` and then `/security-workflows:scan <EPIC>`, from the repository that run branched — the fixes from either return to `/dev-workflows:implement <EPIC>`, which continues on the Epic's branch (`workflows-core:implementation-format` §5)".
+  - **The `/dev-workflows:conformance <EPIC>` line.** "(Dev, once its pull request has merged)" becomes "(Dev, before its pull request merges)". The `fix-code` route becomes "`/dev-workflows:implement <EPIC>`, which continues on the Epic's branch, then `/dev-workflows:conformance <EPIC>` again". The "none" route becomes "`/security-workflows:scan <EPIC>`, then the pull request's review and merge; then the remaining Epics, then the PE's `/dev-workflows:conformance <PRD>`".
+  - **A new line for `/security-workflows:scan <EPIC>`:** a `fix` decision → `/dev-workflows:implement <EPIC>` (continues on the Epic's branch), then the pull request's review and merge; after the merge, `/security-workflows:scan <repo> --verify-fixes` (Security Engineer).
+- [ ] **Step 7: The docs row.** In `plugins/workflows-core/docs/reference/references.md`, add the new file's row in the table's own form. Re-derive the file's count sentence with `find plugins/workflows-core/references -type f | wc -l` (check 9).
+- [ ] **Step 8: GREEN.** `python3 "$S/check.py" "$AW" core | tail -1` → `core: 45 passed, 0 failed`.
+- [ ] **Step 9: Commit** with `feat(workflows-core): the security register format and its bookkeeping paths, unit-branch with the merged test, /scan's cost inference, and the Dev's pre-merge offers`, verifying the branch first.
 
 ---
 
@@ -344,26 +367,77 @@ EOF
 - Read first: `plugins/dev-workflows/references/code-handoff.md` §2.4–§2.6 and §3.1.
 
 **Interfaces:**
-- Consumes `implementation.md`'s latest block naming this repository for `unit_key` (`workflows-core:implementation-format` §4).
-- Produces the question below, and the skipped branch creation that follows *Continue on `<branch>`*.
+- Consumes `unit-branch` (Task 4): `Skill(skill: "workflows-core:reference", args: "implementation-format unit-branch")`.
+- Produces the two questions below, and the skipped branch creation that follows either continue option.
 
-- [ ] **Step 1: RED.** `python3 "$S/check.py" "$AW" implement | tail -1` → `implement: 1 passed, 4 failed`.
-- [ ] **Step 2: Pre-Phase 3 step 4.** In the bullet *HEAD is not on `<base>`*, where the read returned commits, add the case first:
-  - **On a keyed run where HEAD is the branch recorded in the latest `implementation.md` block naming this repository for `unit_key`**, the question is this array, verbatim:
+- [ ] **Step 1: RED.** `python3 "$S/check.py" "$AW" implement | tail -1` → `implement: 1 passed, 6 failed`.
+- [ ] **Step 2: Pre-Phase 3 step 4.** On a keyed run, first run `unit-branch` for this repository and `unit_key` (`args: "implementation-format unit-branch"`). Then act on its `state`, before the existing bullets:
+  - **`checked-out`**, with commits the base lacks: the question is this array, verbatim:
 
     `choices: ["Continue on <branch> — the work joins its open pull request (Recommended)", "Branch from current position", "Branch from default branch — fresh start", "Cancel"]`
-  - **Otherwise** it is the existing three-option array, unchanged.
-  - Add the bullet **Continue on `<branch>`** → step 5 is skipped, and the run commits on `<branch>`. `code-handoff` §2.6 already probes for an open pull request and finds the one this branch has, so §2.5's push updates it, and §3.1's *pushed to existing PR* row reports it. The run's `implementation.md` block names the same branch.
-  - The two *Branch from …* options behave exactly as before.
+  - **`local` or `remote`**, on a clean tree, wherever HEAD stands: the question is this array, verbatim, asked even where HEAD is on `<base>`:
+
+    `choices: ["Switch to <branch> and continue — the work joins its open pull request (Recommended)", "Branch from current position", "Branch from default branch — fresh start", "Cancel"]`
+
+    Where HEAD is on `<base>`, *Branch from current position* is the same as the fresh start: drop it, leaving three options. *Switch to `<branch>` and continue* runs `git switch <branch>`, which creates the local branch from `origin/<branch>` where only that exists.
+  - **`merged`, `missing` or `none`**, or a direct run: the existing bullets, unchanged. Their three-option question stays verbatim for a branch that is not the unit's own.
+  - Add the bullet **Continue on `<branch>`** (both continue options): step 5 is skipped, and the run commits on `<branch>`. `code-handoff` §2.6 already probes for an open pull request and finds the one this branch has, so §2.5's push updates it, and §3.1's *pushed to existing PR* row reports it. The run's `implementation.md` block names the same branch.
 - [ ] **Step 3: Read Phase 4.6 and Phase 5's `### Branch` section** against the skipped step 5. Say in `### Branch` that the run continued on the unit's branch and its open pull request. Change nothing else.
 - [ ] **Step 4: The docs page.** In `plugins/dev-workflows/docs/commands/implement.md`, add the question to its branch section, with one sentence: a follow-up for an Epic whose pull request is open (a security fix from `/security-workflows:scan`, or any other) joins that pull request instead of opening a second one.
 - [ ] **Step 5: The rules.** In `.claude/rules/dev-workflows-implement.md`, add one invariant: on a keyed run whose HEAD is the unit's own recorded branch, `/implement` offers to continue on it, so the work joins its open pull request. It never cuts a second branch carrying the first one's commits, unless the user asks.
-- [ ] **Step 6: GREEN.** `python3 "$S/check.py" "$AW" implement | tail -1` → `implement: 5 passed, 0 failed`.
-- [ ] **Step 7: Commit** with `feat(dev-workflows): /implement continues on the Epic's own branch while its pull request is open`, verifying the branch first.
+- [ ] **Step 6: GREEN.** `python3 "$S/check.py" "$AW" implement | tail -1` → `implement: 7 passed, 0 failed`.
+- [ ] **Step 7: Commit** with `feat(dev-workflows): /implement continues on the Epic's own branch, or switches to it, while its pull request is open`, verifying the branch first.
 
 ---
 
-### Task 6: The command (`command`)
+### Task 6: `/conformance`'s Epic run before the merge (`conformance`)
+
+**Files:**
+- Modify:
+  - `plugins/dev-workflows/commands/conformance.md`;
+  - `plugins/dev-workflows/docs/commands/conformance.md`;
+  - `docs/superpowers/specs/2026-10-12-conformance-design.md` — an amendment note on D5.
+- Read first: `conformance.md` in full; then `implementation-format` §5 (Task 4).
+
+**Interfaces:**
+- Consumes `unit-branch`.
+- Produces an Epic run that traces the Epic's branch before the merge, or the default branch after it. The PRD run is unchanged.
+
+- [ ] **Step 1: RED.** `python3 "$S/check.py" "$AW" conformance | tail -1` → `conformance: 0 passed, 10 failed`.
+- [ ] **Step 2: The opening and the description.**
+  - "**An Epic run is the Dev's**: the Dev runs it on their Epic once `/dev-workflows:implement`'s pull request has merged … An Epic run traces merged code only, and stops while any of that work has not merged (Phase 1 (c))" becomes: the Dev runs it on their Epic after `/dev-workflows:implement`, before its pull request merges, on the branch `workflows-core:implementation-format` §5's `unit-branch` finds. After the merge, it reads the default branch.
+  - The frontmatter `description`'s "(run by its Dev, once its pull request has merged)" becomes "(run by its Dev, before its pull request merges)". "against each repository's default branch" becomes "against the Epic's branch, or each repository's default branch". It stays at most 600 characters.
+- [ ] **Step 3: Phase 1 (c).**
+  - **The heading** becomes "**(c) The code — the Epic's branch, or each repository's default branch**".
+  - **The merged test.** Replace the paragraph from "**The merged test.**" to "…that block's `branch` is the head of the pull request that carries the unit's work in that repository." with one sentence: **The merged test**, and when **a unit's work is merged**, are `workflows-core:implementation-format` §5's (`Skill(skill: "workflows-core:reference", args: "implementation-format unit-branch")`). Keep the sentence after it ("A repository with no clone, or no `<ref>` … not traced"), adjusted to say "on an Epic run, its branch as not traced".
+  - **The `Epic run.` bullet.** Replace it with: for each repository the Epic's `implementation.md` names, run `unit-branch`, after the clone's fetch in (a), and trace by its state:
+    - `checked-out` or `local` → `<branch>`'s tip, read at the ref, never switched;
+    - `remote` → `origin/<branch>`;
+    - `merged` → the default branch, as before.
+  - **Where every repository is `none`,** stop:
+
+    `CONFORMANCE_NOT_IMPLEMENTED: <EPIC-KEY>'s implementation.md records no /implement run, so there is no code to check — implement it with '/dev-workflows:implement <EPIC-KEY>', then re-run '/dev-workflows:conformance <EPIC-KEY>'.`
+
+    Keep the PRD-folder-block clause that the old stop carried.
+  - **Where any is `missing`,** stop:
+
+    `CONFORMANCE_BRANCH_MISSING: <EPIC-KEY>'s latest block in <repo> records <branch>, which is neither merged nor found here or on origin — fetch it ('git -C <repo> fetch origin <branch>'), or, where its pull request closed without merging, re-run '/dev-workflows:implement <EPIC-KEY>' from <repo>; then re-run '/dev-workflows:conformance <EPIC-KEY>'.`
+
+    Keep the read-only / last-fetched clause for a clone read as last fetched.
+  - **The PRD run's bullet and its question** stay as they are, except that they now cite the merged test from §5.
+- [ ] **Step 4: Everything else the Epic run's timing touched.** Find it with `grep -nE 'merged code only|once its pull request has merged|not tested for its merge|NOT_MERGED' plugins/dev-workflows/commands/conformance.md`, and change each hit:
+  - the `Not traced` report line;
+  - Phase 7's `### Next step`: an Epic run's `fix-code` → `/dev-workflows:implement <EPIC-KEY>`, which continues on the Epic's branch, then `/dev-workflows:conformance <EPIC-KEY>` again; with none → `/security-workflows:scan <EPIC-KEY>`, then the pull request's review and merge;
+  - the invariant "NEVER trace an Epic's unmerged work…" becomes "An Epic run traces the Epic's branch by `unit-branch`, before or after its merge; a PRD run traces merged code, and asks before tracing an Epic not shown merged".
+- [ ] **Step 5: The docs page and the design note.**
+  - In `docs/commands/conformance.md`, rewrite each passage that grep finds (`merged code only`, `once its pull request has merged`) to say the Dev runs it before the merge, on the Epic's branch.
+  - In `docs/superpowers/specs/2026-10-12-conformance-design.md`, prefix D5's cell with: "**Amended again 2026-10-15 (dev-workflows 4.28.0): an Epic run traces the Epic's branch before the merge, found by `workflows-core:implementation-format` §5's `unit-branch`, and the default branch after it; see `2026-10-15-security-workflows-scan-design.md` D18–D19.**"
+- [ ] **Step 6: GREEN.** `python3 "$S/check.py" "$AW" conformance | tail -1` → `conformance: 10 passed, 0 failed`. Then read Phase 0 to Phase 1 end to end. Every path an Epic run can take reaches a trace or a named stop.
+- [ ] **Step 7: Commit** with `feat(dev-workflows): /conformance's Epic run returns to before the merge, on the branch unit-branch finds; the merged test moves to implementation-format`, verifying the branch first.
+
+---
+
+### Task 7: The command (`command`)
 
 **Files:**
 - Create: `plugins/security-workflows/commands/scan.md`.
@@ -373,7 +447,7 @@ EOF
 - Consumes:
   - Task 3's CLI, exactly as listed there;
   - Task 4's reference, bookkeeping paths and cost inference;
-  - from `workflows-core`: `run-flags`, `addressing`, `specs-repo-git`, `read-only-repos` §1 and §3, `components` §1 (the repo slug), `implementation-format` §4, `escalation-rules`, `model-routing`, `followup-emission`, `feedback-emission`, `cost-emission`, `next-phase-offer`, `session-hygiene`, `untrusted-content` and `security-register-format`;
+  - from `workflows-core`: `run-flags`, `addressing`, `specs-repo-git`, `read-only-repos` §1 and §3, `components` §1 (the repo slug), `implementation-format` §5 (`unit-branch`), `escalation-rules`, `model-routing`, `followup-emission`, `feedback-emission`, `cost-emission`, `next-phase-offer`, `session-hygiene`, `untrusted-content` and `security-register-format`;
   - from Claude Security: `Skill(skill: "claude-security:claude-security", args: …)`.
 - Produces `/security-workflows:scan <KEY | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort low|medium|high]`.
 
@@ -384,7 +458,7 @@ EOF
 - Shell variables are lower-case (`run_dir`, `wt`, `run_role`), so check 5 reads none of them as an environment variable.
 - **Write every `register.py` call in full**, as `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" <subcommand> --specs "$SPECS_PATH" --slug <repo-slug> …`. This plan abbreviates calls to `register.py" <subcommand>`, and `check.py` matches the full form's `scripts/register.py" <subcommand> `.
 
-- [ ] **Step 1: RED.** `python3 "$S/check.py" "$AW" command | tail -1` → `command: 2 passed, 67 failed`.
+- [ ] **Step 1: RED.** `python3 "$S/check.py" "$AW" command | tail -1` → `command: 2 passed, 69 failed`.
 - [ ] **Step 2: Frontmatter and opening.**
 
 ```markdown
@@ -421,8 +495,8 @@ Check a codebase for security vulnerabilities with Claude Security: $ARGUMENTS
   3. **`$SPECS_PATH`**, with `conformance.md` step 2's test and its `Set SPECS_PATH (you'll be prompted for the path)` array.
   4. **Resolve a key** with `resolve-address`, handling each status as `conformance.md` does. Then run `specs-preflight` once the key set is known; it is empty for a path. Carry `run_dir=$(mktemp -d -t security-workflows-run.XXXXXX)` for the run's scratch files.
   5. **The repository** (spec D5).
-     - **A key** scans the repository this session is open in: `git rev-parse --show-toplevel` from the working directory, and its slug. Read the unit's `implementation.md` with `workflows-core:implementation-format` §4. Take the latest block naming that slug, and from it `branch`, `base` and `commit`.
-     - Where no block names it, stop:
+     - **A key** scans the repository this session is open in: `git rev-parse --show-toplevel` from the working directory, and its slug. Run `unit-branch` for it (`args: "implementation-format unit-branch"`), and carry its `state`, `branch`, `base` and `tip` to Phase 1.
+     - Where the state is `none`, stop:
 
        `SECURITY_NO_IMPLEMENTATION: <KEY>'s implementation.md names no block for <repo-slug>, the repository this session is open in — it names <slugs, or 'nothing'>. Run '/security-workflows:scan <KEY>' from one of those repositories, or '/security-workflows:scan <repo-path>' for a whole-repository scan.`
      - **A path** scans that repository.
@@ -448,12 +522,15 @@ Check a codebase for security vulnerabilities with Claude Security: $ARGUMENTS
      - On Fable, carry one line into Phase 3's confirmation: "Fable's safety filters will re-run some of the scan's requests on Opus."
      - Write that `--enforce-model` reaches this run's own dispatches only, never Claude Security's agents, which run on the session model, and that the routing record says so.
 - [ ] **Step 4: `## Phase 1 — Scope`.**
-  - **A key:**
-    - The repository's HEAD must be the block's commit, on a clean tree, for an in-place scan.
-    - On a clean tree elsewhere, ask: `choices: ["Switch to <branch> (Recommended)", "Cancel"]`. Then `git switch <branch>` (a read-only mount skips it, with the reason).
-    - Where the branch is missing locally, or its tip is not the block's commit, stop:
+  - **A key**, by `unit-branch`'s state:
+    - **`checked-out`:** scan the branch's tip in place. A dirty tree stops for the user to commit or stash, because a change scan reads committed changes only. Where the tip differs from the recorded commit, say so in the confirmation.
+    - **`local` or `remote`**, on a clean tree: ask `choices: ["Switch to <branch> (Recommended)", "Cancel"]`, then `git switch <branch>`. A read-only mount skips it, with the reason.
+    - **`merged`:** stop:
 
-      `SECURITY_BRANCH_MOVED: <KEY>'s latest block records <branch> at <commit7> in <repo-slug>, and <branch> <is missing here | stands at <commit7'>> — <fetch it with 'git fetch origin <branch>' and re-run | re-run /dev-workflows:implement <KEY>, whose next block records the new tip>.`
+      `SECURITY_EPIC_MERGED: <KEY>'s work in <repo-slug> has merged into <default> — a change scan has nothing left to diff. Scan the repository with '/security-workflows:scan <repo-path>', or close fixes with '/security-workflows:scan <repo-path> --verify-fixes'.`
+    - **`missing`:** stop:
+
+      `SECURITY_BRANCH_MISSING: <KEY>'s latest block in <repo-slug> records <branch>, which is neither merged nor found here or on origin — fetch it with 'git fetch origin <branch>' and re-run, or, where its pull request closed without merging, re-run '/dev-workflows:implement <KEY>'.`
     - The kind is a change scan, with `--base <base>`.
   - **A path:** the codebase job on that root as it stands. A dirty tree is scanned anyway, and its confirmation says that a dirty scan closes nothing and yields no patch.
   - **`--verify-fixes`:** `register.py" verify-scope` with `--ref` set to the repository's default ref (`workflows-core:read-only-repos` §3). Its `files` become the scope, and its `gone` carry to triage. Where `files` is empty, stop:
@@ -563,7 +640,7 @@ Check a codebase for security vulnerabilities with Claude Security: $ARGUMENTS
 
 ---
 
-### Task 7: Docs, diagrams and the docs gate (`docs`)
+### Task 8: Docs, diagrams and the docs gate (`docs`)
 
 **Files:**
 - Create, under `plugins/security-workflows/docs/`:
@@ -592,7 +669,7 @@ Check a codebase for security vulnerabilities with Claude Security: $ARGUMENTS
   - the register from Appendix C.
 - **Only `getting-started.md` may name the `shipwright` marketplace or the `ai-workflows` repository** (checks 7 and 10). `claude-plugins-official` is not one of check 10's tokens and may be named anywhere.
 
-- [ ] **Step 1: RED.** `python3 "$S/check.py" "$AW" docs | tail -1` → `docs: 0 passed, 25 failed`.
+- [ ] **Step 1: RED.** `python3 "$S/check.py" "$AW" docs | tail -1` → `docs: 0 passed, 30 failed`.
 - [ ] **Step 2: The gate's config.** In `scripts/check-docs.sh`'s config block only:
   - append `plugins/security-workflows` to `PLUGIN_RELS` and to `COST_PLUGIN_RELS`;
   - leave their `# copilot:` comments as they are;
@@ -674,23 +751,27 @@ flowchart TD
         secscan["/security-workflows:scan"]:::sec
     end
 ```
+  - `    implement -->|"Epic: the Dev, once its pull request has merged"| conformanceepic` becomes `    implement -->|"Epic: the Dev, before its pull request merges"| conformanceepic`.
   - After `    implement -.->|"implementation.md — diff grounding on"| rnfinal`, add:
 
 ```
-    implement -.->|"action: offered once the PR is open"| secscan
+    conformanceepic -.->|"action: then the security scan, still before the merge"| secscan
     secscan -.->|"fix — a follow-up + patch, on the Epic's branch"| implement
 ```
+  - In the *Reading it* bullet on `/dev-workflows:conformance`, "In the Dev lane the Dev checks an Epic once its pull request has merged" becomes "In the Dev lane the Dev checks an Epic before its pull request merges, on its branch".
   - After `    classDef core fill:#ede9fe,stroke:#6d28d9,color:#4c1d95`, add `    classDef sec fill:#ccfbf1,stroke:#0f766e,color:#134e4a`.
   - In the opening sentence, ``every slash command of `product-workflows`, `dev-workflows`, `docs-workflows` and `workflows-core` `` becomes ``every slash command of `product-workflows`, `dev-workflows`, `docs-workflows`, `security-workflows` and `workflows-core` ``.
-  - Add a *Reading it* bullet: "**`/security-workflows:scan` is only ever offered**, by `/implement` once its pull request is open, never run on its own. It runs before the merge, reads code through Claude Security, a plugin outside the family, and records what it finds in the specs repository. A finding marked fix comes back to `/implement`, which continues on the Epic's branch, so the fix joins the open pull request. A Dev's decisions never wait on the Security Engineer, who reviews them in `--triage`."
+  - Add a *Reading it* bullet: "**`/security-workflows:scan` is only ever offered**, after the Epic's `/conformance`, never run on its own. It runs before the merge, reads code through Claude Security, a plugin outside the family, and records what it finds in the specs repository. A finding marked fix comes back to `/implement`, which continues on the Epic's branch, so the fix joins the open pull request. A Dev's decisions never wait on the Security Engineer, who reviews them in `--triage`."
   - In *The detail, per plugin*, add "- `security-workflows` — its Workflow overview page."
 - [ ] **Step 5: The other diagrams and pages.**
   - **`plugins/workflows-core/docs/workflow.md`:** "every command of the four plugins" becomes "every command of the five plugins".
   - **`plugins/dev-workflows/docs/workflow.md`:**
-    - add the node `secplugin["/security-workflows:scan"]:::sec` and the edges `implement -.->|"action: offered once the PR is open, in security-workflows"| secplugin` and `secplugin -.->|"fix — a follow-up, on the Epic's branch"| implement`;
+    - `implement -->|"Epic: the Dev, once its pull request has merged"| conformance` becomes `implement -->|"Epic: the Dev, before its pull request merges"| conformance`;
+    - add the node `secplugin["/security-workflows:scan"]:::sec` and the edges `conformance -.->|"action: then the security scan, in security-workflows"| secplugin` and `secplugin -.->|"fix — a follow-up, on the Epic's branch"| implement`;
     - add `classDef sec fill:#ccfbf1,stroke:#0f766e,color:#134e4a`;
     - add one sentence of prose under the diagram.
   - **`plugins/workflows-core/docs/roles-and-phases.md`:** add the `security-audit` phase in the page's own form.
+  - **`plugins/dev-workflows/docs/README.md`, `roles-and-phases.md` and `commands/implement.md`:** each "once its pull request has merged" about the Epic's `/conformance` becomes "before its pull request merges". `commands/implement.md` also gains D17's two questions in its branch section.
 - [ ] **Step 6: Re-derive the counts** each edited page states, with the recipe beside it (check 9).
 - [ ] **Step 7: The repo-root `README.md`.**
   - Add `claude plugin install security-workflows@shipwright` to the install block, after `docs-workflows`, and `claude plugin update security-workflows@shipwright` to the update block.
@@ -698,14 +779,14 @@ flowchart TD
   - Add one sentence to `## How the plugins fit together`: the security audit plugin, offered after `/implement` and run before the merge, which depends on `workflows-core` and Claude Security.
   - Add the `python3` 3.9+ and dynamic-workflows notes to `## Prerequisites`, scoped to `security-workflows`.
 - [ ] **Step 8: GREEN.**
-  - `python3 "$S/check.py" "$AW" docs | tail -1` → `docs: 25 passed, 0 failed`.
+  - `python3 "$S/check.py" "$AW" docs | tail -1` → `docs: 30 passed, 0 failed`.
   - Then `cd "$AW" && ./scripts/check-docs.sh --root . 2>&1 | tail -15` → `PASS`. Fix what it names. It runs check 5's variables, check 7's install lines, check 9's counts, check 15's index membership and check 16's loader citations over the new plugin.
   - Then the mermaid gate over the worktree: `node "$MAIN/scripts/mermaid/check-mermaid.mjs" --root "$AW"` → `PASS`.
 - [ ] **Step 9: Commit** with `docs(security-workflows): the plugin's docs tree, the family map's Security Engineer lane, five plugins`, verifying the branch first.
 
 ---
 
-### Task 8: Instruction tiers and the claim sweep (`tiers`)
+### Task 9: Instruction tiers and the claim sweep (`tiers`)
 
 **Files:**
 - Create: `.claude/rules/security-workflows.md`.
@@ -716,7 +797,7 @@ flowchart TD
   - `.claude/rules/plugin-updates.md`;
   - and every file the sweep below finds.
 
-- [ ] **Step 1: RED.** `python3 "$S/check.py" "$AW" tiers | tail -1` → `tiers: 0 passed, 12 failed`.
+- [ ] **Step 1: RED.** `python3 "$S/check.py" "$AW" tiers | tail -1` → `tiers: 0 passed, 14 failed`.
 - [ ] **Step 2: Read** `.claude/rules/claim-sweep.md` and `plugins/workflows-core/references/instruction-file-maintenance.md` before editing. Both bind this task.
 - [ ] **Step 3: The rules file.**
   - **Frontmatter:** `paths:` with `plugins/security-workflows/**`, `plugins/workflows-core/references/security-register-format.md` and `plugins/workflows-core/docs/family-map.md`, each glob matching a file (`validate-catalog.py`).
@@ -754,19 +835,22 @@ flowchart TD
   - **Scope (refinement 4):** `plugins/` with every `CHANGELOG.md` excluded from edits but read, plus `README.md`, `CLAUDE.md`, `.claude/rules/` and `docs/maintainers/`.
   - **Subjects:**
     - the family's plugin count: "four plugins", "three family plugins", "the three of", "all three";
+    - the Epic `/conformance`'s timing: "once its pull request has merged", "merged code only", "merged-only";
     - the bookkeeping shapes: "eight shapes";
     - the set of roles: "PM, PA, PE", "four roles";
     - "no security".
   - **Count each phrase before and after** the edit, wrap-insensitively (refinement 7), and keep the counts in `$S/sweep.md`. Disposition the whole paragraph around each hit (refinement 1).
+  - **`.claude/rules/dev-workflows.md`'s `/conformance` map line:** "an EPIC- folder — the Dev, once its pull request has merged" becomes "an EPIC- folder — the Dev, before its pull request merges, on the branch `unit-branch` finds". Rewrite its bracket on the code the same way. Add `/implement`'s continue-on-branch to its map line.
+  - **`.claude/rules/plugin-updates.md`'s bullet "Update `workflows-core` 1.40.1 with `dev-workflows` 4.26.0"** describes a pairing whose behaviour this change reverses. Rewrite it to what still holds: the follow-up `withdraws:` pairing. Drop the merged-only clause.
   - **Add a bullet to `.claude/rules/plugin-updates.md`:** "**Update `workflows-core` 1.42.0 and `dev-workflows` 4.28.0 with `security-workflows` 0.1.0**: the new plugin loads `security-register-format`, commits its register on bookkeeping paths an older `specs-repo-git` and `session-branch.py` do not stage, and hands its fixes to an `/implement` that continues on the Epic's branch."
 - [ ] **Step 7: GREEN.**
-  - `python3 "$S/check.py" "$AW" tiers | tail -1` → `tiers: 12 passed, 0 failed`.
+  - `python3 "$S/check.py" "$AW" tiers | tail -1` → `tiers: 14 passed, 0 failed`.
   - `python3 scripts/validate-catalog.py 2>&1 | tail -5` → no `ERROR`, and no warning on a file this task touched.
 - [ ] **Step 8: Commit** with `docs(tiers): security-workflows in CLAUDE.md and the rules, re-derived counts, the four-to-five-plugin sweep`, verifying the branch first.
 
 ---
 
-### Task 9: Release and gates (`release`)
+### Task 10: Release and gates (`release`)
 
 - [ ] **Step 1: Bump versions in `plugin.json` and the marketplace entry together:**
   - `security-workflows` stays at 0.1.0;
@@ -779,12 +863,12 @@ flowchart TD
     - The dependency on Claude Security, and that installing this plugin installs it.
     - What is not built yet: the architecture loop (E), threat models (B, C), security conformance (D).
   - `workflows-core` 1.42.0:
-    - *Added*: the register format reference, the two bookkeeping shapes (with `session-branch.py`'s classifier), the `/scan` cost inference, and the namespace.
-    - *Changed*: `/implement`'s offer, and the family map.
+    - *Added*: the register format reference, the two bookkeeping shapes (with `session-branch.py`'s classifier), `unit-branch` with the merged test, the `/scan` cost inference, and the namespace.
+    - *Changed*: the Dev's offers before the merge (`/implement` → `/conformance <EPIC>` → the scan), and the family map.
   - `dev-workflows` 4.28.0:
-    - *Added*: `/implement` continues on the Epic's branch while its pull request is open.
-    - *Changed*: the workflow page's scan node.
-- [ ] **Step 3: GREEN.** `python3 "$S/check.py" "$AW" all | tail -1` → `all: 168 passed, 0 failed`.
+    - *Added*: `/implement` continues on the Epic's branch, or switches to it, while its pull request is open.
+    - *Changed*: `/conformance`'s Epic run returns to before the merge, tracing the branch `unit-branch` finds. This reverses 4.26.0's merged-only Epic run; the PRD run is unchanged. The merged test now lives in `workflows-core:implementation-format` §5. The workflow page gains the scan node.
+- [ ] **Step 3: GREEN.** `python3 "$S/check.py" "$AW" all | tail -1` → `all: 200 passed, 0 failed`.
 - [ ] **Step 4: The gate chain.** This container has Python 3.14 only, and CI runs 3.11. `register.py` uses nothing past 3.9. Use a timeout of at least 300 s:
 
 ```bash
@@ -813,18 +897,18 @@ python3 plugins/workflows-core/scripts/session-branch.py --selftest; echo "EXIT=
 
 ---
 
-### Task 10: Whole-branch review
+### Task 11: Whole-branch review
 
 - [ ] **Step 1: Dispatch a fresh Opus reviewer** (general-purpose, `model: opus`, in the background). Give it the spec path, this plan's path, and `git -C "$AW" diff main...HEAD`, with this brief:
 
-  *"Review this branch as a whole. The prose is executed by agents in order, so a false or ambiguous sentence is a defect. Check every changed sentence against what the run does, and every pointer (`this`, `it`, `above`, an ordinal, a section number) where it lands. Check every claim against the reference it cites, and every count against its recipe. Check `scan.md`'s `choices:` arrays against `escalation-rules`, and its phases against the spec's D3–D13 and D17. Check that `register.py` implements `security-register-format.md` rule for rule, that the reference states nothing the script does not do, and that `specs-repo-git` §2.1 and `session-branch.py`'s classifier agree. Check `/implement`'s new question against `code-handoff` §2.4–§2.6. Walk the spec's worked example through the command, the script and `/implement`. Report only this change's defects, most severe first, each with file:line, the evidence, and a fix."*
+  *"Review this branch as a whole. The prose is executed by agents in order, so a false or ambiguous sentence is a defect. Check every changed sentence against what the run does, and every pointer (`this`, `it`, `above`, an ordinal, a section number) where it lands. Check every claim against the reference it cites, and every count against its recipe. Check `scan.md`'s `choices:` arrays against `escalation-rules`, and its phases against the spec's D3–D13 and D17. Check that `register.py` implements `security-register-format.md` rule for rule, that the reference states nothing the script does not do, and that `specs-repo-git` §2.1 and `session-branch.py`'s classifier agree. Check `/implement`'s two new questions against `code-handoff` §2.4–§2.6, and that `/implement`, `/conformance` and the scan each act on every `unit-branch` state. Check that the merged test was moved word for word and that no second copy remains. Walk the spec's worked example through `/implement`, `/conformance`, the scan and the script. Report only this change's defects, most severe first, each with file:line, the evidence, and a fix."*
 - [ ] **Step 2: Triage each finding** at the location it names. Fix every confirmed one. Record any dismissal with a reason that disposes of that finding's own claim.
 - [ ] **Step 3: Re-run `check.py all` and the gate chain** (`EXIT=0`). Commit the wave as `fix: review round N — …`, verifying the branch first.
 - [ ] **Step 4: Repeat Steps 1–3 until a round returns no finding above MINOR.** Fix MINORs in the same wave.
 
 ---
 
-### Task 11: End-to-end on the bookstore demo (with the user)
+### Task 12: End-to-end on the bookstore demo (with the user)
 
 `/security-workflows:scan` is interactive and runs from an installed plugin, in a session open in the code repository. So this task is done with the user, and its outcome decides the merge.
 
@@ -836,34 +920,35 @@ python3 plugins/workflows-core/scripts/session-branch.py --selftest; echo "EXIT=
   - a key run's change scan through the skill, returning control;
   - *Suggest patches* with an `F<n>` selection.
 
-  Record both. Where either fails, apply its fallback (Task 1 Step 9), and loop to Task 10 for that fix.
+  Record both. Where either fails, apply its fallback (Task 1 Step 9), and loop to Task 11 for that fix.
 - [ ] **Step 3: The browser, for a `web/` patch.**
   - Run `npx playwright install chromium`.
   - Write `/home/ivan.gudak/.cache/ms-playwright/chrome-wrapper.sh`: `exec "<the chromium path playwright installed>" --headless=new --no-sandbox --disable-dev-shm-usage "$@"`, executable.
   - Confirm `"$CHROME_BIN" --version` prints a version.
 - [ ] **Step 4: Run the routes, with the user answering:**
-  1. `/security-workflows:scan BOOK-2-01-02` (role `dev`), with one *Fix* and one *False positive*;
-  2. `/dev-workflows:implement BOOK-2-01-02`, which reads the follow-up back, asks D17's question, continues on the Epic's branch, and pushes to its open pull request;
-  3. after the user merges the scratch pull request, `/security-workflows:scan /workspace/bookstore --verify-fixes`;
-  4. `/security-workflows:scan /workspace/bookstore --triage` (role `sec`), confirming the Dev's false positive and accepting one risk;
-  5. `--import` of the report from route 1, which should report the scan as recorded already;
-  6. two scans recorded from two clones of `bookstore-specs` before either pushed, with the rebuild that merges them.
+  1. `/dev-workflows:conformance BOOK-2-01-02`, before the merge, on the Epic's branch (`unit-branch`: `checked-out`);
+  2. `/security-workflows:scan BOOK-2-01-02` (role `dev`), with one *Fix* and one *False positive*;
+  3. after `git switch master`, `/dev-workflows:implement BOOK-2-01-02`. It reads the follow-up back, asks D17's switch-and-continue question, continues on the Epic's branch, and pushes to its open pull request;
+  4. after the user merges the scratch pull request, `/security-workflows:scan /workspace/bookstore --verify-fixes`, and `/dev-workflows:conformance BOOK-2-01-02` again, which now reads the default branch (`merged`);
+  5. `/security-workflows:scan /workspace/bookstore --triage` (role `sec`), confirming the Dev's false positive and accepting one risk;
+  6. `--import` of the report from route 2, which should report the scan as recorded already;
+  7. two scans recorded from two clones of `bookstore-specs` before either pushed, with the rebuild that merges them.
 
   Compare each outcome with the spec's worked example.
 - [ ] **Step 5: The clean install** (spec Verification).
   - In a scratch configuration (`CLAUDE_CONFIG_DIR=$(mktemp -d) claude plugin marketplace add /workspace/ai-workflows/.worktrees/security-workflows-scan`, then `claude plugin install security-workflows@shipwright`), confirm that `workflows-core` and `claude-security` both install.
   - Confirm that the plugin loads (`claude plugin list`).
   - Delete the scratch configuration.
-- [ ] **Step 6: Fix what the runs show wrong** (back to Task 10's loop for those fixes). Then delete the demo's scratch branches.
+- [ ] **Step 6: Fix what the runs show wrong** (back to Task 11's loop for those fixes). Then delete the demo's scratch branches.
 
 ---
 
-### Task 12: Merge, push, clean up
+### Task 13: Merge, push, clean up
 
 - [ ] **Step 1: Check `main` and merge, in the main checkout only if it is on `main` and clean.** Otherwise do it in a temporary worktree of `main`.
   - `git -C "$MAIN" fetch -q origin`. Confirm `origin/main` is still the branch's base; otherwise merge `origin/main` into the branch and re-run the gate chain.
   - Delete the untracked review copies first: the spec, this plan and the spike notes under `$MAIN/docs/superpowers/`. They would block the merge.
-  - Run `git merge --no-ff iv-gu/security-workflows-scan` with the message `Merge iv-gu/security-workflows-scan: /security-workflows:scan — Claude Security scans before the merge, recorded as bookkeeping in a per-repository findings register, triaged without blocking the Dev, and fixed on the Epic's branch through /implement (security-workflows 0.1.0, workflows-core 1.42.0, dev-workflows 4.28.0)` and the trailer.
+  - Run `git merge --no-ff iv-gu/security-workflows-scan` with the message `Merge iv-gu/security-workflows-scan: the Dev's checks before the merge — /security-workflows:scan recording Claude Security findings as bookkeeping, /conformance's Epic run on the Epic's branch, fixes continuing on that branch through /implement, all finding it with unit-branch (security-workflows 0.1.0, workflows-core 1.42.0, dev-workflows 4.28.0)` and the trailer.
   - Confirm the merged tree equals the gated tree.
 - [ ] **Step 2: Run check 18 armed, then push.**
   - `ASSERT_PUBLISHED=1 ./scripts/check-docs.sh --root .` → `PASS`.
@@ -877,7 +962,9 @@ python3 plugins/workflows-core/scripts/session-branch.py --selftest; echo "EXIT=
   - `claude plugin update dev-workflows@shipwright`;
   - then restart Claude Code.
 
-  Sub-project E (the architecture feedback loop) is next.
+  Two follow-ups come next:
+  - **Port D17–D19 to the internal editions.** The Epic `/conformance`'s pre-merge run, `unit-branch` and `/implement`'s continue-on-branch must be ported, with their own mapping of "merged".
+  - **Sub-project E**, the architecture feedback loop.
 
 ---
 
@@ -892,7 +979,7 @@ import json, os, re, subprocess, sys
 
 ROOT = sys.argv[1]
 WANT = sys.argv[2] if len(sys.argv) > 2 else "all"
-GROUPS = ["plugin", "register", "core", "implement", "command", "docs", "tiers", "release"]
+GROUPS = ["plugin", "register", "core", "implement", "conformance", "command", "docs", "tiers", "release"]
 P = "plugins/security-workflows"
 results = {g: [0, 0] for g in GROUPS}
 
@@ -996,6 +1083,13 @@ check("core", re.search(r"^\| `/scan` \| \*\*inferred\*\* \| \*\*inferred\*\* \|
 for needle in ("Fixed per-command labels, with nine inferred exceptions", "**`/scan` inference (whose run it is).**", "`run_role`"):
     has("core", CE, needle)
 has("core", C + "next-phase-offer.md", "/security-workflows:scan <EPIC>")
+has("core", C + "next-phase-offer.md", "before its pull request merges")
+lacks("core", C + "next-phase-offer.md", "once the Epic's code pull request has merged")
+lacks("core", C + "next-phase-offer.md", "(Dev, once its pull request has merged)")
+IF = C + "implementation-format.md"
+for needle in ("## 5. The unit's branch — `unit-branch`", "**The merged test.**", "**A unit's work is merged**",
+               "`checked-out`", "`local`", "`remote`", "`missing`", "**A consumer works on the tip.**"):
+    has("core", IF, needle)
 check("core", js("plugins/workflows-core/scripts/command-namespaces.json").get("security-workflows") == ["scan"],
       "command-namespaces.json maps security-workflows to [scan]")
 has("core", "plugins/workflows-core/docs/reference/references.md", "`security-register-format.md`")
@@ -1006,10 +1100,25 @@ has("implement", IM, 'choices: ["Continue on <branch> — the work joins its ope
 has("implement", IM, 'choices: ["Branch from current position — continue on this work (Recommended)", "Branch from default branch — fresh start", "Cancel"]',
     "implement.md keeps its three-option question for a branch that is not the unit's own")
 has("implement", IM, "**Continue on `<branch>`**")
+has("implement", IM, 'choices: ["Switch to <branch> and continue — the work joins its open pull request (Recommended)", "Branch from current position", "Branch from default branch — fresh start", "Cancel"]')
+has("implement", IM, 'args: "implementation-format unit-branch"')
 has("implement", "plugins/dev-workflows/docs/commands/implement.md", "Continue on")
 has("implement", ".claude/rules/dev-workflows-implement.md", "joins its open pull request")
 
-# ---- command (Task 6) ----
+# ---- conformance (Task 6) ----
+CF = "plugins/dev-workflows/commands/conformance.md"
+has("conformance", CF, 'args: "implementation-format unit-branch"')
+for gone in ("Epic run traces merged code only", "CONFORMANCE_NOT_MERGED", "**The merged test.** A block of an `implementation.md`",
+             "once its pull request has merged"):
+    lacks("conformance", CF, gone)
+for code in ("CONFORMANCE_NOT_IMPLEMENTED:", "CONFORMANCE_BRANCH_MISSING:"):
+    has("conformance", CF, code)
+CFD = "plugins/dev-workflows/docs/commands/conformance.md"
+has("conformance", CFD, "before its pull request merges")
+lacks("conformance", CFD, "traces merged code only")
+has("conformance", "docs/superpowers/specs/2026-10-12-conformance-design.md", "Amended again 2026-10-15")
+
+# ---- command (Task 7) ----
 S = P + "/commands/scan.md"
 cmd = read(S)
 fm = cmd.split("---", 2)[1] if cmd.startswith("---") else ""
@@ -1019,7 +1128,7 @@ d = re.search(r"^description: (.*)$", fm, re.M)
 check("command", bool(d) and len(d.group(1)) <= 600, "scan.md description is at most 600 characters")
 for n in range(8):
     check("command", re.search(r"^## Phase %d — " % n, cmd, re.M) is not None, "scan.md has ## Phase %d — " % n)
-for code in ("SECURITY_USAGE", "SECURITY_NO_IMPLEMENTATION", "SECURITY_BRANCH_MOVED", "SECURITY_ALL_SKIPPED",
+for code in ("SECURITY_USAGE", "SECURITY_NO_IMPLEMENTATION", "SECURITY_BRANCH_MISSING", "SECURITY_EPIC_MERGED", "SECURITY_ALL_SKIPPED",
              "SECURITY_NOTHING_TO_VERIFY", "SECURITY_NOTHING_TO_TRIAGE", "SECURITY_PREREQ_PYTHON",
              "SECURITY_PREREQ_WORKFLOWS"):
     has("command", S, code + ":")
@@ -1031,6 +1140,7 @@ for call in ('args: "run-flags strip-run-flags"', 'args: "addressing resolve-add
              'args: "feedback-emission emit-auto"', 'args: "specs-repo-git commit-artifacts"',
              'args: "next-phase-offer"', 'args: "session-hygiene"', 'args: "escalation-rules"',
              'skill: "workflows-core:model-routing"', 'Skill(skill: "claude-security:claude-security"',
+             'args: "implementation-format unit-branch"',
              "workflows-core:impl-maintenance", "workflows-core:defect-reporter"):
     has("command", S, call)
 for sub in ("plan", "ids", "commit", "verify-scope"):
@@ -1058,7 +1168,7 @@ for needle in ("Check a codebase for security vulnerabilities with Claude Securi
                'choices: ["Start the scan (Recommended)", "Cancel"]'):
     has("command", S, needle)
 
-# ---- docs (Task 7) ----
+# ---- docs (Task 8) ----
 D = P + "/docs/"
 for f in ("README.md", "getting-started.md", "workflow.md", "roles-and-phases.md", "commands/scan.md",
           "reference/security-register.md", "reference/environment.md", "reference/session-cost.md"):
@@ -1071,20 +1181,24 @@ has("docs", D + "reference/security-register.md", "awaiting security review")
 FM = "plugins/workflows-core/docs/family-map.md"
 for needle in ('ksec["security-workflows"]:::sec', "classDef sec fill:#ccfbf1,stroke:#0f766e,color:#134e4a",
                'secscan["/security-workflows:scan"]:::sec', 'subgraph SEC["Security Engineer — audit"]',
-               'implement -.->|"action: offered once the PR is open"| secscan',
+               'implement -->|"Epic: the Dev, before its pull request merges"| conformanceepic',
+               'conformanceepic -.->|"action: then the security scan, still before the merge"| secscan',
                "secscan -.->|\"fix — a follow-up + patch, on the Epic's branch\"| implement",
                "`product-workflows`, `dev-workflows`, `docs-workflows`, `security-workflows` and `workflows-core`"):
     has("docs", FM, needle)
 has("docs", "plugins/workflows-core/docs/workflow.md", "every command of the five plugins")
 lacks("docs", "plugins/workflows-core/docs/workflow.md", "every command of the four plugins")
 has("docs", "plugins/dev-workflows/docs/workflow.md", "/security-workflows:scan")
+for rel in (FM, "plugins/dev-workflows/docs/workflow.md", "plugins/dev-workflows/docs/README.md",
+            "plugins/dev-workflows/docs/roles-and-phases.md"):
+    lacks("docs", rel, "once its pull request has merged")
 check("docs", "plugins/security-workflows" in (re.search(r'^PLUGIN_RELS="([^"]*)"', read("scripts/check-docs.sh"), re.M) or [None, ""])[1],
       "check-docs.sh PLUGIN_RELS lists plugins/security-workflows")
 check("docs", "plugins/security-workflows" in (re.search(r'^COST_PLUGIN_RELS="([^"]*)"', read("scripts/check-docs.sh"), re.M) or [None, ""])[1],
       "check-docs.sh COST_PLUGIN_RELS lists plugins/security-workflows")
 has("docs", "README.md", "claude plugin install security-workflows@shipwright")
 
-# ---- tiers (Task 8) ----
+# ---- tiers (Task 9) ----
 has("tiers", "CLAUDE.md", "`plugins/security-workflows/`")
 lacks("tiers", "CLAUDE.md", "All three of `dev-workflows`, `product-workflows`, and `docs-workflows` name it in `dependencies`")
 R = ".claude/rules/security-workflows.md"
@@ -1093,13 +1207,15 @@ check("tiers", read(R).startswith("---\npaths:"), "the rules file opens with a p
 for needle in ("## Workflow map", "/security-workflows:scan", "## Invariants"):
     has("tiers", R, needle)
 has("tiers", ".claude/rules/plugin-updates.md", "security-workflows")
+lacks("tiers", ".claude/rules/plugin-updates.md", "on an Epic now runs only once the Epic's pull request has merged")
+lacks("tiers", ".claude/rules/dev-workflows.md", "the Dev, once its pull request has merged")
 for stale, rel in (("Twenty-eight commands invoke the `workflows-core:model-routing` skill", ".claude/rules/workflows-core.md"),
                    ("used by 27 of the 36 commands", ".claude/rules/workflows-core.md"),
                    ("Consumed by the thirty-three commands that write into `$SPECS_PATH`", ".claude/rules/workflows-core-git.md"),
                    ("four directory shapes and four single files", ".claude/rules/workflows-core-git.md")):
     lacks("tiers", rel, stale)
 
-# ---- release (Task 9) ----
+# ---- release (Task 10) ----
 def version(p):
     return js("plugins/%s/.claude-plugin/plugin.json" % p).get("version")
 check("release", version("security-workflows") == "0.1.0", "security-workflows is 0.1.0")
@@ -2438,4 +2554,55 @@ A false positive overrules a finding Claude Security's three-voter panel confirm
 ## 6. Readers
 
 The commands and agents that load this reference are what `grep -rl 'args: "security-register-format' plugins` lists. Each reads `register.json`, and reads a finding's text as §3 says.
+````
+
+## Appendix D — `plugins/workflows-core/references/implementation-format.md` §5
+
+#### `unit-branch.md`
+
+````markdown
+## 5. The unit's branch — `unit-branch`
+
+Three commands need to know which branch carries a unit's work in one repository, and what state that branch is in:
+
+- `/dev-workflows:implement`, to continue on it;
+- `/dev-workflows:conformance`, to trace it;
+- `/security-workflows:scan`, to scan it.
+
+Each runs this entry point for that, never a guess. The branch is the one this file records.
+
+**Inputs:**
+- `<repo>`, the clone;
+- `<repo-slug>`, its slug (`workflows-core:components` §1);
+- `<key>`, the unit's key;
+- this file, in the unit's own folder;
+- `<ref>`, the repository's default ref (`workflows-core:read-only-repos` §3).
+
+**Steps:**
+
+1. **The block.** Take the latest block whose `repo:` is `<repo-slug>`. Never take only the newest block overall, since a companion run in a second repository and a re-run in the same one each add a block. Where there is none, the state is `none`.
+2. **Merged?** Run the merged test below on that block. Where it passes, and the branch carries no commit `<ref>` lacks, the state is `merged`. The branch is `<branch>` or `origin/<branch>`, and the check applies only where it still resolves; `git -C <repo> log --oneline <ref>..<that ref>` must print nothing.
+3. **Where the branch is.**
+   - `git -C <repo> branch --show-current` prints `<branch>`: `checked-out`.
+   - Otherwise, `git -C <repo> rev-parse --verify --quiet refs/heads/<branch>` succeeds: `local`.
+   - Otherwise, `refs/remotes/origin/<branch>` resolves: `remote`.
+   - Otherwise: `missing`. The branch is gone, or was never pushed from the machine that ran `/implement`.
+
+**Output:** `{state, branch, base, commit, tip}`. `branch`, `base` and `commit` are the block's. `tip` is the commit `<branch>`, or else `origin/<branch>`, resolves to, or null.
+
+**A consumer works on the tip.** Review commits move the tip past the recorded commit, and a rebase moves it off. Neither is an error, and a consumer that reports what it scanned or traced names the tip.
+
+**Step 3 reads local refs only.** A run that needs `origin`'s current state fetches first, best effort, and says so.
+
+**The merged test.** A block of an `implementation.md` is **merged** where either holds:
+- its commit is an ancestor of the default branch (`git -C <repo> merge-base --is-ancestor <commit> <ref>`); or
+- a commit on the default branch made no earlier than that block carries `[<key>]` in its subject as a whole token, `<key>` being the key of the folder whose `implementation.md` holds the block (`git -C <repo> log <ref> --no-merges --since=<date> --format=%s`, matched as §4 matches a key).
+
+`<date>` comes from the block's own `## <YYYY-MM-DD> — /implement` heading, as `--since="<the day before that date> 00:00"`. Git fills a bare date with the current time of day, which would cut off a squash merged earlier on the same day, and the heading is the Dev's local date. Where the recorded commit resolves in the clone, that commit's committer date (`git -C <repo> show -s --format=%cI <commit>`) replaces it, being exact.
+
+A squash or a rebase keeps that subject, because `/dev-workflows:implement`'s pull-request title is its commit subject. The date keeps an earlier run's squash from standing in for a later run's unmerged work. A recorded commit that does not resolve — a squashed branch deleted before this clone fetched it — leaves the subject leg to show the merge.
+
+**A unit's work is merged** where, for **each** repository this file names, **the latest block that names that repository** is merged. That block's `branch` is the head of the pull request that carries the unit's work in that repository.
+
+**Consumers** are what `grep -rl 'args: "implementation-format unit-branch' plugins` lists. Each says what it does with each state.
 ````

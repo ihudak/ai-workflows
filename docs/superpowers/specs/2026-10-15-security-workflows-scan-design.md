@@ -17,7 +17,12 @@ Date: 2026-10-15. Status: approved. Amended four times.
    - the scan runs before the merge, on the Epic's branch, and a fix joins that branch's open pull request (D17);
    - a Dev is never blocked: their decisions take effect at once, and the Security Engineer reviews afterwards (D9);
    - the register is bookkeeping, committed with the run's session files rather than handed off by pull request (D12).
-4. **On review**, a few smaller corrections.
+4. **On the user's decision about `/conformance`:**
+   - an Epic's `/conformance` returns to before the merge (D19), and the Dev runs it before the scan;
+   - one shared rule, `unit-branch` (D18), finds an Epic's branch for `/implement`, the scan and `/conformance` alike.
+
+   This folds the planned sub-project G into A.
+5. **On review**, a few smaller corrections.
 
 Branch: `iv-gu/security-workflows-scan`.
 
@@ -86,19 +91,30 @@ This spec is sub-project **A**. Each of the others gets its own spec, plan and b
 | **D** | Security conformance: traces each threat-model mitigation to merged code, as `/conformance` traces requirements | B or C |
 | **F** | Model router, independent of security, in two parts. (1) `/implement` hands its coding to an implementer subagent whose model follows the task class (Sonnet for SIMPLE/MODERATE, Opus for SIGNIFICANT/HIGH-RISK) whatever the session model, following the `doc-writer` / `epic-writer` precedent; every dispatch is audited for an explicit `model:`. (2) Escalation to a Fable subagent for very high complexity or risk. When the session is not on Fable, it asks first, offers Opus instead and warns that quality may degrade. A Fable session is the user's own approval and needs no confirmation. | — |
 
+**G**, `/conformance`'s Epic run before the merge, was planned as its own sub-project and is folded into A (D18, D19).
+
 Security requirements in specifications are not a separate sub-project. `spec-reviewer` already flags their absence, and a gap there becomes an amendment that B or C proposes.
 
 ## Where it sits in the delivery
 
 ```
-/implement  →  /security-workflows:scan <EPIC>  →  fix: /implement continues on the Epic's branch  →  pull request reviewed and merged
-            →  /conformance <EPIC>  →  /security-workflows:scan <repo> --verify-fixes  →  …  →  /conformance <PRD>
+Dev — one Epic, its branch, before the merge:
+  /implement <EPIC>                 → the code pull request opens; implementation.md records repo, branch, commit
+  /conformance <EPIC>               → fix-code follow-ups → /implement <EPIC>, continuing on the Epic's branch
+  /security-workflows:scan <EPIC>   → fix follow-ups      → /implement <EPIC>, continuing on the Epic's branch
+  the pull request is reviewed and merged
+
+PE — the whole PRD, after every Epic has merged:
+  /conformance <PRD>  →  /security-workflows:scan <repo> --verify-fixes (Security Engineer)  →  /document, /release-notes
 ```
 
-- **The scan runs before the merge**, on the branch `/implement` left checked out, while the Epic's pull request is open. A fix the Dev chooses joins that same pull request (D17), where its reviewer is already looking.
-- **`/conformance` runs after the merge** (it checks merged code only), so it checks the code that ships, the security fixes included. A fix that changes behaviour shows up there as a discrepancy, for the Dev to settle.
-- **`--verify-fixes` runs after the merge too**, and closes the fixes on evidence (D8).
-- **Nothing waits on the Security Engineer.** The Dev's decisions take effect at once, and the Security Engineer reviews them in `--triage` whenever they get to it (D9).
+**Before the merge: the Dev's commands, on the Epic's own branch.** `/conformance <EPIC>`, the scan, and the `/implement` runs that fix what either finds all work for one Epic, on that Epic's branch, before the merge. Each fix joins the open pull request. The three commands find the branch with one shared rule, `unit-branch` (D18), which looks it up in `implementation.md` and never guesses it.
+
+**Conformance runs before the scan.** A conformance fix is the larger, functional change, and a change scan then covers the whole branch diff, those fixes included. A security fix is guarded in turn by its own `/implement` run, whose Opus code review traces the spec's requirements against the change (`code-review` dimension 10).
+
+**After the merge: the PE's settlement.** `/conformance <PRD>` stays merged-only. Merged pull requests are the Devs saying their Epics are done, and the PE settles the delivered whole on one consistent snapshot: every repository's default branch. `--verify-fixes` closes the security fixes on evidence (D8).
+
+**Nothing waits on the Security Engineer.** The Dev's decisions take effect at once, and the Security Engineer reviews them in `--triage` whenever they get to it (D9).
 
 ## Goals
 
@@ -109,10 +125,11 @@ Security requirements in specifications are not a separate sub-project. `spec-re
    - **An accepted risk** names an owner and a review-by date, and returns to triage once that date passes.
    - **A Dev's false positive or accepted risk takes effect at once**, and stays marked *awaiting security review* until the Security Engineer confirms or overrules it in `--triage`.
 4. **Fixes go through `/implement` on the Epic's own branch**, starting from the plugin's verified patch. A security fix therefore gets the family's test baseline, Opus review and implementation record, in the pull request already under review.
-5. **A finding is closed only on evidence.** Its file has changed, and a later codebase scan that covers the file no longer reports it. `--verify-fixes` runs that scan over just the affected files.
-6. **`--import` records a report the user already produced** by running `/claude-security` directly, without paying for the scan again.
-7. **Nobody waits.** Register changes are bookkeeping, committed and pushed with the run's session files. On a protected default branch they travel on the family's session branch instead.
-8. **The scan's cost and the run's feedback land where every other run's do.**
+5. **The Dev's checks all run before the merge, on one branch.** `/conformance <EPIC>` returns to before the merge, and `/implement`, the scan and `/conformance` find the Epic's branch with one shared rule.
+6. **A finding is closed only on evidence.** Its file has changed, and a later codebase scan that covers the file no longer reports it. `--verify-fixes` runs that scan over just the affected files.
+7. **`--import` records a report the user already produced** by running `/claude-security` directly, without paying for the scan again.
+8. **Nobody waits.** Register changes are bookkeeping, committed and pushed with the run's session files. On a protected default branch they travel on the family's session branch instead.
+9. **The scan's cost and the run's feedback land where every other run's do.**
 
 ## Non-goals
 
@@ -123,7 +140,8 @@ Security requirements in specifications are not a separate sub-project. `spec-re
 - **No integration with the hosted Claude Security product.**
 - **The command never applies a patch itself.**
 - **No exploit code, and nothing run against a deployed system.**
-- **`dev-workflows` does not depend on `security-workflows`.** It offers the scan as a next step, and `/implement` learns to continue on an Epic's branch (D17), which serves any follow-up, not only a security one.
+- **`dev-workflows` does not depend on `security-workflows`.** It offers the scan as a next step. `/implement` learns to continue on an Epic's branch (D17), and `/conformance`'s Epic run returns to before the merge (D19); both serve any follow-up, not only a security one.
+- **No change to `/conformance`'s PRD run.** It stays merged-only.
 - **No access control.** Who may confirm a decision is a matter of team practice. The register records who decided, in which role, and when.
 - **No guarantee of completeness.** A scan can miss a real vulnerability, and no wrapper can change that (see Risks).
 
@@ -228,7 +246,7 @@ flowchart TD
    8. **Prerequisites.** A `python3` older than 3.9 stops with the plugin's own message. A run that scans, with dynamic workflows switched off, stops naming the `/config` row.
    9. **The session-model check** (D6).
 1. **Scope.**
-   - **With a key**, read from `implementation.md` the latest block naming the repository this session is open in, through `workflows-core:implementation-format` §4's read: its `repo`, `branch`, `base` and `commit` (D5). A record that does not name that repository stops, naming the repositories it does name.
+   - **With a key**, run `unit-branch` (D18) for the repository this session is open in, and act on its state as D5 says. A record that does not name that repository stops, naming the repositories it does name.
    - **With a path**, scan the whole repository at its current checkout. The plugin itself offers a focused area for a large repository.
    - **With `--verify-fixes`**, take the default branch's head and the files `register.py verify-scope` returns. An empty set stops, with nothing to verify.
 2. **Checkout** (D5).
@@ -255,9 +273,11 @@ flowchart TD
 
 The plugin decides where it scans, and the command works within that:
 
-- **A change scan runs on the repository this session is open in.** The plugin's change job takes no path; its scan root is the working directory's repository. A key run therefore scans that repository, the one `/implement` ran in, using the latest `implementation.md` block that names it.
-  - It scans in place when HEAD is the block's commit and the tree is clean. After `/implement`, that is where the checkout stands.
-  - On a clean tree whose HEAD is elsewhere, it offers to switch to the block's branch: `choices: ["Switch to <branch> (Recommended)", "Cancel"]`. It stops where that branch is missing locally, or its tip is not the recorded commit.
+- **A change scan runs on the repository this session is open in.** The plugin's change job takes no path; its scan root is the working directory's repository. A key run therefore scans that repository, the one `/implement` ran in, and finds the Epic's branch with `unit-branch` (D18):
+  - **`checked-out`** (where `/implement` leaves the checkout): it scans the branch's **tip**, which review commits may have moved past the recorded commit. The stamp records the commit actually scanned, and the report notes where the tip differs from the recorded one.
+  - **`local` or `remote`**, on a clean tree: it offers to switch, with `choices: ["Switch to <branch> (Recommended)", "Cancel"]`.
+  - **`merged`**: it stops, because the Epic's change is on the default branch now. Scan the repository instead, or run `--verify-fixes`.
+  - **`missing`**: it stops, suggesting `git fetch`.
   - Another repository the record names is scanned from that repository. The report names `/security-workflows:scan <KEY>` there, as `/implement` names a companion run.
 - **A codebase scan takes a path.**
   - A whole-repository scan of a repo-path address runs on that path as it stands.
@@ -473,7 +493,10 @@ It is written only when the run resolved a key, and it is bookkeeping (D12).
   - The `roles-and-phases` pages describe the `sec` role and the `security-audit` phase.
   - The cost line covers the plugin's agents once the spike confirms that `session-cost.py` counts them. If it does not, fixing `session-cost.py` is part of A, because a cost line that leaves out the most expensive part is wrong, not merely partial.
 - **Feedback.** `impl-maintenance`, or `defect-reporter` under `--skip-feedback`, as in every pipeline command.
-- **The `/implement` offer.** `workflows-core:next-phase-offer` adds `/security-workflows:scan <KEY>` to what `/implement` offers once its pull request is open, from the repository that run branched. It sits beside the `docs-workflows` commands that `/implement` already offers without depending on that plugin.
+- **The offers along the Dev's steps.** `workflows-core:next-phase-offer` changes three lines:
+  - **`/implement`** offers `/dev-workflows:conformance <EPIC>` right away, before the merge, then `/security-workflows:scan <EPIC>`, from the repository that run branched. It sits beside the `docs-workflows` commands that `/implement` already offers without depending on that plugin.
+  - **`/conformance <EPIC>`**, with no fix-code decision, offers the scan.
+  - **The scan** offers `/implement` for its fixes, then the pull request's review and merge.
 - **The scan's own next step.**
   - `/dev-workflows:implement` where findings went to fix: with a key, `/dev-workflows:implement <KEY>`, which continues on the Epic's branch; with a path, the prompt lines.
   - `--verify-fixes` where findings are `fixing` and their pull request has merged.
@@ -503,7 +526,9 @@ It is written only when the run resolved a key, and it is bookkeeping (D12).
 
 - A legend entry and a new class, `sec`, in teal (`fill:#ccfbf1,stroke:#0f766e,color:#134e4a`), since red is the ▶ start outline.
 - A **Security Engineer — audit** lane holding `/security-workflows:scan`.
-- `implement -.->|"action: offered once the PR is open"| secscan` and `secscan -.->|"fix — a follow-up + patch, on the Epic's branch"| implement`.
+- The Dev's edge to the Epic's conformance changes to `implement -->|"Epic: the Dev, before its pull request merges"| conformanceepic`.
+- `conformanceepic -.->|"action: then the security scan, still before the merge"| secscan` and `secscan -.->|"fix — a follow-up + patch, on the Epic's branch"| implement`.
+- The *Reading it* bullet on `/conformance` says the Dev checks an Epic before its pull request merges.
 - A *Reading it* bullet: the scan is only ever offered, never run automatically, and it runs before the merge; it reads code through Claude Security, a plugin outside the family; a Dev's decisions never wait on the Security Engineer.
 - The opening sentence and the *The detail, per plugin* list name the fifth plugin.
 
@@ -539,28 +564,76 @@ The user enabled the first and third on 2026-10-15. The end-to-end task download
 
 ### D17. `/implement` continues on the Epic's branch while its pull request is open
 
-Today `/implement`'s branch step asks a question when HEAD is not on the default branch and carries commits that the default branch lacks: `choices: ["Branch from current position — continue on this work (Recommended)", "Branch from default branch — fresh start", "Cancel"]`. Both branch options cut a **new** branch. A fix for an Epic whose pull request is open would therefore open a second pull request carrying the first one's commits.
+Today `/implement`'s branch step cuts a new branch whenever HEAD is not on the default branch and carries commits it lacks. Where HEAD is on the default branch, it cuts one without asking. A fix for an Epic whose pull request is open would therefore open a second pull request carrying the first one's commits, or, from `main`, a branch without the Epic's code at all.
 
-The change: on a keyed run, where HEAD is the branch recorded in the latest `implementation.md` block naming this repository for that unit, the question gains a first option.
+The change: on a keyed run, `/implement` runs `unit-branch` (D18) for its repository and unit first, and acts on its state:
 
-```
-choices: ["Continue on <branch> — the work joins its open pull request (Recommended)", "Branch from current position", "Branch from default branch — fresh start", "Cancel"]
-```
+- **`checked-out`:** the question gains a first option.
 
-- **Continue on `<branch>`** skips step 5's branch creation, so the run commits on that branch.
-- **`dev-workflows:code-handoff` already treats a branch with an open pull request as ordinary:** §2.6 probes for one first, the push updates it, and §3.1's *pushed to existing PR* row reports it.
-- The run appends its own `implementation.md` block, naming the same branch and the new commit.
+  `choices: ["Continue on <branch> — the work joins its open pull request (Recommended)", "Branch from current position", "Branch from default branch — fresh start", "Cancel"]`
+- **`local` or `remote`**, on a clean tree, wherever HEAD stands:
 
-**It serves any follow-up, not only a security one**: a `/conformance` fix-code follow-up meets the same question when its Epic's branch is checked out. Nothing else in `/implement` changes.
+  `choices: ["Switch to <branch> and continue — the work joins its open pull request (Recommended)", "Branch from current position", "Branch from default branch — fresh start", "Cancel"]`
+
+  Where HEAD is on the default branch, *Branch from current position* is the same as the fresh start, and the array drops it.
+- **`merged`, `missing` or `none`:** nothing changes from today.
+
+**Continuing, or switching and continuing,** skips step 5's branch creation, so the run commits on `<branch>`. `dev-workflows:code-handoff` already treats a branch with an open pull request as ordinary: §2.6 probes for one first, the push updates it, and §3.1's *pushed to existing PR* row reports it. The run appends its own `implementation.md` block, naming the same branch and the new commit.
+
+It serves any follow-up, from `/conformance` or the scan alike. Nothing else in `/implement` changes.
+
+### D18. `unit-branch`: one rule for an Epic's branch
+
+`/implement` (D17), the scan (D5) and `/conformance`'s Epic run (D19) all need the same answer: which branch is this unit's in this repository, and what state is it in. They get it from one new entry point in `workflows-core:implementation-format`, `unit-branch`.
+
+The answer is never guessed. The branch is the one named by the latest block for this repository in the unit's `implementation.md`, which every `/implement` run writes. It returns one state:
+
+| State | When |
+|---|---|
+| `none` | The unit's `implementation.md` has no block for this repository |
+| `merged` | The block passes the **merged test**, and the branch, where it still resolves, carries no commit the default branch lacks |
+| `checked-out` | HEAD is the branch |
+| `local` | The branch exists locally, and HEAD is elsewhere |
+| `remote` | The branch exists only as `origin/<branch>` |
+| `missing` | None of the above: the branch is gone, or was never pushed from this machine |
+
+It also returns `branch`, `base`, the recorded `commit`, and the branch's current `tip` where it resolves. **Consumers use the tip.** Review commits move it past the recorded commit, which is normal, not an error.
+
+**The merged test moves here from `/conformance`**, word for word:
+- the block's commit is an ancestor of the default branch; or
+- a default-branch commit made no earlier than the block carries `[<key>]` as a whole token in its subject, which a squash keeps.
+
+`/conformance` cites it instead of keeping its own copy, for its PRD run as well as its Epic run. That leaves one definition of "merged" in the family.
+
+### D19. `/conformance`'s Epic run returns to before the merge
+
+`dev-workflows` 4.26.0 made an Epic's `/conformance` merged-only, because the Epic's branch looked hard to find. With `unit-branch` it is a lookup, and with D17 a fix joins the open pull request. So the Epic run returns to what it was designed as: the Dev's check, before the merge, as one of the Dev's steps.
+
+**What the Epic run traces, per repository, by `unit-branch`'s state:**
+
+| State | Traced |
+|---|---|
+| `checked-out` or `local` | `<branch>`'s tip, read at the ref with no checkout |
+| `remote` | `origin/<branch>` |
+| `merged` | the default branch, as today |
+| `missing` | it stops, naming the branch, gone without merging, and suggesting `git fetch` or `/implement` |
+| `none` | it stops: there is nothing implemented to check |
+
+**What stays the same.**
+- The record, the walk, the effects and the handoff are unchanged.
+- The PRD run is unchanged and merged-only, with its question for an Epic not shown merged.
+- A Dev decision taken before the merge can go stale once review changes the code. The PRD run already re-checks every Dev entry against the merged code and flags it stale (the conformance design's D3 and D11). That re-check is what makes a pre-merge Epic run safe.
+
+**The internal editions** carry the merged-only Epic run too, defined there by the work item's status. Porting this change is a separate step, after A.
 
 ## Worked example
 
 The findings below are illustrative; the spike produces real ones.
 
-On the bookstore demo, the Dev's `/implement BOOK-2-01-02` (storefront ratings) opens its pull request and offers `/security-workflows:scan BOOK-2-01-02`. The Dev runs it in an Opus session.
+On the bookstore demo, the Dev's `/implement BOOK-2-01-02` (storefront ratings) opens its pull request and offers `/dev-workflows:conformance BOOK-2-01-02`, then the scan. The Dev runs the conformance check first. `unit-branch` finds the Epic's branch `checked-out`, so the check traces its tip, finds nothing to fix, and offers `/security-workflows:scan BOOK-2-01-02`. The Dev runs the scan in an Opus session.
 
 1. **Setup and scope.** Phase 0 resolves `BOOK-2-01-02` to `…/PRD-BOOK-2-01-verified-ratings/EPIC-BOOK-2-01-02-storefront-ratings/`. It reserves the numbers in a teammate's unmerged session branch, and finds no leftover worktree. Phase 1 reads that folder's `implementation.md` block for `bookstore`: branch `feat/BOOK-2-01-02-storefront-ratings`, base `master`, commit `eb694d0`. The role is `dev`.
-2. **Checkout.** The session is open in `/workspace/bookstore`, still on that branch at `eb694d0`, where `/implement` left it, so Phase 2 scans in place.
+2. **Checkout.** The session is open in `/workspace/bookstore`, still on that branch, where `/implement` left it. `unit-branch` says `checked-out`, so Phase 2 scans the branch's tip in place.
 3. **Scan and record.** After one confirmation, Phase 3 scans the branch's changes against `master` at `high`, the default for a change. The redaction check passes, and Phase 4 copies the products to `security/bookstore/scans/20261016T091200Z-eb694d0/`. `register.py plan` reports two new findings:
    - HIGH, CWE-862: a rating deleted without an owner check;
    - LOW, CWE-79: a comment rendered unescaped in an admin view.
@@ -568,7 +641,7 @@ On the bookstore demo, the Dev's `/implement BOOK-2-01-02` (storefront ratings) 
 5. **Patches.** Phase 6 gets `F1.patch` from the plugin.
 6. **Close.** Phase 7 fast-forwards SPECS, and `register.py commit` records `[SEC#1]` (`fixing`, with its follow-up line and patch) and `[SEC#2]` (`false-positive`, awaiting security review). The run emits the follow-up into the Epic's `follow-ups.md`, and appends `_security.md`. `commit-artifacts` commits and pushes the register with the session files. The run offers `/dev-workflows:implement BOOK-2-01-02`.
 7. **The fix.** That run reads the follow-up back. HEAD is the Epic's branch, so it asks D17's question, and the Dev continues on `feat/BOOK-2-01-02-storefront-ratings`. It takes `F1.patch` as its starting point and goes through its own baseline and Opus review. Its push updates the open pull request, which is reviewed and merged as usual. Nobody waited for the Security Engineer.
-8. **Verification.** After the merge, `/conformance BOOK-2-01-02` checks the merged code, the fix included. `/security-workflows:scan /workspace/bookstore --verify-fixes` runs a codebase scan scoped to the changed file, at `medium`, in a temporary worktree at `master`'s head. The scan covers the file and does not report `[SEC#1]`, and the file has changed since `eb694d0`, so `[SEC#1]` becomes `fixed`, linked to the fix commit.
+8. **Verification.** After the merge, the PE's `/conformance BOOK-2` settles the whole PRD on the default branches, the fix included. `/security-workflows:scan /workspace/bookstore --verify-fixes` runs a codebase scan scoped to the changed file, at `medium`, in a temporary worktree at `master`'s head. The scan covers the file and does not report `[SEC#1]`, and the file has changed since `eb694d0`, so `[SEC#1]` becomes `fixed`, linked to the fix commit.
 9. **The review.** The Security Engineer's `--triage` shows `[SEC#2]` awaiting security review, and confirms it. It moves to the false-positive log as confirmed.
 
 ## Verification
@@ -604,7 +677,8 @@ The spike needs Claude Security installed in the session, and a `git fetch` in `
 - **A clean install** in a scratch Claude Code configuration with neither `workflows-core` nor Claude Security installed. `claude plugin install security-workflows@shipwright` must bring in both, and the plugin must load.
 - **An end-to-end run on the bookstore demo**, with `SPECS_PATH=/workspace/bookstore-specs`, covering:
   - the key, path, `--import`, `--triage` and `--verify-fixes` routes;
-  - D17's continue-on-branch question;
+  - D17's continue-on-branch question, and its switch-and-continue form from `main`;
+  - D19's pre-merge Epic `/conformance` on the Epic's branch, then the PRD run after the merge;
   - two scans recorded from two clones before either pushed.
 
 ## Risks
@@ -622,6 +696,7 @@ The spike needs Claude Security installed in the session, and a `git fetch` in `
 | **A protected specs default branch.** | `specs-repo-git` §8's session-branch mode carries the register on the user's session branch. `_security.md` merges with the `union` driver. Every run rebuilds the derived files. | The register reaches the default branch only when the session branch's pull request merges. The reservations cover the wait. |
 | **An accepted risk is forgotten.** | It must have an owner and a review-by date. Past that date it returns to triage, and the next-step offer names it. | None beyond someone ignoring the offer. |
 | **Cost.** | One confirmation per scan. The effort defaults are set per scan kind. `--verify-fixes` scans only changed files, and `--import` avoids paying twice. | A whole-repository `high` scan is expensive by choice. |
+| **A pre-merge Epic conformance decision goes stale** once review changes the code. | The PRD run re-checks every Dev entry against the merged code and flags it stale (D19). | — |
 | **Invoking the skill from inside the command may not return control.** | The spike tests it, with `--import` as the fallback. | — |
 | **The plugin's agents may be under-counted in cost.** | The spike tests it, and A fixes `session-cost.py` if so. | — |
 | **A leftover worktree after a crash.** | A fixed name prefix, a pointer in `resume.md`, and Phase 0's leftover-worktree check. | — |
