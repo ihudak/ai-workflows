@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.34.5] — 2026-10-15
+
+### Changed
+- **`/brd-reconcile` records every row taken through *Correct it*** — the row the reader returned, the corrected `chosen` and reason, and where in the canonicalised review each copied passage sits — in the reconciliation record, as it already recorded a re-point. Copying the words out of the review proves they are the customer's; which of their sentences is the reason is a reading no test can make, so the pick is left where a later reader can check it.
+
 ## [3.34.4] — 2026-10-15
 
 ### Fixed

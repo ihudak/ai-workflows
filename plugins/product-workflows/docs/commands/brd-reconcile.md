@@ -243,7 +243,9 @@ as assumed"]` for an assumption, which puts no options. **An answer matching no 
 put is never frozen**: the operator records it for a human, quoting the customer, or rejects it —
 or, where the reader mis-matched it, names the question it does answer, which re-points it and puts
 it to the operator again on the full confirmation picker, the re-point recorded in the
-reconciliation record.
+reconciliation record. A row corrected through *Correct it* is recorded there too — what the reader
+returned, the corrected answer and reason, and where in the review each was copied from — since
+which of the customer's sentences is their reason is a reading the run cannot test.
 
 The run makes **two** handoff offers, and they are two different questions: the first hands off the
 customer's document, the second hands off what the run decided about it. Both land on one `brd/`
