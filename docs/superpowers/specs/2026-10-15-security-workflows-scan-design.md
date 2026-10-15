@@ -1,75 +1,108 @@
 # `security-workflows`: record Claude Security scans in SPECS and route their fixes through `/implement` (sub-project A)
 
-Date: 2026-10-15. Status: design approved in conversation, section by section; spec awaiting review. Branch: `iv-gu/security-workflows-scan`.
+Date: 2026-10-15. Status: design approved in conversation, section by section. Amended after the user's first review:
+
+- effort defaults per scan kind;
+- `false-positive` separated from `accepted-risk`, with evidence, owner and review date;
+- every risk re-checked, which found and fixed a closure bug for change scans, and added mitigations for a finding-ID version change, concurrent register edits, text planted in scanned code, and best-effort redaction.
+
+Spec awaiting re-review. Branch: `iv-gu/security-workflows-scan`.
 
 ## Background
 
-During an `/implement` run on the bookstore demo, Claude Code suggested a Claude Security scan. That suggestion almost certainly came from the Claude Security plugin's hook, which fires after `git push` and `gh pr create` (both run by `/implement`'s finish step). It prints: *"Claude Security: this branch changes … against main. For a security review, ask: 'scan this branch's changes against main with Claude Security'."*
+During an `/implement` run on the bookstore demo, Claude Code suggested a Claude Security scan. That suggestion almost certainly came from the Claude Security plugin's hook, which fires after `git push` and `gh pr create`; `/implement`'s finish step runs both. The hook prints: *"Claude Security: this branch changes … against main. For a security review, ask: 'scan this branch's changes against main with Claude Security'."*
 
 **Claude Security** is two Anthropic products under one name:
 
-- **The hosted product** (claude.ai/security) is an Enterprise-only public beta. It scans connected GitHub repositories, runs scheduled scans, and uses Mythos. It grew out of the February 2026 "Claude Code Security" research preview.
-- **The plugin**, `claude-security@claude-plugins-official`, version 0.12.0 as read from the official marketplace clone. It runs inside a Claude Code session on any paid plan or API account. It adds one command, `/claude-security`, with three jobs: *Scan codebase*, *Scan changes* (a branch, a pull request or one commit), and *Suggest patches*. This spec builds on the plugin.
+- **The hosted product** (claude.ai/security). An Enterprise-only public beta that scans connected GitHub repositories, runs scheduled scans and uses Mythos. It grew out of the February 2026 "Claude Code Security" research preview.
+- **The plugin**, `claude-security@claude-plugins-official`, version 0.12.0 as read from the official marketplace clone. It runs inside a Claude Code session on any paid plan or API account and adds one command, `/claude-security`, with three jobs: *Scan codebase*, *Scan changes* (a branch, a pull request or one commit) and *Suggest patches*. This spec builds on the plugin.
 
-What the plugin's source fixes, and this design relies on:
+These are the plugin facts this design relies on, from its source and README:
 
-- **Its output contract is promised stable.** Each scan writes `CLAUDE-SECURITY-<timestamp>/` in the scanned checkout, with its own `.gitignore`. Inside are `CLAUDE-SECURITY-RESULTS.md`, `CLAUDE-SECURITY-RESULTS.jsonl` (one finding per line), `CLAUDE-SECURITY-RESULTS.sarif` (SARIF 2.1.0, CWE-classified), and `CLAUDE-SECURITY-REVISION-<commit>.json`, the revision stamp. The stamp records the scanned commit, the effort, whether uncommitted changes were in the tree, how thoroughly the run was verified, and a coverage record. `render_report.py` states: *"Filenames, JSONL field order, and verification.status semantics are stable across releases."*
-- **Each finding carries a content-derived ID.** `claudeSecurityPluginFindingId` is `ID_VERSION:` followed by a sha256 over the rule (CWE category), the repository path, and the normalised lines around the finding. It survives line shifts and changes when the code around the finding changes. It is confirmed in the SARIF output and expected in the JSONL; the spike confirms the JSONL.
-- **Patches are never applied.** *Suggest patches* writes `patches/F<n>.patch` with a note beside each, after an independent review that runs the project's tests where there are any. A finding whose code changed since the scan is skipped with a note.
-- **Its skill can be invoked by a model.** `claude-security:claude-security` carries no `disable-model-invocation`. When the request names the job, it skips its menu. It skips its one cost confirmation when the request already accepts the scan's time and token cost.
-- **Its working agents inherit the session model.** `scan-researcher`, `scan-verifier`, `patch-generator`, `patch-verifier` and the `claude-security` agent are `model: inherit`. `scan-inventory`, `scan-loader`, `scan-redactor` and `explore` are pinned to `sonnet`. Its workflow passes no model, so a caller cannot redirect the inherit agents.
+- **Its output contract is promised stable.** Each scan writes `CLAUDE-SECURITY-<timestamp>/` in the scanned checkout, with its own `.gitignore`. The folder holds:
+  - `CLAUDE-SECURITY-RESULTS.md`;
+  - `CLAUDE-SECURITY-RESULTS.jsonl`, one finding per line;
+  - `CLAUDE-SECURITY-RESULTS.sarif`, SARIF 2.1.0, classified by CWE;
+  - `CLAUDE-SECURITY-REVISION-<commit>.json`, the revision stamp: the scanned commit, the effort, whether uncommitted changes were in the tree, how thoroughly the run was verified, and a coverage record.
+
+  `render_report.py` states: *"Filenames, JSONL field order, and verification.status semantics are stable across releases."*
+- **Each finding carries an ID computed from its content.** `claudeSecurityPluginFindingId` is `ID_VERSION:` followed by a sha256 over the rule (the CWE category), the repository path and the normalised lines around the finding. It survives line shifts, and it changes when the code around the finding changes. The SARIF output carries it; the spike confirms the JSONL does too.
+- **Effort sets how much work a scan does**, not how carefully any one agent reasons.
+  - `low`: one researcher, no inventory, no threat model.
+  - `medium`: the full workflow, which is an inventory, a threat model, one researcher per component and category, and one breadth sweep. The plugin calls it *"the calibrated default"*.
+  - `high`: as `medium`, but up to 48 components, two researchers per cell and two sweeps.
+
+  The verification panel stays at three voters at every tier. A `max` tier is accepted but not advertised. For a change, the tier sets how many researchers read the diff, and no tier maps the repository. The README advises: *"For a feature-sized change, choose `high` effort."*
+- **A change scan reports only flaws the change takes part in.** In the README's words: *"It reports only flaws the change takes part in and leaves the rest to a scan of the codebase."*
+- **Patches are never applied automatically.** *Suggest patches* writes `patches/F<n>.patch` with a note beside each, after an independent review that runs the project's tests where there are any. It skips, with a note, any finding whose code changed since the scan.
+- **A model can invoke its skill.** `claude-security:claude-security` carries no `disable-model-invocation`. It skips its menu when the request names the job, and skips its one cost confirmation when the request already accepts the scan's time and token cost.
+- **Its working agents inherit the session model.** These are `model: inherit`: `scan-researcher`, `scan-verifier`, `patch-generator`, `patch-verifier` and the `claude-security` agent. These are pinned to `sonnet`: `scan-inventory`, `scan-loader`, `scan-redactor` and `explore`. Its workflow passes no model, so a caller cannot redirect the inherit agents.
+- **Redaction is best effort.** After writing its products, an agent replaces each credential value it finds with `[REDACTED]`. The README calls this *"a model's best effort, not a guarantee"*, and says the scan reports a failure or a file it could not clean.
 - **It needs** `python3` 3.9 or newer, git for change scans and patches, and dynamic workflows, which are off by default on Pro and switched on in `/config`.
-- **It scans the checkout as it stands.** A change scan diffs HEAD against a base. Its instructions say: *"When a commit is not checked out, never check it out or add a worktree yourself."*
-- **Scans are nondeterministic.** Its own documentation says two scans of the same code can surface different findings.
+- **It scans the checkout as it stands.** A change scan diffs HEAD against a base, and a codebase scan takes a `--scope`. Its instructions say: *"When a commit is not checked out, never check it out or add a worktree yourself."*
+- **Its scans are nondeterministic.** Two scans of the same code can surface different findings.
 
-**What the family has for security today** is scattered. `HIGH-RISK` classification forces Opus planning and review. `code-review` and `risk-planner` each have a Security section. `spec-reviewer` flags a missing security NFR as `MAJOR`. `specification-format` has a `Security / privacy` test-case category. `/vuln` remediates dependency CVEs. Nothing models threats at the ARD or design, nothing scans a whole repository, and nothing keeps a record of findings.
+**What the family has for security today** is scattered:
 
-**The policy boundary.** Anthropic's Usage Policy forbids discovering or exploiting vulnerabilities *without the system owner's authorisation*. Its cyber-safeguards article lists what any user may do on generally available models: secure code review, threat modeling, patching known issues, finding vulnerabilities in their own source code, and triaging alerts. Exploit validation, malware analysis, exploit generation, penetration testing and binary scanning can be interrupted by real-time classifiers; the Cyber Verification Program governs those. Every capability here stays on the permitted side: it reasons about source and documents, describes an attack scenario in prose, and proves a fix with a regression test. It never attacks a running system and never writes a working exploit.
+- `HIGH-RISK` classification forces Opus planning and review.
+- `code-review` and `risk-planner` each have a Security section.
+- `spec-reviewer` flags a missing security NFR as `MAJOR`.
+- `specification-format` has a `Security / privacy` test-case category.
+- `/vuln` remediates dependency CVEs.
 
-**The gap.** A plugin scan's findings live only in a gitignored folder inside the code checkout. Nothing records them in SPECS, nothing tracks a finding across scans, nothing routes a fix into the family's build path, and the scan's cost and feedback land in no Shipwright record.
+Nothing models threats at the ARD or design, nothing scans a whole repository, and nothing keeps a record of findings.
+
+**The policy boundary.** Anthropic's Usage Policy forbids discovering or exploiting vulnerabilities *without the system owner's authorisation*. Its cyber-safeguards article lists what any user may do on generally available models: secure code review, threat modeling, patching known issues, finding vulnerabilities in their own source code and triaging alerts. Real-time classifiers can interrupt exploit validation, malware analysis, exploit generation, penetration testing and binary scanning; the Cyber Verification Program governs those. Every capability here stays on the permitted side. It reasons about source and documents, describes an attack scenario in prose, and proves a fix with a regression test. It never attacks a running system and never writes a working exploit.
+
+**The gap.** A plugin scan's findings live only in a gitignored folder inside the code checkout. Nothing records them in SPECS, nothing tracks a finding across scans, nothing routes a fix into the family's build path, and no Shipwright record carries the scan's cost or feedback.
 
 ## The roadmap
 
-This spec is sub-project **A**. The rest are designed separately, each with its own spec, plan and build:
+This spec is sub-project **A**. Each of the others gets its own spec, plan and build:
 
 | # | Sub-project | Depends on |
 |---|---|---|
-| **A** | This spec: the `security-workflows` plugin and its scan wrapper, the findings register, fixes through `/implement` | Claude Security plugin |
-| **E** | The architecture feedback loop. (1) `architecture-grounder` reads the registers of the repositories a piece of work touches and returns a `known-weakness` challenge to `/create-ard`, `/specify` and `/design`. (2) A weakness class that recurs becomes a follow-up for the PA, who records it as an `[AD#N]` whose `Prevents:` names the CWE. `/harvest-decisions` and `/promote-decisions` then carry it as an ordinary decision, and `ard-resolution` makes breaking it a reviewer BLOCKER. (3) `promotion-scout` flags weakness classes that recur across teams' registers with no covering ADR or standard. | A's register |
+| **A** | This spec: the `security-workflows` plugin and its scan wrapper, the findings register, and fixes through `/implement` | Claude Security plugin |
+| **E** | The architecture feedback loop, in three parts. (1) `architecture-grounder` reads the registers of the repositories a piece of work touches and returns a `known-weakness` challenge to `/create-ard`, `/specify` and `/design`. (2) A weakness class that recurs among **accepted risks** becomes a follow-up for the PA, who records it as an `[AD#N]` whose `Prevents:` names the CWE; `/harvest-decisions` and `/promote-decisions` then carry it as an ordinary decision, and `ard-resolution` makes breaking it a reviewer BLOCKER. (3) `promotion-scout` flags weakness classes that recur across teams' registers with no covering ADR or standard. E's agents read a register's text as data, never as instructions (D10). | A's register |
 | **B** | ARD threat model: `threat-model.md`, with security decisions proposed as `[AD#N]` through `/create-ard` | A, E |
 | **C** | Design threat review: threats per interface of `design.md`, with amendments proposed through `/design` | A; B where present |
 | **D** | Security conformance: traces each threat-model mitigation to merged code, as `/conformance` traces requirements | B or C |
-| **F** | Model router, independent of security. (1) `/implement` hands its coding to an implementer subagent whose model follows the task class (Sonnet for SIMPLE/MODERATE, Opus for SIGNIFICANT/HIGH-RISK) whatever the session model, following the `doc-writer` / `epic-writer` precedent; every dispatch is audited for an explicit `model:`. (2) Escalation to a Fable subagent for very high complexity or risk, with a confirmation when the session is not on Fable that offers Opus instead and warns that quality may degrade. A Fable session is the user's own approval and needs no confirmation. | — |
+| **F** | Model router, independent of security, in two parts. (1) `/implement` hands its coding to an implementer subagent whose model follows the task class (Sonnet for SIMPLE/MODERATE, Opus for SIGNIFICANT/HIGH-RISK) whatever the session model, following the `doc-writer` / `epic-writer` precedent; every dispatch is audited for an explicit `model:`. (2) Escalation to a Fable subagent for very high complexity or risk. When the session is not on Fable, it asks first, offers Opus instead and warns that quality may degrade. A Fable session is the user's own approval and needs no confirmation. | — |
 
-Security requirements in specifications are no separate sub-project: `spec-reviewer` already flags their absence, and a gap there becomes an amendment B or C proposes.
+Security requirements in specifications are not a separate sub-project. `spec-reviewer` already flags their absence, and a gap there becomes an amendment that B or C proposes.
 
 ## Goals
 
-1. A new plugin, `security-workflows`, with one command, `/security-workflows:scan`, that runs the Claude Security plugin on the repositories of a PRD or Epic, or on one repository, and records what it finds in SPECS.
-2. A durable **findings register** per code repository, `$SPECS_PATH/security/<repo-slug>/`. It tracks each finding across scans by the plugin's own finding ID, with a lifecycle and a recorded decision behind every status change.
-3. Every new finding's fate is decided in **one batch triage** at the end of the scan: fix, decide later, dismiss as a false positive, or accept the risk. A dismissal or an accepted risk carries a reason. `--triage` returns to findings left undecided, without a scan.
-4. **Fixes go through `/implement`**, with the plugin's verified patch as the starting point, so a security fix gets the family's test baseline, Opus review, implementation record and pull request.
-5. **`--import`** records a report the user already produced by running `/claude-security` directly, without paying for the scan again.
-6. The scan's cost and the run's feedback land where every other run's do.
+1. **A new plugin, `security-workflows`**, with one command, `/security-workflows:scan`. It runs the Claude Security plugin on the repositories of a PRD or Epic, or on one repository, and records what it finds in SPECS.
+2. **A durable findings register per code repository**, `$SPECS_PATH/security/<repo-slug>/`. It tracks each finding across scans by the plugin's own finding ID. A finding has a lifecycle, and every status change has a recorded decision behind it.
+3. **One batch triage at the end of the scan** decides each new finding's fate: fix, decide later, false positive, or accept the risk. A **false positive** names the evidence that makes the finding unexploitable. An **accepted risk** names an owner and a review-by date, and returns to triage once that date passes. `--triage` returns to undecided and review-due findings without a scan.
+4. **Fixes go through `/implement`**, starting from the plugin's verified patch. A security fix therefore gets the family's test baseline, Opus review, implementation record and pull request.
+5. **A finding is closed only on evidence.** Its file has changed, and a later codebase scan that covers the file no longer reports it. `--verify-fixes` runs that scan over just the affected files.
+6. **`--import` records a report the user already produced** by running `/claude-security` directly, without paying for the scan again.
+7. **The scan's cost and the run's feedback land where every other run's do.**
 
 ## Non-goals
 
-- **No scanner of the family's own.** Claude Security does the code-level work; `/security-review`, a single pass with no file output, is not used.
+- **No scanner of the family's own.** Claude Security does the code-level work. `/security-review`, a single pass with no file output, is not used.
 - **No audit of documents**: no threat model, ARD or design review. Those are B and C.
-- **No architecture feedback loop.** That is E, which A only prepares for by placing the register's format reference in `workflows-core`.
+- **No architecture feedback loop.** That is E. A only prepares for it, by placing the register's format reference in `workflows-core`.
 - **No change to how the family picks models.** That is F.
 - **No integration with the hosted Claude Security product.**
 - **The command never applies a patch itself.**
 - **No exploit code, and nothing run against a deployed system.**
 - **`dev-workflows` does not depend on `security-workflows`.** It only offers the scan as a next step.
+- **No guarantee of completeness.** A scan can miss a real vulnerability, and no wrapper can change that (see Risks).
 
 ## Terms
 
-- **Scan.** One run of the plugin's *Scan codebase* or *Scan changes* job on one repository at one commit. It is identified by its revision stamp.
-- **Covering scan** (for a finding). A scan whose coverage record lists the finding's file as examined. For a full scan, that means the files its research read; for a change scan, the changed files.
-- **Plugin finding ID.** `claudeSecurityPluginFindingId`, the plugin's content-derived identity for a finding.
-- **`[SEC#n]`.** The register's own permanent, per-repository finding ID in the family's bracketed form. It is never reused.
-- **Register.** `register.json`, plus `register.md` rendered from it, under `$SPECS_PATH/security/<repo-slug>/`.
+- **Scan.** One run of the plugin's *Scan codebase* or *Scan changes* job, on one repository at one commit. Its revision stamp identifies it.
+- **Codebase scan.** A *Scan codebase* run, either whole-repository or with a `--scope`.
+- **Change scan.** A *Scan changes* run over a branch's diff, a pull request or one commit.
+- **Covering scan** (for a finding). A **codebase** scan whose coverage record lists the finding's file as read. **A change scan is never a covering scan**, because it reports only flaws the change takes part in. Its silence about an older finding in a file it touched is no evidence.
+- **Plugin finding ID.** `claudeSecurityPluginFindingId`, the plugin's identity for a finding, computed from its content. Its `ID_VERSION:` prefix names the algorithm.
+- **`[SEC#n]`.** The register's own permanent finding ID, in the family's bracketed form, numbered per repository and never reused.
+- **Run record.** One file per run that changes the register, `security/<repo-slug>/runs/<seq>-<UTC-timestamp>.json`. It holds the run's scan (if any), its matches and its decisions.
+- **Register.** `register.json`, plus `register.md` rendered from it. Both are rebuilt from the run records and scan folders.
 - **Unit note.** `_security.md` in a PRD or Epic folder: an append-only list of the scans run for that unit.
 
 ## Decisions
@@ -83,89 +116,112 @@ Security requirements in specifications are no separate sub-project: `spec-revie
 - `scripts/register.py`, standard-library Python, with its tests.
 - `docs/`, `README.md`, `LICENSE` and `CHANGELOG.md`.
 
-There are no agents and no hooks. The orchestrator runs triage; the plugin writes patches.
+There are no agents and no hooks: the orchestrator runs triage, and the plugin writes patches.
 
-**Installing `security-workflows` installs both dependencies automatically.** Claude Code installs any missing declared dependency at `claude plugin install`, and again at `/reload-plugins`, at an auto-update of the marketplace, and at a re-run of the install. The two dependencies get there by different routes:
+**Installing `security-workflows` installs both dependencies automatically.** Claude Code installs any missing declared dependency at `claude plugin install`, and again at `/reload-plugins`, at an auto-update of the marketplace, and at a re-run of the install. The two dependencies arrive by different routes:
 
-- **`workflows-core`** is a bare name. It resolves in `security-workflows`' own marketplace and installs with no further configuration, the same way `dev-workflows`, `product-workflows` and `docs-workflows` declare it in their `plugin.json`.
-- **`claude-security@claude-plugins-official`** is in another marketplace. Claude Code installs it only when the root marketplace allowlists that marketplace, so `.claude-plugin/marketplace.json` gains the plugin's entry and the top-level `"allowCrossMarketplaceDependenciesOn": ["claude-plugins-official"]`. Without that line the install completes without Claude Security, and `security-workflows` then fails to load.
+- **`workflows-core`** is a bare name. It resolves in `security-workflows`' own marketplace and installs with no further configuration, exactly as `dev-workflows`, `product-workflows` and `docs-workflows` declare it in their `plugin.json`.
+- **`claude-security@claude-plugins-official`** lives in another marketplace. Claude Code installs it only when the root marketplace allowlists that marketplace, so `.claude-plugin/marketplace.json` gains the plugin's entry and the top-level `"allowCrossMarketplaceDependenciesOn": ["claude-plugins-official"]`. Without that line, the install completes without Claude Security and `security-workflows` then fails to load.
 
-Either dependency later disabled or uninstalled disables `security-workflows` with Claude Code's own error naming it; there is no degraded mode, as for the rest of the family. The end-to-end verification installs `security-workflows` on a machine that has neither dependency and confirms both arrive.
+If either dependency is later disabled or uninstalled, Claude Code disables `security-workflows` with its own error naming the dependency. As with the rest of the family, there is no degraded mode.
 
-**Why not `dev-workflows`.** An unsatisfied dependency disables the plugin that named it. Anyone who removed or disabled Claude Security would lose `/design`, `/implement` and the rest. Every `dev-workflows` user would also get Claude Security's hooks, its `python3` requirement, and its dynamic-workflows requirement. No other family plugin needs Claude Security.
+**Why not `dev-workflows`.** An unsatisfied dependency disables the plugin that named it, so anyone who removed or disabled Claude Security would lose `/design`, `/implement` and the rest. Every `dev-workflows` user would also inherit Claude Security's hooks, its `python3` requirement and its dynamic-workflows requirement. No other family plugin needs Claude Security.
 
 ### D2. The register format is a `workflows-core` reference
 
-`plugins/workflows-core/references/security-register-format.md` is the single source of truth for the register's layout, fields, statuses and transitions. It lives in `workflows-core` because a reference does not cross a plugin boundary, and E's consumers (`architecture-grounder`, `promotion-scout`) are `workflows-core` agents. `security-workflows` cites it as `workflows-core:security-register-format` through the `reference` loader skill, with the preamble the Internal reference convention requires. Reading `$SPECS_PATH/security/` needs no plugin dependency: it is data in SPECS.
+`plugins/workflows-core/references/security-register-format.md` is the single source of truth for the register's layout, fields, statuses, transitions and rebuild rule.
+
+It lives in `workflows-core` for two reasons. A reference does not cross a plugin boundary, and E's consumers (`architecture-grounder` and `promotion-scout`) are `workflows-core` agents.
+
+`security-workflows` cites it as `workflows-core:security-register-format` through the `reference` loader skill, with the preamble the Internal reference convention requires. Reading `$SPECS_PATH/security/` needs no plugin dependency, since it is data in SPECS.
 
 ### D3. The command
 
 ```
-/security-workflows:scan <KEY | repo-path> [--import <dir>] [--triage] [--effort low|medium|high]
+/security-workflows:scan <KEY | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort low|medium|high]
                          [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
-- **`<KEY>`** scans the repositories the unit's `implementation.md` records. **`<repo-path>`** scans that one repository.
+- **`<KEY>`** runs a change scan of the repositories the unit's `implementation.md` records. **`<repo-path>`** runs a whole-repository codebase scan of that repository.
 - **`--import <dir>`** records an existing `CLAUDE-SECURITY-<timestamp>/` folder instead of scanning. With a `<KEY>`, it also writes that unit's note.
-- **`--triage`** runs no scan. It triages the findings still `open`: those raised for the unit with a `<KEY>`, or every one in the repository's register with a path.
-- **`--effort`** passes through to the plugin. Its default is the plugin's, `medium`.
-- **The run flags** are `workflows-core:run-flags`'s. `--enforce-model` reaches the family's own dispatches only. It cannot reach the plugin's inherit agents, and the run's routing record says so.
+- **`--triage`** runs no scan. It triages the findings still `open` and the accepted risks past their review-by date: with a `<KEY>`, those raised for that unit; with a path, every one in the repository's register.
+- **`--verify-fixes`** runs a codebase scan scoped to the files of the findings being fixed. These are the `fixing` findings whose file has changed on the default branch since they were last seen: those raised for the unit with a `<KEY>`, or every one in the register with a path. The scan runs at the default branch's head, so it can close them (D8).
+- **`--effort`** overrides the default. The default depends on the scan:
+  - **`high`** for a change scan, as the plugin's README advises for a feature-sized change. The diff bounds its cost.
+  - **`medium`**, the plugin's calibrated default, for a whole-repository scan. There `high` multiplies the cost, the plugin itself offers a scoped scan on a large tree, and `high` can still be asked for.
+  - **`medium`** for `--verify-fixes`. A scope of five files or fewer already runs the plugin's single-researcher shape.
 
-The command invokes the `workflows-core:model-routing` skill, for its routing record and the session-model check (D6). It dispatches `impl-maintenance`, or `defect-reporter` under `--skip-feedback`, like every other pipeline command.
+  `max` is not exposed.
+- **The run flags** are `workflows-core:run-flags`'s. `--enforce-model` reaches only the family's own dispatches. It cannot reach the plugin's inherit agents, and the run's routing record says so.
+
+The command invokes the `workflows-core:model-routing` skill, for its routing record and the session-model check (D6). Like every other pipeline command, it dispatches `impl-maintenance`, or `defect-reporter` under `--skip-feedback`.
 
 ### D4. The phases
 
 ```mermaid
 flowchart TD
-    p0["Phase 0 — Setup: run flags, SPECS_PATH, address, specs preflight, session-model check"] --> mode{"Mode?"}
-    mode -->|"KEY or repo path"| p1["Phase 1 — Scope: repositories, branches, commits"]
+    p0["Phase 0 — Setup: run flags, SPECS_PATH, address, specs preflight, pending-register and leftover-worktree checks, session-model check"] --> mode{"Mode?"}
+    mode -->|"KEY, repo path or --verify-fixes"| p1["Phase 1 — Scope: repositories, commits; for --verify-fixes, the changed files of findings being fixed"]
     mode -->|"--import dir"| p4
     mode -->|"--triage"| p5
     p1 --> p2["Phase 2 — Checkout: in place, or a temporary worktree at the commit"]
     p2 --> p3["Phase 3 — Scan: one confirmation, then claude-security per repository"]
-    p3 --> p4["Phase 4 — Record: copy the products to SPECS, register.py merge"]
+    p3 --> p4["Phase 4 — Record: redaction check, copy the products to SPECS, register.py merge"]
     p4 --> p5["Phase 5 — Triage: one batch preview"]
     p5 --> fixq{"Any finding marked fix?"}
     fixq -->|"yes"| p6["Phase 6 — Fix: Suggest patches, then follow-ups or an /implement offer"]
     fixq -->|"no"| p7
-    p6 --> p7["Phase 7 — Close: unit note, SPECS pull request, feedback, cost, commit, next step"]
+    p6 --> p7["Phase 7 — Close: unit note, SPECS pull request, worktree removal, feedback, cost, commit, next step"]
 ```
 
-0. **Setup.** Strip the run flags. Require `$SPECS_PATH`, with `workflows-core:escalation-rules`' *Set / Cancel*.
-
-   Resolve the address. A key goes through `resolve-address`. A path goes to its `<repo-slug>` under `workflows-core:components` §1.
-
-   Run `specs-preflight` once the run key set is known. It is empty for a path.
-
-   Run `require-on-main` over the documents the run reads: on a key, the unit's `implementation.md`; on every run, each in-scope repository's `register.json`, where an absent register is a first scan and falls back under §3.4's row F.
-
-   Check the prerequisites. `python3` older than 3.9 stops with the plugin's own message. Dynamic workflows switched off stops, naming the `/config` row.
-
-   Run the session-model check (D6).
-1. **Scope.** With a key, read each `repo`, `branch` and `commit` from `implementation.md`, using `workflows-core:implementation-format` §4's read. A key with no blocks stops and suggests scanning a repository path. With a path, the scope is the whole repository at its current checkout; the plugin offers a focused area for a large repository itself.
+0. **Setup.**
+   1. Strip the run flags.
+   2. Require `$SPECS_PATH`, with `workflows-core:escalation-rules`' *Set / Cancel*.
+   3. Resolve the address. A key goes through `resolve-address`. A path goes to its `<repo-slug>` under `workflows-core:components` §1.
+   4. Run `specs-preflight` once the run key set is known. The set is empty for a path.
+   5. Run `require-on-main` over the documents the run reads. On a key, that is the unit's `implementation.md`. On every run, it is each in-scope repository's `register.json`; an absent register means a first scan, which falls back under §3.4's row F.
+   6. **The pending-register check.** Fetch the remote's `security/` branches, best effort, as `/conformance` fetches `conformance/` branches. Stop with `SECURITY_REGISTER_PENDING` where an unmerged one changes an in-scope repository's `security/<repo-slug>/`, naming the branch and its pull request. This serialises register changes per repository, so two runs can never number a new finding with the same `[SEC#n]`.
+   7. **The leftover-worktree check.** List each in-scope repository's worktrees under D5's fixed path prefix, run `git worktree prune` for any whose directory has vanished, and offer to remove the rest.
+   8. Check the prerequisites. A `python3` older than 3.9 stops with the plugin's own message. Dynamic workflows switched off stops, naming the `/config` row.
+   9. Run the session-model check (D6).
+1. **Scope.**
+   - **With a key**, read each `repo`, `branch` and `commit` from `implementation.md`, through `workflows-core:implementation-format` §4's read. A key with no blocks stops, and suggests scanning a repository path.
+   - **With a path**, scan the whole repository at its current checkout. The plugin itself offers a focused area for a large repository.
+   - **With `--verify-fixes`**, take the default branch's head and the set of files described in D3. An empty set stops, with nothing to verify.
 2. **Checkout** (D5).
-3. **Scan.** Ask one confirmation that covers every repository in scope (D6). Then, per repository, invoke `Skill(skill: "claude-security:claude-security", args: …)`. With a key, the args name the change job against the default branch; with a path, the codebase job. Either way they carry the effort and state that the user has accepted the scan's time and token cost, so the plugin asks nothing further except its own scope sub-menu on a full scan.
-4. **Record.** Copy the scan's products into `$SPECS_PATH/security/<repo-slug>/scans/<UTC-timestamp>-<commit7>/`. Then run `register.py merge`, which reports the scan's findings as new, reported again, possibly the same as an existing finding, or not reported by a covering scan (D8).
+3. **Scan.**
+   1. Ask one confirmation that covers every repository in scope (D6).
+   2. For each repository, invoke `Skill(skill: "claude-security:claude-security", args: …)`. The args name the job: the change job against the default branch for a key; the codebase job for a path; the codebase job with a `--scope` naming the files for `--verify-fixes`.
+   3. The args also carry the effort (D3) and state that the user has already accepted the scan's time and token cost. The plugin therefore asks nothing more, except its own scope sub-menu on a whole-repository scan.
+4. **Record.**
+   1. **Check redaction first.** Where the scan reports that redaction failed, or names a file it could not clean, stop and ask before anything is copied. The choices are **Stop — I'll review and clean the files, then record them with `--import` (Recommended)** and **Record as they are**.
+   2. Otherwise, copy the scan's products into `$SPECS_PATH/security/<repo-slug>/scans/<UTC-timestamp>-<commit7>/`.
+   3. Run `register.py merge` (D8). It reports the scan's findings as one of: new; reported again; possibly the same as an existing finding; or, for a covering scan, no longer reported.
 5. **Triage** (D9).
 6. **Fix** (D10). This runs while the Phase 2 checkout still stands, because the plugin builds patches against the scanned commit.
 7. **Close.**
-   - With a key, append the unit note (D11).
-   - Hand off `security/<repo-slug>/` and the unit note by pull request (D12).
-   - Remove any temporary worktree.
-   - Run feedback, follow-ups, cost, `resume.md` and `commit-artifacts`, in the family's canonical emitter order.
-   - Print the `Specs repo:` and `Phase handoff:` lines, then the next step.
+   1. Write the run record (D7).
+   2. With a key, append the unit note (D11).
+   3. Hand off `security/<repo-slug>/` and the unit note by pull request (D12).
+   4. Remove any temporary worktree.
+   5. Run the family's emitter tail in its canonical order: feedback, follow-ups, cost, `resume.md`, then `commit-artifacts`.
+   6. Print the `Specs repo:` and `Phase handoff:` lines, then the next step (D13).
 
 ### D5. Checkout
 
 The plugin scans whatever is checked out and never moves the checkout itself, so the command provides the checkout:
 
-- **The repository is already at the recorded commit** (with a key) or is the path given: scan in place.
-- **Otherwise:** add a temporary `git worktree` at the recorded commit, after a `git fetch` where the commit is absent locally, and scan there. The user's own checkout is never switched. The worktree's path is written into `resume.md`, so a run that dies leaves a pointer to it, and Phase 7 removes it on every path, failure included.
-- **A read-only mount** (`workflows-core:read-only-repos` §1) that is not at the commit is skipped, with its reason. If every repository is skipped, the run stops.
+- **Scan in place** when the repository is already at the scan's commit: the recorded commit with a key; the default branch's head with `--verify-fixes`; or the path as given.
+- **Otherwise, use a temporary `git worktree`** at the commit, after a `git fetch` where the commit is absent locally.
+  - Its path has a fixed prefix, `${TMPDIR:-/tmp}/security-workflows/<repo-slug>-<commit7>`, so the leftover-worktree check (Phase 0) can find it.
+  - The user's own checkout is never switched.
+  - The worktree's path also goes into `resume.md`.
+  - Phase 7 removes the worktree on every path, failure included.
+- **Skip a read-only mount** (`workflows-core:read-only-repos` §1) that is not at the commit, with its reason. If every repository is skipped, the run stops.
 
 ### D6. Which model the scan runs on
 
-The plugin's working agents inherit the session model, and nothing inside a running command can change it. The scan's model is therefore an orchestrator-executed property in `classification.md` §9.1's sense, handled like the family's other session-model gates:
+The plugin's working agents inherit the session model, and nothing inside a running command can change it. The scan's model is therefore an orchestrator-executed property in `classification.md` §9.1's sense, and it is handled like the family's other session-model gates:
 
 | Session (`current_model`) | Phase 0 check | Phase 3 confirmation |
 |---|---|---|
@@ -173,139 +229,204 @@ The plugin's working agents inherit the session model, and nothing inside a runn
 | Sonnet (or below) | **asks**: "Claude Security's scan agents run on your session model, Sonnet, and may find fewer or weaker issues." Choices: **Cancel — rerun after `/model opus` (Recommended)** · **Scan on Sonnet anyway** | the cost confirmation |
 | Fable | none: the user chose Fable, which approves its cost | the cost confirmation, plus one line saying Fable's safety filters will re-run some scan requests on Opus |
 
-The scan never escalates to Fable. There is no evidence Fable finds more than Opus. Anthropic's stronger security model is Mythos, in the hosted product. And Fable's own cyber classifiers flag scan requests, which Claude Code then re-runs on Opus, so a Fable scan pays twice for those requests. If a later plugin or Claude Code version lets a caller choose the plugin agents' model, the command passes Opus and drops the Sonnet question.
+The scan never escalates to Fable, for three reasons:
+
+- There is no evidence that Fable finds more than Opus.
+- Anthropic's stronger security model is Mythos, in the hosted product.
+- Fable's own cyber classifiers flag scan requests, which Claude Code then re-runs on Opus, so a Fable scan pays twice for those requests.
+
+If a later plugin or Claude Code version lets a caller choose the plugin agents' model, the command passes Opus and drops the Sonnet question.
 
 ### D7. The register
 
 The register lives at `$SPECS_PATH/security/<repo-slug>/`:
 
-- **`register.json`** is the source of truth. Only `register.py` reads and writes it.
-- **`register.md`** is rendered from it for people to read. It is never edited by hand; a hand edit is overwritten by the next render, and the rendered file says so in its first line.
-- **`scans/<UTC-timestamp>-<commit7>/`** holds the plugin's report, JSONL, SARIF, revision stamp and `patches/`, unchanged. The plugin already withholds secrets from these products.
+- **`scans/<UTC-timestamp>-<commit7>/`** holds the plugin's report, JSONL, SARIF, revision stamp and `patches/`, unchanged and never rewritten. The plugin's redaction is best effort; Phase 4 checks its outcome first.
+- **`runs/<seq>-<UTC-timestamp>.json`** holds one **run record** per run that changes the register: a scan, an import, a triage or a fix verification. `seq` is the register's next run number at the time the run records. A record holds:
+  - the scan folder, if any;
+  - the confirmed and rejected possibly-same matches;
+  - every decision, with its reason, evidence, owner and review-by date;
+  - the `[SEC#n]` it allocated.
+
+  Run records are written once and never edited.
+- **`register.json`** is the folded state. `register.py` alone reads and writes it, and `register.py rebuild` regenerates it from the run records in `seq` order and the scan folders they name. **The run records and scan folders are the source of truth.** `register.json` and `register.md` are derived from them, so a merge conflict in either is resolved by rebuilding, never by hand.
+- **`register.md`** is rendered for people to read, and its first line says it is generated. It has four sections: open findings by severity, findings being fixed, the **risk register** (accepted risks, with owner and review-by date), and the **false-positive log** (each with its evidence). It shows every finding's title and description as quoted data (D10).
 
 Each finding records:
 
-- `id` (`[SEC#n]`) and `plugin_id` (the plugin finding ID).
-- `title`, `cwe` (the primary first), `severity` and `confidence`.
-- `path` and `line`, plus `first_seen` and `last_seen` as `{scan, commit}`.
-- `reported_by[]` (scan ids) and `not_reported_by[]` (covering scans that did not report it).
-- `units[]`, the keys it was raised for.
-- `status` and `history[]`. Each entry has `{status, at, by, reason, scan}`, where `by` is the git `user.name` of the specs repository.
+- `id` (`[SEC#n]`), `plugin_id` and `plugin_id_version`;
+- `title`, `cwe` (the primary first), `severity` and `confidence`;
+- `path` and `line`, plus `first_seen` and `last_seen` as `{scan, commit}`;
+- `reported_by[]` (scan ids) and `not_reported_by[]` (the covering scans that did not report it);
+- `units[]`, the keys it was raised for;
+- `status`, `owner` and `review_by` (for an accepted risk), and `history[]` of `{status, at, by, reason, evidence, run}`, where `by` is the git `user.name` of the specs repository;
 - `links`: the follow-up line, the patch path and the fix commit.
 
 ### D8. Lifecycle
 
 ```mermaid
 stateDiagram-v2
+    state "false-positive" as false_positive
     state "accepted-risk" as accepted_risk
     [*] --> new: first reported
     new --> open: decide later
     new --> fix: fix
-    new --> dismissed: false positive, with a reason
-    new --> accepted_risk: accept the risk, with a reason
+    new --> false_positive: not exploitable, with evidence
+    new --> accepted_risk: exploitable, accepted, with owner and review-by date
     open --> fix
-    open --> dismissed
+    open --> false_positive
     open --> accepted_risk
+    accepted_risk --> accepted_risk: review due, re-accepted with a new date
+    accepted_risk --> fix: review due, fix it now
     fix --> fixing: follow-up written
-    fixing --> fixed: file changed and a covering scan no longer reports it
+    fixing --> fixed: file changed and a covering codebase scan no longer reports it
     open --> fixed: confirmed in triage, on the same evidence
     fixed --> reopened: reported again
     reopened --> fix
-    reopened --> dismissed
+    reopened --> false_positive
     reopened --> accepted_risk
 ```
 
+**The two closing judgements are different claims, recorded differently:**
+
+- **`false-positive` claims "this is not exploitable."** Its reason must name the evidence: the `file:line` of the guard, check or encoding that defeats the plugin's exploit scenario. A human is overruling a finding that the plugin's three-voter panel confirmed, so the evidence is what makes the override checkable later. If the same plugin ID is reported again, the code is unchanged and the finding stays a false positive. A possibly-same match on changed code goes back to triage.
+- **`accepted-risk` claims "this is exploitable, and we accept it."** It carries an **owner** (the person deciding, by default) and a **review-by date** (default 90 days). When the date passes, the finding returns to triage as *review due*, so no risk stays accepted by default. Sub-project E learns from accepted risks, which are real weaknesses a decision should prevent next time. False positives teach it nothing.
+
 `register.py` applies these rules deterministically:
 
-1. **Matching.** A scan's finding matches a register finding when its plugin ID equals the finding's `plugin_id`; it is the same finding, reported again. Otherwise, when a register finding of the same CWE in the same file lies within 10 lines of the scan finding's line, the scan finding is reported as **possibly the same as `[SEC#n]`**, and triage asks. Candidates come only from the register. Otherwise the finding is new and takes the next `[SEC#n]`.
-2. **A missing finding is never closed on absence alone.** A `fixing` finding becomes `fixed` only when a covering scan at a commit descending from its `last_seen.commit` does not report it, matches no possibly-same candidate, and its file has changed between those two commits (`git diff --quiet <last_seen>..<scan> -- <path>` fails). An `open` finding with the same evidence is proposed as fixed in triage and changes only on the user's confirmation. A finding absent with its file unchanged just gains a `not_reported_by` entry.
-3. **Order is by commit ancestry, never by date.** A scan whose commit is an ancestor of a scan already recorded is kept as history. It adds `reported_by` entries but never reopens a later `fixed` (`git merge-base --is-ancestor`).
-4. **Unverified scans.** A scan whose stamp shows unverified, or uncommitted changes in the scanned tree, is recorded and flagged. It can add findings, but it can never move a finding to `fixed`.
-5. **Idempotent.** Merging a scan already recorded (same stamp) changes nothing.
+1. **Matching.** A scan's finding matches a register finding whose `plugin_id` is equal, under the same `ID_VERSION`; it is the same finding, reported again. Otherwise, if a register finding with the same CWE in the same file lies within 10 lines, the scan's finding is reported as **possibly the same as `[SEC#n]`**, and triage asks. Candidates come only from the register. Otherwise the finding is new and takes the next `[SEC#n]`.
+2. **A finding is never closed on absence alone, and never by a change scan.** A `fixing` finding becomes `fixed` only when all of these hold:
+   - a **covering codebase scan**, at a commit descending from the finding's `last_seen.commit`, does not report it;
+   - it matches no possibly-same candidate in that scan;
+   - its file has changed between those two commits (`git diff --quiet <last_seen>..<scan> -- <path>` fails).
+
+   An `open` finding with the same evidence is proposed as fixed in triage, and changes only on the user's confirmation. A finding absent while its file is unchanged just gains a `not_reported_by` entry. A change scan can add findings and re-report them, but it never adds a `not_reported_by` entry and never closes a finding.
+3. **A change of `ID_VERSION` is not a mass event.** When a scan's `ID_VERSION` differs from the one a finding was recorded under, plugin IDs are not compared. Every finding in that scan is matched by rule 1's possibly-same test instead, and triage asks about each match. That scan closes nothing. Once a match is confirmed, the finding takes the new `plugin_id` and `plugin_id_version`.
+4. **Ancestry governs evidence; record order governs numbering.** A scan whose commit is an ancestor of a scan already recorded is kept as history. It adds `reported_by` entries, but it never reopens a later `fixed` (`git merge-base --is-ancestor`). `[SEC#n]` numbers are allocated, and `rebuild` folds, in run-record `seq` order. A rebuild therefore never renumbers a finding that a follow-up or unit note already cites.
+5. **Unverified scans.** A scan whose stamp shows it unverified, or shows uncommitted changes in the scanned tree, is recorded and flagged. It can add findings, but it can never close one.
+6. **Idempotent.** Merging a scan that is already recorded (the same stamp) changes nothing, and `rebuild` over the same records produces the same `register.json` byte for byte.
 
 ### D9. Triage
 
-Triage is one batch preview. It covers the new findings, the possibly-same matches, the `open` findings proposed as fixed, and the findings still `open` from earlier scans. Each row shows `[SEC#n]`, severity, CWE, `file:line` and a suggested decision: **fix** for CRITICAL and HIGH, **decide later** for the rest, and the possibly-same question for a match.
+Triage is one batch preview. It covers:
 
-The batch choice is **Accept the suggestions** · **Change some** · **Decide all later**. *Change some* asks per finding, four findings to an `AskUserQuestion` call, with exactly four options: **Fix** · **Decide later** · **Dismiss — false positive** · **Accept the risk**. A dismissal and an accepted risk then ask for a one-line reason, which is recorded. A free-text answer is normalised into those four or asked again, never written through (`workflows-core:escalation-rules` §0).
+- the new findings;
+- the possibly-same matches;
+- the `open` findings proposed as fixed;
+- the findings still `open` from earlier runs;
+- the accepted risks whose review-by date has passed.
 
-### D10. Fixes go through `/implement`
+Each row shows `[SEC#n]`, severity, CWE, `file:line` and a suggested decision:
+
+- **fix** for CRITICAL and HIGH;
+- **decide later** for the rest;
+- the possibly-same question for a match;
+- for a review-due risk, its current acceptance, shown for re-decision.
+
+The batch choice is **Accept the suggestions** · **Change some** · **Decide all later**.
+
+*Change some* asks about each finding, four findings to an `AskUserQuestion` call, each with exactly four options: **Fix** · **Decide later** · **False positive** · **Accept the risk**.
+
+- **False positive** then asks for the evidence (`file:line` and one line of why).
+- **Accept the risk** then asks for one line of why, and the review-by date: **90 days (Recommended)** · **30 days** · **180 days**. A specific date typed as free text is accepted.
+
+The owner is the person deciding. A free-text answer is normalised into the options it answers, or the question is asked again; it is never written through as is (`workflows-core:escalation-rules` §0).
+
+### D10. Fixes go through `/implement`, and text from the scan is data
 
 For the findings marked fix, Phase 6 runs the plugin's *Suggest patches* job for exactly those findings, in the Phase 2 checkout. It copies the patches into the scan's `patches/` in SPECS.
 
-- **With a key,** it writes one follow-up per finding into the unit's `follow-ups.md`, in `workflows-core:followup-emission`'s form for a change another run makes. For example:
+- **With a key,** it writes one follow-up per finding into the unit's `follow-ups.md`, in `workflows-core:followup-emission`'s form for a change another run makes:
 
   ``- [ ] Run `/dev-workflows:implement BOOK-2-01-02` from repository `bookstore`: fix [SEC#3] (CWE-862) at `ratings/…/RatingsController.java:88`, starting from `security/bookstore/scans/<id>/patches/F2.patch` — raised by /security-workflows:scan``
 
-  `/implement`'s keyed run already reads back follow-ups addressed to its repository and takes their changes into its description. Nothing in `dev-workflows` changes for this.
+  `/implement`'s keyed run already reads back follow-ups addressed to its repository and takes their changes into its description, so nothing in `dev-workflows` changes for this.
 - **With a path,** there is no unit to address. The next-step offer is `/dev-workflows:implement` with a prompt naming each finding and its patch.
-- **A finding the plugin skipped** gets its follow-up without a patch, with the plugin's reason recorded on the finding.
+- **A finding the plugin skipped** gets its follow-up without a patch, and the plugin's reason is recorded on the finding.
 
-The status moves to `fixing` once the follow-up or offer is written. The fix commit is linked when the next covering scan moves the finding to `fixed`, from `git log` over the file between the two commits.
+**Text written from scanned code never reaches an instruction.** A finding's title, description and exploit scenario are written by a model reading code that is not trusted. `/implement` acts on follow-up lines, and the same goes for its prompt with a path. Both are therefore built **only from structured fields**: the `[SEC#n]`, the CWE number, `path:line`, the patch path and the run's own literal wording. They never carry a finding's free text. `register.md` puts free text inside quoted blocks under a heading that marks it as scan output. Sub-project E's agents read it as data.
+
+The status moves to `fixing` once the follow-up or offer is written. The fix commit is linked when a covering codebase scan, usually `--verify-fixes`, moves the finding to `fixed`. It is found from `git log` over the file between the two commits.
 
 ### D11. The unit note
 
-`_security.md` in the PRD or Epic folder is append-only, like `implementation.md`. It has one block per scan:
+`_security.md` in the PRD or Epic folder is append-only, like `implementation.md`. Each scan adds one block:
 
-- the date, repository, commit, effort and mode (scan or import)
-- the counts by severity
-- the `[SEC#n]` raised or re-reported
-- a link to the repository's `register.md`
+- the date, repository, commit, effort and mode (change scan, codebase scan, verification or import);
+- the counts by severity;
+- the `[SEC#n]` raised, re-reported or closed;
+- a link to the repository's `register.md`.
 
 It is written only when the run resolved a key.
 
 ### D12. Handing off to SPECS
 
-The register, the scan products and the unit note are deliverables. They go through `workflows-core:phase-handoff`'s `handoff-to-main` on a new **`security/`** branch prefix, behind its §4.3 consent choice, as `/conformance` hands off `_conformance.md`. This makes the prefix authority twelve prefixes, not eleven: `phase-handoff` §1 rule 3, `specs-repo-git` §2's disposition, `.claude/rules/workflows-core-git.md` and every other copy of the regex and the count change together.
+**The deliverables go by pull request.** The register, the scan products, the run records and the unit note pass through `workflows-core:phase-handoff`'s `handoff-to-main`. They go on a new **`security/`** branch prefix, behind its §4.3 consent choice, just as `/conformance` hands off `_conformance.md`.
 
-The follow-ups, cost and feedback use the bounded shapes `specs-repo-git` §2.1 already has; no new bookkeeping shape is added. A keyless run's cost and feedback go to `dev-workflows-cost/` and `dev-workflows-feedback/`, as every keyless run's do.
+**The prefix authority grows from eleven prefixes to twelve.** `phase-handoff` §1 rule 3, `specs-repo-git` §2's disposition, `.claude/rules/workflows-core-git.md` and every other copy of the regex and the count change together.
+
+**Serialisation keeps numbering safe.** A pull request that is still open blocks the next run on the same repository through Phase 0's pending-register check, so `[SEC#n]` allocation stays serial. A `security/` branch deleted without merging releases the block, and a follow-up already written for its findings then names a `[SEC#n]` that the default branch never received. The unit note and `register.md` document that case: such a follow-up is withdrawn by hand.
+
+**Bookkeeping uses existing shapes.** The follow-ups, cost and feedback use the bounded shapes that `specs-repo-git` §2.1 already has; no new bookkeeping shape is added. A keyless run's cost and feedback go to `dev-workflows-cost/` and `dev-workflows-feedback/`, as every keyless run's do.
 
 ### D13. Cost, feedback and the next-step offer
 
-- **Cost.** `cost-emission` §7 gains the row `/security-workflows:scan` → phase `security-audit`, role `sec`. `roles-and-phases` pages describe the new role. The cost line covers the plugin's agents once the spike confirms `session-cost.py` counts them; if it does not, fixing `session-cost.py` is part of A, since a cost line that leaves out the most expensive part is wrong, not merely partial.
+- **Cost.** `cost-emission` §7 gains the row `/security-workflows:scan` → phase `security-audit`, role `sec`, and the `roles-and-phases` pages describe the new role. The cost line covers the plugin's agents once the spike confirms that `session-cost.py` counts them. If it does not, fixing `session-cost.py` is part of A, because a cost line that leaves out the most expensive part is wrong, not merely partial.
 - **Feedback.** `impl-maintenance`, or `defect-reporter` under `--skip-feedback`, as in every pipeline command.
-- **The `/implement` offer.** `workflows-core:next-phase-offer` adds `/security-workflows:scan <KEY>` to what `/implement` offers once its pull request is open, beside the `docs-workflows` commands it already offers without depending on that plugin.
-- **The scan's own next step** is `/dev-workflows:implement` where findings went to fix, and otherwise nothing.
-- **The plugin's own push tip** keeps firing. The `security-workflows` docs say a report made from that tip can be recorded with `--import`.
+- **The `/implement` offer.** `workflows-core:next-phase-offer` adds `/security-workflows:scan <KEY>` to what `/implement` offers once its pull request is open. It sits beside the `docs-workflows` commands that `/implement` already offers without depending on that plugin.
+- **The scan's own next step.**
+  - `/dev-workflows:implement` where findings went to fix.
+  - `--verify-fixes` where the register holds `fixing` findings whose file has changed on the default branch.
+  - `--triage` where accepted risks are past their review-by date.
+  - Otherwise, nothing.
+- **The plugin's own push tip** keeps firing. The `security-workflows` docs say that a report made from that tip can be recorded with `--import`.
 
 ### D14. Documentation and diagrams
 
-**The new plugin's docs tree**, added to `check-docs.sh`'s `PLUGIN_RELS` and `COST_PLUGIN_RELS`:
+**The new plugin's docs tree.** The plugin is added to `check-docs.sh`'s `PLUGIN_RELS` and `COST_PLUGIN_RELS`, and its docs tree holds:
 
-- `docs/README.md`, the index.
-- `getting-started.md`, which names the dependency's marketplace; check 10's exception is verified to cover a plugin's own `getting-started.md` before the page is written.
-- `workflow.md`, with a mermaid overview: `/implement` upstream, the scan, Claude Security as an external node, the SPECS outputs, and the fix loop back to `/implement`.
-- `roles-and-phases.md`.
-- `commands/scan.md`, with D4's flowchart.
-- `reference/security-register.md`, with D8's state diagram.
-- `reference/environment.md`, `reference/references.md` and whatever else the docs gate requires of a plugin carrying no agents and no hooks.
+- `docs/README.md`, the index;
+- `getting-started.md`, which names the dependency's marketplace. Before the page is written, check that check 10's exception covers a plugin's own `getting-started.md`.
+- `workflow.md`, with a mermaid overview: `/implement` upstream, the scan, Claude Security as an external node, the SPECS outputs, the fix loop back to `/implement`, and `--verify-fixes` closing it;
+- `roles-and-phases.md`;
+- `commands/scan.md`, with D4's flowchart;
+- `reference/security-register.md`, with D8's state diagram and the false-positive / accepted-risk distinction;
+- `reference/environment.md`, `reference/references.md`, and whatever else the docs gate requires of a plugin with no agents and no hooks.
 
 **`workflows-core/docs/family-map.md`:**
 
 - A legend entry and a new class, `sec`, in teal (`fill:#ccfbf1,stroke:#0f766e,color:#134e4a`), since red is the ▶ start outline.
 - A **Security Engineer — audit** lane holding `/security-workflows:scan`.
 - `implement -.->|"action: offered once the PR is open"| secscan` and `secscan -.->|"fix — a follow-up + patch"| implement`.
-- A *Reading it* bullet: the scan is only ever offered, never automatic, and it reads code through Claude Security, a plugin outside the family.
-- The opening sentence and *The detail, per plugin* list name the fifth plugin.
+- A *Reading it* bullet: the scan is only ever offered, never run automatically, and it reads code through Claude Security, a plugin outside the family.
+- The opening sentence and the *The detail, per plugin* list name the fifth plugin.
 
 **Elsewhere:**
 
-- `workflows-core/docs/workflow.md` ("every command of the four plugins") and `dev-workflows/docs/workflow.md`, which gains the scan beside its `docs-workflows` node.
-- The root `README.md`, `CLAUDE.md`'s *Active plugins* section, and a new `.claude/rules/security-workflows.md` with its workflow map line.
-- A claim sweep (`.claude/rules/claim-sweep.md`) for every statement that the family has four plugins, eleven branch prefixes, or a fixed set of roles, with literal before-and-after counts across refinement 4's scope.
+- `workflows-core/docs/workflow.md` ("every command of the four plugins").
+- `dev-workflows/docs/workflow.md`, which gains the scan beside its `docs-workflows` node.
+- The root `README.md`, and `CLAUDE.md`'s *Active plugins* section.
+- A new `.claude/rules/security-workflows.md`, with its workflow-map line.
+- A claim sweep (`.claude/rules/claim-sweep.md`) for every statement that the family has four plugins, eleven branch prefixes or a fixed set of roles, with literal before-and-after counts across refinement 4's scope.
 
 ### D15. Containers
 
-The `ai-containers` launchers install `claude-security@claude-plugins-official` and `security-workflows`, as a separate pull request in that repository.
+The `ai-containers` launchers install `claude-security@claude-plugins-official` and `security-workflows`, in a separate pull request to that repository.
 
-A headless Chromium serves Angular's Karma tests, so a patch to a `web/` component can be verified. The container is aarch64 on Ubuntu 24.04, where Google Chrome has no arm64 Linux package and the apt `chromium` is a snap stub, so it comes from `npx playwright install --with-deps chromium`, with `CHROME_BIN` pointing at it. If Chromium's sandbox fails under the container's seccomp profile, `CHROME_BIN` points at a wrapper that adds `--no-sandbox`. Without it, a `web/` patch carries the plugin's own "reviewed without tests" note.
+**A headless Chromium runs Angular's Karma tests**, so a patch to a `web/` component can be verified. The container is aarch64 on Ubuntu 24.04. Google Chrome has no arm64 Linux package there, and the apt `chromium` is a snap stub. So the browser comes from Playwright:
+
+- `sandbox.conf`'s `playwright=ON` bakes its OS dependencies and raises `/dev/shm` to 1 GB.
+- `npx playwright install chromium` downloads the browser into the group-mounted `~/.cache/ms-playwright`.
+- `container.env`'s `CHROME_BIN` points at a wrapper in that cache, which adds `--headless=new --no-sandbox --disable-dev-shm-usage`.
+
+Without the browser, a `web/` patch carries the plugin's own "reviewed without tests" note.
 
 ### D16. Gates
 
 - `register.py`'s `unittest` suite runs in `.github/workflows/validate-catalog.yml`.
-- `check-id-grammar.sh` learns `[SEC#n]` if it keeps a prefix list.
+- `check-id-grammar.sh` learns `[SEC#n]`, if it keeps a prefix list.
 - `validate-catalog.py`, the mermaid gate, `check-docs.sh` and `claude plugin validate` run as usual.
-- `validate-catalog.py` neither checks `dependencies` nor rejects unknown top-level `marketplace.json` keys; Claude Code's documentation lists `allowCrossMarketplaceDependenciesOn` as a valid field.
+- `validate-catalog.py` neither checks `dependencies` nor rejects unknown top-level `marketplace.json` keys, and Claude Code's documentation lists `allowCrossMarketplaceDependenciesOn` as a valid field.
 
 ## Worked example
 
@@ -313,40 +434,60 @@ The findings below are illustrative; the spike produces real ones.
 
 On the bookstore demo, the Dev's `/implement BOOK-2-01-02` (storefront ratings) opens its pull request and offers `/security-workflows:scan BOOK-2-01-02`. The Dev runs it in an Opus session.
 
-1. **Setup and scope.** Phase 0 resolves `BOOK-2-01-02` to `…/PRD-BOOK-2-01-verified-ratings/EPIC-BOOK-2-01-02-storefront-ratings/`. Phase 1 reads that folder's one `implementation.md` block: repository `bookstore`, branch `feat/BOOK-2-01-02-storefront-ratings`, commit `eb694d0`.
-2. **Checkout.** The Dev's checkout is on `master`, so Phase 2 adds a worktree at `eb694d0`.
-3. **Scan and record.** After one confirmation, Phase 3 scans the branch's changes against `master` at medium effort. Phase 4 copies the products to `security/bookstore/scans/20261016T091200Z-eb694d0/`. `register.py` reports two new findings: `[SEC#1]`, HIGH, CWE-862, a rating deleted without an owner check; and `[SEC#2]`, LOW, CWE-79, a comment rendered unescaped in an admin view.
+1. **Setup and scope.** Phase 0 resolves `BOOK-2-01-02` to `…/PRD-BOOK-2-01-verified-ratings/EPIC-BOOK-2-01-02-storefront-ratings/`. It finds no pending `security/` branch for `bookstore` and no leftover worktree. Phase 1 reads that folder's one `implementation.md` block: repository `bookstore`, branch `feat/BOOK-2-01-02-storefront-ratings`, commit `eb694d0`.
+2. **Checkout.** The Dev's checkout is on `master`, so Phase 2 adds a worktree at `${TMPDIR:-/tmp}/security-workflows/bookstore-eb694d0`.
+3. **Scan and record.** After one confirmation, Phase 3 scans the branch's changes against `master` at `high`, the default for a change. The redaction check passes, and Phase 4 copies the products to `security/bookstore/scans/20261016T091200Z-eb694d0/`. `register.py` reports two new findings:
+   - `[SEC#1]`, HIGH, CWE-862: a rating deleted without an owner check;
+   - `[SEC#2]`, LOW, CWE-79: a comment rendered unescaped in an admin view.
 4. **Triage.** It suggests fix for `[SEC#1]` and decide later for `[SEC#2]`. The Dev accepts the suggestions.
-5. **Fix.** Phase 6 gets `F1.patch` from the plugin and writes the follow-up into the Epic's `follow-ups.md`.
-6. **Close.** Phase 7 appends `_security.md`, hands off `security/bookstore/` and the note on `security/BOOK-2-01-02-…`, removes the worktree, and offers `/dev-workflows:implement BOOK-2-01-02`.
+5. **Fix.** Phase 6 gets `F1.patch` from the plugin and writes the structured follow-up into the Epic's `follow-ups.md`.
+6. **Close.** Phase 7 writes `runs/1-….json`, appends `_security.md`, and hands off `security/bookstore/` and the note on `security/BOOK-2-01-02-…`. It then removes the worktree and offers `/dev-workflows:implement BOOK-2-01-02`.
 7. **The fix.** That run reads the follow-up back, takes `F1.patch` as its starting point, and goes through its own baseline, Opus review and pull request.
-8. **The rescan.** After the merge, a `/security-workflows:scan bookstore` full scan covers the file, doesn't report `[SEC#1]`, and finds the file changed since `eb694d0`. `[SEC#1]` becomes `fixed`, linked to the fix commit. `[SEC#2]` is still `open`, and the Dev dismisses it in triage: "admin view renders through the template's auto-escaping; finding is a false positive".
+8. **Verification.** After both pull requests merge, the next scan run offers `--verify-fixes`. It runs a codebase scan scoped to the one changed file at `medium`, at `master`'s head. The scan covers the file and does not report `[SEC#1]`, and the file has changed since `eb694d0`, so `[SEC#1]` becomes `fixed`, linked to the fix commit.
+9. **The false positive.** The Dev opens `--triage` for `[SEC#2]` and marks it a false positive, with this evidence: "`web/src/app/admin/comments.component.html:12` renders the comment through Angular interpolation, which escapes it". It moves to the false-positive log.
 
 ## Verification
 
-**The spike runs first** (plan task 1, throwaway). It is a change scan of BOOK-2-01-02 at `low` effort on an Opus session, in a worktree, writing nothing to SPECS. It settles four things before anything else is built:
+**The spike runs first** (plan task 1, throwaway). It is a change scan of BOOK-2-01-02 plus a codebase scan scoped to a couple of files, both on an Opus session, in a worktree, at `low` effort to keep them cheap, and writing nothing to SPECS. It settles six things before anything else is built:
 
-1. **Running the plugin's skill from inside a command:** its workflow and questions run, and control returns to the command afterwards. If not, Phase 3 asks the user to run `/claude-security` and continues as `--import`, which needs nothing new.
+1. **Running the plugin's skill from inside a command.** Its workflow and questions run, and control returns to the command afterwards. If not, Phase 3 asks the user to run `/claude-security` and continues as `--import`, which needs nothing new.
 2. **`claudeSecurityPluginFindingId` is in the JSONL.** If not, `register.py` reads it from the SARIF.
 3. **`session-cost.py` counts the plugin's workflow agents.** If not, fixing it joins A (D13).
-4. **The revision stamp's coverage record names the examined files,** with which fields for a full scan and which for a change scan, as D8's *covering scan* needs. If not, rule 2 falls back to "the scan's mode and scope include the file", and the reference says so.
+4. **A codebase scan's coverage record names the files it read**, and the spike records which fields hold them. A small scoped codebase scan settles this. If not, a covering scan is one whose `--scope` included the file, and the reference says so.
+5. **A codebase scan's `--scope` accepts a file, or a list of files.** If it accepts only a directory, `--verify-fixes` scopes to each file's directory, and the cost estimate says so.
+6. **Where the plugin records a failed redaction**, or a file it could not clean, so that Phase 4 can test it.
 
-It needs Claude Security installed in the session and a `git fetch` in `/workspace/bookstore`, whose `origin/master` is behind its remote.
+The spike needs Claude Security installed in the session, and a `git fetch` in `/workspace/bookstore`, whose `origin/master` is behind its remote.
 
 **Then:**
 
-- **`register.py` tests,** with fixture JSONL and stamps for every D8 case: new, reported again, possibly-same (confirmed and rejected), missing with the file unchanged, `fixing` → `fixed`, `open` → `fixed` on confirmation, reopened, the unverified scan, an ancestor import, repeated import, and `[SEC#n]` never reused.
-- **The gates as one `&&` chain,** read by its own exit code.
-- **A clean install,** in a scratch Claude Code configuration with neither `workflows-core` nor Claude Security installed: `claude plugin install security-workflows@shipwright` must bring in both, and the plugin must load.
-- **An end-to-end run on the bookstore demo,** with `SPECS_PATH=/workspace/bookstore-specs`, covering the key, path, `--import` and `--triage` routes.
+- **`register.py` tests**, with fixture JSONL, stamps and run records for every D8 case:
+  - new; reported again; possibly the same, both confirmed and rejected;
+  - missing with the file unchanged; a change scan that touches a finding's file and never closes it;
+  - `fixing` → `fixed`; `open` → `fixed` on confirmation; reopened;
+  - a false positive reported again unchanged; an accepted risk past its review-by date;
+  - an `ID_VERSION` change that closes nothing; an unverified scan; an ancestor import;
+  - repeated import; `rebuild` equal to the incremental merge, byte for byte; `[SEC#n]` never reused or renumbered;
+  - follow-up lines carrying no free text from a finding.
+- **The gates, run as one `&&` chain** and judged by the chain's own exit code.
+- **A clean install** in a scratch Claude Code configuration with neither `workflows-core` nor Claude Security installed. `claude plugin install security-workflows@shipwright` must bring in both, and the plugin must load.
+- **An end-to-end run on the bookstore demo**, with `SPECS_PATH=/workspace/bookstore-specs`, covering the key, path, `--import`, `--triage` and `--verify-fixes` routes, and the pending-register stop.
 
 ## Risks
 
-- **The plugin is pre-1.0 and auto-updates.** A version constraint would disable `security-workflows` whenever the plugin moved outside the range, so none is set. Instead, `register.py` validates every field it reads and stops with `SCAN_PRODUCTS_UNREADABLE`, naming the field, where one is missing. The plugin's own stability promise covers filenames, JSONL field order and `verification.status`.
-- **Nondeterministic scans.** D8's rules 1 and 2 keep a missed finding from looking fixed and a shifted finding from looking new.
-- **Cost.** One confirmation covers every repository. `--effort` and the plugin's own scoping bound a scan, and `--import` avoids paying twice.
-- **Invoking the skill from inside the command may not return control.** The spike tests it, and `--import` is the fallback.
-- **The cost of the plugin's agents may be under-counted.** The spike tests it, and A fixes it if so.
-- **Two scans' pull requests editing one register.** `require-on-main` on `register.json` stops a run whose branch holds a stale copy (row B′). Because `register.py` is deterministic and idempotent, re-running the scan's record step on the merged default branch reproduces the merge.
-- **Disclosure.** SPECS repositories are private for real products. The bookstore demo's public SPECS are intended.
-- **Two reminders after a push.** The plugin's own push tip and `/implement`'s offer both appear. The docs say `--import` records a report made from the tip.
+| Risk | Mitigation | Residual |
+|---|---|---|
+| **A scan misses a real vulnerability.** Scans are nondeterministic, and no tool finds everything. | Change scans default to `high`, and `--verify-fixes` and whole-repository scans revisit code. The plugin's own advice applies: run it alongside static analysis, dependency scanning and code review, not instead of them. | **Inherent.** The register records what was found, never that nothing else is there, and its docs say so. |
+| **A finding looks fixed when it is not.** | D8 rule 2: only a covering **codebase** scan closes a finding, only once its file has changed, and never on absence alone. Change scans and unverified scans close nothing. | A codebase scan that misses a finding the code still has is the row above. |
+| **The plugin changes how it computes finding IDs.** | D8 rule 3: on a new `ID_VERSION`, findings are matched as possibly the same, confirmed in triage, and nothing is closed. | One triage pass with more questions than usual. |
+| **The plugin's output format changes.** It is pre-1.0 and updates itself. | No version pin, because a pin would disable `security-workflows` whenever the plugin moved past it. `register.py` checks every field it reads and stops with `SCAN_PRODUCTS_UNREADABLE`, naming the field, where one is missing. The plugin promises stable filenames, JSONL field order and `verification.status`. | Scans stop until `register.py` is updated: a loud failure, never a wrong register. |
+| **Two runs change one repository's register.** | Phase 0's pending-register check serialises runs per repository. Run records are written once and kept per run, and `register.json` is rebuilt from them, so a conflict in it is resolved by `register.py rebuild`. | A `security/` branch deleted without merging leaves follow-ups naming findings the default branch never received. D12 says they are withdrawn by hand. |
+| **Text planted in scanned code.** A finding's text is written from code that is not trusted. | D10: follow-ups and `/implement` prompts carry structured fields only. `register.md` quotes free text as scan output. E's agents read it as data. | People reading `register.md` still read model-written text, which is quoted and labelled. |
+| **Secrets copied into SPECS.** The plugin's redaction is best effort. | Phase 4 stops before copying when the scan reports a redaction failure, and the user cleans the files and records them with `--import`. SPECS repositories are private for real products. | A credential the redaction missed *without* reporting a failure. Treat SPECS access accordingly; the docs say so. |
+| **A human wrongly marks a real issue a false positive.** | The evidence must cite the `file:line` of the guard, and the false-positive log keeps it reviewable. A changed fingerprint on changed code sends it back to triage. | A wrong judgement with plausible evidence: the same judgement call any reviewer makes, now on record. |
+| **An accepted risk is forgotten.** | It must have an owner and a review-by date. Past that date it returns to triage, and the next-step offer names it. | None beyond someone ignoring the offer. |
+| **Cost.** | One confirmation covers every repository. The effort defaults are set per scan kind. `--verify-fixes` scans only changed files, and `--import` avoids paying twice. | A whole-repository `high` scan is expensive by choice. |
+| **Invoking the skill from inside the command may not return control.** | The spike tests it, with `--import` as the fallback. | — |
+| **The plugin's agents may be under-counted in cost.** | The spike tests it, and A fixes `session-cost.py` if so. | — |
+| **A leftover worktree after a crash.** | A fixed path prefix, a pointer in `resume.md`, and Phase 0's leftover-worktree check. | — |
+| **Two reminders after a push.** The plugin's push tip and `/implement`'s offer both appear. | The docs say a report made from the tip is recorded with `--import`. | Cosmetic. |
