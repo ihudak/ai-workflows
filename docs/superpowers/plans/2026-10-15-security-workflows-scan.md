@@ -448,6 +448,11 @@ EOF
 - [ ] **Step 5: The docs page and the design note.**
   - In `docs/commands/conformance.md`, rewrite each passage that grep finds (`merged code only`, `once its pull request has merged`) to say the Dev runs it before the merge, on the Epic's branch.
   - In `docs/superpowers/specs/2026-10-12-conformance-design.md`, prefix D5's cell with: "**Amended again 2026-10-15 (dev-workflows 4.28.0): an Epic run traces the Epic's branch before the merge, found by `workflows-core:implementation-format` §5's `unit-branch`, and the default branch after it; see `2026-10-15-security-workflows-scan-design.md` D18–D19.**"
+- [ ] **Step 5a: The deferred `/conformance` findings.** `docs/superpowers/to-fix.md` (merged from `main` on 2026-10-15) lists eight findings against `conformance.md`, C1–C8, deferred until this rework lands. Re-read each against the tree as this task leaves it.
+  - Fix each one that still stands, in this task.
+  - Mark each one the rework made moot, giving the reason.
+  - Delete every fixed or moot item from `to-fix.md` in this task's commit, as that file's own rule asks. Say in the commit message why each moot one was dropped.
+  - C1 (an Epic run stuck after a squash whose title was edited) and C2 (any later `[<key>]` commit counting as the merge) bear on `unit-branch`'s merged test as well. Where the fix belongs in `implementation-format` §5 rather than in `conformance.md`, say so in the report, and leave §5 to the controller.
 - [ ] **Step 6: GREEN.** `python3 "$S/check.py" "$AW" conformance | tail -1` → `conformance: 10 passed, 0 failed`. Then read Phase 0 to Phase 1 end to end. Every path an Epic run can take reaches a trace or a named stop.
 - [ ] **Step 7: Commit** with `feat(dev-workflows): /conformance's Epic run returns to before the merge, on the branch unit-branch finds; the merged test moves to implementation-format`, verifying the branch first.
 
@@ -508,7 +513,7 @@ Check a codebase for security vulnerabilities with Claude Security: $ARGUMENTS
        `SECURITY_USAGE: /security-workflows:scan needs one address — a key (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-7-01) or a repository path — at most one of --import <dir>, --triage and --verify-fixes, and --effort medium or high. Re-run '/security-workflows:scan <KEY | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort medium|high]' — <what was wrong>.`
      - **The effort default.** Write this sentence verbatim: "The effort defaults to `high` for a change scan — Claude Security's own advice for a feature-sized change — and to `medium` for a whole-repository scan or `--verify-fixes`."
      - **The run's role,** `run_role` (spec D3): `dev` for a key run without `--triage` or `--verify-fixes`, and for an `--import` with a key; `sec` otherwise. It is recorded as `--role` and passed to cost as `run_role`.
-  3. **`$SPECS_PATH`**, with `conformance.md` step 2's test and its `Set SPECS_PATH (you'll be prompted for the path)` array.
+  3. **`$SPECS_PATH`**, with `conformance.md` step 2's test and its `Set SPECS_PATH (you'll be prompted for the path)` array. Then the path the user types is re-asked until it names an existing directory, citing `workflows-core:escalation-rules`' *Required path environment variable unset* rule. `to-fix.md` D5 records that `/conformance` itself does not do this, so copy the rule, not the defect.
   4. **Resolve a key** with `resolve-address`, handling each status as `conformance.md` does. Then run `specs-preflight` once the key set is known; it is empty for a path. Carry `run_dir=$(mktemp -d -t security-workflows-run.XXXXXX)` for the run's scratch files.
   5. **The repository** (spec D5).
      - **A key** scans the repository this session is open in: `git rev-parse --show-toplevel` from the working directory, and its slug. Run `unit-branch` for it (`args: "implementation-format unit-branch"`), and carry its `state`, `branch`, `base`, `tip` and `after_merge` to Phase 1.
