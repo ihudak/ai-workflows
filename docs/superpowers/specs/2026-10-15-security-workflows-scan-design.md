@@ -1,6 +1,6 @@
 # `security-workflows`: record Claude Security scans in SPECS and route their fixes through `/implement` (sub-project A)
 
-Date: 2026-10-15. Status: approved. Amended five times.
+Date: 2026-10-15. Status: approved. Amended six times.
 
 1. **After the user's first review:**
    - effort defaults per scan kind;
@@ -27,6 +27,11 @@ Date: 2026-10-15. Status: approved. Amended five times.
    - the covering-scan test has two rules: a scope that names the file, or complete counts with `outside_components` 0;
    - `--effort low` is dropped, and a low-effort scan covers nothing;
    - `session-cost.py` reads a workflow's agents (D13).
+7. **On the review of `register.py`** (plan Task 3):
+   - closure evidence survives a squash merge and a deleted branch, through a *later* test that falls back to the merged test's subject leg, and a *changed* test on the file's recorded blob (D8 rule 2);
+   - an `ID_VERSION` change is judged per finding (D8 rule 3);
+   - a renumbering moves only the colliding record, and is reported once (D8 rule 5);
+   - records name a finding by its `origin`, never by its number alone (D7).
 
 Branch: `iv-gu/security-workflows-scan`.
 
@@ -163,7 +168,7 @@ PE — the whole PRD, after every Epic has merged:
   **A change scan is never a covering scan**, because it reports only flaws the change takes part in. Its silence about an older finding in a file it touched is no evidence.
 - **Plugin finding ID.** `claudeSecurityPluginFindingId`. Its `ID_VERSION:` prefix names the algorithm.
 - **`[SEC#n]`.** The register's own permanent finding ID, in the family's bracketed form, numbered per repository.
-- **Run record.** One file per run that changes the register, `security/<repo-slug>/runs/<seq>-<UTC-timestamp>.json`. It holds the run's scan (if any), its matches, its decisions, its role, and the `[SEC#n]` it allocated.
+- **Run record.** One file per run that changes the register, `security/<repo-slug>/runs/<seq>-<UTC>-<hash8>.json`. It holds the run's scan (if any), its matches, its decisions, its role, and the `[SEC#n]` it allocated.
 - **Register.** `register.json`, plus `register.md` rendered from it. Both are rebuilt from the run records and scan folders by every run, and nothing reads them back.
 - **Role.** `dev` for a run addressed by a key (the Dev's own pre-merge scan), and `sec` for any other run: a repository path, `--triage`, `--verify-fixes`, or an `--import` without a key.
 - **Awaiting security review.** A `false-positive` or `accepted-risk` decided in a `dev` run. It is effective at once, and confirmed or overruled by a later `sec` run.
@@ -312,7 +317,7 @@ If a later plugin or Claude Code version lets a caller choose the plugin agents'
 The register lives at `$SPECS_PATH/security/<repo-slug>/`:
 
 - **`scans/<UTC-timestamp>-<commit7>/`** holds the plugin's report, JSONL, SARIF, revision stamp and `patches/`, unchanged and never rewritten. The plugin's redaction is best effort; Phase 4 checks its outcome first.
-- **`runs/<seq>-<UTC-timestamp>.json`** holds one **run record** per run that changes the register: a scan, an import, a triage or a fix verification. A record holds:
+- **`runs/<seq>-<UTC>-<hash8>.json`** holds one **run record** per run that changes the register: a scan, an import, a triage or a fix verification. A record holds:
   - `seq`, `at`, `by`, `kind` and `role`;
   - the scan folder, if any;
   - the `[SEC#n]` it allocated;
@@ -337,7 +342,8 @@ Each finding records:
 
 - `id` (`[SEC#n]`), `plugin_id` and `plugin_id_version`;
 - `title`, `cwe` (the primary first), `severity` and `confidence`;
-- `path` and `line`, plus `first_seen` and `last_seen` as `{scan, commit}`;
+- `path` and `line`, plus `first_seen` and `last_seen` as `{scan, commit, date, blob, base}`: the commit's committer date, the git blob of the finding's file there, and the commit it shares with the default branch (the scan's `base`, from `git merge-base` with the default ref the command passes);
+- `origin`, `<scan_id>:<plugin_id>` of the scan that first recorded it. It never changes, and run records name the finding by it, so a renumbering never redirects a decision;
 - `reported_by[]` (scan ids) and `not_reported_by[]` (the covering scans that did not report it);
 - `units[]`, the keys it was raised for;
 - `status`, plus `owner` and `review_by` for an accepted risk, and `confirmed` for a false positive or an accepted risk;
@@ -378,19 +384,21 @@ stateDiagram-v2
 
 `register.py` applies these rules deterministically:
 
-1. **Matching.** A scan's finding matches a register finding whose `plugin_id` is equal, under the same `ID_VERSION`; it is the same finding, reported again. Otherwise, if a register finding with the same CWE in the same file lies within 10 lines, the scan's finding is reported as **possibly the same as `[SEC#n]`**, and triage asks. Candidates come only from the register. Otherwise the finding is new and takes the next `[SEC#n]`.
+1. **Matching.** A scan's finding matches a register finding whose `plugin_id` is equal, under the same `ID_VERSION`; it is the same finding, reported again. Otherwise, if a register finding with the same CWE in the same file lies within 10 lines, the scan's finding is reported as **possibly the same as `[SEC#n]`**, and triage asks. Candidates come only from the register. Otherwise the finding is new and takes the next `[SEC#n]`. Where two findings carry the reported plugin ID, after two branches each recorded it, both are reported again, so neither is judged absent.
 2. **A finding is never closed on absence alone, and never by a change scan.**
    - **Automatic closure.** A `fixing` finding becomes `fixed` only when all of these hold:
-     - a **covering scan**, at a commit descending from the finding's `last_seen.commit`, does not report it;
+     - a **covering scan** that is **later** than the finding's last sighting does not report it. Later means that its commit descends from `last_seen.commit`. For a finding raised for a unit, it may instead mean that the commit carries a squash of that unit's work: a commit whose subject holds `[<key>]` (D18's merged test, subject leg), dated no earlier than `last_seen.date`, not in the history of `last_seen.base`, and, where the last-seen commit is in the clone, not one of its ancestors. An earlier squash of the same unit is never later, whatever any clock said. A squash merge leaves the branch's commit outside the default branch's history, and a deleted branch leaves it outside clones that never fetched it;
      - it matches no possibly-same candidate in that scan;
-     - its file has changed between those two commits (`git diff --quiet <last_seen>..<scan> -- <path>` fails).
-   - **Proposed closure.** An `open`, `fix`, `reopened` or `accepted-risk` finding with the same evidence is proposed as fixed in triage, and changes only on a person's confirmation.
+     - its file has **changed** since: its blob at the scan's commit differs from `last_seen.blob`, or, where no blob was recorded, `git diff --quiet <last_seen>..<scan> -- <path>` fails.
+
+     A finding whose last sighting the clone cannot place is **unverifiable** for that scan, and the scan records nothing about it.
+   - **Proposed closure.** An `open`, `fix`, `reopened` or `accepted-risk` finding with the same evidence is proposed as fixed in triage, and changes only on a person's confirmation. So is a `fixing` finding that the scan is later than only through a squash, because a squash names the unit, not the fix: a squash of another part of the same unit can land after the branch was cut without holding the fix. Closure through ancestry stays automatic.
    - **No closure.** A finding absent while its file is unchanged gains a `not_reported_by` entry and nothing else.
    - **Change scans.** A change scan can add findings and re-report them, but it never adds a `not_reported_by` entry and never closes a finding.
    - **A file gone at the scan's commit.** An active finding whose file does not exist there (`git cat-file -e <scan>:<path>` fails) is proposed as fixed, whatever kind of scan ran. A moved file's finding comes back as a new one at its new path.
-3. **A change of `ID_VERSION` is not a mass event.** When a scan's `ID_VERSION` differs from the one a finding was recorded under, plugin IDs are not compared. The scan's findings are matched by rule 1's possibly-same test instead, triage asks about each match, and the scan closes nothing. Once a match is confirmed, the finding takes the new `plugin_id` and `plugin_id_version`.
-4. **Ancestry governs evidence; record order governs numbering.** A scan whose commit is an ancestor of a scan already recorded is kept as history. It adds `reported_by` entries, but moves no `last_seen`, closes nothing and never reopens a later `fixed` (`git merge-base --is-ancestor`). Numbers are allocated, and records replayed, in `(seq, at, file name)` order.
-5. **Numbers stay unique across machines.** Numbering skips every number allocated in a run record that another branch holds and this checkout lacks (D12). Two runs can still record at the same moment, before either has pushed. On the rebuild that first sees both, the later record's colliding allocation moves to the next free number, its own decisions follow it, and the run reports the move, naming the record and the follow-up lines that cite the old number. That is the only way a `[SEC#n]` ever changes.
+3. **A change of `ID_VERSION` is not a mass event.** When a scan's `ID_VERSION` differs from the one a finding was recorded under, plugin IDs are not compared. The scan's findings are matched by rule 1's possibly-same test instead, triage asks about each match. The scan neither closes such a finding nor adds a `not_reported_by` entry for it. Once a match is confirmed, the finding takes the new `plugin_id` and `plugin_id_version`. Findings already under the new version are judged as usual, so a version change never freezes the register.
+4. **Ancestry governs evidence; record order governs numbering.** A scan whose commit is an ancestor of a scan already recorded is kept as history. It adds `reported_by` entries, but moves no `last_seen`, closes nothing and never reopens a later `fixed` (`git merge-base --is-ancestor`). A recorded commit the clone lacks is passed over, and the scan's own commit must be present. Numbers are allocated, and records replayed, in `(seq, at, file name)` order.
+5. **Numbers stay unique across machines, and are never reused.** Numbering skips every number any record ever allocated, and every number allocated in a run record that another branch holds and this checkout lacks (D12). A scan that such a record already holds counts as recorded. Two runs can still record at the same moment, before either has pushed. On the rebuild that first sees both, the later record's colliding allocation moves to the lowest number above it that no record allocates and no earlier move has taken, so no third record moves and no later allocation moves it again, and its own decisions follow it. The run that first meets the move reports it, naming the record and the follow-up lines that cite the old number, and writes it into its own record, so it is reported once, from the number last reported. Two records that allocate one finding, through the same origin or the same plugin ID under one `ID_VERSION`, make one finding: the later allocation gives way the same way. That is the only way a `[SEC#n]` ever changes.
 6. **Unverified scans.** A scan whose stamp shows it unverified, or shows uncommitted changes in the scanned tree, is recorded and flagged. It can add findings, but it can never close one.
 7. **Idempotent.** Recording a scan already recorded (the same `scan_id`) changes nothing. A rebuild over the same records produces the same `register.json`, byte for byte, and `register.md` dates *review due* from the last run, never from the clock.
 
