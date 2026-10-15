@@ -6,7 +6,9 @@ Design authority: `docs/superpowers/specs/2026-08-31-specs-native-pipeline-desig
 
 **Written by `/implement`. Read by `/document` and `/release-notes`**, which hand the refs it records
 to `diff-summarizer`; and, for whether it holds a block (§1) or for the repositories its entries
-name, by `references/epic-picker.md`'s ● marker, `/ready`, `/specify` and `/epics`. §3's commit
+name, by `references/epic-picker.md`'s ● marker, `/ready`, `/specify` and `/epics`; and, for the
+branch that carries a unit's work and whether it has merged, by the consumers of §5's `unit-branch`,
+which §5 names. §3's commit
 convention is a separate thing with a wider writer set — all three of the commands that change code
 — and §3 says how each of them writes it.
 
@@ -61,8 +63,9 @@ append-only — and the picker's ● marker, which reads the Epic's own folder, 
 
 **Until that block is moved, the Epic reads as not implemented to everything Epic-level.**
 `/implement`'s picker marks it ◐ where its `design.md` stands and ○ where it does not, a ◐ row
-taking the default cursor; `/ready` derives its phase from an Epic folder holding no record; and an
-Epic-level `/document` or `/release-notes` reads none of its refs. **Population: every Epic
+taking the default cursor; `/ready` derives its phase from an Epic folder holding no record; an
+Epic-level `/document` or `/release-notes` reads none of its refs; and §5's `unit-branch` answers
+`none` for that Epic, so no consumer of it finds the Epic's branch. **Population: every Epic
 implemented under a PRD address before `dev-workflows` 4.1.2.** And where the PRD folder also holds
 a flat `specification.md` on a PRD that is not multi-component, or one the 0-Epic override built whole, a PRD-level `/ready` counts the block as the **broad PRD-level slice's
 own record** (on a multi-component PRD, `${CLAUDE_PLUGIN_ROOT}/references/components.md` §3, a PRD-folder block is what marks the PRD as built whole by the 0-Epic override, so `/ready` reads the PRD as that slice and counts the block toward it — a leftover block for an Epic is therefore moved before a multi-component PRD's readiness is read), the PRD folder's record being the slice's — which moves the slice to *In Progress*
@@ -95,7 +98,8 @@ commit or a fast-forward that commit is reachable from the base; after a squash 
 base holds a copy of the change rather than the commit, so once the branch is deleted no branch
 reaches it and it survives only while a clone still holds it — which is why `diff-summarizer` falls
 back to a key-commit search there, where its caller supplies keys — `/document` does; `/release-notes`
-does not, and there the element comes back unread. `diff-summarizer` accepts the branch or the commit, and recording
+does not, and there the element comes back unread. Whether a block's work has merged, by either
+route, is §5's merged test, and which branch carries it now is §5's `unit-branch`. `diff-summarizer` accepts the branch or the commit, and recording
 both is what makes the file survive branch cleanup; how it reads a commit that has already landed on
 the base is that agent's own rule.
 
@@ -366,3 +370,48 @@ message names the key is findable, no convention compels a human to follow one, 
 many commits it scanned — the non-merge commits it walked, `git -C <repo> rev-list --no-merges
 --count HEAD` — and how many matched**. A zero-match scan in a repository that has commits is
 a signal about the convention, not proof that no work happened.
+
+## 5. The unit's branch — `unit-branch`
+
+Three commands need to know which branch carries a unit's work in one repository, and what state that branch is in:
+
+- `/dev-workflows:implement`, to continue on it;
+- `/dev-workflows:conformance`, to trace it;
+- `/security-workflows:scan`, to scan it.
+
+Each runs this entry point for that, never a guess. The branch is the one this file records.
+
+**Inputs:**
+- `<repo>`, the clone;
+- `<repo-slug>`, its slug (`workflows-core:components` §1);
+- `<key>`, the unit's key;
+- this file, in the unit's own folder;
+- `<ref>`, the repository's default ref (`workflows-core:read-only-repos` §3).
+
+**Steps:**
+
+1. **The block.** Take the latest block whose `repo:` is `<repo-slug>`. Never take only the newest block overall, since a companion run in a second repository and a re-run in the same one each add a block. Where there is none, the state is `none`.
+2. **Merged?** Run the merged test below on that block. Where it passes, and the branch carries no commit `<ref>` lacks, the state is `merged`. The branch is `<branch>` or `origin/<branch>`, and the check applies only where it still resolves; `git -C <repo> log --oneline <ref>..<that ref>` must print nothing.
+3. **Where the branch is.**
+   - `git -C <repo> branch --show-current` prints `<branch>`: `checked-out`.
+   - Otherwise, `git -C <repo> rev-parse --verify --quiet refs/heads/<branch>` succeeds: `local`.
+   - Otherwise, `refs/remotes/origin/<branch>` resolves: `remote`.
+   - Otherwise: `missing`. The branch is gone, or was never pushed from the machine that ran `/implement`.
+
+**Output:** `{state, branch, base, commit, tip}`. `branch`, `base` and `commit` are the block's. `tip` is the commit `<branch>`, or else `origin/<branch>`, resolves to, or null.
+
+**A consumer works on the tip.** Review commits move the tip past the recorded commit, and a rebase moves it off. Neither is an error, and a consumer that reports what it scanned or traced names the tip.
+
+**Step 3 reads local refs only.** A run that needs `origin`'s current state fetches first, best effort, and says so.
+
+**The merged test.** A block of an `implementation.md` is **merged** where either holds:
+- its commit is an ancestor of the default branch (`git -C <repo> merge-base --is-ancestor <commit> <ref>`); or
+- a commit on the default branch made no earlier than that block carries `[<key>]` in its subject as a whole token, `<key>` being the key of the folder whose `implementation.md` holds the block (`git -C <repo> log <ref> --no-merges --since=<date> --format=%s`, matched as §4 matches a key).
+
+`<date>` comes from the block's own `## <YYYY-MM-DD> — /implement` heading, as `--since="<the day before that date> 00:00"`. Git fills a bare date with the current time of day, which would cut off a squash merged earlier on the same day, and the heading is the Dev's local date. Where the recorded commit resolves in the clone, that commit's committer date (`git -C <repo> show -s --format=%cI <commit>`) replaces it, being exact.
+
+A squash or a rebase keeps that subject, because `/dev-workflows:implement`'s pull-request title is its commit subject. The date keeps an earlier run's squash from standing in for a later run's unmerged work. A recorded commit that does not resolve — a squashed branch deleted before this clone fetched it — leaves the subject leg to show the merge.
+
+**A unit's work is merged** where, for **each** repository this file names, **the latest block that names that repository** is merged. That block's `branch` is the head of the pull request that carries the unit's work in that repository.
+
+**Consumers** are what `grep -rl 'args: "implementation-format unit-branch' plugins` lists. Each says what it does with each state.

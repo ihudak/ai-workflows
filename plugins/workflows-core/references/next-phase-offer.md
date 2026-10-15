@@ -9,7 +9,7 @@ commands so the routing graph and the offer rules live in ONE place (the same sh
 
 1. **Guidance-only** — the offer NAMES the next command(s); it NEVER auto-invokes anything. **One exception, operator-elected:** an option the operator picks from the offer itself may run the command it names, as a complete run of its own — today only `/product-workflows:brd-split`'s *Ground now*, which runs `/product-workflows:prd-ground` on the children the operator chooses, after the split's pull request has merged (that command's *Ground now — the operator-elected continuation*). Nothing runs unless that option is chosen, the merge stays the operator's act, and every other option of every offer stays guidance. It exists because the operator would otherwise retype a command whose arguments the run already holds, with no decision between the two runs that the offer could not ask.
 2. **Role-labeled** — it names the concrete command(s) for the next step, tagged with the owning
-   role (PM / PA / PE / Dev), even on a handoff — one person may wear several hats and just keep
+   role (PM / PA / PE / Dev / Security Engineer), even on a handoff — one person may wear several hats and just keep
    going. Never a bare "hand off to PA".
 3. **Adaptive to outcome** — a clean run points forward; a BLOCK / incomplete / cancelled run
    recommends resolving THAT first, not advancing.
@@ -236,10 +236,11 @@ array carries every option.
 - `/dev-workflows:ready <ADDRESS>` → **SUPPORTED** → `/dev-workflows:implement <ADDRESS>` (the same address); **PARTIAL / NOT-SUPPORTED**
   → resolve the named gaps, then re-run `/dev-workflows:ready`. *(Read-only verifier;
   not itself a linear pipeline node — an optional gate before build.)*
-- `/dev-workflows:implement <EPIC>` → first, where it answered a follow-up task its Phase 1 printed, each such task to tick once its change merges, and, where it recorded a change another code repository needs, the run from that repository, addressed to the unit the run implemented (the Epic itself, where it was one); then `/dev-workflows:conformance <EPIC>` once the Epic's code pull request has merged; then finish remaining Epics (breadth); once ALL Epics implemented and merged →
+- `/dev-workflows:implement <EPIC>` → first, where it answered a follow-up task its Phase 1 printed, each such task to tick once its change merges, and, where it recorded a change another code repository needs, the run from that repository, addressed to the unit the run implemented (the Epic itself, where it was one); then, before its pull request merges, `/dev-workflows:conformance <EPIC>` and then `/security-workflows:scan <EPIC>`, from the repository that run branched — the fixes from either return to `/dev-workflows:implement <EPIC>`, which continues on the Epic's branch (`workflows-core:implementation-format` §5); then finish remaining Epics (breadth); once ALL Epics implemented and merged →
   PE → `/dev-workflows:conformance <PRD>` → `/docs-workflows:document <PRD>` → `/docs-workflows:release-notes <PRD>`. *(Direct mode → no forward offer.)*
-- `/dev-workflows:conformance <EPIC>` (Dev, once its pull request has merged) → a `fix-code` decision → `/dev-workflows:implement <EPIC>`, then `/dev-workflows:conformance <EPIC>` again once that fix has merged; none → the remaining Epics, then the PE's `/dev-workflows:conformance <PRD>`.
+- `/dev-workflows:conformance <EPIC>` (Dev, before its pull request merges) → a `fix-code` decision → `/dev-workflows:implement <EPIC>`, which continues on the Epic's branch, then `/dev-workflows:conformance <EPIC>` again; none → `/security-workflows:scan <EPIC>`, then the pull request's review and merge; then the remaining Epics, then the PE's `/dev-workflows:conformance <PRD>`.
   `/dev-workflows:conformance <PRD>` (PE, every Epic merged) → a `fix-code` decision → `/dev-workflows:implement <EPIC>` (`<PRD>` where the PRD has no Epics); an `amend-document` decision → the command its note names; once settled → `/docs-workflows:document <PRD>`.
+- `/security-workflows:scan <EPIC>` (Dev, before its pull request merges) → a `fix` decision → `/dev-workflows:implement <EPIC>` (continues on the Epic's branch), then the pull request's review and merge; after the merge, `/security-workflows:scan <repo> --verify-fixes` (Security Engineer).
 - `/docs-workflows:document <PRD>` (PRD-level, after all Epics) → `/docs-workflows:release-notes <PRD>`. *(Doc-edit mode → no
   forward offer.)*
 - `/docs-workflows:release-notes <PRD>` (PRD-level) → leaf/closure: release note drafted; continue any pending

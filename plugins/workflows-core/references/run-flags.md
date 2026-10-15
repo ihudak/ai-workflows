@@ -100,7 +100,7 @@ Under `run_flags.skip_feedback`, the command's maintenance phase dispatches `wor
 1. **Resolve session artifacts** exactly as `cost-emission.md` §1 names them — restated here, in full, because this path must never load `cost-emission.md`:
    - **`<cwd-slug>`** — the absolute `cwd` with every `/` and `.` replaced by `-`.
    - **Main transcript** — the newest `*.jsonl` directly under `~/.claude/projects/<cwd-slug>/`; its basename minus `.jsonl` is `session_id`.
-   - **Subagents dir** — `~/.claude/projects/<cwd-slug>/<session_id>/subagents/`.
+   - **Subagents dir** — `~/.claude/projects/<cwd-slug>/<session_id>/subagents/` (holding a `Workflow` run's agents under its `workflows/<run-id>/`).
 2. **Advance the checkpoint, and nothing else:**
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/session-cost.py" \

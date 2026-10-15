@@ -1,7 +1,7 @@
 # Session Cost Emission — Shared Reference
 
-Single source of truth for the plugin family's session-cost subsystem. Twenty-seven of
-the twenty-nine commands with an §7 row cite this file from their terminal
+Single source of truth for the plugin family's session-cost subsystem. Twenty-eight of
+the thirty commands with an §7 row cite this file from their terminal
 "Session cost" phase and execute its steps inline through the single `emit-cost`
 entry point (§11). The other two — `/prompt-brainstorm` and `/prompt-grill-me` —
 cede the session before such a phase could run, call `emit-cost` never, and
@@ -64,7 +64,8 @@ Derive from `cwd` and the current session (Claude Code's project-slug rule):
   `~/.claude/projects/<cwd-slug>/`. Its basename minus `.jsonl` is `session_id`.
 - **`<sid8>`** — the first 8 characters of `session_id`.
 - **Subagents dir** — `~/.claude/projects/<cwd-slug>/<session_id>/subagents/`
-  (holds `agent-*.jsonl` with their own Sonnet/other `usage` + `model`).
+  (holds `agent-*.jsonl` with their own Sonnet/other `usage` + `model`, and a
+  `Workflow` run's agents, in the same format, under its `workflows/<run-id>/`).
 
 ## 2. Cost computation (`session-cost.py`)
 
@@ -87,7 +88,8 @@ The helper reads the main transcript **from the checkpoint's line offset
 forward, skipping JSON-parsing of every line before that offset** — I/O still
 scans the whole file (the transcript can be tens of MB), but the offset saves
 re-parsing lines already processed by a prior command — plus every
-`subagents/agent-*.jsonl` entry with `timestamp` in `(last_ts, now]`, groups
+`subagents/agent-*.jsonl` and `subagents/workflows/<run-id>/agent-*.jsonl` entry
+with `timestamp` in `(last_ts, now]`, groups
 `usage` by `model`, applies the price table, and prints JSON to stdout:
 
 ```json
@@ -364,7 +366,7 @@ that model exactly as before).
 
 ## 7. Attribution (phase / role / keys)
 
-Fixed per-command labels, with eight inferred exceptions:
+Fixed per-command labels, with nine inferred exceptions:
 
 | Command | phase | role |
 |---------|-------|------|
@@ -381,6 +383,7 @@ Fixed per-command labels, with eight inferred exceptions:
 | `/create-ard` | architecture | pa |
 | `/frames` | **inferred** | **inferred** |
 | `/conformance` | **inferred** | **inferred** |
+| `/scan` | **inferred** | **inferred** |
 | `/brd-intake` | brd-to-prd | pm |
 | `/prd-ground` | brd-to-prd | pm |
 | `/brd-split` | brd-to-prd | pm |
@@ -446,6 +449,12 @@ carrier, as `/frames`'s is. An Epic folder -> `phase: conformance`, `role: dev`
 the container's key; an address above PRD level is one only a PE's run aims at,
 since an Epic run's address is an Epic.
 
+**`/scan` inference (whose run it is).** The discriminator is the run's role, which cannot be read from disk: the run record that carries it (`${CLAUDE_PLUGIN_ROOT}/references/security-register-format.md` §2's `role`) is written only by a run that changed the register. So `/security-workflows:scan` passes it as `run_role` (§11), as the feedback commands pass `target_command`.
+
+- **`run_role: dev` -> `phase: security-audit`, `role: dev`** (a run addressed by a key, the Dev's pre-merge scan).
+- **`run_role: sec` -> `phase: security-audit`, `role: sec`** (a repository, `--triage` or `--verify-fixes` run, the Security Engineer's).
+- **`run_role` missing, or any other value -> `phase: security-audit`, `role: n/a`.** It is a caller error, and the role is recorded as absent rather than guessed.
+
 **`/diagnose-session` passes `target_command: n/a` on every run**, so the bullet below for a target of `n/a` charges it to `plugin-feedback`/`n/a`: a diagnosis is about the plugin itself, whichever command it reads, so it inherits nothing.
 
 **`/prompt`, `/feedback`, `/prompt-brainstorm` and `/prompt-grill-me` inference
@@ -475,17 +484,21 @@ not attempt to infer it from anything else.
 - **Target is `/frames` or `/conformance` -> resolve ITS inference first**, then inherit
   the result, exactly as for `/release-notes`. One level only. Where no folder resolves
   — which for either means the run never started — treat it as the `n/a` case.
+- **Target is `/scan` -> `phase: security-audit`, `role: n/a`.** Its inference reads
+  `run_role`, which lives in the scan run's own context and reaches no feedback
+  command, so the phase is inherited and the role is recorded as absent rather than
+  guessed.
 - **Target is `/feedback`, `/prompt`, `/prompt-brainstorm`, `/prompt-grill-me` or `/diagnose-session` -> treat as `n/a`.**
   A correction to a correction, or to a diagnosis, has no lifecycle phase of its own, and inheriting
   from an inferred row would regress without a base case. This is the one rule the
   two deferring commands share with the two immediate ones: what a run inherits is
   decided by its `target_command`, never by which of the four is asking.
 
-`role: n/a` is **not a fifth role** — it is the absence of one, recorded rather
+`role: n/a` is **not one more role** — it is the absence of one, recorded rather
 than guessed, and aggregation should treat it as unattributed rather than folding
 it into `dev`.
 
-**`/vuln`, `/upgrade`, `/docs-profile`, `/docs-serve`, `/harvest-decisions` and `/promote-decisions` emit no cost entry, and that is a decision about what the number is for.** A cost entry measures **AI investment in a product increment**, and the rule is: *a cost entry attaches to a run that advances a PRD- or BRD-scoped artifact — or builds the documentation repository a product is documented in, which is the `docs-workflows` family's unit of attribution and which §8 rung 2 files per docs repo.* That second clause is what `/docs-init` and a standalone `/docs-brand` satisfy, and why they have §7 rows. A CVE remediation, a library version bump, a docs-profile refresh, a dev-server start and a decision harvest into the team architecture knowledge base, or the promotion of its records, advance none — they are noise against a PRD, a BRD or a docs repository, and a metric that averages the two answers a question nobody asked.
+**`/vuln`, `/upgrade`, `/docs-profile`, `/docs-serve`, `/harvest-decisions` and `/promote-decisions` emit no cost entry, and that is a decision about what the number is for.** A cost entry measures **AI investment in a product increment**, and the rule is: *a cost entry attaches to a run that advances a PRD- or BRD-scoped artifact — or builds the documentation repository a product is documented in, which is the `docs-workflows` family's unit of attribution and which §8 rung 2 files per docs repo — or records a code repository's security findings in the register `/security-workflows:scan` keeps for it.* That second clause is what `/docs-init` and a standalone `/docs-brand` satisfy, and why they have §7 rows; the third is what a `/scan` run with no key satisfies. A CVE remediation, a library version bump, a docs-profile refresh, a dev-server start and a decision harvest into the team architecture knowledge base, or the promotion of its records, advance none — they are noise against a PRD, a BRD or a docs repository, and a metric that averages the two answers a question nobody asked.
 
 **This is restated here because it lived only on the command pages.** `docs/commands/vuln.md` and
 `docs/commands/upgrade.md` have carried the reason all along — *"runs outside the PRD pipeline: no
@@ -630,13 +643,13 @@ and acceptable.
 ## 11. Caller contract — `emit-cost`
 
 One entry point, called by the
-twenty-seven commands that measure themselves (§1) and by
+twenty-eight commands that measure themselves (§1) and by
 whichever of them replays a §13 record (never by the two that defer — they call
 nothing). Every caller supplies `command`, `phase`, `role` (or the
-`inferred` marker — `/release-notes`, `/frames`, `/conformance`, the four feedback commands and
+`inferred` marker — `/release-notes`, `/frames`, `/conformance`, `/scan`, the four feedback commands and
 `/diagnose-session`), `key` (or `null`), `source`, and `plugin_version`; the four
 feedback commands and `/diagnose-session` additionally supply `target_command` — `/prompt` and `/feedback` directly, `/prompt-brainstorm`
-and `/prompt-grill-me` through the §13 record a replay reads it from. `emit-cost` does the rest; it NEVER commits, NEVER writes
+and `/prompt-grill-me` through the §13 record a replay reads it from — and `/scan` additionally supplies `run_role`. `emit-cost` does the rest; it NEVER commits, NEVER writes
 into a docs/code repo or the current working directory, where it is not the specs repository, and NEVER fails the
 run. The cost entry is committed later, once, by the run's terminal
 `commit-artifacts` step (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md`
@@ -645,7 +658,7 @@ run. The cost entry is committed later, once, by the run's terminal
 Inputs:
 - `command` — the exact slash-command name (e.g. `/implement`,
   `/document (keyed mode)`, `/document (direct mode)`).
-- `phase`, `role` — the §7 labels, or the `inferred` marker for the eight
+- `phase`, `role` — the §7 labels, or the `inferred` marker for the nine
   commands §7 resolves. They resolve from **different** data, and each must
   therefore be given it:
   - `/release-notes` — resolved from `specification.md` / `design.md` presence
@@ -662,6 +675,8 @@ Inputs:
     that deferred.
   - `/diagnose-session` — resolved from `target_command`, which it always passes as
     `n/a`, so it lands on `plugin-feedback`/`n/a`.
+  - `/scan` — resolved from `run_role`, which **cannot** be re-derived from disk
+    (§7's `/scan` inference). It is passed in, like `target_command`.
 - `target_command` — **required for all four feedback commands and for `/diagnose-session`** (supplied
   directly by `/prompt`, `/feedback` and `/diagnose-session`, which always passes `n/a`; read out of the §13.1 record when a
   replay builds the entry for `/prompt-brainstorm` or `/prompt-grill-me`). The
@@ -672,6 +687,10 @@ Inputs:
   field, so the two never disagree. Omitting it is a caller error: §7 has no other
   source for it, and the entry would silently fall back to
   `plugin-feedback`/`n/a`, quietly mis-attributing every correction.
+- `run_role` — **required for `/scan`**, and supplied by `/security-workflows:scan`
+  directly: `dev` for a run addressed by a key, `sec` for any other, the `role` the
+  run's record carries (`${CLAUDE_PLUGIN_ROOT}/references/security-register-format.md`
+  §2). Omitting it is a caller error, which §7 records as `role: n/a`.
 - `key` (or `null`), `source` (`specs | directory | none`).
 - `plugin_version` — the version of **the plugin whose command ran**: the one that ships the command named in `command:`, read from **that plugin's** `.claude-plugin/plugin.json` (`python3 -c "import json;print(json.load(open('<path>'))['version'])"`). It is **supplied by the caller and never resolved here**, and the distinction is not pedantic: this reference is read through the loader skill, so a `${CLAUDE_PLUGIN_ROOT}` written *in this file* resolves to the plugin that **ships this reference**, and a run of a sibling's command would file its entry under `workflows-core`'s version — named outright, because every reader of this sentence is in a different plugin from the one it is about. Each calling command already reads the value from its own `${CLAUDE_PLUGIN_ROOT}`, which resolves correctly there, and passes it in. Two things make the emitter's convenience the wrong trade. The field sits beside `command:`, so an entry pairing one plugin's command with another plugin's version describes no artifact that ever shipped. And every entry already on disk carries the version series of the plugin whose command ran — silently re-basing that series onto a different counter destroys exactly the comparability the field exists for. A §13 replay uses the **record's own** `plugin_version` (§13.1), never the replaying run's.
 
@@ -826,7 +845,7 @@ exists to catch.
 
 ### 13.3 The replay
 
-`emit-cost` step 2 (§11). **No deferred file ⇒ nothing changes**; the twenty-seven
+`emit-cost` step 2 (§11). **No deferred file ⇒ nothing changes**; the twenty-eight
 commands that measure themselves (§1) never take this path.
 
 Otherwise the run passes one `--claim <command>` per deferred record, oldest

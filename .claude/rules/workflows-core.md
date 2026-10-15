@@ -15,15 +15,15 @@ Split out for the same budget: the `finding-triage` authority → `.claude/rules
 
 ## Plugin facts
 
-`workflows-core` carries thirty-seven reference files (`find plugins/workflows-core/references -type f | wc -l`), ten agents (`adr-drafter`, `architecture-grounder`, `code-scanner`, `defect-reporter`, `doc-fixer`, `docs-grounder`, `frame-describer`, `impl-maintenance`, `promotion-scout`, `session-analyst`; `ls plugins/workflows-core/agents | wc -l`), two bundled skills (`model-routing` and the `reference` loader), the cost, status-line, session-branch and bounded-run scripts under `scripts/` (with the command-namespace map beside them), and seven family-meta commands — `/feedback`, `/prompt`, `/prompt-brainstorm`, `/prompt-grill-me`, `/statusline`, `/frames` and `/diagnose-session` (`ls plugins/workflows-core/commands | wc -l`).
+`workflows-core` carries thirty-eight reference files (`find plugins/workflows-core/references -type f | wc -l`), ten agents (`adr-drafter`, `architecture-grounder`, `code-scanner`, `defect-reporter`, `doc-fixer`, `docs-grounder`, `frame-describer`, `impl-maintenance`, `promotion-scout`, `session-analyst`; `ls plugins/workflows-core/agents | wc -l`), two bundled skills (`model-routing` and the `reference` loader), the cost, status-line, session-branch and bounded-run scripts under `scripts/` (with the command-namespace map beside them), and seven family-meta commands — `/feedback`, `/prompt`, `/prompt-brainstorm`, `/prompt-grill-me`, `/statusline`, `/frames` and `/diagnose-session` (`ls plugins/workflows-core/commands | wc -l`).
 
 It ships two hooks — `notify-done` and `test-notify`, both session-wide rather than command-scoped, which is why they live in `workflows-core`: every family plugin declares `workflows-core`, so one copy serves everyone.
 
-The host installs `workflows-core` alongside any of the three family plugins that name it, and every pipeline command loads at least one core reference in its first phase — the reason the tier-1 dependency rule is what the family wants.
+The host installs `workflows-core` alongside any of the four family plugins that name it, and every pipeline command loads at least one core reference in its first phase — the reason the tier-1 dependency rule is what the family wants.
 
 ## Docs tree
 
-`workflows-core` carries 18 pages (`find plugins/workflows-core/docs -name '*.md' | wc -l`) — `docs/README.md` (the index), `getting-started.md`, `workflow.md`, `family-map.md` and `roles-and-phases.md`, 7 command pages under `docs/commands/` and 6 reference pages under `docs/reference/`.
+`workflows-core` carries 19 pages (`find plugins/workflows-core/docs -name '*.md' | wc -l`) — `docs/README.md` (the index), `getting-started.md`, `workflow.md`, `family-map.md` and `roles-and-phases.md`, 7 command pages under `docs/commands/` (`ls plugins/workflows-core/docs/commands | wc -l`) and 7 reference pages under `docs/reference/` (`ls plugins/workflows-core/docs/reference | wc -l`).
 
 ## Model routing reference
 
