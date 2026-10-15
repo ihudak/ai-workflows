@@ -1,6 +1,6 @@
 # `security-workflows`: record Claude Security scans in SPECS and route their fixes through `/implement` (sub-project A)
 
-Date: 2026-10-15. Status: approved. Amended six times.
+Date: 2026-10-15. Status: approved. Amended seven times.
 
 1. **After the user's first review:**
    - effort defaults per scan kind;
@@ -32,6 +32,10 @@ Date: 2026-10-15. Status: approved. Amended six times.
    - an `ID_VERSION` change is judged per finding (D8 rule 3);
    - a renumbering moves only the colliding record, and is reported once (D8 rule 5);
    - records name a finding by its `origin`, never by its number alone (D7).
+8. **On the review of the `workflows-core` changes** (plan Task 4):
+   - `unit-branch`'s merged state tests the branch's tip by content, against the commit the merge landed in, and reports `after_merge` for a branch that went on after its merge (D17, D18);
+   - the register's derived files are unset `-merge`, so a session-branch merge keeps one rebuild whole (D12);
+   - a keyless scan's cost entry is filed per code repository, never left pending (D13).
 
 Branch: `iv-gu/security-workflows-scan`.
 
@@ -481,7 +485,7 @@ It is written only when the run resolved a key, and it is bookkeeping (D12).
 - `<specs-root>/security/*/**`, the register: a directory shape, where `*` is the one-segment repository slug;
 - `<specs-root>/{specs|specifications|vis}/**/_security.md`, the unit note: an appended single file.
 
-`session-branch.py`'s copy of the classifier gains the same two, character for character, as its self-test requires. Its git attributes give `**/_security.md` the `union` merge driver. The register's files need none: a scan folder and a run record each live at a path no other run writes, and the derived files are rebuilt by every run.
+`session-branch.py`'s copy of the classifier gains the same two, character for character, as its self-test requires. Its git attributes give `**/_security.md` the `union` merge driver. A scan folder and a run record need none, because each lives at a path no other run writes. The derived `register.json` and `register.md` are unset `-merge`: §8.2 merges with `-X ours`, which would otherwise splice two rebuilds into a register neither produced. Unset, a merge keeps this run's whole rebuild, and the next run rebuilds from every record anyway.
 
 **A protected default branch.** Where the specs default branch takes no push, `specs-repo-git` §8's session-branch mode carries the register on the user's `session/<identity>` branch, and it reaches the default branch through that branch's pull request.
 
@@ -498,8 +502,9 @@ It is written only when the run resolved a key, and it is bookkeeping (D12).
 
 - **Cost.**
   - `cost-emission` §7 gains the row `/scan` → `**inferred**` / `**inferred**`, and the command passes `emit-cost` `command: /scan`, `phase: inferred`, `role: inferred`.
-  - §7's inference rule resolves the phase to `security-audit`, and the role from the run's role (D3): `dev` for a key run, `sec` otherwise. That is how `/conformance` resolves its role from where its folder sits.
+  - §7's inference rule resolves the phase to `security-audit`, and the role from the run's role (D3): `dev` for a key run without `--triage` or `--verify-fixes`, `sec` otherwise. That is how `/conformance` resolves its role from where its folder sits.
   - Check 8 matches only bare `/name` rows, which is why the row reads `/scan`, as `/release-notes` stands for `/docs-workflows:release-notes`.
+  - A key run files its entry under the unit's folder, as every keyed run does. A keyless run, on a repository path, never acquires a key, so it never waits in §9's pending queue. It files per code repository under `$SPECS_PATH/security/<repo-slug>/`, through §8's second rung, as the keyless docs runs file per docs repository.
   - `command-namespaces.json` gains `"security-workflows": ["scan"]`.
   - The `roles-and-phases` pages describe the `sec` role and the `security-audit` phase.
   - The cost line covers the plugin's agents. The spike showed that `session-cost.py` did not count them: a `Workflow` run's agents write their transcripts under `subagents/workflows/<run-id>/`, which it did not read. Fixing it is part of A, because a cost line that leaves out the most expensive part is wrong, not merely partial. In the spike, five agents and ~1.73M tokens went uncounted.
@@ -588,6 +593,7 @@ The change: on a keyed run, `/implement` runs `unit-branch` (D18) for its reposi
 
   Where HEAD is on the default branch, *Branch from current position* is the same as the fresh start, and the array drops it.
 - **`merged`, `missing` or `none`:** nothing changes from today.
+- **`checked-out`, `local` or `remote` with `after_merge`** (D18): the pull request has merged and the branch has gone on since. No pull request is open for the work to join, so the question is today's three-option one.
 
 **Continuing, or switching and continuing,** skips step 5's branch creation, so the run commits on `<branch>`. `dev-workflows:code-handoff` already treats a branch with an open pull request as ordinary: §2.6 probes for one first, the push updates it, and §3.1's *pushed to existing PR* row reports it. The run appends its own `implementation.md` block, naming the same branch and the new commit.
 
@@ -602,7 +608,7 @@ The answer is never guessed. The branch is the one named by the latest block for
 | State | When |
 |---|---|
 | `none` | The unit's `implementation.md` has no block for this repository |
-| `merged` | The block passes the **merged test**, and the branch, where it still resolves, carries no commit the default branch lacks |
+| `merged` | The block passes the **merged test** at a default-branch commit M, and the branch, where it still resolves, adds nothing to M or to the default branch's head (`git merge-tree --write-tree` prints that commit's own tree) |
 | `checked-out` | HEAD is the branch |
 | `local` | The branch exists locally, and HEAD is elsewhere |
 | `remote` | The branch exists only as `origin/<branch>` |
@@ -610,11 +616,13 @@ The answer is never guessed. The branch is the one named by the latest block for
 
 It also returns `branch`, `base`, the recorded `commit`, and the branch's current `tip` where it resolves. **Consumers use the tip.** Review commits move it past the recorded commit, which is normal, not an error.
 
-**The merged test moves here from `/conformance`**, word for word:
+**The merged test moves here from `/conformance`**, with its substance intact:
 - the block's commit is an ancestor of the default branch; or
 - a default-branch commit made no earlier than the block carries `[<key>]` as a whole token in its subject, which a squash keeps.
 
 `/conformance` cites it instead of keeping its own copy, for its PRD run as well as its Epic run. That leaves one definition of "merged" in the family.
+
+M is `<ref>` where the ancestry leg passed, and the newest `[<key>]`-subject commit where only the subject leg did. The tip test matters after a squash or a rebase, which leave the branch's own commits outside the default branch: without it, a Dev's surviving local branch would read as an open pull request. A content test reads a squash whose context shifted as merged, where patch-id tests do not. Where the local branch is an ancestor of `origin/<branch>`, the remote one is tested, so a stale local branch reads merged too. A rebase whose review line the default branch later rewrote reads as `after_merge`, which only costs the Dev a new branch. So does a stale local branch whose `origin/<branch>` is gone, where review commits only `origin` held changed what the branch wrote: the shape cannot be told apart, and it too only costs a new branch. Where the local branch is behind `origin/<branch>`, the tip is `origin`'s. A consumer that reads at a ref reads it, and one that works in the branch fast-forwards the branch to it first, saying so. Commits made on the branch after its pull request merged make it read unmerged again. The output's `after_merge` is true exactly then: the merged test passed, and the tip adds work. A consumer that needs to know whether a pull request is still open reads it (D17).
 
 ### D19. `/conformance`'s Epic run returns to before the merge
 

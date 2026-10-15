@@ -396,6 +396,8 @@ EOF
 
     Where HEAD is on `<base>`, *Branch from current position* is the same as the fresh start: drop it, leaving three options. *Switch to `<branch>` and continue* runs `git switch <branch>`, which creates the local branch from `origin/<branch>` where only that exists.
   - **`merged`, `missing` or `none`**, or a direct run: the existing bullets, unchanged. Their three-option question stays verbatim for a branch that is not the unit's own.
+  - **`after_merge: true`**, whatever the state: the pull request has merged and the branch has gone on since, so no pull request is open for the work to join. The existing bullets apply, unchanged, as for `merged`. This keeps the two arrays above true.
+  - **Where the tip is `origin/<branch>`'s and `<branch>` is behind it** (§5): *Continue on `<branch>`* first runs `git -C <repo> merge --ff-only origin/<branch>` and says so; *Switch to `<branch>` and continue* does the same after the switch.
   - Add the bullet **Continue on `<branch>`** (both continue options): step 5 is skipped, and the run commits on `<branch>`. `code-handoff` §2.6 already probes for an open pull request and finds the one this branch has, so §2.5's push updates it, and §3.1's *pushed to existing PR* row reports it. The run's `implementation.md` block names the same branch.
 - [ ] **Step 3: Read Phase 4.6 and Phase 5's `### Branch` section** against the skipped step 5. Say in `### Branch` that the run continued on the unit's branch and its open pull request. Change nothing else.
 - [ ] **Step 4: The docs page.** In `plugins/dev-workflows/docs/commands/implement.md`, add the question to its branch section, with one sentence: a follow-up for an Epic whose pull request is open (a security fix from `/security-workflows:scan`, or any other) joins that pull request instead of opening a second one.
@@ -426,8 +428,7 @@ EOF
   - **The heading** becomes "**(c) The code — the Epic's branch, or each repository's default branch**".
   - **The merged test.** Replace the paragraph from "**The merged test.**" to "…that block's `branch` is the head of the pull request that carries the unit's work in that repository." with one sentence: **The merged test**, and when **a unit's work is merged**, are `workflows-core:implementation-format` §5's (`Skill(skill: "workflows-core:reference", args: "implementation-format unit-branch")`). Keep the sentence after it ("A repository with no clone, or no `<ref>` … not traced"), adjusted to say "on an Epic run, its branch as not traced".
   - **The `Epic run.` bullet.** Replace it with: for each repository the Epic's `implementation.md` names, run `unit-branch`, after the clone's fetch in (a), and trace by its state:
-    - `checked-out` or `local` → `<branch>`'s tip, read at the ref, never switched;
-    - `remote` → `origin/<branch>`;
+    - `checked-out`, `local` or `remote` → the tip `unit-branch` returns (which is `origin/<branch>`'s where the local branch is behind it), read at the ref, never switched. Where `after_merge` is true, the report's *Scope* says the Epic's pull request has merged and the branch has gone on since, so the trace covers the merged work and what followed it;
     - `merged` → the default branch, as before.
   - **Where every repository is `none`,** stop:
 
@@ -510,7 +511,7 @@ Check a codebase for security vulnerabilities with Claude Security: $ARGUMENTS
   3. **`$SPECS_PATH`**, with `conformance.md` step 2's test and its `Set SPECS_PATH (you'll be prompted for the path)` array.
   4. **Resolve a key** with `resolve-address`, handling each status as `conformance.md` does. Then run `specs-preflight` once the key set is known; it is empty for a path. Carry `run_dir=$(mktemp -d -t security-workflows-run.XXXXXX)` for the run's scratch files.
   5. **The repository** (spec D5).
-     - **A key** scans the repository this session is open in: `git rev-parse --show-toplevel` from the working directory, and its slug. Run `unit-branch` for it (`args: "implementation-format unit-branch"`), and carry its `state`, `branch`, `base` and `tip` to Phase 1.
+     - **A key** scans the repository this session is open in: `git rev-parse --show-toplevel` from the working directory, and its slug. Run `unit-branch` for it (`args: "implementation-format unit-branch"`), and carry its `state`, `branch`, `base`, `tip` and `after_merge` to Phase 1.
      - Where the state is `none`, stop:
 
        `SECURITY_NO_IMPLEMENTATION: <KEY>'s implementation.md names no block for <repo-slug>, the repository this session is open in — it names <slugs, or 'nothing'>. Run '/security-workflows:scan <KEY>' from one of those repositories, or '/security-workflows:scan <repo-path>' for a whole-repository scan.`
@@ -538,8 +539,8 @@ Check a codebase for security vulnerabilities with Claude Security: $ARGUMENTS
      - Write that `--enforce-model` reaches this run's own dispatches only, never Claude Security's agents, which run on the session model, and that the routing record says so.
 - [ ] **Step 4: `## Phase 1 — Scope`.**
   - **A key**, by `unit-branch`'s state:
-    - **`checked-out`:** scan the branch's tip in place. A dirty tree stops for the user to commit or stash, because a change scan reads committed changes only. Where the tip differs from the recorded commit, say so in the confirmation.
-    - **`local` or `remote`**, on a clean tree: ask `choices: ["Switch to <branch> (Recommended)", "Cancel"]`, then `git switch <branch>`. A read-only mount skips it, with the reason.
+    - **`checked-out`:** scan the branch's tip in place. A dirty tree stops for the user to commit or stash, because a change scan reads committed changes only. Where the tip is `origin/<branch>`'s and the local branch is behind it, run `git merge --ff-only origin/<branch>` first and say so. Where the tip differs from the recorded commit, say so in the confirmation. Where `after_merge` is true, say that the pull request has merged and the branch has gone on since, so the change scan reads the work that followed the merge as well as the work already merged.
+    - **`local` or `remote`**, on a clean tree: ask `choices: ["Switch to <branch> (Recommended)", "Cancel"]`, then `git switch <branch>`, and, where the tip is `origin/<branch>`'s and the local branch is behind it, `git merge --ff-only origin/<branch>`, saying so. A read-only mount skips it, with the reason.
     - **`merged`:** stop:
 
       `SECURITY_EPIC_MERGED: <KEY>'s work in <repo-slug> has merged into <default> — a change scan has nothing left to diff. Scan the repository with '/security-workflows:scan <repo-path>', or close fixes with '/security-workflows:scan <repo-path> --verify-fixes'.`
@@ -4278,15 +4279,19 @@ $SPECS_PATH/security/<repo-slug>/
                                      the SARIF, the revision stamp, and patches/ where patches were made
   runs/<seq>-<UTC>-<hash8>.json      one run record per run that changed the register; <seq> has four digits,
                                      and <hash8> is the start of the record's own sha256, so two records never share a name
-  register.json                      the folded state: derived, never edited, never read back
+  register.json                      the folded state: derived, never edited, never read back as a run's state
   register.md                        rendered from it for people to read: derived, never edited
+  dev-workflows/cost/<sid8>.md       a keyless run's session-cost entry (workflows-core:cost-emission §8):
+                                     beside the register, never part of it
 ```
 
-**The run records and the scan folders are the source of truth.** Every run rebuilds `register.json` and `register.md` from them with `register.py rebuild`, replaying the records in `(seq, at, file name)` order. Nothing reads the derived files back, so a stale or conflicted copy is harmless until the next rebuild overwrites it.
+`$SPECS_PATH/security/` belongs to the register and to those cost entries, and holds nothing else. A team's own security documents go elsewhere in the specs tree: `workflows-core:specs-repo-git` §2.1's shape commits everything in a subdirectory of `security/` as bookkeeping.
+
+**The run records and the scan folders are the source of truth.** Every run rebuilds `register.json` and `register.md` from them with `register.py rebuild`, replaying the records in `(seq, at, file name)` order. No run reads the derived files back as its state, because `register.py` rebuilds them from the records every time. They are for people and for the readers §6 names, so a stale or conflicted copy is harmless until the next rebuild overwrites it.
 
 A rebuild needs no git. Every status change is a decision in a record, the automatic ones included, together with the `not_reported_by` entries and whether the scan was an ancestor. Computing those needed git on the code repository when the run recorded them; the replay does not.
 
-**The register is bookkeeping.** Its files, and a unit's `_security.md`, are among `workflows-core:specs-repo-git` §2.1's bounded paths, so `commit-artifacts` commits and pushes them with the run's other session files. They are never handed off by pull request. Where the default branch takes no push, §8's session-branch mode carries them on the user's session branch. No run waits on another run's register changes.
+**The register is bookkeeping.** Its files, and a unit's `_security.md`, are among `workflows-core:specs-repo-git` §2.1's bounded paths, so `commit-artifacts` commits and pushes them with the run's other session files. They are never handed off by pull request. Where the default branch takes no push, that reference's §8 session-branch mode carries them on the user's session branch. No run waits on another run's register changes.
 
 ## 2. The run record
 
@@ -4296,7 +4301,7 @@ One JSON object per run, with these fields:
 - `at`: ISO-8601 UTC.
 - `by`: the specs repository's git `user.name`.
 - `kind`: `scan`, `import`, `triage` or `verify`.
-- `role`: `dev` for a run addressed by a key (the Dev's pre-merge scan, or an import for a unit), `sec` for any other run.
+- `role`: `dev` for a key run without `--triage` or `--verify-fixes` (the Dev's pre-merge scan, or an `--import` for a unit); `sec` otherwise.
 - `unit`: the key the run was addressed by, or `null`.
 - `scan`: the scan the run recorded, or `null` on a triage. It holds `folder`, `id`, `commit`, `date` (the commit's committer date), `base` (the commit it shares with the default branch, or `null`), `mode`, `scope`, `effort`, `verified`, `dirty`, `counted`, `complete`, `covering`, `id_version` and `ancestor`.
 - `allocated`: each new finding's plugin ID, the `[SEC#n]` it took, and its file's `blob` at the scanned commit.
@@ -4384,7 +4389,7 @@ A false positive overrules a finding Claude Security's three-voter panel confirm
 
 ## 6. Readers
 
-The commands and agents that load this reference are what `grep -rl 'args: "security-register-format' plugins` lists. Each reads `register.json`, and reads a finding's text as §3 says.
+The commands and agents that load this reference are what `grep -l 'args: "security-register-format' plugins/*/commands/*.md plugins/*/agents/*.md` lists — a scope this file is outside. Each reads `register.json`, and reads a finding's text as §3 says.
 ````
 
 ## Appendix D — `plugins/workflows-core/references/implementation-format.md` §5
@@ -4412,22 +4417,24 @@ Each runs this entry point for that, never a guess. The branch is the one this f
 **Steps:**
 
 1. **The block.** Take the latest block whose `repo:` is `<repo-slug>`. Never take only the newest block overall, since a companion run in a second repository and a re-run in the same one each add a block. Where there is none, the state is `none`.
-2. **Merged?** Run the merged test below on that block. Where it passes, and the branch carries no commit `<ref>` lacks, the state is `merged`. The branch is `<branch>` or `origin/<branch>`, and the check applies only where it still resolves; `git -C <repo> log --oneline <ref>..<that ref>` must print nothing.
+2. **Merged?** Run the merged test below on that block, and let `M` be the newest default-branch commit it found: `<ref>` itself where the ancestry leg passed, otherwise the newest commit the subject leg found. The tip is the commit `<branch>` resolves to — or `origin/<branch>`'s, where `<branch>` does not resolve, or where it does and is an ancestor of `origin/<branch>` (`git -C <repo> merge-base --is-ancestor <branch> origin/<branch>`), a local copy that missed commits pushed from elsewhere. The state is `merged` where the merged test passes **and**, where either ref resolves, the tip adds nothing to `M` or adds nothing to `<ref>`: for `<X>` = `M`, then `<ref>`, `git -C <repo> merge-tree --write-tree <X> <tip>` exits 0 and prints `<X>`'s own tree, `git -C <repo> rev-parse <X>^{tree}` — at most two calls. Where neither ref resolves, the merged test alone decides. Where the merged test passes but the tip adds work both lack, the state is step 3's and `after_merge` is true. That is a commit made on the branch after its pull request merged — or, deliberately, one of two misses that err toward asking and never claim an open pull request: a rebase-merged branch whose review commit carried no `[<key>]` and whose line `<ref>` has since rewritten; and a stale local branch whose `origin/<branch>` is gone, where commits only `origin` held changed what the branch wrote. The content test runs where `git -C <repo> merge-tree -h` lists `--write-tree` in its usage text, as git 2.38 and newer do; `-h` exits 129 on every git, so the listing decides, never the exit status. On an older git a `merge-tree --write-tree` call fails rather than merging, and that failure is not "adds work": there the merged test alone decides, `after_merge` is false, and the run says it did not compare the tip.
 3. **Where the branch is.**
    - `git -C <repo> branch --show-current` prints `<branch>`: `checked-out`.
    - Otherwise, `git -C <repo> rev-parse --verify --quiet refs/heads/<branch>` succeeds: `local`.
    - Otherwise, `refs/remotes/origin/<branch>` resolves: `remote`.
    - Otherwise: `missing`. The branch is gone, or was never pushed from the machine that ran `/implement`.
 
-**Output:** `{state, branch, base, commit, tip}`. `branch`, `base` and `commit` are the block's. `tip` is the commit `<branch>`, or else `origin/<branch>`, resolves to, or null.
+**Output:** `{state, branch, base, commit, tip, after_merge}`. `branch`, `base` and `commit` are the block's. `tip` is the commit step 2 calls the tip, or null where neither ref resolves.
 
-**A consumer works on the tip.** Review commits move the tip past the recorded commit, and a rebase moves it off. Neither is an error, and a consumer that reports what it scanned or traced names the tip.
+**`after_merge`** is true exactly where step 2 found the merged test passing and the tip adding work both `M` and `<ref>` lack, and false everywhere else. The unit's pull request has then merged while its branch differs from what merged, and the state alone reads as it would for an open pull request, so a consumer that needs to know whether the branch's pull request is still open reads `after_merge`.
 
-**Step 3 reads local refs only.** A run that needs `origin`'s current state fetches first, best effort, and says so.
+**A consumer works on the tip.** Review commits move the tip past the recorded commit, and a rebase moves it off. Neither is an error, and a consumer that reports what it scanned or traced names the tip. Work added to the tip after the merge is `after_merge`'s case. Where `<branch>` resolves and the tip is not its commit, the tip is `origin/<branch>`'s and `<branch>` is behind it. A consumer that reads at a ref reads the tip. A consumer that works in `<branch>`, checked out there, first fast-forwards it to the tip with `git -C <repo> merge --ff-only origin/<branch>`, and says so; otherwise it names `<branch>`'s own commit as what it worked on.
+
+**Steps 2 and 3 read local refs only.** A run that needs `origin`'s current state, of `<ref>` or of the branch, fetches first, best effort, and says so.
 
 **The merged test.** A block of an `implementation.md` is **merged** where either holds:
 - its commit is an ancestor of the default branch (`git -C <repo> merge-base --is-ancestor <commit> <ref>`); or
-- a commit on the default branch made no earlier than that block carries `[<key>]` in its subject as a whole token, `<key>` being the key of the folder whose `implementation.md` holds the block (`git -C <repo> log <ref> --no-merges --since=<date> --format=%s`, matched as §4 matches a key).
+- a commit on the default branch made no earlier than that block carries `[<key>]` in its subject as a whole token, `<key>` being the key of the folder whose `implementation.md` holds the block (`git -C <repo> log <ref> --no-merges --since=<date> --format='%H %s'`, each subject matched as §4 matches a key; git lists the newest first).
 
 `<date>` comes from the block's own `## <YYYY-MM-DD> — /implement` heading, as `--since="<the day before that date> 00:00"`. Git fills a bare date with the current time of day, which would cut off a squash merged earlier on the same day, and the heading is the Dev's local date. Where the recorded commit resolves in the clone, that commit's committer date (`git -C <repo> show -s --format=%cI <commit>`) replaces it, being exact.
 
@@ -4435,5 +4442,5 @@ A squash or a rebase keeps that subject, because `/dev-workflows:implement`'s pu
 
 **A unit's work is merged** where, for **each** repository this file names, **the latest block that names that repository** is merged. That block's `branch` is the head of the pull request that carries the unit's work in that repository.
 
-**Consumers** are what `grep -rl 'args: "implementation-format unit-branch' plugins` lists. Each says what it does with each state.
+**Consumers** are what `grep -l 'args: "implementation-format unit-branch' plugins/*/commands/*.md plugins/*/agents/*.md` lists — a scope this file is outside. Each says what it does with each state.
 ````
