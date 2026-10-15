@@ -1,6 +1,6 @@
 # `security-workflows`: record Claude Security scans in SPECS and route their fixes through `/implement` (sub-project A)
 
-Date: 2026-10-15. Status: approved. Amended four times.
+Date: 2026-10-15. Status: approved. Amended five times.
 
 1. **After the user's first review:**
    - effort defaults per scan kind;
@@ -23,6 +23,10 @@ Date: 2026-10-15. Status: approved. Amended four times.
 
    This folds the planned sub-project G into A.
 5. **On review**, a few smaller corrections.
+6. **After the spike** (plan Task 1, approved by the user):
+   - the covering-scan test has two rules: a scope that names the file, or complete counts with `outside_components` 0;
+   - `--effort low` is dropped, and a low-effort scan covers nothing;
+   - `session-cost.py` reads a workflow's agents (D13).
 
 Branch: `iv-gu/security-workflows-scan`.
 
@@ -150,12 +154,11 @@ PE — the whole PRD, after every Epic has merged:
 - **Scan.** One run of the plugin's *Scan codebase* or *Scan changes* job, on one repository at one commit. Its revision stamp identifies it.
 - **Codebase scan.** A *Scan codebase* run, either whole-repository or with a `--scope`.
 - **Change scan.** A *Scan changes* run over a branch's diff.
-- **Covering scan** (for a finding). A scan covers a finding's file when all of these hold:
-  - it is a **codebase** scan (`mode: scan`);
-  - its scope is the whole repository, or a scope entry is the file or one of its parent directories;
-  - its research coverage is present and complete: `not_reached` 0, `unaccounted` 0, `capped` false;
-  - `verification.status` is `verified`;
-  - `revision.dirty` is false.
+- **Covering scan** (for a finding). A scan covers a finding's file when it is a **codebase** scan (`mode: scan`), `verification.status` is `verified`, `revision.dirty` is false, its effort is not `low`, and one of these holds:
+  - **its scope names the file itself**, and its research coverage is absent or complete;
+  - **its scope is the whole repository, or one of the file's parent directories**, and its research coverage is present and complete: `not_reached` 0, `unaccounted` 0, `outside_components` 0, `capped` false.
+
+  The spike showed why the rule has two parts. Claude Security writes research coverage only where it keeps its component matrix. It never writes it for a low-effort scan, for a medium-effort scope of five files or fewer, or for a change. A `--verify-fixes` scan names the fixed files, so it is usually that small, and with one rule it could never close anything. `outside_components` counts the files no component read: the inventory's skipped areas, and root files no component claims. Without it, a whole-repository scan could close a finding in a file nobody read.
 
   **A change scan is never a covering scan**, because it reports only flaws the change takes part in. Its silence about an older finding in a file it touched is no evidence.
 - **Plugin finding ID.** `claudeSecurityPluginFindingId`. Its `ID_VERSION:` prefix names the algorithm.
@@ -200,7 +203,7 @@ It lives in `workflows-core` for two reasons. A reference does not cross a plugi
 ### D3. The command
 
 ```
-/security-workflows:scan <KEY | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort low|medium|high]
+/security-workflows:scan <KEY | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort medium|high]
                          [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
@@ -214,7 +217,7 @@ It lives in `workflows-core` for two reasons. A reference does not cross a plugi
   - **`medium`**, the plugin's calibrated default, for a whole-repository scan. There `high` multiplies the cost, the plugin itself offers a scoped scan on a large tree, and `high` can still be asked for.
   - **`medium`** for `--verify-fixes`. A scope of five files or fewer already runs the plugin's single-researcher shape.
 
-  `max` is not exposed.
+  `low` and `max` are not exposed. A low-effort scan reads the target with one researcher and keeps no coverage account, so it could never close a fix; an imported one is recorded but covers nothing (*Terms*).
 - **The run flags** are `workflows-core:run-flags`'s. `--enforce-model` reaches only the family's own dispatches. It cannot reach the plugin's inherit agents, and the run's routing record says so.
 
 The command invokes the `workflows-core:model-routing` skill, for its routing record and the session-model check (D6). Like every other pipeline command, it dispatches `impl-maintenance`, or `defect-reporter` under `--skip-feedback`.
@@ -491,7 +494,7 @@ It is written only when the run resolved a key, and it is bookkeeping (D12).
   - Check 8 matches only bare `/name` rows, which is why the row reads `/scan`, as `/release-notes` stands for `/docs-workflows:release-notes`.
   - `command-namespaces.json` gains `"security-workflows": ["scan"]`.
   - The `roles-and-phases` pages describe the `sec` role and the `security-audit` phase.
-  - The cost line covers the plugin's agents once the spike confirms that `session-cost.py` counts them. If it does not, fixing `session-cost.py` is part of A, because a cost line that leaves out the most expensive part is wrong, not merely partial.
+  - The cost line covers the plugin's agents. The spike showed that `session-cost.py` did not count them: a `Workflow` run's agents write their transcripts under `subagents/workflows/<run-id>/`, which it did not read. Fixing it is part of A, because a cost line that leaves out the most expensive part is wrong, not merely partial. In the spike, five agents and ~1.73M tokens went uncounted.
 - **Feedback.** `impl-maintenance`, or `defect-reporter` under `--skip-feedback`, as in every pipeline command.
 - **The offers along the Dev's steps.** `workflows-core:next-phase-offer` changes three lines:
   - **`/implement`** offers `/dev-workflows:conformance <EPIC>` right away, before the merge, then `/security-workflows:scan <EPIC>`, from the repository that run branched. It sits beside the `docs-workflows` commands that `/implement` already offers without depending on that plugin.
@@ -659,6 +662,14 @@ On the bookstore demo, the Dev's `/implement BOOK-2-01-02` (storefront ratings) 
 
 The spike needs Claude Security installed in the session, and a `git fetch` in `/workspace/bookstore`, whose `origin/master` is behind its remote.
 
+**The spike's results (2026-10-15).** It found one finding, MEDIUM, CWE-359, verified with all three panel votes, in 321 s.
+- **Items 1, 2, 5, 6 and 8 held.**
+  - The skill ends by offering to suggest fixes, and Phase 3 skips that offer.
+  - `ID_VERSION` is `v3`.
+  - A scoped scan can report a finding outside its scope, because its researcher follows the data flow.
+- **Item 3 failed.** The fix is in D13.
+- **Item 4 failed.** The stamp's `research_coverage` was `null`, and the covering-scan test (*Terms*) now has two rules.
+
 **Then:**
 
 - **`register.py` tests**, with fixture JSONL, stamps and run records for every D8 rule and every D9 role case:
@@ -686,7 +697,7 @@ The spike needs Claude Security installed in the session, and a `git fetch` in `
 | Risk | Mitigation | Residual |
 |---|---|---|
 | **A scan misses a real vulnerability.** Scans are nondeterministic, and no tool finds everything. | Change scans default to `high`, and `--verify-fixes` and whole-repository scans revisit code. The plugin's own advice applies: run it alongside static analysis, dependency scanning and code review, not instead of them. | **Inherent.** The register records what was found, never that nothing else is there, and its docs say so. |
-| **A finding looks fixed when it is not.** | D8 rule 2: only a covering **codebase** scan closes a finding, only once its file has changed, and never on absence alone. Change scans and unverified scans close nothing. | A codebase scan that misses a finding the code still has is the row above. |
+| **A finding looks fixed when it is not.** | D8 rule 2: only a covering **codebase** scan closes a finding, only once its file has changed, and never on absence alone. A scan covers a file only where its scope names that file, or where its counts show every file in its target read. Change scans, low-effort scans and unverified scans close nothing. | A codebase scan that misses a finding the code still has is the row above. |
 | **The plugin changes how it computes finding IDs.** | D8 rule 3: on a new `ID_VERSION`, findings are matched as possibly the same, confirmed in triage, and nothing is closed. | One triage pass with more questions than usual. |
 | **The plugin's output format changes.** It is pre-1.0 and updates itself. | No version pin, because a pin would disable `security-workflows` whenever the plugin moved past it. `register.py` checks every field it reads and stops with `SCAN_PRODUCTS_UNREADABLE`, naming the field, where one is missing. The plugin promises stable filenames, JSONL field order and `verification.status`. | Scans stop until `register.py` is updated: a loud failure, never a wrong register. |
 | **Two runs number the same finding.** | Phase 0 reserves the numbers in other users' unmerged session branches. Phase 7 refreshes the reservations from `origin`'s default branch and session branches, and re-plans before recording. | Two runs recording at the same moment: D8 rule 5 moves the later number once and reports it, naming the follow-up lines that cite the old one. |

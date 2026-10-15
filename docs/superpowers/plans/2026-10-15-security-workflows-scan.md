@@ -31,7 +31,7 @@
 
 **Tech Stack:** Markdown prose executed by agents; git; bash; python3 3.9+ (`register.py`), 3.14 here and 3.11 in CI (gates); node 22 (mermaid gate).
 
-**Spec:** `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md` — D1–D17, amended four times. Its status line says what each amendment changed. Executors read both.
+**Spec:** `docs/superpowers/specs/2026-10-15-security-workflows-scan-design.md` — D1–D19, amended five times, the fifth from the spike (Task 1). Its status line says what each amendment changed. Executors read both.
 
 ## Global Constraints
 
@@ -177,6 +177,13 @@ git -C /workspace/bookstore worktree remove --force "$WT" && git -C /workspace/b
 
   Copy `$S/spike.md` to `$MAIN/docs/superpowers/plans/2026-10-15-security-workflows-spike.md`, untracked, and show the user the findings. **Stop and wait for their go-ahead** before Task 2 wherever a fallback was taken.
 
+**Outcome (2026-10-15).** Items 1, 2, 5, 6 and 8 held. Items 3 and 4 failed, and the user approved both fallbacks, which this plan now carries:
+- **Item 3:** the `session-cost.py` fix is in Task 4, beside the `/scan` cost row, rather than in Task 10.
+- **Item 4:** `covers()` has two rules (Appendix B, Appendix C §5 rule 2, spec *Terms*):
+  - a scope naming the file itself needs no coverage counts, though counts that show a gap still block it;
+  - a whole-repository or directory scope also needs `outside_components` 0.
+- **The user's amendment:** Shipwright never asks for a `low`-effort scan. `--effort` takes `medium` or `high`, and an imported low-effort scan covers nothing.
+
 ---
 
 ### Task 2: The plugin skeleton (`plugin`)
@@ -260,9 +267,9 @@ open(sys.argv[2], "w", encoding="utf-8").write(src)
 print("ok")
 EOF
 ```
-- [ ] **Step 2: Run it and watch every case fail.** `python3 -I "$AW/plugins/security-workflows/scripts/register.py" --selftest | tail -1` → `selftest: 0/27 passed`, each case failing with `NameError`.
+- [ ] **Step 2: Run it and watch every case fail.** `python3 -I "$AW/plugins/security-workflows/scripts/register.py" --selftest | tail -1` → `selftest: 0/29 passed`, each case failing with `NameError`.
 - [ ] **Step 3: Add the implementation.** Re-run Step 1's script with `green` in place of `red`. It writes the whole file.
-- [ ] **Step 4: GREEN.** `python3 -I "$AW/plugins/security-workflows/scripts/register.py" --selftest | tail -1` → `selftest: 27/27 passed`. Read each case name against the spec's D8 rules, D9's roles and its Verification list. Every rule and every Review Focus item has its case.
+- [ ] **Step 4: GREEN.** `python3 -I "$AW/plugins/security-workflows/scripts/register.py" --selftest | tail -1` → `selftest: 29/29 passed`. Read each case name against the spec's D8 rules, D9's roles and its Verification list. Every rule and every Review Focus item has its case.
 - [ ] **Step 5: The CI step.** In `.github/workflows/validate-catalog.yml`, after the *Self-test the proposal record* step, add:
 
 ```yaml
@@ -286,6 +293,7 @@ EOF
   - `plugins/workflows-core/references/specs-repo-git.md` — §2.1's shapes and count, and §4 step 2's classifier;
   - `plugins/workflows-core/scripts/session-branch.py` — `ARTIFACT`, `ATTRIBUTES`, and the classifier cases in its selftest;
   - `plugins/workflows-core/references/cost-emission.md` — §7's row, its exception count and its inference paragraph, plus §11's inputs;
+  - `plugins/workflows-core/scripts/session-cost.py` — `read_subagents` also reads a workflow's agents, with a self-test case (spike item 3);
   - `plugins/workflows-core/references/implementation-format.md` — a new §5, `unit-branch`, from Appendix D;
   - `plugins/workflows-core/references/next-phase-offer.md` — the `/implement`, `/conformance <EPIC>` and scan lines;
   - `plugins/workflows-core/scripts/command-namespaces.json`;
@@ -296,6 +304,7 @@ EOF
   - the reference `workflows-core:security-register-format`;
   - the bookkeeping shapes `<specs-root>/security/*/**` and `**/_security.md`;
   - the cost inference `/scan` → `security-audit`, with `role: <run_role>`, where `run_role` is passed by the command;
+  - a cost window that counts the agents a `Workflow` run dispatched;
   - `unit-branch` (`args: "implementation-format unit-branch"`): `{state: none|merged|checked-out|local|remote|missing, branch, base, commit, tip}`, with the merged test.
 
 - [ ] **Step 1: RED.** `python3 "$S/check.py" "$AW" core | tail -1` → `core: 1 passed, 44 failed`. The pass is `session-branch.py`'s current selftest.
@@ -334,6 +343,11 @@ EOF
   - **§11's `inferred` marker list** gains `/scan`. Its inputs gain a `/scan` bullet: `run_role` is passed in, like `target_command`.
   - **Re-derive "twenty-seven commands that measure themselves"** with its recipe.
   - **`command-namespaces.json`:** add `"security-workflows": ["scan"]`, keeping the file's key order alphabetical.
+  - **`session-cost.py` (spike item 3).** A `Workflow` run's agents write their transcripts to `<session>/subagents/workflows/<run-id>/agent-*.jsonl`, in the same format as a subagent's. `read_subagents` globs only `<subagents dir>/agent-*.jsonl`, so the cost entry for `/security-workflows:scan` leaves out Claude Security's researchers and panel, its most expensive part. In the spike, five agents and ~1.73M tokens went uncounted.
+    - Make `read_subagents` read both `os.path.join(subdir, "agent-*.jsonl")` and `os.path.join(subdir, "workflows", "*", "agent-*.jsonl")`, sorted together, with no other change. A workflow's `journal.jsonl` is not an agent transcript, and its name keeps it out.
+    - Add a self-test case: a workflow agent's in-window usage is counted, and an out-of-window one is not, in the existing self-test's own style.
+    - Wherever `cost-emission.md` or `run-flags.md` says what the subagents directory holds, add that a `Workflow` run's agents are under its `workflows/<run-id>/`.
+    - Run `python3 plugins/workflows-core/scripts/session-cost.py --selftest`; every case must pass.
 - [ ] **Step 5: `unit-branch`.** Append Appendix D to `implementation-format.md` as its §5, verbatim:
 
 ```bash
@@ -449,7 +463,7 @@ EOF
   - Task 4's reference, bookkeeping paths and cost inference;
   - from `workflows-core`: `run-flags`, `addressing`, `specs-repo-git`, `read-only-repos` §1 and §3, `components` §1 (the repo slug), `implementation-format` §5 (`unit-branch`), `escalation-rules`, `model-routing`, `followup-emission`, `feedback-emission`, `cost-emission`, `next-phase-offer`, `session-hygiene`, `untrusted-content` and `security-register-format`;
   - from Claude Security: `Skill(skill: "claude-security:claude-security", args: …)`.
-- Produces `/security-workflows:scan <KEY | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort low|medium|high]`.
+- Produces `/security-workflows:scan <KEY | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort medium|high]`.
 
 **How to write it.**
 - Compose the body from `conformance.md`'s phases, keeping its idioms for each shared step (run flags, `$SPECS_PATH`, address resolution, the preflight, the bounded fetch, the report, the maintenance agents, cost, resume, `commit-artifacts`) and substituting what is given below.
@@ -486,10 +500,10 @@ Check a codebase for security vulnerabilities with Claude Security: $ARGUMENTS
      - There is one positional address.
      - **An address that names an existing directory is a repository path.** Its root is `git -C <dir> rev-parse --show-toplevel`, and its `<repo-slug>` comes from `workflows-core:components` §1. Any other address is a key, read with `read-key`.
      - `--import <dir>`, `--triage` and `--verify-fixes` exclude one another.
-     - `--effort` takes `low`, `medium` or `high`.
+     - `--effort` takes `medium` or `high`. Shipwright never asks Claude Security for a `low`-effort scan, which reads the target with one researcher, keeps no coverage account, and so can never close a fix (`security-register-format` §5 rule 2).
      - Anything else stops with:
 
-       `SECURITY_USAGE: /security-workflows:scan needs one address — a key (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-7-01) or a repository path — at most one of --import <dir>, --triage and --verify-fixes, and --effort low, medium or high. Re-run '/security-workflows:scan <KEY | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort low|medium|high]' — <what was wrong>.`
+       `SECURITY_USAGE: /security-workflows:scan needs one address — a key (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-7-01) or a repository path — at most one of --import <dir>, --triage and --verify-fixes, and --effort medium or high. Re-run '/security-workflows:scan <KEY | repo-path> [--import <dir> | --triage | --verify-fixes] [--effort medium|high]' — <what was wrong>.`
      - **The effort default.** Write this sentence verbatim: "The effort defaults to `high` for a change scan — Claude Security's own advice for a feature-sized change — and to `medium` for a whole-repository scan or `--verify-fixes`."
      - **The run's role,** `run_role` (spec D3): `dev` for a key run without `--triage` or `--verify-fixes`, and for an `--import` with a key; `sec` otherwise. It is recorded as `--role` and passed to cost as `run_role`.
   3. **`$SPECS_PATH`**, with `conformance.md` step 2's test and its `Set SPECS_PATH (you'll be prompted for the path)` array.
@@ -557,6 +571,7 @@ Check a codebase for security vulnerabilities with Claude Security: $ARGUMENTS
   2. **The call.**
      - A change scan: `Skill(skill: "claude-security:claude-security", args: "scan changes --base <base> --effort <effort> — the user has already accepted this scan's time and token cost")`.
      - A codebase scan: `Skill(skill: "claude-security:claude-security", args: "scan codebase <absolute scan root> [--scope <a,b>] --effort <effort> — the user has already accepted this scan's time and token cost")`.
+     - Follow the skill's recipe through its delivery and its redaction step, then return here. **Skip its closing offer to suggest fixes**, because Phase 5 triages each finding and Phase 6 asks for patches for the ones marked fix.
   3. **The report directory** is the newest `CLAUDE-SECURITY-2*` folder at the scan root. Its stamp's `revision.commit` must equal the commit Phase 1 fixed.
   4. **Carry the plugin's own words about redaction.** If its report to this session says the report's files may still hold a credential value, carry that into Phase 4.
   5. **If the skill does not return control**, write the fallback the spike settled (Task 1 Step 9).
@@ -901,7 +916,7 @@ python3 plugins/workflows-core/scripts/session-branch.py --selftest; echo "EXIT=
 
 - [ ] **Step 1: Dispatch a fresh Opus reviewer** (general-purpose, `model: opus`, in the background). Give it the spec path, this plan's path, and `git -C "$AW" diff main...HEAD`, with this brief:
 
-  *"Review this branch as a whole. The prose is executed by agents in order, so a false or ambiguous sentence is a defect. Check every changed sentence against what the run does, and every pointer (`this`, `it`, `above`, an ordinal, a section number) where it lands. Check every claim against the reference it cites, and every count against its recipe. Check `scan.md`'s `choices:` arrays against `escalation-rules`, and its phases against the spec's D3–D13 and D17. Check that `register.py` implements `security-register-format.md` rule for rule, that the reference states nothing the script does not do, and that `specs-repo-git` §2.1 and `session-branch.py`'s classifier agree. Check `/implement`'s two new questions against `code-handoff` §2.4–§2.6, and that `/implement`, `/conformance` and the scan each act on every `unit-branch` state. Check that the merged test was moved word for word and that no second copy remains. Walk the spec's worked example through `/implement`, `/conformance`, the scan and the script. Report only this change's defects, most severe first, each with file:line, the evidence, and a fix."*
+  *"Review this branch as a whole. The prose is executed by agents in order, so a false or ambiguous sentence is a defect. Check every changed sentence against what the run does, and every pointer (`this`, `it`, `above`, an ordinal, a section number) where it lands. Check every claim against the reference it cites, and every count against its recipe. Check `scan.md`'s `choices:` arrays against `escalation-rules`, and its phases against the spec's D3–D13 and D17. Check that `register.py` implements `security-register-format.md` rule for rule, that the reference states nothing the script does not do, and that `specs-repo-git` §2.1 and `session-branch.py`'s classifier agree. Check `/implement`'s two new questions against `code-handoff` §2.4–§2.6, and that `/implement`, `/conformance` and the scan each act on every `unit-branch` state. Check that the merged test was moved with its substance intact (Appendix D restates it as a list), and that no second copy remains. Walk the spec's worked example through `/implement`, `/conformance`, the scan and the script. Report only this change's defects, most severe first, each with file:line, the evidence, and a fix."*
 - [ ] **Step 2: Triage each finding** at the location it names. Fix every confirmed one. Record any dismissal with a reason that disposes of that finding's own claim.
 - [ ] **Step 3: Re-run `check.py all` and the gate chain** (`EXIT=0`). Commit the wave as `fix: review round N — …`, verifying the branch first.
 - [ ] **Step 4: Repeat Steps 1–3 until a round returns no finding above MINOR.** Fix MINORs in the same wave.
@@ -1395,8 +1410,11 @@ def load_scan(folder):
         "commit": _need(revision, "commit", str, where + ": revision"),
         "dirty": revision.get("dirty") is not False,
         "verified": _need(verification, "status", str, where + ": verification") == "verified",
+        # Claude Security counts what its researchers read only where it keeps its component matrix:
+        # never for a small scope or a change. outside_components is what no component read at all.
+        "counted": isinstance(rc, dict),
         "complete": isinstance(rc, dict) and rc.get("not_reached") == 0 and rc.get("unaccounted") == 0
-        and rc.get("capped") is False,
+        and rc.get("outside_components") == 0 and rc.get("capped") is False,
     }
     path = os.path.join(folder, JSONL)
     if not os.path.isfile(path):
@@ -1429,16 +1447,21 @@ def load_scan(folder):
 
 
 def covering(scan):
-    return scan["mode"] == "scan" and scan["verified"] and not scan["dirty"] and scan["complete"]
+    """A scan that can be evidence at all: a verified codebase scan of a clean tree, never a low-effort one."""
+    return scan["mode"] == "scan" and scan["verified"] and not scan["dirty"] and scan["effort"] != "low"
 
 
 def covers(scan, path):
+    """Whether a scan is evidence about path (security-register-format section 5, rule 2)."""
     if not covering(scan):
         return False
     scope = [s.rstrip("/") for s in scan["scope"]]
+    if path in scope:
+        # Its researchers were sent to this very file. Absent counts are no gap; counts showing one are.
+        return not scan["counted"] or scan["complete"]
     if not scope or any(s in (".", "") for s in scope):
-        return True
-    return any(path == s or path.startswith(s + "/") for s in scope)
+        return scan["complete"]
+    return scan["complete"] and any(path.startswith(s + "/") for s in scope)
 
 
 # ---- replay ----
@@ -1729,7 +1752,7 @@ def commit(specs, slug, p, dec, by, kind, unit, at, role="sec", repo_name=None):
                          "review_by": None, "owner": None, "confirmed": None, "links": links})
     rec = {"format": 1, "seq": p["next_seq"], "at": at, "by": by, "kind": kind, "role": role, "unit": unit,
            "scan": ({k: scan[k] for k in ("folder", "id", "commit", "mode", "scope", "effort", "verified", "dirty",
-                                          "complete", "covering", "id_version", "ancestor")} if scan else None),
+                                          "counted", "complete", "covering", "id_version", "ancestor")} if scan else None),
            "allocated": allocated, "matched": matched,
            "again": [{"plugin_id": e["plugin_id"], "id": e["id"]} for e in p["again"]] if scan else [],
            "not_reported": list(p["not_reported"]) if scan else [], "decisions": auto + user}
@@ -1915,7 +1938,8 @@ def _change(repo, rel, text):
     return _g(repo, "rev-parse", "HEAD")
 
 
-def _scan(specs, folder, commit, findings, mode="scan", scope=(), verified=True, dirty=False, complete=True):
+def _scan(specs, folder, commit, findings, mode="scan", scope=(), verified=True, dirty=False, complete=True,
+          effort="medium", counted=True, outside=0):
     d = os.path.join(specs, "security", "code", "scans", folder)
     lines = []
     for i, f in enumerate(findings, 1):
@@ -1927,11 +1951,12 @@ def _scan(specs, folder, commit, findings, mode="scan", scope=(), verified=True,
                                  "snippet": "", "symbol": "", "declared_line": line, "via_change": None,
                                  "other_cwe_ids": [], "claudeSecurityPluginFindingId": pid}))
     _wf(d, JSONL, "".join(l + "\n" for l in lines))
-    stamp = {"scan_id": folder, "mode": mode, "scope": list(scope), "effort": "low",
+    rc = {"files": 3, "read": 3, "not_reached": 0 if complete else 1, "unaccounted": 0,
+          "outside_components": outside, "capped": False} if counted else None
+    stamp = {"scan_id": folder, "mode": mode, "scope": list(scope), "effort": effort,
              "revision": {"versioned": True, "commit": commit, "dirty": dirty},
              "verification": {"status": "verified" if verified else "unverified"},
-             "run_shape": {"research_coverage": {"files": 3, "read": 3, "not_reached": 0 if complete else 1,
-                                                 "unaccounted": 0, "outside_components": 0, "capped": False}}}
+             "run_shape": {"research_coverage": rc}}
     _wf(d, STAMP_PREFIX + commit[:12] + ".json", json.dumps(stamp))
     return folder
 
@@ -2054,13 +2079,45 @@ def case_open_with_same_evidence_is_only_proposed(tmp):
 
 
 def case_scope_covers_by_path_prefix_only(tmp):
-    scan = {"mode": "scan", "verified": True, "dirty": False, "complete": True, "scope": ["src"]}
+    scan = {"mode": "scan", "verified": True, "dirty": False, "effort": "medium", "counted": True, "complete": True,
+            "scope": ["src"]}
     assert covers(scan, "src/a.py") and not covers(scan, "srcx/a.py")
     assert covers(dict(scan, scope=["src/a.py"]), "src/a.py")
     assert covers(dict(scan, scope=[]), "srcx/a.py")
     assert not covers(dict(scan, complete=False), "src/a.py")
     assert not covers(dict(scan, mode="changes"), "src/a.py")
     assert not covers(dict(scan, dirty=True), "src/a.py")
+
+
+def case_file_named_scope_covers_without_counts(tmp):
+    # A --verify-fixes scan names the fixed files, and Claude Security keeps no counts for a small scope.
+    scan = {"mode": "scan", "verified": True, "dirty": False, "effort": "medium", "counted": False,
+            "complete": False, "scope": ["src/a.py"]}
+    assert covers(scan, "src/a.py") and not covers(scan, "src/b.py")
+    assert not covers(dict(scan, scope=["src"]), "src/a.py"), "a directory scope needs complete counts"
+    assert not covers(dict(scan, counted=True), "src/a.py"), "counts that show a gap win"
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    _run(specs, repo, "s1", {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]})
+    c2 = _change(repo, "src/a.py", "fixed\n")
+    _scan(specs, "s2", c2, [], scope=["src/a.py"], counted=False)
+    p, _ = _run(specs, repo, "s2", kind="verify")
+    assert p["closable"] == [{"id": 1, "auto": True}], p
+    assert _state(specs)[1]["status"] == "fixed"
+
+
+def case_low_effort_and_unread_files_never_close(tmp):
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    _run(specs, repo, "s1", {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]})
+    c2 = _change(repo, "src/a.py", "fixed\n")
+    _scan(specs, "s2", c2, [], scope=["src/a.py"], counted=False, effort="low")
+    p, _ = _run(specs, repo, "s2", kind="import")
+    assert not p["closable"] and not p["not_reported"] and not p["scan"]["covering"], p
+    _scan(specs, "s3", c2, [], outside=1)
+    p, _ = _run(specs, repo, "s3")
+    assert not p["closable"] and not p["not_reported"], "a whole-repository scan that left files unread closes nothing"
+    assert _state(specs)[1]["status"] == "fixing"
 
 
 def case_reopened_when_reported_again(tmp):
@@ -2475,7 +2532,7 @@ One JSON object per run, with these fields:
 - `kind`: `scan`, `import`, `triage` or `verify`.
 - `role`: `dev` for a run addressed by a key (the Dev's pre-merge scan, or an import for a unit), `sec` for any other run.
 - `unit`: the key the run was addressed by, or `null`.
-- `scan`: the scan the run recorded, or `null` on a triage. It holds `folder`, `id`, `commit`, `mode`, `scope`, `effort`, `verified`, `dirty`, `complete`, `covering`, `id_version` and `ancestor`.
+- `scan`: the scan the run recorded, or `null` on a triage. It holds `folder`, `id`, `commit`, `mode`, `scope`, `effort`, `verified`, `dirty`, `counted`, `complete`, `covering`, `id_version` and `ancestor`.
 - `allocated`: each new finding's plugin ID and the `[SEC#n]` it took.
 - `matched`: each possibly-same match a person confirmed.
 - `again`: each finding the scan reported again.
@@ -2535,12 +2592,11 @@ A false positive overrules a finding Claude Security's three-voter panel confirm
 
 1. **Matching.** A scan's finding is the same finding, reported again, when its plugin ID equals one already recorded under the same `ID_VERSION`. Otherwise, a recorded finding with the same CWE, in the same file and within 10 lines, makes it **possibly the same** as that `[SEC#n]`, and a person confirms or rejects the match. Candidates come only from the register. Anything else is new.
 2. **A finding is never closed on absence alone, and never by a change scan.**
-   - **What counts as covering.** The revision stamp records coverage counts, never a list of files read. So a scan **covers** a file when all of these hold:
-     - it is a codebase scan (`mode: scan`);
-     - its scope is the whole repository, or a scope entry is the file or one of its parent directories;
-     - its research coverage is complete: `not_reached` 0, `unaccounted` 0, `capped` false;
-     - it is `verified`;
-     - its tree was clean.
+   - **What counts as covering.** The revision stamp records coverage counts, never a list of files read. Claude Security writes those counts only where it keeps its component matrix. It never writes them for a low-effort scan, for a medium-effort scan of five files or fewer, or for a change. A scan **covers** a file when it is a codebase scan (`mode: scan`), `verified`, over a clean tree, at an effort other than `low`, and one of these holds:
+     - **its scope names the file itself**, and its research coverage is absent or complete; or
+     - **its scope is the whole repository, or one of the file's parent directories**, and its research coverage is complete: `not_reached` 0, `unaccounted` 0, `outside_components` 0, `capped` false.
+
+     `outside_components` counts the files that no component read at all, the inventory's skipped areas and root files among them. A low-effort scan, which `/security-workflows:scan` never asks for, can be imported but covers nothing.
    - **A change scan is never a covering scan.** It reports only flaws the change takes part in.
    - **Automatic closure.** A `fixing` finding becomes `fixed` when a covering scan at a commit descending from its `last_seen.commit` does not report it, matches no possibly-same candidate in that scan, and its file has changed between those two commits.
    - **Proposed closure.** An `open`, `fix`, `reopened` or `accepted-risk` finding with the same evidence is only proposed as fixed, and changes on a person's confirmation.
