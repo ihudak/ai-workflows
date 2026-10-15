@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.34.4] — 2026-10-15
+
+### Fixed
+- **`/brd-reconcile`'s *Correct it* takes no operator-written customer words in either field.** An answer outside the options put, which 3.34.3 still took as typed into `chosen`'s marked form, is now copied out of the returned review like the reason; the reason may come from anywhere in the review, not only the quotation shown; and a reason that only restates the answer is refused. The *Phase 4* bullet of its docs page names a corrected row beside a confirmed one.
+- **`/brd-interview`'s defect question asks for `blocked_on` where the disposition is `conditional`**, and *Re-base it on a current finding* refuses a superseded finding and puts its picker again where no finding on file qualifies, instead of asking again with no way out.
+- **`/brd-split`'s notice for a missing `[DEF#n]` or replacing `[BR#n]` reaches the slice walk too**, where *Reject* cites the parent's defect log, and a mistyped id puts the row's picker again; 3.34.3 said so on the root walk alone.
+- **The row-B′ forms of `/create-prd`'s, `/create-ard`'s and `/specify`'s `*_REGISTER_NOT_ON_MAIN` carry row B′'s whole remedy**, its session-file conflict advice included, and name the re-run once.
+
 ## [3.34.3] — 2026-10-15
 
 ### Fixed

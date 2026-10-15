@@ -86,3 +86,20 @@ Re-review each against the rework before acting on it; several may be moot.
 - **D11 — `epic-writer`'s `kept_whole` sentence** (`epic-writer.md:40`) reads as blocking a component split; "never split it by size" would remove the ambiguity.
 - **D12 — check 12's marker-loss blind spot**: with the marker removed, 74 of the 100 distinct marked labels at `7c13ce05` still pass. Cheap additions that fire on nothing there: `\(describe\b`, `^provide\b`, `^name\b`, `^quote\b` (`^add\b` fires on four correct labels).
 - **D13 — §0's "never a picker built for text" was applied to one picker**: 41 two-option text-plus-Cancel arrays remain (`escalation-rules.md:187`, `:203`, `epics.md:665` among them). Either say an array with a real alternative is not "built for" the text, or convert them.
+
+## Re-review of the fix commit `cb19fa38`
+
+Two independent reviewers re-read the fix wave after it was merged as `c231cb9f`. They found two MAJORs and eleven MINORs, none a BLOCKER, every one fixed in the follow-up (workflows-core 1.41.2, dev-workflows 4.27.2, product-workflows 3.34.4):
+
+- **MAJOR — `ard-resolution` said a ref-only ARD the gate passes "is not used"**, but row C's repair passes one too and leaves it readable; read literally, F1's silent skip came back. Only row B leaves nothing to read. The new `ls-tree` listing also lacked the `2>/dev/null` every §3.2 primitive carries, for rows H and G.
+- **MAJOR — `/brd-reconcile`'s *Correct it* still took operator-typed customer words through `chosen`**: an answer outside the options, written in the marked form the propagation sweep later reads as the customer's verbatim words. Older than the fix, the same class as F3. Both fields are now copied out of the returned review; the reason may come from anywhere in it, not only the quotation the reader returned, and a reason that only restates the answer is refused (`decision-register-format.md` §2).
+- Row B′'s conflict advice kept "both sides" of `follow-ups.md`, which `/conformance` ticks in place — a ticked follow-up survived beside its open twin; the three register stop templates still summarised the old remedy and named the re-run twice.
+- The `dev-workflows` hook's new line went to `/implement` alone, which reads no `REPOS_PATH`; the line is gone there.
+- Check 12's split left the label-opening forms of *name it* and *supply the* in `PROMISES`, so *Name its key (you'll be prompted)* failed — a gate firing only on correct content. Both opening forms are `ASKS` now.
+- `/brd-interview`'s new defect question omitted `blocked_on` for a `conditional` entry; its *Re-base* question accepted a superseded finding and could only re-ask where none qualified.
+- `/brd-split`'s missing-id notice reached the root walk alone; a mistyped id was undefined.
+- `/brd-reconcile`'s docs page still said only a *confirmed* `not stated` candidate takes the missing-reason routes.
+
+Noted by the re-review and deferred with the rest:
+
+- **D14 — after the operator merges the default branch into a plugin branch as row B′ asks, the next `commit-artifacts` does not push that branch**: `push-scope` measures against `origin/<branch>` alone, so the default branch's commits and the merge read as non-session commits. A later deliverable handoff push clears it. Older than this review.

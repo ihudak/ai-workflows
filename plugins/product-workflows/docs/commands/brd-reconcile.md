@@ -96,8 +96,9 @@ record that a sentence of prose was read into it by an agent.
   confirmation, and that omission is required rather than permitted — the quotation is the whole
   mechanism, and batching turns a confirmation into a formality.
 - A reason nobody gave is **never supplied**. A row confirmed or corrected with `reason: not stated`
-  cannot be frozen as `decided` by anyone in the run, and a correction takes a reason only as the
-  customer's own words, copied out of the quotation — never one the operator writes.
+  cannot be frozen as `decided` by anyone in the run, and a correction takes a reason — or an answer
+  outside the options put — only as the customer's own words, copied out of the returned review, never
+  ones the operator writes, and never a reason that only restates the answer.
 
 ## How it runs
 
@@ -436,8 +437,8 @@ command removes none of them; the next `/brd-interview` run does.
   candidate is confirmed onto a question another candidate of the walk already took, the operator is
   shown both and picks one to freeze — or asks the customer and freezes neither; the one set aside is
   named under what still needs a human as a conflicting answer, beside the one frozen in its place (or noting that the one kept went back to the customer for its reason); a later candidate onto a question the operator sent back to the customer goes back with it.
-- **Phase 4 — a reason nobody gave.** A confirmed candidate whose reason is `not stated` takes one
-  of exactly two routes: ask the customer and freeze nothing, or freeze it `status: open`, which
+- **Phase 4 — a reason nobody gave.** A confirmed candidate, or a corrected row, whose reason is
+  `not stated` takes one of exactly two routes: ask the customer and freeze nothing, or freeze it `status: open`, which
   puts the answer on the record and makes it unusable downstream until the reason arrives. Supplying
   the reason is not on the list — a supplied reason is the delivery team's argument recorded as the
   customer's, and it will be defended later as theirs. A held question whose `[CD#n]` is `open` for

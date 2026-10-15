@@ -1499,15 +1499,16 @@ PROMISES = (
     ("type the names", r"\btype (their|the) names?\b"),
     ("give me / let me give", r"\b(give me|let me give)\b"),
     ("the rows I name", r"\b(rows|ones) i name\b"),
-    ("supply the", r"\bsupply (the|a)\b"),
+    ("supply the", r"(?!^)\bsupply (the|a)\b"),
     ("(enter", r"\(enter\b"),
-    ("name it", "(?:^|[\u2014\u2013-]\\s*)name its?\\b"),
+    ("name it", "[\u2014\u2013-]\\s*name its?\\b"),
 )
 ASKS = (
     ("Enter / Re-enter / Describe first", r"^(re-enter|enter|describe)\b"),
     ("Edit the/a/one/it/name first", r"^edit (the|a|an|one|it|name)\b"),
     ("Specify a path or command", r"^specify\b[^\u2014]*\b(path|command)\b"),
     ("List ... manually", r"^list\b[^\u2014]*\bmanually\b"),
+    ("Name it / Supply the first", r"^(name its?|supply (the|a))\b"),
 )
 PROMPTED = "(you'll be prompted"
 START = re.compile(r'choices:\s*\[')
@@ -3351,7 +3352,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   # The promised-text part, which no switch turns off. Red cases asserting this part's own
   # message, "promises text" for a PROMISES family and "asks for text" for an ASKS one, so each
   # also pins the list its family sits in -- a verb family one per verb a relabelled label used,
-  # the name-it family one per dash and one opening the label, every other family one. Each red
+  # the name-it family one per dash and the ASKS one opening the label, every other family one. Each red
   # case named for a family matches that family alone, so dropping the family cannot leave it red
   # through another. Then the marker pair: a promise phrase beside the marker is red (§0's own
   # "I'll say which": the marker excuses an ASKS label, never a promise) and an ASKS label beside
@@ -3408,7 +3409,7 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf -- '\nchoices: [\"One\", \"Another repo from the list above – name it\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "an option asking to \"- name its\" (hyphen) is rejected" 12 "promises text" \
     "printf -- '\nchoices: [\"One\", \"Another Epic from the list above - name its key\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
-  expect_fail_msg "an option opening \"Name it\" is rejected" 12 "promises text" \
+  expect_fail_msg "an option opening \"Name it\" is rejected" 12 "asks for text" \
     "printf -- '\nchoices: [\"One\", \"Name it from the list above\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_fail_msg "an option opening \"Enter\" is rejected" 12 "asks for text" \
     "printf -- '\nchoices: [\"Use cwd anyway\", \"Enter the docs repo path\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
@@ -3435,6 +3436,10 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     "printf -- '\nchoices: [\"Correct a field — I\047ll say which (you\047ll be prompted)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after "a verb-opening label beside the prompted marker is accepted" \
     "printf -- '\nchoices: [\"Use cwd anyway\", \"Enter the docs repo path (you\047ll be prompted)\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_fail_msg "an option opening \"Supply the\" is rejected" 12 "asks for text" \
+    "printf -- '\nchoices: [\"Confirm\", \"Supply the path to use\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
+  expect_pass_after "an opening \"Name its\" or \"Supply the\" beside the prompted marker is accepted" \
+    "printf -- '\nchoices: [\"Name its key (you\047ll be prompted)\", \"Supply the path (you\047ll be prompted)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after "prompted labels are accepted" \
     "printf -- '\nchoices: [\"Keep it whole (you\047ll be prompted for the reason)\", \"Set SPECS_PATH (you\047ll be prompted for the path)\", \"Another Epic from the list above (you\047ll be prompted for its key)\", \"Cancel\"]\n' >> $(cmd_file $PLUGIN_REL alpha)"
   expect_pass_after "\"Name the clone's absolute path (you'll be prompted)\" is accepted" \

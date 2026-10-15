@@ -15,7 +15,7 @@
 # status/log, no directory listing — now ships from product-workflows's own
 # preload-context.sh, carried across intact rather than re-derived.
 #
-# emit_specs_context surfaces $SPECS_PATH alongside $REPOS_PATH.
+# emit_specs_context surfaces $SPECS_PATH; /implement reads no $REPOS_PATH, so it is not shown.
 #
 # Two sibling plugins each ship a hook of this name, matching only their own
 # commands: docs-workflows covers /document and /release-notes;
@@ -106,11 +106,6 @@ emit_dir_listing_if_small() {
 
 emit_specs_context() {
     echo "=== Auto-injected project context (specs workflow) ==="
-    if [[ -n "${REPOS_PATH:-}" ]]; then
-        echo "repos_path: $REPOS_PATH"
-    else
-        echo "repos_path: /workspace (REPOS_PATH unset — the default, which the command uses without asking wherever it exists)"
-    fi
     if [[ -n "${SPECS_PATH:-}" ]]; then
         echo "SPECS_PATH: $SPECS_PATH"
     else

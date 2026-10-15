@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.41.2] — 2026-10-15
+
+### Fixed
+- **`ard-resolution` reads an ARD that only the default branch held once row C's repair has brought it into the working tree.** 1.41.1 said any ref-only ARD the gate passed was not used, which would have dropped exactly that one; only row B — the run's own branch deleted the file — leaves nothing to read. The new `ls-tree` listing is quiet, and adds no candidate, where `$SPECS_PATH` is no repository or the default ref does not exist.
+- **Row B′'s conflict advice keeps every line either side holds**, a line one side changed in place in its changed form and a heading both sides wrote once. 1.41.1's "keep both sides" of `follow-ups.md` left a follow-up `/dev-workflows:conformance` had ticked beside its open twin.
+
 ## [1.41.1] — 2026-10-15
 
 ### Fixed

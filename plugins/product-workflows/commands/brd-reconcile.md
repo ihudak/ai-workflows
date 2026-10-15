@@ -89,7 +89,7 @@ them is.
 5. **A reason nobody gave is never supplied.** `argumentation` is mandatory
    (`decision-register-format.md` §2) and on a `[CD#n]` it is the **customer's** reason. A row
    confirmed or corrected with `reason: not stated` cannot be frozen as `decided` by anybody in this
-   run — *Correct it* takes a reason only as the quotation's own words, never as the operator's — and
+   run — *Correct it* takes a reason only as the review's own words, never as the operator's — and
    the two resolutions the *Confirm every candidate* phase offers both leave the reason where it
    belongs — with the customer.
 
@@ -910,7 +910,7 @@ the operator, **one at a time, never batched**, with:
 choices: ["Confirm — this is what the customer decided; freeze it", "Correct it — the row does not match the quotation; freeze the row that does (you'll be prompted for it)", "Reject — no decision to freeze: the customer declined to answer, or the row is not an answer (context, thanks, scheduling) (you'll be prompted for why)", "Ask the customer — the answer is not clear enough to freeze; the question is left as it stands"]
 ```
 
-*Correct it* asks in plain text for the row that does match the quotation: its `chosen`, and, where the quotation states the customer's reason, the words of the quotation that state it, copied out of it. **The operator never writes the reason**: a corrected row's reason is the customer's own, quoted — words not found in the quotation, once every run of whitespace on either side is collapsed to one space, are not taken, and the plain-text question is asked again — or `not stated` where the quotation states none, and a corrected row with no reason takes the missing-reason picker below as a *Confirm* on a `not stated` candidate does. *Reject* asks in plain text why there is no decision to freeze; neither is read from the bare selection.
+*Correct it* asks in plain text for the row that does match the quotation: its `chosen` and its reason. **The operator never writes the customer's words, in either field.** `chosen` is one of the options the question, the assumption or the finding put, or — where the row misread an answer outside them as one of them — the customer's own words for that answer, written in the marked outside-the-options form below; the reason is the customer's own words for why, or `not stated` where the review states none. Every such word is **copied out of the canonicalised review** — the quotation, or the passage around it that carries the answer or its reason — and a copy the review does not hold, once every run of whitespace on either side is collapsed to one space and a typographic quote read as a straight one, is not taken, and the plain-text question is asked again; so is a reason that only restates the answer, which `decision-register-format.md` §2 rules out as no reason at all. A corrected row with no reason takes the missing-reason picker below as a *Confirm* on a `not stated` candidate does. *Reject* asks in plain text why there is no decision to freeze; neither is read from the bare selection.
 
 **A customer who explicitly declines to answer takes *Reject*, and the schema guarantees that case
 exists** (`${CLAUDE_PLUGIN_ROOT}/references/customer-review-schema.md` §5): the reader returns it as
@@ -1033,8 +1033,9 @@ escalated `[SR#n]` put — they chose neither reading, or dropped the requiremen
 is still theirs and still clear, so *Confirm* freezes it, and the *Freeze the customer decisions*
 phase writes `chosen` in the one marked form `decision-register-format.md` §1 fixes for an answer
 outside the options, with `options_considered` left exactly as it was put. It is not *Correct it*,
-which is for a row that misreads its own quotation, and not *Ask the customer*, which is for an
-answer that is unclear; an answer outside the options is neither.
+which is for a row that misreads its own quotation — one that took an answer outside the options
+for one of them included, which *Correct it* writes in the same marked form — and not *Ask the
+customer*, which is for an answer that is unclear; an answer outside the options is neither.
 
 **A candidate whose reason is `not stated` cannot be frozen as `decided`, by anyone in this run.**
 `argumentation` is mandatory (`decision-register-format.md` §2) and on a `[CD#n]` it is the
@@ -1152,7 +1153,7 @@ operator takes *Confirm* or *Correct it*, after the conflicting-answer picker be
 picker is put, on the row that choice confirmed: its `chosen` as the *Freeze* phase would write it,
 and its reason — in free-text mode a `reason: not stated` included, which the operator confirms with
 the row, since the reader may have missed a reason the quotation holds and *Correct it* is where the
-quotation's own words for it are taken. An unconfirmed row never skips. The confirmed candidate **re-affirms** its live record,
+review's own words for it are taken. An unconfirmed row never skips. The confirmed candidate **re-affirms** its live record,
 and is recorded rather than frozen, where:
 
 - the live record is **`decided`**, with or without `conditional_on`, and the candidate's `chosen`
