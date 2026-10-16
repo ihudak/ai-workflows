@@ -25,12 +25,11 @@ renumbering can never point a record at another finding. The register is bookkee
 specs repository's own session-file commit, so two runs on two machines can record before either has
 seen the other: --reserve-dir hands plan the run records other branches hold, and plan numbers past
 them and past every move their merge will make. A number is published for an allocation by the record
-that allocated it and by every record whose renumbered moves that allocation to it. Every published number
-is held for its allocation, a number that gave way included, and none is ever handed out again. An
-allocation's number is the one it was last published under, and it moves only where another finding was
-published under that number by an earlier-sorting record: that one keeps it, and the later moves to the
-lowest number above it that no record published and no earlier move took. It never takes back a number it
-was published under before. One finding allocated twice -- the same origin (one scan recorded on two
+that allocated it and by every record whose renumbered moves that allocation to it. A number belongs to the
+finding the earliest-sorting record published it for, and is held for that finding for good, a number that
+gave way included: none is ever handed out again. An allocation's number is the one it was last published
+under, and it moves only where that number belongs to another finding, to the lowest number above it that no
+record published and no earlier move took. It never takes back a number it was published under before. One finding allocated twice -- the same origin (one scan recorded on two
 machines), or the same plugin ID under the same ID_VERSION (scans on two branches each reporting it as new)
 -- is one finding: the later allocation gives way to the earlier, its origin becomes another name for the
 finding, and its decisions apply to it in record order, except its default open -- the one recorded for a
@@ -494,8 +493,8 @@ def _numbering(recs):
     so none is handed out again, and allocs lists every allocation as (run, origin, the numbers it was published
     under in record order, the number it has now).
     A number is published for an allocation by the record that allocated it and by every record whose renumbered
-    moves that allocation to it, and it is held for that allocation for good: it is never handed to another finding.
-    Where two findings were published under one number, the one whose record published it first keeps it.
+    moves that allocation to it. A number belongs to the finding the earliest-sorting record published it for, and
+    is held for that finding for good: it is never handed to another.
     Numbers are for display; records name findings by origin, so a move never points a record at another finding."""
     for r in recs:
         for e in r.get("allocated", []):
