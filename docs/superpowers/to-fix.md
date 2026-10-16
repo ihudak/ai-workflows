@@ -36,12 +36,13 @@ Each edition keeps its own versions and changelog. Run its gate chain after. Whe
 
 ## The merged test — `workflows-core:implementation-format` §5
 
-Found by the 2026-10-15 review against `/conformance`'s own copy of the merged test (line numbers at `7c13ce05`). That copy is gone: the test now lives in `implementation-format` §5, read by every `unit-branch` consumer — `/dev-workflows:implement`, `/dev-workflows:conformance` and `/security-workflows:scan` — and by `/conformance`'s PRD run, so the item below is to be fixed there, never in a consumer.
+Found by the 2026-10-15 review against `/conformance`'s own copy of the merged test (line numbers at `7c13ce05`). That copy is gone: the test now lives in `implementation-format` §5, read by every `unit-branch` consumer — `/dev-workflows:implement`, `/dev-workflows:conformance` and `/security-workflows:scan` — and by `/conformance`'s PRD run, so the items below are to be fixed there, never in a consumer.
 
 - **C2 — MINOR — any later commit carrying the key counts as the merge.** The subject leg's date excludes only commits made before the block, and `implementation-format` §3 asks people outside the plugin to use the key, so a teammate's `[<key>]` commit, or an earlier pull request merging after a later run, passes the latest block while its pull request is still open. What follows:
   - **The PRD run** passes the Epic without asking, whether the branch resolves or not: its merged test never reads the branch.
   - **Where the branch is gone,** `unit-branch` reads `merged`, since the merged test alone decides there. `/conformance`'s Epic run then traces a default branch without the work, and the scan stops as on a merged Epic.
   - **Where the branch resolves,** step 2's tip test finds the tip adding work, so `unit-branch` reports `after_merge` true. `/conformance`'s Epic run traces the right branch, but its report says the pull request has merged; and `/implement` does not offer to continue on it.
+- **C9 — MINOR — the PRD run's parity with `unit-branch`: it does not take the third leg.** Found by the second review of the `/conformance` rework (`4069aa29`). `unit-branch`'s step 2 reads a squash merge whose subject lost `[<key>]` as `merged` where the branch survives and its tip adds nothing to `<ref>`. `/conformance`'s PRD run runs the merged test alone, which cannot see that merge. So an Epic its Epic run traced as merged by that leg is "not shown merged" to the PRD run, which recommends *Stop until it is merged* — an answer nothing can lift, since the merge has happened — and only *Trace anyway* goes on; its label says such an Epic's requirements "may show as missing where it has not merged". The fix is parity, in §5: the PRD run takes `unit-branch`'s state for each Epic and repository, or the merged test itself gains the third leg.
 
 ## Design-level — any machine, after a re-review
 
