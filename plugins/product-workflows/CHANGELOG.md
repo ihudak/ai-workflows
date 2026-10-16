@@ -10,6 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ### Changed
 - **The workflow page draws the Dev's `/dev-workflows:conformance` on an Epic before its pull request merges, on its branch** (dev-workflows 4.28.0), where 3.34.1 drew it once the pull request had merged.
 - **The session-cost page says every keyless run of this plugin's commands takes the pending file**, since `workflows-core:cost-emission` §8 files elsewhere only the documentation plugin's runs it names and a `/security-workflows:scan` with no key (`workflows-core` 1.42.0).
+- **The roles page counts eight lifecycle phases outside this plugin, not six**: four for `dev-workflows` (`conformance` among them), three for `docs-workflows` and one, `security-audit`, for `security-workflows`, as `workflows-core:cost-emission` §7 carries them; and the Dev role's phases include `conformance` and `security-audit`.
 
 ## [3.34.5] — 2026-10-15
 

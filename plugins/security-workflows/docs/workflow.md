@@ -30,7 +30,8 @@ flowchart TD
     scan -->|"one block per scan"| note
     scan -.->|"fix — a follow-up + patch, on the Epic's branch"| implement
     repo -.->|"fix — an /implement prompt line"| implement
-    implement -.->|"action: once the fix has merged"| verify
+    scan -.->|"action: once the fix has merged"| verify
+    repo -.->|"action: once the fix has merged"| verify
     verify -->|"call"| cs
     verify -->|"fixed, on evidence"| register
     register -.->|"awaiting security review"| triage
@@ -47,7 +48,7 @@ flowchart TD
 
 **Every edge into `/dev-workflows:implement` is a follow-up or a prompt, never a call.** A finding marked fix on a key run becomes a follow-up in the Epic folder's `follow-ups.md`, which `/dev-workflows:implement` reads back: it continues on the Epic's branch while the pull request is open, so the fix joins that pull request. On a path, there is no unit to address, so the line is an `/dev-workflows:implement` prompt in the run's report. The scan is likewise only offered, never run for you: `/dev-workflows:implement` offers `/dev-workflows:conformance` and then the scan, and `/dev-workflows:conformance` offers the scan where it decided no fix, for each repository whose Epic branch it traced before the merge.
 
-**Nothing waits on the Security Engineer.** The dashed edge into `--triage` is the review of the Dev's false positives and accepted risks, which took effect when the Dev recorded them. The Security Engineer confirms or overrules them whenever they get to it, and the Dev's pull request is reviewed and merged as usual in the meantime.
+**Nothing waits on the Security Engineer.** The dashed edges into `--verify-fixes` are the scan's own offer, in its report's next step, for once a fix it sent to `/dev-workflows:implement` has merged. The dashed edge into `--triage` is the review of the Dev's false positives and accepted risks, which took effect when the Dev recorded them. The Security Engineer confirms or overrules them whenever they get to it, and the Dev's pull request is reviewed and merged as usual in the meantime.
 
 **`--import` records a report you made yourself.** After a `git push` or a `gh pr create`, Claude Security's own tip suggests a scan of the branch's changes, and you can run `/claude-security` directly at any time. `/security-workflows:scan <KEY | repo-path> --import <report dir>` records that report as the scan would have, without paying for it twice: with a key under the Dev's role, with a path under the Security Engineer's.
 
@@ -55,7 +56,7 @@ flowchart TD
 
 - **`$SPECS_PATH`** — the code repository's register under `security/<repo-slug>/`: the scan's folder, the run record, and the rebuilt `register.json` and `register.md`. With a key, one block in the unit's `_security.md` and the follow-ups in its `follow-ups.md`. The run's cost entry and session feedback. All of it is bookkeeping: the run's terminal commit carries it with the run's other session files and pushes it as it pushes those, never by a pull request of its own, and on a specs repository whose default branch takes no push it travels on your session branch ([Security register](reference/security-register.md)).
 - **The code repository** — only what a scan needs: Claude Security's report directory at the scan root, which carries its own `.gitignore`; on a change scan, a fast-forward or a switch to the Epic's branch, the switch only after you agree; for `--verify-fixes`, a temporary worktree, removed on every path; and a report folder copied out of a temporary worktree to the repository's root, where the run did not record that report, or where you chose to remove an idle worktree a crashed run left, so that `--import` can record it.
-- **Nowhere else.** It never applies a patch: `/dev-workflows:implement` starts from it. It never runs anything against a deployed system, and never writes exploit code.
+- **Nowhere else.** It never applies a patch: on a key run, `/dev-workflows:implement` reads it in the specs repository and starts from it where it still applies; on a path, the report names each patch by its absolute path beside its prompt line. It never runs anything against a deployed system, and never writes exploit code.
 
 ## Sources of truth
 

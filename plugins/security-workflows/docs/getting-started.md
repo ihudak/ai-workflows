@@ -38,9 +38,10 @@ An unsatisfied dependency disables the plugin instead of letting it half-run, wh
 claude plugin marketplace update shipwright
 claude plugin update security-workflows@shipwright
 claude plugin update workflows-core@shipwright
+claude plugin update dev-workflows@shipwright
 ```
 
-**Both kinds of step are needed, and the `plugin update` lines are the ones that change what runs.** `marketplace update` refreshes the catalogue, which is what the marketplace advertises, while an already-installed plugin stays at the version you installed. `claude plugin update` upgrades it, and **requires restarting Claude Code to apply.** The interactive `/plugins` interface does the same with a picker. **Update `workflows-core` with it**: the command loads the register's format, the Epic-branch lookup and the cost rules from that plugin, and commits the register on paths only a current `workflows-core` stages.
+**Both kinds of step are needed, and the `plugin update` lines are the ones that change what runs.** `marketplace update` refreshes the catalogue, which is what the marketplace advertises, while an already-installed plugin stays at the version you installed. `claude plugin update` upgrades it, and **requires restarting Claude Code to apply.** The interactive `/plugins` interface does the same with a picker. **Update `workflows-core` with it**: the command loads the register's format, the Epic-branch lookup and the cost rules from that plugin, and commits the register on paths only a current `workflows-core` stages. **Update `dev-workflows` with it too**, where you build with the family: a fix goes to `/dev-workflows:implement`, and only its 4.28.0 or later continues on the Epic's branch and starts from the scan's patch — an older one cuts a fresh branch, so the fix lands in a second pull request.
 
 ## What you set on your machine
 
@@ -82,6 +83,8 @@ After the merge:
 The command reasons about source code. It never runs anything against a deployed system, never writes exploit code, and never applies a patch.
 
 In the code repository it writes only what a scan needs: the report directory Claude Security leaves at the scan root, `CLAUDE-SECURITY-<timestamp>/`, which carries its own `.gitignore`; on a change scan, a fast-forward or a switch to the Epic's branch, the switch only after you agree to it; for `--verify-fixes`, a temporary worktree it removes on every path; and a report folder copied out of a temporary worktree to the repository's root, where the run did not record that report, or where you chose to remove an idle worktree a crashed run left, so that `--import` can record it. Everything it records goes to `$SPECS_PATH`.
+
+**A credential in a report can reach the specs repository.** Claude Security's redaction of credential values in its report is best effort, and the run asks before copying a report where Claude Security says the redaction may have failed. A credential it misses without saying so is copied into the register, then committed and pushed with the run's session files, as bookkeeping that no pull request reviews; once pushed, only a history rewrite takes it out. Keep the specs repository private, with access no wider than the code repository's, and rotate any credential you find in a scan folder. [`/security-workflows:scan`](commands/scan.md#triage) says which files to read, and when.
 
 ## Your first run
 

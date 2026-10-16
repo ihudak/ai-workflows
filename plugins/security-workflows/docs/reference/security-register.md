@@ -20,13 +20,13 @@ $SPECS_PATH/security/<repo-slug>/
 - **`<repo-slug>`** is the last path segment of the code repository's `origin` URL, a trailing `.git` stripped. A repository with no `origin` has no slug, and so no register: the run stops.
 - **A scan folder** is named after the revision stamp's `generated_at` in UTC, compacted to `YYYYMMDDTHHMMSSZ`, then the scanned commit's first seven characters. Its files are Claude Security's, copied unchanged and never rewritten.
 - **A run record** is named by its four-digit `<seq>`, the run's UTC time, and `<hash8>`, the start of the record's own sha256, so two records never share a name. A record is written once and never edited.
-- **`$SPECS_PATH/security/` belongs to the registers** and the cost entries beside them, and holds nothing else: everything under it is committed as bookkeeping. Keep a team's own security documents elsewhere in the specs tree.
+- **`$SPECS_PATH/security/` belongs to the registers** and the cost entries beside them. A run's terminal commit stages only a register's own paths as bookkeeping — `runs/`, `scans/`, `dev-workflows/`, `register.json` and `register.md` in each `security/<repo-slug>/` — so a team's own security document kept under `security/` is never committed by a run. Keep such documents elsewhere in the specs tree all the same: a directory under `security/` named as a code repository's slug is that repository's register.
 
 **The run records and the scan folders are the source of truth.** Every run rebuilds `register.json` and `register.md` from them with `register.py rebuild`, replaying the records in `(seq, at, file name)` order, and no run reads the derived files back as its state. The one exception is narrow: a Security Engineer's *Confirm* of a decision awaiting security review re-asserts that decision's evidence, reason and review-by date, read from the `register.json` the run has just rebuilt, so the read carries nothing the records do not. A stale or conflicted copy of either derived file is harmless until the next rebuild overwrites it, and a rebuild needs no git: every status change, the automatic ones included, is a decision written in a record.
 
 ## It is bookkeeping, and nothing waits
 
-The register's files, and a unit's `_security.md`, are session bookkeeping, like `implementation.md` and `follow-ups.md`: the run's terminal `commit-artifacts` step commits them with the run's other session files and pushes them as it pushes those. **They are never handed off by pull request**, because a record of what a run did needs no review to exist and must not wait on one. Where the specs repository's default branch takes no push, the register travels on your own `session/<identity>` branch, with every session file, and reaches the default branch when that branch's pull request merges.
+The register's files, and a unit's `_security.md`, are session bookkeeping, like `implementation.md` and `follow-ups.md`: the run's terminal `commit-artifacts` step commits them with the run's other session files and pushes them as it pushes those. **They are never handed off by pull request**, because a record of what a run did needs no review to exist and must not wait on one. That holds for a scan folder's copy of Claude Security's report too, so a credential its redaction missed without saying so is pushed with it unreviewed: keep the specs repository's access no wider than the code repository's, as [`/security-workflows:scan`](../commands/scan.md#triage) says under *Credentials in the report*. Where the specs repository's default branch takes no push, the register travels on your own `session/<identity>` branch, with every session file, and reaches the default branch when that branch's pull request merges.
 
 **No run waits on another run's register changes.** A run never stops because another run's records are unmerged. Instead it numbers past them: it copies the run records that other session branches hold and this checkout lacks into a scratch reservation, once at the start and again just before it records, adding the specs repository's default branch the second time, and allocates new numbers above every number those records took.
 
@@ -36,11 +36,11 @@ A run that changes the register writes one run record, and a second, small one w
 
 - `seq`, `at` (UTC), `by` (the specs repository's git `user.name`), `kind` (`scan`, `import`, `triage` or `verify`) and `role` (`dev` or `sec`);
 - `unit`, the key the run was addressed by, or `null`;
-- `scan`, the scan it recorded, with its commit, base, mode, scope, effort and whether it was verified, clean and covering, or `null` on a triage;
-- `allocated`, `matched` and `again`: the new findings and the `[SEC#n]` each took, the possibly-same matches a person confirmed, and the findings the scan reported again, each with its file's git blob at the scanned commit;
+- `scan`, the scan it recorded, with its commit, base, mode, scope — relative to the repository's top level, whatever directory the scan ran in — effort and whether it was verified, clean and covering, or `null` on a triage;
+- `allocated`, `matched` and `again`: the new findings and the `[SEC#n]` each took, the possibly-same matches a person confirmed, and the findings the scan reported again, each with its file's git blob at the scanned commit, and each match or finding reported again with whether the sighting was **history** for that finding ([below](#how-a-finding-is-closed));
 - `not_reported`: the findings a covering scan did not report;
 - `decisions`: every status change, with its reason, evidence, owner, review-by date, links and whether it is confirmed;
-- `renumbered`: the moves of other records' numbers this run was the first to report.
+- `renumbered`: the moves of other records' numbers this run reported and no earlier record holds, so this run is the first to record them.
 
 Every entry names its finding by its `origin` — the scan that first recorded it and the plugin ID it had then — never by its number alone, so a renumbering can never point a record's decisions at another finding.
 
@@ -56,7 +56,7 @@ Its `[SEC#n]` and `origin`; Claude Security's finding ID and that ID's version; 
 |---|---|
 | `new` | First reported. Triage decides it in the same run; left undecided, it becomes `open` |
 | `open` | Decide later |
-| `fix` | To be fixed |
+| `fix` | To be fixed, with no follow-up written: a decision of `fix` clears the finding's follow-up link |
 | `fixing` | Its follow-up, or its `/implement` prompt line, is written |
 | `fixed` | Closed on evidence, or confirmed in triage |
 | `reopened` | Reported again after `fixed` |
@@ -96,7 +96,9 @@ stateDiagram-v2
     reopened --> accepted_risk
 ```
 
-`register.py` makes some of these moves itself, and a person makes the rest at the triage. It records `open` for a new finding nobody decided, and for a false positive or an accepted risk a confirmed match left undecided; it moves a finding to `fixing` when it writes the finding's follow-up; it closes a `fixing` finding on the evidence below; and it reopens a `fixed` finding a later scan reports again. A follow-up line cancelled at the run's preview returns its finding to `fix`, through a second, small run record. An active finding — `open`, `fix`, `fixing`, `reopened` or `accepted-risk` — whose file is gone at a scan's commit is proposed as fixed, whatever kind of scan ran, by the rules below.
+`register.py` makes some of these moves itself, and a person makes the rest at the triage. It records `open` for a new finding nobody decided, and for a false positive or an accepted risk a confirmed match on changed code left undecided; it moves a finding to `fixing` when it writes the finding's follow-up; it closes a `fixing` finding on the evidence below; and it reopens a `fixed` finding a scan reports again, unless that scan's commit comes before the finding's last sighting or before the scan that closed it. A follow-up line cancelled at the run's preview returns its finding to `fix`, through a second, small run record, and clears its follow-up link. An active finding — `open`, `fix`, `fixing`, `reopened` or `accepted-risk` — whose file is gone at the commit of a scan later than its last sighting is proposed as fixed, whatever kind of scan ran, by the rules below.
+
+**A fix nobody queued is offered again.** `register.py` offers every `fix` finding to the next triage as a row to fix — on a run addressed by a key, those raised for that unit — so a finding whose follow-up line the preview cancelled comes back. Given the unit's `follow-ups.md`, which every run addressed by a key hands it, it also offers every `fixing` finding raised for the unit that no task line there carries: no line, open or ticked, naming the register's repository and carrying `[SEC#n]` under any number the finding was published under. That is a finding whose run was cut off between recording it and writing its follow-up. Deciding it fix builds its line again, starting from the patch an earlier run recorded for it where this scan made none. A run on a repository path writes no follow-up file, and tests no `fixing` finding.
 
 ## A false positive or an accepted risk
 
@@ -105,7 +107,7 @@ stateDiagram-v2
 - **`false-positive` claims "this is not exploitable."** It names its evidence: the `file:line` of the guard, check or encoding that defeats Claude Security's exploit scenario, and one line of why. A person is overruling a finding the scanner's three-voter panel confirmed, so the evidence is what makes the overruling checkable later, and `register.py` refuses a false positive without it. A finding reported again with the same plugin ID stays a false positive, because its code is unchanged.
 - **`accepted-risk` claims "this is exploitable, and we accept it."** It carries one line of why, an owner — the person deciding — and a review-by date, 90 days by default, 30 or 180 on request, or a date you type. When that date passes, the finding returns to triage as *review due*, so no risk stays accepted by default.
 
-**A possibly-same match on either is changed code.** Where a scan reports a finding that may be the same as a false positive or an accepted risk, and a person confirms the match, the old judgement no longer covers it: the run asks that finding's decision again, and left undecided, `register.py` returns it to `open`.
+**A possibly-same match on either is changed code.** Where a scan reports a finding that may be the same as a false positive or an accepted risk, and a person confirms the match, the old judgement no longer covers it: the run asks that finding's decision again, and left undecided, `register.py` returns it to `open`. The one exception is a sighting that is history for that finding — the scanned commit comes before the one it was last seen at — which changes nothing but who reported it.
 
 ## Awaiting security review
 
@@ -122,6 +124,8 @@ A Security Engineer reviews it in a `sec` run, usually `--triage`, where every s
 - **its scope names the file itself**, and its research coverage is absent or complete — which is how a `--verify-fixes` scan, scoped to the files of the findings being fixed, covers them; or
 - **its scope is the whole repository, or one of the file's parent directories**, and its research coverage is complete: no file left unreached, unaccounted for, or outside every component it read, and nothing capped.
 
+A scan run from a subdirectory records it in its revision stamp as `scan_prefix`, and names its findings' files and its scope relative to that directory: `register.py` joins the prefix to every path and every scope entry, so the register holds each relative to the repository's top level, and such a scan with no scope of its own has that directory as its scope. A stamp whose `scan_prefix` is misshapen, or a finding whose file lies outside the repository, stops the run with `SCAN_PRODUCTS_UNREADABLE`.
+
 **Later and changed.** A scan is evidence about a finding only when it is **later** than the finding's last sighting and the finding's file has **changed** since:
 
 - **later:** the scan's commit descends from the commit the finding was last seen at — or, for a finding raised for a unit, it carries a squash of that unit's work that came after the sighting: a commit whose subject holds `[<key>]` as a whole token, made no earlier than that sighting, and in neither the history the sighting shares with the default branch nor the sighting's own history. A squash merge leaves the branch's own commits outside the default branch's history, and a deleted branch leaves them outside every clone that had not fetched it, which is why this leg exists;
@@ -131,14 +135,14 @@ A Security Engineer reviews it in a `sec` run, usually `--triage`, where every s
 
 **No closure.** A finding a later covering scan does not report, while its file is unchanged, gains that scan in its `not_reported_by` list and nothing else.
 
-**Unverifiable.** Where the clone cannot place a finding's last sighting, its commit absent and no squash found, or where the scan is later but whether the file changed cannot be told, the finding is **unverifiable** for that scan: the plan lists it, the scan records nothing about it, and the run's report names it with what would settle it — fetching the branch that holds the sighting, or running `--verify-fixes` from a clone that has it.
+**Unverifiable.** Where the clone cannot place a finding's last sighting, its commit absent and no squash found — whether its file changed or is gone — or where the scan is later but whether the file changed cannot be told, the finding is **unverifiable** for that scan: the plan lists it, the scan records nothing about it, and the run's report names it with what would settle it — fetching the branch that holds the sighting, or running `--verify-fixes` from a clone that has it.
 
 **The rest of the rules.**
 
-- **A file gone at the scan's commit.** An active finding whose file does not exist there is proposed as fixed, whatever kind of scan ran. A moved file's finding comes back as a new one at its new path.
+- **A file gone at the scan's commit.** An active finding whose file does not exist there is proposed as fixed, whatever kind of scan ran, where the scan is later than its last sighting: a scan of a commit that never held the file — a parallel Epic's, or the default branch's before the finding's work merged — says nothing about it. Where the clone cannot place that sighting, the finding is unverifiable for the scan. A moved file's finding comes back as a new one at its new path.
 - **Unverified scans.** A scan that is unverified, or ran over a dirty tree, can add findings but never close one.
 - **A change of the finding-ID version is not a mass event.** Where a scan's ID version differs from a finding's, their IDs are not compared: the finding is matched only as possibly the same, and that scan neither closes it nor adds a `not_reported_by` entry for it.
-- **History.** A scan whose commit is an ancestor of a scan already recorded adds `reported_by` entries, and moves no last sighting, closes nothing and never reopens a later `fixed`. Order is by commit ancestry, never by date.
+- **History, finding by finding.** A sighting is **history** for a finding where the scan's commit comes before the commit the finding was last seen at: one of its ancestors, and not that commit itself. It adds a `reported_by` entry and moves no last sighting, a match confirmed from it changes no finding ID, and a reviewed finding it matches keeps its status. A `fixed` finding a scan reports again is reopened unless the sighting is history for it or the scan's commit comes before the scan that closed it. Whether a scan closes a finding, notes it as not reported or finds its file gone is the later test above, also asked finding by finding: one scan can be history for a finding last seen on an Epic's branch and still later than another. Order is by commit ancestry, never by date, and each run record notes, per sighting, whether it was history, so a rebuild needs no git.
 - **Idempotent.** Recording a scan the register already holds, or one a run record on another branch holds, changes nothing, and a rebuild over the same records produces the same `register.json`, byte for byte.
 
 ## Matching a scan's findings
@@ -147,9 +151,13 @@ A scan's finding is **the same finding, reported again**, when its plugin ID equ
 
 ## Numbers
 
-A `[SEC#n]` is numbered per code repository and never reused. A new finding takes the next number above every number the register holds, every number any record ever allocated, and every number allocated in a run record that another branch holds and this checkout lacks.
+A `[SEC#n]` is numbered per code repository and never reused. A record **publishes** a number for a finding when it allocates it, and when its `renumbered` moves the finding to it. A new finding takes the next number above every number any record ever published — a number that gave way included, and the numbers published in run records that another branch holds and this checkout lacks.
 
-**Two runs can still record at the same moment**, before either has pushed. The rebuild that first sees both moves the later record's colliding number to the lowest one free above it, and its decisions follow it. A run that meets the move reports it, naming the record it came from and the follow-up lines that still cite the old number. The first run that records anything after it writes the move into its own record, so no later run reports it again; a run that records nothing leaves it for the next one to report. Two records that allocated one finding twice name one finding, and the later number gives way the same way. That is the only way a `[SEC#n]` ever changes.
+**A published number stays.** Two runs can still record at the same moment, before either has pushed, so two records can allocate one number. That number belongs to the finding whose record sorts first, in `(seq, at, file name)` order, and stays held for it for good. The other finding moves, its decisions following it, to the lowest number above it that no record published and no other move took. A finding's number is the last one it was published under, and it moves only where that number belongs to another finding; it never goes back to a number it held before, even once the collision that moved it has gone.
+
+**Two records that allocated one finding twice** — one scan recorded on two machines, or one finding reported as new on two branches — name one finding, the later allocation giving way to the earlier. The finding keeps the number its earliest allocation was last published under. Where an earlier record published that number for another finding, it stands on the number another of its own allocations was last published under, and moves only where none of those is its own. A number that gave way stays held, as every published number does.
+
+**A move is reported** from every number the finding was published under that differs from the one it has now, naming the record that allocated it. A run that records reports it with the follow-up lines that still cite the old number to correct — those whose CWE and file match the moved finding's, since after a collision the old number can still belong to the other finding — and writes the move into its own record, so no later run reports it again. A run that records nothing reports it as **provisional**: not yet recorded, its target can still change, so correct no lines yet; the next run that records reports it again. That is the only way a `[SEC#n]` ever changes.
 
 ## Reading `register.md`
 
