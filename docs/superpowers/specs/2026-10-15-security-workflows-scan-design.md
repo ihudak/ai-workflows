@@ -613,7 +613,7 @@ The answer is never guessed. The branch is the one named by the latest block for
 | State | When |
 |---|---|
 | `none` | The unit's `implementation.md` has no block for this repository |
-| `merged` | The block passes the **merged test** at a default-branch commit M, and the branch, where it still resolves, adds nothing to M or to the default branch's head (`git merge-tree --write-tree` prints that commit's own tree) |
+| `merged` | The block passes the **merged test** at a default-branch commit M, and the branch, where it still resolves, adds nothing to M or to the default branch's head (`git merge-tree --write-tree` prints that commit's own tree); or neither leg passes, but the branch resolves and adds nothing to the default branch's head |
 | `checked-out` | HEAD is the branch |
 | `local` | The branch exists locally, and HEAD is elsewhere |
 | `remote` | The branch exists only as `origin/<branch>` |
@@ -627,7 +627,7 @@ It also returns `branch`, `base`, the recorded `commit`, and the branch's curren
 
 `/conformance` cites it instead of keeping its own copy, for its PRD run as well as its Epic run. That leaves one definition of "merged" in the family.
 
-M is `<ref>` where the ancestry leg passed, and the newest `[<key>]`-subject commit where only the subject leg did. The tip test matters after a squash or a rebase, which leave the branch's own commits outside the default branch: without it, a Dev's surviving local branch would read as an open pull request. A content test reads a squash whose context shifted as merged, where patch-id tests do not. Where the local branch is an ancestor of `origin/<branch>`, the remote one is tested, so a stale local branch reads merged too. A rebase whose review line the default branch later rewrote reads as `after_merge`, which only costs the Dev a new branch. So does a stale local branch whose `origin/<branch>` is gone, where review commits only `origin` held changed what the branch wrote: the shape cannot be told apart, and it too only costs a new branch. Where the local branch is behind `origin/<branch>`, the tip is `origin`'s. A consumer that reads at a ref reads it, and one that works in the branch fast-forwards the branch to it first, saying so. Commits made on the branch after its pull request merged make it read unmerged again. The output's `after_merge` is true exactly then: the merged test passed, and the tip adds work. A consumer that needs to know whether a pull request is still open reads it (D17).
+M is `<ref>` where the ancestry leg passed, and the newest `[<key>]`-subject commit where only the subject leg did. Where neither leg passes but the branch resolves, a tip that adds nothing to the default branch's head also reads `merged`: the work reached it under a subject that lost the key. The content test has three outcomes: it adds nothing, it adds work, or it compared nothing (an older git, or a shallow clone whose histories do not meet), where the merged test alone decides. On a read-only mount it runs against a scratch object directory, writing nothing to the clone. A shallow clone is a stated residual, and a consumer says so. Where the explicit branch fetch finds `origin` lacks the branch, the stale tracking ref is removed, as `--prune` would. The tip test matters after a squash or a rebase, which leave the branch's own commits outside the default branch: without it, a Dev's surviving local branch would read as an open pull request. A content test reads a squash whose context shifted as merged, where patch-id tests do not. Where the local branch is an ancestor of `origin/<branch>`, the remote one is tested, so a stale local branch reads merged too. A rebase whose review line the default branch later rewrote reads as `after_merge`, which only costs the Dev a new branch. So does a stale local branch whose `origin/<branch>` is gone, where review commits only `origin` held changed what the branch wrote: the shape cannot be told apart, and it too only costs a new branch. Where the local branch is behind `origin/<branch>`, the tip is `origin`'s. A consumer that reads at a ref reads it, and one that works in the branch fast-forwards the branch to it first, saying so. Commits made on the branch after its pull request merged make it read unmerged again. The output's `after_merge` is true exactly then: the merged test passed, and the tip adds work. A consumer that needs to know whether a pull request is still open reads it (D17).
 
 ### D19. `/conformance`'s Epic run returns to before the merge
 
@@ -640,8 +640,8 @@ M is `<ref>` where the ancestry leg passed, and the newest `[<key>]`-subject com
 | `checked-out` or `local` | `<branch>`'s tip, read at the ref with no checkout |
 | `remote` | `origin/<branch>` |
 | `merged` | the default branch, as today |
-| `missing` | it stops, naming the branch, gone without merging, and suggesting `git fetch` or `/implement` |
-| `none` | it stops: there is nothing implemented to check |
+| `missing` | it asks: stop until the branch is found (recommended, printing `CONFORMANCE_BRANCH_MISSING` with `git fetch` and `/implement` as remedies), trace the default branch there, or cancel. A squash whose subject lost the key, after its branch was deleted, otherwise left the Epic run stuck for good, while the PRD run already asks |
+| `none` | where every repository the record names is `none` — the record holds no `/implement` block at all — it stops with `CONFORMANCE_NOT_IMPLEMENTED`; a single repository without a block, named only as a `target:`, is traced at the default branch, as before |
 
 **What stays the same.**
 - The record, the walk, the effects and the handoff are unchanged.
