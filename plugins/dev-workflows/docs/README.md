@@ -9,7 +9,7 @@
 | build the thing | [`/implement`](commands/implement.md) |
 | document it, then announce it | `/docs-workflows:document`, `/docs-workflows:release-notes` — both ship in the companion `docs-workflows` plugin |
 | check whether a ticket is really ready | [`/ready`](commands/ready.md) |
-| check that what shipped matches what was specified | [`/conformance`](commands/conformance.md) |
+| check that what was built matches what was specified | [`/conformance`](commands/conformance.md) |
 | fix a CVE or upgrade a dependency | [`/vuln`](commands/vuln.md), [`/upgrade`](commands/upgrade.md) |
 | find out whether my test stack is covered | [Test suite detection](reference/test-suite-detection.md) |
 | understand what a run cost | [Session cost](reference/session-cost.md) |

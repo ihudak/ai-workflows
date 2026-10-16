@@ -46,7 +46,7 @@ Emitted by `/ready`, role `dev`. Being in this phase means the workflow phase is
 
 ### conformance
 
-Emitted by `/conformance`, with its role taken from the folder it checked: `dev` for an Epic run, `pe` for a PRD run. Being in this phase means what shipped is being checked against what was specified, and each discrepancy settled.
+Emitted by `/conformance`, with its role taken from the folder it checked: `dev` for an Epic run, `pe` for a PRD run. Being in this phase means what was built is being checked against what was specified, and each discrepancy settled.
 
 ### plugin-feedback
 

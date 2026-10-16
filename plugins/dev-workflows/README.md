@@ -11,7 +11,7 @@ Every command owns one role's step in the pipeline and hands a concrete artifact
 | Role | Commands | What it does |
 |------|----------|--------------|
 | PM/PA/PE | Moved to the sibling `product-workflows` plugin | Refine an idea into a PRD, ground an architecture decision or a BRD's requirements, break a PRD into Epics, author a specification, and run the six-command BRD-to-PRD route. |
-| Dev | [`/design`](docs/commands/design.md), [`/implement`](docs/commands/implement.md), [`/ready`](docs/commands/ready.md), [`/conformance`](docs/commands/conformance.md) | Design against the spec, implement it under review gates, check readiness, and check what shipped against the spec. Documenting and release notes moved to `docs-workflows`. |
+| Dev | [`/design`](docs/commands/design.md), [`/implement`](docs/commands/implement.md), [`/ready`](docs/commands/ready.md), [`/conformance`](docs/commands/conformance.md) | Design against the spec, implement it under review gates, check readiness, and check what was built against the spec. Documenting and release notes moved to `docs-workflows`. |
 | Anytime — maintenance | [`/vuln`](docs/commands/vuln.md), [`/upgrade`](docs/commands/upgrade.md) | Remediate a CVE, or upgrade a dependency. |
 | Anytime — guideline review | Moved to the sibling `guideline-reviewers` plugin | Review an OpenAPI spec or app UI against bundled guidelines. |
 | Anytime — specs-tree repair, status line, plugin feedback | Moved to the sibling `workflows-core` plugin | Index an exported design frame set, install the status line, and log friction or a correction about the plugin itself. |
