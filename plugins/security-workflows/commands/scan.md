@@ -174,12 +174,14 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" verify-scope --specs "$SPECS
 `--ref` is the repository's default ref (`workflows-core:read-only-repos` §3), and `--unit` is given
 with a key. Its `files` — each `fixing` finding's file that changed on `<default>` since the finding
 was last seen — become the scan's scope, and its `gone` — the `[SEC#n]` whose file `<default>` no
-longer holds — carry to Phase 5 as gone rows. On exit 2, stop with its message. Where `files` is
-empty, stop:
+longer holds, at a head later than their last sighting — carry to Phase 5 as gone rows. Its
+`unverifiable` — the `[SEC#n]` whose file `<default>` no longer holds, but whose last sighting this
+clone cannot place — carry to the report's `### Register`, as Phase 4's do. On exit 2, stop with its
+message. Where `files` is empty, stop:
 
 `SECURITY_NOTHING_TO_VERIFY: no finding being fixed has a changed file on <default> in <repo-slug><, for KEY> — nothing to verify yet.`
 
-Where `gone` names findings, the message goes on: ` <each [SEC#n]> no longer have their file on <default>; a scan of the repository ('/security-workflows:scan <repo-path>') proposes them fixed.`
+Where `gone` names findings, the message goes on: ` <each [SEC#n]> no longer have their file on <default>; a scan of the repository ('/security-workflows:scan <repo-path>') proposes them fixed.` Where `unverifiable` names findings, it goes on: ` <each [SEC#n]> have no file on <default>, but this clone cannot place their last sighting — fetch the branch that holds it, then re-run.`
 
 **`--triage`:** no scan. Plan the triage:
 
@@ -275,7 +277,8 @@ stop:
    - One candidate: `choices: ["Same finding", "A different finding"]`.
    - Several: a runtime array of one `Same as [SEC#n]` option per candidate, up to three, then `A different finding`. More candidates follow `workflows-core:next-phase-offer`'s overflow rule: the prose lists every candidate, the array carries the three nearest by line, and a typed `[SEC#n]` is resolved only against the candidates listed.
    - *A different finding* makes the row a new finding, decided as the batch answer says.
-   - **A confirmed match onto a false positive or an accepted risk** is changed code, so ask that finding's decision as in step 4 too, whatever the batch answer. Left undecided, `register.py` returns it to `open`. A match onto a `fixed` finding is reopened by `register.py`; onto any other status, it keeps that status.
+   - **A match onto a candidate the row's `history` names changes nothing** but who reported it: the scan's commit comes before that finding's last sighting (`workflows-core:security-register-format` §5 rule 4).
+   - **Otherwise, a confirmed match onto a false positive or an accepted risk** is changed code, so ask that finding's decision as in step 4 too, whatever the batch answer. Left undecided, `register.py` returns it to `open`. A match onto a candidate the row's `reopens` names is reopened by `register.py`; onto any other `fixed` candidate — the scan comes before the scan that closed it — or onto any other status, it keeps that status.
 
 4. ***Change some*** asks each row's decision — a possibly-same row once step 3 has answered it, a rejected one as a new row and a matched one only as step 3 says — four rows to an `AskUserQuestion` call, each question naming its row and its suggestion, with no `(Recommended)` marker: which answer is right is the question itself.
    - New, open or review-due rows: `choices: ["Fix", "Decide later", "False positive (you'll be prompted for the evidence)", "Accept the risk (you'll be prompted for the reason)"]`.
@@ -423,7 +426,7 @@ SIGNIFICANT — [one-line reason]
 - Raised: [[SEC#n], each] · reported again: [...] · closed: [those closed by themselves, those confirmed fixed]
 - Awaiting security review: [each [SEC#n] a dev run recorded as a false positive or an accepted risk and no sec run has confirmed — or "none"]
 - Review due: [each accepted risk past its review-by date — or "none"]
-- Unverifiable: [each [SEC#n] Phase 4 carried, and what would settle it — or "none"]
+- Unverifiable: [each [SEC#n] Phase 4, or on --verify-fixes Phase 1, carried, and what would settle it — or "none"]
 - Renumbered: [each move commit recorded, with the follow-up lines that cite the old number, to correct; or, on a run that recorded nothing, each move plan reported, marked provisional — not yet recorded; correct no lines yet — or "none"]
 - Follow-ups: [each line commit built, pending the preview at the end of this run — or the prompt lines, on a path — or "none"]
 - Patches: [each F<n>.patch copied, each finding declined, or why none was asked for]
