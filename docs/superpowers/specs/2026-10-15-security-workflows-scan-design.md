@@ -30,7 +30,7 @@ Date: 2026-10-15. Status: approved. Amended seven times.
 7. **On the review of `register.py`** (plan Task 3):
    - closure evidence survives a squash merge and a deleted branch, through a *later* test that falls back to the merged test's subject leg, and a *changed* test on the file's recorded blob (D8 rule 2);
    - an `ID_VERSION` change is judged per finding (D8 rule 3);
-   - a renumbering moves only the colliding record, and is reported once (D8 rule 5);
+   - a published `[SEC#n]` stays with the finding it was published for; only a collision between two published numbers moves one, and the move is reported until a record holds it (D8 rule 5; amended by the final review, Ruling 82);
    - records name a finding by its `origin`, never by its number alone (D7).
 8. **On the review of the `workflows-core` changes** (plan Task 4):
    - `unit-branch`'s merged state tests the branch's tip by content, against the commit the merge landed in, and reports `after_merge` for a branch that went on after its merge (D17, D18);
@@ -331,7 +331,7 @@ The register lives at `$SPECS_PATH/security/<repo-slug>/`:
   Run records are written once and never edited.
 - **`register.json`** is the folded state. `register.py` alone writes it, and every run rebuilds it from the run records, in `(seq, at, file name)` order, and the scan folders they name. **The run records and scan folders are the source of truth.** `register.json` and `register.md` are derived and never read back, so a stale or conflicted copy is harmless until the next run overwrites it.
 
-  **Every status change is a decision in a run record, the automatic ones included** (a closure, a reopening, `fixing`), together with the `not_reported_by` entries and whether the scan was an ancestor. Those need git on the code repository when the run computes them. The replay needs none.
+  **Every status change is a decision in a run record, the automatic ones included** (a closure, a reopening, `fixing`), together with the `not_reported_by` entries and, for each sighting, whether it was history for its finding (rule 4). Those need git on the code repository when the run computes them. The replay needs none.
 - **`register.md`** is rendered for people to read, and its first line says it is generated. It has six sections:
   - open findings, by severity;
   - findings being fixed;
@@ -408,10 +408,11 @@ stateDiagram-v2
    - **Proposed closure.** An `open`, `fix`, `reopened` or `accepted-risk` finding with the same evidence is proposed as fixed in triage, and changes only on a person's confirmation. So is a `fixing` finding that the scan is later than only through a squash, because a squash names the unit, not the fix: a squash of another part of the same unit can land after the branch was cut without holding the fix. Closure through ancestry stays automatic.
    - **No closure.** A finding absent while its file is unchanged gains a `not_reported_by` entry and nothing else.
    - **Change scans.** A change scan can add findings and re-report them, but it never adds a `not_reported_by` entry and never closes a finding.
-   - **A file gone at the scan's commit.** An active finding whose file does not exist there (`git cat-file -e <scan>:<path>` fails) is proposed as fixed, whatever kind of scan ran. A moved file's finding comes back as a new one at its new path.
+   - **A file gone at the scan's commit.** An active finding whose file does not exist there (`git cat-file -e <scan>:<path>` fails) is proposed as fixed, whatever kind of scan ran, where the scan is later than its last sighting. A scan of a commit that never held the file, such as a parallel Epic's, says nothing about it, and where the clone cannot place the sighting the finding is unverifiable. A moved file's finding comes back as a new one at its new path.
+   - **A subdirectory scan covers that subdirectory.** A scan run on a subdirectory records it in its stamp as `scan_prefix`, and its paths and scope are relative to it; `register.py` joins the prefix to every path and scope entry, so a subdirectory scan never reads as a whole-repository one.
 3. **A change of `ID_VERSION` is not a mass event.** When a scan's `ID_VERSION` differs from the one a finding was recorded under, plugin IDs are not compared. The scan's findings are matched by rule 1's possibly-same test instead, triage asks about each match. The scan neither closes such a finding nor adds a `not_reported_by` entry for it. Once a match is confirmed, the finding takes the new `plugin_id` and `plugin_id_version`. Findings already under the new version are judged as usual, so a version change never freezes the register.
-4. **Ancestry governs evidence; record order governs numbering.** A scan whose commit is an ancestor of a scan already recorded is kept as history. It adds `reported_by` entries, but moves no `last_seen`, closes nothing and never reopens a later `fixed` (`git merge-base --is-ancestor`). A recorded commit the clone lacks is passed over, and the scan's own commit must be present. Numbers are allocated, and records replayed, in `(seq, at, file name)` order.
-5. **Numbers stay unique across machines, and are never reused.** Numbering skips every number any record ever allocated, and every number allocated in a run record that another branch holds and this checkout lacks (D12). A scan that such a record already holds counts as recorded. Two runs can still record at the same moment, before either has pushed. On the rebuild that first sees both, the later record's colliding allocation moves to the lowest number above it that no record allocates and no earlier move has taken, so no third record moves and no later allocation moves it again, and its own decisions follow it. The run that first meets the move reports it, naming the record and the follow-up lines that cite the old number, and writes it into its own record, so it is reported once, from the number last reported. Two records that allocate one finding, through the same origin or the same plugin ID under one `ID_VERSION`, make one finding: the later allocation gives way the same way. That is the only way a `[SEC#n]` ever changes.
+4. **Ancestry governs evidence, finding by finding; record order governs numbering.** A sighting is **history** for a finding where the scan's commit is an ancestor of that finding's `last_seen.commit`. A history sighting adds a `reported_by` entry but moves no `last_seen`, and a reviewed finding it matches keeps its status. A `fixed` finding reported again is reopened unless the sighting is history for it, or the scan's commit is an ancestor of the scan that closed it. The answer for one finding never decides another's: a scan of the default branch's head is history for a finding last seen on an Epic cut from it, and still later than a finding last seen before it. Each entry records whether its sighting was history, so the replay needs no git. A recorded commit the clone lacks is passed over, and the scan's own commit must be present. Numbers are allocated, and records replayed, in `(seq, at, file name)` order. (Amended by the final review, Ruling 83: the scan-wide ancestor test made every scan of the default branch history whenever any in-flight Epic descended from it.)
+5. **Numbers stay unique across machines, are never reused, and a published number stays.** A new finding takes the next number after every number any record ever published: every allocated number, a number that gave way included, every number a record's renumbering moved an allocation to, and those in run records another branch holds and this checkout lacks (D12). A scan that such a record already holds counts as recorded. Two runs can still record at the same moment, before either has pushed, so two records can allocate one number. A number belongs to the finding the earliest-sorting record published it for, and is held for that finding for good; an allocation keeps the number it was last published under, and only a collision between two published numbers moves one, to the lowest number above it that no record published. Its decisions follow it. A move is reported from every number the allocation was published under that differs from its current one, naming the record, so the follow-up lines citing the old number can be corrected, and it is reported until a record holds it; a run that records nothing reports it as provisional, and no lines are corrected on its strength. Two records that allocate one finding, through the same origin or the same plugin ID under one `ID_VERSION`, make one finding: the later allocation gives way. A collision and a give-way are the only ways a `[SEC#n]` ever changes. (Amended by the final review, Ruling 82; `workflows-core:security-register-format` §2 is the authority.)
 6. **Unverified scans.** A scan whose stamp shows it unverified, or shows uncommitted changes in the scanned tree, is recorded and flagged. It can add findings, but it can never close one.
 7. **Idempotent.** Recording a scan already recorded (the same `scan_id`) changes nothing. A rebuild over the same records produces the same `register.json`, byte for byte, and `register.md` dates *review due* from the last run, never from the clock.
 
@@ -423,6 +424,7 @@ Triage is one batch preview. It covers:
 - the possibly-same matches;
 - the findings proposed as fixed (rule 2), with any whose file is gone;
 - the findings still `open` from earlier runs;
+- the findings this scan reopened, and the `fix` findings no follow-up line carries: a follow-up the preview cancelled, or one a run cut off before writing it;
 - the accepted risks whose review-by date has passed;
 - in a `sec` run, the decisions awaiting security review.
 
@@ -457,8 +459,8 @@ The batch choice is **Accept the suggestions** · **Change some** · **Decide al
 
   ``- [ ] Run `/dev-workflows:implement BOOK-2-01-02` from repository `bookstore`: fix [SEC#3] (CWE-862) at `ratings/…/RatingsController.java:88`, starting from `security/bookstore/scans/<id>/patches/F2.patch` — raised by /security-workflows:scan``
 
-  The run emits it into the unit's `follow-ups.md`. `/implement`'s keyed run reads follow-ups back and takes their changes into its description; where the Epic's pull request is still open, it continues on that branch (D17).
-- **With a path,** there is no unit to address. The line is an `/implement` prompt line, carried into the next-step offer.
+  The run emits it into the unit's `follow-ups.md`, where a line carrying a `[SEC#n]` is matched only against an open line carrying the same `[SEC#n]` (`workflows-core:followup-emission` §5), so an earlier, ticked fix never suppresses a reopened finding's line. `/implement`'s keyed run reads follow-ups back and takes their changes into its description; where the Epic's pull request is still open, it continues on that branch (D17). The patch path is relative to `$SPECS_PATH`: `/implement` reads the patch from there and runs `git apply --check` on the branch before its first edit, deriving the fix afresh where the check fails.
+- **With a path,** there is no unit to address. The line is an `/implement` prompt line, carried into the next-step offer, and the report prints each patch's absolute path beside it.
 - **A finding the plugin skipped** gets its line without a patch.
 - **A line the follow-up preview cancels** returns its finding to `fix` through a second, small run record.
 
@@ -491,7 +493,7 @@ It is written only when the run resolved a key, and it is bookkeeping (D12).
 
 **Two new path shapes.** `workflows-core:specs-repo-git` §2.1, the bounded write authority, gains:
 
-- `<specs-root>/security/*/**`, the register: a directory shape, where `*` is the one-segment repository slug;
+- `<specs-root>/security/*/{runs/**|scans/**|dev-workflows/**|register.json|register.md}`, the register's own paths: one directory shape, where `*` is the one-segment repository slug, narrowed by the final review (Ruling 90) so a team's own `security/` documents are never staged;
 - `<specs-root>/{specs|specifications|vis}/**/_security.md`, the unit note: an appended single file.
 
 `session-branch.py`'s copy of the classifier gains the same two, character for character, as its self-test requires. Its git attributes give `**/_security.md` the `union` merge driver. A scan folder and a run record need none, because each lives at a path no other run writes. The derived `register.json` and `register.md` are unset `-merge`: §8.2 merges with `-X ours`, which would otherwise splice two rebuilds into a register neither produced. Unset, a merge keeps this run's whole rebuild, and the next run rebuilds from every record anyway.
@@ -707,10 +709,10 @@ The spike needs Claude Security installed in the session, and a `git fetch` in `
   - missing with the file unchanged; a change scan that touches a finding's file and never closes it;
   - `fixing` → `fixed`; `open` → `fixed` on confirmation; reopened; a file gone;
   - a false positive reported again unchanged; an accepted risk past its review-by date;
-  - an `ID_VERSION` change that closes nothing; an unverified scan; an ancestor import;
+  - an `ID_VERSION` change that closes nothing; an unverified scan; a history sighting, judged per finding;
   - repeated import; `rebuild` byte for byte;
   - reserved records from another branch;
-  - two records allocating one number, renumbered once and reported;
+  - two records allocating one number: the later-published allocation moves, the move is reported until a record holds it, and provisionally where only reported;
   - a Dev's decision awaiting review, and a Security Engineer's confirmation;
   - follow-up lines written at commit and carrying no free text from a finding.
 - **`session-branch.py --selftest`** with the two new shapes and the new attribute.
