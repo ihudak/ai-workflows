@@ -350,7 +350,7 @@ which the report's `### Next step` carries.
 - **On `REGISTER_MOVED`** — the register gained a run since this one planned — re-plan with the same arguments and commit again, asking nothing already answered. Where the new plan carries a row the decisions file does not answer — a `possibly_same` row, or a candidate it lacked — ask that row as Phase 5 does and add the answer.
 - **On `TRIAGE_INVALID` or `TRIAGE_INCOMPLETE`**, ask the row it names again, rewrite the decisions file, and commit again.
 - **On any other exit 2**, stop with its message.
-- **Where `plan` or `commit` reports `renumbered`**, name each move in the report — `[SEC#<from>]` → `[SEC#<to>]`, with the run record it came from — with the follow-up lines that cite the old number: `grep -rn -F '[SEC#<from>]' "$SPECS_PATH" --include=follow-ups.md`, kept to the lines naming repository `<repo-slug>`. Where `commit` runs, it writes each move into this run's record, so no later run reports it again; a move only `plan` reported, on a run that recorded nothing, is reported again by the next run that does.
+- **Where `plan` or `commit` reports `renumbered`**, name each move in the report — `[SEC#<from>]` → `[SEC#<to>]`, with the run record it came from. Where `commit` ran, its `renumbered` is the run's: each move is `provisional: false`, written into this run's record so no later run reports it again, and the report names under it the follow-up lines that cite the old number, to correct — `grep -rn -F '[SEC#<from>]' "$SPECS_PATH" --include=follow-ups.md`, kept to the lines naming repository `<repo-slug>`. On a run that recorded nothing, the moves are `plan`'s, each `provisional: true`: the report marks each *provisional — not yet recorded; correct no lines yet*, since its target can still change, and the next run that records reports it again.
 
 ### 7.3 The unit note
 
@@ -424,7 +424,7 @@ SIGNIFICANT — [one-line reason]
 - Awaiting security review: [each [SEC#n] a dev run recorded as a false positive or an accepted risk and no sec run has confirmed — or "none"]
 - Review due: [each accepted risk past its review-by date — or "none"]
 - Unverifiable: [each [SEC#n] Phase 4 carried, and what would settle it — or "none"]
-- Renumbered: [each move, with the follow-up lines that cite the old number — or "none"]
+- Renumbered: [each move commit recorded, with the follow-up lines that cite the old number, to correct; or, on a run that recorded nothing, each move plan reported, marked provisional — not yet recorded; correct no lines yet — or "none"]
 - Follow-ups: [each line commit built, pending the preview at the end of this run — or the prompt lines, on a path — or "none"]
 - Patches: [each F<n>.patch copied, each finding declined, or why none was asked for]
 - Unit note: [the _security.md block appended — or "none"]
