@@ -40,7 +40,7 @@ One command edits a follow-up after writing it: `/conformance`, when a *fix the 
 
 ## A re-queued follow-up
 
-The same command writes one line the duplicate check below would skip: when the PE confirms a Dev's *fix the code* decision whose follow-up is no longer open — ticked, or never written because it was cancelled at the Epic run's preview — the PRD run queues a new line ending `— confirmed: <PRD-KEY>/[DD#n]`. The PE's confirmation is a new request for that change, so a ticked line naming it does not block it; a line already carrying the same `— confirmed:` suffix does, so a re-run does not write it twice.
+The same command writes one line the duplicate check below would skip: when the PE confirms a Dev's *fix the code* decision whose follow-up is no longer open — ticked, or never written because it was cancelled at the Epic run's preview — the PRD run queues a new line ending `— confirmed: <PRD-KEY>/[DD#n]`. A line the Dev's unmerged `conformance/` branch holds open is not re-queued, since it arrives with that branch. A line only a session branch holds is one the PRD run cannot see, so it is re-queued, and the two stand side by side once that branch merges. The PE's confirmation is a new request for that change, so a ticked line naming it does not block it; a line already carrying the same `— confirmed:` suffix does, so a re-run does not write it twice.
 
 ## What no longer becomes a follow-up
 
