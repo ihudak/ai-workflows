@@ -4,7 +4,7 @@
 
 ```yaml
 repo_path: <absolute path of the local clone>
-ref: <the ref to read: the repository's default branch, origin/<default>>
+ref: <the ref to read: the repository's default branch, origin/<default> — or, on an Epic run, the Epic's branch, <branch> or origin/<branch>, where /conformance Phase 1 (c) traces it>
 commit: <the full commit id <ref> resolves to, for the evidence>
 requirements:
   - key: <the folder key the requirement belongs to>
@@ -33,4 +33,4 @@ One section per requirement, in input order, headed by the requirement's `key` a
 
 ## How the caller merges repositories
 
-A requirement handed to more than one repository gets one verdict after the caller merges the sections, carrying each repository's evidence. It needs only one repository — an Epic's requirement handed to its target repository and to another its implementation record names, or a PRD-level one, which states no home and goes to every repository in scope: `contradicts` where any repository returned that, otherwise the strongest of their verdicts (`satisfied` before `partial` before `missing` before `not-checkable`). A `## Contract` line traced on both sides — produced by one Epic and consumed by another — merges each side that way over that side's Epic's repositories, then needs every side: `satisfied` only where every side is, otherwise the weakest of the sides' verdicts (`contradicts` before `missing` before `partial`). So return `missing` wherever your repository does not do it, even where another repository may: the merge, not you, decides whether that is a discrepancy.
+A requirement handed to more than one repository gets one verdict after the caller merges the sections, carrying each repository's evidence. It needs only one repository — an Epic's requirement handed to its target repository and to another its implementation record names, or a PRD-level one, which states no home and goes to every repository in scope: `contradicts` where any repository returned that, otherwise the strongest of their verdicts (`satisfied` before `partial` before `missing` before `not-checkable`). A `## Contract` line traced on both sides — produced by one Epic and consumed by another — merges each side that way over that side's Epic's repositories, then needs every side: `satisfied` only where every side is, otherwise the weakest of the sides' verdicts (`contradicts` before `missing` before `partial` before `not-checkable`), a side none of whose repositories was traced counting as `not-checkable`. So return `missing` wherever your repository does not do it, even where another repository may: the merge, not you, decides whether that is a discrepancy.

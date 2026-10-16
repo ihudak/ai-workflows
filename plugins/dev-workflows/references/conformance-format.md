@@ -23,7 +23,7 @@ key: <the folder's key>
 # Conformance: <KEY>
 
 - **Run:** <Epic | PRD> — role `<dev | pe>` — <YYYY-MM-DD>
-- **Code checked:** <repo slug> at <its default branch> @ <commit>, one line per repository
+- **Code checked:** <repo slug> at <the ref traced: its default branch, or on an Epic run the Epic's branch> @ <commit>, one line per repository
 - **Verdicts:** <n> satisfied · <n> partial · <n> missing · <n> contradicts · <n> not-checkable · <n> unverified
 
 ## Satisfied
@@ -37,7 +37,7 @@ key: <the folder's key>
 ## Discrepancies
 ```
 
-A re-run rewrites the header and both lists. A reader that compares the commit recorded here with the repository's default branch can say how far the code has moved since. A record an Epic run wrote before `dev-workflows` 4.26.0 may name the Epic's own branch under **Code checked** instead, its commit that branch's tip at the time, which a squash merge leaves out of the default branch's history; every run since traces the default branch alone. **`## Satisfied` lists every requirement the run found satisfied, those whose discrepancy the re-check dropped included, with the evidence that settled it — and it is what a later PRD run's drift check reads**: it re-traces a requirement listed there only where the code at its evidence paths changed between the commit the header names for that repository and the default branch, so a record without the list has every requirement re-traced.
+A re-run rewrites the header and both lists. A reader that compares the commit recorded here with the repository's default branch can say how far the code has moved since. An Epic run before the Epic's pull request merges names the Epic's branch under **Code checked**, its commit that branch's tip, which a squash merge leaves out of the default branch's history and a deleted branch out of any clone that never fetched it; a record an Epic run wrote from `dev-workflows` 4.26.0 until 4.28.0 names the default branch alone. **`## Satisfied` lists every requirement the run found satisfied, those whose discrepancy the re-check dropped included, with the evidence that settled it — and it is what a later PRD run's drift check reads**: it re-traces a requirement listed there only where the code at its evidence paths changed between the commit the header names for that repository and the default branch, or where that commit does not resolve in the clone, so a record without the list has every requirement re-traced.
 
 **`## Unverified` lists every requirement the re-check could settle neither way** — a `satisfied` citing no `file:line` among them — with what would settle it. It is neither satisfied nor an entry: it takes no `[DD#n]`, nobody is asked about it, and a later run of either kind traces it in full, since it is not under `## Satisfied`.
 
