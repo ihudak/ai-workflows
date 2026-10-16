@@ -28,7 +28,7 @@ plugins/
     docs/                         ← human-facing docs tree (index, per-command, reference pages)
 ```
 
-## Active plugins: dev-workflows, product-workflows, docs-workflows, and their shared dependency workflows-core
+## Active plugins: dev-workflows, product-workflows, docs-workflows, security-workflows, and their shared dependency workflows-core
 
 `plugins/dev-workflows/` provides six slash commands — `/design`, `/implement`, `/ready`, `/conformance`, `/upgrade`, and `/vuln` — plus thirteen reusable subagents, one hook, eighteen reference files, and no bundled skill. It depends only on `workflows-core`, and does not use `prose-style` at all.
 
@@ -36,7 +36,9 @@ plugins/
 
 `plugins/docs-workflows/` provides seven slash commands — `/document`, `/docs-profile`, `/release-notes`, `/docs-init`, `/docs-brand`, `/docs-serve` and `/docs-audit` — plus eleven subagents, twenty-three reference files, one bundled skill (`docs-frontmatter`), and two hooks. It depends on `workflows-core` and `prose-style`, and carries no absent case for its style gate: `docs-style-checker` dispatches `prose-style-checker` on every run — roles in `.claude/rules/docs-workflows.md`. Neither `dev-workflows` nor `product-workflows` depends on `docs-workflows` ([why](docs/maintainers/rationale.md#docs-workflows-not-a-dependency)). `/docs-serve` writes no deliverable, so it is absent from every caller list by design, not oversight; the rest of its pure-utility rule is in `.claude/rules/docs-serve.md`.
 
-`plugins/workflows-core/` carries the family's shared foundation — reference corpus, agents, skills, two session-wide hooks, and seven family-meta commands (listed, with detail, in `.claude/rules/workflows-core.md`). **All three of `dev-workflows`, `product-workflows`, and `docs-workflows` name it in `dependencies`**; an unsatisfied dependency disables the plugin that named it rather than letting it half-run, and there is no degraded mode to fall back to.
+`plugins/security-workflows/` provides one slash command, `/security-workflows:scan`, which records Claude Security's scans — of an Epic's branch before its pull request merges, or of a whole repository — in a findings register in the specs repository; two scripts (`register.py`, the register's one writer, and the `bounded.py` copy); and no subagent, hook, skill or reference file. It depends on `workflows-core` and on `claude-security@claude-plugins-official`, which Claude Code installs only because `marketplace.json` allowlists `claude-plugins-official` (`allowCrossMarketplaceDependenciesOn`). No other family plugin depends on it. A finding marked fix goes to `/dev-workflows:implement`, which continues on the Epic's branch while its pull request is open. Facts, map and invariants: `.claude/rules/security-workflows.md`.
+
+`plugins/workflows-core/` carries the family's shared foundation — reference corpus, agents, skills, two session-wide hooks, and seven family-meta commands (listed, with detail, in `.claude/rules/workflows-core.md`). **All four of `dev-workflows`, `product-workflows`, `docs-workflows` and `security-workflows` name it in `dependencies`**; an unsatisfied dependency disables the plugin that named it rather than letting it half-run, and there is no degraded mode to fall back to.
 
 The catalog also ships `prose-style`, `guideline-reviewers`, `acli` and `obsidian-llm-wiki`; none has a rules file of its own, and `obsidian-llm-wiki` carries its own `CLAUDE.md`.
 
@@ -91,6 +93,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `docs-workflows-gates.md` | as `docs-workflows.md` | three gate authorities |
 | `docs-serve.md` | `docs-workflows/`: `commands/docs-serve.md`, `docs/commands/docs-serve.md`, `references/docs-profiles/render-verification.md`, `references/toolchain-preflight.md` | `/docs-serve` |
 | `release-notes.md` | `docs-workflows/`: `commands/release-notes.md`, `agents/release-notes-writer.md`, `references/release-note-types.md`, `docs/commands/release-notes.md` | `/release-notes` and its authority |
+| `security-workflows.md` | `security-workflows/**`; `workflows-core/`: `references/security-register-format.md`, `docs/family-map.md` | plugin facts, map, register invariants |
 | `docs-grounding.md` | `workflows-core/`: `references/*-grounding.md`, `agents/*-grounder.md`; and 23 command files: the nine docs-grounding consumers, `/design` (architecture only) and thirteen that resolve none | docs/architecture grounding |
 | `workflows-core.md` | `workflows-core/**`, `*/commands/*.md`, `*/agents/*.md` | plugin facts, model routing, authorities, map |
 | `workflows-core-bounded-run.md` | `*/scripts/bounded.py`, `*/commands/*.md`, `*/agents/*.md`, `*/references/**`; `.github/workflows/validate-catalog.yml` (repo root) | the bounded-run authority |
@@ -149,7 +152,8 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 - `workflows-core:run-flags` — `--skip-costs`, `--skip-feedback`, `--enforce-model` and their `WORKFLOWS_*` env defaults → `workflows-core.md`
 - `workflows-core:source-truth` — the Implementation-vs-Description discrepancy-escalation protocol → `workflows-core.md`
 - `workflows-core:prose-formatting` — output line-wrapping: never hard-wrap prose → `workflows-core.md`
-- `workflows-core:implementation-format` — the append-only `implementation.md` record, the `[<key>]` commit convention, the two-source read → `workflows-core.md`
+- `workflows-core:implementation-format` — the append-only `implementation.md` record, the `[<key>]` commit convention, the two-source read, `unit-branch` → `workflows-core.md`
+- `workflows-core:security-register-format` — the security findings register: its layout, run records, statuses, roles and the rules `register.py` applies → `security-workflows.md`
 - `workflows-core:doc-structure-conventions` — traceability boundary, callout scope and adjacency, component-pattern fidelity → `workflows-core.md`
 - `workflows-core:finding-triage` — the orchestrator's step between a reviewer's findings and a fixer (keep, mark unverified or dismiss), its re-review rules, and the patch gate → `workflows-core-triage.md`
 - `workflows-core:specs-repo-git` — `specs-preflight`, `commit-artifacts`, the bounded write authority, the specs-repo git hard rules → `workflows-core-git.md`

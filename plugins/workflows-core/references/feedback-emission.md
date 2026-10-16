@@ -1,6 +1,6 @@
 # Session Feedback Emission — Shared Reference
 
-Single source of truth for the plugin family's session-feedback emitter. Every capture surface — the automatic maintenance phase of all twenty-seven workflow commands, or, under `--skip-feedback`, its bugs-only replacement, and the `/feedback` and `/prompt*` commands — cites this file and executes its steps inline. The orchestrator owns every prompt; this reference owns the entry format, the persistence ladder, dedup/attribution, the plugin-facing predicate, and the caller contract.
+Single source of truth for the plugin family's session-feedback emitter. Every capture surface — the automatic maintenance phase of all twenty-eight workflow commands, or, under `--skip-feedback`, its bugs-only replacement, and the `/feedback` and `/prompt*` commands — cites this file and executes its steps inline. The orchestrator owns every prompt; this reference owns the entry format, the persistence ladder, dedup/attribution, the plugin-facing predicate, and the caller contract.
 
 **Purpose.** Capture friction and improvement signals about the **plugin
 family itself**, and defects in the ai-containers environment the family runs in (§4), and persist them per-PRD into the **specs repo** so the plugin
@@ -152,11 +152,11 @@ mount / permission) drops to the next tier with the same notice.
 - **Attribution:** `author` from `git config user.email` run in the specs repo
   (best-effort; `unknown` if unset). The *commit* author gives a second,
   authoritative layer once the engineer commits and pushes the specs.
-  `plugin_version` is **supplied by the caller** — the version of the plugin whose command ran, read at run time from **that plugin's** `.claude-plugin/plugin.json` (`python3 -c "import json;print(json.load(open('<path>'))['version'])"`), which is exactly what every calling command already passes in. It is **not** resolved here: this reference is read through the loader skill, so a `${CLAUDE_PLUGIN_ROOT}` written *in this file* resolves to the plugin that **ships this reference**, and twenty-four of the twenty-nine callers ship from a sibling — their entries would silently take `workflows-core`'s version number instead of their own, beside a `command:` naming a command `workflows-core` does not ship — named outright, because every reader of this sentence is in a different plugin from the one it is about.
+  `plugin_version` is **supplied by the caller** — the version of the plugin whose command ran, read at run time from **that plugin's** `.claude-plugin/plugin.json` (`python3 -c "import json;print(json.load(open('<path>'))['version'])"`), which is exactly what every calling command already passes in. It is **not** resolved here: this reference is read through the loader skill, so a `${CLAUDE_PLUGIN_ROOT}` written *in this file* resolves to the plugin that **ships this reference**, and twenty-seven of the thirty-three callers ship from a sibling (`grep -l 'feedback-emission' plugins/*/commands/*.md`, `workflows-core`'s own six aside) — their entries would silently take `workflows-core`'s version number instead of their own, beside a `command:` naming a command `workflows-core` does not ship — named outright, because every reader of this sentence is in a different plugin from the one it is about.
 
 ## 4. Plugin-facing predicate — what persists
 
-Persist **only** signals about **this plugin family** itself — `workflows-core` and every plugin that declares it, currently `dev-workflows`, `product-workflows` and `docs-workflows` — and **defects in the ai-containers environment** the family is run in (`ihudak/ai-containers`). This line said "the dev-workflows plugin" until the family spanned four, and read literally it dropped every signal about the other three:
+Persist **only** signals about **this plugin family** itself — `workflows-core` and every plugin that declares it, currently `dev-workflows`, `product-workflows`, `docs-workflows` and `security-workflows` — and **defects in the ai-containers environment** the family is run in (`ihudak/ai-containers`). This line said "the dev-workflows plugin" until the family spanned four, and read literally it dropped every signal about the other three:
 
 - Command workflow improvements (a command should behave differently — e.g. the
   `cloud|self-hosted` scoping case).
@@ -224,7 +224,7 @@ current working directory, where it is not the specs repository. The artifacts a
 run's terminal `commit-artifacts` step
 (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §4).
 
-### `emit-auto` — automatic callers (the twenty-seven commands' maintenance phases, §1)
+### `emit-auto` — automatic callers (the twenty-eight commands' maintenance phases, §1)
 
 Inputs: the `impl-maintenance` **Lessons Learned report**, `command` (the exact
 slash-command name), `key` (or `null`), `source` (`specs | directory | none`).

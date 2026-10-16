@@ -215,7 +215,8 @@ for `REPOS_PATH`), `/brd-split` (Phase 0 step 2, and for `REPOS_PATH` Phase 7's 
 step 2, borrowing `/prd-ground`'s step 7, where *Cancel* drops the continuation rather than
 ending the run), `/brd-interview` (Phase 0 step 3), `/brd-package`
 (Phase 0 step 3), `/brd-reconcile` (Phase 0 step 3), `/frames` (Phase 0 step 0), `/prd-proposal`
-(Phase 0 step 1), `/brd-proposal` (Phase 0 step 1), `/idea` (Phase 0 step 1), `/implement` (Phase 0
+(Phase 0 step 1), `/brd-proposal` (Phase 0 step 1), `/idea` (Phase 0 step 1),
+`/security-workflows:scan` (Phase 0 step 3, on every run), `/implement` (Phase 0
 *Address resolution*, on a `<KEY>` address only), `/document` (*Mode detection*, keyed mode on a
 `<KEY>` address only, and for `REPOS_PATH` keyed mode's Phase 1) and `/release-notes` (Phase 0
 step 1, on a `<KEY>` address only, and for `REPOS_PATH` Phase 1, with diff grounding on), and — for
