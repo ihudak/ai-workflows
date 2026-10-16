@@ -34,7 +34,8 @@ it is never written through as a value of its own.
 **No shell variable survives from one Bash call to the next.** A value the run carries — `run_dir`,
 `wt` and `run_role`, and a `$SPECS_PATH` the run was given at Phase 0 step 3 rather than inherited — is
 set at the head of each Bash call that names it (`run_dir=<the path>; …`). Every other placeholder
-below (`<repo root>`, `<repo-slug>`, `<default ref>`, `<KEY>`) is written out in the command, and a
+below (`<repo root>`, `<repo-slug>`, `<default ref>`, `<KEY>`, and `<unit folder>`, the unit's folder Phase 0
+step 4 resolved) is written out in the command, and a
 `<repo-path>` in a stop or an offer is written as this run's `<repo root>` where the run has one.
 
 **`register.py` exits 2 when it cannot run**, its stderr led by its stop code. Save where a step below
@@ -186,14 +187,15 @@ Where `gone` names findings, the message goes on: ` <each [SEC#n]> no longer hav
 **`--triage`:** no scan. Plan the triage:
 
 ```
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" plan --specs "$SPECS_PATH" --slug <repo-slug> --repo <repo root> [--unit <KEY>] --reserve-dir "$run_dir/reserve-<repo-slug>" --default-ref <default ref> > "$run_dir/plan.json"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" plan --specs "$SPECS_PATH" --slug <repo-slug> --repo <repo root> [--unit <KEY> --followups "<unit folder>/follow-ups.md"] --reserve-dir "$run_dir/reserve-<repo-slug>" --default-ref <default ref> > "$run_dir/plan.json"
 ```
 
-`--unit` is given with a key, and `--default-ref` is left out where Phase 0 step 5 resolved no default
-ref. On exit 2, stop with its message. Where the plan's `open`, `review_due` and `unconfirmed` are all
-empty, stop:
+`--unit` and `--followups` are given with a key — `--followups` names the unit's `follow-ups.md`,
+whether or not it exists, so a `fixing` finding whose line it lacks comes back as `pending_fix` — and
+`--default-ref` is left out where Phase 0 step 5 resolved no default ref. On exit 2, stop with its
+message. Where the plan's `open`, `pending_fix`, `review_due` and `unconfirmed` are all empty, stop:
 
-`SECURITY_NOTHING_TO_TRIAGE: <repo-slug>'s register holds no open finding, no accepted risk past its review-by date, and no decision awaiting security review<, for KEY>.`
+`SECURITY_NOTHING_TO_TRIAGE: <repo-slug>'s register holds no open finding, no finding to fix whose follow-up is unwritten, no accepted risk past its review-by date, and no decision awaiting security review<, for KEY>.`
 
 Otherwise go to Phase 5.
 
@@ -247,11 +249,11 @@ stop:
 3. **Plan.** Run:
 
    ```
-   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" plan --specs "$SPECS_PATH" --slug <repo-slug> --repo <repo root> --scan <folder> [--unit <KEY>] --reserve-dir "$run_dir/reserve-<repo-slug>" --default-ref <default ref> > "$run_dir/plan.json"
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" plan --specs "$SPECS_PATH" --slug <repo-slug> --repo <repo root> --scan <folder> [--unit <KEY> --followups "<unit folder>/follow-ups.md"] --reserve-dir "$run_dir/reserve-<repo-slug>" --default-ref <default ref> > "$run_dir/plan.json"
    ```
 
    - `--repo` is `<repo root>` on every run, `--verify-fixes` included: `register.py` reads only objects and refs, which the temporary worktree shares with the clone, so the plan never depends on the worktree standing.
-   - `<default ref>` is the repository's default ref (`workflows-core:read-only-repos` §3), read after the run's fetch. `register.py` anchors a squash merge's evidence on it. `--unit` is given with a key.
+   - `<default ref>` is the repository's default ref (`workflows-core:read-only-repos` §3), read after the run's fetch. `register.py` anchors a squash merge's evidence on it. `--unit` and `--followups` are given with a key, as Phase 1's triage call gives them.
    - On `already_recorded`, say the scan is in the register already, and go to Phase 7 with nothing to record. Where `recorded_on` is `another branch`, say that another run's session branch holds it, and that it joins this register when that branch merges.
    - Where `unverifiable` names findings, carry them to the report's `### Register` section. Their last sighting is at a commit this clone cannot place, so this scan says nothing about them: fetch the branch that holds it, or run `--verify-fixes` from a clone that has it.
    - On exit 2, stop with its message, which leads with its stop code (`SCAN_PRODUCTS_UNREADABLE`, `REGISTER_GIT`, …).
@@ -260,8 +262,9 @@ stop:
 
 ## Phase 5 — Triage
 
-1. **The preview.** First run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" rebuild --specs "$SPECS_PATH" --slug <repo-slug>`, so that `register.json` holds every finding the plan names; a row of an existing finding takes its severity, CWE, `file:line` and title from there, read for display and never as the run's state (`workflows-core:security-register-format` §1) — save *Confirm*'s read (step 7), which is §1's one exception — and a row of a scanned finding from the plan. Then show one table. Its rows are the plan's `new`, `possibly_same`, the `closable` with `auto: false`, `gone` (on `--verify-fixes`, with Phase 1's `gone`), `open`, `review_due`, and in a `sec` run `unconfirmed`. A finding two of those lists name is one row, the first of these that names it — `closable` or `gone`, `unconfirmed`, `review_due`, `open` — noting the others. Each row shows its `[SEC#n]`, or `new`, its severity, CWE, `file:line` and a suggested decision:
-   - **fix** for CRITICAL and HIGH, **decide later** for the rest — a new or an open row;
+1. **The preview.** First run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" rebuild --specs "$SPECS_PATH" --slug <repo-slug>`, so that `register.json` holds every finding the plan names; a row of an existing finding takes its severity, CWE, `file:line` and title from there, read for display and never as the run's state (`workflows-core:security-register-format` §1) — save *Confirm*'s read (step 7), which is §1's one exception — and a row of a scanned finding from the plan. Then show one table. Its rows are the plan's `new`, `possibly_same`, the `closable` with `auto: false`, `gone` (on `--verify-fixes`, with Phase 1's `gone`), `reopen` — a `fixed` finding this scan reports again, which `register.py` records `reopened` at Phase 7.2 — `open`, `pending_fix` — a finding to fix whose follow-up is unwritten, its line cancelled at a preview or its run cut off before writing it — `review_due`, and in a `sec` run `unconfirmed`. A finding two of those lists name is one row, the first of these that names it — `closable` or `gone`, `unconfirmed`, `review_due`, `reopen`, `open`, `pending_fix` — noting the others. Each row shows its `[SEC#n]`, or `new`, its severity, CWE, `file:line` and a suggested decision:
+   - **fix** for CRITICAL and HIGH, **decide later** for the rest — a new, a reopen or an open row, and a possibly-same row step 3 reopens;
+   - **fix** for a pending-fix row, which writes its follow-up;
    - **confirm fixed** for `closable` and `gone`;
    - the possibly-same question for a match, naming its candidates;
    - the current status, for a review-due or unconfirmed row, shown for a person to decide again.
@@ -278,17 +281,17 @@ stop:
    - Several: a runtime array of one `Same as [SEC#n]` option per candidate, up to three, then `A different finding`. More candidates follow `workflows-core:next-phase-offer`'s overflow rule: the prose lists every candidate, the array carries the three nearest by line, and a typed `[SEC#n]` is resolved only against the candidates listed.
    - *A different finding* makes the row a new finding, decided as the batch answer says.
    - **A match onto a candidate the row's `history` names changes nothing** but who reported it: the scan's commit comes before that finding's last sighting (`workflows-core:security-register-format` §5 rule 4).
-   - **Otherwise, a confirmed match onto a false positive or an accepted risk** is changed code, so ask that finding's decision as in step 4 too, whatever the batch answer. Left undecided, `register.py` returns it to `open`. A match onto a candidate the row's `reopens` names is reopened by `register.py`; onto any other `fixed` candidate — the scan comes before the scan that closed it — or onto any other status, it keeps that status.
+   - **Otherwise, a confirmed match onto a false positive or an accepted risk** is changed code, so ask that finding's decision as in step 4 too, whatever the batch answer. Left undecided, `register.py` returns it to `open`. A match onto a candidate the row's `reopens` names is reopened by `register.py`, and decided as a reopen row: *Accept the suggestions* takes step 1's suggestion for it, *Change some* asks it as step 4 does, and *Decide all later* leaves it `reopened`. A match onto any other `fixed` candidate — the scan comes before the scan that closed it — or onto any other status keeps that status.
 
 4. ***Change some*** asks each row's decision — a possibly-same row once step 3 has answered it, a rejected one as a new row and a matched one only as step 3 says — four rows to an `AskUserQuestion` call, each question naming its row and its suggestion, with no `(Recommended)` marker: which answer is right is the question itself.
-   - New, open or review-due rows: `choices: ["Fix", "Decide later", "False positive (you'll be prompted for the evidence)", "Accept the risk (you'll be prompted for the reason)"]`.
+   - New, reopen, open, pending-fix or review-due rows, and a match step 3 reopens: `choices: ["Fix", "Decide later", "False positive (you'll be prompted for the evidence)", "Accept the risk (you'll be prompted for the reason)"]`.
    - `closable` and `gone` rows: `choices: ["Confirm fixed", "Keep it open"]`. *Keep it open* writes no decision: the finding keeps its status.
    - Unconfirmed rows, in a `sec` run: `choices: ["Confirm", "Overrule — fix it", "Overrule — decide later"]`. *Confirm* re-asserts the same status, which records it confirmed; *Overrule — decide later* records `open`.
 
 5. **The follow-up questions**, in plain text, each right after the answer that needs it.
    - *False positive* asks for the evidence: the `file:line` of the guard, check or encoding that defeats the plugin's exploit scenario, and one line of why. An answer with no `<path>:<line>` in it is asked again.
    - *Accept the risk* asks for one line of why, then the review-by date: `choices: ["90 days (Recommended)", "30 days", "180 days"]`, counted from today's UTC date. A typed date is normalised to `YYYY-MM-DD`, or asked again. The owner is the person deciding.
-   - *Decide later* records no decision on an existing finding, and `open` on a new one — which `register.py` records itself, for a new finding no decision names.
+   - *Decide later* records no decision on an existing finding, and `open` on a new one — which `register.py` records itself, for a new finding no decision names. A reopen row so left stays `reopened`, and a pending-fix row stays as it is, to be offered again by the next run.
 
 6. **A Dev's choices.** In a `dev` run, a *False positive* or *Accept the risk* is recorded **awaiting security review**, `confirmed: false`, and takes effect at once: a false positive is not fixed, and an accepted risk waits for its date. Nothing the Dev does waits for that review, and their pull request is reviewed and merged as usual. A `sec` run records the same decisions confirmed.
 
@@ -316,7 +319,7 @@ Skip this phase where no decision is `fix`, or where the run recorded no scan (`
 the register holds already).
 
 - Ask for patches only where the scan ran in the repository this session is open in (spec D5): *Suggest patches* builds against the working directory's repository at the scanned commit. That holds for a change scan, for a path or an `--import` whose repository is the one `git rev-parse --show-toplevel` prints from the working directory, and never for `--verify-fixes`, which scanned a temporary worktree. It also needs the stamp's `revision.dirty` to be `false` and the session repository's HEAD to be the stamp's `revision.commit`: otherwise the plugin refuses the report as uncommitted or stale. Elsewhere, ask for none and say why: each follow-up then says it has no patch.
-- Map each `fix` finding to its report id `F<n>`: the plan's `fid` on its `new`, `possibly_same` or `again` entry. A finding this scan did not report has no `fid`, and no patch. Where no `fix` finding has one, ask for none: an empty selection would open the plugin's own menu.
+- Map each `fix` finding to its report id `F<n>`: the plan's `fid` on its `new`, `possibly_same` or `again` entry. A finding this scan did not report has no `fid`, and no new patch: its follow-up names the patch a run recorded for it before, where one did, which `register.py` reuses. Where no `fix` finding has one, ask for none: an empty selection would open the plugin's own menu.
 - Invoke `Skill(skill: "claude-security:claude-security", args: "suggest patches <F-ids, comma-separated> from the report <report dir>")`. Follow its recipe through its products, then return here. **Skip its closing offer to apply a patch or open a pull request**: this command never applies a patch, and `/dev-workflows:implement` starts from it.
 - Copy `<report dir>/patches/` into the scan's folder in SPECS, `$SPECS_PATH/security/<repo-slug>/scans/<folder>/patches/`. A finding the plugin declined has an `F<n>.md` note and no `F<n>.patch`, and its follow-up says it has no patch.
 
@@ -482,7 +485,7 @@ Then spawn all four maintenance agents in a **single Agent message**, each with 
 
 **Persist plugin feedback (automatic).** After Agent 4 returns, invoke `Skill(skill: "workflows-core:reference", args: "feedback-emission emit-auto")` and call its `emit-auto` entry point (§6) with Agent 4's Lessons Learned report, `command: /scan`, the run's `key` and `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`).
 
-**Then persist the follow-ups**, with a key, where 7.2 built any: invoke `Skill(skill: "workflows-core:reference", args: "followup-emission")` and execute its steps inline on the `followups` 7.2 printed, with `unit_folder` the folder Phase 0 step 4 resolved and `key` its key, per its §7 preview and §8 contract. Each line is written exactly as `commit` printed it. A line *cancel* or *select* leaves out (never one §5 skips as `SKIP — already exists`: its line stands) leaves its finding `fixing` with a follow-up nobody wrote, so return each such finding to `fix` with a second, small run record, before cost and `commit-artifacts`:
+**Then persist the follow-ups**, with a key, where 7.2 built any: invoke `Skill(skill: "workflows-core:reference", args: "followup-emission")` and execute its steps inline on the `followups` 7.2 printed, with `unit_folder` the folder Phase 0 step 4 resolved and `key` its key, per its §7 preview and §8 contract. Each line is written exactly as `commit` printed it. A line *cancel* or *select* leaves out (never one §5 skips as `SKIP — already exists`: §5 skips a line carrying a `[SEC#n]` only where an open line carrying the same `[SEC#n]` for the same repository and unit stands for it) leaves its finding `fixing` with a follow-up nobody wrote, so return each such finding to `fix` with a second, small run record, before cost and `commit-artifacts` — a `fix` decision clears its follow-up link, and the next run of the unit offers it again as `pending_fix`:
 - re-plan without `--scan` — Phase 1's `--triage` call, writing `$run_dir/plan-cancel.json` in place of `plan.json`;
 - write `$run_dir/decisions-cancel.json` as `{"decisions": [{"target": "id:<n>", "status": "fix", "reason": "follow-up cancelled at preview"}]}`, one decision per line not written;
 - run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" commit --specs "$SPECS_PATH" --slug <repo-slug> --plan "$run_dir/plan-cancel.json" --decisions "$run_dir/decisions-cancel.json" --by "$(git -C "$SPECS_PATH" config user.name)" --kind triage --role "$run_role" --unit <KEY>` — without `--repo-name`, so no line is built again;

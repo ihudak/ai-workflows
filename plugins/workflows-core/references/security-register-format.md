@@ -16,7 +16,8 @@ Single source of truth for the findings register `/security-workflows:scan` keep
 $SPECS_PATH/security/<repo-slug>/
   scans/<UTC-timestamp>-<commit7>/   one Claude Security scan's products, unchanged: the report, the JSONL,
                                      the SARIF, the revision stamp, and patches/ where patches were made
-  runs/<seq>-<UTC>-<hash8>.json      one run record per run that changed the register; <seq> has four digits,
+  runs/<seq>-<UTC>-<hash8>.json      the run records: one per run that changed the register, and a second, small one
+                                     where that run's preview cancelled a follow-up line; <seq> has four digits,
                                      and <hash8> is the start of the record's own sha256, so two records never share a name
   register.json                      the folded state: derived, never edited, never read back as a run's state,
                                      save the one read below
@@ -35,7 +36,7 @@ A rebuild needs no git. Every status change is a decision in a record, the autom
 
 ## 2. The run record
 
-One JSON object per run, with these fields:
+One JSON object per record — a run that changes the register writes one, and a second, small one where its preview cancels a follow-up line, returning that line's finding to `fix` (§4) — with these fields:
 
 - `seq`: the register's next run number when the run planned. Two runs that recorded before either saw the other can share one, and the replay order stays total.
 - `at`: ISO-8601 UTC.
@@ -96,7 +97,7 @@ It is never built from a finding's text. `register.md` shows that text under a h
 |---|---|
 | `new` | First reported. Triage decides it in the same run; left undecided, it becomes `open` |
 | `open` | Decide later |
-| `fix` | To be fixed |
+| `fix` | To be fixed, with no follow-up written: a decision of `fix` clears the finding's `links.followup` |
 | `fixing` | Its follow-up, or its `/implement` prompt, is written |
 | `fixed` | Closed on evidence (§5 rule 2), or confirmed in triage |
 | `reopened` | Reported again after `fixed` |
@@ -104,6 +105,8 @@ It is never built from a finding's text. `register.md` shows that text under a h
 | `accepted-risk` | "This is exploitable, and we accept it." `owner` and `review_by` (`YYYY-MM-DD`) are set; past that date it returns to triage as review due |
 
 A false positive overrules a finding Claude Security's three-voter panel confirmed, which is why it must carry evidence. A finding reported again with the same plugin ID stays a false positive, because its code is unchanged. A confirmed possibly-same match onto a false positive or an accepted risk is changed code, so it returns the finding to `open`, unless the same run decides it or the sighting is history for it (§5 rule 4).
+
+**A fix nobody queued is offered again.** `register.py plan` lists as `pending_fix` every `fix` finding — one whose follow-up line the preview cancelled comes back here — and, given the unit's `follow-ups.md`, every `fixing` finding raised for the unit that no task line there carries: no line, open or ticked, naming the register's repository and carrying `[SEC#n]` for a number the finding was published under (§2). A run cut off between its record and its follow-up write leaves such a finding. A `fix` decision on it builds its line again, starting from the patch a run recorded for it where this scan made none. A run given no `follow-ups.md` — a run on a repository path, which writes no follow-up file — tests no `fixing` finding.
 
 **A Dev is never blocked.** A `false-positive` or `accepted-risk` decided in a `dev` run is recorded with `confirmed: false`, *awaiting security review*, and takes effect at once. A `sec` run confirms it by deciding the same status again, which records `confirmed: true`, or overrules it with another status. Nothing a Dev does waits for that review.
 

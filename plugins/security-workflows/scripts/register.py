@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """register.py — a code repository's security findings register, kept in SPECS.
 
-  register.py plan         --specs <root> --slug <repo-slug> --repo <clone> [--scan <folder>] [--unit <KEY>] [--today <YYYY-MM-DD>] [--reserve-dir <dir>] [--default-ref <ref>]
+  register.py plan         --specs <root> --slug <repo-slug> --repo <clone> [--scan <folder>] [--unit <KEY> [--followups <follow-ups.md>]] [--today <YYYY-MM-DD>] [--reserve-dir <dir>] [--default-ref <ref>]
   register.py ids          --specs <root> --slug <repo-slug> --plan <plan.json> --decisions <decisions.json>
   register.py commit       --specs <root> --slug <repo-slug> --plan <plan.json> --decisions <decisions.json> --by <name> --kind scan|import|triage|verify --role dev|sec [--unit <KEY>] [--repo-name <name>] [--at <ISO-8601 UTC>]
   register.py rebuild      --specs <root> --slug <repo-slug>
@@ -9,10 +9,13 @@
   register.py --selftest
 
 The register lives at <specs>/security/<repo-slug>/: scans/<folder>/ holds a Claude Security scan's
-products, unchanged; runs/<seq>-<UTC>-<hash8>.json holds one run record per run that changed the
-register, <hash8> being the start of the record file's own sha256; register.json and register.md are
-rebuilt from the run records, in (seq, at, file name) order, and the scan folders they name -- every
-run rebuilds them, and nothing reads them back. Every status change is a decision in a run record, the
+products, unchanged; runs/<seq>-<UTC>-<hash8>.json holds the run records -- one per run that changed
+the register, and a second, small one where that run's preview cancelled a follow-up line -- <hash8>
+being the start of the record file's own sha256; register.json and register.md are rebuilt from the run
+records, in (seq, at, file name) order, and the scan folders they name. Every run rebuilds them, and no
+run reads them back as its state, save the one read the format's section 1 names: a sec run's Confirm
+re-asserts a finding's evidence, reason and review-by date from the register.json it has just rebuilt,
+the records' own replay. Every status change is a decision in a run record, the
 automatic ones included, so a rebuild needs no git. A record is replayed with the ones already held
 before it is written, and is never written where that replay fails. A finding's identity is its origin,
 <scan_id>:<plugin_id> -- the scan that first recorded it and the plugin ID it had there, which a
@@ -59,7 +62,10 @@ findings whose file is gone at a commit later than their last sighting, and, as 
 about which nothing is recorded because this clone cannot place their last sighting (the last-seen commit
 absent and no squash of the finding's unit found after it), or because the scan is later but whether the
 file changed cannot be told (no blob recorded, and one of the two commits absent) -- plus the open
-findings, the accepted risks past their review-by date, as renumbered the moves no run record holds yet,
+findings, as pending_fix each finding at fix -- which has no follow-up written -- and, given --followups, the
+--unit's follow-ups.md, each fixing finding no task line there, open or ticked and naming the register's
+repository, carries under any number it was published under, the accepted risks past their review-by
+date, as renumbered the moves no run record holds yet,
 each marked provisional, and as origins the origin of every [SEC#n] it saw, through which commit names the
 findings decided on.
 Git is run on --repo, which must hold the scan's commit, for ancestry, a unit's squash commit, the finding's
@@ -73,8 +79,10 @@ scan_prefix, relative to the repository's top level. Without --scan it plans a t
 ids: prints the [SEC#n] each new or matched finding takes, from a plan and the triage decisions.
 commit: writes the run record and rebuilds; refuses a plan the register has moved past. With
 --repo-name it also builds, for each finding the decisions mark fix, its follow-up line (with --unit)
-or /implement prompt line (without) -- from structured fields only, never a finding's text -- records
-the finding as fixing with that line, and prints the lines for the caller to emit. --role dev records
+or /implement prompt line (without) -- from structured fields only, never a finding's text, starting
+from this scan's patch for it, or else the patch a run recorded for it before -- records the finding as
+fixing with that line, and prints the lines for the caller to emit. A fix decision clears a finding's
+follow-up link: no line is written for it until one builds it again. --role dev records
 a false positive or an accepted risk as awaiting security review; --role sec confirms it. A new finding
 nobody decided is recorded open with default: true, a decision the replay skips where the allocation gave
 way to an earlier one, since the finding already holds a status.
@@ -122,6 +130,10 @@ AT_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\Z", re.ASCII)
 COMMIT_RE = re.compile(r"^[0-9a-f]{7,40}\Z", re.ASCII)
 DIGITS_RE = re.compile(r"^[0-9]+\Z", re.ASCII)
 LOCATION_RE = re.compile(r"\S+:\d+", re.ASCII)
+TASK_RE = re.compile(r"^\s*- \[[ xX]\] ", re.ASCII)  # a follow-ups task line, open or ticked
+REPO_RE = re.compile(r"repository `([^`]*)`")
+SEC_RE = re.compile(r"\[SEC#(\d+)\]", re.ASCII)
+PATCH_RE = re.compile(r"^F\d+\.patch\Z", re.ASCII)
 SAFE_PATH_RE = re.compile(r"^[A-Za-z0-9._@+][A-Za-z0-9._/@+-]*\Z", re.ASCII)
 LINKS = ("followup", "patch", "fixed_in_scan")
 SCAN_KEYS = ("folder", "id", "commit", "date", "base", "mode", "scope", "effort", "verified", "dirty", "counted", "complete",
@@ -665,6 +677,8 @@ def _apply(specs, slug, st, r, num, canon, by_origin):
         if d["status"] == "reopened":
             for k in LINKS:  # what the fix left behind no longer holds; the history keeps it
                 g["links"].pop(k, None)
+        if d["status"] == "fix":
+            g["links"].pop("followup", None)  # a finding to fix has no follow-up written: a cancelled line was not
         g["links"].update(links)
         g["history"].append({"status": d["status"], "at": r["at"], "by": r["by"], "reason": d.get("reason", ""),
                              "evidence": d.get("evidence", ""), "role": r.get("role"), "run": seq, "links": links})
@@ -738,9 +752,28 @@ def _changed(repo, g, commit):
     return None
 
 
-def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None, default_ref=None):
+def _carried(path, slug):
+    """The [SEC#n] carried by the task lines of a follow-ups file, open or ticked, that name repository `slug`: the
+    name between the backticks after `repository `, exactly. A file that does not exist carries none."""
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            text = fh.read()
+    except FileNotFoundError:
+        return set()
+    except OSError as e:
+        raise Unrunnable("REGISTER_UNREADABLE: --followups %s: %s" % (path, e))
+    out = set()
+    for line in text.splitlines():
+        if TASK_RE.match(line) and slug in REPO_RE.findall(line):
+            out.update(int(n) for n in SEC_RE.findall(line))
+    return out
+
+
+def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None, default_ref=None, followups=None):
     if unit is not None and not KEY_RE.match(unit):
         raise Unrunnable("REGISTER_BAD_UNIT: %r is not a key" % unit)
+    if followups is not None and unit is None:
+        raise Unrunnable("REGISTER_BAD_ARGS: --followups is the follow-ups file of the unit --unit names; give both")
     if not _is_date(today):
         raise Unrunnable("REGISTER_BAD_ARGS: --today %r is not a date written YYYY-MM-DD" % (today,))
     if scan_folder is not None and not _segment(scan_folder):
@@ -763,7 +796,7 @@ def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None, default_
            "origins": {str(n): g["origin"] for n, g in sorted(fs.items())},
            "scan": None, "already_recorded": False, "recorded_on": None, "id_version_changed": False,
            "new": [], "again": [], "possibly_same": [], "closable": [], "not_reported": [], "reopen": [],
-           "gone": [], "unverifiable": [], "open": [], "review_due": [], "unconfirmed": []}
+           "gone": [], "unverifiable": [], "open": [], "pending_fix": [], "review_due": [], "unconfirmed": []}
     ordered = [fs[k] for k in sorted(fs)]
     if scan_folder:
         meta, found = load_scan(os.path.join(regdir(specs, slug), "scans", scan_folder))
@@ -865,11 +898,22 @@ def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None, default_
                 out["closable"].append({"id": g["id"], "auto": g["status"] == "fixing" and later == "ancestor"})
             else:
                 out["not_reported"].append(g["id"])
+    # A fix nobody queued is offered again: a finding at fix has no follow-up written, and, given the unit's
+    # follow-ups file, neither has a fixing one that no task line there carries under any number it was published
+    # under -- a run cut off between its commit and the follow-up write.
+    carried, numbers = (_carried(followups, slug), {}) if followups is not None else (None, {})
+    if carried is not None:
+        _, canon, _, _, allocs = _numbering(recs)
+        for _, o, published, now in allocs:
+            numbers.setdefault(canon[o], set()).update(published + [now])
     for g in ordered:
         if unit is not None and unit not in g["units"]:
             continue
         if g["status"] in ("open", "reopened"):
             out["open"].append(g["id"])
+        if g["status"] == "fix" or (g["status"] == "fixing" and carried is not None
+                                    and not numbers.get(g["origin"], {g["id"]}) & carried):
+            out["pending_fix"].append(g["id"])
         if g["status"] == "accepted-risk" and g.get("review_by") and g["review_by"] < today:
             out["review_due"].append(g["id"])
         if g["status"] in REVIEWED and g.get("confirmed") is False:
@@ -1091,6 +1135,7 @@ def _followups(specs, slug, p, st, allocated, matched, user, repo_name, unit):
         raise Unrunnable("REGISTER_BAD_UNIT: %r is not a key" % unit)
     origins = _plan_origins(p)
     info = {g["origin"]: (g["cwe"], g["path"], g["line"], None) for g in st["findings"].values()}
+    kept = {g["origin"]: g["links"].get("patch") for g in st["findings"].values()}
     for e in p["again"]:
         info[origins[e["id"]]] = (e["cwe"], e["path"], e["line"], e["fid"])
     new = {e["plugin_id"]: e["origin"] for e in allocated + matched}
@@ -1107,6 +1152,15 @@ def _followups(specs, slug, p, st, allocated, matched, user, repo_name, unit):
             rel = "security/%s/scans/%s/patches/%s.patch" % (slug, p["scan"]["folder"], fid)
             if os.path.isfile(os.path.join(specs, rel)):
                 patch = rel
+        old = kept.get(d["origin"])
+        if patch is None and isinstance(old, str):
+            # This scan made no patch for it: the one a run recorded for it before -- a fix whose line the preview
+            # cancelled, or whose run was cut off before writing it -- still names the fix. It is a register path of
+            # this slug's scan folders, and on disk, or it is not used.
+            parts = old.split("/")
+            if len(parts) == 6 and parts[:3] == ["security", slug, "scans"] and _segment(parts[3]) \
+                    and parts[4] == "patches" and PATCH_RE.match(parts[5]) and os.path.isfile(os.path.join(specs, old)):
+                patch = old
         out.append((d, _followup_line(d["id"], cwe, path, line, patch, repo_name, unit), patch))
     return out
 
@@ -1804,6 +1858,64 @@ def case_commit_writes_follow_ups_and_marks_fixing(tmp):
     g = _state(specs)[1]
     assert g["status"] == "fixing" and g["links"]["followup"] == res["followups"][0]
     assert g["links"]["patch"] == "security/code/scans/s1/patches/F1.patch"
+
+
+def case_cancelled_follow_up_clears_its_link_and_is_offered_again(tmp):
+    # The preview cancels [SEC#1]'s line: a second record returns it to fix, and its follow-up link goes, since no line
+    # was written; the patch stays. The next plan offers it as pending_fix, and a fix decision there builds its line
+    # again from the patch the first run recorded.
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    _wf(specs, "security/code/scans/s1/patches/F1.patch", "diff\n")
+    p = plan(specs, "code", repo, "s1", "ACME-1-01", "2026-10-16")
+    res = commit(specs, "code", p, {"decisions": [{"target": "plugin:v3:aa", "status": "fix"}]}, "Dev", "scan", "ACME-1-01",
+                 "2026-10-16T21:00:00Z", "dev", "code")
+    patch = "security/code/scans/s1/patches/F1.patch"
+    assert _state(specs)[1]["links"] == {"followup": res["followups"][0], "patch": patch}
+    t = plan(specs, "code", repo, None, "ACME-1-01", "2026-10-16")
+    commit(specs, "code", t, {"decisions": [{"target": "id:1", "status": "fix", "reason": "follow-up cancelled at preview"}]},
+           "Dev", "triage", "ACME-1-01", "2026-10-16T21:01:00Z", "dev")
+    g = _state(specs)[1]
+    assert g["status"] == "fix" and g["links"] == {"patch": patch}, g["links"]
+    t = plan(specs, "code", repo, None, "ACME-1-01", "2026-10-16")
+    assert t["pending_fix"] == [1] and t["open"] == [], t
+    assert plan(specs, "code", repo, None, "ACME-2-01", "2026-10-16")["pending_fix"] == [], "kept to the unit"
+    r2 = commit(specs, "code", t, {"decisions": [{"target": "id:1", "status": "fix"}]}, "Dev", "triage", "ACME-1-01",
+                "2026-10-16T21:02:00Z", "dev", "code")
+    assert r2["followups"] == res["followups"], "the line is built again, starting from the patch the first run recorded"
+    assert _state(specs)[1]["status"] == "fixing" and plan(specs, "code", repo, None, "ACME-1-01", "2026-10-16")["pending_fix"] == []
+
+
+def case_fixing_finding_whose_line_was_never_written_is_offered_again(tmp):
+    # A run is cut off between its commit and the follow-up write: [SEC#1] is fixing, and no line in the unit's
+    # follow-ups.md carries it. Given that file, plan offers it again; a line for it, open or ticked, settles it; a line
+    # for another repository's [SEC#1] does not. Without --followups a fixing finding is not tested.
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    p = plan(specs, "code", repo, "s1", "ACME-1-01", "2026-10-16")
+    res = commit(specs, "code", p, {"decisions": [{"target": "plugin:v3:aa", "status": "fix"}]}, "Dev", "scan", "ACME-1-01",
+                 "2026-10-16T21:00:00Z", "dev", "code")
+    line = res["followups"][0]
+    fu = os.path.join(specs, "follow-ups.md")
+    pf = lambda unit="ACME-1-01", path=fu: plan(specs, "code", repo, None, unit, "2026-10-16", followups=path)["pending_fix"]
+    assert pf() == [1], "no file: no line was written"
+    assert plan(specs, "code", repo, None, "ACME-1-01", "2026-10-16")["pending_fix"] == [], "no --followups: not tested"
+    for text, want in ((line, []), (line.replace("- [ ]", "- [x]", 1) + " — done", []),
+                       (line.replace("`code`", "`other`"), [1]), ("- [ ] fix [SEC#1] by hand", [1]),
+                       ("Run `/dev-workflows:implement ACME-1-01` from repository `code`: fix [SEC#1]", [1]),
+                       (line.replace("[SEC#1]", "[SEC#12]"), [1])):
+        _wf(specs, "follow-ups.md", "# Follow-ups\n\n" + text + "\n")
+        assert pf() == want, (text, pf())
+    _wf(specs, "follow-ups.md", line + "\n")
+    assert pf("ACME-2-01") == [], "a finding not raised for the unit is not tested"
+    _refuses("REGISTER_BAD_ARGS", plan, specs, "code", repo, None, None, "2026-10-16", None, None, fu)
+    os.makedirs(os.path.join(specs, "dir"))
+    _refuses("REGISTER_UNREADABLE", plan, specs, "code", repo, None, "ACME-1-01", "2026-10-16", None, None,
+             os.path.join(specs, "dir"))
+    me = os.path.realpath(__file__)
+    r = subprocess.run([sys.executable, "-I", me, "plan", "--specs", specs, "--slug", "code", "--repo", repo, "--unit",
+                        "ACME-1-01", "--followups", os.path.join(specs, "none.md")], capture_output=True, text=True)
+    assert r.returncode == 0 and json.loads(r.stdout)["pending_fix"] == [1], (r.stdout, r.stderr)
 
 
 def case_triage_only_run(tmp):
@@ -3347,7 +3459,8 @@ HELP = {
             " reopen, gone (only where the scan is later than the finding's last sighting); unverifiable (the findings"
             " this scan records nothing about: their last sighting cannot be"
             " placed in this clone, or the scan is later but whether the file changed cannot be told); open,"
-            " review_due, unconfirmed; origins (the origin of every [SEC#n] the plan saw). already_recorded comes with"
+            " pending_fix (each finding at fix, and with --followups each fixing finding no task line in that file"
+            " carries), review_due, unconfirmed; origins (the origin of every [SEC#n] the plan saw). already_recorded comes with"
             " recorded_on: \"this register\", or \"another branch\" where a reserved run record holds the scan.",
     "ids": "Print the [SEC#n] each new or matched finding takes.",
     "commit": "Write the run record and rebuild. Prints {record, ids, followups, renumbered}: renumbered holds the moves"
@@ -3381,6 +3494,8 @@ def main(argv):
             sp.add_argument("--today", default=datetime.datetime.now(datetime.timezone.utc).date().isoformat())
             sp.add_argument("--reserve-dir")
             sp.add_argument("--default-ref", help="the repository's default ref, for the scan's base; never guessed")
+            sp.add_argument("--followups", help="the --unit's follow-ups.md, so a fixing finding no line there carries is"
+                                                " offered again; a file that does not exist carries none")
         if name == "commit":
             sp.add_argument("--by", required=True)
             sp.add_argument("--kind", required=True)
@@ -3394,7 +3509,7 @@ def main(argv):
         specs = _dir(a.specs, "--specs")
         if a.command == "plan":
             out = plan(specs, a.slug, _dir(a.repo, "--repo"), a.scan, a.unit, a.today,
-                       _dir(a.reserve_dir, "--reserve-dir") if a.reserve_dir else None, a.default_ref)
+                       _dir(a.reserve_dir, "--reserve-dir") if a.reserve_dir else None, a.default_ref, a.followups)
         elif a.command == "rebuild":
             st = rebuild(specs, a.slug)
             recs = records(specs, a.slug)
