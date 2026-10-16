@@ -258,7 +258,7 @@ flowchart TD
    8. **Prerequisites.** A `python3` older than 3.9 stops with the plugin's own message. A run that scans, with dynamic workflows switched off, stops naming the `/config` row.
    9. **The session-model check** (D6).
 1. **Scope.**
-   - **With a key**, run `unit-branch` (D18) for the repository this session is open in, and act on its state as D5 says. A record that does not name that repository stops, naming the repositories it does name.
+   - **With a key, for a change scan** (none of `--import`, `--triage` and `--verify-fixes`), run `unit-branch` (D18) for the repository this session is open in, and act on its state as D5 says. `--triage` and `--verify-fixes` with a key never run it. A record that does not name that repository stops, naming the repositories it does name.
    - **With a path**, scan the whole repository at its current checkout. The plugin itself offers a focused area for a large repository.
    - **With `--verify-fixes`**, take the default branch's head and the files `register.py verify-scope` returns. An empty set stops, with nothing to verify.
 2. **Checkout** (D5).
@@ -275,7 +275,7 @@ flowchart TD
 7. **Close.**
    1. **Refresh the reservations.** Fetch `origin`'s default branch and its `session/*` branches; this is fetch only, never a merge. Copy any run records they hold that this checkout lacks, and re-run `register.py plan` with them. The triage answers carry over unchanged, because they name findings by plugin ID or by an existing `[SEC#n]`.
    2. Run `register.py commit`, which writes the run record, the follow-up lines and the `fixing` decisions, then rebuilds the register.
-   3. Emit the follow-ups (D10).
+   3. Hold the follow-up lines `commit` built (D10); the report lists them as pending, and step 7's tail emits them after it, as `followup-emission` §7 requires.
    4. With a key, append the unit note (D11).
    5. Remove any temporary worktree.
    6. Print the report.
