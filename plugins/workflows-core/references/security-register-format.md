@@ -18,7 +18,8 @@ $SPECS_PATH/security/<repo-slug>/
                                      the SARIF, the revision stamp, and patches/ where patches were made
   runs/<seq>-<UTC>-<hash8>.json      one run record per run that changed the register; <seq> has four digits,
                                      and <hash8> is the start of the record's own sha256, so two records never share a name
-  register.json                      the folded state: derived, never edited, never read back as a run's state
+  register.json                      the folded state: derived, never edited, never read back as a run's state,
+                                     save the one read below
   register.md                        rendered from it for people to read: derived, never edited
   dev-workflows/cost/<sid8>.md       a keyless run's session-cost entry (workflows-core:cost-emission §8):
                                      beside the register, never part of it
@@ -26,7 +27,7 @@ $SPECS_PATH/security/<repo-slug>/
 
 `$SPECS_PATH/security/` belongs to the register and to those cost entries, and holds nothing else. A team's own security documents go elsewhere in the specs tree: `workflows-core:specs-repo-git` §2.1's shape commits everything in a subdirectory of `security/` as bookkeeping.
 
-**The run records and the scan folders are the source of truth.** Every run rebuilds `register.json` and `register.md` from them with `register.py rebuild`, replaying the records in `(seq, at, file name)` order. No run reads the derived files back as its state, because `register.py` rebuilds them from the records every time. They are for people and for the readers §6 names, so a stale or conflicted copy is harmless until the next rebuild overwrites it.
+**The run records and the scan folders are the source of truth.** Every run rebuilds `register.json` and `register.md` from them with `register.py rebuild`, replaying the records in `(seq, at, file name)` order. No run reads the derived files back as its state, because `register.py` rebuilds them from the records every time. **One read is the exception, and it is this one:** a `sec` run's *Confirm* of a decision awaiting security review re-asserts the finding's status with the `evidence` and `reason` of its latest `history` entry of that status and its `review_by`, read from the `register.json` that run has just rebuilt with `register.py rebuild`. `register.py` refuses a false positive without evidence and an accepted risk without a reason and a date, and a file the run has just rebuilt is the records' own replay, so the read carries nothing the records do not. The derived files are for people and for the readers §6 names, so a stale or conflicted copy is harmless until the next rebuild overwrites it.
 
 A rebuild needs no git. Every status change is a decision in a record, the automatic ones included, together with the `not_reported_by` entries and whether the scan was an ancestor. Computing those needed git on the code repository when the run recorded them; the replay does not.
 
