@@ -32,7 +32,7 @@ Needs `workflows-core` 1.42.0, whose `implementation-format` §5 `unit-branch` b
 - **An Epic covering a PRD-level requirement is defined**: its `epic.md` lists the requirement under `## Covers`. *Fix the code* on a PRD-level requirement names the one Epic that covers it, and asks only where none or several do, marking each that covers it.
 - **A `## Contract` line's side that no code could show has its place in the merge**: `not-checkable` comes after `partial`, so a discrepancy on any side outweighs it, and a side none of whose repositories was traced counts as `not-checkable` and is named under *Not traced*.
 - **The PRD run's *Trace anyway* says an Epic's requirements "may show as missing where it has not merged"**, not "will likely", and the report marks them as traced where the merge was not shown. A shallow clone is named in the report's *Scope* on either run, since its merge state may read as open.
-- The getting-started, environment and checkpoints pages say six commands, not five, and the session-cost page four cost-attribution phases, not three, `/conformance` on a PRD being the PE's; the model-routing, session-cost and roles pages name `/security-workflows:scan` and its `security-audit` phase.
+- The getting-started, environment, checkpoints and session-feedback pages say six commands, not five, and the getting-started page says five of the six declare `WebFetch`, not every one, and the session-cost page four cost-attribution phases, not three, `/conformance` on a PRD being the PE's; the model-routing, session-cost and roles pages name `/security-workflows:scan` and its `security-audit` phase.
 
 ## [4.27.2] — 2026-10-15
 
