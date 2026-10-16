@@ -143,15 +143,17 @@ There is deliberately no `Cancel`: the commit has already happened, so there is 
 
 **First, probe for an existing pull request** — a re-run against a branch that already has one is ordinary, not exceptional:
 
-    gh pr list -R "<owner_repo>" --head <branch> --state open --json number,url
+    gh pr list -R "<owner_repo>" --head <branch> --state open --json number,url,isDraft
 
 One already open ⇒ the push in §2.5 has already updated it. Report it through §3.1's *pushed to existing PR* row — not the rows for a pull request this run opened, which would assert something that did not happen (§2.10) and would leave that row reachable by nothing — and do **not** call `gh pr create`, which would fail on the duplicate and send the run down §3.2 telling the user to open a pull request that exists. This is `workflows-core:phase-handoff` §3.5's primitive, applied here.
 
-**Where `clean_finish` is false (§2.9), that push has just put blocked work on a pull request somebody may merge**, so mark it as §2.9 marks one this run opens. Run `gh pr ready <num> --undo -R "<owner_repo>"`, which turns it back into a draft. Then run `gh pr comment <num> -R "<owner_repo>" --body-file "<body-path>"`, posting the body file §2.7 writes, whose first line is §2.9's banner — whether or not the first command succeeded, since the banner is what a reader sees where the draft flag could not be set. Neither is retried, and a failure of either undoes nothing. §3.1's *run blocked* existing-PR row reports it, in place of the plain *pushed to existing PR* row, with an append for each command's outcome.
+**Where `clean_finish` is false (§2.9), that push has just put blocked work on a pull request somebody may merge**, so mark it as §2.9 marks one this run opens. Run `gh pr ready <num> --undo -R "<owner_repo>"`, which turns it back into a draft, or leaves it one where it is a draft already. Then run `gh pr comment <num> -R "<owner_repo>" --body-file "<body-path>"`, posting the body file §2.7 writes, whose first line is §2.9's banner — whether or not the first command succeeded, since the banner is what a reader sees where the draft flag could not be set. Neither is retried, and a failure of either undoes nothing. §3.1's *run blocked* existing-PR row reports it, in place of the plain *pushed to existing PR* row, with an append for each command's outcome.
+
+**Where `clean_finish` is true and the pull request the probe finds is a draft** (`isDraft`), perhaps from an earlier blocked run, report it on the plain *pushed to existing PR* row with the *Still a draft* append, and do nothing more. **Never mark it ready here**: a draft may carry an earlier run's DO-NOT-MERGE banner, and whether its blocking facts are resolved is a person's call.
 
 A `gh pr create` that exits 0 but prints nothing parseable as a number or URL is **not** treated as a failure — the pull request very likely exists, and falling back to §3.2 would tell the user to open a second one. Report it with the dedicated §3.1 row instead.
 
-Otherwise derive the repository and create it. Run the cheap `gh auth status` pre-check first, purely so a missing login reports as a login problem rather than a raw `gh` error, then supply every argument that would otherwise make `gh` prompt — the plugin must never block on an interactive editor:
+Otherwise derive the repository and create it. Run the cheap `gh auth status` pre-check first, bounded — `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 15 gh auth status` — purely so a missing login reports as a login problem rather than a raw `gh` error, then supply every argument that would otherwise make `gh` prompt — the plugin must never block on an interactive editor:
 
     url=$(git -C "<repo>" remote get-url origin)
     host=$(printf '%s' "$url" | sed -E 's#^[a-zA-Z][a-zA-Z0-9+.-]*://##; s#^[^/@]+@##; s#[:/].*$##')
@@ -198,7 +200,7 @@ Body: **written to a file** — `<body-path>`, a `command mktemp -t dw-pr-body-X
 
 **The repository's own template wins**, resolved and filled per `workflows-core:phase-handoff` §2.7.1 in `<repo>`: the four sections above are the caller's own body, in that order, and §2.9's banner, where there is one, is its required first line. Where §2.7.1's rung 2 finds several templates and resolves none, the body is written as above and its last line says so. Here the body replaces the template on both paths §2.7.1 names: `gh pr create --body-file` (§2.6), and the body §3.2 has the user paste.
 
-**Remove `<body-path>` once `gh pr create` has read it**, or §2.6's `gh pr comment` on a pull request already open — `command rm -f -- "<body-path>"`, as §2.3 removes the message file and for the same reason. **This file is this reference's one exception to that rule**, and §3.2 is why: where the fallback text names it, the user opens the pull request by hand afterwards, from that path, so the run leaves it and the report names it. It is kept on that path alone; where the run opened the pull request, commented on one or tried to, or never reached §2.6 at all, nothing names the file again and it goes.
+**Remove `<body-path>` once `gh pr create` has read it**, or §2.6's `gh pr comment` on a pull request already open — `command rm -f -- "<body-path>"`, as §2.3 removes the message file and for the same reason. **This file is this reference's one exception to that rule**, and §3.2 is why: where the fallback text names it, the user opens the pull request by hand afterwards, from that path, so the run leaves it and the report names it. It is kept on that path alone; where the run opened the pull request, found one already open on a clean run, commented on one or tried to, or never reached §2.6 at all, nothing names the file again and it goes.
 
 ### 2.8 Resolving the base branch
 
@@ -229,7 +231,7 @@ An exhausted ladder (or no `origin`) means no pull request can be opened: report
 
 - opened with `--draft`, so it cannot be merged by reflex;
 - the body file's **first line** is `> ⚠ DO NOT MERGE — <blocking facts>.`, listing **every** blocking fact when a batch has more than one, semicolon-separated. One slot, all the facts.
-- where §2.6's probe finds one already open, which the push has just updated — on a push-only answer too (§2.5) — it is turned back into a draft, and the body file, banner first, is posted on it as a comment (§2.6).
+- where §2.6's probe finds one already open, which the push has just updated — after either push answer (§2.5) — it is turned back into a draft, and the body file, banner first, is posted on it as a comment (§2.6).
 - where §2.6 fell back, §3.2 carries the same banner as its own first line **and** appends `--draft` to the copy-paste `gh` command it offers, and its web-UI wording says to open the pull request as a draft. A fallback that quietly produces a mergeable pull request for blocked work defeats this whole section.
 
 ### 2.10 Failure discipline
@@ -280,8 +282,9 @@ Exactly one per **full** call, prefixed `Code repo:`. A caller that finishes sev
 | Pushed, PR opened | `Code repo: <what> — pushed, PR #<num> open (<url>).` |
 | Pushed, draft PR | `Code repo: <what> — pushed, DRAFT PR #<num> open (<url>) — <blocking facts>.` |
 | Pushed, PR already existed | `Code repo: <what> — pushed to existing PR #<num> (<url>).` |
+| Still a draft (§2.6) | append `; it is still a DRAFT, perhaps from an earlier blocked run — once the blocking facts its DO-NOT-MERGE banner names are resolved, mark it ready with gh pr ready <num>.` |
 | Pushed, PR already existed, run blocked (§2.6) | `Code repo: <what> — pushed to existing PR #<num> (<url>) — <blocking facts>.` |
-| Turned back into a draft (§2.6) | append `; turned back into a DRAFT.` |
+| A draft (§2.6) | append `; a DRAFT.` |
 | Not turned back into a draft (§2.6) | append `; NOT turned back into a draft (<reason>) — mark it as one by hand.` |
 | Banner comment posted (§2.6) | append `; DO-NOT-MERGE comment posted.` |
 | Banner comment not posted (§2.6) | append `; DO-NOT-MERGE comment NOT posted (<reason>) — post its DO NOT MERGE line on the pull request by hand.` |
