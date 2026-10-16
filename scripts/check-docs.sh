@@ -48,7 +48,7 @@ set -uo pipefail
 # check function below is unchanged and still reads a single PLUGIN_REL. A one-element
 # list behaves exactly as the old scalar did, which is what keeps this body portable to
 # editions that ship one plugin.
-PLUGIN_RELS="plugins/dev-workflows plugins/guideline-reviewers plugins/workflows-core plugins/docs-workflows plugins/product-workflows"   # copilot: dev-workflows
+PLUGIN_RELS="plugins/dev-workflows plugins/guideline-reviewers plugins/workflows-core plugins/docs-workflows plugins/product-workflows plugins/security-workflows"   # copilot: dev-workflows
 CMD_DIR="commands"                   # copilot: skills
 CMD_SUFFIX=".md"                     # copilot: /SKILL.md
 CMD_EXCLUDE=""                       # copilot: _shared
@@ -88,7 +88,7 @@ NS_MAP_REL="plugins/workflows-core/scripts/command-namespaces.json"
 # assert that a plugin holding the CALL SITES is declared. The trigger is the call sites and
 # not the reference file: the corpus extraction separated the two, and a file-presence
 # trigger got both directions wrong at once (see those two functions).
-COST_PLUGIN_RELS="plugins/dev-workflows plugins/docs-workflows plugins/workflows-core plugins/product-workflows"        # copilot: dev-workflows
+COST_PLUGIN_RELS="plugins/dev-workflows plugins/docs-workflows plugins/workflows-core plugins/product-workflows plugins/security-workflows"        # copilot: dev-workflows
 HANDOFF_PLUGIN_RELS="plugins/product-workflows"  # copilot: dev-workflows
 # Which plugins check 20 holds to the untrusted-content guard: every docs-gated plugin plus
 # prose-style, which ships agents and dispatching commands but no docs/ tree. Declared, like
