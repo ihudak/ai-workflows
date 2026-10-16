@@ -63,8 +63,8 @@ absent and no squash of the finding's unit found after it), or because the scan 
 file changed cannot be told (no blob recorded, and one of the two commits absent) -- plus the open
 findings, as pending_fix each finding at fix -- which has no follow-up written -- and, given --followups, the
 --unit's follow-ups.md, each fixing finding no task line there, open or ticked and naming the register's
-repository, carries under any number it was published under, the accepted risks past their review-by
-date, as renumbered the moves no run record holds yet,
+repository, carries under a number held for it, save a finding the scan closes or proposes fixed, the accepted
+risks past their review-by date, as renumbered the moves no run record holds yet,
 each marked provisional, and as origins the origin of every [SEC#n] it saw, through which commit names the
 findings decided on.
 Git is run on --repo, which must hold the scan's commit, for ancestry, a unit's squash commit, the finding's
@@ -79,7 +79,8 @@ ids: prints the [SEC#n] each new or matched finding takes, from a plan and the t
 commit: writes the run record and rebuilds; refuses a plan the register has moved past. With
 --repo-name it also builds, for each finding the decisions mark fix, its follow-up line (with --unit)
 or /implement prompt line (without) -- from structured fields only, never a finding's text, starting
-from this scan's patch for it, or else the patch a run recorded for it before -- records the finding as
+from this scan's patch for it, or else the patch a run recorded for it before, unless this run reopens it, since
+that patch is the fix that regressed, and otherwise saying it has no patch -- records the finding as
 fixing with that line, and prints the lines for the caller to emit. A fix decision clears a finding's
 follow-up link: no line is written for it until one builds it again. --role dev records
 a false positive or an accepted risk as awaiting security review; --role sec confirms it. A new finding
@@ -485,13 +486,14 @@ def _new_finding(n, origin, f, scan, unit, b):
 
 
 def _numbering(recs):
-    """(num, canon, moves, taken, allocs), the replay's numbering on its own, from the allocations, the confirmed
+    """(num, canon, moves, taken, allocs, held), the replay's numbering on its own, from the allocations, the confirmed
     matches and the recorded moves alone, so it needs no scan folder and can take records another branch holds: num
     maps every origin to its finding's [SEC#n], canon maps every origin to the origin of the finding it names, moves
     lists each allocation whose number is not the one it allocated, taken is every number any record published --
     allocated, a number that gave way included, or written as a move's `to` -- with every number a move here took,
-    so none is handed out again, and allocs lists every allocation as (run, origin, the numbers it was published
-    under in record order, the number it has now).
+    so none is handed out again, allocs lists every allocation as (run, origin, the numbers it was published
+    under in record order, the number it has now), and held maps each finding, by the origin canon names it by, to
+    the numbers held for it: every number whose first publication was for it, and the number it has now.
     A number is published for an allocation by the record that allocated it and by every record whose renumbered
     moves that allocation to it. A number belongs to the finding the earliest-sorting record published it for, and
     is held for that finding for good: it is never handed to another.
@@ -588,7 +590,8 @@ def _numbering(recs):
             if p not in seen:
                 seen.append(p)
         allocs.append((run, o, seen, num[o]))
-    return num, canon, moves, published | moved, allocs
+    held = {f: {n for n, (_, who) in owner.items() if who == f} | {num_of[f]} for f in members}
+    return num, canon, moves, published | moved, allocs, held
 
 
 def _apply(specs, slug, st, r, num, canon, by_origin):
@@ -691,7 +694,7 @@ def _next_id(num, taken):
 
 
 def _replay(specs, slug, recs):
-    num, canon, moves, taken, _ = _numbering(recs)
+    num, canon, moves, taken, _, _ = _numbering(recs)
     st = {"format": 1, "repo": slug, "next_id": _next_id(num, taken), "next_seq": 1, "last_at": None, "scans": [],
           "findings": {}, "renumbered": moves}
     by_origin = {}
@@ -786,7 +789,7 @@ def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None, default_
     # number their merge will move a finding to. Number them with this checkout's, as the replay will.
     local = {r["_file"] for r in recs}
     reserved = [r for r in _load_records(reserve_dir) if r["_file"] not in local] if reserve_dir else []
-    num, _, _, taken, _ = _numbering(sorted(recs + reserved, key=lambda r: (r["seq"], r["at"], r["_file"])))
+    num, _, _, taken, _, _ = _numbering(sorted(recs + reserved, key=lambda r: (r["seq"], r["at"], r["_file"])))
     next_id = max(st["next_id"], _next_id(num, taken))
     next_seq = max([st["next_seq"]] + [r["seq"] + 1 for r in reserved])
     out = {"format": 1, "repo": slug, "unit": unit, "today": today, "base_id": st["next_id"],
@@ -898,20 +901,20 @@ def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None, default_
             else:
                 out["not_reported"].append(g["id"])
     # A fix nobody queued is offered again: a finding at fix has no follow-up written, and, given the unit's
-    # follow-ups file, neither has a fixing one that no task line there carries under any number it was published
-    # under -- a run cut off between its commit and the follow-up write.
-    carried, numbers = (_carried(followups, slug), {}) if followups is not None else (None, {})
-    if carried is not None:
-        _, canon, _, _, allocs = _numbering(recs)
-        for _, o, published, now in allocs:
-            numbers.setdefault(canon[o], set()).update(published + [now])
+    # follow-ups file, neither has a fixing one that no task line there carries under a number held for it -- a run cut
+    # off between its commit and the follow-up write. A number held for another finding after a collision stands for
+    # that finding, never for this one. A finding this scan closes, or proposes fixed, is no fix to queue: its closure
+    # answers it.
+    carried = _carried(followups, slug) if followups is not None else None
+    held = _numbering(recs)[5] if carried is not None else {}
+    closing = {c["id"] for c in out["closable"]} | set(out["gone"])
     for g in ordered:
         if unit is not None and unit not in g["units"]:
             continue
         if g["status"] in ("open", "reopened"):
             out["open"].append(g["id"])
-        if g["status"] == "fix" or (g["status"] == "fixing" and carried is not None
-                                    and not numbers.get(g["origin"], {g["id"]}) & carried):
+        if g["id"] not in closing and (g["status"] == "fix" or (
+                g["status"] == "fixing" and carried is not None and not held.get(g["origin"], {g["id"]}) & carried)):
             out["pending_fix"].append(g["id"])
         if g["status"] == "accepted-risk" and g.get("review_by") and g["review_by"] < today:
             out["review_due"].append(g["id"])
@@ -1034,6 +1037,11 @@ def resolve(p, dec, allocated, matched, role):
     return out
 
 
+def _match_reopens(p, m):
+    """Whether a confirmed match reopens the fixed finding it names: its possibly-same row's reopens lists it."""
+    return m["id"] in next(e for e in p["possibly_same"] if e["plugin_id"] == m["plugin_id"]).get("reopens", [])
+
+
 def _auto(n, origin, status, reason, links=None, default=False):
     """An automatic decision; default marks the open recorded for a new finding nobody decided, and nothing else."""
     return {"id": n, "origin": origin, "status": status, "reason": reason, "evidence": "", "review_by": None,
@@ -1073,9 +1081,8 @@ def commit(specs, slug, p, dec, by, kind, unit, at, role="sec", repo_name=None):
             auto.append(_auto(c["id"], of(c["id"]), "fixed", "covering scan %s no longer reports it, and its file"
                               " changed since it was last seen" % scan["id"], {"fixed_in_scan": scan["id"]}))
     reopen = [(n, of(n)) for n in p["reopen"]]
-    rows = {e["plugin_id"]: e for e in p["possibly_same"]} if scan else {}
     for m in matched:
-        if m["id"] in rows[m["plugin_id"]].get("reopens", []):
+        if _match_reopens(p, m):
             reopen.append((m["id"], m["origin"]))
         elif not m["history"] and held[of(m["id"])]["status"] in REVIEWED and m["origin"] not in decided:
             # A possibly-same match is changed code: the judgement no longer covers it.
@@ -1134,7 +1141,9 @@ def _followups(specs, slug, p, st, allocated, matched, user, repo_name, unit):
         raise Unrunnable("REGISTER_BAD_UNIT: %r is not a key" % unit)
     origins = _plan_origins(p)
     info = {g["origin"]: (g["cwe"], g["path"], g["line"], None) for g in st["findings"].values()}
-    kept = {g["origin"]: g["links"].get("patch") for g in st["findings"].values()}
+    # A finding this record reopens keeps no patch: the one recorded before the reopen is the fix that regressed.
+    reopened = {origins[n] for n in p["reopen"]} | {m["origin"] for m in matched if _match_reopens(p, m)}
+    kept = {g["origin"]: g["links"].get("patch") for g in st["findings"].values() if g["origin"] not in reopened}
     for e in p["again"]:
         info[origins[e["id"]]] = (e["cwe"], e["path"], e["line"], e["fid"])
     new = {e["plugin_id"]: e["origin"] for e in allocated + matched}
@@ -1154,8 +1163,8 @@ def _followups(specs, slug, p, st, allocated, matched, user, repo_name, unit):
         old = kept.get(d["origin"])
         if patch is None and isinstance(old, str):
             # This scan made no patch for it: the one a run recorded for it before -- a fix whose line the preview
-            # cancelled, or whose run was cut off before writing it -- still names the fix. It is a register path of
-            # this slug's scan folders, and on disk, or it is not used.
+            # cancelled, or whose run was cut off before writing it, never reopened since -- still names the fix. It is
+            # a register path of this slug's scan folders, and on disk, or it is not used.
             parts = old.split("/")
             if len(parts) == 6 and parts[:3] == ["security", slug, "scans"] and _segment(parts[3]) \
                     and parts[4] == "patches" and PATCH_RE.match(parts[5]) and os.path.isfile(os.path.join(specs, old)):
@@ -1915,6 +1924,141 @@ def case_fixing_finding_whose_line_was_never_written_is_offered_again(tmp):
     r = subprocess.run([sys.executable, "-I", me, "plan", "--specs", specs, "--slug", "code", "--repo", repo, "--unit",
                         "ACME-1-01", "--followups", os.path.join(specs, "none.md")], capture_output=True, text=True)
     assert r.returncode == 0 and json.loads(r.stdout)["pending_fix"] == [1], (r.stdout, r.stderr)
+
+
+def case_pending_fix_never_offers_what_the_scan_closes_or_proposes_closed(tmp):
+    # A fix nobody queued is offered again, save where this scan closes it or proposes it fixed (rereview A, probe e).
+    # [SEC#1] is fixing and its run was cut off before its line was written, and a covering scan closes it by itself;
+    # [SEC#2] is at fix, and the scan proposes it fixed; [SEC#3] is at fix, and its file is gone. None is a fix to queue,
+    # so accepting the suggestions closes all three and sends none back to fixing.
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH"), ("v3:bb", "src/b.py", 1, "CWE-79", "HIGH"),
+                            ("v3:cc", "srcx/a.py", 1, "CWE-20", "HIGH")])
+    commit(specs, "code", plan(specs, "code", repo, "s1", "ACME-1-01", "2026-10-16"),
+           {"decisions": [{"target": "plugin:v3:aa", "status": "fix"}]}, "Dev", "scan", "ACME-1-01",
+           "2026-10-16T09:00:00Z", "dev", "code")
+    commit(specs, "code", plan(specs, "code", repo, None, "ACME-1-01", "2026-10-16"),
+           {"decisions": [{"target": "id:2", "status": "fix"}, {"target": "id:3", "status": "fix"}]}, "Dev", "triage",
+           "ACME-1-01", "2026-10-16T09:01:00Z", "dev")
+    assert [_state(specs)[n]["status"] for n in (1, 2, 3)] == ["fixing", "fix", "fix"], _state(specs)
+    _change(repo, "src/a.py", "fixed\n")
+    _change(repo, "src/b.py", "x = 9\n")
+    c2 = _change(repo, "srcx/a.py", None)
+    _scan(specs, "sV", c2, [], scope=["src/a.py", "src/b.py"], counted=False)
+    pv = plan(specs, "code", repo, "sV", "ACME-1-01", "2026-10-16", followups=os.path.join(specs, "follow-ups.md"))
+    assert (pv["closable"], pv["gone"]) == ([{"id": 1, "auto": True}, {"id": 2, "auto": False}], [3]), pv
+    assert pv["pending_fix"] == [], pv["pending_fix"]
+    commit(specs, "code", pv, {"decisions": [{"target": "id:2", "status": "fixed"}, {"target": "id:3", "status": "fixed"}]},
+           "Sec", "verify", "ACME-1-01", "2026-10-16T10:00:00Z", "sec", "code")
+    assert [_state(specs)[n]["status"] for n in (1, 2, 3)] == ["fixed"] * 3, _state(specs)
+
+
+def case_reopened_fix_never_starts_from_the_patch_that_regressed(tmp):
+    # [SEC#1] is fixed from s1's patch and closed by a covering scan. A later scan reports it again -- by its plugin ID,
+    # or through a possibly-same match -- and reopens it, and the run decides fix. Where this scan made no patch for it,
+    # its line says so, as a skipped finding's does: the patch recorded before the reopen is the fix that regressed, never
+    # a starting point (rereview A, probe f). Where this scan made one, the line starts from it.
+    old, new = "security/code/scans/s1/patches/F1.patch", "security/code/scans/s3/patches/F1.patch"
+    for how in ("again", "match", "patched"):
+        sub = os.path.join(tmp, how)
+        os.makedirs(sub)
+        specs = os.path.join(sub, "specs")
+        os.makedirs(specs)
+        repo, c1 = _repo(sub)
+        _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+        _wf(specs, old, "diff\n")
+        commit(specs, "code", plan(specs, "code", repo, "s1", "ACME-1-01", "2026-10-16"),
+               {"decisions": [{"target": "plugin:v3:aa", "status": "fix"}]}, "Dev", "scan", "ACME-1-01",
+               "2026-10-16T09:00:00Z", "dev", "code")
+        c2 = _change(repo, "src/a.py", "fixed\n")
+        _scan(specs, "s2", c2, [], scope=["src/a.py"], counted=False)
+        commit(specs, "code", plan(specs, "code", repo, "s2", None, "2026-10-16"), {}, "Sec", "verify", None,
+               "2026-10-16T10:00:00Z", "sec", "code")
+        g = _state(specs)[1]
+        assert (g["status"], g["links"].get("patch")) == ("fixed", old), (how, g)
+        c3 = _change(repo, "src/a.py", "".join("regressed %d\n" % i for i in range(1, 41)))
+        pid, line = ("v3:ab", 12) if how == "match" else ("v3:aa", 10)
+        _scan(specs, "s3", c3, [(pid, "src/a.py", line, "CWE-89", "HIGH")], mode="changes")
+        if how == "patched":
+            _wf(specs, new, "diff\n")
+        p3 = plan(specs, "code", repo, "s3", "ACME-1-02", "2026-10-16")
+        dec = {"decisions": [{"target": "id:1", "status": "fix"}]}
+        if how == "match":
+            assert p3["reopen"] == [] and p3["possibly_same"][0]["reopens"] == [1], (how, p3)
+            dec["matches"] = [{"plugin_id": pid, "id": 1}]
+        else:
+            assert p3["reopen"] == [1], (how, p3)
+        r = commit(specs, "code", p3, dec, "Dev", "scan", "ACME-1-02", "2026-10-16T11:00:00Z", "dev", "code")
+        start = (", starting from `%s`" % new) if how == "patched" else ", with no patch from the scan"
+        assert r["followups"] == ["- [ ] Run `/dev-workflows:implement ACME-1-02` from repository `code`: fix [SEC#1] (CWE-89)"
+                                  " at `src/a.py:%d`%s — raised by /security-workflows:scan" % (line, start)], (how, r)
+        g = _state(specs)[1]
+        assert (g["status"], g["links"].get("patch")) == ("fixing", new if how == "patched" else None), (how, g["links"])
+    # A fix never reopened since its patch was recorded still starts from it: here a fixing finding whose run was cut off
+    # before its line was written, offered again (a cancelled line is case_cancelled_follow_up_clears_its_link_...).
+    specs, repo, c1 = _setup(os.path.join(tmp, "cut"))
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    _wf(specs, old, "diff\n")
+    r1 = commit(specs, "code", plan(specs, "code", repo, "s1", "ACME-1-01", "2026-10-16"),
+                {"decisions": [{"target": "plugin:v3:aa", "status": "fix"}]}, "Dev", "scan", "ACME-1-01",
+                "2026-10-16T09:00:00Z", "dev", "code")
+    t = plan(specs, "code", repo, None, "ACME-1-01", "2026-10-16", followups=os.path.join(specs, "follow-ups.md"))
+    assert t["pending_fix"] == [1], t
+    r2 = commit(specs, "code", t, {"decisions": [{"target": "id:1", "status": "fix"}]}, "Dev", "triage", "ACME-1-01",
+                "2026-10-16T09:05:00Z", "dev", "code")
+    assert r2["followups"] == r1["followups"] and _state(specs)[1]["links"]["patch"] == old, r2
+
+
+def case_pending_fix_never_reads_another_findings_number(tmp):
+    # A and B each take #2, A's record sorting first, so B's finding moves to #3. A's line cites its own [SEC#2]; B's run
+    # was cut off before its line was written. A [SEC#2] line stands for the finding #2 is held for, never for B's, which
+    # was published under #2 as well: B's finding is a fix nobody queued, and is offered again.
+    repo, c1 = _repo(tmp)
+    a, b = os.path.join(tmp, "a"), os.path.join(tmp, "b")
+    os.makedirs(a)
+    _scan(a, "s0", c1, [("v3:p0", "src/b.py", 1, "CWE-79", "LOW")])
+    commit(a, "code", plan(a, "code", repo, "s0", None, "2026-10-16"), {}, "Z", "scan", None, "2026-10-16T08:00:00Z")
+    _copy_register(a, b)
+    out = {}
+    for z, sid, pid, path, at in ((a, "sA", "v3:pa", "src/a.py", "09:00"), (b, "sB", "v3:pb", "srcx/a.py", "09:05")):
+        _scan(z, sid, c1, [(pid, path, 1, "CWE-89", "HIGH")])
+        out[sid] = commit(z, "code", plan(z, "code", repo, sid, "ACME-1-01", "2026-10-16"),
+                          {"decisions": [{"target": "plugin:" + pid, "status": "fix"}]}, sid, "scan", "ACME-1-01",
+                          "2026-10-16T%s:00Z" % at, "dev", "code")
+    assert (out["sA"]["ids"], out["sB"]["ids"]) == ({"v3:pa": 2}, {"v3:pb": 2}), out
+    _copy_register(b, a)
+    _wf(a, "follow-ups.md", "# Follow-ups\n\n" + out["sA"]["followups"][0] + "\n")
+    fs = rebuild(a, "code")["findings"]
+    assert (fs[2]["origin"], fs[3]["origin"], fs[3]["status"]) == ("sA:v3:pa", "sB:v3:pb", "fixing"), fs
+    p = plan(a, "code", repo, None, "ACME-1-01", "2026-10-16", followups=os.path.join(a, "follow-ups.md"))
+    assert p["pending_fix"] == [3], p["pending_fix"]
+
+
+def case_pending_fix_reads_a_line_under_a_number_held_for_its_finding(tmp):
+    # A takes v3:pz as #2. B, which never saw A, takes v3:px as #2 and then v3:pz as #3, decides it fix and writes its
+    # line, [SEC#3]. Merged, B's v3:pz gives way to A's: the finding is #2, and #3, which B's record published for it,
+    # stays held for it. The [SEC#3] line stands for it until someone corrects it, so it is no fix nobody queued.
+    repo, c1 = _repo(tmp)
+    a, b = os.path.join(tmp, "a"), os.path.join(tmp, "b")
+    os.makedirs(a)
+    _scan(a, "s0", c1, [("v3:p0", "src/b.py", 1, "CWE-79", "LOW")])
+    commit(a, "code", plan(a, "code", repo, "s0", None, "2026-10-16"), {}, "Z", "scan", None, "2026-10-16T08:00:00Z")
+    _copy_register(a, b)
+    _scan(a, "sA", c1, [("v3:pz", "src/a.py", 5, "CWE-89", "HIGH")])
+    commit(a, "code", plan(a, "code", repo, "sA", None, "2026-10-16"), {}, "A", "scan", None, "2026-10-16T09:00:00Z")
+    _scan(b, "sX", c1, [("v3:px", "srcx/a.py", 1, "CWE-20", "LOW")])
+    commit(b, "code", plan(b, "code", repo, "sX", None, "2026-10-16"), {}, "B", "scan", None, "2026-10-16T09:05:00Z")
+    _scan(b, "sB", c1, [("v3:pz", "src/a.py", 5, "CWE-89", "HIGH")])
+    rb = commit(b, "code", plan(b, "code", repo, "sB", "ACME-1-01", "2026-10-16"),
+                {"decisions": [{"target": "plugin:v3:pz", "status": "fix"}]}, "B", "scan", "ACME-1-01",
+                "2026-10-16T09:10:00Z", "dev", "code")
+    assert rb["ids"] == {"v3:pz": 3}, rb
+    _copy_register(b, a)
+    _wf(a, "follow-ups.md", rb["followups"][0] + "\n")
+    fs = rebuild(a, "code")["findings"]
+    assert (fs[2]["origin"], fs[2]["status"], fs[4]["origin"]) == ("sA:v3:pz", "fixing", "sX:v3:px"), fs
+    pf = plan(a, "code", repo, None, "ACME-1-01", "2026-10-16", followups=os.path.join(a, "follow-ups.md"))["pending_fix"]
+    assert pf == [], pf
 
 
 def case_triage_only_run(tmp):
@@ -3368,6 +3512,34 @@ def case_one_plugin_id_from_two_scans_is_one_finding(tmp):
         "a move a record holds is not reported again"
 
 
+def case_history_match_never_frees_a_plugin_id_for_a_later_allocation(tmp):
+    # A takes v3:pz at c2 as #2. A scan of c1, before that sighting, reports v3:p1 beside it, and the match confirmed onto
+    # #2 is history for it: #2 keeps v3:pz. B, which never saw A, reports v3:pz as new in a record that sorts after the
+    # match. The numbering's identity pass leaves the plugin ID where the replay does, so B's allocation names #2 and
+    # gives way to it, and the register holds one finding, never two.
+    repo, c1 = _repo(tmp)
+    c2 = _change(repo, "src/b.py", "x = 2\n")
+    a, b = os.path.join(tmp, "a"), os.path.join(tmp, "b")
+    os.makedirs(a)
+    _scan(a, "s0", c1, [("v3:p0", "srcx/a.py", 1, "CWE-79", "LOW")])
+    commit(a, "code", plan(a, "code", repo, "s0", None, "2026-10-16"), {}, "Z", "scan", None, "2026-10-16T08:00:00Z")
+    _copy_register(a, b)
+    _scan(a, "sA", c2, [("v3:pz", "src/a.py", 10, "CWE-89", "HIGH")])
+    commit(a, "code", plan(a, "code", repo, "sA", None, "2026-10-16"), {}, "A", "scan", None, "2026-10-16T09:00:00Z")
+    _scan(a, "old", c1, [("v3:p1", "src/a.py", 12, "CWE-89", "HIGH")])
+    p = plan(a, "code", repo, "old", None, "2026-10-16")
+    assert (p["possibly_same"][0]["candidates"], p["possibly_same"][0]["history"]) == ([2], [2]), p["possibly_same"]
+    commit(a, "code", p, {"matches": [{"plugin_id": "v3:p1", "id": 2}]}, "A", "import", None, "2026-10-16T09:10:00Z")
+    commit(b, "code", plan(b, "code", repo, None, None, "2026-10-16"), {}, "B", "triage", None, "2026-10-16T09:05:00Z")
+    _scan(b, "sB", c2, [("v3:pz", "src/a.py", 10, "CWE-89", "HIGH")])
+    rb = commit(b, "code", plan(b, "code", repo, "sB", None, "2026-10-16"), {}, "B", "scan", None, "2026-10-16T09:20:00Z")
+    assert rb["ids"] == {"v3:pz": 2} and os.path.basename(rb["record"]).startswith("0003-"), rb
+    _copy_register(b, a)
+    fs = rebuild(a, "code")["findings"]
+    assert sorted(fs) == [1, 2] and (fs[2]["origin"], fs[2]["plugin_id"]) == ("sA:v3:pz", "v3:pz"), fs
+    assert fs[2]["reported_by"] == ["sA", "old", "sB"], fs[2]["reported_by"]
+
+
 def case_glob_characters_in_a_path_are_literal(tmp):
     specs, repo, c1 = _setup(tmp)
     c2 = _change(repo, "src/[a].py", "y = 1\n")
@@ -3459,7 +3631,7 @@ HELP = {
             " this scan records nothing about: their last sighting cannot be"
             " placed in this clone, or the scan is later but whether the file changed cannot be told); open,"
             " pending_fix (each finding at fix, and with --followups each fixing finding no task line in that file"
-            " carries), review_due, unconfirmed; origins (the origin of every [SEC#n] the plan saw). already_recorded comes with"
+            " carries under a number held for it, save one the scan closes or proposes fixed), review_due, unconfirmed; origins (the origin of every [SEC#n] the plan saw). already_recorded comes with"
             " recorded_on: \"this register\", or \"another branch\" where a reserved run record holds the scan.",
     "ids": "Print the [SEC#n] each new or matched finding takes.",
     "commit": "Write the run record and rebuild. Prints {record, ids, followups, renumbered}: renumbered holds the moves"
