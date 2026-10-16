@@ -10,7 +10,8 @@
 $SPECS_PATH/security/<repo-slug>/
   scans/<UTC-timestamp>-<commit7>/   one Claude Security scan's products, unchanged: the report, the JSONL,
                                      the SARIF, the revision stamp, and patches/ where patches were made
-  runs/<seq>-<UTC>-<hash8>.json      one run record per run that changed the register
+  runs/<seq>-<UTC>-<hash8>.json      the run records: one per run that changed the register, and a second
+                                     where that run's preview cancelled a follow-up line
   register.json                      the folded state: derived, never edited
   register.md                        rendered from it for people to read: derived, never edited
   dev-workflows/cost/<sid8>.md       a keyless run's session-cost entry: beside the register, never part of it
@@ -31,7 +32,7 @@ The register's files, and a unit's `_security.md`, are session bookkeeping, like
 
 ## What a run records
 
-A run that changes the register writes one run record:
+A run that changes the register writes one run record, and a second, small one where its preview cancels a follow-up line, returning that line's finding to `fix`. A record holds:
 
 - `seq`, `at` (UTC), `by` (the specs repository's git `user.name`), `kind` (`scan`, `import`, `triage` or `verify`) and `role` (`dev` or `sec`);
 - `unit`, the key the run was addressed by, or `null`;
@@ -76,13 +77,15 @@ stateDiagram-v2
     open --> accepted_risk
     accepted_risk --> accepted_risk: review due, re-accepted with a new date
     accepted_risk --> fix: review due, or overruled
-    accepted_risk --> false_positive: review due, decided again
+    accepted_risk --> false_positive: review due, or matched on changed code, decided again
+    false_positive --> accepted_risk: matched on changed code, decided again
     false_positive --> fix: overruled by the Security Engineer
     false_positive --> open: overruled to decide later, or matched on changed code
     accepted_risk --> open: overruled to decide later, or matched on changed code
     fix --> fixing: follow-up written
     fixing --> fix: follow-up cancelled at its preview
     fixing --> fixed: file changed and a later covering codebase scan no longer reports it
+    fixing --> fixed: its file gone, confirmed in triage
     open --> fixed: confirmed in triage, on the same evidence
     fix --> fixed: confirmed in triage, on the same evidence
     reopened --> fixed: confirmed in triage, on the same evidence
@@ -93,7 +96,7 @@ stateDiagram-v2
     reopened --> accepted_risk
 ```
 
-`register.py` makes some of these moves itself, and a person makes the rest at the triage. It records `open` for a new finding nobody decided, and for a false positive or an accepted risk a confirmed match left undecided; it moves a finding to `fixing` when it writes the finding's follow-up; it closes a `fixing` finding on the evidence below; and it reopens a `fixed` finding a later scan reports again. A follow-up line cancelled at the run's preview returns its finding to `fix`, through a second, small run record. A finding whose file is gone at a scan's commit is proposed as fixed whatever its status, by the rules below.
+`register.py` makes some of these moves itself, and a person makes the rest at the triage. It records `open` for a new finding nobody decided, and for a false positive or an accepted risk a confirmed match left undecided; it moves a finding to `fixing` when it writes the finding's follow-up; it closes a `fixing` finding on the evidence below; and it reopens a `fixed` finding a later scan reports again. A follow-up line cancelled at the run's preview returns its finding to `fix`, through a second, small run record. An active finding — `open`, `fix`, `fixing`, `reopened` or `accepted-risk` — whose file is gone at a scan's commit is proposed as fixed, whatever kind of scan ran, by the rules below.
 
 ## A false positive or an accepted risk
 

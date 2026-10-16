@@ -34,6 +34,15 @@ Port a change only where the edition holds the passage it edits. Several sit on 
 
 Each edition keeps its own versions and changelog. Run its gate chain after. Where an edition carries the text of an item below, its fix is ported the same way once it lands here.
 
+### E3 — Port check 9's singular count to the internal Claude and Copilot editions
+
+**Source:** branch `iv-gu/security-workflows-scan`, the review round 1 fix of its docs task; `git log -S'command emits' --oneline -- scripts/check-docs.sh` names the commit. It changed the shared body: check 9's commands pattern now ends `slash commands?`, its cost-emitting pattern `(commands emit|command emits) a cost entry`, so a plugin of one command can write "One slash command" and "One command emits a cost entry"; and the selftest gained two rewording-only `expect_pass_after` cases and one `expect_fail` twin. One port carries this and E1 together, since each replaces the whole body.
+
+1. **Re-measure `head -1` on each edition's gated files before porting.** For every plugin README in the edition's `PLUGIN_RELS` and every `docs/reference/session-cost.md`, take the first match of the old pattern and of the new one (`grep -ohEi … | head -1`) and compare them. Where they differ, check 9 would compare a different sentence after the port: fix that file in the edition first. Here they were the same in all six gated READMEs, all five session-cost pages and the fixture.
+2. **Port by `cp` of the body, then verify with `cmp`.** Keep the edition's lines above `FAILURES=0`, append this repository's body, `sed -n '/^FAILURES=0$/,$p' <this-repo>/scripts/check-docs.sh`, and prove parity as E1 step 3 does: the `cmp` of the two bodies prints nothing.
+3. Run the edition's whole gate chain, `--selftest` included. An edition whose config sets `HAS_COST=0` prints `skip` for the singular cost case.
+4. **The internal Claude edition lands by pull request only**: push a branch and open a pull request there; never merge it, and never push its default branch.
+
 ## The merged test — `workflows-core:implementation-format` §5
 
 Found by the 2026-10-15 review against `/conformance`'s own copy of the merged test (line numbers at `7c13ce05`). That copy is gone: the test now lives in `implementation-format` §5, read by every `unit-branch` consumer — `/dev-workflows:implement`, `/dev-workflows:conformance` and `/security-workflows:scan` — and by `/conformance`'s PRD run, so the items below are to be fixed there, never in a consumer.

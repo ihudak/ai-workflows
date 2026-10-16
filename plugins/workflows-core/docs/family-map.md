@@ -59,9 +59,10 @@ flowchart TD
         ready["/ready"]:::dev
         implement["/implement"]:::dev
         conformanceepic["/conformance (Epic)"]:::dev
+        secscan["/security-workflows:scan"]:::sec
     end
     subgraph SEC["Security Engineer — audit"]
-        secscan["/security-workflows:scan"]:::sec
+        secrepo["/security-workflows:scan — a repository, --verify-fixes, --triage"]:::sec
     end
     subgraph DOC["Dev — documentation and release notes"]
         document["/document (keyed)"]:::docs
@@ -139,6 +140,8 @@ flowchart TD
     implement -.->|"implementation.md — diff grounding on"| rnfinal
     conformanceepic -.->|"action: then the security scan, still before the merge"| secscan
     secscan -.->|"fix — a follow-up + patch, on the Epic's branch"| implement
+    secscan -.->|"action: once a fix has merged, or decisions await review"| secrepo
+    secrepo -.->|"fix — an /implement prompt line, or a follow-up with a key"| implement
 
     docsinit -.->|"a new docs repo + profile"| document
     docsinit -.->|"call: inline unless --no-brand"| docsbrand
@@ -179,7 +182,7 @@ flowchart TD
 - **The PA lane keeps its own decisions.** `/harvest-decisions` turns the decisions of merged ARDs into team records that `/create-ard`, `/specify` and `/dev-workflows:design` ground on; `/promote-decisions`, run in the architecture repository, proposes organisation ADRs from them, and once one is accepted grounding cites the ADR instead of the record. The product-workflows Workflow overview page draws the whole loop.
 - **`/ready` sits beside the spine, not on it.** Its verdict is advice `/implement` reads; it blocks nothing.
 - **`/dev-workflows:conformance` is drawn twice, once per role.** In the Dev lane the Dev checks an Epic before its pull request merges, on its branch, and the decisions are proposals; in the PE lane the PE checks the whole PRD once every Epic has merged, ruling on every Dev decision, and the PE's decisions are final.
-- **`/security-workflows:scan` is never run for you.** On an Epic it is the Dev's: offered after the Epic's `/conformance`, it runs before the merge, on the Epic's branch, although its node sits in the Security Engineer's lane, whose command it is. It reads code through Claude Security, a plugin outside the family, and records what it finds in the specs repository. A finding marked fix comes back to `/implement`, which continues on the Epic's branch, so the fix joins the open pull request. The Security Engineer runs it across a repository, closes fixes with `--verify-fixes` once they have merged, and reviews the Dev's decisions in `--triage`; those decisions never wait on that review.
+- **`/security-workflows:scan` is never run for you, and it is drawn once per role.** In the Dev lane it is the Dev's scan of their own Epic: offered after the Epic's `/conformance`, it runs before the merge, on the Epic's branch, reads code through Claude Security, a plugin outside the family, and records what it finds in the specs repository. A finding marked fix comes back to `/implement`, which continues on the Epic's branch, so the fix joins the open pull request. In the Security Engineer lane are that role's own runs: a scan across a repository, `--verify-fixes`, which closes fixes once they have merged, and `--triage`, which reviews the Dev's decisions; those decisions never wait on that review. Both nodes are teal, because a colour names the plugin, not the role.
 - **The Anytime lane hands no deliverable to the pipeline** except `/frames`' frame-set index, which `/prd-ground`'s design grounding needs. The portal lane prepares the documentation repository `/document` writes into, and `/docs-serve` only previews it.
 
 ## The detail, per plugin

@@ -73,7 +73,7 @@ After the merge:
   /security-workflows:scan <repo-path> --triage          the Security Engineer: reviews what awaits review, whenever
 ```
 
-**Before the merge the scan is the Dev's.** `/dev-workflows:implement` offers `/dev-workflows:conformance` and then the scan, and `/dev-workflows:conformance` offers the scan where it decided no fix. Each is offered, never run for you. A finding you mark fix comes back to `/dev-workflows:implement`, which continues on the Epic's branch, so the fix joins the open pull request. **After the merge the Security Engineer closes and reviews.** `--verify-fixes` closes a fix once a scan that covers its changed file no longer reports it, and `--triage` reviews the Dev's decisions whenever the Security Engineer gets to it. Nothing the Dev does waits for either.
+**Before the merge the scan is the Dev's.** `/dev-workflows:implement` offers `/dev-workflows:conformance` and then the scan, and `/dev-workflows:conformance` offers the scan where it decided no fix, for each repository whose Epic branch it traced before the merge. Each is offered, never run for you. A finding you mark fix comes back to `/dev-workflows:implement`, which continues on the Epic's branch, so the fix joins the open pull request. **After the merge the Security Engineer closes and reviews.** `--verify-fixes` closes a fix once a scan that covers its changed file no longer reports it, and `--triage` reviews the Dev's decisions whenever the Security Engineer gets to it. Nothing the Dev does waits for either.
 
 **Claude Security's own tip.** After a `git push` or a `gh pr create`, Claude Security suggests a scan of the branch's changes. A report you make that way, by running `/claude-security` yourself, is recorded with `--import`, without paying for the scan twice: `/security-workflows:scan <KEY | repo-path> --import <report dir>`.
 
@@ -81,7 +81,7 @@ After the merge:
 
 The command reasons about source code. It never runs anything against a deployed system, never writes exploit code, and never applies a patch.
 
-In the code repository it writes only what a scan needs: the report directory Claude Security leaves at the scan root, `CLAUDE-SECURITY-<timestamp>/`, which carries its own `.gitignore`; on a change scan, a fast-forward or a switch to the Epic's branch, the switch only after you agree to it; and, for `--verify-fixes`, a temporary worktree it removes on every path. Everything it records goes to `$SPECS_PATH`.
+In the code repository it writes only what a scan needs: the report directory Claude Security leaves at the scan root, `CLAUDE-SECURITY-<timestamp>/`, which carries its own `.gitignore`; on a change scan, a fast-forward or a switch to the Epic's branch, the switch only after you agree to it; for `--verify-fixes`, a temporary worktree it removes on every path; and a report folder copied out of a temporary worktree to the repository's root, where the run did not record that report, or where you chose to remove an idle worktree a crashed run left, so that `--import` can record it. Everything it records goes to `$SPECS_PATH`.
 
 ## Your first run
 

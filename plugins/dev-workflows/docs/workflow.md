@@ -26,7 +26,7 @@ flowchart TD
     implement -->|"Epic: the Dev, before its pull request merges"| conformance
     conformance -.->|"fix the code — a follow-up"| implement
     conformance -.->|"PRD: the PE, every Epic merged — amend the document"| specify
-    conformance -.->|"action: then the security scan, in security-workflows"| secplugin["/security-workflows:scan"]:::sec
+    conformance -.->|"Epic: then the security scan, in security-workflows"| secplugin["/security-workflows:scan"]:::sec
     secplugin -.->|"fix — a follow-up, on the Epic's branch"| implement
     implement -.->|code + implementation.md, in docs-workflows| docsplugin["/docs-workflows:document · /docs-workflows:release-notes"]:::docs
 
