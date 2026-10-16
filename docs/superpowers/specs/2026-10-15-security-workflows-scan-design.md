@@ -235,16 +235,16 @@ The command invokes the `workflows-core:model-routing` skill, for its routing re
 
 ```mermaid
 flowchart TD
-    p0["Phase 0 — Setup: run flags, SPECS_PATH, address, specs preflight, reservations, leftover worktrees, session-model check"] --> mode{"Mode?"}
-    mode -->|"KEY, repo path or --verify-fixes"| p1["Phase 1 — Scope: repository, commit, kind; for --verify-fixes, the changed files of findings being fixed"]
+    p0["Phase 0 — Setup: run flags, arguments and role, SPECS_PATH, address, specs preflight, repository, reservations, leftover worktrees, prerequisites, session-model check"] --> p1["Phase 1 — Scope: commit, kind and scope; a change scan acts on unit-branch's state, after a switch question where the branch is elsewhere; for --verify-fixes, the changed files of findings being fixed; for --triage, the triage plan"]
+    p1 --> mode{"Mode?"}
+    mode -->|"KEY, repo path or --verify-fixes"| p2["Phase 2 — Checkout: in place, or a temporary worktree for --verify-fixes"]
     mode -->|"--import dir"| p4
     mode -->|"--triage"| p5
-    p1 --> p2["Phase 2 — Checkout: in place, after a switch question, or a temporary worktree"]
     p2 --> p3["Phase 3 — Scan: one confirmation, then claude-security"]
     p3 --> p4["Phase 4 — Record: redaction check, copy the products to SPECS, register.py plan"]
     p4 --> p5["Phase 5 — Triage: one batch preview"]
     p5 --> p6["Phase 6 — Patches: Suggest patches for the findings marked fix, in the session's repository"]
-    p6 --> p7["Phase 7 — Close: register.py commit with the follow-ups, unit note, report, feedback, cost, commit-artifacts"]
+    p6 --> p7["Phase 7 — Close: refresh the reservations, register.py commit, unit note, worktree removal, report, then feedback, follow-ups, cost, resume and commit-artifacts"]
 ```
 
 0. **Setup.**
@@ -370,10 +370,19 @@ stateDiagram-v2
     open --> accepted_risk
     accepted_risk --> accepted_risk: review due, re-accepted with a new date
     accepted_risk --> fix: review due, or overruled
+    accepted_risk --> false_positive: review due, or matched on changed code, decided again
+    false_positive --> accepted_risk: matched on changed code, decided again
     false_positive --> fix: overruled by the Security Engineer
+    false_positive --> open: overruled to decide later, or matched on changed code
+    accepted_risk --> open: overruled to decide later, or matched on changed code
     fix --> fixing: follow-up written
-    fixing --> fixed: file changed and a covering codebase scan no longer reports it
+    fixing --> fix: follow-up cancelled at its preview
+    fixing --> fixed: file changed and a later covering codebase scan no longer reports it
+    fixing --> fixed: its file gone, confirmed in triage
     open --> fixed: confirmed in triage, on the same evidence
+    fix --> fixed: confirmed in triage, on the same evidence
+    reopened --> fixed: confirmed in triage, on the same evidence
+    accepted_risk --> fixed: confirmed in triage, on the same evidence
     fixed --> reopened: reported again
     reopened --> fix
     reopened --> false_positive
@@ -541,11 +550,11 @@ It is written only when the run resolved a key, and it is bookkeeping (D12).
 **`workflows-core/docs/family-map.md`:**
 
 - A legend entry and a new class, `sec`, in teal (`fill:#ccfbf1,stroke:#0f766e,color:#134e4a`), since red is the ▶ start outline.
-- A **Security Engineer — audit** lane holding `/security-workflows:scan`.
+- A **Security Engineer — audit** lane holding the Security Engineer's own runs of `/security-workflows:scan` (a repository, `--verify-fixes`, `--triage`). The Dev's pre-merge Epic scan is drawn in the Dev's lane, in the teal class, since each lane is a role.
 - The Dev's edge to the Epic's conformance changes to `implement -->|"Epic: the Dev, before its pull request merges"| conformanceepic`.
 - `conformanceepic -.->|"action: then the security scan, still before the merge"| secscan` and `secscan -.->|"fix — a follow-up + patch, on the Epic's branch"| implement`.
 - The *Reading it* bullet on `/conformance` says the Dev checks an Epic before its pull request merges.
-- A *Reading it* bullet: the scan is only ever offered, never run automatically, and it runs before the merge; it reads code through Claude Security, a plugin outside the family; a Dev's decisions never wait on the Security Engineer.
+- A *Reading it* bullet: on an Epic, the Dev runs the scan, offered after the Epic's `/conformance` traced the branch, before the merge; the Security Engineer runs it on a repository, `--verify-fixes` and `--triage`; it reads code through Claude Security, a plugin outside the family; a Dev's decisions never wait on the Security Engineer.
 - The opening sentence and the *The detail, per plugin* list name the fifth plugin.
 
 **Elsewhere:**
