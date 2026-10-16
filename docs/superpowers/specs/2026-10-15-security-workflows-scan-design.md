@@ -592,10 +592,15 @@ The change: on a keyed run, `/implement` runs `unit-branch` (D18) for its reposi
   `choices: ["Switch to <branch> and continue — the work joins its open pull request (Recommended)", "Branch from current position", "Branch from default branch — fresh start", "Cancel"]`
 
   Where HEAD is on the default branch, *Branch from current position* is the same as the fresh start, and the array drops it.
-- **`merged`, `missing` or `none`:** nothing changes from today.
+- **`merged`, with HEAD on the unit's branch:** the pull request has merged, so a branch from here would carry its merged commits into a second one. The question recommends the fresh start:
+
+  `choices: ["Branch from default branch — fresh start (Recommended)", "Branch from current position", "Cancel"]`
+- **`merged` elsewhere, `missing` or `none`:** nothing changes from today.
 - **`checked-out`, `local` or `remote` with `after_merge`** (D18): the pull request has merged and the branch has gone on since. No pull request is open for the work to join, so the question is today's three-option one.
 
-**Continuing, or switching and continuing,** skips step 5's branch creation, so the run commits on `<branch>`. `dev-workflows:code-handoff` already treats a branch with an open pull request as ordinary: §2.6 probes for one first, the push updates it, and §3.1's *pushed to existing PR* row reports it. The run appends its own `implementation.md` block, naming the same branch and the new commit.
+**Before the question,** a keyed run fetches `origin`, best effort, because `unit-branch` reads local refs. Where `gh` can probe, it also runs `code-handoff` §2.6's read-only open-pull-request probe. It says so where `<branch>` has none, so the label's "open pull request" is never taken on trust. Untracked files never suppress the switch. A tree with tracked changes asks first, `choices: ["Stop so I can commit or stash first (Recommended)", "Cut a fresh branch here"]`, after saying what cutting would do. A branch that went on after its merge (`after_merge`) keeps today's question, with a line saying a branch from there also carries the merged commits.
+
+**Continuing, or switching and continuing,** skips step 5's branch creation, so the run commits on `<branch>`. `dev-workflows:code-handoff` already treats a branch with an open pull request as ordinary: §2.6 probes for one first, the push updates it, and §3.1's *pushed to existing PR* row reports it. A run that finishes blocked turns that pull request back to a draft and comments the blocking banner on it, whether it opened a pull request or only pushed, since D17 makes an open pull request the usual target of a follow-up. The run appends its own `implementation.md` block, naming the same branch and the new commit.
 
 It serves any follow-up, from `/conformance` or the scan alike. Nothing else in `/implement` changes.
 
