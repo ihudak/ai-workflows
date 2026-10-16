@@ -86,7 +86,7 @@ set is ever staged.
 <specs-root>/documentation/*/dev-workflows/**                 # the documentation run with no PRD (D19): feedback, cost
 <specs-root>/dev-workflows-feedback/**                        # feedback-emission.md §2 tier 2 (keyless runs)
 <specs-root>/dev-workflows-cost/**                            # cost-emission.md §9 pending files (keyless runs)
-<specs-root>/security/*/**                                    # security-register-format.md §1: the register of one code repository (/security-workflows:scan), and its keyless scans' cost (cost-emission.md §8)
+<specs-root>/security/*/{runs/**|scans/**|dev-workflows/**|register.json|register.md}  # security-register-format.md §1: the register of one code repository (/security-workflows:scan), its own paths only, and its keyless scans' cost (cost-emission.md §8)
 <specs-root>/{specs|specifications|vis}/**/implementation.md  # implementation-format.md §1, appended by /implement
 <specs-root>/{specs|specifications|vis}/**/follow-ups.md      # followup-emission.md §2, appended per PRD/Epic folder
 <specs-root>/{specs|specifications|vis}/**/_security.md       # security-register-format.md §1: a unit's scan note, appended
@@ -94,7 +94,7 @@ set is ever staged.
 <specs-root>/{specs|specifications|vis}/**/*-implementation-gaps.md  # the <KEY>-implementation-gaps.md draft (source-truth.md §7.5)
 ```
 
-**The security register is bookkeeping**: its records are a run's own and must not wait on anyone's review, so `commit-artifacts` (§4) commits them and no pull request hands them off, as `${CLAUDE_PLUGIN_ROOT}/references/security-register-format.md` §1 says. The same directory holds a keyless scan's cost entry, under `dev-workflows/cost/` beside the register, filed per code repository as the `documentation/` shape files a documentation run's (`cost-emission.md` §8).
+**The security register is bookkeeping**: its records are a run's own and must not wait on anyone's review, so `commit-artifacts` (§4) commits them and no pull request hands them off, as `${CLAUDE_PLUGIN_ROOT}/references/security-register-format.md` §1 says. The same directory holds a keyless scan's cost entry, under `dev-workflows/cost/` beside the register, filed per code repository as the `documentation/` shape files a documentation run's (`cost-emission.md` §8). **The shape names the register's own paths and nothing else under `security/`** — `runs/`, `scans/`, `dev-workflows/`, `register.json` and `register.md` in each `security/<repo-slug>/` — because a specs repository can already hold a team's own `security/<dir>/` documents, a threat model or a policy, and a wider shape would sweep an uncommitted edit there into a prompt-free session commit of any family command, and push it.
 
 **The `documentation/` shape is the `docs-workflows` family's, and it exists because that family's normal run has no PRD and never will.** A documentation run against a repository nobody has written a PRD for would otherwise park every entry as *pending*, awaiting a reconciliation into a PRD directory that is never coming — so those entries accumulate forever and reconcile against nothing. The rung `feedback-emission.md` §2 and `cost-emission.md` §8 insert before pending writes instead to `<specs-root>/documentation/<docs-repo-slug>/dev-workflows/{cost,feedback}/`, where `<docs-repo-slug>` is the one-segment name the next paragraph defines. **Per docs repo, not one flat `documentation/` bucket**, for exactly the reason the PRD-directory rung exists for the pipeline: a person documenting two products must still be able to answer what documenting each one cost. The docs repo is that family's unit of attribution.
 
@@ -194,7 +194,7 @@ fragile to express and to review. The procedure is:
 2. Classify each reported path: **ARTIFACT** if it matches
    `^(specs|specifications|vis)/.+/dev-workflows/` or
    `^documentation/[^/]+/dev-workflows/` or `^dev-workflows-feedback/`
-   or `^dev-workflows-cost/` or `^security/[^/]+/` or
+   or `^dev-workflows-cost/` or `^security/[^/]+/(runs/|scans/|dev-workflows/|register\.(json|md)$)` or
    `^(specs|specifications|vis)/.+/(implementation|follow-ups|pr-draft|[^/]+-implementation-gaps|_security)\.md$`,
    **and** it does not match
    `^(specs|specifications|vis)/(.+/)?(brd|grounding|interview|design|attachments|revisions|bundle-[0-9]{8}|customer-sent-[0-9]{8}|Doc screenshots)/`;

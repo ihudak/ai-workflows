@@ -45,7 +45,7 @@ ARTIFACT = [
     r"^documentation/[^/]+/dev-workflows/",
     r"^dev-workflows-feedback/",
     r"^dev-workflows-cost/",
-    r"^security/[^/]+/",
+    r"^security/[^/]+/(runs/|scans/|dev-workflows/|register\.(json|md)$)",
     r"^(specs|specifications|vis)/.+/(implementation|follow-ups|pr-draft|[^/]+-implementation-gaps|_security)\.md$",
 ]
 EXCLUDED = (r"^(specs|specifications|vis)/(.+/)?(brd|grounding|interview|design|attachments|revisions"
@@ -719,6 +719,10 @@ def selftest():
             ("dev-workflows-cost/pending-2026-10-06-abcd1234.md", True),
             ("security/acme-api/runs/0001-20261016T091200Z.json", True),
             ("security/acme-api/scans/20261016T091200Z-eb694d0/patches/F1.patch", True),
+            ("security/acme-api/register.json", True),
+            ("security/acme-api/dev-workflows/cost/s.md", True),
+            ("security/threat-models/policy.md", False),
+            ("security/acme-api/register.json.orig", False),
             ("specifications/PRD-A-1-x/EPIC-A-1-1-y/_security.md", True),
             ("specifications/BRD-B-1-y/brd/source/implementation.md", False),
             ("specifications/PRD-A-1-x/release-notes.md", False),
