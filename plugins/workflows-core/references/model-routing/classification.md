@@ -170,11 +170,11 @@ The orchestrator MUST execute these steps in order:
    `code-review` sub-agent invocation pinned to Opus. It MUST cover every item
    in the §6 checklist. Tests MUST NOT be run until this review completes.
 5. **Run tests** (build + test suite per the executor / fixer workflow).
-6. **Apply review fixes** — save on `/implement`, whose `code-writer` and
-   `review-fixer` dispatches run on §4's `implementation_model` (its `fixes_model`
-   equals it), fixes flagged by the Opus review may be implemented by the
-   currently selected model **or** Sonnet (no Opus required for the fix edits
-   themselves).
+6. **Apply review fixes** — fixes flagged by the Opus review may be implemented
+   by the currently selected model **or** Sonnet (no Opus required for the fix
+   edits themselves), save on `/implement`, whose `code-writer` and
+   `review-fixer` dispatches run on §4's `implementation_model` (its
+   `fixes_model` equals it).
 7. **Re-run tests** if any review fixes were applied.
 8. **Final summary** — include the classification, the Opus models used at each
    step (or the Sonnet fallback notice), and a one-line outcome per checklist
