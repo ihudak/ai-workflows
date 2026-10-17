@@ -8,13 +8,15 @@ and where it is written. Run every call from the working directory (or pass --re
 `/implement` run per worktree at a time is the precondition; the lock below serialises one run's own
 calls, never two runs.
 
-  run-state.py init [--recover]      the whole object, as JSON on stdin, holding every key in KEYS
-                                     and no other -- checked before anything is moved. A file
-                                     already there is moved aside unread, as
-                                     implement-run.json.stale-<UTC stamp>, after any older such file
-                                     is removed, so at most one is kept; the move is printed and
-                                     appended to `assumptions` -- as a file an earlier run left, or,
-                                     under --recover, as this run's own file that did not parse.
+  run-state.py init [--recover]      a JSON object on stdin, merged over KEYS' defaults: every key or
+                                     member it omits takes the default KEYS gives it, and it may hold
+                                     no key or member KEYS lacks, nor one of the wrong type -- all
+                                     checked before anything is moved. A file already there is moved
+                                     aside unread, as implement-run.json.stale-<UTC stamp>, after any
+                                     older such file is removed, so at most one is kept; the move is
+                                     printed and appended to `assumptions` as a file an earlier run
+                                     left. Under --recover the line appended names the file as this
+                                     run's own, written again, and says whether one was moved aside.
   run-state.py open <phase>          set `phase` and print the file.
   run-state.py read [<key>]          print the file, or one key, changing nothing.
   run-state.py set <key> <json> ...  set each key to its JSON value; with no pairs, a JSON object of
@@ -45,12 +47,14 @@ Exit codes:
   1  there is no run-state file (and nothing was created)
   2  usage: bad arguments, a value that does not parse, input that is not UTF-8, a path through
      null, no such list entry
-  3  a key the file does not hold (set, append, read), or an init object lacking or adding a key
+  3  a key the file does not hold (set, append, read), or an init object adding a key or member,
+     or giving one the wrong type
   4  the file could not be reached: an OSError reading or writing it -- an unreadable directory on
      its path included -- or git failing to name it
   5  the run-state file is there and does not parse
 Standard library only; `python3 run-state.py --selftest` runs the tests.
 """
+import copy
 import json
 import os
 import re
@@ -70,30 +74,36 @@ STALE_RE = re.compile(r"^implement-run\.json\.stale-\d{8}T\d{6}Z$")
 TEMP_PREFIX = "dw-impl-"
 LOCK = ".implement-run.lock"
 
-# Every key init requires, and no other: top-level keys, and the members of the objects whose
-# members a call may name. commands/implement.md quotes this list (KEYS_LINE); the selftest holds
-# the two equal.
+# Every key the file holds, and no other, each beside the default init gives it where the caller's
+# object omits it. A key whose default is an object holds exactly that object's members -- the ones
+# a call may name -- each beside its own default. The default fixes the type: a key or member whose
+# default is an object, a list, a boolean, an integer or a string must be given as one; one whose
+# default is null takes any JSON value. commands/implement.md quotes this list (KEYS_LINE); the
+# selftest holds the two equal.
 KEYS = [
-    ("format", None), ("phase", None), ("mode", None), ("key", None), ("source", None),
+    ("format", 1), ("phase", "Phase 1.4"), ("mode", None), ("key", None), ("source", None),
     ("focus_key", None), ("unit_key", None), ("workitem_key", None), ("unit_folder", None),
     ("run_flags", None), ("specs_git", None),
-    ("spec_context", ["spec_paths", "in_scope_ids", "applicable_spec", "applicable_ard",
-                      "ard_paths", "companion_run", "tasks_only"]),
-    ("task_shape", None), ("clarifications", ["settled", "answers"]),
-    ("routing", ["block", "history"]), ("class", None), ("coding_model", None),
-    ("branch_answer", ["answer", "moves", "lines"]), ("branch", None), ("stash_ref", None),
-    ("pre_existing_dirty", None), ("session_branch_lift", None), ("test_decision", None),
-    ("clean_finish", None),
-    ("files", ["task_description_file", "plan_file", "summary_file", "baseline_file",
-               "test_diff_file", "review_diff_file", "partial_diff_file", "review_file",
-               "claims_file", "failure_file"]),
-    ("step_groups", None), ("patches", None), ("triage", None),
-    ("conformance", ["summary", "annotated", "gaps", "handoff_line"]),
-    ("other_repo_changes", None), ("assumptions", None), ("deferred", None),
-    ("report", ["commands_run", "maintenance", "notices", "phase1_tasks", "confirmed_cause"]),
-    ("code_repo_outcome", None), ("replans_used", None),
+    ("spec_context", {"spec_paths": [], "in_scope_ids": None, "applicable_spec": None,
+                      "applicable_ard": None, "ard_paths": [], "companion_run": None,
+                      "tasks_only": None}),
+    ("task_shape", None), ("clarifications", {"settled": [], "answers": []}),
+    ("routing", {"block": None, "history": []}), ("class", None), ("coding_model", None),
+    ("branch_answer", {"answer": None, "moves": [], "lines": []}), ("branch", None),
+    ("stash_ref", None), ("pre_existing_dirty", None), ("session_branch_lift", False),
+    ("test_decision", None), ("clean_finish", True),
+    ("files", {"task_description_file": None, "plan_file": None, "pending_plan_file": None,
+               "summary_file": None, "baseline_file": None, "test_diff_file": None,
+               "review_diff_file": None, "partial_diff_file": None, "review_return_file": None,
+               "review_file": None, "claims_file": None, "failure_file": None}),
+    ("step_groups", []), ("patches", []), ("triage", []),
+    ("conformance", {"summary": None, "annotated": [], "gaps": [], "handoff_line": None}),
+    ("other_repo_changes", []), ("assumptions", []), ("deferred", []),
+    ("report", {"commands_run": [], "maintenance": [], "notices": [], "phase1_tasks": [],
+                "confirmed_cause": None}),
+    ("code_repo_outcome", None), ("replans_used", 0),
 ]
-KEYS_LINE = " ".join(k + ("{%s}" % " ".join(m) if m else "") for k, m in KEYS)
+KEYS_LINE = " ".join(k + ("{%s}" % " ".join(d) if isinstance(d, dict) else "") for k, d in KEYS)
 
 
 class Fail(Exception):
@@ -186,21 +196,56 @@ def parse(text, what):
         raise Fail(2, "%s does not parse as JSON: %s" % (what, e))
 
 
-def check_keys(d):
-    """Every KEYS key and member present, and no other, in an init object."""
-    want = [k for k, _ in KEYS]
-    missing = [k for k in want if k not in d]
-    extra = [k for k in d if k not in want]
-    for k, members in KEYS:
-        if members and isinstance(d.get(k), dict):
-            missing += ["%s.%s" % (k, m) for m in members if m not in d[k]]
-            extra += ["%s.%s" % (k, m) for m in d[k] if m not in members]
-        elif members and k in d:
-            raise Fail(3, "init: %s must be an object holding %s" % (k, ", ".join(members)))
-    if missing or extra:
+def show(s):
+    """A key as the caller typed it, for a message: an argv byte that was not UTF-8 shows as \\xNN."""
+    try:
+        return s.encode("utf-8", "surrogateescape").decode("utf-8", "backslashreplace")
+    except UnicodeError:
+        return s.encode("utf-8", "backslashreplace").decode("utf-8")
+
+
+def type_of(default):
+    """The JSON type a default fixes, as (python types, name), or None where any value is taken."""
+    if isinstance(default, bool):
+        return (bool,), "a boolean"
+    if isinstance(default, int):
+        return (int,), "an integer"
+    for t, name in ((str, "a string"), (list, "a list"), (dict, "an object")):
+        if isinstance(default, t):
+            return (t,), name
+    return None
+
+
+def typed(name, value, default, wrong):
+    """value, or note in `wrong` that it is not of the type default fixes."""
+    t = type_of(default)
+    if t and (not isinstance(value, t[0]) or (t[0] == (int,) and isinstance(value, bool))):
+        wrong.append("%s must be %s" % (show(name), t[1]))
+    return value
+
+
+def merged(d):
+    """The init object over KEYS' defaults: each key or member it omits takes its default. Exits 3 on a
+    key or member KEYS lacks, or one given with the wrong type, before anything is written."""
+    want = dict(KEYS)
+    extra = [show(k) for k in d if k not in want]
+    wrong = []
+    out = {}
+    for k, default in KEYS:
+        if k not in d:
+            out[k] = copy.deepcopy(default)
+            continue
+        v = typed(k, d[k], default, wrong)
+        if isinstance(default, dict) and isinstance(v, dict):
+            extra += ["%s.%s" % (k, show(m)) for m in v if m not in default]
+            v = dict((m, typed("%s.%s" % (k, m), v[m], md, wrong) if m in v else copy.deepcopy(md))
+                     for m, md in default.items())
+        out[k] = v
+    if extra or wrong:
         raise Fail(3, "init: the object %s" % "; ".join(
-            x for x in ("lacks " + ", ".join(missing) if missing else "",
-                        "holds unknown " + ", ".join(extra) if extra else "") if x))
+            x for x in ("holds unknown " + ", ".join(extra) if extra else "",
+                        "; ".join(wrong)) if x))
+    return out
 
 
 def resolve(d, key):
@@ -215,27 +260,29 @@ def resolve(d, key):
                 idx = int(u)
                 o[idx]
             except (ValueError, IndexError):
-                raise Fail(2, "%s: no list entry %s" % (key, u))
+                raise Fail(2, "%s: no list entry %s" % (show(key), show(u)))
             if last:
                 return o, idx
             o = o[idx]
         elif isinstance(o, dict):
             if u not in o:
-                raise Fail(3, "%s: the run-state file holds no key %s" % (key, here))
+                raise Fail(3, "%s: the run-state file holds no key %s" % (show(key), show(here)))
             if last:
                 return o, u
             o = o[u]
         else:
-            raise Fail(2, "%s: %s is %s -- write that key whole" % (key, ".".join(parts[:i]), json.dumps(o)))
+            raise Fail(2, "%s: %s is %s -- write that key whole" % (show(key), show(".".join(parts[:i])),
+                                                                     json.dumps(o)))
         if o is None:
-            raise Fail(2, "%s: %s is null -- write that key whole" % (key, here))
+            raise Fail(2, "%s: %s is null -- write that key whole" % (show(key), show(here)))
 
 
 def pairs(args, stdin, verb):
     if args:
         if len(args) % 2:
             raise Fail(2, "%s takes <key> <json> pairs" % verb)
-        return [(args[i], parse(args[i + 1], "the value for %s" % args[i])) for i in range(0, len(args), 2)]
+        return [(args[i], parse(args[i + 1], "the value for %s" % show(args[i])))
+                for i in range(0, len(args), 2)]
     obj = parse(stdin.read(), "stdin")
     if not isinstance(obj, dict) or not obj:
         raise Fail(2, "%s with no pairs reads a non-empty JSON object of key: value on stdin" % verb)
@@ -250,13 +297,12 @@ def cmd_init(f, args, stdin, out):
     if args not in ([], ["--recover"]):
         raise Fail(2, "init takes only --recover")
     d = parse(stdin.read(), "stdin")
-    if not isinstance(d, dict) or d.get("format") != 1:
-        raise Fail(2, "init reads the whole object, with format 1, on stdin")
-    check_keys(d)
-    if not isinstance(d.get("assumptions"), list):
-        raise Fail(2, "init: assumptions must be a list")
+    if not isinstance(d, dict) or d.get("format", 1) != 1:
+        raise Fail(2, "init reads a JSON object on stdin, its format 1 where it gives one")
+    d = merged(d)
     os.makedirs(os.path.dirname(f), exist_ok=True)
     with locked(f):
+        s = None
         if os.path.lexists(f):
             here = os.path.dirname(f)
             for name in os.listdir(here):
@@ -266,10 +312,13 @@ def cmd_init(f, args, stdin, out):
             s = "%s.stale-%s" % (f, time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()))
             os.replace(f, s)
             out.write(("moved aside: %s\n" % s).encode("utf-8"))
-            if args == ["--recover"]:
-                d["assumptions"].append("This run's run-state file could not be read back, moved aside unread and written again: %s" % s)
-            else:
-                d["assumptions"].append("Run-state file an earlier run left, moved aside unread: %s" % s)
+        if args == ["--recover"]:
+            d["assumptions"].append(
+                "This run's run-state file could not be read back, and was written again from what the run "
+                "still held: " + ("the file there was moved aside unread, as %s" % s if s else
+                                  "no file was there, so none was moved aside"))
+        elif s:
+            d["assumptions"].append("Run-state file an earlier run left, moved aside unread: %s" % s)
         save(f, d)
     out.write(("created: %s\n" % f).encode("utf-8"))
 
@@ -423,20 +472,16 @@ def selftest():
         return code, out.getvalue().decode("utf-8")
 
     def fresh(**over):
-        d = {}
-        for k, members in KEYS:
-            d[k] = {m: None for m in members} if members else None
-        d.update({"format": 1, "phase": "Phase 1.4", "assumptions": ["seeded"], "deferred": [],
-                  "patches": [], "step_groups": [], "triage": []})
-        d["files"]["plan_file"] = None
-        d["report"].update({"commands_run": [], "notices": []})
+        # only what a caller holds: init gives every other key its default
+        d = {"format": 1, "assumptions": ["seeded"]}
         d.update(over)
         return d
 
     me = os.path.abspath(__file__)
     impl = os.path.join(os.path.dirname(os.path.dirname(me)), "commands", "implement.md")
     if os.path.isfile(impl):
-        quoted = re.findall(r"run-state\.py init` requires, and no other: `([^`]+)`", open(impl, encoding="utf-8").read())
+        quoted = re.findall(r"which `run-state\.py`'s `KEYS` defines, and no other: `([^`]+)`",
+                            open(impl, encoding="utf-8").read())
         check("implement.md quotes KEYS exactly", quoted == [KEYS_LINE])
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -452,20 +497,45 @@ def selftest():
         check("open with no file exits 1", call(["open", "Phase 1.5"], repo=repo)[0] == 1)
         code, out = call(["init"], json.dumps(fresh()), repo)
         check("init creates", code == 0 and os.path.isfile(f) and "moved aside" not in out)
-        check("init keeps the seeded assumptions", json.load(open(f, encoding="utf-8"))["assumptions"] == ["seeded"])
+        d = json.load(open(f, encoding="utf-8"))
+        check("init keeps the seeded assumptions", d["assumptions"] == ["seeded"])
+        check("init holds every key in KEYS, and no other", list(d) == [k for k, _ in KEYS])
+        check("init gives an omitted key its default", d["deferred"] == [] and d["step_groups"] == []
+              and d["clean_finish"] is True and d["replans_used"] == 0 and d["phase"] == "Phase 1.4"
+              and d["session_branch_lift"] is False and d["test_decision"] is None)
+        check("init gives an omitted object its members' defaults",
+              d["files"] == dict((m, None) for m in dict(KEYS)["files"])
+              and d["report"] == {"commands_run": [], "maintenance": [], "notices": [], "phase1_tasks": [],
+                                  "confirmed_cause": None})
         check("init refuses a non-object", call(["init"], "[1]", repo)[0] == 2)
+        check("init refuses a format other than 1", call(["init"], json.dumps(fresh(format=2)), repo)[0] == 2)
 
-        # init validates before it moves anything aside
-        bad = fresh()
-        del bad["deferred"]
+        # a nested member default: a given object keeps its members and takes the rest's defaults
+        code, _ = call(["init"], json.dumps(fresh(files={"task_description_file": "/tmp/dw-impl-task-x"},
+                                                  report={"phase1_tasks": ["t"]})), repo)
+        d = json.load(open(f, encoding="utf-8"))
+        check("init gives an omitted member its default", code == 0
+              and d["files"]["task_description_file"] == "/tmp/dw-impl-task-x" and d["files"]["plan_file"] is None
+              and d["report"]["phase1_tasks"] == ["t"] and d["report"]["notices"] == []
+              and d["report"]["confirmed_cause"] is None)
+
+        # init validates before it moves anything aside: an unknown key or member, or a wrong type, exits 3
         before = sorted(os.listdir(here))
-        code, _ = call(["init"], json.dumps(bad), repo)
-        check("init refuses a missing key, moving nothing", code == 3 and sorted(os.listdir(here)) == before)
-        bad = fresh(defered=[])
-        check("init refuses an unknown key", call(["init"], json.dumps(bad), repo)[0] == 3)
-        bad = fresh()
-        del bad["files"]["baseline_file"]
-        check("init refuses a missing member", call(["init"], json.dumps(bad), repo)[0] == 3)
+        code, _ = call(["init"], json.dumps(fresh(defered=[])), repo)
+        check("init refuses an unknown key, moving nothing", code == 3 and sorted(os.listdir(here)) == before)
+        check("init refuses an unknown member", call(["init"], json.dumps(fresh(files={"plan": "x"})), repo)[0] == 3)
+        code, _ = call(["init"], json.dumps(fresh(deferred="x")), repo)
+        check("init refuses a list given as a string, moving nothing", code == 3
+              and sorted(os.listdir(here)) == before)
+        check("init refuses an object given as a list", call(["init"], json.dumps(fresh(files=[])), repo)[0] == 3)
+        check("init refuses a member of the wrong type",
+              call(["init"], json.dumps(fresh(clarifications={"settled": "x"})), repo)[0] == 3)
+        check("init refuses a boolean given as a string",
+              call(["init"], json.dumps(fresh(clean_finish="true")), repo)[0] == 3)
+        check("init refuses an integer given as a boolean",
+              call(["init"], json.dumps(fresh(replans_used=True)), repo)[0] == 3)
+        check("init takes any value where the default is null",
+              call(["init"], json.dumps(fresh(run_flags={"skip_costs": False}, mode="direct")), repo)[0] == 0)
 
         # stale move-aside: at most one kept, and an unrelated name left alone
         open(os.path.join(here, "implement-run.json.stale-notes.txt"), "w").close()
@@ -487,8 +557,11 @@ def selftest():
         check("an unparseable file exits 5", call(["open", "Phase 2A"], repo=repo)[0] == 5)
         code, out = call(["init", "--recover"], json.dumps(fresh()), repo)
         a = json.load(open(f, encoding="utf-8"))["assumptions"]
+        moved = [n for n in os.listdir(here) if STALE_RE.match(n)]
         check("--recover names this run's own file", code == 0 and "This run's run-state file" in a[-1]
               and "earlier run" not in a[-1])
+        check("--recover names the file it moved aside", len(a) == 2 and len(moved) == 1
+              and "moved aside unread, as" in a[-1] and a[-1].endswith(moved[0]))
 
         # open sets phase and prints
         code, out = call(["open", "Phase 1.5"], repo=repo)
@@ -580,6 +653,9 @@ def selftest():
         r = subprocess.run([sys.executable, me, "--repo", repo, "set", "branch", b'"\xff"'], capture_output=True)
         check("invalid UTF-8 in argv exits 2, the file unchanged", r.returncode == 2
               and b"Traceback" not in r.stderr and open(f, "rb").read() == before)
+        r = subprocess.run([sys.executable, me, "--repo", repo, "read", b"files.\xff"], capture_output=True)
+        check("an invalid-UTF-8 key exits 3, shown as \\xff", r.returncode == 3
+              and b"files.\\xff" in r.stderr and b"udcff" not in r.stderr)
 
         # an unreadable directory on the path: 4, never 1
         if hasattr(os, "geteuid") and os.geteuid() != 0:
@@ -623,6 +699,29 @@ def selftest():
         check("remove leaves a non-temp path", os.path.exists(user) and "left: %s" % user in out)
         check("stale file survives remove", len([n for n in os.listdir(here) if STALE_RE.match(n)]) == 1)
         check("remove with no file is a no-op", call(["remove"], repo=repo)[0] == 0)
+
+        # init --recover with no file: the line it appends says so, and that nothing was moved aside
+        code, out = call(["init", "--recover"], json.dumps(fresh()), repo)
+        a = json.load(open(f, encoding="utf-8"))["assumptions"]
+        check("--recover with no file names the rebuild, nothing moved aside", code == 0
+              and "moved aside:" not in out and len(a) == 2 and "This run's run-state file" in a[-1]
+              and "none was moved aside" in a[-1])
+
+        # set into a list entry's member
+        call(["set", "step_groups", json.dumps([{"steps": [1], "status": None}, {"steps": [2], "status": None}])],
+             repo=repo)
+        code, _ = call(["set", "step_groups.-1.status", '"done"'], repo=repo)
+        d = json.load(open(f, encoding="utf-8"))
+        check("set into the last list entry's member", code == 0 and d["step_groups"][-1]["status"] == "done"
+              and d["step_groups"][0]["status"] is None)
+        check("set refuses a list entry the file lacks", call(["set", "step_groups.5.status", '"x"'], repo=repo)[0] == 2)
+
+        # remove on an unparseable file: the file still goes
+        with open(f, "w", encoding="utf-8") as w:
+            w.write("{broken")
+        code, out = call(["remove"], repo=repo)
+        check("remove on an unparseable file removes it", code == 0 and not os.path.exists(f)
+              and "removed: %s" % f in out)
         check("guard refuses another path", not guarded(os.path.join(tmp, "implement-run.json"))
               and not guarded(os.path.join(tmp, "dev-workflows", "other.json"))
               and guarded(f))
