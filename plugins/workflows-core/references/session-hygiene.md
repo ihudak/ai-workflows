@@ -1,11 +1,11 @@
 # Session hygiene (embedded — shared reference)
 
 The plugin-wide contract for **session-hygiene suggestions**: after a big command
-finishes (or a long-run command reaches a mid-phase checkpoint), the pipeline first
-**flushes resume-critical state to disk**, then **suggests the right context action**
-(`/compact` or `/clear`) plus a session **`/rename`** aid. Cited by the pipeline commands
-and by `next-phase-offer.md` / `context-management.md`, so the contract lives in ONE
-place (the same shape as `next-phase-offer` and the `emit-block` invariant).
+finishes, the pipeline first **flushes resume-critical state to disk**, then **suggests
+the right context action** (`/compact` or `/clear`) plus a session **`/rename`** aid.
+Cited by the pipeline commands and by `next-phase-offer.md` / `context-management.md`,
+so the contract lives in ONE place (the same shape as `next-phase-offer` and the
+`emit-block` invariant).
 
 Everything here is **guidance-only** — the plugin NEVER auto-invokes `/compact`,
 `/clear`, or `/rename`. The goal is to stop relying on a human to keep asking "prepare
@@ -96,7 +96,7 @@ Do NOT hardcode a per-command compact/clear verdict — read the role labels the
 own `next-phase-offer` output already carries. The role graph is owned by
 `next-phase-offer.md`; it is not duplicated here.
 
-## 3. Mid-phase checkpoints & non-pipeline big commands
+## 3. Mid-run suggestions & non-pipeline big commands
 
 - **`/implement` suggests no `/compact` mid-run.** Its step groups are dispatched back to
   back, with no user turn between them to act on a suggestion, and its run-state file

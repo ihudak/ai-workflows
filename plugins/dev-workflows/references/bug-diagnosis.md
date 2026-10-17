@@ -14,14 +14,15 @@ below names where it says the repro runs in one, and never mutate the working tr
 steps** — a run of the repro, a `[DEBUG-xxxx]` probe placed or read, a fixture or a script trimmed
 to minimise the repro — and has `risk-planner`'s exception, held to the scratch checkout: it runs
 each only in the scratch checkout of `HEAD` — the one the section below prescribes once the edits
-have begun — and does so on every dispatch, its first included, before the run's first edit as
-after it, since it never runs one against the working tree; it lists each run with its redacted
-output. It never runs a test the run itself created or changed, in any tree, since that test is
-unreviewed change: a step that runs one is the caller's, after the review (below). Whatever build that repro itself needs is part of running it there; in the working tree
-`code-writer` runs no lint, build, type-check or test at any class. A plan's bisect, which moves
-`HEAD`, and the checks after the review gate are the orchestrator's own (below). An agent without
-`Bash` (`code-review` among them) is never held to the completion criterion and must not be asked
-to satisfy it — it consumes the evidence the criterion produced.
+have begun — and does so on every dispatch, its first included, before the run's first edit as after
+it, since it never runs one against the working tree; it lists each run with its redacted output. It
+never runs a test the run itself created or changed, in any tree, since that test is unreviewed
+change: a step that runs one is the caller's, after the review (below). Whatever build that repro
+itself needs is part of running it there; in the working tree `code-writer` runs no lint, build,
+type-check or test at any class. A plan's bisect, which moves `HEAD`, and the checks after the
+review gate are the orchestrator's own (below). An agent without `Bash` (`code-review` among them)
+is never held to the completion criterion and must not be asked to satisfy it — it consumes the
+evidence the criterion produced.
 
 ## Principle — build the feedback loop before hypothesizing
 
@@ -55,31 +56,34 @@ change — a scan's patch applied included, a probe's tagged line not — dividi
   holds the change: no check — a lint, a build, a type-check or a test — and no repro or probe. A
   command that writes the change rather than checks it, as an install, a code generation or a
   formatting does, is none of these: what it writes is part of the change, and the review diff
-  carries it. A probe or the repro runs only in the scratch checkout of `HEAD` (below), the
-  tree before the change. That takes a probe placed once the edits have begun and every run of the
-  repro a plan step makes, which `code-writer` carries out there; and step 1's repro **on a
-  re-plan** whose working tree already holds edits (`/implement` Phase 3A step 5's, or a `blocked`
-  return's Revise at its Phase 3A step 1), which `risk-planner` runs there. So a plan carries no
-  step that runs a check, the repro or a probe against the working tree between the first edit and
-  the review.
+  carries it. A probe or the repro runs only in the scratch checkout of `HEAD` (below), the tree
+  before the change. That takes a probe placed once the edits have begun and every run of the repro
+  a plan step makes, which `code-writer` carries out there; and step 1's repro **on a re-plan**
+  whose working tree already holds edits (`/implement` Phase 3A step 5's, or a `blocked` return's
+  Revise at its Phase 3A step 1), which `risk-planner` runs there. Neither runs a test the run
+  created or changed, in that checkout or any other: it is unreviewed change. `risk-planner`'s
+  re-plan runs the original repro, and names each such test it left unrun. So a plan carries no step
+  that runs a check, the repro or a probe against the working tree between the first edit and the
+  review.
 - **A fixture or script `code-writer` trims** to minimise the repro (step 1) is trimmed and tried in
   the scratch checkout, before the first edit as after it: trimming it in the working tree would be
   an edit no cleanup gate strips.
 - **After the gate, never before it**, and the orchestrator's own (`/implement` Phase 3B step 8, and
-  its Phase 3.5 step 3 for the red-capability check's second path, below), never `code-writer`'s: step 5's re-run of the repro, against the working tree; then
-  the **red-capability check** — the reviewed regression test from step 4, run in a scratch
-  checkout of `HEAD`, the pre-change tree, with that test file copied in at its own path, must fail
-  there on its assertion of this bug's symptom, not on a symbol only the change adds. Two paths
-  reach it, both on bug work (`task_shape: bug`) alone: Phase 3B step 8 on SIGNIFICANT / HIGH-RISK
-  work, and, at every class, a plan step `code-writer` left to the caller that runs a test the run
-  created or changed and expects it to fail — the repro written as a new test, a test-first step —
-  which `/implement` Phase 3.5 step 3 runs as this check, the step's own command from its own directory, after the review gate at
+  its Phase 3.5 step 3 for the red-capability check's second path, below), never `code-writer`'s:
+  step 5's re-run of the repro, against the working tree; then the **red-capability check** — the
+  reviewed regression test from step 4, run in a scratch checkout of `HEAD`, the pre-change tree,
+  with that test file copied in at its own path, must fail there on its assertion of this bug's
+  symptom, not on a symbol only the change adds. Two paths reach it, both on bug work
+  (`task_shape: bug`) alone: Phase 3B step 8 on SIGNIFICANT / HIGH-RISK work, and, at every class, a
+  plan step `code-writer` left to the caller that runs a test the run created or changed and expects
+  it to fail — the repro written as a new test, a test-first step — which `/implement` Phase 3.5
+  step 3 runs as this check, the step's own command from its own directory, after the review gate at
   MODERATE and above and, at SIMPLE, which has none, in Phase 3.5 all the same; the failure the step
-  expects is the assertion it must fail on, and its outcome is this check's on either path. The **green
-  check** is the caller's verify run (`/implement` Phase 3.5), in which the same test must pass.
-  Where the red check passes instead, the test does not show it catches this bug, and the caller's
-  report says so. Where it fails on anything but that assertion — a missing test bootstrap, a
-  submodule's content, a helper only the change adds — the red check is **inconclusive**: the
+  expects is the assertion it must fail on, and its outcome is this check's on either path. The
+  **green check** is the caller's verify run (`/implement` Phase 3.5), in which the same test must
+  pass. Where the red check passes instead, the test does not show it catches this bug, and the
+  caller's report says so. Where it fails on anything but that assertion — a missing test bootstrap,
+  a submodule's content, a helper only the change adds — the red check is **inconclusive**: the
   caller's report says so under `### Assumptions & limitations`, naming what it failed on, and the
   green check is still the caller's verify run.
 
