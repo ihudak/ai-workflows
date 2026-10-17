@@ -51,7 +51,10 @@ change — a scan's patch applied included, a probe's tagged line not — dividi
   on every dispatch, its first included, so a probe step 3 places is placed and read there too, and
   the cleanup gate strips any tagged line that reached the working tree all the same.
 - **From the first edit until a non-BLOCK review, nothing runs against the working tree**, which
-  holds the change: a probe or the repro runs only in the scratch checkout of `HEAD` (below), the
+  holds the change: no check — a lint, a build, a type-check or a test — and no repro or probe. A
+  command that writes the change rather than checks it, as an install, a code generation or a
+  formatting does, is none of these: what it writes is part of the change, and the review diff
+  carries it. A probe or the repro runs only in the scratch checkout of `HEAD` (below), the
   tree before the change. That takes a probe placed once the edits have begun and every run of the
   repro a plan step makes, which `code-writer` carries out there; and step 1's repro **on a
   re-plan** whose working tree already holds edits (`/implement` Phase 3A step 5's, or a `blocked`
@@ -132,6 +135,9 @@ from the working tree inside the same call
    and name what would let you build one: access to an environment that reproduces it, or a
    redacted captured artifact — a HAR file, a log dump, a core dump, a timestamped recording. Whoever can ask the user
    asks; an agent that cannot returns the list to its caller (`risk-planner` in its `Needs:` line).
+   `code-writer`, whose plan's repro does not go red in the scratch checkout of `HEAD`, returns
+   `blocked` with the command, its directory and its output (its *Bug work*); the caller puts the
+   block to the user, and a SIGNIFICANT or HIGH-RISK re-plan hands that output to `risk-planner`.
    Do not go on to step 2 without a loop.
    A 30-second flaky loop is barely better than no loop; a 2-second deterministic one is worth the
    effort it takes to get there.
