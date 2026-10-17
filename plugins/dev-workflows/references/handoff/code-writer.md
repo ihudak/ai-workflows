@@ -123,7 +123,7 @@ report_file: /tmp/dw-impl-code-AbC123
 - _or_ none
 
 ### Not fixed                  <!-- mode: fix only -->
-- <the failure, as failure_input names it> — <why it was left: no fix found, not this run's change, the CAVEAT: line that accounts for it, or a formatter not run beside pre_existing_dirty>
+- <the failure, as failure_input names it> — <why it was left: no fix found; not this run's change — only where every file it names resolves to one this run did not change, never where a name resolves to nothing or to more than one file; the CAVEAT: line that accounts for it; or a formatter not run beside pre_existing_dirty>
 - _or_ none
 
 ### Tool runs                  <!-- mode: step — an install, code-generation or formatting command a plan step named; mode: fix — the formatter or code generator that fixes a lint failure; each run in repo_root -->
