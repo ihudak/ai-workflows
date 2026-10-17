@@ -1,6 +1,6 @@
 # code-writer Handoff Format
 
-**Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it. The citations below are the caller's: `code-writer` carries no `Skill` tool, and nothing it does turns on a core reference.
+**Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it. `code-writer` loads `workflows-core:model-routing/classification` itself, for §1.1's items alone, when it tests for a trigger; the §4 and §10 citations below are the caller's.
 
 `/dev-workflows:implement` dispatches `code-writer` with `model:` set to its `implementation_model` and hands it the request below in the prompt. Two modes share it: `step` codes one group of consecutive plan steps, and `fix` makes one fix attempt from a failure the caller hands over.
 
@@ -48,8 +48,8 @@ task_shape: bug            # bug | none — bug where /implement set task_shape:
 class: SIGNIFICANT         # SIMPLE | MODERATE | SIGNIFICANT | HIGH-RISK — the run's class. A step has no
                            # class of its own: every step is coded under the run's, and only /implement's
                            # re-classification, which a `trigger` return starts, raises it.
-scratch_checkout: HEAD     # HEAD | none. HEAD on task_shape: bug work: every run of the repro, a probe or a
-                           # trimmed fixture goes in a scratch checkout of HEAD, the tree before the change,
+scratch_checkout: HEAD     # HEAD | none. HEAD on task_shape: bug work: every run of the repro (and of the build
+                           # it needs), a probe or a trimmed fixture goes in a scratch checkout of HEAD, the tree before the change,
                            # as bug-diagnosis.md's single rule sends a run once the edits have begun — on
                            # each dispatch of the run, the one that makes its first edit included, since
                            # code-writer never runs one against the working tree. none on any other work:
@@ -87,7 +87,8 @@ report_file: /tmp/dw-impl-code-AbC123
 - **Mode**: step               <!-- step | fix -->
 - **Steps**: 3 coded; 4 left to the caller — it runs the suite
                                <!-- mode: step — each step handed: coded, stopped (and how far it got),
-                                    or left to the caller (a step that runs a check). mode: fix — n/a -->
+                                    or left to the caller (a step the caller keeps: a check, a bisect, a
+                                    patch's application). mode: fix — n/a -->
 - **Degraded inputs**: none    <!-- each context input that could not be read: `<field> at <path>` -->
 
 ### Files changed
@@ -102,6 +103,10 @@ report_file: /tmp/dw-impl-code-AbC123
 
 ### Out of scope
 - repository `<its top-level path, or the name the code knows it by>` — <the change it needs> — <the step, or the failure, that showed it>
+- _or_ none
+
+### Not fixed                  <!-- mode: fix only -->
+- <the failure, as failure_input names it> — <why it was left: no fix found, not this run's change, or the CAVEAT: line that accounts for it>
 - _or_ none
 
 ### Runs                       <!-- task_shape: bug only -->
@@ -126,9 +131,9 @@ Paths: `<path>`, `<path>`
 
 **The four statuses:**
 
-- `done` — every step handed is coded, or left to the caller where it runs a check; on `mode: fix`, the attempt is made. `### Settled by the run` becomes the Phase 5 report's `### Assumptions & limitations`, and `### Out of scope` goes on the follow-up line Phase 3A/3B step 2 writes for that repository.
+- `done` — every step handed is coded, or left to the caller where the caller keeps it; on `mode: fix`, the attempt is made, and `### Not fixed` names every failure it left. `### Settled by the run` becomes the Phase 5 report's `### Assumptions & limitations`, `### Not fixed` its `### Deferred items`, and `### Out of scope` goes on the follow-up line Phase 3A/3B step 2 writes for that repository.
 - `needs_decision` — Phase 1's test met mid-coding: nothing the run can read settles a question, and its answer changes what the user would notice. `### Decision` carries two to four options, never an *Other* (the harness adds the free-text answer itself). The caller asks, then dispatches afresh for the rest of the group, handed this report with the answer beside it in `earlier_reports`.
 - `trigger` — `mode: step` at `SIMPLE` or `MODERATE` only: a classification item the approved plan did not state, with the paths that show it. The caller runs its re-classification raise.
-- `blocked` — a step cannot be coded as the plan writes it, because something the plan names is not so. A `### Blocked` that reads `Unreadable: <field> at <path>` instead names an evidence input the agent could not read: an orchestrator bug, never a plan defect. On `mode: fix` that form is the only `blocked`, and a failure the attempt found no fix for is a `done` whose `### Settled by the run` says so.
+- `blocked` — a step cannot be coded as the plan writes it, because something the plan names is not so. A `### Blocked` that reads `Unreadable: <field> at <path>` instead names an evidence input the agent could not read: an orchestrator bug, never a plan defect. On `mode: fix` that form is the only `blocked`, and a failure the attempt found no fix for is a `done` that lists it under `### Not fixed`.
 
 On every status the report says what is already coded — `### Files changed` and the **Steps** line — so a later dispatch neither redoes nor undoes it, and nothing is reverted.
