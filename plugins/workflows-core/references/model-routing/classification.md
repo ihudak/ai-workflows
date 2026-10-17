@@ -44,8 +44,8 @@ when the change is **production-critical, security-critical, or data-irreversibl
 - Single trivial edit (typo, formatting, log message, comment, dead-code removal)
   with no behavioural impact.
 
-> **When in doubt, escalate one level.** Misclassifying upward is cheap; the
-> only cost is one extra Opus call. Misclassifying downward can ship bugs.
+> **When in doubt, escalate one level.** Misclassifying upward is cheap; its
+> cost is the Opus steps the higher class adds. Misclassifying downward can ship bugs.
 
 > **Vulnerability-fix exception — classify by fix size, not CVE category.**
 > Two distinct rules apply here:
@@ -139,10 +139,14 @@ rows the `haiku` alias resolves against.
 
 ### 3.1 SIMPLE / MODERATE
 
-- Continue with the currently selected model.
-- Do **not** add mandatory Opus steps.
+- Continue with the currently selected model — `/implement`'s MODERATE coding excepted, which
+  runs on §4's `implementation_model`.
+- Do **not** add mandatory Opus steps — `/implement`'s MODERATE coding and review excepted.
 - Proceed with normal planning, implementation, testing, and fixes.
-- Skip the dedicated Opus code review. **`risk-planner` is not dispatched on this path at
+- Skip the dedicated Opus code review. `/implement` alone reviews MODERATE work with the Opus
+  `code-review` gate (its Phase 3A); every other caller skips it as this section says. That
+  review completes before `/implement` runs any test, as at SIGNIFICANT (§3.2 step 4), and
+  SIMPLE work stays unreviewed. **`risk-planner` is not dispatched on this path at
   all** — §3.2 step 2 is its only route, and the agent's own file forbids the call in terms
   (*"Do NOT use for SIMPLE / MODERATE tasks."*) — so nothing in this section selects its
   tier: wherever it *is* called it runs on its frontmatter `model: opus` pin, per §4's
@@ -159,20 +163,25 @@ The orchestrator MUST execute these steps in order:
 3. **Implement** with the currently selected model **or** Sonnet (Sonnet is fine
    for raw coding throughput; Opus is not required here). Sub-agents that do
    the actual file edits inherit the orchestrator's model unless overridden.
+   `/implement` is the exception: it codes through `code-writer` on §4's
+   `implementation_model`, by the rule there.
 4. **Opus code review** of the completed implementation. This is a dedicated
    `code-review` sub-agent invocation pinned to Opus. It MUST cover every item
    in the §6 checklist. Tests MUST NOT be run until this review completes.
 5. **Run tests** (build + test suite per the executor / fixer workflow).
 6. **Apply review fixes** — fixes flagged by the Opus review may be implemented
    by the currently selected model **or** Sonnet (no Opus required for the fix
-   edits themselves).
+   edits themselves). On `/implement`, `review-fixer` runs on `fixes_model`,
+   which there equals `implementation_model` (§4).
 7. **Re-run tests** if any review fixes were applied.
 8. **Final summary** — include the classification, the Opus models used at each
    step (or the Sonnet fallback notice), and a one-line outcome per checklist
    item from §6.
 
 > **Do not use Opus for routine implementation steps unless the user explicitly
-> requested it.** Opus is reserved for the planning and the dedicated review.
+> requested it, or the step is `/implement`'s coding or review fixes, whose model
+> §4's `implementation_model` rule sets.** Elsewhere, Opus is reserved for the
+> planning and the dedicated review.
 
 ---
 
@@ -189,11 +198,12 @@ model_routing:
   reason: <one-line justification citing the §1 trigger that applied>
   current_model: <e.g. claude-opus-5-5>        # the model the orchestrator is running
   planning_model: <e.g. claude-opus-5-5>       # only set for SIGNIFICANT/HIGH-RISK
-  review_model:   <e.g. claude-opus-5-5>       # only set for SIGNIFICANT/HIGH-RISK
-  implementation_model: <e.g. claude-sonnet-5-5 or current_model>
+  review_model:   <e.g. claude-opus-5-5>       # set for SIGNIFICANT/HIGH-RISK, and for /implement's MODERATE (§3.1)
+  implementation_model: <e.g. claude-opus-5-5>  # /implement: the model its code-writer is dispatched on, by the coding-model rule below;
+                                               # another command that records it: its delegated writer's or executor's model
   detection_model: <e.g. claude-sonnet-5-5>  # mid-tier steps (§2.1); never the session model
   defect_model:   <e.g. claude-sonnet-5-5>   # §2.1 chain; set only under --skip-feedback
-  fixes_model:    <same as implementation_model>
+  fixes_model:    <e.g. claude-opus-5-5>       # = implementation_model for /implement; = detection_model elsewhere
   opus_available: true | false
   enforced_model: <e.g. claude-opus-5-5, or opus>  # §10: set only when run_flags.enforced_model is set
   routing: bypassed                          # §10: present only alongside enforced_model
@@ -210,7 +220,26 @@ workflows). The executor/fixer must accept this value and run all remaining
 steps (verify tests; for the fixer also commit + PR).
 
 For SIMPLE/MODERATE the `planning_model` and `review_model` fields MAY be omitted
-or set to `current_model`.
+or set to `current_model` — save `review_model` on `/implement`'s MODERATE runs,
+which §3.1 reviews with the Opus `code-review` gate.
+
+**`/implement`'s `implementation_model` — the coding-model rule.** `/implement` writes
+no code itself: it dispatches `dev-workflows:code-writer` for each group of plan steps
+and for each fix attempt, and `implementation_model` is the model that dispatch is
+passed, in §5's dispatch form. It is resolved by the run's class:
+
+- `SIMPLE` → `current_model`;
+- `MODERATE`, `SIGNIFICANT`, `HIGH-RISK` → `current_model` where it is an Opus or Fable
+  model (a `claude-opus-*` or `claude-fable-*` id), else the §2 Opus
+  chain's first available row;
+- `--enforce-model` overrides both (§10).
+
+So from MODERATE up a Fable session codes on Fable, an Opus session on its own Opus,
+and a Sonnet or Haiku session on the §2 Opus chain; at SIMPLE each codes on its own
+model. A re-classification mid-run re-resolves `implementation_model` for every later
+dispatch; steps already coded stay as they are. `fixes_model` = `implementation_model`
+for `/implement`, so its `review-fixer` follows the same rule; = `detection_model`
+elsewhere (§2.1).
 
 Sub-agents that receive a `model_routing` block:
 
@@ -234,6 +263,10 @@ Sub-agents that receive a `model_routing` block:
   `gate_tests_on_review: true` flag — both styles are acceptable.
 - `release-notes-writer`: receives the block; behaviour is unchanged by it, and its
   return declares no echo of it.
+- `code-writer` (`/implement`): receives `classification`, `implementation_model`,
+  and `enforced_model` with `routing` where §10 sets them — the fields its handoff
+  declares. It acts on none of them: its tier is the dispatch's `model:`, which is
+  `implementation_model`, and it loads this reference itself only for §1.1's items.
 - **A sub-agent whose handoff file declares no `model_routing:` input is sent
   none, and reads no field of one.** Its tier is fixed either by its own
   frontmatter `model:` pin (the Opus reviewers) or by the `model:` argument on
@@ -268,7 +301,8 @@ task(
 - For **planning** on SIGNIFICANT/HIGH-RISK tasks, prefer `subagent_type: "dev-workflows:risk-planner"`
   with Opus (under §10, the enforced id), asking it to critique the proposed plan — available in `dev-workflows` itself, and
   elsewhere only where the calling plugin depends on it.
-- For **post-implementation review** on SIGNIFICANT/HIGH-RISK tasks, use
+- For **post-implementation review** on SIGNIFICANT/HIGH-RISK tasks, and on
+  `/implement`'s MODERATE ones (§3.1), use
   `subagent_type: "dev-workflows:code-review"` with Opus (under §10, the enforced id), passing the diff and §6 checklist —
   again, in `dev-workflows` itself and elsewhere only where the calling plugin depends on it.
 - Where either agent is unreachable — the calling plugin neither ships it nor depends on
@@ -280,7 +314,8 @@ task(
 
 ## 6. Mandatory Opus code-review checklist (SIGNIFICANT / HIGH-RISK)
 
-The post-implementation Opus review MUST explicitly comment on each of:
+The post-implementation Opus review — `/implement`'s MODERATE review (§3.1) included —
+MUST explicitly comment on each of:
 
 1. **Correctness** — does the change actually do what was planned, including all
    listed acceptance criteria and edge cases?
@@ -326,7 +361,7 @@ The orchestrator's final report MUST include a `### Model Routing` section:
 - Reason: <trigger>
 - Planning model: <model>
 - Implementation model: <model>
-- Review model: <model>  (or "n/a — SIMPLE/MODERATE")
+- Review model: <model>  (or "n/a — SIMPLE/MODERATE"; on /implement, "n/a — SIMPLE")
 - Opus checklist verdicts:
   - Correctness: OK | CONCERN | BLOCKER
   - Security: ...
@@ -339,8 +374,8 @@ The orchestrator's final report MUST include a `### Model Routing` section:
 - Notes: <degradation, fallbacks, deferred items>
 ```
 
-For SIMPLE/MODERATE tasks the verdict list MAY be omitted; the classification
-and reason are still required.
+For SIMPLE/MODERATE tasks the verdict list MAY be omitted — save on `/implement`'s
+MODERATE runs, which §3.1 reviews; the classification and reason are still required.
 
 ---
 
@@ -506,18 +541,21 @@ rule.
   chain — escalate to Opus even when the session is Sonnet.
 - **Mechanical detection / throughput / fix** steps run on the §2.1 detection
   (Sonnet) chain — de-escalate off the session model even when the session is
-  Opus (otherwise an Opus session burns Opus on cheap work).
+  Opus (otherwise an Opus session burns Opus on cheap work). `/implement`'s fix
+  steps are the exception: its `review-fixer` and its `code-writer` fix attempts run
+  on its `implementation_model` (§4).
 - **Orchestrator-executed** judgment steps — the inline prose writing and the
   interactive gates, plus the orchestration itself — run on the session model
   and CANNOT be overridden from inside a running command. Except under §10, where none of the rest of this bullet fires — no advisory, no gate, no degrade path, for any command that carries one (§10's *Opus-session gates do not fire* bullet is the general rule, and `workflows-core:run-flags` §3 step 7's advisory is the only notice) — handle them with an
-  **advisory** (recommend relaunching on the §2 chain), never an override. This advisory applies when the task is SIGNIFICANT/HIGH-RISK. Where the authoring step is the orchestrator itself, how it is discharged is the command's own to state and differs: `/design` and `/create-ard` make it a HARD gate on `current_model` that stops and offers a relaunch, while `/create-prd` degrades to the best available model and records the degradation instead of stopping. Read the command rather than assuming a gate. Where the writing is delegated to a writer on its own Opus pin, the writing is already off the session model and the residual risk is the orchestrator's own context window, so the advisory narrows there to a large non-Opus run, as in `/document`. At SIMPLE/MODERATE §3.1 requires none, and requires nothing against one either: it asks only that no *mandatory* Opus step be added, so a command that offers a soft advisory anyway (`/design`) is stricter by its own choice and not in breach.
+  **advisory** (recommend relaunching on the §2 chain), never an override. This advisory applies when the task is SIGNIFICANT/HIGH-RISK. Where the authoring step is the orchestrator itself, how it is discharged is the command's own to state and differs: `/design` and `/create-ard` make it a HARD gate on `current_model` that stops and offers a relaunch, while `/create-prd` degrades to the best available model and records the degradation instead of stopping. Read the command rather than assuming a gate. Where the writing is delegated to a writer on its own Opus pin, the writing is already off the session model and the residual risk is the orchestrator's own context window, so the advisory narrows there to a large non-Opus run, as in `/document`. At SIMPLE/MODERATE §3.1 requires none, and requires nothing against one either: it asks only that no *mandatory* Opus step be added (`/implement`'s MODERATE coding and review aside), so a command that offers a soft advisory anyway (`/design`) is stricter by its own choice and not in breach.
 
 ### 9.2 Role → chain map
 
 | Role | Chain |
 |------|-------|
 | Synthesis / planner (e.g. `doc-planner`) | §2 reasoning (Opus) |
-| Reader / summarizer / locator / style-checker / fixer / maintenance (the folder read, `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, maintenance agents) | §2.1 detection (Sonnet) |
+| Coding subagent (`/implement`'s `code-writer`, and its `review-fixer`) | §4's `implementation_model` rule: `current_model` at SIMPLE; from MODERATE up, `current_model` where it is an Opus or Fable model, else §2 reasoning (Opus) |
+| Reader / summarizer / locator / style-checker / fixer (`/implement`'s excepted, row above) / maintenance (the folder read, `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, maintenance agents) | §2.1 detection (Sonnet) |
 | Domain reviewer (`doc-reviewer`, `epic-reviewer`) | §2 review (Opus) — usually already frontmatter-pinned; the orchestrator records it and adds **no** override — unless §10 enforces a model |
 | Delegated writer (`doc-writer` / `epic-writer`) | §2 reasoning (Opus) for SIGNIFICANT/judgment writing; §2.1 detection (Sonnet) for MODERATE writing |
 | Coordination + interactive gates (the orchestrator itself) | session model; where the writing is delegated, a narrowed window advisory for large non-Opus runs; where the authoring is inline, the command's own (§9.1) |
@@ -545,7 +583,7 @@ rule, and the array offers only what remains reachable —
 
 ### 9.4 One rule across commands (`/implement` included)
 
-Routing is by **step nature**, not by pipeline or session: the folder read and
+Scanning is routed by **step nature**, not by pipeline or session: the folder read and
 `code-scanner` are mechanical, so they run on the §2.1 detection (Sonnet) chain
 in **every** command — `/implement`'s fan-out (§8.3), `/epics`, and `/document`
 alike. There is no "inherit the session model" for scanning and no per-command
@@ -561,10 +599,10 @@ oversized repo slice's `code-scanner` to Opus (§8.3).
 
 `run_flags.enforced_model` (`workflows-core:run-flags`) lets a run pin every subagent dispatch to one model, bypassing model routing's own per-step selection. Classification and the routing rules above are unchanged in what they select — this section changes only which model each selection resolves to.
 
-- **Chain resolution.** When `run_flags.enforced_model` is set, every resolution of §2, §2.1 and §8.3's oversized-slice escalation returns that id instead of walking its own chain — or that family, where `workflows-core:run-flags` §2 resolved a bare family alias in a §2 family-only harness to the family itself (`opus`); every "enforced id" in this section and in the commands that cite it covers that family value too. Every `*_model` field of the §4 `model_routing` block that names a **dispatched** step equals it — `planning_model`, `review_model`, `detection_model`, `fixes_model`, `defect_model` (present only under `--skip-feedback`, §2.1), and `implementation_model` wherever it names a delegated writer or executor rather than inline coding — and the block gains `enforced_model: <id>` and `routing: bypassed`. A field that instead records the orchestrator's own inline work keeps the session model, never the enforced id, because enforcement pins subagent dispatches and not the orchestrator's own session: `current_model` always does, and so does `implementation_model` / `authoring_model` wherever a command codes or authors inline rather than delegating — `/implement`'s `implementation_model` (inline coding) and `/prd-proposal`'s and `/brd-proposal`'s `authoring_model` (inline grill + authoring) among them. `opus_available` is still resolved and reported truthfully: it is a property of the environment (§9.3), not of the enforcement choice, so it is never rewritten to agree with the enforced id.
+- **Chain resolution.** When `run_flags.enforced_model` is set, every resolution of §2, §2.1 and §8.3's oversized-slice escalation returns that id instead of walking its own chain — or that family, where `workflows-core:run-flags` §2 resolved a bare family alias in a §2 family-only harness to the family itself (`opus`); every "enforced id" in this section and in the commands that cite it covers that family value too. Every `*_model` field of the §4 `model_routing` block that names a **dispatched** step equals it — `planning_model`, `review_model`, `detection_model`, `fixes_model`, `defect_model` (present only under `--skip-feedback`, §2.1), and `implementation_model` wherever it names a delegated writer or executor rather than inline coding, `/implement`'s `code-writer` among them (§4) — and the block gains `enforced_model: <id>` and `routing: bypassed`. A field that instead records the orchestrator's own inline work keeps the session model, never the enforced id, because enforcement pins subagent dispatches and not the orchestrator's own session: `current_model` always does, and so does `implementation_model` / `authoring_model` wherever a command codes or authors inline rather than delegating — `/prd-proposal`'s and `/brd-proposal`'s `authoring_model` (inline grill + authoring) among them. `opus_available` is still resolved and reported truthfully: it is a property of the environment (§9.3), not of the enforcement choice, so it is never rewritten to agree with the enforced id.
 - **Every dispatch.** Every `task` tool dispatch passes `model: <enforced>` explicitly, in §5's dispatch form — the enforced id itself where the tool's `model` parameter accepts ids, its family name in a §2 family-only harness — including the agents whose frontmatter pins `model: opus`: the dispatch's `model:` argument overrides the frontmatter pin. The `model_routing` fields above keep the enforced value as `run-flags` §2 resolved it, never the translated argument. Every "frontmatter-pinned … no override" statement at a command's dispatch site reads "no override unless §10 enforces a model", so no live sentence contradicts this section.
 - **Nested dispatch.** An agent that itself dispatches another agent (`docs-style-checker` → `prose-style-checker`; `upgrade-executor` / `vuln-fixer` → `test-baseliner` via the `task` tool) receives `enforced_model` in its prompt and passes it as `model:` on its own dispatch, in §5's dispatch form, so enforcement reaches every model a run touches, not only the orchestrator's own direct calls.
-- **Steps unchanged.** Classification (§1) still runs and still selects the §3 sequence for the task's class — a SIGNIFICANT/HIGH-RISK task still gets its plan and review gates, a SIMPLE/MODERATE task still skips them. Enforcement changes which model each selected step runs on, never whether the step runs.
+- **Steps unchanged.** Classification (§1) still runs and still selects the §3 sequence for the task's class — a SIGNIFICANT/HIGH-RISK task still gets its plan and review gates, a SIMPLE/MODERATE task still skips them, save the review gate §3.1 gives `/implement`'s MODERATE work. Enforcement changes which model each selected step runs on, never whether the step runs.
 - **The orchestrator.** The orchestrator itself stays on the session model; it cannot be switched from inside a running command, exactly as §2's "currently selected model" already says. `workflows-core:run-flags` §3 step 7 prints the one relaunch advisory when the enforced id differs from `current_model`; its wording is that step's, not restated here.
 - **Opus-session gates do not fire.** Every gate or degrade path that tests `current_model` for an Opus session does not fire under enforcement — not a named list, but the whole class of them, since each exists to require or prefer an Opus-tier session and the user has already chosen the model. Examples that exist today: §9.1's HARD gates in `/design` and `/create-ard`, `/prd-proposal`'s and `/brd-proposal`'s stops, and `/create-prd`'s degrade path (a maintainer finds the candidates with `grep -n "current_model" plugins/*/commands/*.md`, which lists every mention of the field — routing records and reports as well as gates — so each hit is read to tell a gate of this class from the rest). Testing the enforced id in a gate's place would let a Sonnet session pass an Opus gate, since the inline grill or authoring these gates protect still runs on the session model, not the enforced one. The `run-flags` §3 step 7 advisory is the only notice of a session/enforced mismatch; §9.1's own relaunch advisory is not issued alongside it.
 - **Degradation notices are suppressed.** §2's "no Opus available" notice and §9.3's no-Opus degradation notice are not emitted under enforcement — there is no fallback to announce, since every resolution already returns the enforced id. §7's report carries `Model routing: bypassed — enforced <id> (flag|env)` in its `Notes:` field, in place of the degradation or fallback that field would otherwise record; `<id>` there is rendered as `workflows-core:run-flags` §6 defines it — what the dispatches were actually passed, plus the requested value where the two differ (`enforced opus (from opus5.5; the harness picks the version) (flag)`).
