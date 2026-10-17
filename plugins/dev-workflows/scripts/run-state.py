@@ -4,12 +4,17 @@
 The file is `$(git rev-parse --git-path dev-workflows/implement-run.json)` in the code repository
 the run works in: per worktree, inside the git directory, never staged. `/implement` Phase 1.4
 creates it and every later phase opens with `open`; commands/implement.md says what each key holds
-and where it is written. Run every call from the working directory (or pass --repo <dir>).
+and where it is written. Run every call from the working directory (or pass --repo <dir>). One
+`/implement` run per worktree at a time is the precondition; the lock below serialises one run's own
+calls, never two runs.
 
-  run-state.py init                  the whole object, as JSON on stdin. A file an earlier run left
-                                     is moved aside unread, as implement-run.json.stale-<UTC stamp>,
-                                     after any older such file is removed, so at most one is kept;
-                                     the move is printed and appended to `assumptions`.
+  run-state.py init [--recover]      the whole object, as JSON on stdin, holding every key in KEYS
+                                     and no other -- checked before anything is moved. A file
+                                     already there is moved aside unread, as
+                                     implement-run.json.stale-<UTC stamp>, after any older such file
+                                     is removed, so at most one is kept; the move is printed and
+                                     appended to `assumptions` -- as a file an earlier run left, or,
+                                     under --recover, as this run's own file that did not parse.
   run-state.py open <phase>          set `phase` and print the file.
   run-state.py read [<key>]          print the file, or one key, changing nothing.
   run-state.py set <key> <json> ...  set each key to its JSON value; with no pairs, a JSON object of
@@ -23,16 +28,24 @@ and where it is written. Run every call from the working directory (or pass --re
                                      a --keep path -- then the file itself, only at the git path.
 
 A key is a top-level name or a dotted path into one (`files.plan_file`); a list entry is named by
-its index (`triage.-1.followed_by`, the last entry's). A path through a null value is refused: write
-that key whole. Every write replaces the file whole (a temp file beside it, then os.replace), so a
-write is never half done; a value that does not parse changes nothing. The file is UTF-8 with
-non-ASCII text written as itself (ensure_ascii=False), so a path comes back as git's -z record gave
-it; JSON still escapes `"` and `\\`, so `\\"` and `\\\\` in what `open` and `read` print are one
+its index (`triage.-1.followed_by`, the last entry's). `set`, `append` and `read` refuse a key the
+file does not hold, and `set` a path through a null value: write that key whole. Every
+read-modify-write holds an exclusive lock (fcntl.flock on .implement-run.lock beside the file) and
+replaces the file whole (a temp file beside it, then os.replace), so a write is never half done and
+parallel calls lose nothing; a value that does not parse changes nothing. Input -- stdin and argv --
+is read as UTF-8 whatever the locale, and the file is UTF-8 with non-ASCII written as itself
+(ensure_ascii=False), so a path comes back as git's -z record gave it; JSON still escapes `"`, `\\`,
+a tab and a newline, so `\\"`, `\\\\`, `\\t` and `\\n` in what `open` and `read` print are one
 character each.
 
-Exit 0: done. Exit 1: there is no run-state file to read or change. Exit 2: usage, a value that does
-not parse, a key that does not resolve, or a git failure. Standard library only;
-`python3 run-state.py --selftest` runs the tests.
+Exit codes:
+  0  done
+  1  there is no run-state file
+  2  usage: bad arguments, a value that does not parse, a path through null, no such list entry
+  3  a key the file does not hold (set, append, read), or an init object lacking or adding a key
+  4  the file could not be reached: an OSError reading or writing it, or git failing to name it
+  5  the run-state file is there and does not parse
+Standard library only; `python3 run-state.py --selftest` runs the tests.
 """
 import json
 import os
@@ -42,9 +55,40 @@ import sys
 import tempfile
 import time
 
+try:
+    import fcntl
+except ImportError:  # no flock on this host: one run's calls are sequential anyway
+    fcntl = None
+
 REL = "dev-workflows/implement-run.json"
 STALE_RE = re.compile(r"^implement-run\.json\.stale-\d{8}T\d{6}Z$")
 TEMP_PREFIX = "dw-impl-"
+LOCK = ".implement-run.lock"
+
+# Every key init requires, and no other: top-level keys, and the members of the objects whose
+# members a call may name. commands/implement.md quotes this list (KEYS_LINE); the selftest holds
+# the two equal.
+KEYS = [
+    ("format", None), ("phase", None), ("mode", None), ("key", None), ("source", None),
+    ("focus_key", None), ("unit_key", None), ("workitem_key", None), ("unit_folder", None),
+    ("run_flags", None), ("specs_git", None),
+    ("spec_context", ["spec_paths", "in_scope_ids", "applicable_spec", "applicable_ard",
+                      "companion_run", "tasks_only"]),
+    ("task_shape", None), ("clarifications", ["settled", "answers"]),
+    ("routing", ["block", "history"]), ("class", None), ("coding_model", None),
+    ("branch_answer", ["answer", "moves", "lines"]), ("branch", None), ("stash_ref", None),
+    ("pre_existing_dirty", None), ("session_branch_lift", None), ("test_decision", None),
+    ("clean_finish", None),
+    ("files", ["task_description_file", "plan_file", "summary_file", "baseline_file",
+               "test_diff_file", "review_diff_file", "partial_diff_file", "review_file",
+               "claims_file"]),
+    ("step_groups", None), ("patches", None), ("triage", None),
+    ("conformance", ["summary", "annotated", "gaps", "handoff_line"]),
+    ("other_repo_changes", None), ("assumptions", None), ("deferred", None),
+    ("report", ["commands_run", "maintenance", "notices", "phase1_tasks", "confirmed_cause"]),
+    ("code_repo_outcome", None), ("replans_used", None),
+]
+KEYS_LINE = " ".join(k + ("{%s}" % " ".join(m) if m else "") for k, m in KEYS)
 
 
 class Fail(Exception):
@@ -58,9 +102,9 @@ def state_path(repo):
         out = subprocess.run(["git", "-C", repo, "rev-parse", "--git-path", REL],
                              capture_output=True, text=True)
     except OSError as e:
-        raise Fail(2, "git could not run: %s" % e)
+        raise Fail(4, "git could not run: %s" % e)
     if out.returncode != 0:
-        raise Fail(2, "git rev-parse --git-path failed: %s" % out.stderr.strip())
+        raise Fail(4, "git rev-parse --git-path failed: %s" % out.stderr.strip())
     p = out.stdout.rstrip("\n")
     return p if os.path.isabs(p) else os.path.join(os.path.abspath(repo), p)
 
@@ -71,16 +115,38 @@ def guarded(path):
             and os.path.basename(os.path.dirname(path)) == "dev-workflows")
 
 
+class locked(object):
+    """An exclusive flock on the lock file beside the run-state file, for one read-modify-write."""
+
+    def __init__(self, f):
+        self.path = os.path.join(os.path.dirname(f), LOCK)
+        self.fd = None
+
+    def __enter__(self):
+        if fcntl is not None:
+            os.makedirs(os.path.dirname(self.path), exist_ok=True)
+            self.fd = os.open(self.path, os.O_RDWR | os.O_CREAT, 0o600)
+            fcntl.flock(self.fd, fcntl.LOCK_EX)
+        return self
+
+    def __exit__(self, *exc):
+        if self.fd is not None:
+            fcntl.flock(self.fd, fcntl.LOCK_UN)
+            os.close(self.fd)
+        return False
+
+
 def load(f):
     if not os.path.isfile(f):
         raise Fail(1, "no run-state file at %s" % f)
+    with open(f, encoding="utf-8") as r:
+        text = r.read()
     try:
-        with open(f, encoding="utf-8") as r:
-            d = json.load(r)
+        d = json.loads(text)
     except ValueError as e:
-        raise Fail(2, "the run-state file at %s does not parse: %s" % (f, e))
+        raise Fail(5, "the run-state file at %s does not parse: %s" % (f, e))
     if not isinstance(d, dict):
-        raise Fail(2, "the run-state file at %s is not a JSON object" % f)
+        raise Fail(5, "the run-state file at %s is not a JSON object" % f)
     return d
 
 
@@ -104,32 +170,49 @@ def parse(text, what):
         raise Fail(2, "%s does not parse as JSON: %s" % (what, e))
 
 
+def check_keys(d):
+    """Every KEYS key and member present, and no other, in an init object."""
+    want = [k for k, _ in KEYS]
+    missing = [k for k in want if k not in d]
+    extra = [k for k in d if k not in want]
+    for k, members in KEYS:
+        if members and isinstance(d.get(k), dict):
+            missing += ["%s.%s" % (k, m) for m in members if m not in d[k]]
+            extra += ["%s.%s" % (k, m) for m in d[k] if m not in members]
+        elif members and k in d:
+            raise Fail(3, "init: %s must be an object holding %s" % (k, ", ".join(members)))
+    if missing or extra:
+        raise Fail(3, "init: the object %s" % "; ".join(
+            x for x in ("lacks " + ", ".join(missing) if missing else "",
+                        "holds unknown " + ", ".join(extra) if extra else "") if x))
+
+
 def resolve(d, key):
-    """(container, final key) for a dotted key, refusing a path through null."""
+    """(container, final key) for a dotted key the file holds."""
     parts = key.split(".")
     o = d
-    for i, u in enumerate(parts[:-1]):
+    for i, u in enumerate(parts):
+        last = i == len(parts) - 1
+        here = ".".join(parts[:i + 1])
         if isinstance(o, list):
             try:
-                o = o[int(u)]
+                idx = int(u)
+                o[idx]
             except (ValueError, IndexError):
                 raise Fail(2, "%s: no list entry %s" % (key, u))
+            if last:
+                return o, idx
+            o = o[idx]
         elif isinstance(o, dict):
             if u not in o:
-                raise Fail(2, "%s: no key %s" % (key, ".".join(parts[:i + 1])))
+                raise Fail(3, "%s: the run-state file holds no key %s" % (key, here))
+            if last:
+                return o, u
             o = o[u]
         else:
-            raise Fail(2, "%s: %s is %s -- write that key whole" % (key, ".".join(parts[:i + 1]), json.dumps(o)))
+            raise Fail(2, "%s: %s is %s -- write that key whole" % (key, ".".join(parts[:i]), json.dumps(o)))
         if o is None:
-            raise Fail(2, "%s: %s is null -- write that key whole" % (key, ".".join(parts[:i + 1])))
-    k = parts[-1]
-    if isinstance(o, list):
-        try:
-            k = int(k)
-            o[k]
-        except (ValueError, IndexError):
-            raise Fail(2, "%s: no list entry %s" % (key, parts[-1]))
-    return o, k
+            raise Fail(2, "%s: %s is null -- write that key whole" % (key, here))
 
 
 def pairs(args, stdin, verb):
@@ -147,37 +230,41 @@ def emit(out, value):
     out.write((json.dumps(value, indent=1, ensure_ascii=False) + "\n").encode("utf-8"))
 
 
-def cmd_init(f, stdin, out):
+def cmd_init(f, args, stdin, out):
+    if args not in ([], ["--recover"]):
+        raise Fail(2, "init takes only --recover")
     d = parse(stdin.read(), "stdin")
     if not isinstance(d, dict) or d.get("format") != 1:
         raise Fail(2, "init reads the whole object, with format 1, on stdin")
+    check_keys(d)
+    if not isinstance(d.get("assumptions"), list):
+        raise Fail(2, "init: assumptions must be a list")
     os.makedirs(os.path.dirname(f), exist_ok=True)
-    if os.path.exists(f):
-        here = os.path.dirname(f)
-        for name in os.listdir(here):
-            old = os.path.join(here, name)
-            if STALE_RE.match(name) and os.path.isfile(old) and not os.path.islink(old):
-                os.unlink(old)
-        s = "%s.stale-%s" % (f, time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()))
-        os.replace(f, s)
-        out.write(("moved aside: %s\n" % s).encode("utf-8"))
-        line = "Run-state file an earlier run left, moved aside unread: %s" % s
-        if d.get("assumptions") is None:
-            d["assumptions"] = [line]
-        elif isinstance(d["assumptions"], list):
-            d["assumptions"].append(line)
-        else:
-            raise Fail(2, "init: assumptions must be a list or null")
-    save(f, d)
+    with locked(f):
+        if os.path.lexists(f):
+            here = os.path.dirname(f)
+            for name in os.listdir(here):
+                old = os.path.join(here, name)
+                if STALE_RE.match(name) and os.path.isfile(old) and not os.path.islink(old):
+                    os.unlink(old)
+            s = "%s.stale-%s" % (f, time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()))
+            os.replace(f, s)
+            out.write(("moved aside: %s\n" % s).encode("utf-8"))
+            if args == ["--recover"]:
+                d["assumptions"].append("This run's run-state file could not be read back, moved aside unread and written again: %s" % s)
+            else:
+                d["assumptions"].append("Run-state file an earlier run left, moved aside unread: %s" % s)
+        save(f, d)
     out.write(("created: %s\n" % f).encode("utf-8"))
 
 
 def cmd_open(f, args, out):
     if len(args) != 1:
         raise Fail(2, "open takes the phase's name, as its heading names it")
-    d = load(f)
-    d["phase"] = args[0]
-    save(f, d)
+    with locked(f):
+        d = load(f)
+        d["phase"] = args[0]
+        save(f, d)
     emit(out, d)
 
 
@@ -187,33 +274,34 @@ def cmd_read(f, args, out):
         emit(out, d)
     elif len(args) == 1:
         o, k = resolve(d, args[0])
-        if isinstance(o, dict) and k not in o:
-            raise Fail(2, "%s: no such key" % args[0])
         emit(out, o[k])
     else:
         raise Fail(2, "read takes at most one key")
 
 
 def cmd_set(f, args, stdin):
-    d = load(f)
-    for key, v in pairs(args, stdin, "set"):
-        o, k = resolve(d, key)
-        o[k] = v
-    save(f, d)
+    todo = pairs(args, stdin, "set")
+    with locked(f):
+        d = load(f)
+        for key, v in todo:
+            o, k = resolve(d, key)
+            o[k] = v
+        save(f, d)
 
 
 def cmd_append(f, args, stdin):
-    d = load(f)
-    for key, v in pairs(args, stdin, "append"):
-        o, k = resolve(d, key)
-        cur = o.get(k) if isinstance(o, dict) else o[k]
-        if cur is None:
-            o[k] = [v]
-        elif isinstance(cur, list):
-            cur.append(v)
-        else:
-            raise Fail(2, "append: %s is not a list or null" % key)
-    save(f, d)
+    todo = pairs(args, stdin, "append")
+    with locked(f):
+        d = load(f)
+        for key, v in todo:
+            o, k = resolve(d, key)
+            if o[k] is None:
+                o[k] = [v]
+            elif isinstance(o[k], list):
+                o[k].append(v)
+            else:
+                raise Fail(2, "append: %s is not a list or null" % key)
+        save(f, d)
 
 
 def cmd_remove(f, args, out):
@@ -226,35 +314,36 @@ def cmd_remove(f, args, out):
         else:
             raise Fail(2, "remove takes only --keep <path> options")
     if not guarded(f):
-        raise Fail(2, "refusing to remove %s: not the run-state file's path" % f)
-    if not os.path.exists(f):
+        raise Fail(4, "refusing to remove %s: not the run-state file's path" % f)
+    if not os.path.lexists(f):
         out.write(("no run-state file at %s -- nothing to remove\n" % f).encode("utf-8"))
         return
-    try:
-        d = load(f)
-    except Fail:
-        d = {}
-    paths = []
-    files = d.get("files")
-    if isinstance(files, dict):
-        paths += [p for p in files.values() if isinstance(p, str)]
-    for g in d.get("step_groups") or []:
-        if isinstance(g, dict) and isinstance(g.get("report"), str):
-            paths.append(g["report"])
-    for p in d.get("patches") or []:
-        if isinstance(p, dict) and p.get("temp") is True and isinstance(p.get("path"), str):
-            paths.append(p["path"])
-    for p in paths:
-        a = os.path.abspath(p)
-        if a in keep:
-            out.write(("kept: %s\n" % p).encode("utf-8"))
-        elif (os.path.basename(a).startswith(TEMP_PREFIX) and os.path.isfile(a)
-              and not os.path.islink(a)):
-            os.unlink(a)
-            out.write(("removed: %s\n" % p).encode("utf-8"))
-        elif os.path.lexists(a):
-            out.write(("left: %s -- not a %s* temp file\n" % (p, TEMP_PREFIX)).encode("utf-8"))
-    os.unlink(f)
+    with locked(f):
+        try:
+            d = load(f)
+        except Fail:
+            d = {}
+        paths = []
+        files = d.get("files")
+        if isinstance(files, dict):
+            paths += [p for p in files.values() if isinstance(p, str)]
+        for g in d.get("step_groups") or []:
+            if isinstance(g, dict) and isinstance(g.get("report"), str):
+                paths.append(g["report"])
+        for p in d.get("patches") or []:
+            if isinstance(p, dict) and p.get("temp") is True and isinstance(p.get("path"), str):
+                paths.append(p["path"])
+        for p in paths:
+            a = os.path.abspath(p)
+            if a in keep:
+                out.write(("kept: %s\n" % p).encode("utf-8"))
+            elif (os.path.basename(a).startswith(TEMP_PREFIX) and os.path.isfile(a)
+                  and not os.path.islink(a)):
+                os.unlink(a)
+                out.write(("removed: %s\n" % p).encode("utf-8"))
+            elif os.path.lexists(a):
+                out.write(("left: %s -- not a %s* temp file\n" % (p, TEMP_PREFIX)).encode("utf-8"))
+        os.unlink(f)
     out.write(("removed: %s\n" % f).encode("utf-8"))
 
 
@@ -266,21 +355,29 @@ def run(argv, stdin, out, repo="."):
     if not argv:
         raise Fail(2, "usage: run-state.py [--repo <dir>] init|open|read|set|append|remove ...")
     verb, args = argv[0], argv[1:]
-    f = state_path(repo)
-    if verb == "init" and not args:
-        cmd_init(f, stdin, out)
-    elif verb == "open":
-        cmd_open(f, args, out)
-    elif verb == "read":
-        cmd_read(f, args, out)
-    elif verb == "set":
-        cmd_set(f, args, stdin)
-    elif verb == "append":
-        cmd_append(f, args, stdin)
-    elif verb == "remove":
-        cmd_remove(f, args, out)
-    else:
+    if verb not in ("init", "open", "read", "set", "append", "remove"):
         raise Fail(2, "unknown subcommand %s" % verb)
+    f = state_path(repo)
+    try:
+        if verb == "init":
+            cmd_init(f, args, stdin, out)
+        elif verb == "open":
+            cmd_open(f, args, out)
+        elif verb == "read":
+            cmd_read(f, args, out)
+        elif verb == "set":
+            cmd_set(f, args, stdin)
+        elif verb == "append":
+            cmd_append(f, args, stdin)
+        else:
+            cmd_remove(f, args, out)
+    except OSError as e:
+        raise Fail(4, "%s: %s" % (f, e))
+
+
+def utf8_argv(argv):
+    """argv as UTF-8 whatever the locale: undo a locale decode back to bytes, then decode as UTF-8."""
+    return [os.fsencode(a).decode("utf-8", "surrogateescape") for a in argv]
 
 
 def selftest():
@@ -302,10 +399,23 @@ def selftest():
             code = e.code
         return code, out.getvalue().decode("utf-8")
 
-    base = {"format": 1, "phase": "Phase 1.4", "class": None, "test_decision": None,
-            "files": {"plan_file": None, "summary_file": None}, "patches": [],
-            "step_groups": [], "triage": [], "assumptions": ["seeded"], "deferred": [],
-            "pre_existing_dirty": None}
+    def fresh(**over):
+        d = {}
+        for k, members in KEYS:
+            d[k] = {m: None for m in members} if members else None
+        d.update({"format": 1, "phase": "Phase 1.4", "assumptions": ["seeded"], "deferred": [],
+                  "patches": [], "step_groups": [], "triage": []})
+        d["files"]["plan_file"] = None
+        d["report"].update({"commands_run": [], "notices": []})
+        d.update(over)
+        return d
+
+    me = os.path.abspath(__file__)
+    impl = os.path.join(os.path.dirname(os.path.dirname(me)), "commands", "implement.md")
+    if os.path.isfile(impl):
+        quoted = re.findall(r"run-state\.py init` requires, and no other: `([^`]+)`", open(impl, encoding="utf-8").read())
+        check("implement.md quotes KEYS exactly", quoted == [KEYS_LINE])
+
     with tempfile.TemporaryDirectory() as tmp:
         repo = os.path.join(tmp, "r [x] q")
         subprocess.run(["git", "init", "-q", repo], check=True)
@@ -313,45 +423,69 @@ def selftest():
                         "-c", "commit.gpgsign=false", "commit", "-q", "--no-verify",
                         "--allow-empty", "-m", "x"], check=True)
         f = state_path(repo)
+        here = os.path.dirname(f)
         check("path is the git path", f.endswith(os.path.join(".git", "dev-workflows", "implement-run.json")))
 
         check("open with no file exits 1", call(["open", "Phase 1.5"], repo=repo)[0] == 1)
-        code, out = call(["init"], json.dumps(base), repo)
+        code, out = call(["init"], json.dumps(fresh()), repo)
         check("init creates", code == 0 and os.path.isfile(f) and "moved aside" not in out)
         check("init keeps the seeded assumptions", json.load(open(f, encoding="utf-8"))["assumptions"] == ["seeded"])
         check("init refuses a non-object", call(["init"], "[1]", repo)[0] == 2)
 
+        # init validates before it moves anything aside
+        bad = fresh()
+        del bad["deferred"]
+        before = sorted(os.listdir(here))
+        code, _ = call(["init"], json.dumps(bad), repo)
+        check("init refuses a missing key, moving nothing", code == 3 and sorted(os.listdir(here)) == before)
+        bad = fresh(defered=[])
+        check("init refuses an unknown key", call(["init"], json.dumps(bad), repo)[0] == 3)
+        bad = fresh()
+        del bad["files"]["baseline_file"]
+        check("init refuses a missing member", call(["init"], json.dumps(bad), repo)[0] == 3)
+
         # stale move-aside: at most one kept, and an unrelated name left alone
-        here = os.path.dirname(f)
         open(os.path.join(here, "implement-run.json.stale-notes.txt"), "w").close()
-        for old in ("implement-run.json.stale-20200101T000000Z", "implement-run.json.stale-20210101T000000Z"):
+        olds = ("implement-run.json.stale-20200101T000000Z", "implement-run.json.stale-20210101T000000Z")
+        for old in olds:
             open(os.path.join(here, old), "w").close()
-        code, out = call(["init"], json.dumps(base), repo)
+        code, out = call(["init"], json.dumps(fresh()), repo)
         stale = sorted(n for n in os.listdir(here) if STALE_RE.match(n))
         check("init moves the file aside", code == 0 and "moved aside: " in out)
-        check("one stale file kept, the older ones removed", len(stale) == 1 and stale[0] not in (
-            "implement-run.json.stale-20200101T000000Z", "implement-run.json.stale-20210101T000000Z"))
+        check("one stale file kept, the older ones removed", len(stale) == 1 and stale[0] not in olds)
         check("unrelated stale-named file left", os.path.exists(os.path.join(here, "implement-run.json.stale-notes.txt")))
         a = json.load(open(f, encoding="utf-8"))["assumptions"]
-        check("move-aside named once in assumptions", len(a) == 2 and a[0] == "seeded"
-              and a[1].endswith(stale[0]) and "moved aside unread" in a[1])
+        check("move-aside named once, as an earlier run's", len(a) == 2 and a[0] == "seeded"
+              and a[1].endswith(stale[0]) and "an earlier run left" in a[1])
+
+        # an unparseable file: its own code, and --recover names it as this run's own
+        with open(f, "w", encoding="utf-8") as w:
+            w.write("{broken")
+        check("an unparseable file exits 5", call(["open", "Phase 2A"], repo=repo)[0] == 5)
+        code, out = call(["init", "--recover"], json.dumps(fresh()), repo)
+        a = json.load(open(f, encoding="utf-8"))["assumptions"]
+        check("--recover names this run's own file", code == 0 and "This run's run-state file" in a[-1]
+              and "earlier run" not in a[-1])
 
         # open sets phase and prints
         code, out = call(["open", "Phase 1.5"], repo=repo)
         check("open sets phase", code == 0 and json.loads(out)["phase"] == "Phase 1.5"
               and json.load(open(f, encoding="utf-8"))["phase"] == "Phase 1.5")
 
-        # non-ASCII and a path holding " and \ round-trip, written as UTF-8
-        weird = 'dir/ünï cöde "q" b\\c.txt'
+        # non-ASCII and a path holding " and \ round-trip; the file and the printed output unescaped
+        weird = 'dir/ünï cöde "q" b\\c\tt.txt'
         entry = [{"path": weird, "fingerprint": "abc", "status": "??"}]
         code, _ = call(["set", "pre_existing_dirty", json.dumps(entry, ensure_ascii=False)], repo=repo)
         raw = open(f, encoding="utf-8").read()
         check("non-ASCII written as itself", code == 0 and "ünï cöde" in raw and "\\u00fc" not in raw)
-        check("quote and backslash escaped in the file", '\\"q\\" b\\\\c' in raw)
+        check("quote, backslash and tab escaped in the file", '\\"q\\" b\\\\c\\tt' in raw)
         code, out = call(["read", "pre_existing_dirty"], repo=repo)
-        check("path reads back unchanged", code == 0 and json.loads(out)[0]["path"] == weird)
+        check("read prints non-ASCII unescaped", code == 0 and "ünï cöde" in out and "\\u00fc" not in out)
+        check("path reads back unchanged", json.loads(out)[0]["path"] == weird)
+        code, out = call(["open", "Phase 1.6"], repo=repo)
+        check("open prints non-ASCII unescaped", code == 0 and "ünï cöde" in out and "\\u00fc" not in out)
 
-        # multi-key set: argv pairs and a stdin object, dotted keys, list index
+        # multi-key set: argv pairs and a stdin object, dotted keys
         code, _ = call(["set", "class", '"SIGNIFICANT"', "files.plan_file", '"/tmp/dw-impl-plan-x"'], repo=repo)
         d = json.load(open(f, encoding="utf-8"))
         check("set takes several pairs", code == 0 and d["class"] == "SIGNIFICANT"
@@ -366,16 +500,21 @@ def selftest():
         check("a bad value changes nothing", call(["set", "class", "not json"], repo=repo)[0] == 2
               and open(f, encoding="utf-8").read() == before)
         check("an odd pair list is refused", call(["set", "class"], repo=repo)[0] == 2)
+        code, _ = call(["set", "clas", '"x"', "class", '"SIMPLE"'], repo=repo)
+        check("set refuses an unknown key, changing nothing", code == 3
+              and json.load(open(f, encoding="utf-8"))["class"] == "HIGH-RISK")
+        check("set refuses an unknown member", call(["set", "files.plan", '"x"'], repo=repo)[0] == 3)
 
-        # append: onto null, onto a list, into a list entry
+        # append: onto a list, onto null, into a list entry; an unknown key refused
         code, _ = call(["append", "deferred", '"one"', "deferred", '"two"'], repo=repo)
-        code2, _ = call(["append", "conformance_gaps", '"g"'], repo=repo)
-        call(["set", "code_repo_outcome", "null"], repo=repo)
-        code3, _ = call(["append", "code_repo_outcome", '"line"'], repo=repo)
         d = json.load(open(f, encoding="utf-8"))
         check("append onto a list", code == 0 and d["deferred"] == ["one", "two"])
-        check("append onto a missing key", code2 == 0 and d["conformance_gaps"] == ["g"])
-        check("append onto null makes a one-element list", code3 == 0 and d["code_repo_outcome"] == ["line"])
+        code, _ = call(["append", "defered", '"three"'], repo=repo)
+        check("append refuses a missing key", code == 3
+              and json.load(open(f, encoding="utf-8"))["deferred"] == ["one", "two"])
+        code, _ = call(["append", "code_repo_outcome", '"line"'], repo=repo)
+        check("append onto null makes a one-element list", code == 0
+              and json.load(open(f, encoding="utf-8"))["code_repo_outcome"] == ["line"])
         call(["append", "triage", json.dumps({"pass": "first", "followed_by": None})], repo=repo)
         code, _ = call(["append", "triage.-1.followed_by", '"review-fixer pass"'], repo=repo)
         d = json.load(open(f, encoding="utf-8"))
@@ -383,6 +522,35 @@ def selftest():
         check("append refuses a non-list", call(["append", "class", '"x"'], repo=repo)[0] == 2)
         code, out = call(["read", "triage.0.pass"], repo=repo)
         check("read a list entry's member", code == 0 and json.loads(out) == "first")
+        check("read refuses an unknown key", call(["read", "phasee"], repo=repo)[0] == 3)
+
+        # the lock: parallel appends keep every entry
+        procs = [subprocess.Popen([sys.executable, me, "--repo", repo, "append", "report.notices", json.dumps("n%d" % i)],
+                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) for i in range(24)]
+        codes = [p.wait() for p in procs]
+        notices = json.load(open(f, encoding="utf-8"))["report"]["notices"]
+        check("parallel appends keep every entry", codes == [0] * 24
+              and sorted(notices) == sorted("n%d" % i for i in range(24)))
+
+        # input as UTF-8 under a C locale, UTF-8 mode off: argv and stdin
+        env = dict(os.environ, LC_ALL="C", LANG="C", PYTHONUTF8="0", PYTHONIOENCODING="")
+        env.pop("PYTHONIOENCODING")
+        r1 = subprocess.run([sys.executable, me, "--repo", repo, "set", "branch", json.dumps("feat/ünï", ensure_ascii=False)],
+                            env=env, capture_output=True)
+        r2 = subprocess.run([sys.executable, me, "--repo", repo, "set"], env=env, capture_output=True,
+                            input=json.dumps({"stash_ref": "stash ünï"}, ensure_ascii=False).encode("utf-8"))
+        r3 = subprocess.run([sys.executable, me, "--repo", repo, "read", "branch"], env=env, capture_output=True)
+        d = json.load(open(f, encoding="utf-8"))
+        check("argv read as UTF-8 under LC_ALL=C", r1.returncode == 0 and d["branch"] == "feat/ünï")
+        check("stdin read as UTF-8 under LC_ALL=C", r2.returncode == 0 and d["stash_ref"] == "stash ünï")
+        check("output written as UTF-8 under LC_ALL=C", r3.returncode == 0 and "feat/ünï".encode("utf-8") in r3.stdout)
+
+        # OSError: its own code, never 1
+        os.chmod(f, 0)
+        unreadable = not os.access(f, os.R_OK)
+        if unreadable:
+            check("an unreadable file exits 4, not 1", call(["read"], repo=repo)[0] == 4)
+        os.chmod(f, 0o600)
 
         # guarded remove: temp files named, a --keep path, a non-temp path left, then the file
         def mk(name):
@@ -391,8 +559,9 @@ def selftest():
             return p
         plan, summ, kept = mk("dw-impl-plan-1"), mk("dw-impl-summary-1"), mk("dw-impl-diff-1")
         report, patch, user = mk("dw-impl-step-1"), mk("dw-impl-patch-1"), mk("notes.md")
-        call(["set", "files", json.dumps({"plan_file": plan, "summary_file": summ, "test_diff_file": kept,
-                                           "review_file": user, "claims_file": None}),
+        files = {m: None for m in dict(KEYS)["files"]}
+        files.update({"plan_file": plan, "summary_file": summ, "test_diff_file": kept, "review_file": user})
+        call(["set", "files", json.dumps(files),
               "step_groups", json.dumps([{"steps": [1], "status": "done", "report": report}]),
               "patches", json.dumps([{"path": patch, "temp": True, "outcome": "applied"},
                                      {"path": user, "temp": False, "outcome": "refused"}])], repo=repo)
@@ -427,11 +596,18 @@ def main(argv):
     if argv == ["--selftest"]:
         return selftest()
     try:
-        run(argv, sys.stdin, sys.stdout.buffer)
+        sys.stdin.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+    try:
+        run(utf8_argv(argv), sys.stdin, sys.stdout.buffer)
         return 0
     except Fail as e:
         sys.stderr.write("run-state.py: %s\n" % e)
         return e.code
+    except UnicodeDecodeError as e:
+        sys.stderr.write("run-state.py: input is not UTF-8: %s\n" % e)
+        return 2
 
 
 if __name__ == "__main__":
