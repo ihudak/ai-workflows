@@ -12,11 +12,7 @@ claude plugin marketplace add ihudak/ai-workflows
 
 ### 2. In a scripted install, add Anthropic's official marketplace
 
-```bash
-claude plugin marketplace add anthropics/claude-plugins-official
-```
-
-An interactive Claude Code session registers this marketplace on its first start, so you need the step only where a script — a container launcher, a CI job — installs the plugin before any interactive session has run with that Claude Code configuration: without it, Claude Security, which installs from that marketplace, is left out, and this plugin cannot load.
+Run `claude plugin marketplace add anthropics/claude-plugins-official` before the install below. An interactive Claude Code session registers this marketplace on its first start, so you need the step only where a script — a container launcher, a CI job — installs the plugin before any interactive session has run with that Claude Code configuration: without it, Claude Security, which installs from that marketplace, is left out, and this plugin cannot load.
 
 ### 3. Install the plugin
 

@@ -532,7 +532,7 @@ Emit this step's short output — each agent's result, the feedback persisted, a
 
 **Where that line is §6's *push rejected* row that advises `git pull --rebase --autostash`** — not its session-branch form, which advises no pull — **and a `register.py commit` ran in this run**, follow it with one more line, prefixed `Specs repo:` as §6's own addenda are, so that the two stay the run's last output. Where another clone recorded too before either pushed, both rebuilt `register.json` and `register.md`, so that pull stops on a content conflict in each; the run records, each a file of its own, never conflict, and a rebuild from them settles both. `<plugin root>` is this run's expanded `${CLAUDE_PLUGIN_ROOT}`, and `<SPECS_PATH>` the run's `$SPECS_PATH`, both written out:
 
-`Specs repo: where that pull stops on a conflict in security/<repo-slug>/register.json or register.md, settle both from the run records — python3 "<plugin root>/scripts/register.py" rebuild --specs "<SPECS_PATH>" --slug <repo-slug>, then git -C "<SPECS_PATH>" add security/<repo-slug>/register.json security/<repo-slug>/register.md and git -C "<SPECS_PATH>" rebase --continue — then push as the line above says`
+`Specs repo: where that pull stops on a conflict in security/<repo-slug>/register.json or register.md, settle both from the run records — python3 "<plugin root>/scripts/register.py" rebuild --specs "<SPECS_PATH>" --slug <repo-slug>, then git -C "<SPECS_PATH>" add security/<repo-slug>/register.json security/<repo-slug>/register.md; where it also stops on a unit's _security.md or follow-ups.md, which are append-only, keep both sides' blocks and git -C "<SPECS_PATH>" add that file; then git -C "<SPECS_PATH>" rebase --continue — then push as the line above says`
 
 ---
 
