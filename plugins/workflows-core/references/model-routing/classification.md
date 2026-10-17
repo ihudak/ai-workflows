@@ -139,14 +139,15 @@ rows the `haiku` alias resolves against.
 
 ### 3.1 SIMPLE / MODERATE
 
-- Continue with the currently selected model — `/implement`'s MODERATE coding excepted, which
-  runs on §4's `implementation_model`.
-- Do **not** add mandatory Opus steps — `/implement`'s MODERATE coding and review excepted.
+- Continue with the currently selected model — save `/implement`'s `code-writer` and
+  `review-fixer` dispatches, on §4's `implementation_model`.
+- Do **not** add mandatory Opus steps — save `/implement`'s MODERATE `code-review` gate,
+  and its `code-writer` and `review-fixer` dispatches, on §4's `implementation_model`.
 - Proceed with normal planning, implementation, testing, and fixes.
 - Skip the dedicated Opus code review. `/implement` alone reviews MODERATE work with the Opus
   `code-review` gate (its Phase 3A); every other caller skips it as this section says. That
-  review completes before `/implement` runs any test, as at SIGNIFICANT (§3.2 step 4), and
-  SIMPLE work stays unreviewed. **`risk-planner` is not dispatched on this path at
+  review completes before `/implement` runs any test against the working tree, as at
+  SIGNIFICANT (§3.2 step 4), and SIMPLE work stays unreviewed. **`risk-planner` is not dispatched on this path at
   all** — §3.2 step 2 is its only route, and the agent's own file forbids the call in terms
   (*"Do NOT use for SIMPLE / MODERATE tasks."*) — so nothing in this section selects its
   tier: wherever it *is* called it runs on its frontmatter `model: opus` pin, per §4's
@@ -163,24 +164,25 @@ The orchestrator MUST execute these steps in order:
 3. **Implement** with the currently selected model **or** Sonnet (Sonnet is fine
    for raw coding throughput; Opus is not required here). Sub-agents that do
    the actual file edits inherit the orchestrator's model unless overridden.
-   `/implement` is the exception: it codes through `code-writer` on §4's
-   `implementation_model`, by the rule there.
+   `/implement` is the exception: its `code-writer` and `review-fixer` dispatches
+   run on §4's `implementation_model`.
 4. **Opus code review** of the completed implementation. This is a dedicated
    `code-review` sub-agent invocation pinned to Opus. It MUST cover every item
    in the §6 checklist. Tests MUST NOT be run until this review completes.
 5. **Run tests** (build + test suite per the executor / fixer workflow).
-6. **Apply review fixes** — fixes flagged by the Opus review may be implemented
-   by the currently selected model **or** Sonnet (no Opus required for the fix
-   edits themselves). On `/implement`, `review-fixer` runs on `fixes_model`,
-   which there equals `implementation_model` (§4).
+6. **Apply review fixes** — save on `/implement`, whose `code-writer` and
+   `review-fixer` dispatches run on §4's `implementation_model` (its `fixes_model`
+   equals it), fixes flagged by the Opus review may be implemented by the
+   currently selected model **or** Sonnet (no Opus required for the fix edits
+   themselves).
 7. **Re-run tests** if any review fixes were applied.
 8. **Final summary** — include the classification, the Opus models used at each
    step (or the Sonnet fallback notice), and a one-line outcome per checklist
    item from §6.
 
 > **Do not use Opus for routine implementation steps unless the user explicitly
-> requested it, or the step is `/implement`'s coding or review fixes, whose model
-> §4's `implementation_model` rule sets.** Elsewhere, Opus is reserved for the
+> requested it, or the step is one of `/implement`'s `code-writer` and `review-fixer`
+> dispatches, on §4's `implementation_model`.** Elsewhere, Opus is reserved for the
 > planning and the dedicated review.
 
 ---
@@ -223,10 +225,11 @@ For SIMPLE/MODERATE the `planning_model` and `review_model` fields MAY be omitte
 or set to `current_model` — save `review_model` on `/implement`'s MODERATE runs,
 which §3.1 reviews with the Opus `code-review` gate.
 
-**`/implement`'s `implementation_model` — the coding-model rule.** `/implement` writes
+**`/implement`'s `implementation_model` — the coding-model rule.** `/implement` authors
 no code itself: it dispatches `dev-workflows:code-writer` for each group of plan steps
-and for each fix attempt, and `implementation_model` is the model that dispatch is
-passed, in §5's dispatch form. It is resolved by the run's class:
+and for each Phase 3.5 fix attempt (test, lint or build), and `implementation_model` is
+the model that dispatch is passed, in §5's dispatch form. It is resolved by the run's
+class:
 
 - `SIMPLE` → `current_model`;
 - `MODERATE`, `SIGNIFICANT`, `HIGH-RISK` → `current_model` where it is an Opus or Fable
@@ -532,8 +535,8 @@ Steps differ in nature — some judgment-heavy, some mechanical — and a comman
 MUST NOT let every step inherit the session model. Apply this policy in every
 command, resolving each model against the §2 (Opus) and §2.1 (Sonnet) fallback
 chains. The keyed authoring pipelines (`/document` and `/epics`) run long phase
-sequences and are the motivating case, not the scope — §9.4 is the governing
-rule.
+sequences and are the motivating case, not the scope — §9.1's principle and §9.2's
+map govern every command, and §9.4 applies them to scanning.
 
 ### 9.1 Principle
 
@@ -541,21 +544,22 @@ rule.
   chain — escalate to Opus even when the session is Sonnet.
 - **Mechanical detection / throughput / fix** steps run on the §2.1 detection
   (Sonnet) chain — de-escalate off the session model even when the session is
-  Opus (otherwise an Opus session burns Opus on cheap work). `/implement`'s fix
-  steps are the exception: its `review-fixer` and its `code-writer` fix attempts run
-  on its `implementation_model` (§4).
+  Opus (otherwise an Opus session burns Opus on cheap work). `/implement`'s
+  `code-writer` and `review-fixer` dispatches are the exception — `code-writer`'s
+  step and fix dispatches alike, raw coding throughput though they are (§3.2 step 3):
+  they run on §4's `implementation_model`.
 - **Orchestrator-executed** judgment steps — the inline prose writing and the
   interactive gates, plus the orchestration itself — run on the session model
   and CANNOT be overridden from inside a running command. Except under §10, where none of the rest of this bullet fires — no advisory, no gate, no degrade path, for any command that carries one (§10's *Opus-session gates do not fire* bullet is the general rule, and `workflows-core:run-flags` §3 step 7's advisory is the only notice) — handle them with an
-  **advisory** (recommend relaunching on the §2 chain), never an override. This advisory applies when the task is SIGNIFICANT/HIGH-RISK. Where the authoring step is the orchestrator itself, how it is discharged is the command's own to state and differs: `/design` and `/create-ard` make it a HARD gate on `current_model` that stops and offers a relaunch, while `/create-prd` degrades to the best available model and records the degradation instead of stopping. Read the command rather than assuming a gate. Where the writing is delegated to a writer on its own Opus pin, the writing is already off the session model and the residual risk is the orchestrator's own context window, so the advisory narrows there to a large non-Opus run, as in `/document`. At SIMPLE/MODERATE §3.1 requires none, and requires nothing against one either: it asks only that no *mandatory* Opus step be added (`/implement`'s MODERATE coding and review aside), so a command that offers a soft advisory anyway (`/design`) is stricter by its own choice and not in breach.
+  **advisory** (recommend relaunching on the §2 chain), never an override. This advisory applies when the task is SIGNIFICANT/HIGH-RISK. Where the authoring step is the orchestrator itself, how it is discharged is the command's own to state and differs: `/design` and `/create-ard` make it a HARD gate on `current_model` that stops and offers a relaunch, while `/create-prd` degrades to the best available model and records the degradation instead of stopping. Read the command rather than assuming a gate. Where the writing is delegated to a writer on its own Opus pin, the writing is already off the session model and the residual risk is the orchestrator's own context window, so the advisory narrows there to a large non-Opus run, as in `/document`. At SIMPLE/MODERATE §3.1 requires none, and requires nothing against one either: it asks only that no *mandatory* Opus step be added (`/implement`'s MODERATE `code-review` gate, and its `code-writer` and `review-fixer` dispatches, on §4's `implementation_model`, aside), so a command that offers a soft advisory anyway (`/design`) is stricter by its own choice and not in breach.
 
 ### 9.2 Role → chain map
 
 | Role | Chain |
 |------|-------|
 | Synthesis / planner (e.g. `doc-planner`) | §2 reasoning (Opus) |
-| Coding subagent (`/implement`'s `code-writer`, and its `review-fixer`) | §4's `implementation_model` rule: `current_model` at SIMPLE; from MODERATE up, `current_model` where it is an Opus or Fable model, else §2 reasoning (Opus) |
-| Reader / summarizer / locator / style-checker / fixer (`/implement`'s excepted, row above) / maintenance (the folder read, `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, maintenance agents) | §2.1 detection (Sonnet) |
+| `/implement`'s `code-writer` and `review-fixer` dispatches | §4's `implementation_model` rule: `current_model` at SIMPLE; from MODERATE up, `current_model` where it is an Opus or Fable model, else §2 reasoning (Opus) |
+| Reader / summarizer / locator / style-checker / fixer (save `/implement`'s `code-writer` and `review-fixer` dispatches, row above) / maintenance (the folder read, `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, maintenance agents) | §2.1 detection (Sonnet) |
 | Domain reviewer (`doc-reviewer`, `epic-reviewer`) | §2 review (Opus) — usually already frontmatter-pinned; the orchestrator records it and adds **no** override — unless §10 enforces a model |
 | Delegated writer (`doc-writer` / `epic-writer`) | §2 reasoning (Opus) for SIGNIFICANT/judgment writing; §2.1 detection (Sonnet) for MODERATE writing |
 | Coordination + interactive gates (the orchestrator itself) | session model; where the writing is delegated, a narrowed window advisory for large non-Opus runs; where the authoring is inline, the command's own (§9.1) |
