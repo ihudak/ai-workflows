@@ -66,7 +66,8 @@ failure_input: /tmp/dw-impl-failure-AbC123
                            # EVIDENCE on mode: fix; none on mode: step. A file holding test-baseliner's whole
                            # `## Test Verify Report` (Phase 3.5 step 6), or a failing check's command — a
                            # lint, a build, a type-check, or another check a step left to the caller —
-                           # the directory it ran in and its output (Phase 3.5 step 3).
+                           # the directory it ran in and its output, each lint failure the caller found
+                           # on the tree before the change marked pre-existing (Phase 3.5 step 3).
 model_routing:             # CONTEXT, inline. The run's model_routing block
   classification: SIGNIFICANT     # (workflows-core:model-routing/classification §4), as far as this
   implementation_model: claude-opus-5-5   # handoff declares it: the class `class` carries, the model
@@ -123,7 +124,7 @@ report_file: /tmp/dw-impl-code-AbC123
 - _or_ none
 
 ### Not fixed                  <!-- mode: fix only -->
-- <the failure, as failure_input names it> — <why it was left: no fix found; not this run's change — only where every file it names resolves to one this run did not change, never where a name resolves to nothing or to more than one file; the CAVEAT: line that accounts for it; or a formatter not run beside pre_existing_dirty>
+- <the failure, as failure_input names it> — <why it was left: no fix found; failure_input marks it pre-existing — the caller found it on the tree before the change; the CAVEAT: line that accounts for it; or a formatter not run beside pre_existing_dirty>
 - _or_ none
 
 ### Tool runs                  <!-- mode: step — an install, code-generation or formatting command a plan step named; mode: fix — the formatter or code generator that fixes a lint failure; each run in repo_root -->
@@ -152,7 +153,7 @@ Paths: `<path>`, `<path>`
 
 **The four statuses:**
 
-- `done` — every step handed is coded, or left to the caller where the caller keeps it; on `mode: fix`, the attempt is made, and `### Not fixed` names every failure it left. `### Settled by the run` becomes the Phase 5 report's `### Assumptions & limitations`; a `### Not fixed` line's reason goes into its `### Deferred items` beside the failure it names, where the run keeps that failure (Phase 3.5 step 6's **Accept**), and spares that failure a further attempt where it is not this run's change, a `CAVEAT:` line accounts for it, or only a formatter not run beside `pre_existing_dirty` would fix it; and `### Out of scope` goes on the follow-up line Phase 3A/3B step 2 writes for that repository.
+- `done` — every step handed is coded, or left to the caller where the caller keeps it; on `mode: fix`, the attempt is made, and `### Not fixed` names every failure it left. `### Settled by the run` becomes the Phase 5 report's `### Assumptions & limitations`; a `### Not fixed` line's reason goes into its `### Deferred items` beside the failure it names, where the run keeps that failure (Phase 3.5 step 6's **Accept**), and spares that failure a further attempt where a `CAVEAT:` line accounts for it or only a formatter not run beside `pre_existing_dirty` would fix it; and `### Out of scope` goes on the follow-up line Phase 3A/3B step 2 writes for that repository.
 - `needs_decision` — Phase 1's test met mid-coding: nothing the run can read settles a question, and its answer changes what the user would notice. `### Decision` carries two to four options, never an *Other* (the harness adds the free-text answer itself). The caller asks, then dispatches afresh for the rest of the group, handed this report with the answer beside it in `earlier_reports`.
 - `trigger` — `mode: step` at `SIMPLE` or `MODERATE` only: a classification item the approved plan did not state, with the paths that show it. The caller runs its re-classification raise.
 - `blocked` — a step cannot be coded as the plan writes it, because something the plan names is not so. A `### Blocked` that reads `Unreadable: <field> at <path>` instead names an evidence input the agent could not read: an orchestrator bug, never a plan defect. On `mode: fix` that form is the only `blocked`, and a failure the attempt found no fix for is a `done` that lists it under `### Not fixed`.
