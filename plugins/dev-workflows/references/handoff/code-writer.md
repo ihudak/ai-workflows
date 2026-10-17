@@ -97,6 +97,7 @@ report_file: /tmp/dw-impl-code-AbC123
 - `src/rating.ts` — edited — <what this dispatch changed in it, one line>
 - `src/rating-cache.ts` — created — <one line>
 - `src/legacy-rating.ts` — deleted
+- `src/format-me.ts` — edited — formatter-only   <!-- a file a formatter that could not be limited to the step's paths touched, nothing else changed in it -->
 - _or_ none
 
 ### Settled by the run
