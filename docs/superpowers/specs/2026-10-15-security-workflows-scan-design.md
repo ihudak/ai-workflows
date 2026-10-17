@@ -320,7 +320,7 @@ If a later plugin or Claude Code version lets a caller choose the plugin agents'
 
 The register lives at `$SPECS_PATH/security/<repo-slug>/`:
 
-- **`scans/<UTC-timestamp>-<commit7>/`** holds the plugin's report, JSONL, SARIF, revision stamp and `patches/`, unchanged and never rewritten. The plugin's redaction is best effort; Phase 4 checks its outcome first.
+- **`scans/<UTC-timestamp>-<commit7>/`** holds the plugin's report, JSONL, SARIF, revision stamp and `patches/`, unchanged, and a folder a record names is never rewritten. The plugin's redaction is best effort; Phase 4 checks its outcome first.
 - **`runs/<seq>-<UTC>-<hash8>.json`** holds one **run record** per run that changes the register: a scan, an import, a triage or a fix verification. A record holds:
   - `seq`, `at`, `by`, `kind` and `role`;
   - the scan folder, if any;
@@ -329,7 +329,7 @@ The register lives at `$SPECS_PATH/security/<repo-slug>/`:
   - every decision, with its reason, evidence, owner, review-by date and links.
 
   Run records are written once and never edited.
-- **`register.json`** is the folded state. `register.py` alone writes it, and every run rebuilds it from the run records, in `(seq, at, file name)` order, and the scan folders they name. **The run records and scan folders are the source of truth.** `register.json` and `register.md` are derived and never read back, so a stale or conflicted copy is harmless until the next run overwrites it.
+- **`register.json`** is the folded state. `register.py` alone writes it, and every run rebuilds it from the run records, in `(seq, at, file name)` order, and the scan folders they name. **The run records and scan folders are the source of truth.** `register.json` and `register.md` are derived and never read back, so a stale copy is harmless until the next run overwrites it. A conflicted one stops a rebase: where two clones recorded before either pushed, each rebuilt both files, so the `git pull --rebase` a rejected push advises stops on a conflict in each, and `register.py rebuild` settles both from the run records, which, each a file of its own, never conflict.
 
   **Every status change is a decision in a run record, the automatic ones included** (a closure, a reopening, `fixing`), together with the `not_reported_by` entries and, for each sighting, whether it was history for its finding (rule 4). Those need git on the code repository when the run computes them. The replay needs none.
 - **`register.md`** is rendered for people to read, and its first line says it is generated. It has six sections:
@@ -595,12 +595,12 @@ Today `/implement`'s branch step cuts a new branch whenever HEAD is not on the d
 
 The change: on a keyed run, `/implement` runs `unit-branch` (D18) for its repository and unit first, and acts on its state:
 
-- **`checked-out`:** the question gains a first option.
+- **`checked-out`:** the question gains a first option. The question's text names `<branch>` and says that the work joins its open pull request, or that it has none, so the label carries no branch name.
 
-  `choices: ["Continue on <branch> — the work joins its open pull request (Recommended)", "Branch from current position", "Branch from default branch — fresh start", "Cancel"]`
+  `choices: ["Continue on this branch (Recommended)", "Branch from current position", "Branch from default branch — fresh start", "Cancel"]`
 - **`local` or `remote`**, on a clean tree, wherever HEAD stands:
 
-  `choices: ["Switch to <branch> and continue — the work joins its open pull request (Recommended)", "Branch from current position", "Branch from default branch — fresh start", "Cancel"]`
+  `choices: ["Switch and continue (Recommended)", "Branch from current position", "Branch from default branch — fresh start", "Cancel"]`, the question's text naming `<branch>` and its pull request as above
 
   Where HEAD is on the default branch, *Branch from current position* is the same as the fresh start, and the array drops it.
 - **`merged`, with HEAD on the unit's branch:** the pull request has merged, so a branch from here would carry its merged commits into a second one. The question recommends the fresh start:

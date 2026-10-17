@@ -875,7 +875,10 @@ spend before it is the conversation's.
 - **`/dev-workflows:implement` on a direct run from inside the specs repository** (its Phase 0),
   where the specs repository is the repository the run changes — on the code
   branch the run cut there, which step 5 does not push unless its name carries
-  one of §2.2's prefixes.
+  one of §2.2's prefixes; or, where the run stops before it cuts one, on the
+  branch HEAD then stands on — the one it started on, or the default branch
+  where its Phase 1.4's fresh start switched to it, which step 5 pushes as it
+  pushes the default branch on any run.
 
 ## 5. Notice contract — the guards must be impossible to overlook
 
@@ -963,11 +966,14 @@ If ignored: the artifacts land on `<branch>` and reach the maintainer when you
 **On a direct `/dev-workflows:implement` run from inside the specs repository**
 (§4.1) the run changes code here, so it cuts a branch of its own (its
 Pre-Phase 3), and the artifacts are committed on that branch, whose name the
-preflight does not know yet — or on `<branch>`, where the run stops before it
-cuts one. Its *Not done* line reads instead `the preflight did not switch away
-from it — the plugin manages only branches it created. This run changes code
-here, so its artifacts WILL be committed on the branch it cuts for that, or on
-<branch> if it stops first, and not pushed unless that branch's name carries one
+preflight does not know yet — or, where the run stops before it cuts one, on
+the branch HEAD then stands on: `<branch>`, or `<default>` where the run's
+Phase 1.4 answered a fresh start and switched to it before the stop. Its *Not
+done* line reads instead `the preflight did not switch away from it — the
+plugin manages only branches it created. This run changes code here, so its
+artifacts WILL be committed on the branch it cuts for that, or, if it stops
+first, on the branch it then stands on — <branch>, or <default> after a fresh
+start — and not pushed unless that branch is <default> or its name carries one
 of this plugin's prefixes.`; its *Fix* line reads `# nothing to do here: they
 reach the maintainer when that branch is pushed or merged`; and its *If
 ignored* line reads `the artifacts stay on that branch until it is pushed or

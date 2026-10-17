@@ -7,7 +7,7 @@ from mattpocock `diagnosing-bugs`; aligns with `superpowers:verification-before-
 **Who runs the repro.** Step 1's completion criterion requires *executing* a command, so it binds
 whoever holds `Bash`: the `/implement` orchestrator, and `risk-planner`, which carries `Bash` for this
 purpose alone. `risk-planner`'s execution is bounded — run the repro and read-only commands, making no file but
-the scratch export the section below names where it says the repro runs in one, and never mutate
+the scratch checkout the section below names where it says the repro runs in one, and never mutate
 the working tree, the index, `HEAD`, or branch state; the caller owns every write. An agent
 without `Bash` (`code-review` among them) is never held to the completion criterion and must not be
 asked to satisfy it — it consumes the evidence the criterion produced.
@@ -32,31 +32,46 @@ the evidence more convenient.
 
 `/implement` runs this discipline on SIGNIFICANT / HIGH-RISK work, where nothing of the change runs
 before the Opus code review returns a non-BLOCK verdict, or a settle prompt's **Proceed** settles it
-as one (its Phase 3B step 8). Every run below falls on one side of that gate, and a plan carries no
-step that runs a test, the repro or a probe between the first edit and the review:
+as one (its Phase 3B step 8). **One rule places every run below**, `/implement`'s first edit of the
+change — a scan's patch applied included, a probe's tagged line not — dividing it:
 
-- **Before the first edit**, where no change exists yet to review: step 1's repro and its
-  minimisation. **On a re-plan** whose working tree already holds edits (`/implement` Phase 3A
-  step 5), step 1's repro runs in a scratch export of `HEAD` (below), never on those edits.
-- **A probe** step 3 places, and a fixture or script the caller trims to minimise the repro (step
-  1), is tried in a scratch export of `HEAD` too, never in the working tree: reading either is a
-  run, and the working tree holds the change, or will.
+- **Before the first edit**, where no change exists yet to review, the repro and the probes run on
+  the working tree: step 1's repro and its minimisation by its arguments and input, and a probe
+  step 3 places, whose tagged lines the cleanup gate strips.
+- **From the first edit until a non-BLOCK review, nothing runs against the working tree**, which
+  holds the change: a probe or the repro runs only in the scratch checkout of `HEAD` (below), the
+  tree before the change. That takes a probe placed once the edits have begun, and step 1's repro
+  **on a re-plan** whose working tree already holds edits (`/implement` Phase 3A step 5). So a plan
+  carries no step that runs a test, the repro or a probe against the working tree between the first
+  edit and the review.
+- **A fixture or script the caller trims** to minimise the repro (step 1) is trimmed and tried in
+  the scratch checkout, before the first edit as after it: trimming it in the working tree would be
+  an edit no cleanup gate strips.
 - **After the gate, never before it**: step 5's re-run of the repro, against the working tree; then
-  the **red-capability check** — the reviewed regression test from step 4, run against a scratch
-  export of `HEAD`, the pre-change tree, with that test file copied in at its own path, must fail
+  the **red-capability check** — the reviewed regression test from step 4, run in a scratch
+  checkout of `HEAD`, the pre-change tree, with that test file copied in at its own path, must fail
   there on its assertion of this bug's symptom, not on a symbol only the change adds. The **green
   check** is the caller's verify run (`/implement` Phase 3.5), in which the same test must pass.
   Where the red check passes instead, the test does not show it catches this bug, and the caller's
-  report says so.
+  report says so. Where it fails on anything but that assertion — a missing test bootstrap, a
+  submodule's content, a helper only the change adds — the red check is **inconclusive**: the
+  caller's report says so under `### Assumptions & limitations`, naming what it failed on, and the
+  green check is still the caller's verify run.
 
-**The scratch export** is outside every repository and is removed after the run that needed it:
-`d=$(command mktemp -d -t dw-bug-XXXXXX) && git -C "<top level>" archive HEAD | tar -x -C "$d"`,
-then the run from the matching directory under `"$d"`, and then
-`case "$d" in */dw-bug-??????) command rm -rf -- "$d" ;; esac`. Where the run needs a dependency
-directory git does not track — `node_modules`, say — link it from the working tree
-(`ln -s "<top level>/<dir>/node_modules" "$d/<dir>/node_modules"`) rather than installing one. No
-shell variable survives from one Bash call to the next, so the three run in one call. Nothing is
-written into the working tree, its index or its refs.
+**The scratch checkout** is outside every repository and is removed whatever the run in it exits
+with, a red check's expected failure included. One Bash call makes it, runs in it and removes it, since
+no shell variable survives from one call to the next:
+`( d=$(command mktemp -d -t dw-bug-XXXXXX) && trap 'case "$d" in */dw-bug-*) command rm -rf -- "$d" ;; esac' EXIT && command mkdir -- "$d/tree" && GIT_INDEX_FILE="$d/index" git -C "<top level>" -c core.hooksPath=/dev/null --work-tree="$d/tree" checkout HEAD -- . && cd -- "$d/tree/<the directory the run needs>" && <the run> )`.
+The checkout reads `HEAD`'s tree through an index file of its own into `"$d/tree"`, so nothing is
+written into the working tree, its index or its refs; it keeps the `export-ignore` paths a
+`git archive` would drop, a test bootstrap among them; and with `core.hooksPath` pointed at nothing,
+no hook of the repository's runs, as a `post-checkout` hook otherwise would. The subshell's `trap`
+removes the directory on every exit, and its guard matches the `mktemp` prefix, since BSD
+`mktemp -t` appends a suffix of its own after the template. **Its limit: it holds no submodule's
+content**, a submodule's directory standing empty there, so a run that needs one is inconclusive in
+it. Where the run needs a dependency directory git does not track — `node_modules`, say — link it
+from the working tree inside the same call
+(`ln -s "<top level>/<dir>/node_modules" "$d/tree/<dir>/node_modules"`) rather than installing one.
 
 ## Steps
 
@@ -75,8 +90,9 @@ written into the working tree, its index or its refs.
    repro is a **measurement** — a timing harness, a profiler, a query plan — run on the current code,
    and it is red when the time exceeds the expected figure by more than its own run-to-run spread.
    Measure first, fix second. Finding where the time went in by bisecting between a good and a bad
-   state moves `HEAD`, so it is a step of the plan the caller carries out from a clean tree, before the
-   run's first edit, ending in `git bisect reset` — never something `risk-planner` runs. Where the tree
+   state moves `HEAD`, so it is the plan's first step, which the caller carries out from a clean tree
+   before the run's first edit — before any patch is applied — ending in `git bisect reset`; never
+   something `risk-planner` runs, and never in the scratch checkout, which holds no history. Where the tree
    is not clean or the run already has edits, the plan omits the bisection and says why among its risks.
 
    **Completion criterion — one command, already run.** Step 1 is not finished until you can name
@@ -111,9 +127,9 @@ written into the working tree, its index or its refs.
    be read back to what it settled. Prefer a debugger or REPL inspection where the environment allows it, then targeted
    logs at the boundaries that tell two hypotheses apart; never log everything and grep. Tag every
    temporary probe `[DEBUG-xxxx]` (a short unique token per probe). Every `[DEBUG-xxxx]`
-   probe MUST be removed before the change is finalized (it is read in a scratch export, above, and the
-   `/implement` Phase 3B cleanup gate strips any that reached the working tree before the review diff
-   is captured). **A probe never writes a secret's value**: one that checks
+   probe MUST be removed before the change is finalized (once the edits have begun it is placed and read
+   in the scratch checkout, above, and the `/implement` Phase 3B cleanup gate strips any that reached
+   the working tree before the review diff is captured). **A probe never writes a secret's value**: one that checks
    a credential, token, key or connection string records only whether it is set and whether it is empty —
    `SET`, `EMPTY` or `UNSET`, and its length where that tells hypotheses apart — never the value and
    never a line that echoes it, as `env | grep` does — because what a probe writes
