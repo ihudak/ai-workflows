@@ -15,7 +15,8 @@ plan_file: /tmp/dw-impl-plan-AbC123
                            # EVIDENCE. The approved plan. Where the user approved a mid-implementation
                            # re-plan it holds both plans under two headings: the re-plan's Steps are the
                            # work remaining, every Review focus line in either plan applies, and the
-                           # re-plan governs only where the two contradict.
+                           # re-plan governs only where the two contradict. A closing `## Constraints added
+                           # at the re-plan` section, where the caller appended one, binds every step.
 steps: [3, 4]              # mode: step — the numbers of the plan steps this dispatch codes, as the plan
                            # writes them, consecutive and in plan order; on a plan_file holding two plans,
                            # the re-plan's Steps. mode: fix — none.
@@ -39,11 +40,11 @@ earlier_reports:           # CONTEXT, each report on its own. Every earlier disp
     answer: "Keep the old field and add the new one"
                            # only beside a report that returned needs_decision: the user's answer to its
                            # ### Decision, verbatim. It binds the rest of that group and every later one.
-patches:                   # inline. Each patch Phase 1 carried for the tasks these steps code, which the
-  - patch: security/<repo-slug>/scans/<folder>/patches/F2.patch   # caller checked and applied before
-    outcome: applied       # any dispatch: applied | refused. The path is the follow-up's, relative to
-    files: [src/session.ts]   # $SPECS_PATH. `files` (applied only) lists what it changed, relative to
-                           # repo_root. none where Phase 1 carried no patch for these tasks.
+patches:                   # inline. Every patch Phase 1 carried, on every dispatch — an applied one's files
+  - patch: security/<repo-slug>/scans/<folder>/patches/F2.patch   # are this run's — which the caller
+    outcome: applied       # checked before any dispatch: applied | refused. The path is the follow-up's,
+    files: [src/session.ts]   # relative to $SPECS_PATH. `files` (applied only) lists what it changed,
+                           # relative to repo_root. none where Phase 1 carried no patch.
 task_shape: bug            # bug | none — bug where /implement set task_shape: bug (Phase 1.5).
 class: SIGNIFICANT         # SIMPLE | MODERATE | SIGNIFICANT | HIGH-RISK — the run's class. A step has no
                            # class of its own: every step is coded under the run's, and only /implement's

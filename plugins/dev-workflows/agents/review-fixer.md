@@ -1,6 +1,6 @@
 ---
 name: review-fixer
-description: Applies targeted code fixes for BLOCKER and MAJOR findings from a code-review agent report. Returns a structured fix report; caller re-runs the review. Default model (not Opus).
+description: Applies targeted code fixes for BLOCKER and MAJOR findings from a code-review agent report. Returns a structured fix report; caller re-runs the review. Model tier assigned by the caller — its `fixes_model` per the model-routing policy (no fixed pin).
 tools: ["Read", "Glob", "Grep", "Write", "Edit", "Skill"]
 ---
 

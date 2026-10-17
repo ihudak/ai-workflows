@@ -1,9 +1,11 @@
 # Finding triage (embedded — shared reference)
 
 The step between a reviewer's findings and a fixer's edits. Run by the **orchestrator**, never by the
-fixer: `review-fixer` and `doc-fixer` run on the detection/Sonnet chain while `code-review`,
-`doc-reviewer`, and `epic-reviewer` are Opus-pinned, and a dismissal decision must not sit at a weaker
-station than the one that produced the finding.
+fixer: `doc-fixer`, and `review-fixer` on every caller but `/implement`, run on the detection/Sonnet
+chain while `code-review`, `doc-reviewer`, and `epic-reviewer` are Opus-pinned, and a dismissal
+decision must not sit at a weaker station than the one that produced the finding. `/implement`'s
+`review-fixer` runs on its `implementation_model` (`workflows-core:model-routing/classification` §4),
+and the triage stays the orchestrator's there too: one rule for every fixer.
 
 ## When this runs
 

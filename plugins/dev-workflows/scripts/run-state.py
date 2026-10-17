@@ -78,7 +78,7 @@ KEYS = [
     ("focus_key", None), ("unit_key", None), ("workitem_key", None), ("unit_folder", None),
     ("run_flags", None), ("specs_git", None),
     ("spec_context", ["spec_paths", "in_scope_ids", "applicable_spec", "applicable_ard",
-                      "companion_run", "tasks_only"]),
+                      "ard_paths", "companion_run", "tasks_only"]),
     ("task_shape", None), ("clarifications", ["settled", "answers"]),
     ("routing", ["block", "history"]), ("class", None), ("coding_model", None),
     ("branch_answer", ["answer", "moves", "lines"]), ("branch", None), ("stash_ref", None),
