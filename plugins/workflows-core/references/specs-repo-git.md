@@ -78,7 +78,7 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
 
 ### 2.1 Paths
 
-Exactly eight shapes, derived from the emission ladders and from the drafts the family writes for the operator — four directory shapes and the four single files §2.1 names below. Nothing outside this
+Exactly ten shapes, derived from the emission ladders, from the drafts the family writes for the operator and from the security register — five directory shapes and the five single files §2.1 names below. Nothing outside this
 set is ever staged.
 
 ```
@@ -86,11 +86,15 @@ set is ever staged.
 <specs-root>/documentation/*/dev-workflows/**                 # the documentation run with no PRD (D19): feedback, cost
 <specs-root>/dev-workflows-feedback/**                        # feedback-emission.md §2 tier 2 (keyless runs)
 <specs-root>/dev-workflows-cost/**                            # cost-emission.md §9 pending files (keyless runs)
+<specs-root>/security/*/{runs/**|scans/**|dev-workflows/**|register.json|register.md}  # security-register-format.md §1: the register of one code repository (/security-workflows:scan), its own paths only, and its keyless scans' cost (cost-emission.md §8)
 <specs-root>/{specs|specifications|vis}/**/implementation.md  # implementation-format.md §1, appended by /implement
 <specs-root>/{specs|specifications|vis}/**/follow-ups.md      # followup-emission.md §2, appended per PRD/Epic folder
+<specs-root>/{specs|specifications|vis}/**/_security.md       # security-register-format.md §1: a unit's scan note, appended
 <specs-root>/{specs|specifications|vis}/**/pr-draft.md        # the /document (keyed mode) pull-request draft
 <specs-root>/{specs|specifications|vis}/**/*-implementation-gaps.md  # the <KEY>-implementation-gaps.md draft (source-truth.md §7.5)
 ```
+
+**The security register is bookkeeping**: its records are a run's own and must not wait on anyone's review, so `commit-artifacts` (§4) commits them and no pull request hands them off, as `${CLAUDE_PLUGIN_ROOT}/references/security-register-format.md` §1 says. The same directory holds a keyless scan's cost entry, under `dev-workflows/cost/` beside the register, filed per code repository as the `documentation/` shape files a documentation run's (`cost-emission.md` §8). **The shape names the register's own paths and nothing else under `security/`** — `runs/`, `scans/`, `dev-workflows/`, `register.json` and `register.md` in each `security/<repo-slug>/` — because a specs repository can already hold a team's own `security/<dir>/` documents, a threat model or a policy, and a wider shape would sweep an uncommitted edit there into a prompt-free session commit of any family command, and push it.
 
 **The `documentation/` shape is the `docs-workflows` family's, and it exists because that family's normal run has no PRD and never will.** A documentation run against a repository nobody has written a PRD for would otherwise park every entry as *pending*, awaiting a reconciliation into a PRD directory that is never coming — so those entries accumulate forever and reconcile against nothing. The rung `feedback-emission.md` §2 and `cost-emission.md` §8 insert before pending writes instead to `<specs-root>/documentation/<docs-repo-slug>/dev-workflows/{cost,feedback}/`, where `<docs-repo-slug>` is the one-segment name the next paragraph defines. **Per docs repo, not one flat `documentation/` bucket**, for exactly the reason the PRD-directory rung exists for the pipeline: a person documenting two products must still be able to answer what documenting each one cost. The docs repo is that family's unit of attribution.
 
@@ -101,23 +105,23 @@ set is ever staged.
 
 So `git@github.com:acme/docs.git` gives `acme-docs`, and `ssh://git@git.example.com/team/docs.git` gives `git.example.com-team-docs`. **Every such byte is flattened, not only `/`,** because a directory name is the operator's to choose and may carry a space or a non-ASCII letter, and a substitution that admits no exception is what lets two implementations reproduce this directory byte for byte. **It is no longer flattened to keep the path out of the classifier's quoting, and that half of the reason is retired rather than the rule**: `git status --porcelain` does wrap such a path in double quotes (with a non-ASCII byte octal-escaped), and step 2's classifier, reading the path as reported, would have seen `"documentation/…` and never staged it — but step 1 above now reads `-z`, whose records are never quoted, so that is a form this procedure no longer meets. The flattening stands unnarrowed, because **the one-segment property is the whole point, and it is why the flattening is not cosmetic**: step 2's classifier below admits exactly one segment between `documentation/` and `dev-workflows/` (`^documentation/[^/]+/dev-workflows/`), while an unflattened `OWNER_REPO` is two segments on GitHub and three anywhere else. An entry written under one would be classified OTHER — never staged, left dirty, and firing §3.3's G1 on every later preflight of every caller, which is exactly the failure each of the single-file shapes below was once found to cause. Every site that fills the placeholder — `feedback-emission.md` §2, `cost-emission.md` §8, and the `docs-workflows` commands whose runs emit there — cites this definition rather than restating the derivation; a second derivation is how two sites come to disagree about where one repository's record lives. The flattening can in principle map two remotes to one name (`a-b/c` and `a/b-c` both become `a-b-c`); that is accepted, since the alternative is a second derivation or a path the classifier cannot stage.
 
-**The inner `dev-workflows/` in that path names the *family*, not the plugin — do not "correct" it per-plugin.** The shipped persistence ladder writes `<PRD-dir>/dev-workflows/cost/<sid8>.md` regardless of which plugin emitted the entry, and this shape is the same directory one level out. Renaming it to match the emitting plugin would fragment one repository's cost record across four directories and break every reader of it. **No new branch prefix goes with this shape**: §2.2's prefix authority governs branches the plugin creates *in* `$SPECS_PATH`, and the documentation family's one branch there is `/release-notes`', which hands its draft off under the existing `prd/` prefix — `/document`'s deliverable is the docs repository, where it branches, commits and drafts a pull request it never pushes.
+**The inner `dev-workflows/` in that path names the *family*, not the plugin — do not "correct" it per-plugin.** The shipped persistence ladder writes `<PRD-dir>/dev-workflows/cost/<sid8>.md` regardless of which plugin emitted the entry, and this shape is the same directory one level out. Renaming it to match the emitting plugin would fragment one repository's cost record across one directory per emitting plugin and break every reader of it. **No new branch prefix goes with this shape**: §2.2's prefix authority governs branches the plugin creates *in* `$SPECS_PATH`, and the documentation family's one branch there is `/release-notes`', which hands its draft off under the existing `prd/` prefix — `/document`'s deliverable is the docs repository, where it branches, commits and drafts a pull request it never pushes.
 
-**The four single-file shapes name files, never their folder, and the distinction is the
-whole safety property.** All four sit in the feature folder rather than under `dev-workflows/`. The
+**The five single-file shapes name files, never their folder, and the distinction is the
+whole safety property.** All five sit in the feature folder rather than under `dev-workflows/`. The
 first two are read by *key* rather than by session — `implementation.md` is read by `/document` and
 `/release-notes` (their two-source read), by `/ready` (a unit's derived phase and its repositories), by
 `/epics` and `/specify` (repository names) and by `epic-picker.md`'s ● marker — every command
 `grep -l 'implementation\.md' plugins/*/commands/*.md` returns but `/implement`, which writes it — and
 a record only one machine holds is a record the next run cannot use; `follow-ups.md` is `followup-emission.md` §2's "alongside the artifacts the
 follow-ups are about", which §3 makes explicit is about where a *reader* looking at the folder finds
-them. The last two are drafts for the operator, written where the operator looks for them: `/docs-workflows:document` (keyed mode) writes `pr-draft.md` for the pull request it
+them. The third, `_security.md`, is the note `/security-workflows:scan` appends to the folder of the unit a run is addressed by, where a reader looking at that folder finds it (`security-register-format.md` §1). The last two are drafts for the operator, written where the operator looks for them: `/docs-workflows:document` (keyed mode) writes `pr-draft.md` for the pull request it
 never opens itself, and it and `/docs-workflows:release-notes` write `<KEY>-implementation-gaps.md`,
 the bug-report draft `source-truth.md` §7.5 fixes — its name carries the key, so it is matched as
 `*-implementation-gaps.md`. But that same folder holds the phase deliverables (`prd.md`, `ard.md`, `specification.md`,
 `design.md`, `idea.md`, `_readiness.md`), which are `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md`'s
 to commit behind its own consent choice. Widening a shape to the folder would sweep them into a
-prompt-free bookkeeping commit and take the operator's choice away, so the four files are named
+prompt-free bookkeeping commit and take the operator's choice away, so the five files are named
 literally and nothing else in that directory is ever staged here. **The `/release-notes` draft,
 `release-notes.md`, left this set**: it is content a team reviews before it is published, not a
 draft one operator pastes once, so that command hands it off behind the consent choice like any
@@ -137,7 +141,7 @@ that ladder was cut from four rungs to two. Two stale pointers agreeing with eac
 a verified fact. **The two drafts were the fourth and fifth instances**, found by classifying a real
 specs repo's status against this list after a keyed `/document` run: both came out OTHER beside a
 staged cost entry, and nothing else committed them. When an emission ladder changes shape, or a
-command starts writing a draft into the feature folder, re-derive this list against it rather than
+command starts writing a draft or a record of its own into the feature folder or a new directory, re-derive this list against it rather than
 trusting either end. `/epics` is the contrast: the `epic.md` files and `_coverage.md` it
 writes are its deliverable, which this reference never stages and `phase-handoff.md` §2 hands off
 behind that command's consent choice, as it does every other producer's.
@@ -158,11 +162,12 @@ here stages or touches it. A staging directory the operator names outside `$SPEC
 this reference's scope.
 
 Sources: `feedback-emission.md` §2 tiers 1–2 including tier 2's documentation
-branch, `cost-emission.md` §8 tier 1, tier 2's documentation branch and
-§9 pending, `followup-emission.md` §2 (where it lands, per PRD/Epic folder),
+branch, `cost-emission.md` §8 tier 1, tier 2's documentation and security
+branches and §9 pending, `followup-emission.md` §2 (where it lands, per PRD/Epic folder),
 `session-hygiene.md` §1 (resume tier 1), `source-truth.md` §7.5 (the
-implementation-gaps draft) and `docs-workflows:finish-and-handoff` §5 (the
-pull-request draft).
+implementation-gaps draft), `docs-workflows:finish-and-handoff` §5 (the
+pull-request draft) and `security-register-format.md` §1 (the security register
+and a unit's `_security.md`).
 
 **Staging is by enumeration, not by glob.** Pathspec glob magic (`:(glob)`) is
 fragile to express and to review. The procedure is:
@@ -189,8 +194,8 @@ fragile to express and to review. The procedure is:
 2. Classify each reported path: **ARTIFACT** if it matches
    `^(specs|specifications|vis)/.+/dev-workflows/` or
    `^documentation/[^/]+/dev-workflows/` or `^dev-workflows-feedback/`
-   or `^dev-workflows-cost/` or
-   `^(specs|specifications|vis)/.+/(implementation|follow-ups|pr-draft|[^/]+-implementation-gaps)\.md$`,
+   or `^dev-workflows-cost/` or `^security/[^/]+/(runs/|scans/|dev-workflows/|register\.(json|md)$)` or
+   `^(specs|specifications|vis)/.+/(implementation|follow-ups|pr-draft|[^/]+-implementation-gaps|_security)\.md$`,
    **and** it does not match
    `^(specs|specifications|vis)/(.+/)?(brd|grounding|interview|design|attachments|revisions|bundle-[0-9]{8}|customer-sent-[0-9]{8}|Doc screenshots)/`;
    **OTHER** otherwise.
@@ -579,7 +584,7 @@ is each member's own rather than a new condition here:
 - **The cost entry is written, unless `--skip-costs`, in which case `workflows-core:run-flags` `skip-cost` advances the checkpoint and writes nothing, or unless the run carries `specs_git: misrooted` (§3.1), in which case `cost-emission.md` §8 reports it in the run's output and writes nothing** — and on the one stop that is no run at all, named below, none of this tail runs. `cost-emission.md` §11 settles it already —
   *Cost runs unless the user skipped it* — and it is the member that makes this tail matter on a
   refusal: the run spent the session's tokens whether or not it wrote a file,
-  and a keyless one has a home under that file's §9 pending ladder. A refusal
+  and a keyless one has a home too: that file's §9 pending file, save where its §8 tier 2 files it per docs or code repository, or reports it only. A refusal
   that skipped the tail would break §11 silently, which is why the tail is not
   skipped wholesale.
 
@@ -870,7 +875,10 @@ spend before it is the conversation's.
 - **`/dev-workflows:implement` on a direct run from inside the specs repository** (its Phase 0),
   where the specs repository is the repository the run changes — on the code
   branch the run cut there, which step 5 does not push unless its name carries
-  one of §2.2's prefixes.
+  one of §2.2's prefixes; or, where the run stops before it cuts one, on the
+  branch HEAD then stands on — the one it started on, or the default branch
+  where its Phase 1.4's fresh start switched to it, which step 5 pushes as it
+  pushes the default branch on any run.
 
 ## 5. Notice contract — the guards must be impossible to overlook
 
@@ -958,11 +966,14 @@ If ignored: the artifacts land on `<branch>` and reach the maintainer when you
 **On a direct `/dev-workflows:implement` run from inside the specs repository**
 (§4.1) the run changes code here, so it cuts a branch of its own (its
 Pre-Phase 3), and the artifacts are committed on that branch, whose name the
-preflight does not know yet — or on `<branch>`, where the run stops before it
-cuts one. Its *Not done* line reads instead `the preflight did not switch away
-from it — the plugin manages only branches it created. This run changes code
-here, so its artifacts WILL be committed on the branch it cuts for that, or on
-<branch> if it stops first, and not pushed unless that branch's name carries one
+preflight does not know yet — or, where the run stops before it cuts one, on
+the branch HEAD then stands on: `<branch>`, or `<default>` where the run's
+Phase 1.4 answered a fresh start and switched to it before the stop. Its *Not
+done* line reads instead `the preflight did not switch away from it — the
+plugin manages only branches it created. This run changes code here, so its
+artifacts WILL be committed on the branch it cuts for that, or, if it stops
+first, on the branch it then stands on — <branch>, or <default> after a fresh
+start — and not pushed unless that branch is <default> or its name carries one
 of this plugin's prefixes.`; its *Fix* line reads `# nothing to do here: they
 reach the maintainer when that branch is pushed or merged`; and its *If
 ignored* line reads `the artifacts stay on that branch until it is pushed or
@@ -1057,7 +1068,7 @@ In the mode nothing in this reference commits a session file on the checked-out 
 
 1. creates the session branch where it does not exist, at the commit the checkout's files come from (`git merge-base HEAD <default-ref>`);
 2. commits every session file the overlay holds (§8.3) — each path `git status` reports dirty and each where the branch differs from HEAD, by §2.1's classifier, a deleted one as a deletion — onto it through a temporary index. A working copy that is HEAD's version, or the version this worktree was last given, is not committed — save the files `--include-ahead` carries, which HEAD holds: the overlay is simply not in place there (a `lift` not yet put back, a second worktree, a switch back from the session branch, a file removed by hand), or another worktree moved the branch on, and the branch keeps its own. An absent session file is a deletion only under `dev-workflows-cost/` — `cost-emission.md` §9 relocates a pending cost file and deletes it, the one session file a run deletes — and only where HEAD holds it or this worktree held it, which the script records per worktree (path and version, in `session-branch-placed.json` under the git directory); any other absent session file is put back; a working copy of an appended shape (the `union` ones of step 3) that differs from the branch's version is first merged with it, `git merge-file --union` from the version at `git merge-base HEAD <session branch>`, and written back, so an entry only the branch holds survives a hand edit or a lift nobody put back; and with `--include-ahead` also the files of the commits on the local default branch that `<default-ref>` lacks, where every one of them is a session-file commit (the ones a refused push left there); it moves neither the checkout, the index nor HEAD;
-3. then merges in `<default-ref>`, and `origin`'s copy of the session branch where one exists (another clone pushed it under the same identity), each where the branch lacks it, as `NOISSUE Merge <ref> into <session branch>` — a fast-forward where the branch holds nothing of its own, else `git merge-tree --write-tree -X ours` with git's `union` driver for the appended shapes, kept as one marked block in the repository's own `info/attributes`, which no commit carries — so a teammate's entries and this run's both survive, and an overwritten file (`resume.md`, `pr-draft.md`, unset there) keeps this run's version whole;
+3. then merges in `<default-ref>`, and `origin`'s copy of the session branch where one exists (another clone pushed it under the same identity), each where the branch lacks it, as `NOISSUE Merge <ref> into <session branch>` — a fast-forward where the branch holds nothing of its own, else `git merge-tree --write-tree -X ours` with git's `union` driver for the appended shapes, kept as one marked block in the repository's own `info/attributes`, which no commit carries — so a teammate's entries and this run's both survive, and an overwritten file (`resume.md`, `pr-draft.md`, and a security register's `register.json` and `register.md`, unset there) keeps this run's version whole;
 4. and brings each working copy that still matches the branch's previous version up to the merged one.
 
 It prints `{committed, files, paths, created, stranded, ahead_not_session, sync}`. `committed: null` is §4 step 3's *nothing to commit*. A non-empty `sync.conflict` names files the merge could not settle, and `sync.error` says the merge could not run at all: either way the commit stands, its push goes ahead, and §6's line says so. The commit is built with `git commit-tree`, signed where `commit.gpgSign` is set, and runs no `pre-commit` or `commit-msg` hook: those judge a change staged in a checkout, and this one is neither; a rule on `origin` still judges its push.
@@ -1069,7 +1080,7 @@ In the mode the working tree's session files hold the session branch's version w
 - **Before it, `… lift --branch <session branch>`.** Where a session file is not yet on the session branch it prints `unpreserved: [...]` and changes nothing: run §8.2's `commit`, with §4 step 4's message, then `lift` again. A second `unpreserved` skips the move, which the step that wanted it reports as it would a refused switch or pull; nothing is discarded. Otherwise it returns each dirty session file to HEAD — the one discard this reference makes (§1 rule 4), and only of content it has just found on the session branch.
 - **After it, `… put-back --branch <session branch> --default-ref <default-ref>`.** It merges as §8.2 step 3 does, then writes each session file where the branch differs from the new HEAD, or removes it where the branch lacks it. A path whose working copy is neither HEAD's nor the branch's is merged with the branch's version as §8.2 step 2 merges it where its shape is appended, and listed in `merged`; any other is left as it is and listed in `skipped`, as is a pending cost file this worktree held and a run deleted, whose deletion §8.2 commits. A copy that is still the version this worktree was last given, where another worktree has since moved the branch on, is brought up to date like HEAD's. Where its merge cannot run, it puts the branch back as it stands and says so in `sync.error`. It runs whether or not the move succeeded, so the overlay returns over the checkout as it stands.
 
-The moves: §3.4's catch-up and §4 step 2's repeat of it; §3.5's B2 (switch, pull, `branch -d`), B4 (switch, pull) and the re-run's switch back; `phase-handoff.md` §2.2's switch onto a new or reused deliverable branch, and its §3.3 row C repair; and a direct `/dev-workflows:implement` run from inside the specs repository, around its own branch and commit (its Pre-Phase 3 and Phase 4.6). **The preflight ends with `put-back` in the mode** whether or not it moved the checkout, and where a guard (§3.3) ended it, never under `specs_git: misrooted`, so a run interrupted between a `lift` and its `put-back` finds its overlay restored. Neither call prints anything where it succeeds, `skipped` included; an exit 2 is reported as this section's opening says.
+The moves: §3.4's catch-up and §4 step 2's repeat of it; §3.5's B2 (switch, pull, `branch -d`), B4 (switch, pull) and the re-run's switch back; `phase-handoff.md` §2.2's switch onto a new or reused deliverable branch, and its §3.3 row C repair; and a direct `/dev-workflows:implement` run from inside the specs repository, around its own branch and commit (its Phase 1.4, where its clean-tree check lifts and a fresh start switches, its Pre-Phase 3 and its Phase 4.6). **The preflight ends with `put-back` in the mode** whether or not it moved the checkout, and where a guard (§3.3) ended it, never under `specs_git: misrooted`, so a run interrupted between a `lift` and its `put-back` finds its overlay restored. Neither call prints anything where it succeeds, `skipped` included; an exit 2 is reported as this section's opening says.
 
 ### 8.4 Pushing, and the line
 

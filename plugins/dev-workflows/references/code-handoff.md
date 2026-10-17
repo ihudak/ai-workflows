@@ -58,9 +58,9 @@ A failed gate is reported through §3.1's `NOT committed` line and the run conti
 
 **After a §2.12 unit-level commit that did not land, this step stages nothing** — its changes stay uncommitted — and the call goes straight on to §2.4 where the branch carries a commit this run's unit-level calls made, and otherwise ends on §3.1's *Commit rejected* row (§2.12).
 
-**The precondition.** The caller is responsible for establishing, before its first file edit, that the tree held nothing it did not put there — `/implement` at Pre-Phase 3 step 1 and `/upgrade` at Phase 2 prep step 1 do it with an explicit dirty-tree prompt, and `/vuln` does it by capturing the porcelain set at the top of Step 3 and passing it as `pre_existing_dirty` (it never prompts, so on `/vuln` a non-empty set always takes carve-out 1 below rather than the `add -A` path). Where the tree was established clean, everything uncommitted in the repo now **is** this run's work — the same reasoning `docs-workflows:finish-and-handoff` §2 applies to the docs repo — and staging is `git -C "<repo>" add -A`.
+**The precondition.** The caller is responsible for establishing, before its first file edit, that the tree held nothing it did not put there — `/implement` at Phase 1.4 step 1 and `/upgrade` at Phase 2 prep step 1 do it with an explicit dirty-tree prompt, and `/vuln` does it by capturing the porcelain set at the top of Step 3 and passing it as `pre_existing_dirty` (it never prompts, so on `/vuln` a non-empty set always takes carve-out 1 below rather than the `add -A` path). Where the tree was established clean, everything uncommitted in the repo now **is** this run's work — the same reasoning `docs-workflows:finish-and-handoff` §2 applies to the docs repo — and staging is `git -C "<repo>" add -A`.
 
-Enumerate before staging regardless: `git -C "<repo>" status --porcelain -z --untracked-files=all`. `--untracked-files=all` is required because the default collapses an untracked directory to a single `?? dir/` line, which would hide individual files from carve-out 1's set subtraction below. **`-z` is required for the reason `workflows-core:phase-handoff` §2.3 gives** — without it git wraps any path carrying a space, a `"`, a `\` or a non-ASCII byte in double quotes and octal-escapes the non-ASCII bytes, so carve-out 1 would commit that path in its quoted form and match no file; under `-z` each record is NUL-terminated and the path is raw. **The caller's `pre_existing_dirty` capture reads the same form**, and that is not optional either: carve-out 1 subtracts one set from the other, so a quoted recorded path beside a raw current one fails to subtract and sweeps somebody else's uncommitted work in a file the run never changed into this run's commit — the one thing that carve-out exists to prevent. All three callers capture it with `-z` (`/implement` Pre-Phase 3 step 1, `/upgrade` Phase 2 prep step 1, `/vuln` Step 3).
+Enumerate before staging regardless: `git -C "<repo>" status --porcelain -z --untracked-files=all`. `--untracked-files=all` is required because the default collapses an untracked directory to a single `?? dir/` line, which would hide individual files from carve-out 1's set subtraction below. **`-z` is required for the reason `workflows-core:phase-handoff` §2.3 gives** — without it git wraps any path carrying a space, a `"`, a `\` or a non-ASCII byte in double quotes and octal-escapes the non-ASCII bytes, so carve-out 1 would commit that path in its quoted form and match no file; under `-z` each record is NUL-terminated and the path is raw. **The caller's `pre_existing_dirty` capture reads the same form**, and that is not optional either: carve-out 1 subtracts one set from the other, so a quoted recorded path beside a raw current one fails to subtract and sweeps somebody else's uncommitted work in a file the run never changed into this run's commit — the one thing that carve-out exists to prevent. All three callers capture it with `-z` (`/implement` Phase 1.4 step 1, `/upgrade` Phase 2 prep step 1, `/vuln` Step 3).
 
 **Each recorded path carries a fingerprint**, which is how carve-out 1 tells a path whose content changed during the run from one left as it was: for a symlink (`test -L "<repo>/<path>"`), the hash of its link text, `readlink -n -- "<repo>/<path>" | git -C "<repo>" hash-object --stdin`, since `hash-object` given the path reads the file the link points at; for a regular file, `git -C "<repo>" hash-object --no-filters -- <path>`; and `-` for anything else, a deleted path or a directory such as a nested repository included. One path per call, because a `hash-object` call naming several fails whole on the first it cannot read. Carve-out 1 takes each fingerprint again the same way at commit time, and a recorded path that carries no fingerprint counts as unchanged. **A changed fingerprint shows that the content changed, not who changed it**: an edit somebody else makes in the tree during the run reads the same as one the run made. A change of mode alone, or of a submodule's checked-out commit, is not seen at all, so such a path counts as unchanged.
 
@@ -137,18 +137,23 @@ There is deliberately no `Cancel`: the commit has already happened, so there is 
 - **No `origin` remote** → nothing to push; the call ends and §3.1's `no origin remote` row is the line (§2.1 already established this is not a failure).
 - **Non-fast-forward rejection** → reported, never resolved by rebasing, resetting, or forcing. The branch is the run's own, so this means somebody else pushed to it; that is a human's call. Server-side rejections (protected-branch pattern, `pre-receive` hook, size or LFS limits) report the same way, through §3.1's `push FAILED (<reason>)` row.
 - **A failed push never undoes the commit and never starts a retry loop.** The commit is the durable half and it survives every push failure — which is the whole reason §1 rule 5 puts it first.
+- **Push only, on a blocked run.** Where §2.4's answer was *Push the branch only* and `clean_finish` is false, the push may just have put blocked work on a pull request already open for `<branch>`, and §2.6, which that answer skips, is where one is found. So once the push has landed, derive `<owner_repo>`, run the `gh auth status` check and test the slug, all as §2.6 does, then run its probe. Where it finds one open, write the body file as §2.7 does, §2.9's banner its first line — that answer skipped §2.6, so nothing has written it yet — then turn the pull request back into a draft and post that file on it, exactly as §2.6's blocked-run paragraph says, and report through that paragraph's *run blocked* existing-PR row. Where it finds none, nothing more is done — no pull request is opened — and the line is §3.1's *Pushed, no PR requested* row. Where the probe cannot run — `gh` absent or unauthenticated, the slug test failing, or the probe failing — say so: that row carries the *Open pull request not checked* append.
 
 ### 2.6 Open the pull request
 
 **First, probe for an existing pull request** — a re-run against a branch that already has one is ordinary, not exceptional:
 
-    gh pr list -R "<owner_repo>" --head <branch> --state open --json number,url
+    gh pr list -R "<owner_repo>" --head <branch> --state open --json number,url,isDraft
 
 One already open ⇒ the push in §2.5 has already updated it. Report it through §3.1's *pushed to existing PR* row — not the rows for a pull request this run opened, which would assert something that did not happen (§2.10) and would leave that row reachable by nothing — and do **not** call `gh pr create`, which would fail on the duplicate and send the run down §3.2 telling the user to open a pull request that exists. This is `workflows-core:phase-handoff` §3.5's primitive, applied here.
 
+**Where `clean_finish` is false (§2.9), that push has just put blocked work on a pull request somebody may merge**, so mark it as §2.9 marks one this run opens. Run `gh pr ready <num> --undo -R "<owner_repo>"`, which turns it back into a draft, or leaves it one where it is a draft already. Then run `gh pr comment <num> -R "<owner_repo>" --body-file "<body-path>"`, posting the body file §2.7 writes, whose first line is §2.9's banner — whether or not the first command succeeded, since the banner is what a reader sees where the draft flag could not be set. Neither is retried, and a failure of either undoes nothing. §3.1's *run blocked* existing-PR row reports it, in place of the plain *pushed to existing PR* row, with an append for each command's outcome.
+
+**Where `clean_finish` is true and the pull request the probe finds is a draft** (`isDraft`), perhaps from an earlier blocked run, report it on the plain *pushed to existing PR* row with the *Still a draft* append, and do nothing more. **Never mark it ready here**: a draft may carry an earlier run's DO-NOT-MERGE banner, and whether its blocking facts are resolved is a person's call.
+
 A `gh pr create` that exits 0 but prints nothing parseable as a number or URL is **not** treated as a failure — the pull request very likely exists, and falling back to §3.2 would tell the user to open a second one. Report it with the dedicated §3.1 row instead.
 
-Otherwise derive the repository and create it. Run the cheap `gh auth status` pre-check first, purely so a missing login reports as a login problem rather than a raw `gh` error, then supply every argument that would otherwise make `gh` prompt — the plugin must never block on an interactive editor:
+Otherwise derive the repository and create it. Run the cheap `gh auth status` pre-check first, bounded — `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 15 gh auth status` — purely so a missing login reports as a login problem rather than a raw `gh` error, then supply every argument that would otherwise make `gh` prompt — the plugin must never block on an interactive editor:
 
     url=$(git -C "<repo>" remote get-url origin)
     host=$(printf '%s' "$url" | sed -E 's#^[a-zA-Z][a-zA-Z0-9+.-]*://##; s#^[^/@]+@##; s#[:/].*$##')
@@ -195,7 +200,7 @@ Body: **written to a file** — `<body-path>`, a `command mktemp -t dw-pr-body-X
 
 **The repository's own template wins**, resolved and filled per `workflows-core:phase-handoff` §2.7.1 in `<repo>`: the four sections above are the caller's own body, in that order, and §2.9's banner, where there is one, is its required first line. Where §2.7.1's rung 2 finds several templates and resolves none, the body is written as above and its last line says so. Here the body replaces the template on both paths §2.7.1 names: `gh pr create --body-file` (§2.6), and the body §3.2 has the user paste.
 
-**Remove `<body-path>` once `gh pr create` has read it** — `command rm -f -- "<body-path>"`, as §2.3 removes the message file and for the same reason. **This file is this reference's one exception to that rule**, and §3.2 is why: where the fallback text names it, the user opens the pull request by hand afterwards, from that path, so the run leaves it and the report names it. It is kept on that path alone; where the run opened the pull request, or never reached §2.6 at all, nothing names the file again and it goes.
+**Remove `<body-path>` once `gh pr create` has read it**, or §2.6's `gh pr comment` on a pull request already open — `command rm -f -- "<body-path>"`, as §2.3 removes the message file and for the same reason. **This file is this reference's one exception to that rule**, and §3.2 is why: where the fallback text names it, the user opens the pull request by hand afterwards, from that path, so the run leaves it and the report names it. It is kept on that path alone; where the run opened the pull request, found one already open on a clean run, commented on one or tried to, or never reached §2.6 at all, nothing names the file again and it goes.
 
 ### 2.8 Resolving the base branch
 
@@ -226,6 +231,7 @@ An exhausted ladder (or no `origin`) means no pull request can be opened: report
 
 - opened with `--draft`, so it cannot be merged by reflex;
 - the body file's **first line** is `> ⚠ DO NOT MERGE — <blocking facts>.`, listing **every** blocking fact when a batch has more than one, semicolon-separated. One slot, all the facts.
+- where §2.6's probe finds one already open, which the push has just updated — after either push answer (§2.5) — it is turned back into a draft, and the body file, banner first, is posted on it as a comment (§2.6).
 - where §2.6 fell back, §3.2 carries the same banner as its own first line **and** appends `--draft` to the copy-paste `gh` command it offers, and its web-UI wording says to open the pull request as a draft. A fallback that quietly produces a mergeable pull request for blocked work defeats this whole section.
 
 ### 2.10 Failure discipline
@@ -276,7 +282,14 @@ Exactly one per **full** call, prefixed `Code repo:`. A caller that finishes sev
 | Pushed, PR opened | `Code repo: <what> — pushed, PR #<num> open (<url>).` |
 | Pushed, draft PR | `Code repo: <what> — pushed, DRAFT PR #<num> open (<url>) — <blocking facts>.` |
 | Pushed, PR already existed | `Code repo: <what> — pushed to existing PR #<num> (<url>).` |
+| Still a draft (§2.6) | append `; it is still a DRAFT, perhaps from an earlier blocked run — once the blocking facts its DO-NOT-MERGE banner names are resolved, mark it ready with gh pr ready <num>.` |
+| Pushed, PR already existed, run blocked (§2.6) | `Code repo: <what> — pushed to existing PR #<num> (<url>) — <blocking facts>.` |
+| A draft (§2.6) | append `; a DRAFT.` |
+| Not turned back into a draft (§2.6) | append `; NOT turned back into a draft (<reason>) — mark it as one by hand.` |
+| Banner comment posted (§2.6) | append `; DO-NOT-MERGE comment posted.` |
+| Banner comment not posted (§2.6) | append `; DO-NOT-MERGE comment NOT posted (<reason>) — post its DO NOT MERGE line on the pull request by hand.` |
 | Pushed, no PR requested | `Code repo: <what> — pushed. No pull request opened (not requested).` |
+| Open pull request not checked (§2.5) | append `; whether <branch> has an open pull request was not checked (<reason>) — if it has one, mark it as a draft and post on it: > ⚠ DO NOT MERGE — <blocking facts>.` |
 | Pushed, PR not opened | `Code repo: <what> — pushed, PR NOT opened (<reason>). Open it manually.` |
 | Pushed, PR opened but unparseable | `Code repo: <what> — pushed, pull request opened but `gh` returned no usable number or URL; check the branch on the host.` |
 | Pushed, PR not opened, run blocked | `Code repo: <what> — pushed, PR NOT opened (<reason>) — <blocking facts>. Open it manually as a DRAFT.` |
@@ -294,6 +307,8 @@ Exactly one per **full** call, prefixed `Code repo:`. A caller that finishes sev
 | A stash is outstanding | append `; a stash from this run's branch step is still on the stack (<stash_ref>).` |
 | Possible secrets committed (§2.2) | append `; <n> possible secret(s) the scan flagged were committed as not secret, at your request (<unit>, …).` |
 | Secret scan not run (§2.2) | append `; the secret scan did not run (<unit>: <reason>; …).` |
+
+A *run blocked* existing-PR line carries one draft append and one banner append, each the one that says what §2.6's command did, after either push answer (§2.5).
 
 The `push FAILED` line states the surviving commit explicitly. A user reading "FAILED" needs to know in the same sentence that their work is not gone.
 

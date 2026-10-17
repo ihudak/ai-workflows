@@ -12,6 +12,9 @@ As a PM, I want an export, so that I can share it.
 - [SM#1] 90% of exports finish under 30s.
 - [SMC#1] Error rate must not rise.
 
+## Security
+- [SEC#1] A security finding in the hash form.
+
 ## References
 - [[PRODUCT-123]]
 - [[PROJ-8605]]

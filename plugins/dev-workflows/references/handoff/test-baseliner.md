@@ -215,9 +215,11 @@ lists record it once and a loss of one copy is masked by the other; a suite
 recorded by its exit status alone — a `Make` suite, or a declared or hinted one
 naming no runner of the table, whose output yielded no count or no test name —
 where one identifier stands for every test; and a declared suite, whose command
-the repository chose rather than the table. The other two — a watch
-carve-out that did not fire on a suite whose row then reads `RUN_FAILED`, and a
-best-effort suite that printed no count and exited non-zero — arrive on an arm the `Status` does
+the repository chose rather than the table. The other three — a watch
+carve-out that did not fire on a suite whose row then reads `RUN_FAILED`, a
+best-effort suite that printed no count and exited non-zero, and a Gradle suite
+whose output shows that no test ran, its test task `FROM-CACHE` or `UP-TO-DATE`
+or no test executed — arrive on an arm the `Status` does
 flag, and there the mark is what reaches a caller that reads this section on none
 of its arms. Verify marks three more of its own: an abort of a suite whose
 baseline row could lose no passing test, step 2's *"more than one of each for a

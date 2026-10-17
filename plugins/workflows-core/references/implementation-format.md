@@ -6,7 +6,9 @@ Design authority: `docs/superpowers/specs/2026-08-31-specs-native-pipeline-desig
 
 **Written by `/implement`. Read by `/document` and `/release-notes`**, which hand the refs it records
 to `diff-summarizer`; and, for whether it holds a block (§1) or for the repositories its entries
-name, by `references/epic-picker.md`'s ● marker, `/ready`, `/specify` and `/epics`. §3's commit
+name, by `references/epic-picker.md`'s ● marker, `/ready`, `/specify` and `/epics`; and, for the
+branch that carries a unit's work and whether it has merged, by the consumers of §5's `unit-branch`,
+which §5 names. §3's commit
 convention is a separate thing with a wider writer set — all three of the commands that change code
 — and §3 says how each of them writes it.
 
@@ -61,8 +63,9 @@ append-only — and the picker's ● marker, which reads the Epic's own folder, 
 
 **Until that block is moved, the Epic reads as not implemented to everything Epic-level.**
 `/implement`'s picker marks it ◐ where its `design.md` stands and ○ where it does not, a ◐ row
-taking the default cursor; `/ready` derives its phase from an Epic folder holding no record; and an
-Epic-level `/document` or `/release-notes` reads none of its refs. **Population: every Epic
+taking the default cursor; `/ready` derives its phase from an Epic folder holding no record; an
+Epic-level `/document` or `/release-notes` reads none of its refs; and §5's `unit-branch` answers
+`none` for that Epic, so no consumer of it finds the Epic's branch. **Population: every Epic
 implemented under a PRD address before `dev-workflows` 4.1.2.** And where the PRD folder also holds
 a flat `specification.md` on a PRD that is not multi-component, or one the 0-Epic override built whole, a PRD-level `/ready` counts the block as the **broad PRD-level slice's
 own record** (on a multi-component PRD, `${CLAUDE_PLUGIN_ROOT}/references/components.md` §3, a PRD-folder block is what marks the PRD as built whole by the 0-Epic override, so `/ready` reads the PRD as that slice and counts the block toward it — a leftover block for an Epic is therefore moved before a multi-component PRD's readiness is read), the PRD folder's record being the slice's — which moves the slice to *In Progress*
@@ -95,7 +98,8 @@ commit or a fast-forward that commit is reachable from the base; after a squash 
 base holds a copy of the change rather than the commit, so once the branch is deleted no branch
 reaches it and it survives only while a clone still holds it — which is why `diff-summarizer` falls
 back to a key-commit search there, where its caller supplies keys — `/document` does; `/release-notes`
-does not, and there the element comes back unread. `diff-summarizer` accepts the branch or the commit, and recording
+does not, and there the element comes back unread. Whether a block's work has merged, by either
+route, is §5's merged test, and which branch carries it now is §5's `unit-branch`. `diff-summarizer` accepts the branch or the commit, and recording
 both is what makes the file survive branch cleanup; how it reads a commit that has already landed on
 the base is that agent's own rule.
 
@@ -366,3 +370,69 @@ message names the key is findable, no convention compels a human to follow one, 
 many commits it scanned — the non-merge commits it walked, `git -C <repo> rev-list --no-merges
 --count HEAD` — and how many matched**. A zero-match scan in a repository that has commits is
 a signal about the convention, not proof that no work happened.
+
+## 5. The unit's branch — `unit-branch`
+
+Three commands need to know which branch carries a unit's work in one repository, and what state that branch is in:
+
+- `/dev-workflows:implement`, to continue on it;
+- `/dev-workflows:conformance`, to trace it;
+- `/security-workflows:scan`, to scan it.
+
+Each runs this entry point for that, never a guess. The branch is the one this file records.
+
+**Inputs:**
+- `<repo>`, the clone;
+- `<repo-slug>`, its slug (`workflows-core:components` §1);
+- `<key>`, the unit's key;
+- this file, in the unit's own folder;
+- `<ref>`, the repository's default ref (`workflows-core:read-only-repos` §3).
+
+**Steps:**
+
+1. **The block.** Take the latest block whose `repo:` is `<repo-slug>`. Never take only the newest block overall, since a companion run in a second repository and a re-run in the same one each add a block. Where there is none, the state is `none`.
+2. **Merged?** Run the merged test below on that block, and let `M` be the newest default-branch commit it found: `<ref>` itself where the ancestry leg passed, otherwise the newest commit the subject leg found. The tip is the commit `<branch>` resolves to — or `origin/<branch>`'s, where `<branch>` does not resolve, or where it does and is an ancestor of `origin/<branch>` (`git -C <repo> merge-base --is-ancestor <branch> origin/<branch>`), a local copy that missed commits pushed from elsewhere. **The content test** asks whether the tip adds anything to a commit `<X>`: `git -C <repo> merge-tree --write-tree <X> <tip>`, read against `<X>`'s own tree, `git -C <repo> rev-parse <X>^{tree}`. It has three outcomes:
+   - exit 0, printing `<X>`'s own tree: the tip **adds nothing** to `<X>`;
+   - exit 1 printing a tree on its first line — a conflict — or exit 0 printing another tree: the tip **adds work**;
+   - anything else: the call **compared nothing** — any other exit, among them `refusing to merge unrelated histories` (exit 128) in a shallow clone, whose cut-off default branch shares no commit with the branch's history; or an exit 1 that prints no tree, as `<X> - not something we can merge` does — and is handled as on an older git, below.
+
+   **On a read-only mount** (`workflows-core:read-only-repos` §1), a plain call cannot write the objects its merge needs. Where the tip adds work it exits 128, compared nothing. On a read-only filesystem it exits 128 even where the tip adds nothing: git freshens an object it already holds by touching its modification time, and, where it cannot, writes the object anew. Run each call there with a scratch object directory, the clone's own store as its alternate, by the block below, a subshell. **Its lines run in one Bash call**: split across calls, the block's parentheses no longer pair within a call, so the shell refuses each part that holds one as a syntax error (exit 2) and the merge never runs; stripped of its parentheses as well, it runs the merge with `$alt` and `$d` empty, since no shell variable survives from one Bash call to the next, which git refuses (`not a git repository`, exit 128). Either way the call compares nothing. Its `exit $rc` ends that subshell, never the Bash call, so whatever follows the block in the call still runs, a second block included. Within the subshell, resolve the clone's store **first, in a statement of its own**: `git rev-parse --git-path objects` follows `GIT_OBJECT_DIRECTORY` once that is set, and would then name the scratch directory itself, so the call could resolve neither ref and would exit 1 printing no tree. In this order:
+
+   ```
+   ( alt="$(git -C <repo> rev-parse --path-format=absolute --git-path objects)"
+     d="$(mktemp -d -t merge-tree-objects.XXXXXX)"
+     GIT_ALTERNATE_OBJECT_DIRECTORIES="$alt" GIT_OBJECT_DIRECTORY="$d" git -C <repo> merge-tree --write-tree <X> <tip>; rc=$?; rm -rf "$d"; exit $rc )
+   ```
+
+   The call then writes its new objects into the scratch directory alone. The clone's store gains no object; where its filesystem permits, git still refreshes the modification time of an object it already holds there, and that is the only change. **Read the outcome from the exit status the subshell ends with**, the merge's own, which `rc` keeps across the cleanup and `exit $rc` returns: a block that ended on `rm -rf "$d"` would report the `rm`'s 0, and a conflict that prints `<X>`'s own tree — a branch that deletes a file `<X>` modified, on git 2.43 — would read as adding nothing. Where the block ends its Bash call, that status is the call's; where anything follows it in the same call, print it straight after the closing parenthesis, `echo "exit $?"`, since the call's own status is then that of whatever ran last.
+
+   The state is `merged` where the merged test passes **and**, where either ref resolves, the tip adds nothing to `M` or adds nothing to `<ref>`: the content test for `<X>` = `M`, then `<ref>` — at most two calls. Where neither ref resolves, the merged test alone decides. Where the merged test passes but the tip adds work both lack, the state is step 3's and `after_merge` is true. That is a commit made on the branch after its pull request merged — or, deliberately, one of two misses that err toward asking and never claim an open pull request: a rebase-merged branch whose review commit carried no `[<key>]` and whose line `<ref>` has since rewritten; and a stale local branch whose `origin/<branch>` is gone, where commits only `origin` held changed what the branch wrote. **Where the merged test fails but either ref resolves**, a third leg runs: the state is `merged` where the tip adds nothing to `<ref>` — the content test for `<X>` = `<ref>` alone — since the work reached `<ref>` under a subject that lost `[<key>]`: a squash whose title was edited at merge time, or a forge whose squash subject is not the pull-request title. Otherwise the state is step 3's, and `after_merge` is false. Beside those two misses this leg has one of its own, which errs the other way and reads a merged branch as open: on a git older than 2.38, which cannot run it, and where `<ref>` has since rewritten, or edited beside, lines the branch changed, since `merge-tree` then conflicts. The content test runs where `git -C <repo> merge-tree -h` lists `--write-tree` in its usage text, as git 2.38 and newer do; `-h` exits 129 on every git, so the listing decides, never the exit status. On an older git a `merge-tree --write-tree` call fails rather than merging, and that failure is not "adds work"; nor is a call that compared nothing. **Where the content test cannot run, or a call of it compared nothing,** the merged test alone decides, the third leg contributes nothing, `after_merge` is false, and the consumer says it did not compare the tip.
+
+   **In a shallow clone** (`git -C <repo> rev-parse --is-shallow-repository` prints `true`) both tests can be cut off: the merged test sees no default-branch commit beyond the clone's depth, and the content test compares nothing. A merged branch whose squash lies beyond the depth, or lost its key, then reads as open — `local` or `remote` — beside the misses above. A consumer that fetches says so (below), and never deepens the clone.
+
+   **Removing a stale tracking ref** (below) trades evidence for truth, beside those misses. On a forge that deletes a pull request's head branch once it merges, that ref can be the only copy of the tip the third leg would compare: a squash whose subject lost `[<key>]` then reads `missing`, and its consumer asks rather than reading it merged. And where a local branch was behind the deleted remote one, it alone is left as the tip, and where commits only the remote held changed what it wrote, it adds work the default branch lacks. Where the squash kept `[<key>]`, the merged test passes, so it reads `local` with `after_merge` true — the second miss above, which the removal reaches too. Where the squash lost its key, the merged test fails and the third leg finds that work as well, so it reads as open — `local`, `after_merge` false — as the branch of a pull request still under review would.
+3. **Where the branch is.**
+   - `git -C <repo> branch --show-current` prints `<branch>`: `checked-out`.
+   - Otherwise, `git -C <repo> rev-parse --verify --quiet refs/heads/<branch>` succeeds: `local`.
+   - Otherwise, `refs/remotes/origin/<branch>` resolves: `remote`.
+   - Otherwise: `missing`. The branch is gone, or was never pushed from the machine that ran `/implement`.
+
+**Output:** `{state, branch, base, commit, tip, after_merge}`. `branch`, `base` and `commit` are the block's. `tip` is the commit step 2 calls the tip, or null where neither ref resolves.
+
+**`after_merge`** is true exactly where step 2 found the merged test passing and the tip adding work both `M` and `<ref>` lack, and false everywhere else. The unit's pull request has then merged while its branch differs from what merged, and the state alone reads as it would for an open pull request, so a consumer that needs to know whether the branch's pull request is still open reads `after_merge`.
+
+**A consumer works on the tip.** Review commits move the tip past the recorded commit, and a rebase moves it off. Neither is an error, and a consumer that reports what it scanned or traced names the tip. Work added to the tip after the merge is `after_merge`'s case. Where `<branch>` resolves and the tip is not its commit, the tip is `origin/<branch>`'s and `<branch>` is behind it. A consumer that reads at a ref reads the tip. A consumer that works in `<branch>`, checked out there, first fast-forwards it to the tip with `git -C <repo> merge --ff-only origin/<branch>`, and says so; otherwise it names `<branch>`'s own commit as what it worked on.
+
+**Steps 2 and 3 read local refs only.** A run that needs `origin`'s current state, of `<ref>` or of the branch, fetches first, best effort, and says so. It fetches the block's `<branch>` by its explicit refspec as well as the default ref — `git -C <repo> fetch origin +<branch>:refs/remotes/origin/<branch>` — because a single-branch clone's plain `fetch origin` never creates `origin/<branch>`. Where `origin` lacks the branch, that fetch fails with "couldn't find remote ref", which is no error here. Where that fetch found the branch not on origin and `refs/remotes/origin/<branch>` still resolves (`git -C <repo> rev-parse --verify --quiet refs/remotes/origin/<branch>`), the run removes that one tracking ref, `git -C <repo> update-ref -d refs/remotes/origin/<branch>`, as `--prune` would, and says it removed it: a fetch without `--prune` leaves it standing after the remote deleted the branch, and step 3 would read it as `remote`. Where it does not resolve, there is nothing to remove and nothing to say, since `update-ref -d` exits 0 on a ref that does not exist. The run removes it on a writable clone only, as it fetches. Step 3 then reads what the clone holds. A run that fetches also runs `git -C <repo> rev-parse --is-shallow-repository`, and where that prints `true` says that the merge state may read as open in a shallow clone (step 2).
+
+**The merged test.** A block of an `implementation.md` is **merged** where either holds:
+- its commit is an ancestor of the default branch (`git -C <repo> merge-base --is-ancestor <commit> <ref>`); or
+- a commit on the default branch made no earlier than that block carries `[<key>]` in its subject as a whole token, `<key>` being the key of the folder whose `implementation.md` holds the block (`git -C <repo> log <ref> --no-merges --since=<date> --format='%H %s'`, each subject matched as §4 matches a key; git lists the newest first).
+
+`<date>` comes from the block's own `## <YYYY-MM-DD> — /implement` heading, as `--since="<the day before that date> 00:00"`. Git fills a bare date with the current time of day, which would cut off a squash merged earlier on the same day, and the heading is the Dev's local date. Where the recorded commit resolves in the clone, that commit's committer date (`git -C <repo> show -s --format=%cI <commit>`) replaces it, being exact.
+
+A squash or a rebase keeps that subject, because `/dev-workflows:implement`'s pull-request title is its commit subject. The date keeps an earlier run's squash from standing in for a later run's unmerged work. A recorded commit that does not resolve — a squashed branch deleted before this clone fetched it — leaves the subject leg to show the merge.
+
+**A unit's work is merged** where, for **each** repository this file names, **the latest block that names that repository** is merged. That block's `branch` is the head of the pull request that carries the unit's work in that repository.
+
+**Consumers** are what `grep -l 'args: "implementation-format unit-branch' plugins/*/commands/*.md plugins/*/agents/*.md` lists — a scope this file is outside. Each says what it does with each state.

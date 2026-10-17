@@ -23,19 +23,22 @@ flowchart TD
     harvest -.->|team decisions| design
     design -.->|design.md + specification.md| ready
     ready -.->|_readiness.md — advisory| implement
-    implement -->|"Epic: the Dev, once its pull request has merged"| conformance
+    implement -->|"Epic: the Dev, before its pull request merges"| conformance
     conformance -.->|"fix the code — a follow-up"| implement
     conformance -.->|"PRD: the PE, every Epic merged — amend the document"| specify
+    conformance -.->|"Epic: then the security scan, in security-workflows"| secplugin["/security-workflows:scan"]:::sec
+    secplugin -.->|"fix — a follow-up, on the Epic's branch"| implement
     implement -.->|code + implementation.md, in docs-workflows| docsplugin["/docs-workflows:document · /docs-workflows:release-notes"]:::docs
 
     classDef prod fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
     classDef dev fill:#dcfce7,stroke:#15803d,color:#14532d
     classDef docs fill:#fef3c7,stroke:#b45309,color:#78350f
+    classDef sec fill:#ccfbf1,stroke:#0f766e,color:#134e4a
 ```
 
 The diagram draws `specification.md` and the ARD reaching `/design`, and `/ready` reading what `/design` leaves, but `/implement` and `/ready` also resolve the applicable ARD and the in-scope `specification.md`/`design.md` once they exist — each edge is drawn once to keep the diagram readable, not because the others do not consult those artifacts. `/ready`'s verdict, `_readiness.md`, is advice `/implement` reads; it blocks nothing.
 
-Three nodes in this diagram are not this plugin's commands and are drawn for continuity only: `/product-workflows:specify`, where this plugin's spine picks up, `/product-workflows:create-ard`, whose ARD `/design` respects, and `/product-workflows:harvest-decisions`, whose team decision records `/design` grounds on. All three ship in the companion `product-workflows` plugin, alongside `/idea`, `/create-prd`, `/update-prd`, `/epics`, and the six-command BRD-to-PRD route that feeds it — that plugin's own Workflow overview page carries the full upstream diagram. The combined `/docs-workflows:document · /docs-workflows:release-notes` handoff hanging off `/implement` ships in the companion `docs-workflows` plugin and is documented there.
+Three nodes in this diagram are not this plugin's commands and are drawn for continuity only: `/product-workflows:specify`, where this plugin's spine picks up, `/product-workflows:create-ard`, whose ARD `/design` respects, and `/product-workflows:harvest-decisions`, whose team decision records `/design` grounds on. All three ship in the companion `product-workflows` plugin, alongside `/idea`, `/create-prd`, `/update-prd`, `/epics`, and the six-command BRD-to-PRD route that feeds it — that plugin's own Workflow overview page carries the full upstream diagram. The combined `/docs-workflows:document · /docs-workflows:release-notes` handoff hanging off `/implement` ships in the companion `docs-workflows` plugin and is documented there. `/security-workflows:scan`, the security scan an Epic's `/conformance` hands on to before the merge, ships in the companion `security-workflows` plugin, which this one does not depend on: a finding it marks fix comes back to `/implement` as a follow-up, which continues on the Epic's branch, so the fix joins the Epic's open pull request.
 
 The diagram above shows where each command sits in the pipeline; [Roles and phases](roles-and-phases.md) says what each role is accountable for and what it hands over at each seam.
 
@@ -48,7 +51,7 @@ The diagram above shows where each command sits in the pipeline; [Roles and phas
 | **Dev** | `/design`, `/implement`, `/ready`, `/conformance` (then `docs-workflows`' `/document` and a final `/release-notes`); off the spine, `docs-workflows`' `/docs-init`, `/docs-brand` and `/docs-audit` | `design.md` on the specs repo's default branch; code committed on a branch in `$REPOS_PATH`, the push and the pull request behind a consent choice; a read-only readiness verdict that sets no status |
 | **Anytime** | `/vuln`, `/upgrade` | a fixed CVE or a completed upgrade, committed on a feature branch in `$REPOS_PATH` |
 
-The PM, PA, and PE roles that produce this plugin's own input — `specification.md` — ship in the companion `product-workflows` plugin; see [Roles and phases](roles-and-phases.md) for where this plugin's spine picks up and that plugin's own Roles and phases page for what each of those three roles owns.
+The Dev also runs the companion `security-workflows` plugin's `/security-workflows:scan` on each Epic, after `/conformance` and before its pull request merges; that plugin's own Security Engineer role audits whole repositories with it. The PM, PA, and PE roles that produce this plugin's own input — `specification.md` — ship in the companion `product-workflows` plugin; see [Roles and phases](roles-and-phases.md) for where this plugin's spine picks up and that plugin's own Roles and phases page for what each of those three roles owns.
 
 ## Artifact homes
 

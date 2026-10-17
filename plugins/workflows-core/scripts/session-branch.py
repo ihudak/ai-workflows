@@ -45,7 +45,8 @@ ARTIFACT = [
     r"^documentation/[^/]+/dev-workflows/",
     r"^dev-workflows-feedback/",
     r"^dev-workflows-cost/",
-    r"^(specs|specifications|vis)/.+/(implementation|follow-ups|pr-draft|[^/]+-implementation-gaps)\.md$",
+    r"^security/[^/]+/(runs/|scans/|dev-workflows/|register\.(json|md)$)",
+    r"^(specs|specifications|vis)/.+/(implementation|follow-ups|pr-draft|[^/]+-implementation-gaps|_security)\.md$",
 ]
 EXCLUDED = (r"^(specs|specifications|vis)/(.+/)?(brd|grounding|interview|design|attachments|revisions"
             r"|bundle-[0-9]{8}|customer-sent-[0-9]{8}|Doc screenshots)/")
@@ -68,9 +69,12 @@ ATTRIBUTES = [
     "dev-workflows-cost/** merge=union",
     "**/implementation.md merge=union",
     "**/follow-ups.md merge=union",
+    "**/_security.md merge=union",
     "**/*-implementation-gaps.md merge=union",
     "**/dev-workflows/resume.md -merge",
     "**/pr-draft.md -merge",
+    "security/*/register.json -merge",
+    "security/*/register.md -merge",
 ]
 ZERO = "0" * 40
 
@@ -713,6 +717,13 @@ def selftest():
             ("specifications/PRD-A-1-x/PRD-A-1-implementation-gaps.md", True),
             ("documentation/acme-docs/dev-workflows/cost/s.md", True),
             ("dev-workflows-cost/pending-2026-10-06-abcd1234.md", True),
+            ("security/acme-api/runs/0001-20261016T091200Z.json", True),
+            ("security/acme-api/scans/20261016T091200Z-eb694d0/patches/F1.patch", True),
+            ("security/acme-api/register.json", True),
+            ("security/acme-api/dev-workflows/cost/s.md", True),
+            ("security/threat-models/policy.md", False),
+            ("security/acme-api/register.json.orig", False),
+            ("specifications/PRD-A-1-x/EPIC-A-1-1-y/_security.md", True),
             ("specifications/BRD-B-1-y/brd/source/implementation.md", False),
             ("specifications/PRD-A-1-x/release-notes.md", False),
             ("specifications/PRD-A-1-x/attachments/release-notes.md", False),
@@ -1248,7 +1259,9 @@ def selftest():
                                ("specifications/PRD-A-1-x/release-notes.md", "unspecified"),
                                ("specifications/PRD-A-1-x/follow-ups.md", "union"),
                                ("specifications/PRD-A-1-x/PRD-A-1-implementation-gaps.md", "union"),
-                               (rs, "unset"), (pr, "unset")]:
+                               ("specifications/PRD-A-1-x/EPIC-A-1-1-y/_security.md", "union"),
+                               (rs, "unset"), (pr, "unset"),
+                               ("security/acme-api/register.json", "unset"), ("security/acme-api/register.md", "unset")]:
                 got = a.git("check-attr", "merge", "--", path).rsplit(": ", 1)[-1]
                 check(got == want, "%s merges as %s, not %s" % (path, want, got))
         # an OS error is "could not run" (exit 2), never a traceback

@@ -108,7 +108,7 @@ A same-session typo fix on an unrelated page runs direct mode instead — `/docs
 
 ## See also
 
-- Roles and phases — what the `dev` role owns, including why both of this command's modes emit the same fixed `documenting`/`dev` cost attribution. `workflows-core:cost-emission` §7 is the authority that assigns this command its fixed pair; `dev-workflows`' `docs/roles-and-phases.md` describes the `dev` role, and `documenting` has no roles page — [Session cost](../reference/session-cost.md) says which commands emit it; `workflows-core`'s `docs/roles-and-phases.md` covers only the three phases its own commands reach.
+- Roles and phases — what the `dev` role owns, including why both of this command's modes emit the same fixed `documenting`/`dev` cost attribution. `workflows-core:cost-emission` §7 is the authority that assigns this command its fixed pair; `dev-workflows`' `docs/roles-and-phases.md` describes the `dev` role, and `documenting` has no roles page — [Session cost](../reference/session-cost.md) says which commands emit it; `workflows-core`'s `docs/roles-and-phases.md` does not describe `documenting`, which its own commands reach only by inheritance.
 - `/dev-workflows:implement` — the command to use instead for a change that touches both code and docs; it ships in the companion pipeline plugin.
 - `/product-workflows:epics` — writes child Epic drafts from a PRD; a different output from either mode of this command.
 - [`/release-notes`](release-notes.md) — the recommended next step once a PRD is fully documented, and the sibling command whose own phase/role IS inferred rather than fixed.

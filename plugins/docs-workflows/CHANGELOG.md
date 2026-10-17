@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.16.2] — 2026-10-17
+
+### Fixed
+- **`/docs-init`'s reason for the family-wide `dev-workflows/` cost directory** says that naming it per plugin would split one repository's cost record "across one directory per emitting plugin", not "across four directories", a count that went stale as the family grew.
+- **The documentation index counts twenty-four reference files**, not twenty-three, as `references/` holds.
+- **The session-cost page says where a keyless `/security-workflows:scan` files its cost**: per code repository, never in the pending file, and only in the run's output where it resolved no repository slug (`workflows-core` 1.42.0). `/document`'s page no longer says `workflows-core`'s roles page covers "only the three phases its own commands reach"; it says that page does not describe `documenting`, which its commands reach only by inheritance.
+
 ## [1.16.1] — 2026-10-15
 
 ### Fixed

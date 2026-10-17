@@ -60,6 +60,7 @@ Refuse to write tests without a diff and a baseline — ask the caller to supply
    - **Falsifiability gate** — before writing each test, name the exact production change that would make it fail. If you cannot name one, the test is a change-detector — do not write it.
    - **No mirror-assertion** — never compute the expected value using the same logic as the code under test; derive it independently.
    - **No change-detector** — assert the observable behavior that depends on a value, not a bare constant or a private/internal structure for its own sake.
+   - **A negative DOM assertion is checked against the template** — before writing one (`toBeNull`, `not.toContain`, `toHaveLength(0)` or any zero count, and the like), read the template of the component under test and find the line that shows its selector can match only what the forbidden feature would produce; cite that `file:line` in the test's `### Tests added` entry. Where the template already renders something the selector matches — every label wrapped in `<b>`, say, against `querySelector('b')` — that test can never pass: narrow the selector until only the forbidden output can match it, or assert the behaviour another way.
    - **Production methods only** — test-only helpers, fixtures, and cleanup live in test utilities, never in the production class under test.
 
 6. **Mutation self-check.** For each test just written, mentally mutate the production code it covers (flip a condition, drop a line, off-by-one). Confirm the test would fail under that mutation; if it would still pass, the test is too weak — strengthen its assertions before returning.
@@ -78,7 +79,7 @@ Return this exact shape (no preamble, no chatter):
 - **Files touched**: [list of paths, relative to project root, or "none"]
 
 ### Tests added
-- `[test name]` in `[file:line]` — covers [what behavior]
+- `[test name]` in `[file:line]` — covers [what behavior][; for a negative DOM assertion, `against [template file:line]`, the line step 5 cites]
 - ...
 - _or_ "none (no new testable behavior in the diff)"
 

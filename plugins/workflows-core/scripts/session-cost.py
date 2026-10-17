@@ -561,7 +561,10 @@ def scan_main(path, line_offset, ns_map, by_id=None, compactions=None):
 
 
 def read_subagents(subdir, last_dt, now_dt, records, by_id=None, compactions=None):
-    """Buffer usage from subagents/agent-*.jsonl entries whose timestamp is in
+    """Buffer usage from subagents/agent-*.jsonl entries -- and from a Workflow run's
+    agents, which write the same format to subagents/workflows/<run-id>/agent-*.jsonl
+    (the run's journal.jsonl beside them is no agent transcript, and its name keeps it
+    out) -- whose timestamp is in
     (last_dt, now_dt]  (all <= now_dt when last_dt is None), appending
     (ts, model, usage) to records so they are segmented exactly as the main
     transcript's are -- the two must agree at a boundary or a subagent's tokens
@@ -573,7 +576,8 @@ def read_subagents(subdir, last_dt, now_dt, records, by_id=None, compactions=Non
     by_id = {} if by_id is None else by_id
     if not subdir or not os.path.isdir(subdir):
         return first_ts
-    for fp in sorted(glob.glob(os.path.join(subdir, "agent-*.jsonl"))):
+    for fp in sorted(glob.glob(os.path.join(subdir, "agent-*.jsonl"))
+                     + glob.glob(os.path.join(subdir, "workflows", "*", "agent-*.jsonl"))):
         try:
             fh = open(fp, encoding="utf-8", errors="replace")
         except OSError:
@@ -1144,6 +1148,22 @@ def _selftest_body(tmp):
     read_subagents(_ddir, None, None, _all, by_id=_shared)
     check(len(_all) == len(_mrecs) + 2,
           "a main-transcript id a subagent file repeats counts once when the two share one map")
+    # A Workflow run's agents write the same format one level down, under
+    # workflows/<run-id>/, beside the run's journal.jsonl, which is no agent transcript.
+    # Reading only the top level left a scan's whole agent fan-out out of its cost.
+    _wdir = os.path.join(tmp, "workflow-subagents")
+    os.makedirs(os.path.join(_wdir, "workflows", "wf_1"))
+    with open(os.path.join(_wdir, "workflows", "wf_1", "agent-w.jsonl"), "w", encoding="utf-8") as fh:
+        for r in (_rec("msg_W1", "2026-09-01T10:00:09.000Z", 33),    # inside the window
+                  _rec("msg_W2", "2026-09-01T09:00:00.000Z", 900)):  # BEFORE the window
+            fh.write(json.dumps(r) + "\n")
+    with open(os.path.join(_wdir, "workflows", "wf_1", "journal.jsonl"), "w", encoding="utf-8") as fh:
+        fh.write(json.dumps(_rec("msg_J", "2026-09-01T10:00:09.500Z", 77)) + "\n")
+    _wrecs = []
+    read_subagents(_wdir, parse_ts("2026-09-01T09:30:00.000Z"), parse_ts("2026-09-01T10:05:00.000Z"), _wrecs)
+    check([r[2].get("output_tokens") for r in _wrecs] == [33],
+          "a Workflow run's agent counts inside the window and not outside it, and its journal never "
+          "(got %r)" % ([r[2].get("output_tokens") for r in _wrecs],))
 
     tpath = os.path.join(tmp, "t.jsonl")
     with open(tpath, "w", encoding="utf-8") as fh:

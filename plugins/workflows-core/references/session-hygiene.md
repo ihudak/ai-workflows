@@ -78,7 +78,7 @@ sensitive value.
 
 ## 2. The suggestion — role-aware (reads next-phase-offer's role labels)
 
-`next-phase-offer.md` already role-labels every next option (PM / PA / PE / Dev). For
+`next-phase-offer.md` already role-labels every next option (PM / PA / PE / Dev / Security Engineer). For
 each next option the offer names, compare its role to the just-finished command's role:
 
 - **Same role** (e.g. `/design E1 → /design E2`, Dev→Dev) → suggest **`/compact`** —

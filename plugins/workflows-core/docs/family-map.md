@@ -1,6 +1,6 @@
 # Family map
 
-This page shows the whole plugin family on one diagram: every slash command of `product-workflows`, `dev-workflows`, `docs-workflows` and `workflows-core`, from the two ways work enters — `/idea` and `/brd-intake` — to shipped code, its documentation and its release notes. Each lane is a **role**. Each command is **coloured by the plugin that ships it**. Labels name artifacts or explicitly marked actions; gray manual steps are not commands.
+This page shows the whole plugin family on one diagram: every slash command of `product-workflows`, `dev-workflows`, `docs-workflows`, `security-workflows` and `workflows-core`, from the two ways work enters — `/idea` and `/brd-intake` — to shipped code, its documentation and its release notes. Each lane is a **role**. Each command is **coloured by the plugin that ships it**. Labels name artifacts or explicitly marked actions; gray manual steps are not commands.
 
 **Where to start.** The nodes outlined in red and marked ▶ are the entry points:
 
@@ -16,6 +16,7 @@ flowchart TD
         kdev["dev-workflows"]:::dev
         kdocs["docs-workflows"]:::docs
         kcore["workflows-core"]:::core
+        ksec["security-workflows"]:::sec
         kmanual["Manual work — no command"]:::manual
         kentry["▶ entry point — start here"]:::entry
     end
@@ -58,6 +59,10 @@ flowchart TD
         ready["/ready"]:::dev
         implement["/implement"]:::dev
         conformanceepic["/conformance (Epic)"]:::dev
+        secscan["/security-workflows:scan"]:::sec
+    end
+    subgraph SEC["Security Engineer — audit"]
+        secrepo["/security-workflows:scan — a repository, --verify-fixes, --triage"]:::sec
     end
     subgraph DOC["Dev — documentation and release notes"]
         document["/document (keyed)"]:::docs
@@ -127,12 +132,16 @@ flowchart TD
     design -.->|"design.md + specification.md"| ready
     ready -.->|"_readiness.md — advisory"| implement
     implement -->|"code + implementation.md"| document
-    implement -->|"Epic: the Dev, once its pull request has merged"| conformanceepic
+    implement -->|"Epic: the Dev, before its pull request merges"| conformanceepic
     conformanceepic -.->|"fix the code — a follow-up"| implement
     conformanceepic -.->|"the Dev's proposed decisions"| conformanceprd
     conformanceprd -.->|"PRD: the PE, every Epic merged — amend the document"| specify
     conformanceprd -.->|"amend the PRD"| updateprd
     implement -.->|"implementation.md — diff grounding on"| rnfinal
+    conformanceepic -.->|"action: then the security scan, still before the merge"| secscan
+    secscan -.->|"fix — a follow-up + patch, on the Epic's branch"| implement
+    secscan -.->|"action: once a fix has merged, or decisions await review"| secrepo
+    secrepo -.->|"fix — an /implement prompt line, or a follow-up with a key"| implement
 
     docsinit -.->|"a new docs repo + profile"| document
     docsinit -.->|"call: inline unless --no-brand"| docsbrand
@@ -155,6 +164,7 @@ flowchart TD
     classDef dev fill:#dcfce7,stroke:#15803d,color:#14532d
     classDef docs fill:#fef3c7,stroke:#b45309,color:#78350f
     classDef core fill:#ede9fe,stroke:#6d28d9,color:#4c1d95
+    classDef sec fill:#ccfbf1,stroke:#0f766e,color:#134e4a
     classDef cust fill:#f3f4f6,stroke:#6b7280,color:#1f2937
     classDef manual fill:#f3f4f6,stroke:#6b7280,color:#1f2937,stroke-dasharray:5 5
     classDef entry stroke:#dc2626,stroke-width:3px
@@ -171,7 +181,8 @@ flowchart TD
 - **The audit backlog has a manual implementation stage.** Select an actionable unit, write its page, maintain its `unit:` metadata and backlog `page_path` / `status`, verify its claims, and publish it. `/document` direct mode can help with a described prose edit, but it never reads the backlog or manages unit status; keyed mode remains the feature-documentation route. `/docs-write` is planned, not shipped. The `docs-workflows` documentation route page describes the manual procedure; `--refresh` re-audits coverage and does not replace verification.
 - **The PA lane keeps its own decisions.** `/harvest-decisions` turns the decisions of merged ARDs into team records that `/create-ard`, `/specify` and `/dev-workflows:design` ground on; `/promote-decisions`, run in the architecture repository, proposes organisation ADRs from them, and once one is accepted grounding cites the ADR instead of the record. The product-workflows Workflow overview page draws the whole loop.
 - **`/ready` sits beside the spine, not on it.** Its verdict is advice `/implement` reads; it blocks nothing.
-- **`/dev-workflows:conformance` is drawn twice, once per role.** In the Dev lane the Dev checks an Epic once its pull request has merged, and the decisions are proposals; in the PE lane the PE checks the whole PRD once every Epic has merged, ruling on every Dev decision, and the PE's decisions are final.
+- **`/dev-workflows:conformance` is drawn twice, once per role.** In the Dev lane the Dev checks an Epic before its pull request merges, on its branch, and the decisions are proposals; in the PE lane the PE checks the whole PRD once every Epic has merged, ruling on every Dev decision, and the PE's decisions are final.
+- **`/security-workflows:scan` is never run for you, and it is drawn once per role.** In the Dev lane it is the Dev's scan of their own Epic: offered after the Epic's `/conformance`, it runs before the merge, on the Epic's branch, reads code through Claude Security, a plugin outside the family, and records what it finds in the specs repository. A finding marked fix comes back to `/implement`, which continues on the Epic's branch, so the fix joins the open pull request. In the Security Engineer lane are that role's own runs: a scan across a repository, `--verify-fixes`, which closes fixes once they have merged, and `--triage`, which reviews the Dev's decisions; those decisions never wait on that review. Both nodes are teal, because a colour names the plugin, not the role.
 - **The Anytime lane hands no deliverable to the pipeline** except `/frames`' frame-set index, which `/prd-ground`'s design grounding needs. The portal lane prepares the documentation repository `/document` writes into, and `/docs-serve` only previews it.
 
 ## The detail, per plugin
@@ -181,6 +192,7 @@ Each plugin's own workflow page draws its commands in full, with the loops and c
 - `product-workflows` — its Workflow overview page, and its BRD workflow page for the six-command route with its re-entry loops.
 - `dev-workflows` — its Workflow overview page.
 - `docs-workflows` — its Workflow overview page, and its docs workflow page for the portal procedure.
-- `workflows-core` — [Workflow](workflow.md), for what this plugin gives the other three.
+- `security-workflows` — its Workflow overview page.
+- `workflows-core` — [Workflow](workflow.md), for what this plugin gives the other four.
 
 The roles are described on each plugin's Roles and phases page; this plugin's own is [Roles and phases](roles-and-phases.md).

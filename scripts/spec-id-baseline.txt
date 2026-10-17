@@ -42,6 +42,19 @@
 # previous baseline was +1 on each of [AC01], [TCxx] and [U01], each accounted for by
 # one of these three sites, and no other placeholder or concrete ID moved.
 #
+# 2026-10-16: regenerated at +2 [AC01], +3 [U01], +1 [ACxx] and +2 [Uxx], from two
+# sources, both in plugins/dev-workflows/. The first predates the branch that
+# regenerated it and was already live on main at 5b462ebc: fe8ce332 (dev-workflows
+# 4.26.0, 2026-10-13) named the ids that repeat across a PRD run's specifications,
+# `[U01]/[AC01]` in commands/conformance.md and `[U01]` and `[U01]/[AC01]` in
+# references/handoff/conformance-tracer.md, without regenerating this file -- the
+# +2 [AC01] and +3 [U01]. The second is that branch's own (dev-workflows 4.28.0):
+# commands/conformance.md Phase 4 defines when an Epic covers a PRD-level
+# requirement, naming a spec's `[Uxx]/[ACxx]` and its story's `[Uxx]` -- the +1
+# [ACxx] and +2 [Uxx]. Verified before regenerating: per-file counts at 5b462ebc
+# and at the regenerating commit's parent differ in commands/conformance.md alone,
+# by exactly those three placeholders, and no other placeholder or concrete ID moved.
+#
 # Regenerate, preserving this header:
 #   ( grep '^#' scripts/spec-id-baseline.txt; \
 #     grep -rhoE '\[U0[0-9]+\]|\[AC0[0-9]+\]|\[TC0[0-9]+\]|\[Uxx\]|\[ACxx\]|\[TCxx\]' \
@@ -53,12 +66,12 @@
 #   grep -rhoE '\[U0[0-9]+\]|\[AC0[0-9]+\]|\[TC0[0-9]+\]|\[Uxx\]|\[ACxx\]|\[TCxx\]' \
 #     --include='*.md' --exclude='CHANGELOG.md' plugins/ CLAUDE.md .claude/rules/ docs/maintainers/ 2>/dev/null | sort | uniq -c \
 #   | diff <(grep -v '^#' scripts/spec-id-baseline.txt) -
-      2 [AC01]
+      4 [AC01]
       2 [AC03]
-     23 [ACxx]
+     24 [ACxx]
       2 [TC01]
       1 [TC07]
      19 [TCxx]
-      2 [U01]
+      5 [U01]
       2 [U02]
-     26 [Uxx]
+     28 [Uxx]

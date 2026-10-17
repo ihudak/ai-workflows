@@ -55,6 +55,9 @@
     "prose-review-pr",
     "prose-style-refresh"
   ],
+  "security-workflows": [
+    "scan"
+  ],
   "workflows-core": [
     "diagnose-session",
     "feedback",

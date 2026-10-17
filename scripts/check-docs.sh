@@ -48,7 +48,7 @@ set -uo pipefail
 # check function below is unchanged and still reads a single PLUGIN_REL. A one-element
 # list behaves exactly as the old scalar did, which is what keeps this body portable to
 # editions that ship one plugin.
-PLUGIN_RELS="plugins/dev-workflows plugins/guideline-reviewers plugins/workflows-core plugins/docs-workflows plugins/product-workflows"   # copilot: dev-workflows
+PLUGIN_RELS="plugins/dev-workflows plugins/guideline-reviewers plugins/workflows-core plugins/docs-workflows plugins/product-workflows plugins/security-workflows"   # copilot: dev-workflows
 CMD_DIR="commands"                   # copilot: skills
 CMD_SUFFIX=".md"                     # copilot: /SKILL.md
 CMD_EXCLUDE=""                       # copilot: _shared
@@ -88,7 +88,7 @@ NS_MAP_REL="plugins/workflows-core/scripts/command-namespaces.json"
 # assert that a plugin holding the CALL SITES is declared. The trigger is the call sites and
 # not the reference file: the corpus extraction separated the two, and a file-presence
 # trigger got both directions wrong at once (see those two functions).
-COST_PLUGIN_RELS="plugins/dev-workflows plugins/docs-workflows plugins/workflows-core plugins/product-workflows"        # copilot: dev-workflows
+COST_PLUGIN_RELS="plugins/dev-workflows plugins/docs-workflows plugins/workflows-core plugins/product-workflows plugins/security-workflows"        # copilot: dev-workflows
 HANDOFF_PLUGIN_RELS="plugins/product-workflows"  # copilot: dev-workflows
 # Which plugins check 20 holds to the untrusted-content guard: every docs-gated plugin plus
 # prose-style, which ships agents and dispatching commands but no docs/ tree. Declared, like
@@ -854,7 +854,14 @@ check_prose_counts() {
   # correct numeral rather than failing. (^|[^[:alnum:]_-]) keeps the match from starting mid-word
   # or mid-compound; a captured boundary character is whitespace in every real sentence, so it
   # disappears when `awk '{print $1}'` splits the extracted match.
-  _one "commands"        "$p/README.md"                  '(^|[^[:alnum:]_-])(one|two|three|four|five|six|seven|eight|nine|ten|fifteen|sixteen|seventeen|eighteen|nineteen|twenty-one|twenty-two|twenty-three|twenty-four|twenty-five|twenty-six|twenty-seven|twenty-eight|thirty-four|ninety-eight|[0-9]+) slash commands'    "$(cmd_names "$p" | wc -l | tr -d ' ')"
+  #
+  # The commands noun takes a singular, as `hooks?` below does, and so does the cost-emitting
+  # sentence's verb ("One command emits"): a plugin shipping one command otherwise had to write
+  # "1 slash commands" or "1 commands emit" to be counted at all. When the singular was added,
+  # `head -1` returned the same sentence as before in every gated README, every session-cost page
+  # and the fixture, so the widening moved no comparison; two selftest cases reword the fixture's
+  # one-command sentences into the singular and must stay green.
+  _one "commands"        "$p/README.md"                  '(^|[^[:alnum:]_-])(one|two|three|four|five|six|seven|eight|nine|ten|fifteen|sixteen|seventeen|eighteen|nineteen|twenty-one|twenty-two|twenty-three|twenty-four|twenty-five|twenty-six|twenty-seven|twenty-eight|thirty-four|ninety-eight|[0-9]+) slash commands?'    "$(cmd_names "$p" | wc -l | tr -d ' ')"
   # "eleven" is in the agents alternation and in NO sibling below, and that asymmetry was
   # measured -- in the upstream edition, whose plugins every name below is -- before it was
   # taken rather than tidied into uniformity. docs-workflows crossed ten
@@ -915,7 +922,7 @@ check_prose_counts() {
     local n_emit
     n_emit=$(emit_cost_calls "$p" | cut -d'|' -f1 | sort -u | grep -c . || true)
     _one "cost-emitting commands" "$d/reference/session-cost.md" \
-         '(^|[^[:alnum:]_-])(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty-one|twenty-two|twenty-three|twenty-four|twenty-five|twenty-six|twenty-seven|thirty-four|ninety-eight|[0-9]+) commands emit a cost entry' "$n_emit"
+         '(^|[^[:alnum:]_-])(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty-one|twenty-two|twenty-three|twenty-four|twenty-five|twenty-six|twenty-seven|thirty-four|ninety-eight|[0-9]+) (commands emit|command emits) a cost entry' "$n_emit"
   fi
 }
 
@@ -2950,6 +2957,22 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
   else
     printf 'skip  the cost-emitting-count case (the fixture has no cost subsystem)\n'
   fi
+  # Check 9's singular. A plugin of one command writes its count in the singular, and both
+  # sentences must be COUNTED, not reported as drifted away: these two rewording-only cases reword
+  # the fixture's one-command sentences ("one slash commands" in fixture-two, "One commands emit"
+  # in the cost page) and stay green only while `slash commands?` and `(commands emit|command
+  # emits)` hold -- with either reverted, its case FAILs "no count sentence found". The fail case
+  # after them is the twin that shows the singular is COMPARED, not merely matched: two commands
+  # claimed as one fails "says one (1), tree has 2".
+  expect_pass_after "a one-command count written in the singular is accepted" \
+    "sed -i.bak 's|one slash commands|one slash command|' $(plugin_parent)fixture-two/README.md"
+  if [ "$HAS_COST" = 1 ]; then
+    expect_pass_after "a one-command cost-emitting count written in the singular is accepted" \
+      "sed -i.bak 's|One commands emit a cost entry|One command emits a cost entry|' $PLUGIN_REL/docs/reference/session-cost.md"
+  else
+    printf 'skip  the singular cost-emitting-count case (the fixture has no cost subsystem)\n'
+  fi
+  expect_fail "a wrong count written in the singular is rejected" 9 "sed -i.bak 's|two slash commands|one slash command|' $PLUGIN_REL/README.md"
   # The same proof for the THIRD gated alternation, the agents one, and it is the reason check 9
   # learned "eleven": docs-workflows crossed ten agents and writes that count as a word, so the
   # sentence matched no alternative and the count read as ABSENT rather than as 11. Grows the

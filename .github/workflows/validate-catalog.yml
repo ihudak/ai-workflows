@@ -153,6 +153,13 @@ jobs:
         # Fixtures are built at run time.
         run: python3 plugins/product-workflows/scripts/proposal-record.py --selftest
 
+      - name: Self-test the security register
+        # /security-workflows:scan records Claude Security scans in SPECS with it. Its failure modes
+        # are silent: a change scan that closes a finding it never re-checked, a rebuild that
+        # renumbers a [SEC#n] a follow-up already cites, or a follow-up line that carries text the
+        # scanner wrote from untrusted code. Fixtures and a git repository are built at run time.
+        run: python3 plugins/security-workflows/scripts/register.py --selftest
+
       - name: Self-test the key discovery
         # /document and /release-notes run the whole-key commit scan, its probe and the optional
         # GitHub pull-request search with it. A boundary that matches a longer key, or a search
