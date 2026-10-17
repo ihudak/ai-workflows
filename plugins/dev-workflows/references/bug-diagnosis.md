@@ -15,8 +15,9 @@ steps** — a run of the repro, a `[DEBUG-xxxx]` probe placed or read, a fixture
 to minimise the repro — and has `risk-planner`'s exception, held to the scratch checkout: it runs
 each only in the scratch checkout of `HEAD` — the one the section below prescribes once the edits
 have begun — and does so on every dispatch, its first included, before the run's first edit as
-after it, since it never runs one against the working tree; it lists each run with its redacted
-output. Whatever build that repro itself needs is part of running it there; in the working tree
+after it, since it never runs one against the working tree; a run of a test file of the run's own
+copies it in first, at its own path, as the red-capability check below copies the regression test
+in, and never a non-test source file (its *Bug work*); it lists each run with its redacted output. Whatever build that repro itself needs is part of running it there; in the working tree
 `code-writer` runs no lint, build, type-check or test at any class. A plan's bisect, which moves
 `HEAD`, and the checks after the review gate are the orchestrator's own (below). An agent without
 `Bash` (`code-review` among them) is never held to the completion criterion and must not be asked
