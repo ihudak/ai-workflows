@@ -62,13 +62,16 @@ Refuse to review without a diff - ask the caller to produce one.
   is a *context* input under the read-failure contract: if it cannot be read, record
   `Claims falsification: NOT RUN — claims_file unreadable at <path>` in the Summary and continue;
   never substitute the brief's own text for it, and never reconstruct it.
-- **Plan ruling** (optional, from `/implement`, on a review after a plan
-  conflict) — each finding whose fix the user ruled may depart from the
-  approved plan, with the plan text it departs from: a deviation the user
-  sanctioned. That departure is not a finding — report no divergence from that
-  plan text, in Correctness or any other dimension, and do not raise the ruled
-  finding again. The fix itself is reviewed like any other change, and a defect
-  it brings is a finding.
+- **Plan ruling** (optional, from `/implement`) — each ruling of the user's
+  that the plan text does not carry: a question the approved plan left open,
+  which the user answered while it was coded, with that answer; and, on a
+  review after a plan conflict, each finding whose fix the user ruled may
+  depart from the approved plan, with the plan text it departs from: a
+  deviation the user sanctioned. Neither is a finding — report no divergence
+  from the plan, in Correctness or any other dimension, where the code follows
+  such a ruling, and do not raise a ruled finding again. The code that carries
+  out a ruling is reviewed like any other change, and a defect it brings is a
+  finding.
 
 ## Review method
 
