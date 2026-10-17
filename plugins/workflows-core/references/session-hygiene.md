@@ -98,9 +98,10 @@ own `next-phase-offer` output already carries. The role graph is owned by
 
 ## 3. Mid-phase checkpoints & non-pipeline big commands
 
-- **`/implement` mid-phase, between step groups of a long step list** (its Phase 3B; past one run's reach, `context-management.md`'s *Decompose*)
-  → suggest **`/compact`** to free budget before continuing (mid-command → no role
-  transition → never `/clear`).
+- **`/implement` suggests no `/compact` mid-run.** Its step groups are dispatched back to
+  back, with no user turn between them to act on a suggestion, and its run-state file
+  carries the run across an automatic compaction; a step list past one run's reach is
+  decomposed into a unit of its own (`context-management.md`'s *Decompose*).
 - **`/vuln`, `/upgrade`** (big, non-pipeline, no role transition) → a plain end-of-run
   **`/compact`** suggestion only; no `resume.md` (durable state is the branch/PR).
 
@@ -171,5 +172,4 @@ folder, and carries no line there either.
 A short **`### Context hygiene`** block appended right after the `### Next step` section
 at the END of the command's Final Report (guidance-only prose), plus one invariant citing
 this reference. `/vuln` + `/upgrade` place the `/compact` line near their
-`impl-maintenance` handoff. `/implement` places the mid-phase `/compact` in its Phase 3B,
-between step groups of a long step list.
+`impl-maintenance` handoff. `/implement` places none mid-run (§3).

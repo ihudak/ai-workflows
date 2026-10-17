@@ -44,8 +44,10 @@ commits only at its Phase 4.6, after Phase 4. "Hand off by file" is
 orthogonal — apply it whenever you dispatch a sub-agent, whichever offload strategy you chose.
 
 At each **checkpoint**, a long-run command may additionally suggest **`/compact`** to free
-context before continuing the next scope/Epic — see `workflows-core:session-hygiene` §3
-(mid-command → `/compact` only, never `/clear`; guidance-only).
+context before continuing the next scope/Epic (mid-command → `/compact` only, never `/clear`;
+guidance-only). `/implement`, which has no checkpoint, suggests none: its step groups are
+dispatched back to back, with no user turn between them, and its run-state file carries the run
+across an automatic compaction — see `workflows-core:session-hygiene` §3.
 
 ## The read-failure contract
 

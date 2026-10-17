@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.34.7] — Unreleased
+
+### Changed
+- **The resume-and-checkpoints page no longer says `/dev-workflows:implement` carries a mid-phase checkpoint** (dev-workflows 4.29.0, which has none and suggests no `/compact` mid-run): none of this plugin's commands carries one.
+
 ## [3.34.6] — 2026-10-17
 
 ### Changed

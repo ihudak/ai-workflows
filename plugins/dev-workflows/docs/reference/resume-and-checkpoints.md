@@ -33,9 +33,9 @@ Every next-step option a command offers already carries a role label — see [Ro
 - **The next step could go either way** (the companion `product-workflows` plugin's `/product-workflows:create-prd` → PM `/docs-workflows:release-notes`, or handing off to PA/PE) → both branches are named explicitly: continuing as the same role suggests `/compact`, handing off — even to yourself — suggests `/clear`.
 - **You're done, or ending the session** → no suggestion at all.
 
-## Mid-phase checkpoints and big non-pipeline commands
+## Mid-run suggestions and big non-pipeline commands
 
-A run doesn't have to finish to earn a checkpoint. `/implement` suggests `/compact` mid-phase, between the step groups of a long step list, to free up budget before continuing — never `/clear` here, since a mid-command checkpoint is never a role transition. `/vuln` and `/upgrade` are large, non-pipeline commands with no role transition of their own: each gets a plain end-of-run `/compact` suggestion near its maintenance handoff, and neither writes a `resume.md`, since their durable state already lives in the branch or PR they produced.
+`/implement` suggests no `/compact` mid-run: it codes the plan one step group after another with no turn of yours between them, so there is no moment to act on one, and its run-state file carries the run across an automatic compaction (see [`/implement`](../commands/implement.md#the-run-state-file)); a step list too long for one run is split into a unit of its own instead. `/vuln` and `/upgrade` are large, non-pipeline commands with no role transition of their own: each gets a plain end-of-run `/compact` suggestion near its maintenance handoff, and neither writes a `resume.md`, since their durable state already lives in the branch or PR they produced.
 
 ## The `/rename` aid
 
