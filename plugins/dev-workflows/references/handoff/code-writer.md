@@ -99,8 +99,10 @@ report_file: /tmp/dw-impl-code-AbC123
                                     named with why). mode: fix — n/a -->
 - **Install scripts left to the caller**: none
                                <!-- mode: step — each of the project's own install scripts an install skipped
-                                    (install-time-code.md's *The project's own install scripts*), with the
-                                    command that runs it; the caller runs them with its build -->
+                                    that install-time-code.md runs beside a build (*The project's own install
+                                    scripts*), with the command that runs it; the caller runs them with its
+                                    build. One that reference never runs goes in ### Tool runs' skipped list,
+                                    never here -->
 - **Degraded inputs**: none    <!-- each context input that could not be read: `<field> at <path>` -->
 
 ### Files changed
@@ -123,7 +125,7 @@ report_file: /tmp/dw-impl-code-AbC123
 - _or_ none
 
 ### Tool runs                  <!-- mode: step — an install, code-generation or formatting command a plan step named, run in repo_root -->
-- `<the command, as run>` — <its result> — <what it wrote: a lockfile, generated files> — skipped: <the dependencies' install-time code, as install-time-code.md's *Name what was skipped* names it, or none>
+- `<the command, as run>` — <its result> — <what it wrote: a lockfile, generated files> — skipped: <the dependencies' install-time code, and each project install script that reference never runs, as its *Name what was skipped* names them, or none>
 - _or_ none
 
 ### Runs                       <!-- task_shape: bug only -->

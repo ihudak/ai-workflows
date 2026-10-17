@@ -126,7 +126,7 @@ It reads the code it needs itself.
 - On `task_shape: bug` work, run the repro, place and read `[DEBUG-xxxx]` probes, and trim fixtures **only in the scratch checkout of `HEAD`** that `bug-diagnosis.md`'s single rule prescribes once the edits have begun — the exception `risk-planner` already has, never the working tree. The scratch checkout holds the pre-change tree, so this runs no unreviewed code. *(My call: it keeps the probe output out of the orchestrator's context, and step groups need not split at every probe step.)*
 
 **What it may never do**
-- Run a lint, a build, a type-check or a test, at any class: those stay where they run today — Phase 3.5 step 3 onward on SIMPLE/MODERATE, Phase 3B step 8 after the review on SIGNIFICANT/HIGH-RISK — so a generated file never lands in the review diff or `code-handoff`'s staging. *(My call.)*
+- Run a lint, a build, a type-check or a test, at any class: those stay where they run today — Phase 3.5 step 3 onward on SIMPLE/MODERATE, Phase 3B step 8 after the review on SIGNIFICANT/HIGH-RISK — so a file a check generates never lands in the review diff or `code-handoff`'s staging. *(My call.)*
 - Run the repro or a probe against the working tree. `bug-diagnosis.md`'s single rule binds it as it binds `risk-planner`.
 - Write git state (commit, switch, stash, reset, rebase, push).
 - Touch another repository or `$SPECS_PATH`.
