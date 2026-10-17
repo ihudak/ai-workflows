@@ -36,7 +36,11 @@ without degrading. Apply when the plan/step list is large or the run is nearing 
   either.
 
 Prefer the cheapest strategy that fits: checkpoint first; offload parallel steps only when they are
-genuinely independent; decompose only when a single unit still overflows. "Hand off by file" is
+genuinely independent; decompose only when a single unit still overflows. `/implement` is the
+exception, and its own Phase 3B names its strategies: it codes every step group through
+`code-writer`, one dispatch at a time — *Sub-agent-per-`[P]`* applied to every step, in plan order —
+and decomposes a step list past one run's reach; it never checkpoints by *Scope-to-N*, since it
+commits only at its Phase 4.6, after Phase 4. "Hand off by file" is
 orthogonal — apply it whenever you dispatch a sub-agent, whichever offload strategy you chose.
 
 At each **checkpoint**, a long-run command may additionally suggest **`/compact`** to free

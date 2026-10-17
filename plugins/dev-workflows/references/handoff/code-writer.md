@@ -52,10 +52,10 @@ class: SIGNIFICANT         # SIMPLE | MODERATE | SIGNIFICANT | HIGH-RISK — the
                            # re-classification, which a `trigger` return starts, raises it.
 scratch_checkout: HEAD     # HEAD | none. HEAD on task_shape: bug work: every run of the repro (and of the build
                            # it needs), a probe or a trimmed fixture goes in a scratch checkout of HEAD, the tree before the change,
-                           # as bug-diagnosis.md's single rule sends a run once the edits have begun — on
-                           # each dispatch of the run, the one that makes its first edit included, since
-                           # code-writer never runs one against the working tree. none on any other work:
-                           # it runs none of them.
+                           # as bug-diagnosis.md's single rule sends every such run of code-writer's — on
+                           # each dispatch of the run, the first included, before the run has made any
+                           # edit as after it, since code-writer never runs one against the working tree.
+                           # none on any other work: it runs none of them.
 pre_existing_dirty: [src/notes.txt]
                            # inline. The paths /implement recorded as dirty before the run's first edit
                            # (its pre_existing_dirty): the user's own uncommitted work. none where it
