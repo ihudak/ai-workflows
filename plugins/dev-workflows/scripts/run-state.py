@@ -34,22 +34,27 @@ read-modify-write holds an exclusive lock (fcntl.flock on .implement-run.lock be
 replaces the file whole (a temp file beside it, then os.replace), so a write is never half done and
 parallel calls lose nothing; a value that does not parse changes nothing. Input -- stdin and argv --
 is read as UTF-8 whatever the locale, and the file is UTF-8 with non-ASCII written as itself
-(ensure_ascii=False), so a path comes back as git's -z record gave it; JSON still escapes `"`, `\\`,
-a tab and a newline, so `\\"`, `\\\\`, `\\t` and `\\n` in what `open` and `read` print are one
-character each.
+(ensure_ascii=False), so a path comes back as git's -z record gave it. JSON escapes `"`, `\\` and
+control characters -- `\\t`, `\\n`, `\\r` and the like -- in what `open` and `read` print, and each
+escape reads back as one character. A call other than `init` that finds no file creates nothing: it
+checks for the file before it makes the lock beside it. The lock file, like a stale file, is never
+removed.
 
 Exit codes:
   0  done
-  1  there is no run-state file
-  2  usage: bad arguments, a value that does not parse, a path through null, no such list entry
+  1  there is no run-state file (and nothing was created)
+  2  usage: bad arguments, a value that does not parse, input that is not UTF-8, a path through
+     null, no such list entry
   3  a key the file does not hold (set, append, read), or an init object lacking or adding a key
-  4  the file could not be reached: an OSError reading or writing it, or git failing to name it
+  4  the file could not be reached: an OSError reading or writing it -- an unreadable directory on
+     its path included -- or git failing to name it
   5  the run-state file is there and does not parse
 Standard library only; `python3 run-state.py --selftest` runs the tests.
 """
 import json
 import os
 import re
+import stat
 import subprocess
 import sys
 import tempfile
@@ -136,9 +141,20 @@ class locked(object):
         return False
 
 
-def load(f):
-    if not os.path.isfile(f):
+def require(f):
+    """The file is there: missing is 1, unreachable (any other OSError, or not a regular file) is 4."""
+    try:
+        st = os.stat(f)
+    except FileNotFoundError:
         raise Fail(1, "no run-state file at %s" % f)
+    except OSError as e:
+        raise Fail(4, "cannot reach the run-state file at %s: %s" % (f, e))
+    if not stat.S_ISREG(st.st_mode):
+        raise Fail(4, "%s is not a regular file" % f)
+
+
+def load(f):
+    require(f)
     with open(f, encoding="utf-8") as r:
         text = r.read()
     try:
@@ -261,6 +277,7 @@ def cmd_init(f, args, stdin, out):
 def cmd_open(f, args, out):
     if len(args) != 1:
         raise Fail(2, "open takes the phase's name, as its heading names it")
+    require(f)
     with locked(f):
         d = load(f)
         d["phase"] = args[0]
@@ -281,6 +298,7 @@ def cmd_read(f, args, out):
 
 def cmd_set(f, args, stdin):
     todo = pairs(args, stdin, "set")
+    require(f)
     with locked(f):
         d = load(f)
         for key, v in todo:
@@ -291,6 +309,7 @@ def cmd_set(f, args, stdin):
 
 def cmd_append(f, args, stdin):
     todo = pairs(args, stdin, "append")
+    require(f)
     with locked(f):
         d = load(f)
         for key, v in todo:
@@ -315,9 +334,13 @@ def cmd_remove(f, args, out):
             raise Fail(2, "remove takes only --keep <path> options")
     if not guarded(f):
         raise Fail(4, "refusing to remove %s: not the run-state file's path" % f)
-    if not os.path.lexists(f):
+    try:
+        os.lstat(f)
+    except FileNotFoundError:
         out.write(("no run-state file at %s -- nothing to remove\n" % f).encode("utf-8"))
         return
+    except OSError as e:
+        raise Fail(4, "cannot reach the run-state file at %s: %s" % (f, e))
     with locked(f):
         try:
             d = load(f)
@@ -552,6 +575,34 @@ def selftest():
             check("an unreadable file exits 4, not 1", call(["read"], repo=repo)[0] == 4)
         os.chmod(f, 0o600)
 
+        # invalid UTF-8 in argv: exit 2, the file unchanged
+        before = open(f, "rb").read()
+        r = subprocess.run([sys.executable, me, "--repo", repo, "set", "branch", b'"\xff"'], capture_output=True)
+        check("invalid UTF-8 in argv exits 2, the file unchanged", r.returncode == 2
+              and b"Traceback" not in r.stderr and open(f, "rb").read() == before)
+
+        # an unreadable directory on the path: 4, never 1
+        if hasattr(os, "geteuid") and os.geteuid() != 0:
+            os.chmod(here, 0o600)
+            try:
+                code_open = call(["open", "Phase 2A"], repo=repo)[0]
+                code_read = call(["read"], repo=repo)[0]
+                code_rm = call(["remove"], repo=repo)[0]
+            finally:
+                os.chmod(here, 0o700)
+            check("an unreachable file exits 4, not 1", (code_open, code_read, code_rm) == (4, 4, 4))
+            check("the file survives an unreachable remove", os.path.isfile(f))
+
+        # a call with no file creates nothing
+        repo2 = os.path.join(tmp, "bare")
+        subprocess.run(["git", "init", "-q", repo2], check=True)
+        f2 = state_path(repo2)
+        codes = [call(c, s, repo2)[0] for c, s in ((["open", "Phase 2A"], ""), (["read"], ""),
+                                                    (["set", "class", '"X"'], ""), (["append", "deferred", '"x"'], ""),
+                                                    (["set"], '{"class": "X"}'), (["remove"], ""))]
+        check("a call with no file exits 1, remove 0", codes == [1, 1, 1, 1, 1, 0])
+        check("a call with no file creates nothing", not os.path.exists(os.path.dirname(f2)))
+
         # guarded remove: temp files named, a --keep path, a non-temp path left, then the file
         def mk(name):
             p = os.path.join(tmp, name)
@@ -605,8 +656,8 @@ def main(argv):
     except Fail as e:
         sys.stderr.write("run-state.py: %s\n" % e)
         return e.code
-    except UnicodeDecodeError as e:
-        sys.stderr.write("run-state.py: input is not UTF-8: %s\n" % e)
+    except UnicodeError as e:
+        sys.stderr.write("run-state.py: input is not UTF-8, nothing written: %s\n" % e)
         return 2
 
 
