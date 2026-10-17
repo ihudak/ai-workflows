@@ -59,7 +59,7 @@ change — a scan's patch applied included, a probe's tagged line not — dividi
   repro a plan step makes, which `code-writer` carries out there; and step 1's repro **on a
   re-plan** whose working tree already holds edits (`/implement` Phase 3A step 5's, or a `blocked`
   return's Revise at its Phase 3A step 1), which `risk-planner` runs there. So a plan carries no
-  step that runs a test, the repro or a probe against the working tree between the first edit and
+  step that runs a check, the repro or a probe against the working tree between the first edit and
   the review.
 - **A fixture or script `code-writer` trims** to minimise the repro (step 1) is trimmed and tried in
   the scratch checkout, before the first edit as after it: trimming it in the working tree would be
@@ -136,8 +136,11 @@ from the working tree inside the same call
    redacted captured artifact — a HAR file, a log dump, a core dump, a timestamped recording. Whoever can ask the user
    asks; an agent that cannot returns the list to its caller (`risk-planner` in its `Needs:` line).
    `code-writer`, whose plan's repro does not go red in the scratch checkout of `HEAD`, returns
-   `blocked` with the command, its directory and its output (its *Bug work*); the caller puts the
-   block to the user, and a SIGNIFICANT or HIGH-RISK re-plan hands that output to `risk-planner`.
+   `blocked` with the command, its directory, its output, the plan's recorded rate and the runs it
+   made (its *Bug work*); the caller puts the block to the user, and a SIGNIFICANT or HIGH-RISK
+   re-plan hands that output to `risk-planner`. A plan whose ranking reads `Ranking withheld` — the
+   user chose to proceed without a repro — is the exception: `code-writer` runs its repro step,
+   lists the result, and does not block on it.
    Do not go on to step 2 without a loop.
    A 30-second flaky loop is barely better than no loop; a 2-second deterministic one is worth the
    effort it takes to get there.
