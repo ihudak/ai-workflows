@@ -35,7 +35,7 @@ Every next-step option a command offers already carries a role label — see [Ro
 
 ## Mid-phase checkpoints and big non-pipeline commands
 
-A run doesn't have to finish to earn a checkpoint. `/implement`'s own mid-phase checkpoint (Scope-to-N, or per-Epic) suggests `/compact` to free up budget before continuing — never `/clear` here, since a mid-command checkpoint is never a role transition. `/vuln` and `/upgrade` are large, non-pipeline commands with no role transition of their own: each gets a plain end-of-run `/compact` suggestion near its maintenance handoff, and neither writes a `resume.md`, since their durable state already lives in the branch or PR they produced.
+A run doesn't have to finish to earn a checkpoint. `/implement` suggests `/compact` mid-phase, between the step groups of a long step list, to free up budget before continuing — never `/clear` here, since a mid-command checkpoint is never a role transition. `/vuln` and `/upgrade` are large, non-pipeline commands with no role transition of their own: each gets a plain end-of-run `/compact` suggestion near its maintenance handoff, and neither writes a `resume.md`, since their durable state already lives in the branch or PR they produced.
 
 ## The `/rename` aid
 

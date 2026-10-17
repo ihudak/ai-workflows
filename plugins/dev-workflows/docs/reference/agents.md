@@ -27,11 +27,11 @@ Read-only discovery and grounding — each returns a structured digest rather th
 
 ## Writers
 
-Produce artifact content from a structured handoff, and write no git state. `code-writer`, the one of them with `Bash`, uses it to read, to delete a file a step removes and, on a bug fix, to run the repro, the build it needs and its probes in a scratch checkout of `HEAD` — never a check in your working tree.
+Produce artifact content from a structured handoff, and write no git state. `code-writer`, the one of them with `Bash`, uses it to read, to delete a file a step removes, to run the repository's own install, code-generation or formatting command a plan step names — an install without any dependency's install-time code — and, on a bug fix, to run the repro, the build it needs and its probes in a scratch checkout of `HEAD` — never a lint, build, type-check or test in your working tree.
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
-| `code-writer` | per routing | Read, Glob, Grep, Write, Edit, Bash, Skill | Writes the code for one group of an approved plan's steps, or one fix attempt from a failing check, in its branched repository; runs no check on its working tree, and asks you nothing. | `/implement` |
+| `code-writer` | per routing | Read, Glob, Grep, Write, Edit, Bash, Skill | Codes one group of an approved plan's steps, or one fix attempt from a failing check, in its branched repository; runs no lint, build, type-check or test on its working tree; asks you nothing. | `/implement` |
 | `test-writer` | per routing | Read, Glob, Grep, Write, Edit | Writes tests for new or changed behaviour based on a diff, against every suite the diff touches; does not run them, and reports "not detected" where the baseline names no framework at all. | `/implement` |
 
 ## Fixers

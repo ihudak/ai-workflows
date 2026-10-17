@@ -16,7 +16,7 @@ plan_file: /tmp/dw-impl-plan-AbC123
                            # re-plan it holds both plans under two headings: the re-plan's Steps are the
                            # work remaining, every Review focus line in either plan applies, and the
                            # re-plan governs only where the two contradict. A closing `## Constraints added
-                           # at the re-plan` section, where the caller appended one, binds every step.
+                           # after approval` section, where the caller appended one, binds every step.
 steps: [3, 4]              # mode: step — the numbers of the plan steps this dispatch codes, as the plan
                            # writes them, consecutive and in plan order; on a plan_file holding two plans,
                            # the re-plan's Steps. mode: fix — none.
@@ -35,8 +35,9 @@ diff_so_far: /tmp/dw-impl-diff-AbC123
                            # the run's earlier dispatches and applied patches changed. It can also hold a
                            # file the user had changed before the run began; the reports in
                            # earlier_reports name what this run changed. none before the run's first edit.
-earlier_reports:           # CONTEXT, each report on its own. Every earlier dispatch's report_file, in
-  - report: /tmp/dw-impl-code-XyZ789          # dispatch order; none on the run's first dispatch.
+earlier_reports:           # CONTEXT, each report on its own. Every earlier non-`failed` dispatch's
+  - report: /tmp/dw-impl-code-XyZ789          # report_file (its return was readable), in dispatch order;
+                           # none on the run's first dispatch.
     answer: "Keep the old field and add the new one"
                            # only beside a report that returned needs_decision: the user's answer to its
                            # ### Decision, verbatim. It binds the rest of that group and every later one.
@@ -108,6 +109,10 @@ report_file: /tmp/dw-impl-code-AbC123
 
 ### Not fixed                  <!-- mode: fix only -->
 - <the failure, as failure_input names it> — <why it was left: no fix found, not this run's change, or the CAVEAT: line that accounts for it>
+- _or_ none
+
+### Tool runs                  <!-- an install, code-generation or formatting command a plan step named, run in repo_root -->
+- `<the command, as run>` — <its result> — <what it wrote: a lockfile, generated files> — skipped: <what install-time-code.md's *Name what was skipped* names, or none>
 - _or_ none
 
 ### Runs                       <!-- task_shape: bug only -->

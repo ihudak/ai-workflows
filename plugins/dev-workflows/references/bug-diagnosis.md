@@ -41,7 +41,7 @@ change — a scan's patch applied included, a probe's tagged line not — dividi
 - **From the first edit until a non-BLOCK review, nothing runs against the working tree**, which
   holds the change: a probe or the repro runs only in the scratch checkout of `HEAD` (below), the
   tree before the change. That takes a probe placed once the edits have begun, and step 1's repro
-  **on a re-plan** whose working tree already holds edits (`/implement` Phase 3A step 5). So a plan
+  **on a re-plan** whose working tree already holds edits (`/implement` Phase 3A step 5's, or a `blocked` return's Revise at its Phase 3A step 1). So a plan
   carries no step that runs a test, the repro or a probe against the working tree between the first
   edit and the review.
 - **A fixture or script the caller trims** to minimise the repro (step 1) is trimmed and tried in

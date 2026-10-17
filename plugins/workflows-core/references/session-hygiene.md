@@ -98,7 +98,7 @@ own `next-phase-offer` output already carries. The role graph is owned by
 
 ## 3. Mid-phase checkpoints & non-pipeline big commands
 
-- **`/implement` mid-phase checkpoint** (Scope-to-N / per-Epic, per `context-management.md`)
+- **`/implement` mid-phase, between step groups of a long step list** (its Phase 3B; past one run's reach, `context-management.md`'s *Decompose*)
   → suggest **`/compact`** to free budget before continuing (mid-command → no role
   transition → never `/clear`).
 - **`/vuln`, `/upgrade`** (big, non-pipeline, no role transition) → a plain end-of-run
@@ -171,5 +171,5 @@ folder, and carries no line there either.
 A short **`### Context hygiene`** block appended right after the `### Next step` section
 at the END of the command's Final Report (guidance-only prose), plus one invariant citing
 this reference. `/vuln` + `/upgrade` place the `/compact` line near their
-`impl-maintenance` handoff. `/implement` places the mid-phase `/compact` at its Phase 3B
-checkpoint.
+`impl-maintenance` handoff. `/implement` places the mid-phase `/compact` in its Phase 3B,
+between step groups of a long step list.
