@@ -187,7 +187,10 @@ _or_ "none — checked"
 - **Re-classify if warranted.** If inspection shows the task is actually
   `SIMPLE` or `MODERATE`, say so explicitly in a `### Re-classification`
   section (replacing the full plan), and recommend the caller fall back to
-  the non-Opus path.
+  its standard path for that class, with no Opus planning — on `/upgrade`
+  the non-Opus path; on `/implement`, whose MODERATE work is still coded at
+  the Opus tier and reviewed by the Opus `code-review` gate, its Phase 2A
+  plan.
 
 ## Hard rules
 
