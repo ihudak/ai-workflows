@@ -133,6 +133,14 @@ jobs:
         # trip on.
         run: python3 plugins/dev-workflows/scripts/secret-scan.py --selftest
 
+      - name: Self-test the run-state file
+        # /implement keeps its run state in a file it re-reads at every phase, through this
+        # script. Its failure modes are silent: a path written escaped no longer subtracts
+        # against git's -z record, so somebody else's uncommitted work rides into the commit;
+        # a move-aside that keeps every stale file grows the git directory without bound.
+        # Fixtures are built at run time in a temporary repository.
+        run: python3 plugins/dev-workflows/scripts/run-state.py --selftest
+
       - name: Self-test the architecture harvest
         # /product-workflows:harvest-decisions writes the team knowledge base with it. Its
         # failure mode is silent: a rule that stopped matching harvests nothing, or a
