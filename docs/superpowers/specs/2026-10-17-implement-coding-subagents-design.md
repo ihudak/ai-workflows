@@ -26,6 +26,7 @@ The orchestrator stops writing code. For each step of the approved plan, it disp
   - the commands' next-step offers already chain them.
 - **One coding subagent per plan step,** so that no subagent runs long enough to compact.
 - **The run's state lives in a file** that the orchestrator re-reads after a compaction. The re-read trigger is defined below.
+- **`/implement`'s MODERATE runs get the Opus `code-review` gate,** as SIGNIFICANT and HIGH-RISK runs do. Only `/implement` changes. `/vuln` and `/upgrade` keep their routing: there, MODERATE means a version bump with no source-code change, and `/vuln` says "NEVER use Opus for a `MODERATE` fix unless the user explicitly asks for it". SIMPLE runs stay unreviewed.
 - The design was played back to the user and confirmed: "looks right".
 
 ### Proposed and accepted without objection
@@ -38,14 +39,16 @@ The orchestrator stops writing code. For each step of the approved plan, it disp
 1. **Coding leaves the orchestrator.** Each step of an approved plan is coded by a coding subagent, in Phase 3A (SIMPLE/MODERATE) and Phase 3B (SIGNIFICANT/HIGH-RISK) alike. The orchestrator itself makes no source edit, save the mechanical ones listed under *What the orchestrator keeps*.
 2. **Every code-writing dispatch carries an explicit model, by one rule** (*The model rule*). That covers the coding subagent, `review-fixer`, and the Phase 3.5 fix loop, which moves to the coding subagent.
 3. **The run survives compaction.** All state Phase 4.6 and the report need is in the run-state file. The orchestrator re-reads it at the start of each phase and never relies on its memory for it.
-4. **Behaviour stays the same everywhere else.** The phases, the questions, the gates, the review, the tests, the commit, the follow-ups and the report keep the same outcome. Only who writes the code, and on which model, changes.
+4. **A MODERATE run is reviewed by Opus.** It passes the same review sequence a SIGNIFICANT run does after coding: `test-writer`, the Opus `code-review` gate, triage, `review-fixer`, and only then the tests. It does so without `risk-planner`, since Phase 2A still plans it. *(My call: the order matches SIGNIFICANT's, so the review gates the test run for MODERATE too.)*
+5. **Behaviour stays the same everywhere else.** The phases, the questions, the gates, the review, the tests, the commit, the follow-ups and the report keep the same outcome. Only who writes the code, and on which model, changes.
 
 ## Non-goals
 
 - **No single Epic-finishing command.** See *Decided by the user*.
 - **No Fable escalation (part 2 of F).** Deferred. No run so far has shown Opus falling short, and an ask before every high-risk run adds friction for an unmeasured gain. A Fable *session* still gets Fable code, by the model rule's "never below the session" clause.
 - **No change to `test-writer`, `code-review`, `risk-planner`, `test-baseliner` or the maintenance agents.** Their models and briefs stay as they are, save where the run-state file changes what they are handed.
-- **No per-step review.** The Opus `code-review` gate still judges the whole change once, as now. SIMPLE and MODERATE runs still have no Opus review gate, by design.
+- **No per-step review.** The Opus `code-review` gate still judges the whole change once, as now. SIMPLE runs still have no Opus review gate.
+- **No change to `/vuln`'s or `/upgrade`'s routing,** nor to the classification's §3.1 for any command but `/implement`.
 - **No resuming of a crashed or abandoned run** from the run-state file. The file is read only inside the run that wrote it. Using it to resume is a possible later feature, and is out of scope.
 - **No change to `/vuln` or `/upgrade`.** Their fixers already code in subagents.
 - **No parallel coding.** Steps are coded one after another, because they edit one working tree.
@@ -71,7 +74,7 @@ The coding model is the higher of the class floor and the session model:
 - **`--enforce-model` (§10) overrides it,** as it overrides every dispatched step. The coding subagent and `review-fixer` are dispatched steps.
 - **Recording.** `model_routing.implementation_model` stops describing inline coding and names the coding subagent's dispatched model. §10's carve-out for "inline coding" no longer applies to `/implement`, so `classification.md` §4 and §10 say so. `fixes_model` becomes equal to `implementation_model` for `/implement`'s `review-fixer`, which follows the rule.
 - **A re-classification mid-run** (Phase 3A step 5's raise to SIGNIFICANT) re-resolves the coding model for every later dispatch. Steps already coded stay as they are.
-- **Reasons.** MODERATE gets Opus because a MODERATE run has no Opus review gate, so nothing Opus-level would otherwise ever read that code. Every keyed Epic run is floored at SIGNIFICANT by §8.1, so MODERATE arises only on direct runs, and the cost of the floor is small.
+- **Reasons.** MODERATE is coded on Opus because the user puts quality first. Every keyed Epic run is floored at SIGNIFICANT by §8.1, so MODERATE arises only on direct runs, and the cost of the Opus coding and the new review is small.
 
 ## What the orchestrator keeps
 
@@ -183,6 +186,7 @@ It carries `workflows-core`'s untrusted-content block (check 20).
   - Phase 4.6 after Phase 4;
   - changes only in the branched repository;
   - the test-writing requirement.
+- **`classification.md` §3.1 gains one carve-out.** It says SIMPLE/MODERATE "Skip the dedicated Opus code review". It must now say `/implement` reviews MODERATE work, so that no two instructions contradict each other. The rules files' "Opus review gate runs before tests for SIGNIFICANT / HIGH-RISK" invariant (`.claude/rules/dev-workflows.md`) and the implement docs page follow.
 - **`classification.md` §5's dispatch form** (an id where the harness takes ids, a family name where it takes only families) governs every new `model:`.
 - **Plugin-update coupling.** If `workflows-core`'s `classification.md` changes, `dev-workflows` and `workflows-core` ship together. `plugin-updates.md` gains the coupling line.
 
@@ -194,6 +198,7 @@ It carries `workflows-core`'s untrusted-content block (check 20).
   - no compaction during the run;
   - every coding and fix dispatch with an explicit `model:`.
 - **A Sonnet session's run** shows the coding subagent on Opus for MODERATE and above.
+- **A MODERATE direct run** shows the Opus `code-review` gate before its tests.
 - **The commit, the follow-ups and the report** are as they would have been.
 
 ## Left to the builder
