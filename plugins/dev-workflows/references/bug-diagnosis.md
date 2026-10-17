@@ -15,9 +15,9 @@ steps** — a run of the repro, a `[DEBUG-xxxx]` probe placed or read, a fixture
 to minimise the repro — and has `risk-planner`'s exception, held to the scratch checkout: it runs
 each only in the scratch checkout of `HEAD` — the one the section below prescribes once the edits
 have begun — and does so on every dispatch, its first included, before the run's first edit as
-after it, since it never runs one against the working tree; a run of a test file of the run's own
-copies it in first, at its own path, as the red-capability check below copies the regression test
-in, and never a non-test source file (its *Bug work*); it lists each run with its redacted output. Whatever build that repro itself needs is part of running it there; in the working tree
+after it, since it never runs one against the working tree; it lists each run with its redacted
+output. It never runs a test the run itself created or changed, in any tree, since that test is
+unreviewed change: a step that runs one is the caller's, after the review (below). Whatever build that repro itself needs is part of running it there; in the working tree
 `code-writer` runs no lint, build, type-check or test at any class. A plan's bisect, which moves
 `HEAD`, and the checks after the review gate are the orchestrator's own (below). An agent without
 `Bash` (`code-review` among them) is never held to the completion criterion and must not be asked
@@ -65,11 +65,17 @@ change — a scan's patch applied included, a probe's tagged line not — dividi
 - **A fixture or script `code-writer` trims** to minimise the repro (step 1) is trimmed and tried in
   the scratch checkout, before the first edit as after it: trimming it in the working tree would be
   an edit no cleanup gate strips.
-- **After the gate, never before it**, and the orchestrator's own (`/implement` Phase 3B step 8),
-  never `code-writer`'s: step 5's re-run of the repro, against the working tree; then
+- **After the gate, never before it**, and the orchestrator's own (`/implement` Phase 3B step 8, and
+  its Phase 3.5 step 3 for the red-capability check's second path, below), never `code-writer`'s: step 5's re-run of the repro, against the working tree; then
   the **red-capability check** — the reviewed regression test from step 4, run in a scratch
   checkout of `HEAD`, the pre-change tree, with that test file copied in at its own path, must fail
-  there on its assertion of this bug's symptom, not on a symbol only the change adds. The **green
+  there on its assertion of this bug's symptom, not on a symbol only the change adds. Two paths
+  reach it: Phase 3B step 8 on SIGNIFICANT / HIGH-RISK bug work, and, at every class, a plan step
+  `code-writer` left to the caller that runs a test the run created or changed and expects it to
+  fail — the repro written as a new test, a test-first step — which `/implement` Phase 3.5 step 3
+  runs as this check, the step's own command from its own directory, after the review gate at
+  MODERATE and above and, at SIMPLE, which has none, in Phase 3.5 all the same; the failure the step
+  expects is the assertion it must fail on, and its outcome is this check's on either path. The **green
   check** is the caller's verify run (`/implement` Phase 3.5), in which the same test must pass.
   Where the red check passes instead, the test does not show it catches this bug, and the caller's
   report says so. Where it fails on anything but that assertion — a missing test bootstrap, a

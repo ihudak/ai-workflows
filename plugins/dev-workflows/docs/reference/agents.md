@@ -27,7 +27,7 @@ Read-only discovery and grounding — each returns a structured digest rather th
 
 ## Writers
 
-Produce artifact content from a structured handoff, and write no git state. `code-writer`, the one of them with `Bash`, uses it to read, to delete a file a step removes, to run the repository's own install, code-generation or formatting command a plan step names, or the formatter or code generator that fixes a lint failure it is handed — an install without any dependency's install-time code — and, on a bug fix, to run the repro, the build it needs and its probes in a scratch checkout of `HEAD`, the run's own test files a step runs copied in — never a lint, build, type-check or test in your working tree.
+Produce artifact content from a structured handoff, and write no git state. `code-writer`, the one of them with `Bash`, uses it to read, to delete a file a step removes, to run the repository's own install, code-generation or formatting command a plan step names, or the formatter or code generator that fixes a lint failure it is handed — an install without any dependency's install-time code — and, on a bug fix, to run the repro, the build it needs and its probes in a scratch checkout of `HEAD` — never a lint, build, type-check or test in your working tree, and never a test the run itself wrote, in any tree.
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|

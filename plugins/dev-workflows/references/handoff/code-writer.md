@@ -58,14 +58,11 @@ scratch_checkout: HEAD     # HEAD | none. HEAD on task_shape: bug work: every ru
                            # of HEAD, the tree before the change, as bug-diagnosis.md's single rule sends
                            # every such run of code-writer's — on each dispatch of the run, the first
                            # included, before the run has made any edit as after it, since code-writer
-                           # never runs one against the working tree. A run of a test file this run
-                           # created or changed has it copied in first, at its own path, with the test
-                           # fixtures and helpers of this run's it reads — never a non-test source file.
+                           # never runs one against the working tree. A test this run created or
+                           # changed it never runs, in any tree: a step that runs one is left to the
+                           # caller, which runs it once the review gate has cleared — at SIMPLE, which
+                           # has none, in its Phase 3.5 (Steps, below).
                            # none on any other work: it runs none of them.
-baseline_file: /tmp/dw-impl-baseline-AbC123
-                           # CONTEXT, on task_shape: bug work; none otherwise. The run's `## Test
-                           # Baseline` block (Pre-Phase 3.5): its suites say, by each framework's own
-                           # rule, which of this run's files is a test file a scratch run copies in.
 pre_existing_dirty: [src/notes.txt]
                            # inline. The paths /implement recorded as dirty before the run's first edit
                            # (its pre_existing_dirty): the user's own uncommitted work. none where it
@@ -95,7 +92,7 @@ report_file: /tmp/dw-impl-code-AbC123
 **The read-failure tiers** follow `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`'s contract, and the agent states them where it takes the request:
 
 - **Evidence** — `repo_root`, `plan_file`, and `failure_input` on `mode: fix`. One that cannot be read, or a `repo_root` that is not a directory, is a hard stop: the agent writes nothing in the repository, returns `blocked`, and its `### Blocked` reads `Unreadable: <field> at <path>`. It never reconstructs the input by other means — the plan from the earlier reports, the failure by running the check itself.
-- **Context** — `spec_paths`, `summary_file`, `diff_so_far`, `earlier_reports` and `baseline_file`, each path on its own, and `model_routing`. One that cannot be read degrades to absent, and the report's **Degraded inputs** line names it with its path.
+- **Context** — `spec_paths`, `summary_file`, `diff_so_far` and `earlier_reports`, each path on its own, and `model_routing`. One that cannot be read degrades to absent, and the report's **Degraded inputs** line names it with its path.
 - **Inline values** — `mode`, `steps`, `patches`, `task_shape`, `class`, `scratch_checkout` and `pre_existing_dirty` — are read from the request itself and have no read to fail. `report_file` is written, never read.
 
 ## Output (`code-writer` → `/implement`)
@@ -110,7 +107,12 @@ report_file: /tmp/dw-impl-code-AbC123
                                <!-- mode: step — each step handed: coded, stopped (and how far it got),
                                     or left to the caller (a step the caller keeps: a check, a bisect, a
                                     patch's application; or a formatter not run, beside pre_existing_dirty,
-                                    named with why). mode: fix — n/a -->
+                                    named with why), each with its command and the directory it runs from.
+                                    A step that runs a test this run created or changed, in any tree, is
+                                    left to the caller too, naming the test's path and whether the step
+                                    expects it to fail — "2 left to the caller — runs tests/test_x.py by
+                                    pytest tests/test_x.py::test_empty_x, from the top level; expects it
+                                    to fail". mode: fix — n/a -->
 - **Install scripts left to the caller**: none
                                <!-- mode: step — each of the project's own install scripts an install skipped
                                     that install-time-code.md runs beside a build (*The project's own install
@@ -163,8 +165,7 @@ Paths: `<path>`, `<path>`
      Repro not red: step <n> — `<the command>` in `<the directory it ran in>` — <its redacted output>
      — rate <the reproduction rate the plan records, or none recorded> — <the runs made> runs
      and, where pre_existing_dirty names any path: the scratch checkout lacks the user's uncommitted
-     files at <those paths>, which the working tree holds; and, where the output shows the run needed
-     one: not copied, being no test file: <each file of this run's> -->
+     files at <those paths>, which the working tree holds -->
 <!-- or, for an evidence input that could not be read: Unreadable: <field> at <path> -->
 ```
 
@@ -173,6 +174,6 @@ Paths: `<path>`, `<path>`
 - `done` — every step handed is coded, or left to the caller where the caller keeps it; on `mode: fix`, the attempt is made, and `### Not fixed` names every failure it left. `### Settled by the run` becomes the Phase 5 report's `### Assumptions & limitations`; a `### Not fixed` line's reason goes into its `### Deferred items` beside the failure it names, where the run keeps that failure (Phase 3.5 step 6's **Accept**), and spares that failure a further attempt where a `CAVEAT:` line accounts for it or only a formatter not run beside `pre_existing_dirty` would fix it; and `### Out of scope` goes on the follow-up line Phase 3A/3B step 2 writes for that repository.
 - `needs_decision` — Phase 1's test met mid-coding: nothing the run can read settles a question, and its answer changes what the user would notice. `### Decision` carries two to four options, never an *Other* (the harness adds the free-text answer itself). The caller asks, then dispatches afresh for the rest of the group, handed this report with the answer beside it in `earlier_reports`.
 - `trigger` — `mode: step` at `SIMPLE` or `MODERATE` only: a classification item the approved plan did not state, with the paths that show it. The caller runs its re-classification raise.
-- `blocked` — a step cannot be coded as the plan writes it, because something the plan names is not so — on bug work, a repro a step names that does not go red in the scratch checkout of `HEAD` among them, its `### Blocked` naming the command, its directory, its output, the rate the plan records and the runs made, and, where `pre_existing_dirty` names any path, that the checkout lacks those files, and each file of this run's the run needed that was not copied in, being no test file — save where the plan's `### Hypotheses (ranked)` reads `Ranking withheld`, the user having chosen to proceed without a repro, where that run is listed under `### Runs` and is never a `blocked`. A `### Blocked` that reads `Unreadable: <field> at <path>` instead names an evidence input the agent could not read: an orchestrator bug, never a plan defect. On `mode: fix` that form is the only `blocked`, and a failure the attempt found no fix for is a `done` that lists it under `### Not fixed`.
+- `blocked` — a step cannot be coded as the plan writes it, because something the plan names is not so — on bug work, a repro a step names that does not go red in the scratch checkout of `HEAD` among them, its `### Blocked` naming the command, its directory, its output, the rate the plan records and the runs made, and, where `pre_existing_dirty` names any path, that the checkout lacks those files — save where the plan's `### Hypotheses (ranked)` reads `Ranking withheld`, the user having chosen to proceed without a repro, where that run is listed under `### Runs` and is never a `blocked`. A `### Blocked` that reads `Unreadable: <field> at <path>` instead names an evidence input the agent could not read: an orchestrator bug, never a plan defect. On `mode: fix` that form is the only `blocked`, and a failure the attempt found no fix for is a `done` that lists it under `### Not fixed`.
 
 On every status the report says what is already coded — `### Files changed` and the **Steps** line — so a later dispatch neither redoes nor undoes it, and nothing is reverted.

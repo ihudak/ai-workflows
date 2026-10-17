@@ -173,7 +173,8 @@ _or_ "none — checked"
   these, and the review diff carries what it writes. A plan's diagnosis steps — a step that places or reads a probe, runs the repro, or tries a trimmed fixture
   or script — are carried out by `dev-workflows:code-writer`, `/implement`'s coding subagent, in the
   scratch checkout of `HEAD`, never in the working tree, on every dispatch, before the first edit as
-  after it. A bisect, which moves `HEAD`, is your first step, carried out by the caller itself from
+  after it — save a step that runs a test the run itself writes, which `code-writer` never runs: the
+  caller runs it after the review, as the red-capability check where the step expects the test to fail. A bisect, which moves `HEAD`, is your first step, carried out by the caller itself from
   the clean tree before any edit, never by `code-writer`; and the repro's re-run after the fix and
   the regression test's red-capability check are steps after the review, never before it — the
   caller runs them itself once the review gate clears, reports a red check that fails on anything
