@@ -165,16 +165,17 @@ _or_ "none — checked"
   found none, never that you skipped the look.
 - **No step runs anything against the working tree between the first edit and the review, on a bug.**
   When `task_shape: bug`, `${CLAUDE_PLUGIN_ROOT}/references/bug-diagnosis.md` § *When a run may
-  happen — the review gate* is the rule your Steps follow: before the first edit, the repro and the
-  probes run on the working tree — your own repro runs there, where no change exists to review; from
-  the first edit until a non-BLOCK review, nothing runs against the working tree, and a step that
-  places or reads a probe, or runs the repro, does it in the scratch checkout of `HEAD`, never in
-  the working tree, as a step that tries a trimmed fixture or script does before the first edit
-  too; a bisect, which moves `HEAD`, is your
-  first step, carried out from the clean tree before any edit; and the repro's re-run after the fix
-  and the regression test's red-capability check are steps after the review, never before it — the
-  caller runs them once the review gate clears, reports a red check that fails on anything but the
-  bug's assertion as inconclusive, and its verify run is the green check.
+  happen — the review gate* is the rule your Steps follow, and it names who carries out each step:
+  before the first edit, your own repro runs on the working tree, where no change exists to review;
+  from the first edit until a non-BLOCK review, nothing runs against the working tree. A plan's
+  diagnosis steps — a step that places or reads a probe, runs the repro, or tries a trimmed fixture
+  or script — are carried out by `dev-workflows:code-writer`, `/implement`'s coding subagent, in the
+  scratch checkout of `HEAD`, never in the working tree, on every dispatch, before the first edit as
+  after it. A bisect, which moves `HEAD`, is your first step, carried out by the caller itself from
+  the clean tree before any edit, never by `code-writer`; and the repro's re-run after the fix and
+  the regression test's red-capability check are steps after the review, never before it — the
+  caller runs them itself once the review gate clears, reports a red check that fails on anything
+  but the bug's assertion as inconclusive, and its verify run is the green check.
 - **Flag blockers early.** If a prerequisite is missing (missing tests, unclear
   requirement, incompatible runtime), return a plan whose first step is "ask
   user X" rather than silently assuming.
