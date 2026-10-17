@@ -19,7 +19,7 @@ A scratch `check.py`, written first (Task 0), pins every decision as an assertio
 ## Global Constraints
 
 - **The new agent is `dev-workflows:code-writer`,** in `plugins/dev-workflows/agents/code-writer.md`.
-  - Tools: `["Read", "Glob", "Grep", "Write", "Edit", "Bash"]`.
+  - Tools: `["Read", "Glob", "Grep", "Write", "Edit", "Bash", "Skill"]` (Ruling 4: it loads §1.1 through the loader).
   - No `model:` in its frontmatter: the caller assigns it, and the docs say "per routing".
   - No `Task`.
 - **Its contract is `plugins/dev-workflows/references/handoff/code-writer.md`.**
