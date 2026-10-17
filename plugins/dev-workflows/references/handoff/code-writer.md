@@ -56,6 +56,11 @@ scratch_checkout: HEAD     # HEAD | none. HEAD on task_shape: bug work: every ru
                            # each dispatch of the run, the one that makes its first edit included, since
                            # code-writer never runs one against the working tree. none on any other work:
                            # it runs none of them.
+pre_existing_dirty: [src/notes.txt]
+                           # inline. The paths /implement recorded as dirty before the run's first edit
+                           # (its pre_existing_dirty): the user's own uncommitted work. none where it
+                           # recorded none. Where it names any, a formatter that cannot be limited to
+                           # its step's paths is not run, and that step is left to the caller.
 failure_input: /tmp/dw-impl-failure-AbC123
                            # EVIDENCE on mode: fix; none on mode: step. A file holding test-baseliner's whole
                            # `## Test Verify Report` (Phase 3.5 step 6), or the lint or build command, the
@@ -77,7 +82,7 @@ report_file: /tmp/dw-impl-code-AbC123
 
 - **Evidence** — `repo_root`, `plan_file`, and `failure_input` on `mode: fix`. One that cannot be read, or a `repo_root` that is not a directory, is a hard stop: the agent writes nothing in the repository, returns `blocked`, and its `### Blocked` reads `Unreadable: <field> at <path>`. It never reconstructs the input by other means — the plan from the earlier reports, the failure by running the check itself.
 - **Context** — `spec_paths`, `summary_file`, `diff_so_far` and `earlier_reports`, each path on its own, and `model_routing`. One that cannot be read degrades to absent, and the report's **Degraded inputs** line names it with its path.
-- **Inline values** — `mode`, `steps`, `patches`, `task_shape`, `class` and `scratch_checkout` — are read from the request itself and have no read to fail. `report_file` is written, never read.
+- **Inline values** — `mode`, `steps`, `patches`, `task_shape`, `class`, `scratch_checkout` and `pre_existing_dirty` — are read from the request itself and have no read to fail. `report_file` is written, never read.
 
 ## Output (`code-writer` → `/implement`)
 
@@ -90,7 +95,12 @@ report_file: /tmp/dw-impl-code-AbC123
 - **Steps**: 3 coded; 4 left to the caller — it runs the suite
                                <!-- mode: step — each step handed: coded, stopped (and how far it got),
                                     or left to the caller (a step the caller keeps: a check, a bisect, a
-                                    patch's application). mode: fix — n/a -->
+                                    patch's application; or a formatter not run, beside pre_existing_dirty,
+                                    named with why). mode: fix — n/a -->
+- **Install scripts left to the caller**: none
+                               <!-- mode: step — each of the project's own install scripts an install skipped
+                                    (install-time-code.md's *The project's own install scripts*), with the
+                                    command that runs it; the caller runs them with its build -->
 - **Degraded inputs**: none    <!-- each context input that could not be read: `<field> at <path>` -->
 
 ### Files changed
@@ -112,8 +122,8 @@ report_file: /tmp/dw-impl-code-AbC123
 - <the failure, as failure_input names it> — <why it was left: no fix found, not this run's change, or the CAVEAT: line that accounts for it>
 - _or_ none
 
-### Tool runs                  <!-- an install, code-generation or formatting command a plan step named, run in repo_root -->
-- `<the command, as run>` — <its result> — <what it wrote: a lockfile, generated files> — skipped: <what install-time-code.md's *Name what was skipped* names, or none>
+### Tool runs                  <!-- mode: step — an install, code-generation or formatting command a plan step named, run in repo_root -->
+- `<the command, as run>` — <its result> — <what it wrote: a lockfile, generated files> — skipped: <the dependencies' install-time code, as install-time-code.md's *Name what was skipped* names it, or none>
 - _or_ none
 
 ### Runs                       <!-- task_shape: bug only -->

@@ -121,7 +121,7 @@ It reads the code it needs itself.
 
 **What it may do**
 - Read, search, and edit or create files in the branched repository only.
-- Run read-only commands: `git grep`, `git log`, `git show` and the like.
+- Run read-only commands: `git grep`, `git log`, `git show` and the like — save one class: the repository's own install, code-generation or formatting command a plan step names, run in the branched repository; never a lint, a build, a type-check or a test. An install runs no dependency's install-time code (`install-time-code.md`), and the project's own install scripts it skips are left to the orchestrator's build. What the command writes, a lockfile or a generated file, joins the review diff. A formatter runs only on the paths its step changed, where the command takes paths; one that cannot be limited lists every file it touched, marked `formatter-only`, and is not run at all where the tree held the user's own uncommitted work. *(Rulings 14, 16, 17 and 18, settled during the build.)*
 - Delete a file the step removes.
 - On `task_shape: bug` work, run the repro, place and read `[DEBUG-xxxx]` probes, and trim fixtures **only in the scratch checkout of `HEAD`** that `bug-diagnosis.md`'s single rule prescribes once the edits have begun — the exception `risk-planner` already has, never the working tree. The scratch checkout holds the pre-change tree, so this runs no unreviewed code. *(My call: it keeps the probe output out of the orchestrator's context, and step groups need not split at every probe step.)*
 
