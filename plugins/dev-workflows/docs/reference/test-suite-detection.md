@@ -9,7 +9,7 @@ Seventeen rows, over twenty-four distinct markers (five of them globs). `Gemfile
 | Marker | Framework | Qualifies when | Command |
 |---|---|---|---|
 | `pom.xml` | Maven | always | `./mvnw test -q` (falls back to `mvn test -q` with no wrapper) |
-| `build.gradle` or `build.gradle.kts` | Gradle | always | `./gradlew test` (falls back to `gradle test` with no wrapper) |
+| `build.gradle` or `build.gradle.kts` | Gradle | always | `./gradlew cleanTest test` (falls back to `gradle cleanTest test` with no wrapper) |
 | `Gemfile` | RSpec | `spec/` exists | `bin/rspec --format documentation` (falls back to `bundle exec rspec --format documentation` with no binstub) |
 | `Gemfile` | minitest | `test/` holds a `*_test.rb` or `test_*.rb` file other than `test_helper.rb`, or `Rakefile` declares a `test` task | `bin/rails test -v` where `bin/rails` exists, else `bundle exec rake test TESTOPTS=-v` |
 | `Package.swift` | SwiftPM | always | `swift test` |
@@ -26,7 +26,7 @@ Seventeen rows, over twenty-four distinct markers (five of them globs). `Gemfile
 | `CMakeLists.txt` | CTest | it calls `enable_testing()` or `include(CTest)` | `cmake --build build && ctest --test-dir build --output-on-failure` (`.` instead of `build` for an in-source build) |
 | `Makefile` | Make | a `test` target exists, and CMake did not generate the file | `CI=true make test` |
 
-Where a tool ships a pinned entry point, that is the command: `./mvnw`, `./gradlew`, and Ruby's `bin/` binstubs ahead of `bundle exec`. A JavaScript command carries `CI=true` because several runners watch for file changes outside CI, and a watcher never returns; two runners do not read `CI` and are given their own single-run flag instead (`karma start … --single-run`, `ng test … --watch=false`), rebuilt from the invocation rather than appended to the script's text.
+Where a tool ships a pinned entry point, that is the command: `./mvnw`, `./gradlew`, and Ruby's `bin/` binstubs ahead of `bundle exec`. Gradle's runs `cleanTest` first, at the capture and the verify alike: Gradle skips a `test` task whose inputs have not changed since it last ran, so without it a verify after a change that touched no Gradle input runs no test at all. A JavaScript command carries `CI=true` because several runners watch for file changes outside CI, and a watcher never returns; two runners do not read `CI` and are given their own single-run flag instead (`karma start … --single-run`, `ng test … --watch=false`), rebuilt from the invocation rather than appended to the script's text.
 
 The six rows from .NET to CTest were measured against current toolchains before they were written — .NET SDK 10.0.401, PHPUnit 13.3.6 and Pest 5.2.1, sbt 1.11.7 with ScalaTest and MUnit, Elixir 1.20.4 and 1.18.4, Dart 3.13.5 and Flutter 3.47.5, and CMake 4.4.3 — and several of their commands differ from what each tool's documentation suggests because of it:
 

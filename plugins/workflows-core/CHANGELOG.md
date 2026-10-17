@@ -30,6 +30,8 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Fixed
 - **`/feedback` and `/prompt` no longer say a keyless run lands in the pending file "exactly as `/idea`'s does"**: `/idea` always resolves a folder and never reaches it. Each now says the run lands there as §8 tier 2's *Otherwise* sends it, and `cost-emission` §9 names the runs that reach it the same way, `/diagnose-session` among them.
+- **`test-notify` notifies a Gradle run issued as `cleanTest test`**, the command `dev-workflows` 4.28.0's `test-baseliner` now runs in capture and verify alike: its substring matcher found neither `gradlew test` nor `gradle test` in `./gradlew cleanTest test`, so it gains `gradlew cleanTest test` and `gradle cleanTest test`, and the hooks page lists them.
+- **`specs-repo-git` §8.3 names `/dev-workflows:implement`'s Phase 1.4** among the moves its lift and put-back surround on a direct run from inside the specs repository: the clean-tree check that lifts the session files, and a fresh start's switch, moved there from Pre-Phase 3 in `dev-workflows` 4.28.0.
 
 ### Changed — the repository's gates (not shipped in any plugin)
 - **`scripts/check-docs.sh` gates `security-workflows`**, which `PLUGIN_RELS` and `COST_PLUGIN_RELS` now list, **and check 9 accepts a singular count**, `one slash command` and `one command emits a cost entry`, which a plugin of one command needs. Three selftest cases: two reword the fixture into the singular and must stay green, and one claims two commands as one and must fail. The change is to the body shared with the internal editions, and `docs/superpowers/to-fix.md` lists porting it as E3.

@@ -33,8 +33,11 @@ except Exception:
 # A wrapper needs its own alternation: these are substrings, and "mvnw test"
 # does not contain "mvn test" any more than "gradlew test" contains "gradle
 # test" — which is why that one was already spelled out. Maven's was not, so
-# the ./mvnw test most Maven projects actually run never notified.
-if ! echo "$command" | grep -qE '(mvnw test|mvn test|gradlew test|gradle test|npm test|yarn test|pytest|make test)'; then
+# the ./mvnw test most Maven projects actually run never notified. The same
+# holds for a task listed ahead of "test": dev-workflows' test-baseliner runs
+# ./gradlew cleanTest test, which contains neither "gradlew test" nor
+# "gradle test", so that form has an alternation of its own.
+if ! echo "$command" | grep -qE '(mvnw test|mvn test|gradlew test|gradle test|gradlew cleanTest test|gradle cleanTest test|npm test|yarn test|pytest|make test)'; then
     exit 0
 fi
 
