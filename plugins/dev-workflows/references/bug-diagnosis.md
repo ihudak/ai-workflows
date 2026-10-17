@@ -70,10 +70,10 @@ change — a scan's patch applied included, a probe's tagged line not — dividi
   the **red-capability check** — the reviewed regression test from step 4, run in a scratch
   checkout of `HEAD`, the pre-change tree, with that test file copied in at its own path, must fail
   there on its assertion of this bug's symptom, not on a symbol only the change adds. Two paths
-  reach it: Phase 3B step 8 on SIGNIFICANT / HIGH-RISK bug work, and, at every class, a plan step
-  `code-writer` left to the caller that runs a test the run created or changed and expects it to
-  fail — the repro written as a new test, a test-first step — which `/implement` Phase 3.5 step 3
-  runs as this check, the step's own command from its own directory, after the review gate at
+  reach it, both on bug work (`task_shape: bug`) alone: Phase 3B step 8 on SIGNIFICANT / HIGH-RISK
+  work, and, at every class, a plan step `code-writer` left to the caller that runs a test the run
+  created or changed and expects it to fail — the repro written as a new test, a test-first step —
+  which `/implement` Phase 3.5 step 3 runs as this check, the step's own command from its own directory, after the review gate at
   MODERATE and above and, at SIMPLE, which has none, in Phase 3.5 all the same; the failure the step
   expects is the assertion it must fail on, and its outcome is this check's on either path. The **green
   check** is the caller's verify run (`/implement` Phase 3.5), in which the same test must pass.

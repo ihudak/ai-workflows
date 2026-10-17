@@ -112,7 +112,9 @@ report_file: /tmp/dw-impl-code-AbC123
                                     left to the caller too, naming the test's path and whether the step
                                     expects it to fail — "2 left to the caller — runs tests/test_x.py by
                                     pytest tests/test_x.py::test_empty_x, from the top level; expects it
-                                    to fail". mode: fix — n/a -->
+                                    to fail". The caller runs one that expects a failure as the
+                                    red-capability check on task_shape: bug work, and, on any other,
+                                    expected to pass. mode: fix — n/a -->
 - **Install scripts left to the caller**: none
                                <!-- mode: step — each of the project's own install scripts an install skipped
                                     that install-time-code.md runs beside a build (*The project's own install
