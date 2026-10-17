@@ -46,12 +46,15 @@ address stops, a switch or a fast-forward git refuses at Phase 1, and a `registe
 Phase 7.2 has written the run's record — and every
 run-ending answer — Phase 0 step 9's *Cancel*, Phase 1's switch *Cancel*, Phase 3's *Cancel* and
 Phase 4's *Stop to clean the files* — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase
-7.4's worktree removal where Phase 2 added one, the cost entry (unless `--skip-costs`) and
-`commit-artifacts`, with no `resume.md` and no maintenance phase. A stop taken before Phase 0 step 4's
+7.4's worktree removal where Phase 2 added one, the cost entry (unless `--skip-costs`), the removal of
+`$run_dir` where Phase 0 step 4 made it — `run_dir=<the path>; case "$run_dir" in */security-workflows-run.??????) rm -rf -- "$run_dir" ;; esac`,
+which removes nothing else — immediately before `commit-artifacts`, and `commit-artifacts`, with no
+`resume.md` and no maintenance phase. A stop taken before Phase 0 step 4's
 preflight — step 2's and step 4's `SECURITY_USAGE`, the `$SPECS_PATH` *Cancel*, step 4's address
 stops — skips the preflight too (§3 there). A stop writes no run record, unit note or follow-up, and
-says what was decided before it; a scan folder Phase 4 created in the register, which no record
-names, is deleted. A stop on a run that scanned, once Phase 3 step 3 has found the report directory
+says what was decided before it; a scan folder in the register that no record names, and that Phase 4
+created or copied files into, is deleted. A folder a record names is never deleted, and one Phase 4
+found in place and copied nothing into stays as it was found (Phase 4 step 2). A stop on a run that scanned, once Phase 3 step 3 has found the report directory
 and before 7.2 has written the run's record, names that `CLAUDE-SECURITY-…` directory — on
 `--verify-fixes`, the copy 7.4 makes of it out of the worktree — and the line that records it without
 scanning again, `/security-workflows:scan <KEY | repo-path> --import <report dir>`. Its address is the
@@ -85,7 +88,7 @@ keeps a `sec` run's role.
 
    `SECURITY_SPECS_MISROOTED: $SPECS_PATH is misplaced — the notice above says how, and names the value to set where it can tell. The register can be read there but not written, so this run would record nothing; point SPECS_PATH at the root of a dedicated specs repository, then re-run '/security-workflows:scan <the arguments as given>'.`
 
-   Then make the run's scratch directory, outside every repository: `run_dir=$(mktemp -d -t security-workflows-run.XXXXXX)`, carrying the path it prints as `run_dir`. Its files — the reservations, the plan, the decisions — are the run's own and are never committed.
+   Then make the run's scratch directory, outside every repository: `run_dir=$(mktemp -d -t security-workflows-run.XXXXXX)`, carrying the path it prints as `run_dir`. Its files — the reservations, the plan, the decisions — are the run's own and are never committed. It is removed on every path from here on: immediately before the terminal `commit-artifacts` (Phase 7.6), and in *Ending early*'s tail.
 
 5. **The repository** (spec D5). Each run reads one code repository, `<repo root>`:
    - **A key run without `--import`** — a change scan (a key with none of `--import`, `--triage` and `--verify-fixes`), or `--triage` or `--verify-fixes` with a key — takes the repository this session is open in: `git rev-parse --show-toplevel` from the working directory. It is the one repository Claude Security's change job scans, and, for `--triage` and `--verify-fixes`, the repository whose register the key narrows. Where that fails, stop with `SECURITY_USAGE`, its `<what was wrong>` saying that this session is open in no git repository.
@@ -180,16 +183,23 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/register.py" verify-scope --specs "$SPECS
 ```
 
 `--ref` is the repository's default ref (`workflows-core:read-only-repos` §3), and `--unit` is given
-with a key. Its `files` — each `fixing` finding's file that changed on `<default>` since the finding
-was last seen — become the scan's scope, and its `gone` — the `[SEC#n]` whose file `<default>` no
-longer holds, at a head later than their last sighting — carry to Phase 5 as gone rows. Its
-`unverifiable` — the `[SEC#n]` whose file `<default>` no longer holds, but whose last sighting this
-clone cannot place — carry to the report's `### Register`, as Phase 4's do. On exit 2, stop with its
-message. Where `files` is empty, stop:
+with a key. It prints `{files, gone, unverifiable, unreachable}`, each `fixing` finding in at most one
+of them. Its `files` — each `fixing` finding's file that changed on `<default>` since the finding was
+last seen, at a head later than that sighting — become the scan's scope, and its `gone` — the
+`[SEC#n]` whose file `<default>` no longer holds, at a head later than their last sighting — carry to
+Phase 5 as gone rows. Its `unverifiable` — the `[SEC#n]` whose last sighting this clone cannot place,
+their file on `<default>` or not — carry to the report's `### Register`, as Phase 4's do. Its
+`unreachable` — the `[SEC#n]` whose last sighting this clone holds but `<default>`'s head is not later
+than: a sighting on a branch that has not merged, so their fix has not reached `<default>` and a scan
+there can close nothing — carry to the report's `### Register` too. On exit 2, stop with its message.
+Where `files` is empty, stop before the scan:
 
-`SECURITY_NOTHING_TO_VERIFY: no finding being fixed has a changed file on <default> in <repo-slug><, for KEY> — nothing to verify yet.`
+`SECURITY_NOTHING_TO_VERIFY: no finding being fixed in <repo-slug><, for KEY> has a file that changed on <default> after its last sighting — nothing to verify yet.`
 
-Where `gone` names findings, the message goes on: ` <each [SEC#n]> no longer have their file on <default>; a scan of the repository ('/security-workflows:scan <repo-path>') proposes them fixed.` Where `unverifiable` names findings, it goes on: ` <each [SEC#n]> have no file on <default>, but this clone cannot place their last sighting — fetch the branch that holds it, then re-run.`
+Where `unreachable` names findings, the message goes on: ` The fix of <each [SEC#n]> has not reached <default>: <default>'s head is not later than the commit the finding was last seen at, so a scan of it can close nothing — push the fix and merge it into <default>, then re-run '/security-workflows:scan <the arguments as given>'.` Where `gone` names findings, it goes on: ` <each [SEC#n]> no longer have their file on <default>; a scan of the repository ('/security-workflows:scan <repo-path>') proposes them fixed.` Where `unverifiable` names findings, it goes on: ` This clone cannot place the last sighting of <each [SEC#n]> — fetch the branch that holds it, then re-run.`
+
+Where `files` is not empty, scan them as below, and the report's `### Register` names every
+`unreachable` finding, which this scan leaves as it stands.
 
 **`--triage`:** no scan. Plan the triage:
 
@@ -237,6 +247,8 @@ stop:
 
    `SECURITY_NO_REPORT: Claude Security delivered no report for <repo-slug> at <commit7> — <what the skill said, or the commit its newest report names>; nothing is recorded.`
 
+   **The scan's outcome is read from that stamp, never from the workflow's journal.** Its `verification.status` alone says whether the scan is verified or unverified, and the report says which, with the stamp's `verification.reason` where it is unverified. Claude Security's workflow diagnostics count a researcher that returned an empty findings list as an *empty result* (`agents_empty_result`): that is the researcher's clean answer, not a failure, and the run never reports it as one. Where the stamp's `verification.researchers_returned` is below its `verification.researchers_dispatched`, the report's `### Scope` says how many of the dispatched researchers did not return: Claude Security marks a scan unverified only where none returned, so a verified scan can still have lost some.
+
 4. **Carry the plugin's own words about redaction.** Where the skill's report to this session says that the report's files may still hold a credential value, carry that warning into Phase 4.
 
 5. **If the skill does not return control** — it is a recipe this session follows, so control comes back after its delivery, but a run cut short inside it does not — the run ends there (*Ending early*), recording nothing: name the report directory where the scan wrote one, and the step that records it, `/security-workflows:scan <KEY | repo-path> --import <report dir>`, its address as *Ending early* writes it; where it wrote none, the user runs `/claude-security` themselves, then records its report the same way.
@@ -251,7 +263,11 @@ stop:
    - Where Phase 3 carried the plugin's warning that the files may still hold a credential, ask before anything is copied: `choices: ["Stop to clean the files, then record them with --import (Recommended)", "Record as they are"]`. *Stop to clean the files* ends the run, naming the files to check — `CLAUDE-SECURITY-RESULTS.md`, `CLAUDE-SECURITY-RESULTS.jsonl` and `CLAUDE-SECURITY-RESULTS.sarif` in `<report dir>` — and the command that records them once clean, `/security-workflows:scan <KEY | repo-path> --import <report dir>`, its address as *Ending early* writes it; on `--verify-fixes` Phase 7.4 first copies the report directory out of the worktree it removes, and the message names that copy. *Record as they are* goes on, and the report says the files were recorded unchecked.
    - On `--import`, print one line instead: "Claude Security's redaction is best effort, and this run cannot see whether it reported a failure for this report."
 
-2. **Copy.** On `--import`, a `<dir>` holding no `CLAUDE-SECURITY-REVISION-*.json` stamp, or more than one, is no report directory: stop with `SECURITY_USAGE`, saying so, before anything is copied. Copy the report, JSONL, SARIF and stamp — `CLAUDE-SECURITY-RESULTS.md`, `CLAUDE-SECURITY-RESULTS.jsonl`, `CLAUDE-SECURITY-RESULTS.sarif` and `CLAUDE-SECURITY-REVISION-*.json` — into `$SPECS_PATH/security/<repo-slug>/scans/<folder>/`, creating it. `<folder>` is the stamp's `generated_at` in UTC, compacted to `YYYYMMDDTHHMMSSZ`, then `-` and the commit's first seven characters. The copy is unchanged and never rewritten, and a scan folder is bookkeeping (spec D12).
+2. **Copy.** On `--import`, a `<dir>` holding no `CLAUDE-SECURITY-REVISION-*.json` stamp, or more than one, is no report directory: stop with `SECURITY_USAGE`, saying so, before anything is copied; the run reads the scan's outcome from that stamp as Phase 3 step 3 says. Copy the report, JSONL, SARIF and stamp — `CLAUDE-SECURITY-RESULTS.md`, `CLAUDE-SECURITY-RESULTS.jsonl`, `CLAUDE-SECURITY-RESULTS.sarif` and `CLAUDE-SECURITY-REVISION-*.json` — into `$SPECS_PATH/security/<repo-slug>/scans/<folder>/`, creating it. `<folder>` is the stamp's `generated_at` in UTC, compacted to `YYYYMMDDTHHMMSSZ`, then `-` and the commit's first seven characters. The copy is unchanged and never rewritten, and a scan folder is bookkeeping (spec D12).
+
+   **Where `<folder>` exists already** — a report imported again, or one a run that broke off before recording copied — compare each of the four files with the report's, `cmp -s <report dir>/<file> "$SPECS_PATH/security/<repo-slug>/scans/<folder>/<file>"`:
+   - **each is byte-identical**: copy nothing, and plan as step 3 says;
+   - **any differs, or is missing from the folder**: copy nothing yet, and run step 3's plan first, over the folder as it stands. On `already_recorded`, copy nothing and take step 3's branch for it, and the report names each file that differs from the recorded copy: the register keeps the copy it recorded. Otherwise no record names the folder, because a run broke off before recording it, so the copy replaces it: remove it, any `patches/` that run left there included, since its patches answer another report — `d="$SPECS_PATH/security/<repo-slug>/scans/<folder>"; case "$d" in */scans/????????T??????Z-???????) rm -rf -- "$d" ;; esac`, the folder's own shape guarding the target — then copy the four files into it afresh, as above, and run step 3's plan again, over them.
 
 3. **Plan.** Run:
 
@@ -261,7 +277,7 @@ stop:
 
    - `--repo` is `<repo root>` on every run, `--verify-fixes` included: `register.py` reads only objects and refs, which the temporary worktree shares with the clone, so the plan never depends on the worktree standing.
    - `<default ref>` is the repository's default ref (`workflows-core:read-only-repos` §3), read after the run's fetch. `register.py` anchors a squash merge's evidence on it. `--unit` and `--followups` are given with a key, as Phase 1's triage call gives them.
-   - On `already_recorded`, say the scan is in the register already, and go to Phase 7 with nothing to record. Where `recorded_on` is `another branch`, say that another run's session branch holds it, and that it joins this register when that branch merges; then delete the scan folder step 2 copied, `$SPECS_PATH/security/<repo-slug>/scans/<folder>/`, since no record on this checkout names it and the branch that recorded the scan carries its own copy.
+   - On `already_recorded`, say the scan is in the register already, and go to Phase 7 with nothing to record. Where `recorded_on` is `another branch`, say that another run's session branch holds it, and that it joins this register when that branch merges; then, where step 2 created the scan folder or copied into it, delete it, `$SPECS_PATH/security/<repo-slug>/scans/<folder>/`, since no record on this checkout names it and the branch that recorded the scan carries its own copy. A folder step 2 found in place, and copied nothing into, stays as it was found.
    - Where `unverifiable` names findings, carry them to the report's `### Register` section. Their last sighting is at a commit this clone cannot place, so this scan says nothing about them: fetch the branch that holds it, or run `--verify-fixes` from a clone that has it.
    - On exit 2, stop with its message, which leads with its stop code (`SCAN_PRODUCTS_UNREADABLE`, `REGISTER_GIT`, …).
 
@@ -283,6 +299,8 @@ stop:
    - *Decide all later* decides nothing.
    - *Change some* asks each row, as step 4 says.
 
+   **Where no row's suggestion records a decision** — every row is a review-due or an unconfirmed row, or a new, reopen or open row below HIGH, which suggests *decide later*, and none is a possibly-same, pending-fix, `closable` or `gone` row — *Accept the suggestions* and *Decide all later* would do the same thing, so ask `choices: ["Decide each row", "Decide all later"]` instead. *Decide each row* asks each row as step 4 does; *Decide all later* decides nothing. Where the table has no row at all — a scan that reported nothing and left nothing open, due or awaiting review — ask no batch: say so, and the decisions file holds no decision.
+
 3. **Possibly-same rows are always asked, whatever the batch answer**, one row at a time, naming the scanned finding and each candidate's `[SEC#n]`, CWE, `file:line` and status.
    - One candidate: `choices: ["Same finding", "A different finding"]`.
    - Several: a runtime array of one `Same as [SEC#n]` option per candidate, up to three, then `A different finding`. More candidates follow `workflows-core:next-phase-offer`'s overflow rule: the prose lists every candidate, the array carries the three nearest by line, and a typed `[SEC#n]` is resolved only against the candidates listed.
@@ -290,13 +308,13 @@ stop:
    - **A match onto a candidate the row's `history` names changes nothing** but who reported it: the scan's commit comes before that finding's last sighting (`workflows-core:security-register-format` §5 rule 4).
    - **Otherwise, a confirmed match onto a false positive or an accepted risk** is changed code, so ask that finding's decision as in step 4 too, whatever the batch answer. Left undecided, `register.py` returns it to `open`. A match onto a candidate the row's `reopens` names is reopened by `register.py`, and decided as a reopen row: *Accept the suggestions* takes step 1's suggestion for it, *Change some* asks it as step 4 does, and *Decide all later* leaves it `reopened`. A match onto any other `fixed` candidate — the scan comes before the scan that closed it — or onto any other status keeps that status.
 
-4. ***Change some*** asks each row's decision — a possibly-same row once step 3 has answered it, a rejected one as a new row and a matched one only as step 3 says — four rows to an `AskUserQuestion` call, each question naming its row and its suggestion, with no `(Recommended)` marker: which answer is right is the question itself.
+4. ***Change some***, and step 2's *Decide each row*, ask each row's decision — a possibly-same row once step 3 has answered it, a rejected one as a new row and a matched one only as step 3 says — four rows to an `AskUserQuestion` call, each question naming its row and its suggestion, with no `(Recommended)` marker: which answer is right is the question itself.
    - New, reopen, open, pending-fix or review-due rows, a match step 3 reopens, and a match onto a false positive or an accepted risk that step 3 asks: `choices: ["Fix", "Decide later", "False positive (you'll be prompted for the evidence)", "Accept the risk (you'll be prompted for the reason)"]`. On a review-due row, *Accept the risk* re-dates the risk with the review-by date step 5 asks for; in a `sec` run it is recorded confirmed (step 6), so one answer re-dates and confirms a review-due row that also awaited security review.
    - `closable` and `gone` rows: `choices: ["Confirm fixed", "Keep it open"]`. *Keep it open* writes no decision: the finding keeps its status.
-   - Unconfirmed rows, in a `sec` run: `choices: ["Confirm", "Overrule — fix it", "Overrule — decide later"]`. *Confirm* re-asserts the same status, which records it confirmed; *Overrule — decide later* records `open`.
+   - Unconfirmed rows, in a `sec` run: `choices: ["Confirm", "Overrule — fix it", "Overrule — decide later"]`. *Confirm* re-asserts the same status, which records it confirmed; *Overrule — decide later* records `open`. The question shows the evidence and reason the Dev recorded, read for display from the `register.json` step 1 rebuilt, and, for a false positive, beside its evidence the line the `<path>:<line>` it opens with cites, read from step 5's evidence commit as step 5 reads it — or, where that commit holds no such line, says so — so the Security Engineer can judge it. The run judges nothing itself.
 
 5. **The follow-up questions**, in plain text, each right after the answer that needs it.
-   - *False positive* asks for the evidence: the `file:line` of the guard, check or encoding that defeats the plugin's exploit scenario, and one line of why. An answer with no `<path>:<line>` in it is asked again.
+   - *False positive* asks for the evidence: the `file:line` of the guard, check or encoding that defeats the plugin's exploit scenario, and one line of why. An answer with no `<path>:<line>` in it is asked again. The cited `<path>:<line>` must be a line of the **evidence commit**'s tree: the scanned commit — Phase 1's, or on `--import` the stamp's `revision.commit` — and on `--triage`, which scans nothing, the row's finding's `last_seen.commit`, read for display from the `register.json` step 1 rebuilt, or `<repo root>`'s `HEAD` where this clone lacks that commit. `<path>` is relative to the repository's top level; read it with `git -C <repo root> show <evidence commit>:<path>`. Where that names no file, or a file with no line `<line>` — a line number of 0, or past the file's end — say so and ask again — or, where the person withdraws the false positive, ask the row's step 4 question again. Otherwise show that line, quoted as code from the repository, and record the evidence and its why **as given**: the run judges nothing, asks no question of its own about it, and never says the register records its view of the evidence — only the person's evidence and reason are recorded.
    - *Accept the risk* asks for one line of why, then the review-by date: `choices: ["90 days (Recommended)", "30 days", "180 days"]`, counted from today's UTC date. A typed date is normalised to `YYYY-MM-DD`, or asked again. The owner is the person deciding.
    - *Decide later* records no decision on an existing finding, and `open` on a new one — which `register.py` records itself, for a new finding no decision names. A reopen row so left stays `reopened`, and a pending-fix row stays as it is, to be offered again by the next run.
 
@@ -342,7 +360,7 @@ decided nothing (its decisions file holds no decision). Just before recording (s
 - Fetch `origin`'s default branch of the specs repository — `<default>` as `workflows-core:specs-repo-git` §3.2 resolves it — with the bounded form, `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 30 git -C "$SPECS_PATH" fetch --quiet origin <default>`, and the session branches with Phase 0 step 6's capped form, each skipped where that step skips. This is fetch only, never a merge.
 - Repeat Phase 0 step 6 over the session branches **and** the specs default ref, `origin/<default>`, adding to `$run_dir/reserve-<repo-slug>/` every run record the checkout lacks.
 - Where anything was added, re-run `register.py plan` with the same arguments — Phase 4's, or Phase 1's on `--triage` — into `$run_dir/plan.json`. The triage answers carry over unchanged, because they name findings by plugin ID or by an existing `[SEC#n]`, and a reserved record moves only the numbering. Where the new plan reports the scan `already_recorded`, a run recorded it meanwhile, and this run records nothing. Branch on its `recorded_on`, as 7.2 does:
-  - `another branch` — the default branch or another session branch recorded it: say so, as Phase 4 does, delete the scan folder Phase 4 copied, with any patches Phase 6 copied into it, as Phase 4 does — the report's *Patches* line names them as deleted, and they stay in `<report dir>/patches/` — and list this run's decisions in the report's `### Register`, for a `--triage` to take again;
+  - `another branch` — the default branch or another session branch recorded it: say so, as Phase 4 does, delete the scan folder Phase 4 created or copied into, with any patches Phase 6 copied into it, as Phase 4 does — where Phase 4 found the folder in place and copied nothing into it, delete only the patches Phase 6 copied there — the report's *Patches* line names them as deleted, and they stay in `<report dir>/patches/` — and list this run's decisions in the report's `### Register`, for a `--triage` to take again;
   - `this register` — a run on this checkout recorded it: say so, list this run's decisions in the report's `### Register`, for a `--triage` to take again, and leave the scan folder, which that run's record names.
 
 ### 7.2 Commit the register
@@ -424,6 +442,7 @@ SIGNIFICANT — [one-line reason]
 - Run: [scan | import | triage | verify] — [<KEY> | <repo-path>], role [dev | sec]
 - Repository: <repo-slug> at <repo root>
 - Scanned: [the kind at <commit> — the Epic's branch over <base>, the whole repository or the area Claude Security's scope question chose, or the files of --verify-fixes in a temporary worktree at <default>'s head — with the effort and the report directory; a tip that differs from the recorded commit; a fast-forward or switch made; after_merge; a dirty tree; or "no scan" on --triage, and the imported folder on --import]
+- Verification: [the stamp's verification.status — verified, or unverified with its verification.reason — and, where verification.researchers_returned is below verification.researchers_dispatched, how many of the dispatched researchers did not return; or "no scan" on --triage]
 - Refs: [each fetch that failed or timed out, read as last fetched; each stale tracking ref removed; a shallow clone, where the merge state may read as open; a tip unit-branch could not compare; a read-only mount — or "fresh"]
 - Limit: the register records what scans found, never that nothing else is there.
 
@@ -439,6 +458,7 @@ SIGNIFICANT — [one-line reason]
 - Awaiting security review: [each [SEC#n] a dev run recorded as a false positive or an accepted risk and no sec run has confirmed — or "none"]
 - Review due: [each accepted risk past its review-by date — or "none"]
 - Unverifiable: [each [SEC#n] Phase 4, or on --verify-fixes Phase 1, carried, and what would settle it — or "none"]
+- Unreachable: [on --verify-fixes, each [SEC#n] Phase 1 carried, whose fix has not reached <default> and which this scan leaves as it stands: push its fix and merge it into <default>, then run --verify-fixes again — or "none"]
 - Renumbered: [each move commit recorded, with the follow-up lines that cite the old number and either are the moved finding's own line under it or match its CWE and path on what the line carries, to correct; or, on a run that recorded nothing, each move plan reported, marked provisional — not yet recorded; correct no lines yet — or "none"]
 - Follow-ups: [each line commit built, pending the preview at the end of this run — or the prompt lines, on a path — or "none"]
 - Patches: [each F<n>.patch copied, each finding declined, or why none was asked for]
@@ -461,7 +481,7 @@ The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "nex
 - **findings went to fix** → with a key, `/dev-workflows:implement <KEY>` from repository `<repo-slug>`, which reads back the follow-ups the preview writes and continues on the Epic's branch while its pull request is open, starting from each patch a line names — a path under `$SPECS_PATH`, which its Phase 1 reads there, and which it checks with `git apply --check` and applies, each task's in turn, before any other edit; then the pull request's review and merge — where the change scan ran under `after_merge`, whose pull request has merged already, the review and merge of the pull request that run opens. With a path, `/dev-workflows:implement` with the prompt lines, each that names a patch followed by that patch's absolute path, `$SPECS_PATH` joined to it: a direct run reads no follow-up and resolves no path under `$SPECS_PATH` itself;
 - **once the fix has merged** → `/security-workflows:scan <repo-path> --verify-fixes` (Security Engineer), which closes it on evidence;
 - **accepted risks are review due, or decisions await security review** → `/security-workflows:scan <repo-path> --triage` (Security Engineer);
-- **after a change scan** → `/security-workflows:scan <KEY>` from each other repository the unit's `implementation.md` names, since the change scan reads the repository it is run from; and, where no finding went to fix, the pull request's review and merge — none under `after_merge`, whose pull request has merged already — then the remaining Epics, then the PE's `/dev-workflows:conformance <PRD-KEY>`;
+- **after a change scan** → `/security-workflows:scan <KEY>` (Dev) from each other repository the unit's `implementation.md` names, since the change scan reads the repository it is run from; and, where no finding went to fix, the pull request's review and merge — none under `after_merge`, whose pull request has merged already — then the remaining Epics, then the PE's `/dev-workflows:conformance <PRD-KEY>`;
 - otherwise, nothing.
 
 The run hands nothing off by pull request, so no offer carries a `<merge-clause>`. Where more routes
@@ -485,7 +505,9 @@ Scan: [the kind, commit and effort — or "none" on --triage]
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `subagent_type: "workflows-core:defect-reporter"` in place of Agent 4 below, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing, and surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects`.
 
-Then spawn all four maintenance agents in a **single Agent message**, each with `model: <detection_model>` and told that the project root is `$SPECS_PATH`: that is where this run wrote. The working directory is a code checkout, which this command writes only by a fast-forward or a switch Phase 1 made, the report directory Claude Security wrote, and a report directory 7.4 copied out of a temporary worktree.
+Then spawn all four maintenance agents — Agent 4 alone on a run that recorded nothing, as the next paragraph says — in a **single Agent message**, each with `model: <detection_model>` and told that the project root is `$SPECS_PATH`: that is where this run wrote. The working directory is a code checkout, which this command writes only by a fast-forward or a switch Phase 1 made, the report directory Claude Security wrote, and a report directory 7.4 copied out of a temporary worktree.
+
+**On a run that recorded nothing — no `register.py commit` ran — dispatch Agent 4 alone** (or, under `run_flags.skip_feedback`, `defect-reporter` in its place), and say so in this step's output: *Agents 1–3 not run — this run recorded nothing in the register, so what it wrote in `$SPECS_PATH` is its session files alone.* Agents 1–3 check what the run wrote there. The runs that record nothing are: Phase 4 finding the scan `already_recorded`, on either branch; 7.1's re-plan, or 7.2's re-plan after `REGISTER_MOVED`, finding it `already_recorded`; and a `--triage` whose decisions file holds no decision, which 7.1 and 7.2 skip. A run that ends early takes *Ending early*'s tail, which has no maintenance phase at all.
 
 - **Agent 1 — Documentation** (`subagent_type: "general-purpose"`): given the change summary, check the specs repo's own internal documentation for an index of security registers or per-repository records; apply a minimal edit where one is warranted, and otherwise return "no update required (reason)".
 - **Agent 2 — Knowledge base** (`subagent_type: "general-purpose"`): given the change summary, check `~/.claude/memory/` and the project root's `.claude/memory/` for a fitting file and append an entry only for a recurring or non-obvious pattern this run surfaced, in the `### [Short title]` / Context / Insight / When it applies / Date / Ref format; otherwise return "no update required". It never copies a finding's text, which is scan output.
@@ -506,7 +528,11 @@ Emit this step's short output — each agent's result, the feedback persisted, a
 
 **Session cost.** **Under `run_flags.skip_costs`**, do not call `emit-cost`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call `emit-cost` with `command: /scan`, `phase: inferred`, `role: inferred`, `run_role`, the run's `key` and `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). §7's `/scan` inference resolves the phase to `security-audit` and the role from `run_role`. A key run files its entry under the unit's PRD folder; a keyless run, on a repository path, files it under `$SPECS_PATH/security/<repo-slug>/` (§8).
 
-**Then write the resume pointer** per `Skill(skill: "workflows-core:reference", args: "session-hygiene")` §1 — not on a run that ended early (*Ending early*), which writes none — naming in its *Carry-forward decisions* line any worktree 7.4 failed to remove. A keyless run has no PRD folder, and §1 writes no file for it. **Then commit session artifacts (terminal)**: invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It commits the register, the unit note and the follow-ups with the run's other session files (spec D12), and pushes them as it pushes those; where the default branch takes no push, §8's session-branch mode carries them. Print its §6 outcome line, prefixed `Specs repo:`, as the run's last output.
+**Then write the resume pointer** per `Skill(skill: "workflows-core:reference", args: "session-hygiene")` §1 — not on a run that ended early (*Ending early*), which writes none — naming in its *Carry-forward decisions* line any worktree 7.4 failed to remove. A keyless run has no PRD folder, and §1 writes no file for it. **Then remove the run's scratch directory**, immediately before the terminal commit: `run_dir=<the path>; case "$run_dir" in */security-workflows-run.??????) rm -rf -- "$run_dir" ;; esac` — the `mktemp` prefix guards the target, and nothing else is removed. **Then commit session artifacts (terminal)**: invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It commits the register, the unit note and the follow-ups with the run's other session files (spec D12), and pushes them as it pushes those; where the default branch takes no push, §8's session-branch mode carries them. Print its §6 outcome line, prefixed `Specs repo:`, as the run's last output, followed only by the line below where it applies.
+
+**Where that line is §6's *push rejected* row that advises `git pull --rebase --autostash`** — not its session-branch form, which advises no pull — **and a `register.py commit` ran in this run**, follow it with one more line, prefixed `Specs repo:` as §6's own addenda are, so that the two stay the run's last output. Where another clone recorded too before either pushed, both rebuilt `register.json` and `register.md`, so that pull stops on a content conflict in each; the run records, each a file of its own, never conflict, and a rebuild from them settles both. `<plugin root>` is this run's expanded `${CLAUDE_PLUGIN_ROOT}`, and `<SPECS_PATH>` the run's `$SPECS_PATH`, both written out:
+
+`Specs repo: where that pull stops on a conflict in security/<repo-slug>/register.json or register.md, settle both from the run records — python3 "<plugin root>/scripts/register.py" rebuild --specs "<SPECS_PATH>" --slug <repo-slug>, then git -C "<SPECS_PATH>" add security/<repo-slug>/register.json security/<repo-slug>/register.md and git -C "<SPECS_PATH>" rebase --continue — then push as the line above says`
 
 ---
 

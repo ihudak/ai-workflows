@@ -438,7 +438,8 @@ The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "nex
   continues on the Epic's branch while its pull request is open, then
   `/dev-workflows:conformance <EPIC-KEY>` again; an Epic run with none → for each repository whose
   branch it traced before the merge — `after_merge` false — `/security-workflows:scan <EPIC-KEY>`
-  from that repository, since the scan reads the repository it is run from, then the pull request's
+  (Dev, before its pull request merges: a key run is the `dev` role's scan) from that repository,
+  since the scan reads the repository it is run from, then the pull request's
   review and merge; no review and merge for a repository traced under `after_merge`, whose pull
   request has merged already; then the remaining Epics and the PE's
   `/dev-workflows:conformance <PRD-KEY>` once every Epic has merged — the whole route where the run
