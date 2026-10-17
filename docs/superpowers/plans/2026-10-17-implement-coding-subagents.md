@@ -124,6 +124,7 @@ Run by the controller, not a subagent. It creates scratch files only, and a RED 
   - `scratch_checkout`, on bug work after the first edit, else `none`;
   - `mode` (`step` | `fix`);
   - `failure_input`, on `mode: fix` (the verify report, or the lint or build output).
+  - `report_file`, where it writes its report.
 - It returns:
   - its first line, `status: <done | needs_decision | trigger | blocked>`;
   - its report, written to `report_file`. The report holds `### Files changed`; `### Settled by the run` (each open question, with what was chosen); `### Out of scope` (another repository's need); and, by status, `### Decision` (the question, two to four options, and what is already coded), `### Trigger` (the §1.1 item and the paths that show it) or `### Blocked` (what the plan names that is not so).
@@ -208,7 +209,7 @@ Run by the controller, not a subagent. It creates scratch files only, and a RED 
 - [ ] **Step 2: Phase 0's `model_routing` block.** `implementation_model` follows the rule, and `fixes_model` equals it.
 - [ ] **Step 3: Rewrite Phase 3A step 1 and Phase 3B step 1.**
   - **The orchestrator first does its mechanical actions:** the bisect step, then applying the patches. It records each patch's outcome in `patches`.
-  - **Then the step groups.** By default, one dispatch per plan step. Consecutive steps whose text names exactly the same file or files group into one dispatch, up to four steps. Groups run in plan order, one at a time.
+  - **Then the step groups.** By default, one dispatch per plan step. Consecutive steps whose text names exactly the same file or files group into one dispatch, up to four steps. Groups run in plan order, one at a time. A step has no class of its own: every group is coded under the run's class, on its model.
   - **The dispatch** is `→ Agent (subagent_type: "dev-workflows:code-writer", model: <implementation_model>)`, with the handoff fields, the report path, and the diff so far.
 - [ ] **Step 4: Handle each return.**
   - **`done`:** record it, and fold `### Settled by the run` into `assumptions` and `### Out of scope` into step 2's follow-up rule.
