@@ -86,7 +86,7 @@ KEYS = [
     ("clean_finish", None),
     ("files", ["task_description_file", "plan_file", "summary_file", "baseline_file",
                "test_diff_file", "review_diff_file", "partial_diff_file", "review_file",
-               "claims_file"]),
+               "claims_file", "failure_file"]),
     ("step_groups", None), ("patches", None), ("triage", None),
     ("conformance", ["summary", "annotated", "gaps", "handoff_line"]),
     ("other_repo_changes", None), ("assumptions", None), ("deferred", None),

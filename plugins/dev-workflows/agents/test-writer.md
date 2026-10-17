@@ -6,7 +6,7 @@ tools: ["Read", "Glob", "Grep", "Write", "Edit"]
 
 Write tests for new or changed behavior based on a diff. DO NOT run the tests — the caller (the command) runs `test-baseliner` in verify mode separately.
 
-Invoked from `/implement` at Phase 3.5 (SIMPLE / MODERATE, after Phase 3A implementation completes) and inside Phase 3B (SIGNIFICANT / HIGH-RISK, at step 4a — after implementation completes but before the diff is captured for Opus review). This agent runs after the edits, so it settles nothing about which framework the project has: it relays what the baseline recorded before them.
+Invoked from `/implement` at Phase 3.5 (SIMPLE, after Phase 3A implementation completes) and at Phase 3B step 4a (SIGNIFICANT / HIGH-RISK, and MODERATE through Phase 3A step 6's review gate — after implementation completes but before the diff is captured for Opus review). This agent runs after the edits, so it settles nothing about which framework the project has: it relays what the baseline recorded before them.
 
 ## Inputs
 

@@ -8,7 +8,7 @@ Opus-gated quality gates, plus the lighter-weight planners that feed or precede 
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
-| `code-review` | opus | Read, Glob, Grep, Skill | Post-implementation review for SIGNIFICANT / HIGH-RISK changes — correctness, security, architecture, edge cases, migration, dependencies, tests, rollback; gates the test run. | `/implement`, `/upgrade`, `/vuln` |
+| `code-review` | opus | Read, Glob, Grep, Skill | Reviews SIGNIFICANT / HIGH-RISK changes, and `/implement`'s MODERATE ones — correctness, security, architecture, edge cases, migration, dependencies, tests, rollback; gates the test run. | `/implement`, `/upgrade`, `/vuln` |
 | `design-reviewer` | opus | Read, Glob, Grep | Reviews an engineering design against the design-format authority and its specification, treating any unresolved design open question as a BLOCKER. | `/design` |
 | `readiness-reviewer` | opus | Read, Glob, Grep | Cross-artifact readiness verifier — checks the ARD/spec/design justify the phase derived from them and the next transition; the only reviewer that synthesises a verdict across artifacts. | `/ready` |
 | `risk-planner` | opus | Read, Glob, Grep, Bash, WebFetch, WebSearch, Skill | Risk-weighted planner for SIGNIFICANT / HIGH-RISK tasks; returns a structured plan with an explicit risks section. Never dispatched for SIMPLE / MODERATE work. | `/implement`, `/upgrade` |
@@ -27,7 +27,7 @@ Read-only discovery and grounding — each returns a structured digest rather th
 
 ## Writers
 
-Produce artifact content from a structured handoff, and write no git state. `code-writer`, the one of them with `Bash`, uses it to read, to delete a file a step removes, to run the repository's own install, code-generation or formatting command a plan step names — an install without any dependency's install-time code — and, on a bug fix, to run the repro, the build it needs and its probes in a scratch checkout of `HEAD` — never a lint, build, type-check or test in your working tree.
+Produce artifact content from a structured handoff, and write no git state. `code-writer`, the one of them with `Bash`, uses it to read, to delete a file a step removes, to run the repository's own install, code-generation or formatting command a plan step names, or the formatter or code generator that fixes a lint failure it is handed — an install without any dependency's install-time code — and, on a bug fix, to run the repro, the build it needs and its probes in a scratch checkout of `HEAD` — never a lint, build, type-check or test in your working tree.
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|

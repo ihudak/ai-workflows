@@ -10,7 +10,7 @@
 ## Code Writer Request
 mode: step                 # step | fix. `step` codes the plan steps `steps` names (Phase 3A step 1,
                            # Phase 3B step 1). `fix` makes one attempt at what `failure_input` shows
-                           # broke (Phase 3.5's fix loop, and a lint or build failure at its step 3).
+                           # broke (Phase 3.5's fix loop, a failing check at its step 3 included).
 plan_file: /tmp/dw-impl-plan-AbC123
                            # EVIDENCE. The approved plan. Where the user approved a mid-implementation
                            # re-plan it holds both plans under two headings: the re-plan's Steps are the
@@ -60,11 +60,13 @@ pre_existing_dirty: [src/notes.txt]
                            # inline. The paths /implement recorded as dirty before the run's first edit
                            # (its pre_existing_dirty): the user's own uncommitted work. none where it
                            # recorded none. Where it names any, a formatter that cannot be limited to
-                           # its step's paths is not run, and that step is left to the caller.
+                           # its paths is not run: that step is left to the caller, or, on mode: fix,
+                           # that failure goes under ### Not fixed.
 failure_input: /tmp/dw-impl-failure-AbC123
                            # EVIDENCE on mode: fix; none on mode: step. A file holding test-baseliner's whole
-                           # `## Test Verify Report` (Phase 3.5 step 6), or the lint or build command, the
-                           # directory it ran in and its output (Phase 3.5 step 3).
+                           # `## Test Verify Report` (Phase 3.5 step 6), or a failing check's command — a
+                           # lint, a build, a type-check, or another check a step left to the caller —
+                           # the directory it ran in and its output (Phase 3.5 step 3).
 model_routing:             # CONTEXT, inline. The run's model_routing block
   classification: SIGNIFICANT     # (workflows-core:model-routing/classification §4), as far as this
   implementation_model: claude-opus-5-5   # handoff declares it: the class `class` carries, the model
@@ -124,7 +126,7 @@ report_file: /tmp/dw-impl-code-AbC123
 - <the failure, as failure_input names it> — <why it was left: no fix found, not this run's change, or the CAVEAT: line that accounts for it>
 - _or_ none
 
-### Tool runs                  <!-- mode: step — an install, code-generation or formatting command a plan step named, run in repo_root -->
+### Tool runs                  <!-- mode: step — an install, code-generation or formatting command a plan step named; mode: fix — the formatter or code generator that fixes a lint failure; each run in repo_root -->
 - `<the command, as run>` — <its result> — <what it wrote: a lockfile, generated files> — skipped: <the dependencies' install-time code, and each project install script that reference never runs, as its *Name what was skipped* names them, or none>
 - _or_ none
 
@@ -150,7 +152,7 @@ Paths: `<path>`, `<path>`
 
 **The four statuses:**
 
-- `done` — every step handed is coded, or left to the caller where the caller keeps it; on `mode: fix`, the attempt is made, and `### Not fixed` names every failure it left. `### Settled by the run` becomes the Phase 5 report's `### Assumptions & limitations`, `### Not fixed` its `### Deferred items`, and `### Out of scope` goes on the follow-up line Phase 3A/3B step 2 writes for that repository.
+- `done` — every step handed is coded, or left to the caller where the caller keeps it; on `mode: fix`, the attempt is made, and `### Not fixed` names every failure it left. `### Settled by the run` becomes the Phase 5 report's `### Assumptions & limitations`; a `### Not fixed` line's reason goes into its `### Deferred items` beside the failure it names, where the run keeps that failure (Phase 3.5 step 6's **Accept**), and spares that failure a further attempt where it is not this run's change or a `CAVEAT:` line accounts for it; and `### Out of scope` goes on the follow-up line Phase 3A/3B step 2 writes for that repository.
 - `needs_decision` — Phase 1's test met mid-coding: nothing the run can read settles a question, and its answer changes what the user would notice. `### Decision` carries two to four options, never an *Other* (the harness adds the free-text answer itself). The caller asks, then dispatches afresh for the rest of the group, handed this report with the answer beside it in `earlier_reports`.
 - `trigger` — `mode: step` at `SIMPLE` or `MODERATE` only: a classification item the approved plan did not state, with the paths that show it. The caller runs its re-classification raise.
 - `blocked` — a step cannot be coded as the plan writes it, because something the plan names is not so. A `### Blocked` that reads `Unreadable: <field> at <path>` instead names an evidence input the agent could not read: an orchestrator bug, never a plan defect. On `mode: fix` that form is the only `blocked`, and a failure the attempt found no fix for is a `done` that lists it under `### Not fixed`.
