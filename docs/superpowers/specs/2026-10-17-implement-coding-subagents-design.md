@@ -142,6 +142,7 @@ It carries `workflows-core`'s untrusted-content block (check 20).
 ## Steps and dispatches
 
 - **The unit is a plan step**, as written in the plan's `Steps` list.
+- **A step has no class of its own.** The class is the run's, set at Phase 1.5/1.6 and raised only by the existing re-classification. Every step is coded under it and the whole change is reviewed under it. A keyed Epic run is floored at SIGNIFICANT by §8.1, so all its steps, however small, are coded on Opus, and the Opus `code-review` gate reviews the whole change once, exactly as today.
 - **Grouping.** The orchestrator may group consecutive steps into one dispatch where they touch the same files and together stay small. A plan of ten one-line edits to one file is one dispatch, not ten.
 - **No group so large that it would compact.** The exact bound is the builder's (see below), with this intent: no dispatch so large that the subagent compacts, and no dispatch so small that its own setup dominates.
 - **Order.** Groups run in plan order, one at a time.
