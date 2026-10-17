@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.34.6] — 2026-10-16
+## [3.34.6] — 2026-10-17
 
 ### Changed
 - **The workflow page draws the Dev's `/dev-workflows:conformance` on an Epic before its pull request merges, on its branch** (dev-workflows 4.28.0), where 3.34.1 drew it once the pull request had merged.

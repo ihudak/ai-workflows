@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.16.2] — 2026-10-16
+## [1.16.2] — 2026-10-17
 
 ### Fixed
 - **`/docs-init`'s reason for the family-wide `dev-workflows/` cost directory** says that naming it per plugin would split one repository's cost record "across one directory per emitting plugin", not "across four directories", a count that went stale as the family grew.

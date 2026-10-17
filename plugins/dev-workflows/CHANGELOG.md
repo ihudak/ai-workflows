@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.28.0] — 2026-10-16
+## [4.28.0] — 2026-10-17
 
 Needs `workflows-core` 1.42.0, whose `implementation-format` §5 `unit-branch` both `/implement` and `/conformance` now load, and whose `next-phase-offer` offers `/conformance` on an Epic before its pull request merges.
 

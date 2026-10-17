@@ -1121,11 +1121,11 @@ has("core", "plugins/workflows-core/docs/reference/references.md", "`security-re
 
 # ---- implement (Task 5) ----
 IM = "plugins/dev-workflows/commands/implement.md"
-has("implement", IM, 'choices: ["Continue on <branch> — the work joins its open pull request (Recommended)", "Branch from current position", "Branch from default branch — fresh start", "Cancel"]')
+has("implement", IM, 'choices: ["Continue on this branch (Recommended)", "Branch from current position", "Branch from default branch — fresh start", "Cancel"]')
 has("implement", IM, 'choices: ["Branch from current position — continue on this work (Recommended)", "Branch from default branch — fresh start", "Cancel"]',
     "implement.md keeps its three-option question for a branch that is not the unit's own")
-has("implement", IM, "**Continue on `<branch>`**")
-has("implement", IM, 'choices: ["Switch to <branch> and continue — the work joins its open pull request (Recommended)", "Branch from current position", "Branch from default branch — fresh start", "Cancel"]')
+has("implement", IM, "**Continue on this branch**")
+has("implement", IM, 'choices: ["Switch and continue (Recommended)", "Branch from current position", "Branch from default branch — fresh start", "Cancel"]')
 has("implement", IM, 'args: "implementation-format unit-branch"')
 has("implement", "plugins/dev-workflows/docs/commands/implement.md", "Continue on")
 has("implement", ".claude/rules/dev-workflows-implement.md", "joins its open pull request")
@@ -1325,11 +1325,17 @@ plugin ID, with history: whether the scan's commit comes before the finding's la
 sighting moves nothing), possibly-same matches to confirm (each with its candidates, those the match would
 move nothing for as history, and the fixed ones it would reopen as reopens), findings a covering scan closes
 (auto: a fixing finding whose last-seen commit the scan descends from) or proposes closing (every other: a
-squash names the unit, not the fix), findings it did not report, findings to reopen (a fixed finding reported
+squash names the unit, not the fix; and one raised for no unit and last seen off the default branch, which the
+scan is later than only through a later commit of --default-ref, is marked via: moved -- the default branch has
+moved on past the sighting, and nothing records that the fix merged), findings it did not report, findings to
+reopen (a fixed finding reported
 again, unless the scan comes before its last-seen commit or before the commit of the scan that closed it),
-findings whose file is gone at a commit later than their last sighting, and, as unverifiable, the findings
+findings whose file is gone at a commit later than their last sighting, each marked via: moved as a closure is,
+and, as unverifiable, the findings
 about which nothing is recorded because this clone cannot place their last sighting (the last-seen commit
-absent and no squash of the finding's unit found after it), or because the scan is later but whether the
+absent and no squash found after it: one of the finding's unit, or, for a finding raised for no unit and last
+seen off the default branch, any commit of --default-ref outside the sighting's base), or because the scan is
+later but whether the
 file changed cannot be told (no blob recorded, and one of the two commits absent) -- plus the open
 findings, as pending_fix each finding at fix -- which has no follow-up written -- and, given --followups, the
 --unit's follow-ups.md, each fixing finding no task line there, open or ticked and naming the register's
@@ -1338,11 +1344,13 @@ closes or proposes fixed, the accepted risks past their review-by date, as renum
 yet,
 each marked provisional, and as origins the origin of every [SEC#n] it saw, through which commit names the
 findings decided on.
-Git is run on --repo, which must hold the scan's commit, for ancestry, a unit's squash commit, the finding's
+Git is run on --repo, which must hold the scan's commit, for ancestry, a squash commit, the finding's
 file blob, and, with --default-ref, the scan's base: the commit it shares with the default branch (git
-merge-base), recorded with each sighting, so the squash leg skips a [<key>] commit that is in the base --
-one the branch was cut after, whatever any clock said -- and never guesses the default branch; without the
-flag, or where the ref shares no history with the commit, the base is null and no squash counts, and a
+merge-base), recorded with each sighting, so the squash leg -- a [<key>] commit of the finding's unit, or, for a
+finding raised for no unit and last seen off the default branch, any commit --default-ref holds -- skips a commit
+that is in the base -- one the branch was cut after, whatever any clock said -- and never guesses the default
+branch; without the flag, or where the ref shares no history with the commit, the base is null and no squash
+counts, without the flag the keyless leg counts no commit either, and a
 --default-ref that names no commit stops the run with REGISTER_GIT, an empty one included. Every path and
 scope entry the products name is relative to the scan root, and plan reads it joined to the stamp's
 scan_prefix, relative to the repository's top level. Without --scan it plans a triage.
@@ -1359,11 +1367,15 @@ nobody decided is recorded open with default: true, a decision the replay skips 
 way to an earlier one, since the finding already holds a status.
 rebuild: regenerates register.json and register.md from the run records; prints the moves no run
 record holds yet, each marked provisional.
-verify-scope: prints the files of the findings being fixed whose file blob at --ref differs from the
-one last seen -- or, where no blob was recorded, whose file git diff shows changed between the last-seen
-commit and --ref; a file whose change cannot be told is not listed -- the ids whose file is gone at
---ref where --ref is later than their last sighting, and, as unverifiable, the ids whose file is gone where
-this clone cannot place that sighting.
+verify-scope: prints, of the findings being fixed: as files, the file of each one --ref is later than the last
+sighting of, where its blob at --ref differs from the one last seen -- or, where no blob was recorded, git diff
+shows it changed between the last-seen commit and --ref; a file whose change cannot be told is not listed; as
+gone, an entry for each one whose file is gone at a --ref later than its last sighting, marked via: moved as plan
+marks one; as unreachable, the ids --ref is not
+later than the last sighting of, which this clone holds, so a scan of it closes nothing yet, whether --ref holds
+their file or not -- a sighting on a branch whose fix --ref does not show merged, or, for a finding raised for no
+unit, one --ref has not moved on past; and, as
+unverifiable, the ids whose last sighting this clone cannot place, their file gone or not.
 
 Exit 0: it ran. Exit 2: it could not run; the cause is on stderr, led by its stop code.
 Python standard library only.
@@ -1550,18 +1562,26 @@ def _instant(text):
     return t if t is not None and t.tzinfo is not None else None
 
 
-def squashed(repo, commit, units, last, here):
-    """Whether commit carries a squash of a unit's work after the finding's last sighting -- the merged test's
-    subject leg, held to that sighting: a commit whose subject holds `[<key>]` for a key in units, whose
-    committer date is no earlier than last_seen.date, which is neither last_seen.base nor one of its ancestors,
-    and which, where the last-seen commit is in the clone (here), is not one of its ancestors. The base is the
-    commit the sighting shares with the default branch, which every clone of that branch holds, so an earlier
-    squash of the unit, which the branch was cut after, never counts, whatever any clock said; where the base
-    is null or not in the clone, no squash counts. The brackets are not key characters, so `[<key>]` matches
-    only the whole key."""
+def squashed(repo, commit, units, last, here, default=None):
+    """How commit carries the finding's work after its last sighting, held to that sighting: "squash" for the merged
+    test's subject leg -- a commit that is no merge, whose subject holds `[<key>]` for a key in units -- and, for a
+    finding raised for no unit, which no subject can name, "moved" for the keyless leg -- any such commit that the
+    default ref (`default`, a commit the caller resolved) also holds; False for neither. Either leg's commit has a
+    committer date no earlier than last_seen.date, is neither last_seen.base nor one of its ancestors, and, where the
+    last-seen commit is in the clone (here), is not one of its ancestors. The base is the commit the sighting shares
+    with the default branch, which every clone of that branch holds, so an earlier squash of the unit, which the
+    branch was cut after, never counts, whatever any clock said; where the base is null or not in the clone, no
+    squash counts. The brackets are not key characters, so `[<key>]` matches only the whole key. The keyless leg is
+    off without a default ref, and for a sighting on the default branch -- its base is the last-seen commit itself,
+    which a stamp may record abbreviated -- since the ancestor leg already judges that one. It says only that the
+    default branch has moved on past a sighting made off it, never that it holds the fix, so a closure or a gone file
+    reached through it is proposed, as a squash's is, and marked for a person to decide."""
     seen = _instant(last.get("date"))
     base = last.get("base")
-    if not units or seen is None or not isinstance(base, str) or not present(repo, base):
+    if seen is None or not isinstance(base, str) or not present(repo, base):
+        return False
+    sighted = last.get("commit")
+    if not units and (default is None or not isinstance(sighted, str) or base.startswith(sighted)):
         return False
     # git's --since only bounds the walk, a day early so a skewed clock cuts nothing; the exact test is below.
     since = (seen - datetime.timedelta(days=1)).astimezone(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S +0000")
@@ -1571,16 +1591,18 @@ def squashed(repo, commit, units, last, here):
     tokens = ["[%s]" % k for k in units]
     for row in r.stdout.splitlines():
         sha, when, subject = (row.split("\t", 2) + ["", ""])[:3]
-        if not any(t in subject for t in tokens):
+        if tokens and not any(t in subject for t in tokens):
             continue
         made = _instant(when)
         if made is None or made < seen:
             continue
         if is_ancestor(repo, sha, base):
             continue
-        if here and is_ancestor(repo, sha, last["commit"]):
+        if here and is_ancestor(repo, sha, sighted):
             continue
-        return True
+        if not tokens and not is_ancestor(repo, sha, default):
+            continue  # off the default branch: a parallel Epic's commit says nothing about the finding
+        return "squash" if tokens else "moved"
     return False
 
 
@@ -1995,17 +2017,25 @@ def _unacked(recs, provisional):
 
 # ---- plan ----
 
-def _later(repo, g, commit):
+def _later(repo, g, commit, default=None):
     """How commit is later than the finding's last sighting: "ancestor" where it descends from the last-seen commit,
-    "squash" where it carries a squash of the finding's unit after the sighting instead; False where it is neither
-    and the clone holds the last-seen commit, None where the clone cannot place the sighting at all."""
+    "squash" where it carries a squash of the finding's unit after the sighting instead, and, for a finding raised for
+    no unit and last seen off the default branch, "moved" where it holds a commit of the default ref (`default`) after
+    the sighting that neither the sighting's base nor its own history holds; False where it is none of these and the
+    clone holds the last-seen commit, None where the clone cannot place the sighting at all."""
     last = g["last_seen"]
     here = present(repo, last["commit"])
     if here and is_ancestor(repo, last["commit"], commit):
         return "ancestor"
-    if squashed(repo, commit, g["units"], last, here):
-        return "squash"
+    leg = squashed(repo, commit, g["units"], last, here, default)
+    if leg:
+        return leg
     return False if here else None
+
+
+def _gone(n, later):
+    """A gone entry: the finding's [SEC#n], marked via: moved where only the keyless leg makes the scan later."""
+    return dict({"id": n}, **({"via": "moved"} if later == "moved" else {}))
 
 
 def _before(repo, sha, commit):
@@ -2174,9 +2204,9 @@ def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None, default_
             if not file_exists(repo, sha, g["path"]):
                 # Rule 6: gone only where the scan is later than the sighting -- a scan of a commit that never held
                 # the file says nothing about it -- and unverifiable where the clone cannot place the sighting.
-                later = _later(repo, g, sha)
+                later = _later(repo, g, sha, default_sha)
                 if later:
-                    out["gone"].append(g["id"])
+                    out["gone"].append(_gone(g["id"], later))
                 elif later is None:
                     out["unverifiable"].append(g["id"])
                 continue
@@ -2186,7 +2216,7 @@ def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None, default_
                 continue
             if not covers(scan, g["path"]):
                 continue
-            later = _later(repo, g, sha)
+            later = _later(repo, g, sha, default_sha)
             if later is False:
                 continue  # not later than its last sighting: no evidence about it either way
             changed = _changed(repo, g, sha) if later else None
@@ -2194,8 +2224,12 @@ def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None, default_
                 out["unverifiable"].append(g["id"])
             elif changed:
                 # Automatic only where the scan descends from the sighting: a squash names the unit, not the
-                # fix, so a closure reached only through one is proposed, for a person to confirm.
-                out["closable"].append({"id": g["id"], "auto": g["status"] == "fixing" and later == "ancestor"})
+                # fix, so a closure reached only through one is proposed, for a person to confirm; one reached only
+                # through the keyless leg is marked too, since nothing records that its fix merged.
+                entry = {"id": g["id"], "auto": g["status"] == "fixing" and later == "ancestor"}
+                if later == "moved":
+                    entry["via"] = "moved"
+                out["closable"].append(entry)
             else:
                 out["not_reported"].append(g["id"])
     # A fix nobody queued is offered again: a finding at fix has no follow-up written, and, given the unit's
@@ -2209,7 +2243,7 @@ def plan(specs, slug, repo, scan_folder, unit, today, reserve_dir=None, default_
         carried, tasks = _carried(followups, slug)
         _, canon, _, _, _, held = _numbering(recs)
         own = _own_lines(recs, canon)
-    closing = {c["id"] for c in out["closable"]} | set(out["gone"])
+    closing = {c["id"] for c in out["closable"] + out["gone"]}
     for g in ordered:
         if unit is not None and unit not in g["units"]:
             continue
@@ -2395,7 +2429,7 @@ def commit(specs, slug, p, dec, by, kind, unit, at, role="sec", repo_name=None):
     for a in allocated:
         if a["origin"] not in decided:
             auto.append(_auto(a["id"], a["origin"], "open", "decide later", default=True))
-    closing = ({of(c["id"]) for c in p["closable"]} | {of(n) for n in p["gone"]}) if scan else set()
+    closing = {of(c["id"]) for c in p["closable"] + p["gone"]} if scan else set()
     for d in user:
         if d["status"] == "accepted-risk":
             d["owner"] = by
@@ -2491,20 +2525,24 @@ def verify_scope(specs, slug, repo, ref, unit):
         raise Unrunnable("REGISTER_BAD_UNIT: %r is not a key" % unit)
     sha = _rev(repo, ref, "--ref")
     st = replay(specs, slug)
-    files, gone, unverifiable = [], [], []
+    files, gone, unverifiable, unreachable = [], [], [], []
     for n in sorted(st["findings"]):
         g = st["findings"][n]
         if g["status"] != "fixing" or (unit is not None and unit not in g["units"]):
             continue
-        if not file_exists(repo, sha, g["path"]):
-            later = _later(repo, g, sha)  # rule 6, as plan applies it
-            if later:
-                gone.append(n)
-            elif later is None:
-                unverifiable.append(n)
+        later = _later(repo, g, sha, sha)  # rule 2's later test, and rule 6's, as plan applies them; --ref is the default
+        if later is False:
+            # --ref is not later than the last sighting, which this clone holds -- a sighting on a branch whose fix --ref
+            # does not show merged, or, raised for no unit, one --ref has not moved on past -- so a scan of it closes
+            # nothing and proposes nothing yet, whatever its file holds or whether --ref holds it at all.
+            unreachable.append(n)
+        elif later is None:
+            unverifiable.append(n)
+        elif not file_exists(repo, sha, g["path"]):
+            gone.append(_gone(n, later))
         elif _changed(repo, g, sha):  # the blob decides; a change that cannot be told is not listed
             files.append(g["path"])
-    return {"files": sorted(set(files)), "gone": gone, "unverifiable": unverifiable}
+    return {"files": sorted(set(files)), "gone": gone, "unverifiable": unverifiable, "unreachable": unreachable}
 
 
 # ---- rendering ----
@@ -2524,10 +2562,11 @@ def render(st):
     last = st["scans"][-1] if st["scans"] else None
     out = ["<!-- Generated by register.py from runs/ and scans/. Never edit it by hand: `register.py rebuild` overwrites it. -->",
            "", "# Security register — %s" % st["repo"], ""]
-    out.append("%d scans%s. Findings: %d open, %d being fixed, %d accepted risks, %d false positives, %d fixed." % (
-        len(st["scans"]), (", the last at `%s`" % last["commit"][:12]) if last else "",
-        len(by("open", "reopened", "new")), len(by("fix", "fixing")), len(by("accepted-risk")),
-        len(by("false-positive")), len(by("fixed"))))
+    count = lambda n, noun: "%d %s%s" % (n, noun, "" if n == 1 else "s")  # one scan, two scans
+    out.append("%s%s. Findings: %d open, %d being fixed, %s, %s, %d fixed." % (
+        count(len(st["scans"]), "scan"), (", the last at `%s`" % last["commit"][:12]) if last else "",
+        len(by("open", "reopened", "new")), len(by("fix", "fixing")), count(len(by("accepted-risk")), "accepted risk"),
+        count(len(by("false-positive")), "false positive"), len(by("fixed"))))
     out += ["", "This register records what scans found. It never says that nothing else is there.", ""]
 
     def table(title, head, rows):
@@ -2976,7 +3015,7 @@ def case_gone_file_is_proposed_not_closed(tmp):
     c2 = _change(repo, "src/b.py", None)
     _scan(specs, "s2", c2, [], mode="changes")
     p, _ = _run(specs, repo, "s2")
-    assert p["gone"] == [1] and _state(specs)[1]["status"] == "fixing"
+    assert p["gone"] == [{"id": 1}] and _state(specs)[1]["status"] == "fixing"
 
 
 def case_gone_only_where_the_scan_is_later(tmp):
@@ -2998,19 +3037,20 @@ def case_gone_only_where_the_scan_is_later(tmp):
     _scan(specs, "sM", c1, [])
     p = plan(specs, "code", repo, "sM", None, "2026-10-16", default_ref="main")
     assert p["gone"] == [] and p["unverifiable"] == [] and p["closable"] == [], p
-    assert verify_scope(specs, "code", repo, "main", None) == {"files": [], "gone": [], "unverifiable": []}
+    got = verify_scope(specs, "code", repo, "main", None)
+    assert got == {"files": [], "gone": [], "unverifiable": [], "unreachable": [1]}, got  # main does not hold A's fix yet
     other = os.path.join(tmp, "other")
     _g(tmp, "clone", "-q", "--no-local", "--single-branch", "-b", "main", repo, other)
     assert _git(other, "cat-file", "-e", ta).returncode != 0, "A's branch commit is not in this clone"
     p = plan(specs, "code", other, "sM", None, "2026-10-16", default_ref="origin/main")
     assert p["gone"] == [] and p["unverifiable"] == [1], p
-    assert verify_scope(specs, "code", other, "origin/main", None) == {"files": [], "gone": [], "unverifiable": [1]}
+    assert verify_scope(specs, "code", other, "origin/main", None) == {"files": [], "gone": [], "unverifiable": [1], "unreachable": []}
     # Once A merges, main is later than the sighting: a scan of main without the file proposes it gone.
     _g(repo, "merge", "-q", "--no-ff", "-m", "Merge epic a", "epic-a")
     m = _change(repo, "src/new_a.py", None, "drop new_a")
     _scan(specs, "sG", m, [])
-    assert plan(specs, "code", repo, "sG", None, "2026-10-16", default_ref="main")["gone"] == [1]
-    assert verify_scope(specs, "code", repo, "main", None) == {"files": [], "gone": [1], "unverifiable": []}
+    assert plan(specs, "code", repo, "sG", None, "2026-10-16", default_ref="main")["gone"] == [{"id": 1}]
+    assert verify_scope(specs, "code", repo, "main", None) == {"files": [], "gone": [{"id": 1}], "unverifiable": [], "unreachable": []}
 
 
 def case_scan_prefix_makes_paths_and_scope_repository_relative(tmp):
@@ -3068,8 +3108,8 @@ def case_verify_scope_lists_changed_files_only(tmp):
     _run(specs, repo, "s1", {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"},
                                            {"target": "plugin:v3:bb", "status": "fixing"}]}, unit="ACME-1-01")
     c2 = _change(repo, "src/a.py", "fixed\n")
-    assert verify_scope(specs, "code", repo, c2, None) == {"files": ["src/a.py"], "gone": [], "unverifiable": []}
-    assert verify_scope(specs, "code", repo, c2, "ACME-9-01") == {"files": [], "gone": [], "unverifiable": []}
+    assert verify_scope(specs, "code", repo, c2, None) == {"files": ["src/a.py"], "gone": [], "unverifiable": [], "unreachable": []}
+    assert verify_scope(specs, "code", repo, c2, "ACME-9-01") == {"files": [], "gone": [], "unverifiable": [], "unreachable": []}
 
 
 def case_unreadable_products_name_the_field(tmp):
@@ -3249,7 +3289,7 @@ def case_pending_fix_never_offers_what_the_scan_closes_or_proposes_closed(tmp):
     c2 = _change(repo, "srcx/a.py", None)
     _scan(specs, "sV", c2, [], scope=["src/a.py", "src/b.py"], counted=False)
     pv = plan(specs, "code", repo, "sV", "ACME-1-01", "2026-10-16", followups=os.path.join(specs, "follow-ups.md"))
-    assert (pv["closable"], pv["gone"]) == ([{"id": 1, "auto": True}, {"id": 2, "auto": False}], [3]), pv
+    assert (pv["closable"], pv["gone"]) == ([{"id": 1, "auto": True}, {"id": 2, "auto": False}], [{"id": 3}]), pv
     assert pv["pending_fix"] == [], pv["pending_fix"]
     commit(specs, "code", pv, {"decisions": [{"target": "id:2", "status": "fixed"}, {"target": "id:3", "status": "fixed"}]},
            "Sec", "verify", "ACME-1-01", "2026-10-16T10:00:00Z", "sec", "code")
@@ -3542,12 +3582,14 @@ def case_squash_merge_closes_a_units_finding(tmp):
     assert seen["blob"] == _g(dev, "rev-parse", b + ":src/a.py"), seen
     assert _git(repo, "cat-file", "-e", b).returncode != 0, "the branch commit is only in the Dev's clone"
     near = _change(repo, "src/a.py", "unrelated\n", "chore: other work [ACME-1-012]")
-    assert verify_scope(specs, "code", repo, near, "ACME-1-01") == {"files": ["src/a.py"], "gone": [], "unverifiable": []}, \
-        "verify-scope needs no last-seen commit: the blob decides"
+    assert verify_scope(specs, "code", repo, near, "ACME-1-01") == {"files": [], "gone": [], "unverifiable": [1], "unreachable": []}, \
+        "a sighting this clone cannot place, and no squash of the unit after it: a scan of the file would record nothing"
     _scan(specs, "s2", near, [], scope=["src"])
     p = plan(specs, "code", repo, "s2", None, "2026-10-16")
     assert p["unverifiable"] == [1] and not p["closable"] and not p["not_reported"], "a longer key is no squash"
     sq = _change(repo, "src/a.py", "guarded\n", "fix(orders): guard the query [ACME-1-01] (#12)")
+    assert verify_scope(specs, "code", repo, sq, "ACME-1-01") == {"files": ["src/a.py"], "gone": [], "unverifiable": [], "unreachable": []}, \
+        "later through the unit's squash, and the blob changed: the file is in scope"
     _scan(specs, "s3", sq, [], scope=["src"])
     p, _ = _run(specs, repo, "s3", kind="verify")
     assert p["closable"] == [{"id": 1, "auto": False}] and not p["unverifiable"], p
@@ -3589,7 +3631,7 @@ def case_bad_repo_or_ref_stops_with_register_git(tmp):
     for ref in ("no-such-branch", "--all", "HEAD:src/a.py"):
         _refuses("REGISTER_GIT", verify_scope, specs, "code", repo, ref, None)
     _refuses("REGISTER_GIT", verify_scope, specs, "code", plain, "main", None)
-    assert verify_scope(specs, "code", repo, "main", None) == {"files": [], "gone": [], "unverifiable": []}
+    assert verify_scope(specs, "code", repo, "main", None) == {"files": [], "gone": [], "unverifiable": [], "unreachable": []}
 
 
 def case_renumbering_moves_only_the_colliding_record(tmp):
@@ -3779,7 +3821,7 @@ def case_unreadable_blob_and_absent_commit_is_unverifiable(tmp):
     _scan(specs, "s2", c2, [])
     p = plan(specs, "code", repo, "s2", None, "2026-10-16")
     assert p["unverifiable"] == [1] and not p["closable"] and not p["not_reported"], "later, but no way to tell a change"
-    assert verify_scope(specs, "code", repo, c2, None) == {"files": [], "gone": [], "unverifiable": []}, "a change that cannot be told is not listed"
+    assert verify_scope(specs, "code", repo, c2, None) == {"files": [], "gone": [], "unverifiable": [], "unreachable": []}, "a change that cannot be told is not listed"
 
 
 def case_history_match_never_returns_a_reviewed_finding(tmp):
@@ -3887,7 +3929,7 @@ def case_confirmed_closure_names_its_scan(tmp):
     _scan(specs, "s2", c3, [])
     p, _ = _run(specs, repo, "s2", {"decisions": [{"target": "id:1", "status": "fixed", "reason": "confirmed"},
                                                   {"target": "id:2", "status": "fixed", "reason": "file removed"}]})
-    assert p["closable"] == [{"id": 1, "auto": False}] and p["gone"] == [2], p
+    assert p["closable"] == [{"id": 1, "auto": False}] and p["gone"] == [{"id": 2}], p
     fs = _state(specs)
     assert fs[1]["links"] == {"fixed_in_scan": "s2"} and fs[2]["links"] == {"fixed_in_scan": "s2"}, (fs[1]["links"], fs[2]["links"])
 
@@ -4913,6 +4955,191 @@ def case_register_md_sections_follow_the_spec(tmp):
         "Open", "Being fixed", "Awaiting security review", "Risk register", "False-positive log", "Fixed", "Scan output"], md
 
 
+def case_register_md_summary_counts_each_noun_in_its_number(tmp):
+    # register.md's opening line once read "1 scans" and "1 accepted risks": every count noun takes its number.
+    specs, repo, c1 = _setup(tmp)
+    _scan(specs, "s1", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "MEDIUM"), ("v3:bb", "src/b.py", 1, "CWE-79", "LOW"),
+                            ("v3:cc", "srcx/a.py", 1, "CWE-22", "LOW")])
+    _run(specs, repo, "s1", {"decisions": [
+        {"target": "plugin:v3:aa", "status": "accepted-risk", "reason": "internal only", "review_by": "2026-11-01"},
+        {"target": "plugin:v3:bb", "status": "false-positive", "evidence": "src/b.py:1 escapes it"}]})
+    md = open(os.path.join(specs, "security", "code", "register.md"), encoding="utf-8").read()
+    head = "1 scan, the last at `%s`. Findings: 1 open, 0 being fixed, 1 accepted risk, 1 false positive, 0 fixed." % c1[:12]
+    assert head in md, md.splitlines()[4]
+    _scan(specs, "s2", c1, [("v3:aa", "src/a.py", 10, "CWE-89", "MEDIUM"), ("v3:bb", "src/b.py", 1, "CWE-79", "LOW"),
+                            ("v3:cc", "srcx/a.py", 1, "CWE-22", "LOW")])
+    _run(specs, repo, "s2", {"decisions": [
+        {"target": "id:3", "status": "accepted-risk", "reason": "internal only", "review_by": "2026-11-01"}]})
+    md = open(os.path.join(specs, "security", "code", "register.md"), encoding="utf-8").read()
+    head = "2 scans, the last at `%s`. Findings: 0 open, 0 being fixed, 2 accepted risks, 1 false positive, 0 fixed." % c1[:12]
+    assert head in md, md.splitlines()[4]
+
+
+def case_verify_scope_names_a_fix_the_default_branch_has_not_reached(tmp):
+    # The Epic's change scan saw [SEC#1] on its branch and the fix sits there too, on a local branch only, while the
+    # default branch is still an ancestor of the sighting: its blob of the file differs from the one last seen, but a
+    # scan of it is not later than the sighting and so can close nothing. verify-scope names it unreachable rather
+    # than spending a scan on its file; once the Epic merges, the file is in scope.
+    specs, repo, c1 = _setup(tmp)
+    _g(repo, "switch", "-q", "-c", "feat/ACME-1-01-orders")
+    t = _change(repo, "src/a.py", "".join("epic %d\n" % i for i in range(1, 41)), "epic work [ACME-1-01]")
+    _scan(specs, "s1", t, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")], mode="changes")
+    commit(specs, "code", plan(specs, "code", repo, "s1", "ACME-1-01", "2026-10-16", default_ref="main"),
+           {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, "Dev", "scan", "ACME-1-01",
+           "2026-10-16T10:00:00Z", "dev")
+    _change(repo, "src/a.py", "guarded\n", "fix(orders): guard the query [ACME-1-01]")
+    assert _g(repo, "merge-base", "--is-ancestor", "main", t) == "", "the default branch is an ancestor of the sighting"
+    got = verify_scope(specs, "code", repo, "main", None)
+    assert got == {"files": [], "gone": [], "unverifiable": [], "unreachable": [1]}, got
+    assert verify_scope(specs, "code", repo, "main", "ACME-1-01")["unreachable"] == [1]
+    _g(repo, "switch", "-q", "main")
+    _g(repo, "merge", "-q", "--no-ff", "-m", "Merge feat/ACME-1-01-orders", "feat/ACME-1-01-orders")
+    got = verify_scope(specs, "code", repo, "main", None)
+    assert got == {"files": ["src/a.py"], "gone": [], "unverifiable": [], "unreachable": []}, got
+
+
+def _keyless_on_a_branch(tmp):
+    # A codebase scan of a repository path, run on a feature branch's checkout, records [SEC#1] raised for no unit,
+    # with the scan's base, c1, the commit it shares with main; the finding goes to fixing.
+    specs, repo, c1 = _setup(tmp)
+    _g(repo, "switch", "-q", "-c", "feat/orders")
+    b = _change(repo, "src/a.py", "".join("branch %d\n" % i for i in range(1, 41)), "feat: orders")
+    _scan(specs, "s1", b, [("v3:aa", "src/a.py", 10, "CWE-89", "HIGH")])
+    commit(specs, "code", plan(specs, "code", repo, "s1", None, "2026-10-16", default_ref="main"),
+           {"decisions": [{"target": "plugin:v3:aa", "status": "fixing"}]}, "Sec", "scan", None, "2026-10-16T10:00:00Z")
+    g = _state(specs)[1]
+    assert g["units"] == [] and g["last_seen"]["commit"] == b and g["last_seen"]["base"] == c1, g
+    _g(repo, "switch", "-q", "main")
+    return specs, repo, c1, b
+
+
+def case_keyless_finding_stays_unreachable_until_the_default_branch_moves_on(tmp):
+    # main has not moved since the sighting's base: no commit on it came after the sighting, so a scan of it can close
+    # nothing, and the finding is unreachable, as a keyed one is before its branch merges.
+    specs, repo, c1, b = _keyless_on_a_branch(tmp)
+    got = verify_scope(specs, "code", repo, "main", None)
+    assert got == {"files": [], "gone": [], "unverifiable": [], "unreachable": [1]}, got
+    _scan(specs, "s2", c1, [], scope=["src"])
+    p = plan(specs, "code", repo, "s2", None, "2026-10-16", default_ref="main")
+    assert not p["closable"] and not p["not_reported"] and not p["unverifiable"], p
+
+
+def case_keyless_finding_is_proposed_once_the_default_branch_moves_on(tmp):
+    # The branch's fix lands on main by a squash whose subject names nothing -- a finding raised for no unit has no key
+    # a subject could carry. A commit on main after the sighting, in neither the sighting's base nor its own history,
+    # makes main later than it: the file is in --verify-fixes' scope, and a covering scan of main only proposes the
+    # closure, marked via: moved, since that commit says the default branch moved on, not that it holds the fix.
+    specs, repo, c1, b = _keyless_on_a_branch(tmp)
+    sq = _change(repo, "src/a.py", "guarded\n", "fix(orders): guard the query (#12)")
+    got = verify_scope(specs, "code", repo, "main", None)
+    assert got == {"files": ["src/a.py"], "gone": [], "unverifiable": [], "unreachable": []}, got
+    _scan(specs, "s2", sq, [], scope=["src/a.py"])
+    p, _ = _run(specs, repo, "s2", kind="verify", default_ref="main")
+    assert p["closable"] == [{"id": 1, "auto": False, "via": "moved"}] and not p["unverifiable"], p
+    assert _state(specs)[1]["status"] == "fixing", "later only through a commit naming nothing: proposed, never automatic"
+
+
+def case_keyless_leg_counts_no_commit_off_the_default_branch(tmp):
+    # Rereview R, probe A. The SE's path scan of main at m1 raises [SEC#1] for no unit in src/new.py, a file m1 adds,
+    # and marks it fixing. Epic B, cut before m1, commits after it, and the Dev's change scan of Epic B never held the
+    # file: it says nothing about the finding (rev8 b), so it lists no gone row -- a row whose suggestion the Dev's
+    # Accept the suggestions would have recorded fixed, with no security review. Then the same off a branch: a
+    # sighting on feat/orders, whose base is c1, and a parallel Epic's commit after it, which main does not hold.
+    specs, repo, c1 = _setup(tmp)
+    _g(repo, "switch", "-q", "-c", "epic-b")
+    _g(repo, "switch", "-q", "main")
+    m1 = _change(repo, "src/new.py", "".join("n %d\n" % i for i in range(30)), "add new",
+                 when="2026-10-16T09:00:00+00:00")
+    _scan(specs, "s1", m1, [("v3:nn", "src/new.py", 5, "CWE-89", "HIGH")])
+    commit(specs, "code", plan(specs, "code", repo, "s1", None, "2026-10-16", default_ref="main"),
+           {"decisions": [{"target": "plugin:v3:nn", "status": "fixing"}]}, "Sec", "scan", None, "2026-10-16T10:00:00Z")
+    _g(repo, "switch", "-q", "epic-b")
+    tb = _change(repo, "src/b.py", "x = 2\n", "epic b [ACME-1-02]", when="2026-10-16T10:00:00+00:00")
+    _scan(specs, "sB", tb, [], mode="changes")
+    p = plan(specs, "code", repo, "sB", "ACME-1-02", "2026-10-16", default_ref="main")
+    assert p["gone"] == [] and p["closable"] == [] and p["unverifiable"] == [], p
+    # A codebase scan of Epic B's checkout (probe B) proposes nothing either.
+    _scan(specs, "sB2", tb, [], scope=["src"])
+    p = plan(specs, "code", repo, "sB2", None, "2026-10-16", default_ref="main")
+    assert p["gone"] == [] and p["closable"] == [] and p["unverifiable"] == [], p
+    # Off the default branch: [SEC#2], raised for no unit at f1 on feat/orders in src/orders.py, a file that branch adds.
+    _g(repo, "switch", "-q", "-c", "feat/orders", c1)
+    f1 = _change(repo, "src/orders.py", "q = 1\n", "orders", when="2026-10-16T11:00:00+00:00")
+    _scan(specs, "s2", f1, [("v3:oo", "src/orders.py", 1, "CWE-89", "HIGH")])
+    commit(specs, "code", plan(specs, "code", repo, "s2", None, "2026-10-16", default_ref="main"),
+           {"decisions": [{"target": "plugin:v3:oo", "status": "fixing"}]}, "Sec", "scan", None, "2026-10-16T12:00:00Z")
+    assert _state(specs)[2]["last_seen"]["base"] == c1, _state(specs)[2]
+    _g(repo, "switch", "-q", "epic-b")
+    tb2 = _change(repo, "src/b.py", "x = 3\n", "epic b again [ACME-1-02]", when="2026-10-16T12:00:00+00:00")
+    _scan(specs, "sB3", tb2, [], mode="changes")
+    p = plan(specs, "code", repo, "sB3", "ACME-1-02", "2026-10-16", default_ref="main")
+    assert p["gone"] == [] and p["closable"] == [] and p["unverifiable"] == [], "tb2 is after the sighting, off main"
+    # Without a default ref the leg is off, so nothing places the sighting from Epic B's commits either.
+    p = plan(specs, "code", repo, "sB3", "ACME-1-02", "2026-10-16")
+    assert p["gone"] == [] and p["closable"] == [], p
+
+
+def case_keyless_proposal_through_the_default_branch_moving_on_is_marked(tmp):
+    # Rereview R, probe C. [SEC#1] is raised for no unit on feat/orders and is fixing; its fix has not merged, and one
+    # unrelated commit lands on main. main is later than the sighting only through that commit, so verify-scope lists
+    # the file and a covering scan of main proposes the closure -- marked via: moved and auto: false, so its row
+    # suggests decide later and an empty decisions file, which is what Accept the suggestions writes for it, leaves it
+    # fixing. A file only the branch holds is proposed gone the same way, marked by plan and by verify-scope alike.
+    specs, repo, c1, b = _keyless_on_a_branch(tmp)
+    m2 = _change(repo, "src/b.py", "x = 3\n", "unrelated on main")
+    got = verify_scope(specs, "code", repo, "main", None)
+    assert got == {"files": ["src/a.py"], "gone": [], "unverifiable": [], "unreachable": []}, got
+    _scan(specs, "s2", m2, [], scope=["src/a.py"])
+    p, _ = _run(specs, repo, "s2", kind="verify", default_ref="main")
+    assert p["closable"] == [{"id": 1, "auto": False, "via": "moved"}] and p["gone"] == [], p
+    assert _state(specs)[1]["status"] == "fixing", "a marked row is never closed without the person's answer"
+    _g(repo, "switch", "-q", "feat/orders")
+    f = _change(repo, "src/orders.py", "q = 1\n", "orders")
+    _scan(specs, "s3", f, [("v3:oo", "src/orders.py", 1, "CWE-89", "HIGH")])
+    commit(specs, "code", plan(specs, "code", repo, "s3", None, "2026-10-16", default_ref="main"),
+           {"decisions": [{"target": "plugin:v3:oo", "status": "fixing"}]}, "Sec", "scan", None, "2026-10-16T11:00:00Z")
+    _g(repo, "switch", "-q", "main")
+    m3 = _change(repo, "src/b.py", "x = 4\n", "unrelated on main again")
+    assert verify_scope(specs, "code", repo, "main", None)["gone"] == [{"id": 2, "via": "moved"}]
+    _scan(specs, "s4", m3, [], scope=["src/b.py"])
+    p = plan(specs, "code", repo, "s4", None, "2026-10-16", default_ref="main")
+    assert {"id": 2, "via": "moved"} in p["gone"], p
+
+
+def case_keyless_sighting_on_the_default_branch_is_judged_by_ancestry(tmp):
+    # [SEC#1] is raised for no unit at m1 on main, so its base is m1 itself. Epic E, cut before m1, merged once into
+    # main, and its first commit is on main now, after the sighting and outside m1's history; E goes on, and the Dev's
+    # change scan of E's next commit never held the file. The keyless leg is off for a sighting on the default
+    # branch, so that commit makes the scan no later than the sighting, and nothing is proposed gone; the ancestor
+    # leg decides, and a covering scan of main after the fix closes the finding by itself.
+    specs, repo, c1 = _setup(tmp)
+    _g(repo, "switch", "-q", "-c", "epic-e")
+    _g(repo, "switch", "-q", "main")
+    m1 = _change(repo, "src/new.py", "".join("n %d\n" % i for i in range(30)), "add new",
+                 when="2026-10-16T09:00:00+00:00")
+    _scan(specs, "s1", m1, [("v3:nn", "src/new.py", 5, "CWE-89", "HIGH")])
+    commit(specs, "code", plan(specs, "code", repo, "s1", None, "2026-10-16", default_ref="main"),
+           {"decisions": [{"target": "plugin:v3:nn", "status": "fixing"}]}, "Sec", "scan", None, "2026-10-16T10:00:00Z")
+    assert _state(specs)[1]["last_seen"]["base"] == m1, _state(specs)[1]
+    _g(repo, "switch", "-q", "epic-e")
+    e1 = _change(repo, "src/b.py", "x = 2\n", "epic e part one [ACME-1-02]", when="2026-10-16T10:00:00+00:00")
+    _g(repo, "switch", "-q", "main")
+    _g(repo, "merge", "-q", "--no-ff", "-m", "Merge epic-e part one", "epic-e")
+    assert _g(repo, "merge-base", "--is-ancestor", e1, "main") == "", "e1 is on main"
+    _g(repo, "switch", "-q", "epic-e")
+    e2 = _change(repo, "src/b.py", "x = 3\n", "epic e part two [ACME-1-02]", when="2026-10-16T11:00:00+00:00")
+    _scan(specs, "sE", e2, [], mode="changes")
+    p = plan(specs, "code", repo, "sE", "ACME-1-02", "2026-10-16", default_ref="main")
+    assert p["gone"] == [] and p["closable"] == [] and p["unverifiable"] == [], p
+    assert verify_scope(specs, "code", repo, e2, None)["unreachable"] == [1], "e2 is not later than m1"
+    _g(repo, "switch", "-q", "main")
+    fx = _change(repo, "src/new.py", "guarded\n", "fix: guard the query")
+    _scan(specs, "sM", fx, [], scope=["src/new.py"])
+    p, _ = _run(specs, repo, "sM", kind="verify", default_ref="main")
+    assert p["closable"] == [{"id": 1, "auto": True}], p
+    assert _state(specs)[1]["status"] == "fixed", _state(specs)[1]
+
+
 def selftest():
     for env in (os.environ, GIT_ENV):  # the fixtures' git and register.py's own both see none of the user's config
         env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
@@ -4958,9 +5185,13 @@ HELP = {
             " id_version_changed; new, again (one entry per finding carrying a reported plugin ID, with history: the"
             " scan comes before the finding's last sighting, and the sighting moves nothing), possibly_same (with"
             " candidates, history -- the candidates a match moves nothing for -- and reopens -- the fixed candidates a"
-            " match reopens), closable (auto only for a fixing finding whose last-seen"
-            " commit the scan descends from; one later only through a squash of its unit is proposed), not_reported,"
-            " reopen, gone (only where the scan is later than the finding's last sighting); unverifiable (the findings"
+            " match reopens), closable (each {id, auto}: auto only for a fixing finding whose last-seen"
+            " commit the scan descends from; one later only through a squash of its unit is proposed; one raised for no"
+            " unit and last seen off the default branch, later only through a later commit of --default-ref outside the"
+            " sighting's base, is proposed and marked via: moved -- the default branch has moved on past the sighting,"
+            " and nothing records that the fix merged -- and without --default-ref that leg counts no commit),"
+            " not_reported, reopen, gone (each {id}, only where the scan is later than the finding's last sighting,"
+            " marked via: moved as a closable entry is); unverifiable (the findings"
             " this scan records nothing about: their last sighting cannot be"
             " placed in this clone, or the scan is later but whether the file changed cannot be told); open,"
             " pending_fix (each finding at fix, and with --followups each fixing finding no task line in that file"
@@ -4972,9 +5203,13 @@ HELP = {
               " the record now holds, each marked provisional: false.",
     "rebuild": "Rebuild register.json and register.md. Prints {findings, runs, renumbered}: renumbered holds the moves no"
                " run record holds yet, each marked provisional: true.",
-    "verify-scope": "Print the files of the findings being fixed whose file changed by --ref (by blob, or by git diff where"
-                    " no blob was recorded), the ids whose file is gone at a --ref later than their last sighting, and"
-                    " as unverifiable the ids whose file is gone where this clone cannot place that sighting.",
+    "verify-scope": "Print {files, gone, unverifiable, unreachable}: files, of the findings being fixed at a --ref later"
+                    " than their last sighting, whose file changed by --ref (by blob, or by git diff where no blob was"
+                    " recorded); gone, an {id} entry for each whose file is gone at a --ref later than its last"
+                    " sighting, marked via: moved where, raised for no unit and last seen off --ref, only a later commit"
+                    " of --ref makes it later;"
+                    " unreachable, the ids --ref is not later than the last sighting of, which this clone holds, so a"
+                    " scan of it closes nothing yet, whether --ref holds their file or not; unverifiable, the ids whose last sighting this clone cannot place, their file gone or not.",
 }
 
 
@@ -4998,7 +5233,8 @@ def main(argv):
             sp.add_argument("--scan")
             sp.add_argument("--today", default=datetime.datetime.now(datetime.timezone.utc).date().isoformat())
             sp.add_argument("--reserve-dir")
-            sp.add_argument("--default-ref", help="the repository's default ref, for the scan's base; never guessed")
+            sp.add_argument("--default-ref", help="the repository's default ref, for the scan's base and for the commits"
+                                                  " the keyless leg counts; never guessed")
             sp.add_argument("--followups", help="the --unit's follow-ups.md, so a fixing finding no line there carries is"
                                                 " offered again; a file that does not exist carries none")
         if name == "commit":
@@ -5082,7 +5318,7 @@ $SPECS_PATH/security/<repo-slug>/
 
 `$SPECS_PATH/security/` belongs to the register and to those cost entries. `workflows-core:specs-repo-git` §2.1's shape stages exactly these paths under it — `runs/`, `scans/`, `dev-workflows/`, `register.json` and `register.md` in each `security/<repo-slug>/` — so a team's own security document kept there is never committed as bookkeeping. Keep such documents elsewhere in the specs tree all the same: a directory under `security/` named as a code repository's slug is that repository's register.
 
-**The run records and the scan folders are the source of truth.** Every run rebuilds `register.json` and `register.md` from them with `register.py rebuild`, replaying the records in `(seq, at, file name)` order. No run reads the derived files back as its state, because `register.py` rebuilds them from the records every time. **One read is the exception, and it is this one:** a `sec` run's *Confirm* of a decision awaiting security review re-asserts the finding's status with the `evidence` and `reason` of its latest `history` entry of that status and its `review_by`, read from the `register.json` that run has just rebuilt with `register.py rebuild`. `register.py` refuses a false positive without evidence and an accepted risk without a reason and a date, and a file the run has just rebuilt is the records' own replay, so the read carries nothing the records do not. The derived files are for people and for the readers §6 names, so a stale or conflicted copy is harmless until the next rebuild overwrites it.
+**The run records and the scan folders are the source of truth.** Every run rebuilds `register.json` and `register.md` from them with `register.py rebuild`, replaying the records in `(seq, at, file name)` order. No run reads the derived files back as its state, because `register.py` rebuilds them from the records every time. **One read is the exception, and it is this one:** a `sec` run's *Confirm* of a decision awaiting security review re-asserts the finding's status with the `evidence` and `reason` of its latest `history` entry of that status and its `review_by`, read from the `register.json` that run has just rebuilt with `register.py rebuild`. `register.py` refuses a false positive without evidence and an accepted risk without a reason and a date, and a file the run has just rebuilt is the records' own replay, so the read carries nothing the records do not. The derived files are for people and for the readers §6 names, so a stale copy is harmless until the next rebuild overwrites it. A conflicted one stops a rebase: where two clones recorded before either pushed, each rebuilt `register.json` and `register.md`, so the `git pull --rebase` that `workflows-core:specs-repo-git` §6's *push rejected* line advises stops on a content conflict in both. The run records, each a file of its own, never conflict, so `register.py rebuild` settles both from them; `git add` of the two files and `git rebase --continue` then finish the rebase, and `/security-workflows:scan` prints those steps after a *push rejected* line on a run whose commit holds a file of the register.
 
 A rebuild needs no git. Every status change is a decision in a record, the automatic ones included, together with the `not_reported_by` entries and, on each sighting of a finding, whether it was history for that finding (§5 rule 4). Computing those needed git on the code repository when the run recorded them; the replay does not.
 
@@ -5177,17 +5413,19 @@ A false positive overrules a finding Claude Security's three-voter panel confirm
      A scan run on a subdirectory records it in its stamp as `scan_prefix` (`a/b/`, as `git rev-parse --show-prefix` prints it; empty, or absent from an older stamp, at the top level), and its JSONL `file` and its `scope` are relative to that directory: `register.py` reads every path and every scope entry as `scan_prefix` joined to it and normalised, as Claude Security's own `repository_file` folds them, and a scan with a `scan_prefix` and no scope has that directory as its scope. A `scan_prefix` of any other shape, or a `file` that leaves the repository, stops the run with `SCAN_PRODUCTS_UNREADABLE`.
    - **A change scan is never a covering scan.** It reports only flaws the change takes part in.
    - **Later and changed.** A scan is evidence about a finding only when it is **later** than the finding's last sighting and the finding's file has **changed** since:
-     - **later:** the scan's commit descends from `last_seen.commit`. For a finding raised for a unit, it may instead carry a squash of that unit's work: a commit whose subject holds `[<key>]` as a whole token, for a key in its `units`, whose committer date is no earlier than `last_seen.date`, which is not `last_seen.base` or one of its ancestors, and which, where the last-seen commit is in the clone, is not one of that commit's ancestors. Where `last_seen.base` is `null` or not in the clone, no squash counts. That is `workflows-core:implementation-format` §5's merged test, subject leg, held to the exact sighting. A squash merge leaves the branch's commit outside the default branch's history, and a deleted branch leaves it outside every clone that had not fetched it. An earlier squash of the same unit, which the branch was cut after, is never later: it is in the base the branch shares with the default branch, which every clone of that branch holds, whatever any clock said. A clock that runs fast can only make a squash look earlier, which leaves the finding open, never closed;
+     - **later:** the scan's commit descends from `last_seen.commit`, or it carries a squash of the finding's work — the **squash leg**: a commit that is no merge, whose committer date is no earlier than `last_seen.date`, which is not `last_seen.base` or one of its ancestors, and which, where the last-seen commit is in the clone, is not one of that commit's ancestors; and, for a finding raised for a unit, whose subject holds `[<key>]` as a whole token, for a key in its `units`. A finding raised for no unit — a run on a repository path records one — has no key a subject could carry, so for it the leg counts any such commit that the default ref also holds — `register.py plan`'s `--default-ref`, or `verify-scope`'s `--ref` — and only for a sighting off the default branch, where `last_seen.base` differs from `last_seen.commit`: a sighting on the default branch is judged by ancestry alone, and without a default ref this **keyless leg** counts no commit. One says only that the default branch has moved on past the sighting, never that the fix merged. Where `last_seen.base` is `null` or not in the clone, no squash counts. For a unit, that is `workflows-core:implementation-format` §5's merged test, subject leg, held to the exact sighting. A squash merge leaves the branch's commit outside the default branch's history, and a deleted branch leaves it outside every clone that had not fetched it. An earlier squash of the same unit, which the branch was cut after, is never later: it is in the base the branch shares with the default branch, which every clone of that branch holds, whatever any clock said. A clock that runs fast can only make a squash look earlier, which leaves the finding open, never closed;
      - **changed:** the file's blob at the scan's commit differs from `last_seen.blob`; where no blob was recorded, `git diff` between the two commits says.
 
-     A finding is **unverifiable** for that scan where the clone cannot place its last sighting (its commit absent, and no squash found), or where the scan is later but whether the file changed cannot be told (no blob recorded, and one of the two commits absent). The plan lists it, and the scan records nothing about it.
+     A finding is **unverifiable** for that scan where the clone cannot place its last sighting (its commit absent, and the squash leg finding nothing), or where the scan is later but whether the file changed cannot be told (no blob recorded, and one of the two commits absent). The plan lists it, and the scan records nothing about it.
+
+     `register.py verify-scope`, which picks the files a `--verify-fixes` scan reads, applies the same test to each `fixing` finding at the default branch's head, before any scan: it lists the finding's file only where that head is later than the last sighting and the file changed; it lists the finding as **unreachable** where the clone holds the sighting and the head is not later than it, so a scan there could close nothing yet, whether the head holds the file or not — a sighting on a branch whose fix the head does not show merged, or, for a finding raised for no unit, one the default branch has not moved on past since; it lists the finding as unverifiable where the clone cannot place the sighting; and it lists the finding as gone (rule 6) where the head is later and no longer holds the file, its entry marked `via: moved` as `plan` marks one (*Proposed closure*, below).
    - **Automatic closure.** A `fixing` finding becomes `fixed` when a covering scan whose commit descends from `last_seen.commit`, over a changed file, does not report it and matches no possibly-same candidate in that scan.
-   - **Proposed closure.** Two kinds of finding with the same evidence are only proposed as fixed, and change on a person's confirmation: an `open`, `fix`, `reopened` or `accepted-risk` finding, and a `fixing` finding that the scan is later than only through a squash. A squash names the unit, not the fix: a squash of another part of the same unit can land after the branch was cut without holding the fix.
+   - **Proposed closure.** Two kinds of finding with the same evidence are only proposed as fixed, and change on a person's confirmation: an `open`, `fix`, `reopened` or `accepted-risk` finding, and a `fixing` finding that the scan is later than only through the squash leg. A squash names the unit, not the fix: a squash of another part of the same unit can land after the branch was cut without holding the fix. For a finding raised for no unit, the commit names nothing at all: `plan` marks `via: moved` every `closable` entry, beside its `auto: false`, and every `gone` entry (rule 6), which carries no `auto`, that the scan is later than only through the keyless leg, and each such entry's triage row suggests *decide later*, saying that the default branch has moved on past the sighting but nothing records that the fix merged. A batch that accepts the suggestions records nothing for such a row; its finding changes only on a person's explicit *Confirm fixed* for that row. Such an entry is the Security Engineer's to confirm, so a `dev` run offers no row for it and names it in its report instead (`/security-workflows:scan` Phase 5).
    - **No closure.** A finding absent from a later covering scan while its file is unchanged gains a `not_reported_by` entry and nothing else.
 3. **A change of `ID_VERSION` is not a mass event.** When a scan's `ID_VERSION` differs from the one a finding was recorded under, their plugin IDs are not compared. The finding is matched by rule 1's possibly-same test, and the scan neither closes it nor adds a `not_reported_by` entry for it. A confirmed match takes the new ID and version, after which the finding is judged like any other; a match whose sighting is history for that finding (rule 4) leaves them as they are. A finding already recorded under the new version is unaffected.
 4. **Ancestry governs evidence, finding by finding; record order governs numbering. Order is by commit ancestry, never by date.** A sighting is **history** for a finding where the scan's commit comes before the finding's `last_seen.commit`: one of its ancestors, and not that commit itself. A history sighting adds a `reported_by` entry, but it moves no `last_seen`, a match confirmed from it leaves the plugin ID and version as they are (rule 3), and a reviewed finding it matches keeps its status (§4). A `fixed` finding a scan reports again, by its plugin ID or through a confirmed match, is reopened unless the sighting is history for it or the scan's commit comes before the commit of the scan that closed it (its `links.fixed_in_scan`). Whether a scan closes a finding, adds a `not_reported_by` entry or finds its file gone is rule 2's later test, and rule 6's. The answer for one finding never decides another's: a scan of the default branch's head is history for a finding last seen on an Epic cut from it, and still later than a finding last seen before it. Each `again` and `matched` entry records whether its sighting was history, so the replay needs no git. The scan's own commit must be in the clone; a recorded commit the clone lacks is passed over, so nothing comes before it. Numbers are allocated, and records replayed, in `(seq, at, file name)` order (§2).
 5. **Unverified scans.** A scan that is unverified, or ran over a dirty tree, can add findings but can never close one.
-6. **A file gone at the scan's commit.** An active finding whose file does not exist at the scanned commit is proposed as fixed, whatever kind of scan ran, where the scan is later than its last sighting (rule 2's later test): a scan of a commit that never held the file, a parallel Epic's or the default branch's before the finding's work merged, says nothing about it. Where the clone cannot place that sighting, the finding is unverifiable for the scan, as rule 2 says. A moved file's finding comes back as a new one at its new path.
+6. **A file gone at the scan's commit.** An active finding whose file does not exist at the scanned commit is proposed as fixed, whatever kind of scan ran, where the scan is later than its last sighting (rule 2's later test): a scan of a commit that never held the file, a parallel Epic's or the default branch's before the finding's work merged, says nothing about it. For a sighting raised for no unit and made off the default branch, rule 2's keyless leg counts only a commit the default branch holds: a parallel Epic's scan whose history holds no such commit says nothing about the finding, but any scan whose history holds one — the default branch's, or an Epic's cut after that commit or merged with the default branch since — is later though nothing records that the work merged, so the finding's gone entry is marked `via: moved` and its row suggests *decide later*, as rule 2's *Proposed closure* says, offered only in a `sec` run. Where the clone cannot place that sighting, the finding is unverifiable for the scan, as rule 2 says. A moved file's finding comes back as a new one at its new path.
 7. **Idempotent.** Recording a scan the register already holds (the same stamp's `scan_id`), or one that a run record on another branch holds, changes nothing; the second is reported as recorded on another branch. A rebuild over the same records produces the same `register.json`, byte for byte, and `register.md` dates "review due" from the last run, never from the clock.
 
 ## 6. Readers

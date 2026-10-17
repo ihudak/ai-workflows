@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.42.0] — 2026-10-16
+## [1.42.0] — 2026-10-17
 
 **Update `dev-workflows` to 4.28.0 with this release**: `next-phase-offer` now offers an Epic's `/dev-workflows:conformance` before the Epic's pull request merges, which an older `/conformance` refuses with `CONFORMANCE_NOT_MERGED`, and both of 4.28.0's `/implement` and `/conformance` load this release's `unit-branch`. The scan it offers is `security-workflows` 0.1.0's, a new plugin that needs this release.
 
