@@ -1,6 +1,6 @@
 ---
 name: review-fixer
-description: Applies targeted code fixes for BLOCKER and MAJOR findings from a code-review agent report, and MINOR ones where the caller asks for them, as /implement does. Returns a structured fix report; the caller re-runs the review, save after a pass the user chose at /implement's offer to apply what a review left open, which no review follows. Model tier assigned by the caller — its `fixes_model` per the model-routing policy (no fixed pin).
+description: Applies targeted code fixes for BLOCKER and MAJOR findings from a code-review agent report, and MINOR ones where the caller asks for them, as /implement does. Returns a structured fix report; the caller re-runs the review, save after a User-applied pass that follows its last review, which no review follows. Model tier assigned by the caller — its `fixes_model` per the model-routing policy (no fixed pin).
 tools: ["Read", "Glob", "Grep", "Write", "Edit", "Skill"]
 ---
 
@@ -122,7 +122,7 @@ Return this exact shape (no preamble):
 ## Hard rules
 
 - NEVER attempt to fix a finding that requires design judgment. Flag it and stop.
-- NEVER modify a file that is not named in a finding's `path:line` location.
+- NEVER modify a file that is not named in a finding's `path:line` location, or in an `also at path:line` its observation adds for a fix that spans two files.
 - NEVER add new logic beyond what the suggestion explicitly requires.
 - NEVER fix a finding that contradicts the approved plan by overriding the plan; flag it `DEFERRED — plan-conflict` and set `Stop condition flag` to `NEEDS HUMAN` — save a finding a **Plan ruling** names (Inputs), which the user has already ruled on.
 - NEVER add a guard, branch, or check for a state the finding did not demonstrate is reachable.

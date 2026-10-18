@@ -518,8 +518,9 @@ pass, a resumed verify step — stays under the reporting rule above and makes n
 - **Declined**, the run goes on exactly as before, and the version line says the verdict predates
   the edits.
 
-**It never raises the cap.** A run that went through a `BLOCK` spent its re-review there, and nothing
-here offers another. **Which commands it reaches is a behavioural test, as above: a command whose cap
+**It never raises the cap.** A run that went through a `BLOCK`'s fix cycle spent its re-review there,
+and nothing here offers another; a `BLOCK` a settle prompt's **Proceed** settled before any fixer ran
+spent neither half, and is offered the re-review as above. **Which commands it reaches is a behavioural test, as above: a command whose cap
 allows a re-review, whose verdict that is not `BLOCK` leads to the handoff without one, and which can
 edit the reviewed artifact on the way.** The seven commands that fix inline edit it through the offer
 above; `/epics` and `/document` dispatch `doc-fixer` over the findings — `/epics` also folds a
