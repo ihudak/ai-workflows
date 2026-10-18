@@ -485,8 +485,9 @@ re-review, never after its review of the Phase 3.5 delta, whose edits would foll
 
 ## Edits after a verdict that is not BLOCK — the unspent re-review
 
-**A verdict that is not `BLOCK` spends neither half of the cap**, so the no-fixed-point argument
-above does not reach it. A run that edits the reviewed artifact in answer to such a verdict's
+**A verdict that is not `BLOCK` spends neither half of the cap**, nor does a `BLOCK` a triage settle
+prompt's **Proceed** settles as not `BLOCK` before any fixer ran, so the no-fixed-point argument
+above reaches neither. A run that edits the reviewed artifact in answer to such a verdict's
 findings — a first review's findings the user chose to apply at the offer above, or the fixer pass a command dispatches over them — still holds the cap's one re-review, and handing off without offering it ships edited text
 unreviewed for no reason the cap gives. A live `/create-prd` run is the case: `PASS WITH
 RECOMMENDATIONS` with four `MAJOR` findings, two of them acceptance criteria contradicting each
@@ -500,8 +501,9 @@ step 7.5 in `/implement`, whose tests still run on either answer:
 
 `<artifact>` names what was reviewed — `prd.md`, `ard.md`, `specification.md`, `design.md`,
 `proposal.md`, the Epic drafts, the pages written, the code change. The offer is made where all
-three hold: the verdict was not `BLOCK`, the run has not re-reviewed this artifact, and an edit
-answering the verdict's findings followed it. An edit of any other kind — a style
+three hold: the verdict was not `BLOCK`, or was settled as not `BLOCK` at a triage settle prompt's
+**Proceed**, as the offer above counts such a verdict; the run has not re-reviewed this artifact; and
+an edit answering the verdict's findings followed it. An edit of any other kind — a style
 pass, a resumed verify step — stays under the reporting rule above and makes no offer.
 
 - **Taken**, it is the cap's one re-review. Dispatch it as the command dispatches its re-review after

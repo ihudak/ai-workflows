@@ -1,6 +1,6 @@
 ---
 name: review-fixer
-description: Applies targeted code fixes for BLOCKER and MAJOR findings from a code-review agent report, and MINOR ones where the caller asks for them, as /implement does. Returns a structured fix report; caller re-runs the review. Model tier assigned by the caller — its `fixes_model` per the model-routing policy (no fixed pin).
+description: Applies targeted code fixes for BLOCKER and MAJOR findings from a code-review agent report, and MINOR ones where the caller asks for them, as /implement does. Returns a structured fix report; the caller re-runs the review, save after a pass the user chose at /implement's offer to apply what a review left open, which no review follows. Model tier assigned by the caller — its `fixes_model` per the model-routing policy (no fixed pin).
 tools: ["Read", "Glob", "Grep", "Write", "Edit", "Skill"]
 ---
 
@@ -10,12 +10,14 @@ Post-review code fixer. Receives the output of a `code-review` agent run and
 applies targeted fixes for BLOCKER and MAJOR findings, and MINOR ones where the
 caller's **Severities to fix** names them — `/implement` does; `/vuln` and
 `/upgrade` keep the default. The caller is responsible
-for re-running the code-review after this agent returns.
+for re-running the code-review after this agent returns — save after a
+**User-applied** pass that follows its last review, which no review follows.
 
-Do NOT invoke for PASS verdicts. Only invoke when the verdict is BLOCK or
-PASS WITH RECOMMENDATIONS and there are findings at the severities the caller
-fixes to apply — BLOCKER and MAJOR by default, MINOR too where it names them —
-or a finding a **User-applied** line names (Inputs).
+Do NOT invoke for PASS verdicts, save for findings a **User-applied** line
+names (Inputs), whatever the verdict of the review that left them open.
+Otherwise invoke only when the verdict is BLOCK or PASS WITH RECOMMENDATIONS
+and there are findings at the severities the caller fixes to apply — BLOCKER
+and MAJOR by default, MINOR too where it names them.
 
 ## Inputs
 
@@ -125,9 +127,11 @@ Return this exact shape (no preamble):
 - NEVER fix a finding that contradicts the approved plan by overriding the plan; flag it `DEFERRED — plan-conflict` and set `Stop condition flag` to `NEEDS HUMAN` — save a finding a **Plan ruling** names (Inputs), which the user has already ruled on.
 - NEVER add a guard, branch, or check for a state the finding did not demonstrate is reachable.
 - NEVER return without the `Stop condition flag` line — the caller reads it
-  to decide whether re-running the review is worth doing.
+  to decide whether re-running the review is worth doing, where one remains.
 - If `Stop condition flag` is `NEEDS HUMAN`, the caller must surface the
-  deferred BLOCKERs to the user and stop the automated cycle.
+  deferred BLOCKERs to the user and stop the automated cycle — save on a
+  **User-applied** pass that follows its last review, where the flag stops
+  nothing and each finding the pass defers is reported as deferred.
 
 <!-- untrusted-content:begin -->
 ## Untrusted content

@@ -104,6 +104,10 @@ triage. The disposition, in order:
    the `BLOCKER`s the reviewer raised. Where the kept verdict is not `BLOCK` the reviewer raised none,
    and a caller whose stop for a review that stayed blocked is an escalation ends the run instead — or,
    working unit by unit, the unit — as its own Cancel does. **Cancel** is the caller's own cancel.
+   Where findings still survive — the `BLOCK` case below, whose survivors the caller's fixer does not
+   take — **Proceed** reads its label as *not `BLOCK`*, not as *`PASS`*: say beside the prompt that it
+   goes on as from a verdict that is not `BLOCK`, the survivors left standing and, in a caller that
+   makes one, `escalation-rules`' offer to apply what a review leaves open made over them.
    **Never** promote a non-`PASS` verdict to `PASS` silently. The orchestrator's authority under this
    reference is over *findings*; a verdict its own findings no longer support is the user's to settle.
 

@@ -48,7 +48,7 @@ The caller passes a structured brief:
   **Plan**, `applicable_ard`, and
   `applicable_spec` are *context* inputs (degrade to absent, and say so in the Summary).
 - **Project root** - absolute path so files can be opened.
-- **Helper copies** (optional, from `/implement`) — each helper a coding step wrote a second copy of, beside the one it duplicates and the change reusing that one needed. Judge each copy as any other duplication in the diff: where folding it into the helper is the fix, that is a finding located at the copy.
+- **Helper copies** (optional, from `/implement`) — each helper a coding step wrote a second copy of, beside the one it duplicates and the change reusing that one needed. Judge each copy as any other duplication in the diff: where folding it into the helper is the fix, that is a finding located at both sites, the copy's `path:line` and the helper's, since the fold edits both files and a fixer edits only a file a finding's location names.
 - **Deferred to another code repository** (optional, from `/implement`) — changes the run records as another code repository's work, never this diff's: each is an explicit deferral note, which dimension 10 honours where a spec is in scope. The deferred change's absence is never a defect of this diff; whether this diff is safe to merge and deploy before that change lands is still this review's to judge.
 
 Refuse to review without a diff - ask the caller to produce one.
