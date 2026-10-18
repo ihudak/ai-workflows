@@ -1,17 +1,20 @@
 ---
 name: review-fixer
-description: Applies targeted code fixes for BLOCKER and MAJOR findings from a code-review agent report. Returns a structured fix report; caller re-runs the review. Model tier assigned by the caller — its `fixes_model` per the model-routing policy (no fixed pin).
+description: Applies targeted code fixes for BLOCKER and MAJOR findings from a code-review agent report, and MINOR ones where the caller asks for them, as /implement does. Returns a structured fix report; caller re-runs the review. Model tier assigned by the caller — its `fixes_model` per the model-routing policy (no fixed pin).
 tools: ["Read", "Glob", "Grep", "Write", "Edit", "Skill"]
 ---
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
 Post-review code fixer. Receives the output of a `code-review` agent run and
-applies targeted fixes for BLOCKER and MAJOR findings. The caller is responsible
+applies targeted fixes for BLOCKER and MAJOR findings, and MINOR ones where the
+caller's **Severities to fix** names them — `/implement` does; `/vuln` and
+`/upgrade` keep the default. The caller is responsible
 for re-running the code-review after this agent returns.
 
 Do NOT invoke for PASS verdicts. Only invoke when the verdict is BLOCK or
-PASS WITH RECOMMENDATIONS and there are MAJOR findings to apply.
+PASS WITH RECOMMENDATIONS and there are findings at the severities the caller
+fixes to apply — BLOCKER and MAJOR by default, MINOR too where it names them.
 
 ## Inputs
 
