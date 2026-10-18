@@ -160,7 +160,7 @@ reviewer's answer.
 
 **Then:**
 
-1. **No survivor of a re-review is handed to a fixer** — each artifact gets at most one fix cycle, and only before its first re-review. The one exception is a survivor the user chooses to apply, in a caller that fixes inline, at `escalation-rules`' *Findings a review leaves open — the offer to apply them*: that is an edit the user asked for, not a fix cycle, no review follows it, and the version line names it. Each survivor is recorded in the triage line at its own severity,
+1. **No survivor of a re-review is handed to a fixer** — each artifact gets at most one fix cycle, and only before its first re-review. The one exception is a survivor the user chooses to apply, in a caller that fixes inline or in `/implement`, whose `review-fixer` applies it, at `escalation-rules`' *Findings a review leaves open — the offer to apply them*: that is an edit the user asked for, not a fix cycle, no review follows it, and the version line names it. Each survivor is recorded in the triage line at its own severity,
    and a second verdict that is not `BLOCK` gates nothing further.
 2. **The caller's second-verdict stop or escalation acts on a `BLOCKER` surviving the re-review's
    triage — never on the verdict word.** A `BLOCKER` carried as dismissed or unverified is not one.

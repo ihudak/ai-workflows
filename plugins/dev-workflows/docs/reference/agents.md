@@ -40,7 +40,7 @@ Apply changes the caller has already decided on, rather than deciding anything t
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
-| `review-fixer` | per routing | Read, Glob, Grep, Write, Edit, Skill | Applies targeted code fixes for surviving BLOCKER/MAJOR findings from a `code-review` report — and MINOR ones too, on `/implement`; returns a structured fix report for the caller to re-review against. | `/implement`, `/upgrade`, `/vuln` |
+| `review-fixer` | per routing | Read, Glob, Grep, Write, Edit, Skill | Applies targeted code fixes for surviving BLOCKER/MAJOR findings of a `code-review` report — on `/implement`, MINOR too and any you choose to apply; returns a fix report for the caller to re-review. | `/implement`, `/upgrade`, `/vuln` |
 | `upgrade-executor` | per routing | Read, Glob, Grep, Bash, Edit, Task, Skill | Applies one component's approved upgrade plan, runs the build, verifies tests via `test-baseliner`, and auto-fixes test-code breakage caused by the new version's API changes. | `/upgrade` |
 | `vuln-fixer` | per routing | Read, Glob, Grep, Bash, Edit, Task, Skill | Takes the orchestrator's baseline, creates the fix branch **before** the first edit, applies the version change `vuln-research` produced, rebuilds, and verifies tests — uncommitted, for Step 3.9. | `/vuln` |
 

@@ -152,6 +152,11 @@ _or_ "none — checked"
   runs several times longer than the change it describes, the steps have
   written the code — cut them back to the decisions. The other sections are
   not measured against the change.
+- **One helper, one step.** Where two or more steps need the same helper — an
+  error-chain utility, a test fixture or an assertion helper — make it a step
+  of its own, before the first that needs it, naming its file, so later steps
+  reuse it rather than each writing a copy. *Minimise scope* does not forbid
+  it: those steps need the helper either way.
 - **Name the review focus.** In `### Review focus`, list up to five input
   classes or failure modes the task implies and no step's tests exercise,
   most likely to bite a user first, each with the behaviour a reasonable

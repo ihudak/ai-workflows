@@ -38,7 +38,8 @@ diff_so_far: /tmp/dw-impl-partial-AbC123
                            # the user's own uncommitted work. none before the run's first edit.
 earlier_reports:           # CONTEXT, each report on its own. Every earlier non-`failed` dispatch's
   - report: /tmp/dw-impl-code-XyZ789          # report_file (its return was readable), in dispatch order;
-                           # none on the run's first dispatch.
+                           # none on the run's first dispatch. A helper one of them wrote is reused,
+                           # never copied, save as ### Duplicates says.
     plan: first            # only where plan_file holds two plans: whose Steps the report's Steps line
                            # numbers — first, the plan before the re-plan, or re-plan.
     answer: "Keep the old field and add the new one"
@@ -136,6 +137,10 @@ report_file: /tmp/dw-impl-code-AbC123
 
 ### Out of scope
 - repository `<its top-level path, or the name the code knows it by>` — <the change it needs> — <the step, or the failure, that showed it>
+- _or_ none
+
+### Duplicates                 <!-- a helper an earlier dispatch wrote that this one copied, since reusing it needed a change outside the files its steps name -->
+- `<the copy, path:symbol>` — duplicates `<the helper, path:symbol>` — <the change reuse needed>
 - _or_ none
 
 ### Not fixed                  <!-- mode: fix only -->

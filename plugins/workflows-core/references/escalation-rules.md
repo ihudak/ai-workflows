@@ -469,14 +469,19 @@ edit: a command that settles such decisions as it applies (`/create-prd`, `/upda
 answer naming some of the findings applies those.
 
 - **Taken**, each edit is the orchestrator's own, read against what it overlaps (*An inline fix is
-  read against what it overlaps*, below) before anything follows. After the first review the
-  unspent re-review offer (next section) follows; after the re-review no review follows, and the
-  version line above names these edits.
+  read against what it overlaps*, below) before anything follows — save in `/implement`, whose
+  orchestrator edits no source: there the edits are `review-fixer`'s, after the first review in that
+  review's one fixer pass and after the re-review in one pass more (its Phase 3B step 7). After the
+  first review the unspent re-review offer (next section) follows; after the re-review no review
+  follows, and the version line above names these edits.
 - **Declined**, the findings stay open, listed in the final report and the pull request (above).
 
-**It is not a fix cycle and raises no cap**: it dispatches no review, and what the cap allows after
-it is exactly what it allowed before. Used by the commands that fix inline — `/create-prd`,
-`/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and `/brd-proposal`.
+**It is not a fix cycle and raises no cap**: it dispatches no review — `/implement`'s `review-fixer`
+pass after the re-review is no second fix cycle, since no review follows it — and what the cap
+allows after it is exactly what it allowed before. Used by the commands that fix inline —
+`/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and
+`/brd-proposal` — and by `/implement`, through `review-fixer`, after its first review and its one
+re-review, never after its review of the Phase 3.5 delta, whose edits would follow its tests.
 
 ## Edits after a verdict that is not BLOCK — the unspent re-review
 
@@ -506,7 +511,7 @@ pass, a resumed verify step — stays under the reporting rule above and makes n
   one after its fix cycle — its own `Review verdict BLOCK (unresolved after one fix cycle)` rule
   below, or `/implement`'s stayed-blocked stop; any other verdict, or **Proceed** at a settle prompt,
   goes on to the step that follows the review gate, as after the command's own re-review, and none
-  starts a fix cycle: a command that fixes inline puts its findings to the offer above, whose edits no review follows, and every other reports them. The version line then names the re-review's verdict, and
+  starts a fix cycle: a command that fixes inline, or `/implement`, puts its findings to the offer above, whose edits no review follows, and every other reports them. The version line then names the re-review's verdict, and
   an edit after it falls back to the reporting rule above, the cap now spent.
 - **Declined**, the run goes on exactly as before, and the version line says the verdict predates
   the edits.
@@ -517,7 +522,7 @@ allows a re-review, whose verdict that is not `BLOCK` leads to the handoff witho
 edit the reviewed artifact on the way.** The seven commands that fix inline edit it through the offer
 above; `/epics` and `/document` dispatch `doc-fixer` over the findings — `/epics` also folds a
 finding's rewording in itself, under any verdict, where the user takes it for text they chose —
-and `/implement` `review-fixer`. The open questions `A finding left open that needs a decision is
+and `/implement` `review-fixer`, over the findings and over those the user applies at the offer above. The open questions `A finding left open that needs a decision is
 recorded in the artifact` writes answer no finding, and make no offer. `/vuln` and `/upgrade` re-run their review after the `PASS WITH RECOMMENDATIONS`
 fixer pass, spending the re-review there, so the offer never arises; `/docs-init`, `/docs-brand` and
 `/docs-audit` cap at no re-review, so there is none to offer.

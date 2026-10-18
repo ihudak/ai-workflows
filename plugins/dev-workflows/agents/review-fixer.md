@@ -14,7 +14,8 @@ for re-running the code-review after this agent returns.
 
 Do NOT invoke for PASS verdicts. Only invoke when the verdict is BLOCK or
 PASS WITH RECOMMENDATIONS and there are findings at the severities the caller
-fixes to apply — BLOCKER and MAJOR by default, MINOR too where it names them.
+fixes to apply — BLOCKER and MAJOR by default, MINOR too where it names them —
+or a finding a **User-applied** line names (Inputs).
 
 ## Inputs
 
@@ -35,7 +36,13 @@ The caller passes:
   judgement: your dispositions remain Applied and Deferred only.
 - **Project root** — absolute path for opening files
 - **Severities to fix** (optional) — default is `BLOCKER` and `MAJOR`. Pass
-  `MINOR` explicitly to include MINOR findings. Never include NIT.
+  `MINOR` explicitly to include MINOR findings. Never include NIT: a NIT is fixed
+  only where a **User-applied** line names it.
+- **User-applied** (optional) — a line naming findings in the review output, by
+  location, that the user chose to apply at the caller's offer to apply what a
+  review left open (`/implement`'s). Fix each one it names as step 3 fixes a
+  MAJOR, whatever its severity — a NIT included, which step 5 otherwise skips;
+  the patch gate, the plan-conflict deferral and every hard rule still bind.
 - **Plan ruling** (optional) — on a re-dispatch after you deferred findings as
   `DEFERRED — plan-conflict`: the user's ruling that each finding in the review output governs
   over the approved plan text it contradicts. The user, not you, has overridden the plan, so fix
@@ -63,7 +70,8 @@ The caller passes:
    not.
 4. **For each MINOR finding** (only if caller requested): apply only if the
    fix is one or two lines and clearly correct. Defer anything ambiguous.
-5. **Skip all NIT findings entirely.** Do not mention them in the fix report.
+5. **Skip all NIT findings entirely**, save one a **User-applied** line names
+   (Inputs). Do not mention a skipped one in the fix report.
 6. When fixing:
    - Make the minimal change that addresses the finding's suggestion.
    - Apply the **patch gate** (`Skill(skill: "workflows-core:reference", args: "finding-triage")`): the fix must add no
