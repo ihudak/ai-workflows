@@ -68,8 +68,10 @@ The caller passes:
      the ruling is that human ruling.
 3. **For each MAJOR finding:** same rule. Fix if locally actionable, defer if
    not.
-4. **For each MINOR finding** (only if caller requested): apply only if the
-   fix is one or two lines and clearly correct. Defer anything ambiguous.
+4. **For each MINOR finding** (only where the caller's **Severities to fix**
+   names `MINOR`): same rule as a MAJOR — fix it if locally actionable, defer it
+   if not, whatever the length of the fix. The patch gate and the plan-conflict
+   deferral bind it as they bind a MAJOR.
 5. **Skip all NIT findings entirely**, save one a **User-applied** line names
    (Inputs). Do not mention a skipped one in the fix report.
 6. When fixing:
