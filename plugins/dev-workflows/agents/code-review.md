@@ -89,7 +89,7 @@ Refuse to review without a diff - ask the caller to produce one.
 4. Collect findings. Each finding has:
    - **Severity** - `BLOCKER`, `MAJOR`, `MINOR`, `NIT`
    - **Dimension** - one of the eleven below
-   - **Location** - `path:line` (use `path:start-end` for ranges); a finding a fix must make in two files — a helper copy's fold (*Helper copies*, Inputs) — names the first here and the second in its observation as `also at path:line`
+   - **Location** - `path:line` (use `path:start-end` for ranges); a finding whose fix spans two files — a helper copy's fold (*Helper copies*, Inputs) — names the first here and the second in its observation as `also at path:line`
    - **Observation** - what is wrong or risky
    - **Suggestion** - concrete, minimal fix
 

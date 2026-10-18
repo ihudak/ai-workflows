@@ -485,8 +485,8 @@ re-review, never after its review of the Phase 3.5 delta, whose edits would foll
 
 ## Edits after a verdict that is not BLOCK — the unspent re-review
 
-**A verdict that is not `BLOCK` spends neither half of the cap**, nor does a `BLOCK` a triage settle
-prompt's **Proceed** settles as not `BLOCK` before any fixer ran, so the no-fixed-point argument
+**A verdict that is not `BLOCK` spends neither half of the cap**, nor does a `BLOCK` the first triage
+settle prompt's **Proceed** settles as not `BLOCK` before any fixer ran, so the no-fixed-point argument
 above reaches neither. A run that edits the reviewed artifact in answer to such a verdict's
 findings — a first review's findings the user chose to apply at the offer above, or the fixer pass a command dispatches over them — still holds the cap's one re-review, and handing off without offering it ships edited text
 unreviewed for no reason the cap gives. A live `/create-prd` run is the case: `PASS WITH
@@ -519,8 +519,8 @@ pass, a resumed verify step — stays under the reporting rule above and makes n
   the edits.
 
 **It never raises the cap.** A run that went through a `BLOCK`'s fix cycle spent its re-review there,
-and nothing here offers another; a `BLOCK` a settle prompt's **Proceed** settled before any fixer ran
-spent neither half, and is offered the re-review as above. **Which commands it reaches is a behavioural test, as above: a command whose cap
+and nothing here offers another; a `BLOCK` the first settle prompt's **Proceed** settled before any
+fixer ran spent neither half, and is offered the re-review as above. **Which commands it reaches is a behavioural test, as above: a command whose cap
 allows a re-review, whose verdict that is not `BLOCK` leads to the handoff without one, and which can
 edit the reviewed artifact on the way.** The seven commands that fix inline edit it through the offer
 above; `/epics` and `/document` dispatch `doc-fixer` over the findings — `/epics` also folds a
