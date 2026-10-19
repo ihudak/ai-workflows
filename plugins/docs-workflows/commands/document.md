@@ -1152,15 +1152,15 @@ Then spawn all four Phase 4-style maintenance agents in a **single Agent message
 > [paste change summary block]
 >
 > Check ~/.claude/memory/ (global) and .claude/memory/ (project-level, preferred for repo-specific knowledge) for existing knowledge files.
-> Determine if a new knowledge entry is warranted — look for: reusable insights about this docs repo's conventions, non-obvious style rules uncovered, Vale / lint interactions, snippet patterns, image-policy discoveries.
-> If YES: identify the most appropriate existing file (never propose a new file if an existing one fits) and return a proposed edit — write nothing. The entry format:
-> ### [Short title]
+> Determine which new knowledge entries are warranted — one entry per lesson, never two lessons in one entry — look for: reusable insights about this docs repo's conventions, non-obvious style rules uncovered, Vale / lint interactions, snippet patterns, image-policy discoveries.
+> For each: identify the most fitting existing file (never propose a new file if an existing one fits) and return a proposed edit appending it, titled by its own lesson — write nothing. The entry format:
+> ### [Short title naming this entry's lesson]
 > - **Context**: what problem/situation triggered this
 > - **Insight**: the learned rule, pattern, or gotcha
 > - **When it applies**: conditions under which this matters
 > - **Date**: YYYY-MM-DD
 > - **Ref**: [first 60 chars of the key + feature summary]
-> Return: `{file, anchor, replacement, reason}` — `anchor` is the exact existing text to change, or the section to append to; `replacement` is the entry above in full; `reason` is why it's warranted — OR 'no update required'."
+> Return: one `{file, anchor, replacement, reason}` per entry — `anchor` is the exact existing text to change, or the section to append to; `replacement` is that entry in full; `reason` is why it's warranted — OR 'no update required'."
 
 **Agent 3 — Instructions** (general-purpose, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`):
 > "Post-write instructions review. Change summary:
@@ -1722,15 +1722,15 @@ Then spawn all four Phase 4 agents. They are independent and can run in any orde
 > [paste change summary block]
 >
 > Check ~/.claude/memory/ (global) and .claude/memory/ (project-level, preferred for repo-specific knowledge) for existing knowledge files.
-> Determine if a new knowledge entry is warranted — look for: reusable insights about this repo's doc conventions, non-obvious style rules uncovered, tooling gotchas (Vale rule interactions, snippet conventions).
-> If YES: identify the most appropriate existing file (never propose a new file if an existing one fits) and return a proposed edit — write nothing. The entry format:
-> ### [Short title]
+> Determine which new knowledge entries are warranted — one entry per lesson, never two lessons in one entry — look for: reusable insights about this repo's doc conventions, non-obvious style rules uncovered, tooling gotchas (Vale rule interactions, snippet conventions).
+> For each: identify the most fitting existing file (never propose a new file if an existing one fits) and return a proposed edit appending it, titled by its own lesson — write nothing. The entry format:
+> ### [Short title naming this entry's lesson]
 > - **Context**: what problem/situation triggered this
 > - **Insight**: the learned rule, pattern, or gotcha
 > - **When it applies**: conditions under which this matters
 > - **Date**: YYYY-MM-DD
 > - **Ref**: [first 60 chars of the doc-edit description]
-> Return: `{file, anchor, replacement, reason}` — `anchor` is the exact existing text to change, or the section to append to; `replacement` is the entry above in full; `reason` is why it's warranted — OR 'no update required'."
+> Return: one `{file, anchor, replacement, reason}` per entry — `anchor` is the exact existing text to change, or the section to append to; `replacement` is that entry in full; `reason` is why it's warranted — OR 'no update required'."
 
 **Agent 3 — Instructions** (general-purpose, model: `<Sonnet detection chain — claude-sonnet-5-5, fallback claude-sonnet-5 / 4-6 / 4-5; under §10, run_flags.enforced_model>`):
 > "Post-doc-edit instructions review. Change summary:

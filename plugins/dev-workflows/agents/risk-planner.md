@@ -40,6 +40,12 @@ The caller passes a structured brief:
   confirmed capability — the scan could not determine where, or whether, the
   capability exists. Never plan as though its location is known. Absent/other
   → plan normally.
+- **`Security register`** (optional, from `/implement`) — the absolute path of
+  the `register.json` `/security-workflows:scan` keeps for this repository,
+  read only to name a finding as *A finding outside the task carries its
+  ruling* says. A *context* input under the read-failure contract in
+  `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`: unreadable, it
+  degrades to absent, and absent, no register is read.
 - **`task_shape`** (optional) — `bug` when the caller classified the task as a
   defect fix. When `task_shape: bug`, follow
   `${CLAUDE_PLUGIN_ROOT}/references/bug-diagnosis.md`: lead `### Steps` with a
@@ -129,6 +135,16 @@ _or_ "none — checked"
 - **Minimise scope.** Suggest the smallest change that meets the acceptance
   checks. Do NOT introduce abstractions, feature flags, or cleanup for
   unrelated code.
+- **A finding outside the task carries its ruling.** A security finding
+  the plan names other than one the task itself carries — a `[SEC#n]`,
+  under Out of scope, Risks or anywhere else — is named with its status as
+  the brief's `Security register` holds it
+  (`Skill(skill: "workflows-core:reference", args: "security-register-format")`
+  §4): a `false-positive` with who decided it and its `evidence`, from its
+  latest `history` entry, an `accepted-risk` with its `owner` and
+  `review_by`, and one the register does not hold, or a register the brief
+  names none of or you could not read, named as such and given no status —
+  so the plan the user approves never shows a ruled finding as an open one.
 - **Trace to requirements (when a spec/design is in the brief).** If the brief
   carries a `specification.md`/`design.md`, annotate each `### Steps` entry with
   the requirement ID(s) it implements — e.g. `1. <step> — implements [AC03],
@@ -144,8 +160,10 @@ _or_ "none — checked"
   required vs nullable, an enum's values, a validation rule — never
   paraphrased or left to be looked up, because an implementer who does not
   find it invents its own; and, for a verification step, the command to run
-  and the output that means it passed. Before returning, re-read the plan for
-  both failures: a line that decides nothing ("TBD", "add proper error
+  and the output that means it passed, naming the tests that must fail or
+  pass — a total it states counts only this plan's own tests, since on
+  `/implement` `test-writer` adds tests to the same suites after the plan.
+  Before returning, re-read the plan for both failures: a line that decides nothing ("TBD", "add proper error
   handling", "handle edge cases", "similar to step N", a type or function that
   neither a step nor the codebase defines), and a step that writes out the
   body the implementer would write. **Proportion check:** where `### Steps`

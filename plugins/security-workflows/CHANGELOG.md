@@ -4,6 +4,11 @@ All notable changes to the **security-workflows** plugin are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 
+## [0.1.1] — Unreleased
+
+### Changed
+- **The knowledge-base maintenance agent writes one entry per lesson**, each titled by its own lesson and appended to the most fitting existing file, where it appended one entry. Before, a live `/dev-workflows:implement` run's agent, under the brief this one condenses, wrote four lessons into one entry under a heading that named three.
+
 ## [0.1.0] — 2026-10-17
 
 Install it with `claude plugin install security-workflows@shipwright` — in a script that runs before any interactive Claude Code session has registered Anthropic's official marketplace, such as a container launcher or CI, after `claude plugin marketplace add anthropics/claude-plugins-official`, without which Claude Security is not installed and the plugin cannot load. Needs `workflows-core` 1.42.0, which carries the register format, `unit-branch`, the `/scan` cost row and the `[SEC#n]` match of `followup-emission` §5 this plugin relies on. The plugin hands its fixes to `dev-workflows` 4.28.0's `/implement`, which continues on the Epic's branch and starts from the scan's patch.

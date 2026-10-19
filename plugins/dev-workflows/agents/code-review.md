@@ -49,6 +49,7 @@ The caller passes a structured brief:
   `applicable_spec` are *context* inputs (degrade to absent, and say so in the Summary).
 - **Project root** - absolute path so files can be opened.
 - **Helper copies** (optional, from `/implement`) — each helper a coding step wrote a second copy of, beside the one it duplicates and the change reusing that one needed. Judge each copy as any other duplication in the diff: where folding it into the helper is the fix, that is a finding located at both sites — the copy's `path:line` as its Location, and the helper's in its observation as `also at path:line` (*Collect findings*) — since the fold edits both files and a fixer edits only a file a finding names.
+- **Security register** (optional, from `/implement`) — the absolute path of the `register.json` `/security-workflows:scan` keeps for this repository, read only to name a finding as *Set nothing aside silently* (Review method step 4) says. A *context* input under the read-failure contract: unreadable, it degrades to absent, and absent, no register is read.
 - **Deferred to another code repository** (optional, from `/implement`) — changes the run records as another code repository's work, never this diff's: each is an explicit deferral note, which dimension 10 honours where a spec is in scope. The deferred change's absence is never a defect of this diff; whether this diff is safe to merge and deploy before that change lands is still this review's to judge.
 
 Refuse to review without a diff - ask the caller to produce one.
@@ -110,7 +111,14 @@ Refuse to review without a diff - ask the caller to produce one.
    **Set nothing aside silently.** Every behaviour you considered and set
    aside as outside the task, the plan or the spec goes in
    `### Declined to judge`, one line each with the reason. The caller rules
-   on each line.
+   on each line. A security finding you name other than one the task
+   carries — a `[SEC#n]`, in `### Declined to judge` or in a finding — is named with its status
+   as the brief's **Security register** holds it
+   (`Skill(skill: "workflows-core:reference", args: "security-register-format")`
+   §4): a `false-positive` with who decided it and its `evidence`, from its
+   latest `history` entry, an `accepted-risk` with its `owner` and
+   `review_by`, and one the register does not hold, or a register the brief
+   names none of or you could not read, named as such and given no status.
 5. Derive a verdict:
    - `PASS` - no findings at all
    - `PASS WITH RECOMMENDATIONS` - no blockers, but at least one MAJOR, MINOR or NIT. The three are a **partition**: every finding set matches exactly one. `PASS` used to read "no findings above MINOR" beside a `PASS WITH RECOMMENDATIONS` of "MAJOR / MINOR / NIT only", so a lone MINOR matched both and the verdict was the reviewer's coin-toss — and the caller dispatches a fixer on one of the two.

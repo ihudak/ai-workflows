@@ -94,7 +94,7 @@ KEYS = [
     ("test_decision", None), ("clean_finish", True),
     ("files", {"task_description_file": None, "plan_file": None, "pending_plan_file": None,
                "summary_file": None, "baseline_file": None, "test_diff_file": None,
-               "review_diff_file": None, "partial_diff_file": None, "review_return_file": None,
+               "test_report_file": None, "review_diff_file": None, "partial_diff_file": None, "review_return_file": None,
                "review_file": None, "claims_file": None, "failure_file": None}),
     ("step_groups", []), ("patches", []), ("triage", []),
     ("conformance", {"summary": None, "annotated": [], "gaps": [], "handoff_line": None}),

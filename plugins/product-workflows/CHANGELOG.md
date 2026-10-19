@@ -9,6 +9,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ### Changed
 - **The resume-and-checkpoints page no longer says `/dev-workflows:implement` carries a mid-phase checkpoint** (dev-workflows 4.29.0, which has none and suggests no `/compact` mid-run): none of this plugin's commands carries one.
+- **`/epics`' knowledge-base agent writes one entry per lesson**, each titled by its own lesson and appended to the most fitting existing file, as `/dev-workflows:implement`'s does from 4.29.0. Before, its brief asked whether "a new knowledge entry" was warranted, and a live `/implement` run's agent, under the same brief, wrote four lessons into one entry under a heading that named three.
 
 ## [3.34.6] — 2026-10-17
 

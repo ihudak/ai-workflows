@@ -882,15 +882,15 @@ Then spawn all four maintenance agents in a **single Agent message**. They are i
 > [paste change summary block]
 >
 > Check ~/.claude/memory/ (global) and .claude/memory/ (project-level, preferred for project-specific knowledge) for existing knowledge files.
-> Determine if a new knowledge entry is warranted — look for: reusable insights about this PRD-family's Epic patterns, non-obvious scoping constraints uncovered, code-reuse discoveries from code-scanner, duplicate-Epic near-misses that required scope adjustment.
-> If YES: append to the most appropriate existing file (never create a new file if an existing one fits) using this format:
-> ### [Short title]
+> Determine which new knowledge entries are warranted — one entry per lesson, never two lessons in one entry — look for: reusable insights about this PRD-family's Epic patterns, non-obvious scoping constraints uncovered, code-reuse discoveries from code-scanner, duplicate-Epic near-misses that required scope adjustment.
+> For each: append it to the most fitting existing file (never create a new file if an existing one fits), titled by its own lesson, using this format:
+> ### [Short title naming this entry's lesson]
 > - **Context**: what problem/situation triggered this
 > - **Insight**: the learned rule, pattern, or gotcha
 > - **When it applies**: conditions under which this matters
 > - **Date**: YYYY-MM-DD
 > - **Ref**: [first 60 chars of the key + PRD summary]
-> Return: file updated/created and summary of entry, OR 'no update required'."
+> Return: each entry's file updated/created and a summary of the entry, one line per entry, OR 'no update required'."
 
 **Agent 3 — Instructions** (general-purpose, model: `<detection_model — §9 / §2.1 Sonnet chain>`):
 > "Post-write instructions review. Change summary:
@@ -1014,7 +1014,7 @@ MODERATE — Epic drafting for a single PRD
 - [file that needs an update] — [the edit it needs, for you to make] OR "no update required (reason)"
 
 ### Knowledge base (Agent 2)
-- [file updated/created] — [summary of entry] OR "no update required"
+- [one line per entry: file updated/created] — [summary of that entry] OR "no update required"
 
 ### Instructions (Agent 3)
 - [summary of change] OR "no update required"
