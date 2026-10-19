@@ -3,6 +3,7 @@
 All notable changes to the **security-workflows** plugin are recorded here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
+A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
 ## [0.1.1] — Unreleased
 
