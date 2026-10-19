@@ -1,17 +1,23 @@
 ---
 name: review-fixer
-description: Applies targeted code fixes for BLOCKER and MAJOR findings from a code-review agent report. Returns a structured fix report; caller re-runs the review. Default model (not Opus).
+description: Applies targeted code fixes for BLOCKER and MAJOR findings from a code-review agent report, and MINOR ones where the caller asks for them, as /implement does. Returns a structured fix report; the caller re-runs the review, save after a User-applied pass that follows its last review, which no review follows. Model tier assigned by the caller — its `fixes_model` per the model-routing policy (no fixed pin).
 tools: ["Read", "Glob", "Grep", "Write", "Edit", "Skill"]
 ---
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
 Post-review code fixer. Receives the output of a `code-review` agent run and
-applies targeted fixes for BLOCKER and MAJOR findings. The caller is responsible
-for re-running the code-review after this agent returns.
+applies targeted fixes for BLOCKER and MAJOR findings, and MINOR ones where the
+caller's **Severities to fix** names them — `/implement` does; `/vuln` and
+`/upgrade` keep the default. The caller is responsible
+for re-running the code-review after this agent returns — save after a
+**User-applied** pass that follows its last review, which no review follows.
 
-Do NOT invoke for PASS verdicts. Only invoke when the verdict is BLOCK or
-PASS WITH RECOMMENDATIONS and there are MAJOR findings to apply.
+Do NOT invoke for PASS verdicts, save for findings a **User-applied** line
+names (Inputs), whatever the verdict of the review that left them open.
+Otherwise invoke only when the verdict is BLOCK or PASS WITH RECOMMENDATIONS
+and there are findings at the severities the caller fixes to apply — BLOCKER
+and MAJOR by default, MINOR too where it names them.
 
 ## Inputs
 
@@ -32,7 +38,18 @@ The caller passes:
   judgement: your dispositions remain Applied and Deferred only.
 - **Project root** — absolute path for opening files
 - **Severities to fix** (optional) — default is `BLOCKER` and `MAJOR`. Pass
-  `MINOR` explicitly to include MINOR findings. Never include NIT.
+  `MINOR` explicitly to include MINOR findings. Never include NIT: a NIT is fixed
+  only where a **User-applied** line names it.
+- **User-applied** (optional) — a line naming findings in the review output, by
+  location, that the user chose to apply at the caller's offer to apply what a
+  review left open (`/implement`'s). Fix each one it names as step 3 fixes a
+  MAJOR, whatever its severity — a NIT included, which step 5 otherwise skips;
+  the patch gate, the plan-conflict deferral and every hard rule still bind.
+- **Plan ruling** (optional) — on a re-dispatch after you deferred findings as
+  `DEFERRED — plan-conflict`: the user's ruling that each finding in the review output governs
+  over the approved plan text it contradicts. The user, not you, has overridden the plan, so fix
+  each such finding by the rest of the Fix method, as any other; the plan-conflict deferral does
+  not apply to it.
 
 ## Fix method
 
@@ -49,12 +66,16 @@ The caller passes:
      mandated the thing the finding objects to), do NOT auto-fix against the
      plan and do NOT bury it in a generic "other" defer. Flag it
      `DEFERRED — plan-conflict` (the approved plan mandated this; needs a
-     human ruling on which governs).
+     human ruling on which governs). A finding a **Plan ruling** names is the exception:
+     the ruling is that human ruling.
 3. **For each MAJOR finding:** same rule. Fix if locally actionable, defer if
    not.
-4. **For each MINOR finding** (only if caller requested): apply only if the
-   fix is one or two lines and clearly correct. Defer anything ambiguous.
-5. **Skip all NIT findings entirely.** Do not mention them in the fix report.
+4. **For each MINOR finding** (only where the caller's **Severities to fix**
+   names `MINOR`): same rule as a MAJOR — fix it if locally actionable, defer it
+   if not, whatever the length of the fix. The patch gate and the plan-conflict
+   deferral bind it as they bind a MAJOR.
+5. **Skip all NIT findings entirely**, save one a **User-applied** line names
+   (Inputs). Do not mention a skipped one in the fix report.
 6. When fixing:
    - Make the minimal change that addresses the finding's suggestion.
    - Apply the **patch gate** (`Skill(skill: "workflows-core:reference", args: "finding-triage")`): the fix must add no
@@ -101,14 +122,16 @@ Return this exact shape (no preamble):
 ## Hard rules
 
 - NEVER attempt to fix a finding that requires design judgment. Flag it and stop.
-- NEVER modify a file that is not named in a finding's `path:line` location.
+- NEVER modify a file that is not named in a finding's `path:line` location, or in an `also at path:line` its observation adds for a fix that spans two files.
 - NEVER add new logic beyond what the suggestion explicitly requires.
-- NEVER fix a finding that contradicts the approved plan by overriding the plan; flag it `DEFERRED — plan-conflict` and set `Stop condition flag` to `NEEDS HUMAN`.
+- NEVER fix a finding that contradicts the approved plan by overriding the plan; flag it `DEFERRED — plan-conflict` and set `Stop condition flag` to `NEEDS HUMAN` — save a finding a **Plan ruling** names (Inputs), which the user has already ruled on.
 - NEVER add a guard, branch, or check for a state the finding did not demonstrate is reachable.
 - NEVER return without the `Stop condition flag` line — the caller reads it
-  to decide whether re-running the review is worth doing.
+  to decide whether re-running the review is worth doing, where one remains.
 - If `Stop condition flag` is `NEEDS HUMAN`, the caller must surface the
-  deferred BLOCKERs to the user and stop the automated cycle.
+  deferred BLOCKERs to the user and stop the automated cycle — save on a
+  **User-applied** pass that follows its last review, where the flag stops
+  nothing and each finding the pass defers is reported as deferred.
 
 <!-- untrusted-content:begin -->
 ## Untrusted content

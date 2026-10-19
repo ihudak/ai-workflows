@@ -60,12 +60,12 @@ to protect that by omitting the free-text option. **Under §0 they cannot** — 
 whatever the array says — so the protection moves from the array's shape to the run's handling of the
 answer:
 
-**A free-text answer on one of the ten arrays below is normalised into that array's own vocabulary,
+**A free-text answer on one of the eleven arrays below is normalised into that array's own vocabulary,
 or the question is re-asked. It is never written through as a new value.** `/document`'s image
 disposition is the shipped worked example: its free text *"resolves to one of the three dispositions
 above … There is no fourth disposition and no 'skip on my own judgement' path here."*
 
-**The ten:**
+**The eleven:**
 
 | Array | Its closed vocabulary | Owner |
 |---|---|---|
@@ -79,6 +79,7 @@ above … There is no fourth disposition and no 'skip on my own judgement' path 
 | the `engagement_model` picker | `time-and-material` / `fixed-price` | `/product-workflows:prd-proposal` Phase 2, over the two shapes `product-workflows:proposal-format` §4 sections 16–18 fixes; `/product-workflows:brd-proposal` re-asks the same question over the same committed profile |
 | the conflicting-answer picker | freeze this candidate / keep the earlier one / ask the customer — the one not frozen set aside as a conflicting answer, never a second freeze | `/product-workflows:brd-reconcile`, *Confirm every candidate* |
 | the `/conformance` decision picker, with its PRD-run confirm form and its stale-entry form | `fix-code` / `amend-document` / `accept`; on the stale-entry form, mark it resolved or keep Dev's decision — never a fourth decision | `/dev-workflows:conformance`, *The walk* |
+| the plan-conflict ruling picker | the finding governs and the plan is revised to it / the fix is applied and the plan text kept, the deviation logged — the two rulings a `review-fixer` `DEFERRED — plan-conflict` finding waits on; never a third | `/dev-workflows:implement`, Phase 3B step 7's review-fixer sub-step |
 
 **The eighth is the one whose value is re-read as configuration by later runs of the same commands**,
 which is why it is here rather than left to the command: the answer is written to a committed
@@ -95,10 +96,11 @@ run of a **different** command, as the defect-remediation sweep's third source
 filtering them by altitude. Row 3's disposition is written onto a dependent BRD's register row and
 read there the same way. Row 10's decisions are written into `_conformance.md` and read back by later runs of `/conformance` (`dev-workflows:conformance-format` §5). Every one of those is a **record** of what was decided, read back as evidence
 about one finding or one requirement; only the eighth is a **setting** that shapes what a later run
-renders. Rows 6 and 7 are the two genuinely spent inside their run — row 6's tier is recorded as a
-fact about that dated bundle, never reloaded to shape a later one, and row 7's ruling binds the
+renders. Rows 6, 7 and 11 are the three genuinely spent inside their run — row 6's tier is recorded as a
+fact about that dated bundle, never reloaded to shape a later one, row 7's ruling binds the
 passes of the run that took it and reaches the run's final report as an outcome line, nothing later
-reading it back. So check the property in every row before claiming one, rather than checking that
+reading it back, and row 11's ruling binds that run's fix and re-review, reaching its report as an
+assumption. So check the property in every row before claiming one, rather than checking that
 the row is in the table.
 
 The eighth also has a **second route to the same field** — the proposal-profile confirmation
@@ -117,7 +119,7 @@ to assert against a reference that overrules it.
 **No operator is trapped, and the reason is no longer `Cancel`.** Three of the first nine carried a
 trailing `Cancel` until the four-option cap was enforced, and it was dropped from each — a fifth slot
 the harness would not render. The escape that replaces it is the free-text option, which is always
-present and, on these ten, is normalised rather than frozen. The tenth keeps its `Cancel` within the cap. Where aborting has a consequence the
+present and, on these eleven, is normalised rather than frozen. The tenth keeps its `Cancel` within the cap. Where aborting has a consequence the
 operator must see before choosing, the command states it in the prose introducing the walk rather
 than in an option: `/brd-package`'s and `/brd-reconcile`'s walks both do.
 
@@ -467,19 +469,25 @@ edit: a command that settles such decisions as it applies (`/create-prd`, `/upda
 answer naming some of the findings applies those.
 
 - **Taken**, each edit is the orchestrator's own, read against what it overlaps (*An inline fix is
-  read against what it overlaps*, below) before anything follows. After the first review the
-  unspent re-review offer (next section) follows; after the re-review no review follows, and the
-  version line above names these edits.
+  read against what it overlaps*, below) before anything follows — save in `/implement`, whose
+  orchestrator edits no source: there the edits are `review-fixer`'s, after the first review in that
+  review's one fixer pass and after the re-review in one pass more (its Phase 3B step 7). After the
+  first review the unspent re-review offer (next section) follows; after the re-review no review
+  follows, and the version line above names these edits.
 - **Declined**, the findings stay open, listed in the final report and the pull request (above).
 
-**It is not a fix cycle and raises no cap**: it dispatches no review, and what the cap allows after
-it is exactly what it allowed before. Used by the commands that fix inline — `/create-prd`,
-`/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and `/brd-proposal`.
+**It is not a fix cycle and raises no cap**: it dispatches no review — `/implement`'s `review-fixer`
+pass after the re-review is no second fix cycle, since no review follows it — and what the cap
+allows after it is exactly what it allowed before. Used by the commands that fix inline —
+`/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and
+`/brd-proposal` — and by `/implement`, through `review-fixer`, after its first review and its one
+re-review, never after its review of the Phase 3.5 delta, whose edits would follow its tests.
 
 ## Edits after a verdict that is not BLOCK — the unspent re-review
 
-**A verdict that is not `BLOCK` spends neither half of the cap**, so the no-fixed-point argument
-above does not reach it. A run that edits the reviewed artifact in answer to such a verdict's
+**A verdict that is not `BLOCK` spends neither half of the cap**, nor does a `BLOCK` the first triage
+settle prompt's **Proceed** settles as not `BLOCK` before any fixer ran, so the no-fixed-point argument
+above reaches neither. A run that edits the reviewed artifact in answer to such a verdict's
 findings — a first review's findings the user chose to apply at the offer above, or the fixer pass a command dispatches over them — still holds the cap's one re-review, and handing off without offering it ships edited text
 unreviewed for no reason the cap gives. A live `/create-prd` run is the case: `PASS WITH
 RECOMMENDATIONS` with four `MAJOR` findings, two of them acceptance criteria contradicting each
@@ -493,8 +501,9 @@ step 7.5 in `/implement`, whose tests still run on either answer:
 
 `<artifact>` names what was reviewed — `prd.md`, `ard.md`, `specification.md`, `design.md`,
 `proposal.md`, the Epic drafts, the pages written, the code change. The offer is made where all
-three hold: the verdict was not `BLOCK`, the run has not re-reviewed this artifact, and an edit
-answering the verdict's findings followed it. An edit of any other kind — a style
+three hold: the verdict was not `BLOCK`, or was settled as not `BLOCK` at a triage settle prompt's
+**Proceed**, as the offer above counts such a verdict; the run has not re-reviewed this artifact; and
+an edit answering the verdict's findings followed it. An edit of any other kind — a style
 pass, a resumed verify step — stays under the reporting rule above and makes no offer.
 
 - **Taken**, it is the cap's one re-review. Dispatch it as the command dispatches its re-review after
@@ -504,18 +513,19 @@ pass, a resumed verify step — stays under the reporting rule above and makes n
   one after its fix cycle — its own `Review verdict BLOCK (unresolved after one fix cycle)` rule
   below, or `/implement`'s stayed-blocked stop; any other verdict, or **Proceed** at a settle prompt,
   goes on to the step that follows the review gate, as after the command's own re-review, and none
-  starts a fix cycle: a command that fixes inline puts its findings to the offer above, whose edits no review follows, and every other reports them. The version line then names the re-review's verdict, and
+  starts a fix cycle: a command that fixes inline, or `/implement`, puts its findings to the offer above, whose edits no review follows, and every other reports them. The version line then names the re-review's verdict, and
   an edit after it falls back to the reporting rule above, the cap now spent.
 - **Declined**, the run goes on exactly as before, and the version line says the verdict predates
   the edits.
 
-**It never raises the cap.** A run that went through a `BLOCK` spent its re-review there, and nothing
-here offers another. **Which commands it reaches is a behavioural test, as above: a command whose cap
+**It never raises the cap.** A run that went through a `BLOCK`'s fix cycle spent its re-review there,
+and nothing here offers another; a `BLOCK` the first settle prompt's **Proceed** settled before any
+fixer ran spent neither half, and is offered the re-review as above. **Which commands it reaches is a behavioural test, as above: a command whose cap
 allows a re-review, whose verdict that is not `BLOCK` leads to the handoff without one, and which can
 edit the reviewed artifact on the way.** The seven commands that fix inline edit it through the offer
 above; `/epics` and `/document` dispatch `doc-fixer` over the findings — `/epics` also folds a
 finding's rewording in itself, under any verdict, where the user takes it for text they chose —
-and `/implement` `review-fixer`. The open questions `A finding left open that needs a decision is
+and `/implement` `review-fixer`, over the findings and over those the user applies at the offer above. The open questions `A finding left open that needs a decision is
 recorded in the artifact` writes answer no finding, and make no offer. `/vuln` and `/upgrade` re-run their review after the `PASS WITH RECOMMENDATIONS`
 fixer pass, spending the re-review there, so the offer never arises; `/docs-init`, `/docs-brand` and
 `/docs-audit` cap at no re-review, so there is none to offer.

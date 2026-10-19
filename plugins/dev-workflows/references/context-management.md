@@ -27,21 +27,29 @@ without degrading. Apply when the plan/step list is large or the run is nearing 
   `command rm -f -- "<path>"`: `command` because the Bash tool's shell carries the user's aliases and
   shell functions, and an `rm -i` or `rm -I` of theirs would ask before removing the file, be answered
   no from that shell's empty standard input, and leave it behind; `--` ends `rm`'s options. **Nothing
-  else removes one.** These files sit under the system's temporary directory, outside every repository,
-  where no later phase and no later run looks — a resume pointer names artifacts, never a handoff file
-  (`workflows-core:session-hygiene` §1) — so one a run leaves behind stays until the host clears that
-  directory. Where a file must outlive its run, the step that keeps it says why and names it to
-  the user. **A file a stop names to the user because it could not be read stays where it is**:
-  the run has just told them where to look, and a path reported and then removed is worse than
-  either.
+  else removes one** — save on `/implement`, whose `run-state.py` removes such files itself: its `set`
+  each `dw-impl-` file a write stops naming, and its `remove` every `dw-impl-` one its run-state file
+  still names at the run's end (`commands/implement.md` Phase 1.4). These files sit under the system's temporary
+  directory, outside every repository, where no later phase and no later run looks — a resume pointer
+  names artifacts, never a handoff file (`workflows-core:session-hygiene` §1) — so one a run leaves
+  behind stays until the host clears that directory. Where a file must outlive its run, the step that
+  keeps it says why and names it to the user. **A file a stop names to the user because it could not
+  be read stays where it is**: the run has just told them where to look, and a path reported and
+  then removed is worse than either.
 
 Prefer the cheapest strategy that fits: checkpoint first; offload parallel steps only when they are
-genuinely independent; decompose only when a single unit still overflows. "Hand off by file" is
+genuinely independent; decompose only when a single unit still overflows. `/implement` is the
+exception, and its own Phase 3B names its strategies: it codes every step group through
+`code-writer`, one dispatch at a time — *Sub-agent-per-`[P]`* applied to every step, in plan order —
+and decomposes a step list past one run's reach; it never checkpoints by *Scope-to-N*, since it
+commits only at its Phase 4.6, after Phase 4. "Hand off by file" is
 orthogonal — apply it whenever you dispatch a sub-agent, whichever offload strategy you chose.
 
 At each **checkpoint**, a long-run command may additionally suggest **`/compact`** to free
-context before continuing the next scope/Epic — see `workflows-core:session-hygiene` §3
-(mid-command → `/compact` only, never `/clear`; guidance-only).
+context before continuing the next scope/Epic (mid-command → `/compact` only, never `/clear`;
+guidance-only). `/implement`, which has no checkpoint, suggests none: its step groups are
+dispatched back to back, with no user turn between them, and its run-state file carries the run
+across an automatic compaction — see `workflows-core:session-hygiene` §3.
 
 ## The read-failure contract
 

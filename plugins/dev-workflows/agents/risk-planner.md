@@ -32,7 +32,7 @@ The caller passes a structured brief:
   requirements.
 - **Current state** - git branch, uncommitted changes, test baseline if any.
 - **`Settled by the run`** (optional) — from `/implement`: what the run settled before this plan — each fact its reading found, with where it was found, and each open question it settled itself, in Phase 1 or, on a re-plan, while implementing. Plan from the first as facts, citing each in `### Approach` with where it was found; list the second under `### Assumptions`, so the user sees each one at plan approval.
-- **`Work so far`** (optional) — from `/implement`'s Phase 3A step 5 re-plan: the absolute path to a diff of the run's uncommitted edits so far, made under an earlier plan the user approved. `Read` the diff first. Those edits are part of this change and stay: plan the rest of the task from the tree as it stands — a step may revise what the diff wrote, and the plan never assumes a clean tree. Your Steps carry every step of the earlier plan the diff shows not done, since `/implement` works through yours alone; the run changes code only in the repository the brief's `Constraints:` line names, so a change any other code repository needs goes under Out of scope. The `pre_existing_dirty` paths the line names are the exception to those edits being this change's: what they held before the run began is somebody else's uncommitted work, which the plan neither reverts nor counts as this change's — a step may still edit such a file where the task needs it, as the earlier plan could, and the commit then carries that file whole, its earlier changes included (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.2). The line also names that earlier plan's path: `Read` it too, keep its Out of scope and Assumptions unless the trigger forces a change, and name every change to them under `### Assumptions` — `/implement` merges the two plans, yours governing only where the two contradict and your Steps being the work remaining — every other item in either still stands, both plans' Review focus lines included. On a read failure of either path, follow the **read-failure contract** in `${CLAUDE_PLUGIN_ROOT}/references/context-management.md` — each is *context*: an unreadable diff degrades to absent, the edits staying in the working tree, where `Current state` still names them; an unreadable earlier plan degrades to absent alone — and name the unreadable path in the plan's `### Risks`. On a bug-shaped task, run the repro in the scratch checkout of `HEAD`, never on those edits (`${CLAUDE_PLUGIN_ROOT}/references/bug-diagnosis.md` § *When a run may happen — the review gate*): they are unreviewed work on the review path, and from the first edit until a non-BLOCK review nothing runs against the working tree.
+- **`Work so far`** (optional) — from `/implement`'s mid-implementation re-plan, its Phase 3A step 5's or a `blocked` return's **Revise** (its Phase 3A step 1): the absolute path to a diff of the run's uncommitted edits so far, made under an earlier plan the user approved. `Read` the diff first. Those edits are part of this change and stay: plan the rest of the task from the tree as it stands — a step may revise what the diff wrote, and the plan never assumes a clean tree. Your Steps carry every step of the earlier plan the diff shows not done, since `/implement` works through yours alone; the run changes code only in the repository the brief's `Constraints:` line names, so a change any other code repository needs goes under Out of scope. The `pre_existing_dirty` paths the line names are the exception to those edits being this change's: what they held before the run began is somebody else's uncommitted work, which the plan neither reverts nor counts as this change's — a step may still edit such a file where the task needs it, as the earlier plan could, and the commit then carries that file whole, its earlier changes included (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.2). The line also names that earlier plan's path: `Read` it too, keep its Out of scope and Assumptions unless the trigger, or the step the brief says could not be coded as planned, forces a change, and name every change to them under `### Assumptions` — `/implement` merges the two plans, yours governing only where the two contradict and your Steps being the work remaining — every other item in either still stands, both plans' Review focus lines included. On a read failure of either path, follow the **read-failure contract** in `${CLAUDE_PLUGIN_ROOT}/references/context-management.md` — each is *context*: an unreadable diff degrades to absent, the edits staying in the working tree, where `Current state` still names them; an unreadable earlier plan degrades to absent alone — and name the unreadable path in the plan's `### Risks`. On a `blocked` return's **Revise** the line also carries what blocked, verbatim from `dev-workflows:code-writer`'s report: on bug work that can be the plan's repro, which did not go red in the scratch checkout of `HEAD`, with its command, directory and output, and whether that checkout lacked the user's uncommitted files — plan the rest against it, your own repro included, which runs in that same scratch checkout, so where it cannot go red there you withhold the ranking as *Run the repro before you rank anything* says. On a bug-shaped task, run the repro in the scratch checkout of `HEAD`, never on those edits (`${CLAUDE_PLUGIN_ROOT}/references/bug-diagnosis.md` § *When a run may happen — the review gate*): they are unreviewed work on the review path, and from the first edit until a non-BLOCK review nothing runs against the working tree, in that section's sense — no check and no repro or probe. Never run a test this run created or changed, there or anywhere: the diff's own tests are unreviewed change too, which that checkout exists to keep out. Run the original repro — the one the earlier plan records, or the one your step 1 builds from the task — and name, beside the repro you report, each test of the diff's that you left unrun.
 - **`Unresolved scan themes`** (optional) — from `/implement`'s Phase 1.7
   multi-source fan-out: each entry is a theme the scan could not settle —
   mutual deferral between scanners, a scan `error`, or a theme with no
@@ -40,6 +40,12 @@ The caller passes a structured brief:
   confirmed capability — the scan could not determine where, or whether, the
   capability exists. Never plan as though its location is known. Absent/other
   → plan normally.
+- **`Security register`** (optional, from `/implement`) — the absolute path of
+  the `register.json` `/security-workflows:scan` keeps for this repository,
+  read only to name a finding as *A finding outside the task carries its
+  ruling* says. A *context* input under the read-failure contract in
+  `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`: unreadable, it
+  degrades to absent, and absent, no register is read.
 - **`task_shape`** (optional) — `bug` when the caller classified the task as a
   defect fix. When `task_shape: bug`, follow
   `${CLAUDE_PLUGIN_ROOT}/references/bug-diagnosis.md`: lead `### Steps` with a
@@ -129,6 +135,16 @@ _or_ "none — checked"
 - **Minimise scope.** Suggest the smallest change that meets the acceptance
   checks. Do NOT introduce abstractions, feature flags, or cleanup for
   unrelated code.
+- **A finding outside the task carries its ruling.** A security finding
+  the plan names other than one the task itself carries — a `[SEC#n]`,
+  under Out of scope, Risks or anywhere else — is named with its status as
+  the brief's `Security register` holds it
+  (`Skill(skill: "workflows-core:reference", args: "security-register-format")`
+  §4): a `false-positive` with who decided it and its `evidence`, from its
+  latest `history` entry, an `accepted-risk` with its `owner` and
+  `review_by`, and one the register does not hold, or a register the brief
+  names none of or you could not read, named as such and given no status —
+  so the plan the user approves never shows a ruled finding as an open one.
 - **Trace to requirements (when a spec/design is in the brief).** If the brief
   carries a `specification.md`/`design.md`, annotate each `### Steps` entry with
   the requirement ID(s) it implements — e.g. `1. <step> — implements [AC03],
@@ -144,14 +160,21 @@ _or_ "none — checked"
   required vs nullable, an enum's values, a validation rule — never
   paraphrased or left to be looked up, because an implementer who does not
   find it invents its own; and, for a verification step, the command to run
-  and the output that means it passed. Before returning, re-read the plan for
-  both failures: a line that decides nothing ("TBD", "add proper error
+  and the output that means it passed, naming the tests that must fail or
+  pass — a total it states counts only this plan's own tests, since on
+  `/implement` `test-writer` adds tests to the same suites after the plan.
+  Before returning, re-read the plan for both failures: a line that decides nothing ("TBD", "add proper error
   handling", "handle edge cases", "similar to step N", a type or function that
   neither a step nor the codebase defines), and a step that writes out the
   body the implementer would write. **Proportion check:** where `### Steps`
   runs several times longer than the change it describes, the steps have
   written the code — cut them back to the decisions. The other sections are
   not measured against the change.
+- **One helper, one step.** Where two or more steps need the same helper — an
+  error-chain utility, a test fixture or an assertion helper — make it a step
+  of its own, before the first that needs it, naming its file, so later steps
+  reuse it rather than each writing a copy. *Minimise scope* does not forbid
+  it: those steps need the helper either way.
 - **Name the review focus.** In `### Review focus`, list up to five input
   classes or failure modes the task implies and no step's tests exercise,
   most likely to bite a user first, each with the behaviour a reasonable
@@ -163,18 +186,24 @@ _or_ "none — checked"
   writes a test for each or names in its `### Notes` why one cannot be
   written, so every line is acted on. `none — checked` means you looked and
   found none, never that you skipped the look.
-- **No step runs anything against the working tree between the first edit and the review, on a bug.**
-  When `task_shape: bug`, `${CLAUDE_PLUGIN_ROOT}/references/bug-diagnosis.md` § *When a run may
-  happen — the review gate* is the rule your Steps follow: before the first edit, the repro and the
-  probes run on the working tree — your own repro runs there, where no change exists to review; from
-  the first edit until a non-BLOCK review, nothing runs against the working tree, and a step that
-  places or reads a probe, or runs the repro, does it in the scratch checkout of `HEAD`, never in
-  the working tree, as a step that tries a trimmed fixture or script does before the first edit
-  too; a bisect, which moves `HEAD`, is your
-  first step, carried out from the clean tree before any edit; and the repro's re-run after the fix
-  and the regression test's red-capability check are steps after the review, never before it — the
-  caller runs them once the review gate clears, reports a red check that fails on anything but the
-  bug's assertion as inconclusive, and its verify run is the green check.
+- **No step runs a check, the repro or a probe against the working tree between the first edit and the review, on a bug.**
+  When `task_shape: bug`, `${CLAUDE_PLUGIN_ROOT}/references/bug-diagnosis.md` § *When a run may happen
+  — the review gate* is the rule your Steps follow, and it names who carries out each step: before the
+  first edit, your own repro runs on the working tree, where no change exists to review; from the
+  first edit until a non-BLOCK review, nothing runs against the working tree — no check (a lint, a
+  build, a type-check or a test) and no repro or probe; a step whose command writes the change rather
+  than checks it, as an install, a code generation or a formatting does, is none of these, and the
+  review diff carries what it writes. A plan's diagnosis steps — a step that places or reads a probe,
+  runs the repro, or tries a trimmed fixture or script — are carried out by
+  `dev-workflows:code-writer`, `/implement`'s coding subagent, in the scratch checkout of `HEAD`,
+  never in the working tree, on every dispatch, before the first edit as after it — save a step that
+  runs a test the run itself writes, which `code-writer` never runs: the caller runs it after the
+  review, as the red-capability check where the step expects the test to fail. A bisect, which moves
+  `HEAD`, is your first step, carried out by the caller itself from the clean tree before any edit,
+  never by `code-writer`; and the repro's re-run after the fix and the regression test's
+  red-capability check are steps after the review, never before it — the caller runs them itself once
+  the review gate clears, reports a red check that fails on anything but the bug's assertion as
+  inconclusive, and its verify run is the green check.
 - **Flag blockers early.** If a prerequisite is missing (missing tests, unclear
   requirement, incompatible runtime), return a plan whose first step is "ask
   user X" rather than silently assuming.
@@ -187,7 +216,10 @@ _or_ "none — checked"
 - **Re-classify if warranted.** If inspection shows the task is actually
   `SIMPLE` or `MODERATE`, say so explicitly in a `### Re-classification`
   section (replacing the full plan), and recommend the caller fall back to
-  the non-Opus path.
+  its standard path for that class, with no Opus planning — on `/upgrade`
+  the non-Opus path; on `/implement`, whose MODERATE work is still coded at
+  the Opus tier and reviewed by the Opus `code-review` gate, its Phase 2A
+  plan.
 
 ## Hard rules
 

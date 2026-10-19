@@ -581,17 +581,18 @@ concurrently.
 > [paste change summary block]
 >
 > Check ~/.claude/memory/ (global) and .claude/memory/ (project-level) for existing knowledge files.
-> Determine if a new knowledge entry is warranted — look for: recurring readiness-gate gaps for this
-> PRD-family, non-obvious status/artifact mismatches uncovered, repo-availability surprises.
-> If YES: append to the most appropriate existing file (never create a new file if an existing one fits)
-> using this format:
-> ### [Short title]
+> Determine which new knowledge entries are warranted — one entry per lesson, never two lessons in one
+> entry — look for: recurring readiness-gate gaps for this PRD-family, non-obvious status/artifact
+> mismatches uncovered, repo-availability surprises.
+> For each: append it to the most fitting existing file (never create a new file if an existing one
+> fits), titled by its own lesson, using this format:
+> ### [Short title naming this entry's lesson]
 > - **Context**: what problem/situation triggered this
 > - **Insight**: the learned rule, pattern, or gotcha
 > - **When it applies**: conditions under which this matters
 > - **Date**: YYYY-MM-DD
 > - **Ref**: [first 60 chars of the key + PRD summary]
-> Return: file updated/created and summary of entry, OR 'no update required'."
+> Return: each entry's file updated/created and a summary of the entry, one line per entry, OR 'no update required'."
 
 **Agent 3 — Instructions** (general-purpose, model: `<detection_model — §2.1 Sonnet chain>`):
 > "Post-run instructions review. Change summary:

@@ -1,11 +1,11 @@
 # Session hygiene (embedded — shared reference)
 
 The plugin-wide contract for **session-hygiene suggestions**: after a big command
-finishes (or a long-run command reaches a mid-phase checkpoint), the pipeline first
-**flushes resume-critical state to disk**, then **suggests the right context action**
-(`/compact` or `/clear`) plus a session **`/rename`** aid. Cited by the pipeline commands
-and by `next-phase-offer.md` / `context-management.md`, so the contract lives in ONE
-place (the same shape as `next-phase-offer` and the `emit-block` invariant).
+finishes, the pipeline first **flushes resume-critical state to disk**, then **suggests
+the right context action** (`/compact` or `/clear`) plus a session **`/rename`** aid.
+Cited by the pipeline commands and by `next-phase-offer.md` / `context-management.md`,
+so the contract lives in ONE place (the same shape as `next-phase-offer` and the
+`emit-block` invariant).
 
 Everything here is **guidance-only** — the plugin NEVER auto-invokes `/compact`,
 `/clear`, or `/rename`. The goal is to stop relying on a human to keep asking "prepare
@@ -96,11 +96,12 @@ Do NOT hardcode a per-command compact/clear verdict — read the role labels the
 own `next-phase-offer` output already carries. The role graph is owned by
 `next-phase-offer.md`; it is not duplicated here.
 
-## 3. Mid-phase checkpoints & non-pipeline big commands
+## 3. Mid-run suggestions & non-pipeline big commands
 
-- **`/implement` mid-phase checkpoint** (Scope-to-N / per-Epic, per `context-management.md`)
-  → suggest **`/compact`** to free budget before continuing (mid-command → no role
-  transition → never `/clear`).
+- **`/implement` suggests no `/compact` mid-run.** Its step groups are dispatched back to
+  back, with no user turn between them to act on a suggestion, and its run-state file
+  carries the run across an automatic compaction; a step list past one run's reach is
+  decomposed into a unit of its own (`context-management.md`'s *Decompose*).
 - **`/vuln`, `/upgrade`** (big, non-pipeline, no role transition) → a plain end-of-run
   **`/compact`** suggestion only; no `resume.md` (durable state is the branch/PR).
 
@@ -171,5 +172,4 @@ folder, and carries no line there either.
 A short **`### Context hygiene`** block appended right after the `### Next step` section
 at the END of the command's Final Report (guidance-only prose), plus one invariant citing
 this reference. `/vuln` + `/upgrade` place the `/compact` line near their
-`impl-maintenance` handoff. `/implement` places the mid-phase `/compact` at its Phase 3B
-checkpoint.
+`impl-maintenance` handoff. `/implement` places none mid-run (§3).

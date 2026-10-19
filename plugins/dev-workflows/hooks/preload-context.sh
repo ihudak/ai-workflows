@@ -70,9 +70,11 @@ cmd="${BASH_REMATCH[2]}"
 emit_model_routing() {
     echo "Model routing: classify task as SIMPLE / MODERATE / SIGNIFICANT / HIGH-RISK before planning."
     echo "  SIGNIFICANT / HIGH-RISK -> plan with risk-planner (Opus), code-review (Opus)"
-    echo "  BEFORE running tests. Invoke each by subagent_type — Agent(subagent_type:"
+    echo "  BEFORE running tests; /implement also sends MODERATE work to code-review,"
+    echo "  with no risk-planner. Invoke each by subagent_type — Agent(subagent_type:"
     echo "  dev-workflows:risk-planner) and Agent(subagent_type: dev-workflows:code-review)"
-    echo "  — each frontmatter-pinned to Opus, so add no model: override."
+    echo "  — each frontmatter-pinned to Opus, so add no model: override unless"
+    echo "  --enforce-model is set."
     echo "  Full rules: invoke the workflows-core:model-routing skill, which loads"
     echo "  workflows-core:model-routing/classification from the companion plugin."
 }

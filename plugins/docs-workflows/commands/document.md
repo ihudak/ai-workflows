@@ -1152,15 +1152,15 @@ Then spawn all four Phase 4-style maintenance agents in a **single Agent message
 > [paste change summary block]
 >
 > Check ~/.claude/memory/ (global) and .claude/memory/ (project-level, preferred for repo-specific knowledge) for existing knowledge files.
-> Determine if a new knowledge entry is warranted — look for: reusable insights about this docs repo's conventions, non-obvious style rules uncovered, Vale / lint interactions, snippet patterns, image-policy discoveries.
-> If YES: identify the most appropriate existing file (never propose a new file if an existing one fits) and return a proposed edit — write nothing. The entry format:
-> ### [Short title]
+> Determine which new knowledge entries are warranted — one entry per lesson, never two lessons in one entry — look for: reusable insights about this docs repo's conventions, non-obvious style rules uncovered, Vale / lint interactions, snippet patterns, image-policy discoveries.
+> For each: identify the most fitting existing file (never propose a new file if an existing one fits) and return a proposed edit appending it, titled by its own lesson — write nothing. The entry format:
+> ### [Short title naming this entry's lesson]
 > - **Context**: what problem/situation triggered this
 > - **Insight**: the learned rule, pattern, or gotcha
 > - **When it applies**: conditions under which this matters
 > - **Date**: YYYY-MM-DD
 > - **Ref**: [first 60 chars of the key + feature summary]
-> Return: `{file, anchor, replacement, reason}` — `anchor` is the exact existing text to change, or the section to append to; `replacement` is the entry above in full; `reason` is why it's warranted — OR 'no update required'."
+> Return: one `{file, anchor, replacement, reason}` per entry — `anchor` is the exact existing text to change, or the section to append to; `replacement` is that entry in full; `reason` is why it's warranted — OR 'no update required'."
 
 **Agent 3 — Instructions** (general-purpose, model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`):
 > "Post-write instructions review. Change summary:
@@ -1609,7 +1609,7 @@ State the classification and a one-line reason, then proceed to Phase 2A.
 
 **Repo exploration** — Before writing the plan, spawn an exploration subagent to map the relevant docs and any sibling conventions:
 
-→ Agent (subagent_type: "general-purpose", tools: Read/Glob/Grep only — no Bash, no Edit, model: `<Sonnet detection chain — claude-sonnet-5-5, fallback claude-sonnet-5 / 4-6 / 4-5; under §10, run_flags.enforced_model>`):
+→ Agent (subagent_type: "general-purpose", tools: read-only — Read, with Glob and Grep where the session has them, and otherwise Bash for search alone (`find`, `grep`, `ls`); no other Bash, no Edit, model: `<Sonnet detection chain — claude-sonnet-5-5, fallback claude-sonnet-5 / 4-6 / 4-5; under §10, run_flags.enforced_model>`):
   "Given this doc-edit description: [paste the full description from Phase 0 or Phase 1 here], find and return:
    - Target file(s) and their current structure (headings, frontmatter, approximate size)
    - Sibling / adjacent pages that may need matching updates (cross-references, navigation files, index pages)
@@ -1617,7 +1617,7 @@ State the classification and a one-line reason, then proceed to Phase 2A.
    - Existing reference docs that govern this content (e.g. `CONTRIBUTION.md`, `DOCUMENTATION-GUIDELINES.md`, `STYLE.md`)
    Return a structured summary — no edits."
 
-**Wait for the agent's response before proceeding.** If the agent returns no relevant files or fails, gather the context yourself via Read/Glob/Grep before drafting the plan.
+**Wait for the agent's response before proceeding.** If the agent returns no relevant files or fails, gather the context yourself, by your own reads and searches, before drafting the plan.
 
 Produce a written plan with these sections:
 
@@ -1722,15 +1722,15 @@ Then spawn all four Phase 4 agents. They are independent and can run in any orde
 > [paste change summary block]
 >
 > Check ~/.claude/memory/ (global) and .claude/memory/ (project-level, preferred for repo-specific knowledge) for existing knowledge files.
-> Determine if a new knowledge entry is warranted — look for: reusable insights about this repo's doc conventions, non-obvious style rules uncovered, tooling gotchas (Vale rule interactions, snippet conventions).
-> If YES: identify the most appropriate existing file (never propose a new file if an existing one fits) and return a proposed edit — write nothing. The entry format:
-> ### [Short title]
+> Determine which new knowledge entries are warranted — one entry per lesson, never two lessons in one entry — look for: reusable insights about this repo's doc conventions, non-obvious style rules uncovered, tooling gotchas (Vale rule interactions, snippet conventions).
+> For each: identify the most fitting existing file (never propose a new file if an existing one fits) and return a proposed edit appending it, titled by its own lesson — write nothing. The entry format:
+> ### [Short title naming this entry's lesson]
 > - **Context**: what problem/situation triggered this
 > - **Insight**: the learned rule, pattern, or gotcha
 > - **When it applies**: conditions under which this matters
 > - **Date**: YYYY-MM-DD
 > - **Ref**: [first 60 chars of the doc-edit description]
-> Return: `{file, anchor, replacement, reason}` — `anchor` is the exact existing text to change, or the section to append to; `replacement` is the entry above in full; `reason` is why it's warranted — OR 'no update required'."
+> Return: one `{file, anchor, replacement, reason}` per entry — `anchor` is the exact existing text to change, or the section to append to; `replacement` is that entry in full; `reason` is why it's warranted — OR 'no update required'."
 
 **Agent 3 — Instructions** (general-purpose, model: `<Sonnet detection chain — claude-sonnet-5-5, fallback claude-sonnet-5 / 4-6 / 4-5; under §10, run_flags.enforced_model>`):
 > "Post-doc-edit instructions review. Change summary:

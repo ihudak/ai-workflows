@@ -1,9 +1,11 @@
 # Finding triage (embedded — shared reference)
 
 The step between a reviewer's findings and a fixer's edits. Run by the **orchestrator**, never by the
-fixer: `review-fixer` and `doc-fixer` run on the detection/Sonnet chain while `code-review`,
-`doc-reviewer`, and `epic-reviewer` are Opus-pinned, and a dismissal decision must not sit at a weaker
-station than the one that produced the finding.
+fixer: `doc-fixer`, and `review-fixer` on every caller but `/implement`, run on the detection/Sonnet
+chain while `code-review`, `doc-reviewer`, and `epic-reviewer` are Opus-pinned, and a dismissal
+decision must not sit at a weaker station than the one that produced the finding. `/implement`'s
+`review-fixer` runs on its `implementation_model` (`workflows-core:model-routing/classification` §4),
+and the triage stays the orchestrator's there too: one rule for every fixer.
 
 ## When this runs
 
@@ -102,10 +104,14 @@ triage. The disposition, in order:
    the `BLOCKER`s the reviewer raised. Where the kept verdict is not `BLOCK` the reviewer raised none,
    and a caller whose stop for a review that stayed blocked is an escalation ends the run instead — or,
    working unit by unit, the unit — as its own Cancel does. **Cancel** is the caller's own cancel.
+   Where findings still survive — the `BLOCK` case below, whose survivors the caller's fixer does not
+   take — **Proceed** reads its label as *not `BLOCK`*, not as *`PASS`*: say beside the prompt that it
+   goes on as from a verdict that is not `BLOCK`, the survivors left standing and, in a caller that
+   makes one, `escalation-rules`' offer to apply what a review leaves open made over them.
    **Never** promote a non-`PASS` verdict to `PASS` silently. The orchestrator's authority under this
    reference is over *findings*; a verdict its own findings no longer support is the user's to settle.
 
-A partly emptied set is not this case: where at least one finding survived, the verdict stands and the command's normal branch runs on the survivors — save that a caller whose own rule keeps a first review's survivors from the fixer, because their fix lies in another code repository, treats a `BLOCK` as this case where none of those survivors is a `BLOCKER` and no `BLOCKER` or `MAJOR` is left for the fixer: it asks this section's first settle prompt, reporting every survivor — those kept from the fixer and any `MINOR` or `NIT` left — in place of *nothing survived*, and says so. A `BLOCKER` among the survivors kept from the fixer leaves the review blocked, as § On re-review rule 2 names that stop, and on a `PASS WITH RECOMMENDATIONS` with no `BLOCKER` or `MAJOR` left for the fixer the caller continues without one.
+A partly emptied set is not this case: where at least one finding survived that the caller's fixer takes, the verdict stands and the command's normal branch runs on the survivors. **A `BLOCK` whose survivors hold no `BLOCKER` and none the caller's fixer takes is this case**, whatever keeps each from the fixer — a grade it does not take, such as a `NIT`, or the caller's own rule, as for one whose fix lies in another code repository: dispatch no fixer and run no re-review on that account, and ask this section's first settle prompt, reporting every survivor in place of *nothing survived*, and saying so; its **Proceed** goes on as from a verdict that is not `BLOCK`. A `BLOCKER` among the survivors a caller's own rule keeps from the fixer leaves the review blocked, as § On re-review rule 2 names that stop, and on a `PASS WITH RECOMMENDATIONS` with no survivor its fixer takes the caller continues without one.
 
 This section governs the first review. On a re-review, § On re-review settles the verdict instead —
 there, no survivor is handed to a fixer, and its own prompt carries no re-review arm. The prompt
@@ -158,7 +164,7 @@ reviewer's answer.
 
 **Then:**
 
-1. **No survivor of a re-review is handed to a fixer** — each artifact gets at most one fix cycle, and only before its first re-review. The one exception is a survivor the user chooses to apply, in a caller that fixes inline, at `escalation-rules`' *Findings a review leaves open — the offer to apply them*: that is an edit the user asked for, not a fix cycle, no review follows it, and the version line names it. Each survivor is recorded in the triage line at its own severity,
+1. **No survivor of a re-review is handed to a fixer** — each artifact gets at most one fix cycle, and only before its first re-review. The one exception is a survivor the user chooses to apply, in a caller that fixes inline or in `/implement`, whose `review-fixer` applies it, at `escalation-rules`' *Findings a review leaves open — the offer to apply them*: that is an edit the user asked for, not a fix cycle, no review follows it, and the version line names it. Each survivor is recorded in the triage line at its own severity,
    and a second verdict that is not `BLOCK` gates nothing further.
 2. **The caller's second-verdict stop or escalation acts on a `BLOCKER` surviving the re-review's
    triage — never on the verdict word.** A `BLOCKER` carried as dismissed or unverified is not one.
