@@ -25,7 +25,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`session-hygiene` §3 says `/implement` suggests no `/compact` mid-run**, where it placed one at a Scope-to-N checkpoint the command no longer has: its step groups are dispatched back to back, with no user turn between them to act on one, its run-state file carries the run across an automatic compaction, and a step list past one run's reach is decomposed into a unit of its own (`context-management.md`'s *Decompose*). The *Surface* paragraph says it places none, the reference's opening no longer speaks of a mid-phase checkpoint, which no command has, and §3 is retitled *Mid-run suggestions & non-pipeline big commands*.
 
 ### Fixed
-- **`security-register-format` §3 names a `history` entry's fields**: `{status, at, by, reason, evidence, role, run, links}`, the decider's `by` among them, which `/dev-workflows:implement` reads to name who decided a finding it names outside its task. `register.py` has always written them; the format said only *every decision, with its role and the run that made it*.
+- **`security-register-format` §3 names a `history` entry's fields and their order**: `{status, at, by, reason, evidence, role, run, links}`, in replay order, the last entry the decision the finding's status stands on, the decider's `by` among them, which `/dev-workflows:implement` reads to name who decided a finding it names outside its task. `register.py` has always written them; the format said only *every decision, with its role and the run that made it*.
 
 ## [1.42.0] — 2026-10-17
 
