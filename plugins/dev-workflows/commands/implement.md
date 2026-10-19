@@ -1014,7 +1014,7 @@ file's `files` holds: `summary_file`, `pending_plan_file` where an approval ques
 either name removed the one it replaced, Phase 1.4), `test_report_file`, `review_return_file`, `review_file`, `claims_file` and `failure_file` — save `task_description_file`, `plan_file` and `baseline_file`, which Phase 4.6's `body_facts` and the
 Phase 5 report read, and which the end-of-run removal takes (Phase 1.4) — as are the reports `step_groups` names, which the Phase 5 report reads too. Remove each as
 `command rm -f -- "<path>"`, per `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`
-(**Hand off by file, not paste**), which says why nothing else would. A run that stops before this
+(**Hand off by file, not paste**, and **Remove every file so handed off** after it), which says why `command` and `--`, and why each goes once nothing reads it. A run that stops before this
 phase — a `code-writer` return that could not read an input, a brief's path still missing once it is read again, a `blocked` return's **Stop here** or one
 met once the re-plan is spent, the two unreadable-`test_diff_file` stops, the unreadable-`review_diff_file` stop, the
 `review-fixer` `NEEDS HUMAN` stop, a review that stayed blocked, a settle prompt's **Keep the

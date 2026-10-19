@@ -97,7 +97,7 @@ LOCK = ".implement-run.lock"
 # object omits it. A key whose default is an object holds exactly that object's members -- the ones
 # a call may name -- each beside its own default. The default fixes the type: a key or member whose
 # default is an object, a list, a boolean, an integer or a string must be given as one; one whose
-# default is null takes any JSON value. `init` and `set` both hold what they are given to it, and
+# default is null takes any JSON value. `init` and `set` both hold what they are given to this list, and
 # `set` merges an object given for an object key over the members the file holds.
 # commands/implement.md quotes this list (KEYS_LINE); the selftest holds the two equal.
 KEYS = [
