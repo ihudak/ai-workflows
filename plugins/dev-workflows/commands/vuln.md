@@ -294,8 +294,8 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
 **First remove this run's handoff files.** Nothing from here on reads one — each CVE's `research_file`,
 and every `review_diff_file` and `claims_file` this run wrote on the SIGNIFICANT / HIGH-RISK path.
 Remove each as `command rm -f -- "<path>"`, per
-`${CLAUDE_PLUGIN_ROOT}/references/context-management.md` (**Hand off by file, not paste**), which says
-why nothing else would. A run that stops before this step removes
+`${CLAUDE_PLUGIN_ROOT}/references/context-management.md` (**Hand off by file, not paste**, and
+**Remove every file so handed off** after it), which says why `command` and `--`, and why nothing else would. A run that stops before this step removes
 the files it had made before it stops, in the same way, save a file the stop itself named as
 unreadable, which stays for the operator to look at (that reference again); a **CVE** that ended
 early — an unreadable `research_file` or `review_diff_file`, the `review-fixer` `NEEDS HUMAN` stop, a

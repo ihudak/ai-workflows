@@ -223,7 +223,8 @@ Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-pre
 7.6. **Remove this run's handoff files** — nothing from here on reads one: each component's
    `plan_file`, and every `review_diff_file` and `claims_file` this run wrote. Remove each as
    `command rm -f -- "<path>"`, per `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`
-   (**Hand off by file, not paste**), which says why nothing else would. A run that stops before this
+   (**Hand off by file, not paste**, and **Remove every file so handed off** after it), which says why
+   `command` and `--`, and why nothing else would. A run that stops before this
    step removes the files it had made before it stops, in the same way — save a file the stop itself
    named as unreadable, which stays for the operator to look at (that reference again); a component
    that ended early (step 3a's unreadable `plan_file`, the `review-fixer` `NEEDS HUMAN` stop, a review
