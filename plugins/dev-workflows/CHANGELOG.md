@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.29.0] — Unreleased
+## [4.29.0] — 2026-10-19
 
 Needs `workflows-core` 1.43.0, whose `model-routing/classification` §4 states the coding-model rule `/implement` now dispatches `code-writer` and `review-fixer` by, and whose §3.1 carries the carve-out by which it reviews `MODERATE` work; whose `escalation-rules` lets `/implement` make the offer to apply what a review leaves open through `review-fixer`, and offers the unspent re-review after a `BLOCK` the first settle prompt's **Proceed** settled as not `BLOCK`, and whose `finding-triage` § On re-review rule 1 lets that offer apply a re-review's survivor there; and whose § When triage empties the survivor set settles a `BLOCK` that leaves the fixer nothing to take, the case Phase 3B step 7 cites, where an older one settles such a `BLOCK` only where a survivor's fix lies in another code repository, never one that leaves the fixer only `NIT`s or flagged notes. On each of the others an older `workflows-core` says the opposite.
 

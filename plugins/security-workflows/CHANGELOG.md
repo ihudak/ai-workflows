@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [0.1.1] — Unreleased
+## [0.1.1] — 2026-10-19
 
 ### Changed
 - **The knowledge-base maintenance agent writes one entry per lesson**, each titled by its own lesson and appended to the most fitting existing file, where it appended one entry. Before, a live `/dev-workflows:implement` run's agent, under the brief this one condenses, wrote four lessons into one entry under a heading that named three.

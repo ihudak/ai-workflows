@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.16.3] — Unreleased
+## [1.16.3] — 2026-10-19
 
 ### Changed
 - **`/document`'s knowledge-base agent proposes one entry per lesson**, in both modes, each titled by its own lesson and placed in the most fitting existing file, returning one `{file, anchor, replacement, reason}` per entry — so the maintenance step offers each lesson as a proposal of its own. Before, its brief asked whether "a new knowledge entry" was warranted, and a live `/dev-workflows:implement` run's agent, under the same brief, wrote four lessons into one entry under a heading that named three.

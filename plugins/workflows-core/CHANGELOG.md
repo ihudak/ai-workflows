@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.43.0] — Unreleased
+## [1.43.0] — 2026-10-19
 
 **Update `dev-workflows` to 4.29.0 with this release**: every rule change in this release but one is `/dev-workflows:implement`'s alone, a carve-out from a rule that still holds for every other command, and an older `/implement`, which codes inline on the session model and reviews only from `SIGNIFICANT` up, contradicts each. The one is `finding-triage`'s: a `BLOCK` that leaves no `BLOCKER` and no survivor the caller's fixer takes is settled at the first settle prompt, with no fixer dispatched, by every command that triages a review — which each reads from the reference whatever its version, so no other plugin needs updating with it. `escalation-rules`' unspent re-review also now counts a verdict settled as not `BLOCK` at the first settle prompt's **Proceed**, as its offer section already counted one; that changes what no other command does, since each that edits after such a **Proceed** — `/prd-proposal`, `/brd-proposal`, `/epics` — already offers it there, its own text taking the **Proceed** as a verdict that is not `BLOCK`.
 
