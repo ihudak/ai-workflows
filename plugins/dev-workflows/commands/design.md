@@ -176,8 +176,9 @@ model_routing:
 
 The grill + authoring run inline on `current_model` (interactive judgment — not a delegated subagent).
 
-**Tiered model gate (stricter than `/implement` — `/design`'s critical synthesis is inline, not an Opus
-subagent):**
+**Tiered model gate (tiered by the class, because `/design`'s critical synthesis is inline, not an Opus
+subagent — `/implement`'s session-model gate is not tiered: it asks on every class, in its Phase 0, before it
+classifies, since its orchestration and its classification are the session's own):**
 - **Unless `run_flags.enforced_model` is set (`workflows-core:model-routing/classification` §10 — then no gate fires): SIGNIFICANT / HIGH-RISK + `current_model` is not an Opus-tier model → HARD gate.** Stop and require
   relaunching `/design` on Opus (the run is resumable from `_design-session.md`):
   `choices: ["I'll relaunch /dev-workflows:design on Opus (Recommended)", "Override — proceed on the current model (logged in the final report)", "Cancel"]`
