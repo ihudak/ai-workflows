@@ -1,6 +1,6 @@
 # Model routing reference
 
-Every command here classifies its own task before doing real work, and that classification decides how much planning, authoring, and review rigor the rest of the run applies — and, for one command, `/design`, whether the session itself must be running on Opus, and for another, `/implement`, which model writes the code. This page covers the four things a user can observe or influence about that; the full policy — including the mechanics agents don't need restated here — lives in `workflows-core:model-routing/classification`, named again at the end. One question comes before any of it: `/implement` asks about the session's own model before it classifies at all ([next](#the-session-model-implement-asks-about)).
+Every command here classifies its own task before doing real work, and that classification decides how much planning, authoring, and review rigor the rest of the run applies — and, for one command, `/design`, whether the session itself must be running on Opus, and for another, `/implement`, which model writes the code. This page covers the five things a user can observe or influence about that; the full policy — including the mechanics agents don't need restated here — lives in `workflows-core:model-routing/classification`, named again at the end. One question comes before any of it: `/implement` asks about the session's own model before it classifies at all ([next](#the-session-model-implement-asks-about)).
 
 ## The session model `/implement` asks about
 
