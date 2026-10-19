@@ -1609,7 +1609,7 @@ State the classification and a one-line reason, then proceed to Phase 2A.
 
 **Repo exploration** — Before writing the plan, spawn an exploration subagent to map the relevant docs and any sibling conventions:
 
-→ Agent (subagent_type: "general-purpose", tools: Read/Glob/Grep only — no Bash, no Edit, model: `<Sonnet detection chain — claude-sonnet-5-5, fallback claude-sonnet-5 / 4-6 / 4-5; under §10, run_flags.enforced_model>`):
+→ Agent (subagent_type: "general-purpose", tools: read-only — Read, with Glob and Grep where the session has them, and otherwise Bash for search alone (`find`, `grep`, `ls`); no other Bash, no Edit, model: `<Sonnet detection chain — claude-sonnet-5-5, fallback claude-sonnet-5 / 4-6 / 4-5; under §10, run_flags.enforced_model>`):
   "Given this doc-edit description: [paste the full description from Phase 0 or Phase 1 here], find and return:
    - Target file(s) and their current structure (headings, frontmatter, approximate size)
    - Sibling / adjacent pages that may need matching updates (cross-references, navigation files, index pages)
@@ -1617,7 +1617,7 @@ State the classification and a one-line reason, then proceed to Phase 2A.
    - Existing reference docs that govern this content (e.g. `CONTRIBUTION.md`, `DOCUMENTATION-GUIDELINES.md`, `STYLE.md`)
    Return a structured summary — no edits."
 
-**Wait for the agent's response before proceeding.** If the agent returns no relevant files or fails, gather the context yourself via Read/Glob/Grep before drafting the plan.
+**Wait for the agent's response before proceeding.** If the agent returns no relevant files or fails, gather the context yourself, by your own reads and searches, before drafting the plan.
 
 Produce a written plan with these sections:
 

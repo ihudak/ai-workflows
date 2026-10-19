@@ -19,10 +19,28 @@ calls, never two runs.
                                      run's own, written again, and says whether one was moved aside.
   run-state.py open <phase>          set `phase` and print the file.
   run-state.py read [<key>]          print the file, or one key, changing nothing.
-  run-state.py set <key> <json> ...  set each key to its JSON value; with no pairs, a JSON object of
-                                     key: value on stdin. Several keys are written in one replace.
-  run-state.py append <key> <json> ...  append each value to its key's list, or a JSON object on
-                                     stdin; a key that is null becomes a one-element list.
+  run-state.py set <key> <json> [<key> <json> ...]
+                                     set each key to the JSON value after it, the key written again
+                                     before each value; with no pairs, a JSON object of key: value on
+                                     stdin. Several keys are written in one replace. Every value is
+                                     checked against KEYS as init's are: a key or member KEYS lacks,
+                                     or a top-level key or a <key>.<member> of an object key given a
+                                     value of another type than its default fixes, exits 3 -- every
+                                     such slip in the call named at once, nothing written. A top-level
+                                     key whose default is an object, given an object, takes its
+                                     members over the ones the file holds: a member it leaves out
+                                     keeps its value. A deeper path or a list entry is not checked.
+                                     Once the write lands, each path the file named before the call --
+                                     a `files` member, a `step_groups` report or a `patches` path --
+                                     that none of them names after it is removed, where it is a
+                                     regular file, not a symlink, whose name begins `dw-impl-`, and
+                                     printed `removed: <path>`; one whose removal fails is printed
+                                     `left: <path> -- <error>`, and the call still exits 0.
+  run-state.py append <key> <json> [<key> <json> ...]
+                                     append each value to its key's list, the key written again
+                                     before each value -- append assumptions '"a"' assumptions '"b"'
+                                     -- or a JSON object on stdin; a key that is null becomes a
+                                     one-element list.
   run-state.py remove [--keep <path>] ...
                                      the end-of-run removal: every temp file `files` names, each
                                      `step_groups` report and each `patches` path marked `temp`
@@ -45,10 +63,11 @@ removed.
 Exit codes:
   0  done
   1  there is no run-state file (and nothing was created)
-  2  usage: bad arguments, a value that does not parse, input that is not UTF-8, a path through
-     null, no such list entry
-  3  a key the file does not hold (set, append, read), or an init object adding a key or member,
-     or giving one the wrong type
+  2  usage: bad arguments -- set's or append's among them an odd count, or a key opening with `"`,
+     `[` or `{`, a value written where its key belongs -- a value that does not parse, input that
+     is not UTF-8, a path through null, no such list entry
+  3  a key the file does not hold (set, append, read), or an init object or a set call adding a key
+     or member KEYS lacks, or giving one the wrong type
   4  the file could not be reached: an OSError reading or writing it -- an unreadable directory on
      its path included -- or git failing to name it
   5  the run-state file is there and does not parse
@@ -78,8 +97,9 @@ LOCK = ".implement-run.lock"
 # object omits it. A key whose default is an object holds exactly that object's members -- the ones
 # a call may name -- each beside its own default. The default fixes the type: a key or member whose
 # default is an object, a list, a boolean, an integer or a string must be given as one; one whose
-# default is null takes any JSON value. commands/implement.md quotes this list (KEYS_LINE); the
-# selftest holds the two equal.
+# default is null takes any JSON value. `init` and `set` both hold what they are given to it, and
+# `set` merges an object given for an object key over the members the file holds.
+# commands/implement.md quotes this list (KEYS_LINE); the selftest holds the two equal.
 KEYS = [
     ("format", 1), ("phase", "Phase 1.4"), ("mode", None), ("key", None), ("source", None),
     ("focus_key", None), ("unit_key", None), ("workitem_key", None), ("unit_folder", None),
@@ -224,6 +244,14 @@ def typed(name, value, default, wrong):
     return value
 
 
+def refuse(what, extra, wrong):
+    """Exit 3 naming every key or member KEYS lacks and every wrong type at once, where there is any."""
+    if extra or wrong:
+        raise Fail(3, "%s %s" % (what, "; ".join(
+            x for x in ("holds unknown " + ", ".join(extra) if extra else "",
+                        "; ".join(wrong)) if x)))
+
+
 def merged(d):
     """The init object over KEYS' defaults: each key or member it omits takes its default. Exits 3 on a
     key or member KEYS lacks, or one given with the wrong type, before anything is written."""
@@ -241,11 +269,37 @@ def merged(d):
             v = dict((m, typed("%s.%s" % (k, m), v[m], md, wrong) if m in v else copy.deepcopy(md))
                      for m, md in default.items())
         out[k] = v
-    if extra or wrong:
-        raise Fail(3, "init: the object %s" % "; ".join(
-            x for x in ("holds unknown " + ", ".join(extra) if extra else "",
-                        "; ".join(wrong)) if x))
+    refuse("init: the object", extra, wrong)
     return out
+
+
+def checked(todo):
+    """set's pairs held to KEYS as init's object is: exits 3 on a key or member KEYS lacks, or a
+    top-level key or an object key's <key>.<member> given a value of another type than its default
+    fixes -- every slip in the call named at once, before anything is written. A deeper path or a
+    list entry is not checked."""
+    want = dict(KEYS)
+    extra, wrong = [], []
+    for key, v in todo:
+        parts = key.split(".")
+        if parts[0] not in want:
+            extra.append(show(key))
+            continue
+        default = want[parts[0]]
+        if len(parts) == 1:
+            typed(key, v, default, wrong)
+            if isinstance(default, dict) and isinstance(v, dict):
+                for m in v:
+                    if m in default:
+                        typed("%s.%s" % (key, m), v[m], default[m], wrong)
+                    else:
+                        extra.append("%s.%s" % (show(key), show(m)))
+        elif len(parts) == 2 and isinstance(default, dict):
+            if parts[1] in default:
+                typed(key, v, default[parts[1]], wrong)
+            else:
+                extra.append(show(key))
+    refuse("set: the call", extra, wrong)
 
 
 def resolve(d, key):
@@ -277,10 +331,18 @@ def resolve(d, key):
             raise Fail(2, "%s: %s is null -- write that key whole" % (show(key), show(here)))
 
 
+PAIRS = ("takes <key> '<json>' [<key> '<json>' ...], the key written again before each value, "
+         "as in: append assumptions '\"a\"' assumptions '\"b\"'")
+
+
 def pairs(args, stdin, verb):
     if args:
         if len(args) % 2:
-            raise Fail(2, "%s takes <key> <json> pairs" % verb)
+            raise Fail(2, "%s: an odd number of arguments -- %s %s" % (verb, verb, PAIRS))
+        for i in range(0, len(args), 2):
+            if args[i][:1] in ('"', "[", "{"):
+                raise Fail(2, "%s: %s is a JSON value where a key belongs -- %s %s"
+                           % (verb, show(args[i]), verb, PAIRS))
         return [(args[i], parse(args[i + 1], "the value for %s" % show(args[i])))
                 for i in range(0, len(args), 2)]
     obj = parse(stdin.read(), "stdin")
@@ -345,15 +407,55 @@ def cmd_read(f, args, out):
         raise Fail(2, "read takes at most one key")
 
 
-def cmd_set(f, args, stdin):
+def named(d):
+    """Each path the file names that a set may stop naming: every `files` member's, each `step_groups`
+    entry's report and each `patches` entry's path, in that order, each once."""
+    out = []
+    files = d.get("files")
+    if isinstance(files, dict):
+        out += [p for p in files.values() if isinstance(p, str)]
+    groups, patches = d.get("step_groups"), d.get("patches")
+    for g in groups if isinstance(groups, list) else []:
+        if isinstance(g, dict) and isinstance(g.get("report"), str):
+            out.append(g["report"])
+    for p in patches if isinstance(patches, list) else []:
+        if isinstance(p, dict) and isinstance(p.get("path"), str):
+            out.append(p["path"])
+    seen, once = set(), []
+    for p in out:
+        if os.path.abspath(p) not in seen:
+            seen.add(os.path.abspath(p))
+            once.append(p)
+    return once
+
+
+def cmd_set(f, args, stdin, out):
     todo = pairs(args, stdin, "set")
+    checked(todo)
     require(f)
+    want = dict(KEYS)
     with locked(f):
         d = load(f)
+        before = named(d)
         for key, v in todo:
             o, k = resolve(d, key)
-            o[k] = v
+            if isinstance(want.get(key), dict) and isinstance(v, dict) and isinstance(o[k], dict):
+                o[k] = dict(o[k])
+                o[k].update(v)
+            else:
+                o[k] = v
         save(f, d)
+        after = set(os.path.abspath(p) for p in named(d))
+        for p in before:
+            a = os.path.abspath(p)
+            if (a in after or not os.path.basename(a).startswith(TEMP_PREFIX) or not os.path.isfile(a)
+                    or os.path.islink(a)):
+                continue
+            try:
+                os.unlink(a)
+                out.write(("removed: %s\n" % p).encode("utf-8"))
+            except OSError as e:
+                out.write(("left: %s -- %s\n" % (p, e)).encode("utf-8"))
 
 
 def cmd_append(f, args, stdin):
@@ -438,7 +540,7 @@ def run(argv, stdin, out, repo="."):
         elif verb == "read":
             cmd_read(f, args, out)
         elif verb == "set":
-            cmd_set(f, args, stdin)
+            cmd_set(f, args, stdin, out)
         elif verb == "append":
             cmd_append(f, args, stdin)
         else:
@@ -462,13 +564,17 @@ def selftest():
         if not cond:
             failures.append(name)
 
+    said = [""]  # the last call's error message, "" where it succeeded
+
     def call(argv, stdin="", repo=None):
         out = io.BytesIO()
+        said[0] = ""
         try:
             run((["--repo", repo] if repo else []) + argv, io.StringIO(stdin), out)
             code = 0
         except Fail as e:
             code = e.code
+            said[0] = str(e)
         return code, out.getvalue().decode("utf-8")
 
     def fresh(**over):
@@ -511,11 +617,12 @@ def selftest():
         check("init refuses a format other than 1", call(["init"], json.dumps(fresh(format=2)), repo)[0] == 2)
 
         # a nested member default: a given object keeps its members and takes the rest's defaults
-        code, _ = call(["init"], json.dumps(fresh(files={"task_description_file": "/tmp/dw-impl-task-x"},
+        task_x = os.path.join(tmp, "dw-impl-task-x")
+        code, _ = call(["init"], json.dumps(fresh(files={"task_description_file": task_x},
                                                   report={"phase1_tasks": ["t"]})), repo)
         d = json.load(open(f, encoding="utf-8"))
         check("init gives an omitted member its default", code == 0
-              and d["files"]["task_description_file"] == "/tmp/dw-impl-task-x" and d["files"]["plan_file"] is None
+              and d["files"]["task_description_file"] == task_x and d["files"]["plan_file"] is None
               and d["report"]["phase1_tasks"] == ["t"] and d["report"]["notices"] == []
               and d["report"]["confirmed_cause"] is None)
 
@@ -582,10 +689,11 @@ def selftest():
         check("open prints non-ASCII unescaped", code == 0 and "ünï cöde" in out and "\\u00fc" not in out)
 
         # multi-key set: argv pairs and a stdin object, dotted keys
-        code, _ = call(["set", "class", '"SIGNIFICANT"', "files.plan_file", '"/tmp/dw-impl-plan-x"'], repo=repo)
+        plan_x = os.path.join(tmp, "dw-impl-plan-x")
+        code, _ = call(["set", "class", '"SIGNIFICANT"', "files.plan_file", json.dumps(plan_x)], repo=repo)
         d = json.load(open(f, encoding="utf-8"))
         check("set takes several pairs", code == 0 and d["class"] == "SIGNIFICANT"
-              and d["files"]["plan_file"] == "/tmp/dw-impl-plan-x")
+              and d["files"]["plan_file"] == plan_x)
         code, _ = call(["set"], json.dumps({"routing": {"block": {"classification": "HIGH-RISK"}, "history": ["a"]},
                                              "class": "HIGH-RISK", "coding_model": "m"}), repo)
         d = json.load(open(f, encoding="utf-8"))
@@ -619,6 +727,95 @@ def selftest():
         code, out = call(["read", "triage.0.pass"], repo=repo)
         check("read a list entry's member", code == 0 and json.loads(out) == "first")
         check("read refuses an unknown key", call(["read", "phasee"], repo=repo)[0] == 3)
+
+        # set holds every value to KEYS, as init does: an object key's members merge, a slip changes nothing
+        code, _ = call(["set", "files", '{"baseline_file": "x"}'], repo=repo)
+        d = json.load(open(f, encoding="utf-8"))
+        check("set merges an object key's members, the rest kept", code == 0 and d["files"]["baseline_file"] == "x"
+              and d["files"]["plan_file"] == plan_x and list(d["files"]) == list(dict(KEYS)["files"]))
+        call(["set", "files.baseline_file", "null", "deferred", "[]"], repo=repo)
+        code, _ = call(["set"], json.dumps({"files": {"baseline_file": "x"}, "deferred": ["d"]}), repo)
+        d = json.load(open(f, encoding="utf-8"))
+        check("set's stdin object merges the same way", code == 0 and d["files"]["baseline_file"] == "x"
+              and d["files"]["plan_file"] == plan_x and d["deferred"] == ["d"])
+        before = open(f, encoding="utf-8").read()
+        check("set refuses a member the key lacks, writing nothing",
+              call(["set", "files", '{"bogus": 1}'], repo=repo)[0] == 3 and open(f, encoding="utf-8").read() == before)
+        check("set refuses an object key given a string", call(["set", "files", '"x"'], repo=repo)[0] == 3)
+        check("set refuses a boolean given as a string", call(["set", "clean_finish", '"no"'], repo=repo)[0] == 3)
+        check("set refuses an integer given as a boolean", call(["set", "replans_used", "true"], repo=repo)[0] == 3)
+        check("set refuses a member of the wrong type", call(["set", "spec_context.spec_paths", '"x"'], repo=repo)[0] == 3)
+        code, _ = call(["set", "routing.block", '{"anything": 1}'], repo=repo)
+        d = json.load(open(f, encoding="utf-8"))
+        check("set takes any value where the default is null", code == 0 and d["routing"]["block"] == {"anything": 1}
+              and d["routing"]["history"] == ["a"])
+        before = open(f, encoding="utf-8").read()
+        code, _ = call(["set", "class", '"MODERATE"', "replans_used", '"1"'], repo=repo)
+        check("a wrong type in a later pair writes neither pair", code == 3 and open(f, encoding="utf-8").read() == before)
+        code, _ = call(["set", "clean_finish", '"no"', "files.bogus", "1"], repo=repo)
+        check("set names every slip in the call at once", code == 3 and "files.bogus" in said[0]
+              and "clean_finish must be a boolean" in said[0])
+
+        # the pairs form: the key written again before each value
+        before = open(f, encoding="utf-8").read()
+        code, _ = call(["append", "assumptions", '"a"', '"b"', '"c"'], repo=repo)
+        check("a value where a key belongs exits 2, naming the repeat-the-key form, writing nothing", code == 2
+              and "append assumptions '\"a\"' assumptions '\"b\"'" in said[0] and open(f, encoding="utf-8").read() == before)
+        code, _ = call(["append", "assumptions", '"a"', '"b"'], repo=repo)
+        check("an odd count exits 2, naming the repeat-the-key form", code == 2
+              and "append assumptions '\"a\"' assumptions '\"b\"'" in said[0])
+        check("a key opening with [ or { exits 2 before any lookup",
+              call(["set", "[1]", '"x"'], repo=repo)[0] == 2 and call(["set", '{"class": 1}', '"x"'], repo=repo)[0] == 2)
+        code, _ = call(["append", "assumptions", '"a"', "assumptions", '"b"'], repo=repo)
+        check("append takes the key again before each value", code == 0
+              and json.load(open(f, encoding="utf-8"))["assumptions"][-2:] == ["a", "b"])
+
+        # a temp file a set stops naming is removed: dw-impl-, regular, named by none of the three after it
+        def mk(name, where=tmp):
+            p = os.path.join(where, name)
+            open(p, "w").close()
+            return p
+        ra, rb = mk("dw-impl-return-a"), mk("dw-impl-return-b")
+        call(["set", "files.review_return_file", json.dumps(ra)], repo=repo)
+        code, out = call(["set", "files.review_return_file", json.dumps(rb)], repo=repo)
+        check("a replaced file is removed, its replacement kept", code == 0 and not os.path.exists(ra)
+              and os.path.exists(rb) and "removed: %s" % ra in out)
+        pp = mk("dw-impl-plan-p")
+        call(["set", "files.pending_plan_file", json.dumps(pp)], repo=repo)
+        code, out = call(["set", "files.plan_file", json.dumps(pp), "files.pending_plan_file", "null"], repo=repo)
+        check("plan promotion keeps the plan, now plan_file's", code == 0 and os.path.exists(pp) and out == "")
+        pq = mk("dw-impl-plan-q")
+        call(["set", "files.pending_plan_file", json.dumps(pq)], repo=repo)
+        code, out = call(["set", "files.pending_plan_file", "null"], repo=repo)
+        check("a file nulled that nothing else names is removed", code == 0 and not os.path.exists(pq)
+              and "removed: %s" % pq in out)
+        notes = mk("notes-n")
+        call(["set", "files.summary_file", json.dumps(notes)], repo=repo)
+        code, out = call(["set", "files.summary_file", "null"], repo=repo)
+        check("a replaced file not named dw-impl- is left", code == 0 and os.path.exists(notes) and out == "")
+        rep = mk("dw-impl-code-r")
+        call(["set", "step_groups", json.dumps([{"steps": [1], "report": rep}]), "files.failure_file", json.dumps(rep)],
+             repo=repo)
+        code, out = call(["set", "files.failure_file", "null"], repo=repo)
+        check("a file a step_groups report still names is kept", code == 0 and os.path.exists(rep) and out == "")
+        target, link = mk("target-t"), os.path.join(tmp, "dw-impl-link-l")
+        os.symlink(target, link)
+        call(["set", "files.claims_file", json.dumps(link)], repo=repo)
+        code, out = call(["set", "files.claims_file", "null"], repo=repo)
+        check("a symlink is left", code == 0 and os.path.islink(link) and os.path.exists(target) and out == "")
+        if hasattr(os, "geteuid") and os.geteuid() != 0:
+            ro = os.path.join(tmp, "ro")
+            os.mkdir(ro)
+            stuck = mk("dw-impl-stuck-s", ro)
+            call(["set", "files.failure_file", json.dumps(stuck)], repo=repo)
+            os.chmod(ro, 0o500)
+            try:
+                code, out = call(["set", "files.failure_file", "null"], repo=repo)
+            finally:
+                os.chmod(ro, 0o700)
+            check("a removal that fails is printed left:, the call exiting 0", code == 0 and os.path.exists(stuck)
+                  and out.startswith("left: %s -- " % stuck)
+                  and json.load(open(f, encoding="utf-8"))["files"]["failure_file"] is None)
 
         # the lock: parallel appends keep every entry
         procs = [subprocess.Popen([sys.executable, me, "--repo", repo, "append", "report.notices", json.dumps("n%d" % i)],

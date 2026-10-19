@@ -10,6 +10,9 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ### Changed
 - **`/document`'s knowledge-base agent proposes one entry per lesson**, in both modes, each titled by its own lesson and placed in the most fitting existing file, returning one `{file, anchor, replacement, reason}` per entry — so the maintenance step offers each lesson as a proposal of its own. Before, its brief asked whether "a new knowledge entry" was warranted, and a live `/dev-workflows:implement` run's agent, under the same brief, wrote four lessons into one entry under a heading that named three.
 
+### Fixed
+- **`/document`'s exploration agent can search.** Its direct-mode Phase 2A dispatch is read-only: `Read`, with `Glob` and `Grep` where the session has them, and otherwise `Bash` for search alone (`find`, `grep`, `ls`); no other `Bash`, no `Edit`. Where the agent fails, the orchestrator gathers the context by its own reads and searches, naming no tool the session may lack. Before, the dispatch read `Read/Glob/Grep only — no Bash`, and a `general-purpose` agent in this Claude Code has no `Glob` or `Grep`: a live `/dev-workflows:implement` run's explorer, under the same line, met `No such tool available: Glob` on every search.
+
 ## [1.16.2] — 2026-10-17
 
 ### Fixed
