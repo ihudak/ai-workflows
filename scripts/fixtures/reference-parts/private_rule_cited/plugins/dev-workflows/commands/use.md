@@ -17,3 +17,5 @@ Invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")` and app
 Explain the pickers per `workflows-core:alpha`'s *Why the pickers exist* and *Closed-vocabulary pickers*.
 
 Invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")`. Then explain the pickers per *Why the pickers exist*.
+
+Invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")`. Then explain the pickers per § Why the pickers exist.
