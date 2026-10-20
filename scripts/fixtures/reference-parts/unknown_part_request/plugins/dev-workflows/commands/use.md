@@ -19,3 +19,5 @@ Load the index: `Skill(skill: "workflows-core:reference", args: "alpha index")`.
 Load a part that does not exist: `Skill(skill: "workflows-core:reference", args: "alpha nosuch")`.
 
 Load the private part: `Skill(skill: "workflows-core:reference", args: "alpha maintainer")`.
+
+Load two parts at once: `Skill(skill: "workflows-core:reference", args: "alpha pickers core")`.

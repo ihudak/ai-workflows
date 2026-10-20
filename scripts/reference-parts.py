@@ -57,19 +57,22 @@ reference-parts/<split>/<part>.md -- names a requestable part or `index`; and ev
 PLACED. The unit is one sentence and one cited reference. A name in that sentence (an
 italic, bold, backticked or quoted span, or a § reference) that the cited reference's index
 holds places it on that part, and names of several parts place it on each of them, since the
-preamble has the run load the part that holds each rule; an explicit request places it on
-the part requested, and fails where its sentence names a rule that load (the part, its needs
-and the always part) does not hold -- a call converted to the wrong part; no name places it
-on the whole reference, which is what the preamble then loads, so it passes and is counted
-whole, as does an explicit whole load (`args: "<split>"`). A name that matches entries in two
-parts fails: every name in an index has one part, so the guard is the index's own uniqueness
-error, which fails check-citations, before it reads a citation, as it fails check-parts. The
-census `placed N, whole M` is printed per
-reference, N counting each part a citation is placed on; `--verbose` lists each whole
-citation as `WHOLE <file>:<line>: workflows-core:<split>`.
+preamble has the run load the part that holds each rule. An explicit request places it on
+the part requested, and fails where its PARAGRAPH -- read whole, erring toward failing, since
+a later sentence may apply "its" rule -- names a rule that load (the part, its needs and the
+always part) does not hold: a call converted to the wrong part. No name places it on the
+whole reference, which is what the preamble then loads, so it passes and is counted whole,
+as does an explicit whole load (`args: "<split>"`). A citation naming a rule held in a
+private part fails, explicit or bare: no run loads a private part. A name that matches
+entries in two parts fails: every name in an index has one part, so the guard is the index's
+own uniqueness error, which fails check-citations, before it reads a citation, as it fails
+check-parts. The census `placed N, whole M` is printed per reference, N counting each part a
+citation is placed on; `--verbose` lists each whole citation as
+`WHOLE <file>:<line>: workflows-core:<split>`.
 
-IT FAILS CLOSED. A scan that finds no declaration, or a declared reference no consumer cites,
-fails: a gate that matched nothing proves nothing when it passes.
+IT FAILS CLOSED. A scan that finds no declaration fails both subcommands, and a declared
+reference no consumer cites fails check-citations: a gate that matched nothing proves
+nothing when it passes.
 
 WHAT IT CANNOT SEE: whether a run loads the part when it reaches a citation -- the preamble
 tells it to; the rule-by-rule reading and the live runs check that it does. A name the gate
@@ -782,20 +785,34 @@ def cmd_check_citations(root, verbose):
                 if path in consumers:
                     consumer_cites[name] += 1
                 ref = refs[name]
+                # A bare citation's names are read in its own sentence. An explicit request's are
+                # read in its whole paragraph, erring toward failing: a later sentence that applies
+                # "its" rule leans on the load the call made.
                 a, b = spans[s]
-                hits = []
-                for readings in names_in(joined[a:b]):
-                    part = next((ref.index[k] for k in map(norm, readings) if k in ref.index), None)
-                    if part and not ref.parts[part].private and part not in hits:
-                        hits.append(part)
+                hits, private = [], []
+                for readings in names_in(joined if g["parts"] else joined[a:b]):
+                    found = next(((r, ref.index[norm(r)]) for r in readings if norm(r) in ref.index), None)
+                    if found is None:
+                        continue
+                    if ref.parts[found[1]].private:
+                        if found not in private:
+                            private.append(found)
+                    elif found[1] not in hits:
+                        hits.append(found[1])
+                if private:
+                    # A private part is never loaded by part, so a rule a run must apply is never in one.
+                    for r, p in private:
+                        problems.append("%s:%d: names '%s', in private part '%s' of %s:%s, which no run loads"
+                                        % (rel, g["line"], r.strip(), p, CORE_NAME, name))
+                    continue
                 if g["parts"]:
-                    # An explicit request loads what it names, so every rule its sentence names
-                    # must be in that load -- or the rule is absent when the run applies it. An
-                    # `index` request is a lookup: the run loads what the index then names.
+                    # An explicit request loads what it names, so every rule its paragraph names must
+                    # be in that load -- or the rule is absent when the run applies it. An `index`
+                    # request is a lookup: the run loads what the index then names.
                     held = set().union(*(covers(refs, ref, p) for p in g["parts"] if p != "index"))
                     lacking = [h for h in hits if h not in held]
                     if lacking and "index" not in g["parts"]:
-                        problems.append("%s:%d: requests part %s of %s:%s, but its sentence names a rule of part %s, "
+                        problems.append("%s:%d: requests part %s of %s:%s, but its paragraph names a rule of part %s, "
                                         "which that load does not hold" % (rel, g["line"], ", ".join(g["parts"]),
                                                                            CORE_NAME, name, ", ".join(lacking)))
                     else:
@@ -895,6 +912,19 @@ CASES = [
     ('nested_region', 'a region opened inside another', [
         Step(['check-parts'], 1, [A + ":11: region 'pickers' opens inside region 'core'", 'regions never nest'], errors=1),
     ]),
+    # alpha's block misspells `needs=` as `need=` and carries an unknown line; beta's never closes.
+    ('malformed_declaration', 'a misspelt need=, an unknown declaration line and an unclosed block', [
+        Step(['check-parts'], 1, [A + ":5: part 'pickers': unknown word 'need=beta/detail' -- always, private or needs=",
+                                  A + ":6: unknown declaration line 'parts core pickers'",
+                                  'plugins/workflows-core/references/beta.md:3: the reference-parts declaration is '
+                                  'never closed with -->'], errors=3),
+    ]),
+    # alpha opens a region with `<!--part: pickers-->`; beta closes one inside a fenced block.
+    ('malformed_marker', 'a marker not in the exact form, and a region closed inside a fence', [
+        Step(['check-parts'], 1, [A + ':16: malformed marker -- a region opens with `<!-- part: <name> -->`',
+                                  "plugins/workflows-core/references/beta.md:12: region 'core' closes inside a "
+                                  "fenced block"], errors=2),
+    ]),
     ('two_always', 'two parts marked always', [
         Step(['check-parts'], 1, [A + ': 2 parts are marked always (core, pickers) -- exactly one part is'], errors=1),
     ]),
@@ -918,14 +948,17 @@ CASES = [
         Step(['generate'], 0, ['2 written, 1 removed'], errors=0, on_copy=True),
         Step(['check-parts'], 0, ['check-parts: PASS'], errors=0, on_copy=True),
     ]),
-    ('relative_link', 'a relative link beside an absolute one, an anchor and a code span', [
-        Step(['check-parts'], 1, [A + ":19: relative link 'vocabulary.md'"], errors=1),
+    ('relative_link', 'inline and reference-definition relative links, beside links that are not', [
+        Step(['check-parts'], 1, [A + ":19: relative link 'vocabulary.md'",
+                                  A + ":21: relative link 'vocabulary-list.md'"], errors=2),
     ]),
-    ('unknown_part_request', 'a request for no such part and one for a private part', [
+    ('unknown_part_request', 'a request for no such part, one for a private part and one for two parts', [
         Step(['check-citations'], 1, [U + ":19: requests part 'nosuch' of workflows-core:alpha, which has no such part"
                                           " -- requestable: core, pickers, index",
-                                      U + ":21: requests part 'maintainer' of workflows-core:alpha, which is private"],
-             errors=2),
+                                      U + ":21: requests part 'maintainer' of workflows-core:alpha, which is private",
+                                      U + ":23: requests 'alpha pickers core' -- a split reference takes one part "
+                                          "token"],
+             errors=3),
     ]),
     # bare.md carries no preamble; glued.md runs it into the paragraph before; kept.md is right.
     ('missing_preamble_sentence', 'one citing file without the preamble, one with it run into another paragraph', [
@@ -955,10 +988,25 @@ CASES = [
         Step(['check-citations'], 0, ['workflows-core:alpha: placed 2, whole 0', 'check-citations: PASS'], errors=0),
     ]),
     # Beside the red request (core, naming a pickers rule), one requests pickers and names core's.
-    ('request_lacks_named_rule', 'an explicit part request whose sentence names a rule that part lacks', [
-        Step(['check-citations'], 1, [U + ":15: requests part core of workflows-core:alpha, but its sentence names a "
+    ('request_lacks_named_rule', 'an explicit part request whose paragraph names a rule that part lacks', [
+        Step(['check-citations'], 1, [U + ":15: requests part core of workflows-core:alpha, but its paragraph names a "
                                           "rule of part pickers, which that load does not hold",
                                       'workflows-core:alpha: placed 1, whole 0'], errors=1),
+    ]),
+    # A call loading core, then a sentence applying "its" pickers rule: red, read over the
+    # paragraph. Green beside it: a call loading pickers, and a bare stops citation in a
+    # paragraph of its own, which the call's check never reads.
+    ('request_scope_is_paragraph', "an explicit request's names are read in its whole paragraph", [
+        Step(['check-citations'], 1, [U + ":15: requests part core of workflows-core:alpha, but its paragraph names a "
+                                          "rule of part pickers, which that load does not hold",
+                                      'workflows-core:alpha: placed 2, whole 0'], errors=1),
+    ]),
+    # The maintainer part is private; an explicit request and a bare citation each name its heading.
+    ('private_rule_cited', 'a rule of a private part, named by an explicit and by a bare citation', [
+        Step(['check-citations'], 1, [U + ":15: names 'Why the pickers exist', in private part 'maintainer' of "
+                                          "workflows-core:alpha, which no run loads",
+                                      U + ":17: names 'Why the pickers exist', in private part 'maintainer' of "
+                                          "workflows-core:alpha, which no run loads"], errors=2),
     ]),
     # Italic, bold, backticked, straight- and curly-quoted spans; §N; a § heading; a § alias; a
     # path citation inside workflows-core; a name after "e.g.". A § name reads longest first, so

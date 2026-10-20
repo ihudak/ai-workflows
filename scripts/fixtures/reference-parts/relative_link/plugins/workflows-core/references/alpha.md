@@ -16,5 +16,7 @@ Present every option exactly as the command wrote it.
 <!-- part: pickers -->
 ## Closed-vocabulary pickers
 
-See [the vocabulary](vocabulary.md), [the guide](https://example.com/guide), [the heading](#choice-lists-are-presented-verbatim) and `[a](b.md)`.
+See [the vocabulary](vocabulary.md), [the guide](https://example.com/guide), [the heading](#choice-lists-are-presented-verbatim), `[a](b.md)` and [the list][list].
+
+[list]: vocabulary-list.md
 <!-- /part -->
