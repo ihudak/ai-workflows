@@ -14,4 +14,4 @@ rule of these references from memory.
 
 Invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")` and apply its *Why the pickers exist*.
 
-Explain the pickers per `workflows-core:alpha`'s *Why the pickers exist*.
+Explain the pickers per `workflows-core:alpha`'s *Why the pickers exist* and *Closed-vocabulary pickers*.

@@ -21,7 +21,9 @@ Present every option exactly as the command wrote it.
 
 ## Closed-vocabulary pickers
 
-A free-text answer is normalised into the picker's own vocabulary, or re-asked.
+A free-text answer is normalised into the picker's own vocabulary, or re-asked. [^1]
+
+[^1]: A footnote, which is no link.
 
 ```markdown
 # Resume — <KEY>

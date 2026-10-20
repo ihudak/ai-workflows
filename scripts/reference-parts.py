@@ -58,15 +58,17 @@ PLACED. The unit is one sentence and one cited reference. A name in that sentenc
 italic, bold, backticked or quoted span, or a § reference) that the cited reference's index
 holds places it on that part, and names of several parts place it on each of them, since the
 preamble has the run load the part that holds each rule. An explicit request places it on
-the part requested, and fails where its PARAGRAPH -- read whole, erring toward failing, since
-a later sentence may apply "its" rule -- names a rule that load (the part, its needs and the
-always part) does not hold: a call converted to the wrong part. No name places it on the
-whole reference, which is what the preamble then loads, so it passes and is counted whole,
-as does an explicit whole load (`args: "<split>"`). A citation naming a rule held in a
-private part fails, explicit or bare: no run loads a private part. A name that matches
-entries in two parts fails: every name in an index has one part, so the guard is the index's
-own uniqueness error, which fails check-citations, before it reads a citation, as it fails
-check-parts. The census `placed N, whole M` is printed per reference, N counting each part a
+the part requested, and fails where a rule it is read against is not held by the paragraph's
+explicit loads of that reference together (each part, its needs and the always part): a call
+converted to the wrong part. It is read against its own sentence and every sentence of its
+PARAGRAPH that cites the reference no other way, erring toward failing, since a later
+sentence may apply "its" rule; a sentence carrying its own citation of the reference is
+judged as that citation. No name places it on the whole reference, which is what the
+preamble then loads, so it passes and is counted whole, as does an explicit whole load
+(`args: "<split>"`). A citation naming a rule held in a private part fails, explicit or
+bare: its text is what no part load brings. A name that matches entries in two parts fails:
+every name in an index has one part, so the guard is the index's own uniqueness error, which
+fails check-citations, before it reads a citation, as it fails check-parts. The census `placed N, whole M` is printed per reference, N counting each part a
 citation is placed on; `--verbose` lists each whole citation as
 `WHOLE <file>:<line>: workflows-core:<split>`.
 
@@ -144,7 +146,7 @@ FENCE = re.compile(r"^\s*(`{3,}|~{3,})(.*)$")
 POSITIONAL = re.compile(r"\b(?:above|below)\b|\bthe (?:next|previous) section\b", re.I)
 CODE_SPAN = re.compile(r"`([^`\n]*)`")
 INLINE_LINK = re.compile(r"!?\[[^\]\n]*\]\(\s*<?([^)\s>]+)")
-REF_LINK_DEF = re.compile(r"^\s{0,3}\[[^\]\n]+\]:\s*<?(\S+?)>?(?:\s|$)")
+REF_LINK_DEF = re.compile(r"^\s{0,3}\[(?!\^)[^\]\n]+\]:\s*<?(\S+?)>?(?:\s|$)")
 ABSOLUTE = re.compile(r"^(?:[A-Za-z][A-Za-z0-9+.-]*:|/|#|\$)")
 
 
@@ -786,11 +788,17 @@ def cmd_check_citations(root, verbose):
                     consumer_cites[name] += 1
                 ref = refs[name]
                 # A bare citation's names are read in its own sentence. An explicit request's are
-                # read in its whole paragraph, erring toward failing: a later sentence that applies
-                # "its" rule leans on the load the call made.
-                a, b = spans[s]
+                # read in its own sentence and in every sentence of its paragraph that cites this
+                # reference no other way, erring toward failing: a later sentence that applies
+                # "its" rule leans on the paragraph's loads. A sentence carrying its own citation
+                # of the reference is judged as that citation, never against this call's load.
+                if g["parts"]:
+                    own = {i for (i, n) in groups if n == name and i != s}
+                    scope = " ".join(joined[a:b] for i, (a, b) in enumerate(spans) if i not in own)
+                else:
+                    scope = joined[spans[s][0]:spans[s][1]]
                 hits, private = [], []
-                for readings in names_in(joined if g["parts"] else joined[a:b]):
+                for readings in names_in(scope):
                     found = next(((r, ref.index[norm(r)]) for r in readings if norm(r) in ref.index), None)
                     if found is None:
                         continue
@@ -802,19 +810,21 @@ def cmd_check_citations(root, verbose):
                 if private:
                     # A private part is never loaded by part, so a rule a run must apply is never in one.
                     for r, p in private:
-                        problems.append("%s:%d: names '%s', in private part '%s' of %s:%s, which no run loads"
+                        problems.append("%s:%d: names '%s', in private part '%s' of %s:%s -- text no part load brings"
                                         % (rel, g["line"], r.strip(), p, CORE_NAME, name))
                     continue
                 if g["parts"]:
-                    # An explicit request loads what it names, so every rule its paragraph names must
-                    # be in that load -- or the rule is absent when the run applies it. An `index`
-                    # request is a lookup: the run loads what the index then names.
-                    held = set().union(*(covers(refs, ref, p) for p in g["parts"] if p != "index"))
+                    # An explicit request loads what it names, so every rule it is read against must be
+                    # in what the paragraph's explicit loads of this reference hold together -- or the
+                    # rule is absent when the run applies it. An `index` request is a lookup: the run
+                    # loads what the index then names.
+                    held = set().union(*(covers(refs, ref, p) for (i, n), o in groups.items() if n == name
+                                         for p in o["parts"] if p != "index"))
                     lacking = [h for h in hits if h not in held]
                     if lacking and "index" not in g["parts"]:
                         problems.append("%s:%d: requests part %s of %s:%s, but its paragraph names a rule of part %s, "
-                                        "which that load does not hold" % (rel, g["line"], ", ".join(g["parts"]),
-                                                                           CORE_NAME, name, ", ".join(lacking)))
+                                        "which the paragraph's loads do not hold"
+                                        % (rel, g["line"], ", ".join(g["parts"]), CORE_NAME, name, ", ".join(lacking)))
                     else:
                         census[name][0] += len(set(g["parts"]))
                     continue
@@ -990,23 +1000,33 @@ CASES = [
     # Beside the red request (core, naming a pickers rule), one requests pickers and names core's.
     ('request_lacks_named_rule', 'an explicit part request whose paragraph names a rule that part lacks', [
         Step(['check-citations'], 1, [U + ":15: requests part core of workflows-core:alpha, but its paragraph names a "
-                                          "rule of part pickers, which that load does not hold",
+                                          "rule of part pickers, which the paragraph's loads do not hold",
                                       'workflows-core:alpha: placed 1, whole 0'], errors=1),
     ]),
     # A call loading core, then a sentence applying "its" pickers rule: red, read over the
     # paragraph. Green beside it: a call loading pickers, and a bare stops citation in a
     # paragraph of its own, which the call's check never reads.
-    ('request_scope_is_paragraph', "an explicit request's names are read in its whole paragraph", [
+    ('request_scope_is_paragraph', "a call is read against a later sentence of its paragraph that applies its rule", [
         Step(['check-citations'], 1, [U + ":15: requests part core of workflows-core:alpha, but its paragraph names a "
-                                          "rule of part pickers, which that load does not hold",
+                                          "rule of part pickers, which the paragraph's loads do not hold",
                                       'workflows-core:alpha: placed 2, whole 0'], errors=1),
     ]),
-    # The maintainer part is private; an explicit request and a bare citation each name its heading.
+    # The maintainer part is private; an explicit request and a bare citation each name its heading,
+    # the bare one beside a public heading, which must not let the private name drop.
     ('private_rule_cited', 'a rule of a private part, named by an explicit and by a bare citation', [
         Step(['check-citations'], 1, [U + ":15: names 'Why the pickers exist', in private part 'maintainer' of "
-                                          "workflows-core:alpha, which no run loads",
+                                          "workflows-core:alpha -- text no part load brings",
                                       U + ":17: names 'Why the pickers exist', in private part 'maintainer' of "
-                                          "workflows-core:alpha, which no run loads"], errors=2),
+                                          "workflows-core:alpha -- text no part load brings"], errors=2),
+    ]),
+    # Two calls in one paragraph, each sentence applying its own part's rule; then two calls
+    # followed by a citation-free sentence applying both rules, which only both loads hold.
+    ('two_calls_one_paragraph', "two calls in one paragraph are read against the paragraph's loads together", [
+        Step(['check-citations'], 0, ['workflows-core:alpha: placed 4, whole 0', 'check-citations: PASS'], errors=0),
+    ]),
+    # A call, then a sentence carrying a bare citation of another part's rule.
+    ('call_beside_bare_citation', "a sentence with its own citation is judged as that citation, not as the call's", [
+        Step(['check-citations'], 0, ['workflows-core:alpha: placed 2, whole 0', 'check-citations: PASS'], errors=0),
     ]),
     # Italic, bold, backticked, straight- and curly-quoted spans; §N; a § heading; a § alias; a
     # path citation inside workflows-core; a name after "e.g.". A § name reads longest first, so
