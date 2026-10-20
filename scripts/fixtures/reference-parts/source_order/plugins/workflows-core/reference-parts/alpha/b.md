@@ -6,7 +6,7 @@
 
 ## Rule index of `alpha`
 
-Every rule name in `alpha`, with the part that holds it; `core` comes with every part. Load a part with `Skill(skill: "workflows-core:reference", args: "alpha <part>")`, unless it is already in this conversation.
+Every rule name in `alpha`, with the part that holds it; `core` comes with every part. Load a part with `Skill(skill: "workflows-core:reference", args: "alpha <part>")`, unless it is already in this conversation word for word.
 
 - `First half` → `a`
 - ``2. The `second` half`` → `a`

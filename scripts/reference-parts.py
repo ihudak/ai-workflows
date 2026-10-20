@@ -559,7 +559,7 @@ def index_block(refs, ref):
         lead += (" A rule of a helper part, which has no file of its own, is listed with the parts that bring it;"
                  " load any one of them.")
     lead += (" Load a part with `Skill(skill: \"%s\", args: \"%s <part>\")`, unless it is already in this "
-             "conversation." % (LOADER_SKILL, ref.name))
+             "conversation word for word." % (LOADER_SKILL, ref.name))
     blocks = ["## Rule index of `%s`" % ref.name, lead]
     if ref.entries:
         blocks.append("\n".join("- %s → %s" % (code(d), either(carriers(refs, ref, p)) if ref.parts[p].helper

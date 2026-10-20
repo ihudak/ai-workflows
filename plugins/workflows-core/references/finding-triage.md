@@ -69,12 +69,12 @@ own text names which of its reviews are re-reviews):
   section's disposition applies in order, through its first settle prompt. A shortcut past it would
   let a verdict nothing supports through silently. Load part `triage` for it,
   `Skill(skill: "workflows-core:reference", args: "finding-triage triage")`, unless it is already in
-  this conversation.
+  this conversation word for word.
 - **A re-review whose verdict is `BLOCK`** also takes § On re-review rules 2 and 3: with no finding,
   no `BLOCKER` survives its triage, so rule 3's settle prompt settles the verdict, and rule 2 says
   when the review stayed blocked. Load part `re-review` for them,
   `Skill(skill: "workflows-core:reference", args: "finding-triage re-review")`, unless it is already
-  in this conversation.
+  in this conversation word for word.
 <!-- /part -->
 
 <!-- part: triage -->

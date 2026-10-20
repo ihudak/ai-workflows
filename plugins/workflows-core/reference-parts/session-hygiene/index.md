@@ -4,7 +4,7 @@
 
 ## Rule index of `session-hygiene`
 
-Every rule name in `session-hygiene`, with the part that holds it; `core` comes with every part. Load a part with `Skill(skill: "workflows-core:reference", args: "session-hygiene <part>")`, unless it is already in this conversation.
+Every rule name in `session-hygiene`, with the part that holds it; `core` comes with every part. Load a part with `Skill(skill: "workflows-core:reference", args: "session-hygiene <part>")`, unless it is already in this conversation word for word.
 
 - ``1. Prepare-checkpoint (runs FIRST — unconditional for PRD-scoped runs, save one carrying `specs_git: misrooted`)`` → `resume-pointer`
 - `§1` → `resume-pointer`

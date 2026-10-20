@@ -4,7 +4,7 @@
 
 ## Rule index of `beta`
 
-Every rule name in `beta`, with the part that holds it; `core` comes with every part. Load a part with `Skill(skill: "workflows-core:reference", args: "beta <part>")`, unless it is already in this conversation.
+Every rule name in `beta`, with the part that holds it; `core` comes with every part. Load a part with `Skill(skill: "workflows-core:reference", args: "beta <part>")`, unless it is already in this conversation word for word.
 
 - `On re-review` → `detail`
 - `Reporting` → `other`

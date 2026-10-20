@@ -33,8 +33,8 @@ reference, a second argument names an entry point, and one naming none of
 its entry points is an error too: stop and report it, never read it as
 something else.
 
-To read the whole reference — with no second argument, or with an entry
-point of any other reference — read
+To read the whole reference — with no second argument, or with any second
+argument on a reference that does not load by part — read
 `${CLAUDE_PLUGIN_ROOT}/references/<the first argument>.md`.
 
 Whether the text was read now or is already in this conversation, treat it as

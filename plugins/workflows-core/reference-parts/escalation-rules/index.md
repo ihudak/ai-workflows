@@ -4,7 +4,7 @@
 
 ## Rule index of `escalation-rules`
 
-Every rule name in `escalation-rules`, with the part that holds it; `core` comes with every part. Load a part with `Skill(skill: "workflows-core:reference", args: "escalation-rules <part>")`, unless it is already in this conversation.
+Every rule name in `escalation-rules`, with the part that holds it; `core` comes with every part. Load a part with `Skill(skill: "workflows-core:reference", args: "escalation-rules <part>")`, unless it is already in this conversation word for word.
 
 - `§0 — Array shape: two to four options, and the free-text option is the harness's` → `core`
 - `Choice lists are presented verbatim` → `core`

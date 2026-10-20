@@ -4,7 +4,7 @@
 
 ## Rule index of `alpha`
 
-Every rule name in `alpha`, with the part that holds it; `core` comes with every part. A rule of a helper part, which has no file of its own, is listed with the parts that bring it; load any one of them. Load a part with `Skill(skill: "workflows-core:reference", args: "alpha <part>")`, unless it is already in this conversation.
+Every rule name in `alpha`, with the part that holds it; `core` comes with every part. A rule of a helper part, which has no file of its own, is listed with the parts that bring it; load any one of them. Load a part with `Skill(skill: "workflows-core:reference", args: "alpha <part>")`, unless it is already in this conversation word for word.
 
 - `Closed-vocabulary pickers` → `pickers`
 - `Key dir not found` → `stops`

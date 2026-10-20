@@ -6,7 +6,7 @@
 
 ## Rule index of `finding-triage`
 
-Every rule name in `finding-triage`, with the part that holds it; `core` comes with every part. A rule of a helper part, which has no file of its own, is listed with the parts that bring it; load any one of them. Load a part with `Skill(skill: "workflows-core:reference", args: "finding-triage <part>")`, unless it is already in this conversation.
+Every rule name in `finding-triage`, with the part that holds it; `core` comes with every part. A rule of a helper part, which has no file of its own, is listed with the parts that bring it; load any one of them. Load a part with `Skill(skill: "workflows-core:reference", args: "finding-triage <part>")`, unless it is already in this conversation word for word.
 
 - `The patch gate` → `patch-gate`
 - `patch gate` → `patch-gate`
@@ -47,12 +47,12 @@ own text names which of its reviews are re-reviews):
   section's disposition applies in order, through its first settle prompt. A shortcut past it would
   let a verdict nothing supports through silently. Load part `triage` for it,
   `Skill(skill: "workflows-core:reference", args: "finding-triage triage")`, unless it is already in
-  this conversation.
+  this conversation word for word.
 - **A re-review whose verdict is `BLOCK`** also takes § On re-review rules 2 and 3: with no finding,
   no `BLOCKER` survives its triage, so rule 3's settle prompt settles the verdict, and rule 2 says
   when the review stayed blocked. Load part `re-review` for them,
   `Skill(skill: "workflows-core:reference", args: "finding-triage re-review")`, unless it is already
-  in this conversation.
+  in this conversation word for word.
 
 3. **Record every dismissal and every unverified finding with its reason.** Never drop a finding
    silently. There is no "reject and say nothing" disposition and none may be added.

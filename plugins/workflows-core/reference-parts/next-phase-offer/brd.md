@@ -6,7 +6,7 @@
 
 ## Rule index of `next-phase-offer`
 
-Every rule name in `next-phase-offer`, with the part that holds it; `core` comes with every part. A rule of a helper part, which has no file of its own, is listed with the parts that bring it; load any one of them. Load a part with `Skill(skill: "workflows-core:reference", args: "next-phase-offer <part>")`, unless it is already in this conversation.
+Every rule name in `next-phase-offer`, with the part that holds it; `core` comes with every part. A rule of a helper part, which has no file of its own, is listed with the parts that bring it; load any one of them. Load a part with `Skill(skill: "workflows-core:reference", args: "next-phase-offer <part>")`, unless it is already in this conversation word for word.
 
 - `The offer contract (7 rules)` → `contract`
 - `Session hygiene co-fires here` → `contract`
