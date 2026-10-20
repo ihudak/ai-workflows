@@ -19,7 +19,7 @@ The commit that added the loader (`a0663947`) records why it exists — a comman
 
 ## What was measured before deciding
 
-Five read-only maps (session scratch, `loader-map/*.md`) traced, for each large reference, what every requested entry point depends on elsewhere in its file. They settled what this part does and does not do:
+Five read-only maps (`docs/superpowers/research/2026-10-20-lean-context-loader-maps/`) traced, for each large reference, what every requested entry point depends on elsewhere in its file. They settled what this part does and does not do:
 
 - **Procedure references do not slice safely.** Most entry points need 70–90% of their file: `specs-repo-git`'s two entry points 71–86%, `cost-emission`'s `emit-cost` 80–90%, `addressing`'s `resolve-address` 80%, `run-flags`' `strip-run-flags` 86%, `feedback-emission` 67–78%, `followup-emission` 84%. And a narrower load drops rules silently, in at least seven places found — among them: cost and feedback files filed under a wrong directory because their path rule lives in `specs-repo-git` and they never load it; `require-on-main` stops losing their fix commands because the stop contract (`phase-handoff` §4.4) is pointed at only by callers; `unit-branch`'s whole-key boundary living in another section, so that `ACME-7` would match `[ACME-77]`; the nine `docs-grounding` callers dispatching and consuming the grounder with no further load, correct today only because the first load read the whole file.
 - **Rulebook references do split**, behind a few fixes, because callers use them rule by rule: `escalation-rules`, `next-phase-offer`, `finding-triage`, `session-hygiene`.
