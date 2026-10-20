@@ -707,7 +707,7 @@ that file describes the archived revision and not this one.
      > Readiness tier: [1 · Indicative | 2 · Grounded | 3 · Architected | 4 · Specified], capped by [the slice that set the minimum]
      > Anchor revision: [absolute path to the archived prior revision, or 'none — first revision' or 'discarded by --redo']"
 
-3. **Triage before anything is edited.** Invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")`
+3. **Triage before anything is edited.** Invoke `Skill(skill: "workflows-core:reference", args: "finding-triage triage")`
    and follow it over the reviewer's findings — **the orchestrator runs the triage, never a fixer**.
    Verify each finding's claimed consequence at the location it names; keep it, mark it unverified, or
    dismiss it; record every dismissal with a reason that disposes of that finding's own claim and every
@@ -717,21 +717,22 @@ that file describes the archived revision and not this one.
    against every total and brief line computed from it — per the `An inline fix is read against what
    it overlaps` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`, and
    re-review **once**, triaging that re-review — and one you chose
-   at the first settle prompt — under that reference's § On re-review. If the review **stayed
+   at the first settle prompt — under `workflows-core:finding-triage` § On re-review
+   (`Skill(skill: "workflows-core:reference", args: "finding-triage re-review")`). If the review **stayed
    blocked** — a BLOCKER survives that triage, or you keep the verdict at either settle prompt —
    escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`
-   rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`; on § On re-review's
-   **Proceed**, proceed as after a verdict that is not `BLOCK`. `PASS` / `PASS WITH RECOMMENDATIONS`
+   rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`; on
+   `workflows-core:finding-triage` § On re-review's **Proceed**, proceed as after a verdict that is not `BLOCK`. `PASS` / `PASS WITH RECOMMENDATIONS`
    → after the first review and after the re-review alike, where it leaves open at least one surviving finding
    whose fix is only an edit, offer to apply them before going on, per the `Findings a review leaves open — the offer to apply
-   them` rule in the same reference — `choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]` — applying each inline, read against what it overlaps,
+   them` rule in `workflows-core:escalation-rules` — `choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]` — applying each inline, read against what it overlaps,
    and a finding not applied going to the final report and the pull request; then proceed. Cap: one
    fix cycle plus one re-review — and a finding applied at that offer after the first review leaves
    the re-review unspent, and it is offered before the handoff, per the
    `Edits after a verdict that is not BLOCK — the unspent re-review` rule in the same reference. Where triage empties the survivor set, do not
    dispatch a fix cycle with nothing to apply and do not silently promote the verdict — the user
-   settles a verdict its own findings no longer support. At either of that reference's settle
-   prompts, **Keep the verdict** means the review stayed blocked — on a kept verdict that is not
+   settles a verdict its own findings no longer support. At either of `workflows-core:finding-triage`'s
+   settle prompts, **Keep the verdict** means the review stayed blocked — on a kept verdict that is not
    `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run.
 
 **After the last inline edit to `proposal.md` — a triage fix, or an edit a later prompt asked for —

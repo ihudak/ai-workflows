@@ -11,6 +11,7 @@ part record-and-raise helper
 part declined-to-judge helper
 part reporting helper
 alias patch-gate "patch gate"
+alias verify "verification step"
 alias triage "survivors only" "first settle prompt" "Keep the verdict" "Proceed"
 alias re-review "stayed blocked"
 -->

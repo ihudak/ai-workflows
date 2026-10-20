@@ -201,7 +201,9 @@ was traced, and the report's *Not traced* names those repositories.
 ## Phase 3 — Re-check before asking
 
 Verify each `partial`, `missing` and `contradicts` verdict at the location it cites, in the manner of
-`workflows-core:finding-triage`'s verification step: read the evidence yourself, at the ref.
+`workflows-core:finding-triage`'s *verification step*
+(`Skill(skill: "workflows-core:reference", args: "finding-triage verify")`): read the evidence
+yourself, at the ref.
 - **Confirmed** → a discrepancy, numbered `[DD#n]` when the record is written (`conformance-format.md` §5).
 - **Could not be settled either way** → *unverified*: neither a discrepancy nor satisfied. It is never
   asked about — no decision can rest on a verdict nobody could confirm — and takes no `[DD#n]`: the

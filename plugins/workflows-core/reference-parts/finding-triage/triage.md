@@ -10,6 +10,7 @@ Every rule name in `finding-triage`, with the part that holds it; `core` comes w
 
 - `The patch gate` → `patch-gate`
 - `patch gate` → `patch-gate`
+- `verification step` → `verify`
 - `A review that returned no findings` → `no-findings`
 - `When this runs` → `triage`
 - `The step` → `triage`

@@ -349,7 +349,7 @@ orchestrator MUST **dispose of** every `BLOCKER` — and document the dispositio
 each `CONCERN` — where a disposition is a fix, a dismissal recorded with a reason
 that disposes of that finding's own claim, or — for a finding triage could not
 settle — an unverified record with what would settle it, per
-`${CLAUDE_PLUGIN_ROOT}/references/finding-triage.md`. Only survivors are handed to
+`${CLAUDE_PLUGIN_ROOT}/references/finding-triage.md` § The step. Only survivors are handed to
 the fixer; no `BLOCKER` may be left undisposed, and none may be dropped silently.
 
 ---
