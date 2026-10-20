@@ -5,7 +5,7 @@ part core always
 part resume-pointer
 part guidance
 alias resume-pointer "§1" "Location" "Skipped"
-alias guidance "§2" "§3" "§4" "§5" "`### Context hygiene`"
+alias guidance "§2" "§3" "§4" "§5"
 -->
 
 <!-- part: core -->

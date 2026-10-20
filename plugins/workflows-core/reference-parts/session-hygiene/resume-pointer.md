@@ -21,7 +21,6 @@ Every rule name in `session-hygiene`, with the part that holds it; `core` comes 
 - §3 → `guidance`
 - §4 → `guidance`
 - §5 → `guidance`
-- `### Context hygiene` → `guidance`
 
 ---
 
