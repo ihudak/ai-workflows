@@ -19,3 +19,5 @@ Stop per §4 (`Skill(skill: "workflows-core:reference", args: "alpha pickers")`)
 Stop per §4 (`Skill(skill: "workflows-core:reference", args: "gamma commit")`), then invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")`.
 
 Stop per `Skill(skill: "workflows-core:reference", args: "gamma commit")` §4, then invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")`.
+
+Invoke `Skill(skill: "workflows-core:reference", args: "gamma commit")`. Stop per §4 (`Skill(skill: "workflows-core:reference", args: "alpha pickers")`).

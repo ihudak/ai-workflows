@@ -79,17 +79,17 @@ parts bare citations are placed on, of every split reference the paragraph cites
 holds the name, and a bare citation naming no rule loads the whole reference, which is where
 the preamble sends it (`args: "<split>"`); an `index` load holds every later sentence, as the
 lookup it is. A § reference in a sentence citing nothing is read against the loads of the
-reference it belongs to alone. A paragraph making no part request is not read this way:
-measured over the live tree, that widening fired only on correct prose. No name places a
-citation on the whole reference, which is what the preamble then loads, so it passes and is
-counted whole, as does an explicit whole load (`args: "<split>"`). A citation naming a rule
-held in a private part fails, explicit or bare, and so does any other sentence naming one in a
-paragraph read that way: its text is what no part load brings. A name that matches entries in
-two parts fails: every name in an index has one part, so the guard is the index's own
-uniqueness error, which fails check-citations, before it reads a citation, as it fails
-check-parts. The census `placed N, whole M` is printed per reference, N counting each part a
-citation is placed on; `--verbose` lists each whole citation as
-`WHOLE <file>:<line>: workflows-core:<split>`.
+reference it belongs to alone, where the paragraph requests a part of that reference. A
+paragraph making no part request is not read this way: measured over the live tree, that
+widening fired only on correct prose. No name places a citation on the whole reference, which
+is what the preamble then loads, so it passes and is counted whole, as does an explicit whole
+load (`args: "<split>"`). A citation naming a rule held in a private part fails, explicit or
+bare, and so does any other sentence naming one in a paragraph read that way: its text is what
+no part load brings. A name that matches entries in two parts fails: every name in an index
+has one part, so the guard is the index's own uniqueness error, which fails check-citations,
+before it reads a citation, as it fails check-parts. The census `placed N, whole M` is printed
+per reference, N counting each part a citation is placed on; `--verbose` lists each whole
+citation as `WHOLE <file>:<line>: workflows-core:<split>`.
 
 IT FAILS CLOSED. A scan that finds no declaration fails both subcommands, and a declared
 reference no consumer cites fails check-citations: a gate that matched nothing proves
@@ -142,8 +142,9 @@ DEPENDENT_PLUGIN_RELS = (
 )
 LOADER_SKILL_REL = "plugins/workflows-core/skills/reference/SKILL.md"
 LOADER_SKILL = "workflows-core:reference"
-# A core skill whose call loads one reference, so the call cites it: a § reference after it belongs
-# to that reference. Every other skill call is no citation.
+# A core skill whose call loads one reference, so its `skill:` token cites it: a § reference after it
+# belongs to that reference. Every other skill's `skill:` token is no citation; a loader call cites
+# by its `args:`.
 SKILL_REFERENCES = {"model-routing": "model-routing/classification"}
 REF_DIR = "references"
 PARTS_DIR = "reference-parts"
@@ -1269,25 +1270,26 @@ CASES = [
                                           "rule of part stops, which that load does not hold",
                                       'workflows-core:alpha: placed 6, whole 0'], errors=2),
     ]),
-    # The same alpha, gamma and delta. A § no citation precedes in its sentence belongs to the first
+    # The same alpha and gamma. A § no citation precedes in its sentence belongs to the first
     # citation after it there. Green: a §1 before a pickers call; a §4 before a gamma call, then
     # a pickers call; and a §4 after a gamma call, then a pickers call, the citation before it
-    # winning. Red: a §4 before a pickers call, which names alpha's stops rule.
+    # winning. Red: a §4 before a pickers call, which names alpha's stops rule; and the same after
+    # a gamma call in an earlier sentence, since the citation after it in its own sentence wins.
     ('section_before_any_citation', 'a § with no citation before it in its sentence belongs to the first one after it', [
         Step(['check-citations'], 1, [U + ":17: requests part pickers of workflows-core:alpha, but its sentence names a "
                                           "rule of part stops, which that load does not hold",
-                                      'workflows-core:alpha: placed 3, whole 0'], errors=1),
+                                      U + ":23: requests part pickers of workflows-core:alpha, but its sentence names a "
+                                          "rule of part stops, which that load does not hold",
+                                      'workflows-core:alpha: placed 3, whole 0'], errors=2),
     ]),
-    # A § in a sentence citing nothing belongs to the nearest citation in an earlier sentence of its
-    # paragraph, and with none there to nothing. Green: a §1 after a pickers call; a §4 after a
-    # pickers call and then a gamma call, which is the nearer; and a §4 before any citation.
     ('section_in_sentence_citing_nothing', 'a § in a sentence citing nothing belongs to the nearest earlier citation', [
         Step(['check-citations'], 0, ['workflows-core:alpha: placed 3, whole 0', 'check-citations: PASS'], errors=0),
     ]),
     # alpha aliases §4 to stops; model-routing/classification is a core reference, not split. Green:
     # a §4 after a `workflows-core:model-routing` skill call, which loads that reference. Red: a §4
     # after a `workflows-core:frames` skill call, no citation, so it leans on the pickers call.
-    ('skill_call_cites_its_reference', "a skill call cites only the reference the config's skill map names", [
+    ('skill_call_cites_its_reference',
+     "a skill's `skill:` token cites only a reference the skill map names; the loader cites by its args", [
         Step(['check-citations'], 1, [U + ":17: a sentence citing workflows-core:alpha no other way names a rule of "
                                           "part stops, which no load of it at or before that sentence in its "
                                           "paragraph holds",
