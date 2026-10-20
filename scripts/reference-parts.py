@@ -58,19 +58,20 @@ PLACED. The unit is one sentence and one cited reference. A name in that sentenc
 italic, bold, backticked or quoted span, or a § reference) that the cited reference's index
 holds places it on that part, and names of several parts place it on each of them, since the
 preamble has the run load the part that holds each rule. An explicit request places it on
-the part requested, and fails where a rule it is read against is not held by the paragraph's
-explicit loads of that reference together (each part, its needs and the always part): a call
-converted to the wrong part. It is read against its own sentence and every sentence of its
-PARAGRAPH that cites the reference no other way, erring toward failing, since a later
-sentence may apply "its" rule; a sentence carrying its own citation of the reference is
-judged as that citation. No name places it on the whole reference, which is what the
-preamble then loads, so it passes and is counted whole, as does an explicit whole load
-(`args: "<split>"`). A citation naming a rule held in a private part fails, explicit or
-bare: its text is what no part load brings. A name that matches entries in two parts fails:
-every name in an index has one part, so the guard is the index's own uniqueness error, which
-fails check-citations, before it reads a citation, as it fails check-parts. The census `placed N, whole M` is printed per reference, N counting each part a
-citation is placed on; `--verbose` lists each whole citation as
-`WHOLE <file>:<line>: workflows-core:<split>`.
+the part requested, and fails where its own sentence names a rule that load -- the part, its
+needs and the always part, and no other call's -- does not hold: a call converted to the
+wrong part. Where a PARAGRAPH makes explicit loads of a reference, each of its sentences
+that cites that reference no other way may apply "its" rule, so each is judged against what
+the loads made AT OR BEFORE it hold together, never a later one, erring toward failing; a
+sentence carrying its own citation of the reference is judged as that citation. No name
+places a citation on the whole reference, which is what the preamble then loads, so it
+passes and is counted whole, as does an explicit whole load (`args: "<split>"`). A citation
+naming a rule held in a private part fails, explicit or bare: its text is what no part load
+brings. A name that matches entries in two parts fails: every name in an index has one
+part, so the guard is the index's own uniqueness error, which fails check-citations, before
+it reads a citation, as it fails check-parts. The census `placed N, whole M` is printed per
+reference, N counting each part a citation is placed on; `--verbose` lists each whole
+citation as `WHOLE <file>:<line>: workflows-core:<split>`.
 
 IT FAILS CLOSED. A scan that finds no declaration fails both subcommands, and a declared
 reference no consumer cites fails check-citations: a gate that matched nothing proves
@@ -782,23 +783,10 @@ def cmd_check_citations(root, verbose):
                     if m.group(1) in refs:
                         group(m.start(), m.group(1))
 
-            for (s, name), g in sorted(groups.items(), key=lambda kv: kv[1]["line"]):
-                cited.add(name)
-                if path in consumers:
-                    consumer_cites[name] += 1
-                ref = refs[name]
-                # A bare citation's names are read in its own sentence. An explicit request's are
-                # read in its own sentence and in every sentence of its paragraph that cites this
-                # reference no other way, erring toward failing: a later sentence that applies
-                # "its" rule leans on the paragraph's loads. A sentence carrying its own citation
-                # of the reference is judged as that citation, never against this call's load.
-                if g["parts"]:
-                    own = {i for (i, n) in groups if n == name and i != s}
-                    scope = " ".join(joined[a:b] for i, (a, b) in enumerate(spans) if i not in own)
-                else:
-                    scope = joined[spans[s][0]:spans[s][1]]
+            def read(ref, text_):
+                """The parts a stretch of text names rules of: (public parts, private matches)."""
                 hits, private = [], []
-                for readings in names_in(scope):
+                for readings in names_in(text_):
                     found = next(((r, ref.index[norm(r)]) for r in readings if norm(r) in ref.index), None)
                     if found is None:
                         continue
@@ -807,23 +795,35 @@ def cmd_check_citations(root, verbose):
                             private.append(found)
                     elif found[1] not in hits:
                         hits.append(found[1])
+                return hits, private
+
+            def private_fails(private, line, name):
+                # A private part is never loaded by part, so a rule a run must apply is never in one.
+                for r, p in private:
+                    problems.append("%s:%d: names '%s', in private part '%s' of %s:%s -- text no part load brings"
+                                    % (rel, line, r.strip(), p, CORE_NAME, name))
+
+            def held_by(ref, parts):
+                return set().union(*(covers(refs, ref, p) for p in parts if p != "index"))
+
+            # Each citation is judged on its own sentence -- an explicit request against its own
+            # load only (the part, its needs and the always part), since a run applies a rule the
+            # moment it reads it.
+            for (s, name), g in sorted(groups.items(), key=lambda kv: kv[1]["line"]):
+                cited.add(name)
+                if path in consumers:
+                    consumer_cites[name] += 1
+                ref = refs[name]
+                hits, private = read(ref, joined[spans[s][0]:spans[s][1]])
                 if private:
-                    # A private part is never loaded by part, so a rule a run must apply is never in one.
-                    for r, p in private:
-                        problems.append("%s:%d: names '%s', in private part '%s' of %s:%s -- text no part load brings"
-                                        % (rel, g["line"], r.strip(), p, CORE_NAME, name))
+                    private_fails(private, g["line"], name)
                     continue
                 if g["parts"]:
-                    # An explicit request loads what it names, so every rule it is read against must be
-                    # in what the paragraph's explicit loads of this reference hold together -- or the
-                    # rule is absent when the run applies it. An `index` request is a lookup: the run
-                    # loads what the index then names.
-                    held = set().union(*(covers(refs, ref, p) for (i, n), o in groups.items() if n == name
-                                         for p in o["parts"] if p != "index"))
-                    lacking = [h for h in hits if h not in held]
+                    lacking = [h for h in hits if h not in held_by(ref, g["parts"])]
                     if lacking and "index" not in g["parts"]:
-                        problems.append("%s:%d: requests part %s of %s:%s, but its paragraph names a rule of part %s, "
-                                        "which the paragraph's loads do not hold"
+                        # An `index` request is a lookup: the run loads what the index then names.
+                        problems.append("%s:%d: requests part %s of %s:%s, but its sentence names a rule of part %s, "
+                                        "which that load does not hold"
                                         % (rel, g["line"], ", ".join(g["parts"]), CORE_NAME, name, ", ".join(lacking)))
                     else:
                         census[name][0] += len(set(g["parts"]))
@@ -836,6 +836,26 @@ def cmd_check_citations(root, verbose):
                 # A bare citation is placed on the part of each rule its sentence names: the
                 # preamble has the run load the part that holds each rule before applying it.
                 census[name][0] += len(hits)
+
+            # Where a paragraph makes explicit loads of a reference, each of its sentences that
+            # cites that reference no other way may apply "its" rule, leaning on those loads: it
+            # is judged against what the loads made AT OR BEFORE it hold together, never a later
+            # one, erring toward failing. A sentence carrying its own citation was judged above.
+            for name in sorted({n for (i, n), g in groups.items() if g["parts"]}):
+                ref, citing = refs[name], {i for (i, n) in groups if n == name}
+                for u, (a, b) in enumerate(spans):
+                    if u in citing:
+                        continue
+                    hits, private = read(ref, joined[a:b])
+                    if private:
+                        private_fails(private, line_at(at, a), name)
+                        continue
+                    loads = [p for (i, n), g in groups.items() if n == name and i < u for p in g["parts"]]
+                    lacking = [h for h in hits if h not in held_by(ref, loads)]
+                    if lacking and "index" not in loads:
+                        problems.append("%s:%d: a sentence citing %s:%s no other way names a rule of part %s, which "
+                                        "no load of it at or before that sentence in its paragraph holds"
+                                        % (rel, line_at(at, a), CORE_NAME, name, ", ".join(lacking)))
         if cited and path in consumers and preamble not in paragraphs(text):
             problems.append("%s: cites %s but does not carry the load-by-part preamble as a paragraph of its own"
                             % (rel, ", ".join("%s:%s" % (CORE_NAME, n) for n in sorted(cited))))
@@ -998,18 +1018,36 @@ CASES = [
         Step(['check-citations'], 0, ['workflows-core:alpha: placed 2, whole 0', 'check-citations: PASS'], errors=0),
     ]),
     # Beside the red request (core, naming a pickers rule), one requests pickers and names core's.
-    ('request_lacks_named_rule', 'an explicit part request whose paragraph names a rule that part lacks', [
-        Step(['check-citations'], 1, [U + ":15: requests part core of workflows-core:alpha, but its paragraph names a "
-                                          "rule of part pickers, which the paragraph's loads do not hold",
+    ('request_lacks_named_rule', 'an explicit part request whose own sentence names a rule that part lacks', [
+        Step(['check-citations'], 1, [U + ":15: requests part core of workflows-core:alpha, but its sentence names a "
+                                          "rule of part pickers, which that load does not hold",
                                       'workflows-core:alpha: placed 1, whole 0'], errors=1),
     ]),
-    # A call loading core, then a sentence applying "its" pickers rule: red, read over the
-    # paragraph. Green beside it: a call loading pickers, and a bare stops citation in a
-    # paragraph of its own, which the call's check never reads.
-    ('request_scope_is_paragraph', "a call is read against a later sentence of its paragraph that applies its rule", [
-        Step(['check-citations'], 1, [U + ":15: requests part core of workflows-core:alpha, but its paragraph names a "
-                                          "rule of part pickers, which the paragraph's loads do not hold",
-                                      'workflows-core:alpha: placed 2, whole 0'], errors=1),
+    # A call loading core, then a sentence citing nothing that applies "its" pickers rule: the
+    # sentence is red, judged against the core load before it; the call's own sentence holds, so
+    # the call is placed. Green beside it: a call loading pickers, and a bare stops citation in a
+    # paragraph of its own, which the first paragraph's loads never reach.
+    ('request_scope_is_paragraph', "a sentence citing nothing is judged against its paragraph's loads", [
+        Step(['check-citations'], 1, [U + ":15: a sentence citing workflows-core:alpha no other way names a rule of "
+                                          "part pickers, which no load of it at or before that sentence in its "
+                                          "paragraph holds",
+                                      'workflows-core:alpha: placed 3, whole 0'], errors=1),
+    ]),
+    # A call loading stops whose own sentence applies a pickers rule, then a call loading pickers.
+    ('wrong_call_before_right_call', 'a wrong-part call is not saved by a later right-part call', [
+        Step(['check-citations'], 1, [U + ":15: requests part stops of workflows-core:alpha, but its sentence names a "
+                                          "rule of part pickers, which that load does not hold"], errors=1),
+    ]),
+    # The mirror: the right-part call first, then the wrong-part call naming the rule.
+    ('wrong_call_after_right_call', "a call's own sentence is judged against its own load only", [
+        Step(['check-citations'], 1, [U + ":15: requests part stops of workflows-core:alpha, but its sentence names a "
+                                          "rule of part pickers, which that load does not hold"], errors=1),
+    ]),
+    # Stops loaded, a citation-free sentence applying a pickers rule, then pickers loaded.
+    ('free_sentence_before_right_call', 'a sentence citing nothing is never held by a load after it', [
+        Step(['check-citations'], 1, [U + ":15: a sentence citing workflows-core:alpha no other way names a rule of "
+                                          "part pickers, which no load of it at or before that sentence in its "
+                                          "paragraph holds"], errors=1),
     ]),
     # The maintainer part is private; an explicit request and a bare citation each name its heading,
     # the bare one beside a public heading, which must not let the private name drop.
