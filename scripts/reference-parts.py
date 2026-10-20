@@ -167,7 +167,7 @@ PREAMBLE = (
     "These shared references load by part — {list}. A citation of one names a rule: before "
     "applying it, load the part that holds it, `Skill(skill: \"{loader}\", args: \"<name> "
     "<part>\")`, the part its rule index names (`args: \"<name> index\"` loads the index; every "
-    "part carries it), unless that part is already in this conversation. A citation that "
+    "part carries it), unless that part is already in this conversation word for word. A citation that "
     "names no rule the index holds loads the whole reference, `args: \"<name>\"`. Never apply "
     "a rule of these references from memory."
 )

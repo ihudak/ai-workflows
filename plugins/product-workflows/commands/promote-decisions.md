@@ -9,7 +9,7 @@ Promote team decisions to organisation ADRs: $ARGUMENTS
 
 `/product-workflows:promote-decisions` is the product architect's step after `/product-workflows:harvest-decisions`. It reads the team's decision records, shortlists those worth an organisation ADR and the ADRs that team decisions keep contradicting, and drafts the ones the architect picks. Then it records what happened on each record, so the next run neither re-proposes nor forgets.
 
-`workflows-core:architecture-promotion` is the authority for every step below; this file orders them, and each `§` below is that reference's — load a section with `Skill(skill: "workflows-core:reference", args: "architecture-promotion <its entry point>")` where its heading names one, and any other with `args: "architecture-promotion"`, the whole reference. Its `<scripts>` is `${CLAUDE_PLUGIN_ROOT}/scripts`, this plugin's bundled scripts: `promotion-signals.py` does the deterministic work.
+`workflows-core:architecture-promotion` is the authority for every step below; this file orders them, and each `§` below is that reference's — execute a section whose heading names an entry point with `Skill(skill: "workflows-core:reference", args: "architecture-promotion <that entry point>")`, and read any other with `args: "architecture-promotion"`; both read the whole reference. Its `<scripts>` is `${CLAUDE_PLUGIN_ROOT}/scripts`, this plugin's bundled scripts: `promotion-signals.py` does the deterministic work.
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
