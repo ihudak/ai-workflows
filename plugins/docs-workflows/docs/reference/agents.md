@@ -9,9 +9,9 @@ The gate `/document` runs after writing, plus the planner and the style checker 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
 | `doc-reviewer` | opus | Read, Glob, Grep, Skill | Reviews product documentation written by `/document` for correctness, completeness, and fitness for purpose; product-docs only — Epic drafts go through the pipeline plugin's `epic-reviewer`. | `/document` |
-| `docs-scaffold-reviewer` | opus | Read, Glob, Grep, Bash, Skill | Reviews the docs-repo scaffold — mkdocs configs, generated nav, `.vale.ini`, CI workflow, theme CSS — against a fixed seven-item checklist; never reads page content. Returns findings only, no fixer. | `/docs-init`, `/docs-brand` |
+| `docs-scaffold-reviewer` | opus | Read, Glob, Grep, Bash | Reviews the docs-repo scaffold — mkdocs configs, generated nav, `.vale.ini`, CI workflow, theme CSS — against a fixed seven-item checklist; never reads page content. Returns findings only, no fixer. | `/docs-init`, `/docs-brand` |
 | `doc-planner` | per routing | Read, Glob, Grep, Skill | Synthesises PRD content, per-repo diff summaries, and confirmed write targets into the documentation checklist the writer follows and the reviewer checks against; writes no content itself. | `/document` |
-| `docs-style-checker` | per routing | Read, Glob, Grep, Bash, Task | Runs the docs repo's configured prose linter and a complementary `prose-style-checker` pass; merges both finding sets for `doc-reviewer`/`doc-fixer`. | `/document` |
+| `docs-style-checker` | per routing | Read, Glob, Grep, Bash, Task, Skill | Runs the docs repo's configured prose linter and a complementary `prose-style-checker` pass; merges both finding sets for `doc-reviewer`/`doc-fixer`. | `/document` |
 
 ## Readers and scanners
 
@@ -39,7 +39,7 @@ The agents `/docs-audit` dispatches, turning a product's own code into a documen
 |---|---|---|---|---|
 | `docs-auditor` | sonnet | Read, Glob, Grep, Bash, Skill | Enumerates the individual documentation surfaces inside what a batch of `code-scanner` runs returned and what the specs-tree read named, with volatility from `git log` density at the ref. | `/docs-audit` |
 | `ia-planner` | opus | Read, Glob, Grep | Crosses each surface with the page types it actually earns, ranks the resulting units on four prioritisation signals with a reason naming them, and proposes tutorial candidates. | `/docs-audit` |
-| `docs-audit-reviewer` | opus | Read, Glob, Grep, Bash | Reviews the backlog on four dimensions — evidence proved at its recorded ref, type fit, `visibility` against `page_path`, reasons against ranks, orphans and duplicates. Findings only, no fixer. | `/docs-audit` |
+| `docs-audit-reviewer` | opus | Read, Glob, Grep, Bash, Skill | Reviews the backlog on four dimensions — evidence proved at its recorded ref, type fit, `visibility` against `page_path`, reasons against ranks, orphans and duplicates. Findings only, no fixer. | `/docs-audit` |
 
 Every agent in this reference is reachable: each is dispatched by a command this plugin ships, as its row's **Used by** cell records — the three in this section by `/docs-audit`, and the rest by `/document`, `/release-notes`, `/docs-init` and `/docs-brand`. Two commands dispatch none of them. `/docs-profile` scans a documentation repository itself and writes the profile `/document` consumes; `/docs-serve` starts a dev server and dispatches nothing at all.
 

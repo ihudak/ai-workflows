@@ -620,8 +620,9 @@ file describes the archived revision and not this one.
      > Readiness tier: [1 · Indicative | 2 · Grounded | 3 · Architected | 4 · Specified], capped by [what capped it]
      > Anchor revision: [absolute path to the archived prior revision, or 'none — first revision' or 'discarded by --redo']"
 
-3. **Triage before anything is edited.** Invoke `Skill(skill: "workflows-core:reference", args: "finding-triage triage")`
-   and follow it over the reviewer's findings — **the orchestrator runs the triage, never a fixer**.
+3. **Triage before anything is edited.** Invoke `Skill(skill: "workflows-core:reference", args: "finding-triage re-review")`
+   and follow it over the reviewer's findings — that part holds `triage` as well, so the re-review below
+   reuses the same load — **the orchestrator runs the triage, never a fixer**.
    Verify each finding's claimed consequence at the location it names; keep it, mark it unverified, or
    dismiss it; record every dismissal with a reason that disposes of that finding's own claim and every
    unverified finding with what would settle it; and raise a grade only by effect. There is no
@@ -630,8 +631,7 @@ file describes the archived revision and not this one.
    against every total and brief line computed from it — per the `An inline fix is read against what
    it overlaps` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`, and
    re-review **once**, triaging that re-review — and one you chose
-   at the first settle prompt — under `workflows-core:finding-triage` § On re-review
-   (`Skill(skill: "workflows-core:reference", args: "finding-triage re-review")`). If the review **stayed
+   at the first settle prompt — under `workflows-core:finding-triage` § On re-review. If the review **stayed
    blocked** — a BLOCKER survives that triage, or you keep the verdict at either settle prompt —
    escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`
    rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`; on
