@@ -265,8 +265,8 @@ repository root. For `SPECS_PATH` it is a stop, not a degradation: there is no "
 it" option, because that path is where the run's inputs and outputs live. `REPOS_PATH` holds only
 code a run reads, which is why a citer whose run can go on without it offers that way on. Other
 commands reproduce the same two-option list inline without naming the rule; a citer that names the
-rule uses the list written here, save the `REPOS_PATH` way on this rule gives a citer whose run can go
-on without code.
+rule uses the list written here, save the `REPOS_PATH` way on that this rule gives a citer whose run
+can go on without code.
 <!-- /part -->
 
 <!-- part: scan -->
@@ -298,7 +298,7 @@ slug→clone map.
 `choices: ["Skip and continue without this repo", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo (you'll be prompted)"]`
 
 Used in `/prd-ground` Phase 1 step 3 when a repo the operator named has zero matches in the
-slug→clone map. Same options, same order as the `/epics` variant; the first one drops
+slug→clone map. Same options, same order as *Repo unresolved (zero matches) — /epics*; the first one drops
 "'s scan" because this command grounds a claim against a repository rather than scanning one for
 capabilities, and skipping it leaves that repository's claims ungrounded rather than unscanned.
 

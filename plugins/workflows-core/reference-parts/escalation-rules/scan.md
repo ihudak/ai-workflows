@@ -183,7 +183,7 @@ slug→clone map.
 `choices: ["Skip and continue without this repo", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo (you'll be prompted)"]`
 
 Used in `/prd-ground` Phase 1 step 3 when a repo the operator named has zero matches in the
-slug→clone map. Same options, same order as the `/epics` variant; the first one drops
+slug→clone map. Same options, same order as *Repo unresolved (zero matches) — /epics*; the first one drops
 "'s scan" because this command grounds a claim against a repository rather than scanning one for
 capabilities, and skipping it leaves that repository's claims ungrounded rather than unscanned.
 
