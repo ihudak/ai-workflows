@@ -1,12 +1,30 @@
 # Finding triage (embedded — shared reference)
 
+<!-- reference-parts
+part core always
+part patch-gate
+part verify needs=record-and-raise
+part no-findings needs=record-and-raise,declined-to-judge,reporting
+part triage needs=verify,declined-to-judge,reporting,patch-gate
+part re-review needs=triage
+part record-and-raise
+part declined-to-judge
+part reporting
+alias patch-gate "patch gate"
+alias triage "survivors only" "first settle prompt" "Keep the verdict" "Proceed"
+alias re-review "stayed blocked"
+-->
+
+<!-- part: core -->
 The step between a reviewer's findings and a fixer's edits. Run by the **orchestrator**, never by the
 fixer: `doc-fixer`, and `review-fixer` on every caller but `/implement`, run on the detection/Sonnet
 chain while `code-review`, `doc-reviewer`, and `epic-reviewer` are Opus-pinned, and a dismissal
 decision must not sit at a weaker station than the one that produced the finding. `/implement`'s
 `review-fixer` runs on its `implementation_model` (`workflows-core:model-routing/classification` §4),
 and the triage stays the orchestrator's there too: one rule for every fixer.
+<!-- /part -->
 
+<!-- part: triage -->
 ## When this runs
 
 Wherever an **Opus reviewer's reasoned findings feed a fixer**:
@@ -32,9 +50,37 @@ A review that returns the `Diff: unreadable at <path>` marker never reaches this
 reports a capture failure, not a finding about the change: there is no location to verify it at, and its
 own BLOCKER says so. The caller stops on the marker (`/implement`, `/vuln`, `/upgrade` each check the
 review's first line before acting on the verdict), so no fixer is dispatched and nothing is triaged.
+<!-- /part -->
 
+<!-- part: no-findings -->
+## A review that returned no findings
+
+A review that returned no findings is still triaged. Every such review takes steps 3 to 5 of
+§ The step — step 5 rules on each line of a `### Declined to judge` list, which a review with no
+findings can still carry — and § Reporting, and part `no-findings` holds them. What else of this
+reference it takes turns on its verdict and on whether it is a re-review (§ On re-review):
+
+- **A `PASS`, or a re-review whose verdict is not `BLOCK`,** takes nothing else of this reference:
+  part `no-findings` holds all of it such a review needs, and a second verdict that is not `BLOCK`
+  gates nothing further (§ On re-review rule 1).
+- **A first review whose verdict is not `PASS`** — `PASS WITH RECOMMENDATIONS` or `BLOCK` — also takes
+  § When triage empties the survivor set: with no finding, none behind the verdict survives, so that
+  section's disposition applies in order, through its first settle prompt. A shortcut past it would
+  let a verdict nothing supports through silently. Load part `triage` for it,
+  `Skill(skill: "workflows-core:reference", args: "finding-triage triage")`, unless it is already in
+  this conversation.
+- **A re-review whose verdict is `BLOCK`** also takes § On re-review rules 2 and 3: with no finding,
+  no `BLOCKER` survives its triage, so rule 3's settle prompt settles the verdict, and rule 2 says
+  when the review stayed blocked. Load part `re-review` for them,
+  `Skill(skill: "workflows-core:reference", args: "finding-triage re-review")`, unless it is already
+  in this conversation.
+<!-- /part -->
+
+<!-- part: triage -->
 ## The step
+<!-- /part -->
 
+<!-- part: verify -->
 For each finding, **before any grouping or deduplication**:
 
 1. **Verify its own claimed consequence** at the location it names. Read past the changed lines — into
@@ -56,6 +102,9 @@ For each finding, **before any grouping or deduplication**:
      that would show it. One whose grade if true is only `MINOR` or `NIT` is dismissed, with that grade
      and what would settle it as its reason. An unverified finding changes nothing the verdict gates;
      it reaches the user through § Reporting.
+<!-- /part -->
+
+<!-- part: record-and-raise -->
 3. **Record every dismissal and every unverified finding with its reason.** Never drop a finding
    silently. There is no "reject and say nothing" disposition and none may be added.
 4. **Raise a grade by effect, never lower one.** Where a survivor's grade reflects the spec's, the
@@ -64,11 +113,16 @@ For each finding, **before any grouping or deduplication**:
    it, to `MAJOR` at most: a `BLOCKER` changes the verdict, and the verdict is not triage's to
    restate (§ When triage empties the survivor set). Step 2 grades an unverified finding by this rule
    too. Record every raise with its reason.
+<!-- /part -->
+
+<!-- part: declined-to-judge -->
 5. **Rule on what the reviewer set aside.** Where the review carries a `### Declined to judge` list
    (`code-review` returns one), rule on each line: it **stands** — record why — or it is a **defect**,
    recorded with its grade by effect and what shows it. A line ruled a defect is never handed to the
    fixer: no finding of the review carries it, and the verdict was taken without it.
+<!-- /part -->
 
+<!-- part: triage -->
 **A reviewer with two grades** — one filing only `BLOCKER` and `RECOMMENDATION` — maps onto steps 2
 and 4 with `RECOMMENDATION` below `MAJOR`: an unverified `RECOMMENDATION` is dismissed with its note,
 and step 4 raises nothing, since the grade above it is `BLOCKER`.
@@ -88,7 +142,8 @@ triage. The disposition, in order:
 2. **Never run the unresolved-`BLOCKER` escalation on a `BLOCKER` that did not survive triage** —
    unless the user keeps the verdict at step 3's prompt. That escalation exists for a `BLOCKER` that
    survived a fix cycle, not for one that never survived triage; a user who keeps the verdict says the
-   review stayed blocked (§ On re-review), at their own word.
+   review stayed blocked (step 3's **Keep the verdict**, the stop § On re-review rule 2 names), at their
+   own word.
 3. **Surface it and let the user settle the verdict.** Report the verdict, the fact that nothing
    survived, every dismissal with its reason and every unverified finding with what would settle it,
    then ask:
@@ -111,13 +166,16 @@ triage. The disposition, in order:
    **Never** promote a non-`PASS` verdict to `PASS` silently. The orchestrator's authority under this
    reference is over *findings*; a verdict its own findings no longer support is the user's to settle.
 
-A partly emptied set is not this case: where at least one finding survived that the caller's fixer takes, the verdict stands and the command's normal branch runs on the survivors. **A `BLOCK` whose survivors hold no `BLOCKER` and none the caller's fixer takes is this case**, whatever keeps each from the fixer — a grade it does not take, such as a `NIT`, or the caller's own rule, as for one whose fix lies in another code repository: dispatch no fixer and run no re-review on that account, and ask this section's first settle prompt, reporting every survivor in place of *nothing survived*, and saying so; its **Proceed** goes on as from a verdict that is not `BLOCK`. A `BLOCKER` among the survivors a caller's own rule keeps from the fixer leaves the review blocked, as § On re-review rule 2 names that stop, and on a `PASS WITH RECOMMENDATIONS` with no survivor its fixer takes the caller continues without one.
+A partly emptied set is not this case: where at least one finding survived that the caller's fixer takes, the verdict stands and the command's normal branch runs on the survivors. **A `BLOCK` whose survivors hold no `BLOCKER` and none the caller's fixer takes is this case**, whatever keeps each from the fixer — a grade it does not take, such as a `NIT`, or the caller's own rule, as for one whose fix lies in another code repository: dispatch no fixer and run no re-review on that account, and ask this section's first settle prompt, reporting every survivor in place of *nothing survived*, and saying so; its **Proceed** goes on as from a verdict that is not `BLOCK`. A `BLOCKER` among the survivors a caller's own rule keeps from the fixer leaves the review blocked: the review stayed blocked, as § On re-review rule 2 names that stop, and the caller takes its stop or escalation over that `BLOCKER`, as step 3's **Keep the verdict** does over the `BLOCKER`s the reviewer raised. So a caller whose own rule keeps a first review's `BLOCKER` from the fixer, because its fix lies in another code repository, counts that review as one that stayed blocked, and says so. On a `PASS WITH RECOMMENDATIONS` with no survivor its fixer takes, the caller continues without one.
 
 This section governs the first review. On a re-review, § On re-review settles the verdict instead —
-there, no survivor is handed to a fixer, and its own prompt carries no re-review arm. The prompt
+there, no survivor is handed to a fixer, save one the user applies at `escalation-rules`' offer to
+apply what a review leaves open, and its own prompt carries no re-review arm. The prompt
 above, in either form, is the **first settle prompt**, since it settles the first review; it and
 § On re-review's are this reference's **settle prompts**.
+<!-- /part -->
 
+<!-- part: patch-gate -->
 ## The patch gate
 
 A survivor may be auto-fixed only where it shows a defect that **actually occurs**, missing coverage for
@@ -139,7 +197,9 @@ finding disappear without settling it. Where the change under review itself edit
 finding on it is a finding on the change, and the clause does not apply. A fixer agent is not handed
 the diff, so it applies the clause by the finding's location: it edits such a file only where the
 finding's own location is in that file.
+<!-- /part -->
 
+<!-- part: re-review -->
 ## On re-review
 
 A **re-review** is any review a run dispatches over an artifact this run has already reviewed to a
@@ -182,7 +242,9 @@ reviewer's answer.
    verdict** means the review stayed blocked: the caller takes its stop or escalation over the
    `BLOCKER`s the reviewer raised — at the user's word, not on triage's. **Cancel** is the caller's
    own cancel.
+<!-- /part -->
 
+<!-- part: reporting -->
 ## Reporting
 
 The orchestrator's run report carries one triage line per review pass, and the line names:
@@ -190,10 +252,11 @@ The orchestrator's run report carries one triage line per review pass, and the l
 - how many findings were reviewed, and how many **survived**, are **unverified** and were
   **dismissed** — the three always sum to the findings reviewed, and a finding in none of them is a
   triage failure; on a re-review, also how many were **carried**;
-- on a re-review, every survivor with its severity — none of them is handed to a fixer, save one the user applies at that offer;
+- on a re-review, every survivor with its severity — none of them is handed to a fixer, save one the user applies at `escalation-rules`' offer to apply what a review leaves open;
 - **every dismissal with its reason** — a triage that reports only survivors is indistinguishable from
   a reviewer that found less;
 - every unverified finding with its grade if true and what would settle it;
 - every raise, with the grade it moved from and to and the effect that moved it;
 - where the review carried a `### Declined to judge` list, each line with its ruling;
 - where a settle prompt was asked, its answer, so a verdict the user settled is never left unmarked.
+<!-- /part -->
