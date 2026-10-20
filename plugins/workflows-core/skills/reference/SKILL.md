@@ -16,7 +16,10 @@ read, or when a compaction has replaced the earlier read with a summary — a
 summary of a reference is never its text. A read of the whole file covers
 every entry point in it.
 
-To read it, read `${CLAUDE_PLUGIN_ROOT}/references/<the first argument>.md`
-and treat it as the single source of truth for the current step. When a
-second argument is present, execute that entry point of it inline. Never
-paraphrase or summarise its contents.
+To read the reference, read
+`${CLAUDE_PLUGIN_ROOT}/references/<the first argument>.md`.
+
+Whether the text was read now or is already in this conversation, treat it as
+the single source of truth for the current step. When a second argument names
+an entry point, execute that entry point of it inline. Never paraphrase or
+summarise its contents.
