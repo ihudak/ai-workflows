@@ -9,6 +9,8 @@ Author the programme-level effort proposal for the resolved BRD container: $ARGU
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names (`args: "<name> index"` loads the index; every part carries it), unless that part is already in this conversation. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/brd-proposal` is the **programme effort-proposal step** (PM phase) — it takes one `BRD-` container and
 writes the document a vendor sends a customer for the whole programme, by rolling each slice's own
 `proposal.md` into one. It prices nothing itself: every slice's hours were computed by
@@ -860,7 +862,7 @@ either: that is the gate working. The one exception is a halt on a tool the ai-c
    target via its §2 ladder, dedupe per §5, and preview + confirm per §7. ADDITIVE: the same items
    also stay in the final report.
 4. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-proposal`, `phase: proposal`, `role: pm`, the run's `key`, `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or the report-only notice). **This entry records model spend in USD and has no relationship whatever to the human hours the artifacts contain.**
-5. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")`
+5. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")`
    and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry
    above, so the pointer reflects the completed run, and before the commit step below, so it is
    included in it. Redact per §1. Silent; the printed `### Context hygiene` guidance already appeared.

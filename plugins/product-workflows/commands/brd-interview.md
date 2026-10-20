@@ -9,6 +9,8 @@ Turn the grounded BRD into a decided one, one round at a time: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names (`args: "<name> index"` loads the index; every part carries it), unless that part is already in this conversation. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/brd-interview` is the **BRD-to-PRD route's decision step** (PM phase) — it takes the verified
 findings `/prd-ground` produced and the fully-allocated ledger `/brd-split` left behind, and works
 the BRD's open questions to recorded decisions. Its whole discipline is one rule: **every question
@@ -2383,7 +2385,7 @@ this command reports correctly, not a capability it lacks. The one exception is 
 3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-interview`, `phase: brd-to-prd`, `role: pm`, the
    run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only
    notice).
-4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the commit
+4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the commit
    step below. Redact per §1. Silent.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. Stages ONLY the §2.1 bounded artifact paths inside
    `$SPECS_PATH`, commits `<BRD-KEY> Add dev-workflows session artifacts (/brd-interview)` with no

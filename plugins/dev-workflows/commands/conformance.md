@@ -9,6 +9,8 @@ Check what was built against what was specified: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names (`args: "<name> index"` loads the index; every part carries it), unless that part is already in this conversation. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/conformance` closes an implementation by checking it against what was specified. Given an Epic or a
 PRD address, it traces every requirement of that unit against the code — on an Epic run the Epic's
 own branch, before its pull request merges or where the branch has gone on since, and otherwise each
@@ -505,7 +507,7 @@ Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission
 `/conformance` inference resolves the phase to `conformance` and the role from where
 `workflows-core:addressing` §4.1 places the folder: `dev` for an Epic, `pe` for a PRD.
 
-**Then write the resume pointer** per `Skill(skill: "workflows-core:reference", args: "session-hygiene")` §1 — not on a run that ended early (Phase 1, *Ending early*), which writes none — and
+**Then write the resume pointer** per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` §1 — not on a run that ended early (Phase 1, *Ending early*), which writes none — and
 **then commit session artifacts (terminal)**: invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. Print its §6 outcome line, prefixed `Specs repo:`, as the run's last output.
 
 ---

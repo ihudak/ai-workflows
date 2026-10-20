@@ -9,6 +9,8 @@ Verify readiness for AI-driven development: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names (`args: "<name> index"` loads the index; every part carries it), unless that part is already in this conversation. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/ready` is the **artifact-anchored readiness gate**. Given a PRD or Epic address, it derives the
 workflow phase from the artifacts present and checks whether the
 ARD/spec/design artifacts that actually exist, taken together, justify that phase and the *next*
@@ -699,7 +701,7 @@ Emit this phase's own short output:
 [persisted path, OR the report-only / pending notice, OR, under `--skip-costs`, `Session cost: skipped (--skip-costs)` / `(WORKFLOWS_SKIP_COSTS)`]
 ```
 
-**Then write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the pointer
+**Then write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the pointer
 reflects the completed run, and before the commit step below, so it is included in it. Redact per §1.
 Silent; the printed `### Context hygiene` guidance already appeared in the Phase 5 report.
 
@@ -762,4 +764,4 @@ a code or docs repository, or the current working directory, where it is not the
   byte-identical to before, save what an Epic's `target:` adds on any PRD (Phase 3(c)'s candidate repositories) and, on a multi-component PRD, the exception `workflows-core:ard-resolution`'s no-regression rule states (Phase 1 step 2, Phase 3(b) and 3(d), the `## Contract coverage` section)
 - ALL written claims trace to a resolved key or to artifact paths actually read; never
   invent content the sources don't contain
-- ALWAYS end with a `### Context hygiene` block per `workflows-core:session-hygiene` — prepare-first (the `resume.md` write — carrying the verdict as carry-forward — runs later, in the terminal cost phase, per `workflows-core:session-hygiene` §1 — this block prints the guidance only), then a same-role `/compact` suggestion + `/rename <PRD-ID>-<slug>-dev`; guidance only, never auto-run.
+- ALWAYS end with a `### Context hygiene` block per `Skill(skill: "workflows-core:reference", args: "session-hygiene guidance")` — prepare-first (the `resume.md` write — carrying the verdict as carry-forward — runs later, in the terminal cost phase, per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` §1 — this block prints the guidance only), then a same-role `/compact` suggestion + `/rename <PRD-ID>-<slug>-dev`; guidance only, never auto-run.

@@ -2,7 +2,7 @@
 
 `product-workflows` bundles 12 files under `references/`, all top-level markdown, no bundled subtrees. This page enumerates every one, grouped by concern below.
 
-The shared corpus every plugin in this family reads — the addressing grammar, the git and phase-handoff entry points, model routing, escalation and triage, cost/feedback/follow-up emission, the grounding and grilling conventions, and the PRD format — ships in the companion `workflows-core` plugin and is enumerated on its own references page, reached through the loader skill rather than by path. What is listed here is what `product-workflows` itself carries.
+The shared corpus every plugin in this family reads — the addressing grammar, the git and phase-handoff entry points, model routing, escalation and triage, cost/feedback/follow-up emission, the grounding and grilling conventions, and the PRD format — ships in the companion `workflows-core` plugin and is enumerated on its own references page, reached through the loader skill rather than by path. Four of its references — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene` — load by part: a command or agent here loads the part that holds the rule it cites, `args: "<name> <part>"`, and the whole reference only where it cites no rule the reference indexes. What is listed here is what `product-workflows` itself carries.
 
 ## BRD-to-PRD route formats
 

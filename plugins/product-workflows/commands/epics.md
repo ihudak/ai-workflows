@@ -9,6 +9,8 @@ Draft child Epics for the resolved Product Requirements Document: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names (`args: "<name> index"` loads the index; every part carries it), unless that part is already in this conversation. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/epics` is the **keyed Epic-writing** workflow. Given a Product Requirements Document key, it reads the PRD plus its existing Epics from the resolved PRD folder, optionally scans code repos to identify reusable capabilities and gaps, drafts child Epic definitions as markdown files under the resolved output directory, and gates the result on an Opus review.
 
 Key distinction from `/document` (keyed mode): the PRD being Epic-ized is **not yet implemented** — there is no implementation record and no commit to diff. Code scanning (when enabled) is a plain filesystem search to understand what exists and what needs to be built.
@@ -1090,7 +1092,7 @@ reconciliation (§9) when no PRD key resolves. **The checkpoint advances even in
 the pending / report-only tiers.** Surface the persisted path (or the
 report-only notice) as this phase's only output.
 
-**Then write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite
+**Then write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite
 `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the
 pointer reflects the completed run, and before the commit step below, so it is
 included in it. Redact per §1. Silent; the printed `### Context hygiene`
@@ -1152,4 +1154,4 @@ user name is ever written (§10 privacy).
 - ALWAYS re-surface the code-scan default adaptively in Phase 3.5 for refine/both (ON at ≥2 targets, OFF at 1) — never in the generate path
 - ALWAYS run the Phase 6.1 leftover-disposition gate in refine/both when `_coverage.md` has `❌ gap` rows; silent no-op when none
 - Refinement mode (Phase 3.5 gate, `refinement_targets` handoff, leftover gate, keyed output) is ADDITIVE and guarded — no `refinement_candidate` targets AND no `focus_key` ⇒ `mode = generate` and the run is byte-identical to the legacy net-new flow, save Phase 6 step 4's size split (a `mode: both` re-dispatch on one Epic)
-- ALWAYS end the Phase 9 report with a `### Context hygiene` block per `workflows-core:session-hygiene` — prepare-first (the `resume.md` write runs later, in the terminal cost phase, per `workflows-core:session-hygiene` §1 — this block prints the guidance only), then a role-aware `/compact`|`/clear` suggestion + `/rename <PRD-ID>-<slug>-pe`; guidance only, never auto-run.
+- ALWAYS end the Phase 9 report with a `### Context hygiene` block per `Skill(skill: "workflows-core:reference", args: "session-hygiene guidance")` — prepare-first (the `resume.md` write runs later, in the terminal cost phase, per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` §1 — this block prints the guidance only), then a role-aware `/compact`|`/clear` suggestion + `/rename <PRD-ID>-<slug>-pe`; guidance only, never auto-run.

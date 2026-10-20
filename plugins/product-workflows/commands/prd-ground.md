@@ -8,6 +8,8 @@ Ground the BRD's requirement inventory against code and design: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names (`args: "<name> index"` loads the index; every part carries it), unless that part is already in this conversation. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/prd-ground` is the **BRD-to-PRD route's grounding step** (a PM phase — a PA or PE runs it where the PM cannot clone the code repositories), run once per slice
 `/brd-split` carves — and **again on an already-ground slice a later re-cut gave a new row**, the third of the three cases `commands/brd-split.md` Phase 7 distinguishes when it offers this command, because no `[CG#n]` on file was derived against a row that arrived after them — it takes the `[BR#n]` inventory that slice's own `brd/brd-inventory.md`
 holds and checks its premises against real code and real design assets, at pinned commits, rather
@@ -2106,7 +2108,7 @@ fire `emit-block`. The one exception is a halt on a tool the ai-containers image
 3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /prd-ground`, `phase: brd-to-prd`, `role: pm`,
    the run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the
    report-only notice).
-4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the
+4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the
    commit step below. Redact per §1. Silent.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. Stages
    ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits

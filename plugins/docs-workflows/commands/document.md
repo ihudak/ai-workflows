@@ -9,6 +9,8 @@ Generate product documentation for the resolved Product Requirements Document: $
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names (`args: "<name> index"` loads the index; every part carries it), unless that part is already in this conversation. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 Signature: one positional address — a key, or an `@<path>` naming a folder in the specs tree. Phase 5.5 resolves each write target against the content roots the resolved profile declares, and Phase 6.3 writes each page into the root that owns it.
 
 `/document` (keyed mode) is the **keyed feature-documentation** workflow. Given a PRD address — or an Epic's, which scopes the repositories it resolves, the diff summaries and the documentation plan to that Epic — it reads the resolved PRD folder, resolves the implementation record's repo slugs to local clones, runs parallel diff summaries of the refs that record names, synthesises product documentation, runs style-check + Opus review gates, and writes the output into the docs repository Phase 0 step 2 resolves — the current working directory where it carries a docs signal, and otherwise `${DOCS_PATH:-/workspace/docs}`, a repository under `${REPOS_PATH:-/workspace}`, or cwd or a path you confirm: a run writes wherever that ladder answers, not wherever it was started (Phase 0 step 2, and step 4 for the profile).
@@ -1445,7 +1447,7 @@ appends one per-invocation entry to `<PRD-dir>/dev-workflows/cost/<sid8>.md` via
 the specs-first ladder (§8). Keyed mode always resolves its folder — an absent one is a stop in the Mode detection section — so that is where the entry lands whenever `$SPECS_PATH` is writable, never in pending; with a key resolved, §9's opportunistic move-then-delete reconciliation offers any pending files earlier keyless runs left. **The checkpoint advances in every tier, report-only included.** Surface the persisted path (or the
 report-only notice) as this phase's only output.
 
-**Then write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite
+**Then write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite
 `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the
 pointer reflects the completed run, and before the commit step below, so it
 is included in it. Redact per §1. Silent; the printed `### Context hygiene`
@@ -1495,7 +1497,7 @@ name is ever written (§10 privacy).
 - ALWAYS end the Phase 9 report with a `### Next step` recommendation (per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")`) — guidance only, never auto-invoked; omitted in direct doc-edit mode (Mode B)
 - ALL written claims must be traceable to a resolved key or to a summarised diff — attribution goes in the run's return payload and the commit message, NEVER inline in the rendered page (`workflows-core:doc-structure-conventions` §1)
 - For `image_policy: cdn_upload_required`, NEVER copy user-provided screenshots into the repo — stage under `<screenshot_staging_dir>` — the resolved PRD folder's screenshot subfolder by default, else a directory the operator names (Phase 1); never the docs repo, never `/tmp` — and surface in the Phase 9 `### Screenshots to upload manually` section
-- ALWAYS end the Phase 9 report with a `### Context hygiene` block per `workflows-core:session-hygiene` — prepare-first (the `resume.md` write runs later, in the terminal cost phase, per `workflows-core:session-hygiene` §1 — this block prints the guidance only), then a docs→PM handoff suggestion (`/clear`) + `/rename <PRD-ID>-<slug>-dev`; guidance only, never auto-run. **Mode B (direct doc-edit) omits this** — no PRD context.
+- ALWAYS end the Phase 9 report with a `### Context hygiene` block per `Skill(skill: "workflows-core:reference", args: "session-hygiene guidance")` — prepare-first (the `resume.md` write runs later, in the terminal cost phase, per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` §1 — this block prints the guidance only), then a docs→PM handoff suggestion (`/clear`) + `/rename <PRD-ID>-<slug>-dev`; guidance only, never auto-run. **Mode B (direct doc-edit) omits this** — no PRD context.
 
 ---
 

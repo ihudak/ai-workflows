@@ -9,6 +9,8 @@ Author a product specification for the resolved item: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names (`args: "<name> index"` loads the index; every part carries it), unless that part is already in this conversation. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/specify` is the **PE-phase specification-authoring** workflow — the specification step of the PM→PA→PE→Dev pipeline
 (`/specify` → `specification.md`; then `/design` → `design.md`). Given an Epic or PRD address,
 it reads the item from the specs tree, lightly scans code to
@@ -1063,9 +1065,9 @@ persists the plugin-facing slice of its report as session feedback.
 **Capture-at-block invariant.** This terminal phase captures gaps for a *completed* run. Separately, if an EARLIER phase **halts on a plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked), `emit-block` (per `workflows-core:feedback-emission`) at that halt **before** escalating — so a run abandoned at the block still records the gap. NEVER `emit-block` for a work-quality review BLOCK or an environment / user halt (repo/spec gate, key-not-found, cancellation). **Every `SPECIFY_*` stop is argument-, tree- or git-shaped, and of that second class**: `SPECIFY_NEEDS_KEY`, `SPECIFY_ONE_ADDRESS`, `SPECIFY_BRD_NOT_FOUND`, `SPECIFY_BRD_NOT_SLICED`, `SPECIFY_EPIC_NOT_FOUND`, `SPECIFY_REGISTER_NOT_ON_MAIN` and `SPECIFY_REGISTER_NOT_HANDED_OFF` report the operator's own argument list, specs tree or where its register sits in git, not a capability this plugin lacks, so none of them `emit-block`s. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
 **Session-hygiene invariant.** End the report with a `### Context hygiene` block per
-`workflows-core:session-hygiene` — prepare-first (the
+`Skill(skill: "workflows-core:reference", args: "session-hygiene guidance")` — prepare-first (the
 `resume.md` write runs later, in the terminal cost phase, per
-`workflows-core:session-hygiene` §1 — this block prints the
+`Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` §1 — this block prints the
 guidance only), then a
 span suggestion (PRD-level→`/product-workflows:epics` `/compact`; Epic-level→`/dev-workflows:design` `/clear`) +
 `/rename <PRD-ID>-<slug>-pe`. Guidance only, never auto-run.
@@ -1131,7 +1133,7 @@ reconciliation (§9) when no PRD key resolves. **The checkpoint advances even in
 the pending / report-only tiers.** Surface the persisted path (or the
 report-only notice) as this phase's only output.
 
-**Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite
+**Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite
 `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the
 pointer reflects the completed run, and before the commit step below, so it is
 included in it. Redact per §1. Silent; the printed `### Context hygiene`

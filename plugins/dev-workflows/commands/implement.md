@@ -11,6 +11,8 @@ Usage: `/implement <ADDRESS> | <prompt> [@file…] [@spec-folder] [@repo…] [--
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names (`args: "<name> index"` loads the index; every part carries it), unless that part is already in this conversation. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 ---
 
 ## Phase 0 — Load and classify inputs
@@ -1343,7 +1345,7 @@ cross-check (§5), and appends one per-invocation entry to
 **The checkpoint advances even in the pending / report-only tiers.** Surface the
 persisted path (or the report-only notice) as this phase's only output.
 
-**Then write the resume pointer (keyed runs only — reads run-state `mode`).** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite
+**Then write the resume pointer (keyed runs only — reads run-state `mode`).** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite
 `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the
 pointer reflects the completed run, and before the commit step below, so it
 is included in it. Redact per §1. Silent; the printed `### Context hygiene`
