@@ -36,7 +36,8 @@ and the triage stays the orchestrator's there too: one rule for every fixer.
 A review that returned no findings is still triaged. Every such review takes steps 3 to 5 of
 § The step — step 5 rules on each line of a `### Declined to judge` list, which a review with no
 findings can still carry — and § Reporting, and part `no-findings` holds them. What else of this
-reference it takes turns on its verdict and on whether it is a re-review (§ On re-review):
+reference it takes turns on its verdict and on whether it is a re-review (§ On re-review; the caller's
+own text names which of its reviews are re-reviews):
 
 - **A `PASS`, or a re-review whose verdict is not `BLOCK`,** takes nothing else of this reference:
   part `no-findings` holds all of it such a review needs, and a second verdict that is not `BLOCK`
