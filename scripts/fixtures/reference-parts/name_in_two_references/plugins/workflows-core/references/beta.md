@@ -4,6 +4,7 @@
 part core always
 part detail
 part other
+alias other "§2"
 -->
 
 <!-- part: core -->

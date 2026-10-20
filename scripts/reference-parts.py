@@ -59,35 +59,36 @@ cited reference's index holds places it on that part, and names of several parts
 each of them, since the preamble has the run load the part that holds each rule. A name is an
 italic, bold, backticked or quoted span, read with any code span inside it, or a § reference
 that belongs to the citation. A § reference belongs to a reference citation, split or not -- a
-`<plugin>:<name>` token naming a reference file of that plugin the tree holds, a loader call
-or a path: the nearest before it in its sentence; else the first after it there; else, in a
-sentence citing nothing, the nearest in an earlier sentence of its paragraph; else none, and
-it names nothing. An explicit request places it on the part requested, and fails where its
-sentence names a rule that the loads of that sentence's calls do not hold -- each part with
-its needs and the always part, or everything where one of them loads the whole reference: a
-call converted to the wrong part. An `index` request is a lookup, so its sentence passes
-whatever it names: the run loads what the index names. A run reads a sentence whole before it
-acts, so the calls of one sentence are one load in any order, and a rule named before its call
-is held by it; no other sentence's call counts. Where a PARAGRAPH makes explicit part requests
-of a reference, its sentences may apply "its" rules leaning on the paragraph's loads. A
-sentence citing a split reference is judged as that citation for the names that reference's
-index holds; any other name in a sentence of the paragraph, where a requested reference's
-index holds it, passes only where a load made AT OR BEFORE that sentence holds it, never a
-later one, erring toward failing. Those loads are the explicit part requests, the explicit
-whole loads and the parts bare citations are placed on, of every split reference the paragraph
-cites whose index holds the name, and a bare citation naming no rule loads the whole
-reference, which is where the preamble sends it (`args: "<split>"`); an `index` load holds
-every later sentence, as the lookup it is. A § reference in a sentence citing nothing is read
-against the loads of the reference it belongs to alone. A paragraph making no part request is
-not read this way: measured over the live tree, that widening fired only on correct prose. No
-name places a citation on the whole reference, which is what the preamble then loads, so it
-passes and is counted whole, as does an explicit whole load (`args: "<split>"`). A citation
-naming a rule held in a private part fails, explicit or bare, and so does any other sentence
-naming one in a paragraph read that way: its text is what no part load brings. A name that
-matches entries in two parts fails: every name in an index has one part, so the guard is the
-index's own uniqueness error, which fails check-citations, before it reads a citation, as it
-fails check-parts. The census `placed N, whole M` is printed per reference, N counting each
-part a citation is placed on; `--verbose` lists each whole citation as
+`<plugin>:<name>` token naming a reference file of that plugin the tree holds, a loader call,
+a call of a skill SKILL_REFERENCES ties to the one reference it loads, or a path: the nearest
+before it in its sentence; else the first after it there; else, in a sentence citing nothing,
+the nearest in an earlier sentence of its paragraph; else none, and it names nothing. An
+explicit request places it on the part requested, and fails where its sentence names a rule
+that the loads of that sentence's calls do not hold -- each part with its needs and the always
+part, or everything where one of them loads the whole reference: a call converted to the wrong
+part. An `index` request is a lookup, so its sentence passes whatever public rule it names:
+the run loads what the index names. A run reads a sentence whole before it acts, so the calls
+of one sentence are one load in any order, and a rule named before its call is held by it; no
+other sentence's call counts. Where a PARAGRAPH makes explicit part requests of a reference,
+its sentences may apply "its" rules leaning on the paragraph's loads. A sentence citing a
+split reference is judged as that citation for the names that reference's index holds; any
+other name in a sentence of the paragraph, where a requested reference's index holds it,
+passes only where a load made AT OR BEFORE that sentence holds it, never a later one, erring
+toward failing. Those loads are the explicit part requests, the explicit whole loads and the
+parts bare citations are placed on, of every split reference the paragraph cites whose index
+holds the name, and a bare citation naming no rule loads the whole reference, which is where
+the preamble sends it (`args: "<split>"`); an `index` load holds every later sentence, as the
+lookup it is. A § reference in a sentence citing nothing is read against the loads of the
+reference it belongs to alone. A paragraph making no part request is not read this way:
+measured over the live tree, that widening fired only on correct prose. No name places a
+citation on the whole reference, which is what the preamble then loads, so it passes and is
+counted whole, as does an explicit whole load (`args: "<split>"`). A citation naming a rule
+held in a private part fails, explicit or bare, and so does any other sentence naming one in a
+paragraph read that way: its text is what no part load brings. A name that matches entries in
+two parts fails: every name in an index has one part, so the guard is the index's own
+uniqueness error, which fails check-citations, before it reads a citation, as it fails
+check-parts. The census `placed N, whole M` is printed per reference, N counting each part a
+citation is placed on; `--verbose` lists each whole citation as
 `WHOLE <file>:<line>: workflows-core:<split>`.
 
 IT FAILS CLOSED. A scan that finds no declaration fails both subcommands, and a declared
@@ -99,9 +100,12 @@ tells it to; the rule-by-rule reading and the live runs check that it does. A na
 does not read as a span ("rule 6", "the overflow rule") places nothing, so its citation is
 counted whole: the census is how such citations are found. A § reference belongs to a citation
 by position, never by its words: "§4 of `workflows-core:gamma`" after a call of another
-reference belongs to that call, and a § before every citation of its paragraph names nothing.
-And a bare citation the gate counts whole holds every later sentence of its paragraph, though
-a run that reads its rule another way ("the overflow rule") may load only that rule's part.
+reference belongs to that call, and a § in a sentence citing nothing, with no citation before
+it in its paragraph, names nothing, so one leaning on a later sentence's call goes unread. In
+a paragraph requesting one reference, a citation-free sentence whose § leans on an earlier
+bare citation of another split reference is not read either. And a bare citation the gate
+counts whole holds every later sentence of its paragraph, though a run that reads its rule
+another way ("the overflow rule") may load only that rule's part.
 
 Usage:
     python3 scripts/reference-parts.py [--root DIR] generate
@@ -138,6 +142,9 @@ DEPENDENT_PLUGIN_RELS = (
 )
 LOADER_SKILL_REL = "plugins/workflows-core/skills/reference/SKILL.md"
 LOADER_SKILL = "workflows-core:reference"
+# A core skill whose call loads one reference, so the call cites it: a § reference after it belongs
+# to that reference. Every other skill call is no citation.
+SKILL_REFERENCES = {"model-routing": "model-routing/classification"}
 REF_DIR = "references"
 PARTS_DIR = "reference-parts"
 SCAN_DIRS = ("commands", "agents", "references")
@@ -624,9 +631,11 @@ CALL = re.compile(r'"' + re.escape(LOADER_SKILL) + r'"\s*,\s*args:\s*"([^"]*)"')
 WHOLE_PATH = re.compile(r"(?<![A-Za-z0-9_.-])" + re.escape(REF_DIR) + r"/([A-Za-z0-9][A-Za-z0-9_-]*)\.md\b")
 PART_PATH = re.compile(r"(?<![A-Za-z0-9_.-])" + re.escape(PARTS_DIR) + r"/([A-Za-z0-9][A-Za-z0-9_-]*)/([^/\s`)\"]+)\.md\b")
 # Every reference citation, split or not, that a § reference can belong to: a `<plugin>:<name>`
-# token naming a reference file of that plugin the tree holds, a loader call, a path.
+# token naming a reference file of that plugin the tree holds, a loader call, a call of a skill
+# SKILL_REFERENCES names, a path.
 ANY_TOKEN = re.compile(r"(?<![A-Za-z0-9_-])([a-z][a-z0-9-]*):([A-Za-z0-9](?:[A-Za-z0-9_/-]*[A-Za-z0-9])?)")
 ANY_CALL = re.compile(r'"' + re.escape(LOADER_SKILL) + r'"\s*,\s*args:\s*"\s*([^"\s]*)')
+SKILL_CALL = re.compile(r'skill:\s*"' + re.escape(CORE_NAME) + r':([A-Za-z0-9][A-Za-z0-9_-]*)"')
 ANY_PATH = re.compile(r"(?<![A-Za-z0-9_.-])(" + re.escape(REF_DIR) + "|" + re.escape(PARTS_DIR) +
                       r")/([A-Za-z0-9][A-Za-z0-9_/-]*)\.md\b")
 NO_CITATION = object()   # what a § reference belongs to where no citation it could lean on exists
@@ -836,6 +845,8 @@ def cmd_check_citations(root, verbose):
             cites = [(m.start(), m.group(1) if m.group(1) in refs else None) for m in ANY_CALL.finditer(joined)]
             cites += [(m.start(), m.group(2) if m.group(1) == CORE_NAME and m.group(2) in refs else None)
                       for m in ANY_TOKEN.finditer(joined) if is_reference(m.group(1), m.group(2))]
+            cites += [(m.start(), SKILL_REFERENCES[m.group(1)] if SKILL_REFERENCES[m.group(1)] in refs else None)
+                      for m in SKILL_CALL.finditer(joined) if m.group(1) in SKILL_REFERENCES]
             for m in ANY_PATH.finditer(joined):
                 key = m.group(2) if m.group(1) == REF_DIR else m.group(2).split("/")[0]
                 cites.append((m.start(), key if key in refs else None))
@@ -1229,9 +1240,10 @@ CASES = [
     ]),
     # alpha and beta each hold a rule named Closed-vocabulary pickers, alpha in pickers, beta in
     # detail. Green: alpha's stops and beta's detail loaded, then the name in a sentence citing
-    # nothing, which beta's load holds; and the name in a sentence citing beta, which is judged as
-    # that citation, never against alpha's loads. Red: alpha's stops and beta's other loaded, then
-    # the name, which neither load holds.
+    # nothing, which beta's load holds; the name in a sentence citing beta, which is judged as that
+    # citation, never against alpha's loads; and, in a paragraph requesting only alpha, a §2 of
+    # beta's (its other part) leaning on an earlier bare citation of beta, which is not read. Red:
+    # alpha's stops and beta's other loaded, then the name, which neither load holds.
     ('name_in_two_references', "a name is held by any loaded reference whose index holds it, and a sentence citing "
                                "one reference is that citation only for that reference's names", [
         Step(['check-citations'], 1, [U + ":19: a sentence citing workflows-core:alpha no other way names a rule of "
@@ -1240,8 +1252,8 @@ CASES = [
                                       U + ":19: a sentence citing workflows-core:beta no other way names a rule of "
                                           "part detail, which no load of it at or before that sentence in its "
                                           "paragraph holds",
-                                      'workflows-core:alpha: placed 3, whole 0',
-                                      'workflows-core:beta: placed 3, whole 0'], errors=2),
+                                      'workflows-core:alpha: placed 4, whole 0',
+                                      'workflows-core:beta: placed 4, whole 0'], errors=2),
     ]),
     # alpha aliases §1 to pickers and §4 to stops; gamma is a core reference and delta a plugin's
     # own, neither split. Green: a §4 after a gamma call in a sentence that called alpha before it,
@@ -1249,7 +1261,7 @@ CASES = [
     # and a `references/delta.md` path. Red: a §4 in a sentence citing nothing after a pickers
     # call, which belongs to that call and names alpha's stops rule; and a §4 right after one.
     ('section_belongs_to_nearest_citation',
-     'a § reference belongs to the nearest reference citation before it, in its sentence or before it', [
+     'a § reference belongs to the nearest reference citation before it, in its sentence or an earlier one', [
         Step(['check-citations'], 1, [U + ":25: a sentence citing workflows-core:alpha no other way names a rule of "
                                           "part stops, which no load of it at or before that sentence in its "
                                           "paragraph holds",
@@ -1271,6 +1283,15 @@ CASES = [
     # pickers call and then a gamma call, which is the nearer; and a §4 before any citation.
     ('section_in_sentence_citing_nothing', 'a § in a sentence citing nothing belongs to the nearest earlier citation', [
         Step(['check-citations'], 0, ['workflows-core:alpha: placed 3, whole 0', 'check-citations: PASS'], errors=0),
+    ]),
+    # alpha aliases §4 to stops; model-routing/classification is a core reference, not split. Green:
+    # a §4 after a `workflows-core:model-routing` skill call, which loads that reference. Red: a §4
+    # after a `workflows-core:frames` skill call, no citation, so it leans on the pickers call.
+    ('skill_call_cites_its_reference', "a skill call cites only the reference the config's skill map names", [
+        Step(['check-citations'], 1, [U + ":17: a sentence citing workflows-core:alpha no other way names a rule of "
+                                          "part stops, which no load of it at or before that sentence in its "
+                                          "paragraph holds",
+                                      'workflows-core:alpha: placed 2, whole 0'], errors=1),
     ]),
     # dev-workflows' references/ holds a directory upgrade/ and a file upgrade/handoff.md. Green: a §4
     # after the `dev-workflows:upgrade/handoff` token, a reference file. Red: a §4 after the

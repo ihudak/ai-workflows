@@ -17,3 +17,5 @@ Invoke `Skill(skill: "workflows-core:reference", args: "alpha stops")`. Invoke `
 Invoke `Skill(skill: "workflows-core:reference", args: "alpha stops")`. Normalise per `workflows-core:beta`'s *Closed-vocabulary pickers*.
 
 Invoke `Skill(skill: "workflows-core:reference", args: "alpha stops")`. Invoke `Skill(skill: "workflows-core:reference", args: "beta other")`. Then normalise per *Closed-vocabulary pickers*.
+
+Invoke `Skill(skill: "workflows-core:reference", args: "alpha stops")`. Per `workflows-core:beta`'s *Closed-vocabulary pickers*, read the answer. Then act as §2 says.
