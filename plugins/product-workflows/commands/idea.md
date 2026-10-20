@@ -733,7 +733,7 @@ key, since Phase 0 required one before this run wrote anything, but for two diff
 no pointer because this run hands its brief off in the same run rather than being a phase a
 later run resumes (`workflows-core:session-hygiene` §1), and no label because the ideation
 phase is short (§4).) Guidance only — see
-`workflows-core:session-hygiene`.
+`workflows-core:session-hygiene` §5.
 
 ---
 
@@ -748,7 +748,7 @@ abandoned at the block still records the gap. NEVER `emit-block` for an environm
 source-not-found, cancellation). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
 **Session-hygiene invariant.** End Phase 5 with a `### Context hygiene` note per
-`workflows-core:session-hygiene` — a same-role `/compact` suggestion, and neither a `resume.md`
+`workflows-core:session-hygiene` §2 — a same-role `/compact` suggestion, and neither a `resume.md`
 nor a `/rename` label. Two different reasons, neither of them a missing key: no pointer because
 this run hands its brief off in the same run rather than being a phase a later run resumes (§1),
 and no label because the ideation phase is short (§4). Guidance only, never auto-run.

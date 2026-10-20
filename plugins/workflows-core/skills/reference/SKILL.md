@@ -9,6 +9,14 @@ The invocation arguments name one reference file and, optionally, a second
 argument: one entry point within it or, for a reference that loads by part,
 one part of it.
 
+Work from the reference's own words, never from memory or a summary. Where
+the text this request needs is already in this conversation word for word,
+from a read made in this run, work from that text and read nothing. Read it
+otherwise: when it was never read, when only a different part of it was
+read, or when a compaction has replaced the earlier read with a summary — a
+summary of a reference is never its text. A read of the whole file covers
+every entry point in it.
+
 These references load by part: `escalation-rules`, `finding-triage`,
 `next-phase-offer` and `session-hygiene`. For one of these, a second
 argument names a part: read
@@ -22,14 +30,6 @@ each of its parts, and a part already read covers itself and every part it
 holds. On any other reference, a second argument names an entry point, and
 one naming none of its entry points is an error too: stop and report it,
 never read it as something else.
-
-Work from the reference's own words, never from memory or a summary. Where
-the text this request needs is already in this conversation word for word,
-from a read made in this run, work from that text and read nothing. Read it
-otherwise: when it was never read, when only a different part of it was
-read, or when a compaction has replaced the earlier read with a summary — a
-summary of a reference is never its text. A read of the whole file covers
-every entry point in it.
 
 To read the whole reference, read
 `${CLAUDE_PLUGIN_ROOT}/references/<the first argument>.md`.

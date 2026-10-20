@@ -344,7 +344,7 @@ deliverables require and no next-phase offer at all, so no `<merge-clause>` aris
 ## Session hygiene co-fires here
 
 The `### Next step` this contract produces is immediately followed by a
-`### Context hygiene` block (`${CLAUDE_PLUGIN_ROOT}/references/session-hygiene.md`): the compact-vs-clear
+`### Context hygiene` block (`${CLAUDE_PLUGIN_ROOT}/references/session-hygiene.md` §2): the compact-vs-clear
 choice reads the SAME role labels computed here (same role → `/compact`; role handoff →
 `/clear`). This reference owns the role graph; `session-hygiene.md` only reads it.
 <!-- /part -->

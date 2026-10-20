@@ -1044,7 +1044,7 @@ The resume pointer is written in the terminal cost phase (Phase 11), per `workfl
 - **Handing to PA (`/product-workflows:create-ard <EPIC>`), even yourself?** → run **`/clear`** for a clean slate.
 - Consider **`/rename <PRD-ID>-<slug>-pe`** to relocate this session later.
 
-Guidance only — see `workflows-core:session-hygiene`.
+Guidance only — see `workflows-core:session-hygiene` §5.
 ```
 
 ---

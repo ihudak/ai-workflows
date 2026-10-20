@@ -629,7 +629,7 @@ Outside that one case there is no question to ask and no option that replaces th
    - **A PA/PE phase still pending for this PRD (e.g. `/product-workflows:create-ard`, `/product-workflows:epics`), even yourself?** → run **`/clear`** before switching roles.
    - Consider **`/rename <PRD-ID>-<slug>-<role>`** to relocate this session later — `<role>` is this run's inferred lane (`pm` on the early run, `dev` once a spec or design exists).
 
-   Guidance only — see `workflows-core:session-hygiene`.
+   Guidance only — see `workflows-core:session-hygiene` §5.
    ```
 
 ---

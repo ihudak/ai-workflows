@@ -1273,4 +1273,4 @@ that command gates on `prd.md`, which this run does not write.
 
 - Consider **`/rename <PRD-ID>-<slug>-pe`** to relocate this session later.
 
-Guidance only — see `workflows-core:session-hygiene`.
+Guidance only — see `workflows-core:session-hygiene` §5.

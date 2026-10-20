@@ -1397,7 +1397,7 @@ The resume pointer is written in the terminal cost phase (Phase 11), per `workfl
 - **On to `/docs-workflows:release-notes <PRD>` (still Dev — a spec or design exists by now, so this is the late run)?** → run **`/compact`** — context stays relevant.
 - Consider **`/rename <PRD-ID>-<slug>-dev`** to relocate this session later.
 
-Guidance only — see `workflows-core:session-hygiene`.
+Guidance only — see `workflows-core:session-hygiene` §5.
 ```
 
 ---

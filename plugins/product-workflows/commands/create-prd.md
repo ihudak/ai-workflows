@@ -859,7 +859,7 @@ auto-suggested; name the session manually if useful. Then:
 - **Continuing as PM (`/docs-workflows:release-notes <ADDRESS>`)?** → run **`/compact`**.
 - **Handing to PA (`/product-workflows:create-ard <PRD>`) or PE (`/product-workflows:epics <PRD>`), even yourself?** → run **`/clear`** for a clean slate.
 
-Guidance only — nothing is auto-run. See `workflows-core:session-hygiene`.
+Guidance only — nothing is auto-run. See `workflows-core:session-hygiene` §5.
 
 ---
 

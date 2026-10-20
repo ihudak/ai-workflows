@@ -882,7 +882,7 @@ to PE/Dev, so:
 - Continuing to draft more ARD areas yourself right now? → **`/compact`** is fine.
 - Consider **`/rename <PRD-ID>-<slug>-pa`** so you can find this session later.
 
-Guidance only — see `workflows-core:session-hygiene`.
+Guidance only — see `workflows-core:session-hygiene` §5.
 
 ---
 

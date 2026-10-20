@@ -1561,7 +1561,7 @@ there is no wait to state. Guidance only — never auto-invokes another command.
 
 ### Context hygiene
 
-Per `workflows-core:session-hygiene`, the resume pointer is written in the
+Per `workflows-core:session-hygiene` §1, the resume pointer is written in the
 terminal cost phase (Phase 9), after the cost entry and before the commit step. Continuing this
 route into `/product-workflows:brd-split <BRD-KEY>` — both PM — keeps the context relevant → run
 **`/compact`**. Guidance only — nothing is auto-run.

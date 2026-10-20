@@ -767,7 +767,7 @@ The resume pointer is written in the terminal cost phase (Phase 12), per
   the next run reads them from the specs repo, not from this session.
 - Consider **`/rename <KEY>-<slug>-pm`** so you can find this session later.
 
-Guidance only — see `workflows-core:session-hygiene`.
+Guidance only — see `workflows-core:session-hygiene` §5.
 
 ---
 

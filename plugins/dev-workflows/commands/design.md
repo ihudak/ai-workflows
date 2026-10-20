@@ -556,4 +556,4 @@ The resume pointer is written in the terminal cost phase (Phase 9), per `workflo
 - **Continuing on this design's folder (`/dev-workflows:ready <EPIC>` / `/dev-workflows:implement <EPIC>`, or `<PRD>` in place of `<EPIC>` after a broad PRD-level design) or the next Epic (`/dev-workflows:design <SIBLING-EPIC>`) — all still Dev?** → run **`/compact`** — context stays relevant.
 - Consider **`/rename <PRD-ID>-<slug>-dev`** to relocate this session later.
 
-Guidance only — see `workflows-core:session-hygiene`.
+Guidance only — see `workflows-core:session-hygiene` §5.

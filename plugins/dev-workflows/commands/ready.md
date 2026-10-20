@@ -525,7 +525,7 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
    - **PARTIAL / NOT-SUPPORTED → resolving the gaps yourself now?** → **`/compact`**.
    - Consider **`/rename <PRD-ID>-<slug>-dev`** to relocate this session later.
 
-   Guidance only — see `workflows-core:session-hygiene`.
+   Guidance only — see `workflows-core:session-hygiene` §5.
    ```
 
 `/ready` **NEVER** writes outside `$SPECS_PATH`. It commits and hands off

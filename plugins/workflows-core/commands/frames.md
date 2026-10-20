@@ -379,7 +379,7 @@ on disk and the pull request).
 
 A `/frames` run over a large set carries forty descriptions and nothing else it needs to keep. Going
 on to other work in this session? → run **`/compact`**; every index is already on disk. Guidance only —
-see `${CLAUDE_PLUGIN_ROOT}/references/session-hygiene.md`.
+see `${CLAUDE_PLUGIN_ROOT}/references/session-hygiene.md` §5.
 
 ---
 

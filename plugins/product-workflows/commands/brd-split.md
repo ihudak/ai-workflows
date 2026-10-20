@@ -1545,7 +1545,7 @@ child's route to reach, never this BRD's own.
 
 ### Context hygiene
 
-Per `workflows-core:session-hygiene`, the resume pointer is written in the
+Per `workflows-core:session-hygiene` §1, the resume pointer is written in the
 terminal cost phase (Phase 8), after the cost entry and before the commit step. On `full`,
 grounding a child is PM work too — PM to PM, so → run **`/compact`** before typing it, or let
 *Ground now* run it in this session; a PA or PE grounding it for a PM who cannot clone the code
