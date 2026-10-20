@@ -13,5 +13,3 @@ rule of these references from memory.
 ## Phase 1
 
 Normalise the answer per `workflows-core:alpha`'s *Closed-vocabulary pickers* and stop per its *Key dir not found*.
-
-Present the list per `workflows-core:alpha`'s *Choice lists are presented verbatim* and *Closed-vocabulary pickers*.

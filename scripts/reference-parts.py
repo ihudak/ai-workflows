@@ -56,13 +56,17 @@ reference-parts/<split>/<part>.md -- names a requestable part or `index`; and ev
 -- in the consumers and in workflows-core's own commands/, agents/ and references/ -- is
 PLACED. The unit is one sentence and one cited reference. A name in that sentence (an
 italic, bold, backticked or quoted span, or a § reference) that the cited reference's index
-holds places it on that part; names of several parts place it only where one part holds them
-all (the always part comes with every part), and fail otherwise; an explicit request places
-it on the part requested, and fails where its sentence names a rule that load lacks; no name
-places it on the whole reference, which is what the preamble then loads, so it passes and is
-counted, as does an explicit whole load (`args: "<split>"`). The census `placed N, whole M`
-is printed per reference; `--verbose` lists each whole citation as
-`WHOLE <file>:<line>: workflows-core:<split>`.
+holds places it on that part, and names of several parts place it on each of them, since the
+preamble has the run load the part that holds each rule; an explicit request places it on
+the part requested, and fails where its sentence names a rule that load (the part, its needs
+and the always part) does not hold -- a call converted to the wrong part; no name places it
+on the whole reference, which is what the preamble then loads, so it passes and is counted
+whole, as does an explicit whole load (`args: "<split>"`). A name that matches entries in two
+parts fails: every name in an index has one part, so the guard is the index's own uniqueness
+error, which fails check-citations, before it reads a citation, as it fails check-parts. The
+census `placed N, whole M` is printed per
+reference, N counting each part a citation is placed on; `--verbose` lists each whole
+citation as `WHOLE <file>:<line>: workflows-core:<split>`.
 
 IT FAILS CLOSED. A scan that finds no declaration, or a declared reference no consumer cites,
 fails: a gate that matched nothing proves nothing when it passes.
@@ -795,19 +799,16 @@ def cmd_check_citations(root, verbose):
                                         "which that load does not hold" % (rel, g["line"], ", ".join(g["parts"]),
                                                                            CORE_NAME, name, ", ".join(lacking)))
                     else:
-                        census[name][0] += 1
+                        census[name][0] += len(set(g["parts"]))
                     continue
                 if g["bad"]:
                     continue
                 if g["whole_call"] or not hits:
                     census[name][1].append("%s:%d" % (rel, g["line"]))
                     continue
-                if any(all(h in covers(refs, ref, p) for h in hits) for p in hits):
-                    census[name][0] += 1
-                else:
-                    problems.append("%s:%d: cites %s:%s beside names of rules in %d parts, %s, and no one part "
-                                    "holds them all -- cite each rule in a sentence of its own"
-                                    % (rel, g["line"], CORE_NAME, name, len(hits), ", ".join(hits)))
+                # A bare citation is placed on the part of each rule its sentence names: the
+                # preamble has the run load the part that holds each rule before applying it.
+                census[name][0] += len(hits)
         if cited and path in consumers and preamble not in paragraphs(text):
             problems.append("%s: cites %s but does not carry the load-by-part preamble as a paragraph of its own"
                             % (rel, ", ".join("%s:%s" % (CORE_NAME, n) for n in sorted(cited))))
@@ -906,6 +907,8 @@ CASES = [
     ('ambiguous_name', 'one rule name, after normalising, in two parts', [
         Step(['check-parts'], 1, [A + ": rule name 'closed-vocabulary pickers' is in two parts, core and pickers"],
              errors=1),
+        Step(['check-citations'], 1, [A + ": rule name 'closed-vocabulary pickers' is in two parts, core and pickers",
+                                      'fix the declarations first'], errors=1),
     ]),
     # Generated from older pickers text; core.md deleted since; old.md left by a removed part.
     ('stale_generated', 'a stale, a missing and an orphaned generated file; generate repairs all three', [
@@ -946,11 +949,10 @@ CASES = [
         Step(['check-citations'], 1, ["workflows-core:alpha is declared split, but no file in the dependent plugins' "
                                       "commands/, agents/ or references/ cites it"], errors=1),
     ]),
-    # Beside the red sentence (pickers and stops), one names core and pickers: pickers holds both.
-    ('citation_names_two_parts', 'a sentence naming rules of two parts no one part holds', [
-        Step(['check-citations'], 1, [U + ":15: cites workflows-core:alpha beside names of rules in 2 parts, pickers, "
-                                          "stops, and no one part holds them all",
-                                      'workflows-core:alpha: placed 1, whole 0'], errors=1),
+    # One bare sentence names a pickers rule and a stops rule: the run loads both parts, so the
+    # citation is placed on both and the census counts two.
+    ('citation_names_two_parts', 'a bare sentence naming rules of two parts is placed on both', [
+        Step(['check-citations'], 0, ['workflows-core:alpha: placed 2, whole 0', 'check-citations: PASS'], errors=0),
     ]),
     # Beside the red request (core, naming a pickers rule), one requests pickers and names core's.
     ('request_lacks_named_rule', 'an explicit part request whose sentence names a rule that part lacks', [
