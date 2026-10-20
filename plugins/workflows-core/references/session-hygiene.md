@@ -1,5 +1,14 @@
 # Session hygiene (embedded — shared reference)
 
+<!-- reference-parts
+part core always
+part resume-pointer
+part guidance
+alias resume-pointer "§1" "Location" "Skipped"
+alias guidance "§2" "§3" "§4" "§5" "`### Context hygiene`"
+-->
+
+<!-- part: core -->
 The plugin-wide contract for **session-hygiene suggestions**: after a big command
 finishes, the pipeline first **flushes resume-critical state to disk**, then **suggests
 the right context action** (`/compact` or `/clear`) plus a session **`/rename`** aid.
@@ -10,7 +19,9 @@ so the contract lives in ONE place (the same shape as `next-phase-offer` and the
 Everything here is **guidance-only** — the plugin NEVER auto-invokes `/compact`,
 `/clear`, or `/rename`. The goal is to stop relying on a human to keep asking "prepare
 for a compact/clear": the pipeline does the prep and prompts the choice itself.
+<!-- /part -->
 
+<!-- part: resume-pointer -->
 ## 1. Prepare-checkpoint (runs FIRST — unconditional for PRD-scoped runs, save one carrying `specs_git: misrooted`)
 
 At command finalization — AFTER the deliverable artifact is saved/committed, AFTER
@@ -25,14 +36,14 @@ of `emit-cost`.** The `### Context hygiene` block in a command's report carries 
 step that runs after the cost phase's `emit-cost` call has returned and before
 `commit-artifacts`** — placed at the end of the command's terminal cost phase, but never
 folded into `emit-cost`'s own procedure. `cost-emission.md` owns that procedure and
-writes no resume pointer; giving it one would split ownership of this file across two
+writes no resume pointer; giving it one would split ownership of `resume.md` across two
 references. The order is three separate steps, as §5 rule 2 states: **cost →
 `resume.md` → `commit-artifacts`**.
 
 Binding the write to the printed block instead would break it twice over: several
 commands compose their Final Report *before* their follow-up and cost phases run, so the
 write would land before the cost entry it is supposed to follow, and it would stay
-uncommitted, since `commit-artifacts` runs after cost. Prepare-first is still satisfied:
+uncommitted, since `commit-artifacts` runs after cost. Prepare-first (§5 rule 2) is still satisfied:
 the write happens before the run ends, and therefore before the user can act on the
 printed suggestion.
 
@@ -75,7 +86,9 @@ log). It is intentionally tiny:
 content pulled from a PRD or the session — redact any secret,
 credential, token, or PII. A resume pointer records *what to do next*, never a
 sensitive value.
+<!-- /part -->
 
+<!-- part: guidance -->
 ## 2. The suggestion — role-aware (reads next-phase-offer's role labels)
 
 `next-phase-offer.md` already role-labels every next option (PM / PA / PE / Dev / Security Engineer). For
@@ -112,10 +125,17 @@ not any argument shape, is what settles it.** Read off those blocks, the set is 
 `/create-ard`, `/epics`, `/specify`, `/design`, `/ready`, `/implement`, `/document`,
 `/release-notes` — plus the two PM effort-proposal commands, `/prd-proposal` and `/brd-proposal`.
 For those, print a suggested `/rename <KEY>-<slug>-<role>` line so the user can relocate the session
-in `claude --resume` later (e.g. after going home). `<KEY>` is the key that named the folder this run
-resolved — a PRD key on the ladder, the root BRD key for `/brd-proposal` — and `<role>` is the
-just-finished command's lane tag (pm / pa / pe / dev). Guidance-only — a command cannot run
-`/rename` itself.
+in `claude --resume` later (e.g. after going home).
+<!-- /part -->
+
+<!-- part: core -->
+`<KEY>` is the key that named the folder this run resolved — a PRD key on the PA/PE/Dev ladder, the
+root BRD key for `/brd-proposal` — and `<role>` is the just-finished command's lane tag
+(pm / pa / pe / dev).
+<!-- /part -->
+
+<!-- part: guidance -->
+Guidance-only — a command cannot run `/rename` itself.
 
 **Do not restate that set as "every command that takes a `<PRD>`".** Argument shape does not settle
 it: `/implement`'s address is optional (absent → the run is **direct**) and `/document`'s Mode B
@@ -173,3 +193,4 @@ A short **`### Context hygiene`** block appended right after the `### Next step`
 at the END of the command's Final Report (guidance-only prose), plus one invariant citing
 this reference. `/vuln` + `/upgrade` place the `/compact` line near their
 `impl-maintenance` handoff. `/implement` places none mid-run (§3).
+<!-- /part -->

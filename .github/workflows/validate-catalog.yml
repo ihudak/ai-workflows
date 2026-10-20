@@ -112,6 +112,13 @@ jobs:
         # the message it must print and its number of problems, not the exit code alone.
         run: python3 scripts/reference-parts.py --selftest
 
+      - name: Check the split references and their generated parts
+        # Regenerates every part in memory and compares it byte for byte with the committed file, so
+        # a source edited without `generate` fails here, naming the file. A FLAG line (a positional
+        # pointer inside a part) is printed and does not fail: whether it crosses a part is a reading's
+        # call.
+        run: python3 scripts/reference-parts.py check-parts
+
       - name: Install the mermaid gate's pinned parser
         run: npm ci --prefix scripts/mermaid --ignore-scripts --no-audit --no-fund
       - name: Self-test the mermaid gate
