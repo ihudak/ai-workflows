@@ -132,6 +132,18 @@ A failure is located by content because mermaid numbers its errors from text it 
 
 The four constructs the hand-rolled fence scanner got wrong, each a selftest fixture: `red-blockquote`, `red-list-marker`, `red-after-code-span` and `green-indented-code`.
 
+## reference-parts
+
+`scripts/reference-parts.py` exists so a shared reference can be split into parts without a rule going missing (lean context part 1, `docs/superpowers/specs/2026-10-20-lean-context-loader-design.md` §B–§D).
+
+**Why generated files.** Extracting a part when it is loaded was the alternative, and it fails the callers that need parts most: `review-fixer`, which applies one rule of `finding-triage` on every dispatch, has no Bash, and a skill's `allowed-tools` grants no tool its caller lacks; `doc-fixer` has neither Bash nor the loader and reads its reference by path. A committed generated file is one `Read` for every caller, and the model never assembles the always part itself. The source stays one file, so a maintainer edits one place and checks 11, 16 and 20 keep the reference files they are keyed to.
+
+**Why it fails closed.** A part file is read by runs and checked by nothing else, so every way it can drift without a symptom is a failure here, never a pass: a source edited without `generate` serves an old rule; a file a removed part left behind still answers a request that names it; a request naming no part must stop a run, never fall back to something else; an explicit request whose sentence names a rule of another part loads that part and leaves the rule out; and a scan that finds no declaration, or no citation of a declared reference, proves nothing when it passes. A sentence naming rules of two parts is placed only where one part holds both — the always part comes with every part, so a core rule beside another part's rule places on the other — and fails otherwise, since loading either part leaves the other rule out. A citation naming no rule the index holds is none of these: the preamble loads the whole reference for it, which loses no rule, so it passes and is counted, and the census is how a heading renamed under its callers is found.
+
+**Why its own script.** `scripts/check-docs.sh`'s body is byte-identical in the internal Claude and Copilot editions, so a check there ships to both, and they would receive a gate with nothing to check (the design, §D).
+
+**Why a sentence, not a line.** Command files hard-wrap their prose, so a rule's name in an italic span often wraps across two lines; the gate reads each citation's sentence out of its joined paragraph, and the `minimal` fixture wraps both the name and the preamble to hold that.
+
 ## choices-arity
 
 The plugin nonetheless shipped a convention saying the opposite of the harness schema (2–4 options, no authored Other), stated across the command files (*"last choice is always `"Other… (describe)"`"*), which authored duplicate options in bulk and pushed dozens of arrays past the cap — the measured figures are in `scripts/check-docs.sh`'s check-12 header, cited rather than restated in `CLAUDE.md` because two copies of one census is how they came to disagree while `workflows-core:escalation-rules` simultaneously required every array be presented verbatim — a rule the harness made unfollowable. **Two consequences outlive the cleanup** (both stated in `CLAUDE.md`). Six closed-vocabulary pickers used to protect themselves by omitting the free-text option.

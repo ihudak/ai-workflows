@@ -8,7 +8,7 @@ paths:
 
 Loaded when a file under `scripts/` or `.github/` is read. Repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
-Split out to keep this file under 20,000 characters: the ID-grammar gate → `.claude/rules/gates-id-grammar.md`, `scripts/validate-catalog.py` → `.claude/rules/gates-validate-catalog.md`, and the mermaid gate → `.claude/rules/gates-mermaid.md`. Each loads with the files its section names and `.github/workflows/validate-catalog.yml`, always beside this file, whose opening rule binds every gate.
+Split out to keep this file under 20,000 characters, into files beside it that share its `paths:`, so load with it, and are bound by its opening rule: `gates-id-grammar.md` (the ID-grammar gate), `gates-validate-catalog.md` (`scripts/validate-catalog.py`), `gates-mermaid.md` (the mermaid gate) and `gates-reference-parts.md` (`scripts/reference-parts.py`).
 
 **A gate widening or a scope change is measured before it is taken, and one that would fire only on correct content is refused.** Each refused widening below records that result; do not re-propose one without new evidence.
 

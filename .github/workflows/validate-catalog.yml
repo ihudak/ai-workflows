@@ -104,6 +104,14 @@ jobs:
           ASSERT_PUBLISHED: ${{ github.ref == 'refs/heads/main' && '1' || '' }}
         run: ./scripts/check-docs.sh --root .
 
+      - name: Self-test the reference-parts gate
+        # scripts/reference-parts.py assembles each split shared reference's parts into the committed
+        # files under plugins/workflows-core/reference-parts/ and gates them and their callers. Its
+        # failure modes are silent: a part file left stale serves a run an old rule, and a part a
+        # caller requests that lacks the rule it cites leaves the rule out. Each red fixture asserts
+        # the message it must print and its number of problems, not the exit code alone.
+        run: python3 scripts/reference-parts.py --selftest
+
       - name: Install the mermaid gate's pinned parser
         run: npm ci --prefix scripts/mermaid --ignore-scripts --no-audit --no-fund
       - name: Self-test the mermaid gate
