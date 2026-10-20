@@ -23,7 +23,7 @@ Order three: b, between a's regions.
 <!-- /part -->
 
 <!-- part: a -->
-## Second half
+## 2. The `second` half
 
 Order four: a's second region.
 <!-- /part -->

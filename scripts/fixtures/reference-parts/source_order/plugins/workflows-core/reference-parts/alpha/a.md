@@ -8,9 +8,9 @@
 
 Every rule name in `alpha`, with the part that holds it; `core` comes with every part. Load a part with `Skill(skill: "workflows-core:reference", args: "alpha <part>")`, unless it is already in this conversation.
 
-- First half → `a`
-- Second half → `a`
-- Middle → `b`
+- `First half` → `a`
+- ``2. The `second` half`` → `a`
+- `Middle` → `b`
 
 ---
 
@@ -24,6 +24,6 @@ Order two: a's first region.
 
 Order three: b, between a's regions.
 
-## Second half
+## 2. The `second` half
 
 Order four: a's second region.

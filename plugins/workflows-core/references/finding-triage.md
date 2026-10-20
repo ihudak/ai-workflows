@@ -7,9 +7,9 @@ part verify needs=record-and-raise
 part no-findings needs=record-and-raise,declined-to-judge,reporting
 part triage needs=verify,declined-to-judge,reporting,patch-gate
 part re-review needs=triage
-part record-and-raise
-part declined-to-judge
-part reporting
+part record-and-raise helper
+part declined-to-judge helper
+part reporting helper
 alias patch-gate "patch gate"
 alias triage "survivors only" "first settle prompt" "Keep the verdict" "Proceed"
 alias re-review "stayed blocked"

@@ -6,19 +6,19 @@
 
 Every rule name in `session-hygiene`, with the part that holds it; `core` comes with every part. Load a part with `Skill(skill: "workflows-core:reference", args: "session-hygiene <part>")`, unless it is already in this conversation.
 
-- 1. Prepare-checkpoint (runs FIRST — unconditional for PRD-scoped runs, save one carrying `specs_git: misrooted`) → `resume-pointer`
-- §1 → `resume-pointer`
-- Location → `resume-pointer`
-- Skipped → `resume-pointer`
-- 2. The suggestion — role-aware (reads next-phase-offer's role labels) → `guidance`
-- 3. Mid-run suggestions & non-pipeline big commands → `guidance`
-- 4. Session-name aid → `guidance`
-- 5. Contract (5 rules) → `guidance`
-- Surface → `guidance`
-- §2 → `guidance`
-- §3 → `guidance`
-- §4 → `guidance`
-- §5 → `guidance`
+- ``1. Prepare-checkpoint (runs FIRST — unconditional for PRD-scoped runs, save one carrying `specs_git: misrooted`)`` → `resume-pointer`
+- `§1` → `resume-pointer`
+- `Location` → `resume-pointer`
+- `Skipped` → `resume-pointer`
+- `2. The suggestion — role-aware (reads next-phase-offer's role labels)` → `guidance`
+- `3. Mid-run suggestions & non-pipeline big commands` → `guidance`
+- `4. Session-name aid` → `guidance`
+- `5. Contract (5 rules)` → `guidance`
+- `Surface` → `guidance`
+- `§2` → `guidance`
+- `§3` → `guidance`
+- `§4` → `guidance`
+- `§5` → `guidance`
 
 ## Parts of `session-hygiene`
 

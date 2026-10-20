@@ -4,21 +4,21 @@
 
 ## Rule index of `finding-triage`
 
-Every rule name in `finding-triage`, with the part that holds it; `core` comes with every part. Load a part with `Skill(skill: "workflows-core:reference", args: "finding-triage <part>")`, unless it is already in this conversation.
+Every rule name in `finding-triage`, with the part that holds it; `core` comes with every part. A rule of a helper part, which has no file of its own, is listed with the parts that bring it; load any one of them. Load a part with `Skill(skill: "workflows-core:reference", args: "finding-triage <part>")`, unless it is already in this conversation.
 
-- The patch gate → `patch-gate`
-- patch gate → `patch-gate`
-- A review that returned no findings → `no-findings`
-- When this runs → `triage`
-- The step → `triage`
-- When triage empties the survivor set → `triage`
-- survivors only → `triage`
-- first settle prompt → `triage`
-- Keep the verdict → `triage`
-- Proceed → `triage`
-- On re-review → `re-review`
-- stayed blocked → `re-review`
-- Reporting → `reporting`
+- `The patch gate` → `patch-gate`
+- `patch gate` → `patch-gate`
+- `A review that returned no findings` → `no-findings`
+- `When this runs` → `triage`
+- `The step` → `triage`
+- `When triage empties the survivor set` → `triage`
+- `survivors only` → `triage`
+- `first settle prompt` → `triage`
+- `Keep the verdict` → `triage`
+- `Proceed` → `triage`
+- `On re-review` → `re-review`
+- `stayed blocked` → `re-review`
+- `Reporting` → `no-findings`, `triage` or `re-review`
 
 ## Parts of `finding-triage`
 
@@ -28,6 +28,5 @@ Every rule name in `finding-triage`, with the part that holds it; `core` comes w
 - `no-findings` — needs `record-and-raise`, `declined-to-judge`, `reporting`
 - `triage` — needs `verify`, `declined-to-judge`, `reporting`, `patch-gate`
 - `re-review` — needs `triage`
-- `record-and-raise`
-- `declined-to-judge`
-- `reporting`
+
+Helper parts, each with no file of its own and never requested, come only with a part that needs them: `record-and-raise`, `declined-to-judge` and `reporting`.
