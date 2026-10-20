@@ -5,6 +5,7 @@ part core always
 part pickers needs=wording
 part stops
 part wording helper
+part review needs=pickers
 -->
 
 <!-- part: core -->
@@ -27,4 +28,10 @@ Stop and name the key.
 ## Wording
 
 Helper text: say what the answer means in the picker's own words.
+<!-- /part -->
+
+<!-- part: review -->
+## Review gate
+
+A review reads the answer as the picker worded it.
 <!-- /part -->

@@ -10,7 +10,8 @@ Every rule name in `alpha`, with the part that holds it; `core` comes with every
 
 - `Closed-vocabulary pickers` → `pickers`
 - `Key dir not found` → `stops`
-- `Wording` → `pickers`
+- `Wording` → `pickers` or `review`
+- `Review gate` → `review`
 
 ---
 

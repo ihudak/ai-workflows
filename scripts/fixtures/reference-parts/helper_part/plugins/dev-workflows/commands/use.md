@@ -17,3 +17,5 @@ Word the answer per `workflows-core:alpha`'s *Wording*.
 Invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")` and word the answer per its *Wording*.
 
 Invoke `Skill(skill: "workflows-core:reference", args: "alpha wording")` and word the answer.
+
+Invoke `Skill(skill: "workflows-core:reference", args: "alpha stops")` and word the answer per its *Wording*.

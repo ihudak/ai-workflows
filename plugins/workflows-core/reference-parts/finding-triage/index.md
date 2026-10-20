@@ -29,4 +29,4 @@ Every rule name in `finding-triage`, with the part that holds it; `core` comes w
 - `triage` — needs `verify`, `declined-to-judge`, `reporting`, `patch-gate`
 - `re-review` — needs `triage`
 
-Helper parts, each with no file of its own and never requested, come only with a part that needs them: `record-and-raise`, `declined-to-judge` and `reporting`.
+Helper parts, each with no file of its own and never requested, come only with a part that brings them: `record-and-raise`, `declined-to-judge` and `reporting`.

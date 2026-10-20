@@ -4,6 +4,7 @@
 part core always
 part pickers
 part review
+alias pickers "On"
 -->
 
 <!-- part: core -->

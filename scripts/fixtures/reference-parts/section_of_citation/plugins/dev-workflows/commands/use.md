@@ -19,3 +19,11 @@ Invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")` and sto
 Invoke `Skill(skill: "workflows-core:reference", args: "gamma commit")` and stop per §4 of `Skill(skill: "workflows-core:reference", args: "alpha pickers")`.
 
 Invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")` and stop per §4 of `references/gamma.md`.
+
+Invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")` and apply §4 to every key of `workflows-core:gamma`.
+
+Invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")` and apply § Key dir not found to the keys of `workflows-core:gamma`.
+
+Invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")` and stop per §4 for each folder of `references/gamma.md`.
+
+Invoke `Skill(skill: "workflows-core:reference", args: "gamma commit")` and stop per § Key dir not found of `workflows-core:alpha`.

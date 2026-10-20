@@ -17,3 +17,5 @@ Record each finding in `workflows-core:alpha` § On re-review’s terms.
 Invoke `Skill(skill: "workflows-core:reference", args: "alpha review")` and record per § On re-review's terms.
 
 Invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")` and record per § On re-review's terms.
+
+Invoke `Skill(skill: "workflows-core:reference", args: "alpha review")` and record per § On re-review’s terms.
