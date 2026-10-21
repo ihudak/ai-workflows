@@ -707,7 +707,7 @@ On `BLOCK`, fix the BLOCKER findings inline (the orchestrator/grill edits the AR
 
 **Every inline edit this phase makes is held to `ard-format`'s Quality rules, like the draft** — a `BLOCK` fix, an applied finding, a manual fix note: a claim it adds about the code as it is cites the `file:line` it rests on, found by a search made for that claim. **And this phase adds two steps those rules do not name**: a universal claim (*only*, *every*, *no other*) is searched for its counter-examples before it is written — a live run's fix wrote that one service was the only caller of an endpoint two others also call, unsearched, and the re-review spent the cap on the BLOCKER it raised — and the edit is read against what it overlaps before the step that follows it, each decision's Rule, contract row and scope line it adds or changes against those that govern the same component or interface, per the `An inline fix is read against what it overlaps` rule in `workflows-core:escalation-rules`.
 
-**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`. Where none did, it says that too.
+**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules version-line")`. Where none did, it says that too.
 
 ---
 

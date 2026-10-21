@@ -771,7 +771,7 @@ Act on the verdict (mirrors `/specify` on `BLOCK`, save `/specify`'s refinement-
 
 Cap: one fix cycle + one re-review. **A verdict that is not `BLOCK` spends neither**, so where an edit answering its findings followed it, offer the re-review the cap still holds before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`.
 
-**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`. Where none did, it says that too.
+**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules version-line")`. Where none did, it says that too.
 
 ---
 

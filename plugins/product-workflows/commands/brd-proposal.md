@@ -739,7 +739,7 @@ that file describes the archived revision and not this one.
 run Phase 8's `stamp` once more** with the same record file and `--excluded`, so no edit carries a damaged record into the
 handoff; `{"written": true}` there is reported beside the edit that caused it.
 
-**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`. Where none did, it says that too.
+**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules version-line")`. Where none did, it says that too.
 
 **A finding against a slice's own proposal is not fixed here.** This run edits the umbrella and
 nothing under it; where a survivor's location is a slice document, record it, name the slice, and

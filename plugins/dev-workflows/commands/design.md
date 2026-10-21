@@ -413,7 +413,7 @@ Dispatch `design-reviewer` (Opus):
 Cap: one fix cycle + one re-review maximum. Phase 7 will not hand off a `design.md` with any unresolved
 `- [ ]`. A finding applied at that offer after the first review is an inline edit answering a verdict that was not `BLOCK`: it is read against what it overlaps, as a fix is, and the re-review the cap still holds is offered before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`.
 
-**The recorded verdict names the version it was taken against** — where any edit followed it, the final report, Phase 7's `body_facts` and `_design-session.md` say so and name the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`. Where none did, it says that too.
+**The recorded verdict names the version it was taken against** — where any edit followed it, the final report, Phase 7's `body_facts` and `_design-session.md` say so and name the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules version-line")`. Where none did, it says that too.
 
 ---
 

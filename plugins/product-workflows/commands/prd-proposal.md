@@ -652,7 +652,7 @@ file describes the archived revision and not this one.
 run Phase 7's `stamp` once more** with the same record file, so no edit carries a damaged record into the
 handoff; `{"written": true}` there is reported beside the edit that caused it.
 
-**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`. Where none did, it says that too.
+**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules version-line")`. Where none did, it says that too.
 
 Report the triage per `workflows-core:finding-triage` § Reporting — one line per review pass, naming
 the counts, the survivors, the unverified findings, every dismissal with its reason and any settle

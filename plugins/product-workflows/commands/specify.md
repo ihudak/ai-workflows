@@ -996,7 +996,7 @@ Cap: one fix cycle + one re-review maximum. A finding applied at that offer afte
 
 **A finding left open that needs a decision is recorded in the spec.** Once the last review has returned — the offers to apply findings and the re-review offer above settled — and immediately before the handoff, every finding the run leaves open whose fix needs a product decision it did not take, a deferred BLOCKER among them, is written into `specification.md` as a `- [ ]` open question that names it, and the requirement it puts in doubt where it puts one in doubt, under the `Open questions` sub-heading of the stage it concerns, with the header count updated — per the `A finding left open that needs a decision is recorded in the artifact` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`. A finding the user overrode, or whose fix is only an edit, gets no open question.
 
-**The recorded verdict names the version it was taken against** — where any edit followed it, the final report, Phase 7's `body_facts` and `_session.md` say so and name the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`. Where none did, it says that too.
+**The recorded verdict names the version it was taken against** — where any edit followed it, the final report, Phase 7's `body_facts` and `_session.md` say so and name the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules version-line")`. Where none did, it says that too.
 
 ---
 

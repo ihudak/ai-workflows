@@ -816,7 +816,7 @@ Cap: one fix cycle + one re-review maximum.
 
 **Count once more before the handoff.** Once those markers are written, count every Epic this run wrote or edited — the `epic.md` set Phase 7.5 hands off — as Phase 6 step 4 counts, and handle each over the limit and not settled as that step handles one: `doc-fixer`'s passes in Phases 6.2 and 7 and *User-resolved text* edit Epics after Phase 6.1's count, and an *Epic size* finding held out of the fixer's set is put to the operator here. A split here, and any line it re-points, follow the review, so the recorded verdict (next paragraph) names them among the edits that followed it; the split's `clarifications_needed[]` is not asked, and the markers its slices carry stay where the writer put them, for the next phase to ask. Phase 9's `### Sizing` prints this count for every Epic it covers.
 
-**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`. Where none did, it says that too.
+**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules version-line")`. Where none did, it says that too.
 
 ---
 
