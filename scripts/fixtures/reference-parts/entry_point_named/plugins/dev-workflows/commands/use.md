@@ -23,3 +23,9 @@ heading's whole code span, then `Skill(skill: "workflows-core:reference",
 args: "steps resolve-address")`, the first word of one, wrapped across two lines.
 A placeholder, `Skill(skill: "workflows-core:reference", args: "steps <entry point>")`,
 names no token.
+
+Run `Skill(skill: "workflows-core:reference", args: "steps key-list")`, the second
+code span of its heading.
+
+Run `Skill(skill: "workflows-core:reference", args: "steps emit-note")`, the first
+word of a double-backtick span.

@@ -27,3 +27,5 @@ Run `Skill(skill: "workflows-core:reference", args: "steps resolve")`.
 Run `Skill(skill: "workflows-core:reference", args: "steps run")`.
 
 Run `Skill(skill: "workflows-core:reference", args: "steps fenced-step")`.
+
+Run `Skill(skill: "workflows-core:reference", args: "steps kind")`.

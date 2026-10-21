@@ -17,3 +17,7 @@ Build the shortlist.
 ```markdown
 ## `fenced-step`
 ```
+
+## 6. ``emit-note `kind` `` — a span holding backticks
+
+Emit the note.

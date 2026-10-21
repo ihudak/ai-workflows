@@ -9,3 +9,11 @@ Run the preflight.
 ### Entry point: `resolve-address <ARG> [<KIND>]`
 
 Resolve the address.
+
+## 5. `key-summary` and `key-list` — two entry points
+
+List the keys.
+
+## 6. ``emit-note `<KIND>` `` — a span holding backticks
+
+Emit the note.

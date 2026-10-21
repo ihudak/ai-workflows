@@ -819,15 +819,21 @@ def covers(refs, ref, part):
     return closure(refs, ref, part)[0][ref.name]
 
 
+# A code span as CommonMark reads one: a run of backticks, then text, then a run of the same length,
+# so ``a `b` c`` is one span holding a `b` c, never an empty span and `b`.
+HEADING_SPAN = re.compile(r"(?<!`)(`+)(?!`)(.+?)(?<!`)\1(?!`)")
+
+
 def entry_points(path):
     """The entry points of a reference that does not load by part: the first word of each code span
     in one of its headings, a heading inside a fenced block being none -- `resolve-address` in
-    `### Entry point: `resolve-address <ARG> [<KIND>]``."""
+    `### Entry point: `resolve-address <ARG> [<KIND>]``, and `key-list` in `## `key-summary` and
+    `key-list``, as the second span."""
     names, fences = set(), Fences()
     for line in path.read_text(encoding="utf-8").splitlines():
         h = None if fences.step(line) else HEADING.match(line)
         if h and h.group(2):
-            names.update(m.group(1).split()[0] for m in CODE_SPAN.finditer(h.group(2)) if m.group(1).split())
+            names.update(m.group(2).split()[0] for m in HEADING_SPAN.finditer(h.group(2)) if m.group(2).split())
     return names
 
 
@@ -1538,20 +1544,24 @@ CASES = [
     ]),
     # steps is a core reference that does not load by part: `specs-preflight` is a heading's whole code
     # span, `resolve-address` the first word of `resolve-address <ARG> [<KIND>]`, the second call
-    # wrapped across two lines; a placeholder token names nothing to check.
+    # wrapped across two lines; `key-list` the second code span of its heading; and `emit-note` the
+    # first word of ``emit-note `<KIND>` ``, a double-backtick span holding a single-backtick one. A
+    # placeholder token names nothing to check.
     ('entry_point_named', "an entry-point request naming the first word of a heading's code span passes", [
-        Step(['check-citations'], 0, ['entry-point requests on references that do not load by part: 2, 2 distinct',
+        Step(['check-citations'], 0, ['entry-point requests on references that do not load by part: 4, 4 distinct',
                                       'check-citations: PASS'], errors=0),
     ]),
-    # The same steps, with a section The shortlist and a fenced `## `fenced-step`` line. Beside a green
-    # `specs-preflight`: a section's name, whose heading has no code span; `resolve`, a prefix of an
-    # entry point; `run`, a word of a heading outside its code span; and a heading inside a fence.
+    # The same steps, with a section The shortlist, a fenced `## `fenced-step`` line and the double-backtick
+    # span ``emit-note `kind` ``. Beside a green `specs-preflight`: a section's name, whose heading has no
+    # code span; `resolve`, a prefix of an entry point; `run`, a word of a heading outside its code span;
+    # a heading inside a fence; and `kind`, a word inside a double-backtick span, never its first.
     ('entry_point_unnamed', 'an entry-point request naming no first word of a heading code span fails', [
         Step(['check-citations'], 1, [U + ":%d: requests entry point '%s' of workflows-core:steps, which is not the first "
                                           "word of a code span in any of its headings -- its entry points: "
-                                          "`resolve-address` and `specs-preflight`" % (n, t)
-                                      for n, t in ((23, 'shortlist'), (25, 'resolve'), (27, 'run'), (29, 'fenced-step'))]
-             + ['entry-point requests on references that do not load by part: 5, 5 distinct'], errors=4),
+                                          "`emit-note`, `resolve-address` and `specs-preflight`" % (n, t)
+                                      for n, t in ((23, 'shortlist'), (25, 'resolve'), (27, 'run'), (29, 'fenced-step'),
+                                                   (31, 'kind'))]
+             + ['entry-point requests on references that do not load by part: 6, 6 distinct'], errors=5),
     ]),
     ('renamed_heading_reported', 'a citation of a renamed heading passes as whole, and --verbose names it', [
         Step(['check-citations'], 0, ['workflows-core:alpha: placed 0, whole 1'], errors=0, absent=['WHOLE ']),

@@ -14,13 +14,15 @@ that loads by part, one part of it.
 Work from the reference's own words, never from memory or a summary. On a
 reference that does not load by part, the text a request needs is the whole
 file, whichever entry point the request names; with no second argument, it
-is the whole file on any reference. A read of some of a file's lines — a
-section, a range, a search — covers no request that needs the whole file.
-Where the text this request needs is already in this conversation word for
-word, from a read made in this run, work from that text and read nothing,
-within one bound: reuse an earlier read to execute an entry point only where
-that read was made in the current phase — a `## Phase` of your command, a
-`Step` of a command numbered by steps, or, for an agent, its whole dispatch,
+is the whole file on any reference. A read short of every line — a section,
+a range, a search — covers no request that needs the whole file; consecutive
+ranges that reach its last line are one read of every line. Where the text
+this request needs is already in this conversation word for word, from a
+read made in this run, work from that text and read nothing, within one
+bound: reuse an earlier read to execute an entry point only where that read
+was made in the current phase — the `##` section of the command now running,
+a `## Phase`, a `## Step` or any other `##` section, the text before its
+first `##` heading counting as one; or, for an agent, its whole dispatch,
 since an agent's run is one unit — and read it again otherwise; to look up a
 rule, any read in this run serves. Read it whenever those words are not in
 front of you now, whatever removed them — it was never read, only a different
