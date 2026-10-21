@@ -19,3 +19,7 @@ Invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")` and wor
 Invoke `Skill(skill: "workflows-core:reference", args: "alpha wording")` and word the answer.
 
 Invoke `Skill(skill: "workflows-core:reference", args: "alpha stops")` and word the answer per its *Wording*.
+
+Invoke `Skill(skill: "workflows-core:reference", args: "alpha stops")`. Then normalise the answer per *Closed-vocabulary pickers* and word it per *Wording*.
+
+Invoke `Skill(skill: "workflows-core:reference", args: "alpha stops")` and normalise the answer per *Closed-vocabulary pickers*, worded per its *Wording*.

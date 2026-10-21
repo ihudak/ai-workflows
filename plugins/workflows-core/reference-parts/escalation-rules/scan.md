@@ -2,6 +2,8 @@
 
 # Escalation rules (shared) — part scan
 
+This file holds parts `core` and `scan`.
+
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
 ## Rule index of `escalation-rules`

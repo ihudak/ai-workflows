@@ -2,6 +2,8 @@
 
 # Finding triage (embedded — shared reference) — part verify
 
+This file holds parts `core` and `verify`, with helper part `record-and-raise`.
+
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
 ## Rule index of `finding-triage`

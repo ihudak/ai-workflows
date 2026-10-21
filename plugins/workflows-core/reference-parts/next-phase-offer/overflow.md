@@ -2,6 +2,8 @@
 
 # Next-phase offer (embedded — shared reference) — part overflow
 
+This file holds parts `core` and `overflow`, with helper parts `rule-3` and `surface`.
+
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
 ## Rule index of `next-phase-offer`

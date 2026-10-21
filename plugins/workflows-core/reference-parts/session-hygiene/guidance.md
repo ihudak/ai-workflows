@@ -2,6 +2,8 @@
 
 # Session hygiene (embedded — shared reference) — part guidance
 
+This file holds parts `core` and `guidance`.
+
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
 ## Rule index of `session-hygiene`

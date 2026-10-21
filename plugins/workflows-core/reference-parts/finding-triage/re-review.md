@@ -2,6 +2,8 @@
 
 # Finding triage (embedded — shared reference) — part re-review
 
+This file holds parts `core`, `patch-gate`, `verify`, `triage` and `re-review`, with helper parts `record-and-raise`, `declined-to-judge` and `reporting`.
+
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
 ## Rule index of `finding-triage`

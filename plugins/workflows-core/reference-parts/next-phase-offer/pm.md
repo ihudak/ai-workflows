@@ -2,6 +2,8 @@
 
 # Next-phase offer (embedded — shared reference) — part pm
 
+This file holds parts `core`, `contract`, `pm`, `epics-precondition` and `overflow`, with helper parts `rule-1`, `rule-3`, `rule-6`, `surface` and `routing-graph`.
+
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
 ## Rule index of `next-phase-offer`

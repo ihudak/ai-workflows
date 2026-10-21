@@ -2,6 +2,8 @@
 
 # Session hygiene (embedded — shared reference) — part resume-pointer
 
+This file holds parts `core` and `resume-pointer`.
+
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
 ## Rule index of `session-hygiene`

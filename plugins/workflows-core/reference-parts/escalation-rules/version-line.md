@@ -2,6 +2,8 @@
 
 # Escalation rules (shared) — part version-line
 
+This file holds parts `core` and `version-line`.
+
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
 ## Rule index of `escalation-rules`

@@ -2,6 +2,8 @@
 
 # Beta rules — part core
 
+This file holds part `core`.
+
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
 ## Rule index of `beta`

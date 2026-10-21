@@ -5,11 +5,16 @@ A split reference stays ONE source file under plugins/workflows-core/references/
 declaration block directly after its H1 line names its parts, and region markers in the
 body say which part owns each line:
 
+    # Alpha rules
+
     <!-- reference-parts
     part core always
-    part review needs=finding-triage/re-review
+    part pickers needs=wording
+    part stops
+    part wording helper
     part maintainer private
-    alias review "§ Review gate" "A recorded verdict names the version it was taken against"
+    alias pickers "§1"
+    alias stops "§4"
     -->
 
     <!-- part: core -->
@@ -34,7 +39,10 @@ normalise equal in different parts are an error.
 the part list) and one <part>.md per requestable part -- neither private nor a helper. In the
 rule index each name is a code span, so one starting with a number renders as itself, and a
 rule of a helper names the requestable parts that bring it; the part list names helpers only
-as such. Each part file holds a header line, a title, a sentence saying
+as such. Each part file holds a header line, a title, a line under it naming every part the
+file holds -- `This file holds parts `core`, `pickers` and `review`, with helper part
+`wording`.`: its own reference's requestable parts, then its helpers, then each other
+reference's parts it bundles, each in declaration order -- a sentence saying
 `${CLAUDE_PLUGIN_ROOT}` in it is workflows-core's root, the rule index, then the always part,
 the part and the parts of its file it needs (transitively) IN SOURCE ORDER, then each part of
 another reference it needs, under a `Bundled from workflows-core:<ref>, part <part>:` line. It
@@ -57,8 +65,11 @@ reading's call, not a pattern's.
 `check-citations` gates the callers: the split list in the loader skill equals the declared
 set; every consumer file (commands/, agents/, references/ of the dependent plugins,
 CHANGELOG.md excluded) that cites a split reference carries the load-by-part preamble as a
-paragraph of its own; every explicit part request -- `args: "<split> <part>"`, or a read of
-reference-parts/<split>/<part>.md -- names a requestable part or `index`, never a helper; every
+paragraph of its own; every explicit part request -- `args: "<split> <part>"`, or, in
+workflows-core's own files, a read of reference-parts/<split>/<part>.md -- names a requestable
+part or `index`, never a helper; a consumer file that reads a reference-parts/<ref>/<part>.md
+path fails, the failure naming the loader call to make instead, since `${CLAUDE_PLUGIN_ROOT}`
+there is its own plugin's root, which holds no reference-parts/; every
 entry-point request -- `args: "<ref> <token>"` on a reference that does not load by part, the
 token no `<placeholder>` -- names an entry point of it, the first word of a code span in one of
 its headings outside a fenced block, since the loader stops the run on any other token (a first
@@ -85,18 +96,19 @@ helper holds names the parts that bring it, as the index does. An `index` reques
 so its sentence passes whatever public rule it names: the run loads what the index names. A
 run reads a sentence whole before it acts, so the calls of one sentence are one load in any
 order, and a rule named before its call is held by it; no other sentence's call counts. Where
-a PARAGRAPH makes explicit part requests of a reference, its sentences may apply "its" rules
-leaning on the paragraph's loads. A sentence citing a split reference is judged as that
-citation for the names that reference's index holds; any other name in a sentence of the
-paragraph, where a requested reference's index holds it, passes only where a load made AT OR
-BEFORE that sentence holds it, never a later one, erring toward failing. Those loads are the
-explicit part requests, the explicit whole loads and the parts bare citations are placed on,
-of every split reference the paragraph cites whose index holds the name, and a bare citation
-naming no rule loads the whole reference, which is where the preamble sends it (`args:
-"<split>"`); an `index` load holds every later sentence, as the lookup it is. A § reference in
-a sentence citing nothing is read against the loads of the reference it belongs to alone,
-where the paragraph requests a part of that reference. A paragraph making no part request is
-not read this way: measured over the live tree, that widening fired only on correct prose. No
+a PARAGRAPH cites a split reference, in any form, its sentences may apply "its" rules leaning
+on the paragraph's loads. A sentence citing a split reference is judged as that citation for
+the names that reference's index holds; any other name in a sentence of the paragraph, where
+a cited split reference's index holds it, passes only where a load made AT OR BEFORE that
+sentence holds it, never a later one, erring toward failing. Those loads are the explicit part
+requests, the explicit whole loads and the parts bare citations are placed on, of every split
+reference the paragraph cites whose index holds the name, and a bare citation naming no rule
+loads the whole reference, which is where the preamble sends it (`args: "<split>"`); an `index`
+load holds every later sentence, as the lookup it is. A § reference in a sentence citing
+nothing is read against the loads of the reference it belongs to alone. A paragraph making no
+part request is read this way too: that reading was first refused as firing only on correct
+prose, and re-measured on the tree before the rule-by-rule reading it caught 4 of the 6 gaps
+that reading found, so it is on. No
 name places a citation on the whole reference, which is what the preamble then loads, so it
 passes and is counted whole, as does an explicit whole load (`args: "<split>"`). A citation
 naming a rule held in a private part fails, explicit or bare, and so does any other sentence
@@ -119,10 +131,13 @@ by position, and by its words only in a `§N of <citation>` phrase or a `§ <Nam
 <citation>` one naming its section: "§4, which `workflows-core:gamma` defines" after a call of
 another reference belongs to that call, and a § in a sentence citing nothing, with no citation
 before it in its paragraph, names nothing, so one leaning on a later sentence's call goes
-unread. In a paragraph requesting one reference, a citation-free sentence whose § leans on an
-earlier bare citation of another split reference is not read either. And a bare citation the
-gate counts whole holds every later sentence of its paragraph, though a run that reads its
-rule another way ("the overflow rule") may load only that rule's part.
+unread. A bare citation the gate counts whole holds every later sentence of its paragraph,
+though a run that reads its rule another way ("the overflow rule") may load only that rule's
+part. And an explicit request whose sentence names no rule is placed on the part it requests,
+whichever that is, so a call converted to the wrong part passes there: each next-phase-offer
+lane request names its lane's rule in its sentence ("`next-phase-offer dev`, the *Dev — build,
+verify & deliver* lane"), so the gate places and pins it, but a request written without one
+is held by review alone.
 
 Usage:
     python3 scripts/reference-parts.py [--root DIR] generate
@@ -572,6 +587,22 @@ def index_block(refs, ref):
     return "\n\n".join(blocks)
 
 
+def holds_line(refs, ref, included):
+    """The line under a part file's title naming every part it holds: its own reference's requestable
+    parts, then its helpers, then each other reference's parts it bundles, each in declaration order."""
+    def held(r):
+        names = [p for p in refs[r].parts.values() if p.name in included[r]]
+        plain, helpers = [p.name for p in names if not p.helper], [p.name for p in names if p.helper]
+        text = "part%s %s" % ("s" if len(plain) > 1 else "", either(plain, "and"))
+        if helpers:
+            text += ", with helper part%s %s" % ("s" if len(helpers) > 1 else "", either(helpers, "and"))
+        return text
+    line = "This file holds " + held(ref.name)
+    for other in [r for r in included if r != ref.name]:
+        line += ", and `%s:%s`'s %s" % (CORE_NAME, other, held(other))
+    return line + "."
+
+
 def expected_tree(refs):
     """{repo-relative path: (text, source path)} of every generated file, for each reference
     that assembles; and the names of those that do not."""
@@ -593,7 +624,7 @@ def expected_tree(refs):
              "\n".join(plist)]) + "\n", ref.rel)
         for p in ref.public():
             included, named = closure(refs, ref, p.name)
-            blocks = [header(ref), "# %s — part %s" % (ref.title, p.name),
+            blocks = [header(ref), "# %s — part %s" % (ref.title, p.name), holds_line(refs, ref, included),
                       "`${CLAUDE_PLUGIN_ROOT}` in this file is `%s`'s root, whichever plugin's run reads it." % CORE_NAME,
                       index_block(refs, ref), "---", text_of(ref, included[ref.name])]
             for other in [r for r in included if r != ref.name]:
@@ -970,8 +1001,17 @@ def cmd_check_citations(root, verbose):
                 else:
                     request(m.start(), toks[0], toks[1])
             for m in PART_PATH.finditer(joined):
-                if m.group(1) in refs and not m.group(2).startswith("<"):
+                if m.group(1) in refs and not m.group(2).startswith("<") and path not in consumers:
                     request(m.start(), m.group(1), m.group(2))
+                elif path in consumers and not m.group(2).startswith("<"):
+                    # `${CLAUDE_PLUGIN_ROOT}` is the reading plugin's root, and only workflows-core's holds
+                    # reference-parts/: outside it, a part file read by path opens nothing.
+                    if m.group(1) in refs:
+                        group(m.start(), m.group(1))["bad"] += 1
+                    problems.append("%s:%d: reads %s/%s/%s.md by path outside %s, whose plugin root alone holds "
+                                    "%s/ -- load it with `Skill(skill: \"%s\", args: \"%s %s\")`"
+                                    % (rel, line_at(at, m.start()), PARTS_DIR, m.group(1), m.group(2), CORE_NAME,
+                                       PARTS_DIR, LOADER_SKILL, m.group(1), m.group(2)))
             for pat in (TOKEN, WHOLE_PATH):
                 for m in pat.finditer(joined):
                     if m.group(1) in refs:
@@ -1078,7 +1118,7 @@ def cmd_check_citations(root, verbose):
                         problems.append("%s:%d: requests part %s of %s:%s, but its sentence names a rule of part %s, "
                                         "which that load does not hold"
                                         % (rel, g["line"], ", ".join(g["parts"]), CORE_NAME, name,
-                                           ", ".join(label(ref, h) for h in lacking)))
+                                           "; ".join(label(ref, h) for h in lacking)))
                     else:
                         census[name][0] += len(set(g["parts"]))
                     continue
@@ -1098,28 +1138,27 @@ def cmd_check_citations(root, verbose):
                 """Whether a load of `name` made at or before sentence `u` holds `part`."""
                 return any(h is None or h == "index" or part in h for s, h in loads[name] if s <= u)
 
-            # Where a paragraph makes explicit part requests of a reference, each of its sentences may
-            # apply "its" rule leaning on the paragraph's loads. A name such a sentence carries that its
-            # own citation's reference holds was judged above, as that citation, and so was every §
+            # Where a paragraph cites a split reference, in any form, each of its sentences may apply
+            # "its" rule leaning on the paragraph's loads. A name such a sentence carries that its own
+            # citation's reference holds was judged above, as that citation, and so was every §
             # reference in a sentence that cites anything, which belongs to a citation in that sentence. A
             # § reference in a sentence citing nothing belongs to the nearest citation in an earlier
-            # sentence, and where that is a requested reference's, it is read against that reference's
-            # loads alone. Any other name a requested reference's index holds is read against every split
-            # reference the paragraph loads, in any form, whose index holds it, and passes where a load of
-            # any of them made AT OR BEFORE the sentence holds it -- never a later one, erring toward
-            # failing. A paragraph making no part request is not read this way: measured over the live
-            # tree with the four rulebooks trial-split, that widening fired only on correct prose
-            # (docs/maintainers/rationale.md, "reference-parts").
-            requested = {n for (_, n), g in groups.items() if g["parts"]}
-            for u, (a, b) in enumerate(spans if requested else ()):
+            # sentence, and where that is a split reference's, it is read against that reference's loads
+            # alone. Any other name a cited split reference's index holds is read against every split
+            # reference the paragraph cites whose index holds it, and passes where a load of any of them
+            # made AT OR BEFORE the sentence holds it -- never a later one, erring toward failing. A
+            # paragraph making no part request is read too: first refused as firing only on correct
+            # prose, this reading, re-measured on the tree before the rule-by-rule reading, caught 4 of
+            # the 6 gaps that reading found (docs/maintainers/rationale.md, "reference-parts").
+            for u, (a, b) in enumerate(spans if loads else ()):
                 own = {n for (i, n) in groups if i == u}
                 lacking, private = {}, {}
                 bare = not any(a <= c[0] < b for c in cites)
                 for offset, readings, section in names[u]:
                     if section:
                         n = owner(u, offset) if bare else None
-                        hit = n in requested and next(((r, refs[n].index[norm(r)]) for r in readings
-                                                       if norm(r) in refs[n].index), None)
+                        hit = n in loads and next(((r, refs[n].index[norm(r)]) for r in readings
+                                                   if norm(r) in refs[n].index), None)
                         if hit and (refs[n].parts[hit[1]].private or not holds(n, u, hit[1])):
                             if refs[n].parts[hit[1]].private:
                                 private.setdefault(n, []).append(hit)
@@ -1131,7 +1170,7 @@ def cmd_check_citations(root, verbose):
                     found = [(n, hit) for n in sorted(loads) if n not in own
                              for hit in [next(((r, refs[n].index[norm(r)]) for r in readings
                                                if norm(r) in refs[n].index), None)] if hit]
-                    if not any(n in requested for n, _ in found):
+                    if not found:
                         continue
                     if any(not refs[n].parts[p].private and holds(n, u, p) for n, (r, p) in found):
                         continue
@@ -1147,7 +1186,7 @@ def cmd_check_citations(root, verbose):
                         problems.append("%s:%d: a sentence citing %s:%s no other way names a rule of part %s, which "
                                         "no load of it at or before that sentence in its paragraph holds"
                                         % (rel, line_at(at, a), CORE_NAME, n,
-                                           ", ".join(label(refs[n], h) for h in lacking[n])))
+                                           "; ".join(label(refs[n], h) for h in lacking[n])))
         if cited and path in consumers and preamble not in paragraphs(text):
             problems.append("%s: cites %s but does not carry the load-by-part preamble as a paragraph of its own"
                             % (rel, ", ".join("%s:%s" % (CORE_NAME, n) for n in sorted(cited))))
@@ -1181,7 +1220,10 @@ def cmd_check_citations(root, verbose):
 # asserts. The generated trees in the green fixtures were written by hand from the layout above
 # before the generator existed, so freshness there is a test of the generator's output. After a
 # deliberate change to that layout, rerun `generate --root scripts/fixtures/reference-parts/<case>`
-# on each green fixture and read the diff -- never on stale_generated, which is stale on purpose.
+# on each green fixture and read the diff -- never on stale_generated, which is stale on purpose,
+# and on stale_helper_file only on a copy, keeping the wording.md it leaves on purpose. The
+# post-checks on minimal, helper_part, cross_file_bundle and source_order pin the part files' own
+# lines, which a regenerated fixture cannot.
 class Step:
     def __init__(self, argv, want_exit, must_print=(), errors=None, flags=None, on_copy=False, post=None, absent=()):
         self.argv, self.want_exit, self.must_print = list(argv), want_exit, list(must_print)
@@ -1233,7 +1275,10 @@ CASES = [
     # hard-wrapped, as command files are; pickers holds a fenced `# Resume` line, no heading; and
     # notes.md, which is not split, quotes the marker syntax in code spans.
     ('minimal', 'one always part, one part, one consumer citing it by heading', [
-        Step(['check-parts'], 0, ['check-parts: PASS'], errors=0, flags=0),
+        Step(['check-parts'], 0, ['check-parts: PASS'], errors=0, flags=0, post=[
+            _order(G + '/alpha/pickers.md', ['# Alpha rules — part pickers', 'This file holds parts `core` and `pickers`.',
+                                             '`${CLAUDE_PLUGIN_ROOT}` in this file']),
+            _order(G + '/alpha/core.md', ['# Alpha rules — part core', 'This file holds part `core`.'])]),
         Step(['check-citations'], 0, ['workflows-core:alpha: placed 1, whole 0', 'check-citations: PASS'], errors=0),
         Step(['generate'], 0, ['0 written, 0 removed'], errors=0, on_copy=True, post=[_unchanged]),
     ]),
@@ -1258,6 +1303,38 @@ CASES = [
     ]),
     ('two_always', 'two parts marked always', [
         Step(['check-parts'], 1, [A + ': 2 parts are marked always (core, pickers) -- exactly one part is'], errors=1),
+    ]),
+    # alpha's block names a part index, a part outside [a-z0-9-], a part twice and an unclosed alias,
+    # and its body opens a second block; beta's block follows a sentence, not its H1. generate
+    # refuses the tree and writes nothing.
+    ('declaration_line_errors', 'every declaration-line defect is reported, and generate writes nothing on any', [
+        Step(['check-parts'], 1, [A + ":5: 'index' is not a part name -- lowercase letters, digits and dashes, never 'index'",
+                                  A + ":6: 'Pickers' is not a part name",
+                                  A + ":7: part 'core' is declared twice",
+                                  A + ':8: an alias line is `alias <part> "<name>" ...`, every name quoted and non-empty',
+                                  A + ': carries a second reference-parts declaration',
+                                  'plugins/workflows-core/references/beta.md:3: the <!-- reference-parts declaration must '
+                                  'directly follow the H1 line'], errors=6),
+        Step(['generate'], 1, ['generate: FAIL -- 6 problem(s); nothing written'], errors=6, on_copy=True,
+             post=[_unchanged]),
+    ]),
+    # alpha opens a region for a part it never declared; beta closes a region twice; gamma's last
+    # region is never closed, so its lines would reach no part.
+    ('region_errors', 'a region naming no declared part, a stray close and an unclosed region', [
+        Step(['check-parts'], 1, [A + ":11: region 'ghost' names no declared part",
+                                  'plugins/workflows-core/references/beta.md:10: <!-- /part --> closes no open region',
+                                  "plugins/workflows-core/references/gamma.md:7: region 'core' is never closed"],
+             errors=3),
+    ]),
+    # alpha's always part is private, a part owns no region, an alias names an undeclared part and one
+    # a private part; beta's detail needs its private part.
+    ('part_declaration_errors', 'always and private together, a part with no region, a bad alias and a private need', [
+        Step(['check-parts'], 1, [A + ":4: part 'core' is marked always and private",
+                                  A + ":6: part 'empty' has no region",
+                                  A + ":8: alias names part 'ghost', which is not declared",
+                                  A + ":9: alias names part 'maintainer', which is private",
+                                  "plugins/workflows-core/references/beta.md:5: part 'detail' needs 'maintainer', which "
+                                  "is private"], errors=5),
     ]),
     ('unknown_need', 'a need naming no part, and one naming a reference that is not split', [
         Step(['check-parts'], 1, [A + ":5: part 'pickers' needs 'nosuch', which alpha does not declare",
@@ -1302,6 +1379,10 @@ CASES = [
     ('skill_list_mismatch', "the loader's split list names a reference no declaration splits", [
         Step(['check-citations'], 1, [SK + ': no paragraph opens with the split list the declarations give',
                                       'These references load by part: `alpha` and `beta`.'], errors=1),
+    ]),
+    ('missing_loader_skill', 'the loader skill is missing, so nothing names the split list', [
+        Step(['check-citations'], 1, [SK + ': missing -- the loader skill must open a paragraph with "These references '
+                                           'load by part: `alpha`."'], errors=1),
     ]),
     ('no_declarations', 'vacuity: no reference carries a declaration', [
         Step(['check-parts'], 1, ['no file under plugins/workflows-core/references carries a reference-parts '
@@ -1400,18 +1481,21 @@ CASES = [
      "a bare citation's parts hold a later sentence, and one naming no rule holds them all", [
         Step(['check-citations'], 0, ['workflows-core:alpha: placed 3, whole 1', 'check-citations: PASS'], errors=0),
     ]),
-    # A bare stops citation, then a sentence citing nothing that names a pickers rule as a reason,
-    # in a paragraph making no part request. Reading such a paragraph was measured over the live
-    # tree and fired only on correct prose, so the gate does not read it.
-    ('no_request_no_paragraph_read', 'a paragraph making no part request is not read for sentences citing nothing', [
-        Step(['check-citations'], 0, ['workflows-core:alpha: placed 1, whole 0', 'check-citations: PASS'], errors=0),
+    # A paragraph making no part request is read like any other. Red: a bare stops citation, then a
+    # sentence citing nothing that names a pickers rule as a reason, which no load at or before it
+    # holds. Green beside it: the same shape with the reason's own citation, placed on pickers.
+    ('paragraph_without_request_is_read', 'a paragraph making no part request is read for its sentences citing nothing', [
+        Step(['check-citations'], 1, [U + ":15: a sentence citing workflows-core:alpha no other way names a rule of "
+                                          "part pickers, which no load of it at or before that sentence in its "
+                                          "paragraph holds",
+                                      'workflows-core:alpha: placed 3, whole 0'], errors=1),
     ]),
     # alpha and beta each hold a rule named Closed-vocabulary pickers, alpha in pickers, beta in
     # detail. Green: alpha's stops and beta's detail loaded, then the name in a sentence citing
-    # nothing, which beta's load holds; the name in a sentence citing beta, which is judged as that
-    # citation, never against alpha's loads; and, in a paragraph requesting only alpha, a §2 of
-    # beta's (its other part) leaning on an earlier bare citation of beta, which is not read. Red:
-    # alpha's stops and beta's other loaded, then the name, which neither load holds.
+    # nothing, which beta's load holds; and the name in a sentence citing beta, which is judged as
+    # that citation, never against alpha's loads. Red: alpha's stops and beta's other loaded, then
+    # the name, which neither load holds; and, after alpha's stops and a bare citation of beta placed
+    # on detail, a §2 of beta's (its other part) leaning on that citation, which no load of beta holds.
     ('name_in_two_references', "a name is held by any loaded reference whose index holds it, and a sentence citing "
                                "one reference is that citation only for that reference's names", [
         Step(['check-citations'], 1, [U + ":19: a sentence citing workflows-core:alpha no other way names a rule of "
@@ -1420,8 +1504,22 @@ CASES = [
                                       U + ":19: a sentence citing workflows-core:beta no other way names a rule of "
                                           "part detail, which no load of it at or before that sentence in its "
                                           "paragraph holds",
+                                      U + ":21: a sentence citing workflows-core:beta no other way names a rule of "
+                                          "part other, which no load of it at or before that sentence in its "
+                                          "paragraph holds",
                                       'workflows-core:alpha: placed 4, whole 0',
-                                      'workflows-core:beta: placed 4, whole 0'], errors=2),
+                                      'workflows-core:beta: placed 4, whole 0'], errors=3),
+    ]),
+    # A dependent plugin's agent reads a part file by path, which its own plugin root does not hold:
+    # red, naming the loader call. A workflows-core agent reads one by path rightly, placed on
+    # pickers; and reads one naming no part: red.
+    ('part_path_outside_core', 'a part file read by path outside workflows-core fails; inside it, the path is a request', [
+        Step(['check-citations'], 1, ['plugins/dev-workflows/agents/fixer.md:12: reads reference-parts/alpha/pickers.md '
+                                      'by path outside workflows-core, whose plugin root alone holds reference-parts/ '
+                                      '-- load it with `Skill(skill: "workflows-core:reference", args: "alpha pickers")`',
+                                      "plugins/workflows-core/agents/core-fixer.md:9: requests part 'nosuch' of "
+                                      "workflows-core:alpha, which has no such part",
+                                      'workflows-core:alpha: placed 1, whole 0'], errors=2),
     ]),
     # alpha aliases §1 to pickers and §4 to stops; gamma is a core reference and delta a plugin's
     # own, neither split. Green: a §4 after a gamma call in a sentence that called alpha before it,
@@ -1487,34 +1585,51 @@ CASES = [
                                           "rule of part review, which that load does not hold",
                                       'workflows-core:alpha: placed 3, whole 0'], errors=1),
     ]),
-    # alpha aliases §4 to stops; gamma is a core reference, not split, holding the heading Key dir not
-    # found. Green, each after a pickers call: `§4 of `workflows-core:gamma``, `§ Key dir not found
-    # of` it, and `§4 of` its path -- each gamma's, ahead of the call before it; and, after a gamma
-    # call, `§ Key dir not found of `workflows-core:alpha``, placed on alpha's stops. Red: after a
+    # alpha aliases §4, Stop rule and § Missing key to stops; gamma is a core reference, not split,
+    # holding the heading Key dir not found, and so is delta, dev-workflows' own. Green, each after a
+    # pickers call: `§4 of `workflows-core:gamma``, `§ Key dir not found of` it, and `§4 of` its path
+    # -- each gamma's, ahead of the call before it; `§ Key dir not found of` delta's path and of
+    # `dev-workflows:delta`, each delta's own file, never workflows-core's; and, after a gamma call,
+    # `§ Key dir not found of `workflows-core:alpha``, `§ Stop rule of` it (an alias, no heading) and
+    # `§ Missing key of` it (an alias written with its §), each placed on alpha's stops. Red: after a
     # gamma call, `§4 of` a pickers call; and, after a pickers call, a § with words between it and
     # "of" -- `§4 to every key of`, `§ Key dir not found to the keys of`, `§4 for each folder of` --
     # which position gives to the pickers call, each naming alpha's stops rule.
     ('section_of_citation', 'only `§N of <citation>`, or `§ <Name> of` it with <Name> its section, names that citation', [
         Step(['check-citations'], 1, [U + ":%d: requests part pickers of workflows-core:alpha, but its sentence names "
                                           "a rule of part stops, which that load does not hold" % n for n in (19, 23, 25, 27)]
-             + ['workflows-core:alpha: placed 4, whole 0'], errors=4),
+             + ['workflows-core:alpha: placed 8, whole 0'], errors=4),
     ]),
     # alpha's pickers needs the helper wording, and review needs pickers, so both bring it. pickers.md
-    # carries wording's text in source order, no wording.md is generated, the index sends Wording to
-    # pickers or review, and the part list names wording only as a helper. Green: a bare citation of
-    # *Wording*, and a pickers call naming it. Red: a request naming the helper; and a stops call
-    # naming *Wording*, which stops does not bring, its failure naming the parts that do.
+    # carries wording's text in source order and its holds line names wording as a helper, no
+    # wording.md is generated, the index sends Wording to pickers or review, and the part list names
+    # wording only as a helper. Green: a bare citation of *Wording*, and a pickers call naming it.
+    # Red: a request naming the helper; a stops call naming *Wording*, which stops does not bring, its
+    # failure naming the parts that do; and, after a stops call, a sentence citing nothing, then the
+    # stops call's own sentence, each naming a pickers rule and *Wording*, every lacking entry named
+    # and the entries separated by semicolons.
     ('helper_part', 'a helper part has no file, comes with the parts that bring it, and is never requested', [
         Step(['check-parts'], 0, ['check-parts: PASS'], errors=0, post=[
-            _order(G + '/alpha/pickers.md', ['## Closed-vocabulary pickers', '## Wording', 'Helper text']),
+            _order(G + '/alpha/pickers.md', ['# Alpha rules — part pickers',
+                                             'This file holds parts `core` and `pickers`, with helper part `wording`.',
+                                             '`${CLAUDE_PLUGIN_ROOT}` in this file', '## Closed-vocabulary pickers',
+                                             '## Wording', 'Helper text']),
+            _order(G + '/alpha/review.md', ['This file holds parts `core`, `pickers` and `review`, with helper part '
+                                            '`wording`.']),
             _order(G + '/alpha/index.md', ['- `Wording` → `pickers` or `review`', '- `pickers` — needs `wording`',
-                                           'Helper parts', '`wording`.'], absent=['- `wording`']),
+                                           'Helper parts', '`wording`.'], absent=['- `wording`', 'This file holds']),
             _no_file(G + '/alpha/wording.md')]),
         Step(['check-citations'], 1, [U + ":19: requests part 'wording' of workflows-core:alpha, which is a helper -- it "
                                           "comes only with a part that brings it: `pickers` or `review`",
                                       U + ":21: requests part stops of workflows-core:alpha, but its sentence names a "
                                           "rule of part pickers or review (helper wording), which that load does not hold",
-                                      'workflows-core:alpha: placed 2, whole 0'], errors=2),
+                                      U + ":23: a sentence citing workflows-core:alpha no other way names a rule of part "
+                                          "pickers; pickers or review (helper wording), which no load of it at or before "
+                                          "that sentence in its paragraph holds",
+                                      U + ":25: requests part stops of workflows-core:alpha, but its sentence names a "
+                                          "rule of part pickers; pickers or review (helper wording), which that load does "
+                                          "not hold",
+                                      'workflows-core:alpha: placed 3, whole 0'], errors=4),
         Step(['generate'], 0, ['0 written, 0 removed'], errors=0, on_copy=True, post=[_unchanged]),
     ]),
     # helper_part's tree, with a wording.md left from when wording was requestable.
@@ -1535,12 +1650,15 @@ CASES = [
     # Italic, bold, backticked, straight- and curly-quoted spans; §N; a § heading; a § alias; a
     # path citation inside workflows-core; a name after "e.g.". A § name reads longest first, so
     # `§ Key dir not found` is never the pickers alias `Key dir`. The three whole citations each
-    # follow a sentence that names the rule -- one opening with a span, one ending inside one.
+    # follow a sentence that names the rule -- one opening with a span, one ending inside one -- so
+    # each is counted whole, and each sentence before it, naming a rule no load before it holds, fails.
     ('name_forms', 'each form a name takes places its citation, and only within its own sentence', [
-        Step(['check-citations', '--verbose'], 0, ['workflows-core:alpha: placed 10, whole 3',
-                                                   'WHOLE ' + U + ':33: workflows-core:alpha',
-                                                   'WHOLE ' + U + ':35: workflows-core:alpha',
-                                                   'WHOLE ' + U + ':37: workflows-core:alpha'], errors=0),
+        Step(['check-citations', '--verbose'], 1, [U + ":%d: a sentence citing workflows-core:alpha no other way names "
+                                                       "a rule of part %s, which no load of it at or before that "
+                                                       "sentence in its paragraph holds" % (n, p)
+                                                   for n, p in ((33, 'pickers'), (35, 'pickers'), (37, 'stops'))]
+             + ['workflows-core:alpha: placed 10, whole 3', 'WHOLE ' + U + ':33: workflows-core:alpha',
+                'WHOLE ' + U + ':35: workflows-core:alpha', 'WHOLE ' + U + ':37: workflows-core:alpha'], errors=3),
     ]),
     # steps is a core reference that does not load by part: `specs-preflight` is a heading's whole code
     # span, `resolve-address` the first word of `resolve-address <ARG> [<KIND>]`, the second call
@@ -1570,17 +1688,21 @@ CASES = [
     ('positional_flagged', '"the next section" inside a part is flagged, never failed', [
         Step(['check-parts'], 0, ['FLAG ' + A + ':19: the next section', 'check-parts: PASS'], errors=0, flags=1),
     ]),
-    # review.md carries alpha's text, then beta's always part and detail -- never beta's other.
+    # review.md carries alpha's text, then beta's always part and detail -- never beta's other -- and
+    # its holds line names both references' parts.
     ('cross_file_bundle', "a part needing another reference's part carries it after a Bundled from line", [
         Step(['check-parts'], 0, ['check-parts: PASS'], errors=0, post=[
             _order(G + '/alpha/review.md',
-                   ['Alpha core: the station rule.', 'Alpha review:', 'Bundled from workflows-core:beta, part detail:',
+                   ["This file holds parts `core` and `review`, and `workflows-core:beta`'s parts `core` and `detail`.",
+                    'Alpha core: the station rule.', 'Alpha review:', 'Bundled from workflows-core:beta, part detail:',
                     'Beta core: the orchestrator triages.', 'Beta detail:'], absent=['Beta other'])]),
     ]),
     ('source_order', 'a part owning two regions with a needed part between them assembles in source order', [
         Step(['check-parts'], 0, ['check-parts: PASS'], errors=0, post=[
-            _order(G + '/alpha/a.md', ['Order one', 'Order two', 'Order three', 'Order four']),
-            _order(G + '/alpha/b.md', ['Order one', 'Order three'], absent=['Order two', 'Order four']),
+            _order(G + '/alpha/a.md', ['This file holds parts `core`, `a` and `b`.', 'Order one', 'Order two',
+                                       'Order three', 'Order four']),
+            _order(G + '/alpha/b.md', ['This file holds parts `core` and `b`.', 'Order one', 'Order three'],
+                   absent=['Order two', 'Order four']),
             # A heading starting with a number and holding a code span is one inert code span.
             _order(G + '/alpha/index.md', ['- ``2. The `second` half`` → `a`'])]),
     ]),

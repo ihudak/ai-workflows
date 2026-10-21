@@ -2,6 +2,8 @@
 
 # Alpha rules — part b
 
+This file holds parts `core` and `b`.
+
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
 ## Rule index of `alpha`

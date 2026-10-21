@@ -2,6 +2,8 @@
 
 # Next-phase offer (embedded — shared reference) — part epics-precondition
 
+This file holds parts `core` and `epics-precondition`, with helper part `routing-graph`.
+
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
 ## Rule index of `next-phase-offer`

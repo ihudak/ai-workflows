@@ -755,8 +755,8 @@ source-not-found, cancellation). The one exception is a halt on a tool the ai-co
 **Session-hygiene invariant.** End Phase 5 with a `### Context hygiene` note per
 `workflows-core:session-hygiene` §2 — a same-role `/compact` suggestion, and neither a `resume.md`
 nor a `/rename` label. Two different reasons, neither of them a missing key: no pointer because
-this run hands its brief off in the same run rather than being a phase a later run resumes (§1),
-and no label because the ideation phase is short (§4). Guidance only, never auto-run.
+this run hands its brief off in the same run rather than being a phase a later run resumes
+(`workflows-core:session-hygiene` §1), and no label because the ideation phase is short (§4). Guidance only, never auto-run.
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 

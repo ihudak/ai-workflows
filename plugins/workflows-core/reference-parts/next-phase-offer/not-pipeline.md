@@ -2,6 +2,8 @@
 
 # Next-phase offer (embedded — shared reference) — part not-pipeline
 
+This file holds parts `core` and `not-pipeline`, with helper parts `rule-1`, `rule-3`, `rule-6` and `surface`.
+
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
 ## Rule index of `next-phase-offer`

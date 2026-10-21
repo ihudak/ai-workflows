@@ -2,6 +2,8 @@
 
 # Escalation rules (shared) — part branch-prefix
 
+This file holds parts `core` and `branch-prefix`.
+
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
 ## Rule index of `escalation-rules`

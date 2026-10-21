@@ -12,4 +12,6 @@ reference, `args: "<name>"`. Never apply a rule of these references from memory.
 
 ## Phase 1
 
-Stop per `workflows-core:alpha`'s *Key dir not found*. The list stays closed (*Closed-vocabulary pickers*), so name the key and nothing else.
+Ask the user to pick a value, and normalise a free-text answer per
+`workflows-core:alpha`'s *Closed-vocabulary
+pickers*.

@@ -27,3 +27,11 @@ Invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")` and app
 Invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")` and stop per §4 for each folder of `references/gamma.md`.
 
 Invoke `Skill(skill: "workflows-core:reference", args: "gamma commit")` and stop per § Key dir not found of `workflows-core:alpha`.
+
+Invoke `Skill(skill: "workflows-core:reference", args: "gamma commit")` and stop per § Stop rule of `workflows-core:alpha`.
+
+Invoke `Skill(skill: "workflows-core:reference", args: "gamma commit")` and stop per § Missing key of `workflows-core:alpha`.
+
+Invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")` and stop per § Key dir not found of `${CLAUDE_PLUGIN_ROOT}/references/delta.md`.
+
+Invoke `Skill(skill: "workflows-core:reference", args: "alpha pickers")` and stop per § Key dir not found of `dev-workflows:delta`.

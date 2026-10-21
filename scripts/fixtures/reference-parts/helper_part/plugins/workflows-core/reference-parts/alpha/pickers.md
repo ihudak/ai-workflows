@@ -2,6 +2,8 @@
 
 # Alpha rules — part pickers
 
+This file holds parts `core` and `pickers`, with helper part `wording`.
+
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 
 ## Rule index of `alpha`

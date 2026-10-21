@@ -5,7 +5,7 @@ part core always
 part pickers
 part stops
 alias pickers "§1"
-alias stops "§4"
+alias stops "§4" "Stop rule" "§ Missing key"
 -->
 
 <!-- part: core -->
