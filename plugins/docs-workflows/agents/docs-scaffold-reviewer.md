@@ -20,7 +20,7 @@ The caller passes a structured brief:
 - **`docs_tree`** — the full list of paths under the site's `docs_dir` (`docs/` on the scaffold's layout) as actually written, from a `Glob` over the resolved repository. This is the ground truth for dimension 1 (navigation completeness); a generated `nav:` is never checked against its own claim of being generated.
 - **`profile`** — the resolved `docs-profile.yml`, read for `images.policy`, `images.root` and `images.max_bytes` (dimension 6). Its `builds[]` entry for the internal build also records `out: site-internal`, cross-checked against `mkdocs.internal.yml`'s own `site_dir` in dimension 2.
 
-Before reviewing, `Read` this plugin's own two bundled references — `${CLAUDE_PLUGIN_ROOT}/references/docs-workflow/scaffold-tree.md` and `${CLAUDE_PLUGIN_ROOT}/references/docs-workflow/visibility.md` — directly, never through the `workflows-core` loader (they are not `workflows-core:<name>` citations). They are what makes dimensions 1, 2, 3, 5 and 6 checkable rather than a matter of opinion, and every "checked against" clause below cites the section that fixes it.
+Before reviewing, read this plugin's own two bundled references — `${CLAUDE_PLUGIN_ROOT}/references/docs-workflow/scaffold-tree.md` and `${CLAUDE_PLUGIN_ROOT}/references/docs-workflow/visibility.md` — directly with `Read`, never through a loader. They are what makes dimensions 1, 2, 3, 5 and 6 checkable rather than a matter of opinion, and every "checked against" clause below cites the section that fixes it.
 
 Refuse to review without the written file paths and the `docs_tree` listing — reviewing a nav against nothing is exactly the "against the config's own claim" failure dimension 1 exists to catch.
 

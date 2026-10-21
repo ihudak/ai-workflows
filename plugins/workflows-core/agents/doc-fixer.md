@@ -18,7 +18,8 @@ The caller passes:
 - **Reviewer or style-checker output** — the full structured output, including all findings with severity, location (`path:line`), observation, and suggestion.
   When the source is `doc-reviewer` or `epic-reviewer`, this list has already been triaged by the
   caller — every finding is a **survivor**; do not re-triage and do not dismiss. When the source is
-  a style checker, no triage step ran (a linter violation is not a claim about consequence) and the list is as the checker produced it.
+  a style checker, no triage step ran (a linter violation is not a claim about consequence) and the
+  list is as the checker produced it.
 - **Project root** — absolute path for opening files (the docs repo root for product docs, the PRD folder for Epic definitions)
 - **Severities to fix** (optional) — default is `BLOCKER` and `MAJOR`. Pass `MINOR` explicitly to include MINOR findings. Never include NIT.
 
