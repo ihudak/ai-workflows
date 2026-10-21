@@ -31,7 +31,7 @@ Every rule name in `escalation-rules`, with the part that holds it; `core` comes
 - `Refresh blocked` → `scan`
 - `Read-only mount — ref stale or diverged` → `scan`
 - `Branch prefix undetected` → `branch-prefix`
-- `A recorded verdict names the version it was taken against` → `review`
+- `A recorded verdict names the version it was taken against` → `version-line`
 - `Findings a review leaves open — the offer to apply them` → `review`
 - `Edits after a verdict that is not BLOCK — the unspent re-review` → `review`
 - `An inline fix is read against what it overlaps` → `review`
@@ -184,10 +184,9 @@ cap trades one unreviewed version for a later one and has no fixed point, since 
 find something the previous fix introduced. What actually costs the reader is not the unreviewed
 edit — a run has to stop somewhere — but believing the verdict covers it. Saying which version it
 covers costs nothing, cannot itself introduce a defect, and leaves the decision about the residue
-where it belongs — with the user, whom the next section asks. **Where no edit followed the verdict,
+where it belongs — with the user. **Where no edit followed the verdict,
 say that too**, so a clean run reads as checked rather than as unreported. A run whose verdict was
-not `BLOCK` has not spent the cap, and the section after the next offers it the re-review the cap
-still holds.
+not `BLOCK` has not spent the cap. Two offers can follow a review: the offer to apply what a review leaves open, which puts the residue to the user, made by the seven commands that fix inline (`/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and `/brd-proposal`) and by `/implement`; and the offer of the re-review the cap still holds, made by those eight and by `/document` and `/epics`. `/vuln` and `/upgrade` make neither: each re-runs its review after its `PASS WITH RECOMMENDATIONS` fixer pass, spending the re-review there.
 
 ## Findings a review leaves open — the offer to apply them
 

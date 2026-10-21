@@ -6,7 +6,8 @@ part pickers
 part stops
 part scan
 part branch-prefix
-part review needs=finding-triage/re-review
+part version-line
+part review needs=finding-triage/re-review,version-line
 alias core "§0" "A selection carries no text" "When no option is safe to recommend" "no option safe to recommend"
 alias stops "Set <VAR>"
 alias review "The offer to apply what a review leaves open" "A verdict that is not `BLOCK` spends neither"
@@ -439,7 +440,7 @@ A read-only mount is not a failure and does not use the `Refresh blocked` list: 
 The condition gates the prompt, so the `(Recommended — <why>)` reason annotation is well-formed under *The `(Recommended)` marker is unconditional*.
 <!-- /part -->
 
-<!-- part: review -->
+<!-- part: version-line -->
 ## A recorded verdict names the version it was taken against
 
 **The review cap assumes a fix cycle only removes defects, and three live runs proved otherwise.** On
@@ -469,11 +470,12 @@ cap trades one unreviewed version for a later one and has no fixed point, since 
 find something the previous fix introduced. What actually costs the reader is not the unreviewed
 edit — a run has to stop somewhere — but believing the verdict covers it. Saying which version it
 covers costs nothing, cannot itself introduce a defect, and leaves the decision about the residue
-where it belongs — with the user, whom the next section asks. **Where no edit followed the verdict,
+where it belongs — with the user. **Where no edit followed the verdict,
 say that too**, so a clean run reads as checked rather than as unreported. A run whose verdict was
-not `BLOCK` has not spent the cap, and the section after the next offers it the re-review the cap
-still holds.
+not `BLOCK` has not spent the cap. Two offers can follow a review: the offer to apply what a review leaves open, which puts the residue to the user, made by the seven commands that fix inline (`/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and `/brd-proposal`) and by `/implement`; and the offer of the re-review the cap still holds, made by those eight and by `/document` and `/epics`. `/vuln` and `/upgrade` make neither: each re-runs its review after its `PASS WITH RECOMMENDATIONS` fixer pass, spending the re-review there.
+<!-- /part -->
 
+<!-- part: review -->
 ## Findings a review leaves open — the offer to apply them
 
 **A finding the gate does not fix is a defect the run knows of, and shipping it is the user's

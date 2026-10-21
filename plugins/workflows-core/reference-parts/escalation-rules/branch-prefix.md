@@ -31,7 +31,7 @@ Every rule name in `escalation-rules`, with the part that holds it; `core` comes
 - `Refresh blocked` → `scan`
 - `Read-only mount — ref stale or diverged` → `scan`
 - `Branch prefix undetected` → `branch-prefix`
-- `A recorded verdict names the version it was taken against` → `review`
+- `A recorded verdict names the version it was taken against` → `version-line`
 - `Findings a review leaves open — the offer to apply them` → `review`
 - `Edits after a verdict that is not BLOCK — the unspent re-review` → `review`
 - `An inline fix is read against what it overlaps` → `review`
