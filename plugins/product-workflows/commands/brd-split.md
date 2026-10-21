@@ -945,7 +945,7 @@ It is substituted in the option strings exactly as `<BRD-KEY>` and `<merge-claus
 is still presented verbatim per `workflows-core:escalation-rules`'s *Choice
 lists are presented verbatim* — a command that instead told the orchestrator to *adjust the wording*
 of an option would be contradicting that convention, which is why the variation lives in a
-placeholder (`Skill(skill: "workflows-core:reference", args: "next-phase-offer contract")` states the same for its own).
+placeholder (`workflows-core:next-phase-offer` states the same for its own — *Resolving this placeholder is not a rewording*, `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`).
 It resolves, for each row:
 
 | This row's state | `<recommended>` resolves to |

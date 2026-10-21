@@ -16,6 +16,8 @@ Every rule name in `next-phase-offer`, with the part that holds it; `core` comes
 - `merge-clause rule` → `contract`
 - `Epic fan-out` → `contract`
 - `rule 7` → `contract`
+- `Resolving this placeholder is not a rewording` → `contract`
+- `Where the placeholder sits in the text` → `contract`
 - `PM — ideation & framing` → `pm`
 - `PM — the BRD-to-PRD route` → `brd`
 - `PM — effort proposals (optional, and they gate nothing on the build ladder)` → `proposals`
@@ -25,6 +27,10 @@ Every rule name in `next-phase-offer`, with the part that holds it; `core` comes
 - `` `/epics` precondition `` → `epics-precondition`
 - `overflow rule` → `overflow`
 - `Not pipeline nodes` → `not-pipeline`
+- `rule 1` → `contract`, `pm`, `brd`, `proposals`, `pa`, `pe`, `dev` or `not-pipeline`
+- `Guidance-only` → `contract`, `pm`, `brd`, `proposals`, `pa`, `pe`, `dev` or `not-pipeline`
+- `rule 3` → `contract`, `pm`, `brd`, `proposals`, `pa`, `pe`, `dev`, `overflow` or `not-pipeline`
+- `Adaptive to outcome` → `contract`, `pm`, `brd`, `proposals`, `pa`, `pe`, `dev`, `overflow` or `not-pipeline`
 - `rule 6` → `contract`, `pm`, `brd`, `proposals`, `pa`, `pe`, `dev` or `not-pipeline`
 - `Surface` → `contract`, `pm`, `brd`, `proposals`, `pa`, `pe`, `dev`, `overflow` or `not-pipeline`
 - `universal minimum` → `contract`, `pm`, `brd`, `proposals`, `pa`, `pe`, `dev`, `overflow` or `not-pipeline`

@@ -18,7 +18,9 @@ part rule-3 helper
 part rule-6 helper
 part surface helper
 part routing-graph helper
-alias contract "A next-step offer that names a downstream command must also name the merge" "Where a run emitted more than one" "resolution table" "merge-clause rule" "Epic fan-out" "rule 7"
+alias contract "A next-step offer that names a downstream command must also name the merge" "Where a run emitted more than one" "resolution table" "merge-clause rule" "Epic fan-out" "rule 7" "Resolving this placeholder is not a rewording" "Where the placeholder sits in the text"
+alias rule-1 "rule 1" "Guidance-only"
+alias rule-3 "rule 3" "Adaptive to outcome"
 alias rule-6 "rule 6"
 alias surface "universal minimum"
 alias overflow "overflow rule"

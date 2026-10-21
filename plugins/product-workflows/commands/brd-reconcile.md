@@ -751,7 +751,7 @@ path nobody else can reproduce; the copy is the record.
    **each line name which handoff it reports**, which is why neither is printed bare here: one
    reports the customer's document, the other this run's own deliverable, wherever either appears.
    **A `<merge-clause>` resolves from the second**, and by `workflows-core:next-phase-offer`'s own
-   rule, *where a run emitted more than one*, rather than by anything local: that file resolves the clause from the line reporting the
+   rule, *where a run emitted more than one* (`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`), rather than by anything local: that file resolves the clause from the line reporting the
    handoff of **the artifact the offered command's gate targets**, which here is the reconciliation
    record with `decisions.md` and `coverage-ledger.md` beside it — what
    `/product-workflows:brd-package` and `/product-workflows:prd-ground` gate on — and not the
