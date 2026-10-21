@@ -127,7 +127,7 @@ A fallback is never valid for an **identity** placeholder — `feat/` is not a n
 
 ### 2.5 Mandatory escalation
 
-When the ladder yields nothing, the command MUST ask before creating the branch (canonical wording in `escalation-rules.md` → "Branch prefix undetected"):
+When the ladder yields nothing, the command MUST ask before creating the branch (canonical wording in `workflows-core:escalation-rules`' *Branch prefix undetected*):
 
 ```
 "I couldn't infer a branch prefix from $GIT_USER_INITIALS, `git config user.initials`, or existing branches. This command's default is `<fallback>`. What prefix should I use?"

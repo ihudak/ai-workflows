@@ -2246,7 +2246,7 @@ why `workflows-core:escalation-rules`'s *Closed-vocabulary pickers must normalis
 picker among the arrays whose free-text answer must be normalised into their own vocabulary rather than
 written through. No `(Recommended)`
 marker, and the reason is stated beside the list per the
-`When no option is safe to recommend` guidance in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`: which one is right is a
+`When no option is safe to recommend` guidance in `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`: which one is right is a
 judgement about a position in another BRD, taken by whoever owns it, and a marker would invite the
 run to inherit-unchanged its way through a sweep whose whole purpose is to find what did move.
 

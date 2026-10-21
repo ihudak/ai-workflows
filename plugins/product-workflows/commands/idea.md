@@ -375,7 +375,7 @@ Runs only when `--ground-code` was given; otherwise take the OFF branch at the e
   choices: ["Ground the proposed set (Recommended)", "Ground a different set (you'll be prompted)", "Ground nothing — continue without a code scan", "Cancel"]
   ```
   *Ground a different set* asks in plain text for the repositories' names, each resolved against the directories just listed.
-- **Empty proposal — do not show that list.** When no theme matches any mounted repo its first option names a set that does not exist. Escalate instead per the `No repos derivable — /epics` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Every option in a shown list must name something that exists.
+- **Empty proposal — do not show that list.** When no theme matches any mounted repo its first option names a set that does not exist. Escalate instead per the `No repos derivable — /epics` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules scan")`. Every option in a shown list must name something that exists.
 - **"Ground nothing — continue without a code scan"** ends this phase for the run: no scanner is dispatched, Phase 4 writes no `## Feasibility grounding` section, and the Final report shows `code grounding: declined at the repo gate` — distinct from `code grounding: off`, which means the flag was never given at all.
 
 **2. Round 1 — broad.** Spawn `code-scanner` on the confirmed set in **batches of up to 4 concurrent agents per Agent message**, on `detection_model` per `workflows-core:model-routing/classification` §8.3. For each repo in the batch:

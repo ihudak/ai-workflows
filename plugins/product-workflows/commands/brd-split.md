@@ -542,7 +542,7 @@ Present the candidate slices — each: a short working name, its `[BR#n]` rows, 
 
 **On the re-cut path every `[BR#n]` in that presentation also names its donor**: the donor's key, and the fact that the donor's own ledger records `deferred-to` against that row. Phase 0 step 9a built exactly that pair, and it is the pair — this BRD's `covered-by: <A>` beside A's own `deferred-to: <A>` — that makes the row movable at all (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §3.2). So the operator sees which slice is giving each row up before confirming anything; a proposal that hides the donor asks them to approve a transfer they cannot see. **The donor is a property of the row, never of the proposed slice** — one candidate slice may take rows from several siblings — so it is named per row and never once per group.
 
-**One of the four answers below has no re-cut meaning of its own, and it is stated here rather than left to a guess.** *"Make this whole BRD one slice"* answers the degenerate case of a **first** split — nothing clusters, so the whole BRD becomes the one slice — and on the re-cut path there is nothing for it to make: every row already carries a fate, and at least one slice already stands, since `recut_mode` is set only where some child's own ledger defers a row this BRD delegated to it (Phase 0 step 9a, step 10). So on that path **it is unavailable, and an operator who picks it is read as declining** — the same outcome as confirming no group: nothing is created, nothing moves, every candidate is left with its donor and reported, and the run continues to Phase 4 where Step 2R has nothing to offer. Say that when it is chosen, rather than acting on it or asking again. **The array is unchanged and nothing is added or removed for this** — `AskUserQuestion` renders two to four options and this one is presented verbatim like every other (`workflows-core:escalation-rules`); what this paragraph fixes is what that answer *means* here, which is the one thing an agent would otherwise have to invent, and every invention writes something.
+**One of the four answers below has no re-cut meaning of its own, and it is stated here rather than left to a guess.** *"Make this whole BRD one slice"* answers the degenerate case of a **first** split — nothing clusters, so the whole BRD becomes the one slice — and on the re-cut path there is nothing for it to make: every row already carries a fate, and at least one slice already stands, since `recut_mode` is set only where some child's own ledger defers a row this BRD delegated to it (Phase 0 step 9a, step 10). So on that path **it is unavailable, and an operator who picks it is read as declining** — the same outcome as confirming no group: nothing is created, nothing moves, every candidate is left with its donor and reported, and the run continues to Phase 4 where Step 2R has nothing to offer. Say that when it is chosen, rather than acting on it or asking again. **The array is unchanged and nothing is added or removed for this** — `AskUserQuestion` renders two to four options and this one is presented verbatim like every other (`workflows-core:escalation-rules` §0, *Choice lists are presented verbatim*); what this paragraph fixes is what that answer *means* here, which is the one thing an agent would otherwise have to invent, and every invention writes something.
 
 Confirm before anything is created:
 
@@ -820,8 +820,8 @@ choices: ["Re-point all <N> rows to <B-KEY> now — each was deferred by the sli
 **Why one list carries a marker and the other two do not** — the same rule all three times, applied to what
 each picker already says. The `allocate-only` picker recommends `covered-here` on every row it
 shows, unconditionally and for a reason no instruction changes, so recommending it once here is that
-marker printed once: a reason annotation, honoured verbatim, of the kind `workflows-core:escalation-rules`
-admits explicitly. The `full` picker carries **no** marker unless an instruction placed the row,
+marker printed once: a reason annotation, honoured verbatim, of the kind `workflows-core:escalation-rules`'
+*The `(Recommended)` marker is unconditional* admits explicitly. The `full` picker carries **no** marker unless an instruction placed the row,
 because which resolution is right is a fact about the row in front of the operator — and there being
 one slice does not change that. So the `full` offer carries none either, and says so beside the
 list: *no option here is recommended — this run knows which slice a delegated row would go to, not
@@ -966,7 +966,7 @@ option never carries a written marker. **The no-instruction run is unchanged** �
 resolves to the same sentence that used to be typed there.
 
 **The reason is carried, not just the marker.** `(Recommended — <why>)` is a reason annotation, which
-`workflows-core:escalation-rules` admits explicitly; a bare `(Recommended)` here would assert a recommendation
+`workflows-core:escalation-rules`' *The `(Recommended)` marker is unconditional* admits explicitly; a bare `(Recommended)` here would assert a recommendation
 whose only basis is a sentence the operator typed several phases ago and can no longer see. Naming
 what in the instruction placed the row is what lets them disagree with it on this row without
 abandoning the instruction.
@@ -1511,7 +1511,7 @@ The rule governs **every** mention of the merge in this phase — both choice ar
 below — because this command reaches three outcomes that open no pull request: the no-op, the
 reconcile path where Step 3 wrote nothing and every standing empty child was kept unchanged, and a declined handoff. It is a
 placeholder and not an instruction to reword an option, so the arrays are still presented verbatim
-per `workflows-core:escalation-rules`.
+per `workflows-core:escalation-rules`' *Choice lists are presented verbatim*.
 
 **Say what the child's own route looks like when offering it**: after `/prd-ground <CHILD-KEY>`,
 `/brd-split <CHILD-KEY>` runs in `allocate-only` mode (Phase 0 step 5) — it allocates that child's

@@ -29,7 +29,7 @@ Usage: `/security-workflows:scan <KEY | repo-path> [--import <dir> | --triage | 
 
 **Rule: Ask, don't guess.** Use `choices` arrays: 2–4 options, each array presented verbatim, and
 never an authored "Other" — the harness supplies the free-text escape itself
-(`Skill(skill: "workflows-core:reference", args: "escalation-rules")` §0). A free-text answer to one of
+(`Skill(skill: "workflows-core:reference", args: "escalation-rules core")` §0). A free-text answer to one of
 this command's pickers is normalised into that picker's own options, or the question is asked again;
 it is never written through as a value of its own.
 
@@ -557,5 +557,5 @@ Emit this step's short output — each agent's result, the feedback persisted, a
 - NEVER ask Claude Security for a `low`-effort scan
 - A Dev is never blocked: a `dev` run's false positive or accepted risk takes effect at once, awaiting security review
 - ALWAYS run `specs-preflight` at Phase 0, and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`)
-- ALWAYS use `choices` arrays of 2–4 options, presented verbatim, and never author an "Other" option (`Skill(skill: "workflows-core:reference", args: "escalation-rules")` §0)
+- ALWAYS use `choices` arrays of 2–4 options, presented verbatim, and never author an "Other" option (`Skill(skill: "workflows-core:reference", args: "escalation-rules core")` §0)
 - ALWAYS end the report with a `### Next step` per `workflows-core:next-phase-offer` — guidance only, never auto-invoked

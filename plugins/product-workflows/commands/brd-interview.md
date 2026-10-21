@@ -1768,7 +1768,7 @@ which reaches it by that field when the prerequisite's decision moves
 kind that names an id its reconciliation changed.
 
 **This picker's vocabulary is closed, and holding it closed is required here rather than merely
-permitted.** `workflows-core:escalation-rules` names this picker among the arrays
+permitted.** `workflows-core:escalation-rules`'s *Closed-vocabulary pickers must normalise the free-text answer* section names this picker among the arrays
 whose free-text answer is normalised into their own vocabulary rather than written through — the
 harness supplies that option on every array and no picker can decline it, so the discipline is in
 what the run does with the answer, not in the array's shape. The rule being applied admits
@@ -2284,7 +2284,7 @@ choices: ["Stop here — the reopened decision named above waits for the next ro
 
 **Five of the six lists carry no `(Recommended)` marker, and that omission is deliberate**, per
 the `When no option is safe to recommend` guidance in
-`Skill(skill: "workflows-core:reference", args: "escalation-rules")`: on `yes`, `rounds-unsettled`,
+`Skill(skill: "workflows-core:reference", args: "escalation-rules core")`: on `yes`, `rounds-unsettled`,
 `nothing-to-review` and its reopened-record list, which one is right depends entirely on what this round left behind.
 **`defects-unasked` is the exception and is well-formed rather than an inconsistency**: its list is
 shown only in its own state, and in it the marked step is the single one every path out goes through

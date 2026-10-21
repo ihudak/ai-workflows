@@ -193,7 +193,7 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
    ```
    **Neither option carries a `(Recommended)` marker, and the omission is deliberate** per the
    `When no option is safe to recommend` guidance in
-   `Skill(skill: "workflows-core:reference", args: "escalation-rules")`, as Phase 8's zero-row list
+   `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, as Phase 8's zero-row list
    states it for its own: whether this run is the re-intake the operator meant or the one they typed
    by mistake is a judgement about their own intent and about the customer's document, and nothing
    the run holds distinguishes the two — the folder looks the same either way. Present the array as
@@ -1543,7 +1543,7 @@ choices: ["Re-run this intake with a corrected source — /product-workflows:brd
 
 Neither option on that zero-row list carries a `(Recommended)` marker, and the omission is deliberate
 per the `When no option is safe to recommend` guidance in
-`Skill(skill: "workflows-core:reference", args: "escalation-rules")`: whether the source was mis-converted, was
+`Skill(skill: "workflows-core:reference", args: "escalation-rules core")`: whether the source was mis-converted, was
 the wrong file, or genuinely states no requirement is a judgement about the customer's document, and
 only the operator who has read it can take it. Say beside the list which conversion or file this run
 actually read, so that judgement has something to stand on.

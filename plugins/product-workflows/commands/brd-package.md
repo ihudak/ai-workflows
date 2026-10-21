@@ -853,11 +853,11 @@ to. Then:
   neither the prompt, which must state the tier and the evidence sentence §3's table pairs with it,
   nor a returned review's own section 1, which is written against that sentence. Its vocabulary is closed, and holding it
   closed is **required rather than merely permitted**, which is why
-  `workflows-core:escalation-rules` names this picker among the arrays whose
+  `workflows-core:escalation-rules`'s *Closed-vocabulary pickers must normalise the free-text answer* section names this picker among the arrays whose
   free-text answer is normalised into their own vocabulary rather than written through. Nobody is
   trapped: that free-text option is always present, and an answer that lands on none of the listed
   values re-asks rather than inventing a value no consumer handles. No `(Recommended)` marker, and the reason is stated beside
-  the list per the `When no option is safe to recommend` guidance in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`: which
+  the list per the `When no option is safe to recommend` guidance in `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`: which
   tier is right is not a judgement at all, it is a fact about what this customer can be given, and a
   marker would invite the run to ship at Full because Full is better.
 

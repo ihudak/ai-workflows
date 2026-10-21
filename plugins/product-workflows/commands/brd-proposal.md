@@ -716,12 +716,12 @@ that file describes the archived revision and not this one.
    silent-drop disposition. Fix the surviving BLOCKERs inline (the orchestrator edits both artifacts —
    there is no delegated writer), read the fix against what it overlaps — each figure it changes
    against every total and brief line computed from it — per the `An inline fix is read against what
-   it overlaps` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`, and
+   it overlaps` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`, and
    re-review **once**, triaging that re-review — and one you chose
    at the first settle prompt — under `workflows-core:finding-triage` § On re-review. If the review **stayed
    blocked** — a BLOCKER survives that triage, or you keep the verdict at either settle prompt —
    escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`
-   rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`; on
+   rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`; on
    `workflows-core:finding-triage` § On re-review's **Proceed**, proceed as after a verdict that is not `BLOCK`. `PASS` / `PASS WITH RECOMMENDATIONS`
    → after the first review and after the re-review alike, where it leaves open at least one surviving finding
    whose fix is only an edit, offer to apply them before going on, per the `Findings a review leaves open — the offer to apply
@@ -739,7 +739,7 @@ that file describes the archived revision and not this one.
 run Phase 8's `stamp` once more** with the same record file and `--excluded`, so no edit carries a damaged record into the
 handoff; `{"written": true}` there is reported beside the edit that caused it.
 
-**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
+**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`. Where none did, it says that too.
 
 **A finding against a slice's own proposal is not fixed here.** This run edits the umbrella and
 nothing under it; where a survivor's location is a slice document, record it, name the slice, and

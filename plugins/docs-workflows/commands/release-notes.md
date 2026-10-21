@@ -49,7 +49,7 @@ This command makes **no external API calls but two**: key discovery's optional, 
    with no tree the `absent` stop below would name the wrong cause and offer a re-enter that cannot
    succeed. An `@<path>` address needs no specs tree to resolve and runs on, exactly as `/document`'s
    *Mode detection* does. Then resolve the address with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). Carry the resolved `path`, `kind` and
-   `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `RELEASE_NOTES_NEEDS_KEY` below, naming the token `read-key` (§1) did not read — a key, a key behind its folder's kind prefix, or a folder's whole name — which the `$SPECS_PATH` test above has already let through. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
+   `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `RELEASE_NOTES_NEEDS_KEY` below, naming the token `read-key` (§1) did not read — a key, a key behind its folder's kind prefix, or a folder's whole name — which the `$SPECS_PATH` test above has already let through. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules stops")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
 
    **Then settle the specs checkout, before the placement below reads anything.** Fix the run key
    set (`workflows-core:specs-repo-git` §3.2), reading only carrier frontmatter (`key:`, `kind:`) as
@@ -455,7 +455,7 @@ choices: ["Feature update — titled section with a docs link, under ## Feature 
 
 Either array is presented as written — it carries each route once, and the proposal is the one the
 question above it names, never a further option repeating it, so no run renders a duplicate
-(`workflows-core:escalation-rules`: there is no permitted adjustment; a recommendation the array does
+(`workflows-core:escalation-rules` *Choice lists are presented verbatim*: there is no permitted adjustment; a recommendation the array does
 not carry belongs in the prose beside it, which is where this one is). When the user confirms the
 proposed route, keep the draft. When they choose another, **re-dispatch `release-notes-writer`** with
 the same inputs and `change_type` set to the choice (Feature update → `New technology support`,

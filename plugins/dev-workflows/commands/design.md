@@ -36,7 +36,7 @@ Usage: `/design <ADDRESS> [--design-twice] [--no-arch] [--skip-costs] [--skip-fe
    never an address.
 
    Parse the **single positional address** from the stripped `$ARGUMENTS` — a `<KEY>`, or an
-   `@<path>` naming a folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind` and `key` forward; `ambiguous` → stop, naming every match and `@<path>` as the way through; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `DESIGN_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree, and designs only against a specification already in one. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command. Then carry forward:
+   `@<path>` naming a folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind` and `key` forward; `ambiguous` → stop, naming every match and `@<path>` as the way through; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `DESIGN_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree, and designs only against a specification already in one. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules stops")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command. Then carry forward:
    - `<PRD>` — the resolved **PRD folder's** `key`: the folder itself when the address named a
      `PRD-` folder, its parent when the address named an `EPIC-` folder.
    - `<EPIC>` — the resolved `EPIC-` folder's `key`, or `null` when the address named a `PRD-`
@@ -129,7 +129,7 @@ scans repos under `$REPOS_PATH`; cwd need not be inside either.
 
 ## Phase 1 — Configure
 
-**Rule: Ask, don't guess. This rule is absolute.** Use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`Skill(skill: "workflows-core:reference", args: "escalation-rules")` §0).
+**Rule: Ask, don't guess. This rule is absolute.** Use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`Skill(skill: "workflows-core:reference", args: "escalation-rules core")` §0).
 
 1. **Feature folder — resolved, never asked.** Phase 0 resolved it from the address, and every
    later command — `/implement`, `/ready`, `/conformance`, the handoff's branch name — finds this
@@ -411,9 +411,9 @@ Dispatch `design-reviewer` (Opus):
 - **`PASS`** / **`PASS WITH RECOMMENDATIONS`** — proceed to Phase 7, once that offer is settled.
 
 Cap: one fix cycle + one re-review maximum. Phase 7 will not hand off a `design.md` with any unresolved
-`- [ ]`. A finding applied at that offer after the first review is an inline edit answering a verdict that was not `BLOCK`: it is read against what it overlaps, as a fix is, and the re-review the cap still holds is offered before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`.
+`- [ ]`. A finding applied at that offer after the first review is an inline edit answering a verdict that was not `BLOCK`: it is read against what it overlaps, as a fix is, and the re-review the cap still holds is offered before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`.
 
-**The recorded verdict names the version it was taken against** — where any edit followed it, the final report, Phase 7's `body_facts` and `_design-session.md` say so and name the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
+**The recorded verdict names the version it was taken against** — where any edit followed it, the final report, Phase 7's `body_facts` and `_design-session.md` say so and name the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`. Where none did, it says that too.
 
 ---
 

@@ -131,7 +131,7 @@ On the §2 powerful chain (`planning_model`), turn the detection report into a d
 
 ## Phase 4 — Confirm and fill gaps
 
-**Rule: Ask, don't guess.** For every field the synthesis marked `needs-confirmation` — and anything detection could not settle — ask the user. Use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`Skill(skill: "workflows-core:reference", args: "escalation-rules")` §0); the recommended default is first and labelled `"(Recommended)"`. Group related fields into one question where possible. On a **refresh** (below), a field the Phase 2 report found nothing for is not a gap: the existing profile already answers it and keeps it, so ask about it only where the existing profile does not carry it either — or carries a value the schema does not accept, which the refresh rules below never keep (a free-text `images.policy`).
+**Rule: Ask, don't guess.** For every field the synthesis marked `needs-confirmation` — and anything detection could not settle — ask the user. Use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`Skill(skill: "workflows-core:reference", args: "escalation-rules core")` §0); the recommended default is first and labelled `"(Recommended)"`. Group related fields into one question where possible. On a **refresh** (below), a field the Phase 2 report found nothing for is not a gap: the existing profile already answers it and keeps it, so ask about it only where the existing profile does not carry it either — or carries a value the schema does not accept, which the refresh rules below never keep (a free-text `images.policy`).
 
 Typical gaps:
 

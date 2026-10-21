@@ -397,7 +397,7 @@ as before this gate.
 
 **Rule: Ask, don't guess. This rule is absolute.**
 
-Use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`Skill(skill: "workflows-core:reference", args: "escalation-rules")` §0).
+Use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`Skill(skill: "workflows-core:reference", args: "escalation-rules core")` §0).
 
 1. **Feature folder — resolved, never asked.** Phase 0 resolved it from the address, and every later
    command — `/design`, `/implement`, `/ready`, `/conformance`, the handoff's branch name — finds this
@@ -992,11 +992,11 @@ the grill/author. **Advisory** — never blocks; proceed to Phase 6 once finding
      goes to the final report and the pull request.
    - **`PASS`** / **`PASS WITH RECOMMENDATIONS`** — proceed to Phase 7, once that offer is settled.
 
-Cap: one fix cycle + one re-review maximum. A finding applied at that offer after the first review is an inline edit answering a verdict that was not `BLOCK`: it is read against what it overlaps, as a fix is, and the re-review the cap still holds is offered before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`.
+Cap: one fix cycle + one re-review maximum. A finding applied at that offer after the first review is an inline edit answering a verdict that was not `BLOCK`: it is read against what it overlaps, as a fix is, and the re-review the cap still holds is offered before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`.
 
-**A finding left open that needs a decision is recorded in the spec.** Once the last review has returned — the offers to apply findings and the re-review offer above settled — and immediately before the handoff, every finding the run leaves open whose fix needs a product decision it did not take, a deferred BLOCKER among them, is written into `specification.md` as a `- [ ]` open question that names it, and the requirement it puts in doubt where it puts one in doubt, under the `Open questions` sub-heading of the stage it concerns, with the header count updated — per the `A finding left open that needs a decision is recorded in the artifact` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. A finding the user overrode, or whose fix is only an edit, gets no open question.
+**A finding left open that needs a decision is recorded in the spec.** Once the last review has returned — the offers to apply findings and the re-review offer above settled — and immediately before the handoff, every finding the run leaves open whose fix needs a product decision it did not take, a deferred BLOCKER among them, is written into `specification.md` as a `- [ ]` open question that names it, and the requirement it puts in doubt where it puts one in doubt, under the `Open questions` sub-heading of the stage it concerns, with the header count updated — per the `A finding left open that needs a decision is recorded in the artifact` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`. A finding the user overrode, or whose fix is only an edit, gets no open question.
 
-**The recorded verdict names the version it was taken against** — where any edit followed it, the final report, Phase 7's `body_facts` and `_session.md` say so and name the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
+**The recorded verdict names the version it was taken against** — where any edit followed it, the final report, Phase 7's `body_facts` and `_session.md` say so and name the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`. Where none did, it says that too.
 
 ---
 

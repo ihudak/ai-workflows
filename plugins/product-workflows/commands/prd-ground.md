@@ -694,7 +694,7 @@ the manual path:
 3. **An entry beginning `/` is an absolute path to a clone** — from `--repos`, or typed at step 1 — and is never matched against the map: it is resolved as *Specify a different absolute path for this repo* resolves one below. Resolve each other named repo against the map: one match → use it; multiple matches → auto-prefer
    basename ending `-repo`, then `_repo`/`_fast`, then alphabetically last (show candidates before
    proceeding); zero matches → escalate per the `Repo unresolved (zero matches) — /prd-ground` rule
-   in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`:
+   in `Skill(skill: "workflows-core:reference", args: "escalation-rules scan")`:
    ```
    choices: ["Skip and continue without this repo", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo (you'll be prompted)"]
    ```
