@@ -107,8 +107,8 @@ loads the whole reference, which is where the preamble sends it (`args: "<split>
 load holds every later sentence, as the lookup it is. A § reference in a sentence citing
 nothing is read against the loads of the reference it belongs to alone. A paragraph making no
 part request is read this way too: that reading was first refused as firing only on correct
-prose, and re-measured on the tree before the rule-by-rule reading it caught 4 of the 6 gaps
-that reading found, so it is on. No
+prose, and re-measured on the tree before the rule-by-rule reading four of its six hits were
+gaps that reading found, so it is on. No
 name places a citation on the whole reference, which is what the preamble then loads, so it
 passes and is counted whole, as does an explicit whole load (`args: "<split>"`). A citation
 naming a rule held in a private part fails, explicit or bare, and so does any other sentence
@@ -1148,8 +1148,8 @@ def cmd_check_citations(root, verbose):
             # reference the paragraph cites whose index holds it, and passes where a load of any of them
             # made AT OR BEFORE the sentence holds it -- never a later one, erring toward failing. A
             # paragraph making no part request is read too: first refused as firing only on correct
-            # prose, this reading, re-measured on the tree before the rule-by-rule reading, caught 4 of
-            # the 6 gaps that reading found (docs/maintainers/rationale.md, "reference-parts").
+            # prose, this reading, re-measured on the tree before the rule-by-rule reading, fired six
+            # times, four of them on gaps that reading found (docs/maintainers/rationale.md, "reference-parts").
             for u, (a, b) in enumerate(spans if loads else ()):
                 own = {n for (i, n) in groups if i == u}
                 lacking, private = {}, {}
