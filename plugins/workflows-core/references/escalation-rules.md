@@ -38,7 +38,7 @@ unfollowable.
    a closed vocabulary by *omitting* the option cannot do that any more, and must handle the answer
    instead — see *Closed-vocabulary pickers must normalise the free-text answer*.
 2. **A fifth option must go somewhere else, not away.** Where an offer has more routes than four,
-   `${CLAUDE_PLUGIN_ROOT}/references/next-phase-offer.md`'s overflow rule applies: the prose carries
+   `${CLAUDE_PLUGIN_ROOT}/references/next-phase-offer.md`'s *overflow rule* applies: the prose carries
    every route, the array carries the likeliest, and the run says the list is longer than the prompt.
 
 **A selection carries no text.** Choosing an option returns its label and nothing else. An option
@@ -164,7 +164,7 @@ an edit to the list.** Where which option is recommended varies per showing, the
 placeholder the command substitutes — `/brd-split`'s Phase 4 walk writes `<recommended>` on each of
 its dispositions and resolves it, per row, to `(Recommended — <why>)` on one and to the empty string
 on the rest. That is substitution, exactly as `<BRD-KEY>` and `<merge-clause>` are substituted in
-the same strings (`references/next-phase-offer.md`), and it is the mechanism this section's first
+the same strings (`references/next-phase-offer.md`'s *Resolving this placeholder is not a rewording*), and it is the mechanism this section's first
 bullet asks for: the **command** evaluates the condition and prints a bare, reasoned marker, rather
 than printing the condition for the user to evaluate. What stays forbidden is the orchestrator
 deciding a marker belongs somewhere the command did not put a placeholder.

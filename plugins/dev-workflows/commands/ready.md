@@ -528,6 +528,8 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
    Guidance only — see `workflows-core:session-hygiene` §5.
    ```
 
+   The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`.
+
 `/ready` **NEVER** writes outside `$SPECS_PATH`. It commits and hands off
 `_readiness.md` only through step 3's `workflows-core:phase-handoff` §4.3 consent choice — declining leaves it
 uncommitted; that handoff is independent of the terminal `commit-artifacts` step, which stages ONLY the
@@ -738,7 +740,7 @@ a code or docs repository, or the current working directory, where it is not the
   artifact is recorded as missing in the coverage roll-up, exactly as before this feature
 - ALWAYS run `specs-preflight` at Phase 0 and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`) — bounded to `$SPECS_PATH`'s artifact paths (§2.1), switching only branches the plugin created (§2.2) and pushing only what §4 step 5 allows, always `git -C "$SPECS_PATH"` and never a `cd` (§1 rule 1), never force-pushing, and never failing the run
 - doc-only — repo check is presence-only, no scanning (Phase 3c; never dispatches `code-scanner`)
-- ALWAYS end with a `### Next step` per `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")` — guidance only, never
+- ALWAYS end with a `### Next step` per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane — guidance only, never
   auto-invoked
 - ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a
   **plugin / skill / command / reference gap** — a `readiness-reviewer` run that cannot get a verdict

@@ -1290,6 +1290,8 @@ The resume pointer is written in the terminal cost phase (Phase 7), per `workflo
 Guidance only — see `workflows-core:session-hygiene` §5.
 ```
 
+Where run-state `mode` is `keyed`, the `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`; a direct run omits that section and loads nothing for it.
+
 Also repeat the `Run flags: …` line whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6; reads run-state `report.notices`), and carry the `Session feedback: …` line wherever Phase 4 printed one (under `--skip-feedback`; reads run-state `report.maintenance`). The `Session cost: …` line is Phase 7's own output, printed after this report and not restated in it.
 
 ---
@@ -1401,7 +1403,7 @@ directory, where it is not the specs repository — save the run-state file's re
 - ALWAYS spawn Phase 4 agents in a single message — never sequentially
 - ALWAYS use `choices` arrays for decision points; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0)
 - ALWAYS produce the Phase 5 report as the final output
-- ALWAYS end the Phase 5 report with a `### Next step` recommendation (per `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`) — guidance only, never auto-invoked; omitted in direct mode (no PRD/Epic pipeline context)
+- ALWAYS end the Phase 5 report with a `### Next step` recommendation (per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane) — guidance only, never auto-invoked; omitted in direct mode (no PRD/Epic pipeline context)
 - ALWAYS pass `Command run: /implement` in the Phase 4 Agent 4 session handoff
 - ALWAYS pass `Change type: code` in the Phase 4 change summary block (scopes the four maintenance agents' suggestions to code-change territory — docs variants use `docs`)
 - AFTER one review-fixer pass + one re-review, if the review stayed blocked (`workflows-core:finding-triage` § On re-review): stop and surface to user — do NOT loop

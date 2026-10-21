@@ -558,4 +558,4 @@ Emit this step's short output — each agent's result, the feedback persisted, a
 - A Dev is never blocked: a `dev` run's false positive or accepted risk takes effect at once, awaiting security review
 - ALWAYS run `specs-preflight` at Phase 0, and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`)
 - ALWAYS use `choices` arrays of 2–4 options, presented verbatim, and never author an "Other" option (`Skill(skill: "workflows-core:reference", args: "escalation-rules core")` §0)
-- ALWAYS end the report with a `### Next step` per `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")` — guidance only, never auto-invoked
+- ALWAYS end the report with a `### Next step` per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane — guidance only, never auto-invoked

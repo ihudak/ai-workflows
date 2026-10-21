@@ -1047,6 +1047,8 @@ The resume pointer is written in the terminal cost phase (Phase 11), per `workfl
 Guidance only — see `workflows-core:session-hygiene` §5.
 ```
 
+The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer pe")`.
+
 ---
 
 ## Phase 10 — Emit follow-up tasks
@@ -1140,7 +1142,7 @@ user name is ever written (§10 privacy).
 - ALWAYS spawn Phase 8 agents in a single message — never sequentially
 - ALWAYS use `choices` arrays for decision points; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0)
 - ALWAYS produce the Phase 9 report as the final output
-- ALWAYS end the Phase 9 report with a `### Next step` recommendation (per `Skill(skill: "workflows-core:reference", args: "next-phase-offer pe")`) — guidance only, never auto-invoked
+- ALWAYS end the Phase 9 report with a `### Next step` recommendation (per `workflows-core:next-phase-offer`'s *PE — breakdown & specification* lane) — guidance only, never auto-invoked
 - ALL written claims must be traceable to a resolved key (from the folder read) or code paths (from `code-scanner`); do not invent content the sources don't contain. `[[KEY]]` wikilinks in the draft are correct here and stay: they are the specs tree's required traceability form, not a link that has to resolve — the specs tree is a git repository, not a vault, and nothing there resolves `[[name]]`. `workflows-core:doc-structure-conventions` §1 — which bans in-page provenance — governs **rendered product-docs pages** (`/document`'s write targets), not Epic definitions; do not apply it to them
 - NEVER run `docs-style-checker` — Epic definitions are specs-tree content and not subject to product-docs prose linting. Prose style is checked via `prose-style-checker` in Phase 6.2 instead.
 - ALWAYS have `epic-writer` write `_coverage.md` to the PRD folder itself (PRD-holistic, even in focus mode); it is NOT an Epic definition and is never published

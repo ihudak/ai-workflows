@@ -1400,6 +1400,8 @@ The resume pointer is written in the terminal cost phase (Phase 11), per `workfl
 Guidance only — see `workflows-core:session-hygiene` §5.
 ```
 
+The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`.
+
 ---
 
 ## Phase 10 — Emit follow-up tasks
@@ -1494,7 +1496,7 @@ name is ever written (§10 privacy).
 - ALWAYS spawn Phase 8 agents in a single message — never sequentially
 - ALWAYS use `choices` arrays for decision points; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0)
 - ALWAYS produce the Phase 9 report as the final output
-- ALWAYS end the Phase 9 report with a `### Next step` recommendation (per `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`) — guidance only, never auto-invoked; omitted in direct doc-edit mode (Mode B)
+- ALWAYS end the Phase 9 report with a `### Next step` recommendation (per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane) — guidance only, never auto-invoked; omitted in direct doc-edit mode (Mode B)
 - ALL written claims must be traceable to a resolved key or to a summarised diff — attribution goes in the run's return payload and the commit message, NEVER inline in the rendered page (`workflows-core:doc-structure-conventions` §1)
 - For `image_policy: cdn_upload_required`, NEVER copy user-provided screenshots into the repo — stage under `<screenshot_staging_dir>` — the resolved PRD folder's screenshot subfolder by default, else a directory the operator names (Phase 1); never the docs repo, never `/tmp` — and surface in the Phase 9 `### Screenshots to upload manually` section
 - ALWAYS end the Phase 9 report with a `### Context hygiene` block per `Skill(skill: "workflows-core:reference", args: "session-hygiene guidance")` — prepare-first (the `resume.md` write runs later, in the terminal cost phase, per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` §1 — this block prints the guidance only), then a docs→PM handoff suggestion (`/clear`) + `/rename <PRD-ID>-<slug>-dev`; guidance only, never auto-run. **Mode B (direct doc-edit) omits this** — no PRD context.

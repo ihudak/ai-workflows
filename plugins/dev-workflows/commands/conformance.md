@@ -524,6 +524,6 @@ Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission
 - ALWAYS run `specs-preflight`, the document gate and the record check at Phase 0, and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`)
 - An Epic run traces the Epic's branch by `unit-branch`, before or after its merge — and the default branch in three cases: where `unit-branch` finds the work merged (`merged`), where no block names the repository (`none`), and where the Dev answered that a `missing` branch's pull request merged; a PRD run traces merged code, and asks before tracing an Epic not shown merged
 - ALWAYS hand off the record and the notes only through the Phase 6 §4.3 consent choice, on a `conformance/` branch
-- ALWAYS end the report with a `### Next step` per `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")` — guidance only, never auto-invoked
+- ALWAYS end the report with a `### Next step` per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane — guidance only, never auto-invoked
 - ALWAYS use `choices` arrays for decision points; 2–4 options, and never author an "Other" option (`workflows-core:escalation-rules` §0)
 - ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a plugin, skill, command or reference gap — never for a discrepancy, a decision, or an environment or user halt

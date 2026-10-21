@@ -422,7 +422,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
    whose slice holds unasked requirement defects that no customer review is owed. It names the one
    run that decides and says what that run does where neither test fires — it hands off nothing — so
    the operator is never sent there expecting work it will not do, the no-op offer
-   `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")` exists to keep out of this route; and beside it, the grounding
+   `workflows-core:next-phase-offer`'s *PM — the BRD-to-PRD route* lane exists to keep out of this route; and beside it, the grounding
    pass that can make a round askable, and the plain fact that stopping is a legitimate outcome.
 
    Note what this gate does **not** require: a package with `[VD#n]` decisions and no `[C]` question
