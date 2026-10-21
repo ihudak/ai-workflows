@@ -751,7 +751,7 @@ path nobody else can reproduce; the copy is the record.
    **each line name which handoff it reports**, which is why neither is printed bare here: one
    reports the customer's document, the other this run's own deliverable, wherever either appears.
    **A `<merge-clause>` resolves from the second**, and by `workflows-core:next-phase-offer`'s own
-   rule rather than by anything local: that file resolves the clause from the line reporting the
+   rule, *where a run emitted more than one*, rather than by anything local: that file resolves the clause from the line reporting the
    handoff of **the artifact the offered command's gate targets**, which here is the reconciliation
    record with `decisions.md` and `coverage-ledger.md` beside it — what
    `/product-workflows:brd-package` and `/product-workflows:prd-ground` gate on — and not the
@@ -2724,8 +2724,8 @@ on a failed eligibility test — so the second array is typically two or three o
 
 **`advance_ready: yes` — the route is finished with this slice and crosses into the PRD
 pipeline.** Print the full list as prose first, per
-`workflows-core:next-phase-offer`'s
-overflow rule — five routes do not fit in four slots, and the prose is what carries all of them:
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`'s
+*overflow rule* — five routes do not fit in four slots, and the prose is what carries all of them:
 
 ```
 Where this run can go next:
@@ -2830,7 +2830,7 @@ That state is reachable here: a `--sent` run, for one, reconciles a review no pa
 route checked.
 
 **The trigger filter runs first and the four-option cap applies to what survives it**
-(`workflows-core:next-phase-offer`'s overflow rule). Typically two or three
+(`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`'s *overflow rule*). Typically two or three
 options survive and every one of them fits. Where four re-entry options survive, the prose above
 still names all four and the array carries `Stop here` plus the three whose triggers this run's own
 outcome makes most pressing — say in one line that the list is longer than the options and that the
@@ -2882,7 +2882,7 @@ gate this run feeds.
 it.** The re-run's Phase 0 step 6c gates the parent's defect log, which this run's *Handoff* phase
 carries, so it waits on this run's merge like every option that names a gate this run feeds. And it
 waits on the *dependent's* register reaching the default branch, while the placeholder
-`workflows-core:next-phase-offer` defines resolves from **this** run's own
+`workflows-core:next-phase-offer` defines resolves, by that reference's *resolution table*, from **this** run's own
 `Phase handoff:` outcome line — a different merge, which is why the condition is written in the
 option's own text like every other one in the list.
 
@@ -2897,7 +2897,7 @@ array option — it names work on a different key — and it carries no `<merge-
 gates on the dependent's `grounding/code-grounding.md`, which this run never writes. A dependent
 recorded-not-written has no such line, since nothing was reopened there yet.
 
-Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")` — names only,
+Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")` — names only,
 never behaviour a command of its own owns: a `[C]` the review did not answer keeps its round open and
 travels in the next package, save one whose question stopped applying and which had no record of
 its own, which this run closed; a decision this run reopened is settled by another interview round,
@@ -3005,7 +3005,7 @@ stale cross-reference sweep** — the hit counts by outcome and every `needs-a-h
 **both** `Phase handoff:` outcome lines — §4.1 counts one **per handoff offered** and this command
 offers two — **each labelled with the handoff it reports and neither printed bare**, as that
 section requires of a multi-handoff producer: the review's and the run's, in that order, the run's
-being the one a `<merge-clause>` resolves from (`workflows-core:next-phase-offer`); the
+being the one a `<merge-clause>` resolves from (`workflows-core:next-phase-offer`, *where a run emitted more than one*); the
 `Specs repo:` outcome line (`workflows-core:specs-repo-git` §6); the next-step
 recommendation; and end with the ledger line, read fresh from `coverage-ledger.md` **as this run
 left it**, exactly per `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §6:

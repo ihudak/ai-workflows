@@ -422,7 +422,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
    whose slice holds unasked requirement defects that no customer review is owed. It names the one
    run that decides and says what that run does where neither test fires — it hands off nothing — so
    the operator is never sent there expecting work it will not do, the no-op offer
-   `workflows-core:next-phase-offer` exists to keep out of this route; and beside it, the grounding
+   `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")` exists to keep out of this route; and beside it, the grounding
    pass that can make a round askable, and the plain fact that stopping is a legitimate outcome.
 
    Note what this gate does **not** require: a package with `[VD#n]` decisions and no `[C]` question
@@ -1635,7 +1635,7 @@ findings may be exactly right to send today or exactly right to hold, and only t
 which. The reason is stated here, beside the list, rather than folded into a conditional marker the
 orchestrator would then have to evaluate.
 
-Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")` — names only,
+Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")` — names only,
 never behaviour a command of its own owns: the round holding each `[C]` stays open until the
 customer's answer comes back and `/product-workflows:brd-reconcile` records it, or finds its question
 has stopped applying, and what happens between

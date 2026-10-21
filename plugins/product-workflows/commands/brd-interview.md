@@ -1466,7 +1466,7 @@ choices: ["It puts again <candidate id> — <its statement>", "It puts again <ne
 
 One entry per candidate, **up to three**, and the `None` entry last, always; where one candidate
 exists the array is two entries. **Past three candidates, the overflow rule applies**
-(`workflows-core:next-phase-offer`): the prose lists every one, the array carries the three whose
+(`Skill(skill: "workflows-core:reference", args: "next-phase-offer overflow")`): the prose lists every one, the array carries the three whose
 `statement` is closest to the question's, and the harness's free-text option reaches the rest. A
 free-text answer is normalised to one candidate's id or to `None`, and re-asked where it names
 neither — never written through. The answer is held, and *Write the register and the round record*
@@ -2246,8 +2246,8 @@ reading `covered-here` never counts — is still `unallocated`, and at least one
 `covered-here` (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5). This command's own
 gate has already found no row `unallocated`, so the covered-here test is the one left to read.
 
-The routes below, with `Stop here`, do not fit in the prompt's four slots in either case, so apply `workflows-core:next-phase-offer`'s
-overflow rule: print every route in prose, in the order below, then one line saying the list is
+The routes below, with `Stop here`, do not fit in the prompt's four slots in either case, so apply `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`'s
+*overflow rule*: print every route in prose, in the order below, then one line saying the list is
 longer than the prompt and that anything on it is reachable by typing it into the free-text option.
 Leave the PRD line out of both the prose and the array where the slice is not PRD-eligible, and say
 why. The array carries the forward routes first, as `/product-workflows:brd-reconcile`'s does, and
@@ -2302,7 +2302,7 @@ advancing list does. Its
 reopened-record list carries none because stopping there is legitimate too: the record waits, named,
 until whoever owns the next round runs it.
 
-`<merge-clause>` in these lists is the placeholder `workflows-core:next-phase-offer` resolves from
+`<merge-clause>` in these lists is the placeholder that `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`'s *resolution table* resolves from
 this run's own `Phase handoff:` outcome line; it is never written as an unconditional "once the pull
 request above is merged", because the no-new-round path reaches the handoff with nothing to commit
 wherever the register was already on file, and then opens no pull request. **The lists that name
@@ -2312,7 +2312,7 @@ can hold it up and there is no wait to state. **The `defects-unasked` re-open, a
 for the same reason**: this command gates on `grounding/code-grounding.md` (*Resolve inputs and gate the
 grounded BRD*, step 6), which this run never writes either.
 
-Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")` — names only,
+Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")` — names only,
 never behaviour a command of its own owns: a round still holding a `[C]` stays open, because the
 answer arrives through a package and is recorded by `/product-workflows:brd-reconcile` once it comes
 back — or that command finds the question has stopped applying. A

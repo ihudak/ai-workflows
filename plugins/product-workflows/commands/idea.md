@@ -665,7 +665,7 @@ the next phase — **adapted to status**:
   option 1. Then, **whichever option was taken**, recommend
   `/product-workflows:create-prd <KEY>` `<merge-clause>`, which finds `idea.md` in that folder —
   `<merge-clause>` resolved from the `Phase handoff:` line §4.1 just emitted, per
-  `Skill(skill: "workflows-core:reference", args: "next-phase-offer")`'s resolution table, and never written
+  `Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`'s *resolution table*, and never written
   unconditionally. **The clause sits outside the command's own code span**, per that reference's
   placement paragraph, which states the rule for every adopter and gives the reason; it binds with
   particular force here, because this offer *is* the one line an operator copies, with nothing
@@ -723,7 +723,7 @@ the file.
 
 `/create-prd` is a separate command; this offer is guidance the user acts on — it never auto-invokes
 another command. (Per `workflows-core:next-phase-offer` — the plugin-wide
-next-phase-offer contract; `/idea` is one reference implementation.)
+next-phase-offer contract, whose *PM — ideation & framing* lane holds `/idea`'s node; `/idea` is one reference implementation.)
 
 ### Context hygiene
 

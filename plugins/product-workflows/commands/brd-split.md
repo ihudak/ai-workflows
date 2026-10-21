@@ -945,7 +945,7 @@ It is substituted in the option strings exactly as `<BRD-KEY>` and `<merge-claus
 is still presented verbatim per `workflows-core:escalation-rules`'s *Choice
 lists are presented verbatim* — a command that instead told the orchestrator to *adjust the wording*
 of an option would be contradicting that convention, which is why the variation lives in a
-placeholder (`workflows-core:next-phase-offer` states the same for its own).
+placeholder (`Skill(skill: "workflows-core:reference", args: "next-phase-offer contract")` states the same for its own).
 It resolves, for each row:
 
 | This row's state | `<recommended>` resolves to |
@@ -1505,7 +1505,7 @@ the continuation.
 **A donor that gained no row is not in that set and is not offered anything here — and that is the condition, not "being a donor".** It lost a row and gained none, so its remaining findings still cover everything it still claims, and the findings it holds about the row it gave up stay on file as a record of what it saw (`workflows-core:grounding-format` §8) — they are not stale grounding to repair, and re-running `/prd-ground` on it would re-derive work nothing asked for. **A donor that also gained a row is in the set like any other receiver**, which is reachable whenever two donors are involved: A's row lands on C while C's own row goes elsewhere, and C is then a child that gained a row and needs its grounding re-derived for it. Stating the rule as "a donor is never offered" would drop C out of the offer on the strength of a label. A donor left claiming nothing at all was resolved in Phase 4.5 and is not here either.
 
 **Every merge clause in this phase is the `<merge-clause>` placeholder**, resolved per
-`Skill(skill: "workflows-core:reference", args: "next-phase-offer")`'s *A next-step offer that names a downstream
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`'s *A next-step offer that names a downstream
 command must also name the merge* rule, which owns the §4.1 outcome map and is not restated here.
 The rule governs **every** mention of the merge in this phase — both choice arrays and the prose
 below — because this command reaches three outcomes that open no pull request: the no-op, the

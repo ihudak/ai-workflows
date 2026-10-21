@@ -788,8 +788,8 @@ came to; the coverage proportion and the count of requirements left unpriced; th
 ## Phase 12 — Next steps
 
 **One literal array.** Every printed command name is fully qualified
-(`workflows-core:next-phase-offer` rule 6), and every offer in it prints exactly one positional
-address (rule 7).
+(`Skill(skill: "workflows-core:reference", args: "next-phase-offer proposals")` *rule 6*), and every offer in it prints exactly one positional
+address (*rule 7*).
 
 ```
 choices: ["Stop here — the umbrella is written and, if you handed it off, committed", "Re-price a slice the readiness walk flagged — /product-workflows:prd-proposal <SLICE-KEY>", "Re-run the umbrella once those land — /product-workflows:brd-proposal <BRD-KEY>"]
@@ -810,7 +810,7 @@ requires, and the third then reads as the standing re-run offer it is: the umbre
 from whatever the slices hold on the day it is run. Nothing is ever added beyond the three above, and
 no option's wording is adjusted.
 
-Guidance only — never auto-invokes another command. Per `workflows-core:next-phase-offer`.
+Guidance only — never auto-invokes another command. Per `Skill(skill: "workflows-core:reference", args: "next-phase-offer proposals")`.
 
 ### Context hygiene
 

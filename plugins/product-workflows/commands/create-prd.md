@@ -829,7 +829,7 @@ refusal leaves standing. (This paragraph once distinguished `<KEY>` from a secon
 carried `--from-brd` into the PA option; D4 retired the pair and D18 retired the flag.)
 
 - **`/docs-workflows:release-notes <ADDRESS>`** (PM) — draft the customer-facing release note now (the cost model's `pm`/`prd-creation` inferred case: no spec/design yet).
-- **`/product-workflows:create-ard <ADDRESS>`** (PA, **optional**) — hand to a Product Architect to author the grounded architecture document. It gates this PRD on the specs repo's default branch (its own Phase 0), so it stops where this PRD reached a branch and falls back to the resolved folder — reported, never silently — where it reached none; **on the BRD route** it also gates the `decisions.md` this run stages and stops where that is on a branch or on no ref (see the PA paragraph below). `<merge-clause>` is the placeholder `workflows-core:next-phase-offer` owns, resolved from this run's own `Phase handoff:` outcome line (§4.1) and never written as the unconditional "once the pull request above is merged": a declined handoff, a failed push and a nothing-to-commit run — among the other outcomes §4.1 lists — each leave a different wait, and none of those three opens a pull request to wait on. It is a placeholder, not an instruction to reword an option, so the array is still presented verbatim per `workflows-core:escalation-rules`' *Choice lists are presented verbatim*.
+- **`/product-workflows:create-ard <ADDRESS>`** (PA, **optional**) — hand to a Product Architect to author the grounded architecture document. It gates this PRD on the specs repo's default branch (its own Phase 0), so it stops where this PRD reached a branch and falls back to the resolved folder — reported, never silently — where it reached none; **on the BRD route** it also gates the `decisions.md` this run stages and stops where that is on a branch or on no ref (see the PA paragraph below). `<merge-clause>` is the placeholder `workflows-core:next-phase-offer` owns, resolved per `Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`'s *resolution table* from this run's own `Phase handoff:` outcome line (§4.1) and never written as the unconditional "once the pull request above is merged": a declined handoff, a failed push and a nothing-to-commit run — among the other outcomes §4.1 lists — each leave a different wait, and none of those three opens a pull request to wait on. It is a placeholder, not an instruction to reword an option, so the array is still presented verbatim per `workflows-core:escalation-rules`' *Choice lists are presented verbatim*.
 - **`/product-workflows:epics <ADDRESS>`** (PE) — hand to a Product Engineer to split the PRD into Epics (or author a PRD-level spec → `/product-workflows:specify <ADDRESS>`, which resolves the same folder through the same entry point).
 
 The other two options carry no clause, and that is checked, not assumed: `/docs-workflows:release-notes` runs no `require-on-main` at all, and `/product-workflows:epics` gates only `<PRD-dir>/specification.md` — a file this run does not write.
@@ -844,9 +844,9 @@ with `resolve-address` and reads the PRD there on both routes — and, on the BR
 `ard-seed.md` where one was left, the register and the grounding findings besides. On both routes its
 Phase 0 gates the `prd.md` this run wrote, and on the BRD route also the `decisions.md` this run's
 handoff stages (its register gate), so its option carries the clause on both, resolved per
-`Skill(skill: "workflows-core:reference", args: "next-phase-offer")`'s resolution table.
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`'s *resolution table*.
 
-Guidance only — never auto-invokes another command. Per `workflows-core:next-phase-offer`.
+Guidance only — never auto-invokes another command. Per `Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`.
 
 ### Context hygiene
 

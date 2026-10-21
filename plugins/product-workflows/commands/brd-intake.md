@@ -1499,7 +1499,7 @@ each, and all three commands refuse the container itself
 row is refused by every downstream command on the route, and `/product-workflows:brd-split`'s walk
 takes only a ledger's `unallocated` rows (`coverage-ledger-format.md` §4), so offering either where
 there is nothing for it would name a run that stops on its own Phase 0 or does nothing — the offer
-`workflows-core:next-phase-offer` exists to prevent. **Its sibling re-cut does walk rows with a
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")` exists to prevent. **Its sibling re-cut does walk rows with a
 fate** — on a root whose every row is allocated, given an instruction
 (`coverage-ledger-format.md` §3.2) — and is not offered either: it moves a row only where the slice
 holding it has recorded in its own ledger that it will not build it, which this command never reads,
@@ -1557,7 +1557,7 @@ merge-state gate; grounding now happens only at the slice `/brd-split` carves. *
 offer carries no `<merge-clause>`**, and that is derived, not an oversight: `/brd-split` on a root
 reads this handoff's artifacts with a plain worktree read at its own step 8, gating none of them, so
 there is no wait to state. Guidance only — never auto-invokes another command. Per
-`workflows-core:next-phase-offer`.
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`.
 
 ### Context hygiene
 

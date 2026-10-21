@@ -701,8 +701,8 @@ Low and how many carry a declared re-estimate gate; the `proposal-reviewer` verd
 ## Phase 11 — Next steps
 
 **Three literal arrays, one per tier branch.** Every printed command name is fully qualified
-(`workflows-core:next-phase-offer` rule 6), and each array prints exactly one positional address
-(rule 7).
+(`Skill(skill: "workflows-core:reference", args: "next-phase-offer proposals")` *rule 6*), and each array prints exactly one positional address
+(*rule 7*).
 
 ```
 choices: ["Stop here — the proposal is written and, if you handed it off, committed", "Roll it into the programme umbrella — /product-workflows:brd-proposal <BRD-KEY> <merge-clause>", "Price the next sibling slice — /product-workflows:prd-proposal <SIBLING-SLICE-KEY>", "Re-derive it from scratch once the inputs move — /product-workflows:prd-proposal <KEY> --redo"]
@@ -724,7 +724,7 @@ than a forward pointer.
 
 **Drop an option whose subject does not exist on this run** — the umbrella option where the folder has
 no parent BRD, the sibling option where **no sibling holds a stale proposal or holds none at all**.
-Read that as one predicate over the siblings, matching `workflows-core:next-phase-offer`'s own wording
+Read that as one predicate over the siblings, matching `workflows-core:next-phase-offer`'s own wording in its *PM — effort proposals (optional, and they gate nothing on the build ladder)* lane
 (*"the next sibling holding no current proposal"*): the option stands wherever some sibling has no
 current proposal, a sibling that was never priced included. Read the other way — dropped unless a
 sibling holds a *stale* one — it would vanish in the commonest case there is. **Current** is
@@ -748,14 +748,14 @@ substitutions, not rewordings (`workflows-core:escalation-rules`, *Choice lists 
 verbatim*).
 
 **`<merge-clause>` is resolved from the `Phase handoff:` line this run actually emitted**, per
-`workflows-core:next-phase-offer`'s resolution table — a row names a branch only where that outcome
+`workflows-core:next-phase-offer`'s *resolution table* — a row names a branch only where that outcome
 committed one, which the declined and gate-failed rows did not, and a declined handoff opened no
 pull request. Read which rows those are off that table rather than off this sentence. `/product-workflows:brd-proposal` runs `require-on-main`
 against the `proposal.md` this run has just written, which is why that one option carries the
 placeholder and the two tier-raising options do not: both of those gate on `prd.md`, which this run
 does not write.
 
-Guidance only — never auto-invokes another command. Per `workflows-core:next-phase-offer`.
+Guidance only — never auto-invokes another command. Per `Skill(skill: "workflows-core:reference", args: "next-phase-offer proposals")`.
 
 ### Context hygiene
 

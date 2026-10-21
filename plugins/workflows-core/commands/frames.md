@@ -366,7 +366,7 @@ same phase presented minutes earlier, and it did not: the array was moved to adv
 register was corrected, and this clause was left saying nothing reads the file — the exact
 self-contradiction §4.3 exists to forbid, inside the command the correction was made for. Nothing runs
 `require-on-main` on a frame-set index (`${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §3.4's
-table names none), and `${CLAUDE_PLUGIN_ROOT}/references/next-phase-offer.md`'s rule attaches the
+table names none), and `${CLAUDE_PLUGIN_ROOT}/references/next-phase-offer.md`'s *merge-clause rule* attaches the
 clause to an offer naming a gate this run's own output feeds. There is none. Recommend nothing
 unconditional either: this command sits beside the pipeline rather than inside it, and what to run
 next is a question about the folder, not about the index.

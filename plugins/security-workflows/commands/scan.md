@@ -310,7 +310,7 @@ stop:
 
 3. **Possibly-same rows are always asked, whatever the batch answer**, one row at a time, naming the scanned finding and each candidate's `[SEC#n]`, CWE, `file:line` and status.
    - One candidate: `choices: ["Same finding", "A different finding"]`.
-   - Several: a runtime array of one `Same as [SEC#n]` option per candidate, up to three, then `A different finding`. More candidates follow `workflows-core:next-phase-offer`'s overflow rule: the prose lists every candidate, the array carries the three nearest by line, and a typed `[SEC#n]` is resolved only against the candidates listed.
+   - Several: a runtime array of one `Same as [SEC#n]` option per candidate, up to three, then `A different finding`. More candidates follow `Skill(skill: "workflows-core:reference", args: "next-phase-offer overflow")`'s *overflow rule*: the prose lists every candidate, the array carries the three nearest by line, and a typed `[SEC#n]` is resolved only against the candidates listed.
    - *A different finding* makes the row a new finding, decided as the batch answer says.
    - **A match onto a candidate the row's `history` names changes nothing** but who reported it: the scan's commit comes before that finding's last sighting (`workflows-core:security-register-format` §5 rule 4).
    - **Otherwise, a confirmed match onto a false positive or an accepted risk** is changed code, so ask that finding's decision as in step 4 too, whatever the batch answer. Left undecided, `register.py` returns it to `open`. A match onto a candidate the row's `reopens` names is reopened by `register.py`, and decided as a reopen row: *Accept the suggestions* takes step 1's suggestion for it, *Change some* asks it as step 4 does, and *Decide all later* leaves it `reopened`. A match onto any other `fixed` candidate — the scan comes before the scan that closed it — or onto any other status keeps that status.
@@ -474,7 +474,7 @@ SIGNIFICANT — [one-line reason]
 - Reservations: [N run records reserved from other branches; a fetch that failed]
 
 ### Next step
-[Per `workflows-core:next-phase-offer` — guidance only, never auto-invoked.]
+[Per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane — guidance only, never auto-invoked.]
 
 ### Context hygiene
 [per `workflows-core:session-hygiene`]
@@ -485,7 +485,7 @@ else is there. The `### Register` section names every decision awaiting security
 this run recorded and the ones it found, and lists each follow-up line as pending the preview: a line
 the preview then cancels stays in this report only (`workflows-core:followup-emission` §7).
 
-The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer")`:
+The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`:
 - **findings went to fix** → with a key, `/dev-workflows:implement <KEY>` from repository `<repo-slug>`, which reads back the follow-ups the preview writes and continues on the Epic's branch while its pull request is open, starting from each patch a line names — a path under `$SPECS_PATH`, which its Phase 1 reads there, and which it checks with `git apply --check` and applies, each task's in turn, before any other edit; then the pull request's review and merge — where the change scan ran under `after_merge`, whose pull request has merged already, the review and merge of the pull request that run opens. With a path, `/dev-workflows:implement` with the prompt lines, each that names a patch followed by that patch's absolute path, `$SPECS_PATH` joined to it: a direct run reads no follow-up and resolves no path under `$SPECS_PATH` itself;
 - **once the fix has merged** → `/security-workflows:scan <repo-path> --verify-fixes` (Security Engineer), which closes it on evidence;
 - **accepted risks are review due, or decisions await security review** → `/security-workflows:scan <repo-path> --triage` (Security Engineer);
@@ -558,4 +558,4 @@ Emit this step's short output — each agent's result, the feedback persisted, a
 - A Dev is never blocked: a `dev` run's false positive or accepted risk takes effect at once, awaiting security review
 - ALWAYS run `specs-preflight` at Phase 0, and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`)
 - ALWAYS use `choices` arrays of 2–4 options, presented verbatim, and never author an "Other" option (`Skill(skill: "workflows-core:reference", args: "escalation-rules core")` §0)
-- ALWAYS end the report with a `### Next step` per `workflows-core:next-phase-offer` — guidance only, never auto-invoked
+- ALWAYS end the report with a `### Next step` per `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")` — guidance only, never auto-invoked
