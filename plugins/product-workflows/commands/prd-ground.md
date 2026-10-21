@@ -2060,8 +2060,9 @@ choices: ["Write the missing frame-set index — /workflows-core:frames <BRD-KEY
 ### Context hygiene
 
 The resume pointer is written in the terminal cost phase (Phase 11), per
-`workflows-core:session-hygiene` §1. Grounding another repository or
-prerequisite in the same BRD? → run **`/compact`**. Continuing as PM into `/brd-split` on this slice? → run **`/compact`**
+`workflows-core:session-hygiene` §1. Per the role-aware suggestion of
+`workflows-core:session-hygiene` §2: grounding another repository or prerequisite in the same BRD?
+→ run **`/compact`**. Continuing as PM into `/brd-split` on this slice? → run **`/compact`**
 (`route: brd`) — the same role, and its walk allocates against the findings this run just wrote;
 handing it to the PM you ran this for, as a PA or PE? → run **`/clear`**: they pick it up in their own
 session. Grounding another repository for the same PRD? → run

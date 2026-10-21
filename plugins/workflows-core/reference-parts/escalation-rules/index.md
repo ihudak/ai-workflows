@@ -48,4 +48,4 @@ Every rule name in `escalation-rules`, with the part that holds it; `core` comes
 - `scan`
 - `branch-prefix`
 - `version-line`
-- `review` — needs `finding-triage/re-review`, `version-line`
+- `review` — needs `version-line`

@@ -962,8 +962,8 @@ choose *Ask the customer*.
 **That requirement is enforceable only because the shared reference names this array.**
 `workflows-core:escalation-rules` §0 makes the free-text option unconditional —
 no array can decline it — so a picker about customer authority is protected by what the run does with
-the answer, not by the array's shape. Its *Closed-vocabulary pickers must normalise the free-text
-answer* section therefore names this picker, the missing-reason picker and the conflicting-answer
+the answer, not by the array's shape. `workflows-core:escalation-rules`' *Closed-vocabulary pickers
+must normalise the free-text answer* section therefore names this picker, the missing-reason picker and the conflicting-answer
 picker below, and the propagation sweep's, and gives that reason. Until that section was rewritten the file said the opposite of what
 this command needs: it called adding a trailing free-text entry "the one permitted adjustment", which
 would have **authorised** an agent to open the exact hole D14 closes, on the authority of the file
@@ -2916,7 +2916,7 @@ default branch.
 
 The resume pointer is written in the terminal cost phase, per
 `workflows-core:session-hygiene` §1. **The offer above spans roles, so both
-branches are printed** (§2's *Next options span both* bullet). Reconciling a second review for the
+branches are printed** (`workflows-core:session-hygiene` §2's *Next options span both* bullet). Reconciling a second review for the
 same BRD, or working another round of it, or authoring this slice's PRD yourself as PM
 (`/product-workflows:create-prd <SLICE-KEY>`)? → run **`/compact`**. Moving to a different BRD or
 slice, or handing on to PA (`/product-workflows:create-ard <SLICE-KEY>`) or PE

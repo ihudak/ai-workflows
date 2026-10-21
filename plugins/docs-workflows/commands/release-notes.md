@@ -364,11 +364,11 @@ from anything, and the PRD's `release_versions`, where `/create-prd` wrote one, 
 
 ## Phase 4 — Resolve repos (only if diff grounding is ON)
 
-Take the slug→clone map Phase 3 built with the diff sources — this phase and that step run under the same one condition, diff grounding ON, so the map is always in hand here and is never built twice. Resolve each in-scope `repo` slug — the ones the Phase 3 implementation record and its commit scan named — against the map: one match → use it; multiple → auto-prefer basename ending `-repo`, then `_repo`/`_fast`, then alphabetically last; zero matches → escalate:
+Take the slug→clone map Phase 3 built with the diff sources — this phase and that step run under the same one condition, diff grounding ON, so the map is always in hand here and is never built twice. Resolve each in-scope `repo` slug — the ones the Phase 3 implementation record and its commit scan named — against the map: one match → use it; multiple → auto-prefer basename ending `-repo`, then `_repo`/`_fast`, then alphabetically last; zero matches → escalate per the `Repo unresolved (zero matches) — /document` rule in `workflows-core:escalation-rules`, whose list this reproduces:
 ```
 choices: ["Skip and continue without its refs", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo (you'll be prompted)"]
 ```
-*Specify a different absolute path for this repo* asks for the path in plain text. "I'll clone it — wait" and a specified path run key discovery again once the clone is there (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1, *A clone mounted mid-run*).
+*Specify a different absolute path for this repo* asks for the path in plain text, as that reference's `Repo resolution — specifying a different absolute path` rule says, and a path that is not a directory is asked for again. "I'll clone it — wait" and a specified path run key discovery again once the clone is there (`${CLAUDE_PLUGIN_ROOT}/references/key-discovery.md` §1, *A clone mounted mid-run*).
 
 ---
 
@@ -619,7 +619,7 @@ Outside that one case there is no question to ask and no option that replaces th
    - Reminder: paste the draft just appended to <the resolved PRD folder>/release-notes.md, under <version | Unreleased> → <## Breaking changes | ## Feature updates | ## Fixes>, wherever your release notes are published — the docs automation adds the {{#internal-note}} metadata and emits it into example-docs.
 
    ### Next step
-   [leaf/closure per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane — guidance only, never auto-invoked: the release note is drafted. If earlier pipeline phases remain, continue — hand to PA → `/product-workflows:create-ard <PRD>` or PE → `/product-workflows:epics <PRD>`; if the change is already built and documented, the PRD is fully processed.]
+   [leaf/closure per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane, and, for a PA or PE phase still pending, its *PA — architecture (optional)* and *PE — breakdown & specification* lanes, which name that phase's command — guidance only, never auto-invoked: the release note is drafted. If earlier pipeline phases remain, continue — hand to PA → `/product-workflows:create-ard <PRD>` or PE → `/product-workflows:epics <PRD>`; if the change is already built and documented, the PRD is fully processed.]
 
    ### Context hygiene
 
@@ -632,7 +632,7 @@ Outside that one case there is no question to ask and no option that replaces th
    Guidance only — see `workflows-core:session-hygiene` §5.
    ```
 
-   The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`.
+   The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`, whose node for this command continues any pending PA or PE phase; where one is pending, it also follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer pa")` and `Skill(skill: "workflows-core:reference", args: "next-phase-offer pe")`, whose lanes name that phase's command.
 
 ---
 
@@ -763,5 +763,5 @@ current working directory, where it is not the specs repository; no user name is
 - ALWAYS use `choices` arrays for decision points; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0).
 - Light gate only — no Opus review, no tests, and no branch but the `prd/` branch Phase 8's handoff cuts in the specs repository behind the operator's consent (`specs-preflight`, its same-run re-run after a slice key is entered included (`workflows-core:specs-repo-git` §3.5), switches `$SPECS_PATH` only between branches that already exist, and only plugin-created ones (§2.2); it creates none), and no commit of anything in a docs/code repo or the current working directory, where it is not the specs repository. The draft, `release-notes.md` in the resolved PRD folder, is committed by that handoff, in the specs repository and nowhere else; the terminal `commit-artifacts` step commits ONLY `$SPECS_PATH`'s bounded session paths (`workflows-core:specs-repo-git` §2.1), never the draft — and under `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), or with `$SPECS_PATH` unset on an `@<path>` run, neither commits, and the draft is written and not committed — as it is where the `@<path>` leads outside `$SPECS_PATH`'s work tree, which is offered no handoff (Phase 8 step 1a).
 - ALWAYS run `specs-preflight` at Phase 0 — again, with the slice's key set, where step 1 re-enters for a slice the operator entered at `RELEASE_NOTES_BRD_NOT_SLICED` — and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`) — bounded to `$SPECS_PATH`'s artifact paths (§2.1), switching only branches the plugin created (§2.2) and pushing only what §4 step 5 allows, always `git -C "$SPECS_PATH"` and never a `cd` (§1 rule 1), never force-pushing, and never failing the run
-- ALWAYS end the Phase 8 report with a `### Next step` recommendation (per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane) — guidance only, never auto-invoked; the pipeline leaf (adaptive: continue any pending PA/PE phase, else the PRD is fully processed).
+- ALWAYS end the Phase 8 report with a `### Next step` recommendation (per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane, and its *PA — architecture (optional)* and *PE — breakdown & specification* lanes for a pending PA or PE phase) — guidance only, never auto-invoked; the pipeline leaf (adaptive: continue any pending PA/PE phase, else the PRD is fully processed).
 - ALWAYS end the Phase 8 report with a `### Context hygiene` block per `Skill(skill: "workflows-core:reference", args: "session-hygiene guidance")` — prepare-first (the `resume.md` write runs later, in the terminal cost phase, per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` §1 — this block prints the guidance only), then a leaf-aware suggestion (done → nothing; pending role → `/clear`) + `/rename <PRD-ID>-<slug>-<role>` using this run's inferred lane (`pm` or `dev`, per the Phase 6 inference); guidance only, never auto-run.

@@ -2140,6 +2140,10 @@ its Phase 0 gate. `/brd-reconcile` is the command after that one and is not offe
 a review that has not been asked for yet, and offering it now would name a step out of order. So the
 honest offer is the state this run actually leaves behind.
 
+**Load the lane before anything below is computed or printed**: every list in this phase follows
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, and each `<merge-clause>` in
+it resolves per that part's *resolution table* from this run's own `Phase handoff:` outcome line.
+
 **Compute the gate before printing the list, and compute every step of it.** `/brd-package` gates
 on the register in its Phase 0 step 6 and on content in steps 7 and 8, and an offer that evaluates
 some of them still hands the operator a run that stops on another. Apply each, **exactly as those
@@ -2302,7 +2306,7 @@ advancing list does. Its
 reopened-record list carries none because stopping there is legitimate too: the record waits, named,
 until whoever owns the next round runs it.
 
-`<merge-clause>` in these lists is the placeholder that `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`'s *resolution table* resolves from
+`<merge-clause>` in these lists is the placeholder that `workflows-core:next-phase-offer`'s *resolution table*, loaded at the top of this phase, resolves from
 this run's own `Phase handoff:` outcome line; it is never written as an unconditional "once the pull
 request above is merged", because the no-new-round path reaches the handoff with nothing to commit
 wherever the register was already on file, and then opens no pull request. **The lists that name
@@ -2328,9 +2332,9 @@ set could not be read — because until that changes no slice can tell whether t
 The resume pointer is written in the terminal cost phase, per
 `workflows-core:session-hygiene` §1. Working another round of the same BRD, or
 going on to `/product-workflows:brd-package <BRD-KEY>`? Both stay in the PM lane
-(§2's *Same role* bullet) → run **`/compact`**. Moving to a different BRD or slice? → run **`/clear`**.
+(`workflows-core:session-hygiene` §2's *Same role* bullet) → run **`/compact`**. Moving to a different BRD or slice? → run **`/clear`**.
 **Where the `nothing-to-review` list offers the authoring ladder, it spans roles, so print both
-branches** (§2's *Next options span both* bullet): authoring this slice's PRD yourself as PM
+branches** (`workflows-core:session-hygiene` §2's *Next options span both* bullet): authoring this slice's PRD yourself as PM
 (`/product-workflows:create-prd <BRD-KEY>`)? → run **`/compact`**. Handing on to PA
 (`/product-workflows:create-ard <BRD-KEY>`) or PE (`/product-workflows:specify <BRD-KEY>`), even
 when the same person does it? → run **`/clear`**; those runs read the slice folder from the specs

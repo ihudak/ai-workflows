@@ -1404,6 +1404,10 @@ and reports the same `nothing to commit` line.
 
 ## Phase 7 — Next steps
 
+Load the lane before any array below is printed: every offer in this phase follows
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, and each `<merge-clause>`
+in it resolves per that part's *resolution table* from this run's own `Phase handoff:` outcome line.
+
 **`split_mode: allocate-only` — no child of this slice is reachable, so no grounding of one is
 offered.** Phase 3 never ran, so there is no child to ground. This slice's ledger may still hold a
 `covered-by` key — an **orphan row** naming a sibling or the parent
@@ -1505,8 +1509,9 @@ the continuation.
 **A donor that gained no row is not in that set and is not offered anything here — and that is the condition, not "being a donor".** It lost a row and gained none, so its remaining findings still cover everything it still claims, and the findings it holds about the row it gave up stay on file as a record of what it saw (`workflows-core:grounding-format` §8) — they are not stale grounding to repair, and re-running `/prd-ground` on it would re-derive work nothing asked for. **A donor that also gained a row is in the set like any other receiver**, which is reachable whenever two donors are involved: A's row lands on C while C's own row goes elsewhere, and C is then a child that gained a row and needs its grounding re-derived for it. Stating the rule as "a donor is never offered" would drop C out of the offer on the strength of a label. A donor left claiming nothing at all was resolved in Phase 4.5 and is not here either.
 
 **Every merge clause in this phase is the `<merge-clause>` placeholder**, resolved per
-`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`'s *A next-step offer that names a downstream
-command must also name the merge* rule, which owns the §4.1 outcome map and is not restated here.
+`workflows-core:next-phase-offer`'s *A next-step offer that names a downstream
+command must also name the merge* rule — in the part loaded at the top of this phase — which owns
+the §4.1 outcome map and is not restated here.
 The rule governs **every** mention of the merge in this phase — both choice arrays and the prose
 below — because this command reaches three outcomes that open no pull request: the no-op, the
 reconcile path where Step 3 wrote nothing and every standing empty child was kept unchanged, and a declined handoff. It is a
@@ -1549,9 +1554,11 @@ Per `workflows-core:session-hygiene` §1, the resume pointer is written in the
 terminal cost phase (Phase 8), after the cost entry and before the commit step. On `full`,
 grounding a child is PM work too — PM to PM, so → run **`/compact`** before typing it, or let
 *Ground now* run it in this session; a PA or PE grounding it for a PM who cannot clone the code
-picks it up in their own session. This BRD's own key has no step of its own. On `allocate-only`, continuing as PM into
+picks it up in their own session — the role-aware suggestion of `workflows-core:session-hygiene`
+§2, its *Same role* and *Different role* bullets. This BRD's own key has no step of its own. On `allocate-only`, continuing as PM into
 `/product-workflows:brd-interview <BRD-KEY>` on this same slice keeps the context relevant → run
-**`/compact`**. Guidance only — nothing is auto-run.
+**`/compact`**, per `workflows-core:session-hygiene` §2's *Same role* bullet. Guidance only —
+nothing is auto-run.
 
 ---
 

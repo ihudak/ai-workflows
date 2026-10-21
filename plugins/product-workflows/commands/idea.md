@@ -623,6 +623,11 @@ every later run until those paths are committed or the handoff is taken. A run c
 
 ## Phase 5 — Handoff: adaptive next-phase offer
 
+Load the lane before either offer below is printed: both follow
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`, and the refined offer's
+`<merge-clause>` resolves per that part's *resolution table* from the `Phase handoff:` outcome line
+this run emits.
+
 Report where `idea.md` was written and its `status`, and what Phase 4.5 vendored beside it, then offer
 the next phase — **adapted to status**:
 
@@ -665,8 +670,8 @@ the next phase — **adapted to status**:
   option 1. Then, **whichever option was taken**, recommend
   `/product-workflows:create-prd <KEY>` `<merge-clause>`, which finds `idea.md` in that folder —
   `<merge-clause>` resolved from the `Phase handoff:` line §4.1 just emitted, per
-  `Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`'s *resolution table*, and never written
-  unconditionally. **The clause sits outside the command's own code span**, per that reference's
+  `workflows-core:next-phase-offer`'s *resolution table*, loaded at the top of this phase, and never
+  written unconditionally. **The clause sits outside the command's own code span**, per that reference's
   placement paragraph, which states the rule for every adopter and gives the reason; it binds with
   particular force here, because this offer *is* the one line an operator copies, with nothing
   beside it to mark where the command ends. **The clause is load-bearing here,

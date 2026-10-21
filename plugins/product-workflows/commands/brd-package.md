@@ -1584,7 +1584,12 @@ path, and the condition is what the item printed beside it adds.
 
 ## Phase 10 — Next steps
 
-**First, print the delivery note in full, and the delivery-route item directly after it.** The offer
+**Load the lane before anything below is printed**: this phase's offer follows
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, and its `<merge-clause>`
+resolves per that part's *resolution table* from the `Phase handoff:` outcome line this run's
+*Handoff* phase printed.
+
+**Then print the delivery note in full, and the delivery-route item directly after it.** The offer
 below asks whether to send the note, so the operator reads both before answering rather than after.
 The item states the route the *Render the delivery note* phase settled and why; on the archive
 route, the archive command with an absolute path (*Assemble the bundle*); on the repository route,
@@ -1635,7 +1640,7 @@ findings may be exactly right to send today or exactly right to hold, and only t
 which. The reason is stated here, beside the list, rather than folded into a conditional marker the
 orchestrator would then have to evaluate.
 
-Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")` — names only,
+Say plainly what remains, per `workflows-core:next-phase-offer`'s *PM — the BRD-to-PRD route* lane, loaded at the top of this phase — names only,
 never behaviour a command of its own owns: the round holding each `[C]` stays open until the
 customer's answer comes back and `/product-workflows:brd-reconcile` records it, or finds its question
 has stopped applying, and what happens between
@@ -1645,9 +1650,10 @@ customer has to answer.
 ### Context hygiene
 
 The resume pointer is written in the terminal cost phase, per
-`workflows-core:session-hygiene` §1. Re-packaging the same BRD after a
-correction? → run **`/compact`**. Moving to a different BRD or slice? → run **`/clear`**. Guidance
-only — nothing is auto-run.
+`workflows-core:session-hygiene` §1. Per the role-aware suggestion of
+`workflows-core:session-hygiene` §2: re-packaging the same BRD after a correction? → run
+**`/compact`**. Moving to a different BRD or slice? → run **`/clear`**. Guidance only — nothing is
+auto-run.
 
 ---
 

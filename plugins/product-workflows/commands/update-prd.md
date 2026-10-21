@@ -216,7 +216,7 @@ false published claim.
 
 ### Context hygiene
 
-The resume pointer is written in the terminal cost phase (Phase 7), per `workflows-core:session-hygiene` §1. Then: continuing as PM → `/compact`; handing to PA/PE → `/clear`. Guidance only.
+The resume pointer is written in the terminal cost phase (Phase 7), per `workflows-core:session-hygiene` §1. Then, per `workflows-core:session-hygiene` §2: continuing as PM → `/compact`; handing to PA/PE → `/clear`. Guidance only.
 
 ---
 
