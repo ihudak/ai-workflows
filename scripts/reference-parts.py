@@ -40,9 +40,9 @@ the part list) and one <part>.md per requestable part -- neither private nor a h
 rule index each name is a code span, so one starting with a number renders as itself, and a
 rule of a helper names the requestable parts that bring it; the part list names helpers only
 as such. Each part file holds a header line, a title, a line under it naming every part the
-file holds -- `This file holds parts `core`, `pickers` and `review`, with helper part
-`wording`.`: its own reference's requestable parts, then its helpers, then each other
-reference's parts it bundles, each in declaration order -- a sentence saying
+file holds -- in the example's pickers.md, `This file holds parts `core` and `pickers`, with
+helper part `wording`.`: its own reference's requestable parts, then its helpers, then each
+other reference's parts it bundles, each in declaration order -- a sentence saying
 `${CLAUDE_PLUGIN_ROOT}` in it is workflows-core's root, the rule index, then the always part,
 the part and the parts of its file it needs (transitively) IN SOURCE ORDER, then each part of
 another reference it needs, under a `Bundled from workflows-core:<ref>, part <part>:` line. It
