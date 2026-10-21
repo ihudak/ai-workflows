@@ -13,8 +13,8 @@ The authoritative classification rules and model fallback chain are in:
 
 Work from that file's own words, never from memory or a summary. The text
 this request needs is the whole file, and a read short of every line — a
-section, a range, a search — covers no request; consecutive ranges that reach
-its last line are one read of every line. Where the text this request needs is
+section, a range, a search — covers no request; consecutive ranges from its
+first line to its last are one read of every line. Where the text this request needs is
 already in this conversation word for word, from a read made in this run, work
 from that text and read nothing, within one bound: classifying executes that
 file, so reuse an earlier read to classify only where that read was made in
@@ -27,7 +27,7 @@ front of you now, whatever removed them — it was never read, only a different
 part of it was read, or an earlier read has since been replaced by a summary
 or cleared; a summary of a reference is never its text. Where you cannot
 tell, read it. Reading the whole file means reading every line of it: where
-one read cannot hold it, read it in consecutive ranges up to its last line.
+one read cannot hold it, read it in consecutive ranges from its first line to its last.
 
 Whether the text was read now or is already in this conversation, classify
 the current task as exactly one of `SIMPLE`, `MODERATE`, `SIGNIFICANT`, or

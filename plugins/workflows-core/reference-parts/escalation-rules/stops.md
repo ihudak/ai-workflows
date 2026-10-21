@@ -218,5 +218,5 @@ repository root. For `SPECS_PATH` it is a stop, not a degradation: there is no "
 it" option, because that path is where the run's inputs and outputs live. `REPOS_PATH` holds only
 code a run reads, which is why a citer whose run can go on without it offers that way on. Other
 commands reproduce the same two-option list inline without naming the rule; a citer that names the
-rule uses the list written here, save the `REPOS_PATH` way on that this rule gives a citer whose run
+rule uses the list written here, save the `REPOS_PATH` way on, which this rule gives a citer whose run
 can go on without code.

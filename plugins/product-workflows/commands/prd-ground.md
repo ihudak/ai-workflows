@@ -1977,9 +1977,9 @@ nobody acted on (this command never edits `prd.md` itself, design §7).
 `prd.md` this run's own Phase 0 already required on main (step 6i), so an operator who runs either
 immediately is running against a file this command has already confirmed is there; the placeholder
 still names the wait truthfully for the ordinary case in which that confirmation and this offer are
-being read minutes apart. **`/update-prd <KEY>` carries none — deliberately, and for the reason
-`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")` already gives for `/product-workflows:brd-reconcile`'s own
-three-command offer: it never executes `require-on-main` against anything at all**
+being read minutes apart. **`/update-prd <KEY>` carries none — deliberately**, and for the reason
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane, already gives for `/product-workflows:brd-reconcile`'s own
+three-command offer: **it never executes `require-on-main` against anything at all**
 (`commands/update-prd.md` states this outright — "`require-on-main` … is never executed by this
 command"), so there is no gate for this run's handoff to make anyone wait on. Naming a wait that
 does not exist would be the placeholder's own named failure — resolving it truthfully, not
@@ -2013,7 +2013,7 @@ the array recommending it is not the array to show. The second offers the repair
 names — `/workflows-core:frames <BRD-KEY>` to write the missing index, after which a `--no-code`
 re-run of this command reconciles the set — and names `/brd-split` nowhere in its options, since
 neither half of that repair has run yet; the prose above the arrays still says where it sits in the
-route, which is what `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`'s *universal minimum* asks of a route the array
+route, which is what the *universal minimum* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane, asks of a route the array
 does not carry. **Selecting between two written arrays is how this branch is taken, never by editing
 one**: `workflows-core:escalation-rules`' *Choice lists are presented verbatim* puts an array's
 options, their order, their wording and the `(Recommended)` marker outside the orchestrator's
@@ -2031,10 +2031,10 @@ order, since it refuses a ledger that still holds an unallocated row. `/brd-spli
 until this phase's findings are on the specs repo's default branch — its own Phase 0 gates
 `grounding/code-grounding.md` on `origin/<default>`; **which words state that wait, in the array that
 offers it, are `<merge-clause>`'s**, resolved from this run's own `Phase handoff:` outcome line per
-`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, since a declined handoff opened no pull
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane, since a declined handoff opened no pull
 request to wait on — and it carries its own role and
 cost-attribution row (`docs/roles-and-phases.md`). Guidance only, per
-`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")` — names only that `/brd-split` exists and
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane — names only that `/brd-split` exists and
 where it sits in the route, never its behaviour, which `commands/brd-split.md` owns.
 
 **The array that offers it says which of `/brd-split`'s two modes will run**, so nobody

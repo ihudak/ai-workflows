@@ -1290,7 +1290,7 @@ The resume pointer is written in the terminal cost phase (Phase 7), per `workflo
 Guidance only — see `workflows-core:session-hygiene` §5.
 ```
 
-Where run-state `mode` is `keyed`, the `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`; a direct run omits that section and loads nothing for it.
+Where run-state `mode` is `keyed`, the `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`, the *Dev — build, verify & deliver* lane; a direct run omits that section and loads nothing for it.
 
 Also repeat the `Run flags: …` line whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6; reads run-state `report.notices`), and carry the `Session feedback: …` line wherever Phase 4 printed one (under `--skip-feedback`; reads run-state `report.maintenance`). The `Session cost: …` line is Phase 7's own output, printed after this report and not restated in it.
 

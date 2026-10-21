@@ -47,18 +47,18 @@ commands so the routing graph and the offer rules live in ONE place (the same sh
 
 ## The routing graph (role-aware)
 
-  **Every `/product-workflows:epics` option the routing graph names is conditional on the folder it names
-  holding an authored `prd.md`** (`kind: prd`): `/epics` accepts a PRD folder or an `EPIC-` folder
-  under one and refuses everything else (`/product-workflows:epics` Phase 0 step 1b). Where the
-  caller's PRD folder — the resolved folder itself on a PRD-level run, its parent on an Epic-level
-  one — holds no PRD, which the BRD route reaches legitimately since `/product-workflows:create-prd`
-  is not a prerequisite for `/product-workflows:create-ard` there, the offer is
-  `/product-workflows:create-prd <PRD>` instead, `<PRD>` being that tested folder's own key and
-  never an Epic's, **and only where that command can itself run**: it refuses more than one shape —
-  three on the BRD route, and an `EPIC-` folder on either, which is why the key is the PRD folder's
-  — so on a BRD-route slice the two data refusals on that slice's own ledger are tested first and
-  the offer resolves to `/product-workflows:brd-split` against one of two keys, or to no option at
-  all, where either fails (`product-workflows:coverage-ledger-format` §5.2, the authority, applied
-  by each offering command). An offer whose run stops the moment it starts is the same defect the
-  `<merge-clause>` rules exist to prevent, one command further on: a next step the operator
-  cannot take from the state the report describes.
+**Every `/product-workflows:epics` option the routing graph names is conditional on the folder it names
+holding an authored `prd.md`** (`kind: prd`): `/epics` accepts a PRD folder or an `EPIC-` folder
+under one and refuses everything else (`/product-workflows:epics` Phase 0 step 1b). Where the
+caller's PRD folder — the resolved folder itself on a PRD-level run, its parent on an Epic-level
+one — holds no PRD, which the BRD route reaches legitimately since `/product-workflows:create-prd`
+is not a prerequisite for `/product-workflows:create-ard` there, the offer is
+`/product-workflows:create-prd <PRD>` instead, `<PRD>` being that tested folder's own key and
+never an Epic's, **and only where that command can itself run**: it refuses more than one shape —
+three on the BRD route, and an `EPIC-` folder on either, which is why the key is the PRD folder's
+— so on a BRD-route slice the two data refusals on that slice's own ledger are tested first and
+the offer resolves to `/product-workflows:brd-split` against one of two keys, or to no option at
+all, where either fails (`product-workflows:coverage-ledger-format` §5.2, the authority, applied
+by each offering command). An offer whose run stops the moment it starts is the same defect the
+`<merge-clause>` rules exist to prevent, one command further on: a next step the operator
+cannot take from the state the report describes.

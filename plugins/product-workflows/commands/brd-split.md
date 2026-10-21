@@ -945,7 +945,7 @@ It is substituted in the option strings exactly as `<BRD-KEY>` and `<merge-claus
 is still presented verbatim per `workflows-core:escalation-rules`'s *Choice
 lists are presented verbatim* — a command that instead told the orchestrator to *adjust the wording*
 of an option would be contradicting that convention, which is why the variation lives in a
-placeholder (`workflows-core:next-phase-offer` states the same for its own — *Resolving this placeholder is not a rewording*, `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`).
+placeholder (`workflows-core:next-phase-offer` states the same for its own — *Resolving this placeholder is not a rewording*, `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane).
 It resolves, for each row:
 
 | This row's state | `<recommended>` resolves to |
@@ -1405,7 +1405,7 @@ and reports the same `nothing to commit` line.
 ## Phase 7 — Next steps
 
 Load the lane before any array below is printed: every offer in this phase follows
-`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, and each `<merge-clause>`
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane, and each `<merge-clause>`
 in it resolves per that part's *resolution table* from this run's own `Phase handoff:` outcome line.
 
 **`split_mode: allocate-only` — no child of this slice is reachable, so no grounding of one is

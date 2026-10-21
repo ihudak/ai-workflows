@@ -747,7 +747,7 @@ under a slice it is the `EPIC-` subfolder and the branch is `ard/<EPIC>-<eslug>`
 ## Phase 7 — Next-step offer (adaptive)
 
 Load the lane before any array below is printed: the offer follows
-`Skill(skill: "workflows-core:reference", args: "next-phase-offer pa")`, and each `<merge-clause>` in
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer pa")`, the *PA — architecture (optional)* lane, and each `<merge-clause>` in
 it resolves per that part's *resolution table* from this run's own `Phase handoff:` outcome line.
 
 **One precondition governs every `/product-workflows:epics` option below, on both routes.** `/epics`
@@ -874,7 +874,7 @@ indicative. Either way it
 is optional and ungated — nothing on the build ladder waits on a proposal, and no arrays above change. (`/product-workflows:brd-proposal` does wait on a slice's, but that is the proposal phase gating its own earlier run rather than anything this offer names.) No merge wait: that
 command gates on `prd.md`, which this run does not write.
 
-Guidance only — never auto-invokes another command. Per `Skill(skill: "workflows-core:reference", args: "next-phase-offer pa")`.
+Guidance only — never auto-invokes another command. Per `Skill(skill: "workflows-core:reference", args: "next-phase-offer pa")`, the *PA — architecture (optional)* lane.
 
 ### Context hygiene
 

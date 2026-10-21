@@ -1047,7 +1047,7 @@ The resume pointer is written in the terminal cost phase (Phase 11), per `workfl
 Guidance only — see `workflows-core:session-hygiene` §5.
 ```
 
-The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer pe")`.
+The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer pe")`, the *PE — breakdown & specification* lane.
 
 ---
 

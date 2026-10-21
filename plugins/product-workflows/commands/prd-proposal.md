@@ -701,7 +701,7 @@ Low and how many carry a declared re-estimate gate; the `proposal-reviewer` verd
 ## Phase 11 — Next steps
 
 **Three literal arrays, one per tier branch.** Every printed command name is fully qualified
-(`Skill(skill: "workflows-core:reference", args: "next-phase-offer proposals")` *rule 6*), and each array prints exactly one positional address
+(*rule 6* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer proposals")`, the *PM — effort proposals (optional, and they gate nothing on the build ladder)* lane), and each array prints exactly one positional address
 (*rule 7*).
 
 ```
@@ -755,7 +755,7 @@ against the `proposal.md` this run has just written, which is why that one optio
 placeholder and the two tier-raising options do not: both of those gate on `prd.md`, which this run
 does not write.
 
-Guidance only — never auto-invokes another command. Per `Skill(skill: "workflows-core:reference", args: "next-phase-offer proposals")`.
+Guidance only — never auto-invokes another command. Per `Skill(skill: "workflows-core:reference", args: "next-phase-offer proposals")`, the *PM — effort proposals (optional, and they gate nothing on the build ladder)* lane.
 
 ### Context hygiene
 

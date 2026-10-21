@@ -751,7 +751,7 @@ path nobody else can reproduce; the copy is the record.
    **each line name which handoff it reports**, which is why neither is printed bare here: one
    reports the customer's document, the other this run's own deliverable, wherever either appears.
    **A `<merge-clause>` resolves from the second**, and by `workflows-core:next-phase-offer`'s own
-   rule, *where a run emitted more than one* (`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`), rather than by anything local: that file resolves the clause from the line reporting the
+   rule, *where a run emitted more than one* (`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane), rather than by anything local: that file resolves the clause from the line reporting the
    handoff of **the artifact the offered command's gate targets**, which here is the reconciliation
    record with `decisions.md` and `coverage-ledger.md` beside it — what
    `/product-workflows:brd-package` and `/product-workflows:prd-ground` gate on — and not the
@@ -2724,8 +2724,8 @@ on a failed eligibility test — so the second array is typically two or three o
 
 **`advance_ready: yes` — the route is finished with this slice and crosses into the PRD
 pipeline.** Print the full list as prose first, per
-`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`'s
-*overflow rule* — five routes do not fit in four slots, and the prose is what carries all of them:
+the *overflow rule* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the
+*PM — the BRD-to-PRD route* lane — five routes do not fit in four slots, and the prose is what carries all of them:
 
 ```
 Where this run can go next:
@@ -2830,7 +2830,7 @@ That state is reachable here: a `--sent` run, for one, reconciles a review no pa
 route checked.
 
 **The trigger filter runs first and the four-option cap applies to what survives it**
-(`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`'s *overflow rule*). Typically two or three
+(the *overflow rule* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane). Typically two or three
 options survive and every one of them fits. Where four re-entry options survive, the prose above
 still names all four and the array carries `Stop here` plus the three whose triggers this run's own
 outcome makes most pressing — say in one line that the list is longer than the options and that the
@@ -2897,7 +2897,7 @@ array option — it names work on a different key — and it carries no `<merge-
 gates on the dependent's `grounding/code-grounding.md`, which this run never writes. A dependent
 recorded-not-written has no such line, since nothing was reopened there yet.
 
-Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")` — names only,
+Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane — names only,
 never behaviour a command of its own owns: a `[C]` the review did not answer keeps its round open and
 travels in the next package, save one whose question stopped applying and which had no record of
 its own, which this run closed; a decision this run reopened is settled by another interview round,

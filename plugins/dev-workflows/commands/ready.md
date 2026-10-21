@@ -528,7 +528,7 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
    Guidance only — see `workflows-core:session-hygiene` §5.
    ```
 
-   The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`.
+   The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`, the *Dev — build, verify & deliver* lane.
 
 `/ready` **NEVER** writes outside `$SPECS_PATH`. It commits and hands off
 `_readiness.md` only through step 3's `workflows-core:phase-handoff` §4.3 consent choice — declining leaves it

@@ -89,7 +89,7 @@ commands so the routing graph and the offer rules live in ONE place (the same sh
 
 **A next-step offer that names a downstream command must also name the merge.** The downstream command executes `require-on-main` (`${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §3) and stops while this phase's pull request is open, so an offer that reads "next: `/product-workflows:create-ard <KEY>`" without "once the pull request is merged" sends the user into a stop they were not warned about.
 
-So the merge is named by every next-step offer that names a downstream gate its own run feeds. **An offer that names none does not**, and `/product-workflows:brd-proposal` is the case: it hands off an artifact no `require-on-main` gate targets — a later run of that same command reads it, which is a read and not a gate — and its own next-step options name no gate its run feeds, so it carries no clause anywhere — which is why the rule is stated against the gate the offer names rather than against membership of the family. `/security-workflows:scan` is the same case: its register is bookkeeping, which no pull request hands off and no `require-on-main` gate targets, so none of its offers carries a clause. This reference ships in `workflows-core`, which prints no next-phase offer of its own: `/workflows-core:frames` makes only its §4.3 handoff offer (*Not pipeline nodes*), and that offer carries no clause on purpose: nothing runs `require-on-main` on a frame-set index, so no downstream gate reads what it writes. `/product-workflows:create-ard`'s prose offer of `/product-workflows:harvest-decisions` carries the clause too, though that command runs no `require-on-main`: it reads only the default branch, so an ARD not yet there is not harvested, and the clause names that wait.
+So the merge is named by every next-step offer that names a downstream gate its own run feeds. **An offer that names none does not**, and `/product-workflows:brd-proposal` is the case: it hands off an artifact no `require-on-main` gate targets — a later run of that same command reads it, which is a read and not a gate — and its own next-step options name no gate its run feeds, so it carries no clause anywhere — which is why the rule is stated against the gate the offer names rather than against membership of the `/product-workflows:brd-*` family, whose glob it matches. `/security-workflows:scan` is the same case: its register is bookkeeping, which no pull request hands off and no `require-on-main` gate targets, so none of its offers carries a clause. This reference ships in `workflows-core`, which prints no next-phase offer of its own: `/workflows-core:frames` makes only its handoff offer, `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.3's consent choice (*Not pipeline nodes*), and that offer carries no clause on purpose: nothing runs `require-on-main` on a frame-set index, so no downstream gate reads what it writes. `/product-workflows:create-ard`'s prose offer of `/product-workflows:harvest-decisions` carries the clause too, though that command runs no `require-on-main`: it reads only the default branch, so an ARD not yet there is not harvested, and the clause names that wait.
 
 **And an offer that names the merge must name it truthfully, which means the clause is never unconditional.** A run that staged nothing, or whose handoff the user declined, opened no pull request — and "once the pull request above is merged" then parks the operator waiting for a merge that will never happen, on a run they could often start immediately. Worse, the failing outcomes differ from each other — of those two, only one has a branch to name, and they are not the only two §4.1 defines. So an offer carries the clause as the placeholder **`<merge-clause>`**, resolved from the `Phase handoff:` line `phase-handoff.md` §4.1 actually emitted. **Where a run emitted more than one — §4.1 names `/brd-reconcile` as the only producer that does — the clause resolves from the line reporting the handoff of the artifact the offered command's gate targets**, which is the run's own deliverable rather than any ancillary one it also landed; there, `/brd-package` and `/prd-ground` — and, through `decisions.md`, `/create-prd`, `/create-ard` and `/specify` — gate on what the reconciliation record's handoff carried, not on the canonicalised customer review:
 
@@ -144,21 +144,21 @@ array carries every option.
 - `/product-workflows:specify <PRD>` (PRD-level spec) → `/product-workflows:epics <PRD>`.
 - `/product-workflows:epics <PRD>` → `/product-workflows:specify <EPIC>` (per Epic); optional PA → `/product-workflows:create-ard <EPIC>`.
 
-  **Every `/product-workflows:epics` option the routing graph names is conditional on the folder it names
-  holding an authored `prd.md`** (`kind: prd`): `/epics` accepts a PRD folder or an `EPIC-` folder
-  under one and refuses everything else (`/product-workflows:epics` Phase 0 step 1b). Where the
-  caller's PRD folder — the resolved folder itself on a PRD-level run, its parent on an Epic-level
-  one — holds no PRD, which the BRD route reaches legitimately since `/product-workflows:create-prd`
-  is not a prerequisite for `/product-workflows:create-ard` there, the offer is
-  `/product-workflows:create-prd <PRD>` instead, `<PRD>` being that tested folder's own key and
-  never an Epic's, **and only where that command can itself run**: it refuses more than one shape —
-  three on the BRD route, and an `EPIC-` folder on either, which is why the key is the PRD folder's
-  — so on a BRD-route slice the two data refusals on that slice's own ledger are tested first and
-  the offer resolves to `/product-workflows:brd-split` against one of two keys, or to no option at
-  all, where either fails (`product-workflows:coverage-ledger-format` §5.2, the authority, applied
-  by each offering command). An offer whose run stops the moment it starts is the same defect the
-  `<merge-clause>` rules exist to prevent, one command further on: a next step the operator
-  cannot take from the state the report describes.
+**Every `/product-workflows:epics` option the routing graph names is conditional on the folder it names
+holding an authored `prd.md`** (`kind: prd`): `/epics` accepts a PRD folder or an `EPIC-` folder
+under one and refuses everything else (`/product-workflows:epics` Phase 0 step 1b). Where the
+caller's PRD folder — the resolved folder itself on a PRD-level run, its parent on an Epic-level
+one — holds no PRD, which the BRD route reaches legitimately since `/product-workflows:create-prd`
+is not a prerequisite for `/product-workflows:create-ard` there, the offer is
+`/product-workflows:create-prd <PRD>` instead, `<PRD>` being that tested folder's own key and
+never an Epic's, **and only where that command can itself run**: it refuses more than one shape —
+three on the BRD route, and an `EPIC-` folder on either, which is why the key is the PRD folder's
+— so on a BRD-route slice the two data refusals on that slice's own ledger are tested first and
+the offer resolves to `/product-workflows:brd-split` against one of two keys, or to no option at
+all, where either fails (`product-workflows:coverage-ledger-format` §5.2, the authority, applied
+by each offering command). An offer whose run stops the moment it starts is the same defect the
+`<merge-clause>` rules exist to prevent, one command further on: a next step the operator
+cannot take from the state the report describes.
 
 - `/product-workflows:specify <EPIC>` (Epic-level spec) → Dev → `/dev-workflows:design <EPIC>`.
 

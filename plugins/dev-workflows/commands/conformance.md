@@ -436,7 +436,7 @@ Written to: <absolute path>.
 [per `workflows-core:session-hygiene`]
 ```
 
-The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`:
+The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`, the *Dev — build, verify & deliver* lane:
 - an Epic run with a `fix-code` decision → `/dev-workflows:implement <EPIC-KEY>` from repository
   `<slug>` — the repository its follow-up names, since `/implement` reads it back only there — which
   continues on the Epic's branch while its pull request is open, then

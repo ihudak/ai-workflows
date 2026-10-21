@@ -624,7 +624,7 @@ every later run until those paths are committed or the handoff is taken. A run c
 ## Phase 5 — Handoff: adaptive next-phase offer
 
 Load the lane before either offer below is printed: both follow
-`Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`, and the refined offer's
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`, the *PM — ideation & framing* lane, and the refined offer's
 `<merge-clause>` resolves per that part's *resolution table* from the `Phase handoff:` outcome line
 this run emits.
 

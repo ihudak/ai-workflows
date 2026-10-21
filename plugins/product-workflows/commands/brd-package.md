@@ -1585,7 +1585,7 @@ path, and the condition is what the item printed beside it adds.
 ## Phase 10 — Next steps
 
 **Load the lane before anything below is printed**: this phase's offer follows
-`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, and its `<merge-clause>`
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane, and its `<merge-clause>`
 resolves per that part's *resolution table* from the `Phase handoff:` outcome line this run's
 *Handoff* phase printed.
 

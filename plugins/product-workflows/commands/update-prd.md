@@ -175,7 +175,7 @@ Act on the verdict as `/create-prd` Phase 4 does: on `BLOCK`, fix the BLOCKER fi
 
 ## Phase 6 — Next steps
 
-Offer (guidance only — never auto-invoke), per `Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`.
+Offer (guidance only — never auto-invoke), per `Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`, the *PM — ideation & framing* lane.
 The following menu is a candidate set, not a prompt to emit before filtering. Apply the artifact conditions below first, then render the surviving routes:
 
 ```

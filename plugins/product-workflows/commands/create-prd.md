@@ -815,7 +815,7 @@ On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:re
 ## Phase 6 — Next steps
 
 Load the lane before the offer is printed: it follows
-`Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`, and its `<merge-clause>`
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`, the *PM — ideation & framing* lane, and its `<merge-clause>`
 resolves per that part's *resolution table* from this run's own `Phase handoff:` outcome line.
 
 Offer these — clearly labeling the role handoff:
@@ -848,9 +848,9 @@ with `resolve-address` and reads the PRD there on both routes — and, on the BR
 `ard-seed.md` where one was left, the register and the grounding findings besides. On both routes its
 Phase 0 gates the `prd.md` this run wrote, and on the BRD route also the `decisions.md` this run's
 handoff stages (its register gate), so its option carries the clause on both, resolved per
-`Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`'s *resolution table*.
+the *resolution table* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`, the *PM — ideation & framing* lane.
 
-Guidance only — never auto-invokes another command. Per `Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`.
+Guidance only — never auto-invokes another command. Per `Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`, the *PM — ideation & framing* lane.
 
 ### Context hygiene
 

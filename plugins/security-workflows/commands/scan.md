@@ -485,7 +485,7 @@ else is there. The `### Register` section names every decision awaiting security
 this run recorded and the ones it found, and lists each follow-up line as pending the preview: a line
 the preview then cancels stays in this report only (`workflows-core:followup-emission` §7).
 
-The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`:
+The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`, the *Dev — build, verify & deliver* lane:
 - **findings went to fix** → with a key, `/dev-workflows:implement <KEY>` from repository `<repo-slug>`, which reads back the follow-ups the preview writes and continues on the Epic's branch while its pull request is open, starting from each patch a line names — a path under `$SPECS_PATH`, which its Phase 1 reads there, and which it checks with `git apply --check` and applies, each task's in turn, before any other edit; then the pull request's review and merge — where the change scan ran under `after_merge`, whose pull request has merged already, the review and merge of the pull request that run opens. With a path, `/dev-workflows:implement` with the prompt lines, each that names a patch followed by that patch's absolute path, `$SPECS_PATH` joined to it: a direct run reads no follow-up and resolves no path under `$SPECS_PATH` itself;
 - **once the fix has merged** → `/security-workflows:scan <repo-path> --verify-fixes` (Security Engineer), which closes it on evidence;
 - **accepted risks are review due, or decisions await security review** → `/security-workflows:scan <repo-path> --triage` (Security Engineer);

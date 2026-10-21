@@ -68,12 +68,12 @@ own text names which of its reviews are re-reviews):
 - **A first review whose verdict is not `PASS`** — `PASS WITH RECOMMENDATIONS` or `BLOCK` — also takes
   § When triage empties the survivor set: with no finding, none behind the verdict survives, so that
   section's disposition applies in order, through its first settle prompt. A shortcut past it would
-  let a verdict nothing supports through silently. Load part `triage` for it,
-  `Skill(skill: "workflows-core:reference", args: "finding-triage triage")`, unless it is already in
-  this conversation word for word.
+  let a verdict nothing supports through silently. Load part `triage` — or `re-review`, which holds
+  it — for it, `Skill(skill: "workflows-core:reference", args: "finding-triage triage")` or
+  `args: "finding-triage re-review"`, unless either is already in this conversation word for word.
 - **A re-review whose verdict is `BLOCK`** also takes § On re-review rules 2 and 3: with no finding,
   no `BLOCKER` survives its triage, so rule 3's settle prompt settles the verdict, and rule 2 says
-  when the review stayed blocked. Load part `re-review` for them,
+  when the review stayed blocked. Load part `re-review` — which holds `triage` too — for them,
   `Skill(skill: "workflows-core:reference", args: "finding-triage re-review")`, unless it is already
   in this conversation word for word.
 <!-- /part -->

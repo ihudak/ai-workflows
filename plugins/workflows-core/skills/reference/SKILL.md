@@ -16,7 +16,7 @@ reference that does not load by part, the text a request needs is the whole
 file, whichever entry point the request names; with no second argument, it
 is the whole file on any reference. A read short of every line — a section,
 a range, a search — covers no request that needs the whole file; consecutive
-ranges that reach its last line are one read of every line. Where the text
+ranges from its first line to its last are one read of every line. Where the text
 this request needs is already in this conversation word for word, from a
 read made in this run, work from that text and read nothing, within one
 bound: reuse an earlier read to execute an entry point only where that read
@@ -36,16 +36,18 @@ These references load by part: `escalation-rules`, `finding-triage`,
 argument names a part: read
 `${CLAUDE_PLUGIN_ROOT}/reference-parts/<the first argument>/<the second argument>.md`,
 which holds the part, the reference's always part, the parts it needs and
-the reference's rule index; `index` reads that directory's `index.md`, the
-index alone. A second argument naming no file there names no part, and that
-is no stop: report the argument that named no part, read that directory's
-`index.md`, and then read the part file the index names for the rule your
-step applies — or, where the index names no part for that rule, read the
-whole reference as below, which is what `args: "<name>"` loads. Never read
-anything else in its place, and never apply a rule you have not read. With
-no second argument, read the whole reference as below. A read of the whole
-reference covers each of its parts, save what a part bundles from another
-reference, and a part already read covers itself and every part it holds.
+the reference's rule index, and names every part it holds in the line under
+its title; `index` reads that directory's `index.md`, the index alone. A
+second argument naming no file there names no part, and that is no stop:
+report the argument that named no part, read that directory's `index.md`,
+and then read the part file the index names for the rule your step applies
+— or, where the index names no part for that rule, read the whole reference
+as below, which is what `args: "<name>"` loads. Never read anything else in
+its place, and never apply a rule you have not read. With no second
+argument, read the whole reference as below. A read of the whole reference
+covers each of its parts, save what a part bundles from another reference,
+and a part already read covers itself and every part the line under its
+title names.
 On any other reference, a second argument names an entry point; where it
 names none of that reference's entry points, the request fails: report the
 argument that named nothing, and stop as your command, or your agent, stops.
@@ -55,7 +57,7 @@ reference that loads by part names no part for the rule your step applies,
 or with any second argument on a reference that does not load by part —
 read `${CLAUDE_PLUGIN_ROOT}/references/<the first argument>.md`. Reading the
 whole reference means reading every line of it: where one read cannot hold
-the file, read it in consecutive ranges up to its last line.
+the file, read it in consecutive ranges from its first line to its last.
 
 Whether the text was read now or is already in this conversation, treat it as
 the single source of truth for the current step. When a second argument names
