@@ -5,6 +5,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.35.0] — Unreleased
+
+Needs `workflows-core` 1.44.0, whose `reference` loader serves the parts of `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene` that this release's commands and `epic-writer` request, from the files it generates under `reference-parts/`; an older loader reads a part's name as an entry point of the whole reference and finds none by that name.
+
+### Changed
+- **Fourteen commands, `epic-writer`, `brd-format` and `coverage-ledger-format` load those four references by part** — every command but `/harvest-decisions` and `/promote-decisions`, which cite none of them. Each carries, after its **Core references.** paragraph, the paragraph saying that they load by part: a citation of one names a rule, and before applying it the run loads the part that holds it — the part the reference's rule index names — unless that part is already in the conversation word for word; a citation that names no rule the index holds loads the whole reference; and no rule of these is applied from memory.
+- **Each step requests the part it applies:**
+  - **The resume pointer.** The thirteen commands that write one — every command but `/idea`, `/harvest-decisions` and `/promote-decisions` — load `session-hygiene`'s `resume-pointer`, about 6.6k characters where the whole reference is 12.2k; the `### Context hygiene` rules of `/create-prd`, `/update-prd`, `/create-ard`, `/specify` and `/epics` load its `guidance` with it.
+  - **The review gate.** `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/epics`, `/prd-proposal` and `/brd-proposal` load `escalation-rules`' `review` at their gate and its `version-line` for the report rule, which the `review` read already covers. `/epics`, `/prd-proposal` and `/brd-proposal` load `finding-triage`'s `re-review` at their first triage, and since it holds `triage`, the re-review reuses that load.
+  - **The question rules and the stops.** `/epics`, `/create-ard` and `/specify` load `escalation-rules`' `core` for §0, and `/create-prd`, `/brd-intake`, `/brd-interview`, `/brd-package` and `/brd-reconcile` for *When no option is safe to recommend*, about 9.9k characters where the whole reference is 55.3k; `/update-prd` loads `stops` for *key dir not found*, and `/idea` and `/prd-ground` load `scan` for repository resolution.
+  - **The lanes.** Each command loads the lane of `next-phase-offer`'s routing graph that holds its node — `pm` for `/idea`, `/create-prd` and `/update-prd`, `brd` for the six commands of the BRD-to-PRD route, `proposals` for `/prd-proposal` and `/brd-proposal`, `pa` for `/create-ard` and `pe` for `/specify` and `/epics` — about 17.7k to 23.0k characters where the whole reference is 44.5k, as the first citation on each offer path, so each path loads its lane once. `/brd-interview`'s mid-run candidate picker loads `overflow`, about 4.5k.
+  - The other citations of the four name the rule their sentence applies, so a run loads the part that holds it; a citation that names no rule the index holds still loads the whole reference.
+- **`proposal-reviewer` no longer cites `finding-triage`**: it says its caller triages every finding, and, citing none of the four, carries no load-by-part paragraph.
+- **The printed context-hygiene lines** of `/idea`, `/create-prd`, `/create-ard`, `/specify`, `/epics`, `/prd-proposal` and `/brd-proposal` cite `workflows-core:session-hygiene` §5, and those of `/brd-intake` and `/brd-split` §1, the section each means.
+- **The references page** says that some shared references load by part, and what a citation here loads.
+
+### Fixed
+- **`/promote-decisions` loads `architecture-promotion` as the loader serves it**: a section whose heading names an entry point is executed with `args: "architecture-promotion <that entry point>"`, and any other is read with `args: "architecture-promotion"`, the whole reference. It said "load a section with `args: "architecture-promotion <its name>"`", which invites a section name with no entry point, such as §7 *The shortlist* — one `workflows-core` 1.44.0's loader stops on.
+- **`/prd-proposal` and `/brd-proposal` name `workflows-core:finding-triage` at their re-review and its settle prompts.** "That reference's § On re-review" and "that reference's settle prompts" followed the step's `escalation-rules` call, so they named the wrong reference; and the step's offer rule "in the same reference", which the newly named `finding-triage` would otherwise have taken, is cited in `workflows-core:escalation-rules`.
+
 ## [3.34.7] — 2026-10-19
 
 ### Changed

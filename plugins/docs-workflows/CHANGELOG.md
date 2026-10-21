@@ -5,6 +5,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.17.0] — Unreleased
+
+Needs `workflows-core` 1.44.0, whose `reference` loader serves the parts of `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene` that this release's commands request, from the files it generates under `reference-parts/`; an older loader reads a part's name as an entry point of the whole reference and finds none by that name.
+
+### Changed
+- **The seven commands, `gate-ledger`, `toolchain-preflight` and `docs-audit/coverage-model` load those four references by part.** Each carries, after its **Core references.** paragraph, the paragraph saying that they load by part: a citation of one names a rule, and before applying it the run loads the part that holds it — the part the reference's rule index names — unless that part is already in the conversation word for word; a citation that names no rule the index holds loads the whole reference; and no rule of these is applied from memory.
+- **Each step requests the part it applies:**
+  - **The resume pointer.** `/document` and `/release-notes` load `session-hygiene`'s `resume-pointer`, about 6.6k characters where the whole reference is 12.2k, and `/docs-init`, `/docs-brand` and `/docs-audit` load it for its *Location* ladder; the `### Context hygiene` rules of `/document` and `/release-notes` load its `guidance` with it.
+  - **The review gate.** `/document` loads `finding-triage`'s `re-review` at its keyed triage, and since it holds `triage`, the re-review reuses that load; it loads `escalation-rules`' `review` for the unspent re-review and its `version-line` for the report rule. `/docs-init`, `/docs-brand` and `/docs-audit`, which never re-review, load `triage`, about 16.0k characters where the whole reference is 21.3k.
+  - **The stops and the question rules.** `/document` and `/release-notes` load `escalation-rules`' `stops` for *key dir not found*, about 14.9k characters where the whole reference is 55.3k, and `/docs-profile` its `core` for §0.
+  - **The lanes.** `/document` and `/release-notes` load `next-phase-offer`'s `dev` lane in the step that prints their `### Next step`; `/docs-init`, `/docs-brand`, `/docs-serve` and `/docs-audit` load `not-pipeline`, about 6.3k characters where the whole reference is 44.5k; and `/document`'s Phase 0 docs-repository pick loads `overflow`, about 4.5k.
+  - The other citations of the four name the rule their sentence applies, so a run loads the part that holds it; a citation that names no rule the index holds still loads the whole reference.
+- **`docs-audit-reviewer` and `docs-scaffold-reviewer` no longer cite `finding-triage`**: each says its caller triages its findings, and neither, citing none of the four, carries the load-by-part paragraph. `docs-scaffold-reviewer`, which now cites no shared reference at all, reads its two bundled references with `Read` and drops the `Skill` tool it no longer uses.
+- **The Invariants line on how a citation loads** — `/docs-init`'s, `/docs-brand`'s, `/docs-audit`'s and `/docs-serve`'s — says a reference that loads by part is loaded by part, `args: "<name> <part>"`.
+- **The printed `### Context hygiene` lines of `/document` and `/release-notes`** cite `workflows-core:session-hygiene` §5, the section they mean.
+- **The references page** says that some shared references load by part, and what a citation here loads.
+
+### Fixed
+- **The agents page lists each agent's tools as its frontmatter does**: `docs-audit-reviewer` and `docs-style-checker` carry `Skill`, which the page left out, and `docs-scaffold-reviewer` no longer does.
+- **The README counts twenty-two reference pages and twenty-four files under `references/`**, where it said twenty-one and twenty-three: 1.16.2 corrected the documentation index's count and left the README's.
+
 ## [1.16.3] — 2026-10-19
 
 ### Changed

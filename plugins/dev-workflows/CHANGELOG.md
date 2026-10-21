@@ -5,6 +5,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.30.0] — Unreleased
+
+Needs `workflows-core` 1.44.0, whose `reference` loader serves the parts of `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene` that this release's commands and `review-fixer` request, from the files it generates under `reference-parts/`; an older loader reads a part's name as an entry point of the whole reference and finds none by that name.
+
+### Changed
+- **The six commands, `review-fixer` and `context-management` load those four references by part.** Each carries, after its **Core references.** paragraph, the paragraph saying that they load by part: a citation of one names a rule, and before applying it the run loads the part that holds it — the part the reference's rule index names — unless that part is already in the conversation word for word; a citation that names no rule the index holds loads the whole reference; and no rule of these is applied from memory.
+- **Each step requests the part it applies:**
+  - **The resume pointer.** `/design`, `/implement`, `/ready` and `/conformance` load `session-hygiene`'s `resume-pointer`, about 6.6k characters where the whole reference is 12.2k; the `### Context hygiene` rules of `/design` and `/ready` load its `guidance` with it.
+  - **The review gate.** `/implement`, `/vuln` and `/upgrade` load `finding-triage`'s `re-review` at their triage sub-step, and since it holds `triage`, the re-review reuses that load. Where a review returned no finding and `re-review` is not yet in the conversation, `/implement` loads `no-findings` in its place, whose opening says what else such a review takes, and `re-review` where that opening sends it to `triage`. `/design` and `/implement` load `escalation-rules`' `review` for the unspent re-review.
+  - **The version line.** `/design`, `/implement`, `/vuln` and `/upgrade` load `escalation-rules`' `version-line` for *A recorded verdict names the version it was taken against*, about 13.2k characters where the whole reference is 55.3k; a run that read `review` at its gate reuses that read.
+  - **The fixer.** `review-fixer` loads `finding-triage`'s `patch-gate` on each dispatch, about 3.4k characters where it read all 21.3k, and its Inputs say the patch gate is all of that reference it applies.
+  - **The verification.** `/conformance`'s re-check of each `partial`, `missing` and `contradicts` tracer verdict loads `finding-triage`'s `verify`, about 4.4k characters.
+  - **The stops and the question rules.** `/conformance`, `/design` and `/ready` load `escalation-rules`' `stops` for *key dir not found*, and `/design` and `/implement` its `core` for §0, about 9.9k characters.
+  - **The lane.** `/design`, `/ready`, `/conformance` and `/implement` load `next-phase-offer`'s `dev` lane, about 21.0k characters where the whole reference is 44.5k, in the step that prints their `### Next step` — `/implement` on a keyed run only, since a direct run prints none — and `/design` and `/implement` load `epics-precondition` for their Phase 0 redirect, about 4.2k.
+  - The other citations of the four name the rule their sentence applies, so a run loads the part that holds it; a citation that names no rule the index holds still loads the whole reference.
+- **The printed `### Context hygiene` lines of `/design`, `/implement` and `/ready`** cite `workflows-core:session-hygiene` §5, the section they mean.
+- **`/vuln` and `/upgrade` say they make neither of the offers the version line's rule names** — the offer to apply what a review leaves open and the unspent re-review: no edit after their review answers a finding save the fixer pass's, which the one re-review follows unless a `NEEDS HUMAN` stop ends that CVE or component first, the run's report then naming those edits.
+- **The references page** says that some shared references load by part, and what a citation here loads.
+
+### Fixed
+- **`/ready`'s printed `### Next step` reads "update any status you keep elsewhere"**, where it read "update the any status you keep elsewhere".
+
 ## [4.29.0] — 2026-10-19
 
 Needs `workflows-core` 1.43.0, whose `model-routing/classification` §4 states the coding-model rule `/implement` now dispatches `code-writer` and `review-fixer` by, and whose §3.1 carries the carve-out by which it reviews `MODERATE` work; whose `escalation-rules` lets `/implement` make the offer to apply what a review leaves open through `review-fixer`, and offers the unspent re-review after a `BLOCK` the first settle prompt's **Proceed** settled as not `BLOCK`, and whose `finding-triage` § On re-review rule 1 lets that offer apply a re-review's survivor there; and whose § When triage empties the survivor set settles a `BLOCK` that leaves the fixer nothing to take, the case Phase 3B step 7 cites, where an older one settles such a `BLOCK` only where a survivor's fix lies in another code repository, never one that leaves the fixer only `NIT`s or flagged notes. On each of the others an older `workflows-core` says the opposite.
