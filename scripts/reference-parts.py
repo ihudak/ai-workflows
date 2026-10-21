@@ -58,9 +58,14 @@ reading's call, not a pattern's.
 set; every consumer file (commands/, agents/, references/ of the dependent plugins,
 CHANGELOG.md excluded) that cites a split reference carries the load-by-part preamble as a
 paragraph of its own; every explicit part request -- `args: "<split> <part>"`, or a read of
-reference-parts/<split>/<part>.md -- names a requestable part or `index`, never a helper; and
-every citation -- in the consumers and in workflows-core's own commands/, agents/ and
-references/ -- is PLACED. The unit is one sentence and one cited reference. A name in that
+reference-parts/<split>/<part>.md -- names a requestable part or `index`, never a helper; every
+entry-point request -- `args: "<ref> <token>"` on a reference that does not load by part, the
+token no `<placeholder>` -- names an entry point of it, the first word of a code span in one of
+its headings outside a fenced block, since the loader stops the run on any other token (a first
+token naming no reference file is check 16's, in scripts/check-docs.sh), and the census
+`entry-point requests ...: N, M distinct` is printed; and every citation -- in the consumers and
+in workflows-core's own commands/, agents/ and references/ -- is PLACED. The unit is one
+sentence and one cited reference. A name in that
 sentence that the cited reference's index holds places it on that part, and names of several
 parts place it on each of them, since the preamble has the run load the part that holds each
 rule. A name is an italic, bold, backticked or quoted span, read with any code span inside it,
@@ -166,10 +171,10 @@ SCAN_DIRS = ("commands", "agents", "references")
 PREAMBLE = (
     "These shared references load by part — {list}. A citation of one names a rule: before "
     "applying it, load the part that holds it, `Skill(skill: \"{loader}\", args: \"<name> "
-    "<part>\")`, the part its rule index names (`args: \"<name> index\"` loads the index; every "
-    "part carries it), unless that part is already in this conversation word for word. A citation that "
-    "names no rule the index holds loads the whole reference, `args: \"<name>\"`. Never apply "
-    "a rule of these references from memory."
+    "<part>\")`, the part its rule index names, unless that part is already in this conversation word "
+    "for word; never guess a part's name — until you hold the index (every part carries it), load it "
+    "with `args: \"<name> index\"`. A citation that names no rule the index holds loads the whole "
+    "reference, `args: \"<name>\"`. Never apply a rule of these references from memory."
 )
 SKILL_OPENING = "These references load by part: {list}."
 SKILL_OPENING_LEAD = "These references load by part:"
@@ -814,6 +819,18 @@ def covers(refs, ref, part):
     return closure(refs, ref, part)[0][ref.name]
 
 
+def entry_points(path):
+    """The entry points of a reference that does not load by part: the first word of each code span
+    in one of its headings, a heading inside a fenced block being none -- `resolve-address` in
+    `### Entry point: `resolve-address <ARG> [<KIND>]``."""
+    names, fences = set(), Fences()
+    for line in path.read_text(encoding="utf-8").splitlines():
+        h = None if fences.step(line) else HEADING.match(line)
+        if h and h.group(2):
+            names.update(m.group(1).split()[0] for m in CODE_SPAN.finditer(h.group(2)) if m.group(1).split())
+    return names
+
+
 def scan_files(root, rels):
     for rel in rels:
         for d in SCAN_DIRS:
@@ -877,6 +894,24 @@ def cmd_check_citations(root, verbose):
 
     census = {n: [0, []] for n in split}   # placed, [whole locations]
     consumer_cites = {n: 0 for n in split}
+    named_entry_points, entry_requests = {}, []   # path -> its entry points; [(reference, token)]
+
+    def entry_request(rel, line, name, token):
+        """An entry-point request on a reference that does not load by part names one of its entry
+        points, or the loader stops the run that makes it. A first token naming no reference file
+        is check 16's (scripts/check-docs.sh), and a placeholder names nothing."""
+        path = core_refs / (name + ".md")
+        if token.startswith("<") or ".." in name.split("/") or not path.is_file():
+            return
+        if path not in named_entry_points:
+            named_entry_points[path] = entry_points(path)
+        entry_requests.append((name, token))
+        if token not in named_entry_points[path]:
+            have = sorted(named_entry_points[path])
+            problems.append("%s:%d: requests entry point '%s' of %s:%s, which is not the first word of a code span "
+                            "in any of its headings -- %s"
+                            % (rel, line, token, CORE_NAME, name,
+                               "its entry points: " + either(have, "and") if have else "it has none"))
     consumers = set(scan_files(root, DEPENDENT_PLUGIN_RELS))
     for path in sorted(consumers | set(scan_files(root, [CORE_PLUGIN_REL]))):
         rel = path.relative_to(root).as_posix()
@@ -912,7 +947,11 @@ def cmd_check_citations(root, verbose):
 
             for m in CALL.finditer(joined):
                 toks = m.group(1).split()
-                if not toks or toks[0].startswith("<") or toks[0] not in refs:
+                if not toks or toks[0].startswith("<"):
+                    continue
+                if toks[0] not in refs:
+                    if len(toks) > 1:
+                        entry_request(rel, line_at(at, m.start()), toks[0], toks[1])
                     continue
                 if len(toks) == 1:
                     group(m.start(), toks[0])["whole_call"] = True
@@ -1119,6 +1158,8 @@ def cmd_check_citations(root, verbose):
         if verbose:
             for loc in whole:
                 print("WHOLE %s: %s:%s" % (loc, CORE_NAME, n))
+    print("entry-point requests on references that do not load by part: %d, %d distinct"
+          % (len(entry_requests), len(set(entry_requests))))
     if problems:
         print("reference-parts check-citations: FAIL -- %d problem(s)" % len(problems))
         return 1
@@ -1494,6 +1535,23 @@ CASES = [
                                                    'WHOLE ' + U + ':33: workflows-core:alpha',
                                                    'WHOLE ' + U + ':35: workflows-core:alpha',
                                                    'WHOLE ' + U + ':37: workflows-core:alpha'], errors=0),
+    ]),
+    # steps is a core reference that does not load by part: `specs-preflight` is a heading's whole code
+    # span, `resolve-address` the first word of `resolve-address <ARG> [<KIND>]`, the second call
+    # wrapped across two lines; a placeholder token names nothing to check.
+    ('entry_point_named', "an entry-point request naming the first word of a heading's code span passes", [
+        Step(['check-citations'], 0, ['entry-point requests on references that do not load by part: 2, 2 distinct',
+                                      'check-citations: PASS'], errors=0),
+    ]),
+    # The same steps, with a section The shortlist and a fenced `## `fenced-step`` line. Beside a green
+    # `specs-preflight`: a section's name, whose heading has no code span; `resolve`, a prefix of an
+    # entry point; `run`, a word of a heading outside its code span; and a heading inside a fence.
+    ('entry_point_unnamed', 'an entry-point request naming no first word of a heading code span fails', [
+        Step(['check-citations'], 1, [U + ":%d: requests entry point '%s' of workflows-core:steps, which is not the first "
+                                          "word of a code span in any of its headings -- its entry points: "
+                                          "`resolve-address` and `specs-preflight`" % (n, t)
+                                      for n, t in ((23, 'shortlist'), (25, 'resolve'), (27, 'run'), (29, 'fenced-step'))]
+             + ['entry-point requests on references that do not load by part: 5, 5 distinct'], errors=4),
     ]),
     ('renamed_heading_reported', 'a citation of a renamed heading passes as whole, and --verbose names it', [
         Step(['check-citations'], 0, ['workflows-core:alpha: placed 0, whole 1'], errors=0, absent=['WHOLE ']),

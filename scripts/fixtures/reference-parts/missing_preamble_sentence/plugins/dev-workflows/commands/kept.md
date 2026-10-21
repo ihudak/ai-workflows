@@ -4,10 +4,10 @@
 
 These shared references load by part — `alpha`. A citation of one names a rule:
 before applying it, load the part that holds it,
-`Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its
-rule index names (`args: "<name> index"` loads the index; every part carries
-it), unless that part is already in this conversation word for word. A citation that names no
-rule the index holds loads the whole reference, `args: "<name>"`. Never apply a
-rule of these references from memory.
+`Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule
+index names, unless that part is already in this conversation word for word; never
+guess a part's name — until you hold the index (every part carries it), load it with
+`args: "<name> index"`. A citation that names no rule the index holds loads the whole
+reference, `args: "<name>"`. Never apply a rule of these references from memory.
 
 Normalise a free-text answer per `workflows-core:alpha`'s *Closed-vocabulary pickers*.
