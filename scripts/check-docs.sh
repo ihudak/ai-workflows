@@ -1839,7 +1839,9 @@ check_index_membership() {
 #   1. FORWARD  -- every real `args:` string resolves to a file under
 #                  $CORE_PLUGIN_REL/$REF_DIR/. The FIRST whitespace token is the reference;
 #                  a second token is an entry point WITHIN it (`specs-repo-git
-#                  specs-preflight`), and 167 of this tree's 341 real invocations carry one.
+#                  specs-preflight`) or, on a reference that loads by part, the part to
+#                  read (`session-hygiene resume-pointer`), and 455 of this tree's 598 real
+#                  invocations carry one.
 #                  An implementation matching the whole argument string reports every one of
 #                  them as unresolvable.
 #   2. REVERSE  -- every markdown file in the corpus is reached by at least one citation.
@@ -1860,8 +1862,8 @@ check_index_membership() {
 #
 # THE PLACEHOLDER TRAP, which is the single most likely way to get this wrong. The preamble
 # quotes the invocation form literally -- `args: "<name>"` -- as documentation of the
-# convention, on 74 files in this tree. A forward direction that resolves every `args:`
-# string it finds opens `<name>.md`, fails, and reports 74 defects on entirely correct
+# convention, on 92 files in this tree. A forward direction that resolves every `args:`
+# string it finds opens `<name>.md`, fails, and reports 92 defects on entirely correct
 # content. A bracketed first token is therefore the PREAMBLE MARKER, not an argument: it is
 # what relation 3 looks for, and it is skipped by relations 1 and 4. Anything else that is
 # not a plausible reference name is still reported -- skipping "implausible" arguments
@@ -1890,10 +1892,10 @@ check_index_membership() {
 # Re-derive by instrumenting the scan itself (print real_calls / entry_calls / preamble_files
 # after the plugin loop); never adjust a figure by the size of your own change.
 #
-# Relation 3 over those three directories is an EXACT match on this tree -- 74 files cite a
-# core reference, 74 carry the preamble -- while 38 further files cite one from OUTSIDE them
-# (human-facing pages under docs/ and one shell hook), and not one of them should carry a
-# runtime loader instruction. A relation-3 implemented as "every file that cites" fires 38
+# Relation 3 over those three directories is an EXACT match on this tree -- 92 files cite a
+# core reference, 92 carry the preamble -- while 53 further files cite one from OUTSIDE them
+# (52 human-facing pages under docs/ and one shell hook), and not one of them should carry a
+# runtime loader instruction. A relation-3 implemented as "every file that cites" fires 53
 # times on a correct tree. The same bound is what keeps relation 2 falsifiable: core's own
 # docs/reference/references.md enumerates every reference file by name, so admitting docs/
 # as a citation source would make the reverse direction unfalsifiable by construction.
@@ -2047,7 +2049,8 @@ for rel in plugins:
                 if target is None:
                     out.append("%s:%d loads '%s' through %s, which resolves to %s/%s/%s -- "
                                "no such file. The reference is the FIRST whitespace token "
-                               "(a second is an entry point WITHIN it) and the loader "
+                               "(a second names an entry point within it, or the part to "
+                               "read) and the loader "
                                "appends '.md' unconditionally, so an argument carrying its "
                                "own extension cannot resolve: a non-markdown corpus member "
                                "is cited as a path and read by whatever consumes it, never "
@@ -3554,11 +3557,11 @@ with open(sys.argv[1], "w", encoding="utf-8") as fh:
     # written with `-i.bak` first and came back green against a deliberately broken tree.
     expect_fail "an unresolvable loader argument is rejected" 16 \
       "sed 's|args: \"phase-handoff\"|args: \"no-such-reference\"|' $(cmd_file $(plugin_parent)fixture-two omega) > c16.tmp && mv c16.tmp $(cmd_file $(plugin_parent)fixture-two omega)"
-    # THE DISCRIMINATOR for the forward direction. A second argument is an entry point WITHIN
-    # the reference, not part of its name, and nearly half of the live tree's real invocations
-    # carry one -- check 16's own header holds the count, and is the one place it is written. An
-    # implementation matching the whole argument string passes both red cases above and
-    # below and fails only this one.
+    # THE DISCRIMINATOR for the forward direction. A second argument names an entry point
+    # WITHIN the reference, or the part to read, never part of its name, and most of the live
+    # tree's real invocations carry one -- check 16's own header holds the count, and is the
+    # one place it is written. An implementation matching the whole argument string passes both
+    # red cases above and below and fails only this one.
     expect_pass_after "the two-argument entry-point form resolves on its first token" \
       "sed 's|args: \"phase-handoff\"|args: \"phase-handoff handoff-to-main\"|' $(cmd_file $(plugin_parent)fixture-two omega) > c16.tmp && mv c16.tmp $(cmd_file $(plugin_parent)fixture-two omega)"
     # ...and the extension guard, which points the OTHER way and was wrong here first. The
