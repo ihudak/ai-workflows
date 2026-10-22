@@ -158,7 +158,7 @@ four-resolution one.
    `grounding/code-grounding.md` — every deliverable a `handoff-to-main` run stages lands in one
    commit, so this file's presence on `origin/<default>` implies `grounding/design-grounding.md`
    and `brd-link.md` merged with it; **That implication holds for a full `/prd-ground` run and not for a `--no-code` one**, whose `deliverable_paths` is `grounding/design-grounding.md` alone and lands in its own later commit — so a BRD can legitimately have `code-grounding.md` merged and `design-grounding.md` on no ref at all. Anything reading the design findings gates them separately rather than inheriting this sentence. And since `/prd-ground` Phase 0 step 6 already required
-   `coverage-ledger.md` on `origin/<default>` before grounding itself would run, this file's presence also implies
+   `coverage-ledger.md` on `origin/<default>` before grounding itself would run, `code-grounding.md`'s presence also implies
    `/brd-intake`'s ledger was on main before this BRD was ever grounded. Map the §3.7 return by
    `stopped` first: any stopping row → stop, naming the concrete branch/PR state it reports;
    `pass` → proceed; `pass_amending` → proceed, printing the §3.3 row-B message; `absent` (row F —

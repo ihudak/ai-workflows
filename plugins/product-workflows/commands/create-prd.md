@@ -329,7 +329,7 @@ Usage: `/create-prd <ADDRESS> [@idea.md] [--from-prd <PRD-KEY|path>] [--lean|--h
    branch or a handoff — so there is no `Phase handoff:` outcome line
    for a clause to resolve from, and every
    command they name either runs no `require-on-main` gate at all (`/product-workflows:brd-intake`
-   consumes nothing) or gates on artifacts **another** run wrote and already
+   consumes nothing — `workflows-core:phase-handoff` §3.4) or gates on artifacts **another** run wrote and already
    merged. Phase 6 holds this
    command's only two placeholder sites — its choice array and the bullet that resolves it — and
    nothing on this route adds a third.

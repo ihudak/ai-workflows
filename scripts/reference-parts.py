@@ -637,6 +637,11 @@ def parse_source(root: Path, path: Path):
     return ref
 
 
+def within(inner, outer):
+    """Whether § `inner` is § `outer` or lies under it: `3.1` and `3` are within `3`, `31` is not."""
+    return inner == outer or inner.startswith(outer + ".")
+
+
 def section_extents(heads, end):
     """{§ number: (first, last) line numbers} of each numbered heading in `heads` -- (line number,
     level, § number or None) of every heading outside a fenced block, in source order. A section runs
@@ -694,9 +699,7 @@ def parse_entry_source(root: Path, path: Path):
             partial_at.setdefault((entry, sec), n)
     # A section held whole is declared once, its subsections with it: no other § of its entry, held whole
     # or in part, is it or lies under it, and no § held in part has it under it.
-    def within(inner, outer):
-        return inner == outer or inner.startswith(outer + ".")
-    tail = " -- a section held whole is declared once, its subsections with it"
+    tail =" -- a section held whole is declared once, its subsections with it"
     for entry, decl in ref.entries.items():
         for j, sec in enumerate(decl.holds):
             other = next((o for o in decl.holds[:j] if within(sec, o) or within(o, sec)), None)
@@ -1287,7 +1290,7 @@ def holds_cited(decl, number, sentence):
     """Whether an entry-point file holds §`number` for the sentence citing it: under a § it holds whole,
     or a § it holds in part where one of that section's phrases is in the sentence, each normalised as
     a rule name is."""
-    if any(number == h or number.startswith(h + ".") for h in decl.holds):
+    if any(within(number, h) for h in decl.holds):
         return True
     return any(norm(p) in norm(sentence) for p in decl.partial.get(number, ()))
 
@@ -2400,6 +2403,20 @@ CASES = [
     ]),
     ('entry_cite_partial_with_phrase', 'a section held in part, cited with its phrase in the sentence, passes', [
         Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 2 citation(s) checked',
+                                      'check-citations: PASS'], errors=0),
+    ]),
+    # A sentence citing nothing, whose § belongs to the gamma citation in the sentence before it: §2.3 red,
+    # and its twin leaning on §3.1, which the file holds, green.
+    ('entry_cite_free_sentence_out_of_file', "a § in a sentence citing nothing, leaning on an earlier citation of "
+                                             "the reference, is judged as that reference's", [
+        Step(['check-citations'], 1, [U + ":18: cites workflows-core:gamma §2.3, which the check-it file does not hold, in "
+                                          "a section that reads only that file",
+                                      'entry-point file gamma check-it: 1 request section(s), 3 citation(s) checked'],
+             errors=1),
+    ]),
+    ('entry_cite_free_sentence_held', "a § in a sentence citing nothing, leaning on an earlier citation, passes where "
+                                      "the file holds it", [
+        Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 3 citation(s) checked',
                                       'check-citations: PASS'], errors=0),
     ]),
     ('entry_cite_bare', 'a citation naming no section, in the section requesting the file, fails', [
