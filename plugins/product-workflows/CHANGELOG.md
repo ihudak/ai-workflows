@@ -5,6 +5,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.36.0] — Unreleased
+
+Needs `workflows-core` 1.45.0 for one citation: `/harvest-decisions` names the SSH-alias rule as `phase-handoff` §2.6.1's `owner-repo`, a section 1.44.0 does not have — its derivation sits in §2.6 there. The rest runs beside 1.44.0, which serves `escalation-rules core` and reads the whole `phase-handoff` for `require-on-main`.
+
+The handoff check of the eleven commands that run one — `/create-prd`, `/create-ard`, `/specify`, `/epics`, `/prd-ground`, `/brd-split`, `/brd-interview`, `/brd-package`, `/brd-reconcile`, `/prd-proposal` and `/brd-proposal` — and of `/brd-reconcile`'s cross-BRD write guard reads about half of `phase-handoff`, about 69k of its 140k characters, where it read all of it, from `workflows-core` 1.45.0's file for that entry point. A run carries that read through every later call, so the saving lands on the whole run. And no command asks a question before it has loaded the rules its questions follow.
+
+### Changed
+- **All sixteen commands load the question rules before their first question.** Each carries a **Load the question rules.** step — `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, §0's array shape, choice lists presented verbatim, the `(Recommended)` marker and a selection that carries no text, about 9.9k characters — after its run flags are stripped, or, in `/harvest-decisions`, which strips none, as its Phase 0's first step. The citations of `escalation-rules` that stood inside a rule statement stay where they were; a run reads one there as a source note, not a step. `/harvest-decisions` and `/promote-decisions`, which now cite a reference that loads by part, carry the load-by-part paragraph after their **Core references.** paragraph.
+- **Every check step requests the entry point it runs.** `/brd-interview`'s Phase 0 step 6, `/brd-package`'s steps 6 and 6b, `/brd-reconcile`'s steps 6 and 6c, `/brd-split`'s step 6 and the *Gate the decision register* steps of `/create-ard` and `/specify` execute `require-on-main` with `args: "phase-handoff require-on-main"`, where several reached it only through a bare citation, which reads the whole reference.
+- **A pointer that only explains, in a phase that runs the handoff check, names the handoff contract in words** — among them the single commit a producer's handoff lands its files in, the advisory class of a plain worktree read, the files a run did not declare, why the preflight runs before the gate, the outcome line a stop does not carry — where it cited a section the check's file does not hold, which would load the whole reference beside it: in `/brd-interview`, `/brd-package`, `/brd-proposal`, `/brd-reconcile`, `/brd-split`, `/create-prd`, `/epics` and `/prd-ground`. `/create-prd` names `phase-handoff` §3.4 for `/brd-intake` consuming nothing, where it pointed at a "§5 caller table" §5 does not have.
+- **A section number that belonged to another reference names it.** In the preflight steps of `/brd-interview`, `/brd-package`, `/brd-reconcile` and `/prd-proposal` a guard's notice is `workflows-core:specs-repo-git` §5's, after that reference's §3.1; `/create-ard` and `/specify` name `workflows-core:addressing` §5's legacy fallback; and `/prd-ground` cites `coverage-ledger-format.md` §5.1 and `brd-format.md` §2 by their `${CLAUDE_PLUGIN_ROOT}/references/` path. Each followed a `phase-handoff` citation, so a run could read the number as that reference's.
+- **`/harvest-decisions` names `phase-handoff` §2.6.1's `owner-repo`** for the derivation of `OWNER_REPO`.
+- **The references page** says that a `require-on-main` request reads that entry point's own file, and so does a citation of a section the file holds made in a phase that requests it.
+
+### Fixed
+- **`/brd-split`'s code-grounding paragraph starts its sentence with a capital** and names `code-grounding.md` as the file whose presence implies the rest, where a stranded "it" did; **`/epics`' docs-grounding paragraph** reads "Phase 3's folder read", where it read "Phase 3's the folder read".
+
 ## [3.35.0] — 2026-10-22
 
 Needs `workflows-core` 1.44.0, whose `reference` loader serves the parts of `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene` that this release's commands and `epic-writer` request, from the generated files under `reference-parts/`; an older loader reads a part's name as an entry point of the whole reference, which no heading names as one, and may run a section whose heading merely contains that word.

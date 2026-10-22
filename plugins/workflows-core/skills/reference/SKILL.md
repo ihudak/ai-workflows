@@ -67,14 +67,18 @@ A request with no second
 argument, made for a citation of a section the file holds — of one it holds
 in part, only for the text its quoted phrase names — inside a `##` section
 whose text also requests that entry point, before the citation or after it,
-reads the file and executes nothing; the request in that `##` section then
-works from that read, a read made in the current phase, and executes the
-entry point. Every other request on that reference reads the whole
-reference, as the paragraph after this one says: a second argument naming
-any other entry point, and a request with no second argument made for a
-citation of a section the file does not hold, of no section, or outside
-such a `##` section. A read of the whole reference covers the file, within
-the same bound on reuse as any read.
+reads the file and executes nothing. In that `##` section the file is read
+once, wherever the citation stands: whichever of the request and the
+citation comes first reads it, and the other works from that read, a read
+made in the current phase — the request executing the entry point from it,
+the citation applying its section from it. Every other request on that
+reference reads the whole reference, as the paragraph after this one says:
+a second argument naming any other entry point, and a request with no
+second argument made for a citation of a section the file does not hold,
+of a section it holds in part for text its quoted phrase does not name —
+§4.0 for anything but its *Never infer* rule, §5 for any rule but rules 2
+and 3 — of no section, or outside such a `##` section. A read of the whole
+reference covers the file, within the same bound on reuse as any read.
 
 To read the whole reference — with no second argument, where the index of a
 reference that loads by part names no part for the rule your step applies,

@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.3.0] — Unreleased
+
+Needs `workflows-core` 1.44.0 or later, as 0.2.0 did: its one change requests `escalation-rules core`, which 1.44.0 serves.
+
+### Changed
+- **`/security-workflows:scan` loads the question rules before its first question.** Its step 1 carries a **Load the question rules.** step — `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, §0's array shape, choice lists presented verbatim, the `(Recommended)` marker and a selection that carries no text, about 9.9k characters — after its run flags are stripped. Its citation of that part sat inside its **Rule: Ask, don't guess.** statement, which a run reads as a source note: in lean context part 1's live run of the command, as before part 1, the run asked its questions without ever loading it. The citation stays where it was.
+
 ## [0.2.0] — 2026-10-22
 
 Needs `workflows-core` 1.44.0, whose `reference` loader serves the parts of `escalation-rules`, `next-phase-offer` and `session-hygiene` that `/security-workflows:scan` requests, from the generated files under `reference-parts/`; an older loader reads a part's name as an entry point of the whole reference, which no heading names as one, and may run a section whose heading merely contains that word.

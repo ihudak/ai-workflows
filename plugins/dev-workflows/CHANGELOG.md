@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.31.0] — Unreleased
+
+Needs `workflows-core` 1.45.0 for one citation: `code-handoff`'s SSH-alias rule names `phase-handoff` §2.6.1's `owner-repo`, a section 1.44.0 does not have — its derivation sits in §2.6 there. The rest runs beside 1.44.0, which serves `escalation-rules core` and reads the whole `phase-handoff` for `require-on-main`.
+
+A run's handoff check reads about half of `phase-handoff` — about 69k of its 140k characters — where it read all of it: `/design`'s, `/implement`'s and `/conformance`'s in Phase 0 and `/ready`'s in Phase 1, from `workflows-core` 1.45.0's file for that entry point. A run carries that read through every later call, so the saving lands on the whole run. And no command asks a question before it has loaded the rules its questions follow.
+
+### Changed
+- **All six commands load the question rules before their first question.** Each carries a **Load the question rules.** step — `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, §0's array shape, choice lists presented verbatim, the `(Recommended)` marker and a selection that carries no text, about 9.9k characters — right after its run flags are stripped. `/design` cited the part inside its **Rule: Ask, don't guess.** statement, which a run reads as a source note: in lean context part 1's live run of it, as before part 1, the run asked its questions without ever loading core. The citations stay where they were.
+- **`/implement`'s session-model gate runs straight after the question-rules load**, whose rules its question follows, and after `strip-run-flags`, whose `run_flags.enforced_model` it reads — still before `--no-commit` is stripped, the working directory classified or anything read or written. Below Opus it asks at once, before any later step. The command page and the model-routing page say so.
+- **`/ready`'s explanatory pointers into `phase-handoff` name the contract in words** — the handoff's consent choice at Phase 5 step 3, the handoff gate and its return contract — where they cited a section number, since a citation ahead of Phase 1 would load the whole reference before Phase 1's gate reads the entry point's own file.
+- **`code-handoff` §2.6's SSH-alias rule names `phase-handoff` §2.6.1's `owner-repo`**, the block that now holds that derivation.
+- **The references page** says that a `require-on-main` request reads that entry point's own file, and so does a citation of a section the file holds made in a phase that requests it.
+
 ## [4.30.1] — 2026-10-22
 
 ### Fixed
