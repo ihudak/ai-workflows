@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.17.0] — Unreleased
+## [1.17.0] — 2026-10-22
 
 Needs `workflows-core` 1.44.0, whose `reference` loader serves the parts of `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene` that this release's commands request, from the generated files under `reference-parts/`; an older loader reads a part's name as an entry point of the whole reference, which no heading names as one, and may run a section whose heading merely contains that word.
 

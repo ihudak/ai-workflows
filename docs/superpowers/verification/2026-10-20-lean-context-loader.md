@@ -179,7 +179,7 @@ The same run counts 307 entry-point requests on references that do not load by p
 - `model-routing/classification`: 48k against about 22k.
 - The four split rulebooks' parts: 2–24k each.
 
-**The early whole reads carry the cost.** The scratch script `refcost.py` prices each reference read in a main session as tokens (characters / 4) × ($8 per million for the 1-hour cache write + $0.20 per million × the main calls after it). Its output, `refcost-all.txt` (scratch), gives runs 1–6; the ledger gives run 7 and run 5's today's-`main` figure.
+**The early whole reads carry the cost.** The scratch script `refcost.py` prices each reference read in a main session as tokens (characters / 4) × ($8 per million for the 1-hour cache write + $0.20 per million × the main calls after it). Its output, `refcost-all.txt` (scratch), gives every row below.
 
 | Run | New | Comparison |
 |---|---|---|
@@ -187,11 +187,11 @@ The same run counts 307 entry-point requests on references that do not load by p
 | 2 prd-ground | $3.20 | no transcript |
 | 3 release-notes | $2.91 | $1.00, today's `main` |
 | 4 scan | $1.68 | $0.88, baseline |
-| 5 run B | $2.19 | $0.89, baseline; $1.29, today's `main` (ledger) |
+| 5 run B | $2.19 | $0.89, baseline; $1.29, today's `main` |
 | 6 route 3 | $5.33 | $1.99, today's `main` |
-| 7 design | $5.92 (ledger) | $2.11 (ledger) |
+| 7 design | $5.92 | $2.11, baseline cut at its final report |
 
-`refcost-all.txt` holds no run-7 row, so run 7's figures are the ledger's. The repeated whole reads, which dropping Ruling 69 would save, came to $0.00–0.75 per run, because they come late. The cost is the early whole reads that every later call carries: `phase-handoff`, `specs-repo-git`, `addressing`, `classification` and `run-flags` (ledger).
+The repeated whole reads, which dropping Ruling 69 would save, came to $0.00–0.75 per run, because they come late. The cost is the early whole reads that every later call carries: `phase-handoff`, `specs-repo-git`, `addressing`, `classification` and `run-flags` (ledger).
 
 The options put to the user after run 7 (ledger): **A**, keep part 1 as is; **B**, drop Ruling 69; **C**, allow section reads of the procedure references again; **D**, split the large procedure references by entry point, with their needs, as part 1 did for the rulebooks.
 

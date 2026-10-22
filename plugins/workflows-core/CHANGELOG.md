@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.44.0] — Unreleased
+## [1.44.0] — 2026-10-22
 
 **Update `dev-workflows` to 4.30.0, `product-workflows` to 3.35.0, `docs-workflows` to 1.17.0 and `security-workflows` to 0.2.0 with this release**: each of them now asks the `reference` loader for a part of `escalation-rules`, `finding-triage`, `next-phase-offer` or `session-hygiene`, which only this release's loader serves — an older one reads a part's name as an entry point of the whole reference, which no heading names as one, and may run a section whose heading merely contains that word. An older dependent beside this release requests no part, and the loader reads each reference whole for it as before, with one exception: `/product-workflows:promote-decisions` before 3.35.0 loads an `architecture-promotion` section by its name, and this loader fails a request whose second argument names none of the entry points of a reference that does not load by part, and the run stops as its command stops.
 
