@@ -130,15 +130,17 @@ jobs:
         # or counted whole. A request whose sentence names a rule that its load does not hold is a
         # call converted to the wrong part, and it fails here; so does a citation of a section the
         # entry-point file does not hold, in a section that requests that entry point, with no load of
-        # the whole reference at or before it there, and any citation of that reference ahead of the
-        # first such section whose own sentence does not load the whole reference.
+        # the whole reference at or before it there, or in a later section, before the file's first
+        # load of the whole reference; and any citation of that reference ahead of the first such
+        # section whose own sentence does not load the whole reference.
         run: python3 scripts/reference-parts.py check-citations
 
       - name: Check every asking command loads the question rules first
-        # A command whose text holds a `choices:` array, or presents phase-handoff §4.3's consent
-        # array, needs a **Load the question rules.** step -- a paragraph loading `escalation-rules
-        # core` -- on an earlier line than its first question. A citation inside a rule statement is
-        # no step: a run reads it as a source note. A scan that finds no asking command fails.
+        # A command whose text holds a `choices:` array, presents phase-handoff §4.3's consent array,
+        # or states a prompt of 2–4 options it builds at run time needs a **Load the question rules.**
+        # step -- a paragraph loading `escalation-rules core` -- on an earlier line than its first
+        # question. A citation inside a rule statement is no step: a run reads it as a source note. A
+        # scan that finds no asking command fails.
         run: python3 scripts/reference-parts.py check-questions
 
       - name: Install the mermaid gate's pinned parser

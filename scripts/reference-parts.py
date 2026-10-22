@@ -59,8 +59,10 @@ is one Read for every caller, and the model never assembles the always part itse
 AN ENTRY-POINT FILE is a second, narrower mechanism, for a reference that does NOT load by part:
 one entry point gets a generated file holding that entry point and the sections it needs. It
 has no rule index and no citation placement: every other request means the whole file, and so does
-every citation but one of a section the file holds made inside a `##` section that requests the
-entry point, which the loader serves from the file (OUT-OF-FILE CITATIONS, below). A declaration
+every citation but one of a section the file holds, which the loader serves from the file -- from its
+text wherever a read of it, or of the whole reference, made in the run is in the conversation, and
+otherwise by reading it inside a `##` section that requests the entry point (OUT-OF-FILE CITATIONS,
+below). A declaration
 block directly after the H1 line names each such entry
 point, and region markers select the lines its file holds:
 
@@ -200,10 +202,21 @@ holds nothing. Before the first `##` section requesting an entry point in its fi
 <ref> by a token, a path or a call other than that request fails whatever § it names, unless its own
 calls load the whole reference: a run loads the whole reference there, ahead of the request, and the
 file then saves nothing. A § reference in a sentence citing nothing is not read there, since the
-citation it leans on is. A later section requesting nothing is not read at all: it reads the whole
-reference, as the loader says. The census `entry-point file <ref> <entry>: N request section(s), M
-citation(s) checked` counts the sections requesting each entry point and every sentence judged for it,
-a request's own included. A tree declaring no entry point runs none of this.
+citation it leans on is. After the first section requesting an entry point, the file's text is in the
+conversation, so the loader serves a citation of a section it holds there from that text, as a lookup,
+and reads the whole reference for any other: so, outside every section requesting it and until the
+file's first whole load of <ref> -- the first sentence whose calls load it whole, by the forms above --
+each sentence citing <ref> is judged as one inside a requesting section is, against every entry point
+the file has already requested, and fails `ERROR <file>:<line>: cites workflows-core:<ref> §<n>, which
+the <entry> file does not hold, after the first `##` section requesting `<ref> <entry>` and before any
+load of the whole reference in this file, so a run loads the whole reference here -- ...`, or `with no
+section`, where it cites a section the file does not hold or none; that first whole load's own sentence
+passes, and every sentence after it is not read, since the whole reference is in the conversation
+from then on. Whole loads are counted from calls alone: a citation that loads the whole reference is
+the failure this reports, never a load that excuses the citations after it. The census `entry-point
+file <ref> <entry>: N request section(s), M citation(s) checked` counts the sections requesting each
+entry point and every sentence judged for it, a request's own included. A tree declaring no entry
+point runs none of this.
 
 THE QUESTION RULES. `check-questions` gates the step that loads `escalation-rules core` -- §0's
 array shape, choice lists presented verbatim, the `(Recommended)` marker, a selection that carries no
@@ -212,11 +225,15 @@ check-citations, because its subject is a command's questions, not a reference's
 fail-closed rule would fail every tree that declares references and asks nothing, as check-citations'
 fixture trees do. It reads the `commands/*.md`
 of workflows-core and of every dependent plugin (QUESTION_PLUGIN_RELS) for each one's FIRST QUESTION:
-the first line, fenced or not, holding `choices:`, or holding both `phase-handoff` and `§4.3` -- the
+the first line, fenced or not, holding `choices:`; holding both `phase-handoff` and `§4.3` -- the
 consent array that reference's §4.3 has a command present, as /frames does with no `choices:` of its
-own -- whichever comes first. A command with no such line presents no choice list and is not read. A
-command with one fails, `ERROR <file>:<line>: asks the user a question before its **Load the question
-rules.** step -- add the step before this line`, unless a STEP starts on an earlier line: a paragraph or
+own; or stating a prompt of 2–4 options the command builds at run time, `2–4 options` (or `2-4`)
+on a line naming no `choices` array -- /feedback's one grouped prompt of its metadata, with no
+`choices:` of its own -- whichever comes first. A line naming `choices` arrays beside `2–4 options`
+states the arrays' rule ("Use `choices` arrays; 2–4 options"), not a prompt, and is no question. A
+command with no such line is not read. A command with one fails, `ERROR <file>:<line>: asks the user a
+question before its **Load the question rules.** step -- add the step before this line`, unless a STEP
+starts on an earlier line: a paragraph or
 list item outside every fenced block that opens, its list marker dropped, with `**Load the question
 rules.**` and holds the loader call `Skill(skill: "workflows-core:reference", args: "escalation-rules
 core")`. A citation of that reference inside a rule statement is no step, since a run reads it as a
@@ -251,12 +268,16 @@ position, so a § a sentence means as another reference's -- "emit its §5 notic
 the file lacks it, and a § in a sentence citing nothing, with no citation before it in its paragraph,
 names nothing, so a bare pointer into <ref> there goes unread. It reads a § only by its number: one
 written as a name (`§ Stop contract`) is not read, so a sentence citing <ref> by such a name alone
-fails as citing no section. And whether a failing sentence only explains or applies a rule the file
-lacks is the reading's call, not the gate's: it fails both. check-questions cannot see whether a run
+fails as citing no section. It reads a file in the order of its text, so a section a run reaches
+before an earlier one -- a definition a later phase invokes -- is judged by where it stands. And whether
+a failing sentence only explains or applies a rule the file lacks is the reading's call, not the gate's:
+it fails both. check-questions cannot see whether a run
 executes the step when it reaches it -- the step says to, and the live runs check that it does -- nor
 whether the step's text is the agreed paragraph, since it reads only the lead and the call. It sees a
-question only as a `choices:` line or a line naming `phase-handoff` and `§4.3`: a question asked in
-prose, with no array, before the step goes unseen, and a line that only mentions `choices:` counts as a
+question only as a `choices:` line, a line naming `phase-handoff` and `§4.3`, or a line stating a prompt
+of 2–4 options: a question asked in prose with no array and no option count before the step goes unseen,
+and so does a prompt stated on a line that also names a `choices` array, which it reads as the arrays'
+rule; a line that only mentions `choices:`, or `2–4 options` without that rule's subject, counts as a
 question, erring early.
 
 Usage:
@@ -322,13 +343,17 @@ ENTRY_HOLDS = "The file for `{pair}` holds {held}."
 ENTRY_HOLDS_LEAD = "The file for `{pair}` holds"
 
 # check-questions: the step every command that presents a choice list makes before its first question,
-# and what marks that question -- a `choices:` array, or phase-handoff §4.3's consent array presented.
+# and what marks that question -- a `choices:` array, phase-handoff §4.3's consent array presented, or a
+# prompt the command builds at run time and states as 2–4 options. A line naming `choices` arrays states
+# the arrays' rule, not a prompt: "Use `choices` arrays; 2–4 options" asks nothing.
 QUESTION_PLUGIN_RELS = DEPENDENT_PLUGIN_RELS + (CORE_PLUGIN_REL,)
 QUESTION_DIR = "commands"
 QUESTION_STEP_LEAD = "**Load the question rules.**"
 QUESTION_STEP_ARGS = "escalation-rules core"
 QUESTION_ARRAY = "choices:"
 QUESTION_HANDOFF = ("phase-handoff", "§4.3")
+QUESTION_PROMPT = re.compile(r"2[–-]4 options")
+QUESTION_RULE = re.compile(r"`choices` arrays?\b")
 
 CORE_NAME = os.path.basename(CORE_PLUGIN_REL)
 SCRIPT_REL = "scripts/reference-parts.py"
@@ -1323,6 +1348,13 @@ def level2_sections(text):
     return out
 
 
+def loads_whole(toks, ref, entries):
+    """Whether a loader call's tokens load all of `ref`, a reference declaring entry-point files: no second
+    token, or one naming an entry point with no file of its own, which the loader answers with the whole
+    reference; a placeholder loads nothing."""
+    return toks[0] == ref and (len(toks) == 1 or toks[1] not in entries) and not toks[-1].startswith("<")
+
+
 def holds_cited(decl, number, sentence):
     """Whether an entry-point file holds §`number` for the sentence citing it: under a § it holds whole,
     or a § it holds in part where one of that section's phrases is in the sentence, each normalised as
@@ -1451,11 +1483,20 @@ def cmd_check_citations(root, verbose):
                     asked.setdefault(toks[0], {}).setdefault(sec, set()).add(toks[1])
         first_asked = {r: {e: min(s for s, es in secs.items() if e in es) for e in set().union(*secs.values())}
                        for r, secs in asked.items()}
+        # Where the file first loads each such reference whole, as (block, sentence): after the first section
+        # requesting an entry point, a citation the file does not hold fails until then.
+        first_whole = {}
+        for bi, (joined, at, table) in enumerate(blocks):
+            for m in CALL.finditer(joined):
+                t = m.group(1).split()
+                if t and t[0] in asked and t[0] not in first_whole and loads_whole(t, t[0], declared[t[0]]):
+                    first_whole[t[0]] = (bi, next(i for i, (a, b) in enumerate(sentences(joined, table))
+                                                  if a <= m.start() < b))
         for r, secs in asked.items():
             for es in secs.values():
                 for e in es:
                     entry_census[(r, e)][0] += 1
-        for joined, at, table in blocks:
+        for bi, (joined, at, table) in enumerate(blocks):
             groups = {}   # (sentence, ref) -> one citation: its line, the parts it requests, ...
             spans = sentences(joined, table)
 
@@ -1565,19 +1606,25 @@ def cmd_check_citations(root, verbose):
             # is judged by its own § references, and passes where each is held, or where a whole load of
             # the reference is made at or before it in the section. Before the first section requesting
             # the entry point, a citation loads the whole reference ahead of the request, so a sentence
-            # citing it there fails unless it loads the whole reference itself.
+            # citing it there fails unless it loads the whole reference itself. After that section, until
+            # the file first loads the reference whole, a citation of a section the file holds is a lookup
+            # the file's text in the conversation serves, and any other loads the whole reference: so each
+            # such sentence outside every requesting section is judged as one inside, against the file
+            # already read, and passes from that first whole load on.
             here = at[0][1]
             here_sec = section_of.get(here)
             for r in sorted(asked):
                 inside = asked[r].get(here_sec)
                 early = [] if inside else sorted(e for e, first in first_asked[r].items() if here < first)
-                if not inside and not early:
+                late = [] if inside or early else sorted(e for e, first in first_asked[r].items() if first < here)
+                if not inside and not early and not late:
                     continue
                 rpath, decls = core_refs / (r + ".md"), declared[r]
                 for u, (a, b) in enumerate(spans):
+                    if late and r in first_whole and (bi, u) > first_whole[r]:
+                        break
                     calls = [(m.start(), m.group(1).split()) for m in CALL.finditer(joined) if a <= m.start() < b]
-                    whole = any(t[0] == r and (len(t) == 1 or t[1] not in decls) and not t[-1].startswith("<")
-                                for _, t in calls if t)
+                    whole = any(loads_whole(t, r, decls) for _, t in calls if t)
                     requests = {o for o, t in calls if len(t) == 2 and t[0] == r and t[1] in decls}
                     ours = [c for c in cites if a <= c[0] < b and c[2] == rpath]
                     if early:
@@ -1601,18 +1648,22 @@ def cmd_check_citations(root, verbose):
                             numbers.append((offset, num.group(1)))
                     if not ours and not numbers:
                         continue
-                    for e in inside:
+                    holders = inside or late
+                    for e in holders:
                         entry_census[(r, e)][1] += 1
-                    if whole:
+                    if whole and inside:
                         whole_in.add((r, here_sec))
-                    if (r, here_sec) in whole_in:
+                    if whole or (r, here_sec) in whole_in:
                         continue
-                    tail = (", which the %s file does not hold, in a section that reads only that file -- name a "
-                            "section it holds, load the whole reference at or before this sentence, or reword it so "
-                            "it implies no load" % " or ".join(sorted(inside)))
+                    where = ("in a section that reads only that file" if inside else
+                             "after the first `##` section requesting %s and before any load of the whole reference in "
+                             "this file, so a run loads the whole reference here" % either(["%s %s" % (r, e) for e in late]))
+                    tail = (", which the %s file does not hold, %s -- name a section it holds, load the whole reference "
+                            "at or before this sentence, or reword it so it implies no load"
+                            % (" or ".join(sorted(holders)), where))
                     said = set()
                     for offset, n in numbers:
-                        if n not in said and not any(holds_cited(decls[e], n, joined[a:b]) for e in inside):
+                        if n not in said and not any(holds_cited(decls[e], n, joined[a:b]) for e in holders):
                             said.add(n)
                             problems.append("%s:%d: cites %s:%s §%s%s" % (rel, line_at(at, offset), CORE_NAME, r, n, tail))
                     if ours and not numbers and not requests:
@@ -1783,9 +1834,11 @@ def cmd_check_citations(root, verbose):
 
 def first_question(lines):
     """The 1-based line of a command's first question, or None: the first line, fenced or not, holding
-    `choices:`, or holding both `phase-handoff` and `§4.3`."""
+    `choices:`, holding both `phase-handoff` and `§4.3`, or stating a prompt of 2–4 options -- `2–4 options`
+    on a line that names no `choices` array, whose rule such a line states instead."""
     for n, line in enumerate(lines, 1):
-        if QUESTION_ARRAY in line or all(w in line for w in QUESTION_HANDOFF):
+        if QUESTION_ARRAY in line or all(w in line for w in QUESTION_HANDOFF) or (
+                QUESTION_PROMPT.search(line) and not QUESTION_RULE.search(line)):
             return n
     return None
 
@@ -2555,8 +2608,28 @@ CASES = [
         Step(['check-citations'], 1, [U + ":18: cites workflows-core:gamma §2.3, which the check-it file does not hold, in "
                                           "a section that reads only that file"], errors=1),
     ]),
-    ('entry_cite_other_section_unaffected', 'a citation in a later section that requests nothing is not judged', [
-        Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 1 citation(s) checked',
+    # After the first section requesting check-it, in a section that requests nothing, until the file first
+    # loads gamma whole. Red: Phase 1 cites §3.1, which the file holds -- a lookup its text serves, green --
+    # and Phase 9 cites §2.3, which it does not, with no whole load before it. Its green twin: the same, the
+    # §2.3 sentence loading the whole reference itself.
+    ('entry_cite_later_section', "a citation of a section the file lacks, in a later section before any whole load, "
+                                 "fails", [
+        Step(['check-citations'], 1, [U + ":28: cites workflows-core:gamma §2.3, which the check-it file does not hold, "
+                                          "after the first `##` section requesting `gamma check-it` and before any load of "
+                                          "the whole reference in this file, so a run loads the whole reference here -- "
+                                          "name a section it holds, load the whole reference at or before this sentence, "
+                                          "or reword it so it implies no load",
+                                      'entry-point file gamma check-it: 1 request section(s), 3 citation(s) checked'],
+             errors=1),
+    ]),
+    ('entry_cite_later_section_whole_load', "the same citation passes where its own sentence loads the whole reference", [
+        Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 3 citation(s) checked',
+                                      'check-citations: PASS'], errors=0),
+    ]),
+    # Phase 8 loads gamma whole, so Phase 9's §2.3 after it is a lookup that read serves: not judged.
+    ('entry_cite_later_section_after_whole_load', 'a citation in a later section after a whole load of the reference '
+                                                  'is not judged', [
+        Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 2 citation(s) checked',
                                       'check-citations: PASS'], errors=0),
     ]),
     # Before the first section requesting check-it, a citation of a held section loads the whole reference
@@ -2572,8 +2645,9 @@ CASES = [
         Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 2 citation(s) checked',
                                       'check-citations: PASS'], errors=0),
     ]),
-    # check-questions: a command's first question -- a `choices:` line, fenced or not, or a line naming
-    # phase-handoff's §4.3 -- needs a **Load the question rules.** step on an earlier line. Each tree holds
+    # check-questions: a command's first question -- a `choices:` line, fenced or not, a line naming
+    # phase-handoff's §4.3, or a line stating a prompt of 2–4 options -- needs a **Load the question rules.**
+    # step on an earlier line. Each tree holds
     # one asking command; the loaded and missing trees also hold one that asks nothing, which is not counted.
     ('question_rules_loaded', 'the question-rules step before the first choices: array passes', [
         Step(['check-questions'], 0, ['question rules: 1 command(s) present a choice list, 1 load the rules first',
@@ -2619,6 +2693,20 @@ CASES = [
                                       'its **Load the question rules.** step',
                                       'question rules: 1 command(s) present a choice list, 0 load the rules first'],
              errors=1),
+    ]),
+    # A prompt the command builds at run time, stated as 2–4 options with no `choices:` line of its own, as
+    # /feedback's confirmation is. Each tree's preamble also states the arrays' rule, "`choices` arrays; 2–4
+    # options", ahead of the strip step: a rule, not a prompt, so the red's question is the prompt line, and
+    # the green's step, after that rule, still comes first.
+    ('question_rules_runtime_prompt', 'a prompt stated as 2–4 options, with no step before it, fails', [
+        Step(['check-questions'], 1, ['plugins/workflows-core/commands/note.md:11: asks the user a question before its '
+                                      '**Load the question rules.** step',
+                                      'question rules: 1 command(s) present a choice list, 0 load the rules first'],
+             errors=1),
+    ]),
+    ('question_rules_runtime_prompt_loaded', 'a prompt stated as 2–4 options, after the step, passes', [
+        Step(['check-questions'], 0, ['question rules: 1 command(s) present a choice list, 1 load the rules first',
+                                      'check-questions: PASS'], errors=0),
     ]),
     ('question_rules_no_asking_command', 'vacuity: no command presents a choice list', [
         Step(['check-questions'], 1, ['the scan matched nothing',

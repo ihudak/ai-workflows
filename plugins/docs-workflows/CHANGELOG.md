@@ -10,7 +10,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 Needs `workflows-core` 1.45.0 for two citations: `finish-and-handoff` and `key-discovery` name the SSH-alias rule as `phase-handoff` §2.6.1's `owner-repo`, a section 1.44.0 does not have — its derivation sits in §2.6 there. The rest runs beside 1.44.0, which serves `escalation-rules core`.
 
 ### Changed
-- **All seven commands load the question rules before their first question.** Each carries a **Load the question rules.** step — `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, §0's array shape, choice lists presented verbatim, the `(Recommended)` marker and a selection that carries no text, about 9.9k characters — after its run flags are stripped; `/document` makes it in `## Mode detection`, so both modes make it, and says that a direct-mode run is unchanged save that load.
+- **All seven commands load the question rules before their first question.** Each carries a **Load the question rules.** step — `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, §0's array shape, choice lists presented verbatim, the `(Recommended)` marker and a selection that carries no text, about 9.9k characters — after its run flags are stripped; `/document` makes it in `## Mode detection`, ahead of its mode test, and says that what runs there — the run-flag strip and that load — runs in both modes, where it said a direct-mode run was byte-identical to its form before the shared front-end retired.
 - **`finish-and-handoff` and `key-discovery` name `phase-handoff` §2.6.1's `owner-repo`** for the SSH-alias rule, the block that now holds that derivation.
 
 ## [1.17.0] — 2026-10-22

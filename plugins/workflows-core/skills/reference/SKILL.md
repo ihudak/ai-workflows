@@ -60,30 +60,34 @@ Each one's file is
 holding the entry point and the sections it needs and naming them in the
 line under its title. The file for `phase-handoff require-on-main` holds
 the text before §1, §1, §2.2, §2.6.1, §3 and §4.4, and in part §4.0
-("never infer") and §5 ("rule 2" and "rule 3"). Two kinds of request read
-that file instead of the whole reference. A request whose second argument
-names the entry point reads the file and executes the entry point from it.
-A request with no second
-argument, made for a citation of a section the file holds — of one it holds
-in part, only for the text its quoted phrase names — inside a `##` section
-whose text also requests that entry point, before the citation or after it,
-reads the file and executes nothing. In that `##` section the file is read
-once, wherever the citation stands: whichever of the request and the
-citation comes first reads it, and the other works from that read, a read
-made in the current phase — the request executing the entry point from it,
-the citation applying its section from it. Every other request on that
-reference reads the whole reference, as the paragraph after this one says:
-a second argument naming any other entry point, and a request with no
-second argument made for a citation of a section the file does not hold,
-of a section it holds in part for text its quoted phrase does not name —
-§4.0 for anything but its *Never infer* rule, §5 for any rule but rules 2
-and 3 — of no section, or outside such a `##` section. A read of the whole
-reference covers the file, within the same bound on reuse as any read.
+("never infer") and §5 ("rule 2" and "rule 3"). A request whose second
+argument names the entry point reads the file and executes the entry point
+from it. A request with no second argument, made for a citation of a section
+the file holds — of one it holds in part, only for the text its quoted
+phrase names — executes nothing and needs only that section's text, so it
+is a lookup: wherever that text is in this conversation word for word, from
+a read of the file or of the whole reference made in this run, in whatever
+phase, it works from that text and reads nothing. Only where that text is
+not in front of you does it read: the file, inside a `##` section whose text
+also requests that entry point, before the citation or after it; the whole
+reference, anywhere else. So a `##` section requesting the entry point
+reads the file at most once, wherever the citation stands: where the
+citation comes first and reads the file, the request executes the entry
+point from that read, made in the current phase; where the request reads it
+first, the citation is a lookup. Every other request on that reference reads
+the whole reference, as the paragraph after this one says: a second argument
+naming any other entry point, and a request with no second argument made for
+a citation of a section the file does not hold, of a section it holds in
+part for text its quoted phrase does not name — §4.0 for anything but its
+*Never infer* rule, §5 for any rule but rules 2 and 3 — or of no section. A
+read of the whole reference covers the file, within the same bound on reuse
+as any read.
 
 To read the whole reference — with no second argument, where the index of a
 reference that loads by part names no part for the rule your step applies,
 or with any second argument on a reference that does not load by part, in
-each case save a request that an entry point's own file serves — read
+each case save a request the paragraph above answers from an entry point's
+own file — read
 `${CLAUDE_PLUGIN_ROOT}/references/<the first argument>.md`. Reading the
 whole reference means reading every line of it: where one read cannot hold
 the file, read it in consecutive ranges from its first line to its last.

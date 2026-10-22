@@ -21,6 +21,10 @@ Ask the user to pick a value, and normalise a free-text answer per
 `workflows-core:alpha`'s *Closed-vocabulary
 pickers*.
 
+## Phase 8
+
+Offer the handoff: load the contract whole with `Skill(skill: "workflows-core:reference", args: "gamma")`.
+
 ## Phase 9
 
 Stage the deliverable as `workflows-core:gamma` §2.3 says.

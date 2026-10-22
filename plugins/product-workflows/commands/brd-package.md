@@ -1209,11 +1209,11 @@ later, and the note this phase writes is one of the files it commits, so the not
 `Phase handoff:` line. What the repository route depends on is the bundle reaching the specs
 repository's default branch, where a customer pulling the repository finds it — which it does when
 the handoff's pull request merges — and three facts decide whether this run can start it on its
-way, all of them held before anything is committed: the specs repository passes
-`workflows-core:phase-handoff` §2.1's gate — every condition that section lists, its run-wide
-`specs_git` flags as well as its repository tests, so a run carrying `specs_git: blocked` or
-`specs_git: misrooted` fails it here; §2.1's push-target probe finds an `origin` remote to push to;
-and the operator consents to the handoff. Take all three here:
+way, all of them held before anything is committed: the specs repository passes the handoff's own
+gate — every condition that gate lists, its run-wide `specs_git` flags as well as its repository
+tests, so a run carrying `specs_git: blocked` or `specs_git: misrooted` fails it here; the handoff's
+push-target probe finds an `origin` remote to push to; and the operator consents to the handoff.
+Take all three here, step 1 loading the handoff contract that states them:
 
 1. **Take the handoff's consent now.** Invoke
    `Skill(skill: "workflows-core:reference", args: "phase-handoff")`, test §2.1's gate conditions —
