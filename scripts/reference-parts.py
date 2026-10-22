@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Assemble the parts of a split shared reference into committed files, and gate them.
+"""Assemble the parts of a split shared reference, and the entry-point files of a reference that
+is not split, into committed files, and gate them.
 
 A split reference stays ONE source file under plugins/workflows-core/references/. A
 declaration block directly after its H1 line names its parts, and region markers in the
@@ -54,16 +55,60 @@ doc-fixer has neither Bash nor the loader and reads its reference by path. A gen
 is one Read for every caller, and the model never assembles the always part itself
 (docs/maintainers/rationale.md, "reference-parts").
 
+AN ENTRY-POINT FILE is a second, narrower mechanism, for a reference that does NOT load by part:
+one entry point gets a generated file holding that entry point and the sections it needs. It
+has no rule index and no citation placement; every other request, and every citation, still
+means the whole file. A declaration block directly after the H1 line names each such entry
+point, and region markers select the lines its file holds:
+
+    # Gamma steps
+
+    <!-- reference-entry-files
+    entry check-it holds=1,3
+    partial check-it 4.0 "never infer"
+    -->
+
+    <!-- entry: check-it -->
+    ...
+    <!-- /entry -->
+
+`entry <entry> holds=<§>[,<§>...]` names an entry point -- the first word of a code span in one
+of the reference's headings outside a fenced block, as the loader reads one -- and the sections
+its file holds whole. A § is the number a heading opens with (`## 3. ...`, `### 3.1 ...`), and
+it covers its subsections: `3` covers `3.1` to `3.7`, and the section runs to the next heading
+that is neither numbered under it nor an unnumbered one deeper than its own. `partial <entry>
+<§> "<phrase>" ...` names a section the file holds in part, with phrases that identify the held
+text. Regions never nest and never close inside a fenced block, and the markers take the
+`part` regions' exact form with `entry` for `part`. A line outside every region belongs to no
+entry file: unlike a split reference, a line needs no region. `generate` writes
+plugins/workflows-core/reference-parts/<ref>/<entry>.md for each entry point: the header line
+and the `${CLAUDE_PLUGIN_ROOT}` sentence a part file carries; the title `# <H1> — entry point
+<entry>`; under it the line `This file holds entry point `check-it` of `gamma`: §1 and §3, and
+in part §4.0 ("never infer"). Any other section is in the whole reference: `Skill(skill:
+"workflows-core:reference", args: "gamma")`.` -- each list in source order, phrases as
+declared; then the regions' text in source order. Its deletion of every file no declaration
+produces counts these files as produced.
+
 `check-parts` is the gate on the sources and the tree: declarations, regions, coverage, index
 uniqueness, dependency resolution, no relative link in a split source (a generated file sits
 one directory deeper, where it would not resolve), and freshness -- it regenerates in memory
 and compares byte for byte, so a source edited without `generate` fails, naming the file.
 A positional pointer inside a part ("above", "below", "the next section") is printed as
 `FLAG <file>:<line>: <word>` and does not fail: whether it crosses a part boundary is a
-reading's call, not a pattern's.
+reading's call, not a pattern's. On an entry-point declaration it fails on a block out of place,
+unclosed or carried twice, a malformed line or marker, an entry declared twice, a partial line
+naming an undeclared entry, a nested region, one closed inside a fenced block or one naming no
+declared entry; on an entry that is no entry point of its reference; on a § no heading opens
+with; on a non-blank line of a section held whole that lies in no region of its entry; on a
+phrase of a section held in part that no region text of its entry inside that section holds,
+phrase and text each normalised as the rule index normalises names; and on an entry-point file
+that is stale, missing or produced by no declaration.
 
 `check-citations` gates the callers: the split list in the loader skill equals the declared
-set; every consumer file (commands/, agents/, references/ of the dependent plugins,
+set; where any entry point is declared, a paragraph of the loader skill opens with `These entry
+points read their own file: `<ref> <entry>`, ...`, the declared pairs alphabetical, as the split
+list is; an entry-point declaration check-parts fails stops it before it reads a citation, as a
+split declaration does; every consumer file (commands/, agents/, references/ of the dependent plugins,
 CHANGELOG.md excluded) that cites a split reference carries the load-by-part preamble as a
 paragraph of its own; every explicit part request -- `args: "<split> <part>"`, or, in
 workflows-core's own files, a read of reference-parts/<split>/<part>.md -- names a requestable
@@ -119,9 +164,10 @@ fails check-parts. The census `placed N, whole M` is printed per reference, N co
 part a citation is placed on; `--verbose` lists each whole citation as
 `WHOLE <file>:<line>: workflows-core:<split>`.
 
-IT FAILS CLOSED. A scan that finds no declaration fails both subcommands, and a declared
-reference no consumer cites fails check-citations: a gate that matched nothing proves
-nothing when it passes.
+IT FAILS CLOSED. A scan that finds no reference-parts declaration fails both subcommands, and a
+declared reference no consumer cites fails check-citations: a gate that matched nothing proves
+nothing when it passes. Entry-point files are outside that guard: a tree declaring none passes
+their checks.
 
 WHAT IT CANNOT SEE: whether a run loads the part when it reaches a citation -- the preamble
 tells it to; the rule-by-rule reading and the live runs check that it does. A name the gate
@@ -193,16 +239,24 @@ PREAMBLE = (
 )
 SKILL_OPENING = "These references load by part: {list}."
 SKILL_OPENING_LEAD = "These references load by part:"
+# {list} is every declared `<ref> <entry>` pair, alphabetical and backticked.
+ENTRY_OPENING = "These entry points read their own file: {list}."
+ENTRY_OPENING_LEAD = "These entry points read their own file:"
 
 CORE_NAME = os.path.basename(CORE_PLUGIN_REL)
 SCRIPT_REL = "scripts/reference-parts.py"
+ROOT_SENTENCE = "`${CLAUDE_PLUGIN_ROOT}` in this file is `%s`'s root, whichever plugin's run reads it." % CORE_NAME
 
 # ---------------------------------------------------------------- shared patterns
 PART_NAME = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 DECL_OPEN = re.compile(r"^\s*<!--\s*reference-parts\b")
-REGION_OPEN = re.compile(r"^<!-- part: (\S+) -->$")
-REGION_CLOSE = re.compile(r"^<!-- /part -->$")
-ANY_MARKER = re.compile(r"<!--\s*/?\s*part\b")
+ENTRY_DECL_OPEN = re.compile(r"^\s*<!--\s*reference-entry-files\b")
+# Per region word: the opening marker, the closing marker, and anything that looks like either.
+MARKERS = {w: (re.compile(r"^<!-- %s: (\S+) -->$" % w), re.compile(r"^<!-- /%s -->$" % w),
+               re.compile(r"<!--\s*/?\s*%s\b" % w)) for w in ("part", "entry")}
+SECTION = re.compile(r"^\d+(?:\.\d+)*$")
+HOLDS = re.compile(r"^holds=(\d+(?:\.\d+)*(?:,\d+(?:\.\d+)*)*)$")
+HEADING_NUMBER = re.compile(r"^(\d+(?:\.\d+)*)\.?(?=\s|$)")
 HEADING = re.compile(r"^ {0,3}(#{1,6})[ \t]+(.*?)[ \t]*(?:[ \t]#+[ \t]*)?$")
 FENCE = re.compile(r"^\s*(`{3,}|~{3,})(.*)$")
 POSITIONAL = re.compile(r"\b(?:above|below)\b|\bthe (?:next|previous) section\b", re.I)
@@ -265,12 +319,22 @@ class Part:
         self.aliases = []    # [display text]
 
 
-class Ref:
+class Source:
+    """A reference file under the core reference dir that carries a declaration."""
+
     def __init__(self, name, rel):
         self.name, self.rel = name, rel
         self.title = None
+        self.errors = []     # declarations, regions, coverage, and the rest each kind checks
+
+    def err(self, line, msg):
+        self.errors.append("%s%s: %s" % (self.rel, ":%d" % line if line else "", msg))
+
+
+class Ref(Source):
+    def __init__(self, name, rel):
+        super().__init__(name, rel)
         self.parts = {}      # declaration order
-        self.errors = []     # declarations, regions, coverage, needs, index
         self.link_errors = []
         self.flags = []
         self.index = {}      # norm -> part, every part (uniqueness)
@@ -287,32 +351,122 @@ class Ref:
     def helpers(self):
         return [p for p in self.parts.values() if p.helper]
 
-    def err(self, line, msg):
-        self.errors.append("%s%s: %s" % (self.rel, ":%d" % line if line else "", msg))
+
+class EntryDecl:
+    """One declared entry point: the § numbers its file holds whole, as declared; per § it holds in
+    part, the phrases that identify the held text; and its regions, each as (first, last) content
+    line numbers of the source, in source order."""
+
+    def __init__(self, line, holds):
+        self.line = line
+        self.holds = holds
+        self.partial = {}
+        self.regions = []
+
+
+class EntryRef(Source):
+    def __init__(self, name, rel, lines):
+        super().__init__(name, rel)
+        self.lines = lines
+        self.entries = {}    # entry -> EntryDecl, declaration order
+
+
+def ids(root: Path, path: Path):
+    """A core reference file's name (`model-routing/classification`) and repo-relative path."""
+    return (path.relative_to(root / CORE_PLUGIN_REL / REF_DIR).with_suffix("").as_posix(),
+            path.relative_to(root).as_posix())
+
+
+def declares(lines, opener, word):
+    """Whether a source carries a declaration or a region marker of `word` outside a code span."""
+    return any(opener.match(l) or MARKERS[word][2].search(CODE_SPAN.sub("", l)) for l in lines)
+
+
+def declaration_block(src, lines, keyword, opener, kind):
+    """The (first, last) line indexes of the `<!-- <keyword>` block directly after the H1 line, with
+    src.title set; or None, the reason reported on `src`. A second block is reported too."""
+    first = next((i for i, l in enumerate(lines) if l.strip()), None)
+    if first is None or not lines[first].startswith("# "):
+        src.err(None, "%s opens with its H1 line, and the declaration follows it" % kind)
+        return None
+    src.title = lines[first][2:].strip()
+    start = next((i for i in range(first + 1, len(lines)) if lines[i].strip()), None)
+    if start is None or lines[start].strip() != "<!-- " + keyword:
+        src.err(start + 1 if start is not None else None,
+                "the <!-- %s declaration must directly follow the H1 line" % keyword)
+        return None
+    end = next((i for i in range(start + 1, len(lines)) if lines[i].strip() == "-->"), None)
+    if end is None:
+        src.err(start + 1, "the %s declaration is never closed with -->" % keyword)
+        return None
+    if any(opener.match(l) for l in lines[end + 1:]):
+        src.err(None, "carries a second %s declaration" % keyword)
+    return start, end
+
+
+def quoted_names(rest):
+    """The names of a `"<name>" ...` list, every one quoted and non-empty; None for any other text."""
+    names = re.findall(r'"([^"]*)"', rest)
+    return names if re.fullmatch(r'(\s*"[^"]*")+\s*', rest) and all(x.strip() for x in names) else None
+
+
+def more(numbers):
+    """` (N more non-blank line(s), to line M)` after the first of several line numbers."""
+    return " (%d more non-blank line(s), to line %d)" % (len(numbers) - 1, numbers[-1]) if len(numbers) > 1 else ""
+
+
+def walk_regions(src, lines, start, word, names):
+    """The body from line index `start`, as events: ("open", n, name) where `<!-- <word>: <name> -->`
+    opens a region; ("close", name, first, last) where `<!-- /<word> -->` closes it, first and last
+    being its content line numbers; ("line", n, line, the open region's name or None, whether the line
+    is fenced) for every other line; and ("halt",) after a marker error, reported on `src`, which ends
+    the walk. A region names one of `names`, never nests, and never closes inside a fenced block."""
+    opener, closer, anything = MARKERS[word]
+    fences, current = Fences(), None   # (name, the line number of its opening marker)
+    for i in range(start, len(lines)):
+        n, line, s = i + 1, lines[i], lines[i].strip()
+        mo, mc = opener.match(s), closer.match(s)
+        if mo and current is not None:
+            src.err(n, "region '%s' opens inside region '%s' (opened at line %d) -- regions never nest"
+                    % (mo.group(1), current[0], current[1]))
+        elif mo and mo.group(1) not in names:
+            src.err(n, "region '%s' names no declared %s" % (mo.group(1), word))
+        elif mo:
+            current = (mo.group(1), n)
+            yield ("open", n, current[0])
+            continue
+        elif mc and current is None:
+            src.err(n, "<!-- /%s --> closes no open region" % word)
+        elif mc and fences.open is not None:
+            src.err(n, "region '%s' closes inside a fenced block" % current[0])
+        elif mc:
+            yield ("close", current[0], current[1] + 1, n - 1)
+            current = None
+            continue
+        elif anything.search(CODE_SPAN.sub("", line)):
+            src.err(n, "malformed marker -- a region opens with `<!-- %s: <name> -->` and closes with "
+                       "`<!-- /%s -->`, each alone on its line" % (word, word))
+        else:
+            yield ("line", n, line, current and current[0], fences.step(line))
+            continue
+        yield ("halt",)
+        return
+    if current is not None:
+        src.err(current[1], "region '%s' is never closed" % current[0])
+        yield ("halt",)
 
 
 def parse_source(root: Path, path: Path):
     """A Ref for a split source, or None for a reference that is not split."""
-    rel = path.relative_to(root).as_posix()
-    name = path.relative_to(root / CORE_PLUGIN_REL / REF_DIR).with_suffix("").as_posix()
+    name, rel = ids(root, path)
     lines = path.read_text(encoding="utf-8").splitlines()
-    if not any(DECL_OPEN.match(l) or ANY_MARKER.search(CODE_SPAN.sub("", l)) for l in lines):
+    if not declares(lines, DECL_OPEN, "part"):
         return None
     ref = Ref(name, rel)
-    first = next((i for i, l in enumerate(lines) if l.strip()), None)
-    if first is None or not lines[first].startswith("# "):
-        ref.err(None, "a split reference opens with its H1 line, and the declaration follows it")
+    block = declaration_block(ref, lines, "reference-parts", DECL_OPEN, "a split reference")
+    if block is None:
         return ref
-    ref.title = lines[first][2:].strip()
-    start = next((i for i in range(first + 1, len(lines)) if lines[i].strip()), None)
-    if start is None or lines[start].strip() != "<!-- reference-parts":
-        ref.err(start + 1 if start is not None else None,
-                "the <!-- reference-parts declaration must directly follow the H1 line")
-        return ref
-    end = next((i for i in range(start + 1, len(lines)) if lines[i].strip() == "-->"), None)
-    if end is None:
-        ref.err(start + 1, "the reference-parts declaration is never closed with -->")
-        return ref
+    start, end = block
     aliases = []
     for i in range(start + 1, end):
         n, words = i + 1, lines[i].split()
@@ -344,67 +498,45 @@ def parse_source(root: Path, path: Path):
                     ref.err(n, "part '%s': unknown word '%s' -- always, private, helper or needs=" % (pname, w))
             ref.parts[pname] = part
         elif words[0] == "alias" and len(words) >= 3:
-            rest = lines[i].split(None, 2)[2]
-            names = re.findall(r'"([^"]*)"', rest)
-            if not re.fullmatch(r'(\s*"[^"]*")+\s*', rest) or not all(x.strip() for x in names):
+            names = quoted_names(lines[i].split(None, 2)[2])
+            if names is None:
                 ref.err(n, "an alias line is `alias <part> \"<name>\" ...`, every name quoted and non-empty")
                 continue
             aliases.append((n, words[1], names))
         else:
             ref.err(n, "unknown declaration line '%s' -- a line is `part ...` or `alias ...`" % lines[i].strip())
-    if any(DECL_OPEN.match(l) for l in lines[end + 1:]):
-        ref.err(None, "carries a second reference-parts declaration")
     if ref.errors:
         return ref
 
     # The body: regions, coverage, headings, links, flags.
-    fences, current, gap = Fences(), None, []
+    gap = []
 
     def report_gap():
         if gap:
-            more = " (%d more non-blank line(s), to line %d)" % (len(gap) - 1, gap[-1]) if len(gap) > 1 else ""
             ref.err(gap[0], "a non-blank line lies in no part region -- every non-blank line after the "
-                            "declaration lies in exactly one%s" % more)
+                            "declaration lies in exactly one%s" % more(gap))
             gap.clear()
 
-    for i in range(end + 1, len(lines)):
-        n, line, s = i + 1, lines[i], lines[i].strip()
-        mo, mc = REGION_OPEN.match(s), REGION_CLOSE.match(s)
-        if mo:
-            if current is not None:
-                ref.err(n, "region '%s' opens inside region '%s' (opened at line %d) -- regions never nest"
-                        % (mo.group(1), current[0].name, current[1]))
-                return ref
-            if mo.group(1) not in ref.parts:
-                ref.err(n, "region '%s' names no declared part" % mo.group(1))
-                return ref
-            report_gap()
-            current = (ref.parts[mo.group(1)], n, [])
-            continue
-        if mc:
-            if current is None:
-                ref.err(n, "<!-- /part --> closes no open region")
-                return ref
-            if fences.open is not None:
-                ref.err(n, "region '%s' closes inside a fenced block" % current[0].name)
-                return ref
-            current[0].regions.append((current[1] + 1, current[2]))
-            current = None
-            continue
-        if ANY_MARKER.search(CODE_SPAN.sub("", line)):
-            ref.err(n, "malformed marker -- a region opens with `<!-- part: <name> -->` and closes with "
-                       "`<!-- /part -->`, each alone on its line")
+    for event in walk_regions(ref, lines, end + 1, "part", ref.parts):
+        if event[0] == "halt":
             return ref
-        fenced = fences.step(line)
-        if current is None:
-            if s:
+        if event[0] == "open":
+            report_gap()
+            continue
+        if event[0] == "close":
+            _, pname, first, last = event
+            ref.parts[pname].regions.append((first, lines[first - 1:last]))
+            continue
+        _, n, line, pname, fenced = event
+        if pname is None:
+            if line.strip():
                 gap.append(n)
             continue
-        current[2].append(line)
+        part = ref.parts[pname]
         if not fenced:
             h = HEADING.match(line)
             if h and h.group(2):
-                current[0].headings.append(h.group(2))
+                part.headings.append(h.group(2))
             plain = CODE_SPAN.sub("", line)
             targets = INLINE_LINK.findall(plain)
             m = REF_LINK_DEF.match(plain)
@@ -414,12 +546,9 @@ def parse_source(root: Path, path: Path):
                 if not ABSOLUTE.match(t):
                     ref.link_errors.append("%s:%d: relative link '%s' -- a generated part sits one directory "
                                            "deeper than its source, where it would not resolve" % (rel, n, t))
-        if not current[0].private:
+        if not part.private:
             for m in POSITIONAL.finditer(line):
                 ref.flags.append("FLAG %s:%d: %s" % (rel, n, m.group(0)))
-    if current is not None:
-        ref.err(current[1], "region '%s' is never closed" % current[0].name)
-        return ref
     report_gap()
 
     always = [p.name for p in ref.parts.values() if p.always]
@@ -457,12 +586,136 @@ def parse_source(root: Path, path: Path):
     return ref
 
 
+def section_extents(heads, end):
+    """{§ number: (first, last) line numbers} of each numbered heading in `heads` -- (line number,
+    level, § number or None) of every heading outside a fenced block, in source order. A section runs
+    to the next heading that is neither numbered under it (`3.1` under `3`) nor an unnumbered one
+    deeper than its own, or to line `end`; the first heading with a number owns it."""
+    out = {}
+    for k, (n, level, num) in enumerate(heads):
+        if num and num not in out:
+            stop = next((m for m, lv, nm in heads[k + 1:] if not (nm.startswith(num + ".") if nm else lv > level)),
+                        end + 1)
+            out[num] = (n, stop - 1)
+    return out
+
+
+def parse_entry_source(root: Path, path: Path):
+    """An EntryRef for a reference declaring entry-point files, or None for one that declares none."""
+    name, rel = ids(root, path)
+    lines = path.read_text(encoding="utf-8").splitlines()
+    if not declares(lines, ENTRY_DECL_OPEN, "entry"):
+        return None
+    ref = EntryRef(name, rel, lines)
+    block = declaration_block(ref, lines, "reference-entry-files", ENTRY_DECL_OPEN,
+                              "a reference declaring entry-point files")
+    if block is None:
+        return ref
+    start, end = block
+    partials = []   # (line number, entry, §, phrases)
+    for i in range(start + 1, end):
+        n, words = i + 1, lines[i].split()
+        if not words:
+            continue
+        if words[0] == "entry":
+            holds = HOLDS.match(words[2]) if len(words) == 3 and PART_NAME.match(words[1]) else None
+            if holds is None:
+                ref.err(n, "an entry line is `entry <entry> holds=<§>[,<§>...]`, the entry lowercase letters, digits "
+                           "and dashes")
+            elif words[1] in ref.entries:
+                ref.err(n, "entry '%s' is declared twice" % words[1])
+            else:
+                ref.entries[words[1]] = EntryDecl(n, holds.group(1).split(","))
+        elif words[0] == "partial":
+            phrases = quoted_names(lines[i].split(None, 3)[3]) if len(words) >= 4 and SECTION.match(words[2]) else None
+            if phrases is None:
+                ref.err(n, "a partial line is `partial <entry> <§> \"<phrase>\" ...`, every phrase quoted and non-empty")
+            else:
+                partials.append((n, words[1], words[2], phrases))
+        else:
+            ref.err(n, "unknown declaration line '%s' -- a line is `entry ...` or `partial ...`" % lines[i].strip())
+    partial_at = {}   # (entry, §) -> the line declaring it
+    for n, entry, sec, phrases in partials:
+        if entry not in ref.entries:
+            ref.err(n, "partial names entry '%s', which is not declared" % entry)
+        else:
+            ref.entries[entry].partial.setdefault(sec, []).extend(phrases)
+            partial_at.setdefault((entry, sec), n)
+    if ref.errors:
+        return ref
+
+    # The body: regions, and the numbered headings that bound each section. `body` maps the number of
+    # every line that is no marker to its text, and `owner` each region line's to its entry.
+    body, owner, heads = {}, {}, []
+    for event in walk_regions(ref, lines, end + 1, "entry", ref.entries):
+        if event[0] == "halt":
+            return ref
+        if event[0] == "close":
+            _, entry, first, last = event
+            ref.entries[entry].regions.append((first, last))
+            owner.update((k, entry) for k in range(first, last + 1))
+        elif event[0] == "line":
+            _, n, line, _entry, fenced = event
+            body[n] = line
+            h = None if fenced else HEADING.match(line)
+            if h and h.group(2):
+                num = HEADING_NUMBER.match(h.group(2))
+                heads.append((n, len(h.group(1)), num and num.group(1)))
+    extent, points = section_extents(heads, len(lines)), entry_points(path)
+
+    for entry, decl in ref.entries.items():
+        if entry not in points:
+            ref.err(decl.line, "entry '%s' is not an entry point of %s:%s -- not the first word of a code span in any "
+                               "of its headings; %s" % (entry, CORE_NAME, name, "its entry points: " +
+                                                       either(sorted(points), "and") if points else "it has none"))
+        for sec, at in [(s, decl.line) for s in decl.holds] + [(s, partial_at[(entry, s)]) for s in decl.partial]:
+            if sec not in extent:
+                ref.err(at, "§%s names no section of %s:%s -- no heading opens with that number" % (sec, CORE_NAME, name))
+        # A section held whole: every non-blank line of it, its heading included, lies in this entry's regions.
+        for sec in (s for s in decl.holds if s in extent):
+            first, last = extent[sec]
+            gap = [k for k in range(first, last + 1) if body.get(k, "").strip() and owner.get(k) != entry]
+            if gap:
+                ref.err(gap[0], "§%s is held whole by entry '%s', but this line of it lies in no `%s` region%s"
+                        % (sec, entry, entry, more(gap)))
+        # A section held in part: each phrase, normalised as a rule name is, is in this entry's region
+        # text inside that section.
+        for sec, phrases in ((s, p) for s, p in decl.partial.items() if s in extent):
+            first, last = extent[sec]
+            held = norm(" ".join(body[k] for k in range(first, last + 1) if owner.get(k) == entry))
+            for phrase in phrases:
+                if norm(phrase) not in held:
+                    ref.err(partial_at[(entry, sec)], "§%s is held in part by entry '%s', but no `%s` region in it holds "
+                                                      "\"%s\"" % (sec, entry, entry, phrase))
+    return ref
+
+
+def core_references(root: Path):
+    base = root / CORE_PLUGIN_REL / REF_DIR
+    return sorted(base.rglob("*.md")) if base.is_dir() else []
+
+
+def load_entries(root: Path):
+    """Every reference under the core reference dir that declares entry-point files, keyed by name.
+    None declaring any is no problem: entry-point files are not part of the vacuity guard."""
+    refs = {}
+    for path in core_references(root):
+        ref = parse_entry_source(root, path)
+        if ref is not None:
+            refs[ref.name] = ref
+    return refs
+
+
+def entry_files(root: Path):
+    """{reference: {entry: EntryDecl}} for every declared entry point, as its source declares it."""
+    return {name: ref.entries for name, ref in load_entries(root).items()}
+
+
 def load(root: Path):
     """Every split reference under the core reference dir, keyed by name; and the problems
     that stop a run before it can check anything (vacuity)."""
-    base = root / CORE_PLUGIN_REL / REF_DIR
     refs = {}
-    for path in sorted(base.rglob("*.md")) if base.is_dir() else []:
+    for path in core_references(root):
         ref = parse_source(root, path)
         if ref is not None:
             refs[ref.name] = ref
@@ -536,9 +789,14 @@ def closure(refs, ref, part):
 
 
 def text_of(ref, parts):
-    regions = sorted((first, lines) for p in parts for first, lines in ref.parts[p].regions)
+    return joined([region for p in parts for region in ref.parts[p].regions])
+
+
+def joined(regions):
+    """The text of regions, each (first line number, [lines]), in source order: each trimmed of its
+    blank edge lines, and one blank line between two."""
     chunks = []
-    for _, lines in regions:
+    for _, lines in sorted(regions):
         lo, hi = 0, len(lines)
         while lo < hi and not lines[lo].strip():
             lo += 1
@@ -604,8 +862,8 @@ def holds_line(refs, ref, included):
 
 
 def expected_tree(refs):
-    """{repo-relative path: (text, source path)} of every generated file, for each reference
-    that assembles; and the names of those that do not."""
+    """{repo-relative path: (text, source path)} of every split reference's generated file, for each
+    reference that assembles; and the names of those that do not."""
     out, bad = {}, broken(refs)
     for ref in refs.values():
         if ref.name in bad:
@@ -625,8 +883,7 @@ def expected_tree(refs):
         for p in ref.public():
             included, named = closure(refs, ref, p.name)
             blocks = [header(ref), "# %s — part %s" % (ref.title, p.name), holds_line(refs, ref, included),
-                      "`${CLAUDE_PLUGIN_ROOT}` in this file is `%s`'s root, whichever plugin's run reads it." % CORE_NAME,
-                      index_block(refs, ref), "---", text_of(ref, included[ref.name])]
+                      ROOT_SENTENCE, index_block(refs, ref), "---", text_of(ref, included[ref.name])]
             for other in [r for r in included if r != ref.name]:
                 parts = named[other]
                 which = "part " + parts[0] if len(parts) == 1 else "parts " + ", ".join(parts[:-1]) + " and " + parts[-1]
@@ -636,27 +893,60 @@ def expected_tree(refs):
     return out, bad
 
 
+def entry_line(ref, entry, decl):
+    """The line under an entry-point file's title: the sections it holds whole and in part, each in
+    source order, the phrases of each in declaration order, and the whole reference's load."""
+    def ordered(sections):
+        return sorted(sections, key=lambda s: [int(x) for x in s.split(".")])
+    line = "This file holds entry point `%s` of `%s`: %s" % (entry, ref.name,
+                                                             either(["§" + s for s in ordered(decl.holds)], "and", ""))
+    if decl.partial:
+        line += ", and in part " + either(["§%s (%s)" % (s, either(decl.partial[s], "and", '"'))
+                                           for s in ordered(decl.partial)], "and", "")
+    return line + ". Any other section is in the whole reference: `Skill(skill: \"%s\", args: \"%s\")`." % (
+        LOADER_SKILL, ref.name)
+
+
+def entry_tree(entries):
+    """{repo-relative path: (text, source path)} of every entry-point file, for each reference whose
+    declaration and regions hold."""
+    out = {}
+    for ref in entries.values():
+        if ref.errors:
+            continue
+        for entry, decl in ref.entries.items():
+            text = joined([(first, ref.lines[first - 1:last]) for first, last in decl.regions])
+            blocks = [header(ref), "# %s — entry point %s" % (ref.title, entry), entry_line(ref, entry, decl),
+                      ROOT_SENTENCE, text]
+            out["%s/%s/%s/%s.md" % (CORE_PLUGIN_REL, PARTS_DIR, ref.name, entry)] = (
+                "\n\n".join(b for b in blocks if b) + "\n", ref.rel)
+    return out
+
+
 def actual_tree(root):
     base = root / CORE_PLUGIN_REL / PARTS_DIR
     return sorted(p.relative_to(root).as_posix() for p in base.rglob("*") if p.is_file()) if base.is_dir() else []
 
 
-def source_problems(refs):
-    return [e for r in refs.values() for e in r.errors + r.link_errors]
+def source_problems(refs, entries):
+    return ([e for r in refs.values() for e in r.errors + r.link_errors]
+            + [e for r in entries.values() for e in r.errors])
 
 
 # ---------------------------------------------------------------- subcommands
 def cmd_generate(root, _verbose):
     refs, vacuous = load(root)
-    problems = source_problems(refs)
+    entries = load_entries(root)
+    problems = source_problems(refs, entries)
     if problems:
         for p in problems:
             print("ERROR " + p)
         print("reference-parts generate: FAIL -- %d problem(s); nothing written" % len(problems))
         return 1
-    if vacuous:
+    if vacuous and not entries:
         print("no reference carries a reference-parts declaration; removing every generated file")
     want, _ = expected_tree(refs)
+    want.update(entry_tree(entries))
     written = removed = 0
     for rel, (text, _src) in sorted(want.items()):
         path = root / rel
@@ -681,11 +971,13 @@ def cmd_generate(root, _verbose):
 
 def cmd_check_parts(root, _verbose):
     refs, vacuous = load(root)
-    problems = vacuous + source_problems(refs)
+    entries = load_entries(root)
+    problems = vacuous + source_problems(refs, entries)
     want, bad = expected_tree(refs)
+    want.update(entry_tree(entries))
     # A reference whose source fails is not judged for freshness: generate refuses to run on
     # it, so its files cannot be repaired until the source is, and every one would be noise.
-    bad |= {n for n, r in refs.items() if r.link_errors}
+    bad |= {n for n, r in refs.items() if r.link_errors} | {n for n, r in entries.items() if r.errors}
     skip = tuple("%s/%s/%s/" % (CORE_PLUGIN_REL, PARTS_DIR, n) for n in bad)
     want = {rel: v for rel, v in want.items() if not rel.startswith(skip)}
     have = [r for r in actual_tree(root) if not r.startswith(skip)]
@@ -880,7 +1172,8 @@ def scan_files(root, rels):
 
 def cmd_check_citations(root, verbose):
     refs, vacuous = load(root)
-    problems = vacuous + [e for r in refs.values() for e in r.errors]
+    entries = load_entries(root)
+    problems = vacuous + [e for r in list(refs.values()) + list(entries.values()) for e in r.errors]
     if problems:
         for p in problems:
             print("ERROR " + p)
@@ -888,19 +1181,24 @@ def cmd_check_citations(root, verbose):
         return 1
     split = sorted(refs)
 
-    # The loader skill names the declared set.
+    # The loader skill names the declared set, and the declared entry points where there are any.
     skill = root / LOADER_SKILL_REL
     want = SKILL_OPENING.format(list=listing(split))
     if not skill.is_file():
         problems.append("%s: missing -- the loader skill must open a paragraph with \"%s\"" % (LOADER_SKILL_REL, want))
     else:
         paras = paragraphs(skill.read_text(encoding="utf-8"))
-        if not any(p.startswith(want) for p in paras):
-            said = next((p for p in paras if p.startswith(SKILL_OPENING_LEAD)), None)
-            reads = ("it reads \"%s\"" % (said.split(". ")[0].rstrip(".") + ".")) if said else \
-                "no paragraph opens with \"%s\"" % SKILL_OPENING_LEAD
-            problems.append("%s: no paragraph opens with the split list the declarations give, \"%s\" -- %s"
-                            % (LOADER_SKILL_REL, want, reads))
+        lists = [(want, SKILL_OPENING_LEAD, "split list")]
+        pairs = ["%s %s" % (n, e) for n, r in entries.items() for e in r.entries]
+        if pairs:
+            lists.append((ENTRY_OPENING.format(list=listing(pairs)), ENTRY_OPENING_LEAD, "entry list"))
+        for opening, lead, what in lists:
+            if not any(p.startswith(opening) for p in paras):
+                said = next((p for p in paras if p.startswith(lead)), None)
+                reads = ("it reads \"%s\"" % (said.split(". ")[0].rstrip(".") + ".")) if said else \
+                    "no paragraph opens with \"%s\"" % lead
+                problems.append("%s: no paragraph opens with the %s the declarations give, \"%s\" -- %s"
+                                % (LOADER_SKILL_REL, what, opening, reads))
 
     preamble = PREAMBLE.format(list=listing(split), loader=LOADER_SKILL)
     plugins_dir, resolved = root / os.path.dirname(CORE_PLUGIN_REL), {}
@@ -1220,10 +1518,10 @@ def cmd_check_citations(root, verbose):
 # asserts. The generated trees in the green fixtures were written by hand from the layout above
 # before the generator existed, so freshness there is a test of the generator's output. After a
 # deliberate change to that layout, rerun `generate --root scripts/fixtures/reference-parts/<case>`
-# on each green fixture and read the diff -- never on stale_generated, which is stale on purpose,
-# and on stale_helper_file only on a copy, keeping the wording.md it leaves on purpose. The
+# on each green fixture and read the diff -- never on stale_generated or entry_stale, each stale on
+# purpose, and on stale_helper_file only on a copy, keeping the wording.md it leaves on purpose. The
 # post-checks on minimal, helper_part, cross_file_bundle and source_order pin the part files' own
-# lines, which a regenerated fixture cannot.
+# lines, and entry_minimal's the entry-point file's, which a regenerated fixture cannot.
 class Step:
     def __init__(self, argv, want_exit, must_print=(), errors=None, flags=None, on_copy=False, post=None, absent=()):
         self.argv, self.want_exit, self.must_print = list(argv), want_exit, list(must_print)
@@ -1705,6 +2003,84 @@ CASES = [
                    absent=['Order two', 'Order four']),
             # A heading starting with a number and holding a code span is one inert code span.
             _order(G + '/alpha/index.md', ['- ``2. The `second` half`` → `a`'])]),
+    ]),
+    # Entry-point files. Each tree is minimal's, with gamma, a reference that does not load by part,
+    # declaring entry check-it: §1 and §3 whole, §4.0 in part. Its regions hold a scope line before §1,
+    # §1, §3 -- whose §3.2 holds a fenced `## 4.` line, no heading -- and §4.0's heading and its *Never
+    # infer* rule; §2 and the rest of §4 lie outside every region, so check-it.md holds neither.
+    ('entry_minimal', 'an entry-point file holds its regions in source order, under its own title and holds line', [
+        Step(['check-parts'], 0, ['check-parts: PASS'], errors=0, flags=0, post=[
+            _order(G + '/gamma/check-it.md',
+                   ['# Gamma steps — entry point check-it',
+                    'This file holds entry point `check-it` of `gamma`: §1 and §3, and in part §4.0 ("never infer"). Any '
+                    'other section is in the whole reference: `Skill(skill: "workflows-core:reference", args: "gamma")`.',
+                    '`${CLAUDE_PLUGIN_ROOT}` in this file', 'Scope: the steps', '## 1. Hard rules',
+                    '## 3. `check-it` — the entry point', '## 4. Not a heading', '### 4.0 The downstream classes',
+                    '*Never infer'],
+                   absent=['`make-it`', '## 4. Reporting', 'Each artifact is in one class', '<!--  entry'])]),
+        Step(['check-citations'], 0, ['check-citations: PASS'], errors=0),
+        Step(['generate'], 0, ['0 written, 0 removed'], errors=0, on_copy=True, post=[_unchanged]),
+    ]),
+    # check-it.md lacks §3.1's line; generate repairs it.
+    ('entry_stale', 'an entry-point file that differs from its regions is stale; generate repairs it', [
+        Step(['check-parts'], 1, [G + '/gamma/check-it.md: stale -- differs from what generate builds from '
+                                  'plugins/workflows-core/references/gamma.md'], errors=1),
+        Step(['generate'], 0, ['1 written, 0 removed'], errors=0, on_copy=True),
+        Step(['check-parts'], 0, ['check-parts: PASS'], errors=0, on_copy=True),
+    ]),
+    # gamma declares entry nope, whose regions hold §1; its only entry point is make-it.
+    ('entry_not_entry_point', 'an entry declaration naming no entry point of its reference fails', [
+        Step(['check-parts'], 1, ["plugins/workflows-core/references/gamma.md:4: entry 'nope' is not an entry point of "
+                                  "workflows-core:gamma -- not the first word of a code span in any of its headings; its "
+                                  "entry points: `make-it`"], errors=1),
+        Step(['check-citations'], 1, ["plugins/workflows-core/references/gamma.md:4: entry 'nope' is not an entry point",
+                                      'fix the declarations first'], errors=1),
+    ]),
+    # gamma holds §3 whole, but a line of §3.2, after a fenced `## 4.` line, lies outside every region.
+    ('entry_section_not_covered', 'a line of a section held whole outside every region of its entry fails', [
+        Step(['check-parts'], 1, ["plugins/workflows-core/references/gamma.md:25: §3 is held whole by entry 'check-it', "
+                                  "but this line of it lies in no `check-it` region"], errors=1),
+    ]),
+    # gamma holds §4.0 in part by "never infer", which §4.0 holds only outside its check-it region.
+    ('entry_partial_phrase_missing', "a phrase of a section held in part that no region text of its entry holds fails", [
+        Step(['check-parts'], 1, ["plugins/workflows-core/references/gamma.md:5: §4.0 is held in part by entry 'check-it', "
+                                  "but no `check-it` region in it holds \"never infer\""], errors=1),
+    ]),
+    ('entry_skill_list_mismatch', "the loader's entry list names an entry point no declaration gives a file", [
+        Step(['check-citations'], 1, [SK + ': no paragraph opens with the entry list the declarations give, "These entry '
+                                           'points read their own file: `gamma check-it`."',
+                                      'it reads "These entry points read their own file: `gamma check-it` and `gamma '
+                                      'other`."'], errors=1),
+    ]),
+    # gamma opens a region inside another; delta closes one inside a fenced block; epsilon opens one
+    # for an entry it never declared.
+    ('entry_region_errors', 'a nested entry region, one closed inside a fence and one naming no declared entry', [
+        Step(['check-parts'], 1, ["plugins/workflows-core/references/gamma.md:10: region 'check-it' opens inside region "
+                                  "'check-it' (opened at line 7) -- regions never nest",
+                                  "plugins/workflows-core/references/delta.md:12: region 'check-it' closes inside a "
+                                  "fenced block",
+                                  "plugins/workflows-core/references/epsilon.md:13: region 'undeclared' names no declared "
+                                  "entry"], errors=3),
+    ]),
+    # gamma declares an entry twice, two malformed entry lines, a malformed partial line, a partial
+    # for an entry it never declares and an unknown line; delta holds a § and declares a partial §
+    # that no heading of it opens with.
+    ('entry_declaration_errors', 'every entry declaration-line defect is reported', [
+        Step(['check-parts'], 1, ["plugins/workflows-core/references/gamma.md:5: entry 'check-it' is declared twice",
+                                  'plugins/workflows-core/references/gamma.md:6: an entry line is `entry <entry> '
+                                  'holds=<§>[,<§>...]`',
+                                  'plugins/workflows-core/references/gamma.md:7: an entry line is `entry <entry> '
+                                  'holds=<§>[,<§>...]`',
+                                  'plugins/workflows-core/references/gamma.md:8: a partial line is `partial <entry> <§> '
+                                  '"<phrase>" ...`, every phrase quoted and non-empty',
+                                  "plugins/workflows-core/references/gamma.md:9: partial names entry 'ghost', which is not "
+                                  "declared",
+                                  "plugins/workflows-core/references/gamma.md:10: unknown declaration line 'entries "
+                                  "check-it holds=1' -- a line is `entry ...` or `partial ...`",
+                                  'plugins/workflows-core/references/delta.md:4: §9 names no section of '
+                                  'workflows-core:delta -- no heading opens with that number',
+                                  'plugins/workflows-core/references/delta.md:5: §7 names no section of '
+                                  'workflows-core:delta -- no heading opens with that number'], errors=8),
     ]),
 ]
 
