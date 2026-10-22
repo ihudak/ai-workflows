@@ -153,7 +153,7 @@ four-resolution one.
    always the source-owning root (`brd-format.md` §4). Phase 4 states it where it is used.
 6. **Gate the grounding deliverable on main.** **This step and step 7 run in `split_mode: allocate-only` only.** A root BRD is never ground — grounding happens at a `PRD-` folder (on this route a slice), and the customer interview at the slice and nowhere else — so on a `full` run there is no grounding to gate and both steps are skipped entirely. There is no `coverage-ledger.md` gate to keep: step 8 reads that ledger in both modes with a plain worktree read, never a `require-on-main` gate, which is why `workflows-core:phase-handoff` §4.0 classes it — and `brd/brd-inventory.md` beside it — **advisory** at a root. `/brd-split` **consumes** a `$SPECS_PATH`
    deliverable it did not write (`/prd-ground`'s findings, and — transitively — `/brd-intake`'s
-   ledger), so per `workflows-core:phase-handoff` §5 rule 2 it executes `require-on-main` (§3) here in Phase 0,
+   ledger), so per `workflows-core:phase-handoff` §5 rule 2 it executes `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) here in Phase 0,
    before anything else reads a file. Execute it against the resolved BRD folder's
    `grounding/code-grounding.md` — every deliverable a `handoff-to-main` run stages lands in one
    commit (§2.3), so this file's presence on `origin/<default>` implies `grounding/design-grounding.md`

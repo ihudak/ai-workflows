@@ -277,7 +277,7 @@ command, not one route's.
 **Gate the decision register — on the BRD route, right after the PRD gate.** Wherever the PRD
 folder that gate just tested carries a `brd-link.md` — the resolved slice on a PRD-level run, and on
 an Epic-level run the slice the Epic sits in, which is the folder Phase 2's BRD-route read takes the
-register from — execute `require-on-main` (§3) against that folder's `decisions.md` too. Phase 2
+register from — execute `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against that folder's `decisions.md` too. Phase 2
 freezes every `[VD#n]` and `[CD#n]` in it against this run's grill, so it is read only once it is on
 the specs repo's default branch. Map the §3.7 return by `stopped` first:
 - **Any stopping row** → stop per §4.4, as `CREATE_ARD_REGISTER_NOT_ON_MAIN` below.

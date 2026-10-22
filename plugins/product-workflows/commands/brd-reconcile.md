@@ -312,7 +312,7 @@ write would re-ask a question already answered.
 
    **The ordinary gate, where `--sent` was not given.** This command **consumes** `$SPECS_PATH` deliverables it did not
    write, so per `workflows-core:phase-handoff` §5 rule 2 it executes
-   `require-on-main` (§3) here, before anything else reads a file. Execute it against the resolved
+   `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) here, before anything else reads a file. Execute it against the resolved
    folder's **most recent `customer-review-prompt-<YYYYMMDD>.md`** — the artifact whose presence
    proves a package was actually built and handed off. Every deliverable one `handoff-to-main` run
    stages lands in a single commit (§2.3), so on that path its presence on `origin/<default>` implies
@@ -467,8 +467,8 @@ write would re-ask a question already answered.
 6c. **Settle the parent's defect log before any answer is confirmed.** The *Resolve the defects the
    review settled* phase writes this run's defect resolutions into the parent's
    `brd/brd-defect-log.md` — a slice holds no log of its own (`brd-format.md` §2.1) — and that write
-   never falls back to recording (*The cross-BRD write guard*). So execute `require-on-main` against
-   that log — the parent's, which `brd-link.md`'s `parent:` names, one hop — now, while nothing is written: `pass`, `pass_amending` and `unmanaged` → go on. Any stopping
+   never falls back to recording (*The cross-BRD write guard*). So execute `require-on-main`
+   (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against that log — the parent's, which `brd-link.md`'s `parent:` names, one hop — now, while nothing is written: `pass`, `pass_amending` and `unmanaged` → go on. Any stopping
    row, or `absent`, means this run cannot write the log safely: it is edited in this checkout and
    not handed off — a run whose handoff was declined leaves it so — or on a branch the default
    branch does not have, or on no branch at all, or the repository itself cannot be

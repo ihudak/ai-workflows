@@ -13,8 +13,9 @@ that loads by part, one part of it.
 
 Work from the reference's own words, never from memory or a summary. On a
 reference that does not load by part, the text a request needs is the whole
-file, whichever entry point the request names; with no second argument, it
-is the whole file on any reference. A read short of every line — a section,
+file, whichever entry point the request names, save an entry point that
+reads its own file; with no second argument, it is the whole file on any
+reference. A read short of every line — a section,
 a range, a search — covers no request that needs the whole file; consecutive
 ranges from its first line to its last are one read of every line. Where the text
 this request needs is already in this conversation word for word, from a
@@ -52,10 +53,23 @@ On any other reference, a second argument names an entry point; where it
 names none of that reference's entry points, the request fails: report the
 argument that named nothing, and stop as your command, or your agent, stops.
 
+These entry points read their own file: `phase-handoff require-on-main`.
+For one of these, read
+`${CLAUDE_PLUGIN_ROOT}/reference-parts/<the first argument>/<the second argument>.md`
+and execute the entry point from it; that file holds the entry point and
+the sections it needs, and names them in the line under its title. A read
+of the whole reference covers that file, within the same bound on reuse as
+any read. Every other request on that reference — with no second argument,
+or with a second argument naming any other entry point — reads the whole
+reference, as the paragraph after this one says, and so does a step that
+cites a section of that reference the file does not hold.
+
 To read the whole reference — with no second argument, where the index of a
 reference that loads by part names no part for the rule your step applies,
-or with any second argument on a reference that does not load by part —
-read `${CLAUDE_PLUGIN_ROOT}/references/<the first argument>.md`. Reading the
+with any second argument on a reference that does not load by part save an
+entry point that reads its own file, or where a step cites a section such a
+file does not hold — read
+`${CLAUDE_PLUGIN_ROOT}/references/<the first argument>.md`. Reading the
 whole reference means reading every line of it: where one read cannot hold
 the file, read it in consecutive ranges from its first line to its last.
 

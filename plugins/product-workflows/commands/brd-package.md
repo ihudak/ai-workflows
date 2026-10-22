@@ -226,7 +226,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
       `BRD_PACKAGE_TORN_WRITES: <BRD-KEY>'s folder is not in a state a package can ship. <where torn writes were found:> It holds items a /product-workflows:brd-interview run left when it stopped before writing the round record that would name them (<each, by id or heading, with the round it claims>); no reader counts them. <where half-applied re-dispositions were found:> Its code-defect-log.md has not yet taken moves a round record already names (<each [CDF#n] #k <old> → <new>>) — the round record was written and the run stopped before the log was. Run '/product-workflows:brd-interview <BRD-KEY>' and merge its handoff: any run of it that reaches its handoff removes the torn writes, and any run that passes its input gates applies the pending moves in its first phase. Nothing was written.`
 6. **Gate the decision register on main.** This command **consumes** a `$SPECS_PATH` deliverable it
    did not write, so per `workflows-core:phase-handoff` §5 rule 2 it executes
-   `require-on-main` (§3) here, before any content is read — step 5c's worktree test reads items
+   `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) here, before any content is read — step 5c's worktree test reads items
    only to find torn writes, and gates nothing. Execute it against the resolved folder's
    `decisions.md`. **Its presence on `origin/<default>` implies nothing about any other file this
    package ships, and each of those is gated in its own right** (step 6b below for the question set
@@ -271,7 +271,8 @@ cannot review, and they will not tell you that — they will review it anyway, b
 6b. **Gate the question set and the code-defect log on main, each where it is in the folder.**
     Both ship in the bundle whole (`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1.1),
     and neither is implied by step 6's gate. For each of `interview/customer-questions.md` and
-    `code-defect-log.md` present in the folder, execute `require-on-main` against it and map the
+    `code-defect-log.md` present in the folder, execute `require-on-main`
+    (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against it and map the
     §3.7 return by `stopped` first: any stopping row → stop, naming the file and the branch/PR state
     it reports; `pass` / `pass_amending` / `unmanaged` → proceed as step 6 does; `absent` (row F — in
     the folder and on no ref) → collect it, and stop once after both naming every file collected:
