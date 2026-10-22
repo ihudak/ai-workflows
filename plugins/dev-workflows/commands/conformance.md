@@ -9,6 +9,8 @@ Check what was built against what was specified: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/conformance` closes an implementation by checking it against what was specified. Given an Epic or a
 PRD address, it traces every requirement of that unit against the code — on an Epic run the Epic's
 own branch, before its pull request merges or where the branch has gone on since, and otherwise each
@@ -34,7 +36,7 @@ Usage: `/conformance <EPIC-KEY | PRD-KEY> [--skip-costs] [--skip-feedback] [--en
 
 ## Phase 0 — Resolve the address and gate the documents
 
-1. **Resolve the address.** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Read the **single positional address** with `read-key` (`workflows-core:addressing` §1) and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind` and `key`; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `absent` → stop with the `key dir not found` rule of `Skill(skill: "workflows-core:reference", args: "escalation-rules")` — this command creates no folder. With no address, or one `read-key` finds `invalid`, stop:
+1. **Resolve the address.** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Read the **single positional address** with `read-key` (`workflows-core:addressing` §1) and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind` and `key`; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `absent` → stop with the `key dir not found` rule of `Skill(skill: "workflows-core:reference", args: "escalation-rules stops")` — this command creates no folder. With no address, or one `read-key` finds `invalid`, stop:
    `CONFORMANCE_NEEDS_KEY: /conformance needs an Epic or PRD address (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. ACME-7 or ACME-7-01) — re-run '/dev-workflows:conformance <ADDRESS>'.`
    On `invalid` the message goes on, naming the token: ` — '<token>' is not a key (workflows-core:addressing §1).`
 
@@ -199,7 +201,9 @@ was traced, and the report's *Not traced* names those repositories.
 ## Phase 3 — Re-check before asking
 
 Verify each `partial`, `missing` and `contradicts` verdict at the location it cites, in the manner of
-`workflows-core:finding-triage`'s verification step: read the evidence yourself, at the ref.
+`workflows-core:finding-triage`'s *verification step*
+(`Skill(skill: "workflows-core:reference", args: "finding-triage verify")`): read the evidence
+yourself, at the ref.
 - **Confirmed** → a discrepancy, numbered `[DD#n]` when the record is written (`conformance-format.md` §5).
 - **Could not be settled either way** → *unverified*: neither a discrepancy nor satisfied. It is never
   asked about — no decision can rest on a verdict nobody could confirm — and takes no `[DD#n]`: the
@@ -255,7 +259,7 @@ choices: ["Confirm Dev's decision — <decision>", "<other decision 1>", "<other
 choices: ["Mark it resolved — the code now matches", "Keep Dev's decision — <decision>", "Cancel"]
 ```
 
-A free-text answer is normalised into one of the three decisions or the question is asked again — on the stale-entry form, into marking it resolved or keeping Dev's decision — and it is never written through as a new value (`workflows-core:escalation-rules`, the `/conformance` decision picker). Ask for the rationale in the person's own words after each decision; where they give none, record `—`. *Cancel* ends the run there: no record, note or follow-up is written, and the report says how many items were decided before it.
+A free-text answer is normalised into one of the three decisions or the question is asked again — on the stale-entry form, into marking it resolved or keeping Dev's decision — and it is never written through as a new value (`workflows-core:escalation-rules` *Closed-vocabulary pickers must normalise the free-text answer*, the `/conformance` decision picker). Ask for the rationale in the person's own words after each decision; where they give none, record `—`. *Cancel* ends the run there: no record, note or follow-up is written, and the report says how many items were decided before it.
 
 **On a PRD run, *Fix the code* on a PRD-level requirement — `prd.md`'s, or the PRD-level spec's — also names the Epic that carries the fix**, where the PRD has Epic folders: `/dev-workflows:implement` reads a follow-up back only on a run of the unit it names, and on a PRD with Epics that unit is an Epic, save a broad slice it offers only beside a flat `specification.md`. An Epic **covers** a PRD-level requirement where its `epic.md` lists that requirement's id under `## Covers` — a PRD-level spec's `[Uxx]/[ACxx]` listed there as `[Uxx/ACxx]`, or as its story's `[Uxx]`; and a `prd.md` `[AC#n]` listed there itself, or as the `[US#n]` it sits under, where the PRD places each story's criteria under it (`workflows-core:prd-format`). Where the PRD has one Epic, or exactly one Epic covers the requirement, name that Epic in a one-line notice. Otherwise — no Epic covers it, or several do — print every Epic — key and title, marking each one that covers it — and ask, with no `(Recommended)` marker, one row per Epic where there are four or fewer and otherwise `choices: ["<EPIC-KEY-1> <title>", "<EPIC-KEY-2> <title>", "<EPIC-KEY-3> <title>", "Another Epic from the list above (you'll be prompted for its key)"]`, the last asking for the key in plain text, and a typed key resolved only against the keys printed (`workflows-core:epic-picker` *The cap*). A PRD with no Epic folder has none to name, and its follow-up names the PRD.
 
@@ -426,13 +430,13 @@ Written to: <absolute path>.
 [the Phase 6 §4.1 outcome line]
 
 ### Next step
-[Per `workflows-core:next-phase-offer` — guidance only, never auto-invoked.]
+[Per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane — guidance only, never auto-invoked.]
 
 ### Context hygiene
 [per `workflows-core:session-hygiene`]
 ```
 
-The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer")`:
+The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`, the *Dev — build, verify & deliver* lane:
 - an Epic run with a `fix-code` decision → `/dev-workflows:implement <EPIC-KEY>` from repository
   `<slug>` — the repository its follow-up names, since `/implement` reads it back only there — which
   continues on the Epic's branch while its pull request is open, then
@@ -453,7 +457,7 @@ The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "nex
   settled, `/docs-workflows:document <PRD-KEY>` and `/docs-workflows:release-notes <PRD-KEY>`.
 
 An offer carries `<merge-clause>`, in a span of its own after the command's, resolved from Phase 6's
-`Phase handoff:` line per `workflows-core:next-phase-offer`, where Phase 6 handed off a document the
+`Phase handoff:` line per `workflows-core:next-phase-offer`'s *resolution table*, where Phase 6 handed off a document the
 offered command gates — one its own `require-on-main` runs on, or the ARD for a command that resolves
 one through `workflows-core:ard-resolution`. An annotated document is
 the only such path: `/product-workflows:update-prd` and the two documentation commands gate none, and
@@ -505,7 +509,7 @@ Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission
 `/conformance` inference resolves the phase to `conformance` and the role from where
 `workflows-core:addressing` §4.1 places the folder: `dev` for an Epic, `pe` for a PRD.
 
-**Then write the resume pointer** per `Skill(skill: "workflows-core:reference", args: "session-hygiene")` §1 — not on a run that ended early (Phase 1, *Ending early*), which writes none — and
+**Then write the resume pointer** per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` §1 — not on a run that ended early (Phase 1, *Ending early*), which writes none — and
 **then commit session artifacts (terminal)**: invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. Print its §6 outcome line, prefixed `Specs repo:`, as the run's last output.
 
 ---
@@ -520,6 +524,6 @@ Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission
 - ALWAYS run `specs-preflight`, the document gate and the record check at Phase 0, and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`)
 - An Epic run traces the Epic's branch by `unit-branch`, before or after its merge — and the default branch in three cases: where `unit-branch` finds the work merged (`merged`), where no block names the repository (`none`), and where the Dev answered that a `missing` branch's pull request merged; a PRD run traces merged code, and asks before tracing an Epic not shown merged
 - ALWAYS hand off the record and the notes only through the Phase 6 §4.3 consent choice, on a `conformance/` branch
-- ALWAYS end the report with a `### Next step` per `workflows-core:next-phase-offer` — guidance only, never auto-invoked
+- ALWAYS end the report with a `### Next step` per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane — guidance only, never auto-invoked
 - ALWAYS use `choices` arrays for decision points; 2–4 options, and never author an "Other" option (`workflows-core:escalation-rules` §0)
 - ALWAYS `emit-block` (per `workflows-core:feedback-emission`) before escalating a halt caused by a plugin, skill, command or reference gap — never for a discrepancy, a decision, or an environment or user halt

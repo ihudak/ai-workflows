@@ -9,6 +9,8 @@ Author a Product Requirements Document: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/create-prd` is **sub-project 2 of the PRD-creation flow** (PM phase) — it consumes the `idea.md` from
 `/idea` and a **user-supplied address** and
 authors a high-quality **Product Requirements Document** that feeds the downstream pipeline. The PRD is **product-level**
@@ -318,7 +320,7 @@ Usage: `/create-prd <ADDRESS> [@idea.md] [--from-prd <PRD-KEY|path>] [--lean|--h
    `covered-here` one. Un-deferring a requirement is a decision the operator takes with the customer,
    not a command — and the re-cut does not weaken that, because it acts **on** such a decision already written down, moving a row a *sibling* recorded `deferred-to` against onto a slice that will build it, never reversing one this slice is still committed to (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §3.2); naming a command here would send the reader into a run that does nothing. Per the
    *When no option is safe to recommend* guidance in
-   `Skill(skill: "workflows-core:reference", args: "escalation-rules")`, nothing on that stop is marked
+   `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, nothing on that stop is marked
    `(Recommended)`.
 
    **None of the three refusals carries a merge clause — step 5a's container refusal included, and
@@ -767,9 +769,9 @@ Act on the verdict (mirrors `/specify` on `BLOCK`, save `/specify`'s refinement-
 - **`PASS`** / **`PASS WITH RECOMMENDATIONS`** — after the first review and after the re-review alike, where it leaves open at least one finding whose fix is only an edit, offer to apply them before going on, per the `Findings a review leaves open — the offer to apply them` rule in `workflows-core:escalation-rules`: `choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]`. Applying is an inline edit, read against what it overlaps, as on the `BLOCK` path; a finding whose fix is a product decision is put to the user one question at a time, as the grill asks. Then proceed; a finding not applied goes to the final report and the pull request.
 - **A finding left open** — under any verdict and not applied, a deferred BLOCKER among them — whose fix needs a product decision the run did not take is also written into the PRD's `## Assumptions & open questions` once the last review has returned, immediately before the handoff, naming it and the requirement it puts in doubt where it puts one in doubt. The section is added where a hybrid or full PRD does not carry it yet; on a kept `--lean`, which has none, the PRD gets no entry and the final report carries it. On the BRD route each also goes through Phase 3's triage of a gap the grill cannot close, on any profile, so one only the customer can settle becomes an `[AS#n]` in `decisions.md` by Phase 3's rules. Per the `A finding left open that needs a decision is recorded in the artifact` rule in `workflows-core:escalation-rules`.
 
-Cap: one fix cycle + one re-review. **A verdict that is not `BLOCK` spends neither**, so where an edit answering its findings followed it, offer the re-review the cap still holds before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`.
+Cap: one fix cycle + one re-review. **A verdict that is not `BLOCK` spends neither**, so where an edit answering its findings followed it, offer the re-review the cap still holds before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`.
 
-**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
+**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules version-line")`. Where none did, it says that too.
 
 ---
 
@@ -812,6 +814,10 @@ On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:re
 
 ## Phase 6 — Next steps
 
+Load the lane before the offer is printed: it follows
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`, the *PM — ideation & framing* lane, and its `<merge-clause>`
+resolves per that part's *resolution table* from this run's own `Phase handoff:` outcome line.
+
 Offer these — clearly labeling the role handoff:
 
 ```
@@ -827,7 +833,7 @@ refusal leaves standing. (This paragraph once distinguished `<KEY>` from a secon
 carried `--from-brd` into the PA option; D4 retired the pair and D18 retired the flag.)
 
 - **`/docs-workflows:release-notes <ADDRESS>`** (PM) — draft the customer-facing release note now (the cost model's `pm`/`prd-creation` inferred case: no spec/design yet).
-- **`/product-workflows:create-ard <ADDRESS>`** (PA, **optional**) — hand to a Product Architect to author the grounded architecture document. It gates this PRD on the specs repo's default branch (its own Phase 0), so it stops where this PRD reached a branch and falls back to the resolved folder — reported, never silently — where it reached none; **on the BRD route** it also gates the `decisions.md` this run stages and stops where that is on a branch or on no ref (see the PA paragraph below). `<merge-clause>` is the placeholder `workflows-core:next-phase-offer` owns, resolved from this run's own `Phase handoff:` outcome line (§4.1) and never written as the unconditional "once the pull request above is merged": a declined handoff, a failed push and a nothing-to-commit run — among the other outcomes §4.1 lists — each leave a different wait, and none of those three opens a pull request to wait on. It is a placeholder, not an instruction to reword an option, so the array is still presented verbatim per `workflows-core:escalation-rules`.
+- **`/product-workflows:create-ard <ADDRESS>`** (PA, **optional**) — hand to a Product Architect to author the grounded architecture document. It gates this PRD on the specs repo's default branch (its own Phase 0), so it stops where this PRD reached a branch and falls back to the resolved folder — reported, never silently — where it reached none; **on the BRD route** it also gates the `decisions.md` this run stages and stops where that is on a branch or on no ref (see the PA paragraph below). `<merge-clause>` is the placeholder `workflows-core:next-phase-offer` owns, resolved per its *resolution table*, loaded at the top of this phase, from this run's own `Phase handoff:` outcome line (§4.1) and never written as the unconditional "once the pull request above is merged": a declined handoff, a failed push and a nothing-to-commit run — among the other outcomes §4.1 lists — each leave a different wait, and none of those three opens a pull request to wait on. It is a placeholder, not an instruction to reword an option, so the array is still presented verbatim per `workflows-core:escalation-rules`' *Choice lists are presented verbatim*.
 - **`/product-workflows:epics <ADDRESS>`** (PE) — hand to a Product Engineer to split the PRD into Epics (or author a PRD-level spec → `/product-workflows:specify <ADDRESS>`, which resolves the same folder through the same entry point).
 
 The other two options carry no clause, and that is checked, not assumed: `/docs-workflows:release-notes` runs no `require-on-main` at all, and `/product-workflows:epics` gates only `<PRD-dir>/specification.md` — a file this run does not write.
@@ -842,9 +848,9 @@ with `resolve-address` and reads the PRD there on both routes — and, on the BR
 `ard-seed.md` where one was left, the register and the grounding findings besides. On both routes its
 Phase 0 gates the `prd.md` this run wrote, and on the BRD route also the `decisions.md` this run's
 handoff stages (its register gate), so its option carries the clause on both, resolved per
-`Skill(skill: "workflows-core:reference", args: "next-phase-offer")`'s resolution table.
+the *resolution table* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`, the *PM — ideation & framing* lane.
 
-Guidance only — never auto-invokes another command. Per `workflows-core:next-phase-offer`.
+Guidance only — never auto-invokes another command. Per `Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`, the *PM — ideation & framing* lane.
 
 ### Context hygiene
 
@@ -857,7 +863,7 @@ auto-suggested; name the session manually if useful. Then:
 - **Continuing as PM (`/docs-workflows:release-notes <ADDRESS>`)?** → run **`/compact`**.
 - **Handing to PA (`/product-workflows:create-ard <PRD>`) or PE (`/product-workflows:epics <PRD>`), even yourself?** → run **`/clear`** for a clean slate.
 
-Guidance only — nothing is auto-run. See `workflows-core:session-hygiene`.
+Guidance only — nothing is auto-run. See `workflows-core:session-hygiene` §5.
 
 ---
 
@@ -868,9 +874,9 @@ Terminal phase — runs after Phase 6, NEVER interrupts an earlier phase.
 **Capture-at-block invariant.** If an EARLIER phase **halts on a plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked), `emit-block` (per `workflows-core:feedback-emission`) at that halt **before** escalating. NEVER `emit-block` for an environment / user halt (missing key, unset `$SPECS_PATH`, cancellation) or a work-quality review BLOCK. **The three BRD-route refusals are of that second class, not the first**: `CREATE_PRD_BRD_NOT_SLICED` (structural, step 5a), `CREATE_PRD_BRD_UNALLOCATED` and `CREATE_PRD_BRD_NOT_ELIGIBLE` (slice-only, step 7) each report the state of the operator's own BRD tree, not a capability this plugin lacks, so none of them `emit-block`s. `CREATE_PRD_EPIC_FOLDER` (step 5b) and `CREATE_PRD_NEEDS_KEY` are the same, and so are step 7a's `CREATE_PRD_REGISTER_NOT_ON_MAIN` and `CREATE_PRD_REGISTER_NOT_HANDED_OFF`, which report where the operator's register sits in git, and Phase 1 step 2's `CREATE_PRD_PRIOR_UNREADABLE` and Phase 3's `CREATE_PRD_ARCHIVE_FAILED`, which report a file or directory the operator's environment will not let this run read or write. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
 **Session-hygiene invariant.** End Phase 6 with a `### Context hygiene` block per
-`workflows-core:session-hygiene` — prepare-first (the
+`Skill(skill: "workflows-core:reference", args: "session-hygiene guidance")` — prepare-first (the
 `resume.md` write runs later, in the terminal cost phase, per
-`workflows-core:session-hygiene` §1 — this block prints the
+`Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` §1 — this block prints the
 guidance only),
 then a span suggestion (PM continue → `/compact`; PA/PE handoff → `/clear`). No `/rename`
 label — not for want of a key, since Phase 0 refuses this run without one, but because the
@@ -881,7 +887,7 @@ PM phase is short (`workflows-core:session-hygiene` §4). Guidance only, never a
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model: `<detection_model — §2.1 Sonnet chain>`) with a compact handoff: command `/create-prd`; what was authored (PRD + profile); key events (source-ladder friction, unresolved clarifications, BLOCK reviews — or 'none'); workarounds; the `prd-reviewer` verdict; test result N/A; project root = the feature folder.
 2. **Persist plugin feedback (automatic).** Invoke `Skill(skill: "workflows-core:reference", args: "feedback-emission emit-auto")` and call its `emit-auto` entry point (§6) with the Lessons Learned report, `command: /create-prd`, the run's `key` — which on the BRD route is the `<SLICE-KEY>`, matching this PRD's own `$SPECS_PATH` folder, so the write stays on that reference's primary tier instead of dropping to the unfiled one — `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or "no plugin-facing signal — nothing persisted").
 3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /create-prd`, `phase: prd-creation`, `role: pm`, the run's `key` — on the BRD route the `<SLICE-KEY>`, for the reason step 2 gives, which is also the value this run writes as the PRD's `brd_key` (`workflows-core:prd-format`: `brd_key` names the slice the PRD was authored from, `brd_parent` its parent), so the two never disagree — `source`, and `plugin_version`. Surface the persisted path (or the report-only notice).
-4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the pointer reflects the completed run, and before the commit step below, so it is included in it. Redact per §1. Silent; the printed `### Context hygiene` guidance already appeared in the report.
+4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the pointer reflects the completed run, and before the commit step below, so it is included in it. Redact per §1. Silent; the printed `### Context hygiene` guidance already appeared in the report.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It stages ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits `<KEY> Add dev-workflows session artifacts (/create-prd)` — or `NOISSUE …` when the run resolved no key at all — with no `Co-Authored-By` trailer. **On the BRD route that `<KEY>` is the `<SLICE-KEY>`, not `NOISSUE`**: this is a specs-repo commit-message prefix, not a tracker lookup, and the slice key is the key this run resolved, the `key` the PRD it wrote carries, and the name of the folder the staged artifacts sit in. It pushes the branch this run's handoff phase created (§4.1) per §4 step 5. It NEVER touches anything outside `$SPECS_PATH`; NEVER force-pushes; NEVER fails the run; and skips entirely when the run carries `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1, or `specs-root-check`'s stop), re-emitting that notice. Hold its §6 outcome line for the Final report.
 
 ADDITIVE — this phase NEVER fails the run, NEVER commits the deliverable (git for the deliverable is offered only in Phase 5; the terminal step above commits only the bounded session-artifact paths in `$SPECS_PATH`), and NEVER writes into a code/docs repo or the current working directory, where it is not the specs repository; no user name is ever written.

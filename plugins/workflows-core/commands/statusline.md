@@ -18,7 +18,7 @@ behavior.
 
 Note: Claude Code ships its own built-in `/statusline` command (backed by the
 `statusline-setup` agent), so the bare `/statusline` resolves to Claude Code's
-built-in flow. This is one instance of the general rule — see rule 6 of
+built-in flow. This is one instance of the general rule — see *rule 6* of
 `${CLAUDE_PLUGIN_ROOT}/references/next-phase-offer.md`: printed command names
 are always fully qualified. Direct users to `/workflows-core:statusline`.
 

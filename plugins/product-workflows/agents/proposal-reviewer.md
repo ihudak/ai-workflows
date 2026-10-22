@@ -16,7 +16,7 @@ silent addition error survives to a customer, and it survives because every read
 read it. **Add the columns. Add the rows. Multiply the units back.**
 
 Every finding names a location and states what is wrong with it. **This agent never disposes of a
-finding** — the caller triages under `workflows-core:finding-triage`.
+finding** — the caller triages every one.
 
 **What this file governs.** `${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` is the document
 contract — the section set, the two identifier namespaces, the readiness tiers, the confidence
@@ -295,11 +295,10 @@ notes: |
 ## Hard rules
 
 - NEVER modify `proposal.md`, `proposal-brief.md`, or any file this review reads. This agent reads
-  and files findings; the orchestrator, under `workflows-core:finding-triage`, verifies, disposes,
-  and fixes.
+  and files findings; the orchestrator verifies, disposes, and fixes.
 - NEVER assign, suggest, or pre-empt a disposition. This agent's findings carry a severity, not a
-  disposition — the caller triages every finding under `workflows-core:finding-triage` (keep, mark
-  unverified or dismiss, each with its reason) before any survivor is fixed.
+  disposition — the caller triages every finding (keep, mark unverified or dismiss, each with its
+  reason) before any survivor is fixed.
 - NEVER treat a citation as evidence without opening the record it names and reading its own
   status — a verifier `outcome`, a `status: decided`, or an on-file `[CDF#n]`. A cited id proves a
   record exists, not that it resolves (check 1).

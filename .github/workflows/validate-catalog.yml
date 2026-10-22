@@ -104,6 +104,28 @@ jobs:
           ASSERT_PUBLISHED: ${{ github.ref == 'refs/heads/main' && '1' || '' }}
         run: ./scripts/check-docs.sh --root .
 
+      - name: Self-test the reference-parts gate
+        # scripts/reference-parts.py assembles each split shared reference's parts into the committed
+        # files under plugins/workflows-core/reference-parts/ and gates them and their callers. Its
+        # failure modes are silent: a part file left stale serves a run an old rule, and a part a
+        # caller requests that lacks the rule it cites leaves the rule out. Each red fixture asserts
+        # the message it must print and its number of problems, not the exit code alone.
+        run: python3 scripts/reference-parts.py --selftest
+
+      - name: Check the split references and their generated parts
+        # Regenerates every part in memory and compares it byte for byte with the committed file, so
+        # a source edited without `generate` fails here, naming the file. A FLAG line (a positional
+        # pointer inside a part) is printed and does not fail: whether it crosses a part is a reading's
+        # call.
+        run: python3 scripts/reference-parts.py check-parts
+
+      - name: Check the callers of the split references
+        # Every dependent-plugin file citing a split reference carries the load-by-part preamble,
+        # the loader skill names the declared set, every part request names a requestable part, and
+        # every citation is placed on a part or counted whole. A request whose sentence names a rule
+        # that its load does not hold is a call converted to the wrong part, and it fails here.
+        run: python3 scripts/reference-parts.py check-citations
+
       - name: Install the mermaid gate's pinned parser
         run: npm ci --prefix scripts/mermaid --ignore-scripts --no-audit --no-fund
       - name: Self-test the mermaid gate

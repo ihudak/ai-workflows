@@ -6,6 +6,8 @@ tools: ["Read", "Glob", "Grep", "Write", "Edit", "Skill"]
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 Post-review code fixer. Receives the output of a `code-review` agent run and
 applies targeted fixes for BLOCKER and MAJOR findings, and MINOR ones where the
 caller's **Severities to fix** names them — `/implement` does; `/vuln` and
@@ -33,8 +35,9 @@ The caller passes:
   hard stop, return `Stop condition flag: NEEDS HUMAN` with the unreadable path named, and never
   reconstruct the findings from the diff.
   This list has already been triaged by the caller per
-  `workflows-core:finding-triage` — every finding you receive is a **survivor** whose
-  claimed consequence the caller verified. Do not re-triage, and do not dismiss a finding on your own
+  `workflows-core:finding-triage`, of which you apply only the **patch gate** (Fix method
+  step 6) — every finding you receive is a **survivor** whose claimed consequence the caller
+  verified. Do not re-triage, and do not dismiss a finding on your own
   judgement: your dispositions remain Applied and Deferred only.
 - **Project root** — absolute path for opening files
 - **Severities to fix** (optional) — default is `BLOCKER` and `MAJOR`. Pass
@@ -78,7 +81,7 @@ The caller passes:
    (Inputs). Do not mention a skipped one in the fix report.
 6. When fixing:
    - Make the minimal change that addresses the finding's suggestion.
-   - Apply the **patch gate** (`Skill(skill: "workflows-core:reference", args: "finding-triage")`): the fix must add no
+   - Apply the **patch gate** (`Skill(skill: "workflows-core:reference", args: "finding-triage patch-gate")`): the fix must add no
      public surface, **guard no state the finding did not demonstrate**, and edit no instruction file the
      gate names (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, a file under
      `.claude/rules/` or `.github/instructions/`, `CONTRIBUTING.md`, `CODING_STANDARDS.md`) unless the

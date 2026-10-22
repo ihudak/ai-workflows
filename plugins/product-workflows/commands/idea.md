@@ -9,6 +9,8 @@ Refine an idea into `idea.md`: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/idea` is the **front door of the PRD-creation flow** (PM phase) — upstream of `/create-prd` and
 the existing pipeline. It ingests one source, refines it through a grill, and writes a lean one-page
 `idea.md` (per `${CLAUDE_PLUGIN_ROOT}/references/idea-format.md`) that seeds the Product Requirements Document. It is
@@ -373,7 +375,7 @@ Runs only when `--ground-code` was given; otherwise take the OFF branch at the e
   choices: ["Ground the proposed set (Recommended)", "Ground a different set (you'll be prompted)", "Ground nothing — continue without a code scan", "Cancel"]
   ```
   *Ground a different set* asks in plain text for the repositories' names, each resolved against the directories just listed.
-- **Empty proposal — do not show that list.** When no theme matches any mounted repo its first option names a set that does not exist. Escalate instead per the `No repos derivable — /epics` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Every option in a shown list must name something that exists.
+- **Empty proposal — do not show that list.** When no theme matches any mounted repo its first option names a set that does not exist. Escalate instead per the `No repos derivable — /epics` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules scan")`. Every option in a shown list must name something that exists.
 - **"Ground nothing — continue without a code scan"** ends this phase for the run: no scanner is dispatched, Phase 4 writes no `## Feasibility grounding` section, and the Final report shows `code grounding: declined at the repo gate` — distinct from `code grounding: off`, which means the flag was never given at all.
 
 **2. Round 1 — broad.** Spawn `code-scanner` on the confirmed set in **batches of up to 4 concurrent agents per Agent message**, on `detection_model` per `workflows-core:model-routing/classification` §8.3. For each repo in the batch:
@@ -621,6 +623,11 @@ every later run until those paths are committed or the handoff is taken. A run c
 
 ## Phase 5 — Handoff: adaptive next-phase offer
 
+Load the lane before either offer below is printed: both follow
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer pm")`, the *PM — ideation & framing* lane, and the refined offer's
+`<merge-clause>` resolves per that part's *resolution table* from the `Phase handoff:` outcome line
+this run emits.
+
 Report where `idea.md` was written and its `status`, and what Phase 4.5 vendored beside it, then offer
 the next phase — **adapted to status**:
 
@@ -663,8 +670,8 @@ the next phase — **adapted to status**:
   option 1. Then, **whichever option was taken**, recommend
   `/product-workflows:create-prd <KEY>` `<merge-clause>`, which finds `idea.md` in that folder —
   `<merge-clause>` resolved from the `Phase handoff:` line §4.1 just emitted, per
-  `Skill(skill: "workflows-core:reference", args: "next-phase-offer")`'s resolution table, and never written
-  unconditionally. **The clause sits outside the command's own code span**, per that reference's
+  `workflows-core:next-phase-offer`'s *resolution table*, loaded at the top of this phase, and never
+  written unconditionally. **The clause sits outside the command's own code span**, per that reference's
   placement paragraph, which states the rule for every adopter and gives the reason; it binds with
   particular force here, because this offer *is* the one line an operator copies, with nothing
   beside it to mark where the command ends. **The clause is load-bearing here,
@@ -721,7 +728,7 @@ the file.
 
 `/create-prd` is a separate command; this offer is guidance the user acts on — it never auto-invokes
 another command. (Per `workflows-core:next-phase-offer` — the plugin-wide
-next-phase-offer contract; `/idea` is one reference implementation.)
+next-phase-offer contract, whose *PM — ideation & framing* lane holds `/idea`'s node; `/idea` is one reference implementation.)
 
 ### Context hygiene
 
@@ -731,7 +738,7 @@ key, since Phase 0 required one before this run wrote anything, but for two diff
 no pointer because this run hands its brief off in the same run rather than being a phase a
 later run resumes (`workflows-core:session-hygiene` §1), and no label because the ideation
 phase is short (§4).) Guidance only — see
-`workflows-core:session-hygiene`.
+`workflows-core:session-hygiene` §5.
 
 ---
 
@@ -746,10 +753,10 @@ abandoned at the block still records the gap. NEVER `emit-block` for an environm
 source-not-found, cancellation). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
 **Session-hygiene invariant.** End Phase 5 with a `### Context hygiene` note per
-`workflows-core:session-hygiene` — a same-role `/compact` suggestion, and neither a `resume.md`
+`workflows-core:session-hygiene` §2 — a same-role `/compact` suggestion, and neither a `resume.md`
 nor a `/rename` label. Two different reasons, neither of them a missing key: no pointer because
-this run hands its brief off in the same run rather than being a phase a later run resumes (§1),
-and no label because the ideation phase is short (§4). Guidance only, never auto-run.
+this run hands its brief off in the same run rather than being a phase a later run resumes
+(`workflows-core:session-hygiene` §1), and no label because the ideation phase is short (§4). Guidance only, never auto-run.
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 

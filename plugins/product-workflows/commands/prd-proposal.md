@@ -9,6 +9,8 @@ Author a customer-facing effort proposal for the resolved PRD folder: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/prd-proposal` is the **effort-proposal step** (PM phase) — it takes one `PRD-` folder, grades how much
 evidence stands behind it, and writes the document a vendor sends a customer: what the requirement set
 will take in **human delivery hours**, by work package and by role, as a range whose width is computed
@@ -618,38 +620,39 @@ file describes the archived revision and not this one.
      > Readiness tier: [1 · Indicative | 2 · Grounded | 3 · Architected | 4 · Specified], capped by [what capped it]
      > Anchor revision: [absolute path to the archived prior revision, or 'none — first revision' or 'discarded by --redo']"
 
-3. **Triage before anything is edited.** Invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")`
-   and follow it over the reviewer's findings — **the orchestrator runs the triage, never a fixer**.
+3. **Triage before anything is edited.** Invoke `Skill(skill: "workflows-core:reference", args: "finding-triage re-review")`
+   and follow it over the reviewer's findings — that part holds `triage` as well, so the re-review below
+   reuses the same load — **the orchestrator runs the triage, never a fixer**.
    Verify each finding's claimed consequence at the location it names; keep it, mark it unverified, or
    dismiss it; record every dismissal with a reason that disposes of that finding's own claim and every
    unverified finding with what would settle it; and raise a grade only by effect. There is no
    silent-drop disposition. Fix the surviving BLOCKERs inline (the orchestrator edits both artifacts —
    there is no delegated writer), read the fix against what it overlaps — each figure it changes
    against every total and brief line computed from it — per the `An inline fix is read against what
-   it overlaps` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`, and
+   it overlaps` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`, and
    re-review **once**, triaging that re-review — and one you chose
-   at the first settle prompt — under that reference's § On re-review. If the review **stayed
+   at the first settle prompt — under `workflows-core:finding-triage` § On re-review. If the review **stayed
    blocked** — a BLOCKER survives that triage, or you keep the verdict at either settle prompt —
    escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`
-   rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`; on § On re-review's
-   **Proceed**, proceed as after a verdict that is not `BLOCK`. `PASS` / `PASS WITH RECOMMENDATIONS`
+   rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`; on
+   `workflows-core:finding-triage` § On re-review's **Proceed**, proceed as after a verdict that is not `BLOCK`. `PASS` / `PASS WITH RECOMMENDATIONS`
    → after the first review and after the re-review alike, where it leaves open at least one surviving finding
    whose fix is only an edit, offer to apply them before going on, per the `Findings a review leaves open — the offer to apply
-   them` rule in the same reference — `choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]` — applying each inline, read against what it overlaps,
+   them` rule in `workflows-core:escalation-rules` — `choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]` — applying each inline, read against what it overlaps,
    and a finding not applied going to the final report and the pull request; then proceed. Cap: one
    fix cycle plus one re-review — and a finding applied at that offer after the first review leaves
    the re-review unspent, and it is offered before the handoff, per the
    `Edits after a verdict that is not BLOCK — the unspent re-review` rule in the same reference. Where triage empties the survivor set, do not
    dispatch a fix cycle with nothing to apply and do not silently promote the verdict — the user
-   settles a verdict its own findings no longer support. At either of that reference's settle
-   prompts, **Keep the verdict** means the review stayed blocked — on a kept verdict that is not
+   settles a verdict its own findings no longer support. At either of `workflows-core:finding-triage`'s
+   settle prompts, **Keep the verdict** means the review stayed blocked — on a kept verdict that is not
    `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run.
 
 **After the last inline edit to `proposal.md` — a triage fix, or an edit a later prompt asked for —
 run Phase 7's `stamp` once more** with the same record file, so no edit carries a damaged record into the
 handoff; `{"written": true}` there is reported beside the edit that caused it.
 
-**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
+**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules version-line")`. Where none did, it says that too.
 
 Report the triage per `workflows-core:finding-triage` § Reporting — one line per review pass, naming
 the counts, the survivors, the unverified findings, every dismissal with its reason and any settle
@@ -698,8 +701,8 @@ Low and how many carry a declared re-estimate gate; the `proposal-reviewer` verd
 ## Phase 11 — Next steps
 
 **Three literal arrays, one per tier branch.** Every printed command name is fully qualified
-(`workflows-core:next-phase-offer` rule 6), and each array prints exactly one positional address
-(rule 7).
+(*rule 6* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer proposals")`, the *PM — effort proposals (optional, and they gate nothing on the build ladder)* lane), and each array prints exactly one positional address
+(*rule 7*).
 
 ```
 choices: ["Stop here — the proposal is written and, if you handed it off, committed", "Roll it into the programme umbrella — /product-workflows:brd-proposal <BRD-KEY> <merge-clause>", "Price the next sibling slice — /product-workflows:prd-proposal <SIBLING-SLICE-KEY>", "Re-derive it from scratch once the inputs move — /product-workflows:prd-proposal <KEY> --redo"]
@@ -721,7 +724,7 @@ than a forward pointer.
 
 **Drop an option whose subject does not exist on this run** — the umbrella option where the folder has
 no parent BRD, the sibling option where **no sibling holds a stale proposal or holds none at all**.
-Read that as one predicate over the siblings, matching `workflows-core:next-phase-offer`'s own wording
+Read that as one predicate over the siblings, matching `workflows-core:next-phase-offer`'s own wording in its *PM — effort proposals (optional, and they gate nothing on the build ladder)* lane
 (*"the next sibling holding no current proposal"*): the option stands wherever some sibling has no
 current proposal, a sibling that was never priced included. Read the other way — dropped unless a
 sibling holds a *stale* one — it would vanish in the commonest case there is. **Current** is
@@ -745,14 +748,14 @@ substitutions, not rewordings (`workflows-core:escalation-rules`, *Choice lists 
 verbatim*).
 
 **`<merge-clause>` is resolved from the `Phase handoff:` line this run actually emitted**, per
-`workflows-core:next-phase-offer`'s resolution table — a row names a branch only where that outcome
+`workflows-core:next-phase-offer`'s *resolution table* — a row names a branch only where that outcome
 committed one, which the declined and gate-failed rows did not, and a declined handoff opened no
 pull request. Read which rows those are off that table rather than off this sentence. `/product-workflows:brd-proposal` runs `require-on-main`
 against the `proposal.md` this run has just written, which is why that one option carries the
 placeholder and the two tier-raising options do not: both of those gate on `prd.md`, which this run
 does not write.
 
-Guidance only — never auto-invokes another command. Per `workflows-core:next-phase-offer`.
+Guidance only — never auto-invokes another command. Per `Skill(skill: "workflows-core:reference", args: "next-phase-offer proposals")`, the *PM — effort proposals (optional, and they gate nothing on the build ladder)* lane.
 
 ### Context hygiene
 
@@ -765,7 +768,7 @@ The resume pointer is written in the terminal cost phase (Phase 12), per
   the next run reads them from the specs repo, not from this session.
 - Consider **`/rename <KEY>-<slug>-pm`** so you can find this session later.
 
-Guidance only — see `workflows-core:session-hygiene`.
+Guidance only — see `workflows-core:session-hygiene` §5.
 
 ---
 
@@ -803,7 +806,7 @@ plugin lacks. **`PRD_PROPOSAL_RECORD_FAILED` qualifies only by its cause**: wher
    write target via its §2 ladder, dedupe per §5, and preview + confirm per §7. ADDITIVE: the same
    items also stay in the final report.
 4. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /prd-proposal`, `phase: proposal`, `role: pm`, the run's `key`, `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or the report-only notice). **This entry records model spend in USD and has no relationship whatever to the human hours the artifacts contain.**
-5. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")`
+5. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")`
    and, per its §1, write/overwrite `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry
    above, so the pointer reflects the completed run, and before the commit step below, so it is
    included in it. Redact per §1. Silent; the printed `### Context hygiene` guidance already appeared.

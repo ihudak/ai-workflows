@@ -8,6 +8,8 @@ Ground the BRD's requirement inventory against code and design: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/prd-ground` is the **BRD-to-PRD route's grounding step** (a PM phase — a PA or PE runs it where the PM cannot clone the code repositories), run once per slice
 `/brd-split` carves — and **again on an already-ground slice a later re-cut gave a new row**, the third of the three cases `commands/brd-split.md` Phase 7 distinguishes when it offers this command, because no `[CG#n]` on file was derived against a row that arrived after them — it takes the `[BR#n]` inventory that slice's own `brd/brd-inventory.md`
 holds and checks its premises against real code and real design assets, at pinned commits, rather
@@ -692,7 +694,7 @@ the manual path:
 3. **An entry beginning `/` is an absolute path to a clone** — from `--repos`, or typed at step 1 — and is never matched against the map: it is resolved as *Specify a different absolute path for this repo* resolves one below. Resolve each other named repo against the map: one match → use it; multiple matches → auto-prefer
    basename ending `-repo`, then `_repo`/`_fast`, then alphabetically last (show candidates before
    proceeding); zero matches → escalate per the `Repo unresolved (zero matches) — /prd-ground` rule
-   in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`:
+   in `Skill(skill: "workflows-core:reference", args: "escalation-rules scan")`:
    ```
    choices: ["Skip and continue without this repo", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo (you'll be prompted)"]
    ```
@@ -1975,15 +1977,15 @@ nobody acted on (this command never edits `prd.md` itself, design §7).
 `prd.md` this run's own Phase 0 already required on main (step 6i), so an operator who runs either
 immediately is running against a file this command has already confirmed is there; the placeholder
 still names the wait truthfully for the ordinary case in which that confirmation and this offer are
-being read minutes apart. **`/update-prd <KEY>` carries none — deliberately, and for the reason
-`workflows-core:next-phase-offer` already gives for `/product-workflows:brd-reconcile`'s own
-three-command offer: it never executes `require-on-main` against anything at all**
+being read minutes apart. **`/update-prd <KEY>` carries none — deliberately**, and for the reason
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane, already gives for `/product-workflows:brd-reconcile`'s own
+three-command offer: **it never executes `require-on-main` against anything at all**
 (`commands/update-prd.md` states this outright — "`require-on-main` … is never executed by this
 command"), so there is no gate for this run's handoff to make anyone wait on. Naming a wait that
 does not exist would be the placeholder's own named failure — resolving it truthfully, not
 unconditionally.
 
-Neither `route: idea` array below needs `workflows-core:next-phase-offer`'s overflow rule for a fifth option: even
+Neither `route: idea` array below needs `workflows-core:next-phase-offer`'s *overflow rule* for a fifth option: even
 the `CONFIRMED` case tops out at four, the harness's own cap, so the array carries the whole menu
 and no route is demoted into prose.
 
@@ -2011,7 +2013,7 @@ the array recommending it is not the array to show. The second offers the repair
 names — `/workflows-core:frames <BRD-KEY>` to write the missing index, after which a `--no-code`
 re-run of this command reconciles the set — and names `/brd-split` nowhere in its options, since
 neither half of that repair has run yet; the prose above the arrays still says where it sits in the
-route, which is what `workflows-core:next-phase-offer`'s universal minimum asks of a route the array
+route, which is what the *universal minimum* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane, asks of a route the array
 does not carry. **Selecting between two written arrays is how this branch is taken, never by editing
 one**: `workflows-core:escalation-rules`' *Choice lists are presented verbatim* puts an array's
 options, their order, their wording and the `(Recommended)` marker outside the orchestrator's
@@ -2029,10 +2031,10 @@ order, since it refuses a ledger that still holds an unallocated row. `/brd-spli
 until this phase's findings are on the specs repo's default branch — its own Phase 0 gates
 `grounding/code-grounding.md` on `origin/<default>`; **which words state that wait, in the array that
 offers it, are `<merge-clause>`'s**, resolved from this run's own `Phase handoff:` outcome line per
-`Skill(skill: "workflows-core:reference", args: "next-phase-offer")`, since a declined handoff opened no pull
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane, since a declined handoff opened no pull
 request to wait on — and it carries its own role and
 cost-attribution row (`docs/roles-and-phases.md`). Guidance only, per
-`workflows-core:next-phase-offer` — names only that `/brd-split` exists and
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane — names only that `/brd-split` exists and
 where it sits in the route, never its behaviour, which `commands/brd-split.md` owns.
 
 **The array that offers it says which of `/brd-split`'s two modes will run**, so nobody
@@ -2058,8 +2060,9 @@ choices: ["Write the missing frame-set index — /workflows-core:frames <BRD-KEY
 ### Context hygiene
 
 The resume pointer is written in the terminal cost phase (Phase 11), per
-`workflows-core:session-hygiene` §1. Grounding another repository or
-prerequisite in the same BRD? → run **`/compact`**. Continuing as PM into `/brd-split` on this slice? → run **`/compact`**
+`workflows-core:session-hygiene` §1. Per the role-aware suggestion of
+`workflows-core:session-hygiene` §2: grounding another repository or prerequisite in the same BRD?
+→ run **`/compact`**. Continuing as PM into `/brd-split` on this slice? → run **`/compact`**
 (`route: brd`) — the same role, and its walk allocates against the findings this run just wrote;
 handing it to the PM you ran this for, as a PA or PE? → run **`/clear`**: they pick it up in their own
 session. Grounding another repository for the same PRD? → run
@@ -2106,7 +2109,7 @@ fire `emit-block`. The one exception is a halt on a tool the ai-containers image
 3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /prd-ground`, `phase: brd-to-prd`, `role: pm`,
    the run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the
    report-only notice).
-4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the
+4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the
    commit step below. Redact per §1. Silent.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. Stages
    ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits

@@ -9,6 +9,8 @@ Author an engineering design for the resolved item: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/design` is the **Dev-phase engineering-design** workflow — the design step of the PM→PA→PE→Dev pipeline
 (`/specify` → `specification.md`; then `/design` → `design.md`). The developer *takes over* a merged
 `specification.md`, grounds in the **fully-mounted** implementation code, and authors a reviewed
@@ -34,7 +36,7 @@ Usage: `/design <ADDRESS> [--design-twice] [--no-arch] [--skip-costs] [--skip-fe
    never an address.
 
    Parse the **single positional address** from the stripped `$ARGUMENTS` — a `<KEY>`, or an
-   `@<path>` naming a folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind` and `key` forward; `ambiguous` → stop, naming every match and `@<path>` as the way through; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `DESIGN_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree, and designs only against a specification already in one. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command. Then carry forward:
+   `@<path>` naming a folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind` and `key` forward; `ambiguous` → stop, naming every match and `@<path>` as the way through; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `DESIGN_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree, and designs only against a specification already in one. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules stops")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command. Then carry forward:
    - `<PRD>` — the resolved **PRD folder's** `key`: the folder itself when the address named a
      `PRD-` folder, its parent when the address named an `EPIC-` folder.
    - `<EPIC>` — the resolved `EPIC-` folder's `key`, or `null` when the address named a `PRD-`
@@ -103,7 +105,7 @@ it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), ca
      is its per-Epic home. Skip the picker; go to step 5.
    - **`<EPIC>` null on a multi-component PRD.** First run `multi-component-test` (`Skill(skill: "workflows-core:reference", args: "components multi-component-test")`, §3) on the resolved PRD dir. Where it returns `multi_component: true`, a flat `specification.md` is a requirements source the PRD's Epics are designed from, not one unit designed whole save by the override below (`${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`, *Ready for Implementation*): skip the flat-spec bullet in the next bullet and take the Epic-subfolder bullet nested under it. Two shapes leave nothing to pick. **Epic folders, none holding a `specification.md` on `<default>`** → stop with the Epic-subfolder bullet's excluded-count report, naming `/product-workflows:specify <PRD>` (whose picker offers those Epics) for an Epic with no `specification.md`, and the merge of its branch or pull request for one whose spec is not yet merged. **No Epic folder, and a flat `specification.md` on `<default>`** → ask:
      `choices: ["Split into Epics first — /product-workflows:epics <PRD> (Recommended)", "Design across components anyway", "Cancel"]`
-     — the *Split* option only where the PRD folder holds an authored `prd.md`, which `/epics` needs; without one, it becomes what `workflows-core:next-phase-offer`'s `/epics` precondition names in its place — `/product-workflows:create-prd <PRD>`, or, on a BRD-route slice, whatever its ledger tests resolve that to — `/product-workflows:create-prd <SLICE>` where both clear, a `/product-workflows:brd-split` where one fails — still marked `(Recommended)` — and only where that rule names nothing is the array the other two, unmarked.
+     — the *Split* option only where the PRD folder holds an authored `prd.md`, which `/epics` needs; without one, it becomes what `Skill(skill: "workflows-core:reference", args: "next-phase-offer epics-precondition")`'s *`/epics` precondition* names in its place — `/product-workflows:create-prd <PRD>`, or, on a BRD-route slice, whatever its ledger tests resolve that to — `/product-workflows:create-prd <SLICE>` where both clear, a `/product-workflows:brd-split` where one fails — still marked `(Recommended)` — and only where that rule names nothing is the array the other two, unmarked.
      **Split** stops, naming that command; **Cancel** stops; **Design across components anyway** takes the flat-spec bullet in the next bullet, and the Final report names the override — the shape `/dev-workflows:implement <PRD>` offers to implement as one slice, at 0 Epics, so the design it writes is one that command can reach. With no Epic folder and a flat `specification.md` that is not on `<default>`, step 3's gate runs against that flat path and stops naming its branch or pull request; with neither, the next bullet's own absent stop applies. Where it returns `multi_component: false`, nothing here applies.
    - **`<EPIC>` null** → inspect the resolved PRD dir in the specs repo:
      - it holds a **flat `specification.md`** (a broad PRD-level spec — the only shape that puts one at PRD level, now that a top-level `EPIC-` folder with no PRD above it is retired: `/product-workflows:epics` writes every `EPIC-` folder under a PRD folder and is the only command that writes one) → one design; the feature folder is the PRD dir itself. Skip the picker; go to step 5 (step 3's gate re-applies against this flat path). **This bullet is taken first after the multi-component bullet above, so a single-component PRD folder holding a flat `specification.md` *and* Epic subfolders designs the slice and never reaches the picker** — `/design <PRD>` offers no Epic on that shape, and each Epic's own `design.md` is reached by addressing that Epic, `/dev-workflows:design <EPIC-KEY>`. That is the shape `references/workflow-states.md`'s *Ready for Implementation* row calls **both**, and its expected artifacts are each in-scope Epic *and* the slice carrying `specification.md` AND `design.md` — so a PRD of that shape reaches that rung through one `/design` per Epic plus this one, never through `/design <PRD>` alone.
@@ -127,7 +129,7 @@ scans repos under `$REPOS_PATH`; cwd need not be inside either.
 
 ## Phase 1 — Configure
 
-**Rule: Ask, don't guess. This rule is absolute.** Use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`Skill(skill: "workflows-core:reference", args: "escalation-rules")` §0).
+**Rule: Ask, don't guess. This rule is absolute.** Use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`Skill(skill: "workflows-core:reference", args: "escalation-rules core")` §0).
 
 1. **Feature folder — resolved, never asked.** Phase 0 resolved it from the address, and every
    later command — `/implement`, `/ready`, `/conformance`, the handoff's branch name — finds this
@@ -409,9 +411,9 @@ Dispatch `design-reviewer` (Opus):
 - **`PASS`** / **`PASS WITH RECOMMENDATIONS`** — proceed to Phase 7, once that offer is settled.
 
 Cap: one fix cycle + one re-review maximum. Phase 7 will not hand off a `design.md` with any unresolved
-`- [ ]`. A finding applied at that offer after the first review is an inline edit answering a verdict that was not `BLOCK`: it is read against what it overlaps, as a fix is, and the re-review the cap still holds is offered before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`.
+`- [ ]`. A finding applied at that offer after the first review is an inline edit answering a verdict that was not `BLOCK`: it is read against what it overlaps, as a fix is, and the re-review the cap still holds is offered before the handoff, per the `Edits after a verdict that is not BLOCK — the unspent re-review` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`.
 
-**The recorded verdict names the version it was taken against** — where any edit followed it, the final report, Phase 7's `body_facts` and `_design-session.md` say so and name the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
+**The recorded verdict names the version it was taken against** — where any edit followed it, the final report, Phase 7's `body_facts` and `_design-session.md` say so and name the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules version-line")`. Where none did, it says that too.
 
 ---
 
@@ -444,9 +446,9 @@ persists the plugin-facing slice of its report as session feedback.
 **Capture-at-block invariant.** This terminal phase captures gaps for a *completed* run. Separately, if an EARLIER phase **halts on a plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked), `emit-block` (per `workflows-core:feedback-emission`) at that halt **before** escalating — so a run abandoned at the block still records the gap. NEVER `emit-block` for a work-quality review BLOCK or an environment / user halt (repo/spec gate, key-not-found, cancellation). The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
 **Session-hygiene invariant.** End the report with a `### Context hygiene` block per
-`workflows-core:session-hygiene` — prepare-first (the
+`Skill(skill: "workflows-core:reference", args: "session-hygiene guidance")` — prepare-first (the
 `resume.md` write runs later, in the terminal cost phase, per
-`workflows-core:session-hygiene` §1 — this block prints the
+`Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` §1 — this block prints the
 guidance only), then a
 same-role `/compact` suggestion + `/rename <PRD-ID>-<slug>-dev`. Guidance only, never auto-run.
 
@@ -503,7 +505,7 @@ reconciliation (§9) when no PRD key resolves. **The checkpoint advances even in
 the pending / report-only tiers.** Surface the persisted path (or the
 report-only notice) as this phase's only output.
 
-**Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite
+**Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite
 `<PRD-dir>/dev-workflows/resume.md` now — after the cost entry above, so the
 pointer reflects the completed run, and before the commit step below, so it is
 included in it. Redact per §1. Silent; the printed `### Context hygiene`
@@ -543,9 +545,9 @@ The report always states exactly one of the Phase 5 interface fan-out outcomes w
 
 ### Next step
 
-End the report with a `### Next step` recommendation per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")` (guidance only — never auto-invoked): → `/dev-workflows:implement <EPIC>` where `<EPIC>` is set, and `/dev-workflows:implement <PRD>` after a broad PRD-level design, where it is null (depth, still Dev) `<merge-clause>` — the one address this design's folder answers to, so the offer never carries a null key — which stops rather than proceeding wherever this design reached a branch (`workflows-core:phase-handoff` §3.3 rows D/E) and is unaffected wherever it reached none (§3.4's `/implement` row); the **Epic fan-out** `/dev-workflows:design <SIBLING-EPIC>` designs a sibling Epic (breadth, no merge wait — a different Epic's design). Each is **one** address — the Epic's own key encodes its ancestry, so no command here takes a `<PRD> <Epic>` pair (D4). If the run BLOCKED or `design.md` has open questions, recommend resolving those first.
+End the report with a `### Next step` recommendation per `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`, the *Dev — build, verify & deliver* lane (guidance only — never auto-invoked): → `/dev-workflows:implement <EPIC>` where `<EPIC>` is set, and `/dev-workflows:implement <PRD>` after a broad PRD-level design, where it is null (depth, still Dev) `<merge-clause>` — the one address this design's folder answers to, so the offer never carries a null key — which stops rather than proceeding wherever this design reached a branch (`workflows-core:phase-handoff` §3.3 rows D/E) and is unaffected wherever it reached none (§3.4's `/implement` row); the **Epic fan-out** `/dev-workflows:design <SIBLING-EPIC>` designs a sibling Epic (breadth, no merge wait — a different Epic's design). Each is **one** address — the Epic's own key encodes its ancestry, so no command here takes a `<PRD> <Epic>` pair (D4). If the run BLOCKED or `design.md` has open questions, recommend resolving those first.
 
-`<merge-clause>` is the placeholder `workflows-core:next-phase-offer` owns, resolved from this run's own `Phase handoff:` outcome line (§4.1) and never written as the unconditional "once the pull request above is merged" — the handoff offered above reaches a declined, a push-failed and a nothing-to-commit outcome among others §4.1 lists, and none of those three opens a pull request to wait on. This offer is prose rather than a `choices:` array, so `scripts/check-docs.sh` check 11 cannot see it: it is held by review alone, even though `design.md` is exactly the intersection that check looks for.
+`<merge-clause>` is the placeholder `workflows-core:next-phase-offer` owns, resolved per that reference's *resolution table* from this run's own `Phase handoff:` outcome line (§4.1) and never written as the unconditional "once the pull request above is merged" — the handoff offered above reaches a declined, a push-failed and a nothing-to-commit outcome among others §4.1 lists, and none of those three opens a pull request to wait on. This offer is prose rather than a `choices:` array, so `scripts/check-docs.sh` check 11 cannot see it: it is held by review alone, even though `design.md` is exactly the intersection that check looks for.
 
 ### Context hygiene
 
@@ -554,4 +556,4 @@ The resume pointer is written in the terminal cost phase (Phase 9), per `workflo
 - **Continuing on this design's folder (`/dev-workflows:ready <EPIC>` / `/dev-workflows:implement <EPIC>`, or `<PRD>` in place of `<EPIC>` after a broad PRD-level design) or the next Epic (`/dev-workflows:design <SIBLING-EPIC>`) — all still Dev?** → run **`/compact`** — context stays relevant.
 - Consider **`/rename <PRD-ID>-<slug>-dev`** to relocate this session later.
 
-Guidance only — see `workflows-core:session-hygiene`.
+Guidance only — see `workflows-core:session-hygiene` §5.

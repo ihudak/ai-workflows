@@ -9,6 +9,8 @@ Intake the customer-supplied business requirements document: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/brd-intake` is the **entry point of the BRD-to-PRD flow** (PM phase) — the first of the
 route's commands, which between them turn a long, often internally
 contradictory customer BRD into requirements a PRD can be built from. It copies the customer's
@@ -191,7 +193,7 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
    ```
    **Neither option carries a `(Recommended)` marker, and the omission is deliberate** per the
    `When no option is safe to recommend` guidance in
-   `Skill(skill: "workflows-core:reference", args: "escalation-rules")`, as Phase 8's zero-row list
+   `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, as Phase 8's zero-row list
    states it for its own: whether this run is the re-intake the operator meant or the one they typed
    by mistake is a judgement about their own intent and about the customer's document, and nothing
    the run holds distinguishes the two — the folder looks the same either way. Present the array as
@@ -1497,7 +1499,7 @@ each, and all three commands refuse the container itself
 row is refused by every downstream command on the route, and `/product-workflows:brd-split`'s walk
 takes only a ledger's `unallocated` rows (`coverage-ledger-format.md` §4), so offering either where
 there is nothing for it would name a run that stops on its own Phase 0 or does nothing — the offer
-`workflows-core:next-phase-offer` exists to prevent. **Its sibling re-cut does walk rows with a
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane, exists to prevent. **Its sibling re-cut does walk rows with a
 fate** — on a root whose every row is allocated, given an instruction
 (`coverage-ledger-format.md` §3.2) — and is not offered either: it moves a row only where the slice
 holding it has recorded in its own ledger that it will not build it, which this command never reads,
@@ -1541,7 +1543,7 @@ choices: ["Re-run this intake with a corrected source — /product-workflows:brd
 
 Neither option on that zero-row list carries a `(Recommended)` marker, and the omission is deliberate
 per the `When no option is safe to recommend` guidance in
-`Skill(skill: "workflows-core:reference", args: "escalation-rules")`: whether the source was mis-converted, was
+`Skill(skill: "workflows-core:reference", args: "escalation-rules core")`: whether the source was mis-converted, was
 the wrong file, or genuinely states no requirement is a judgement about the customer's document, and
 only the operator who has read it can take it. Say beside the list which conversion or file this run
 actually read, so that judgement has something to stand on.
@@ -1555,14 +1557,15 @@ merge-state gate; grounding now happens only at the slice `/brd-split` carves. *
 offer carries no `<merge-clause>`**, and that is derived, not an oversight: `/brd-split` on a root
 reads this handoff's artifacts with a plain worktree read at its own step 8, gating none of them, so
 there is no wait to state. Guidance only — never auto-invokes another command. Per
-`workflows-core:next-phase-offer`.
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane.
 
 ### Context hygiene
 
-Per `workflows-core:session-hygiene`, the resume pointer is written in the
+Per `workflows-core:session-hygiene` §1, the resume pointer is written in the
 terminal cost phase (Phase 9), after the cost entry and before the commit step. Continuing this
 route into `/product-workflows:brd-split <BRD-KEY>` — both PM — keeps the context relevant → run
-**`/compact`**. Guidance only — nothing is auto-run.
+**`/compact`**, per `workflows-core:session-hygiene` §2's *Same role* bullet. Guidance only —
+nothing is auto-run.
 
 ---
 
@@ -1596,7 +1599,7 @@ as Phase 1 says where it stops. The one exception is a halt on a tool the ai-con
 3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-intake`, `phase: brd-to-prd`, `role: pm`, the
    run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only
    notice).
-4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry above, and before
+4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry above, and before
    the commit step below. Redact per §1. Silent.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It stages ONLY the §2.1 bounded artifact paths
    inside `$SPECS_PATH`, commits `<BRD-KEY> Add dev-workflows session artifacts (/brd-intake)` with

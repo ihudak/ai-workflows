@@ -1,0 +1,57 @@
+05:45:45    0.0k  Skill workflows-core:reference run-flags strip-run-flags
+05:45:47    1.9k  Bash cat references/run-flags.md
+05:45:49   30.7k  Read b5a7zckci.txt off=None lim=None  [persisted from: cat /home/ivan.gudak/.claude/plugins/cache/shipwright/workflows-core/1]
+05:45:55    0.0k  Skill workflows-core:reference addressing resolve-address
+05:45:55    0.0k  Skill workflows-core:reference addressing resolve-address
+05:45:57    2.2k  Bash cat references/addressing.md
+05:45:59   67.2k  Read brclfcfdt.txt off=None lim=None  [persisted from: cat /home/ivan.gudak/.claude/plugins/cache/shipwright/workflows-core/1]
+05:46:20    0.0k  Skill workflows-core:reference specs-repo-git specs-preflight
+05:46:20    0.0k  Skill workflows-core:reference specs-repo-git specs-preflight
+05:46:23    0.9k  Bash wc -l references/specs-repo-git.md; grep -n '^## \|^### ' references/specs-repo-git.md
+05:46:26   67.7k  Read specs-repo-git.md off=1 lim=550
+05:46:29   11.0k  Read specs-repo-git.md off=1051 lim=45
+05:46:44    0.0k  Skill workflows-core:reference phase-handoff require-on-main
+05:46:44    0.0k  Skill workflows-core:reference phase-handoff require-on-main
+05:46:47    0.9k  Bash grep -n '^## \|^### ' references/phase-handoff.md
+05:46:49   49.7k  Read phase-handoff.md off=184 lim=140
+    0.0k  Skill workflows-core:reference ard-resolution
+05:46:56    0.0k  Skill workflows-core:reference ard-resolution
+05:46:59   12.9k  Bash cat references/ard-resolution.md
+    0.0k  Skill workflows-core:reference components multi-component-prereqs
+05:47:19    0.0k  Skill workflows-core:reference components multi-component-prereqs
+05:47:21   18.5k  Bash cat references/components.md
+05:48:26    0.9k  Bash F=references/code-handoff.md; grep -n '^## \|^### \|^#### ' $F
+05:48:29    7.3k  Read code-handoff.md off=205 lim=25
+    0.0k  Skill workflows-core:reference implementation-format unit-branch
+05:48:31    0.0k  Skill workflows-core:reference implementation-format unit-branch
+05:48:34   13.1k  Bash F=references/implementation-format.md; grep -n '^## \|^### ' $F; awk '/^## 5\./{f=1} /^## 6\./{f=0} f' $F
+05:49:03    6.6k  Read code-handoff.md off=142 lim=45
+    0.0k  Skill workflows-core:model-routing 
+05:50:53    0.0k  Skill workflows-core:model-routing 
+05:50:56    1.2k  Bash F=references/model-routing/classification.md; wc -l $F; grep -n '^## \|^### ' $F
+05:50:57    7.3k  Bash F=references/model-routing/classification.md; sed -n '1,120p' $F
+05:51:08   14.8k  Bash F=references/model-routing/classification.md; sed -n '111,317p' $F
+05:51:46    0.5k  Bash F=references/bug-diagnosis.md; wc -l $F; grep -n '^## \|^### \|^\*\*' $F | head -40
+05:51:49   15.8k  Read bug-diagnosis.md off=None lim=None
+06:00:49   13.0k  Bash cat references/handoff/code-writer.md | head -150
+06:06:08    0.0k  Skill workflows-core:reference finding-triage
+06:06:08    0.0k  Skill workflows-core:reference finding-triage
+06:06:10   18.1k  Bash cat references/finding-triage.md
+06:13:20   30.1k  Read code-handoff.md off=24 lim=120
+06:13:23   28.4k  Read code-handoff.md off=186 lim=160
+06:13:23   28.4k  Read code-handoff.md off=186 lim=160
+06:13:35    0.0k  Skill workflows-core:reference feedback-emission emit-auto
+06:13:35    0.0k  Skill workflows-core:reference feedback-emission emit-auto
+06:13:46   21.4k  Bash ls -la .claude/memory/; git check-ignore -v .claude/memory/epic-patterns.md; git ls-files .claude/memory/; grep -n 'scanner' .claude/memory/epic-patte
+06:16:49    4.4k  Bash F=references/followup-emission.md; grep -n '^## \|^### ' $F; awk '/^## 6\./{f=1} /^## 7\./{f=0} f' $F | head -60
+06:16:58    0.0k  Skill workflows-core:reference cost-emission emit-cost
+06:16:58    0.0k  Skill workflows-core:reference cost-emission emit-cost
+06:17:05   22.1k  Bash F=references/cost-emission.md; sed -n '57,163p;268,330p;554,598p;646,723p' $F
+06:17:11    3.0k  Bash F=references/cost-emission.md; sed -n '164,185p' $F; grep -n 'PRD dir\|Epic key\|epic:' $F | sed -n '1,30p'; grep -n '/implement' $F | head -20; ls $S
+06:17:25    1.0k  Bash WC=/home/ivan.gudak/.claude/plugins/cache/shipwright/workflows-core/1.43.0; SID=beebc3f3-c921-428a-a6dc-396e7fcef841; P=${DEV_WORKFLOWS_COST_PRICES:-}
+06:17:38    4.3k  Bash F=references/session-hygiene.md; awk '/^## 1\./{f=1} /^## 2\./{f=0} f' $F | head -60
+06:17:46    0.0k  Skill workflows-core:reference specs-repo-git commit-artifacts
+06:17:46    0.0k  Skill workflows-core:reference specs-repo-git commit-artifacts
+06:17:49   15.3k  Read specs-repo-git.md off=550 lim=200
+06:17:52    8.5k  Read specs-repo-git.md off=749 lim=110
+06:18:17    5.6k  Bash sed -n '986,1012p' references/specs-repo-git.md

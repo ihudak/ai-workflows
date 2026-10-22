@@ -9,6 +9,8 @@ Author the programme-level effort proposal for the resolved BRD container: $ARGU
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/brd-proposal` is the **programme effort-proposal step** (PM phase) — it takes one `BRD-` container and
 writes the document a vendor sends a customer for the whole programme, by rolling each slice's own
 `proposal.md` into one. It prices nothing itself: every slice's hours were computed by
@@ -705,38 +707,39 @@ that file describes the archived revision and not this one.
      > Readiness tier: [1 · Indicative | 2 · Grounded | 3 · Architected | 4 · Specified], capped by [the slice that set the minimum]
      > Anchor revision: [absolute path to the archived prior revision, or 'none — first revision' or 'discarded by --redo']"
 
-3. **Triage before anything is edited.** Invoke `Skill(skill: "workflows-core:reference", args: "finding-triage")`
-   and follow it over the reviewer's findings — **the orchestrator runs the triage, never a fixer**.
+3. **Triage before anything is edited.** Invoke `Skill(skill: "workflows-core:reference", args: "finding-triage re-review")`
+   and follow it over the reviewer's findings — that part holds `triage` as well, so the re-review below
+   reuses the same load — **the orchestrator runs the triage, never a fixer**.
    Verify each finding's claimed consequence at the location it names; keep it, mark it unverified, or
    dismiss it; record every dismissal with a reason that disposes of that finding's own claim and every
    unverified finding with what would settle it; and raise a grade only by effect. There is no
    silent-drop disposition. Fix the surviving BLOCKERs inline (the orchestrator edits both artifacts —
    there is no delegated writer), read the fix against what it overlaps — each figure it changes
    against every total and brief line computed from it — per the `An inline fix is read against what
-   it overlaps` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`, and
+   it overlaps` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`, and
    re-review **once**, triaging that re-review — and one you chose
-   at the first settle prompt — under that reference's § On re-review. If the review **stayed
+   at the first settle prompt — under `workflows-core:finding-triage` § On re-review. If the review **stayed
    blocked** — a BLOCKER survives that triage, or you keep the verdict at either settle prompt —
    escalate per the `Review verdict BLOCK (unresolved after one fix cycle) — commands that fix inline`
-   rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`; on § On re-review's
-   **Proceed**, proceed as after a verdict that is not `BLOCK`. `PASS` / `PASS WITH RECOMMENDATIONS`
+   rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules review")`; on
+   `workflows-core:finding-triage` § On re-review's **Proceed**, proceed as after a verdict that is not `BLOCK`. `PASS` / `PASS WITH RECOMMENDATIONS`
    → after the first review and after the re-review alike, where it leaves open at least one surviving finding
    whose fix is only an edit, offer to apply them before going on, per the `Findings a review leaves open — the offer to apply
-   them` rule in the same reference — `choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]` — applying each inline, read against what it overlaps,
+   them` rule in `workflows-core:escalation-rules` — `choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]` — applying each inline, read against what it overlaps,
    and a finding not applied going to the final report and the pull request; then proceed. Cap: one
    fix cycle plus one re-review — and a finding applied at that offer after the first review leaves
    the re-review unspent, and it is offered before the handoff, per the
    `Edits after a verdict that is not BLOCK — the unspent re-review` rule in the same reference. Where triage empties the survivor set, do not
    dispatch a fix cycle with nothing to apply and do not silently promote the verdict — the user
-   settles a verdict its own findings no longer support. At either of that reference's settle
-   prompts, **Keep the verdict** means the review stayed blocked — on a kept verdict that is not
+   settles a verdict its own findings no longer support. At either of `workflows-core:finding-triage`'s
+   settle prompts, **Keep the verdict** means the review stayed blocked — on a kept verdict that is not
    `BLOCK`, which raised no BLOCKER, the run ends as Cancel does — and **Cancel** aborts the run.
 
 **After the last inline edit to `proposal.md` — a triage fix, or an edit a later prompt asked for —
 run Phase 8's `stamp` once more** with the same record file and `--excluded`, so no edit carries a damaged record into the
 handoff; `{"written": true}` there is reported beside the edit that caused it.
 
-**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`. Where none did, it says that too.
+**The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules version-line")`. Where none did, it says that too.
 
 **A finding against a slice's own proposal is not fixed here.** This run edits the umbrella and
 nothing under it; where a survivor's location is a slice document, record it, name the slice, and
@@ -785,8 +788,8 @@ came to; the coverage proportion and the count of requirements left unpriced; th
 ## Phase 12 — Next steps
 
 **One literal array.** Every printed command name is fully qualified
-(`workflows-core:next-phase-offer` rule 6), and every offer in it prints exactly one positional
-address (rule 7).
+(*rule 6* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer proposals")`, the *PM — effort proposals (optional, and they gate nothing on the build ladder)* lane), and every offer in it prints exactly one positional
+address (*rule 7*).
 
 ```
 choices: ["Stop here — the umbrella is written and, if you handed it off, committed", "Re-price a slice the readiness walk flagged — /product-workflows:prd-proposal <SLICE-KEY>", "Re-run the umbrella once those land — /product-workflows:brd-proposal <BRD-KEY>"]
@@ -807,7 +810,7 @@ requires, and the third then reads as the standing re-run offer it is: the umbre
 from whatever the slices hold on the day it is run. Nothing is ever added beyond the three above, and
 no option's wording is adjusted.
 
-Guidance only — never auto-invokes another command. Per `workflows-core:next-phase-offer`.
+Guidance only — never auto-invokes another command. Per `Skill(skill: "workflows-core:reference", args: "next-phase-offer proposals")`, the *PM — effort proposals (optional, and they gate nothing on the build ladder)* lane.
 
 ### Context hygiene
 
@@ -820,7 +823,7 @@ The resume pointer is written in the terminal cost phase (Phase 13), per
   them from the specs repo, not from this session.
 - Consider **`/rename <BRD-KEY>-<slug>-pm`** so you can find this session later.
 
-Guidance only — see `workflows-core:session-hygiene`.
+Guidance only — see `workflows-core:session-hygiene` §5.
 
 ---
 
@@ -860,7 +863,7 @@ either: that is the gate working. The one exception is a halt on a tool the ai-c
    target via its §2 ladder, dedupe per §5, and preview + confirm per §7. ADDITIVE: the same items
    also stay in the final report.
 4. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-proposal`, `phase: proposal`, `role: pm`, the run's `key`, `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). Surface the persisted path (or the report-only notice). **This entry records model spend in USD and has no relationship whatever to the human hours the artifacts contain.**
-5. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")`
+5. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")`
    and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry
    above, so the pointer reflects the completed run, and before the commit step below, so it is
    included in it. Redact per §1. Silent; the printed `### Context hygiene` guidance already appeared.

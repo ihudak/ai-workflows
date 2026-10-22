@@ -10,6 +10,8 @@ asserting a position it overturned: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/brd-reconcile` is the **BRD-to-PRD route's last command** (PM phase) — it takes the
 file that came back from the package `/brd-package` sent, freezes what the customer actually decided,
 and then goes looking for everything the delivery organisation still believes that their answer has
@@ -749,7 +751,7 @@ path nobody else can reproduce; the copy is the record.
    **each line name which handoff it reports**, which is why neither is printed bare here: one
    reports the customer's document, the other this run's own deliverable, wherever either appears.
    **A `<merge-clause>` resolves from the second**, and by `workflows-core:next-phase-offer`'s own
-   rule rather than by anything local: that file resolves the clause from the line reporting the
+   rule, *where a run emitted more than one* (`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane), rather than by anything local: that file resolves the clause from the line reporting the
    handoff of **the artifact the offered command's gate targets**, which here is the reconciliation
    record with `decisions.md` and `coverage-ledger.md` beside it — what
    `/product-workflows:brd-package` and `/product-workflows:prd-ground` gate on — and not the
@@ -960,8 +962,8 @@ choose *Ask the customer*.
 **That requirement is enforceable only because the shared reference names this array.**
 `workflows-core:escalation-rules` §0 makes the free-text option unconditional —
 no array can decline it — so a picker about customer authority is protected by what the run does with
-the answer, not by the array's shape. Its *Closed-vocabulary pickers must normalise the free-text
-answer* section therefore names this picker, the missing-reason picker and the conflicting-answer
+the answer, not by the array's shape. `workflows-core:escalation-rules`' *Closed-vocabulary pickers
+must normalise the free-text answer* section therefore names this picker, the missing-reason picker and the conflicting-answer
 picker below, and the propagation sweep's, and gives that reason. Until that section was rewritten the file said the opposite of what
 this command needs: it called adding a trailing free-text entry "the one permitted adjustment", which
 would have **authorised** an agent to open the exact hole D14 closes, on the authority of the file
@@ -2244,7 +2246,7 @@ why `workflows-core:escalation-rules`'s *Closed-vocabulary pickers must normalis
 picker among the arrays whose free-text answer must be normalised into their own vocabulary rather than
 written through. No `(Recommended)`
 marker, and the reason is stated beside the list per the
-`When no option is safe to recommend` guidance in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`: which one is right is a
+`When no option is safe to recommend` guidance in `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`: which one is right is a
 judgement about a position in another BRD, taken by whoever owns it, and a marker would invite the
 run to inherit-unchanged its way through a sweep whose whole purpose is to find what did move.
 
@@ -2722,8 +2724,8 @@ on a failed eligibility test — so the second array is typically two or three o
 
 **`advance_ready: yes` — the route is finished with this slice and crosses into the PRD
 pipeline.** Print the full list as prose first, per
-`workflows-core:next-phase-offer`'s
-overflow rule — five routes do not fit in four slots, and the prose is what carries all of them:
+the *overflow rule* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the
+*PM — the BRD-to-PRD route* lane — five routes do not fit in four slots, and the prose is what carries all of them:
 
 ```
 Where this run can go next:
@@ -2828,7 +2830,7 @@ That state is reachable here: a `--sent` run, for one, reconciles a review no pa
 route checked.
 
 **The trigger filter runs first and the four-option cap applies to what survives it**
-(`workflows-core:next-phase-offer`'s overflow rule). Typically two or three
+(the *overflow rule* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane). Typically two or three
 options survive and every one of them fits. Where four re-entry options survive, the prose above
 still names all four and the array carries `Stop here` plus the three whose triggers this run's own
 outcome makes most pressing — say in one line that the list is longer than the options and that the
@@ -2880,7 +2882,7 @@ gate this run feeds.
 it.** The re-run's Phase 0 step 6c gates the parent's defect log, which this run's *Handoff* phase
 carries, so it waits on this run's merge like every option that names a gate this run feeds. And it
 waits on the *dependent's* register reaching the default branch, while the placeholder
-`workflows-core:next-phase-offer` defines resolves from **this** run's own
+`workflows-core:next-phase-offer` defines resolves, by that reference's *resolution table*, from **this** run's own
 `Phase handoff:` outcome line — a different merge, which is why the condition is written in the
 option's own text like every other one in the list.
 
@@ -2895,7 +2897,7 @@ array option — it names work on a different key — and it carries no `<merge-
 gates on the dependent's `grounding/code-grounding.md`, which this run never writes. A dependent
 recorded-not-written has no such line, since nothing was reopened there yet.
 
-Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")` — names only,
+Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane — names only,
 never behaviour a command of its own owns: a `[C]` the review did not answer keeps its round open and
 travels in the next package, save one whose question stopped applying and which had no record of
 its own, which this run closed; a decision this run reopened is settled by another interview round,
@@ -2914,7 +2916,7 @@ default branch.
 
 The resume pointer is written in the terminal cost phase, per
 `workflows-core:session-hygiene` §1. **The offer above spans roles, so both
-branches are printed** (§2's *Next options span both* bullet). Reconciling a second review for the
+branches are printed** (`workflows-core:session-hygiene` §2's *Next options span both* bullet). Reconciling a second review for the
 same BRD, or working another round of it, or authoring this slice's PRD yourself as PM
 (`/product-workflows:create-prd <SLICE-KEY>`)? → run **`/compact`**. Moving to a different BRD or
 slice, or handing on to PA (`/product-workflows:create-ard <SLICE-KEY>`) or PE
@@ -2963,7 +2965,7 @@ records, and the operator settles it by opening that file and re-running with it
 3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-reconcile`, `phase: brd-to-prd`, `role: pm`, the
    run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only
    notice).
-4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the commit
+4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the commit
    step below. Redact per §1. Silent.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. Stages ONLY the §2.1 bounded artifact paths inside
    `$SPECS_PATH`, commits `<BRD-KEY> Add dev-workflows session artifacts (/brd-reconcile)` with no
@@ -3003,7 +3005,7 @@ stale cross-reference sweep** — the hit counts by outcome and every `needs-a-h
 **both** `Phase handoff:` outcome lines — §4.1 counts one **per handoff offered** and this command
 offers two — **each labelled with the handoff it reports and neither printed bare**, as that
 section requires of a multi-handoff producer: the review's and the run's, in that order, the run's
-being the one a `<merge-clause>` resolves from (`workflows-core:next-phase-offer`); the
+being the one a `<merge-clause>` resolves from (`workflows-core:next-phase-offer`, *where a run emitted more than one*); the
 `Specs repo:` outcome line (`workflows-core:specs-repo-git` §6); the next-step
 recommendation; and end with the ledger line, read fresh from `coverage-ledger.md` **as this run
 left it**, exactly per `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §6:

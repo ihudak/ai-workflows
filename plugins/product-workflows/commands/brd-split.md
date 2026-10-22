@@ -9,6 +9,8 @@ Split the grounded BRD into slices and allocate every requirement: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/brd-split` is the **BRD-to-PRD route's allocation step** (PM phase) — on a root it carves the
 slices `/prd-ground` will later verify each of, and forces every `[BR#n]` in this BRD's own coverage
 ledger to a recorded fate: built by a named child, deferred, rejected, or superseded. On a slice it
@@ -540,7 +542,7 @@ Present the candidate slices — each: a short working name, its `[BR#n]` rows, 
 
 **On the re-cut path every `[BR#n]` in that presentation also names its donor**: the donor's key, and the fact that the donor's own ledger records `deferred-to` against that row. Phase 0 step 9a built exactly that pair, and it is the pair — this BRD's `covered-by: <A>` beside A's own `deferred-to: <A>` — that makes the row movable at all (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §3.2). So the operator sees which slice is giving each row up before confirming anything; a proposal that hides the donor asks them to approve a transfer they cannot see. **The donor is a property of the row, never of the proposed slice** — one candidate slice may take rows from several siblings — so it is named per row and never once per group.
 
-**One of the four answers below has no re-cut meaning of its own, and it is stated here rather than left to a guess.** *"Make this whole BRD one slice"* answers the degenerate case of a **first** split — nothing clusters, so the whole BRD becomes the one slice — and on the re-cut path there is nothing for it to make: every row already carries a fate, and at least one slice already stands, since `recut_mode` is set only where some child's own ledger defers a row this BRD delegated to it (Phase 0 step 9a, step 10). So on that path **it is unavailable, and an operator who picks it is read as declining** — the same outcome as confirming no group: nothing is created, nothing moves, every candidate is left with its donor and reported, and the run continues to Phase 4 where Step 2R has nothing to offer. Say that when it is chosen, rather than acting on it or asking again. **The array is unchanged and nothing is added or removed for this** — `AskUserQuestion` renders two to four options and this one is presented verbatim like every other (`workflows-core:escalation-rules`); what this paragraph fixes is what that answer *means* here, which is the one thing an agent would otherwise have to invent, and every invention writes something.
+**One of the four answers below has no re-cut meaning of its own, and it is stated here rather than left to a guess.** *"Make this whole BRD one slice"* answers the degenerate case of a **first** split — nothing clusters, so the whole BRD becomes the one slice — and on the re-cut path there is nothing for it to make: every row already carries a fate, and at least one slice already stands, since `recut_mode` is set only where some child's own ledger defers a row this BRD delegated to it (Phase 0 step 9a, step 10). So on that path **it is unavailable, and an operator who picks it is read as declining** — the same outcome as confirming no group: nothing is created, nothing moves, every candidate is left with its donor and reported, and the run continues to Phase 4 where Step 2R has nothing to offer. Say that when it is chosen, rather than acting on it or asking again. **The array is unchanged and nothing is added or removed for this** — `AskUserQuestion` renders two to four options and this one is presented verbatim like every other (`workflows-core:escalation-rules` §0, *Choice lists are presented verbatim*); what this paragraph fixes is what that answer *means* here, which is the one thing an agent would otherwise have to invent, and every invention writes something.
 
 Confirm before anything is created:
 
@@ -818,8 +820,8 @@ choices: ["Re-point all <N> rows to <B-KEY> now — each was deferred by the sli
 **Why one list carries a marker and the other two do not** — the same rule all three times, applied to what
 each picker already says. The `allocate-only` picker recommends `covered-here` on every row it
 shows, unconditionally and for a reason no instruction changes, so recommending it once here is that
-marker printed once: a reason annotation, honoured verbatim, of the kind `workflows-core:escalation-rules`
-admits explicitly. The `full` picker carries **no** marker unless an instruction placed the row,
+marker printed once: a reason annotation, honoured verbatim, of the kind `workflows-core:escalation-rules`'
+*The `(Recommended)` marker is unconditional* admits explicitly. The `full` picker carries **no** marker unless an instruction placed the row,
 because which resolution is right is a fact about the row in front of the operator — and there being
 one slice does not change that. So the `full` offer carries none either, and says so beside the
 list: *no option here is recommended — this run knows which slice a delegated row would go to, not
@@ -943,7 +945,7 @@ It is substituted in the option strings exactly as `<BRD-KEY>` and `<merge-claus
 is still presented verbatim per `workflows-core:escalation-rules`'s *Choice
 lists are presented verbatim* — a command that instead told the orchestrator to *adjust the wording*
 of an option would be contradicting that convention, which is why the variation lives in a
-placeholder (`workflows-core:next-phase-offer` states the same for its own).
+placeholder (`workflows-core:next-phase-offer` states the same for its own — *Resolving this placeholder is not a rewording*, `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane).
 It resolves, for each row:
 
 | This row's state | `<recommended>` resolves to |
@@ -964,7 +966,7 @@ option never carries a written marker. **The no-instruction run is unchanged** �
 resolves to the same sentence that used to be typed there.
 
 **The reason is carried, not just the marker.** `(Recommended — <why>)` is a reason annotation, which
-`workflows-core:escalation-rules` admits explicitly; a bare `(Recommended)` here would assert a recommendation
+`workflows-core:escalation-rules`' *The `(Recommended)` marker is unconditional* admits explicitly; a bare `(Recommended)` here would assert a recommendation
 whose only basis is a sentence the operator typed several phases ago and can no longer see. Naming
 what in the instruction placed the row is what lets them disagree with it on this row without
 abandoning the instruction.
@@ -1402,6 +1404,10 @@ and reports the same `nothing to commit` line.
 
 ## Phase 7 — Next steps
 
+Load the lane before any array below is printed: every offer in this phase follows
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane, and each `<merge-clause>`
+in it resolves per that part's *resolution table* from this run's own `Phase handoff:` outcome line.
+
 **`split_mode: allocate-only` — no child of this slice is reachable, so no grounding of one is
 offered.** Phase 3 never ran, so there is no child to ground. This slice's ledger may still hold a
 `covered-by` key — an **orphan row** naming a sibling or the parent
@@ -1503,13 +1509,14 @@ the continuation.
 **A donor that gained no row is not in that set and is not offered anything here — and that is the condition, not "being a donor".** It lost a row and gained none, so its remaining findings still cover everything it still claims, and the findings it holds about the row it gave up stay on file as a record of what it saw (`workflows-core:grounding-format` §8) — they are not stale grounding to repair, and re-running `/prd-ground` on it would re-derive work nothing asked for. **A donor that also gained a row is in the set like any other receiver**, which is reachable whenever two donors are involved: A's row lands on C while C's own row goes elsewhere, and C is then a child that gained a row and needs its grounding re-derived for it. Stating the rule as "a donor is never offered" would drop C out of the offer on the strength of a label. A donor left claiming nothing at all was resolved in Phase 4.5 and is not here either.
 
 **Every merge clause in this phase is the `<merge-clause>` placeholder**, resolved per
-`Skill(skill: "workflows-core:reference", args: "next-phase-offer")`'s *A next-step offer that names a downstream
-command must also name the merge* rule, which owns the §4.1 outcome map and is not restated here.
+`workflows-core:next-phase-offer`'s *A next-step offer that names a downstream
+command must also name the merge* rule — in the part loaded at the top of this phase — which owns
+the §4.1 outcome map and is not restated here.
 The rule governs **every** mention of the merge in this phase — both choice arrays and the prose
 below — because this command reaches three outcomes that open no pull request: the no-op, the
 reconcile path where Step 3 wrote nothing and every standing empty child was kept unchanged, and a declined handoff. It is a
 placeholder and not an instruction to reword an option, so the arrays are still presented verbatim
-per `workflows-core:escalation-rules`.
+per `workflows-core:escalation-rules`' *Choice lists are presented verbatim*.
 
 **Say what the child's own route looks like when offering it**: after `/prd-ground <CHILD-KEY>`,
 `/brd-split <CHILD-KEY>` runs in `allocate-only` mode (Phase 0 step 5) — it allocates that child's
@@ -1543,13 +1550,15 @@ child's route to reach, never this BRD's own.
 
 ### Context hygiene
 
-Per `workflows-core:session-hygiene`, the resume pointer is written in the
+Per `workflows-core:session-hygiene` §1, the resume pointer is written in the
 terminal cost phase (Phase 8), after the cost entry and before the commit step. On `full`,
 grounding a child is PM work too — PM to PM, so → run **`/compact`** before typing it, or let
 *Ground now* run it in this session; a PA or PE grounding it for a PM who cannot clone the code
-picks it up in their own session. This BRD's own key has no step of its own. On `allocate-only`, continuing as PM into
+picks it up in their own session — the role-aware suggestion of `workflows-core:session-hygiene`
+§2, its *Same role* and *Different role* bullets. This BRD's own key has no step of its own. On `allocate-only`, continuing as PM into
 `/product-workflows:brd-interview <BRD-KEY>` on this same slice keeps the context relevant → run
-**`/compact`**. Guidance only — nothing is auto-run.
+**`/compact`**, per `workflows-core:session-hygiene` §2's *Same role* bullet. Guidance only —
+nothing is auto-run.
 
 ---
 
@@ -1603,7 +1612,7 @@ mid-walk in Phase 4 — each a user halt that reports what it left written. The 
 3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-split`, `phase: brd-to-prd`, `role: pm`, the
    run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only
    notice).
-4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry above, and before
+4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry above, and before
    the commit step below. Redact per §1. Silent.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run, or, where Phase 7's *Ground now* was confirmed, the last before the continuation, which cedes control (§4 allows exactly that). It stages ONLY the §2.1 bounded artifact paths
    inside `$SPECS_PATH`, commits `<BRD-KEY> Add dev-workflows session artifacts (/brd-split)` with

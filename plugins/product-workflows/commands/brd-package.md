@@ -9,6 +9,8 @@ Turn the decided BRD into a package a customer can actually review: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/brd-package` is the **BRD-to-PRD route's customer-packaging step** (PM phase) — it takes the register
 `/brd-interview` wrote and the `[C]` questions it held, attacks the package before the customer
 does, and renders a bundle for a reviewer with **a vanilla agent and nothing installed**. Its whole
@@ -420,7 +422,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
    whose slice holds unasked requirement defects that no customer review is owed. It names the one
    run that decides and says what that run does where neither test fires — it hands off nothing — so
    the operator is never sent there expecting work it will not do, the no-op offer
-   `workflows-core:next-phase-offer` exists to keep out of this route; and beside it, the grounding
+   `workflows-core:next-phase-offer`'s *PM — the BRD-to-PRD route* lane exists to keep out of this route; and beside it, the grounding
    pass that can make a round askable, and the plain fact that stopping is a legitimate outcome.
 
    Note what this gate does **not** require: a package with `[VD#n]` decisions and no `[C]` question
@@ -851,11 +853,11 @@ to. Then:
   neither the prompt, which must state the tier and the evidence sentence §3's table pairs with it,
   nor a returned review's own section 1, which is written against that sentence. Its vocabulary is closed, and holding it
   closed is **required rather than merely permitted**, which is why
-  `workflows-core:escalation-rules` names this picker among the arrays whose
+  `workflows-core:escalation-rules`'s *Closed-vocabulary pickers must normalise the free-text answer* section names this picker among the arrays whose
   free-text answer is normalised into their own vocabulary rather than written through. Nobody is
   trapped: that free-text option is always present, and an answer that lands on none of the listed
   values re-asks rather than inventing a value no consumer handles. No `(Recommended)` marker, and the reason is stated beside
-  the list per the `When no option is safe to recommend` guidance in `Skill(skill: "workflows-core:reference", args: "escalation-rules")`: which
+  the list per the `When no option is safe to recommend` guidance in `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`: which
   tier is right is not a judgement at all, it is a fact about what this customer can be given, and a
   marker would invite the run to ship at Full because Full is better.
 
@@ -1582,7 +1584,12 @@ path, and the condition is what the item printed beside it adds.
 
 ## Phase 10 — Next steps
 
-**First, print the delivery note in full, and the delivery-route item directly after it.** The offer
+**Load the lane before anything below is printed**: this phase's offer follows
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane, and its `<merge-clause>`
+resolves per that part's *resolution table* from the `Phase handoff:` outcome line this run's
+*Handoff* phase printed.
+
+**Then print the delivery note in full, and the delivery-route item directly after it.** The offer
 below asks whether to send the note, so the operator reads both before answering rather than after.
 The item states the route the *Render the delivery note* phase settled and why; on the archive
 route, the archive command with an absolute path (*Assemble the bundle*); on the repository route,
@@ -1633,7 +1640,7 @@ findings may be exactly right to send today or exactly right to hold, and only t
 which. The reason is stated here, beside the list, rather than folded into a conditional marker the
 orchestrator would then have to evaluate.
 
-Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")` — names only,
+Say plainly what remains, per `workflows-core:next-phase-offer`'s *PM — the BRD-to-PRD route* lane, loaded at the top of this phase — names only,
 never behaviour a command of its own owns: the round holding each `[C]` stays open until the
 customer's answer comes back and `/product-workflows:brd-reconcile` records it, or finds its question
 has stopped applying, and what happens between
@@ -1643,9 +1650,10 @@ customer has to answer.
 ### Context hygiene
 
 The resume pointer is written in the terminal cost phase, per
-`workflows-core:session-hygiene` §1. Re-packaging the same BRD after a
-correction? → run **`/compact`**. Moving to a different BRD or slice? → run **`/clear`**. Guidance
-only — nothing is auto-run.
+`workflows-core:session-hygiene` §1. Per the role-aware suggestion of
+`workflows-core:session-hygiene` §2: re-packaging the same BRD after a correction? → run
+**`/compact`**. Moving to a different BRD or slice? → run **`/clear`**. Guidance only — nothing is
+auto-run.
 
 ---
 
@@ -1697,7 +1705,7 @@ operator's own ruling on the customer's words. The one exception is a halt on a 
 3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-package`, `phase: brd-to-prd`, `role: pm`, the
    run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only
    notice).
-4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the commit
+4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the commit
    step below. Redact per §1. Silent.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. Stages ONLY the §2.1 bounded artifact paths inside
    `$SPECS_PATH`, commits `<BRD-KEY> Add dev-workflows session artifacts (/brd-package)` with no

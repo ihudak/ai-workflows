@@ -1,5 +1,19 @@
 # Escalation rules (shared)
 
+<!-- reference-parts
+part core always
+part pickers
+part stops
+part scan
+part branch-prefix
+part version-line
+part review needs=version-line
+alias core "§0" "A selection carries no text" "When no option is safe to recommend" "no option safe to recommend"
+alias stops "Set <VAR>"
+alias review "The offer to apply what a review leaves open" "A verdict that is not `BLOCK` spends neither"
+-->
+
+<!-- part: core -->
 Canonical `choices:` arrays for escalation decision points. Command bodies are authoritative; where
 `/document` and `/epics` differ for the same scenario, both variants are listed.
 
@@ -18,13 +32,13 @@ rule authored 136 duplicate options across 30 files and pushed 42 arrays past th
 while the file next to it insisted the arrays be presented verbatim — a rule the harness made
 unfollowable.
 
-**Two consequences, both of which the rest of this file now depends on:**
+**Two consequences, both of which the rest of `escalation-rules` now depends on:**
 
 1. **The free-text option is unconditional.** No array can decline it. A picker that used to protect
    a closed vocabulary by *omitting* the option cannot do that any more, and must handle the answer
-   instead — see the next section.
+   instead — see *Closed-vocabulary pickers must normalise the free-text answer*.
 2. **A fifth option must go somewhere else, not away.** Where an offer has more routes than four,
-   `${CLAUDE_PLUGIN_ROOT}/references/next-phase-offer.md`'s overflow rule applies: the prose carries
+   `${CLAUDE_PLUGIN_ROOT}/references/next-phase-offer.md`'s *overflow rule* applies: the prose carries
    every route, the array carries the likeliest, and the run says the list is longer than the prompt.
 
 **A selection carries no text.** Choosing an option returns its label and nothing else. An option
@@ -45,13 +59,15 @@ order, their wording, and the `(Recommended)` marker are not the orchestrator's 
 orchestrator that believes a different option is correct for this run says so in prose alongside the
 list — it never edits the list.**
 
-This rule binds every command in the family — this plugin's own and those of every plugin that depends on it — not only the ones documented below. It exists because a
+This rule binds every command in the family — this plugin's own and those of every plugin that depends on it — not only the ones `escalation-rules` documents. It exists because a
 `/document` run presented Phase 6.5's `["Run smoke-check (Recommended)", "Skip — use the manual table
 only", "Cancel"]` with the recommendation moved onto Skip, and the render gate was never exercised.
 
 There is no permitted adjustment. Under §0 an array's options are exactly what its phase wrote, and
 the free-text option is the harness's — neither is the orchestrator's to add to or take from.
+<!-- /part -->
 
+<!-- part: pickers -->
 ## Closed-vocabulary pickers must normalise the free-text answer
 
 A picker whose options are drawn from a **closed vocabulary another authority fixes** has no room for
@@ -112,7 +128,7 @@ pickers through which a customer's authority enters the decision register, and D
 silently is the one way that workflow could fabricate a mandate the customer never gave.** A free-text
 entry on a picker about what the customer decided is a box into which something that is neither their
 decision nor a refusal of it can be typed and then frozen as theirs — the exact route D14 closes,
-re-opened by an adjustment made in good faith against this file. A rule contradicted by its own
+re-opened by an adjustment made in good faith against `escalation-rules`. A rule contradicted by its own
 authority is not a rule, so the carve-out is written here, by name, rather than left to each command
 to assert against a reference that overrules it.
 
@@ -125,7 +141,9 @@ than in an option: `/brd-package`'s and `/brd-reconcile`'s walks both do.
 
 **This list is closed, and it is not a licence to prune elsewhere.** It marks where a free-text answer
 needs *normalising*, not where an array may be shortened; §0's cap binds every array equally.
+<!-- /part -->
 
+<!-- part: core -->
 ## The `(Recommended)` marker is unconditional
 
 **A `(Recommended)` marker applies whenever its list is shown.** A marker that carries its own
@@ -146,7 +164,7 @@ an edit to the list.** Where which option is recommended varies per showing, the
 placeholder the command substitutes — `/brd-split`'s Phase 4 walk writes `<recommended>` on each of
 its dispositions and resolves it, per row, to `(Recommended — <why>)` on one and to the empty string
 on the rest. That is substitution, exactly as `<BRD-KEY>` and `<merge-clause>` are substituted in
-the same strings (`references/next-phase-offer.md`), and it is the mechanism this section's first
+the same strings (`references/next-phase-offer.md`'s *Resolving this placeholder is not a rewording*), and it is the mechanism this section's first
 bullet asks for: the **command** evaluates the condition and prints a bare, reasoned marker, rather
 than printing the condition for the user to evaluate. What stays forbidden is the orchestrator
 deciding a marker belongs somewhere the command did not put a placeholder.
@@ -154,7 +172,7 @@ deciding a marker belongs somewhere the command did not put a placeholder.
 When no option is safe to recommend across the runs that reach a prompt, omit the marker and say so
 in prose beside the list (as `/document` Phase 5.6 does for its per-occurrence image review).
 
-This rule binds every command in the family — this plugin's own and those of every plugin that depends on it — not only the ones documented below.
+This rule binds every command in the family — this plugin's own and those of every plugin that depends on it — not only the ones `escalation-rules` documents.
 
 ## When a choice list fires
 
@@ -180,10 +198,13 @@ run continues on the stated resolution. It is the correct form wherever a phase 
 question with one plausible answer.
 
 This rule governs only *whether* a list is presented. Option wording, option order, and the
-`(Recommended)` marker are governed by the two rules above and are untouched by it.
+`(Recommended)` marker are governed by *Choice lists are presented verbatim* and
+*The `(Recommended)` marker is unconditional*, and are untouched by it.
 
-This rule binds every command in the family — this plugin's own and those of every plugin that depends on it — not only the ones documented below.
+This rule binds every command in the family — this plugin's own and those of every plugin that depends on it — not only the ones `escalation-rules` documents.
+<!-- /part -->
 
+<!-- part: stops -->
 ## key dir not found
 
 `choices: ["Re-enter key (you'll be prompted)", "Cancel"]`
@@ -231,8 +252,8 @@ without code, its array carries that run's own way on between the two options** 
 confirmed-mounted set (record the rest as open questions)*, `/epics` *Turn code scan off — produce
 Epic drafts from PRD content alone*, `/document` *Proceed without the repos — PRD-only for every
 repo*, `/release-notes` *PRD content only* — and no option is marked; `/design`, `/prd-ground` and
-`/brd-split`'s *Ground now* cannot run without code, and keep the two-option list. A citer not named for
-`REPOS_PATH` above requires `SPECS_PATH` alone (`/idea --ground-code` reads
+`/brd-split`'s *Ground now* cannot run without code, and keep the two-option list. A citer this rule
+does not name for `REPOS_PATH` requires `SPECS_PATH` alone (`/idea --ground-code` reads
 `${REPOS_PATH:-/workspace}` with its default and never stops on it; a `$DOCS_PATH` that does not
 resolve only skips documentation grounding, or, in `/document`, one rung of its docs-repository
 ladder, and stops nothing). **State the set by its
@@ -245,7 +266,17 @@ repository root. For `SPECS_PATH` it is a stop, not a degradation: there is no "
 it" option, because that path is where the run's inputs and outputs live. `REPOS_PATH` holds only
 code a run reads, which is why a citer whose run can go on without it offers that way on. Other
 commands reproduce the same two-option list inline without naming the rule; a citer that names the
-rule uses the list written here, save the `REPOS_PATH` way on above.
+rule uses the list written here, save the `REPOS_PATH` way on, which this rule gives a citer whose run
+can go on without code.
+<!-- /part -->
+
+<!-- part: scan -->
+## Repo resolution — specifying a different absolute path
+
+In every *Repo unresolved (zero matches)* variant, and in *Repo missing (after resolution)*,
+*Specify a different absolute path for this repo* is followed by one plain-text question for the
+path, which the citing command takes as that repo's clone the way its own text after the array says;
+a path that is not a directory is asked for again.
 
 ## Repo unresolved (zero matches) — /document
 
@@ -263,17 +294,12 @@ and reads a pull request only as the commits a merged one landed (`/document` Ph
 Used in `/epics` Phase 4 when a repo slug has zero matches in the
 slug→clone map.
 
-In every *Repo unresolved (zero matches)* variant, and in *Repo missing (after resolution)* below,
-*Specify a different absolute path for this repo* is followed by one plain-text question for the
-path, which the citing command takes as that repo's clone the way its own text after the array says;
-a path that is not a directory is asked for again.
-
 ## Repo unresolved (zero matches) — /prd-ground
 
 `choices: ["Skip and continue without this repo", "I'll clone it — wait", "Cancel", "Specify a different absolute path for this repo (you'll be prompted)"]`
 
 Used in `/prd-ground` Phase 1 step 3 when a repo the operator named has zero matches in the
-slug→clone map. Same options, same order as the `/epics` variant above; the first one drops
+slug→clone map. Same options, same order as *Repo unresolved (zero matches) — /epics*; the first one drops
 "'s scan" because this command grounds a claim against a repository rather than scanning one for
 capabilities, and skipping it leaves that repository's claims ungrounded rather than unscanned.
 
@@ -286,14 +312,14 @@ theme matches any mounted repo), in `/specify` Phase 3 step 1 when its candidate
 and in `/epics` Phase 4 when the final resolved repo list is empty (every repo was skipped or
 missing — "Use case B with no repos derivable"). The `— /epics` suffix on this heading is
 historical — `/epics` was its first citer — not a scope restriction; the rule serves every
-command whose repo set comes up empty this way, the three above among them, and any future
+command whose repo set comes up empty this way, `/idea`, `/specify` and `/epics` among them, and any future
 citer with the same empty-repo-set shape uses it too. *List repos to scan manually* is followed by one plain-text question for the
 repositories' names, each resolved as the citing command resolves a derived one.
 
 In `/prd-ground` Phase 1 step 4 the *Proceed without code scan* entry is omitted:
 `choices: ["List repos to check manually (you'll be prompted)", "Cancel"]`
 
-and *scan* reads *check*, for the reason the `— /prd-ground` heading above gives. The dropped
+and *scan* reads *check*, for the reason *Repo unresolved (zero matches) — /prd-ground* gives. The dropped
 option is not a shortening: grounding has nothing to check a claim against without at least one
 mounted repository, which is why that command already refuses to start with none
 (`/product-workflows:prd-ground` Phase 0 step 7) — an option offering to proceed anyway would name an
@@ -314,7 +340,7 @@ which option is right depends entirely on why the repo is absent.
 
 ## Stashing the user's changes
 
-**Six stash choices run this procedure**: the Stash choice of § *Dirty working tree* below, and the
+**Six stash choices run this procedure**: the Stash choice of § *Dirty working tree*, and the
 "Stash … and continue" choices of the documentation commands that branch a repository they write
 into (`/document` Phase 6.2's two, `/docs-profile` Phase 5, `/docs-init` Phase 2.5 and `/docs-brand`
 Phase 7). `/implement` and `/upgrade` keep their own: each records a `stash_ref` that
@@ -352,7 +378,7 @@ Phase 7). `/implement` and `/upgrade` keep their own: each records a `stash_ref`
 
 Used in `/document` Phase 5 when a diff-summarizer returns `DIRTY_TREE`. `/create-ard`, `/design`,
 `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without reproducing the list,
-so per the "Choice lists are presented verbatim" convention above they use the list written under
+so per the "Choice lists are presented verbatim" convention they use the list written under
 this heading; `/epics` (Phase 5) and `/specify` (Phase 4) reproduce the same list inline. **`/docs-audit`
 reproduces a list without the second choice**, and says why: its coverage denominator is a claim
 about the product as it ships. A new citer that reproduces a list inline states which one it uses.
@@ -362,7 +388,7 @@ pushes or discards them.** Each choice does exactly this, and **the answer holds
 run**: a later dispatch to the same repository — a second scan round — is made the way the answer
 left it, and asks nothing, save a Stash that stashed nothing (§ *Stashing the user's changes* step 1).
 
-- **Stash changes and retry this repo** — stash per § *Stashing the user's changes* above, then
+- **Stash changes and retry this repo** — stash per § *Stashing the user's changes*, then
   re-dispatch the agent for this repo unchanged.
 - **Use the checkout as it stands — no fetch, switch or pull** — re-dispatch the agent for this repo
   with its refresh off: `code-scanner` with `refresh.pull` and `refresh.switch_to_default_branch`
@@ -376,7 +402,9 @@ left it, and asks nothing, save a Stash that stashed nothing (§ *Stashing the u
   `<repo>: read without a fetch`.
 - **Skip this repo** — the run goes on without it, and its report names the repository skipped.
 - **Cancel** — the run ends, naming any stash it took.
+<!-- /part -->
 
+<!-- part: branch-prefix -->
 ## Branch prefix undetected
 
 `choices: ["Use `<fallback>` (default for this command)", "Use my initials (you'll be prompted for them)"]`
@@ -388,14 +416,16 @@ Used by every branch-creating command (`/implement`, `/document` (keyed mode onl
 `"This repo's documented convention starts the branch with your name or initials, and I couldn't infer one. Enter your initials (lowercase; 2–8 characters from [a-z0-9-], starting with a letter or digit, e.g. `iv-gu` or `ivgu`), or type `cancel`:"`
 
 A `cancel` answer — or a blank one, where the host sends it — ends the run before any branch is created, as *Cancel* does elsewhere. After *Use my initials*, prompt for the value with: `"Enter your initials (lowercase; 2–8 characters from [a-z0-9-], starting with a letter or digit, e.g. `iv-gu` or `ivgu`):"`. Either way, then suggest, without persisting, `GIT_USER_INITIALS` or `git config --global user.initials`.
+<!-- /part -->
 
+<!-- part: scan -->
 ## Refresh blocked
 
 `choices: ["Continue with current local state", "Skip this repo", "Cancel"]`
 
 Used in `/document` Phase 5 when a diff-summarizer returns `REFRESH_BLOCKED`. `/create-ard`, `/design`,
 `/docs-audit`, `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without
-reproducing the list, so per the "Choice lists are presented verbatim" convention above they use the
+reproducing the list, so per the "Choice lists are presented verbatim" convention they use the
 list written under this heading; `/epics` (Phase 5) and `/specify` (Phase 4) reproduce the same list
 inline. A new citer that reproduces a list inline states which one it uses.
 
@@ -407,8 +437,10 @@ Used when `code-scanner` or `diff-summarizer` returns `prep.read_only: true` **a
 
 A read-only mount is not a failure and does not use the `Refresh blocked` list: the scan proceeds at `prep.scanned_ref`. This prompt exists only because the container cannot fetch, so refreshing the clone is an action only the user can take on the host.
 
-The condition gates the prompt, so the `(Recommended — <why>)` reason annotation is well-formed under the rules at the top of this file.
+The condition gates the prompt, so the `(Recommended — <why>)` reason annotation is well-formed under *The `(Recommended)` marker is unconditional*.
+<!-- /part -->
 
+<!-- part: version-line -->
 ## A recorded verdict names the version it was taken against
 
 **The review cap assumes a fix cycle only removes defects, and three live runs proved otherwise.** On
@@ -438,11 +470,12 @@ cap trades one unreviewed version for a later one and has no fixed point, since 
 find something the previous fix introduced. What actually costs the reader is not the unreviewed
 edit — a run has to stop somewhere — but believing the verdict covers it. Saying which version it
 covers costs nothing, cannot itself introduce a defect, and leaves the decision about the residue
-where it belongs — with the user, whom the next section asks. **Where no edit followed the verdict,
+where it belongs — with the user. **Where no edit followed the verdict,
 say that too**, so a clean run reads as checked rather than as unreported. A run whose verdict was
-not `BLOCK` has not spent the cap, and the section after the next offers it the re-review the cap
-still holds.
+not `BLOCK` has not spent the cap. Two offers can follow a review, each under a rule of its own that part `review` holds and that names the commands making it: *Findings a review leaves open — the offer to apply them*, which puts the residue to the user, and *Edits after a verdict that is not BLOCK — the unspent re-review*, which offers the re-review the cap still holds.
+<!-- /part -->
 
+<!-- part: review -->
 ## Findings a review leaves open — the offer to apply them
 
 **A finding the gate does not fix is a defect the run knows of, and shipping it is the user's
@@ -455,14 +488,15 @@ only in its final report, after the pull request was open, that it had to be fix
 The user merged, and the fix took a second pull request.
 
 **So, after each review the gate takes whose verdict is not `BLOCK` — the first review or the
-re-review, or one the run goes on from as from such a verdict at a triage settle prompt's
-**Proceed** — and before whatever follows it, where it leaves open at least one finding whose fix is only an edit, offer once to apply them:**
+re-review, or, where the command triages, one the run goes on from as from such a verdict at a
+triage settle prompt's **Proceed** (`workflows-core:finding-triage` § When triage empties the
+survivor set, § On re-review) — and before whatever follows it, where it leaves open at least one finding whose fix is only an edit, offer once to apply them:**
 
 `choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]`
 
 The question lists each with its severity and says whether a re-review remains. **Left open** means
-not applied, not overridden and not dismissed; a finding triage marked unverified is never applied
-(`finding-triage.md`), here as anywhere; and the re-review's offer carries every finding of the first
+not applied, not overridden and not dismissed; where the command triages, a finding its triage
+marked unverified is never applied (`workflows-core:finding-triage` § The step), here as anywhere; and the re-review's offer carries every finding of the first
 review still open beside its own. A finding whose fix needs a decision the run does not have is no
 edit: a command that settles such decisions as it applies (`/create-prd`, `/update-prd`,
 `/create-ard`) puts it to the user one question at a time, as the grill asks, and every other records it where *A finding left open that needs a decision is recorded in the artifact* (below) names the command, and otherwise lists it in the final report and the pull request. A free-text
@@ -489,10 +523,12 @@ re-review, never after its review of the Phase 3.5 delta, whose edits would foll
 settle prompt's **Proceed** settles as not `BLOCK` before any fixer ran, so the no-fixed-point argument
 above reaches neither. A run that edits the reviewed artifact in answer to such a verdict's
 findings — a first review's findings the user chose to apply at the offer above, or the fixer pass a command dispatches over them — still holds the cap's one re-review, and handing off without offering it ships edited text
-unreviewed for no reason the cap gives. A live `/create-prd` run is the case: `PASS WITH
-RECOMMENDATIONS` with four `MAJOR` findings, two of them acceptance criteria contradicting each
-other; the user applied every finding, criteria were merged and renumbered, and the text went to
-its pull request with only the version line above to say the verdict predated it.
+unreviewed for no reason the cap gives.
+
+A live `/create-prd` run is the case: `PASS WITH RECOMMENDATIONS` with four `MAJOR` findings, two of
+them acceptance criteria contradicting each other; the user applied every finding, criteria were
+merged and renumbered, and the text went to its pull request with only the version line above to say
+the verdict predated it.
 
 **So, before the step that follows the review gate, offer it once** — the handoff in most adopters,
 step 7.5 in `/implement`, whose tests still run on either answer:
@@ -502,13 +538,14 @@ step 7.5 in `/implement`, whose tests still run on either answer:
 `<artifact>` names what was reviewed — `prd.md`, `ard.md`, `specification.md`, `design.md`,
 `proposal.md`, the Epic drafts, the pages written, the code change. The offer is made where all
 three hold: the verdict was not `BLOCK`, or was settled as not `BLOCK` at a triage settle prompt's
-**Proceed**, as the offer above counts such a verdict; the run has not re-reviewed this artifact; and
-an edit answering the verdict's findings followed it. An edit of any other kind — a style
-pass, a resumed verify step — stays under the reporting rule above and makes no offer.
+**Proceed**, as *Findings a review leaves open — the offer to apply them* counts such a verdict; the
+run has not re-reviewed this artifact; and an edit answering the verdict's findings followed it. An
+edit of any other kind — a style pass, a resumed verify step — stays under the reporting rule above
+and makes no offer.
 
 - **Taken**, it is the cap's one re-review. Dispatch it as the command dispatches its re-review after
   a `BLOCK` — with the fixer's report as `claims_file` where the command passes one there — and
-  triage it where the command triages its re-review (`finding-triage.md` § On re-review). A `BLOCK`,
+  triage it where the command triages its re-review (`workflows-core:finding-triage` § On re-review). A `BLOCK`,
   or, where the command triages, a review that **stayed blocked**, is handled as the command handles
   one after its fix cycle — its own `Review verdict BLOCK (unresolved after one fix cycle)` rule
   below, or `/implement`'s stayed-blocked stop; any other verdict, or **Proceed** at a settle prompt,
@@ -627,14 +664,14 @@ own open questions must be resolved before its gate passes, so a finding it leav
 
 `choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in the final report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]`
 
-Used by the commands that fix their own reviewer's findings inline, with no delegated writer — `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and `/brd-proposal` — when the one re-review returns `BLOCK`, whether it followed a `BLOCK`'s fix cycle or was the unspent re-review offered after a verdict that was not (above); for `/prd-proposal` and `/brd-proposal`, which triage their re-review, when the review stayed blocked (`finding-triage.md` § On re-review).
+Used by the commands that fix their own reviewer's findings inline, with no delegated writer — `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and `/brd-proposal` — when the one re-review returns `BLOCK`, whether it followed a `BLOCK`'s fix cycle or was the unspent re-review offered after a verdict that was not (*Edits after a verdict that is not BLOCK — the unspent re-review*); for `/prd-proposal` and `/brd-proposal`, which triage their re-review, when the review stayed blocked (`workflows-core:finding-triage` § On re-review). The other five do not triage their re-review, so their re-review's `BLOCK` verdict itself is what takes this rule.
 Escalate per unresolved BLOCKER individually. "Manual fix notes" → take free-text from the user and apply it inline in one bounded pass, with no further re-review, reading it first per `An inline fix is read against what it overlaps`. "Defer" → record the finding as deferred in the run's final report; `/specify` also appends it to a `## Refinement notes` section of `specification.md`, as one plain `- ` bullet per finding. Never a `- [ ]` item there: `pre-lint` counts every `- [ ]` in the file against the header's `Open questions` count, while `specification-format.md` counts only those under its Open questions sub-headings, so a checkbox in the notes would put the two at odds. "Override" → ask for the user's rationale in plain text and record the finding, with it, in the run's final report. "Cancel" aborts the run.
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — /document
 
 `choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]`
 
-Used in `/document` Phase 7 at either of two points: when `doc-fixer` returns `Stop condition flag: NEEDS HUMAN` — it deferred a BLOCKER as needing a human decision, so no re-review runs — or when the review stayed blocked (`finding-triage.md` § On re-review).
+Used in `/document` Phase 7 at either of two points: when `doc-fixer` returns `Stop condition flag: NEEDS HUMAN` — it deferred a BLOCKER as needing a human decision, so no re-review runs — or when the review stayed blocked (`workflows-core:finding-triage` § On re-review).
 Escalate per unresolved BLOCKER individually. "Override" asks for the rationale in plain text, which
 `/document` records with the finding in `### Deferred items`.
 
@@ -642,10 +679,11 @@ Escalate per unresolved BLOCKER individually. "Override" asks for the rationale 
 
 `choices: ["Provide manual fix notes (you'll be prompted)", "Defer to a follow-up issue (record in Phase 9 report)", "Override and accept the finding (you'll be prompted for the rationale)", "Cancel the whole run"]`
 
-Used in `/epics` Phase 7 at either of two points: when `doc-fixer` returns `Stop condition flag: NEEDS HUMAN` — it deferred a BLOCKER as needing a human decision, so no re-review runs — or when the review stayed blocked (`finding-triage.md` § On re-review).
+Used in `/epics` Phase 7 at either of two points: when `doc-fixer` returns `Stop condition flag: NEEDS HUMAN` — it deferred a BLOCKER as needing a human decision, so no re-review runs — or when the review stayed blocked (`workflows-core:finding-triage` § On re-review).
 Escalate per unresolved BLOCKER individually. "Override" asks for the rationale in plain text, which
 the Phase 9 report records with the finding. "Defer" means the finding goes
 into an Epic-refinement note in the draft itself (appended as a
 `## Refinement notes` section, one plain `- ` bullet per finding) in addition to the Phase 9 report;
 a deferred finding whose fix needs a decision also becomes a marker in the Epic (*A finding left
 open that needs a decision is recorded in the artifact*).
+<!-- /part -->

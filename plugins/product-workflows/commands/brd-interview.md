@@ -9,6 +9,8 @@ Turn the grounded BRD into a decided one, one round at a time: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 `/brd-interview` is the **BRD-to-PRD route's decision step** (PM phase) — it takes the verified
 findings `/prd-ground` produced and the fully-allocated ledger `/brd-split` left behind, and works
 the BRD's open questions to recorded decisions. Its whole discipline is one rule: **every question
@@ -1464,7 +1466,7 @@ choices: ["It puts again <candidate id> — <its statement>", "It puts again <ne
 
 One entry per candidate, **up to three**, and the `None` entry last, always; where one candidate
 exists the array is two entries. **Past three candidates, the overflow rule applies**
-(`workflows-core:next-phase-offer`): the prose lists every one, the array carries the three whose
+(`Skill(skill: "workflows-core:reference", args: "next-phase-offer overflow")`, the *overflow rule*): the prose lists every one, the array carries the three whose
 `statement` is closest to the question's, and the harness's free-text option reaches the rest. A
 free-text answer is normalised to one candidate's id or to `None`, and re-asked where it names
 neither — never written through. The answer is held, and *Write the register and the round record*
@@ -1766,7 +1768,7 @@ which reaches it by that field when the prerequisite's decision moves
 kind that names an id its reconciliation changed.
 
 **This picker's vocabulary is closed, and holding it closed is required here rather than merely
-permitted.** `workflows-core:escalation-rules` names this picker among the arrays
+permitted.** `workflows-core:escalation-rules`'s *Closed-vocabulary pickers must normalise the free-text answer* section names this picker among the arrays
 whose free-text answer is normalised into their own vocabulary rather than written through — the
 harness supplies that option on every array and no picker can decline it, so the discipline is in
 what the run does with the answer, not in the array's shape. The rule being applied admits
@@ -2138,6 +2140,10 @@ its Phase 0 gate. `/brd-reconcile` is the command after that one and is not offe
 a review that has not been asked for yet, and offering it now would name a step out of order. So the
 honest offer is the state this run actually leaves behind.
 
+**Load the lane before anything below is computed or printed**: every list in this phase follows
+`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane, and each `<merge-clause>` in
+it resolves per that part's *resolution table* from this run's own `Phase handoff:` outcome line.
+
 **Compute the gate before printing the list, and compute every step of it.** `/brd-package` gates
 on the register in its Phase 0 step 6 and on content in steps 7 and 8, and an offer that evaluates
 some of them still hands the operator a run that stops on another. Apply each, **exactly as those
@@ -2244,8 +2250,8 @@ reading `covered-here` never counts — is still `unallocated`, and at least one
 `covered-here` (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5). This command's own
 gate has already found no row `unallocated`, so the covered-here test is the one left to read.
 
-The routes below, with `Stop here`, do not fit in the prompt's four slots in either case, so apply `workflows-core:next-phase-offer`'s
-overflow rule: print every route in prose, in the order below, then one line saying the list is
+The routes below, with `Stop here`, do not fit in the prompt's four slots in either case, so apply the *overflow rule* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the
+*PM — the BRD-to-PRD route* lane: print every route in prose, in the order below, then one line saying the list is
 longer than the prompt and that anything on it is reachable by typing it into the free-text option.
 Leave the PRD line out of both the prose and the array where the slice is not PRD-eligible, and say
 why. The array carries the forward routes first, as `/product-workflows:brd-reconcile`'s does, and
@@ -2282,7 +2288,7 @@ choices: ["Stop here — the reopened decision named above waits for the next ro
 
 **Five of the six lists carry no `(Recommended)` marker, and that omission is deliberate**, per
 the `When no option is safe to recommend` guidance in
-`Skill(skill: "workflows-core:reference", args: "escalation-rules")`: on `yes`, `rounds-unsettled`,
+`Skill(skill: "workflows-core:reference", args: "escalation-rules core")`: on `yes`, `rounds-unsettled`,
 `nothing-to-review` and its reopened-record list, which one is right depends entirely on what this round left behind.
 **`defects-unasked` is the exception and is well-formed rather than an inconsistency**: its list is
 shown only in its own state, and in it the marked step is the single one every path out goes through
@@ -2300,7 +2306,7 @@ advancing list does. Its
 reopened-record list carries none because stopping there is legitimate too: the record waits, named,
 until whoever owns the next round runs it.
 
-`<merge-clause>` in these lists is the placeholder `workflows-core:next-phase-offer` resolves from
+`<merge-clause>` in these lists is the placeholder that `workflows-core:next-phase-offer`'s *resolution table*, loaded at the top of this phase, resolves from
 this run's own `Phase handoff:` outcome line; it is never written as an unconditional "once the pull
 request above is merged", because the no-new-round path reaches the handoff with nothing to commit
 wherever the register was already on file, and then opens no pull request. **The lists that name
@@ -2310,7 +2316,7 @@ can hold it up and there is no wait to state. **The `defects-unasked` re-open, a
 for the same reason**: this command gates on `grounding/code-grounding.md` (*Resolve inputs and gate the
 grounded BRD*, step 6), which this run never writes either.
 
-Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer")` — names only,
+Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane — names only,
 never behaviour a command of its own owns: a round still holding a `[C]` stays open, because the
 answer arrives through a package and is recorded by `/product-workflows:brd-reconcile` once it comes
 back — or that command finds the question has stopped applying. A
@@ -2326,9 +2332,9 @@ set could not be read — because until that changes no slice can tell whether t
 The resume pointer is written in the terminal cost phase, per
 `workflows-core:session-hygiene` §1. Working another round of the same BRD, or
 going on to `/product-workflows:brd-package <BRD-KEY>`? Both stay in the PM lane
-(§2's *Same role* bullet) → run **`/compact`**. Moving to a different BRD or slice? → run **`/clear`**.
+(`workflows-core:session-hygiene` §2's *Same role* bullet) → run **`/compact`**. Moving to a different BRD or slice? → run **`/clear`**.
 **Where the `nothing-to-review` list offers the authoring ladder, it spans roles, so print both
-branches** (§2's *Next options span both* bullet): authoring this slice's PRD yourself as PM
+branches** (`workflows-core:session-hygiene` §2's *Next options span both* bullet): authoring this slice's PRD yourself as PM
 (`/product-workflows:create-prd <BRD-KEY>`)? → run **`/compact`**. Handing on to PA
 (`/product-workflows:create-ard <BRD-KEY>`) or PE (`/product-workflows:specify <BRD-KEY>`), even
 when the same person does it? → run **`/clear`**; those runs read the slice folder from the specs
@@ -2383,7 +2389,7 @@ this command reports correctly, not a capability it lacks. The one exception is 
 3. **Session cost (ALWAYS runs).** **Under `run_flags.skip_costs`**, do not call `emit-cost` and do not load `cost-emission`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) instead, which advances the checkpoint and drops any deferred record, and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). The resume-pointer write and the terminal `commit-artifacts` step below run unchanged either way. Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call its `emit-cost` entry point with `command: /brd-interview`, `phase: brd-to-prd`, `role: pm`, the
    run's `key`, `source`, and `plugin_version`. Surface the persisted path (or the report-only
    notice).
-4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the commit
+4. **Write the resume pointer.** Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the commit
    step below. Redact per §1. Silent.
 5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. Stages ONLY the §2.1 bounded artifact paths inside
    `$SPECS_PATH`, commits `<BRD-KEY> Add dev-workflows session artifacts (/brd-interview)` with no

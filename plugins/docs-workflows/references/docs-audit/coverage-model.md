@@ -2,6 +2,8 @@
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 Single source of truth for the vocabulary a documentation audit is built on: what a **surface** is and where each kind comes from (§2), what a page's **type** is and what the coverage grid is a grid of (§3), which quadrant does not automate (§4), the four **prioritisation signals** and the one guard on them (§5), how a **unit** enters the backlog (§6), and what **done** means (§7).
 
 Consumed by `/docs-audit` and by the agents it dispatches — `docs-auditor`, `ia-planner` and `docs-audit-reviewer` — each of which names the part of this file it is executing rather than restating it. These names are defined once, here; a command or agent body that re-derives them is the defect this file exists to prevent, because two copies of a vocabulary drift and then disagree about what a run produced.
