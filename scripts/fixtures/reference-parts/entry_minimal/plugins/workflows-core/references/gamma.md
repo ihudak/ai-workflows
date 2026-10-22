@@ -18,14 +18,14 @@ Scope: the steps a run takes before it reads a deliverable.
 
 ## 2. `make-it` — the producer entry point
 
-Make the deliverable and hand it off.
+Make the deliverable and hand it off, as described below.
 
 <!-- entry: check-it -->
 ## 3. `check-it` — the entry point
 
 ### 3.1 Gate
 
-Run before any expensive work.
+Run before any expensive work, and after the rule above.
 
 ### 3.2 The state table
 

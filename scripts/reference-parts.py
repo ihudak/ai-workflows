@@ -78,9 +78,14 @@ its file holds whole. A § is the number a heading opens with (`## 3. ...`, `###
 it covers its subsections: `3` covers `3.1` to `3.7`, and the section runs to the next heading
 that is neither numbered under it nor an unnumbered one deeper than its own. `partial <entry>
 <§> "<phrase>" ...` names a section the file holds in part, with phrases that identify the held
-text. Regions never nest and never close inside a fenced block, and the markers take the
-`part` regions' exact form with `entry` for `part`. A line outside every region belongs to no
-entry file: unlike a split reference, a line needs no region. `generate` writes
+text. A section held whole is declared once, its subsections with it: no other § of its entry,
+held whole or in part, is it or lies under it, and no § held in part has it under it; one § held
+in part under another is allowed. Regions never nest and never close inside a fenced block, and
+the markers take the `part` regions' exact form with `entry` for `part`. A line outside every
+region belongs to no entry file: unlike a split reference, a line needs no region. A region line
+inside a numbered section lies inside one its entry holds whole or in part, so the line under
+the file's title names every section the file holds text of; a line before the first numbered
+heading is in no section and free. `generate` writes
 plugins/workflows-core/reference-parts/<ref>/<entry>.md for each entry point: the header line
 and the `${CLAUDE_PLUGIN_ROOT}` sentence a part file carries; the title `# <H1> — entry point
 <entry>`; under it the line `This file holds entry point `check-it` of `gamma`: §1 and §3, and
@@ -95,14 +100,19 @@ one directory deeper, where it would not resolve), and freshness -- it regenerat
 and compares byte for byte, so a source edited without `generate` fails, naming the file.
 A positional pointer inside a part ("above", "below", "the next section") is printed as
 `FLAG <file>:<line>: <word>` and does not fail: whether it crosses a part boundary is a
-reading's call, not a pattern's. On an entry-point declaration it fails on a block out of place,
-unclosed or carried twice, a malformed line or marker, an entry declared twice, a partial line
-naming an undeclared entry, a nested region, one closed inside a fenced block or one naming no
-declared entry; on an entry that is no entry point of its reference; on a § no heading opens
-with; on a non-blank line of a section held whole that lies in no region of its entry; on a
-phrase of a section held in part that no region text of its entry inside that section holds,
-phrase and text each normalised as the rule index normalises names; and on an entry-point file
-that is stale, missing or produced by no declaration.
+reading's call, not a pattern's. A positional pointer inside an entry region prints the same
+FLAG line and does not fail either, since an entry-point file too holds only some of its
+reference's text. On an entry-point declaration it fails on a block out of place, unclosed or
+carried twice, a malformed line or marker, an entry declared twice, a partial line naming an
+undeclared entry, a section held whole declared beside one it is, lies under or has under it, a
+nested region, one closed inside a fenced block or one naming no declared entry; on an entry
+that is no entry point of its reference; on a § no heading opens with; on a non-blank line of a
+section held whole that lies in no region of its entry; on a region line inside a numbered
+section its entry neither holds whole nor holds in part; on a phrase of a section held in part
+that no region text of its entry inside that section holds, phrase and text each normalised as
+the rule index normalises names; and on an entry-point file that is stale, missing or produced
+by no declaration. Its PASS line counts the split references, the entry-point files and every
+generated file.
 
 `check-citations` gates the callers: the split list in the loader skill equals the declared
 set; where any entry point is declared, a paragraph of the loader skill opens with `These entry
@@ -326,6 +336,7 @@ class Source:
         self.name, self.rel = name, rel
         self.title = None
         self.errors = []     # declarations, regions, coverage, and the rest each kind checks
+        self.flags = []      # FLAG lines: a positional pointer in text a generated file holds
 
     def err(self, line, msg):
         self.errors.append("%s%s: %s" % (self.rel, ":%d" % line if line else "", msg))
@@ -336,7 +347,6 @@ class Ref(Source):
         super().__init__(name, rel)
         self.parts = {}      # declaration order
         self.link_errors = []
-        self.flags = []
         self.index = {}      # norm -> part, every part (uniqueness)
         self.entries = []    # [(display, part)] for the public index, in index order
 
@@ -641,6 +651,28 @@ def parse_entry_source(root: Path, path: Path):
         else:
             ref.entries[entry].partial.setdefault(sec, []).extend(phrases)
             partial_at.setdefault((entry, sec), n)
+    # A section held whole is declared once, its subsections with it: no other § of its entry, held whole
+    # or in part, is it or lies under it, and no § held in part has it under it.
+    def within(inner, outer):
+        return inner == outer or inner.startswith(outer + ".")
+    tail = " -- a section held whole is declared once, its subsections with it"
+    for entry, decl in ref.entries.items():
+        for j, sec in enumerate(decl.holds):
+            other = next((o for o in decl.holds[:j] if within(sec, o) or within(o, sec)), None)
+            if other == sec:
+                ref.err(decl.line, "entry '%s' holds §%s whole twice%s" % (entry, sec, tail))
+            elif other:
+                outer, inner = (other, sec) if within(sec, other) else (sec, other)
+                ref.err(decl.line, "entry '%s' holds §%s whole, which covers §%s, held whole too%s"
+                        % (entry, outer, inner, tail))
+        for sec in decl.partial:
+            for held in dict.fromkeys(decl.holds):
+                if within(sec, held):
+                    ref.err(partial_at[(entry, sec)], "entry '%s' holds §%s whole, which covers §%s, held in part too%s"
+                            % (entry, held, sec, tail))
+                elif within(held, sec):
+                    ref.err(partial_at[(entry, sec)], "entry '%s' holds §%s in part, which covers §%s, held whole too%s"
+                            % (entry, sec, held, tail))
     if ref.errors:
         return ref
 
@@ -655,8 +687,10 @@ def parse_entry_source(root: Path, path: Path):
             ref.entries[entry].regions.append((first, last))
             owner.update((k, entry) for k in range(first, last + 1))
         elif event[0] == "line":
-            _, n, line, _entry, fenced = event
+            _, n, line, entry, fenced = event
             body[n] = line
+            if entry is not None:
+                ref.flags += ["FLAG %s:%d: %s" % (rel, n, m.group(0)) for m in POSITIONAL.finditer(line)]
             h = None if fenced else HEADING.match(line)
             if h and h.group(2):
                 num = HEADING_NUMBER.match(h.group(2))
@@ -678,6 +712,18 @@ def parse_entry_source(root: Path, path: Path):
             if gap:
                 ref.err(gap[0], "§%s is held whole by entry '%s', but this line of it lies in no `%s` region%s"
                         % (sec, entry, entry, more(gap)))
+        # Every region line inside a numbered section lies inside one the entry holds whole or in part,
+        # so the line under the file's title names every section the file holds text of; a line in no
+        # numbered section, before the first, is free.
+        spans, stray = [extent[s] for s in list(decl.holds) + list(decl.partial) if s in extent], {}
+        for first, last in decl.regions:
+            for k in range(first, last + 1):
+                inside = [s for s, (a, b) in extent.items() if a <= k <= b]
+                if body[k].strip() and inside and not any(a <= k <= b for a, b in spans):
+                    stray.setdefault(max(inside, key=lambda s: extent[s][0]), []).append(k)
+        for sec, at in stray.items():
+            ref.err(at[0], "this line of a `%s` region lies in §%s, which entry '%s' neither holds whole nor holds in "
+                           "part%s" % (entry, sec, entry, more(at)))
         # A section held in part: each phrase, normalised as a rule name is, is in this entry's region
         # text inside that section.
         for sec, phrases in ((s, p) for s, p in decl.partial.items() if s in extent):
@@ -707,8 +753,15 @@ def load_entries(root: Path):
 
 
 def entry_files(root: Path):
-    """{reference: {entry: EntryDecl}} for every declared entry point, as its source declares it."""
-    return {name: ref.entries for name, ref in load_entries(root).items()}
+    """{reference: {entry: EntryDecl}} for every declared entry point, as its source declares it, and {}
+    for a tree declaring none. It never returns a declaration it could not read whole: where any
+    reference's entry-point declaration fails a check check-parts makes on the source, it raises
+    ValueError naming every such problem, and the caller stops before judging anything against it."""
+    refs = load_entries(root)
+    problems = [e for r in refs.values() for e in r.errors]
+    if problems:
+        raise ValueError("entry-point declarations fail check-parts:\n" + "\n".join(problems))
+    return {name: ref.entries for name, ref in refs.items()}
 
 
 def load(root: Path):
@@ -974,7 +1027,8 @@ def cmd_check_parts(root, _verbose):
     entries = load_entries(root)
     problems = vacuous + source_problems(refs, entries)
     want, bad = expected_tree(refs)
-    want.update(entry_tree(entries))
+    made = entry_tree(entries)
+    want.update(made)
     # A reference whose source fails is not judged for freshness: generate refuses to run on
     # it, so its files cannot be repaired until the source is, and every one would be noise.
     bad |= {n for n, r in refs.items() if r.link_errors} | {n for n, r in entries.items() if r.errors}
@@ -992,14 +1046,14 @@ def cmd_check_parts(root, _verbose):
             problems.append("%s: no declaration produces it -- generate removes it" % rel)
     for p in problems:
         print("ERROR " + p)
-    for r in refs.values():
+    for r in list(refs.values()) + list(entries.values()):
         for f in r.flags:
             print(f)
     if problems:
         print("reference-parts check-parts: FAIL -- %d problem(s)" % len(problems))
         return 1
-    print("reference-parts check-parts: PASS -- %d split reference(s), %d generated file(s) fresh"
-          % (len(refs), len(want)))
+    print("reference-parts check-parts: PASS -- %d split reference(s), %d entry file(s), %d generated file(s) fresh"
+          % (len(refs), len(made), len(want)))
     return 0
 
 
@@ -1553,6 +1607,27 @@ def _no_file(rel):
     return check
 
 
+def _entry_files(want):
+    """A post-check: entry_files gives `want`, {reference: {entry: (holds, partial, regions)}}."""
+    def check(_fixture, root):
+        got = {r: {e: (d.holds, d.partial, d.regions) for e, d in es.items()} for r, es in entry_files(root).items()}
+        return None if got == want else 'entry_files gives %r, not %r' % (got, want)
+    return check
+
+
+def _entry_files_raise(*words):
+    """A post-check: entry_files raises ValueError naming each of `words`, never returning a declaration
+    that check-parts fails."""
+    def check(_fixture, root):
+        try:
+            got = entry_files(root)
+        except ValueError as e:
+            missing = [w for w in words if w not in str(e)]
+            return 'entry_files raised, but never named %s' % missing if missing else None
+        return 'entry_files returned %r on a declaration check-parts fails' % sorted(got)
+    return check
+
+
 def _unchanged(fixture, root):
     """A post-check: the run left the copy byte-identical to its fixture."""
     stack = [filecmp.dircmp(fixture, root)]
@@ -1568,12 +1643,14 @@ A = 'plugins/workflows-core/references/alpha.md'
 G = 'plugins/workflows-core/reference-parts'
 U = 'plugins/dev-workflows/commands/use.md'
 SK = 'plugins/workflows-core/skills/reference/SKILL.md'
+E = 'plugins/workflows-core/references/epsilon.md'
 CASES = [
     # The cited heading is an italic span wrapped across two lines and the preamble is
     # hard-wrapped, as command files are; pickers holds a fenced `# Resume` line, no heading; and
     # notes.md, which is not split, quotes the marker syntax in code spans.
     ('minimal', 'one always part, one part, one consumer citing it by heading', [
-        Step(['check-parts'], 0, ['check-parts: PASS'], errors=0, flags=0, post=[
+        Step(['check-parts'], 0, ['check-parts: PASS -- 1 split reference(s), 0 entry file(s), 3 generated file(s) fresh'],
+             errors=0, flags=0, post=[
             _order(G + '/alpha/pickers.md', ['# Alpha rules — part pickers', 'This file holds parts `core` and `pickers`.',
                                              '`${CLAUDE_PLUGIN_ROOT}` in this file']),
             _order(G + '/alpha/core.md', ['# Alpha rules — part core', 'This file holds part `core`.'])]),
@@ -2006,10 +2083,13 @@ CASES = [
     ]),
     # Entry-point files. Each tree is minimal's, with gamma, a reference that does not load by part,
     # declaring entry check-it: §1 and §3 whole, §4.0 in part. Its regions hold a scope line before §1,
-    # §1, §3 -- whose §3.2 holds a fenced `## 4.` line, no heading -- and §4.0's heading and its *Never
-    # infer* rule; §2 and the rest of §4 lie outside every region, so check-it.md holds neither.
+    # §1, §3 -- whose §3.1 says "above", flagged, and whose §3.2 holds a fenced `## 4.` line, no heading --
+    # and §4.0's heading and its *Never infer* rule; §2, whose "below" is in no region and never flagged,
+    # and the rest of §4 lie outside every region, so check-it.md holds neither.
     ('entry_minimal', 'an entry-point file holds its regions in source order, under its own title and holds line', [
-        Step(['check-parts'], 0, ['check-parts: PASS'], errors=0, flags=0, post=[
+        Step(['check-parts'], 0, ['FLAG plugins/workflows-core/references/gamma.md:28: above',
+                                  'check-parts: PASS -- 1 split reference(s), 1 entry file(s), 4 generated file(s) fresh'],
+             errors=0, flags=1, post=[
             _order(G + '/gamma/check-it.md',
                    ['# Gamma steps — entry point check-it',
                     'This file holds entry point `check-it` of `gamma`: §1 and §3, and in part §4.0 ("never infer"). Any '
@@ -2017,7 +2097,8 @@ CASES = [
                     '`${CLAUDE_PLUGIN_ROOT}` in this file', 'Scope: the steps', '## 1. Hard rules',
                     '## 3. `check-it` — the entry point', '## 4. Not a heading', '### 4.0 The downstream classes',
                     '*Never infer'],
-                   absent=['`make-it`', '## 4. Reporting', 'Each artifact is in one class', '<!--  entry'])]),
+                   absent=['`make-it`', '## 4. Reporting', 'Each artifact is in one class', '<!-- entry', '<!-- /entry']),
+            _entry_files({'gamma': {'check-it': (['1', '3'], {'4.0': ['never infer']}, [(9, 16), (24, 38), (44, 46)])}})]),
         Step(['check-citations'], 0, ['check-citations: PASS'], errors=0),
         Step(['generate'], 0, ['0 written, 0 removed'], errors=0, on_copy=True, post=[_unchanged]),
     ]),
@@ -2034,7 +2115,7 @@ CASES = [
                                   "workflows-core:gamma -- not the first word of a code span in any of its headings; its "
                                   "entry points: `make-it`"], errors=1),
         Step(['check-citations'], 1, ["plugins/workflows-core/references/gamma.md:4: entry 'nope' is not an entry point",
-                                      'fix the declarations first'], errors=1),
+                                      'fix the declarations first'], errors=1, post=[_entry_files_raise("entry 'nope'")]),
     ]),
     # gamma holds §3 whole, but a line of §3.2, after a fenced `## 4.` line, lies outside every region.
     ('entry_section_not_covered', 'a line of a section held whole outside every region of its entry fails', [
@@ -2052,6 +2133,18 @@ CASES = [
                                       'it reads "These entry points read their own file: `gamma check-it` and `gamma '
                                       'other`."'], errors=1),
     ]),
+    # entry_minimal's tree, its loader skill carrying no entry list at all.
+    ('entry_skill_list_missing', "a loader skill naming no entry point beside a declared one fails", [
+        Step(['check-citations'], 1, [SK + ': no paragraph opens with the entry list the declarations give, "These entry '
+                                           'points read their own file: `gamma check-it`." -- no paragraph opens with '
+                                           '"These entry points read their own file:"'], errors=1),
+    ]),
+    # gamma holds §3 whole and §2.6 in part; a check-it region starts in §2.5, neither held nor held in
+    # part, and runs on into §2.6, whose heading and owner-repo text it rightly holds.
+    ('entry_region_outside_sections', "a region line in a numbered section its entry declares neither way fails", [
+        Step(['check-parts'], 1, ["plugins/workflows-core/references/gamma.md:15: this line of a `check-it` region lies in "
+                                  "§2.5, which entry 'check-it' neither holds whole nor holds in part"], errors=1),
+    ]),
     # gamma opens a region inside another; delta closes one inside a fenced block; epsilon opens one
     # for an entry it never declared.
     ('entry_region_errors', 'a nested entry region, one closed inside a fence and one naming no declared entry', [
@@ -2064,7 +2157,9 @@ CASES = [
     ]),
     # gamma declares an entry twice, two malformed entry lines, a malformed partial line, a partial
     # for an entry it never declares and an unknown line; delta holds a § and declares a partial §
-    # that no heading of it opens with.
+    # that no heading of it opens with; epsilon declares a section held whole beside one it overlaps --
+    # §1 twice, §3 and its §3.1, §3.2 in part under held §3, §1 in part as well as whole, and §2 in part
+    # over held §2.1 -- and, green beside them, §2.2 in part under §2 in part.
     ('entry_declaration_errors', 'every entry declaration-line defect is reported', [
         Step(['check-parts'], 1, ["plugins/workflows-core/references/gamma.md:5: entry 'check-it' is declared twice",
                                   'plugins/workflows-core/references/gamma.md:6: an entry line is `entry <entry> '
@@ -2080,7 +2175,13 @@ CASES = [
                                   'plugins/workflows-core/references/delta.md:4: §9 names no section of '
                                   'workflows-core:delta -- no heading opens with that number',
                                   'plugins/workflows-core/references/delta.md:5: §7 names no section of '
-                                  'workflows-core:delta -- no heading opens with that number'], errors=8),
+                                  'workflows-core:delta -- no heading opens with that number']
+             + [E + m + ' -- a section held whole is declared once, its subsections with it' for m in (
+                 ":4: entry 'check-it' holds §1 whole twice",
+                 ":4: entry 'check-it' holds §3 whole, which covers §3.1, held whole too",
+                 ":5: entry 'check-it' holds §3 whole, which covers §3.2, held in part too",
+                 ":6: entry 'check-it' holds §1 whole, which covers §1, held in part too",
+                 ":8: entry 'make-it' holds §2 in part, which covers §2.1, held whole too")], errors=13),
     ]),
 ]
 

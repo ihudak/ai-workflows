@@ -19,7 +19,7 @@ Scope: the steps a run takes before it reads a deliverable.
 
 ### 3.1 Gate
 
-Run before any expensive work.
+Run before any expensive work, and after the rule above.
 
 ### 3.2 The state table
 
