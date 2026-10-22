@@ -111,7 +111,7 @@ them is.
 
    **Two further prompts can appear, raised inside shared entry points this command executes rather
    than by the command itself, and neither can carry a question from the set** — because neither
-   entry point is ever handed one: `require-on-main`'s row-C repair offer (`workflows-core:phase-handoff` §3.3),
+   entry point is ever handed one: `require-on-main`'s row-C repair offer,
    which asks whether to switch the specs repo to its default branch, and `emit-cost`'s pending-file
    relocation confirmation (`workflows-core:cost-emission` §9), which asks where a cost entry should land. They
    are named so that "every prompt is enumerated" stays a checkable claim rather than one that
@@ -141,7 +141,7 @@ and nothing downstream can tell the difference afterwards.
    ```
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one,
-   the same ordering `/prd-ground` uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+   the same ordering `/prd-ground` uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or `workflows-core:specs-repo-git` §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run.
 5. **Resolve the BRD folder.** `resolve-address <BRD-KEY>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
    every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus §5's legacy fallback — and so can return any folder kind it finds there: a `BRD-` folder directly under `specifications/`, a `PRD-` folder (a slice inside a BRD, or an idea-route PRD folder), or an `EPIC-` folder inside a `PRD-` folder. Step 5a answers the level question on what it returns. Absent
@@ -210,7 +210,7 @@ and nothing downstream can tell the difference afterwards.
    it did not write, so per `workflows-core:phase-handoff` §5 rule 2 it executes
    `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) here, before anything else reads a file. Execute it against the resolved
    folder's `grounding/code-grounding.md` — the same file `/brd-split` gates, and for the same reason:
-   every deliverable one `handoff-to-main` run stages lands in a single commit (§2.3), so its presence
+   every deliverable one `handoff-to-main` run stages lands in a single commit, so its presence
    on `origin/<default>` implies `grounding/design-grounding.md` and `brd-link.md` merged with it — **That implication holds for a full `/prd-ground` run and not for a `--no-code` one**, whose `deliverable_paths` is `grounding/design-grounding.md` alone and lands in its own later commit — so a BRD can legitimately have `code-grounding.md` merged and `design-grounding.md` on no ref at all. Anything reading the design findings gates them separately rather than inheriting this sentence. And
    `/prd-ground`'s own gate on `coverage-ledger.md` had already run before those findings existed at
    all. Map the §3.7 return by `stopped` first: any stopping row → stop, naming the concrete branch/PR

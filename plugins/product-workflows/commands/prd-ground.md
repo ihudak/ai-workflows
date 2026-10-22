@@ -279,9 +279,9 @@ behaviour, not the behaviour.
      was written and lost —
      `/brd-split` writes a slice's inventory before its ledger (`commands/brd-split.md` Phase 3). Read the resolved folder's
      `brd-link.md` and branch on its `parent:` field: 5a's own legacy-fallback test lets a folder
-     that is not a slice through unrefused (`coverage-ledger-format.md` §5.1), so a folder reaching
+     that is not a slice through unrefused (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.1), so a folder reaching
      this branch is not always the slice step 5a would otherwise guarantee. Since product-workflows 3.7.0 `/brd-intake` writes the
-     inventory's header before it copies anything (`brd-format.md` §2); a folder an earlier intake
+     inventory's header before it copies anything (`${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §2); a folder an earlier intake
      left with `brd/source/` alone carries neither BRD file, and `/brd-intake` refuses it too, so the
      remedy is the same.
      - **No `brd-link.md`, or one with no `parent:`** — not a slice with a `<PARENT-KEY>` to read,
@@ -405,8 +405,7 @@ behaviour, not the behaviour.
      pull request. Where some *other* child is out of step, the bare run is live, but it reconciles
      that child and declares only the files it changes (its Phase 6), and this slice — in step, by
      the case that brought the run here — is not one of them. `handoff-to-main` stages only the paths *that* run declared, so the slice's
-     already-written files are OTHER to it
-     (`workflows-core:phase-handoff` §2.3) and can never reach main by that
+     already-written files, which that run did not declare, can never reach main by that
      route.
 
      **Every part of that condition matters, so the clause carries all of it.** A parent re-run is a

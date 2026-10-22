@@ -327,9 +327,9 @@ Usage: `/create-prd <ADDRESS> [@idea.md] [--from-prd <PRD-KEY|path>] [--lean|--h
    step 5b's Epic-folder refusal no more than they — and
    that is a fact about where they sit rather than an omission.** All of them are Phase 0 stops, taken before this run has a deliverable, a
    branch or a handoff — so there is no `Phase handoff:` outcome line
-   (`workflows-core:phase-handoff` §4.1) for a clause to resolve from, and every
+   for a clause to resolve from, and every
    command they name either runs no `require-on-main` gate at all (`/product-workflows:brd-intake`
-   consumes nothing — §5's caller table) or gates on artifacts **another** run wrote and already
+   consumes nothing) or gates on artifacts **another** run wrote and already
    merged. Phase 6 holds this
    command's only two placeholder sites — its choice array and the bullet that resolves it — and
    nothing on this route adds a third.

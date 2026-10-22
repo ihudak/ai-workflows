@@ -57,8 +57,10 @@ is one Read for every caller, and the model never assembles the always part itse
 
 AN ENTRY-POINT FILE is a second, narrower mechanism, for a reference that does NOT load by part:
 one entry point gets a generated file holding that entry point and the sections it needs. It
-has no rule index and no citation placement; every other request, and every citation, still
-means the whole file. A declaration block directly after the H1 line names each such entry
+has no rule index and no citation placement: every other request means the whole file, and so does
+every citation but one of a section the file holds made inside a `##` section that requests the
+entry point, which the loader serves from the file (OUT-OF-FILE CITATIONS, below). A declaration
+block directly after the H1 line names each such entry
 point, and region markers select the lines its file holds:
 
     # Gamma steps
@@ -178,6 +180,30 @@ fails check-parts. The census `placed N, whole M` is printed per reference, N co
 part a citation is placed on; `--verbose` lists each whole citation as
 `WHOLE <file>:<line>: workflows-core:<split>`.
 
+OUT-OF-FILE CITATIONS. Where an entry point is declared, check-citations holds the files it scans to
+what the loader serves from that entry point's file. The unit is a `##` section -- from a `##` heading
+outside a fenced block to the next heading of level 1 or 2 -- whose text requests a declared entry
+point, `args: "<ref> <entry>"`. There the loader serves a citation of a section the file holds from
+the file, before the request or after it, and reads the whole reference for any other; so each
+sentence of that section citing <ref> -- a `workflows-core:<ref>` token, a loader call or a path -- or
+carrying a § reference that belongs to a citation of <ref>, by the rule above, is judged by its own
+numbered § references of <ref>. Each passes where it lies under a § the entry holds whole, or is a §
+held in part and the sentence holds one of that section's phrases, each normalised as a rule name is;
+any other fails, `ERROR <file>:<line>: cites workflows-core:<ref> §<n>, which the <entry> file does not
+hold, in a section that reads only that file -- ...`. A sentence citing <ref> by no § reference of it,
+with no request of the entry point among its calls, cites no section and fails the same way, `with no
+section` for `§<n>`. A whole load of <ref> at or before the sentence in its section holds every §:
+`args: "<ref>"`, or a request of an entry point that has no file of its own, which the loader answers
+with the whole reference -- a sentence's calls are one load in any order, and a load after the sentence
+holds nothing. Before the first `##` section requesting an entry point in its file, a sentence citing
+<ref> by a token, a path or a call other than that request fails whatever § it names, unless its own
+calls load the whole reference: a run loads the whole reference there, ahead of the request, and the
+file then saves nothing. A § reference in a sentence citing nothing is not read there, since the
+citation it leans on is. A later section requesting nothing is not read at all: it reads the whole
+reference, as the loader says. The census `entry-point file <ref> <entry>: N request section(s), M
+citation(s) checked` counts the sections requesting each entry point and every sentence judged for it,
+a request's own included. A tree declaring no entry point runs none of this.
+
 IT FAILS CLOSED. A scan that finds no reference-parts declaration fails both subcommands, and a
 declared reference no consumer cites fails check-citations: a gate that matched nothing proves
 nothing when it passes. Entry-point files are outside that guard: a tree declaring none passes
@@ -197,7 +223,14 @@ part. And an explicit request whose sentence names no rule is placed on the part
 whichever that is, so a call converted to the wrong part passes there: each next-phase-offer
 lane request names its lane's rule in its sentence ("`next-phase-offer dev`, the *Dev — build,
 verify & deliver* lane"), so the gate places and pins it, but a request written without one
-is held by review alone.
+is held by review alone. The out-of-file check gives a § reference to a citation by that same
+position, so a § a sentence means as another reference's -- "emit its §5 notice" after a citation of
+<ref>, or a § after a bare `<name>.md`, which is no citation -- is judged as <ref>'s and fails where
+the file lacks it, and a § in a sentence citing nothing, with no citation before it in its paragraph,
+names nothing, so a bare pointer into <ref> there goes unread. It reads a § only by its number: one
+written as a name (`§ Stop contract`) is not read, so a sentence citing <ref> by such a name alone
+fails as citing no section. And whether a failing sentence only explains or applies a rule the file
+lacks is the reading's call, not the gate's: it fails both.
 
 Usage:
     python3 scripts/reference-parts.py [--root DIR] generate
@@ -1237,6 +1270,28 @@ def entry_points(path):
     return names
 
 
+def level2_sections(text):
+    """{line number: the line of the `##` heading whose section holds it, or None} -- a `##` section
+    runs to the next heading of level 1 or 2 outside a fenced block, and a line before the first `##`
+    heading, or under a `#` one, is in none."""
+    out, current, fences = {}, None, Fences()
+    for n, line in enumerate(text.splitlines(), 1):
+        h = None if fences.step(line) else HEADING.match(line)
+        if h and len(h.group(1)) <= 2:
+            current = n if len(h.group(1)) == 2 else None
+        out[n] = current
+    return out
+
+
+def holds_cited(decl, number, sentence):
+    """Whether an entry-point file holds §`number` for the sentence citing it: under a § it holds whole,
+    or a § it holds in part where one of that section's phrases is in the sentence, each normalised as
+    a rule name is."""
+    if any(number == h or number.startswith(h + ".") for h in decl.holds):
+        return True
+    return any(norm(p) in norm(sentence) for p in decl.partial.get(number, ()))
+
+
 def scan_files(root, rels):
     for rel in rels:
         for d in SCAN_DIRS:
@@ -1257,6 +1312,8 @@ def cmd_check_citations(root, verbose):
         print("reference-parts check-citations: FAIL -- %d problem(s); fix the declarations first" % len(problems))
         return 1
     split = sorted(refs)
+    declared = entry_files(root)   # never raises here: a failing declaration stopped the run above
+    entry_census = {(r, e): [0, 0] for r, es in declared.items() for e in es}   # request sections, citations
 
     # The loader skill names the declared set, and the declared entry points where there are any.
     skill = root / LOADER_SKILL_REL
@@ -1342,7 +1399,23 @@ def cmd_check_citations(root, verbose):
         rel = path.relative_to(root).as_posix()
         text = path.read_text(encoding="utf-8")
         cited = set()
-        for joined, at, table in blocks_of(text):
+        blocks = blocks_of(text)
+        # The out-of-file citation check's unit: each `##` section whose text requests a declared entry
+        # point, `args: "<ref> <entry>"`; `asked[ref]` maps each such section's heading line to the
+        # entries it requests, and `whole_in` holds each (ref, section) a whole load has been made in.
+        section_of, asked, whole_in = level2_sections(text), {}, set()
+        for joined, at, _ in blocks:
+            for m in CALL.finditer(joined):
+                toks, sec = m.group(1).split(), section_of.get(line_at(at, m.start()))
+                if len(toks) == 2 and toks[1] in declared.get(toks[0], ()) and sec is not None:
+                    asked.setdefault(toks[0], {}).setdefault(sec, set()).add(toks[1])
+        first_asked = {r: {e: min(s for s, es in secs.items() if e in es) for e in set().union(*secs.values())}
+                       for r, secs in asked.items()}
+        for r, secs in asked.items():
+            for es in secs.values():
+                for e in es:
+                    entry_census[(r, e)][0] += 1
+        for joined, at, table in blocks:
             groups = {}   # (sentence, ref) -> one citation: its line, the parts it requests, ...
             spans = sentences(joined, table)
 
@@ -1427,18 +1500,84 @@ def cmd_check_citations(root, verbose):
             cites.sort(key=lambda c: c[0])
             names = [[(a + o, rd, sec) for o, rd, sec in names_in(joined[a:b])] for a, b in spans]
 
-            def owner(s, offset):
+            def owner_of(s, offset):
+                """The citation a § reference at `offset` in sentence `s` belongs to, as (offset, the
+                split reference it cites or None, the reference file it resolves to); None for none."""
                 a, b = spans[s]
-                after = [(o, k, f) for o, k, f in cites if offset <= o < b]
+                after = [c for c in cites if offset <= c[0] < b]
                 if after:
                     named = OF_NAME.match(joined, offset, after[0][0])
                     if OF_NUMBER.match(joined, offset, after[0][0]) or (
                             named and is_section(after[0][1], after[0][2], named.group(1))):
-                        return after[0][1]
-                before = [k for o, k, f in cites if a <= o < offset]
-                earlier = [k for o, k, f in cites if o < a]
-                return (before[-1] if before else after[0][1] if after else
-                        earlier[-1] if earlier else NO_CITATION)
+                        return after[0]
+                before = [c for c in cites if a <= c[0] < offset]
+                earlier = [c for c in cites if c[0] < a]
+                return before[-1] if before else after[0] if after else earlier[-1] if earlier else None
+
+            def owner(s, offset):
+                c = owner_of(s, offset)
+                return NO_CITATION if c is None else c[1]
+
+            # The out-of-file citation check (the docstring's "OUT-OF-FILE CITATIONS"). In a `##` section
+            # requesting a declared entry point, the loader serves a citation of a section that entry's
+            # file holds from the file, and reads the whole reference for any other: so each sentence
+            # there citing the reference -- or carrying a § reference that belongs to a citation of it --
+            # is judged by its own § references, and passes where each is held, or where a whole load of
+            # the reference is made at or before it in the section. Before the first section requesting
+            # the entry point, a citation loads the whole reference ahead of the request, so a sentence
+            # citing it there fails unless it loads the whole reference itself.
+            here = at[0][1]
+            here_sec = section_of.get(here)
+            for r in sorted(asked):
+                inside = asked[r].get(here_sec)
+                early = [] if inside else sorted(e for e, first in first_asked[r].items() if here < first)
+                if not inside and not early:
+                    continue
+                rpath, decls = core_refs / (r + ".md"), declared[r]
+                for u, (a, b) in enumerate(spans):
+                    calls = [(m.start(), m.group(1).split()) for m in CALL.finditer(joined) if a <= m.start() < b]
+                    whole = any(t[0] == r and (len(t) == 1 or t[1] not in decls) and not t[-1].startswith("<")
+                                for _, t in calls if t)
+                    requests = {o for o, t in calls if len(t) == 2 and t[0] == r and t[1] in decls}
+                    ours = [c for c in cites if a <= c[0] < b and c[2] == rpath]
+                    if early:
+                        direct = [c for c in ours if c[0] not in requests]
+                        if not direct:
+                            continue
+                        for e in early:
+                            entry_census[(r, e)][1] += 1
+                        if not whole:
+                            problems.append("%s:%d: cites %s:%s before the first `##` section requesting %s, so a run "
+                                            "loads the whole reference ahead of that request -- load the whole reference "
+                                            "in this sentence, or reword it so it implies no load"
+                                            % (rel, line_at(at, direct[0][0]), CORE_NAME, r,
+                                               either(["%s %s" % (r, e) for e in early])))
+                        continue
+                    numbers = []   # (offset, §) of each numbered § reference belonging to a citation of r
+                    for offset, readings, section in names[u]:
+                        c = owner_of(u, offset) if section else None
+                        num = re.fullmatch(r"§(\d+(?:\.\d+)*)", readings[0]) if c and c[2] == rpath else None
+                        if num:
+                            numbers.append((offset, num.group(1)))
+                    if not ours and not numbers:
+                        continue
+                    for e in inside:
+                        entry_census[(r, e)][1] += 1
+                    if whole:
+                        whole_in.add((r, here_sec))
+                    if (r, here_sec) in whole_in:
+                        continue
+                    tail = (", which the %s file does not hold, in a section that reads only that file -- name a "
+                            "section it holds, load the whole reference at or before this sentence, or reword it so "
+                            "it implies no load" % " or ".join(sorted(inside)))
+                    said = set()
+                    for offset, n in numbers:
+                        if n not in said and not any(holds_cited(decls[e], n, joined[a:b]) for e in inside):
+                            said.add(n)
+                            problems.append("%s:%d: cites %s:%s §%s%s" % (rel, line_at(at, offset), CORE_NAME, r, n, tail))
+                    if ours and not numbers and not requests:
+                        problems.append("%s:%d: cites %s:%s with no section%s"
+                                        % (rel, line_at(at, ours[0][0]), CORE_NAME, r, tail))
 
             def read(name, s):
                 """The parts sentence `s` names rules of `name`'s in -- every span, and each §
@@ -1593,6 +1732,8 @@ def cmd_check_citations(root, verbose):
                 print("WHOLE %s: %s:%s" % (loc, CORE_NAME, n))
     print("entry-point requests on references that do not load by part: %d, %d distinct"
           % (len(entry_requests), len(set(entry_requests))))
+    for (r, e), (sections_n, cites_n) in entry_census.items():
+        print("entry-point file %s %s: %d request section(s), %d citation(s) checked" % (r, e, sections_n, cites_n))
     if problems:
         print("reference-parts check-citations: FAIL -- %d problem(s)" % len(problems))
         return 1
@@ -2238,6 +2379,59 @@ CASES = [
                  ":5: entry 'check-it' holds §3 whole, which covers §3.2, held in part too",
                  ":6: entry 'check-it' holds §1 whole, which covers §1, held in part too",
                  ":8: entry 'make-it' holds §2 in part, which covers §2.1, held whole too")], errors=13),
+    ]),
+    # The out-of-file citation check. Each tree is entry_minimal's -- check-it holds §1 and §3 whole and
+    # §4.0 in part by "never infer" -- with a consumer whose `## Phase 0` requests `gamma check-it` and
+    # whose Phase 1 cites alpha. In that section a sentence citing gamma is judged by its own § references.
+    ('entry_cite_held', 'a citation of a section the entry-point file holds, in the section requesting it, passes', [
+        Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 2 citation(s) checked',
+                                      'check-citations: PASS'], errors=0),
+    ]),
+    ('entry_cite_out_of_file', "a citation of a section the entry-point file lacks, in the section requesting it, fails", [
+        Step(['check-citations'], 1, [U + ":18: cites workflows-core:gamma §2.3, which the check-it file does not hold, in "
+                                          "a section that reads only that file -- name a section it holds, load the whole "
+                                          "reference at or before this sentence, or reword it so it implies no load",
+                                      'entry-point file gamma check-it: 1 request section(s), 2 citation(s) checked'],
+             errors=1),
+    ]),
+    ('entry_cite_partial_without_phrase', 'a section held in part, cited without its phrase, fails', [
+        Step(['check-citations'], 1, [U + ":18: cites workflows-core:gamma §4.0, which the check-it file does not hold, in "
+                                          "a section that reads only that file"], errors=1),
+    ]),
+    ('entry_cite_partial_with_phrase', 'a section held in part, cited with its phrase in the sentence, passes', [
+        Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 2 citation(s) checked',
+                                      'check-citations: PASS'], errors=0),
+    ]),
+    ('entry_cite_bare', 'a citation naming no section, in the section requesting the file, fails', [
+        Step(['check-citations'], 1, [U + ":18: cites workflows-core:gamma with no section, which the check-it file does "
+                                          "not hold, in a section that reads only that file"], errors=1),
+    ]),
+    # Phase 0: a whole load in an earlier paragraph, then §2.3. Phase 2, which requests check-it too: a
+    # request of the make-it entry point, which reads the whole reference, then §2.3 in the next sentence.
+    ('entry_cite_after_whole_load', 'a whole load at or before the citation in its section holds any section', [
+        Step(['check-citations'], 0, ['entry-point file gamma check-it: 2 request section(s), 6 citation(s) checked',
+                                      'check-citations: PASS'], errors=0),
+    ]),
+    ('entry_cite_before_whole_load', 'a whole load after the citation in its sentence order does not hold it', [
+        Step(['check-citations'], 1, [U + ":18: cites workflows-core:gamma §2.3, which the check-it file does not hold, in "
+                                          "a section that reads only that file"], errors=1),
+    ]),
+    ('entry_cite_other_section_unaffected', 'a citation in a later section that requests nothing is not judged', [
+        Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 1 citation(s) checked',
+                                      'check-citations: PASS'], errors=0),
+    ]),
+    # Before the first section requesting check-it, a citation of a held section loads the whole reference
+    # ahead of the request: red; with a whole load in its own sentence, green.
+    ('entry_cite_before_request_section', 'a citation before the first section requesting the file fails', [
+        Step(['check-citations'], 1, [U + ":13: cites workflows-core:gamma before the first `##` section requesting "
+                                          "`gamma check-it`, so a run loads the whole reference ahead of that request -- "
+                                          "load the whole reference in this sentence, or reword it so it implies no load",
+                                      'entry-point file gamma check-it: 1 request section(s), 2 citation(s) checked'],
+             errors=1),
+    ]),
+    ('entry_cite_before_request_whole_load', 'a citation before the first requesting section that loads the whole passes', [
+        Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 2 citation(s) checked',
+                                      'check-citations: PASS'], errors=0),
     ]),
 ]
 

@@ -205,7 +205,7 @@ write would re-ask a question already answered.
    ```
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one,
-   the same ordering `/brd-package` uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+   the same ordering `/brd-package` uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or `workflows-core:specs-repo-git` §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run.
 5. **Resolve the BRD folder.** `resolve-address <BRD-KEY>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
    every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus §5's legacy fallback — and so can return any folder kind it finds there: a `BRD-` folder directly under `specifications/`, a `PRD-` folder (a slice inside a BRD, or an idea-route PRD folder), or an `EPIC-` folder inside a `PRD-` folder. Step 5a answers the level question on what it returns. Absent
@@ -315,7 +315,7 @@ write would re-ask a question already answered.
    `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) here, before anything else reads a file. Execute it against the resolved
    folder's **most recent `customer-review-prompt-<YYYYMMDD>.md`** — the artifact whose presence
    proves a package was actually built and handed off. Every deliverable one `handoff-to-main` run
-   stages lands in a single commit (§2.3), so on that path its presence on `origin/<default>` implies
+   stages lands in a single commit, so on that path its presence on `origin/<default>` implies
    `self-review-<YYYYMMDD>.md`, `customer-delivery-note-<YYYYMMDD>.md` and the whole
    `bundle-<YYYYMMDD>/` merged with it — the artifacts `/brd-package`'s handoff stages together —
    and `/brd-package`'s own gate on `decisions.md` had already run before any of them existed.
