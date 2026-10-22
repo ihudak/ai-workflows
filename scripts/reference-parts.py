@@ -117,7 +117,11 @@ generated file.
 `check-citations` gates the callers: the split list in the loader skill equals the declared
 set; where any entry point is declared, a paragraph of the loader skill opens with `These entry
 points read their own file: `<ref> <entry>`, ...`, the declared pairs alphabetical, as the split
-list is; an entry-point declaration check-parts fails stops it before it reads a citation, as a
+list is, and for each pair a sentence of it reads `The file for `<ref> <entry>` holds <held>.`,
+<held> being the generated file's own list led by `the text before §<n>` where a region of the
+entry holds text before its reference's first numbered heading, §<n> -- the loader serves a
+citation of a held section from that file, so the list it names is the declaration's, neither
+more nor less; an entry-point declaration check-parts fails stops it before it reads a citation, as a
 split declaration does; every consumer file (commands/, agents/, references/ of the dependent plugins,
 CHANGELOG.md excluded) that cites a split reference carries the load-by-part preamble as a
 paragraph of its own; every explicit part request -- `args: "<split> <part>"`, or, in
@@ -252,6 +256,9 @@ SKILL_OPENING_LEAD = "These references load by part:"
 # {list} is every declared `<ref> <entry>` pair, alphabetical and backticked.
 ENTRY_OPENING = "These entry points read their own file: {list}."
 ENTRY_OPENING_LEAD = "These entry points read their own file:"
+# One per declared entry point: {pair} is `<ref> <entry>`, {held} what its file holds (held_text).
+ENTRY_HOLDS = "The file for `{pair}` holds {held}."
+ENTRY_HOLDS_LEAD = "The file for `{pair}` holds"
 
 CORE_NAME = os.path.basename(CORE_PLUGIN_REL)
 SCRIPT_REL = "scripts/reference-parts.py"
@@ -372,6 +379,7 @@ class EntryDecl:
         self.holds = holds
         self.partial = {}
         self.regions = []
+        self.opening = None   # the § of the first numbered heading, where a region holds text before it
 
 
 class EntryRef(Source):
@@ -697,6 +705,13 @@ def parse_entry_source(root: Path, path: Path):
                 heads.append((n, len(h.group(1)), num and num.group(1)))
     extent, points = section_extents(heads, len(lines)), entry_points(path)
 
+    # The text before the first numbered heading, which no § names: whether a region of each entry
+    # holds any of it.
+    if extent:
+        first_sec = min(extent, key=lambda s: extent[s][0])
+        for decl in ref.entries.values():
+            if any(body[k].strip() for a, b in decl.regions for k in range(a, b + 1) if k < extent[first_sec][0]):
+                decl.opening = first_sec
     for entry, decl in ref.entries.items():
         if entry not in points:
             ref.err(decl.line, "entry '%s' is not an entry point of %s:%s -- not the first word of a code span in any "
@@ -946,18 +961,26 @@ def expected_tree(refs):
     return out, bad
 
 
-def entry_line(ref, entry, decl):
-    """The line under an entry-point file's title: the sections it holds whole and in part, each in
-    source order, the phrases of each in declaration order, and the whole reference's load."""
+def held_text(decl, opening=False):
+    """What an entry-point file holds: the sections held whole, then those held in part, each in source
+    order, the phrases of each in declaration order -- and first, with `opening`, the text before the
+    first numbered heading where a region holds some. The generated file's line under its title says
+    it without that text; the loader skill's ENTRY_HOLDS sentence says it with it."""
     def ordered(sections):
         return sorted(sections, key=lambda s: [int(x) for x in s.split(".")])
-    line = "This file holds entry point `%s` of `%s`: %s" % (entry, ref.name,
-                                                             either(["§" + s for s in ordered(decl.holds)], "and", ""))
+    whole = (["the text before §" + decl.opening] if opening and decl.opening else []) + \
+        ["§" + s for s in ordered(decl.holds)]
+    text = either(whole, "and", "")
     if decl.partial:
-        line += ", and in part " + either(["§%s (%s)" % (s, either(decl.partial[s], "and", '"'))
+        text += ", and in part " + either(["§%s (%s)" % (s, either(decl.partial[s], "and", '"'))
                                            for s in ordered(decl.partial)], "and", "")
-    return line + ". Any other section is in the whole reference: `Skill(skill: \"%s\", args: \"%s\")`." % (
-        LOADER_SKILL, ref.name)
+    return text
+
+
+def entry_line(ref, entry, decl):
+    """The line under an entry-point file's title: held_text, and the whole reference's load."""
+    return "This file holds entry point `%s` of `%s`: %s. Any other section is in the whole reference: " \
+           "`Skill(skill: \"%s\", args: \"%s\")`." % (entry, ref.name, held_text(decl), LOADER_SKILL, ref.name)
 
 
 def entry_tree(entries):
@@ -1253,6 +1276,19 @@ def cmd_check_citations(root, verbose):
                     "no paragraph opens with \"%s\"" % lead
                 problems.append("%s: no paragraph opens with the %s the declarations give, \"%s\" -- %s"
                                 % (LOADER_SKILL_REL, what, opening, reads))
+        # Each declared entry point's held list, as its declaration and regions give it: the loader
+        # names what the file holds, so a citation of a held section can be served from it.
+        for n, r in entries.items():
+            for e, d in r.entries.items():
+                pair = "%s %s" % (n, e)
+                held = ENTRY_HOLDS.format(pair=pair, held=held_text(d, opening=True))
+                if not any(held in p for p in paras):
+                    lead = ENTRY_HOLDS_LEAD.format(pair=pair)
+                    said = next((p[p.index(lead):] for p in paras if lead in p), None)
+                    reads = ("it reads \"%s\"" % (re.split(r"(?<=\)|\")\.\s|(?<=[0-9])\.\s", said)[0].rstrip(".") + "."))\
+                        if said else "no sentence opens with \"%s\"" % lead
+                    problems.append("%s: the loader names what the file of `%s` holds as its declaration gives it, "
+                                    "\"%s\" -- %s" % (LOADER_SKILL_REL, pair, held, reads))
 
     preamble = PREAMBLE.format(list=listing(split), loader=LOADER_SKILL)
     plugins_dir, resolved = root / os.path.dirname(CORE_PLUGIN_REL), {}
@@ -2133,11 +2169,31 @@ CASES = [
                                       'it reads "These entry points read their own file: `gamma check-it` and `gamma '
                                       'other`."'], errors=1),
     ]),
-    # entry_minimal's tree, its loader skill carrying no entry list at all.
+    # entry_minimal's tree, its loader skill carrying no entry list at all, and so no held list either.
     ('entry_skill_list_missing', "a loader skill naming no entry point beside a declared one fails", [
         Step(['check-citations'], 1, [SK + ': no paragraph opens with the entry list the declarations give, "These entry '
                                            'points read their own file: `gamma check-it`." -- no paragraph opens with '
-                                           '"These entry points read their own file:"'], errors=1),
+                                           '"These entry points read their own file:"',
+                                      SK + ': the loader names what the file of `gamma check-it` holds as its declaration '
+                                           'gives it, "The file for `gamma check-it` holds the text before §1, §1 and §3, '
+                                           'and in part §4.0 ("never infer")." -- no sentence opens with "The file for '
+                                           '`gamma check-it` holds"'], errors=2),
+    ]),
+    # The held list, red beside entry_minimal's green: entry_minimal's tree, its loader skill naming
+    # what check-it's file holds with §2 added, which the declaration does not hold, ...
+    ('entry_skill_holds_extra', "a loader held list naming a section the declaration does not hold fails", [
+        Step(['check-citations'], 1, [SK + ': the loader names what the file of `gamma check-it` holds as its declaration '
+                                           'gives it, "The file for `gamma check-it` holds the text before §1, §1 and §3, '
+                                           'and in part §4.0 ("never infer")." -- it reads "The file for `gamma check-it` '
+                                           'holds the text before §1, §1, §2 and §3, and in part §4.0 ("never infer")."'],
+             errors=1),
+    ]),
+    # ... and with §4.0's part left out, which the declaration holds.
+    ('entry_skill_holds_short', "a loader held list leaving out a section the declaration holds fails", [
+        Step(['check-citations'], 1, [SK + ': the loader names what the file of `gamma check-it` holds as its declaration '
+                                           'gives it, "The file for `gamma check-it` holds the text before §1, §1 and §3, '
+                                           'and in part §4.0 ("never infer")." -- it reads "The file for `gamma check-it` '
+                                           'holds the text before §1, §1 and §3."'], errors=1),
     ]),
     # gamma holds §3 whole and §2.6 in part; a check-it region starts in §2.5, neither held nor held in
     # part, and runs on into §2.6, whose heading and owner-repo text it rightly holds.

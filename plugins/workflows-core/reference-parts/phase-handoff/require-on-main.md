@@ -50,9 +50,9 @@ Collision is normal, not exceptional: `_readiness.md` is overwritten on every `/
 
 **In session-branch mode** (`specs-repo-git.md` §8), the switch onto `<name>` — creating it or reusing it — is wrapped in that section's `lift` and `put-back` (§8.3); a `lift` that skips the move refuses the handoff with the reason, as a failed switch does.
 
-### 2.6.1 `owner-repo` — deriving `OWNER_REPO`
+### 2.6.1 `owner-repo` — deriving $OWNER_REPO
 
-`$OWNER_REPO` is the `[HOST/]OWNER/REPO` value every `gh -R` call against the specs repo names — §2.6's two and §3.5's probe — derived from its `origin` remote. A reference that derives it for another repository reads that repository's `origin` in its place:
+`$OWNER_REPO` is the `[HOST/]OWNER/REPO` value a `gh -R` call names, derived from a repository's `origin` remote — §2.6's calls and §3.5's probe name the specs repo's. This block derives it from `$SPECS_PATH`'s `origin`; a reader that derives it for another repository reads that repository's `origin` in its place:
 
     url=$(git -C "$SPECS_PATH" remote get-url origin)
     host=$(printf '%s' "$url" | sed -E 's#^[a-zA-Z][a-zA-Z0-9+.-]*://##; s#^[^/@]+@##; s#[:/].*$##')
@@ -75,7 +75,7 @@ The expressions strip a scheme, a `user@`, and a host with an optional `:port` t
 
 ## 3. `require-on-main` — the consumer entry point
 
-Runs in the caller's Phase 0, immediately after `specs-preflight`, so it reuses that step's best-effort `fetch` (`specs-repo-git.md` §3.2) — no second network call. That fetch runs on a run carrying `specs_git: misrooted` too, which stops only the preflight's writes (`specs-repo-git.md` §3.1). **It applies rules of two other references, and looks them up:** `workflows-core:specs-repo-git` §3.1, §3.2, §3.3 and §8, and `workflows-core:read-only-repos`. Any read of them made in this run serves, since any read in the run serves to look up a rule, and `specs-repo-git` is loaded whole only where no read of it is in the conversation. That holds for a caller whose check runs a phase or more after its preflight too — `/ready`, `/epics`, `/brd-proposal`, and `/brd-reconcile`'s cross-BRD write guard: the preflight's read of `specs-repo-git` serves it while that read is in the conversation.
+Runs in most callers' Phase 0 immediately after `specs-preflight`, and in every caller after it, so it reuses that step's best-effort `fetch` (`specs-repo-git.md` §3.2) — no second network call. That fetch runs on a run carrying `specs_git: misrooted` too, which stops only the preflight's writes (`specs-repo-git.md` §3.1). **It applies rules of two other references, and looks them up:** `workflows-core:specs-repo-git`, §2.1, §3.1, §3.2, §3.3, §3.5 and §8 among them, and `workflows-core:read-only-repos`. Any read of them made in this run serves, since any read in the run serves to look up a rule, and each is loaded whole only where no read of it is in the conversation. That holds for a caller whose check runs a phase or more after its preflight too — `/ready`, `/epics`, `/brd-proposal`, and `/brd-reconcile`'s cross-BRD write guard: the preflight's read of `specs-repo-git` serves it while that read is in the conversation.
 
 ### 3.1 Gate
 
