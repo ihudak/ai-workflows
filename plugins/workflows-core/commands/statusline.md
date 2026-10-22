@@ -28,6 +28,8 @@ are always fully qualified. Direct users to `/workflows-core:statusline`.
 
 **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. No run flag applies to this command; `strip-run-flags` reports an explicit one as ignored. It takes no positional arguments to protect, but a stray flag must not be misread.
 
+**Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
+
 1. Source script: `${CLAUDE_PLUGIN_ROOT}/scripts/statusline-command.sh`.
 2. Stable install path: `~/.claude/dev-workflows/statusline-command.sh`
    (per-user, survives plugin re-installs). Create `~/.claude/dev-workflows/` if

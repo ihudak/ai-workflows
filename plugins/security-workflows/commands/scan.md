@@ -71,6 +71,8 @@ keeps a `sec` run's role.
 
 1. **Run flags.** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
 
+   **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
+
 2. **Arguments.** What step 1 leaves is one positional address and the command's own flags.
    - **An address that names an existing directory is a repository path**: step 5 takes its repository. **Any other address is a key**, which step 4 reads with `read-key`.
    - `--import <dir>`, `--triage` and `--verify-fixes` exclude one another, and `--import` takes an existing directory.

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Assemble the parts of a split shared reference, and the entry-point files of a reference that
-is not split, into committed files, and gate them.
+is not split, into committed files, and gate them; and gate that every command presenting a choice
+list loads the question rules before its first question.
 
 A split reference stays ONE source file under plugins/workflows-core/references/. A
 declaration block directly after its H1 line names its parts, and region markers in the
@@ -204,10 +205,31 @@ reference, as the loader says. The census `entry-point file <ref> <entry>: N req
 citation(s) checked` counts the sections requesting each entry point and every sentence judged for it,
 a request's own included. A tree declaring no entry point runs none of this.
 
-IT FAILS CLOSED. A scan that finds no reference-parts declaration fails both subcommands, and a
-declared reference no consumer cites fails check-citations: a gate that matched nothing proves
-nothing when it passes. Entry-point files are outside that guard: a tree declaring none passes
-their checks.
+THE QUESTION RULES. `check-questions` gates the step that loads `escalation-rules core` -- §0's
+array shape, choice lists presented verbatim, the `(Recommended)` marker, a selection that carries no
+text -- which every question a run asks follows. It is a subcommand of its own, not part of
+check-citations, because its subject is a command's questions, not a reference's declaration: its
+fail-closed rule would fail every tree that declares references and asks nothing, as check-citations'
+fixture trees do. It reads the `commands/*.md`
+of workflows-core and of every dependent plugin (QUESTION_PLUGIN_RELS) for each one's FIRST QUESTION:
+the first line, fenced or not, holding `choices:`, or holding both `phase-handoff` and `§4.3` -- the
+consent array that reference's §4.3 has a command present, as /frames does with no `choices:` of its
+own -- whichever comes first. A command with no such line presents no choice list and is not read. A
+command with one fails, `ERROR <file>:<line>: asks the user a question before its **Load the question
+rules.** step -- add the step before this line`, unless a STEP starts on an earlier line: a paragraph or
+list item outside every fenced block that opens, its list marker dropped, with `**Load the question
+rules.**` and holds the loader call `Skill(skill: "workflows-core:reference", args: "escalation-rules
+core")`. A citation of that reference inside a rule statement is no step, since a run reads it as a
+source note; nor is a step inside a fenced block, which a run prints. The first question is a line,
+not a phase: a question before the first `##` heading needs the step before it, not merely under that
+heading. The census `question rules: N command(s) present a choice list, M load the rules first` is
+printed, and `--verbose` lists each asking command's step line and first question line.
+
+IT FAILS CLOSED. A scan that finds no reference-parts declaration fails check-parts and
+check-citations, and a declared reference no consumer cites fails check-citations: a gate that
+matched nothing proves nothing when it passes. Entry-point files are outside that guard: a tree
+declaring none passes their checks. A scan that finds no command presenting a choice list fails
+check-questions.
 
 WHAT IT CANNOT SEE: whether a run loads the part when it reaches a citation -- the preamble
 tells it to; the rule-by-rule reading and the live runs check that it does. A name the gate
@@ -230,12 +252,18 @@ the file lacks it, and a § in a sentence citing nothing, with no citation befor
 names nothing, so a bare pointer into <ref> there goes unread. It reads a § only by its number: one
 written as a name (`§ Stop contract`) is not read, so a sentence citing <ref> by such a name alone
 fails as citing no section. And whether a failing sentence only explains or applies a rule the file
-lacks is the reading's call, not the gate's: it fails both.
+lacks is the reading's call, not the gate's: it fails both. check-questions cannot see whether a run
+executes the step when it reaches it -- the step says to, and the live runs check that it does -- nor
+whether the step's text is the agreed paragraph, since it reads only the lead and the call. It sees a
+question only as a `choices:` line or a line naming `phase-handoff` and `§4.3`: a question asked in
+prose, with no array, before the step goes unseen, and a line that only mentions `choices:` counts as a
+question, erring early.
 
 Usage:
     python3 scripts/reference-parts.py [--root DIR] generate
     python3 scripts/reference-parts.py [--root DIR] check-parts
     python3 scripts/reference-parts.py [--root DIR] check-citations [--verbose]
+    python3 scripts/reference-parts.py [--root DIR] check-questions [--verbose]
     python3 scripts/reference-parts.py --selftest
 
 `--root` defaults to the repository holding this script. Exit 0 on a pass, 1 on any
@@ -292,6 +320,15 @@ ENTRY_OPENING_LEAD = "These entry points read their own file:"
 # One per declared entry point: {pair} is `<ref> <entry>`, {held} what its file holds (held_text).
 ENTRY_HOLDS = "The file for `{pair}` holds {held}."
 ENTRY_HOLDS_LEAD = "The file for `{pair}` holds"
+
+# check-questions: the step every command that presents a choice list makes before its first question,
+# and what marks that question -- a `choices:` array, or phase-handoff §4.3's consent array presented.
+QUESTION_PLUGIN_RELS = DEPENDENT_PLUGIN_RELS + (CORE_PLUGIN_REL,)
+QUESTION_DIR = "commands"
+QUESTION_STEP_LEAD = "**Load the question rules.**"
+QUESTION_STEP_ARGS = "escalation-rules core"
+QUESTION_ARRAY = "choices:"
+QUESTION_HANDOFF = ("phase-handoff", "§4.3")
 
 CORE_NAME = os.path.basename(CORE_PLUGIN_REL)
 SCRIPT_REL = "scripts/reference-parts.py"
@@ -1744,6 +1781,70 @@ def cmd_check_citations(root, verbose):
     return 0
 
 
+def first_question(lines):
+    """The 1-based line of a command's first question, or None: the first line, fenced or not, holding
+    `choices:`, or holding both `phase-handoff` and `§4.3`."""
+    for n, line in enumerate(lines, 1):
+        if QUESTION_ARRAY in line or all(w in line for w in QUESTION_HANDOFF):
+            return n
+    return None
+
+
+def question_steps(text):
+    """The first line of each question-rules step in a command: a paragraph or list item outside every
+    fenced block that opens, its list marker dropped, with the step's lead and holds the loader call
+    `args: "escalation-rules core"`. A fenced one is printed, not run, so it is none."""
+    fenced, fences = set(), Fences()
+    for n, line in enumerate(text.splitlines(), 1):
+        if fences.step(line):
+            fenced.add(n)
+    out = []
+    for joined, at, table in blocks_of(text):
+        n = at[0][1]
+        if table or n in fenced or not joined.startswith(QUESTION_STEP_LEAD):
+            continue
+        if any(" ".join(m.group(1).split()) == QUESTION_STEP_ARGS for m in CALL.finditer(joined)):
+            out.append(n)
+    return out
+
+
+def cmd_check_questions(root, verbose):
+    problems, asking, loading = [], 0, 0
+    for rel in QUESTION_PLUGIN_RELS:
+        base = root / rel / QUESTION_DIR
+        if not base.is_dir():
+            continue
+        for path in sorted(base.glob("*.md")):
+            text = path.read_text(encoding="utf-8")
+            first = first_question(text.splitlines())
+            if first is None:
+                continue
+            asking += 1
+            name = path.relative_to(root).as_posix()
+            steps = [n for n in question_steps(text) if n < first]
+            if steps:
+                loading += 1
+            else:
+                problems.append("%s:%d: asks the user a question before its %s step -- add the step before this line"
+                                % (name, first, QUESTION_STEP_LEAD))
+            if verbose:
+                print("ASKS %s: step at line %s, first question at line %d"
+                      % (name, steps[0] if steps else "none", first))
+    if not asking:
+        problems.append("no command under %s presents a choice list -- the scan matched nothing, and a gate that "
+                        "matched nothing proves nothing when it passes"
+                        % either(["%s/%s/" % (r, QUESTION_DIR) for r in QUESTION_PLUGIN_RELS], quote=""))
+    for p in problems:
+        print("ERROR " + p)
+    print("question rules: %d command(s) present a choice list, %d load the rules first" % (asking, loading))
+    if problems:
+        print("reference-parts check-questions: FAIL -- %d problem(s)" % len(problems))
+        return 1
+    print("reference-parts check-questions: PASS -- %d command(s) load the question rules before their first question"
+          % loading)
+    return 0
+
+
 # ---------------------------------------------------------------- selftest
 # One fixture tree per case under scripts/fixtures/reference-parts/<case>/, laid out as the repo
 # is, and run through the CLI with --root. A step asserts the exit code AND what it must print;
@@ -1757,10 +1858,26 @@ def cmd_check_citations(root, verbose):
 # post-checks on minimal, helper_part, cross_file_bundle and source_order pin the part files' own
 # lines, and entry_minimal's the entry-point file's, which a regenerated fixture cannot.
 class Step:
-    def __init__(self, argv, want_exit, must_print=(), errors=None, flags=None, on_copy=False, post=None, absent=()):
+    def __init__(self, argv, want_exit, must_print=(), errors=None, flags=None, on_copy=False, post=None, absent=(),
+                 pre=None):
         self.argv, self.want_exit, self.must_print = list(argv), want_exit, list(must_print)
         self.errors, self.flags, self.on_copy, self.post = errors, flags, on_copy, post
-        self.absent = list(absent)
+        self.absent, self.pre = list(absent), pre
+
+
+def _rewrite(rel, *pairs):
+    """A pre-step for an on-copy step: in the copy's `rel`, replace each `old` -- found exactly once --
+    with its `new`, in order."""
+    def edit(root):
+        path = root / rel
+        text = path.read_text(encoding='utf-8')
+        for old, new in pairs:
+            if text.count(old) != 1:
+                return '%s holds %r %d time(s), not once' % (rel, old, text.count(old))
+            text = text.replace(old, new)
+        path.write_text(text, encoding='utf-8')
+        return None
+    return edit
 
 
 def _order(rel, wanted, absent=()):
@@ -1824,6 +1941,11 @@ G = 'plugins/workflows-core/reference-parts'
 U = 'plugins/dev-workflows/commands/use.md'
 SK = 'plugins/workflows-core/skills/reference/SKILL.md'
 E = 'plugins/workflows-core/references/epsilon.md'
+QA = 'plugins/dev-workflows/commands/ask.md'
+QSTEP = ('**Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", '
+         'args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows '
+         'them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, '
+         'and a selection that carries no text.')
 CASES = [
     # The cited heading is an italic span wrapped across two lines and the preamble is
     # hard-wrapped, as command files are; pickers holds a fenced `# Resume` line, no heading; and
@@ -2450,6 +2572,59 @@ CASES = [
         Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 2 citation(s) checked',
                                       'check-citations: PASS'], errors=0),
     ]),
+    # check-questions: a command's first question -- a `choices:` line, fenced or not, or a line naming
+    # phase-handoff's §4.3 -- needs a **Load the question rules.** step on an earlier line. Each tree holds
+    # one asking command; the loaded and missing trees also hold one that asks nothing, which is not counted.
+    ('question_rules_loaded', 'the question-rules step before the first choices: array passes', [
+        Step(['check-questions'], 0, ['question rules: 1 command(s) present a choice list, 1 load the rules first',
+                                      'check-questions: PASS'], errors=0),
+    ]),
+    ('question_rules_missing', 'a choices: array and no question-rules step fails', [
+        Step(['check-questions'], 1, [QA + ':10: asks the user a question before its **Load the question rules.** '
+                                           'step -- add the step before this line',
+                                      'question rules: 1 command(s) present a choice list, 0 load the rules first'],
+             errors=1),
+    ]),
+    ('question_rules_after_question', 'a step after the first choices: array does not hold it', [
+        Step(['check-questions'], 1, [QA + ':6: asks the user a question before its **Load the question rules.** step',
+                                      'question rules: 1 command(s) present a choice list, 0 load the rules first'],
+             errors=1),
+    ]),
+    # The model-gate question sits before the first `##` heading, as /implement's does: a step under
+    # Phase 0 comes too late. On a copy, the step moved up beside the strip step, before the gate, passes.
+    ('question_rules_before_intro_question', 'a question before the first ## heading needs the step before it', [
+        Step(['check-questions'], 1, [QA + ':6: asks the user a question before its **Load the question rules.** step'],
+             errors=1),
+        Step(['check-questions'], 0, ['question rules: 1 command(s) present a choice list, 1 load the rules first',
+                                      'check-questions: PASS'], errors=0, on_copy=True,
+             pre=_rewrite(QA, (QSTEP + '\n\n', ''),
+                          ('**The model gate runs next.**', QSTEP + '\n\n**The model gate runs next.**'))),
+    ]),
+    ('question_rules_fenced_array', 'a choices: array inside a fenced block is a question too', [
+        Step(['check-questions'], 1, ['plugins/security-workflows/commands/ask.md:9: asks the user a question before '
+                                      'its **Load the question rules.** step'], errors=1),
+    ]),
+    ('question_rules_fenced_step', 'a step inside a fenced block is printed, not run, so it is no step', [
+        Step(['check-questions'], 1, [QA + ':11: asks the user a question before its **Load the question rules.** step',
+                                      'question rules: 1 command(s) present a choice list, 0 load the rules first'],
+             errors=1),
+    ]),
+    ('question_rules_parenthetical_only', 'a rule statement citing escalation-rules core in parentheses is no step', [
+        Step(['check-questions'], 1, ['plugins/product-workflows/commands/ask.md:7: asks the user a question before '
+                                      'its **Load the question rules.** step'], errors=1),
+    ]),
+    ('question_rules_presents_handoff_array', "presenting phase-handoff §4.3's array is a question with no choices: of "
+                                              "its own", [
+        Step(['check-questions'], 1, ['plugins/workflows-core/commands/hand.md:9: asks the user a question before '
+                                      'its **Load the question rules.** step',
+                                      'question rules: 1 command(s) present a choice list, 0 load the rules first'],
+             errors=1),
+    ]),
+    ('question_rules_no_asking_command', 'vacuity: no command presents a choice list', [
+        Step(['check-questions'], 1, ['the scan matched nothing',
+                                      'question rules: 0 command(s) present a choice list, 0 load the rules first'],
+             errors=1),
+    ]),
 ]
 
 
@@ -2470,6 +2645,9 @@ def _selftest() -> int:
             shutil.copytree(fixture, copy)
             for step in steps:
                 root = copy if step.on_copy else fixture
+                why = step.pre(root) if step.pre else None
+                if why:
+                    break
                 got, out = _run(root, step.argv)
                 lines = out.splitlines()
                 if got != step.want_exit:
@@ -2504,8 +2682,9 @@ def _selftest() -> int:
     return rc
 
 
-COMMANDS = {"generate": cmd_generate, "check-parts": cmd_check_parts, "check-citations": cmd_check_citations}
-USAGE = ("usage: reference-parts.py [--root DIR] generate|check-parts|check-citations [--verbose]\n"
+COMMANDS = {"generate": cmd_generate, "check-parts": cmd_check_parts, "check-citations": cmd_check_citations,
+            "check-questions": cmd_check_questions}
+USAGE = ("usage: reference-parts.py [--root DIR] generate|check-parts|check-citations|check-questions [--verbose]\n"
          "       reference-parts.py --selftest")
 
 

@@ -70,6 +70,8 @@ still: the slice proposals, the root ledger and the profile. There is no flag to
 
 **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
 
+**Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
+
 **Parse the flags before anything counts a positional token**, so a flag is never read as the address.
 `--no-brief`, `--profile` and `--redo` are boolean; strip all three from `$ARGUMENTS` first, and what
 remains is the single positional `<ADDRESS>`. Without this rung the flags this command documents do

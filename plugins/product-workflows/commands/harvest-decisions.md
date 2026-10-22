@@ -11,9 +11,13 @@ Harvest the ARDs' decisions into the team architecture knowledge base: $ARGUMENT
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 Usage: `/product-workflows:harvest-decisions [--dry-run]` — `--dry-run` shows the plan and stops. Any other argument stops the run with this usage line.
 
 ## Phase 0 — Preflight
+
+**Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
 
 1. **`$SPECS_PATH` unset** → stop: `HARVEST_NEEDS_SPECS_PATH: set SPECS_PATH to your specs repository and run /product-workflows:harvest-decisions again.`
 2. **`command -v python3` fails** → stop: `/product-workflows:harvest-decisions needs python3 — the harvest is a bundled script.`
