@@ -81,9 +81,11 @@ of theirs would otherwise run in its place and could print into what you read; g
    **A cited line must be re-read for what it actually does before it is cited** — the failure this
    agent exists to prevent is inferring a plausible mechanism and citing something adjacent to it.
 
-4a. **Run a positive control before asserting any absence.** Where a claim's search returns nothing
-   and the finding is about to say the mechanism is not there, take the **same search** and point it
-   at a case of the **same kind** that is known to be present in this repository — established from a
+4a. **Run a positive control before asserting any absence.** Wherever the finding is about to say
+   something is not there — a search returned nothing, or a code path read in full has no step that
+   does it — in its verdict or in the correction an `AMENDED` or `REWRITTEN` states, take the **same
+   search or reading** and point it at a case of the **same kind** that is known to be present in
+   this repository — for a reading, a path of the same kind known to do the thing — established from a
    claim already settled this run, or from a file read and citable, never assumed. Record it in
    `control` with the `path:line` it matched. A control that matches nothing has established that
    this method cannot see this class of thing here, which is a fact about the search and not about
@@ -98,6 +100,10 @@ of theirs would otherwise run in its place and could print into what you read; g
 5. **Decide the verdict** from the closed set in `workflows-core:grounding-format` §3, less
    `SUPERSEDED`, which marks a finding a later one replaced and is written by the re-grounding run,
    never returned by you. Do not restate the definitions here; apply them as written there.
+   **A claim that restricts a value is `CONFIRMED` only with the restriction shown on every path
+   that writes the value — a request that leaves it out, and the default it is then stored with,
+   among them — so look for the write that would break it first** (`workflows-core:grounding-format`
+   §3, *A claim that restricts a value*).
 
    **`NOT-PROVABLE` is a legitimate, final answer, not a shortfall.** When a claim genuinely cannot
    be settled from the repository — the mechanism it describes could live in a system this
@@ -191,7 +197,9 @@ notes: |
   evidence; evidence is a line re-read and confirmed to bear on the specific claim under test.
 - NEVER leave `evidence` blank, including for `NOT-PROVABLE` findings or findings that assert an
   absence. State what was searched and why it fell short, per `workflows-core:grounding-format` §2.
-- NEVER assert an absence without a `control` that fired. An empty search result means either the
+- NEVER assert an absence without a `control` that fired — in a verdict or in a correction, and
+  whether a search or a reading of a code path in full reached it. An empty search result, or a path
+  read with no step that does the thing, means either the
   thing is not there or the method could never have found it, and nothing in the result tells you
   which (`workflows-core:grounding-format` §2.2). Where the control does not fire, the verdict is
   `NOT-PROVABLE` and the failed control is recorded — never a `REWRITTEN` or an `AMENDED` resting

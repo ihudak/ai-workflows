@@ -453,7 +453,7 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   pinned to a repository whose `HEAD` still matches its recorded pin (none under `--no-code`), but
   never a `[DG#n]` already on file, nor an earlier baseline finding (the run supersedes a
   repository's for the fresh one it records, and any other repository's is not this run's to
-  re-check). A retired finding keeps the outcome it had, and re-deriving it could only bring it back to life beside its successor. It runs in batches of up to 25 findings per repository or frame set, each in two dispatches: a blind re-derivation that is handed each finding's requirement and source and never its verdict, evidence, control or citation — and refuses a dispatch that carries one — then a comparison that runs the original's control and settles the outcome without changing the blind result. A finding whose result comes back incomplete is re-dispatched once in each verification pass and in each second opinion (below) — the first pass, and the class-4 sweep's re-check of a design finding whose cited code finding this run rewrote. The comparison is handed the blind result verbatim, and its copy counts as changed only where a structured value changed — the re-derived verdict, an evidence entry's path or lines, or a control's result — never where a free-text note was reworded. A finding without a
+  re-check). A retired finding keeps the outcome it had, and re-deriving it could only bring it back to life beside its successor. It runs in batches of up to 25 findings per repository or frame set, each in two dispatches: a blind re-derivation that is handed each finding's requirement and source and never its verdict, evidence, control or citation — and refuses a dispatch that carries one — then a comparison that runs the original's control and settles the outcome without changing the blind result. A finding whose result comes back incomplete is re-dispatched once in each verification pass and in each second opinion (below) — the first pass, and the class-4 sweep's re-check of a design finding whose cited code finding this run rewrote. Where a re-dispatch's blind verdict differs from a usable one it replaced — one lacking only the positive control its own absence claim owed — the outcome is the re-dispatch's, and the final report and the finding's notes name both verdicts. The comparison is handed the blind result verbatim, and its copy counts as changed only where a structured value changed — the re-derived verdict, an evidence entry's path or lines, or a control's result — never where a free-text note was reworded. A finding without a
   verifier outcome is never treated as evidence. **The outcome is first reconciled against the verdict
   the verifier re-derived**, which it returns on every outcome: `agree` means *the same verdict* and
   `extend` means *the claim holds*, so either arriving with a differing verdict is a return that
@@ -491,7 +491,9 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   command: `--no-code` where the code finding has a successor, and a plain re-run where it has none,
   since that re-grounds a claim nothing on file answers. An `agree`/`extend`/`unprovable` outcome
   is recorded alongside the finding unchanged (`extend` also
-  appends the additional evidence the verifier's own search turned up). Which anchor each finding
+  adds the evidence the verifier's own search turned up that the finding does not already hold: an
+  entry overlapping one the finding cites on the same file widens that entry's lines, keeping its
+  note, and any other is appended). Which anchor each finding
   is verified against depends on what it rests on: a `[CG#n]` and a class-4 `[DG#n]` are re-derived
   against the pinned repository, a class-1/2/3 `[DG#n]` against the frame set it was reconciled
   from — see `workflows-core:grounding-format` §8. A verifier that

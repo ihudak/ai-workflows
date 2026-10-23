@@ -1326,6 +1326,8 @@ finding exactly as hard as any other without being told which it is.
   `PRD_GROUND_VERIFY_INCOMPLETE: <finding-id> could not be verified — in <the first pass | the class-4 sweep | its second opinion>, its <derive|compare> result was <reason> and its retry's <derive|compare> result was <reason>, each <missing from the return | a blank own_evidence | an INCOMPLETE entry with no outcome | an echo differing from the derive return>. No finding was written; re-run '/product-workflows:prd-ground <KEY>' with the flags this run was given.`
   An **on-file** finding writes nothing, keeps every field and the `outcome` it had, and is reported **not verified by this run**, with the reason; the run continues, as in the on-file *incomplete return* branch under `contradict` below.
 
+**A retry that replaces a usable blind verdict keeps both.** A blind result is usable where it carries an `own_verdict` and a non-blank `own_evidence` — as a compare entry marked `INCOMPLETE` that carries an `outcome` does, its only gap the blind verdict's own control. Where a retry's fresh derive replaces such a result and its `own_verdict` differs from the one it replaces, the run records both: the Final report names the finding with both blind verdicts, and the record's `notes` state both too, wherever this run writes the finding's outcome (Phase 8). What the run acts on is the retry's result alone. The pair is never settled as *Settling* (below) settles two blind verdicts that disagree: the verdict replaced was set aside for lacking something its own result owed, not weighed and found doubtful, and where the control route forced the first outcome, that route takes precedence over any blind verdict.
+
 **Nothing reaches Phase 8 unverified.** Any stop above happens before Phase 8's first write, and so
 does the incomplete-return stop below (*Act on `outcome`*, own-run), so a finding without an outcome
 is never written into the package; whatever was on file from a previous
@@ -1418,16 +1420,25 @@ this step settles, plus `outcome` and any `notes` — never a second verdict bes
 
 Act on `outcome`:
 - **`agree`** — keep the finding as written; record the outcome alongside it.
-- **`extend`** — keep the finding's verdict; append the verifier's additional evidence to the
-  finding's `evidence` list — each `own_evidence` entry the finding does not already hold. An entry
+- **`extend`** — keep the finding's verdict; add the verifier's additional evidence to the
+  finding's `evidence` list — each `own_evidence` entry the finding does not already hold, taken in
+  the order the return gives them, each against the list as the ones before it left it. An entry
   is already held where the finding's entries on that `path` together cover all of its `lines` (an
-  entry with no `lines`, a whole-file read, covers every line); its note is never compared. **An
+  entry with no `lines`, a whole-file read, covers every line); its note is never compared. **One
+  not held is merged or appended, never added beside an entry it overlaps.** Where it carries
+  `lines` and shares one with an entry the finding holds on its `path`, it widens that entry's
+  `lines` to the union of the two, in ascending order, and that entry keeps its own note — the first
+  such entry in the list, where more than one shares a line. The widened entry loses nothing a reader
+  needs: the verifier's `notes`, which the record keeps, name by path and line what the new lines
+  add. Any other is appended with its note: one
+  sharing no line with an entry on its `path`, and one with no `lines`, which an entry naming lines
+  cannot take without its note describing lines it no longer names. **An
   entry with no `path` is never appended** — a statement of what was searched, or a baseline
   finding's integrity-command output (`workflows-core:grounding-format` §2, §4.1): what an `extend`
   adds is a place in the source the blind search cited, and neither of those names one; the
   verifier's `notes` say what such an entry adds. The set is read off the structured fields, never
-  out of `notes`, which the verifier writes by the same test. Where nothing is left to append, the
-  finding keeps its `evidence` as it stands and the Final report records *extend, nothing new to append* for it;
+  out of `notes`, which the verifier writes by the same test. Where nothing is left to add, the
+  finding keeps its `evidence` as it stands and the Final report records *extend, nothing new to add* for it;
   record the outcome.
 - **`unprovable`** — keep the finding's verdict unchanged (the verifier's own search settling
   nothing either way is not the same as it being wrong); record the outcome and flag the finding
@@ -1674,7 +1685,7 @@ a file whose readers report findings as missing that are on the page. Each block
 `consumed_by` — `none` on a block this run appends, while a block already on file keeps the value it holds, since `/create-prd`, `/create-ard` and `/specify` write it later and nothing here may erase a stamp — plus `prior_verdict` on every finding reading `SUPERSEDED`, `prerequisite` on every finding reading `horizon: will-change`, `control` on every finding that owes one by `workflows-core:grounding-format` §2.2's closed-set rule, `class`/`cites` on a
 `[DG#n]` and `commit` on everything **except** a
 `[DG#n]` of class 1, 2 or 3 — those are settled from the frame set alone and are pinned to no commit,
-per §2's applicability note) plus this run's verifier `outcome` — on every finding Phase 7 verified, and on each successor a Phase 7 `contradict` appended, but three kinds, each of which keeps the `outcome` it holds: an on-file one Phase 7 superseded, its `contradict` written on its successor or, where there is none, recorded in the Final report only; and an on-file one whose `contradict` was an incomplete return, owing a control and returning no `own_control`, whose block this run does not touch and whose `contradict` the Final report records as not verified by this run (Phase 7, *On-file*); and an on-file one still incomplete after its retry, which Phase 7 left **not verified by this run**, writing nothing and keeping every field (Phase 7, *Retry once*) — **and the `notes` of the `mode: compare` return that settled that outcome**, where it carried any: compare's alone, since they hold the comparison, and derive's already reached compare inside `derived` — **and nothing else.** **On an outcome a dispute settled `unprovable`, no compare return settled it**, so the record's `notes` are the ones Phase 7 writes in their place, stating both blind verdicts and the first compare's reason for disputing (Phase 7, *Settling*). A block Phase 7 did not verify keeps the `outcome` it holds, among them every on-file block another of this run's supersessions retires — Phase 6's for a moved horizon, a `--rebaseline` pass's, an earlier baseline's (*Supersede the earlier baselines*), the class-4 cascade's and a re-ground frame set's (below) — none of which Phase 7 dispatches. §2.1 makes the field set closed: `own_verdict`, `own_evidence`, `own_control`, `control_outcome`, `blind_disputed` and the verifier's re-derivation `commit` are return fields Phase 7 has already acted on — where a `contradict` rewrote an own-run finding or appended an on-file finding's successor, their values are already in that block under the record's own names (`verdict`, `evidence`, `control`) and the return names never appear — and a block carrying `own_verdict` beside `verdict` states two verdicts at once, leaving every downstream reader free to quote whichever half suits. That is the state `/brd-split` step 7 and `/brd-interview` step 7 now refuse, so writing it here deadlocks the route rather than merely muddying the record. Compare's contract calls its `notes` *"anything the caller should know before recording this outcome"*, so they are read before the outcome is written, not after — a verdict recorded without them is recorded against a caveat the verifier raised and nothing carried.
+per §2's applicability note) plus this run's verifier `outcome` — on every finding Phase 7 verified, and on each successor a Phase 7 `contradict` appended, but three kinds, each of which keeps the `outcome` it holds: an on-file one Phase 7 superseded, its `contradict` written on its successor or, where there is none, recorded in the Final report only; and an on-file one whose `contradict` was an incomplete return, owing a control and returning no `own_control`, whose block this run does not touch and whose `contradict` the Final report records as not verified by this run (Phase 7, *On-file*); and an on-file one still incomplete after its retry, which Phase 7 left **not verified by this run**, writing nothing and keeping every field (Phase 7, *Retry once*) — **and the `notes` of the `mode: compare` return that settled that outcome**, where it carried any: compare's alone, since they hold the comparison, and derive's already reached compare inside `derived` — **and nothing else.** **On an outcome a dispute settled `unprovable`, no compare return settled it**, so the record's `notes` are the ones Phase 7 writes in their place, stating both blind verdicts and the first compare's reason for disputing (Phase 7, *Settling*). **Where a retry's fresh derive replaced a usable blind result whose verdict differs** (Phase 7, *Retry once*), the record's `notes` open with one line stating both, in words a reader with no plugin follows — *a first independent re-derivation reached CONFIRMED and was made again because it did not show its search could find what it said was absent; the second reached AMENDED, and this outcome rests on it* — before the compare return's. A block Phase 7 did not verify keeps the `outcome` it holds, among them every on-file block another of this run's supersessions retires — Phase 6's for a moved horizon, a `--rebaseline` pass's, an earlier baseline's (*Supersede the earlier baselines*), the class-4 cascade's and a re-ground frame set's (below) — none of which Phase 7 dispatches. §2.1 makes the field set closed: `own_verdict`, `own_evidence`, `own_control`, `control_outcome`, `blind_disputed` and the verifier's re-derivation `commit` are return fields Phase 7 has already acted on — where a `contradict` rewrote an own-run finding or appended an on-file finding's successor, their values are already in that block under the record's own names (`verdict`, `evidence`, `control`) and the return names never appear — and a block carrying `own_verdict` beside `verdict` states two verdicts at once, leaving every downstream reader free to quote whichever half suits. That is the state `/brd-split` step 7 and `/brd-interview` step 7 now refuse, so writing it here deadlocks the route rather than merely muddying the record. Compare's contract calls its `notes` *"anything the caller should know before recording this outcome"*, so they are read before the outcome is written, not after — a verdict recorded without them is recorded against a caveat the verifier raised and nothing carried.
 A `--rebaseline` run appends its new findings after the existing ones and marks any finding it
 superseded — never one already reading `SUPERSEDED`, whichever run retired it — with `verdict:
 SUPERSEDED`, id retained, rather than deleting or renumbering it — and writes the verdict that
@@ -2186,7 +2197,7 @@ earlier `baselines.md` entry that named no id, or an id no block carries;
 finding counts by verdict for `[CG#n]` and `[DG#n]`
 separately, and the verifier
 tally (`agree` / `extend` / `contradict` / `unprovable`) — naming every `extend` that left nothing
-new to append (Phase 7, *Act on outcome*) — opened by the run's verification
+new to add (Phase 7, *Act on outcome*) — opened by the run's verification
 arithmetic — Phase 1's cost statement as this run actually came out, printed as this one block with
 every value filled in (`none` for a part the run had nothing in), because a headless orchestrator
 may compress Phase 1's printed lines and the Final report is the output a reader always sees:
@@ -2196,7 +2207,9 @@ Verification: <K> repositories × <N> claims · batches: <repo> <n>[, <repo> <n>
 ```
 
 — then every retry by finding id, the unit it was made in (the first pass, the class-4 sweep's, or
-a second opinion's) and the step or steps retried (derive then compare, or compare alone), or "no retries"; every disputed
+a second opinion's) and the step or steps retried (derive then compare, or compare alone), with
+both blind verdicts where the retry's fresh derive differs from a usable one it replaced (Phase 7,
+*Retry once*), or "no retries"; every disputed
 `contradict` by finding id, with both blind verdicts and how its second opinion settled it — upheld,
 or `unprovable` as **verification inconclusive — two blind re-derivations disagreed** — or "no
 disputes"; with every `contradict` named by
