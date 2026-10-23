@@ -189,8 +189,10 @@ Rules:
   `choices: ["Cancel — resolve the design's open questions in /dev-workflows:design first (Recommended)", "Override and implement anyway (logged in the Phase 5 report)"]`
   A design must be decision-complete before implementation (enforced upstream by `design-reviewer`;
   this is the cross-command backstop). **`specification.md`-level open questions are exempt** — they are
-  the spec's way of flagging what the design phase resolves, and a design doc may legitimately
-  incorporate a spec that still carries them. "Override" is the only escape and is recorded in the
+  the spec's own: a question the design phase answers, or one it leaves open for the specification's
+  owner with its proposal under it (`${CLAUDE_PLUGIN_ROOT}/references/design-format.md` §
+  Engineering-review edits to the specification) — and a design doc may legitimately incorporate a
+  spec that still carries them. "Override" is the only escape and is recorded in the
   Phase 5 report's `### Assumptions & limitations`.
 - Multiple inputs of the same kind are allowed.
 - A token naming nothing on disk or an unrecognized directory, and an unreadable `@file`, are each token's own checks, made as it is classified (above), before the specs-repo preflight.

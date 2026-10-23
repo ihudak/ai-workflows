@@ -25,7 +25,8 @@ its repositories hold and deploy today that a decision, a rollout or release ste
 `validated` challenge note (section 2) rests on — a precedent, what a script, a build or a job
 produces, a port, a profile, a configuration key or path, a manifest value, how an existing endpoint
 answers, what a deploy step changes in the running processes, what a running job does to data —
-cites the `path:line` it was read at, in the repository and at the commit `/design` Phase 4 scanned.
+cites the `path:line` it was read at, in the repository and at the commit `/design` Phase 4 scanned —
+or, where Phase 4 recorded that commit `with uncommitted changes`, in the working tree it scanned.
 A precedent or a count claims no more than its citations show: one handler cited proves that
 handler, not every handler like it. `design-reviewer` re-derives each such statement from the
 repository, at that commit.
@@ -77,9 +78,9 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
 2. **## Requirements coverage** (core) — a table/list tracing every in-scope spec item / user story
    (`[Uxx]`) / acceptance criterion (`[ACxx]`) to how this design addresses it, with a **challenge
    note** per row where the design questioned or refined the spec (`validated` / `questioned` /
-   `proposed-change`). A `validated` note is a claim about the existing system — that the requirement
-   can be met, and its test cases set up, against the components as they run — and cites where that
-   was read (§ Principle). Every in-scope requirement is addressed or explicitly deferred with a reason.
+   `proposed-change`). A `validated` note that rests on how existing components behave — that the
+   requirement's test cases can be set up against them as they run — cites where that was read
+   (§ Principle). Every in-scope requirement is addressed or explicitly deferred with a reason.
    This is where the "challenge the spec" track lands in the design.
 3. **## Architecture & components** (core) — the components changed/added and their responsibilities;
    a diagram or bullet decomposition. Name real modules/files where the code scan revealed them.

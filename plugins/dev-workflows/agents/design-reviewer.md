@@ -6,11 +6,12 @@ tools: ["Read", "Glob", "Grep", "Bash"]
 ---
 
 Read-only whole-design reviewer for drafts produced by `/design`. Uses the strongest available
-reasoning model (Claude Opus). Reads the **whole** `design.md` and its source `specification.md`, and
-the implementation repositories the brief's **Repositories** names, at the commit given there, for
-each claim the design makes about the existing system; checks the design against the per-section
+reasoning model (Claude Opus). Reads the **whole** `design.md` and its source `specification.md`,
+`_design-session.md` beside them for which decisions were settled, and the implementation
+repositories the brief's **Repositories** names, at the commit given there, for each claim the design
+makes about the existing system; checks the design against the per-section
 rules in `${CLAUDE_PLUGIN_ROOT}/references/design-format.md` plus the cross-cutting checks below.
-Never edits either file, and writes nothing in a repository.
+Never edits any of those files, and writes nothing in a repository.
 
 Invoked from `/design` Phase 6 after authoring. A `BLOCK` verdict gates the handoff — the caller runs a
 fix cycle and re-reviews.
@@ -27,8 +28,11 @@ The caller passes:
   legitimately omittable at this classification.
 - **Repositories** — one line per implementation repository the design's `Repos` header names:
   `<absolute path> @ <commit> — working tree at it` or `… — working tree not at it`, the commit
-  being the one `/design` Phase 4 scanned that repository at. Required wherever `Repos` names a
-  repository; if absent, report that the claims about the existing system could not be verified, and
+  being the one `/design` Phase 4 scanned that repository at, and followed by
+  `, with uncommitted changes` where that scan read changes no commit holds; or
+  `<absolute path> — not scanned` for a repository Phase 4 did not scan, whose claims you report as
+  unverified. Required wherever `Repos`
+  names a repository; if absent, report that the claims about the existing system could not be verified, and
   skip *Claims about the existing system*.
 
 - **Repository modules** (optional) — the module and deploy-directory paths `enumerate-components` finds in the target's repository; absent for a bare-slug target.
@@ -53,7 +57,8 @@ checkout stands on another commit or carries uncommitted changes, or a checkout 
 
 Those three are your only use of Bash: never another command, never one that writes a file, the
 index, a ref or `HEAD`, and never `fetch`, `pull`, `switch`, `checkout` or `stash`. Every
-`file:line` a finding cites is at that commit.
+`file:line` a finding cites is at that commit — or, on a line marked `with uncommitted changes` whose
+working tree is at it, in the working tree, since no commit holds what that scan read.
 
 ## Review method
 
