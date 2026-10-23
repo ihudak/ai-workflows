@@ -375,7 +375,7 @@ by their literal value, and rewrites a sentence that has one — a local path re
 in a command, by the path from the root it lies under where it names a file, so an evidence path
 still names the same file, and by words such as *the checkout* in prose —
 changing no id, verdict, outcome, line or control result. The final report lists every rewrite.
-**Naming a finding records is left as written**, since rewording it would break the record: a path,
+**Naming that a finding records is left as written**, since rewording it would break the record: a path,
 line or route in your code repository, a command run against your repository
 (`git -C "<repo>" grep …`), a frame path or label, a documentation page's path, the requirement
 text a finding quotes. A path your code names counts as such naming whatever its shape — `/tmp/…`
