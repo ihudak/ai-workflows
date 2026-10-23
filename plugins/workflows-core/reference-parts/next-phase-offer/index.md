@@ -14,7 +14,6 @@ Every rule name in `next-phase-offer`, with the part that holds it; `core` comes
 - `merge-clause rule` → `contract`
 - `Epic fan-out` → `contract`
 - `rule 7` → `contract`
-- `The remaining Epics are named` → `contract`
 - `Resolving this placeholder is not a rewording` → `contract`
 - `Where the placeholder sits in the text` → `contract`
 - `PM — ideation & framing` → `pm`
@@ -34,6 +33,7 @@ Every rule name in `next-phase-offer`, with the part that holds it; `core` comes
 - `Surface` → `contract`, `pm`, `brd`, `proposals`, `pa`, `pe`, `dev`, `overflow` or `not-pipeline`
 - `universal minimum` → `contract`, `pm`, `brd`, `proposals`, `pa`, `pe`, `dev`, `overflow` or `not-pipeline`
 - `The routing graph (role-aware)` → `pm`, `brd`, `proposals`, `pa`, `pe`, `dev` or `epics-precondition`
+- `The remaining Epics are named` → `dev`
 
 ## Parts of `next-phase-offer`
 
@@ -44,9 +44,9 @@ Every rule name in `next-phase-offer`, with the part that holds it; `core` comes
 - `proposals` — needs `contract`, `routing-graph`
 - `pa` — needs `contract`, `routing-graph`, `epics-precondition`
 - `pe` — needs `contract`, `routing-graph`, `epics-precondition`
-- `dev` — needs `contract`, `routing-graph`, `epics-precondition`
+- `dev` — needs `contract`, `routing-graph`, `epics-precondition`, `remaining-epics`
 - `epics-precondition` — needs `routing-graph`
 - `overflow` — needs `rule-3`, `surface`
 - `not-pipeline` — needs `rule-1`, `rule-3`, `rule-6`, `surface`
 
-Helper parts, each with no file of its own and never requested, come only with a part that brings them: `rule-1`, `rule-3`, `rule-6`, `surface` and `routing-graph`.
+Helper parts, each with no file of its own and never requested, come only with a part that brings them: `rule-1`, `rule-3`, `rule-6`, `surface`, `routing-graph` and `remaining-epics`.

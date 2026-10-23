@@ -85,7 +85,7 @@ command rather than writing one.
    `⚠ could not persist a resume pointer — set $SPECS_PATH`.
 
 `resume.md` is a **"last known position" pointer, OVERWRITTEN each run** (NOT an append
-log). It is intentionally tiny — one line per item, and an item leaves it once a run settles it:
+log). It is intentionally tiny — one line per item, and an item leaves it once it is settled:
 
 ```markdown
 # Resume — <KEY>[ / <EPIC-KEY>] (<role>)
@@ -94,7 +94,7 @@ log). It is intentionally tiny — one line per item, and an item leaves it once
 - **Artifact:** <relative path to the deliverable just written/committed, or 'none (read-only)'>
 - **Next step:** <the exact next command from ### Next step, or 'PRD fully processed'>
 - **Suggested session name:** <KEY>-<slug>-<role>   (omit this line on a run whose own `### Context hygiene` block carries no `/rename` suggestion — that block is this command's own, so the test is decidable from the command being executed and needs no list to look up; §4 names which commands carry the line and why the rest do not)
-- **Carry-forward decisions:** <0–N one-line items: the decisions the next phase needs that are NOT already in the artifact, and every item the pointer being overwritten carried that this run did not settle — each of its carry-forward items, and each open item of its Next step that this run's Next step does not name; 'none' if none>
+- **Carry-forward decisions:** <0–N one-line items: the decisions the next phase needs that are NOT already in the artifact, and every item the pointer being overwritten carried that is not settled, by the one test *Read the pointer you overwrite first* gives — each of its carry-forward items, and each open item of its Next step that this run's Next step does not name; 'none' if none>
 ```
 
 **Read the pointer you overwrite first.** It is the one `resume.md` its folder holds, written by
@@ -103,10 +103,25 @@ Epic's or another lane's — a pending refine, a PRD update, a re-run, a push, a
 the next phase of this run's own lane never needs. The overwrite replaces the position, never an
 open item: each item the old pointer carried — each of its carry-forward items, and each open item
 of its *Next step* that this run's *Next step* does not name — goes into the new *Carry-forward
-decisions* line, one line each, unless this run settled it, and a settled one is dropped or kept as one line saying it
-is settled. The run carries an item it cannot see settled, without having to show it still open.
-An item a file the next run reads already records — `follow-ups.md`, say — stays as one line
-naming that file. Where no pointer stands yet, there is nothing to carry.
+decisions* line, one line each, unless it is settled. **An item is settled where this run settled
+it, or where the run can see it settled by one of these checks**, each a read that fetches nothing
+and writes nothing:
+- a branch it names, a pull request's included, is merged — its tip is an ancestor of the default
+  branch's tip in the refs the run holds, or `workflows-core:implementation-format` §5's merged
+  test, where the run applied it to that branch, shows it merged;
+- a branch it names is pushed — its `origin/<branch>` ref holds the local branch's tip;
+- a follow-up line it names is ticked in its `follow-ups.md`;
+- a command it names has run since — the record that command writes in the folder the item names
+  (an `implementation.md` block, a `_conformance.md` or `_security.md` entry, the deliverable
+  itself) is dated after the old pointer's *Last completed* datetime — by the date it records,
+  else by the specs repository's last commit touching it.
+
+A settled item is dropped. The run that settled an item may keep one line saying so instead, and
+the next run drops that line: a line saying its item is settled is settled. An item none of these
+checks shows settled is carried, without the run having to show it still open; one a file the next
+run reads already records — `follow-ups.md`, say — is carried as one line naming that file. An item
+that waits on a pull request names that pull request's branch, so a later run can make the check.
+Where no pointer stands yet, there is nothing to carry.
 
 **Redact before writing.** The `Carry-forward decisions` line may summarize
 content pulled from a PRD or the session — redact any secret,

@@ -28,7 +28,7 @@ The handoff check of the eleven commands that run one — `/create-prd`, `/creat
 - **`/brd-package`'s delivery-route test, and its page, name the gate it applies as `handoff-to-main`'s**, where "the handoff's gate" read like the handoff gate the command runs in Phase 0, `require-on-main`.
 - **`/brd-split`'s code-grounding paragraph starts its sentence with a capital** and names `code-grounding.md` as the file whose presence implies the rest, where a stranded "it" did; **`/epics`' docs-grounding paragraph** reads "Phase 3's folder read", where it read "Phase 3's the folder read".
 - **`/epics`' report is the run's account, and its invariant says what follows it.** "ALWAYS produce the Phase 9 report as the final output" was false of the command's own Phase 11, which prints the cost and `Specs repo:` lines after it. It now says that after the report the run prints only what Phases 10 and 11 print, never a recap of the report or one of its lines again (`workflows-core:specs-repo-git` §4 step 7).
-- **The resume-and-checkpoints page** says a pointer carries every open item the one it overwrites held, another Epic's, slice's or role's included, which `workflows-core` 1.45.0's `session-hygiene` §1 now requires.
+- **The resume-and-checkpoints page** says a pointer carries every item the one it overwrites held until it is settled, another Epic's or role's included, by `workflows-core` 1.45.0's `session-hygiene` §1 test, which it restates, and that a slice keeps its own pointer, as the PRD folder it is.
 
 ## [3.35.0] — 2026-10-22
 

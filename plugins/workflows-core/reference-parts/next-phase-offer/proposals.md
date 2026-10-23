@@ -18,7 +18,6 @@ Every rule name in `next-phase-offer`, with the part that holds it; `core` comes
 - `merge-clause rule` → `contract`
 - `Epic fan-out` → `contract`
 - `rule 7` → `contract`
-- `The remaining Epics are named` → `contract`
 - `Resolving this placeholder is not a rewording` → `contract`
 - `Where the placeholder sits in the text` → `contract`
 - `PM — ideation & framing` → `pm`
@@ -38,6 +37,7 @@ Every rule name in `next-phase-offer`, with the part that holds it; `core` comes
 - `Surface` → `contract`, `pm`, `brd`, `proposals`, `pa`, `pe`, `dev`, `overflow` or `not-pipeline`
 - `universal minimum` → `contract`, `pm`, `brd`, `proposals`, `pa`, `pe`, `dev`, `overflow` or `not-pipeline`
 - `The routing graph (role-aware)` → `pm`, `brd`, `proposals`, `pa`, `pe`, `dev` or `epics-precondition`
+- `The remaining Epics are named` → `dev`
 
 ---
 
@@ -87,8 +87,6 @@ commands so the routing graph and the offer rules live in ONE place (the same sh
    prefix of the folder the address resolves to is what sets the altitude, and a folder with none is
    placed by what it holds (`${CLAUDE_PLUGIN_ROOT}/references/addressing.md` §4.1), so the offer
    never has to say it twice.
-
-**The remaining Epics are named.** Where a lane line of the routing graph says "the remaining Epics", the printed offer never writes that phrase bare, nor a placeholder where a key belongs. It names each other Epic folder directly under the PRD folder by its key, one address each (rule 7) — the folder listing is the set, never a key read out of a resume pointer, a report or a carry-forward line — with the state the run can see of it: `not implemented` where its folder holds no `implementation.md`; `implemented — not merged` where the run applied `workflows-core:implementation-format` §5's merged test to the branch of its `implementation.md`'s latest block and the test did not show it merged; and otherwise `implemented — merge not checked`. An Epic that test showed merged is not a remaining one and is left out. Each gets its next step — `/dev-workflows:implement <EPIC>` for one not implemented, rule 5's breadth, and its pull request's review and merge for one implemented — and the offer orders them, this Epic's own pull request among them, by the PRD-level ARD's `### Landing order`: the `landing_order` `workflows-core:ard-resolution` returned where the run resolved the ARD through it, else that list as the PRD folder's `ard.md` writes it, each Epic placed where its `epic.md`'s `target:` stands in it. Where this Epic's own pull request has still to merge and a remaining Epic's target comes before this Epic's, the offer says that this Epic's pull request merges after that Epic's has. Epics whose targets stand in one place keep key order, and the offer asserts no order between them; where the PRD folder holds no `ard.md`, the ARD has no `### Landing order`, or an Epic has no `target:` or one the list does not name, the offer asserts no order for that Epic and says no recorded order places it. Where no other Epic stands under the PRD, or every other one was shown merged, the offer says so and names none.
 
 **A next-step offer that names a downstream command must also name the merge.** The downstream command executes `require-on-main` (`${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §3) and stops while this phase's pull request is open, so an offer that reads "next: `/product-workflows:create-ard <KEY>`" without "once the pull request is merged" sends the user into a stop they were not warned about.
 

@@ -260,7 +260,7 @@ Never fatal (§1 rule 4). Every failure is reported, and no report may imply a s
 | `pre_existing_dirty` | porcelain paths dirty before the run's first edit, each with its §2.2 fingerprint, or `null` |
 | `stash_ref` | the stash the caller pushed at branch time, or `null` |
 | `key` | the key of the unit the run implements (`workflows-core:implementation-format` §3) — the resolved folder's (`workflows-core:addressing` §4), save where `/implement` chose an Epic under a PRD address and passes that Epic's — or `null` |
-| `workitem_key` | the `workitem_key:` field of that unit's folder's own document's frontmatter — `epic.md` in an Epic's folder, `prd.md` in a PRD's — or `null` where the field is absent; never `key`, and never read off the log |
+| `workitem_key` | the `workitem_key:` field of that unit's folder's own document's frontmatter — `epic.md` in an Epic's folder, `prd.md` in a PRD's — or `null` where the field is absent, and `null` in a folder of any other kind; never `key`, and never read off the log |
 | `title` | the commit subject and pull-request title — on a §2.12 terminal call, which commits nothing, the pull-request title alone (§2.7) |
 | `body_facts` | what §2.7 renders into the body file's four sections: what changed (the files changed being §2.7 item 1's, read from git); the before and the after the run observed; the facts its door and blast-radius calls rest on; and the review — the classification, the verdict and triage, and every finding not applied |
 | `clean_finish` | `true` / `false` per §2.9 |
