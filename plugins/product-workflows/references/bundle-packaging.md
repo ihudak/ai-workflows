@@ -159,9 +159,9 @@ filename alone:
   `customer-review-<YYYYMMDD>.md`, and `dev-workflows/`. No prompt part sends the reviewer to any of
   them.
 
-**The plugin-free scan does not cover this.** It hunts plugin-internal tokens (§1 rules 1–2, of
-the classes §1.2 tabulates), and
-every document above is free of them whether or not it belongs in a customer's hands. Nothing
+**The plugin-free scan does not cover this.** It hunts tokens of the classes §1.2 tabulates —
+plugin-internal ones (§1 rules 1–2), and a model id — and a document can carry none of them and
+still not belong in a customer's hands. Nothing
 mechanical stands behind this allow-list, which is why it is written out rather than left to
 "the package's own documents".
 
@@ -179,6 +179,15 @@ exemptions being the customer's own words and naming, which §6.3 defines:
 | A slash command | `/brd-…`, `/dev-workflows:…`, `/workflows-core:…`, any leading-slash command name |
 | An agent, subagent type or skill name | `subagent_type`, any `<plugin>:<name>` prefix (`dev-workflows:`, `workflows-core:`, and any namespace a later split adds), any agent filename |
 | A decision-row reference | `D12`, `D13`, `D18`, `D20`, or any other bare `D<n>` row id |
+| A model id | `claude-opus-5-5`, `claude-sonnet-4-6` — any `claude-<family>-<version>` id, with or without a suffix such as `[1m]` |
+
+**A model id needs no plugin to read and is in the table all the same**: it tells the customer which
+tooling produced the document and gives their reviewer nothing to check
+(`workflows-core:grounding-format` §2.3). A grounding file an earlier run left can carry one, since
+no later run rewrites that run's prose, and this scan is where it is found. **A local path has no
+row**: its shape cannot tell the operator's checkout from a path or a route the customer's own code
+names, which a finding quotes and keeps, so a row for it would stop correct packages. `commands/prd-ground.md` looks for its own local paths by their literal value instead,
+and a local path an earlier run left in a grounding file is not caught here.
 
 **The table is here, rather than in the command that runs the scan, because most of the bundle's
 documents are written long before it runs**, by earlier commands of the route, and a token one of

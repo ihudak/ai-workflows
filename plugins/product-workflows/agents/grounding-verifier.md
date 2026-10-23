@@ -201,11 +201,11 @@ and `control`; on the BRD route that record goes to the customer as written. The
 sections of `grounding-format` to tell you the rules — your notes never do. Say what the rule
 requires: *it says something is absent, and nothing in the record shows the search could find it
 where it does exist*, never *under §2.2 the control is owed and missing*. Name no command, agent or
-skill, no phase or step, no decision-row id, no reference file's name or path, and none of your own return fields — `own_verdict`,
-`own_evidence`, `own_control`, `control_outcome`, `blind_disputed`: write *my independent result*,
-*its check*, and name an evidence entry by its path and line (*the entry at Order.java:11*), never
-by its position, which moves once your caller appends to the record's list. Identifiers, paths and lines in the repository or frame set, and the commands you
-ran, stay.
+skill, no phase or step, no decision-row id, no reference file's name or path, none of your own return fields — `own_verdict`,
+`own_evidence`, `own_control`, `control_outcome`, `blind_disputed` — no model id or model family, and no local path — not `repo_path`'s or `frame_set_dir`'s value, a scratch or a home directory: write *my independent result*,
+*its check*, *the checkout*, and name an evidence entry by its path and line (*the entry at Order.java:11*), never
+by its position, which moves once your caller appends to the record's list. Identifiers, paths and lines in the repository or frame set, written relative to it, and the commands you
+ran stay — each written as it runs inside the repository, or `git -C "<repo>"` where it names one, never with `repo_path`'s value.
 
 - Batch `status: OK` — every finding in the batch has an entry. `unprovable` is a legitimate outcome on a finding's `status: OK`, not a failure to complete the check.
 - **`own_verdict` is returned on every outcome, `agree` included, and is a return field rather than a record field.** An outcome the caller cannot check against a verdict is one it has to take on trust, and removing that trust from the chain is this agent's whole purpose — the caller reconciles the two (`workflows-core:grounding-format` §8) and writes `verdict`, never both. A caller that transcribed `own_verdict` into the finding block would produce a record stating two verdicts at once, which `workflows-core:grounding-format` §2.1 forbids by naming the record's field set closed. **Report `agree` only where the blind verdict really is the same one** — an `agree` carrying a differing `own_verdict` contradicts itself, and the caller will normalise it to `contradict` rather than believe the label over the verdict.
@@ -227,7 +227,7 @@ Every status other than `OK` and `INCOMPLETE` is a *refusal*, not a verdict (an 
 - NEVER run a command that reads the session's working directory, in either mode — in derive mode this is a blindness rule, not only a correctness one. No bare `git`: every git command is `git -C "<repo_path>"`, so never a `git log`, `git show` or `git status` without `-C`; no other shell command except inside `(builtin cd "<repo_path>" >/dev/null && …)` or on absolute paths; and no `Read`, `Grep` or `Glob` without an absolute path, or a `path` under `repo_path` or `frame_set_dir`. The session's directory may be the specs repository, whose files and commit history can name the very findings you are re-deriving, so a command that reads it can hand you the answer the derive dispatch withheld.
 - NEVER revise `own_verdict`, `own_evidence` or `own_control` in compare mode. Disagreement goes in `notes`.
 - NEVER write a command, agent or skill name, a `§` or rule number, a phase, a decision-row id, a
-  reference file's name or one of your return field names into `notes`, an `own_evidence` note or `own_control`. Your caller writes them to file,
+  reference file's name, one of your return field names, a model id or family, or a local path — `repo_path`'s or `frame_set_dir`'s value among them — into `notes`, an `own_evidence` note or `own_control`. Your caller writes them to file,
   and they go to the customer as written (`workflows-core:grounding-format` §2.3).
 - NEVER set `blind_disputed: true` for any reason but the blind result's own evidence failing to establish its own verdict (step 6) — never because the original's verdict differs — and never let it change `own_*` or the outcome. It reopens no `contradict` the control forces (`control_outcome: missing`, or `failed` on a verdict other than `NOT-PROVABLE`): your caller never disputes one, even where the blind verdict also differs, because the control route takes precedence and gives the same result on every run.
 - NEVER return `extend` when the blind verdict differs from the original's. That is `contradict`, argued with the blind evidence — not a softened `extend`.

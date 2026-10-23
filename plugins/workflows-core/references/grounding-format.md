@@ -316,13 +316,27 @@ bundle's plugin-free scan stops the package on any token of a class
 that wrote it, in a record the operator then has to edit by hand. The idea route bundles nothing, and
 the rule holds there too: the same agents write both routes.
 
-So a finding's free text never carries:
+So neither a finding's free text nor the prose around the blocks ever carries:
 
 - a command, agent or skill name — `/prd-ground`, `grounding-verifier`, `workflows-core:grounding-format`;
 - a section or rule number of a plugin reference, or a phase or step number of a command — `§2.2`,
   `§4.1 rule 4`, `Phase 4.5`;
 - an agent's return-field name — `own_verdict`, `own_control`, `blind_disputed`;
-- a reference file's name or path, or a decision-row id such as `D12`.
+- a reference file's name or path, or a decision-row id such as `D12`;
+- a model id or a model family's name — `claude-opus-5-5`, `Opus` — the tier a finding was ground
+  or verified at included;
+- a local filesystem path — the checkout a repository was read in, the specs repository's own
+  directory, a scratch or a home directory: `/workspace/<repo>`, `~/…`, `/tmp/…`.
+
+**The last two describe the operator's environment, not the record.** They tell the customer which
+tooling and which machine produced the file, and their reviewer can do nothing with either: the
+reviewer's checkout is somewhere else, which is why the three pin commands are written
+`git -C "<repo>"` (§4), and the tier a corpus was ground at is the operator's evidence about the
+run, which `product-workflows:prd-ground` reports in its own Final report and writes into no
+grounding file. A verifier note that read *I re-ran the three git commands against
+/workspace/e2e/bookstore* should have said *I re-ran the three git commands against the checkout*.
+A path inside the repository is not a local path in this sense: written from the repository's root,
+as every evidence `path` is, it stays.
 
 **Say what the rule requires, never where it is written — and a token they cannot resolve is not
 fixed by deleting it.** A sentence that cited a rule leaned on it, so the sentence is what has to
@@ -350,7 +364,8 @@ it rather than leaving it to be found at packaging.
 **Who holds a writer to it.** `product-workflows:code-grounder`, `product-workflows:design-grounder`
 and `product-workflows:grounding-verifier` each carry the rule for the fields they return.
 `/product-workflows:prd-ground`, which writes the files, scans what it is about to write against
-`product-workflows:bundle-packaging` §1.2's table and rewrites a sentence that hits before writing it. A rewritten sentence changes nothing a
+`product-workflows:bundle-packaging` §1.2's table, and for its own local paths — each checkout's and
+`$SPECS_PATH`'s — by their literal value, and rewrites a sentence that hits before writing it. A rewritten sentence changes nothing a
 reader acts on — no id, verdict, evidence path or line, control result or outcome — so the run makes
 it without dispatching anything again. A finding already on file is not rewritten by a later run; a
 hand edit to its free text is sanctioned (§2.1) and touches none of those fields either.
