@@ -221,9 +221,10 @@ yourself, at the ref.
   part the requirement places on one (Phase 2, *A sibling Epic's part*) → taken before the outcomes
   below: it is no discrepancy of this Epic's, whatever the code at that location shows. Judge the
   requirement again without that part — read the rest yourself, at the ref — and record the verdict
-  the rest bears: `satisfied` with this Epic's evidence; a discrepancy on the rest, confirmed by that
-  reading; `not-checkable` where it is an `[AD#n]` Rule that binds only components other than this
-  Epic's (the handoff file's rule 3); or *unverified*, as below, where that reading settles neither.
+  the rest bears: `satisfied` with the evidence of every part but the sibling's; a discrepancy on the
+  rest, confirmed by that reading; `not-checkable` where it is an `[AD#n]` Rule that binds only
+  components other than this Epic's (the handoff file's rule 3); or *unverified*, as below, where
+  that reading settles neither.
   The sibling Epic's part is named as a tracer names it. The report's *Dropped at the re-check*
   names the tracer's verdict and the sibling Epic it rested on.
 - **Confirmed** → a discrepancy, numbered `[DD#n]` when the record is written (`conformance-format.md` §5).
