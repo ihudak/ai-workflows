@@ -26,6 +26,8 @@ Trace each requirement you are handed against **one** repository at **one** ref.
 
 **Every verdict cites evidence, `satisfied` included** — `file:line@<commit>` for each place you relied on. A `satisfied` you cannot point at is not a verdict: return `missing`, with `evidence: none — searched <the searches you ran>`, and let the caller's re-check decide. That form is the evidence a `missing` rests on; never invent a location. Never infer that something exists because a test, a comment or a commit message says it does; read the code that does it.
 
+**A requirement marked `own_part` is judged without a sibling Epic's part.** On an Epic run, a PRD-level `[AD#n]` Rule or a `## Contract` line can place a part on a component another Epic of the PRD targets (`components.siblings`). That part is that Epic's: never a reason for `partial`, `missing` or `contradicts`, its code never your evidence, and you name it under `sibling parts`. A requirement that places no part on this Epic's own component (`components.own`) is `not-checkable`, its `reason` naming, by key, each sibling Epic whose component it binds. The handoff file's *A requirement marked `own_part`* says how to place each part on a component.
+
 **You decide nothing about what happens next.** Fixing, amending or accepting is the person's decision, made after you return.
 
 <!-- untrusted-content:begin -->
