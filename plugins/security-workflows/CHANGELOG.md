@@ -7,10 +7,13 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [0.3.0] — Unreleased
 
-Needs `workflows-core` 1.44.0 or later, as 0.2.0 did: its one change requests `escalation-rules core`, which 1.44.0 serves.
+Needs `workflows-core` 1.45.0: its next step after a change scan names the remaining Epics by key in the ARD's landing order, citing `next-phase-offer`'s *The remaining Epics are named*, which 1.44.0 does not have, while 1.44.0's lane line for this command writes "the remaining Epics" bare, after this Epic's merge — two instructions that disagree. Its other change, the question-rules step, requests `escalation-rules core`, which 1.44.0 serves too.
 
 ### Changed
 - **`/security-workflows:scan` loads the question rules before its first question.** Its step 1 carries a **Load the question rules.** step — `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, §0's array shape, choice lists presented verbatim, the `(Recommended)` marker and a selection that carries no text, about 9.9k characters — after its run flags are stripped. Its citation of that part sat inside its **Rule: Ask, don't guess.** statement, which a run reads as a source note: in lean context part 1's live run of the command, as before part 1, the run asked its questions without ever loading it. The citation stays where it was.
+
+### Fixed
+- **`/security-workflows:scan`'s next step after a change scan names the remaining Epics.** Where no finding went to fix, it said to take this Epic's pull request through review and merge and *then* finish "the remaining Epics" — and a run, copying that, told the Dev to merge the storefront Epic before the ratings Epic it consumes, which the ARD's landing order puts first and which was unmerged. It now names each other Epic of the PRD by key, with the state the run can see and its next step, ordered with this Epic's pull request by the ARD's landing order, as `workflows-core:next-phase-offer`'s *The remaining Epics are named* says; the command page says so.
 
 ## [0.2.0] — 2026-10-22
 

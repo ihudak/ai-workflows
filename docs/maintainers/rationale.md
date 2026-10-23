@@ -237,6 +237,11 @@ A key re-derived by pattern is a key nothing in the tree ever asserted.
 
 The worked example: `workflows-core:specs-repo-git` §3.5's `branch-key` strips the plugin prefix, then tests the remainder against the keys the run already holds — a key counting as a candidate only where the remainder is exactly it or continues with `-` or `_`, longest candidate winning.
 
+**Refused, with the reason:**
+
+- *`run-state.py` rejecting a `workitem_key` equal to `unit_key` (2026-10-23).* Two live `/implement` runs wrote the Epic's key into run-state as its `workitem_key`, and one committed it as a `Work-Item:` trailer. A check that the two values differ is a pattern guess, not a resolution: it rejects a team whose tracker identity happens to equal the folder's key, and passes any other invented value. The fix resolves the value against the one place it lives — the `workitem_key:` field of the folder's own document, `null` where that field is absent — in `/dev-workflows:implement`'s Phase 0 and `dev-workflows:code-handoff` §2.11, and §2.3 forbids copying a trailer from the log. The investigation is preserved in `docs/superpowers/verification/2026-10-22-lean-context-handoff-part-worse-small.md`, section 3a.
+- *Reading an ARD's landing order out of the resume pointer's carry-forward text (2026-10-23).* A scan run's pointer carried "Landing order: ratings before web" while its next step told the Dev to merge the web Epic first. Ordering the remaining Epics from that line would parse identifiers out of prose a run wrote. `workflows-core:next-phase-offer`'s *The remaining Epics are named* orders them from known sets instead: the Epic folders under the PRD, each `epic.md`'s `target:`, and the ARD's `### Landing order` list. The investigation is preserved in the same file, section 2.
+
 ## claim-expiry-sweep
 
 Eleven such sentences were retired in 3.3.0, sitting in ten files — four commands, three references and three documentation pages — and the count grew from six to eleven only because successive agents walked the tree instead of trusting the list they were handed.

@@ -7,11 +7,14 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.18.0] — Unreleased
 
-Needs `workflows-core` 1.45.0 for two citations: `finish-and-handoff` and `key-discovery` name the SSH-alias rule as `phase-handoff` §2.6.1's `owner-repo`, a section 1.44.0 does not have — its derivation sits in §2.6 there. The rest runs beside 1.44.0, which serves `escalation-rules core`.
+Needs `workflows-core` 1.45.0 for two citations: `finish-and-handoff` and `key-discovery` name the SSH-alias rule as `phase-handoff` §2.6.1's `owner-repo`, a section 1.44.0 does not have — its derivation sits in §2.6 there. The rest runs beside 1.44.0, which serves `escalation-rules core`; `/document`'s invariants on what may follow its report cite `specs-repo-git` §4 step 7, which 1.44.0's step 7 does not say, and state the rule themselves.
 
 ### Changed
 - **All seven commands load the question rules before their first question.** Each carries a **Load the question rules.** step — `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, §0's array shape, choice lists presented verbatim, the `(Recommended)` marker and a selection that carries no text, about 9.9k characters — after its run flags are stripped; `/document` makes it in `## Mode detection`, ahead of its mode test, and says that what runs there — the run-flag strip and that load — runs in both modes, where it said a direct-mode run was byte-identical to its form before the shared front-end retired.
 - **`finish-and-handoff` and `key-discovery` name `phase-handoff` §2.6.1's `owner-repo`** for the SSH-alias rule, the block that now holds that derivation.
+
+### Fixed
+- **`/document`'s report is the run's account in both modes, and its invariants say what follows it.** "ALWAYS produce the Phase 9 report as the final output", and Mode B's for its Phase 5 report, were false of each mode's own cost phase, which prints the cost and `Specs repo:` lines after the report. Each now says that after the report the run prints only what the follow-up and cost phases print, never a recap of the report or one of its lines again (`workflows-core:specs-repo-git` §4 step 7).
 
 ## [1.17.0] — 2026-10-22
 

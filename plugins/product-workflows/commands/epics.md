@@ -1143,7 +1143,7 @@ user name is ever written (§10 privacy).
 - ALWAYS pass `Command run: /epics` in the Phase 8 Agent 4 session handoff
 - ALWAYS spawn Phase 8 agents in a single message — never sequentially
 - ALWAYS use `choices` arrays for decision points; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0)
-- ALWAYS produce the Phase 9 report as the final output
+- ALWAYS produce the Phase 9 report as the run's account: after it the run prints only what Phases 10 and 11 print — the follow-up preview and its outcome, the cost phase's line and, last, the `Specs repo:` line — never a recap or restatement of the report, and never one of its lines again (`workflows-core:specs-repo-git` §4 step 7)
 - ALWAYS end the Phase 9 report with a `### Next step` recommendation (per `workflows-core:next-phase-offer`'s *PE — breakdown & specification* lane) — guidance only, never auto-invoked
 - ALL written claims must be traceable to a resolved key (from the folder read) or code paths (from `code-scanner`); do not invent content the sources don't contain. `[[KEY]]` wikilinks in the draft are correct here and stay: they are the specs tree's required traceability form, not a link that has to resolve — the specs tree is a git repository, not a vault, and nothing there resolves `[[name]]`. `workflows-core:doc-structure-conventions` §1 — which bans in-page provenance — governs **rendered product-docs pages** (`/document`'s write targets), not Epic definitions; do not apply it to them
 - NEVER run `docs-style-checker` — Epic definitions are specs-tree content and not subject to product-docs prose linting. Prose style is checked via `prose-style-checker` in Phase 6.2 instead.

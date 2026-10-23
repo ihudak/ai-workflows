@@ -470,9 +470,10 @@ The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "nex
   (Dev, before its pull request merges: a key run is the `dev` role's scan) from that repository,
   since the scan reads the repository it is run from, then the pull request's
   review and merge; no review and merge for a repository traced under `after_merge`, whose pull
-  request has merged already; then the remaining Epics and the PE's
-  `/dev-workflows:conformance <PRD-KEY>` once every Epic has merged — the whole route where the run
-  traced no branch before the merge;
+  request has merged already; and the remaining Epics, each named by its key and ordered with that
+  pull request by the ARD's landing order, as `workflows-core:next-phase-offer`'s
+  *The remaining Epics are named* says, then the PE's `/dev-workflows:conformance <PRD-KEY>` once
+  every Epic has merged — the whole route where the run traced no branch before the merge;
 - a PRD run → for a `fix-code` decision, `/dev-workflows:implement <EPIC-KEY>` from repository
   `<slug>`, as its follow-up names it — for a PRD-level
   requirement, the Epic Phase 4 named or chose, or `<PRD-KEY>` where the PRD has no Epics; for

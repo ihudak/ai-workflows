@@ -1497,7 +1497,7 @@ name is ever written (§10 privacy).
 - ALWAYS pass `Command run: /document (keyed mode)` in the Phase 8 Agent 4 session handoff — the mode-qualified name this run already passes `emit-auto` in the same phase and `emit-cost` in Phase 11, and what keeps a returned phase-numbered suggestion resolvable between two modes that each number from their own Phase 0
 - ALWAYS spawn Phase 8 agents in a single message — never sequentially
 - ALWAYS use `choices` arrays for decision points; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0)
-- ALWAYS produce the Phase 9 report as the final output
+- ALWAYS produce the Phase 9 report as the run's account: after it the run prints only what Phases 10 and 11 print — the follow-up preview and its outcome, the cost phase's line and, last, the `Specs repo:` line — never a recap or restatement of the report, and never one of its lines again (`workflows-core:specs-repo-git` §4 step 7)
 - ALWAYS end the Phase 9 report with a `### Next step` recommendation (per `workflows-core:next-phase-offer`'s *Dev — build, verify & deliver* lane) — guidance only, never auto-invoked; omitted in direct doc-edit mode (Mode B)
 - ALL written claims must be traceable to a resolved key or to a summarised diff — attribution goes in the run's return payload and the commit message, NEVER inline in the rendered page (`workflows-core:doc-structure-conventions` §1)
 - For `image_policy: cdn_upload_required`, NEVER copy user-provided screenshots into the repo — stage under `<screenshot_staging_dir>` — the resolved PRD folder's screenshot subfolder by default, else a directory the operator names (Phase 1); never the docs repo, never `/tmp` — and surface in the Phase 9 `### Screenshots to upload manually` section
@@ -1954,6 +1954,6 @@ directory, where it is not the specs repository; no user name is ever written (�
 - ALWAYS pass `Command run: /document (direct mode)` in the Phase 4 Agent 4 session handoff
 - ALWAYS spawn Phase 4 agents in a single message — never sequentially
 - ALWAYS use `choices` arrays for decision points; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0)
-- ALWAYS produce the Phase 5 report as the final output
+- ALWAYS produce the Phase 5 report as the run's account: after it the run prints only what Phases 6 and 7 print — the follow-up preview and its outcome, the cost phase's line and, last, the `Specs repo:` line — never a recap or restatement of the report, and never one of its lines again (`workflows-core:specs-repo-git` §4 step 7)
 - ALWAYS run the Validation checks from the plan — validation failures are surfaced in the Phase 5 report, not silently accepted
 - IF the task reads as SIGNIFICANT / HIGH-RISK on inspection: redirect to `/document` (keyed mode) or `/epics` rather than proceeding under the simplified flow

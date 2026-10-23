@@ -853,7 +853,18 @@ spend before it is the conversation's.
      retry and never `--no-verify`. The artifacts stay staged, and a later
      run's preflight flushes them (§3.4) once git accepts the commit.
 7. **Emit the §6 outcome line**, plus the full §5 notice repeated verbatim when
-   a guard fired at §3.3.
+   a guard fired at §3.3. **Where the run printed its report before this step,
+   the report is the run's account, and nothing after it restates it.** From
+   the report to the end of the run — or, where a later phase cedes control
+   (the exception at the head of §4), to that hand-off — the run prints only
+   what the command's own steps after the report tell it to print: its
+   maintenance, feedback, follow-up and cost lines, any question one of those
+   steps asks, a context-hygiene line a step places there, and this outcome
+   line with its §5 block and §6's appends, followed by any line the command
+   names to follow it. Never a summary, recap or restatement of the report,
+   and never one of the report's own lines again, its `Code repo:` or
+   `Phase handoff:` line among them: a recap written after the report states
+   its facts a second time, from memory, and is the part the user reads last.
 
 ### 4.1 Where the commit lands
 
@@ -988,7 +999,8 @@ them before its branch and again before its commit, and puts them back after it.
 `commit-artifacts` step 7 emits exactly one of these, prefixed `Specs repo:`.
 The caller places it per its own contract (§7) — inside its final report where
 the report is the run's last output, or as its own terminal block where the
-report was composed earlier.
+report was composed earlier, which holds nothing but what §4 step 7 lets
+follow the report.
 
 | Case | Line |
 |---|---|

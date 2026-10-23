@@ -70,7 +70,7 @@ command rather than writing one.
    `⚠ could not persist a resume pointer — set $SPECS_PATH`.
 
 `resume.md` is a **"last known position" pointer, OVERWRITTEN each run** (NOT an append
-log). It is intentionally tiny:
+log). It is intentionally tiny — one line per item, and an item leaves it once a run settles it:
 
 ```markdown
 # Resume — <KEY>[ / <EPIC-KEY>] (<role>)
@@ -79,8 +79,19 @@ log). It is intentionally tiny:
 - **Artifact:** <relative path to the deliverable just written/committed, or 'none (read-only)'>
 - **Next step:** <the exact next command from ### Next step, or 'PRD fully processed'>
 - **Suggested session name:** <KEY>-<slug>-<role>   (omit this line on a run whose own `### Context hygiene` block carries no `/rename` suggestion — that block is this command's own, so the test is decidable from the command being executed and needs no list to look up; §4 names which commands carry the line and why the rest do not)
-- **Carry-forward decisions:** <0–N one-line decisions the next phase needs that are NOT already in the artifact; 'none' if none>
+- **Carry-forward decisions:** <0–N one-line items: the decisions the next phase needs that are NOT already in the artifact, and every item the pointer being overwritten carried that this run did not settle — each of its carry-forward items, and each open item of its Next step that this run's Next step does not name; 'none' if none>
 ```
+
+**Read the pointer you overwrite first.** It is the one `resume.md` its folder holds, written by
+every run of every Epic and every role under that folder, so an item it carries may be another
+Epic's or another lane's — a pending refine, a PRD update, a re-run, a push, a merge order — that
+the next phase of this run's own lane never needs. The overwrite replaces the position, never an
+open item: each item the old pointer carried — each of its carry-forward items, and each open item
+of its *Next step* that this run's *Next step* does not name — goes into the new *Carry-forward
+decisions* line, one line each, unless this run settled it, and a settled one is dropped or kept as one line saying it
+is settled. The run carries an item it cannot see settled, without having to show it still open.
+An item a file the next run reads already records — `follow-ups.md`, say — stays as one line
+naming that file. Where no pointer stands yet, there is nothing to carry.
 
 **Redact before writing.** The `Carry-forward decisions` line may summarize
 content pulled from a PRD or the session — redact any secret,

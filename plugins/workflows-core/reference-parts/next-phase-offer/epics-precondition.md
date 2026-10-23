@@ -18,6 +18,7 @@ Every rule name in `next-phase-offer`, with the part that holds it; `core` comes
 - `merge-clause rule` → `contract`
 - `Epic fan-out` → `contract`
 - `rule 7` → `contract`
+- `The remaining Epics are named` → `contract`
 - `Resolving this placeholder is not a rewording` → `contract`
 - `Where the placeholder sits in the text` → `contract`
 - `PM — ideation & framing` → `pm`
