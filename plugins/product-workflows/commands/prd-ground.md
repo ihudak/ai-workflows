@@ -1587,7 +1587,8 @@ but the same agents write both:
    by its value, and no scratch or home directory, a command run against a repository naming its
    checkout only as `"<repo>"`, as Phase 3's `git -C "<repo>"` commands do
    (`workflows-core:grounding-format` §2.3). A path or a route the customer's code, configuration or
-   documents name is none of these, whatever its shape. Reword a verifier's `notes` that carries any
+   documents name is none of these, whatever its shape — save one that is, to the letter, a path
+   point 2 scans for, which point 3 replaces wherever it sits. Reword a verifier's `notes` that carries any
    of them, as point 3 rewords a hit. Where this run creates a file, its opening lines say what the
    file holds — never which command or agent wrote it, or at which tier, and no pinned commit,
    which `grounding/baselines.md` records; a run that appends to a file leaves its opening
@@ -1624,8 +1625,9 @@ but the same agents write both:
    customer's naming, wherever it sits** — prose, a note, a command or an evidence `path`: replace
    it with `"<repo>"` where a command names a checkout; with the path from the root it lies under —
    the repository's, the specs repository's or the documentation root's — where it names a file
-   under one, so that an evidence `path` still names the same file and line; and with words, *the
-   checkout*, where prose names the directory itself. Record it as a rewrite, and never
+   under one, so that an evidence `path` still names the same file and line; and with words naming
+   the directory — *the checkout*, *the specs repository*, *the documentation root* — where prose
+   names the directory itself. Record it as a rewrite, and never
    report it as a hit `/product-workflows:brd-package` will stop on, since that command has no row
    for a local path and one left standing would ship. **A hit inside the customer's own naming that a block records
    is theirs, not the plugin's** — a path and line in the code repository or the frame set, wherever

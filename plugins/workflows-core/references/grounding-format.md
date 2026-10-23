@@ -338,9 +338,11 @@ grounding file. A verifier note that read *I re-ran the three git commands again
 /workspace/e2e/bookstore* should have said *I re-ran the three git commands against the checkout*.
 **A path the customer's own material names is not a local path in this sense, whatever its shape**:
 a path or a route the repository's code or configuration names — `/tmp/update.json` in a script it
-carries, `/api/v1/ratings` — or one the customer's documents give stays, quoted as they give it. A
-path inside the repository is written from the repository's root, as every evidence `path` is, and
-stays too.
+carries, `/api/v1/ratings` — or one the customer's documents give stays, quoted as they give it,
+save where it is, to the letter, one of this machine's own — the checkout's, the specs
+repository's or the documentation root's path — which `/product-workflows:prd-ground`'s Phase 8
+replaces wherever it sits, by the exact value it scans for. A path inside the repository is written
+from the repository's root, as every evidence `path` is, and stays too.
 
 **Say what the rule requires, never where it is written — and a token they cannot resolve is not
 fixed by deleting it.** A sentence that cited a rule leaned on it, so the sentence is what has to

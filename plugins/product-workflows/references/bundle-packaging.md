@@ -187,11 +187,11 @@ tooling produced the document and gives their reviewer nothing to check
 (`workflows-core:grounding-format` §2.3). A grounding file an earlier run left can carry one, since
 no later run rewrites that run's prose, and this scan is where it is found; the repair is the
 operator's, by hand, in the file it came from. **A model id inside a prerequisite's package copied
-in is no stop**: that package went to the customer as written and is never rewritten (§5), so
-including it again exposes nothing new, and rewriting it would falsify what was sent.
+in is no stop**: that package is never rewritten (§5), so its text reaches the customer as written
+whether or not it already has, and a copy of it in this bundle exposes nothing it does not.
 `commands/brd-package.md`'s *Assemble the bundle* rule 7 names each such hit in the run's Final
-report — the bundled filename and line, *already sent in* that package, *left as sent* — and
-packages on. Every other class stops in a prerequisite's package exactly as anywhere else. **A local
+report — the bundled filename and line, in that prerequisite's dated bundle, *which is never
+rewritten — left as packaged* — and packages on. Every other class stops in a prerequisite's package exactly as anywhere else. **A local
 path has no row**: its shape cannot tell the operator's checkout from a path or a route the
 customer's own code names, which a finding quotes and keeps, so a row for it would stop correct
 packages. `commands/prd-ground.md` looks for its own local paths by their literal value instead,

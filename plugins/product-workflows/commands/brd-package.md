@@ -106,9 +106,9 @@ them is.
    customer's own token is reported and put to the operator, who ships it as the customer's own or
    holds the package, which stops the run with `BRD_PACKAGE_CUSTOMER_CONTENT_HELD`; or, where that
    section says so, it is not a hit at all (*The plugin-free scan*, below). **And a model id inside
-   a prerequisite's package copied in**, which went to the customer as written and is never
-   rewritten: the run names it in the Final report and packages on (*Assemble the bundle* rule 7);
-   every other class stops there as anywhere.
+   a prerequisite's package copied in**, which is never rewritten, so its text reaches the customer
+   as written whether or not it already has: the run names it in the Final report and packages on
+   (*Assemble the bundle* rule 7); every other class stops there as anywhere.
 
 The failure all five exist to prevent is stated once, in `bundle-packaging.md` §1, and is not
 restated here: a bundle that assumes anything about the machine it lands on is a bundle the customer
@@ -1208,10 +1208,10 @@ exemptions bar that one, and each covers a class of content rather than one file
 citation-resolution check (Phase 8 rule 8, `bundle-packaging.md` §6) carries the same two over the
 same spans, and one of a different shape for `[SR#n]` (§6.3) — and they exist because the
 alternatives are a deadlock or a falsified record. **The one more is a model id inside a
-prerequisite's package copied in** (*Assemble the bundle* rule 7): that package went to the
-customer as written and is never rewritten (`bundle-packaging.md` §5), so a model id in it exposes
-nothing the customer was not already sent, and the run names it in the Final report and packages
-on. It covers that class alone — every other class stops in such a package as anywhere — and the
+prerequisite's package copied in** (*Assemble the bundle* rule 7): that package is never rewritten
+(`bundle-packaging.md` §5), so its text reaches the customer as written whether or not it already
+has, and a copy of it in this bundle exposes nothing it does not; the run names the hit in the
+Final report and packages on. It covers that class alone — every other class stops in such a package as anywhere — and the
 prompt this section scans holds no prerequisite's document, so it is met only at rule 7.
 
 Identifiers are **not** in the scan's classes and are meant to travel: the classes
@@ -1462,10 +1462,12 @@ command writes whether or not that line is there.
    outside verbatim customer content and customer-derived locators, whose hits are the operator's
    to rule on exactly as `bundle-packaging.md` §6.3 disposes of them (*The plugin-free scan*,
    Phase 6) — **save a model id in a document rule 5 copied in from a prerequisite's package**,
-   which is no stop: that document went to the customer as written and is never rewritten
-   (`bundle-packaging.md` §5), so including it again exposes nothing new, and rewriting it would
-   falsify what was sent. Name each such hit in the Final report — the bundled filename and line,
-   *already sent in `bundle-<YYYYMMDD>/` of `<PREREQ-KEY>`, left as sent* — and package on. Every
+   which is no stop: that package is never rewritten (`bundle-packaging.md` §5), so its text
+   reaches the customer as written whether or not it already has, and a copy of it in this bundle
+   exposes nothing it does not, while rewriting the copy would make it disagree with the dated
+   package it was copied from. Name each such hit in the Final report — the bundled filename and
+   line, *in `<PREREQ-KEY>`'s `bundle-<YYYYMMDD>/`, which is never rewritten — left as packaged* —
+   and package on. Every
    other class of `bundle-packaging.md` §1.2 stops in a prerequisite's document exactly as anywhere
    else. The scan runs here as well as over the prompt because a leak can arrive through a
    copied document as easily as through a rendered part, and together with rule 8's
@@ -1774,8 +1776,8 @@ full because those are the ones the customer will read; whether a second reviewe
 `in-scope`, `conditional` and `out-of-scope` respectively; **every prerequisite named under *what
 could still move***, with whether it resolved, whether its decisions are customer-reviewed, and whether a
 package of its own was copied in — and every model id *Assemble the bundle* rule 7 left standing in
-a copied-in package, by bundled filename and line, as *already sent in `bundle-<YYYYMMDD>/` of
-`<PREREQ-KEY>`, left as sent*; every artifact written, by path — the self-review, the customer
+a copied-in package, by bundled filename and line, as *in `<PREREQ-KEY>`'s `bundle-<YYYYMMDD>/`,
+which is never rewritten — left as packaged*; every artifact written, by path — the self-review, the customer
 prompt, the delivery note and the bundle, and `brd-link.md` where this run added a prerequisite to
 it; **the citation check's
 outcome** — how many identifier references resolved, across how many source packages, how many

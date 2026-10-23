@@ -374,13 +374,15 @@ tokens, and for the paths of the repositories it resolved, `$SPECS_PATH` and the
 by their literal value, and rewrites a sentence that has one — a local path replaced by `"<repo>"`
 in a command, by the path from the root it lies under where it names a file, so an evidence path
 still names the same file, and by words such as *the checkout* in prose —
-changing no id, verdict, outcome, line or control result. The final report lists every rewrite. A
-token inside naming a finding records rather than prose — a path, route or command your code
-repository names, a frame path or label, a documentation page's path, the requirement text a finding
-quotes — is left as written, since rewording it would break the record; the final report names it,
-because on the BRD route, `/brd-package` will still stop on it. A path your code names is such
-naming whatever its shape — `/tmp/…` in a script, `/api/v1/…` — and only the literal value of one of
-the run's own paths marks one as your machine's. This covers what the run writes: the notes, opening lines and run headings an earlier run left on file stay as they are, and you can reword their free text by hand — an earlier run's tier line or local path among them.
+changing no id, verdict, outcome, line or control result. The final report lists every rewrite.
+**Naming a finding records is left as written**, since rewording it would break the record: a path,
+line or route in your code repository, a command run against your repository
+(`git -C "<repo>" grep …`), a frame path or label, a documentation page's path, the requirement
+text a finding quotes. A path your code names counts as such naming whatever its shape — `/tmp/…`
+in a script, `/api/v1/…` — so the run leaves it alone; only the literal value of one of the run's
+own paths marks a path as your machine's. Where a plugin token — a `§` or a command name, say — sits
+inside such naming, the final report names it, because on the BRD route `/brd-package` will still
+stop on it. This covers what the run writes: the notes, opening lines and run headings an earlier run left on file stay as they are, and you can reword their free text by hand — an earlier run's tier line or local path among them.
 
 Behind Phase 9's consent choice, these are committed, pushed, and a pull request opened against the
 specs repo's default branch — under the shared `brd/<KEY>-<slug>` branch prefix on the BRD route

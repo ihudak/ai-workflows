@@ -58,7 +58,8 @@ renders a copy and never edits a source. And the plugin-free scan runs last, ove
 text of the prompt, the note and every bundle document — a hit **stops the run and never sanitises**
 (inside the customer's own verbatim content, or a locator naming their own files and headings, it
 is reported for the operator to rule on instead, and a model id inside a prerequisite's package,
-already sent as written, is named in the final report and left), because a citation that reached the
+which is never rewritten and so reaches your customer as written either way, is named in the final
+report and left), because a citation that reached the
 prompt reached it from a sentence that assumed a reader who has this plugin, and deleting four
 characters leaves that assumption in place. A model id is removed too — by you, in the file it came
 from, never by the scan in a copy.
@@ -329,9 +330,10 @@ attack.
   which tooling produced the package: a grounding file an earlier `/prd-ground` run wrote can carry
   its tier line, and the stop's repair is to remove that line or clause from the file it names by
   hand, commit the edit to the specs repository's default branch, and re-run. Two exceptions. A
-  model id inside a prerequisite's package copied in is not a stop: that package already went to
-  your customer as written and is never rewritten, so the run names each such hit in its final
-  report — the bundled filename and line, *already sent … left as sent* — and packages on; every
+  model id inside a prerequisite's package copied in is not a stop: that package is never
+  rewritten, so its text reaches your customer as written whether or not it already has, and the
+  run names each such hit in its final report — the bundled filename and line, *… which is never
+  rewritten — left as packaged* — and packages on; every
   other class stops there as anywhere. And a hit inside the customer's own verbatim
   content (their captured files, and the parts of the transcription, the inventory, the coverage
   ledger and the register that quote them) or a locator naming their own files, headings and links,

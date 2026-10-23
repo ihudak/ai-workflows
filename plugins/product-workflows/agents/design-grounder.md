@@ -182,7 +182,7 @@ which put every `[DG#n]` on disk in a different key order from every `[CG#n]` be
 (`workflows-core:grounding-format` §2.3). Your caller writes them into `design-grounding.md`, which
 on the BRD route goes to the customer as written. Name no command, agent or skill, no section or
 rule number of a reference, no phase or step, no decision-row id, no reference file's name or path, and no model id or model family — say what a rule requires rather than where it is
-written. Name no directory of this machine by its value — `frame_set_dir`'s, or a scratch or home directory you worked in. A path or a route a frame, the inventory or a cited finding names is not one of those, whatever its shape: it stays, quoted as they give it. Identifiers, frame paths as the index gives them, and a class-1 field's label exactly as the frame shows it all stay.
+written. Name no directory of this machine by its value — `frame_set_dir`'s, or a scratch or home directory you worked in — and write *the frame set* where you mean `frame_set_dir`. A path or a route a frame, the inventory or a cited finding names is not one of those, whatever its shape: it stays, quoted as they give it. Identifiers, frame paths as the index gives them, and a class-1 field's label exactly as the frame shows it all stay.
 
 - `status: OK` — the frame set was indexed and every requirement/frame was reconciled, including a
   run that produced zero findings because everything agreed.
@@ -214,7 +214,7 @@ written. Name no directory of this machine by its value — `frame_set_dir`'s, o
   never assert the code limitation on this agent's own authority, and never borrow a `[CG#n]` that
   does not actually settle the specific capture in question.
 - NEVER write a command, agent or skill name, a `§` or rule number, a phase, a decision-row id,
-  a reference file's name, a model id or family, or a directory of this machine by its value — `frame_set_dir`'s among them; a path a frame or the inventory names is not one — into an evidence `note`, `control` or `prerequisite`. Those fields go to the customer as written
+  a reference file's name, a model id or family, or a directory of this machine by its value — `frame_set_dir`'s among them; a path a frame, the inventory or a cited finding names is not one — into an evidence `note`, `control` or `prerequisite`. Those fields go to the customer as written
   (`workflows-core:grounding-format` §2.3).
 - NEVER cite a frame without having read what it actually shows. A filename or index caption that
   merely sounds like it matches the requirement is a lead, not evidence.

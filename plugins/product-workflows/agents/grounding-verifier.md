@@ -207,7 +207,7 @@ model family. Name none of your own return fields — `own_verdict`, `own_eviden
 an evidence entry by its path and line (*the entry at Order.java:11*), never by its position, which
 moves once your caller appends to the record's list. Name no directory of this machine by its value
 — `repo_path`'s, `frame_set_dir`'s, or a scratch or home directory you worked in: write *the
-checkout* instead. A path or a route the repository's own code or configuration names is not one
+checkout* for `repo_path`, and *the frame set* for `frame_set_dir`, instead. A path or a route the repository's own code or configuration names is not one
 of those, whatever its shape (`/tmp/update.json` in a script it carries, `/api/v1/ratings`): it
 stays, quoted as the code gives it. Identifiers, paths and lines in the repository or frame set,
 written relative to it, and the commands you ran stay — each written as it runs inside the
