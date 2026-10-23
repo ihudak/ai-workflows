@@ -152,7 +152,7 @@ The four constructs the hand-rolled fence scanner got wrong, each a selftest fix
 
 **Why `require-on-main` reads a file of its own, and no procedure reference is split (lean context D, 2026-10-22, `docs/superpowers/specs/2026-10-22-lean-context-handoff-part-design.md`).** Each of part 1's seven blind runs cost more than its comparison, +6% to +56%, and the extra cost was the procedure references, read whole early in a run and carried on every later call: a read costs its size once to write to the cache and again on every later call that carries it. The user's rule for any split: it needs a reason and an outcome better than before, and quality stays above cost within reason. Measured against part 1's dependency maps (`docs/superpowers/research/2026-10-20-lean-context-loader-maps/`) and the carried cost of each reference across the seven runs:
 
-| Reference | Carried cost | What one entry point needs | Outcome |
+| Reference (size, bytes, at `11a4fa70`) | Carried cost | What one entry point needs | Outcome |
 |---|---|---|---|
 | `specs-repo-git` (120k) | $7.49 | `specs-preflight` 86%, `commit-artifacts` 71% | not split: 64% of it is rare-case machinery every entry point must have in front of it; part 3's script is the way to stop reading it |
 | `phase-handoff` (138k) | $5.59 | `require-on-main` 44%, 49% with §2.2; the handoff phase 82% | `require-on-main` alone gets a file |

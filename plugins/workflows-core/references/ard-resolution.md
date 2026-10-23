@@ -2,7 +2,7 @@
 
 Given a resolved item, resolve any applicable **Architecture Requirements/Decision Document(s)** produced by
 `/create-ard` and return a normalized **ARD context** — or **`none`**. Cited by `/create-ard`, `/design`,
-`/implement`, `/specify`, `/epics`, and `/ready` so the resolution logic, the **optional/no-regression** rule, and the deviation-record
+`/implement`, `/specify`, `/epics`, `/ready`, and `/conformance` so the resolution logic, the **optional/no-regression** rule, and the deviation-record
 convention live in ONE place.
 
 ## Inputs
@@ -20,7 +20,7 @@ convention live in ONE place.
    its `SPECS_PATH_INSIDE_TREE` message — never `none`, which would let the caller go on without an
    ARD it should have enforced.
 
-   **This step is the only route by which that resolution reaches an ARD.** All six consumers below
+   **This step is the only route by which that resolution reaches an ARD.** All seven consumers below
    delegate their ARD lookup here, so none of them finds an ARD by resolving its *own* folder —
    `/implement` included, which resolves its own folder on a keyed run and still reaches an ARD
    solely by citing this file.
@@ -124,7 +124,8 @@ deviation record as *allowed-but-flagged* (the architect adjudicates), **without
 - `/specify` — keep user stories + scope consistent with `AD#N` + scope; deviations → the spec's `### Open questions`.
 - `/epics` — PRD-level only (`epic: null` on a re-refine run as on a draft one, `prd` the PRD folder's key either way); `AD#N` = inherited invariants the drafted Epics must respect; deviations → a `- ARD deviation: …` line in the Epic draft + the Phase 9 report.
 - `/ready` — PRD-level + Epic-level `AD#N` = inherited invariants passed to `readiness-reviewer` as `applicable_ard`; read-only — it never authors a deviation record, only checks the artifacts it reads for an existing one.
+- `/conformance` — Epic runs only (its Phase 1 (b)); the `Rule` of each returned `AD#N` is a requirement to trace against the code, and `status: unmerged` stops the run. Read-only — it never authors a deviation record.
 
 `components` and `contracts` are read by `${CLAUDE_PLUGIN_ROOT}/references/components.md` §3 and §6, read directly by `/specify`, `/design` and `/ready`, and passed on by `/epics` to `epic-writer` and `epic-reviewer`, and by `/design` to `design-reviewer` (its interface rows); a caller that reads neither field behaves exactly as it did before they existed.
 
-The five consumers listed above other than `/create-ard` pass `invariants` to their reviewer as `applicable_ard`; the reviewer's ARD-conformance dimension is skipped entirely when it is absent. `/create-ard` alone does not: it inherits PRD-level `AD#N` read-only straight into its own grill and drafting (Phase 4), and `ard-reviewer` checks non-contradiction directly against the drafted file, never via that field.
+Of the consumers listed above, `/design`, `/implement`, `/specify`, `/epics` and `/ready` pass `invariants` to their reviewer as `applicable_ard`; the reviewer's ARD-conformance dimension is skipped entirely when it is absent. `/create-ard` does not: it inherits PRD-level `AD#N` read-only straight into its own grill and drafting (Phase 4), and `ard-reviewer` checks non-contradiction directly against the drafted file, never via that field. `/conformance` passes them to no reviewer, since it traces each `Rule` itself.
