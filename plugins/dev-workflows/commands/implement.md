@@ -172,9 +172,9 @@ No shared reference defines this set; it is this command's own rule.
 **`unit_key` — the key the branch and the commit carry** (into run-state `unit_key`, `workitem_key` and `unit_folder` at Phase 1.4, read from there after it). It is the key of the unit this run
 implements, whose folder Phase 4.7's record goes in: `focus_key` wherever it is set, however it was
 set, and the resolved folder's `key` on a broad PRD-level slice; `null` in direct mode. Its
-`workitem_key` is the value of the `workitem_key:` field in that same folder's own document's
-frontmatter — `epic.md` in an Epic's folder, `prd.md` in a PRD's (`workflows-core:prd-format`) —
-and `null` where that frontmatter has no such field, as it usually has none: never `unit_key` or
+`workitem_key` is the value of the `workitem_key:` field in the frontmatter of the `epic.md` or
+`prd.md` that same folder holds at its top level, whichever it holds (`workflows-core:prd-format`),
+and `null` where it holds neither or that frontmatter has no such field, as it usually has none: never `unit_key` or
 any other key, and never a value read off a commit, a branch or the log. Pre-Phase 3 names the branch with `unit_key` and Phase 4.6 ends the
 commit subject with it (`workflows-core:implementation-format` §3), so a run that implements an
 Epic under a PRD address commits `[<EPIC-KEY>]` on a branch named for the Epic — the key an

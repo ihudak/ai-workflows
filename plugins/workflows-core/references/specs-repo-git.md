@@ -439,7 +439,7 @@ First matching row applies.
 
 **In session-branch mode** (§8), B2's and B4's switch and pull, and the re-run's switch back below, are each wrapped in `lift` and `put-back` (§8.3), and the preflight ends with `put-back`. HEAD on the session branch is not a row's subject: G2 has already kept the run there.
 
-**Merged — `branch-merged <ref>`.** Whether the work on a branch is on the default branch, asked against `<default-ref>` (§3.2). B2 asks it of `HEAD`, `phase-handoff.md` §2.2 rule 3 of the ref it resolves, and §3.4's retry of each branch it lists. The first test that holds answers **merged**; none holding answers **unmerged**:
+**Merged — `branch-merged <ref>`.** Whether the work on a branch is on the default branch, asked against `<default-ref>` (§3.2). B2 asks it of `HEAD`, `phase-handoff.md` §2.2 rule 3 of the ref it resolves, §3.4's retry of each branch it lists, and `session-hygiene.md` §1 of each specs-repository branch an item of the resume pointer it overwrites names. The first test that holds answers **merged**; none holding answers **unmerged**:
 
 1. **A merge or a fast-forward:** `git -C "$SPECS_PATH" merge-base --is-ancestor <ref> <default-ref> 2>/dev/null` exits 0.
 2. **A rebase merge:** `git -C "$SPECS_PATH" cherry <default-ref> <ref>` prints at least one line, every line it prints begins `-`, which marks a commit whose change the default branch already holds under another commit, and `git -C "$SPECS_PATH" rev-list --merges <default-ref>..<ref>` prints nothing. `cherry` passes over merge commits, so a branch whose only change of its own sat in a merge commit would otherwise read merged, and B2 would name `branch -D` on it.

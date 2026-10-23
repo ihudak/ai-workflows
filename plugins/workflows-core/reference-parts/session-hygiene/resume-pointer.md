@@ -104,24 +104,36 @@ the next phase of this run's own lane never needs. The overwrite replaces the po
 open item: each item the old pointer carried — each of its carry-forward items, and each open item
 of its *Next step* that this run's *Next step* does not name — goes into the new *Carry-forward
 decisions* line, one line each, unless it is settled. **An item is settled where this run settled
-it, or where the run can see it settled by one of these checks**, each a read that fetches nothing
-and writes nothing:
-- a branch it names, a pull request's included, is merged — its tip is an ancestor of the default
-  branch's tip in the refs the run holds, or `workflows-core:implementation-format` §5's merged
-  test, where the run applied it to that branch, shows it merged;
+it, or where these checks show it settled** — each a read that fetches nothing and writes nothing,
+and an item that names several branches, commands, questions or paths is settled only once every
+one of them is:
+- a branch it names, a pull request's included, is merged — in the specs repository,
+  `specs-repo-git.md` §3.5's `branch-merged` answers merged, or this run's preflight found it
+  merged (§3.5 B2); in a code repository, its tip is an ancestor of the default branch's tip in
+  the refs the run holds, or `workflows-core:implementation-format` §5's merged test, where the
+  run applied it to that branch, shows it merged;
 - a branch it names is pushed — its `origin/<branch>` ref holds the local branch's tip;
 - a follow-up line it names is ticked in its `follow-ups.md`;
 - a command it names has run since — the record that command writes in the folder the item names
   (an `implementation.md` block, a `_conformance.md` or `_security.md` entry, the deliverable
-  itself) is dated after the old pointer's *Last completed* datetime — by the date it records,
-  else by the specs repository's last commit touching it.
+  itself) is later than the old pointer's *Last completed* datetime, by the datetime it records,
+  or, where it records a day alone or no date, by the specs repository's last commit touching it;
+- a decision or a fact it states is recorded, or an open question it states is answered, in a
+  document of the folder it belongs to — the test the template applies to this run's own
+  decisions, *NOT already in the artifact*;
+- a path it names no longer exists.
 
 A settled item is dropped. The run that settled an item may keep one line saying so instead, and
-the next run drops that line: a line saying its item is settled is settled. An item none of these
-checks shows settled is carried, without the run having to show it still open; one a file the next
-run reads already records — `follow-ups.md`, say — is carried as one line naming that file. An item
-that waits on a pull request names that pull request's branch, so a later run can make the check.
-Where no pointer stands yet, there is nothing to carry.
+the next run drops that line: a line saying its item is settled is settled. An item not settled —
+by this run or by one of these checks — is carried, without the run having to show it still open;
+one a file the next run reads already records — `follow-ups.md`, say — is carried as one line
+naming that file. An item that waits on a pull request names that pull request's branch and its
+repository, so a later run can make the check. Two kinds stay longer than they need: a code
+repository's branch merged by a squash or a rebase leaves once a run applies
+`workflows-core:implementation-format` §5's merged test to it — a run of the Epic the branch
+belongs to, or `/dev-workflows:conformance <PRD>`; and an item an older pointer wrote, naming a
+pull request by its number alone, stays until a run settles it. Where no pointer stands yet, there is
+nothing to carry.
 
 **Redact before writing.** The `Carry-forward decisions` line may summarize
 content pulled from a PRD or the session — redact any secret,
