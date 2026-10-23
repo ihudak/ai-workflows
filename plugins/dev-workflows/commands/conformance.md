@@ -94,7 +94,7 @@ Usage: `/conformance <EPIC-KEY | PRD-KEY> [--skip-costs] [--skip-feedback] [--en
 **(b) Requirements** (spec D4). List every requirement to trace, each with its `key`, its id (or quoted text), its document and its text:
 - **Epic run.** The Epic's `specification.md`: each `[Uxx]`, and each `[ACxx]` as the pair `[Uxx]/[ACxx]`, since `[ACxx]` restarts per story. The Epic's `epic.md`: each `## Acceptance criteria` bullet, identified by its quoted text, since it carries no id; each `Produces:` / `Consumes: [AD#n]` line of its `## Contract`, traced on this Epic's own side only — the other side is another Epic's, and the PRD run traces both. The ARD: resolve it with `workflows-core:ard-resolution` and take the `Rule` of each `[AD#n]` it returns as applicable. On `status: unmerged`, stop, adding the returned `pr` after `<branch>` where there is one:
   `CONFORMANCE_ARD_NOT_ON_MAIN: <KEY>'s ARD is on <branch>, not on the default branch — merge it, then re-run '/dev-workflows:conformance <KEY>'.`
-  Any other stopping state of its gate — a working copy that differs from the merged ARD — stops the run on that state's own message, as that reference says. A PRD-level `[AD#n]` — `source: prd` in what `ard-resolution` returns — binds the components of the whole PRD, so, like a `## Contract` line, it is traced without a sibling Epic's part: a part it places on a component another Epic of this PRD targets, which is that Epic's to build (Phase 2, *A sibling Epic's part*); the PRD run traces every part. The Epic's `design.md` is context: its `## Requirements coverage` notes are carried to the walk beside the requirement they name.
+  Any other stopping state of its gate — a working copy that differs from the merged ARD — stops the run on that state's own message, as that reference says. A PRD-level `[AD#n]` — `source: prd` in what `ard-resolution` returns — binds the components of the whole PRD, so, like a `## Contract` line, it is traced without a sibling Epic's part: a part it places on the component of another Epic of this PRD whose target is not this Epic's, which is that Epic's to build; and one that binds only components other than this Epic's is `not-checkable` on this run (Phase 2, *A sibling Epic's part*). The PRD run traces every part. The Epic's `design.md` is context: its `## Requirements coverage` notes are carried to the walk beside the requirement they name.
 - **PRD run.** `prd.md`: every live `[AC#n]` and `[FR#n]`, and every live `[US#n]` with no `[AC#n]` beneath it; never `[UC#n]`, `[SM#n]` or `[SMC#n]`, and never a superseded or withdrawn id (`workflows-core:prd-format`). The PRD-level `specification.md`, as above. Every Epic's set as on an Epic run, both sides of each `## Contract` line and every part of each PRD-level `[AD#n]` Rule included, in the depth (d) sets. The report's *Not traced* names each Epic that gave no requirement of its own.
 - Never trace `[TCxx]`: a test case says how a criterion is verified, not what the code does.
 
@@ -186,9 +186,10 @@ paths.
   the producing Epic's repositories and each consuming Epic's;
 - a PRD-level requirement — `prd.md`'s, or the PRD-level spec's — states no home, so every repository.
 
-**A sibling Epic's part — an Epic run.** A PRD-level `[AD#n]` Rule and a `## Contract` line can place a part on a component another Epic of this PRD builds, on that Epic's own branch, and such a part is that Epic's — never a discrepancy of this run. So on an Epic run whose `epic.md` names a `target:`, hand every tracer `components`, and mark `own_part: true` on each PRD-level Rule — with its `binds`, as `ard-resolution` returns it — and on each `## Contract` line:
+**A sibling Epic's part — an Epic run.** A PRD-level `[AD#n]` Rule and a `## Contract` line can place a part on the component of a sibling Epic — another Epic of this PRD, whose target is not this Epic's — built on that Epic's own branch, and such a part is that Epic's, never a discrepancy of this run; a Rule that binds only components other than this Epic's is `not-checkable` on this run, and the PRD run traces it in full. So on an Epic run whose `epic.md` names a `target:`, hand every tracer `components`, and mark `own_part: true` on each PRD-level Rule — with its `binds`, as `ard-resolution` returns it — and on each `## Contract` line:
 - `own` is that `target:`. `siblings` are the other Epics of this PRD — the folders directly under the PRD folder that Phase 0 step 3's *Epic folder* bullet places as one, each keyed by the `key` its own carrier asserts — each with the `target:` its `epic.md` names, leaving out an Epic that names none, and one whose target is this Epic's own: a part on that component is this Epic's too. Each id is read from a `target:` field, never from a folder name or a requirement's text. A sibling's `epic.md` is read from the checkout for its key and its target alone, as `workflows-core:components` §3 reads targets; it gives this run no requirement and no context, so Phase 0 step 4 does not gate it.
-- A component's `paths` are the `paths` of the entry `ard-resolution`'s `components` returns for its id, else the id's own `<path>` — `[]` for a bare slug, which holds its whole repository (`workflows-core:components` §1, §5).
+- `others` are the entries of `ard-resolution`'s `components` whose id is neither `own`'s nor a sibling's — a component no Epic of this PRD targets, such as a service the PRD only calls — so a tracer places a part on one against a known set; `[]` where the ARD lists none.
+- A component's `paths`: an id with no `:` — a bare slug — holds its whole repository, and it alone is handed `paths: []`; any other id's are the `paths` of the entry `ard-resolution`'s `components` returns for it where that entry lists any, and otherwise — `paths` absent or empty, or no entry — the id's own `<path>` (`workflows-core:components` §1, §5).
 
 An Epic whose `epic.md` names no `target:` has no component to tell its own part by: no `components` is handed, and every part is traced, as on a PRD run, which hands none.
 
@@ -220,10 +221,11 @@ yourself, at the ref.
   part the requirement places on one (Phase 2, *A sibling Epic's part*) → taken before the outcomes
   below: it is no discrepancy of this Epic's, whatever the code at that location shows. Judge the
   requirement again without that part — read the rest yourself, at the ref — and record the verdict
-  the rest bears: `satisfied` with this Epic's evidence, a discrepancy on the rest, confirmed by that
-  reading, or `not-checkable` where the requirement places no part on this Epic's target; the sibling
-  Epic's part is named as a tracer names it. The report's *Dropped at the re-check* names the tracer's
-  verdict and the sibling Epic it rested on.
+  the rest bears: `satisfied` with this Epic's evidence; a discrepancy on the rest, confirmed by that
+  reading; `not-checkable` where it is an `[AD#n]` Rule that binds only components other than this
+  Epic's (the handoff file's rule 3); or *unverified*, as below, where that reading settles neither.
+  The sibling Epic's part is named as a tracer names it. The report's *Dropped at the re-check*
+  names the tracer's verdict and the sibling Epic it rested on.
 - **Confirmed** → a discrepancy, numbered `[DD#n]` when the record is written (`conformance-format.md` §5).
 - **Could not be settled either way** → *unverified*: neither a discrepancy nor satisfied. It is never
   asked about — no decision can rest on a verdict nobody could confirm — and takes no `[DD#n]`: the
@@ -431,7 +433,7 @@ Emit the terminal report:
 
 ### Verdicts
 [N satisfied · N partial · N missing · N contradicts · N not-checkable · N unverified]
-[each not-checkable requirement and its reason — on an Epic run, one that places no part on this Epic's target names each sibling Epic whose part it is — or omit where there is none]
+[each not-checkable requirement and its reason, on either run — on an Epic run, a Rule that binds only components other than this Epic's names each component it binds and the sibling Epic that targets it, where one does — or omit where there is none]
 
 ### Discrepancies
 [each [DD#n]: requirement, verdict, what shipped, decision and status — carried-forward entries marked so, and on a PRD run each of an Epic traced under *Trace anyway* marked as traced where its merge was not shown]

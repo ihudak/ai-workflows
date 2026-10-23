@@ -11,9 +11,12 @@ components:            # an Epic run whose epic.md names a target: only — omit
   own:
     id: <this Epic's target: component id>
     paths: [<its paths>]
-  siblings:            # the other Epics of its PRD that name another target: — [] where none does
+  siblings:            # each other Epic of its PRD whose target: is not this Epic's — [] where none is
     - epic: <EPIC-KEY>
       id: <that Epic's target: component id>
+      paths: [<its paths>]
+  others:              # each component of the ARD's components: that neither own nor a sibling is — [] where none is
+    - id: <component id>
       paths: [<its paths>]
 requirements:
   - key: <the folder key the requirement belongs to>
@@ -37,7 +40,7 @@ One section per requirement, in input order, headed by the requirement's `key` a
 - verdict: <satisfied | partial | missing | contradicts | not-checkable>
 - shipped: <one sentence on what the code does>
 - evidence: <file:line@commit>, one per place relied on — or, for `missing`, `evidence: none — searched <the searches run>`
-- reason: <not-checkable only: why no code can show it>
+- reason: <not-checkable only: why no code can show it — or, under rule 3 below, the components the Rule binds in place of this Epic's>
 - sibling parts: <own_part only: each sibling Epic whose component the requirement places a part on, as "<EPIC-KEY> (<component id>) — <that part, in a few words>" — omitted where it places none>
 ```
 
@@ -45,11 +48,11 @@ One section per requirement, in input order, headed by the requirement's `key` a
 
 ## A requirement marked `own_part` — a sibling Epic's part is that Epic's
 
-A PRD-level `[AD#n]` Rule binds the components of its whole PRD, and an `epic.md` `## Contract` line has a side on another Epic's component, so on an Epic run each can place a part on a component another Epic of the PRD builds — on that Epic's own branch, which the ref you read need not hold. Such a part is that Epic's:
+A PRD-level `[AD#n]` Rule binds the components of its whole PRD, and an `epic.md` `## Contract` line has a side on another Epic's component, so on an Epic run each can place a part on the component of a sibling Epic — another Epic of the PRD, whose target is not this Epic's — built on that Epic's own branch, which the ref you read need not hold. Such a part is that Epic's:
 
-1. **Place each part of the requirement on a component** — by a component id its `text` or `binds` names, matched whole against the ids `components` holds, never a name that only resembles one; and the code you read on the component of `components` whose `paths` hold the longest prefix of its path, compared segment by segment — the components reference's `component-of` (§1.1) — counting only a component whose id names this repository: `repo_slug`, the id up to its first `:`. A component's `paths` are relative to its repository's top level, and `[]` is a bare slug's: it holds every path of its repository.
-2. **A part on a component of `components.siblings` is that sibling Epic's: it is never a reason for `partial`, `missing` or `contradicts`, and code on that component is never your evidence.** Name it under `sibling parts`. Judge the verdict on every other part, as you judge any requirement, and cite the evidence of those parts alone.
-3. **A requirement that places no part on `components.own` is `not-checkable`**: nothing of it is this Epic's to build. Its `reason` names each sibling Epic, by key, whose component it binds, and each other component it binds, by its id; its `sibling parts` are named as in 2.
+1. **Place each part of the requirement on a component of `components`** — `own`, a sibling's or one of `others` — by a component id its `text` or `binds` names, matched whole against those ids, never a name that only resembles one; and by the code you read, on the component whose `paths` hold the longest prefix of its path, compared segment by segment — the components reference's `component-of` (§1.1) — counting only a component whose id names this repository: `repo_slug`, the id up to its first `:`. A component's `paths` are relative to its repository's top level; an id with no `:` — a bare slug — holds every path of its repository, and is the one component handed `paths: []`. Code on none of them — a repository's shared ground — is on no sibling's component. A component the requirement names only as the caller of another component's interface — "as bookstore:web calls them" — holds no part of it: the part lies on the component whose behaviour the requirement states, and the call is the caller's own `## Contract` line, traced as that.
+2. **A part on a sibling's component is that sibling Epic's: it is never a reason for `partial`, `missing` or `contradicts`, and code on that component is never your evidence.** Name it under `sibling parts`. Where 3 does not apply, judge the verdict on every other part — this Epic's, and any on a component of `others` — as you judge any requirement, and cite the evidence of those parts alone.
+3. **An `[AD#n]` Rule that binds only components other than this Epic's is `not-checkable`** on this run: every part it places (1) lies off `components.own` — placed by the component ids its `text` or `binds` names or, where it names none, by the code that does what it states — and no code doing what it states lies on `own`. Its `reason` names each component it binds, by its id, and the sibling Epic, by key, that targets it where one does; its `sibling parts` are named as in 2. A Rule that names no component id and whose code you found nowhere places no part, so it is judged as in 2, never `not-checkable` under this rule: where nothing does what it states, it is `missing`. Rule 3 never applies to a `## Contract` line: its side on this Epic is always this Epic's.
 
 Without `components`, or on a requirement not marked `own_part`, every part is yours to judge.
 
