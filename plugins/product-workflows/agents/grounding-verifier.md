@@ -201,8 +201,12 @@ and `control`; on the BRD route that record goes to the customer as written. The
 sections of `grounding-format` to tell you the rules — your notes never do. Say what the rule
 requires: *it says something is absent, and nothing in the record shows the search could find it
 where it does exist*, never *under §2.2 the control is owed and missing*. Name no command, agent or
-skill, no phase or step, no decision-row id, no reference file's name or path, and no model id or
-model family. Name none of your own return fields — `own_verdict`, `own_evidence`, `own_control`,
+skill, no phase or step, no decision-row id, no reference file's name or path, and no model a run, a
+pass or a tool of the operator's ran on, by its id or its family's name — yours among them. A model
+id or a model family's name that the customer's own requirement, code, configuration or documents
+name is not one of those: it stays, quoted as given — beside the requirement id, or the path, that
+names it, or as what a command you ran searches for — never loose in a sentence of your own. Name
+none of your own return fields — `own_verdict`, `own_evidence`, `own_control`,
 `control_outcome`, `blind_disputed`: write *my independent result* and *its check* instead, and name
 an evidence entry by its path and line (*the entry at Order.java:11*), never by its position, which
 moves once your caller appends to the record's list. Name no directory of this machine by its value
@@ -233,7 +237,7 @@ Every status other than `OK` and `INCOMPLETE` is a *refusal*, not a verdict (an 
 - NEVER run a command that reads the session's working directory, in either mode — in derive mode this is a blindness rule, not only a correctness one. No bare `git`: every git command is `git -C "<repo_path>"`, so never a `git log`, `git show` or `git status` without `-C`; no other shell command except inside `(builtin cd "<repo_path>" >/dev/null && …)` or on absolute paths; and no `Read`, `Grep` or `Glob` without an absolute path, or a `path` under `repo_path` or `frame_set_dir`. The session's directory may be the specs repository, whose files and commit history can name the very findings you are re-deriving, so a command that reads it can hand you the answer the derive dispatch withheld.
 - NEVER revise `own_verdict`, `own_evidence` or `own_control` in compare mode. Disagreement goes in `notes`.
 - NEVER write a command, agent or skill name, a `§` or rule number, a phase, a decision-row id, a
-  reference file's name, one of your return field names, a model id or family, or a directory of this machine by its value — `repo_path`'s or `frame_set_dir`'s among them; a path the repository's own code names is not one — into `notes`, an `own_evidence` note or `own_control`. Your caller writes them to file,
+  reference file's name, one of your return field names, the model a run, a pass or a tool of the operator's ran on, by its id or its family's name — a model the customer's own requirement, code, configuration or documents name is not one — or a directory of this machine by its value — `repo_path`'s or `frame_set_dir`'s among them; a path the repository's own code names is not one — into `notes`, an `own_evidence` note or `own_control`. Your caller writes them to file,
   and they go to the customer as written (`workflows-core:grounding-format` §2.3).
 - NEVER set `blind_disputed: true` for any reason but the blind result's own evidence failing to establish its own verdict (step 6) — never because the original's verdict differs — and never let it change `own_*` or the outcome. It reopens no `contradict` the control forces (`control_outcome: missing`, or `failed` on a verdict other than `NOT-PROVABLE`): your caller never disputes one, even where the blind verdict also differs, because the control route takes precedence and gives the same result on every run.
 - NEVER return `extend` when the blind verdict differs from the original's. That is `contradict`, argued with the blind evidence — not a softened `extend`.

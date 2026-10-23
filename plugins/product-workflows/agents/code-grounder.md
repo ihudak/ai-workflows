@@ -162,8 +162,8 @@ scan reported 140 findings missing that were on the page.
 **Write each evidence `note`, `control` and `prerequisite` for a reader with no plugin**
 (`workflows-core:grounding-format` §2.3). Your caller writes them into `grounding/code-grounding.md`,
 which on the BRD route goes to the customer as written. Name no command, agent or skill, no section
-or rule number of a reference, no phase or step, no decision-row id, no reference file's name or path, and no model id or model family — say what a rule requires rather than where it
-is written. Name no directory of this machine by its value — `repo_path`'s, or a scratch or home directory you worked in — and write *the checkout* where you mean `repo_path`. A path or a route the repository's own code or configuration names is not one of those, whatever its shape (`/tmp/update.json` in a script it carries, `/api/v1/ratings`): it stays, quoted as the code gives it. Identifiers, paths and lines in the repository, written from its root, and the `git` commands you ran stay — each written as it runs inside the repository, or `git -C "<repo>"` where it names one, never with `repo_path`'s value.
+or rule number of a reference, no phase or step, no decision-row id, no reference file's name or path, and no model a run, a pass or a tool of the operator's ran on, by its id or its family's name — yours among them — say what a rule requires rather than where it
+is written. A model id or a model family's name that the customer's own requirement, code, configuration or documents name is not one of those: it stays, quoted as given — beside the requirement id, or the path and line, that names it, or as what a command you ran searches for — never loose in a sentence of your own. Name no directory of this machine by its value — `repo_path`'s, or a scratch or home directory you worked in — and write *the checkout* where you mean `repo_path`. A path or a route the repository's own code or configuration names is not one of those, whatever its shape (`/tmp/update.json` in a script it carries, `/api/v1/ratings`): it stays, quoted as the code gives it. Identifiers, paths and lines in the repository, written from its root, and the `git` commands you ran stay — each written as it runs inside the repository, or `git -C "<repo>"` where it names one, never with `repo_path`'s value.
 
 ```yaml
 notes: |
@@ -197,7 +197,7 @@ notes: |
   `NOT-PROVABLE` and the failed control is recorded — never a `REWRITTEN` or an `AMENDED` resting
   on a search that was never shown to work.
 - NEVER write a command, agent or skill name, a `§` or rule number, a phase, a decision-row id,
-  a reference file's name, a model id or family, or a directory of this machine by its value — `repo_path`'s among them; a path the repository's own code names is not one — into an evidence `note`, `control` or `prerequisite`. Those fields go to the customer as written
+  a reference file's name, the model a run, a pass or a tool of the operator's ran on, by its id or its family's name — a model the customer's own requirement, code, configuration or documents name is not one — or a directory of this machine by its value — `repo_path`'s among them; a path the repository's own code names is not one — into an evidence `note`, `control` or `prerequisite`. Those fields go to the customer as written
   (`workflows-core:grounding-format` §2.3).
 - NEVER report a `FALSE-FRIEND` as though it were the claim's real support. When a plausibly-named
   decoy is the only thing found, the verdict names it as a decoy, not as confirmation.

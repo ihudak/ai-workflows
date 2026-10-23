@@ -767,8 +767,8 @@ always knows which tier the corpus this run wrote was ground at.
 **`ground_tier` is recorded in two places, both the operator's: the `model_routing` block above
 and its own line of the Final report.** No file this run writes records it — the cost entry Phase
 11 files lists what the run spent by model, never which tier any agent ran at — and no grounding
-file carries it, so nothing the review bundle sends does either: a model id tells the customer which
-tooling ground their corpus and gives their reviewer nothing to check
+file carries it, so nothing the review bundle sends does either: the tier's model id tells the
+customer which tooling ground their corpus and gives their reviewer nothing to check
 (`workflows-core:grounding-format` §2.3), and `/product-workflows:brd-package` stops on one.
 
 ---
@@ -1576,20 +1576,26 @@ a raw finding and one a downstream command may cite.
 writing it** (`workflows-core:grounding-format` §2.3). On `route: brd` every grounding file this
 phase writes — `grounding/code-grounding.md`, `grounding/design-grounding.md`,
 `grounding/baselines.md` — goes to the customer in the review bundle as written, and
-`/product-workflows:brd-package` stops the package on a plugin token or a model id it finds in them, days after
+`/product-workflows:brd-package` stops the package on a plugin token or a model id it finds in them — a
+model id in the customer's naming a block records aside, which it puts to the operator to rule on — days after
 this run, where the only repair is a hand edit. So, on both routes — the idea route bundles nothing,
 but the same agents write both:
 
 1. **What this run writes names no command, agent, skill, phase or rule, none of an agent's
-   return fields, no model and no local path** — no `own_verdict`, `own_control`,
-   `blind_disputed` or the rest; no model id or model family, the `ground_tier` Phase 2 records in
+   return fields, no model of the operator's and no local path** — no `own_verdict`, `own_control`,
+   `blind_disputed` or the rest; no model a run, a pass or a tool of the operator's ran on, by its
+   id or its family's name, and no record of a tier, the `ground_tier` Phase 2 records in
    this run's own record included; and no checkout's path, no `$SPECS_PATH` or documentation root
    by its value, and no scratch or home directory, a command run against a repository naming its
    checkout only as `"<repo>"`, as Phase 3's `git -C "<repo>"` commands do
    (`workflows-core:grounding-format` §2.3). A path or a route the customer's code, configuration or
-   documents name is none of these, whatever its shape — save one that is, to the letter, a path
-   point 2 scans for, which point 3 replaces wherever it sits. Reword a verifier's `notes` that carries any
-   of them, as point 3 rewords a hit. Where this run creates a file, its opening lines say what the
+   documents name is none of these, whatever its shape — save one that is, or lies under, a path
+   point 2 scans for, to the letter, which point 3 replaces wherever it sits. Nor is a model id or a
+   model family's name that the customer's own requirement, code, configuration or documents name:
+   it stays, quoted as given — in the `claim`, beside the requirement id or the path it comes from,
+   or as what a command run against the repository searches for, never loose in a sentence of this
+   run's own. Reword a verifier's `notes` that carries anything this point forbids, as point 3
+   rewords a hit. Where this run creates a file, its opening lines say what the
    file holds — never which command or agent wrote it, or at which tier, and no pinned commit,
    which `grounding/baselines.md` records; a run that appends to a file leaves its opening
    lines as they stand. A run's heading in `design-grounding.md` is its date. The note saying design
@@ -1634,13 +1640,19 @@ but the same agents write both:
    the block records it (an evidence entry's `path` and `lines`, one named inside a note,
    `control`'s trailing `path:line`), a command run against the repository, a documentation page's
    path, a class-1 finding's field label, and the `claim`, which quotes the requirement as the
-   inventory gives it: a `references/` directory of theirs, a `§ 4.3` in their requirement. The
+   inventory gives it: a `references/` directory of theirs, a `§ 4.3` in their requirement, a model
+   id their requirement or configuration names. The
    sentence around such naming is still reworded where it carries a token of the plugin's own; the
    naming itself would break the record if reworded, so leave it as written and name it in the Final
    report — on `route: brd` as one `/product-workflows:brd-package` will stop on, that command's
    exemptions (`bundle-packaging.md` §6.3) covering no code or frame naming and no finding's
-   `claim`, so it is found here rather than days later; on `route: idea`, as left standing, that
-   route bundling nothing. Record every rewrite for the Final report, by finding id, or
+   `claim` for any other class, or, a model id, as one it will put to the operator to rule on, §6.3
+   there covering a model id in a block's `claim` and in what a block quotes beside where it comes
+   from — so it is found here rather than days later; on `route: idea`, as left standing, that
+   route bundling nothing. A model id the customer's material names that stands loose in a sentence
+   of this run's own is rewritten to quote it beside the requirement id or the path it comes from,
+   as point 1 says, never removed; one that records what a run of the operator's ran on is reworded
+   out. Record every rewrite for the Final report, by finding id, or
    by file and section for this run's own prose.
 
 **Append Phase 3's held `grounding/baselines.md` entries** once the two finding files below are
@@ -2206,7 +2218,7 @@ re-checked and left standing, and, where it did nothing, which of the three reas
 empty set; a non-empty one over which this phase rewrote no `[CG#n]` at all; or a non-empty one
 where `[CG#n]` **were** rewritten and no finding in the set cites one of them; every class-4
 `[DG#n]` Phase 8's cascade marked `SUPERSEDED`, each with the `[CG#n]` that took it there, the route
-that superseded that `[CG#n]` and the command that replaces it — `/product-workflows:prd-ground <KEY> --no-code` where that `[CG#n]` has a successor, a plain `/product-workflows:prd-ground <KEY>` where it has none — which its note describes in words (Phase 8); every sentence Phase 8 rewrote before writing it, by finding id or by file and section, and every hit it left standing — on `route: brd` each one `/product-workflows:brd-package` will stop on — by finding id and field, or an explicit "none" for each; the `docs grounding:` line from Phase 1 step 0 verbatim, any repository a Phase 4.5 lead added,
+that superseded that `[CG#n]` and the command that replaces it — `/product-workflows:prd-ground <KEY> --no-code` where that `[CG#n]` has a successor, a plain `/product-workflows:prd-ground <KEY>` where it has none — which its note describes in words (Phase 8); every sentence Phase 8 rewrote before writing it, by finding id or by file and section, and every hit it left standing — on `route: brd` each one `/product-workflows:brd-package` will stop on, or, a model id, put to the operator to rule on — by finding id and field, or an explicit "none" for each; the `docs grounding:` line from Phase 1 step 0 verbatim, any repository a Phase 4.5 lead added,
 and the count of documentation divergences recorded (each named by the `[CG#n]` it diverges from —
 never by an identifier of its own, because it has none); whether the derivation matrix ran and why; any `design-grounder` class-4 gap deferred for want
 of a settling `[CG#n]`; **on `route: idea`, the claim-exclusion count and prefixes step 8i

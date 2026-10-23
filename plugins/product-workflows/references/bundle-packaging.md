@@ -182,11 +182,15 @@ prerequisite's package copied in, below:
 | A decision-row reference | `D12`, `D13`, `D18`, `D20`, or any other bare `D<n>` row id |
 | A model id | `claude-opus-5-5`, `claude-sonnet-4-6` — any `claude-<family>-<version>` id, with or without a suffix such as `[1m]` |
 
-**A model id needs no plugin to read and is in the table all the same**: it tells the customer which
-tooling produced the document and gives their reviewer nothing to check
-(`workflows-core:grounding-format` §2.3). A grounding file an earlier run left can carry one, since
-no later run rewrites that run's prose, and this scan is where it is found; the repair is the
-operator's, by hand, in the file it came from. **A model id inside a prerequisite's package copied
+**A model id needs no plugin to read and is in the table all the same**: where it records the model
+a run, a pass or a tool of the operator's ran on, it tells the customer which tooling produced the
+document and gives their reviewer nothing to check (`workflows-core:grounding-format` §2.3). A
+grounding file an earlier run left can carry one, since no later run rewrites that run's prose, and
+this scan is where it is found; the repair is the operator's, by hand, in the file it came from.
+**A model the customer's own material names is theirs, and the token cannot tell it from that
+one** — `claude-sonnet-4-6` reads the same in their configuration and in a tier line — so the row
+fires on every model id, and where one sits in the customer's naming a grounding block records,
+§6.3 puts it to the operator rather than stopping on it. **A model id inside a prerequisite's package copied
 in is no stop**: that package is never rewritten (§5), so its text reaches the customer as written
 whether or not it already has, and a copy of it in this bundle exposes nothing it does not.
 `commands/brd-package.md`'s *Assemble the bundle* rule 7 names each such hit in the run's Final
@@ -780,9 +784,10 @@ stopping outright would make that BRD permanently unpackageable, since the only 
 falsify the record — an edit to an immutable file, a transcription saying something the image does
 not, or a quotation saying something the customer did not. So a relation 1 or relation 3 hit inside
 one is reported, grouped as rule 4 below fixes, and put to the operator on the one question *The
-operator's ruling* below fixes. Outside these spans and the customer-derived locators below, every
-hit stays a hard stop, in the figures file, the inventory, the ledger and the register as anywhere
-else: the rest of each is the plugin's own writing.
+operator's ruling* below fixes. Outside these spans, the customer-derived locators below and, for a
+model id alone, the naming a grounding block records (after them), every hit stays a hard stop, in
+the figures file, the inventory, the ledger and the register as anywhere else: the rest of each is
+the plugin's own writing.
 
 **A customer-derived locator is the customer's naming, wherever it appears.** It is one of four
 things: a captured file's path relative to `brd/`, with whatever follows its ` › ` — the `source/`
@@ -826,9 +831,29 @@ relation 3's (§6.2). Four rules follow, for the plugin-free scan and this check
    §6.2 keeps the relation off the manifest's own quotation of a link.
 4. **Every report this section makes is grouped** — one line per file and token, with a count — in
    the report that asks the operator to rule and in the run's final report alike, whether the hit
-   sat in verbatim content or in a locator. A `"D3"` quoted in an image anchor, in that row's
-   `text`, in its ledger row's `text` and in the figures file's *Flow* is three lines, not four
-   reports.
+   sat in verbatim content, in a locator or in a grounding block's naming (below). A `"D3"` quoted
+   in an image anchor, in that row's `text`, in its ledger row's `text` and in the figures file's
+   *Flow* is three lines, not four reports.
+
+**A model id in the customer's naming a grounding block records reports too — for that class
+alone.** In `grounding/code-grounding.md` and `grounding/design-grounding.md`, a block's `claim`,
+which quotes the requirement as the inventory gives it, and a value a field of the block quotes from
+the customer's code, configuration, frames or documents — beside the requirement id, or the path, it
+comes from, or as what a command run against the repository searches for — are the
+customer's naming (`workflows-core:grounding-format` §2.3), and a model id there is theirs: a
+requirement that summaries be written by `claude-sonnet-4-6`, the configuration line that sets it.
+A hit of the plugin-free scan's model-id row (§1.2) there is reported, grouped as rule 4 fixes, and
+put to the operator on the question below, and so is the same text where a part of the prompt
+renders it from there. **The span is recognised by where the model id sits, never by the token**,
+which reads the same in the customer's configuration and in a record of the model a run ran on — so
+the operator's ruling is the guard: a model id there that is not the customer's after all — the
+model a run of the operator's ran on, written into a quoted line — is one the operator holds, and
+removes by hand from the file it came from before the re-run. Every other class's hit in that naming
+stays a hard stop, as `commands/prd-ground.md` reports it, and so does a model id anywhere else in a
+grounding file — its opening lines, a run's heading, a sentence's own words in a field — which is
+where the plugin's own record of a model sits, and where a writer that quoted the customer's loose
+left it; the stop says how each is repaired (`commands/brd-package.md`, *The plugin-free scan*). The
+citation-resolution check never meets one: a model id is no identifier and no filename.
 
 **The operator's ruling — one question per pass, never one per hit.** A pass that reports a hit this
 section covers — the plugin-free scan over the prompt, over the delivery note or over the finished

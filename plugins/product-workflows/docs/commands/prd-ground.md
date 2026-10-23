@@ -365,7 +365,8 @@ Under the resolved folder — the `PRD-<SLICE-KEY>-<slug>/` slice folder inside 
 **The three grounding files are written for a reader with no plugin, and name nothing of your
 machine.** On the BRD route they go to the customer in the review bundle as written, and
 [`/brd-package`](brd-package.md) stops on any command, agent or skill name, `§` reference,
-decision-row id or model id it finds in them. So every note, heading and lead-in the run writes says
+decision-row id or model id it finds in them, save a model id in the naming a finding quotes (below),
+which it puts to you to rule on. So every note, heading and lead-in the run writes says
 what happened in plain words; nothing it writes names the model or the tier the corpus was ground at
 — that goes on its own line of the final report — or a directory of your machine: a command run
 against a repository names its checkout `"<repo>"`, and a path in your code repository is written
@@ -380,9 +381,12 @@ line or route in your code repository, a command run against your repository
 (`git -C "<repo>" grep …`), a frame path or label, a documentation page's path, the requirement
 text a finding quotes. A path your code names counts as such naming whatever its shape — `/tmp/…`
 in a script, `/api/v1/…` — so the run leaves it alone; only the literal value of one of the run's
-own paths marks a path as your machine's. Where a plugin token — a `§` or a command name, say — sits
-inside such naming, the final report names it, because on the BRD route `/brd-package` will still
-stop on it. This covers what the run writes: the notes, opening lines and run headings an earlier run left on file stay as they are, and you can reword their free text by hand — an earlier run's tier line or local path among them.
+own paths marks a path as your machine's. A model your requirement, code, configuration or documents
+name counts as such naming too — `claude-sonnet-4-6` in a requirement or a configuration line — and
+is quoted as given, beside the requirement or the path it comes from; only the model the run itself
+ran on is kept out. Where a plugin token — a `§` or a command name, say — sits inside such naming,
+the final report names it, because on the BRD route `/brd-package` will still stop on it; it names a
+model id there too, as one `/brd-package` will put to you to rule on as the customer's own. This covers what the run writes: the notes, opening lines and run headings an earlier run left on file stay as they are, and you can reword their free text by hand — an earlier run's tier line or local path among them.
 
 Behind Phase 9's consent choice, these are committed, pushed, and a pull request opened against the
 specs repo's default branch — under the shared `brd/<KEY>-<slug>` branch prefix on the BRD route

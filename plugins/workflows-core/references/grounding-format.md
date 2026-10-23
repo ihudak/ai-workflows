@@ -323,8 +323,9 @@ So neither a finding's free text nor the prose around the blocks ever carries:
   `§4.1 rule 4`, `Phase 4.5`;
 - an agent's return-field name — `own_verdict`, `own_control`, `blind_disputed`;
 - a reference file's name or path, or a decision-row id such as `D12`;
-- a model id or a model family's name — `claude-opus-5-5`, `Opus` — the tier a finding was ground
-  or verified at included;
+- the model a run, a pass or a tool of the operator's ran on, by its id or its family's name —
+  `claude-opus-5-5`, `Opus` — and the plugin's own record of a tier, the tier a finding was ground or
+  verified at included;
 - a local filesystem path — a directory of the machine the run worked on, recognised by its value
   and never by its shape: the checkout a repository was read in, the specs repository's own
   directory, the documentation root the run resolved, a scratch or a home directory it worked in.
@@ -339,10 +340,18 @@ grounding file. A verifier note that read *I re-ran the three git commands again
 **A path the customer's own material names is not a local path in this sense, whatever its shape**:
 a path or a route the repository's code or configuration names — `/tmp/update.json` in a script it
 carries, `/api/v1/ratings` — or one the customer's documents give stays, quoted as they give it,
-save where it is, to the letter, one of this machine's own — the checkout's, the specs
+save where it is, or lies under, one of this machine's own to the letter — the checkout's, the specs
 repository's or the documentation root's path — which `/product-workflows:prd-ground`'s Phase 8
 replaces wherever it sits, by the exact value it scans for. A path inside the repository is written
-from the repository's root, as every evidence `path` is, and stays too.
+from the repository's root, as every evidence `path` is, and stays too. **Nor is a model the
+customer's own material names the operator's**: a model id or a model family's name that the
+customer's own requirement, code, configuration or documents name stays, quoted as given — a
+requirement that summaries be written by `claude-sonnet-4-6`, the configuration line that sets it.
+It is quoted where the record shows whose it is: in the `claim`, beside the requirement id or the
+path — a code file's with its line, or a frame's — it is quoted from, or as what a command run
+against the repository searches for —
+never loose in a sentence's own words, since those are the positions where
+`product-workflows:bundle-packaging` §6.3 tells it from the operator's.
 
 **Say what the rule requires, never where it is written — and a token they cannot resolve is not
 fixed by deleting it.** A sentence that cited a rule leaned on it, so the sentence is what has to
@@ -363,9 +372,11 @@ the record's own field names and values, which are the record being read. A sect
 of the customer's own document is written `source/<basename> › § <n>` — its captured path, then the
 section — never a bare `§ <n>`, which reads as one of the plugin's (`product-workflows:bundle-packaging`
 §6.3 rule 1). What stays may still match a class there — a `references/` directory of the customer's,
-a `§` inside the requirement a `claim` quotes — and it stays all the same, since rewording it would
-break the record; but the package's scan has no exemption for it, so the run that writes it reports
-it rather than leaving it to be found at packaging.
+a `§` inside the requirement a `claim` quotes, a model id their configuration sets — and it stays all
+the same, since rewording it would break the record. The package's scan has no exemption for it,
+save a model id quoted where the record shows whose it is, which it puts to the operator to rule on
+as the customer's own (`product-workflows:bundle-packaging` §6.3); so the run that writes such a
+token reports it rather than leaving it to be found at packaging.
 
 **Who holds a writer to it.** `product-workflows:code-grounder`, `product-workflows:design-grounder`
 and `product-workflows:grounding-verifier` each carry the rule for the fields they return.

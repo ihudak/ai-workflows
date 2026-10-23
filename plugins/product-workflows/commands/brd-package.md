@@ -96,13 +96,16 @@ them is.
 5. **A scan hit stops the run; it never sanitises.** The command does not strip the offending token
    and continue. A citation that reached the prompt reached it because some part of the package
    assumed a reader who has this plugin, and deleting the four characters that reveal that leaves
-   the assumption in place and the sentence unfollowable. A model id is the one token whose removal
-   is the whole repair, and the scan still does not make it: the operator removes the line or the
-   clause naming it from the artifact it came from, so what ships and the record it was built from
-   stay one text. What is reported is the token, where it landed — a part of the prompt, the
+   the assumption in place and the sentence unfollowable. A model id that records the model a run,
+   a pass or a tool of the operator's ran on is the one token whose removal is the whole repair, and
+   the scan still does not make it: the operator removes the line or the clause naming it from the
+   artifact it came from, so what ships and the record it was built from stay one text. A model the
+   customer's own requirement, code, configuration or documents name is theirs, and is never
+   removed. What is reported is the token, where it landed — a part of the prompt, the
    delivery note, or a bundle document and its line — and the artifact it came from. **Two exceptions, neither of which stops
    the run outright.** **The customer's own words and naming** — verbatim customer content and
-   customer-derived locators, both as `bundle-packaging.md` §6.3 defines them — where the
+   customer-derived locators, both as `bundle-packaging.md` §6.3 defines them, and, for a model id
+   alone, the customer's naming a grounding block records, which that section defines too — where the
    customer's own token is reported and put to the operator, who ships it as the customer's own or
    holds the package, which stops the run with `BRD_PACKAGE_CUSTOMER_CONTENT_HELD`; or, where that
    section says so, it is not a hit at all (*The plugin-free scan*, below). **And a model id inside
@@ -528,7 +531,7 @@ from the delivery team present to correct it — a proposal is read outside the 
 it is read, not run. If no Opus resolves, degrade to best-available, record it in `notes`, in the
 self-review's own header and in the final report — a package whose adversarial pass ran on a weaker
 model is still a package, and the customer's own reviewer is the second pass, but the operator must
-know which they got. Never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded — the self-review's own header records that enforced id as the model the pass ran on. (`/prd-ground` reports an enforced id as its `ground_tier` too, but only in its Final report and never in a file it writes: its grounding files ship to the customer, and the self-review never does.)
+know which they got. Never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded — the self-review's own header records that enforced id as the model the pass ran on. (`/prd-ground` reports an enforced id as its `ground_tier` too, but only in its Final report and never in a file it writes: its grounding files are in the review bundle, and the self-review never is.)
 
 ---
 
@@ -1170,20 +1173,23 @@ the same table, and two copies of one list drift. The same stop serves the deliv
 (*Render the delivery note*) and the bundle's (*Assemble the bundle* rule 7), each naming where its
 hit landed.
 
-`BRD_PACKAGE_PROMPT_LEAK: <where> carries <token>, from <artifact> — <why>. Where <token> is a § quoting the customer's own section number with no captured path, write it as the path and the section, source/<basename> › § <n>, which bundle-packaging.md §6.3 rule 1 exempts. Where <token> is a model id, remove the line or the clause naming it from <artifact> by hand — no field of the record holds a model, so nothing else changes, and workflows-core:grounding-format §2.3 sanctions the edit in a grounding file — commit the edit to the specs repository's default branch, and re-run.`
+`BRD_PACKAGE_PROMPT_LEAK: <where> carries <token>, from <artifact> — <why>. Where <token> is a § quoting the customer's own section number with no captured path, write it as the path and the section, source/<basename> › § <n>, which bundle-packaging.md §6.3 rule 1 exempts. Where <token> is a model id that records what a run, a pass or a tool of yours ran on — a tier line, a note saying which model a pass used — remove the line or the clause naming it from <artifact> by hand: no field of the record holds that model, so nothing else changes, and workflows-core:grounding-format §2.3 sanctions the edit in a grounding file. Where it is a model the customer's own requirement, code, configuration or documents name, it is theirs and is never removed: in a grounding file, quote it beside the requirement id, or the path, it comes from, which bundle-packaging.md §6.3 puts to your ruling; anywhere else, reword the sentence around it to name the model by the record that names it. Either way, commit the edit to the specs repository's default branch, and re-run.`
 
 `<where>` is `the rendered prompt, in part <n>` here, `the delivery note` over the note, and the
 bundled filename and line of the document the hit is in over the bundle — a copied grounding file,
-most often. `<why>` is `a model id tells the customer which tooling produced the package and gives
-their reviewer nothing to check` for a model id, and for every other class `the package is read by
-somebody with no plugin, and a token they cannot resolve is not fixed by deleting it`.
+most often. `<why>` is `the scan stops on every model id, since one the customer's own material names
+reads the same as one your tooling ran on, which tells the customer which tooling produced the
+package and gives their reviewer nothing to check` for a model id, and for every other class `the
+package is read by somebody with no plugin, and a token they cannot resolve is not fixed by deleting
+it`.
 
 **The scan stops; it never sanitises.** A citation that reached the prompt reached it because some
 sentence in the package assumed a reader who has this plugin, and stripping the citation leaves that
-sentence unfollowable while making it look fine. A model id is the exception to that reason and not
-to the rule: removing the clause that names it is the whole repair, but the operator makes it in the
-artifact it came from, never the scan in a copy, so what ships and the record it was built from
-stay one text.
+sentence unfollowable while making it look fine. A model id that records what the operator's tooling
+ran on is the exception to that reason and not to the rule: removing the clause that names it is the
+whole repair, but the operator makes it in the artifact it came from, never the scan in a copy, so
+what ships and the record it was built from stay one text. A model the customer's own material
+names is no exception to either: it is theirs, and removing it would falsify the record.
 
 **The customer's own words and naming can be neither sanitised nor corrected, and the scan must say
 so rather than deadlock.** `${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §6.3 defines both
@@ -1191,9 +1197,14 @@ sets of span this covers: **verbatim customer content** — the customer's own f
 byte and immutable by rule (§2.1 there, `${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §1), and
 the parts of the figures file, the inventory, the coverage ledger and the register that transcribe
 or quote their words — and **customer-derived locators**, the customer's names for their own files,
-headings and links, in the positions §6.3 recognises them in, this package's own writing included. A
-hit inside either is not a leak this package committed. It is the customer having written the token
-themselves, in a document, a screenshot, a heading or a folder name — because they were told what
+headings and links, in the positions §6.3 recognises them in, this package's own writing included.
+For a model id alone it covers one more, which §6.3 defines too: **the customer's naming a grounding
+block records** — a block's `claim`, and what a field of it quotes from the customer's code,
+configuration, frames or documents beside where it comes from, in the grounding file or where a part
+of this prompt renders it from there — where a requirement or a configuration line names the model
+the customer's own product uses. A hit inside any of these is not a leak this package committed. It
+is the customer having written the token
+themselves, in a document, a screenshot, a heading, a folder name or their own code — because they were told what
 tooling the delivery team uses, or because their own numbering happens to look like ours, a `§ 4.2`
 in a specification or a `D3` in a diagram. Report it, grouped as §6.3 fixes, and **put it to the
 operator on the one question §6.3's *The operator's ruling* fixes** — ship it as the customer's own,
@@ -1203,10 +1214,11 @@ hit at all, there is nothing to report or ask. Stopping outright would make that
 unpackageable, since the only repair left would falsify the record — an edit to an immutable file,
 an anchor that no longer names where the requirement is stated, a transcription saying something the
 image does not, or a quotation saying something the customer did not — and every other span's hit
-stays a hard stop exactly as above, save one. **These two sets are the plugin-free scan's only
-exemptions bar that one, and each covers a class of content rather than one file** — the
-citation-resolution check (Phase 8 rule 8, `bundle-packaging.md` §6) carries the same two over the
-same spans, and one of a different shape for `[SR#n]` (§6.3) — and they exist because the
+stays a hard stop exactly as above, save one. **These two sets, with the model-id span beside them,
+are the plugin-free scan's only exemptions bar that one, and each covers a class of content rather
+than one file** — the citation-resolution check (Phase 8 rule 8, `bundle-packaging.md` §6) carries
+the same two over the same spans, a model id being nothing it tests, and one of a different shape for
+`[SR#n]` (§6.3) — and they exist because the
 alternatives are a deadlock or a falsified record. **The one more is a model id inside a
 prerequisite's package copied in** (*Assemble the bundle* rule 7): that package is never rewritten
 (`bundle-packaging.md` §5), so its text reaches the customer as written whether or not it already
@@ -1459,7 +1471,8 @@ command writes whether or not that line is there.
    is enumerated above is this command's contribution to the manifest, not its contents.
    The manifest is a bundle document; the delivery note is not.
 7. **Run the plugin-free scan over every document in the finished bundle**, and stop on any hit
-   outside verbatim customer content and customer-derived locators, whose hits are the operator's
+   outside verbatim customer content and customer-derived locators — and, for a model id, outside
+   the customer's naming a grounding block records — whose hits are the operator's
    to rule on exactly as `bundle-packaging.md` §6.3 disposes of them (*The plugin-free scan*,
    Phase 6) — **save a model id in a document rule 5 copied in from a prerequisite's package**,
    which is no stop: that package is never rewritten (`bundle-packaging.md` §5), so its text
@@ -1782,7 +1795,8 @@ prompt, the delivery note and the bundle, and `brd-link.md` where this run added
 it; **the citation check's
 outcome** — how many identifier references resolved, across how many source packages, how many
 named another BRD and were discharged, and every hit inside verbatim customer content or a
-customer-derived locator — this check's and the plugin-free scan's alike — that the operator was
+customer-derived locator — this check's and the plugin-free scan's alike, the scan's model ids in the
+customer's naming a grounding block records among them — that the operator was
 asked to rule on, under the *Customer content:* outcome line `bundle-packaging.md` §6.3's *The
 operator's ruling* fixes and grouped as that section fixes, **or `Customer content: none`**; **the
 delivery note and its delivery-route item** — both printed at *Next steps*, before that phase's
