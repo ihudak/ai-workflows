@@ -78,10 +78,10 @@ re-derived against a repository it was never checked against. A field listed wit
 applicability is a field an emitter fills to satisfy the table.
 
 **`evidence` is never blank.** A finding that asserts a mechanism is absent still owes the reader
-what was searched and where it was expected — "no route under `api/` handles this verb; searched
-`api/**/*.py` at the pinned commit" is evidence; a bare empty field is not. **That is what was
-searched; `control` (§2.2) is whether the search could have found it**, and an absence claim owes
-both — the first without the second is the reason this field set gained a row.
+what was searched or read and where it was expected — "no route under `api/` handles this verb;
+searched `api/**/*.py` at the pinned commit" is evidence; a bare empty field is not. **That is what
+was searched or read; `control` (§2.2) is whether that search or reading could have found it**, and
+an absence claim owes both — the first without the second is the reason this field set gained a row.
 
 **`consumed_by` starts at `none` and is written later**, by whichever downstream authoring command
 actually cites the finding — this file fixes only that the field exists and what its values mean,
@@ -466,7 +466,11 @@ finding says whether that client can send it without the value.
 
 **Listing the writers found is evidence, not an absence claim, and owes no control.** A finding that
 also says no other writer exists asserts an absence, and §2.2 applies to that sentence as it does to
-any other.
+any other. So does the `AMENDED` this subsection mandates: naming a writer the restriction does not
+reach states that something is not there on that writer's path — no step on it applies the
+restriction — and owes §2.2's control like any other absence read off a path, the same reading
+pointed at a write path of the same kind known to apply such a restriction, as a writer of the same
+value the finding shows applying it is.
 
 The failure this prevents is §1's, met at the claim rather than at the line: a range check in a
 setter cited as the whole support for "the value is always within the range", while a request that

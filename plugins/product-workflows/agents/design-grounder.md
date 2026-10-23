@@ -113,8 +113,8 @@ guess, not a citation.
      the findings are copied in front of a customer.
 
 5a. **Class 2 is the one class of the four that owes a control, and the reason is the shape of the
-   question rather than what the finding asserts.** A control tests whether a **search** could have
-   found the thing; where the question is a lookup in a set handed to this agent, there is no search
+   question rather than what the finding asserts.** A control tests whether a **search**, or a reading,
+   could have found the thing; where the question is a lookup in a set handed to this agent, there is no search
    to control for (`workflows-core:grounding-format` §2.2's closed-set rule). Classes 1 and 3 resolve
    against the `inventory` the caller supplied — enumerated, in hand, nothing to miss — and class 4's
    code half is the cited `[CG#n]`'s own search. **Class 2 is a negative over the frame set, which is

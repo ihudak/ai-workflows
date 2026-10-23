@@ -492,8 +492,8 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   since that re-grounds a claim nothing on file answers. An `agree`/`extend`/`unprovable` outcome
   is recorded alongside the finding unchanged (`extend` also
   adds the evidence the verifier's own search turned up that the finding does not already hold: an
-  entry overlapping one the finding cites on the same file widens that entry's lines, keeping its
-  note, and any other is appended). Which anchor each finding
+  entry whose lines overlap those of one the finding cites on the same file widens that entry's
+  lines, keeping its note, and any other is appended). Which anchor each finding
   is verified against depends on what it rests on: a `[CG#n]` and a class-4 `[DG#n]` are re-derived
   against the pinned repository, a class-1/2/3 `[DG#n]` against the frame set it was reconciled
   from — see `workflows-core:grounding-format` §8. A verifier that

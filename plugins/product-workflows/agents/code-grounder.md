@@ -148,7 +148,8 @@ findings:
       - path: <relative to repo_path>
         lines: [<1-based line numbers>]   # omit only when the evidence is a whole-file read
         note: <what this line actually shows, and how it bears on the claim>
-    control: <required wherever this finding asserts an absence — the same search shape, run against a case
+    control: <required wherever this finding asserts an absence — in its verdict or in the correction it
+              states — the same search or reading, run against a case
               of the same kind known to be present in this repo, and the `path:line` it matched. Where it
               matched nothing, the same field says so: the method and the case, then `— no match`. Omit
               entirely on a finding that asserts no absence. `workflows-core:grounding-format` §2.2>
