@@ -57,8 +57,8 @@ prompt is assembled from a named artifact rather than written fresh. The de-Obsi
 renders a copy and never edits a source. And the plugin-free scan runs last, over the *finished*
 text of the prompt, the note and every bundle document — a hit **stops the run and never sanitises**
 (inside the customer's own verbatim content, or a locator naming their own files and headings, it
-is reported for the operator to rule on instead, as is a model id your customer's requirement or
-code names where a grounding finding quotes it, and a model id inside a prerequisite's package,
+is reported for the operator to rule on instead, as is a model id your customer's requirement,
+code, configuration or documents name, where a grounding finding quotes it, and a model id inside a prerequisite's package,
 which is never rewritten and so reaches your customer as written either way, is named in the final
 report and left), because a citation that reached the
 prompt reached it from a sentence that assumed a reader who has this plugin, and deleting four
@@ -341,7 +341,8 @@ attack.
   model id inside a prerequisite's package copied in is not a stop: that package is never
   rewritten, so its text reaches your customer as written whether or not it already has, and the
   run names each such hit in its final report — the bundled filename and line, *… which is never
-  rewritten — left as packaged* — and packages on; every
+  rewritten — left as packaged* — and packages on, never asking you to rule on it, even where it sits
+  in the customer's own content or naming; every
   other class stops there as anywhere. And a hit inside the customer's own verbatim
   content (their captured files, and the parts of the transcription, the inventory, the coverage
   ledger and the register that quote them) or a locator naming their own files, headings and links,
@@ -350,7 +351,9 @@ attack.
   these sets are defined there, once. There a `§ 4.2` or a `D3` is the customer's own and the only fix would falsify it, so the
   hit is reported, grouped as that section fixes, and put to the operator on one question per pass —
   ship it as the customer's own (recommended), or hold the package, which stops with
-  `BRD_PACKAGE_CUSTOMER_CONTENT_HELD` and hands nothing off; a hit an earlier ruling in the run
+  `BRD_PACKAGE_CUSTOMER_CONTENT_HELD` and hands nothing off — a model id the report shows there that
+  records what your own tooling ran on is yours: hold the package over it, and remove it by hand from
+  the file it came from before the re-run; a hit an earlier ruling in the run
   covered is not asked about again, and the report opens its list of them with a
   `Customer content:` line — or, where that section says so, it is no hit at all. The identifiers
   the package's own registers, logs and grounding files mint are **not** in the scan's classes and

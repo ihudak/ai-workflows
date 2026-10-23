@@ -1177,7 +1177,7 @@ hit landed.
 
 `<where>` is `the rendered prompt, in part <n>` here, `the delivery note` over the note, and the
 bundled filename and line of the document the hit is in over the bundle — a copied grounding file,
-most often. `<why>` is `the scan stops on every model id, since one the customer's own material names
+most often. `<why>` is `the scan fires on every model id, since one the customer's own material names
 reads the same as one your tooling ran on, which tells the customer which tooling produced the
 package and gives their reviewer nothing to check` for a model id, and for every other class `the
 package is read by somebody with no plugin, and a token they cannot resolve is not fixed by deleting
@@ -1198,7 +1198,7 @@ byte and immutable by rule (§2.1 there, `${CLAUDE_PLUGIN_ROOT}/references/brd-f
 the parts of the figures file, the inventory, the coverage ledger and the register that transcribe
 or quote their words — and **customer-derived locators**, the customer's names for their own files,
 headings and links, in the positions §6.3 recognises them in, this package's own writing included.
-For a model id alone it covers one more, which §6.3 defines too: **the customer's naming a grounding
+For a model id alone it covers a third span, which §6.3 defines too: **the customer's naming a grounding
 block records** — a block's `claim`, and what a field of it quotes from the customer's code,
 configuration, frames or documents beside where it comes from, in the grounding file or where a part
 of this prompt renders it from there — where a requirement or a configuration line names the model
@@ -1219,11 +1219,12 @@ are the plugin-free scan's only exemptions bar that one, and each covers a class
 than one file** — the citation-resolution check (Phase 8 rule 8, `bundle-packaging.md` §6) carries
 the same two over the same spans, a model id being nothing it tests, and one of a different shape for
 `[SR#n]` (§6.3) — and they exist because the
-alternatives are a deadlock or a falsified record. **The one more is a model id inside a
+alternatives are a deadlock or a falsified record. **The exemption beyond these is a model id inside a
 prerequisite's package copied in** (*Assemble the bundle* rule 7): that package is never rewritten
 (`bundle-packaging.md` §5), so its text reaches the customer as written whether or not it already
 has, and a copy of it in this bundle exposes nothing it does not; the run names the hit in the
-Final report and packages on. It covers that class alone — every other class stops in such a package as anywhere — and the
+Final report and packages on, whatever span it sits in, and never puts it to the operator's
+ruling. It covers that class alone — every other class stops in such a package as anywhere — and the
 prompt this section scans holds no prerequisite's document, so it is met only at rule 7.
 
 Identifiers are **not** in the scan's classes and are meant to travel: the classes
@@ -1480,7 +1481,9 @@ command writes whether or not that line is there.
    exposes nothing it does not, while rewriting the copy would make it disagree with the dated
    package it was copied from. Name each such hit in the Final report — the bundled filename and
    line, *in `<PREREQ-KEY>`'s `bundle-<YYYYMMDD>/`, which is never rewritten — left as packaged* —
-   and package on. Every
+   and package on, whatever span of `bundle-packaging.md` §6.3 it sits in, the customer's naming a
+   grounding block records and verbatim customer content included: such a hit is never put to the
+   operator's ruling, since no answer could change a package that is never rewritten. Every
    other class of `bundle-packaging.md` §1.2 stops in a prerequisite's document exactly as anywhere
    else. The scan runs here as well as over the prompt because a leak can arrive through a
    copied document as easily as through a rendered part, and together with rule 8's
@@ -1740,7 +1743,7 @@ that already exists, and an unset `$SPECS_PATH` are environment or sequencing ha
 bundle-integrity checks (`BRD_PACKAGE_DEAD_CITATION`, `BRD_PACKAGE_CITATION_MISMATCH`,
 `BRD_PACKAGE_SET_MISMATCH`) report what the assembled bundle and the records it was built from hold;
 `BRD_PACKAGE_UNDISPOSED` is the gate working; and `BRD_PACKAGE_CUSTOMER_CONTENT_HELD` is the
-operator's own ruling on the customer's words. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
+operator's own ruling on what the scan reported as the customer's words. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 

@@ -350,8 +350,8 @@ requirement that summaries be written by `claude-sonnet-4-6`, the configuration 
 It is quoted where the record shows whose it is: in the `claim`, beside the requirement id or the
 path — a code file's with its line, or a frame's — it is quoted from, or as what a command run
 against the repository searches for —
-never loose in a sentence's own words, since those are the positions where
-`product-workflows:bundle-packaging` §6.3 tells it from the operator's.
+never loose in a sentence's own words, since `product-workflows:bundle-packaging` §6.3 tells it from
+the operator's by the positions just named alone.
 
 **Say what the rule requires, never where it is written — and a token they cannot resolve is not
 fixed by deleting it.** A sentence that cited a rule leaned on it, so the sentence is what has to

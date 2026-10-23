@@ -383,8 +383,8 @@ text a finding quotes. A path your code names counts as such naming whatever its
 in a script, `/api/v1/…` — so the run leaves it alone; only the literal value of one of the run's
 own paths marks a path as your machine's. A model your requirement, code, configuration or documents
 name counts as such naming too — `claude-sonnet-4-6` in a requirement or a configuration line — and
-is quoted as given, beside the requirement or the path it comes from; only the model the run itself
-ran on is kept out. Where a plugin token — a `§` or a command name, say — sits inside such naming,
+is quoted as given, beside the requirement or the path it comes from; only a model your own tooling
+ran on — this run's, a pass's or a tool's — and the record of a tier are kept out. Where a plugin token — a `§` or a command name, say — sits inside such naming,
 the final report names it, because on the BRD route `/brd-package` will still stop on it; it names a
 model id there too, as one `/brd-package` will put to you to rule on as the customer's own. This covers what the run writes: the notes, opening lines and run headings an earlier run left on file stay as they are, and you can reword their free text by hand — an earlier run's tier line or local path among them.
 

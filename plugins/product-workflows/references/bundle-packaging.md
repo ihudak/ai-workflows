@@ -195,7 +195,8 @@ in is no stop**: that package is never rewritten (§5), so its text reaches the 
 whether or not it already has, and a copy of it in this bundle exposes nothing it does not.
 `commands/brd-package.md`'s *Assemble the bundle* rule 7 names each such hit in the run's Final
 report — the bundled filename and line, in that prerequisite's dated bundle, *which is never
-rewritten — left as packaged* — and packages on. Every other class stops in a prerequisite's package exactly as anywhere else. **A local
+rewritten — left as packaged* — and packages on, whatever span of §6.3 it sits in, and never puts it
+to the operator's ruling. Every other class stops in a prerequisite's package exactly as anywhere else. **A local
 path has no row**: its shape cannot tell the operator's checkout from a path or a route the
 customer's own code names, which a finding quotes and keeps, so a row for it would stop correct
 packages. `commands/prd-ground.md` looks for its own local paths by their literal value instead,
@@ -852,7 +853,11 @@ removes by hand from the file it came from before the re-run. Every other class'
 stays a hard stop, as `commands/prd-ground.md` reports it, and so does a model id anywhere else in a
 grounding file — its opening lines, a run's heading, a sentence's own words in a field — which is
 where the plugin's own record of a model sits, and where a writer that quoted the customer's loose
-left it; the stop says how each is repaired (`commands/brd-package.md`, *The plugin-free scan*). The
+left it; the stop says how each is repaired (`commands/brd-package.md`, *The plugin-free scan*). A
+model id in a document `commands/brd-package.md`'s *Assemble the bundle* rule 5 copied in from a
+prerequisite's package is that phase's rule 7's, whatever span it sits in, this one and the verbatim
+spans above included: named in the run's Final report as left as packaged (§1.2), and never put to
+the ruling below, since that package is never rewritten (§5) and no answer could change it. The
 citation-resolution check never meets one: a model id is no identifier and no filename.
 
 **The operator's ruling — one question per pass, never one per hit.** A pass that reports a hit this
@@ -866,10 +871,11 @@ choices: ["Ship it — these are the customer's own words and naming, left exact
 ```
 
 The recommendation stands because every hit reported here is, by the definitions above, a token the
-customer wrote, and its only repair would falsify the record. *Ship it* continues the run. *Hold the
-package* stops it:
+customer wrote, and its only repair would falsify the record — save the guard case above, a model id
+in a grounding block's naming that records what the operator's tooling ran on, which the operator
+holds and removes by hand. *Ship it* continues the run. *Hold the package* stops it:
 
-`BRD_PACKAGE_CUSTOMER_CONTENT_HELD: you held <BRD-KEY>'s package over <n> hit(s) inside the customer's own words or naming — nothing was handed off. What the report names is the customer's and is never edited here: take it up with the customer, then re-run. Where this run already wrote bundle-<YYYYMMDD>/, it was never sent — move it aside first, or the re-run stops with BRD_PACKAGE_BUNDLE_EXISTS.`
+`BRD_PACKAGE_CUSTOMER_CONTENT_HELD: you held <BRD-KEY>'s package over <n> hit(s) inside the customer's own words or naming — nothing was handed off. What the report names is the customer's, save a model id that records what your own tooling ran on, and is never edited here: take it up with the customer, then re-run. Such a model id is yours: remove it by hand from the file it came from, commit the edit to the specs repository's default branch, and re-run. Where this run already wrote bundle-<YYYYMMDD>/, it was never sent — move it aside first, or the re-run stops with BRD_PACKAGE_BUNDLE_EXISTS.`
 
 A free-text answer is read onto one of the two, or the question is asked again; it never becomes a
 third outcome. **A hit an earlier ruling in this run already covered is listed under that ruling and

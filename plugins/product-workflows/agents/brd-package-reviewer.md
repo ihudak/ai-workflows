@@ -226,7 +226,7 @@ carrying either could then never ship, since nothing downstream may change its w
   customer's own requirement, code, configuration or documents name is theirs, not the operator's,
   but write even that one by the record that quotes it — *the model `[BR#4]` names*, *the model
   `[CG#3]` finds configured* — never by its id: these three fields reach the prompt, where the scan
-  stops on every model id and no exemption reaches them;
+  fires on every model id and no exemption reaches them;
 - no working filename — `decisions.md`, `code-grounding.md` — since the bundle renames every
   document it carries, and its bundled filename is minted after this review: name a package
   document by what it is, *the decision register*, *the code-grounding findings*;
