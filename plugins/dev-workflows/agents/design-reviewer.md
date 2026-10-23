@@ -27,9 +27,9 @@ The caller passes:
   `HIGH-RISK` design must cover them thoroughly). Never flag a section that `${CLAUDE_PLUGIN_ROOT}/references/design-format.md` says is
   legitimately omittable at this classification.
 - **Repositories** — one line per implementation repository the design's `Repos` header names:
-  `<absolute path> @ <commit> — working tree at it` or `… — working tree not at it`, the commit
-  being the one `/design` Phase 4 scanned that repository at, and followed by
-  `, with uncommitted changes` where that scan read changes no commit holds; or
+  `<absolute path> @ <commit> — working tree at it` or `… — working tree not at it`, `<commit>`
+  being the id of the commit `/design` Phase 4 scanned that repository at, and the line followed by
+  `— with uncommitted changes` where that scan read changes no commit holds; or
   `<absolute path> — not scanned` for a repository Phase 4 did not scan, whose claims you report as
   unverified. Required wherever `Repos`
   names a repository; if absent, report that the claims about the existing system could not be verified, and
@@ -55,7 +55,9 @@ checkout stands on another commit or carries uncommitted changes, or a checkout 
 - search — `git -C "<path>" grep -n <pattern> <commit> -- <pathspec>`
 - list — `git -C "<path>" ls-tree -r --name-only <commit>`
 
-Those three are your only use of Bash: never another command, never one that writes a file, the
+`<commit>` in each is the line's commit id alone, never the `with uncommitted changes` mark after it.
+
+Those three commands are your only use of Bash: never another command, never one that writes a file, the
 index, a ref or `HEAD`, and never `fetch`, `pull`, `switch`, `checkout` or `stash`. Every
 `file:line` a finding cites is at that commit — or, on a line marked `with uncommitted changes` whose
 working tree is at it, in the working tree, since no commit holds what that scan read.
