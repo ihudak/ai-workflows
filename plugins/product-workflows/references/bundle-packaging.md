@@ -169,7 +169,8 @@ mechanical stands behind this allow-list, which is why it is written out rather 
 
 `commands/brd-package.md`'s plugin-free scan stops on a token of any of these classes, over the
 finished prompt, the finished delivery note and every document in the finished bundle — the only
-exemptions being the customer's own words and naming, which §6.3 defines:
+exemptions being the customer's own words and naming, which §6.3 defines, and a model id inside a
+prerequisite's package copied in, below:
 
 | Class | Examples |
 |---|---|
@@ -184,9 +185,16 @@ exemptions being the customer's own words and naming, which §6.3 defines:
 **A model id needs no plugin to read and is in the table all the same**: it tells the customer which
 tooling produced the document and gives their reviewer nothing to check
 (`workflows-core:grounding-format` §2.3). A grounding file an earlier run left can carry one, since
-no later run rewrites that run's prose, and this scan is where it is found. **A local path has no
-row**: its shape cannot tell the operator's checkout from a path or a route the customer's own code
-names, which a finding quotes and keeps, so a row for it would stop correct packages. `commands/prd-ground.md` looks for its own local paths by their literal value instead,
+no later run rewrites that run's prose, and this scan is where it is found; the repair is the
+operator's, by hand, in the file it came from. **A model id inside a prerequisite's package copied
+in is no stop**: that package went to the customer as written and is never rewritten (§5), so
+including it again exposes nothing new, and rewriting it would falsify what was sent.
+`commands/brd-package.md`'s *Assemble the bundle* rule 7 names each such hit in the run's Final
+report — the bundled filename and line, *already sent in* that package, *left as sent* — and
+packages on. Every other class stops in a prerequisite's package exactly as anywhere else. **A local
+path has no row**: its shape cannot tell the operator's checkout from a path or a route the
+customer's own code names, which a finding quotes and keeps, so a row for it would stop correct
+packages. `commands/prd-ground.md` looks for its own local paths by their literal value instead,
 and a local path an earlier run left in a grounding file is not caught here.
 
 **The table is here, rather than in the command that runs the scan, because most of the bundle's

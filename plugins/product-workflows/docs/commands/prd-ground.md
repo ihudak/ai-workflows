@@ -129,7 +129,7 @@ and there it is **optional and ungated**: nothing in [`/create-ard`](create-ard.
   which is what lets [`/brd-interview`](brd-interview.md) tell a re-grounding that came back as it
   stood from one that moved a decision's ground.
 
-All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 11's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 11's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `workflows-core:docs-grounder`, `code-grounder`, `design-grounder`, `grounding-verifier` (overriding their frontmatter Opus pin), `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; if no Opus resolves, the three grounding agents otherwise degrade to the best-available model and record it, and `ground_tier` records that degraded tier, which does not happen under enforcement since the enforced model is used instead and `ground_tier` records that enforced id — see [Model routing](../reference/model-routing.md).
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 11's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 11's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `workflows-core:docs-grounder`, `code-grounder`, `design-grounder`, `grounding-verifier` (overriding their frontmatter Opus pin), `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; if no Opus resolves, the three grounding agents otherwise degrade to the best-available model and record it, and `ground_tier` records that degraded tier, which does not happen under enforcement since the enforced model is used instead and `ground_tier` records that enforced id — see [Model routing](../reference/model-routing.md). `ground_tier` is printed on its own line of the final report, from the run's model-routing record, and nowhere else: no grounding file names the model or the tier its corpus was ground at.
 
 ## How it runs
 
@@ -362,16 +362,25 @@ Under the resolved folder — the `PRD-<SLICE-KEY>-<slug>/` slice folder inside 
 - `brd-link.md` — **BRD route only.** The `depends-on:` list, merged additively across runs. Never
   written on the idea route, since `--depends-on` is refused there before Phase 4 could persist one.
 
-**The three grounding files are written for a reader with no plugin.** On the BRD route they go to
-the customer in the review bundle as written, and [`/brd-package`](brd-package.md) stops on any
-command, agent or skill name, `§` reference or decision-row id it finds in them. So every note,
-heading and lead-in the run writes says what happened in plain words, and before writing, Phase 8
-scans everything it is about to write for those tokens and rewrites a sentence that has one,
-changing no id, verdict, outcome, evidence path or line, or control result. The final report lists
-every rewrite. A token inside naming a finding records rather than prose — a path or command in your
-code repository, a frame path or label, a documentation page's path, the requirement text a finding
+**The three grounding files are written for a reader with no plugin, and name nothing of your
+machine.** On the BRD route they go to the customer in the review bundle as written, and
+[`/brd-package`](brd-package.md) stops on any command, agent or skill name, `§` reference,
+decision-row id or model id it finds in them. So every note, heading and lead-in the run writes says
+what happened in plain words; nothing it writes names the model or the tier the corpus was ground at
+— that goes on its own line of the final report — or a directory of your machine: a command run
+against a repository names its checkout `"<repo>"`, and a path in your code repository is written
+from the repository's root. Before writing, Phase 8 scans everything it is about to write for those
+tokens, and for the paths of the repositories it resolved, `$SPECS_PATH` and the documentation root
+by their literal value, and rewrites a sentence that has one — a local path replaced by `"<repo>"`
+in a command, by the path from the root it lies under where it names a file, so an evidence path
+still names the same file, and by words such as *the checkout* in prose —
+changing no id, verdict, outcome, line or control result. The final report lists every rewrite. A
+token inside naming a finding records rather than prose — a path, route or command your code
+repository names, a frame path or label, a documentation page's path, the requirement text a finding
 quotes — is left as written, since rewording it would break the record; the final report names it,
-because on the BRD route, `/brd-package` will still stop on it. This covers what the run writes: the notes, opening lines and run headings an earlier run left on file stay as they are, and you can reword their free text by hand.
+because on the BRD route, `/brd-package` will still stop on it. A path your code names is such
+naming whatever its shape — `/tmp/…` in a script, `/api/v1/…` — and only the literal value of one of
+the run's own paths marks one as your machine's. This covers what the run writes: the notes, opening lines and run headings an earlier run left on file stay as they are, and you can reword their free text by hand — an earlier run's tier line or local path among them.
 
 Behind Phase 9's consent choice, these are committed, pushed, and a pull request opened against the
 specs repo's default branch — under the shared `brd/<KEY>-<slug>` branch prefix on the BRD route

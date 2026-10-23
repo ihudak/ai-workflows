@@ -764,13 +764,12 @@ result. Where the spend is genuinely unacceptable on a given run, **make the pin
 classification rather than reverting it**, and record `ground_tier` either way, so the operator
 always knows which tier the corpus this run wrote was ground at.
 
-**`ground_tier` is recorded for the operator, in this run's own record, never in a grounding
-file**: in the `model_routing` block above, and on its own line of the Final report — and, on a run
-that files a cost entry (Phase 11), that entry, under `dev-workflows/`, which no bundle carries,
-lists by model what the run spent. Neither a grounding file nor any other file that goes to the
-customer carries it: a model id tells the customer which tooling ground their corpus and gives
-their reviewer nothing to check (`workflows-core:grounding-format` §2.3), and
-`/product-workflows:brd-package` stops on one.
+**`ground_tier` is recorded in two places, both the operator's: the `model_routing` block above
+and its own line of the Final report.** No file this run writes records it — the cost entry Phase
+11 files lists what the run spent by model, never which tier any agent ran at — and no grounding
+file carries it, so nothing the review bundle sends does either: a model id tells the customer which
+tooling ground their corpus and gives their reviewer nothing to check
+(`workflows-core:grounding-format` §2.3), and `/product-workflows:brd-package` stops on one.
 
 ---
 
@@ -1584,10 +1583,12 @@ but the same agents write both:
 1. **What this run writes names no command, agent, skill, phase or rule, none of an agent's
    return fields, no model and no local path** — no `own_verdict`, `own_control`,
    `blind_disputed` or the rest; no model id or model family, the `ground_tier` Phase 2 records in
-   this run's own record included; and no checkout's path or `$SPECS_PATH`'s value, and no scratch
-   or home directory, a command run against a repository naming its checkout only as `"<repo>"`, as
-   Phase 3's `git -C "<repo>"` do (`workflows-core:grounding-format` §2.3). Reword a verifier's `notes` that carries any of
-   them, as point 3 rewords a hit. Where this run creates a file, its opening lines say what the
+   this run's own record included; and no checkout's path, no `$SPECS_PATH` or documentation root
+   by its value, and no scratch or home directory, a command run against a repository naming its
+   checkout only as `"<repo>"`, as Phase 3's `git -C "<repo>"` commands do
+   (`workflows-core:grounding-format` §2.3). A path or a route the customer's code, configuration or
+   documents name is none of these, whatever its shape. Reword a verifier's `notes` that carries any
+   of them, as point 3 rewords a hit. Where this run creates a file, its opening lines say what the
    file holds — never which command or agent wrote it, or at which tier, and no pinned commit,
    which `grounding/baselines.md` records; a run that appends to a file leaves its opening
    lines as they stand. A run's heading in `design-grounding.md` is its date. The note saying design
@@ -1607,19 +1608,29 @@ but the same agents write both:
    hand edit to it instead). A `§` that opens what follows ` › ` after a captured path —
    `source/<basename> › § 3.1`, the customer's own section — is no hit (`bundle-packaging.md` §6.3
    rule 1). **Scan it, too, for this run's own local paths by their literal value** — the path of
-   each repository Phase 1 resolved, and `$SPECS_PATH`'s value — never for a path by its shape: a
-   route or a path the customer's code names, which a finding quotes, is theirs, and only the
-   literal value tells the operator's own path from one of those.
+   each repository Phase 1 resolved, `$SPECS_PATH`'s value, and the documentation root Phase 1
+   step 0 resolved: every local path Phase 0 and Phase 1 resolve, save `$REPOS_PATH` itself, the
+   checkouts' parent, whose bare value (`/workspace` by default) a path the customer's code names
+   can begin with; this command makes no scratch directory of its own. Never scan for a path by its
+   shape: a route or a path the customer's code names, which a finding quotes, is theirs, and only
+   the literal value tells the operator's own path from one of those.
 3. **On a hit, rewrite the sentence in plain language before writing it, and change nothing else.**
    Never delete the token alone: the sentence leaned on what the token named, and without it says
-   less than it did. The id, `verdict`, every evidence entry's `path` and `lines`, `control`'s result —
+   less than it did. The id, `verdict`, every evidence entry's `path` (save a literal-value hit in
+   it, below) and `lines`, `control`'s result —
    its trailing `path:line` or `— no match` — `outcome` and every other field stay exactly as they
    are, the line Phase 7 draws when it calls a reworded note no difference, so a rewrite settles
-   nothing again and dispatches nothing. **A hit inside the customer's own naming that a block records
+   nothing again and dispatches nothing. **A hit of point 2's literal-value scan is never the
+   customer's naming, wherever it sits** — prose, a note, a command or an evidence `path`: replace
+   it with `"<repo>"` where a command names a checkout; with the path from the root it lies under —
+   the repository's, the specs repository's or the documentation root's — where it names a file
+   under one, so that an evidence `path` still names the same file and line; and with words, *the
+   checkout*, where prose names the directory itself. Record it as a rewrite, and never
+   report it as a hit `/product-workflows:brd-package` will stop on, since that command has no row
+   for a local path and one left standing would ship. **A hit inside the customer's own naming that a block records
    is theirs, not the plugin's** — a path and line in the code repository or the frame set, wherever
    the block records it (an evidence entry's `path` and `lines`, one named inside a note,
-   `control`'s trailing `path:line`), a command run against the repository — its checkout written
-   `"<repo>"`, as point 1 says, never by this run's own path — a documentation page's
+   `control`'s trailing `path:line`), a command run against the repository, a documentation page's
    path, a class-1 finding's field label, and the `claim`, which quotes the requirement as the
    inventory gives it: a `references/` directory of theirs, a `§ 4.3` in their requirement. The
    sentence around such naming is still reworded where it carries a token of the plugin's own; the

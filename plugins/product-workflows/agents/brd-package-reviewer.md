@@ -210,16 +210,18 @@ shorthand — because you do not control which ones do.
 
 **So its `target`, `attack` and `what_would_settle_it` are written in words a customer can read
 without this plugin.** Two checks read the finished package and stop the run on what a reader with
-nothing installed cannot follow: its plugin-free scan, on a `§` reference, a command, agent or skill
-name, or a decision-row name (`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1), and its
-citation-resolution check, on a working filename, which names no document in the bundle (§6.2 there,
-relation 3). A finding carrying either could then never ship, since nothing downstream may change
-its words:
+nothing installed cannot follow or has no use for: its plugin-free scan, on a `§` reference, a
+command, agent or skill name, a decision-row name, or a model id
+(`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1), and its citation-resolution check, on
+a working filename, which names no document in the bundle (§6.2 there, relation 3). A finding
+carrying either could then never ship, since nothing downstream may change its words:
 
 - no `§` reference to a plugin file, and no reference, command, agent, skill or decision-row name —
   state the test or the rule you apply in words; a section of the customer's own document is cited
   with its captured path, `source/<basename> › § 4.2`, which the plugin-free scan exempts
   (§6.3 rule 1 there);
+- no model id — not the model this review, a grounding pass or a verification ran on; where a
+  pass ran on a weaker model and that is the attack, say *a weaker model*;
 - no working filename — `decisions.md`, `code-grounding.md` — since the bundle renames every
   document it carries, and its bundled filename is minted after this review: name a package
   document by what it is, *the decision register*, *the code-grounding findings*;
@@ -247,9 +249,9 @@ never ships — and are not bound by this.
   files findings; `/brd-package` and its operator decide what changes.
 - NEVER carry a prior round's `accepted-risk` forward as settled. Re-derive it; file it again if it
   still stands.
-- NEVER write a plugin file's `§`, a working filename, or a command, agent, skill, reference or
-  decision-row name into a finding's `target`, `attack` or `what_would_settle_it` — it would reach
-  the customer verbatim, and the package cannot ship it.
+- NEVER write a plugin file's `§`, a working filename, a model id, or a command, agent, skill,
+  reference or decision-row name into a finding's `target`, `attack` or `what_would_settle_it` — it
+  would reach the customer verbatim, and the package cannot ship it.
 - NEVER return an empty findings list without the per-pass account of what was examined.
 
 <!-- untrusted-content:begin -->

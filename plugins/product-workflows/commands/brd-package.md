@@ -96,13 +96,19 @@ them is.
 5. **A scan hit stops the run; it never sanitises.** The command does not strip the offending token
    and continue. A citation that reached the prompt reached it because some part of the package
    assumed a reader who has this plugin, and deleting the four characters that reveal that leaves
-   the assumption in place and the sentence unfollowable. What is reported is the token, the part it
-   landed in, and the artifact it came from. **The one exception is the customer's own words and
-   naming** — verbatim customer content and customer-derived locators, both as
-   `bundle-packaging.md` §6.3 defines them — where the customer's own token is reported and put to
-   the operator, who ships it as the customer's own or holds the package, which stops the run with
-   `BRD_PACKAGE_CUSTOMER_CONTENT_HELD`; or, where that section says so, it is not a hit at all.
-   Either way the hit itself never stops the run outright (*The plugin-free scan*, below).
+   the assumption in place and the sentence unfollowable. A model id is the one token whose removal
+   is the whole repair, and the scan still does not make it: the operator removes the line or the
+   clause naming it from the artifact it came from, so what ships and the record it was built from
+   stay one text. What is reported is the token, where it landed — a part of the prompt, the
+   delivery note, or a bundle document and its line — and the artifact it came from. **Two exceptions, neither of which stops
+   the run outright.** **The customer's own words and naming** — verbatim customer content and
+   customer-derived locators, both as `bundle-packaging.md` §6.3 defines them — where the
+   customer's own token is reported and put to the operator, who ships it as the customer's own or
+   holds the package, which stops the run with `BRD_PACKAGE_CUSTOMER_CONTENT_HELD`; or, where that
+   section says so, it is not a hit at all (*The plugin-free scan*, below). **And a model id inside
+   a prerequisite's package copied in**, which went to the customer as written and is never
+   rewritten: the run names it in the Final report and packages on (*Assemble the bundle* rule 7);
+   every other class stops there as anywhere.
 
 The failure all five exist to prevent is stated once, in `bundle-packaging.md` §1, and is not
 restated here: a bundle that assumes anything about the machine it lands on is a bundle the customer
@@ -522,7 +528,7 @@ from the delivery team present to correct it — a proposal is read outside the 
 it is read, not run. If no Opus resolves, degrade to best-available, record it in `notes`, in the
 self-review's own header and in the final report — a package whose adversarial pass ran on a weaker
 model is still a package, and the customer's own reviewer is the second pass, but the operator must
-know which they got. Never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded — the self-review's own header records that enforced id as the model the pass ran on, the same way `/prd-ground`'s `ground_tier` does.
+know which they got. Never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded — the self-review's own header records that enforced id as the model the pass ran on. (`/prd-ground` reports an enforced id as its `ground_tier` too, but only in its Final report and never in a file it writes: its grounding files ship to the customer, and the self-review never does.)
 
 ---
 
@@ -1054,8 +1060,8 @@ listing them as blockers.
 `accepted-risk`, each in the reviewer agent's own words rather than re-summarised — that agent
 writes its findings knowing they may end up here, and writes their `target`, `attack` and
 `what_would_settle_it` for a customer to read, with no `§` of a plugin file, working filename,
-command or agent name in them (`agents/brd-package-reviewer.md`), so they pass both checks that read
-the finished prompt as quoted: the plugin-free scan stops on a `§`, a command or an agent name, and
+model id, command or agent name in them (`agents/brd-package-reviewer.md`), so they pass both checks that read
+the finished prompt as quoted: the plugin-free scan stops on a `§`, a model id, a command or an agent name, and
 the citation-resolution check (Phase 8 rule 8,
 `${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §6.2 relation 3) on a working filename. A
 token that reaches the prompt this way anyway stops whichever of the two catches it, like any other;
@@ -1157,16 +1163,27 @@ scope is still open — which is cheaper for both sides than meeting it after de
 
 The last thing this phase does, over the **finished** prompt text — not over the templates, and not
 over the schema alone. Stop the run on any hit of a class
-`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1.2 tabulates, naming the token, the part it
-landed in, and the artifact it was interpolated from. **The classes are that table's and are not
+`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1.2 tabulates, naming the token, where it
+landed, and the artifact it was interpolated from. **The classes are that table's and are not
 copied here**: `/product-workflows:prd-ground` scans what it writes into the grounding files against
-the same table, and two copies of one list drift.
+the same table, and two copies of one list drift. The same stop serves the delivery note's scan
+(*Render the delivery note*) and the bundle's (*Assemble the bundle* rule 7), each naming where its
+hit landed.
 
-`BRD_PACKAGE_PROMPT_LEAK: the rendered prompt carries <token> in part <n>, interpolated from <artifact> — the prompt is read by somebody with no plugin, and a token they cannot resolve is not fixed by deleting it. Where <token> is a § quoting the customer's own section number with no captured path, write it as the path and the section, source/<basename> › § <n>, which bundle-packaging.md §6.3 rule 1 exempts.`
+`BRD_PACKAGE_PROMPT_LEAK: <where> carries <token>, from <artifact> — <why>. Where <token> is a § quoting the customer's own section number with no captured path, write it as the path and the section, source/<basename> › § <n>, which bundle-packaging.md §6.3 rule 1 exempts. Where <token> is a model id, remove the line or the clause naming it from <artifact> by hand — no field of the record holds a model, so nothing else changes, and workflows-core:grounding-format §2.3 sanctions the edit in a grounding file — commit the edit to the specs repository's default branch, and re-run.`
+
+`<where>` is `the rendered prompt, in part <n>` here, `the delivery note` over the note, and the
+bundled filename and line of the document the hit is in over the bundle — a copied grounding file,
+most often. `<why>` is `a model id tells the customer which tooling produced the package and gives
+their reviewer nothing to check` for a model id, and for every other class `the package is read by
+somebody with no plugin, and a token they cannot resolve is not fixed by deleting it`.
 
 **The scan stops; it never sanitises.** A citation that reached the prompt reached it because some
 sentence in the package assumed a reader who has this plugin, and stripping the citation leaves that
-sentence unfollowable while making it look fine.
+sentence unfollowable while making it look fine. A model id is the exception to that reason and not
+to the rule: removing the clause that names it is the whole repair, but the operator makes it in the
+artifact it came from, never the scan in a copy, so what ships and the record it was built from
+stay one text.
 
 **The customer's own words and naming can be neither sanitised nor corrected, and the scan must say
 so rather than deadlock.** `${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §6.3 defines both
@@ -1186,10 +1203,16 @@ hit at all, there is nothing to report or ask. Stopping outright would make that
 unpackageable, since the only repair left would falsify the record — an edit to an immutable file,
 an anchor that no longer names where the requirement is stated, a transcription saying something the
 image does not, or a quotation saying something the customer did not — and every other span's hit
-stays a hard stop exactly as above. **These two sets are the plugin-free scan's only exemptions, and
-each covers a class of content rather than one file** — the citation-resolution check (Phase 8 rule
-8, `bundle-packaging.md` §6) carries the same two over the same spans, and one of a different shape
-for `[SR#n]` (§6.3) — and they exist because the alternatives are a deadlock or a falsified record.
+stays a hard stop exactly as above, save one. **These two sets are the plugin-free scan's only
+exemptions bar that one, and each covers a class of content rather than one file** — the
+citation-resolution check (Phase 8 rule 8, `bundle-packaging.md` §6) carries the same two over the
+same spans, and one of a different shape for `[SR#n]` (§6.3) — and they exist because the
+alternatives are a deadlock or a falsified record. **The one more is a model id inside a
+prerequisite's package copied in** (*Assemble the bundle* rule 7): that package went to the
+customer as written and is never rewritten (`bundle-packaging.md` §5), so a model id in it exposes
+nothing the customer was not already sent, and the run names it in the Final report and packages
+on. It covers that class alone — every other class stops in such a package as anywhere — and the
+prompt this section scans holds no prerequisite's document, so it is met only at rule 7.
 
 Identifiers are **not** in the scan's classes and are meant to travel: the classes
 `${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §6.1's table enumerates are how the returned
@@ -1320,8 +1343,11 @@ reaches them **filtered**, through part 9 and part 7 of the prompt; the file car
 set, plus the model the adversarial pass actually ran on. It sits in this same folder under the same
 `<BRD-KEY>`-and-date naming as the prompt and the delivery note, so nothing about its filename marks
 it as internal — which is exactly why the rule is written down rather than inferred. **The
-plugin-free scan below would not catch it**: that scan hunts plugin-internal tokens, and a
-self-review is free of them while being the most internal document this command writes.
+plugin-free scan below is no substitute for this rule**: it hunts tokens, and what makes a
+self-review internal is not a token — it is the unfiltered findings and the reasons the team
+rejected some of them, which can be written without one. The model id its header records is the one
+thing in it the scan is sure to stop on, and a self-review is the most internal document this
+command writes whether or not that line is there.
 
 1. **Name every bundle document distinctively.** Documents are located by **filename search, never
    by path**, because a path is correct exactly once — in the directory layout this machine had —
@@ -1435,7 +1461,13 @@ self-review is free of them while being the most internal document this command 
 7. **Run the plugin-free scan over every document in the finished bundle**, and stop on any hit
    outside verbatim customer content and customer-derived locators, whose hits are the operator's
    to rule on exactly as `bundle-packaging.md` §6.3 disposes of them (*The plugin-free scan*,
-   Phase 6). The scan runs here as well as over the prompt because a leak can arrive through a
+   Phase 6) — **save a model id in a document rule 5 copied in from a prerequisite's package**,
+   which is no stop: that document went to the customer as written and is never rewritten
+   (`bundle-packaging.md` §5), so including it again exposes nothing new, and rewriting it would
+   falsify what was sent. Name each such hit in the Final report — the bundled filename and line,
+   *already sent in `bundle-<YYYYMMDD>/` of `<PREREQ-KEY>`, left as sent* — and package on. Every
+   other class of `bundle-packaging.md` §1.2 stops in a prerequisite's document exactly as anywhere
+   else. The scan runs here as well as over the prompt because a leak can arrive through a
    copied document as easily as through a rendered part, and together with rule 8's
    citation-resolution check, this pair is the last point at which anything is still ours.
 8. **Run the citation-resolution check over every document in the finished bundle**, per
@@ -1443,8 +1475,9 @@ self-review is free of them while being the most internal document this command 
    nowhere earlier because both of its inputs — the identifier corpus and the set of bundle
    filenames — are facts about the *assembled* bundle; the rendered prompt is covered because the
    prompt is itself a bundle document. It is a second pass rather than a widening of rule 7's scan:
-   that scan hunts tokens a reader **cannot resolve**, and this one hunts tokens a reader **resolves
-   to the wrong thing**, which is the worse failure and needs the bundle's own corpus to detect.
+   that scan hunts tokens a reader **cannot resolve** — or, a model id, has no use for — and this one
+   hunts tokens a reader **resolves to the wrong thing**, which is the worse failure and needs the
+   bundle's own corpus to detect.
 
    A reference that resolves to nothing — an unresolved id or filename (§6.2 relations 1 and 3), a
    bundle document whose filename carries no `<BRD-KEY>` and therefore has no partition at all, or a
@@ -1483,8 +1516,8 @@ self-review is free of them while being the most internal document this command 
 
 9. **Run the set-resolution check**, per `${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §7,
    and stop on any hit. It is a third pass rather than a widening of rule 8, and the three hunt
-   different failures: rule 7 finds a token the reviewer **cannot resolve**, rule 8 one they
-   **resolve to the wrong thing**, and this one a **set restated wrongly** — every identifier
+   different failures: rule 7 finds a token the reviewer **cannot resolve** or, a model id, has no
+   use for, rule 8 one they **resolve to the wrong thing**, and this one a **set restated wrongly** — every identifier
    resolving, every filename real, and the set they compose not being the set its source holds. It
    runs last because relation 2 needs the assembled bundle's own listing, and it is the only one that
    reaches the delivery note, which is deliberately not a bundle document.
@@ -1671,8 +1704,8 @@ gap, `emit-block` (`workflows-core:feedback-emission`) fires at that halt before
 this command's stops **do** qualify and are the reason the invariant is named here:
 `BRD_PACKAGE_SCHEMA_BOUNDARY`, `BRD_PACKAGE_SCHEMA_EXAMPLE_ID` and `BRD_PACKAGE_PROMPT_LEAK` are all
 reference-integrity gaps — a rendered authority whose boundary moved, a rendered authority carrying
-an example identifier with a number in it, and a package artifact carrying a citation that should
-never have been written into it; `BRD_PACKAGE_CORPUS_UNREADABLE` and `BRD_PACKAGE_SET_UNREADABLE`
+an example identifier with a number in it, and a package artifact carrying a citation, or a model
+id, that should never have been written into it; `BRD_PACKAGE_CORPUS_UNREADABLE` and `BRD_PACKAGE_SET_UNREADABLE`
 are record-integrity gaps — each is, by its own text, this command's parse or read of the plugin's
 own records failing on content that is there, which no sentence in the package can fix; and
 `BRD_PACKAGE_REVIEW_UNACCOUNTED` is an agent-contract gap, a dispatch this command owns whose agent
@@ -1740,7 +1773,9 @@ full because those are the ones the customer will read; whether a second reviewe
 `[AS#n]`, `escalated-to-customer` findings, and the `[CDF#n]` counts parts 6, 8 and 11 each carry,
 `in-scope`, `conditional` and `out-of-scope` respectively; **every prerequisite named under *what
 could still move***, with whether it resolved, whether its decisions are customer-reviewed, and whether a
-package of its own was copied in; every artifact written, by path — the self-review, the customer
+package of its own was copied in — and every model id *Assemble the bundle* rule 7 left standing in
+a copied-in package, by bundled filename and line, as *already sent in `bundle-<YYYYMMDD>/` of
+`<PREREQ-KEY>`, left as sent*; every artifact written, by path — the self-review, the customer
 prompt, the delivery note and the bundle, and `brd-link.md` where this run added a prerequisite to
 it; **the citation check's
 outcome** — how many identifier references resolved, across how many source packages, how many

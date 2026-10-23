@@ -325,18 +325,22 @@ So neither a finding's free text nor the prose around the blocks ever carries:
 - a reference file's name or path, or a decision-row id such as `D12`;
 - a model id or a model family's name — `claude-opus-5-5`, `Opus` — the tier a finding was ground
   or verified at included;
-- a local filesystem path — the checkout a repository was read in, the specs repository's own
-  directory, a scratch or a home directory: `/workspace/<repo>`, `~/…`, `/tmp/…`.
+- a local filesystem path — a directory of the machine the run worked on, recognised by its value
+  and never by its shape: the checkout a repository was read in, the specs repository's own
+  directory, the documentation root the run resolved, a scratch or a home directory it worked in.
 
 **The last two describe the operator's environment, not the record.** They tell the customer which
 tooling and which machine produced the file, and their reviewer can do nothing with either: the
 reviewer's checkout is somewhere else, which is why the three pin commands are written
 `git -C "<repo>"` (§4), and the tier a corpus was ground at is the operator's evidence about the
-run, which `product-workflows:prd-ground` reports in its own Final report and writes into no
+run, which `/product-workflows:prd-ground` reports in its own Final report and writes into no
 grounding file. A verifier note that read *I re-ran the three git commands against
 /workspace/e2e/bookstore* should have said *I re-ran the three git commands against the checkout*.
-A path inside the repository is not a local path in this sense: written from the repository's root,
-as every evidence `path` is, it stays.
+**A path the customer's own material names is not a local path in this sense, whatever its shape**:
+a path or a route the repository's code or configuration names — `/tmp/update.json` in a script it
+carries, `/api/v1/ratings` — or one the customer's documents give stays, quoted as they give it. A
+path inside the repository is written from the repository's root, as every evidence `path` is, and
+stays too.
 
 **Say what the rule requires, never where it is written — and a token they cannot resolve is not
 fixed by deleting it.** A sentence that cited a rule leaned on it, so the sentence is what has to
@@ -364,9 +368,10 @@ it rather than leaving it to be found at packaging.
 **Who holds a writer to it.** `product-workflows:code-grounder`, `product-workflows:design-grounder`
 and `product-workflows:grounding-verifier` each carry the rule for the fields they return.
 `/product-workflows:prd-ground`, which writes the files, scans what it is about to write against
-`product-workflows:bundle-packaging` §1.2's table, and for its own local paths — each checkout's and
-`$SPECS_PATH`'s — by their literal value, and rewrites a sentence that hits before writing it. A rewritten sentence changes nothing a
-reader acts on — no id, verdict, evidence path or line, control result or outcome — so the run makes
+`product-workflows:bundle-packaging` §1.2's table, and for its own local paths — each checkout's,
+`$SPECS_PATH`'s and its documentation root's — by their literal value, and rewrites a sentence that
+hits before writing it, a local path among them replaced rather than reported. A rewritten sentence changes nothing a
+reader acts on — no id, verdict, file or line an evidence entry names, control result or outcome — so the run makes
 it without dispatching anything again. A finding already on file is not rewritten by a later run; a
 hand edit to its free text is sanctioned (§2.1) and touches none of those fields either.
 
