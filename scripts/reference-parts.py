@@ -61,8 +61,8 @@ one entry point gets a generated file holding that entry point and the sections 
 has no rule index and no citation placement: every other request means the whole file, and so does
 every citation but one of a section the file holds, which the loader serves from the file -- from its
 text wherever a read of it, or of the whole reference, made in the run is in the conversation, and
-otherwise by reading it inside a `##` section that requests the entry point (OUT-OF-FILE CITATIONS,
-below). A declaration
+otherwise by reading it inside a `##` section that requests the entry point and the whole reference
+anywhere else (OUT-OF-FILE CITATIONS, below). A declaration
 block directly after the H1 line names each such entry
 point, and region markers select the lines its file holds:
 
@@ -115,7 +115,10 @@ that is no entry point of its reference; on a § no heading opens with; on a non
 section held whole that lies in no region of its entry; on a region line inside a numbered
 section its entry neither holds whole nor holds in part; on a phrase of a section held in part
 that no region text of its entry inside that section holds, phrase and text each normalised as
-the rule index normalises names; and on an entry-point file that is stale, missing or produced
+the rule index normalises names -- and on a phrase naming a numbered rule, `rule <N>`, where no
+region line of its entry inside that section opens the rule's own list item, `N.`, since the
+section's opening line may mention the rule while the rule itself lies outside every region; and
+on an entry-point file that is stale, missing or produced
 by no declaration. Its PASS line counts the split references, the entry-point files and every
 generated file.
 
@@ -216,14 +219,14 @@ from then on. Whole loads are counted from calls alone: a citation that loads th
 the failure this reports, never a load that excuses the citations after it. The census `entry-point
 file <ref> <entry>: N request section(s), M citation(s) checked` counts the sections requesting each
 entry point and every sentence judged for it, a request's own included. A tree declaring no entry
-point runs none of this.
+point runs none of this; a declared entry point that no section requests fails (IT FAILS CLOSED).
 
 THE QUESTION RULES. `check-questions` gates the step that loads `escalation-rules core` -- §0's
 array shape, choice lists presented verbatim, the `(Recommended)` marker, a selection that carries no
 text -- which every question a run asks follows. It is a subcommand of its own, not part of
 check-citations, because its subject is a command's questions, not a reference's declaration: its
 fail-closed rule would fail every tree that declares references and asks nothing, as check-citations'
-fixture trees do. It reads the `commands/*.md`
+fixture trees do. It reads every markdown file under `commands/`
 of workflows-core and of every dependent plugin (QUESTION_PLUGIN_RELS) for each one's FIRST QUESTION:
 the first line, fenced or not, holding `choices:`; holding both `phase-handoff` and `§4.3` -- the
 consent array that reference's §4.3 has a command present, as /frames does with no `choices:` of its
@@ -245,8 +248,10 @@ printed, and `--verbose` lists each asking command's step line and first questio
 IT FAILS CLOSED. A scan that finds no reference-parts declaration fails check-parts and
 check-citations, and a declared reference no consumer cites fails check-citations: a gate that
 matched nothing proves nothing when it passes. Entry-point files are outside that guard: a tree
-declaring none passes their checks. A scan that finds no command presenting a choice list fails
-check-questions.
+declaring none passes their checks. But a declared entry point that no `##` section of a scanned
+file requests, `args: "<ref> <entry>"`, fails check-citations, as a declared reference no consumer
+cites does: its out-of-file check would judge nothing. A scan that finds no command presenting a
+choice list fails check-questions.
 
 WHAT IT CANNOT SEE: whether a run loads the part when it reaches a citation -- the preamble
 tells it to; the rule-by-rule reading and the live runs check that it does. A name the gate
@@ -269,7 +274,11 @@ the file lacks it, and a § in a sentence citing nothing, with no citation befor
 names nothing, so a bare pointer into <ref> there goes unread. It reads a § only by its number: one
 written as a name (`§ Stop contract`) is not read, so a sentence citing <ref> by such a name alone
 fails as citing no section. It reads a file in the order of its text, so a section a run reaches
-before an earlier one -- a definition a later phase invokes -- is judged by where it stands. And whether
+before an earlier one -- a definition a later phase invokes -- is judged by where it stands. It
+judges a file by its own text alone, never by the references it loads: a command's section that
+loads another reference is not judged for that reference's citations of <ref>, and a reference is
+judged only where it requests the entry point itself, so one that reaches <ref> by a path or a
+citation, with no request of its own, goes unseen. And whether
 a failing sentence only explains or applies a rule the file lacks is the reading's call, not the gate's:
 it fails both. check-questions cannot see whether a run
 executes the step when it reaches it -- the step says to, and the live runs check that it does -- nor
@@ -369,6 +378,7 @@ MARKERS = {w: (re.compile(r"^<!-- %s: (\S+) -->$" % w), re.compile(r"^<!-- /%s -
 SECTION = re.compile(r"^\d+(?:\.\d+)*$")
 HOLDS = re.compile(r"^holds=(\d+(?:\.\d+)*(?:,\d+(?:\.\d+)*)*)$")
 HEADING_NUMBER = re.compile(r"^(\d+(?:\.\d+)*)\.?(?=\s|$)")
+RULE_PHRASE = re.compile(r"^rule (\d+)$")   # a partial phrase naming a numbered rule, normalised
 HEADING = re.compile(r"^ {0,3}(#{1,6})[ \t]+(.*?)[ \t]*(?:[ \t]#+[ \t]*)?$")
 FENCE = re.compile(r"^\s*(`{3,}|~{3,})(.*)$")
 POSITIONAL = re.compile(r"\b(?:above|below)\b|\bthe (?:next|previous) section\b", re.I)
@@ -761,7 +771,7 @@ def parse_entry_source(root: Path, path: Path):
             partial_at.setdefault((entry, sec), n)
     # A section held whole is declared once, its subsections with it: no other § of its entry, held whole
     # or in part, is it or lies under it, and no § held in part has it under it.
-    tail =" -- a section held whole is declared once, its subsections with it"
+    tail = " -- a section held whole is declared once, its subsections with it"
     for entry, decl in ref.entries.items():
         for j, sec in enumerate(decl.holds):
             other = next((o for o in decl.holds[:j] if within(sec, o) or within(o, sec)), None)
@@ -838,12 +848,22 @@ def parse_entry_source(root: Path, path: Path):
             ref.err(at[0], "this line of a `%s` region lies in §%s, which entry '%s' neither holds whole nor holds in "
                            "part%s" % (entry, sec, entry, more(at)))
         # A section held in part: each phrase, normalised as a rule name is, is in this entry's region
-        # text inside that section.
+        # text inside that section -- and a phrase naming a numbered rule, `rule <N>`, only where a region
+        # line there opens the rule's own item, `N.`: the section's opening line may mention the rule
+        # while the rule itself lies outside every region.
         for sec, phrases in ((s, p) for s, p in decl.partial.items() if s in extent):
             first, last = extent[sec]
-            held = norm(" ".join(body[k] for k in range(first, last + 1) if owner.get(k) == entry))
+            mine = [body[k] for k in range(first, last + 1) if owner.get(k) == entry]
+            held = norm(" ".join(mine))
             for phrase in phrases:
-                if norm(phrase) not in held:
+                rule = RULE_PHRASE.match(norm(phrase))
+                if rule and not any(item.group(0).strip() == rule.group(1) + "."
+                                    for item in map(LIST_ITEM.match, mine) if item):
+                    ref.err(partial_at[(entry, sec)], "§%s is held in part by entry '%s', but no `%s` region in it holds "
+                                                      "\"%s\" -- a phrase naming a numbered rule is held only by the "
+                                                      "rule's own item, `%s.`, never by a mention of it"
+                            % (sec, entry, entry, phrase, rule.group(1)))
+                elif norm(phrase) not in held:
                     ref.err(partial_at[(entry, sec)], "§%s is held in part by entry '%s', but no `%s` region in it holds "
                                                       "\"%s\"" % (sec, entry, entry, phrase))
     return ref
@@ -1364,9 +1384,11 @@ def holds_cited(decl, number, sentence):
     return any(norm(p) in norm(sentence) for p in decl.partial.get(number, ()))
 
 
-def scan_files(root, rels):
+def scan_files(root, rels, dirs=SCAN_DIRS):
+    """Every markdown file under each plugin's `dirs`, CHANGELOG.md excluded, in plugin, directory and
+    path order."""
     for rel in rels:
-        for d in SCAN_DIRS:
+        for d in dirs:
             base = root / rel / d
             if base.is_dir():
                 for path in sorted(base.rglob("*.md")):
@@ -1813,6 +1835,12 @@ def cmd_check_citations(root, verbose):
         if consumer_cites[n] == 0:
             problems.append("%s:%s is declared split, but no file in the dependent plugins' commands/, agents/ or "
                             "references/ cites it -- the scan found nothing" % (CORE_NAME, n))
+    # Fail-closed, as for a split reference no consumer cites: an entry point no section requests runs
+    # none of the out-of-file check, which would pass on nothing.
+    for (r, e), (sections_n, _) in entry_census.items():
+        if sections_n == 0:
+            problems.append("%s:%s declares a file for entry point `%s`, but no `##` section of a scanned file requests "
+                            "it, `args: \"%s %s\"` -- the out-of-file check found nothing to judge" % (CORE_NAME, r, e, r, e))
     for p in problems:
         print("ERROR " + p)
     for n in split:
@@ -1863,26 +1891,21 @@ def question_steps(text):
 
 def cmd_check_questions(root, verbose):
     problems, asking, loading = [], 0, 0
-    for rel in QUESTION_PLUGIN_RELS:
-        base = root / rel / QUESTION_DIR
-        if not base.is_dir():
+    for path in scan_files(root, QUESTION_PLUGIN_RELS, (QUESTION_DIR,)):
+        text = path.read_text(encoding="utf-8")
+        first = first_question(text.splitlines())
+        if first is None:
             continue
-        for path in sorted(base.glob("*.md")):
-            text = path.read_text(encoding="utf-8")
-            first = first_question(text.splitlines())
-            if first is None:
-                continue
-            asking += 1
-            name = path.relative_to(root).as_posix()
-            steps = [n for n in question_steps(text) if n < first]
-            if steps:
-                loading += 1
-            else:
-                problems.append("%s:%d: asks the user a question before its %s step -- add the step before this line"
-                                % (name, first, QUESTION_STEP_LEAD))
-            if verbose:
-                print("ASKS %s: step at line %s, first question at line %d"
-                      % (name, steps[0] if steps else "none", first))
+        asking += 1
+        name = path.relative_to(root).as_posix()
+        steps = question_steps(text)
+        if steps and steps[0] < first:
+            loading += 1
+        else:
+            problems.append("%s:%d: asks the user a question before its %s step -- add the step before this line"
+                            % (name, first, QUESTION_STEP_LEAD))
+        if verbose:
+            print("ASKS %s: step at line %s, first question at line %d" % (name, steps[0] if steps else "none", first))
     if not asking:
         problems.append("no command under %s presents a choice list -- the scan matched nothing, and a gate that "
                         "matched nothing proves nothing when it passes"
@@ -2454,8 +2477,18 @@ CASES = [
                     '*Never infer'],
                    absent=['`make-it`', '## 4. Reporting', 'Each artifact is in one class', '<!-- entry', '<!-- /entry']),
             _entry_files({'gamma': {'check-it': (['1', '3'], {'4.0': ['never infer']}, [(9, 16), (24, 38), (44, 46)])}})]),
-        Step(['check-citations'], 0, ['check-citations: PASS'], errors=0),
+        Step(['check-citations'], 0, ['entry-point file gamma check-it: 1 request section(s), 1 citation(s) checked',
+                                      'check-citations: PASS'], errors=0),
         Step(['generate'], 0, ['0 written, 0 removed'], errors=0, on_copy=True, post=[_unchanged]),
+    ]),
+    # entry_minimal's tree, its consumer requesting nothing: no scanned file requests check-it, so the
+    # out-of-file check judges nothing -- which fails, closed, as a split reference no consumer cites does.
+    ('entry_unrequested', 'a declared entry point that no scanned file requests fails', [
+        Step(['check-citations'], 1, ["workflows-core:gamma declares a file for entry point `check-it`, but no `##` "
+                                      "section of a scanned file requests it, `args: \"gamma check-it\"` -- the "
+                                      "out-of-file check found nothing to judge",
+                                      'entry-point file gamma check-it: 0 request section(s), 0 citation(s) checked'],
+             errors=1),
     ]),
     # check-it.md lacks §3.1's line; generate repairs it.
     ('entry_stale', 'an entry-point file that differs from its regions is stale; generate repairs it', [
@@ -2481,6 +2514,20 @@ CASES = [
     ('entry_partial_phrase_missing', "a phrase of a section held in part that no region text of its entry holds fails", [
         Step(['check-parts'], 1, ["plugins/workflows-core/references/gamma.md:5: §4.0 is held in part by entry 'check-it', "
                                   "but no `check-it` region in it holds \"never infer\""], errors=1),
+    ]),
+    # entry_minimal's gamma, holding §5 in part by "rule 2" too: its region in §5 holds the section's opening
+    # line, which mentions rule 2, while the rule's own item, `2.`, lies outside every region. On a copy, the
+    # item in a region of its own is held, and the file regenerated from it passes.
+    ('entry_partial_rule_mention', 'a phrase naming a numbered rule is held by the rule\'s own item, not a mention', [
+        Step(['check-parts'], 1, ["plugins/workflows-core/references/gamma.md:6: §5 is held in part by entry 'check-it', "
+                                  "but no `check-it` region in it holds \"rule 2\" -- a phrase naming a numbered rule is "
+                                  "held only by the rule's own item, `2.`, never by a mention of it"], errors=1),
+        Step(['generate'], 0, ['1 written, 0 removed'], errors=0, on_copy=True,
+             pre=_rewrite('plugins/workflows-core/references/gamma.md',
+                          ('2. A consumer executes `check-it` before its first scan.\n',
+                           '<!-- entry: check-it -->\n2. A consumer executes `check-it` before its first scan.\n'
+                           '<!-- /entry -->\n'))),
+        Step(['check-parts'], 0, ['check-parts: PASS'], errors=0, on_copy=True),
     ]),
     ('entry_skill_list_mismatch', "the loader's entry list names an entry point no declaration gives a file", [
         Step(['check-citations'], 1, [SK + ': no paragraph opens with the entry list the declarations give, "These entry '
@@ -2663,9 +2710,11 @@ CASES = [
         Step(['check-questions'], 1, [QA + ':6: asks the user a question before its **Load the question rules.** step',
                                       'question rules: 1 command(s) present a choice list, 0 load the rules first'],
              errors=1),
+        Step(['check-questions', '--verbose'], 1, ['ASKS ' + QA + ': step at line 8, first question at line 6'],
+             errors=1),
     ]),
-    # The model-gate question sits before the first `##` heading, as /implement's does: a step under
-    # Phase 0 comes too late. On a copy, the step moved up beside the strip step, before the gate, passes.
+    # The model-gate question sits before the first `##` heading: a step under Phase 0 comes too late. On a
+    # copy, the step moved up beside the strip step, before the gate, passes.
     ('question_rules_before_intro_question', 'a question before the first ## heading needs the step before it', [
         Step(['check-questions'], 1, [QA + ':6: asks the user a question before its **Load the question rules.** step'],
              errors=1),
@@ -2732,6 +2781,10 @@ def _selftest() -> int:
             copy = Path(tmp) / name
             shutil.copytree(fixture, copy)
             for step in steps:
+                if step.pre and not step.on_copy:
+                    # A pre-step edits the tree it is given: run on the fixture, it would edit the committed tree.
+                    why = '%s: a pre-step edits its tree, so its step runs on the copy -- set on_copy' % ' '.join(step.argv)
+                    break
                 root = copy if step.on_copy else fixture
                 why = step.pre(root) if step.pre else None
                 if why:

@@ -10,6 +10,11 @@ guess a part's name — until you hold the index (every part carries it), load i
 `args: "<name> index"`. A citation that names no rule the index holds loads the whole
 reference, `args: "<name>"`. Never apply a rule of these references from memory.
 
+## Phase 0
+
+Gate the input: execute `check-it` with
+`Skill(skill: "workflows-core:reference", args: "gamma check-it")`.
+
 ## Phase 1
 
 Ask the user to pick a value, and normalise a free-text answer per

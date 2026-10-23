@@ -31,11 +31,12 @@ convention live in ONE place.
      inherited invariants.
    - **PRD-level** (`epic` null): only the PRD folder's `ard.md`.
 
-   Collect them **in the working tree and on `<default-ref>`** — the ref `phase-handoff.md` §3.2
-   resolves — listing each folder there with `git -C "$SPECS_PATH" ls-tree --name-only
-   "<default-ref>" -- "./<folder>/" 2>/dev/null`, `<folder>` relative to `$SPECS_PATH`: a filename
-   above that the ref holds and the working tree does not is a candidate too. A listing that fails —
-   `$SPECS_PATH` no git repository, or no `<default-ref>` (§3.3 rows H and G there) — adds none. An
+   Collect them **in the working tree and on `<default-ref>`** — the ref `specs-repo-git.md` §3.2
+   resolves for the run's preflight, which `require-on-main` reads too — listing each folder there
+   with `git -C "$SPECS_PATH" ls-tree --name-only "<default-ref>" -- "./<folder>/" 2>/dev/null`,
+   `<folder>` relative to `$SPECS_PATH`: a filename above that the ref holds and the working tree
+   does not is a candidate too. A listing that fails — `$SPECS_PATH` no git repository, or no
+   `<default-ref>`, the states `require-on-main` meets as its rows H and G — adds none. An
    ARD that reached the default branch after the run's own branch was cut is in no working-tree
    listing, so without the ref's the run would resolve `none` and never ask the gate, which stops
    there on row B′. A ref-only candidate goes through `require-on-main` like any other: row B′
@@ -87,7 +88,7 @@ contracts:           # the PRD-level ARD's `## Contracts` (step 4), or null
 
 `status: none` when no ARD file resolves (the common case — `/create-ard` is optional), and `components` is then `[]` and `contracts` `null`.
 
-`status: unmerged` when an ARD file resolves but is **not on the specs repo's default branch** — verified via `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §3 (`require-on-main`), whose rows D and E find it on a plugin branch and return the carrying `branch` and any open `pr`. Both are passed through to the caller.
+`status: unmerged` when an ARD file resolves but is **not on the specs repo's default branch** — verified by `require-on-main` (§3), executed from its own file with `Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, which holds the gate and every rule it applies. The gate's rows D and E find the ARD file on a plugin branch and return the carrying `branch` and any open `pr`; both are passed through to the caller.
 
 **An ARD file no plugin branch carries is not `unmerged`.** There `require-on-main` returns row F — `on_main: absent`, with no branch to pass through — which is the state a declined handoff of a new ARD leaves, or that an ARD committed only on a branch of the person's own leaves, and it is `status: none`, exactly as `phase-handoff.md` §3.4's ARD row records it: the file is not read, and the no-regression rule below applies unchanged. Reading it as `unmerged` would stop every consumer but `/ready`, naming no branch, in a state §3.4 lets them proceed past.
 

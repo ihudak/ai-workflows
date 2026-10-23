@@ -1209,8 +1209,8 @@ later, and the note this phase writes is one of the files it commits, so the not
 `Phase handoff:` line. What the repository route depends on is the bundle reaching the specs
 repository's default branch, where a customer pulling the repository finds it — which it does when
 the handoff's pull request merges — and three facts decide whether this run can start it on its
-way, all of them held before anything is committed: the specs repository passes the handoff's own
-gate — every condition that gate lists, its run-wide `specs_git` flags as well as its repository
+way, all of them held before anything is committed: the specs repository passes the gate
+`handoff-to-main` opens with, before it commits anything — every condition that gate lists, its run-wide `specs_git` flags as well as its repository
 tests, so a run carrying `specs_git: blocked` or `specs_git: misrooted` fails it here; the handoff's
 push-target probe finds an `origin` remote to push to; and the operator consents to the handoff.
 Take all three here, step 1 loading the handoff contract that states them:

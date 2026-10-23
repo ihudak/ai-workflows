@@ -204,7 +204,7 @@ repo's default branch under the shared `brd/<BRD-KEY>-<slug>` branch prefix. The
 serves both delivery routes, and the run settles which one at the delivery note — which is why the
 consent is asked there rather than at the handoff phase that acts on it: the note is one of the
 files the handoff commits, so its route cannot wait on the handoff's outcome. Where the specs repo
-passes the handoff's gate (an existing git repository whose `.git` is writable, on no detached
+passes the gate `handoff-to-main` opens with (an existing git repository whose `.git` is writable, on no detached
 HEAD, and a `$SPECS_PATH` the run has not found misplaced), has an `origin` remote to push to, and
 the operator consents, the run asks, recommending that
 the customer pull the bundle; where any of the three fails — declining the handoff among them, which

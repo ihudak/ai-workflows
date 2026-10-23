@@ -172,7 +172,7 @@ finding written into the artifact, a style pass, a resumed verify step — the f
 plainly and names the edits. One line: *"`<verdict>` was reached before <the edits>, which followed
 it; the current text has not been reviewed."*
 
-**The line also goes into the pull request of a specs-repository handoff, and into a session record.** A command that hands a reviewed artifact off (`workflows-core:phase-handoff` §2) puts the verdict in its `body_facts`, and the pull request is what a reviewer reads before merging: there the verdict carries this line, and every finding the run leaves open is listed beside it with its severity. A session record the command keeps (`/specify`'s `_session.md`, `/design`'s `_design-session.md`) records the verdict with the same line. A live `/specify` run had to work out both places for itself.
+**The line also goes into the pull request of a specs-repository handoff, and into a session record.** A command that hands a reviewed artifact off in its specs-repository handoff puts the verdict in the handoff's `body_facts`, and the pull request is what a reviewer reads before merging: there the verdict carries this line, and every finding the run leaves open is listed beside it with its severity. A session record the command keeps (`/specify`'s `_session.md`, `/design`'s `_design-session.md`) records the verdict with the same line. A live `/specify` run had to work out both places for itself.
 
 **Which commands record a verdict is derived, not listed, and a phrase grep is not the derivation.** The set
 was first taken from the commands carrying the literal *"one fix cycle + one re-review"* cap, which
