@@ -1840,7 +1840,7 @@ check_index_membership() {
 #                  $CORE_PLUGIN_REL/$REF_DIR/. The FIRST whitespace token is the reference;
 #                  a second token is an entry point WITHIN it (`specs-repo-git
 #                  specs-preflight`) or, on a reference that loads by part, the part to
-#                  read (`session-hygiene resume-pointer`), and 455 of this tree's 598 real
+#                  read (`session-hygiene resume-pointer`), and 500 of this tree's 643 real
 #                  invocations carry one.
 #                  An implementation matching the whole argument string reports every one of
 #                  them as unresolvable.

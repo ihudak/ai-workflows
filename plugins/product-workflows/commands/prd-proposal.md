@@ -78,6 +78,8 @@ specs tree and the profile. There is no flag to turn off, no `resolve-docs-groun
 
 **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
 
+**Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
+
 **Parse the flags before anything counts a positional token**, so a flag is never read as the address.
 `--no-brief`, `--profile` and `--redo` are boolean; `--baseline` consumes the token after it. Strip
 all four — and `--baseline`'s value with it — from `$ARGUMENTS` first; what remains is the single
@@ -100,7 +102,7 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
 3. **Specs-repo preflight — once step 2's resolution returns `status: found`.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")`
    and execute its `specs-preflight` entry point (§3) inline, before step 4's container refusal, step 4a's Epic refusal and step 5's gate — `require-on-main` performs no fetch of its own
    (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one. Prompt-free, and
-   silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5
+   silent unless it acts, a guard fires, or `workflows-core:specs-repo-git` §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5
    notice; if it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the
    terminal `commit-artifacts` step skips on it.
    Its run key set (`workflows-core:specs-repo-git` §3.2) is fixed from what step 2 returned and

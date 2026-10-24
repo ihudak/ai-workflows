@@ -96,13 +96,22 @@ them is.
 5. **A scan hit stops the run; it never sanitises.** The command does not strip the offending token
    and continue. A citation that reached the prompt reached it because some part of the package
    assumed a reader who has this plugin, and deleting the four characters that reveal that leaves
-   the assumption in place and the sentence unfollowable. What is reported is the token, the part it
-   landed in, and the artifact it came from. **The one exception is the customer's own words and
-   naming** — verbatim customer content and customer-derived locators, both as
-   `bundle-packaging.md` §6.3 defines them — where the customer's own token is reported and put to
-   the operator, who ships it as the customer's own or holds the package, which stops the run with
-   `BRD_PACKAGE_CUSTOMER_CONTENT_HELD`; or, where that section says so, it is not a hit at all.
-   Either way the hit itself never stops the run outright (*The plugin-free scan*, below).
+   the assumption in place and the sentence unfollowable. A model id that records the model a run,
+   a pass or a tool of the operator's ran on is the one token whose removal is the whole repair, and
+   the scan still does not make it: the operator removes the line or the clause naming it from the
+   artifact it came from, so what ships and the record it was built from stay one text. A model the
+   customer's own requirement, code, configuration or documents name is theirs, and is never
+   removed. What is reported is the token, where it landed — a part of the prompt, the
+   delivery note, or a bundle document and its line — and the artifact it came from. **Two exceptions, neither of which stops
+   the run outright.** **The customer's own words and naming** — verbatim customer content and
+   customer-derived locators, both as `bundle-packaging.md` §6.3 defines them, and, for a model id
+   alone, the customer's naming a grounding block records, which that section defines too — where the
+   customer's own token is reported and put to the operator, who ships it as the customer's own or
+   holds the package, which stops the run with `BRD_PACKAGE_CUSTOMER_CONTENT_HELD`; or, where that
+   section says so, it is not a hit at all (*The plugin-free scan*, below). **And a model id inside
+   a prerequisite's package copied in**, which is never rewritten, so its text reaches the customer
+   as written whether or not it already has: the run names it in the Final report and packages on
+   (*Assemble the bundle* rule 7); every other class stops there as anywhere.
 
 The failure all five exist to prevent is stated once, in `bundle-packaging.md` §1, and is not
 restated here: a bundle that assumes anything about the machine it lands on is a bundle the customer
@@ -112,7 +121,11 @@ cannot review, and they will not tell you that — they will review it anyway, b
 
 ## Phase 0 — Resolve inputs and gate the decided BRD
 
-1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--depends-on` consumes the token after it (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
+1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
+
+   **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
+
+   Parse the first token that is neither a flag nor a flag's value — `--depends-on` consumes the token after it (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
    (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix or a folder's whole name, and carries the bare key from then on. On `needs-tree` (`$SPECS_PATH` unset), take step 3's `$SPECS_PATH` stop now — answered with a path, read the token again from the top of this step. If absent or invalid, stop:
    `BRD_PACKAGE_NEEDS_KEY: /brd-package needs a BRD key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) — re-run '/product-workflows:brd-package <KEY>'.`
 2. **`--depends-on <BRD-KEY>`.** Repeatable, each consuming the next token; read each with `read-key`, carry the key each reads and never the token typed, and drop (warn, do not stop the run) any that fail shape — a `needs-tree` value is read again once step 3 has settled `$SPECS_PATH`, and dropped with a warning if it still fails — the same handling
@@ -130,7 +143,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
    ```
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one,
-   the same ordering `/brd-interview` uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+   the same ordering `/brd-interview` uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or `workflows-core:specs-repo-git` §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run.
 5. **Resolve the BRD folder.** `resolve-address <BRD-KEY>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
    every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus §5's legacy fallback — and so can return any folder kind it finds there: a `BRD-` folder directly under `specifications/`, a `PRD-` folder (a slice inside a BRD, or an idea-route PRD folder), or an `EPIC-` folder inside a `PRD-` folder. Step 5a answers the level question on what it returns. Absent
@@ -226,12 +239,12 @@ cannot review, and they will not tell you that — they will review it anyway, b
       `BRD_PACKAGE_TORN_WRITES: <BRD-KEY>'s folder is not in a state a package can ship. <where torn writes were found:> It holds items a /product-workflows:brd-interview run left when it stopped before writing the round record that would name them (<each, by id or heading, with the round it claims>); no reader counts them. <where half-applied re-dispositions were found:> Its code-defect-log.md has not yet taken moves a round record already names (<each [CDF#n] #k <old> → <new>>) — the round record was written and the run stopped before the log was. Run '/product-workflows:brd-interview <BRD-KEY>' and merge its handoff: any run of it that reaches its handoff removes the torn writes, and any run that passes its input gates applies the pending moves in its first phase. Nothing was written.`
 6. **Gate the decision register on main.** This command **consumes** a `$SPECS_PATH` deliverable it
    did not write, so per `workflows-core:phase-handoff` §5 rule 2 it executes
-   `require-on-main` (§3) here, before any content is read — step 5c's worktree test reads items
+   `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) here, before any content is read — step 5c's worktree test reads items
    only to find torn writes, and gates nothing. Execute it against the resolved folder's
    `decisions.md`. **Its presence on `origin/<default>` implies nothing about any other file this
    package ships, and each of those is gated in its own right** (step 6b below for the question set
    and the code-defect log, step 7 for the round records): that a single `handoff-to-main` run
-   stages its deliverables in one commit (§2.3) is a fact about that run and not about the tree — a
+   stages its deliverables in one commit is a fact about that run and not about the tree — a
    handoff declined and hand-committed in part, or a later `/brd-interview` run that stages the
    register and not a question set an earlier run left, lands the register alone
    (`workflows-core:phase-handoff` §4.0, never infer an artifact's merged-ness from a sibling's
@@ -265,13 +278,14 @@ cannot review, and they will not tell you that — they will review it anyway, b
      the no-new-round path, reaches its handoff phase with nothing staged, reports `nothing to
      commit` and opens no pull request, while where it finds something the round it opens is handed
      off with its own record and not the earlier ones. Either way `handoff-to-main` stages only the
-     paths *that* run declared (`workflows-core:phase-handoff` §2.3), and the round records already
+     paths *that* run declared, and the round records already
      on disk are not among them. What is needed is the register already written, landed:
      `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF: <BRD-KEY>'s decision register is written at <path> but is on no branch — its handoff was declined. Commit and merge decisions.md and the interview/ round records to the specs repo's default branch, then re-run; do not re-run /product-workflows:brd-interview, whose no-new-round path stages nothing on an unchanged BRD.`
 6b. **Gate the question set and the code-defect log on main, each where it is in the folder.**
     Both ship in the bundle whole (`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1.1),
     and neither is implied by step 6's gate. For each of `interview/customer-questions.md` and
-    `code-defect-log.md` present in the folder, execute `require-on-main` against it and map the
+    `code-defect-log.md` present in the folder, execute `require-on-main`
+    (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against it and map the
     §3.7 return by `stopped` first: any stopping row → stop, naming the file and the branch/PR state
     it reports; `pass` / `pass_amending` / `unmanaged` → proceed as step 6 does; `absent` (row F — in
     the folder and on no ref) → collect it, and stop once after both naming every file collected:
@@ -517,7 +531,7 @@ from the delivery team present to correct it — a proposal is read outside the 
 it is read, not run. If no Opus resolves, degrade to best-available, record it in `notes`, in the
 self-review's own header and in the final report — a package whose adversarial pass ran on a weaker
 model is still a package, and the customer's own reviewer is the second pass, but the operator must
-know which they got. Never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded — the self-review's own header records that enforced id as the model the pass ran on, the same way `/prd-ground`'s `ground_tier` does.
+know which they got. Never hard-block. Under `run_flags.enforced_model` (`workflows-core:model-routing/classification` §10) the enforced model is used instead and no degradation is recorded — the self-review's own header records that enforced id as the model the pass ran on. (`/prd-ground` reports an enforced id as its `ground_tier` too, but only in its Final report and never in a file it writes: its grounding files are in the review bundle, and the self-review never is.)
 
 ---
 
@@ -1049,8 +1063,8 @@ listing them as blockers.
 `accepted-risk`, each in the reviewer agent's own words rather than re-summarised — that agent
 writes its findings knowing they may end up here, and writes their `target`, `attack` and
 `what_would_settle_it` for a customer to read, with no `§` of a plugin file, working filename,
-command or agent name in them (`agents/brd-package-reviewer.md`), so they pass both checks that read
-the finished prompt as quoted: the plugin-free scan stops on a `§`, a command or an agent name, and
+model id, command or agent name in them (`agents/brd-package-reviewer.md`), so they pass both checks that read
+the finished prompt as quoted: the plugin-free scan stops on a `§`, a model id, a command or an agent name, and
 the citation-resolution check (Phase 8 rule 8,
 `${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §6.2 relation 3) on a working filename. A
 token that reaches the prompt this way anyway stops whichever of the two catches it, like any other;
@@ -1152,16 +1166,30 @@ scope is still open — which is cheaper for both sides than meeting it after de
 
 The last thing this phase does, over the **finished** prompt text — not over the templates, and not
 over the schema alone. Stop the run on any hit of a class
-`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1.2 tabulates, naming the token, the part it
-landed in, and the artifact it was interpolated from. **The classes are that table's and are not
+`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1.2 tabulates, naming the token, where it
+landed, and the artifact it was interpolated from. **The classes are that table's and are not
 copied here**: `/product-workflows:prd-ground` scans what it writes into the grounding files against
-the same table, and two copies of one list drift.
+the same table, and two copies of one list drift. The same stop serves the delivery note's scan
+(*Render the delivery note*) and the bundle's (*Assemble the bundle* rule 7), each naming where its
+hit landed.
 
-`BRD_PACKAGE_PROMPT_LEAK: the rendered prompt carries <token> in part <n>, interpolated from <artifact> — the prompt is read by somebody with no plugin, and a token they cannot resolve is not fixed by deleting it. Where <token> is a § quoting the customer's own section number with no captured path, write it as the path and the section, source/<basename> › § <n>, which bundle-packaging.md §6.3 rule 1 exempts.`
+`BRD_PACKAGE_PROMPT_LEAK: <where> carries <token>, from <artifact> — <why>. Where <token> is a § quoting the customer's own section number with no captured path, write it as the path and the section, source/<basename> › § <n>, which bundle-packaging.md §6.3 rule 1 exempts. Where <token> is a model id that records what a run, a pass or a tool of yours ran on — a tier line, a note saying which model a pass used — remove the line or the clause naming it from <artifact> by hand: no field of the record holds that model, so nothing else changes, and workflows-core:grounding-format §2.3 sanctions the edit in a grounding file. Where it is a model the customer's own requirement, code, configuration or documents name, it is theirs and is never removed: in a grounding file, quote it beside the requirement id, or the path, it comes from, which bundle-packaging.md §6.3 puts to your ruling; anywhere else, reword the sentence around it to name the model by the record that names it. Either way, commit the edit to the specs repository's default branch, and re-run.`
+
+`<where>` is `the rendered prompt, in part <n>` here, `the delivery note` over the note, and the
+bundled filename and line of the document the hit is in over the bundle — a copied grounding file,
+most often. `<why>` is `the scan fires on every model id, since one the customer's own material names
+reads the same as one your tooling ran on, which tells the customer which tooling produced the
+package and gives their reviewer nothing to check` for a model id, and for every other class `the
+package is read by somebody with no plugin, and a token they cannot resolve is not fixed by deleting
+it`.
 
 **The scan stops; it never sanitises.** A citation that reached the prompt reached it because some
 sentence in the package assumed a reader who has this plugin, and stripping the citation leaves that
-sentence unfollowable while making it look fine.
+sentence unfollowable while making it look fine. A model id that records what the operator's tooling
+ran on is the exception to that reason and not to the rule: removing the clause that names it is the
+whole repair, but the operator makes it in the artifact it came from, never the scan in a copy, so
+what ships and the record it was built from stay one text. A model the customer's own material
+names is no exception to either: it is theirs, and removing it would falsify the record.
 
 **The customer's own words and naming can be neither sanitised nor corrected, and the scan must say
 so rather than deadlock.** `${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §6.3 defines both
@@ -1169,9 +1197,14 @@ sets of span this covers: **verbatim customer content** — the customer's own f
 byte and immutable by rule (§2.1 there, `${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §1), and
 the parts of the figures file, the inventory, the coverage ledger and the register that transcribe
 or quote their words — and **customer-derived locators**, the customer's names for their own files,
-headings and links, in the positions §6.3 recognises them in, this package's own writing included. A
-hit inside either is not a leak this package committed. It is the customer having written the token
-themselves, in a document, a screenshot, a heading or a folder name — because they were told what
+headings and links, in the positions §6.3 recognises them in, this package's own writing included.
+For a model id alone it covers a third span, which §6.3 defines too: **the customer's naming a grounding
+block records** — a block's `claim`, and what a field of it quotes from the customer's code,
+configuration, frames or documents beside where it comes from, in the grounding file or where a part
+of this prompt renders it from there — where a requirement or a configuration line names the model
+the customer's own product uses. A hit inside any of these is not a leak this package committed. It
+is the customer having written the token
+themselves, in a document, a screenshot, a heading, a folder name or their own code — because they were told what
 tooling the delivery team uses, or because their own numbering happens to look like ours, a `§ 4.2`
 in a specification or a `D3` in a diagram. Report it, grouped as §6.3 fixes, and **put it to the
 operator on the one question §6.3's *The operator's ruling* fixes** — ship it as the customer's own,
@@ -1181,10 +1214,18 @@ hit at all, there is nothing to report or ask. Stopping outright would make that
 unpackageable, since the only repair left would falsify the record — an edit to an immutable file,
 an anchor that no longer names where the requirement is stated, a transcription saying something the
 image does not, or a quotation saying something the customer did not — and every other span's hit
-stays a hard stop exactly as above. **These two sets are the plugin-free scan's only exemptions, and
-each covers a class of content rather than one file** — the citation-resolution check (Phase 8 rule
-8, `bundle-packaging.md` §6) carries the same two over the same spans, and one of a different shape
-for `[SR#n]` (§6.3) — and they exist because the alternatives are a deadlock or a falsified record.
+stays a hard stop exactly as above, save one. **These two sets, with the model-id span beside them,
+are the plugin-free scan's only exemptions bar that one, and each covers a class of content rather
+than one file** — the citation-resolution check (Phase 8 rule 8, `bundle-packaging.md` §6) carries
+the same two over the same spans, a model id being nothing it tests, and one of a different shape for
+`[SR#n]` (§6.3) — and they exist because the
+alternatives are a deadlock or a falsified record. **The exemption beyond these is a model id inside a
+prerequisite's package copied in** (*Assemble the bundle* rule 7): that package is never rewritten
+(`bundle-packaging.md` §5), so its text reaches the customer as written whether or not it already
+has, and a copy of it in this bundle exposes nothing it does not; the run names the hit in the
+Final report and packages on, whatever span it sits in, and never puts it to the operator's
+ruling. It covers that class alone — every other class stops in such a package as anywhere — and the
+prompt this section scans holds no prerequisite's document, so it is met only at rule 7.
 
 Identifiers are **not** in the scan's classes and are meant to travel: the classes
 `${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §6.1's table enumerates are how the returned
@@ -1204,11 +1245,11 @@ later, and the note this phase writes is one of the files it commits, so the not
 `Phase handoff:` line. What the repository route depends on is the bundle reaching the specs
 repository's default branch, where a customer pulling the repository finds it — which it does when
 the handoff's pull request merges — and three facts decide whether this run can start it on its
-way, all of them held before anything is committed: the specs repository passes
-`workflows-core:phase-handoff` §2.1's gate — every condition that section lists, its run-wide
-`specs_git` flags as well as its repository tests, so a run carrying `specs_git: blocked` or
-`specs_git: misrooted` fails it here; §2.1's push-target probe finds an `origin` remote to push to;
-and the operator consents to the handoff. Take all three here:
+way, all of them held before anything is committed: the specs repository passes the gate
+`handoff-to-main` opens with, before it commits anything — every condition that gate lists, its run-wide `specs_git` flags as well as its repository
+tests, so a run carrying `specs_git: blocked` or `specs_git: misrooted` fails it here; the handoff's
+push-target probe finds an `origin` remote to push to; and the operator consents to the handoff.
+Take all three here, step 1 loading the handoff contract that states them:
 
 1. **Take the handoff's consent now.** Invoke
    `Skill(skill: "workflows-core:reference", args: "phase-handoff")`, test §2.1's gate conditions —
@@ -1315,8 +1356,11 @@ reaches them **filtered**, through part 9 and part 7 of the prompt; the file car
 set, plus the model the adversarial pass actually ran on. It sits in this same folder under the same
 `<BRD-KEY>`-and-date naming as the prompt and the delivery note, so nothing about its filename marks
 it as internal — which is exactly why the rule is written down rather than inferred. **The
-plugin-free scan below would not catch it**: that scan hunts plugin-internal tokens, and a
-self-review is free of them while being the most internal document this command writes.
+plugin-free scan below is no substitute for this rule**: it hunts tokens, and what makes a
+self-review internal is not a token — it is the unfiltered findings and the reasons the team
+rejected some of them, which can be written without one. The model id its header records is the one
+thing in it the scan is sure to stop on, and a self-review is the most internal document this
+command writes whether or not that line is there.
 
 1. **Name every bundle document distinctively.** Documents are located by **filename search, never
    by path**, because a path is correct exactly once — in the directory layout this machine had —
@@ -1428,9 +1472,20 @@ self-review is free of them while being the most internal document this command 
    is enumerated above is this command's contribution to the manifest, not its contents.
    The manifest is a bundle document; the delivery note is not.
 7. **Run the plugin-free scan over every document in the finished bundle**, and stop on any hit
-   outside verbatim customer content and customer-derived locators, whose hits are the operator's
+   outside verbatim customer content and customer-derived locators — and, for a model id, outside
+   the customer's naming a grounding block records — whose hits are the operator's
    to rule on exactly as `bundle-packaging.md` §6.3 disposes of them (*The plugin-free scan*,
-   Phase 6). The scan runs here as well as over the prompt because a leak can arrive through a
+   Phase 6) — **save a model id in a document rule 5 copied in from a prerequisite's package**,
+   which is no stop: that package is never rewritten (`bundle-packaging.md` §5), so its text
+   reaches the customer as written whether or not it already has, and a copy of it in this bundle
+   exposes nothing it does not, while rewriting the copy would make it disagree with the dated
+   package it was copied from. Name each such hit in the Final report — the bundled filename and
+   line, *in `<PREREQ-KEY>`'s `bundle-<YYYYMMDD>/`, which is never rewritten — left as packaged* —
+   and package on, whatever span of `bundle-packaging.md` §6.3 it sits in, the customer's naming a
+   grounding block records and verbatim customer content included: such a hit is never put to the
+   operator's ruling, since no answer could change a package that is never rewritten. Every
+   other class of `bundle-packaging.md` §1.2 stops in a prerequisite's document exactly as anywhere
+   else. The scan runs here as well as over the prompt because a leak can arrive through a
    copied document as easily as through a rendered part, and together with rule 8's
    citation-resolution check, this pair is the last point at which anything is still ours.
 8. **Run the citation-resolution check over every document in the finished bundle**, per
@@ -1438,8 +1493,9 @@ self-review is free of them while being the most internal document this command 
    nowhere earlier because both of its inputs — the identifier corpus and the set of bundle
    filenames — are facts about the *assembled* bundle; the rendered prompt is covered because the
    prompt is itself a bundle document. It is a second pass rather than a widening of rule 7's scan:
-   that scan hunts tokens a reader **cannot resolve**, and this one hunts tokens a reader **resolves
-   to the wrong thing**, which is the worse failure and needs the bundle's own corpus to detect.
+   that scan hunts tokens a reader **cannot resolve** — or, a model id, has no use for — and this one
+   hunts tokens a reader **resolves to the wrong thing**, which is the worse failure and needs the
+   bundle's own corpus to detect.
 
    A reference that resolves to nothing — an unresolved id or filename (§6.2 relations 1 and 3), a
    bundle document whose filename carries no `<BRD-KEY>` and therefore has no partition at all, or a
@@ -1478,8 +1534,8 @@ self-review is free of them while being the most internal document this command 
 
 9. **Run the set-resolution check**, per `${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §7,
    and stop on any hit. It is a third pass rather than a widening of rule 8, and the three hunt
-   different failures: rule 7 finds a token the reviewer **cannot resolve**, rule 8 one they
-   **resolve to the wrong thing**, and this one a **set restated wrongly** — every identifier
+   different failures: rule 7 finds a token the reviewer **cannot resolve** or, a model id, has no
+   use for, rule 8 one they **resolve to the wrong thing**, and this one a **set restated wrongly** — every identifier
    resolving, every filename real, and the set they compose not being the set its source holds. It
    runs last because relation 2 needs the assembled bundle's own listing, and it is the only one that
    reaches the delivery note, which is deliberately not a bundle document.
@@ -1666,8 +1722,8 @@ gap, `emit-block` (`workflows-core:feedback-emission`) fires at that halt before
 this command's stops **do** qualify and are the reason the invariant is named here:
 `BRD_PACKAGE_SCHEMA_BOUNDARY`, `BRD_PACKAGE_SCHEMA_EXAMPLE_ID` and `BRD_PACKAGE_PROMPT_LEAK` are all
 reference-integrity gaps — a rendered authority whose boundary moved, a rendered authority carrying
-an example identifier with a number in it, and a package artifact carrying a citation that should
-never have been written into it; `BRD_PACKAGE_CORPUS_UNREADABLE` and `BRD_PACKAGE_SET_UNREADABLE`
+an example identifier with a number in it, and a package artifact carrying a citation, or a model
+id, that should never have been written into it; `BRD_PACKAGE_CORPUS_UNREADABLE` and `BRD_PACKAGE_SET_UNREADABLE`
 are record-integrity gaps — each is, by its own text, this command's parse or read of the plugin's
 own records failing on content that is there, which no sentence in the package can fix; and
 `BRD_PACKAGE_REVIEW_UNACCOUNTED` is an agent-contract gap, a dispatch this command owns whose agent
@@ -1687,7 +1743,7 @@ that already exists, and an unset `$SPECS_PATH` are environment or sequencing ha
 bundle-integrity checks (`BRD_PACKAGE_DEAD_CITATION`, `BRD_PACKAGE_CITATION_MISMATCH`,
 `BRD_PACKAGE_SET_MISMATCH`) report what the assembled bundle and the records it was built from hold;
 `BRD_PACKAGE_UNDISPOSED` is the gate working; and `BRD_PACKAGE_CUSTOMER_CONTENT_HELD` is the
-operator's own ruling on the customer's words. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
+operator's own ruling on what the scan reported as the customer's words. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 
@@ -1735,12 +1791,15 @@ full because those are the ones the customer will read; whether a second reviewe
 `[AS#n]`, `escalated-to-customer` findings, and the `[CDF#n]` counts parts 6, 8 and 11 each carry,
 `in-scope`, `conditional` and `out-of-scope` respectively; **every prerequisite named under *what
 could still move***, with whether it resolved, whether its decisions are customer-reviewed, and whether a
-package of its own was copied in; every artifact written, by path — the self-review, the customer
+package of its own was copied in — and every model id *Assemble the bundle* rule 7 left standing in
+a copied-in package, by bundled filename and line, as *in `<PREREQ-KEY>`'s `bundle-<YYYYMMDD>/`,
+which is never rewritten — left as packaged*; every artifact written, by path — the self-review, the customer
 prompt, the delivery note and the bundle, and `brd-link.md` where this run added a prerequisite to
 it; **the citation check's
 outcome** — how many identifier references resolved, across how many source packages, how many
 named another BRD and were discharged, and every hit inside verbatim customer content or a
-customer-derived locator — this check's and the plugin-free scan's alike — that the operator was
+customer-derived locator — this check's and the plugin-free scan's alike, the scan's model ids in the
+customer's naming a grounding block records among them — that the operator was
 asked to rule on, under the *Customer content:* outcome line `bundle-packaging.md` §6.3's *The
 operator's ruling* fixes and grouped as that section fixes, **or `Customer content: none`**; **the
 delivery note and its delivery-route item** — both printed at *Next steps*, before that phase's

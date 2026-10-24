@@ -54,7 +54,11 @@ behaviour, not the behaviour.
    conversation's, not this command's, and a cost entry would bill a run that never was.
    A typed run is never stopped here, with or without the flag, and step 9 checks the flag against
    the slice's own parent on every run that carries it.
-1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--depends-on`, `--docs`, `--repos` and `--from-split` each consume the token after them (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
+1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
+
+   **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
+
+   Parse the first token that is neither a flag nor a flag's value — `--depends-on`, `--docs`, `--repos` and `--from-split` each consume the token after them (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
    (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix or a folder's whole name, and carries the bare key from then on. On `needs-tree` (`$SPECS_PATH` unset), take step 3's `$SPECS_PATH` stop now — answered with a path, read the token again from the top of this step. If absent or invalid, stop:
    `PRD_GROUND_NEEDS_KEY: /prd-ground needs a key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) — re-run '/product-workflows:prd-ground <KEY>'.`
 2. **Flags.** `--depends-on <BRD-KEY>` — repeatable, each consuming the next token; read each with `read-key`, carry the key each reads and never the token typed, and drop (warn, do not stop the run) any that fail shape — a `needs-tree` value is read again once step 3 has settled `$SPECS_PATH`, and dropped with a warning if it still fails. **Refused outright on
@@ -279,9 +283,9 @@ behaviour, not the behaviour.
      was written and lost —
      `/brd-split` writes a slice's inventory before its ledger (`commands/brd-split.md` Phase 3). Read the resolved folder's
      `brd-link.md` and branch on its `parent:` field: 5a's own legacy-fallback test lets a folder
-     that is not a slice through unrefused (`coverage-ledger-format.md` §5.1), so a folder reaching
+     that is not a slice through unrefused (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.1), so a folder reaching
      this branch is not always the slice step 5a would otherwise guarantee. Since product-workflows 3.7.0 `/brd-intake` writes the
-     inventory's header before it copies anything (`brd-format.md` §2); a folder an earlier intake
+     inventory's header before it copies anything (`${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §2); a folder an earlier intake
      left with `brd/source/` alone carries neither BRD file, and `/brd-intake` refuses it too, so the
      remedy is the same.
      - **No `brd-link.md`, or one with no `parent:`** — not a slice with a `<PARENT-KEY>` to read,
@@ -405,8 +409,7 @@ behaviour, not the behaviour.
      pull request. Where some *other* child is out of step, the bare run is live, but it reconciles
      that child and declares only the files it changes (its Phase 6), and this slice — in step, by
      the case that brought the run here — is not one of them. `handoff-to-main` stages only the paths *that* run declared, so the slice's
-     already-written files are OTHER to it
-     (`workflows-core:phase-handoff` §2.3) and can never reach main by that
+     already-written files, which that run did not declare, can never reach main by that
      route.
 
      **Every part of that condition matters, so the clause carries all of it.** A parent re-run is a
@@ -758,8 +761,15 @@ than instead of it.
 corpus in which every code-citing finding is defective has negative value, and the cost is not
 avoided but deferred and multiplied through verification, reconciliation and the human reading the
 result. Where the spend is genuinely unacceptable on a given run, **make the pin conditional on
-classification rather than reverting it**, and record `ground_tier` either way, so a reader always
-knows which tier the corpus in front of them was ground at.
+classification rather than reverting it**, and record `ground_tier` either way, so the operator
+always knows which tier the corpus this run wrote was ground at.
+
+**`ground_tier` is recorded in two places, both the operator's: the `model_routing` block above
+and its own line of the Final report.** No file this run writes records it — the cost entry Phase
+11 files lists what the run spent by model, never which tier any agent ran at — and no grounding
+file carries it, so nothing the review bundle sends does either: the tier's model id tells the
+customer which tooling ground their corpus and gives their reviewer nothing to check
+(`workflows-core:grounding-format` §2.3), and `/product-workflows:brd-package` stops on one.
 
 ---
 
@@ -945,7 +955,8 @@ For every declared prerequisite (this run's plus any already on file):
      to move the ground it is standing on, so it is stated even when obvious.
 
 No declared prerequisites at all → `prerequisites: none declared`. Hold this block for the final
-report; Phase 6 also uses it to decide which findings get `horizon: will-change`.
+report; Phase 6 also uses it to decide which findings get `horizon: will-change`, and Phase 10 to
+decide whether its offer names grounding a declared prerequisite first.
 
 ---
 
@@ -1056,6 +1067,24 @@ highest `CG#n` already assigned this run — Phase 3's own baseline findings, wh
 on a first run and continue after whatever the highest `CG#n` already on file is on any later run
 (Phase 3) — never trusting an agent's own numbers as the BRD's numbering.
 
+**Then map every reference each dispatch wrote through that dispatch's own table, in one pass.**
+Renumbering gives each dispatch a table from the ids it returned to the BRD-wide ids this merge
+assigned them. A finding's free text can name another finding of the same return — an evidence
+entry's `note`, `control`'s method text or `prerequisite` (*the search named in CG#5*, *see CG#4*),
+or the dispatch's `notes` beside its findings — and a `CG#n` there names that dispatch's own
+finding, never one on file, whatever number an on-file finding carries: `code-grounder` is handed no
+other finding, and its output contract says so. **Which finding a reference means is settled by
+the return it stands in, never by its number** — on a re-run the dispatch's numbers and the ones on
+file overlap. A reference is a finding prefix, `CG` or `DG`, then `#` and a number, standing as a
+token of its own, bracketed or bare. Rewrite every one in a **single simultaneous pass**, each read against the ids the dispatch
+returned and never against an id this pass has already written, so that `CG#1 → CG#2` and
+`CG#2 → CG#3` cannot chain `CG#1` into `CG#3`; write each bracketed, `[CG#n]`, whatever form the
+agent gave it; and leave `claim` alone, which quotes the requirement as Phase 0 handed it. A
+reference the dispatch's table does not hold — an id that dispatch did not return — is never
+matched against the findings on file: it is a parse failure, handled in this same pass as
+*Every reference resolves* (below) handles one, so no later check can take its number for an
+on-file finding's.
+
 **Then `design-grounder`, unless `--no-design`.** Look for `<BRD-dir>/design/`; each immediate
 subdirectory is a candidate exported frame set. The location and the index requirement are
 `workflows-core:grounding-format` §6.1's, cited here rather than restated —
@@ -1085,7 +1114,15 @@ Handle `status`: `OK` → collect `findings` (may be empty — agreement produce
 frame set cannot be reconciled without an index file; report it and skip that directory rather
 than guessing at frame identity — and name the repair, `/workflows-core:frames <this run's KEY>`,
 which writes the index and lets a re-run ground the set. Renumber into one BRD-wide `[DG#n]` sequence the same way as
-`[CG#n]` above, continuing from the highest `DG#n` already on file.
+`[CG#n]` above, continuing from the highest `DG#n` already on file — its references mapped through
+its own table in a single simultaneous pass of its own and written bracketed, where a `DG#n` names
+that dispatch's own finding and a `CG#n` names one of the `cg_findings` it was handed, which already
+carries its BRD-wide id and maps through nothing. A `DG#n` its table does not hold, and a `CG#n`
+naming none of the `cg_findings`, is a parse failure handled there and then, as a `code-grounder`
+one is. **So `cites` maps through nothing**: a class-4 `[DG#n]` cites
+a `[CG#n]` of this phase's merged set — or, under `--no-code`, one on file — and never an id local
+to a `code-grounder` dispatch, since the design pass is dispatched only once the code batch above
+has been renumbered.
 
 **Record which frame set each `[DG#n]` came from** as you merge — the dispatch that produced it
 names exactly one `frame_set_dir`, and Phase 7 hands that same directory back to
@@ -1093,7 +1130,23 @@ names exactly one `frame_set_dir`, and Phase 7 hands that same directory back to
 after the merge would mean guessing; carrying it forward costs nothing.
 
 A `design-grounder` `notes` entry naming a class-4 gap it deferred for lack of a settling
-`[CG#n]` is carried into the final report verbatim — it is a real, actionable gap, not noise.
+`[CG#n]` is carried into the final report verbatim, its references as the renumbering wrote them — it is a real, actionable gap, not noise.
+
+**Every reference resolves, or it is not written.** A reference this run writes into a block names
+a finding of this run or one on file, and nothing else. Check it twice: before Phase 7 dispatches
+anything, once Phase 6 has appended its successors, and again before Phase 8's first write. Read
+every reference in the free text this run will write into a block, as it stands at that point —
+each evidence entry's `note`, `control`'s method text, `prerequisite` and `notes`, whether a
+grounder, a verifier or this run wrote it, and whatever this run copies from a block on file into
+a successor — and resolve it against this run's findings and the blocks on file, parsed by
+`workflows-core:grounding-format` §2.1's reading rule — a grounder's own references name BRD-wide
+ids by then, the renumbering above having mapped them. Write each reference that resolves
+bracketed. **One that resolves to neither is a parse failure**, as is one the renumbering found its
+dispatch's table does not hold: report it in the Final report by the id of the finding that carries
+it, or, in a dispatch's `notes`, which belong to no finding, by the repository or frame set that
+dispatch grounded, and by the reference as written; and never write it: reword the sentence holding it to say what it
+says without it, changing no other field, as Phase 8's point 3 rewords a hit. Text a block on file
+already holds is not read: it is an earlier run's record, which this run leaves as it stands.
 
 ---
 
@@ -1175,6 +1228,9 @@ be decided (`/product-workflows:brd-interview`, *A decision the re-grounding mov
 ---
 
 ## Phase 7 — Verify
+
+**First, check every reference** (Phase 5, *Every reference resolves*) over the blocks this run
+holds now, Phase 6's successors among them, before any dispatch below.
 
 **The set.** Phase 7 verifies **every** finding this run holds — Phase 3's baseline `[CG#n]` findings, freshly-merged Phase 5 claim findings, the successors Phase 6 appended for a moved horizon, and **the on-file findings this run re-checks, which are exactly these**: every `[CG#n]` already on file that does not read `SUPERSEDED` and whose `commit` equals the recorded pin of a repository whose `HEAD` still matched it in Phase 3, **and that no `grounding/baselines.md` entry records** (a claim finding, never an earlier baseline) — on a plain re-run and a `--rebaseline` pass alike, `provenance: inherited` (below), and none under `--no-code` (below) — **and never an on-file `[DG#n]`**, which no run of this command re-checks. A moved repository's on-file findings are not among them: a `--rebaseline` pass supersedes them in Phase 8. Nor is any earlier baseline finding — each `[CG#n]` an earlier `grounding/baselines.md` entry records, never one matched out of a `claim`. An unmoved repository's is one Phase 8 supersedes (*Supersede the earlier baselines*) for the fresh one Phase 3 minted it, as it does for every repository it pins on any run but `--no-code`, so re-deriving it would spend an Opus pass on a block retired in the same run; and any other repository's is pinned where no repository this run found unmoved stands (Phase 3, *No two repositories share a pin*), so it was never this run's to re-check.
 
@@ -1316,6 +1372,8 @@ finding exactly as hard as any other without being told which it is.
   `PRD_GROUND_VERIFY_INCOMPLETE: <finding-id> could not be verified — in <the first pass | the class-4 sweep | its second opinion>, its <derive|compare> result was <reason> and its retry's <derive|compare> result was <reason>, each <missing from the return | a blank own_evidence | an INCOMPLETE entry with no outcome | an echo differing from the derive return>. No finding was written; re-run '/product-workflows:prd-ground <KEY>' with the flags this run was given.`
   An **on-file** finding writes nothing, keeps every field and the `outcome` it had, and is reported **not verified by this run**, with the reason; the run continues, as in the on-file *incomplete return* branch under `contradict` below.
 
+**A retry that replaces a usable blind verdict keeps both.** A blind result is usable where it carries an `own_verdict` and a non-blank `own_evidence` — as a compare entry marked `INCOMPLETE` that carries an `outcome` does, its only gap the blind verdict's own control. Where a retry's fresh derive replaces such a result and its `own_verdict` differs from the one it replaces, the run records both: the Final report names the finding with both blind verdicts, and the record's `notes` state both too, wherever this run writes the finding's outcome (Phase 8). What the run acts on is the retry's result alone. The pair is never settled as *Settling* (below) settles two blind verdicts that disagree: the verdict replaced was set aside for lacking something its own result owed, not weighed and found doubtful, and where the control route forced the first outcome, that route takes precedence over any blind verdict.
+
 **Nothing reaches Phase 8 unverified.** Any stop above happens before Phase 8's first write, and so
 does the incomplete-return stop below (*Act on `outcome`*, own-run), so a finding without an outcome
 is never written into the package; whatever was on file from a previous
@@ -1343,10 +1401,11 @@ one of them.
 
 - **`missing`** — the finding owed a control and carries none. Normalise to `contradict`.
 - **`failed`**, and the finding's verdict is anything **other than** `NOT-PROVABLE` — the absence
-  rests on a search never shown capable of finding the thing it says is missing. Normalise to
-  `contradict` **even where the returned outcome is `agree` and the verifier's own search also found
-  nothing**: that agreement is two searches sharing one blind spot, which is the state the control
-  exists to expose and the one an `agree` would launder into evidence.
+  rests on a search or reading never shown capable of finding the thing it says is missing.
+  Normalise to `contradict` **even where the returned outcome is `agree` and the verifier's own
+  search or reading also found nothing**: that agreement is two searches or readings sharing one
+  blind spot, which is the state the control exists to expose and the one an `agree` would launder
+  into evidence.
 - **`failed`**, and the finding already reads `NOT-PROVABLE` with that failed control recorded —
   **no normalisation.** The finding did exactly what §2.2 tells a writer to do and the verifier
   reproduced its result; overturning it would contradict, on every run and forever, the one finding
@@ -1382,17 +1441,21 @@ instead:
   normalisation forces nothing on them: the original's control is the one the first compare ran,
   it gives the same result on every run, and on a disputable entry it forced no `contradict` — so
   the settling below is the one path such a finding takes.
-- **Settling**, by the two blind verdicts — the first derive's `own_verdict` and the second's:
+- **Settling**, by the two blind verdicts — the first derive's `own_verdict` and the second's, each
+  the retry's where a retry's fresh derive replaced that derive (*Retry once*, above):
   - **They agree** → that verdict stands, and the finding takes the `contradict` branch below as any
     other does, on the second opinion's returns: `own_verdict`, `own_evidence` and `own_control`
     from its derive entry, `notes` from its compare entry.
   - **They differ** → normalise the outcome to `unprovable`. The finding keeps its original
     `verdict`, `evidence` and `control` and takes the `unprovable` branch below, and the Final report
     flags it **verification inconclusive — two blind re-derivations disagreed**, naming both blind
-    verdicts. **Its record's `notes` state that disagreement and nothing else**: both blind verdicts
+    verdicts and, where the second equals the finding's own verdict, saying so, as the
+    `## Final report` section words it. **Its record's `notes` state that disagreement and nothing else**: both blind verdicts
     and the first compare's reason for disputing — never either compare's argument for an outcome
     this run did not write, which the second compare's notes, arguing from its own blind verdict,
-    usually are.
+    usually are. Ahead of that disagreement the `notes` carry one line more, and only this one: the
+    line Phase 8 writes where a retry's fresh derive replaced either derive's usable blind verdict
+    with one that differs (*Retry once*, above).
 
 **Record every normalisation and report the count** — the finding id, the outcome as returned, and
 both verdicts — in the Final report's verifier tally, and every dispute beside them: the finding
@@ -1408,16 +1471,27 @@ this step settles, plus `outcome` and any `notes` — never a second verdict bes
 
 Act on `outcome`:
 - **`agree`** — keep the finding as written; record the outcome alongside it.
-- **`extend`** — keep the finding's verdict; append the verifier's additional evidence to the
-  finding's `evidence` list — each `own_evidence` entry the finding does not already hold. An entry
+- **`extend`** — keep the finding's verdict; add the verifier's additional evidence to the
+  finding's `evidence` list — each `own_evidence` entry the finding does not already hold, taken in
+  the order the return gives them, each against the list as the ones before it left it. An entry
   is already held where the finding's entries on that `path` together cover all of its `lines` (an
-  entry with no `lines`, a whole-file read, covers every line); its note is never compared. **An
+  entry with no `lines`, a whole-file read, covers every line); its note is never compared. **One
+  not held is merged or appended, never added beside an entry whose lines it shares.** Where it carries
+  `lines` and shares one with an entry the finding holds on its `path`, it widens that entry's
+  `lines` to the union of the two, in ascending order, and that entry keeps its own note — the first
+  such entry in the list, where more than one shares a line. The widened entry loses nothing a reader
+  needs: the verifier's `notes`, which the record keeps, name by path and line what the new lines
+  add. Any other is appended with its note: one
+  sharing no line with an entry on its `path`, and one with no `lines`, which an entry naming lines
+  cannot take without its note describing lines it no longer names. **An
   entry with no `path` is never appended** — a statement of what was searched, or a baseline
   finding's integrity-command output (`workflows-core:grounding-format` §2, §4.1): what an `extend`
   adds is a place in the source the blind search cited, and neither of those names one; the
   verifier's `notes` say what such an entry adds. The set is read off the structured fields, never
-  out of `notes`, which the verifier writes by the same test. Where nothing is left to append, the
-  finding keeps its `evidence` as it stands and the Final report records *extend, nothing new to append* for it;
+  out of `notes`, which the verifier writes by the same held test applied to the original's entries
+  alone, so they may name as an addition an entry that an earlier entry of the verifier's own, once
+  added here, already covers. Where nothing is left to add, the
+  finding keeps its `evidence` as it stands and the Final report records *extend, nothing new to add* for it;
   record the outcome.
 - **`unprovable`** — keep the finding's verdict unchanged (the verifier's own search settling
   nothing either way is not the same as it being wrong); record the outcome and flag the finding
@@ -1566,15 +1640,28 @@ a raw finding and one a downstream command may cite.
 writing it** (`workflows-core:grounding-format` §2.3). On `route: brd` every grounding file this
 phase writes — `grounding/code-grounding.md`, `grounding/design-grounding.md`,
 `grounding/baselines.md` — goes to the customer in the review bundle as written, and
-`/product-workflows:brd-package` stops the package on a plugin token it finds in them, days after
+`/product-workflows:brd-package` stops the package on a plugin token or a model id it finds in them — a
+model id in the customer's naming a block records aside, which it puts to the operator to rule on — days after
 this run, where the only repair is a hand edit. So, on both routes — the idea route bundles nothing,
 but the same agents write both:
 
-1. **What this run writes names no command, agent, skill, phase or rule, and none of an agent's
-   return fields** (`own_verdict`, `own_control`, `blind_disputed` and the rest — reword a
-   verifier's `notes` that carries one, as point 3 rewords a hit). Where this run creates a file,
-   its opening lines say what the file holds — never which command or agent wrote it, and no pinned
-   commit, which `grounding/baselines.md` records; a run that appends to a file leaves its opening
+1. **What this run writes names no command, agent, skill, phase or rule, none of an agent's
+   return fields, no model of the operator's and no local path** — no `own_verdict`, `own_control`,
+   `blind_disputed` or the rest; no model a run, a pass or a tool of the operator's ran on, by its
+   id or its family's name, and no record of a tier, the `ground_tier` Phase 2 records in
+   this run's own record included; and no checkout's path, no `$SPECS_PATH` or documentation root
+   by its value, and no scratch or home directory, a command run against a repository naming its
+   checkout only as `"<repo>"`, as Phase 3's `git -C "<repo>"` commands do
+   (`workflows-core:grounding-format` §2.3). A path or a route the customer's code, configuration or
+   documents name is none of these, whatever its shape — save one that is, or lies under, a path
+   point 2 scans for, to the letter, which point 3 replaces wherever it sits. Nor is a model id or a
+   model family's name that the customer's own requirement, code, configuration or documents name:
+   it stays, quoted as given — in the `claim`, beside the requirement id or the path it comes from,
+   or as what a command run against the repository searches for, never loose in a sentence of this
+   run's own. Reword a verifier's `notes` that carries anything this point forbids, as point 3
+   rewords a hit. Where this run creates a file, its opening lines say what the
+   file holds — never which command or agent wrote it, or at which tier, and no pinned commit,
+   which `grounding/baselines.md` records; a run that appends to a file leaves its opening
    lines as they stand. A run's heading in `design-grounding.md` is its date. The note saying design
    grounding was skipped gives its reason in plain words; the derivation matrix's lead-in names its
    classes by what each means; and the documentation divergences and every note this run adds to a
@@ -1591,25 +1678,49 @@ but the same agents write both:
    record, which this run leaves as it stands (`workflows-core:grounding-format` §2.3 sanctions a
    hand edit to it instead). A `§` that opens what follows ` › ` after a captured path —
    `source/<basename> › § 3.1`, the customer's own section — is no hit (`bundle-packaging.md` §6.3
-   rule 1).
+   rule 1). **Scan it, too, for this run's own local paths by their literal value** — the path of
+   each repository Phase 1 resolved, `$SPECS_PATH`'s value, and the documentation root Phase 1
+   step 0 resolved: every local path Phase 0 and Phase 1 resolve, save `$REPOS_PATH` itself, the
+   checkouts' parent, whose bare value (`/workspace` by default) a path the customer's code names
+   can begin with; this command makes no scratch directory of its own. Never scan for a path by its
+   shape: a route or a path the customer's code names, which a finding quotes, is theirs, and only
+   the literal value tells the operator's own path from one of those.
 3. **On a hit, rewrite the sentence in plain language before writing it, and change nothing else.**
-   Never delete the token alone: the sentence leaned on the rule it cited, and without it says less
-   than it did. The id, `verdict`, every evidence entry's `path` and `lines`, `control`'s result —
+   Never delete the token alone: the sentence leaned on what the token named, and without it says
+   less than it did. The id, `verdict`, every evidence entry's `path` (save a literal-value hit in
+   it, below) and `lines`, `control`'s result —
    its trailing `path:line` or `— no match` — `outcome` and every other field stay exactly as they
    are, the line Phase 7 draws when it calls a reworded note no difference, so a rewrite settles
-   nothing again and dispatches nothing. **A hit inside the customer's own naming that a block records
+   nothing again and dispatches nothing. **A hit of point 2's literal-value scan is never the
+   customer's naming, wherever it sits** — prose, a note, a command or an evidence `path`: replace
+   it with `"<repo>"` where a command names a checkout; with the path from the root it lies under —
+   the repository's, the specs repository's or the documentation root's — where it names a file
+   under one, so that an evidence `path` still names the same file and line; and with words naming
+   the directory — *the checkout*, *the specs repository*, *the documentation root* — where prose
+   names the directory itself. Record it as a rewrite, and never
+   report it as a hit `/product-workflows:brd-package` will stop on, since that command has no row
+   for a local path and one left standing would ship. **A hit inside the customer's own naming that a block records
    is theirs, not the plugin's** — a path and line in the code repository or the frame set, wherever
    the block records it (an evidence entry's `path` and `lines`, one named inside a note,
    `control`'s trailing `path:line`), a command run against the repository, a documentation page's
    path, a class-1 finding's field label, and the `claim`, which quotes the requirement as the
-   inventory gives it: a `references/` directory of theirs, a `§ 4.3` in their requirement. The
+   inventory gives it: a `references/` directory of theirs, a `§ 4.3` in their requirement, a model
+   id their requirement or configuration names. The
    sentence around such naming is still reworded where it carries a token of the plugin's own; the
    naming itself would break the record if reworded, so leave it as written and name it in the Final
    report — on `route: brd` as one `/product-workflows:brd-package` will stop on, that command's
    exemptions (`bundle-packaging.md` §6.3) covering no code or frame naming and no finding's
-   `claim`, so it is found here rather than days later; on `route: idea`, as left standing, that
-   route bundling nothing. Record every rewrite for the Final report, by finding id, or
+   `claim` for any other class, or, a model id, as one it will put to the operator to rule on, §6.3
+   there covering a model id in a block's `claim` and in what a block quotes beside where it comes
+   from — so it is found here rather than days later; on `route: idea`, as left standing, that
+   route bundling nothing. A model id the customer's material names that stands loose in a sentence
+   of this run's own is rewritten to quote it beside the requirement id or the path it comes from,
+   as point 1 says, never removed; one that records what a run of the operator's ran on is reworded
+   out. Record every rewrite for the Final report, by finding id, or
    by file and section for this run's own prose.
+4. **Check every reference again** (Phase 5, *Every reference resolves*), over everything this phase
+   is about to write into a block — among it what Phase 7 wrote there from a verifier's return, and
+   every note this run added after the first check.
 
 **Append Phase 3's held `grounding/baselines.md` entries** once the two finding files below are
 written, and before the ledger's `evidence` column — never under `--no-code`, which holds none (Phase
@@ -1630,7 +1741,7 @@ a file whose readers report findings as missing that are on the page. Each block
 `consumed_by` — `none` on a block this run appends, while a block already on file keeps the value it holds, since `/create-prd`, `/create-ard` and `/specify` write it later and nothing here may erase a stamp — plus `prior_verdict` on every finding reading `SUPERSEDED`, `prerequisite` on every finding reading `horizon: will-change`, `control` on every finding that owes one by `workflows-core:grounding-format` §2.2's closed-set rule, `class`/`cites` on a
 `[DG#n]` and `commit` on everything **except** a
 `[DG#n]` of class 1, 2 or 3 — those are settled from the frame set alone and are pinned to no commit,
-per §2's applicability note) plus this run's verifier `outcome` — on every finding Phase 7 verified, and on each successor a Phase 7 `contradict` appended, but three kinds, each of which keeps the `outcome` it holds: an on-file one Phase 7 superseded, its `contradict` written on its successor or, where there is none, recorded in the Final report only; and an on-file one whose `contradict` was an incomplete return, owing a control and returning no `own_control`, whose block this run does not touch and whose `contradict` the Final report records as not verified by this run (Phase 7, *On-file*); and an on-file one still incomplete after its retry, which Phase 7 left **not verified by this run**, writing nothing and keeping every field (Phase 7, *Retry once*) — **and the `notes` of the `mode: compare` return that settled that outcome**, where it carried any: compare's alone, since they hold the comparison, and derive's already reached compare inside `derived` — **and nothing else.** **On an outcome a dispute settled `unprovable`, no compare return settled it**, so the record's `notes` are the ones Phase 7 writes in their place, stating both blind verdicts and the first compare's reason for disputing (Phase 7, *Settling*). A block Phase 7 did not verify keeps the `outcome` it holds, among them every on-file block another of this run's supersessions retires — Phase 6's for a moved horizon, a `--rebaseline` pass's, an earlier baseline's (*Supersede the earlier baselines*), the class-4 cascade's and a re-ground frame set's (below) — none of which Phase 7 dispatches. §2.1 makes the field set closed: `own_verdict`, `own_evidence`, `own_control`, `control_outcome`, `blind_disputed` and the verifier's re-derivation `commit` are return fields Phase 7 has already acted on — where a `contradict` rewrote an own-run finding or appended an on-file finding's successor, their values are already in that block under the record's own names (`verdict`, `evidence`, `control`) and the return names never appear — and a block carrying `own_verdict` beside `verdict` states two verdicts at once, leaving every downstream reader free to quote whichever half suits. That is the state `/brd-split` step 7 and `/brd-interview` step 7 now refuse, so writing it here deadlocks the route rather than merely muddying the record. Compare's contract calls its `notes` *"anything the caller should know before recording this outcome"*, so they are read before the outcome is written, not after — a verdict recorded without them is recorded against a caveat the verifier raised and nothing carried.
+per §2's applicability note) plus this run's verifier `outcome` — on every finding Phase 7 verified, and on each successor a Phase 7 `contradict` appended, but three kinds, each of which keeps the `outcome` it holds: an on-file one Phase 7 superseded, its `contradict` written on its successor or, where there is none, recorded in the Final report only; and an on-file one whose `contradict` was an incomplete return, owing a control and returning no `own_control`, whose block this run does not touch and whose `contradict` the Final report records as not verified by this run (Phase 7, *On-file*); and an on-file one still incomplete after its retry, which Phase 7 left **not verified by this run**, writing nothing and keeping every field (Phase 7, *Retry once*) — **and the `notes` of the `mode: compare` return that settled that outcome**, where it carried any: compare's alone, since they hold the comparison, and derive's already reached compare inside `derived` — **and nothing else.** **On an outcome a dispute settled `unprovable`, no compare return settled it**, so the record's `notes` are the ones Phase 7 writes in their place, stating both blind verdicts and the first compare's reason for disputing (Phase 7, *Settling*). **Where a retry's fresh derive replaced a usable blind result whose verdict differs** (Phase 7, *Retry once*), the record's `notes` open with one line stating both, in words a reader with no plugin follows — *a first independent re-derivation reached CONFIRMED and was made again because it did not show its search could find what it said was absent; the second reached AMENDED, and this outcome rests on it* — before the rest of the `notes`, whether the compare return's or the disagreement Phase 7 writes in their place. A block Phase 7 did not verify keeps the `outcome` it holds, among them every on-file block another of this run's supersessions retires — Phase 6's for a moved horizon, a `--rebaseline` pass's, an earlier baseline's (*Supersede the earlier baselines*), the class-4 cascade's and a re-ground frame set's (below) — none of which Phase 7 dispatches. §2.1 makes the field set closed: `own_verdict`, `own_evidence`, `own_control`, `control_outcome`, `blind_disputed` and the verifier's re-derivation `commit` are return fields Phase 7 has already acted on — where a `contradict` rewrote an own-run finding or appended an on-file finding's successor, their values are already in that block under the record's own names (`verdict`, `evidence`, `control`) and the return names never appear — and a block carrying `own_verdict` beside `verdict` states two verdicts at once, leaving every downstream reader free to quote whichever half suits. That is the state `/brd-split` step 7 and `/brd-interview` step 7 now refuse, so writing it here deadlocks the route rather than merely muddying the record. Compare's contract calls its `notes` *"anything the caller should know before recording this outcome"*, so they are read before the outcome is written, not after — a verdict recorded without them is recorded against a caveat the verifier raised and nothing carried.
 A `--rebaseline` run appends its new findings after the existing ones and marks any finding it
 superseded — never one already reading `SUPERSEDED`, whichever run retired it — with `verdict:
 SUPERSEDED`, id retained, rather than deleting or renumbering it — and writes the verdict that
@@ -1847,13 +1958,14 @@ rather than as a new file, since it is not in this command's produced-artifact s
 the last write of this phase, taken once the two grounding files hold everything this run is going
 to put in them, because the column is an index over them and an index built early indexes a file
 that is still changing. Rebuild it over **every** row of `<BRD-dir>/coverage-ledger.md`, exactly per
-`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §2: parse the finding set out of
-`grounding/code-grounding.md` and `grounding/design-grounding.md` **as this phase has just left
-them** — §2.1's reading rule, resolved against the blocks actually parsed and never by matching a
-column or a fixed run of leading spaces — and write into each row's `evidence` cell the id of every
-finding whose `claim` names that row's `[BR#n]`, in id order, as `brd-format.md` §2.3 writes a list.
-A row no finding names takes an empty cell, which is the whole of what an orphan row gets
-(`coverage-ledger-format.md` §2). **A finding that names no requirement lands in no cell** — the
+`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §2, **in two steps: this run builds a
+map of `[BR#n]` to finding ids, and the bundled script writes the column from it.** Build the map
+from the finding set parsed out of `grounding/code-grounding.md` and
+`grounding/design-grounding.md` **as this phase has just left them** — §2.1's reading rule,
+resolved against the blocks actually parsed and never by matching a column or a fixed run of leading
+spaces — putting the id of every finding under the `[BR#n]` its `claim` names. A row no finding
+names is left out of the map and takes an empty cell, which is the whole of what an orphan row gets
+(`coverage-ledger-format.md` §2). **A finding that names no requirement goes under no `[BR#n]`** — the
 class-1 `[DG#n]`, which reconciles a frame against no requirement at all
 (`workflows-core:grounding-format` §6.3, written with the `claim` spelling
 `agents/design-grounder.md` fixes for it): it is not a gap in the column, and it is not to be
@@ -1861,15 +1973,45 @@ attached to a row on a resemblance. **Read
 each `claim` for the id it names rather than for the id it opens with** — a hand-edited block may
 carry the id mid-sentence, and a claim naming more than one requirement is reported as the ambiguity
 it is rather than placed in one row (the same test `references/bundle-packaging.md` §6.2 relation 2
-makes of a citation). **Nothing else in the row is touched** — `id`, `text`,
-`disposition` and `defects` are read and written back unchanged, and this command allocates nothing
-and disposes nothing (`coverage-ledger-format.md` §3, §4). **A finding carrying
-`verdict: SUPERSEDED` is listed like any other**: the column indexes and does not adjudicate, its id
+makes of a citation). **A finding carrying
+`verdict: SUPERSEDED` goes in the map like any other**: the column indexes and does not adjudicate, its id
 still resolves, and a column filtered by verdict would disagree with the file it indexes. **A count
 that disagrees with the file is a parse failure and is reported as one, never as an absent
 finding** — the same rule `workflows-core:grounding-format` §2.1 states for every reader of these
 records, and the reason the write is a rebuild rather than an append: a run that appended would
-double every id a re-run re-derived. **Under `--no-code` this write still happens**, over the
+double every id a re-run re-derived.
+
+Then run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ledger-evidence.py" write --ledger "<BRD-dir>/coverage-ledger.md"`
+with the map on its standard input as one JSON object — `{"[BR#1]": ["[CG#2]", "[DG#1]"], "[BR#2]": ["[CG#3]"]}` —
+**and never write the column any other way.** The script orders each row's ids as §2 requires,
+writes them as `brd-format.md` §2.3 writes a list, gives every row the map does not name an empty
+cell, and splits each row on §2.3's delimiting `|` only, so an empty cell keeps its column. **Nothing
+else in the row is touched** — `id`, `text`, `disposition` and `defects`, and every line of the file
+that is not a row, keep every byte — and this command allocates nothing and disposes nothing
+(`coverage-ledger-format.md` §3, §4). It prints `{"written": …, "rows": …, "with_evidence": …, "empty": …}`:
+`written` is `false` where no byte changed, and `with_evidence` and `empty` are the Final report's
+figures. **A non-zero exit wrote nothing** — the script writes the whole file beside the ledger and
+renames it over it only once that write is complete — **and which exit it was decides what follows:**
+
+- **Exit 3 refused the map**, which is this run's own input: not one JSON object, a key that is not
+  a `[BR#n]` or names one the ledger has no row for, or a value that is not a well-formed
+  `[CG#n]`/`[DG#n]` list. Rebuild the map from the parsed findings by the rules above — a quoting
+  slip, a bare id, a mistyped key — and run the script once more. A second refusal is reported as
+  any other non-zero exit is.
+- **Any other non-zero exit** — exit 2, which refused the ledger or could not read or write it, or
+  the shell's own, where `python3` did not run at all — is reported in the Final report with the
+  line the script or the shell printed, and the column is left as it stands. A refusal of the
+  ledger — a header or a row the rule cannot read — is a parse failure, as a count that disagrees
+  with the file is; a failure to read or write it is reported as what its line says.
+
+The script refuses
+a header that is not §2's five columns in their order, a row whose cell count differs from the
+header's and a duplicate row id, with exit 2, and a map naming a `[BR#n]` the ledger has no row for
+and a map value that is not a well-formed `[CG#n]`/`[DG#n]` list, with exit 3; it reads a ledger
+written before §2's layout was fixed wherever its rows still split by that rule. **Never repair the ledger by hand, and never parse
+it yourself to write around a refusal**: an improvised parse is the defect the script replaces — one
+that splits a row on ` | ` merges an empty `defects` cell with its neighbour and writes the ids into
+`defects`. **Under `--no-code` this write still happens**, over the
 `[DG#n]` this run wrote and the `[CG#n]` already on file, because a column that skipped this mode
 would never index a design finding at all. **On `route: idea` it does not happen and is not a
 gap**: that route has no `coverage-ledger.md` to write (the Final report's own ledger line says so).
@@ -1909,14 +2051,15 @@ resolved in Phase 0; `deliverable_paths` = every file this run wrote or updated 
 
 - **`route: brd`:** `grounding/baselines.md`, `grounding/code-grounding.md`,
   `grounding/design-grounding.md`, `brd-link.md`, and `coverage-ledger.md` **where Phase 8's
-  `evidence` rebuild changed it** — **under `--no-code` that set is
+  `evidence` rebuild changed it** — where its script printed `"written": true` — **under `--no-code` that set is
   `grounding/design-grounding.md`, that same conditional `coverage-ledger.md`, and, where Phase 4
   persisted a prerequisite, `brd-link.md`**: the
   other two are untouched, and naming an unchanged path in a handoff is how a commit comes to claim
   work it did not do. **The ledger is conditional for that same reason and for no other**: the
   rebuild rewrites a column a re-run over an unmoved finding set reproduces byte for byte, so a run
-  that changed nothing there declares nothing there — while a first grounding run always changes
-  it, every cell it writes having been empty.
+  that changed nothing there declares nothing there, nor does one whose script refused and wrote
+  nothing — while a first grounding run the script does not refuse always changes it, every cell it
+  writes having been empty.
 - **`route: idea`:** `grounding/baselines.md`, `grounding/code-grounding.md`,
   `grounding/design-grounding.md` — **and no BRD-route file, since none exists**: `brd-link.md` is
   never written on this route (Phase 4's `--depends-on` is refused on it outright, step 2), and
@@ -2002,23 +2145,29 @@ choices: ["Revise the PRD first — /product-workflows:update-prd <KEY> (PM) (Re
 **On `route: brd`, this run always stands on a slice** — by the time Phase 10 runs, step 6's gates have already
 guaranteed `coverage-ledger.md` and `brd/brd-inventory.md` are both on main, which is positive
 evidence 5a's legacy-fallback test would have refused had this BRD been a root — so there is no
-level branch to take here. **Which of the two arrays below is presented** is settled by the test
-that follows.
+level branch to take here. **Which of the four arrays below is presented** is settled by the two
+tests that follow.
 
-**That offer carries one qualifying test, and this run holds the answer to it.** `/brd-split`'s
+**That offer carries two qualifying tests, and this run holds the answer to both.** **The
+frame-set test picks the next step.** `/brd-split`'s
 Phase 0 step 7, test b stops on any `design/` subdirectory this run recorded `skipped: no index`, and on any
 it could not cover. So where Phase 8's `## Frame sets covered` section carries such a row, present
-the **second** array below in place of the first: `/brd-split` would refuse the key just ground, so
-the array recommending it is not the array to show. The second offers the repair that stop itself
-names — `/workflows-core:frames <BRD-KEY>` to write the missing index, after which a `--no-code`
-re-run of this command reconciles the set — and names `/brd-split` nowhere in its options, since
-neither half of that repair has run yet; the prose above the arrays still says where it sits in the
-route, which is what the *universal minimum* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane, asks of a route the array
-does not carry. **Selecting between two written arrays is how this branch is taken, never by editing
+one of the **last two** arrays below in place of the first two: `/brd-split` would refuse the key
+just ground, so an array recommending it is not the array to show. The last two offer the repair
+that stop itself names — `/workflows-core:frames <BRD-KEY>` to write the missing index, after which
+a `--no-code` re-run of this command reconciles the set — and name `/brd-split` nowhere in their
+options, since neither half of that repair has run yet; the prose above the arrays still says where
+it sits in the route, which is what the *universal minimum* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane, asks of a route the array
+does not carry. **The prerequisite test picks whether the array offers *Ground another declared
+prerequisite first*.** It does only where Phase 4's `prerequisites:` block names at least one
+declared prerequisite — anything but `prerequisites: none declared`; on a run that declared none
+there is no prerequisite to ground, and the option would offer a step that does not exist. So of
+each pair below, the first carries no such option and the second carries it. **Selecting between
+the written arrays is how this branch is taken, never by editing
 one**: `workflows-core:escalation-rules`' *Choice lists are presented verbatim* puts an array's
 options, their order, their wording and the `(Recommended)` marker outside the orchestrator's
 authority, and this phase's `route: idea` branch above already selects between two arrays the same
-way. **Neither array's marker names a precondition of `/brd-split`'s own gate.** That command applies
+way. **No array's marker names a precondition of `/brd-split`'s own gate.** That command applies
 four tests at step 7, and a marker naming one of them — an earlier wording of this offer read
 "once every finding carries a verifier outcome" — promises a pass the offer cannot deliver; each
 marker below states what the run it recommends will *do* instead.
@@ -2029,7 +2178,7 @@ of the route**. `/product-workflows:brd-interview <BRD-KEY>` follows it, and `/b
 is what offers it, so it is not offered here: putting it in this list would name a step out of
 order, since it refuses a ledger that still holds an unallocated row. `/brd-split` will not start
 until this phase's findings are on the specs repo's default branch — its own Phase 0 gates
-`grounding/code-grounding.md` on `origin/<default>`; **which words state that wait, in the array that
+`grounding/code-grounding.md` on `origin/<default>`; **which words state that wait, in each array that
 offers it, are `<merge-clause>`'s**, resolved from this run's own `Phase handoff:` outcome line per
 `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane, since a declined handoff opened no pull
 request to wait on — and it carries its own role and
@@ -2037,7 +2186,7 @@ cost-attribution row (`docs/roles-and-phases.md`). Guidance only, per
 `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane — names only that `/brd-split` exists and
 where it sits in the route, never its behaviour, which `commands/brd-split.md` owns.
 
-**The array that offers it says which of `/brd-split`'s two modes will run**, so nobody
+**Each array that offers it says which of `/brd-split`'s two modes will run**, so nobody
 expects a fan-out that cannot happen: on a slice it runs `allocate-only`
 (`commands/brd-split.md` Phase 0 step 5) — it creates no child, because nesting is
 capped at one level (`workflows-core:addressing` §6), and walks this
@@ -2047,12 +2196,22 @@ makes this slice PRD-eligible
 (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5), so it is a real next step, not a
 formality.
 
-No frame set left unreconciled — every one on disk recorded `ground` or `skipped: --no-design`, or `design/` holds none:
+No frame set left unreconciled — every one on disk recorded `ground` or `skipped: --no-design`, or `design/` holds none — and `prerequisites: none declared`:
+```
+choices: ["Allocate this slice's ledger — /product-workflows:brd-split <BRD-KEY> (Recommended — allocate-only, so no child is created) <merge-clause>", "Stop here"]
+```
+
+No frame set left unreconciled, and at least one prerequisite declared:
 ```
 choices: ["Allocate this slice's ledger — /product-workflows:brd-split <BRD-KEY> (Recommended — allocate-only, so no child is created) <merge-clause>", "Ground another declared prerequisite first", "Stop here"]
 ```
 
-At least one frame set recorded `skipped: no index`, or on disk and missing from Phase 8's census:
+At least one frame set recorded `skipped: no index`, or on disk and missing from Phase 8's census — and `prerequisites: none declared`:
+```
+choices: ["Write the missing frame-set index — /workflows-core:frames <BRD-KEY> (Recommended — nothing can reconcile a frame set that has no index; re-ground it here with --no-code afterwards)", "Stop here"]
+```
+
+At least one frame set recorded `skipped: no index`, or on disk and missing from Phase 8's census, and at least one prerequisite declared:
 ```
 choices: ["Write the missing frame-set index — /workflows-core:frames <BRD-KEY> (Recommended — nothing can reconcile a frame set that has no index; re-ground it here with --no-code afterwards)", "Ground another declared prerequisite first", "Stop here"]
 ```
@@ -2142,7 +2301,7 @@ earlier `baselines.md` entry that named no id, or an id no block carries;
 finding counts by verdict for `[CG#n]` and `[DG#n]`
 separately, and the verifier
 tally (`agree` / `extend` / `contradict` / `unprovable`) — naming every `extend` that left nothing
-new to append (Phase 7, *Act on outcome*) — opened by the run's verification
+new to add (Phase 7, *Act on outcome*) — opened by the run's verification
 arithmetic — Phase 1's cost statement as this run actually came out, printed as this one block with
 every value filled in (`none` for a part the run had nothing in), because a headless orchestrator
 may compress Phase 1's printed lines and the Final report is the output a reader always sees:
@@ -2152,10 +2311,14 @@ Verification: <K> repositories × <N> claims · batches: <repo> <n>[, <repo> <n>
 ```
 
 — then every retry by finding id, the unit it was made in (the first pass, the class-4 sweep's, or
-a second opinion's) and the step or steps retried (derive then compare, or compare alone), or "no retries"; every disputed
+a second opinion's) and the step or steps retried (derive then compare, or compare alone), with
+both blind verdicts where the retry's fresh derive differs from a usable one it replaced (Phase 7,
+*Retry once*), or "no retries"; every disputed
 `contradict` by finding id, with both blind verdicts and how its second opinion settled it — upheld,
-or `unprovable` as **verification inconclusive — two blind re-derivations disagreed** — or "no
-disputes"; with every `contradict` named by
+or `unprovable` as **verification inconclusive — two blind re-derivations disagreed**, and, on one
+so settled whose second blind verdict equals the finding's own verdict, that it does, and that the
+settlement compares the two blind verdicts only, so the finding's own verdict agreeing with the
+second is not a vote — or "no disputes"; with every `contradict` named by
 id and by what it wrote — an own-run finding's in-place rewrite; an on-file finding's supersession with its
 successor's id; an on-file finding superseded with no successor because the verifier's own verdict
 was `SUPERSEDED`, the one `contradict` no block records; and an on-file finding left incomplete — a
@@ -2174,7 +2337,7 @@ re-checked and left standing, and, where it did nothing, which of the three reas
 empty set; a non-empty one over which this phase rewrote no `[CG#n]` at all; or a non-empty one
 where `[CG#n]` **were** rewritten and no finding in the set cites one of them; every class-4
 `[DG#n]` Phase 8's cascade marked `SUPERSEDED`, each with the `[CG#n]` that took it there, the route
-that superseded that `[CG#n]` and the command that replaces it — `/product-workflows:prd-ground <KEY> --no-code` where that `[CG#n]` has a successor, a plain `/product-workflows:prd-ground <KEY>` where it has none — which its note describes in words (Phase 8); every sentence Phase 8 rewrote before writing it, by finding id or by file and section, and every hit it left standing — on `route: brd` each one `/product-workflows:brd-package` will stop on — by finding id and field, or an explicit "none" for each; the `docs grounding:` line from Phase 1 step 0 verbatim, any repository a Phase 4.5 lead added,
+that superseded that `[CG#n]` and the command that replaces it — `/product-workflows:prd-ground <KEY> --no-code` where that `[CG#n]` has a successor, a plain `/product-workflows:prd-ground <KEY>` where it has none — which its note describes in words (Phase 8); every sentence Phase 8 rewrote before writing it, by finding id or by file and section, and every hit it left standing — on `route: brd` each one `/product-workflows:brd-package` will stop on, or, a model id, put to the operator to rule on — by finding id and field, or an explicit "none" for each; every reference *Every reference resolves* (Phase 5) found unresolved and kept out of what this run wrote, by the id of the finding that carried it — or, in a dispatch's `notes`, by the repository or frame set that dispatch grounded — and the reference as written, or an explicit "none"; the `docs grounding:` line from Phase 1 step 0 verbatim, any repository a Phase 4.5 lead added,
 and the count of documentation divergences recorded (each named by the `[CG#n]` it diverges from —
 never by an identifier of its own, because it has none); whether the derivation matrix ran and why; any `design-grounder` class-4 gap deferred for want
 of a settling `[CG#n]`; **on `route: idea`, the claim-exclusion count and prefixes step 8i
@@ -2195,9 +2358,14 @@ ledger: <N> requirements — <covered> covered, <deferred> deferred, <rejected> 
 going into `/brd-split`. **Phase 8's `evidence` rebuild is the one cell this command does write, and
 it moves no figure in the line**: §6 counts rows by their `disposition`, so a column that carries no
 disposition cannot change a count. Report the rebuild separately and by number — how many rows took
-at least one `[CG#n]`/`[DG#n]` id and how many were left with an empty cell — because the second
+at least one `[CG#n]`/`[DG#n]` id and how many were left with an empty cell, the `with_evidence` and
+`empty` its script printed — because the second
 figure is the one that says which requirements this grounding run did not reach, and it is the
-figure the customer would otherwise have to infer from an empty column.
+figure the customer would otherwise have to infer from an empty column. Where the column was not
+written — a refusal of the map that stood after Phase 8 ran the script once more, or any other
+non-zero exit — report in their place the line the script or the shell printed, and that the
+column was left as it stood; where the map was refused once and the second run wrote, say so
+beside the figures.
 
 **On `route: idea`** — no ledger line at all; there is no `coverage-ledger.md` on this route to read
 one from. **Where every claim this run ground came back a verified absence, say so outright instead

@@ -47,7 +47,7 @@ Every finding — `[CG#n]` from `code-grounder`, `[DG#n]` from `design-grounder`
 | `verdict` | exactly one of the six values in §3 |
 | `prior_verdict` | *(required where `verdict` is `SUPERSEDED`, omitted otherwise)* the verdict the finding carried at the moment it was superseded — one of §3's other five, never `SUPERSEDED`. Written by whichever run marks the finding `SUPERSEDED`, in the same write, since superseding overwrites `verdict` and this is the only place the verdict survives. A finding already reading `SUPERSEDED` is never marked again, by any rule of any run, so no write can record `SUPERSEDED` here. It is history, not a second verdict: `verdict` reads `SUPERSEDED` and is the one every consumer reads |
 | `evidence` | a `file:line` list, or — when the verdict is `NOT-PROVABLE` or the finding asserts an absence — an explicit statement of why no evidence exists rather than an empty field |
-| `control` | *(required wherever the finding asserts an absence — the second half of `evidence`'s own disjunction, not the whole of it: a `NOT-PROVABLE` finding that asserts no absence owes `evidence` and no control; omitted otherwise)* the **positive control** on the search that reached that absence: the same method, run against a case of the same kind known to be present in this same source, and what it returned (§2.2) |
+| `control` | *(required wherever the finding asserts an absence — the second half of `evidence`'s own disjunction, not the whole of it: a `NOT-PROVABLE` finding that asserts no absence owes `evidence` and no control; omitted otherwise)* the **positive control** on the search, or the reading, that reached that absence: the same method, run against a case of the same kind known to be present in this same source, and what it returned (§2.2) |
 | `commit` | the pinned commit SHA the finding was checked against (`baseline-integrity`, §4); **absent on a `[DG#n]` of class 1, 2 or 3**, which is settled from the frame set and the requirement text alone (§6) and is pinned to no commit. A class-4 `[DG#n]` carries the cited `[CG#n]`'s own |
 | `altitude` | one of `product \| architecture \| implementation` |
 | `horizon` | one of `current \| will-change` (§5), naming the prerequisite decision when `will-change` |
@@ -78,10 +78,10 @@ re-derived against a repository it was never checked against. A field listed wit
 applicability is a field an emitter fills to satisfy the table.
 
 **`evidence` is never blank.** A finding that asserts a mechanism is absent still owes the reader
-what was searched and where it was expected — "no route under `api/` handles this verb; searched
-`api/**/*.py` at the pinned commit" is evidence; a bare empty field is not. **That is what was
-searched; `control` (§2.2) is whether the search could have found it**, and an absence claim owes
-both — the first without the second is the reason this field set gained a row.
+what was searched or read and where it was expected — "no route under `api/` handles this verb;
+searched `api/**/*.py` at the pinned commit" is evidence; a bare empty field is not. **That is what
+was searched or read; `control` (§2.2) is whether that search or reading could have found it**, and
+an absence claim owes both — the first without the second is the reason this field set gained a row.
 
 **`consumed_by` starts at `none` and is written later**, by whichever downstream authoring command
 actually cites the finding — this file fixes only that the field exists and what its values mean,
@@ -171,9 +171,9 @@ as an absence: a scan that cannot read a block has learned nothing about whether
 
 ### 2.2 `control` — the positive control on an absence
 
-**An absence claim rests on a search returning nothing, and a search returns nothing for two
-different reasons.** Either the thing is not there, or the method could never have found it. Those
-two are indistinguishable from the result, and only one of them is a finding. `control` is the field
+**An absence claim rests on a search, or a reading, returning nothing, and either returns nothing
+for two different reasons.** Either the thing is not there, or the method could never have found it.
+Those two are indistinguishable from the result, and only one of them is a finding. `control` is the field
 that separates them, and it is a field rather than an instruction because the difference has already
 been explained in prose and reproduced anyway: a run explicitly warned about this failure filed an
 empty `grep` as evidence of absence in the same pass.
@@ -186,7 +186,7 @@ inference from it was false.
 **What `control` holds.** The same method, pointed at a case of the same kind that is known to be
 present in this same source, and what it returned:
 
-- **Same method.** The grep that reached the absence, not a different or easier one.
+- **Same method.** The grep or reading that reached the absence, not a different or easier one.
 - **Same kind.** A case of the shape the claim is about — another attributed field, another
   scheduled job, another frame carrying the class of element that is missing. A control that
   succeeds on an unrelated shape proves only that the tool runs.
@@ -214,8 +214,9 @@ every finding that followed this paragraph, on every run, forever — the writer
 failed control, and the verifier told to reject the record.
 
 **Where it applies is the claim, not the verdict.** Any finding asserting that something is not
-there carries it, whichever of §3's six verdicts it lands on. **This is deliberately the second half
-of `evidence`'s disjunction rather than the whole of it.** `evidence` is owed on a `NOT-PROVABLE`
+there carries it, whichever of §3's six verdicts it lands on, and wherever in the finding it says so:
+in its verdict, or in the correction an `AMENDED` or `REWRITTEN` finding states. **Keying it to an
+absence is deliberately the second half of `evidence`'s disjunction rather than the whole of it.** `evidence` is owed on a `NOT-PROVABLE`
 finding *or* on one asserting an absence; `control` is owed on the second only. A `NOT-PROVABLE`
 finding that asserts nothing about the source — the mechanism could live in a system this repository
 does not contain, the claim turns on behaviour no code path here determines — has made no absence
@@ -224,10 +225,16 @@ they never said was missing. A
 `FALSE-FRIEND` carries one whenever the half being asserted is that the plausible name does *not* do
 the thing.
 
+**Nor does how an absence was reached change whether it owes a control.** An absence read off a
+code path in full — a function, a handler, a request's route through the code, with no step that
+does the thing — rests on that reading as an empty grep rests on the grep, and its control is the
+same reading pointed at a path of the same kind known to do it, citing the line where that path does
+it.
+
 **A negative over a closed set handed to the agent owes no control, and that is the line — not
-"positive versus negative".** A control exists to test whether a **search** could have found the
-thing; where there is no search, because the set is enumerated in hand and the question is a lookup,
-there is nothing to control for. This is the same rule this family applies everywhere: resolve an
+"positive versus negative".** A control exists to test whether a **search**, or a reading, could
+have found the thing; where there is no search, because the set is enumerated in hand and the
+question is a lookup, there is nothing to control for. This is the same rule this family applies everywhere: resolve an
 identifier against a known set, never parse one out of free text. It settles the four `[DG#n]`
 classes without appeal to what each one "asserts", which is the reading that gets them wrong:
 
@@ -316,13 +323,42 @@ bundle's plugin-free scan stops the package on any token of a class
 that wrote it, in a record the operator then has to edit by hand. The idea route bundles nothing, and
 the rule holds there too: the same agents write both routes.
 
-So a finding's free text never carries:
+So neither a finding's free text nor the prose around the blocks ever carries:
 
 - a command, agent or skill name — `/prd-ground`, `grounding-verifier`, `workflows-core:grounding-format`;
 - a section or rule number of a plugin reference, or a phase or step number of a command — `§2.2`,
   `§4.1 rule 4`, `Phase 4.5`;
 - an agent's return-field name — `own_verdict`, `own_control`, `blind_disputed`;
-- a reference file's name or path, or a decision-row id such as `D12`.
+- a reference file's name or path, or a decision-row id such as `D12`;
+- the model a run, a pass or a tool of the operator's ran on, by its id or its family's name —
+  `claude-opus-5-5`, `Opus` — and the plugin's own record of a tier, the tier a finding was ground or
+  verified at included;
+- a local filesystem path — a directory of the machine the run worked on, recognised by its value
+  and never by its shape: the checkout a repository was read in, the specs repository's own
+  directory, the documentation root the run resolved, a scratch or a home directory it worked in.
+
+**The last two describe the operator's environment, not the record.** They tell the customer which
+tooling and which machine produced the file, and their reviewer can do nothing with either: the
+reviewer's checkout is somewhere else, which is why the three pin commands are written
+`git -C "<repo>"` (§4), and the tier a corpus was ground at is the operator's evidence about the
+run, which `/product-workflows:prd-ground` reports in its own Final report and writes into no
+grounding file. A verifier note that read *I re-ran the three git commands against
+/workspace/e2e/bookstore* should have said *I re-ran the three git commands against the checkout*.
+**A path the customer's own material names is not a local path in this sense, whatever its shape**:
+a path or a route the repository's code or configuration names — `/tmp/update.json` in a script it
+carries, `/api/v1/ratings` — or one the customer's documents give stays, quoted as they give it,
+save where it is, or lies under, one of this machine's own to the letter — the checkout's, the specs
+repository's or the documentation root's path — which `/product-workflows:prd-ground`'s Phase 8
+replaces wherever it sits, by the exact value it scans for. A path inside the repository is written
+from the repository's root, as every evidence `path` is, and stays too. **Nor is a model the
+customer's own material names the operator's**: a model id or a model family's name that the
+customer's own requirement, code, configuration or documents name stays, quoted as given — a
+requirement that summaries be written by `claude-sonnet-4-6`, the configuration line that sets it.
+It is quoted where the record shows whose it is: in the `claim`, beside the requirement id or the
+path — a code file's with its line, or a frame's — it is quoted from, or as what a command run
+against the repository searches for —
+never loose in a sentence's own words, since `product-workflows:bundle-packaging` §6.3 tells it from
+the operator's only by those positions.
 
 **Say what the rule requires, never where it is written — and a token they cannot resolve is not
 fixed by deleting it.** A sentence that cited a rule leaned on it, so the sentence is what has to
@@ -343,15 +379,19 @@ the record's own field names and values, which are the record being read. A sect
 of the customer's own document is written `source/<basename> › § <n>` — its captured path, then the
 section — never a bare `§ <n>`, which reads as one of the plugin's (`product-workflows:bundle-packaging`
 §6.3 rule 1). What stays may still match a class there — a `references/` directory of the customer's,
-a `§` inside the requirement a `claim` quotes — and it stays all the same, since rewording it would
-break the record; but the package's scan has no exemption for it, so the run that writes it reports
-it rather than leaving it to be found at packaging.
+a `§` inside the requirement a `claim` quotes, a model id their configuration sets — and it stays all
+the same, since rewording it would break the record. The package's scan has no exemption for it,
+save a model id quoted where the record shows whose it is, which it puts to the operator to rule on
+as the customer's own (`product-workflows:bundle-packaging` §6.3); so the run that writes such a
+token reports it rather than leaving it to be found at packaging.
 
 **Who holds a writer to it.** `product-workflows:code-grounder`, `product-workflows:design-grounder`
 and `product-workflows:grounding-verifier` each carry the rule for the fields they return.
 `/product-workflows:prd-ground`, which writes the files, scans what it is about to write against
-`product-workflows:bundle-packaging` §1.2's table and rewrites a sentence that hits before writing it. A rewritten sentence changes nothing a
-reader acts on — no id, verdict, evidence path or line, control result or outcome — so the run makes
+`product-workflows:bundle-packaging` §1.2's table, and for its own local paths — each checkout's,
+`$SPECS_PATH`'s and its documentation root's — by their literal value, and rewrites a sentence that
+hits before writing it, a local path among them replaced rather than reported. A rewritten sentence changes nothing a
+reader acts on — no id, verdict, file or line an evidence entry names, control result or outcome — so the run makes
 it without dispatching anything again. A finding already on file is not rewritten by a later run; a
 hand edit to its free text is sanctioned (§2.1) and touches none of those fields either.
 
@@ -398,6 +438,45 @@ treats the premise as supported. `FALSE-FRIEND` exists precisely to catch that r
 stop: it says, in one verdict, "this name looks like your answer, and it is not" — something a
 `REWRITTEN` or a `NOT-PROVABLE` finding, both silent about the decoy, would not surface on their
 own.
+
+### A claim that restricts a value
+
+**A claim that restricts a value — to a range, a set or a format, to one per something, to never
+changing once written — holds only where the restriction holds on every path that writes the
+value**, and a `[CG#n]` that answers one is held to it. A guard runs only where it is called, so it
+covers only the paths that call it: a check in a setter, a validator or one form settles nothing
+about a writer that never reaches it.
+
+So a `CONFIRMED` on such a claim names each writer of the value the repository holds, and shows the
+restriction applied on it:
+
+- every way the record holding the value is created — a constructor, a factory, an insert;
+- every way the value is set or changed afterwards — a setter, an update, a patch;
+- every input the value is taken from — a request, a message, a file read in — **including one that
+  leaves the value out, and the value it is then stored with**: the default the language, the
+  framework or the storage gives it;
+- any other writer — a script, a migration, a direct write to the store, a second service in the
+  repository writing the same store.
+
+**Before writing `CONFIRMED`, look for the write that would break the claim**, not only for the guard
+that supports it. A writer the restriction is not shown to reach makes the verdict `AMENDED` —
+`REWRITTEN` where the verdict table makes the premise materially wrong — and the finding names that
+writer and what it can store. Where the repository also holds the client that sends the request, the
+finding says whether that client can send it without the value.
+
+**Listing the writers found is evidence, not an absence claim, and owes no control.** A finding that
+also says no other writer exists asserts an absence, and §2.2 applies to that sentence as it does to
+any other. So does the `AMENDED` this subsection mandates: naming a writer the restriction does not
+reach states that something is not there on that writer's path — no step on it applies the
+restriction — and owes §2.2's control like any other absence read off a path, the same reading
+pointed at a write path of the same kind known to apply such a restriction, as a writer of the same
+value the finding shows applying it is.
+
+The failure this prevents is §1's, met at the claim rather than at the line: a range check in a
+setter cited as the whole support for "the value is always within the range", while a request that
+leaves the value out builds the record without calling the setter and stores the type's default,
+outside the range. The guard is real; it is not the whole answer, and a grounder and a blind
+re-derivation that both read the line showing the gap can both cite the guard.
 
 ## 4. Baseline integrity
 
@@ -970,8 +1049,9 @@ own result. Without this row the rule would overturn, on every run and forever, 
 followed §2.2 correctly.
 
 Everywhere else a `failed` or `missing` control forces `contradict` **including where the verifier's
-own search also found nothing**: two searches sharing one blind spot is exactly the state the control
-exists to expose, and an `agree` between them would launder it into evidence.
+own search or reading also found nothing**: two searches or readings sharing one blind spot is
+exactly the state the control exists to expose, and an `agree` between them would launder it into
+evidence.
 
 `control_outcome` is a return field, never a record field, on the same terms as `own_verdict`
 (§2.1) — the caller acts on it and writes `verdict` and `outcome`, never a third column of its own.

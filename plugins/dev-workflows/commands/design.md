@@ -35,6 +35,8 @@ Usage: `/design <ADDRESS> [--design-twice] [--no-arch] [--skip-costs] [--skip-fe
    unstripped flag is read as the positional token and resolution then fails on a token that was
    never an address.
 
+   **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
+
    Parse the **single positional address** from the stripped `$ARGUMENTS` — a `<KEY>`, or an
    `@<path>` naming a folder or a file inside one — and resolve it with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). `status: found` → carry its `path`, `kind` and `key` forward; `ambiguous` → stop, naming every match and `@<path>` as the way through; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `DESIGN_NEEDS_KEY` below, naming the token that failed §1's grammar. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree, and designs only against a specification already in one. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules stops")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command. Then carry forward:
    - `<PRD>` — the resolved **PRD folder's** `key`: the folder itself when the address named a
@@ -200,8 +202,10 @@ Read the resolved `specification.md` **fully** (from the specs repo main). Extra
 user stories (`[Uxx]`), acceptance criteria (`[ACxx]`), and test cases (`[TCxx]`) the design must cover
 — this is the traceability baseline for **Requirements coverage** and the raw material the grill
 challenges. Note the spec's `Published` flag (governs whether Phase 5 may propose ID changes or must
-annotate-only) and any existing `- [ ]` open questions (spec-level; tolerated — the design may resolve
-or inherit them). **No PRD re-read** — the spec is the requirements source of truth.
+annotate-only) and any existing `- [ ]` open questions (spec-level; tolerated — the design inherits
+them, and answers one only as Phase 5's *Challenge the spec* says: ticked where the answer changes no
+requirement text, else left open with the design's proposal written under it). **No PRD re-read** —
+the spec is the requirements source of truth.
 
 ---
 
@@ -275,6 +279,8 @@ Handle per-repo status after the batch returns:
   `workflows-core:escalation-rules`.
 - `prep.read_only: true` — not a failure. The scan ran at `prep.scanned_ref`. Escalate per the `Read-only mount — ref stale or diverged` rule in `workflows-core:escalation-rules` **only** when `prep.ref_committed_at` is more than 14 days old or `prep.head_divergence.ahead > 0`; otherwise proceed silently and cite evidence at `prep.scanned_ref`.
 
+**Record the commit each repository was scanned at.** As each `OK`, `PARTIAL` or `EMPTY` scan returns, take `git -C "<repo_path>" rev-parse <prep.scanned_ref>` — the commit id — and carry it for the run with that repository's path and `prep.read_only`, and record `<repo slug> @ <commit>` beside the confirmed repo set in `_design-session.md` — the commit, never the ref's name, which can move while the grill runs. On a writable mount whose `git --no-optional-locks -C "<repo_path>" status --porcelain` prints anything or exits non-zero, the scan read uncommitted changes no commit holds: carry the mark `with uncommitted changes` beside the id, and end the recorded line `<repo slug> @ <commit>, with uncommitted changes` — both halves of how `read-only-repos` §7 records a scan's ref. The mark is shown and recorded, never part of the id: every git command this run or `design-reviewer` makes takes the id alone. Phase 5 reads a premise about the existing system at that commit, and Phase 6 hands it to `design-reviewer`.
+
 **Architecture grounding (optional).** Phase 1 resolved it and showed its line, and nothing here resolves it again. Where it resolved `arch_grounding: ON` or `team_grounding: ON`, once the scan's last batch has returned, build `stack_facts` as that reference's dispatch section says — from the scanned repositories' build and deploy manifests and the scan results, at most 20 — and `dispatch-architecture-grounder` (`workflows-core:architecture-grounding`) with `feature_summary` = the specification's goal + capability themes (2–4 sentences), `themes` = the capability themes the scan used, `components` = the Phase 2.5 ARD's `components` where it returned them, else the slugs of the repositories scanned (`[]` where none was), `arch_root` and `team_root` as resolved (`null` where that root is OFF), and `own_sources` = Phase 2.5's `ard_paths`, relative to `$SPECS_PATH` (`[]` where it resolved none) — those decisions reach this run as ARD invariants, so their harvested copies are skipped, while every other team record, a sibling Epic's ARD included, grounds the run like any other. Carry the digest into the Phase 5 grill with **grill-rank** consumption (that reference's § Consumption). On `status: ERROR` or a failed dispatch, architecture grounding is OFF from there on, and the final report says so in one line. Where it resolved OFF, dispatch nothing.
 
 ---
@@ -282,6 +288,8 @@ Handle per-repo status after the batch returns:
 ## Phase 5 — Grill: challenge + design
 
 **Interview technique (grilling — embedded; no runtime dependency).** Conduct the design as a **relentless** interview per `Skill(skill: "workflows-core:reference", args: "grilling-technique")` — one question at a time, recommend each answer where one exists, explore the Phase 4 code scan / spec to self-answer (fact-vs-decision), ask from the frontier, and clear the confirmation gate before writing each section.
+
+**A premise about the existing system is read before a question states it.** A question, an option or the rationale for a recommendation that states how the system already behaves — a precedent (*as X does*, *like every service*), what a script, a build or a job produces, a count, how an existing endpoint answers, what a deploy step changes in the running processes, what a running job does to data — states a fact, and finding it is this run's job, not the user's: read it in the repository that holds it, at the commit id Phase 4 recorded for that repository, never its mark (the working tree where HEAD still stands at that commit and, on a read-only mount, the tree is clean; else `git -C "<path>" show <commit>:<file>` to read and `git -C "<path>" grep -n <pattern> <commit>` to search), and across every instance it generalises over, since a citation proves the line it names, never the class. Where the read falsifies the premise, rewrite the option or drop it. At a gate's play-back such a statement is played back with the `file:line` it was read at, or marked *unverified* with what would settle it — never left as an inference for the user to confirm (`workflows-core:grilling-technique`). `design.md` cites each one a decision, a step or a `validated` note rests on (`${CLAUDE_PLUGIN_ROOT}/references/design-format.md` § Principle).
 
 Run **two intertwined tracks**, authoring `design.md` live against
 `${CLAUDE_PLUGIN_ROOT}/references/design-format.md`, applying the no-hard-wrap prose convention in `Skill(skill: "workflows-core:reference", args: "prose-formatting")`, sections scaled by the Phase 1.5 classification:
@@ -291,7 +299,15 @@ Run **two intertwined tracks**, authoring `design.md` live against
   `## Engineering review` section and new `- [ ]` open questions on the spec. Raise substantive changes
   to ACs/TCs as **proposals** — do not unilaterally rewrite them; when the spec is `Published: yes`,
   **annotate only, never mutate `[Uxx]` / `[ACxx]` / `[TCxx]` IDs** (those route through the specs
-  repo's human change-management).
+  repo's human change-management). **A spec open question the design answers stays open where the
+  answer is a product decision:** tick it, with the answer recorded under it, only where the answer
+  changes no requirement text; an answer that adds or changes a criterion, a scope line, a target or
+  a limit is written under the question as the design's proposal, the `- [ ]` stays for the
+  specification's owner, the design proceeds on its proposal, and the coverage row of the
+  requirement it bears on, where it bears on one, reads `proposed-change` (`${CLAUDE_PLUGIN_ROOT}/references/design-format.md` § Engineering-review
+  edits to the specification). That is not a residual engineering unknown pushed onto the spec, which
+  the design cannot settle and waits on (*Resolve `design.md` open questions to zero*, after these
+  tracks): here the design has an answer, and only its adoption is the owner's.
 - **Design the implementation.** Author each `design.md` section: Context & problem, Requirements
   coverage (with the challenge notes cross-referencing the spec's `## Engineering review`), Architecture
   & components, Interfaces / contracts, Seams, Data flow, Error handling & edge cases, Test strategy,
@@ -300,7 +316,7 @@ Run **two intertwined tracks**, authoring `design.md` live against
   non-applicable section with a one-line `_N/A — why_`.
 - **Target and contract.** Where the Epic carries a `target:`, the header's `- **Target**:` names it. Where the design must change files outside the target's paths that no ride-along covers and that are not its repository's shared ground (`workflows-core:components` §2) — another module of the same repository — record each under `## Risks & mitigations` as `- Target span: <component> — <why>`, the line Phase 3's *Add anyway* writes for a repository, which `design-reviewer` flags rather than blocks. Where Phase 2.5 carried `contracts` and the Epic's `## Contract` cites rows, `## Interfaces / contracts` names each interface the Epic produces — its `[AD#N]`, how the design meets that Rule, and, where the design implements its behaviour, its producer-side test — and each it consumes — its `[AD#N]`, and the stub or test double `## Test strategy` uses for it, the code artifact a contract Epic builds for it, or, for a row whose `Status` is `exists`, the interface as it already runs; a consumer in another repository than the artifact's names how it gets it — a package pinned to a version, or a copy recording its source path and revision — and never edits the copy in place (`${CLAUDE_PLUGIN_ROOT}/references/design-format.md`).
 - **Behaviour at a boundary.** For every boundary interface — one the change introduces or alters on the producing side, which another component or a consumer outside the system calls or receives the messages of — grill the behaviour a schema does not carry — what each failure returns, side effects, and whether a repeat repeats one; for an altered one, the behaviour the change touches — and settle the producer-side test that checks it (`${CLAUDE_PLUGIN_ROOT}/references/design-format.md` sections 4 and 8).
-- **Release verification.** For a change to behaviour a deployed system runs, grill `## Observability & release verification` (`${CLAUDE_PLUGIN_ROOT}/references/design-format.md` section 11): the signal that shows each delivered acceptance criterion working once live, and whether it exists yet; its baseline and where it is read; what the change can hurt, and the signal that would show it; the alerts and service-level objectives it moves; and the threshold that triggers a rollback. A signal that does not exist yet is added by the implementation, so it is designed here like any other change.
+- **Release verification.** For a change to behaviour a deployed system runs, grill `## Observability & release verification` (`${CLAUDE_PLUGIN_ROOT}/references/design-format.md` section 11): the signal that shows each delivered acceptance criterion working once live, and whether it exists yet; its baseline and where it is read; what the change can hurt, and the signal that would show it; the alerts and service-level objectives it moves; and the threshold that triggers a rollback. A signal that does not exist yet is added by the implementation, so it is designed here like any other change. For each check, grill the state it relies on — the records it reads or creates, the configuration the process it calls must hold, the jobs that must not run during its window — and read the deploy files and the rollout steps for whether the running system provides it: a fixture the component that owns it can create as it runs, a configuration change the rollout brings to the process that reads it, and nothing else running that changes the state meanwhile, or a step that pauses it (section 11's *Post-release checks*).
 - **Architecture governance.** Where Phase 4 dispatched `architecture-grounder`, the grill consumes its digest per `workflows-core:architecture-grounding` § Consumption — what binds a design decision is put as a confirmation that cites it, and a challenge competes for a question slot — and `design.md` records the outcome per `${CLAUDE_PLUGIN_ROOT}/references/design-format.md` § Architecture governance: a link citation where a binding artifact settles a decision, and an `Architecture deviation:` line under `## Risks & mitigations` for each departure.
 
 As each decision settles, append it to `_design-session.md`. **For an interface decision, record each
@@ -359,6 +375,16 @@ verification concentrate), **seam placement** (whether the boundary falls where 
 Give an opinionated recommendation, and propose a **hybrid** where the strongest ideas split across
 takes — that is a common outcome, not indecision.
 
+**Check the recommendation before you give it — a hybrid above all.** A hybrid combines what no take
+was asked to combine, so nothing has checked it yet. Read whatever you recommend against the
+`problem_frame` the takes were given, and word for word against each inherited `[AD#N]` Rule and its
+Prevents (Phase 2.5's `invariants`) that governs this interface — a bound, a match rule, a limit, an
+enumeration, or the outcome it assigns to an answer or a state (`workflows-core:grilling-technique`,
+*A decision the source already states is settled*). A recommendation that breaks the `problem_frame`
+is rewritten or dropped; one that departs from a Rule is offered only as an ARD deviation — recorded
+in `## ARD deviations` and as a `- [ ]` open question, as Phase 2.5 says — never as a plain
+recommendation.
+
 The user chooses. Record the chosen interface in `## Interfaces / contracts`, and record the losing
 takes in `### Alternatives considered` (take, constraint, why it lost) per
 `${CLAUDE_PLUGIN_ROOT}/references/design-format.md` section 3. Then resume the interview.
@@ -384,6 +410,7 @@ Dispatch `design-reviewer` (Opus):
   > Design path:        [absolute path to design.md]
   > Specification path: [absolute path to specification.md]
   > Classification:     [the Phase 1.5 classification]
+  > Repositories:       [one line per repository `design.md`'s `Repos` names: `<absolute path> @ <commit id Phase 4 recorded> — working tree at it`, or `— working tree not at it`, followed by `— with uncommitted changes` where Phase 4 carried that mark; `<absolute path> — not scanned` for one Phase 4 recorded no commit for]
   > applicable_ard:     [the ARD invariants resolved in Phase 2.5, or omit if none]
   > Target paths:       [the target's paths (Phase 3), or omit where the Epic carries no target]
   > Contract lines:     [the Epic's `## Contract` lines, verbatim, or omit where it has none]
@@ -391,9 +418,13 @@ Dispatch `design-reviewer` (Opus):
   > Ride-along lines:   [the Epic's `- Also touches:` lines, verbatim, or omit where it has none]
   > Repository modules: [the module and deploy-directory paths `enumerate-components` (`workflows-core:components` §2) finds in the target's repository, or omit for a bare-slug target]"
 
+**Repositories** is what `design-reviewer` re-derives the design's claims about the existing system from. A line's working tree is *at it* where `git -C "<path>" rev-parse HEAD` equals the recorded commit id and either the repository was writable at the scan (`prep.read_only: false` — the scan read its working tree, uncommitted changes included) or `git --no-optional-locks -C "<path>" status --porcelain` prints nothing and exits 0; anything else is *not at it*, and the reviewer reads at the commit instead. A repository whose scan never returned — one any *Skip* answer left out, whichever rule offered it — has no commit, and its line reads `— not scanned`. Every `design-reviewer` dispatch in this phase — the first review and any re-review — carries this brief, the working-tree test taken again at that dispatch.
+
 **Act on the verdict** (mirrors `/specify`, save `/specify`'s refinement-notes "Defer" and its open question for a finding left open — a design resolves its own open questions to zero):
 - **`BLOCK`** — fix the BLOCKER findings (the orchestrator/grill edits `design.md` inline — no delegated
-  writer), read the fix against what it overlaps — each line it adds or changes, in any section (an
+  writer; a BLOCKER on a claim about the existing system that a settled decision rests on is fixed by
+  putting that decision to the user again, one question, with the true premise and the `file:line` it
+  was read at, then editing what the answer changes — never by editing the claim's line alone), read the fix against what it overlaps — each line it adds or changes, in any section (an
   interface, a seam, a test-strategy line, a migration or rollout step), against those that govern
   the same behaviour, and an operational step against everything its selector reaches in the deploy files of the repositories Phase 3 confirmed, ride-along deploy components included, per the `An inline fix is read against what it overlaps` rule in
   `workflows-core:escalation-rules`, and manual fix notes the same

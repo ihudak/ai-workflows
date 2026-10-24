@@ -70,6 +70,8 @@ still: the slice proposals, the root ledger and the profile. There is no flag to
 
 **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
 
+**Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
+
 **Parse the flags before anything counts a positional token**, so a flag is never read as the address.
 `--no-brief`, `--profile` and `--redo` are boolean; strip all three from `$ARGUMENTS` first, and what
 remains is the single positional `<ADDRESS>`. Without this rung the flags this command documents do
@@ -90,7 +92,7 @@ not work: a flag is a token, so `--redo` would arrive as the address.
 
 3. **Specs-repo preflight — once step 2's resolution returns `status: found`.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")`
    and execute its `specs-preflight` entry point (§3) inline, before step 4's slice refusal and every later read, Phase 4's gate among them — `require-on-main` performs no fetch of its own
-   (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one. Prompt-free, and
+   and relies on this step's best-effort one. Prompt-free, and
    silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5
    notice; if it returns `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run — the
    terminal `commit-artifacts` step skips on it.
@@ -304,7 +306,7 @@ and every slice under `unrecorded_slices` the time rule finds not current, with 
 — any non-zero exit — stops the run with `BRD_PROPOSAL_RECORD_FAILED`, as above.
 
 - **Current** — **then say where that umbrella stands in git**, with three of `require-on-main`'s
-  read-only primitives (`workflows-core:phase-handoff` §3.2) and never the gate itself — this is a
+  read-only primitives and never the gate itself — this is a
   read, so nothing here prompts, switches a branch or stops. `<default-ref>` is resolved as
   `workflows-core:specs-repo-git` §3.2 resolves it, and `<path>` is the umbrella's `proposal.md`
   relative to `$SPECS_PATH`. Where `$SPECS_PATH` is not a git repository, print *not under git*. Else

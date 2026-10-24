@@ -159,9 +159,9 @@ filename alone:
   `customer-review-<YYYYMMDD>.md`, and `dev-workflows/`. No prompt part sends the reviewer to any of
   them.
 
-**The plugin-free scan does not cover this.** It hunts plugin-internal tokens (§1 rules 1–2, of
-the classes §1.2 tabulates), and
-every document above is free of them whether or not it belongs in a customer's hands. Nothing
+**The plugin-free scan does not cover this.** It hunts tokens of the classes §1.2 tabulates —
+plugin-internal ones (§1 rules 1–2), and a model id — and a document can carry none of them and
+still not belong in a customer's hands. Nothing
 mechanical stands behind this allow-list, which is why it is written out rather than left to
 "the package's own documents".
 
@@ -169,7 +169,8 @@ mechanical stands behind this allow-list, which is why it is written out rather 
 
 `commands/brd-package.md`'s plugin-free scan stops on a token of any of these classes, over the
 finished prompt, the finished delivery note and every document in the finished bundle — the only
-exemptions being the customer's own words and naming, which §6.3 defines:
+exemptions being the customer's own words and naming, which §6.3 defines, and a model id inside a
+prerequisite's package copied in, below:
 
 | Class | Examples |
 |---|---|
@@ -179,6 +180,27 @@ exemptions being the customer's own words and naming, which §6.3 defines:
 | A slash command | `/brd-…`, `/dev-workflows:…`, `/workflows-core:…`, any leading-slash command name |
 | An agent, subagent type or skill name | `subagent_type`, any `<plugin>:<name>` prefix (`dev-workflows:`, `workflows-core:`, and any namespace a later split adds), any agent filename |
 | A decision-row reference | `D12`, `D13`, `D18`, `D20`, or any other bare `D<n>` row id |
+| A model id | `claude-opus-5-5`, `claude-sonnet-4-6` — any `claude-<family>-<version>` id, with or without a suffix such as `[1m]` |
+
+**A model id needs no plugin to read and is in the table all the same**: where it records the model
+a run, a pass or a tool of the operator's ran on, it tells the customer which tooling produced the
+document and gives their reviewer nothing to check (`workflows-core:grounding-format` §2.3). A
+grounding file an earlier run left can carry one, since no later run rewrites that run's prose, and
+this scan is where it is found; the repair is the operator's, by hand, in the file it came from.
+**A model the customer's own material names is theirs, and the token cannot tell it from that
+one** — `claude-sonnet-4-6` reads the same in their configuration and in a tier line — so the row
+fires on every model id, and where one sits in the customer's naming a grounding block records,
+§6.3 puts it to the operator rather than stopping on it. **A model id inside a prerequisite's package copied
+in is no stop**: that package is never rewritten (§5), so its text reaches the customer as written
+whether or not it already has, and a copy of it in this bundle exposes nothing it does not.
+`commands/brd-package.md`'s *Assemble the bundle* rule 7 names each such hit in the run's Final
+report — the bundled filename and line, in that prerequisite's dated bundle, *which is never
+rewritten — left as packaged* — and packages on, whatever span of §6.3 it sits in, and never puts it
+to the operator's ruling. Every other class stops in a prerequisite's package exactly as anywhere else. **A local
+path has no row**: its shape cannot tell the operator's checkout from a path or a route the
+customer's own code names, which a finding quotes and keeps, so a row for it would stop correct
+packages. `commands/prd-ground.md` looks for its own local paths by their literal value instead,
+and a local path an earlier run left in a grounding file is not caught here.
 
 **The table is here, rather than in the command that runs the scan, because most of the bundle's
 documents are written long before it runs**, by earlier commands of the route, and a token one of
@@ -763,9 +785,10 @@ stopping outright would make that BRD permanently unpackageable, since the only 
 falsify the record — an edit to an immutable file, a transcription saying something the image does
 not, or a quotation saying something the customer did not. So a relation 1 or relation 3 hit inside
 one is reported, grouped as rule 4 below fixes, and put to the operator on the one question *The
-operator's ruling* below fixes. Outside these spans and the customer-derived locators below, every
-hit stays a hard stop, in the figures file, the inventory, the ledger and the register as anywhere
-else: the rest of each is the plugin's own writing.
+operator's ruling* below fixes. Outside these spans, the customer-derived locators below and, for a
+model id alone, the naming a grounding block records (after them), every hit stays a hard stop, in
+the figures file, the inventory, the ledger and the register as anywhere else: the rest of each is
+the plugin's own writing.
 
 **A customer-derived locator is the customer's naming, wherever it appears.** It is one of four
 things: a captured file's path relative to `brd/`, with whatever follows its ` › ` — the `source/`
@@ -809,9 +832,33 @@ relation 3's (§6.2). Four rules follow, for the plugin-free scan and this check
    §6.2 keeps the relation off the manifest's own quotation of a link.
 4. **Every report this section makes is grouped** — one line per file and token, with a count — in
    the report that asks the operator to rule and in the run's final report alike, whether the hit
-   sat in verbatim content or in a locator. A `"D3"` quoted in an image anchor, in that row's
-   `text`, in its ledger row's `text` and in the figures file's *Flow* is three lines, not four
-   reports.
+   sat in verbatim content, in a locator or in a grounding block's naming (below). A `"D3"` quoted
+   in an image anchor, in that row's `text`, in its ledger row's `text` and in the figures file's
+   *Flow* is three lines, not four reports.
+
+**A model id in the customer's naming a grounding block records reports too — for that class
+alone.** In `grounding/code-grounding.md` and `grounding/design-grounding.md`, a block's `claim`,
+which quotes the requirement as the inventory gives it, and a value a field of the block quotes from
+the customer's code, configuration, frames or documents — beside the requirement id, or the path, it
+comes from, or as what a command run against the repository searches for — are the
+customer's naming (`workflows-core:grounding-format` §2.3), and a model id there is theirs: a
+requirement that summaries be written by `claude-sonnet-4-6`, the configuration line that sets it.
+A hit of the plugin-free scan's model-id row (§1.2) there is reported, grouped as rule 4 fixes, and
+put to the operator on the question below, and so is the same text where a part of the prompt
+renders it from there. **The span is recognised by where the model id sits, never by the token**,
+which reads the same in the customer's configuration and in a record of the model a run ran on — so
+the operator's ruling is the guard: a model id there that is not the customer's after all — the
+model a run of the operator's ran on, written into a quoted line — is one the operator holds, and
+removes by hand from the file it came from before the re-run. Every other class's hit in that naming
+stays a hard stop, as `commands/prd-ground.md` reports it, and so does a model id anywhere else in a
+grounding file — its opening lines, a run's heading, a sentence's own words in a field — which is
+where the plugin's own record of a model sits, and where a writer that quoted the customer's loose
+left it; the stop says how each is repaired (`commands/brd-package.md`, *The plugin-free scan*). A
+model id in a document `commands/brd-package.md`'s *Assemble the bundle* rule 5 copied in from a
+prerequisite's package is that phase's rule 7's, whatever span it sits in, this one and the verbatim
+spans above included: named in the run's Final report as left as packaged (§1.2), and never put to
+the ruling below, since that package is never rewritten (§5) and no answer could change it. The
+citation-resolution check never meets one: a model id is no identifier and no filename.
 
 **The operator's ruling — one question per pass, never one per hit.** A pass that reports a hit this
 section covers — the plugin-free scan over the prompt, over the delivery note or over the finished
@@ -824,10 +871,11 @@ choices: ["Ship it — these are the customer's own words and naming, left exact
 ```
 
 The recommendation stands because every hit reported here is, by the definitions above, a token the
-customer wrote, and its only repair would falsify the record. *Ship it* continues the run. *Hold the
-package* stops it:
+customer wrote, and its only repair would falsify the record — save the guard case above, a model id
+in a grounding block's naming that records what the operator's tooling ran on, which the operator
+holds and removes by hand. *Ship it* continues the run. *Hold the package* stops it:
 
-`BRD_PACKAGE_CUSTOMER_CONTENT_HELD: you held <BRD-KEY>'s package over <n> hit(s) inside the customer's own words or naming — nothing was handed off. What the report names is the customer's and is never edited here: take it up with the customer, then re-run. Where this run already wrote bundle-<YYYYMMDD>/, it was never sent — move it aside first, or the re-run stops with BRD_PACKAGE_BUNDLE_EXISTS.`
+`BRD_PACKAGE_CUSTOMER_CONTENT_HELD: you held <BRD-KEY>'s package over <n> hit(s) inside the customer's own words or naming — nothing was handed off. What the report names is the customer's, save a model id that records what your own tooling ran on, and is never edited here: take it up with the customer, then re-run. Such a model id is yours: remove it by hand from the file it came from, commit the edit to the specs repository's default branch, and re-run. Where this run already wrote bundle-<YYYYMMDD>/, it was never sent — move it aside first, or the re-run stops with BRD_PACKAGE_BUNDLE_EXISTS.`
 
 A free-text answer is read onto one of the two, or the question is asked again; it never becomes a
 third outcome. **A hit an earlier ruling in this run already covered is listed under that ruling and

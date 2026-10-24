@@ -20,6 +20,17 @@ prose can*, inline it (note it if it came from a prototype) and trim it to the d
 Never paste a whole prototype; the snippet earns its place only by pinning down a decision prose would
 leave ambiguous.
 
+**A statement about the existing system cites where it was read.** Every statement about the system
+its repositories hold and deploy today that a decision, a rollout or release step, a test case or a
+`validated` challenge note (section 2) rests on — a precedent, what a script, a build or a job
+produces, a port, a profile, a configuration key or path, a manifest value, how an existing endpoint
+answers, what a deploy step changes in the running processes, what a running job does to data —
+cites the `path:line` it was read at, in the repository and at the commit `/design` Phase 4 scanned —
+or, where Phase 4 recorded that commit `with uncommitted changes`, in the working tree it scanned.
+A precedent or a count claims no more than its citations show: one handler cited proves that
+handler, not every handler like it. `design-reviewer` re-derives each such statement from the
+repository, at that commit.
+
 ## Frontmatter
 
 ```yaml
@@ -67,7 +78,9 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
 2. **## Requirements coverage** (core) — a table/list tracing every in-scope spec item / user story
    (`[Uxx]`) / acceptance criterion (`[ACxx]`) to how this design addresses it, with a **challenge
    note** per row where the design questioned or refined the spec (`validated` / `questioned` /
-   `proposed-change`). Every in-scope requirement is addressed or explicitly deferred with a reason.
+   `proposed-change`). A `validated` note that rests on how existing components behave — that the
+   requirement's test cases can be set up against them as they run — cites where that was read
+   (§ Principle). Every in-scope requirement is addressed or explicitly deferred with a reason.
    This is where the "challenge the spec" track lands in the design.
 3. **## Architecture & components** (core) — the components changed/added and their responsibilities;
    a diagram or bullet decomposition. Name real modules/files where the code scan revealed them.
@@ -130,6 +143,9 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
    it changes an artifact consumers already use, that it stays compatible with the version they use.
    A stub or test double for a consumed interface models the failures its `[AD#N]` Rule or section 4
    states, as well as the success shape.
+   A test case run against a deployed system, rather than against what the test sets up itself,
+   names the state it relies on and shows the running system provides it, as section 11's
+   *Post-release checks* do.
 9. **## Risks & mitigations** (scaled) — engineering risks (performance, concurrency, data-loss, blast
    radius) and the mitigation or explicit acceptance for each. Each `Architecture deviation:` line (§ Architecture governance) is recorded here. A repository added to a targeted Epic's design at `/design` Phase 3, or another component of the target's own repository the design must change, is recorded here as `- Target span: <component> — <why>`: in another repository `/implement` will plan the change as a companion change, and in the same one it implements it beyond the Epic's target, and the line is what says so before it does.
 10. **## Migration / rollout / backward-compatibility** (scaled) — schema/data migration, feature
@@ -155,6 +171,15 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
       An acceptance criterion no runtime signal can show reads `n/a — <reason>` and rests on
       `## Test strategy` alone. A check may carry the query that reads it, in the system's own monitoring tool,
       written against the real names, never with placeholders.
+      Each check also names the **state it relies on** — the records it reads or creates, the
+      configuration the process it calls must hold, the jobs that must not run during its window — and
+      the design shows the running system provides it: a fixture can be created through the component
+      that owns it, as that component runs, or the check says how it is put in place; a configuration
+      change reaches the process that reads it under the rollout steps section 10 writes, since a
+      workload re-applied unchanged is not restarted; and nothing else in the deployed system — a
+      scheduled job, a load generator, a sidecar, a reset — changes that state during the window, or
+      the check says how that is paused and when it is restarted. A check whose state the running
+      system cannot provide reads `n/a — <reason>` and rests on `## Test strategy` alone.
     - **Alert / SLO impact** — the existing alerts and service-level objectives the change moves,
       and any it adds or retunes.
     - **Rollback signal** — a named signal, a threshold against its baseline and the window that
@@ -199,8 +224,19 @@ annotate only — never mutate existing `[Uxx]` / `[ACxx]` / `[TCxx]` IDs (those
 repo's human change-management). This design doc's **Requirements coverage** cross-references those
 spec edits.
 
+**A specification open question the design answers.** Where the answer changes no requirement text,
+tick the `- [ ]` and record the answer under it. Where it adds or changes requirement text — an
+acceptance criterion, a scope line, a target or a limit — the question is a product decision, and
+the specification's owner takes it: write the design's answer under the question as a proposal
+(`Engineering proposal (/design): <answer> — <why>`), leave the `- [ ]` open, and mark the row of the
+requirement it bears on, where it bears on one, `proposed-change` in **Requirements coverage**. The
+design proceeds on its proposal. That differs from an engineering unknown the design cannot settle,
+which is pushed onto the specification and waited on (section 13): here the design has an answer,
+and only its adoption is the owner's.
+
 ## Provenance
 
 Net-new, authored for the dev-workflows plugin — no upstream import source. The grilling technique
-`/design` uses to author against this format is embedded in `commands/design.md` (adapted from
-mattpocock grill-me/grilling), so `/design` has no runtime plugin dependency.
+`/design` uses to author against this format is the shared `workflows-core:grilling-technique`
+reference, which `/design` Phase 5 loads; it is adapted from mattpocock grill-me/grilling, and no
+plugin outside this family is loaded for it.

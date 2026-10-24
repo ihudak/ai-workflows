@@ -9,7 +9,7 @@ Opus-gated quality gates, plus the lighter-weight planners that feed or precede 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
 | `code-review` | opus | Read, Glob, Grep, Skill | Reviews SIGNIFICANT / HIGH-RISK changes, and `/implement`'s MODERATE ones — correctness, security, architecture, edge cases, migration, dependencies, tests, rollback; gates the test run. | `/implement`, `/upgrade`, `/vuln` |
-| `design-reviewer` | opus | Read, Glob, Grep | Reviews an engineering design against the design-format authority and its specification, treating any unresolved design open question as a BLOCKER. | `/design` |
+| `design-reviewer` | opus | Read, Glob, Grep, Bash | Reviews a design against the design-format authority and its specification — any open design question a BLOCKER — and re-derives its claims about the existing system from the code it was grounded on. | `/design` |
 | `readiness-reviewer` | opus | Read, Glob, Grep | Cross-artifact readiness verifier — checks the ARD/spec/design justify the phase derived from them and the next transition; the only reviewer that synthesises a verdict across artifacts. | `/ready` |
 | `risk-planner` | opus | Read, Glob, Grep, Bash, WebFetch, WebSearch, Skill | Risk-weighted planner for SIGNIFICANT / HIGH-RISK tasks; returns a structured plan with an explicit risks section. Never dispatched for SIMPLE / MODERATE work. | `/implement`, `/upgrade` |
 | `interface-designer` | per routing | Read, Glob, Grep, Bash, Skill | Produces one interface proposal for one contested interface under one named design constraint, for `/design`'s optional three-take Phase 5 fan-out. | `/design` |

@@ -163,7 +163,11 @@ write would re-ask a question already answered.
 
 ## Phase 0 — Resolve inputs and gate the sent package
 
-1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--sent` consumes the token after it (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
+1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
+
+   **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
+
+   Parse the first token that is neither a flag nor a flag's value — `--sent` consumes the token after it (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
    (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix or a folder's whole name, and carries the bare key from then on. On `needs-tree` (`$SPECS_PATH` unset), take step 3's `$SPECS_PATH` stop now — answered with a path, read the token again from the top of this step. If absent or invalid, stop:
    `BRD_RECONCILE_NEEDS_KEY: /brd-reconcile needs a BRD key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) — re-run '/product-workflows:brd-reconcile <KEY>', adding @<review-file> where the review came back as a file.`
 2. **`@<review-file>` (optional).** The file the customer sent back, **at whatever path it arrived
@@ -205,7 +209,7 @@ write would re-ask a question already answered.
    ```
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one,
-   the same ordering `/brd-package` uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+   the same ordering `/brd-package` uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or `workflows-core:specs-repo-git` §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run.
 5. **Resolve the BRD folder.** `resolve-address <BRD-KEY>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
    every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus §5's legacy fallback — and so can return any folder kind it finds there: a `BRD-` folder directly under `specifications/`, a `PRD-` folder (a slice inside a BRD, or an idea-route PRD folder), or an `EPIC-` folder inside a `PRD-` folder. Step 5a answers the level question on what it returns. Absent
@@ -312,10 +316,10 @@ write would re-ask a question already answered.
 
    **The ordinary gate, where `--sent` was not given.** This command **consumes** `$SPECS_PATH` deliverables it did not
    write, so per `workflows-core:phase-handoff` §5 rule 2 it executes
-   `require-on-main` (§3) here, before anything else reads a file. Execute it against the resolved
+   `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) here, before anything else reads a file. Execute it against the resolved
    folder's **most recent `customer-review-prompt-<YYYYMMDD>.md`** — the artifact whose presence
    proves a package was actually built and handed off. Every deliverable one `handoff-to-main` run
-   stages lands in a single commit (§2.3), so on that path its presence on `origin/<default>` implies
+   stages lands in a single commit, so on that path its presence on `origin/<default>` implies
    `self-review-<YYYYMMDD>.md`, `customer-delivery-note-<YYYYMMDD>.md` and the whole
    `bundle-<YYYYMMDD>/` merged with it — the artifacts `/brd-package`'s handoff stages together —
    and `/brd-package`'s own gate on `decisions.md` had already run before any of them existed.
@@ -467,8 +471,8 @@ write would re-ask a question already answered.
 6c. **Settle the parent's defect log before any answer is confirmed.** The *Resolve the defects the
    review settled* phase writes this run's defect resolutions into the parent's
    `brd/brd-defect-log.md` — a slice holds no log of its own (`brd-format.md` §2.1) — and that write
-   never falls back to recording (*The cross-BRD write guard*). So execute `require-on-main` against
-   that log — the parent's, which `brd-link.md`'s `parent:` names, one hop — now, while nothing is written: `pass`, `pass_amending` and `unmanaged` → go on. Any stopping
+   never falls back to recording (*The cross-BRD write guard*). So execute `require-on-main`
+   (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) against that log — the parent's, which `brd-link.md`'s `parent:` names, one hop — now, while nothing is written: `pass`, `pass_amending` and `unmanaged` → go on. Any stopping
    row, or `absent`, means this run cannot write the log safely: it is edited in this checkout and
    not handed off — a run whose handoff was declined leaves it so — or on a branch the default
    branch does not have, or on no branch at all, or the repository itself cannot be

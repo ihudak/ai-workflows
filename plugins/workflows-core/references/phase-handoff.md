@@ -1,5 +1,12 @@
 # Phase handoff — Shared Reference
 
+<!-- reference-entry-files
+entry require-on-main holds=1,2.2,2.6.1,3,4.4
+partial require-on-main 4.0 "never infer"
+partial require-on-main 5 "rule 2" "rule 3"
+-->
+
+<!-- entry: require-on-main -->
 Single source of truth for the two entry points that move a **phase deliverable** into `$SPECS_PATH`'s default branch and that refuse to start a phase whose input never got there, save where §3.4 falls back: `handoff-to-main` (§2, producer) and `require-on-main` (§3, consumer).
 
 **The principle.** A workflow phase is not finished until its artifact is on the default branch. A command that ends a phase commits, pushes, and opens a pull request. The command that starts the next phase does not run until the previous artifact is there — save, for an artifact no plugin branch carries (§3.3 row F), where §3.4 records that it falls back to what it does without it. The gate applies even when the role does not change — it may be a different human of the same role, and even the same human should have to confirm the previous phase is done.
@@ -22,6 +29,7 @@ Where this reference **differs** — each difference is deliberate, and a reader
 5. **`require-on-main` is fatal by design.** `specs-repo-git.md` §1 rule 5 is "never fatal", which is right for bookkeeping. A gate that reports and continues is not a gate. `handoff-to-main` is *not* fatal — the deliverable is already written — but it must report the phase as **not handed off**.
 6. **The `Co-Authored-By` trailer IS carried.** `specs-repo-git.md` §1 rule 6 forbids it because bookkeeping files are plugin-generated. A deliverable is authored content, and the existing handoff phases already carry the trailer.
 7. **`handoff-to-main` runs only behind a user choice.** `specs-repo-git.md` §1 rule 7 is "prompt-free". Opening a pull request is outward-facing, so it is never reached except through the calling command's consent choice (§4.3).
+<!-- /entry -->
 
 ## 2. `handoff-to-main` — the producer entry point
 
@@ -35,8 +43,9 @@ Gate fails on path / repo / permission grounds → report that the deliverable i
 
 **The push-target probe — run before the choice, and never gated on.** `git -C "$SPECS_PATH" remote get-url origin`: exit 0 with a non-empty URL sets `remote: origin`, anything else sets `remote: none`. **It runs before §4.3 presents its array, not here**: it only reads, and its result is what decides whether §4.3 prints its no-remote notice, which a probe run after the choice could never have fed. This entry point then carries the `remote` value that probe set rather than probing a second time. A specs repo with no `origin` is an ordinary state (a tree kept locally, a clone whose remote was removed), and it is deliberately **not** a gate failure: branching and committing there still does the useful half of this entry point, and a deliverable is safer on a local commit than in a working tree. What `remote: none` removes is §2.5's push and §2.6's pull request — both are skipped — so the run says so **before** the choice is presented (§4.3's notice) and reports it afterwards through §4.1's *No remote* row.
 
-**The probe is `origin` specifically, because every later step names `origin` literally** — §2.2's `refs/remotes/origin/<name>`, §2.5's `push -u origin`, §2.6's `OWNER_REPO` derivation, and §3.2's `origin/<default>`. A repository whose only remote is under some other name is therefore `remote: none` for this entry point. **Probing is not optional and no earlier step stands in for it:** §2.1's four existing conditions are all satisfiable on a repository with no remote at all, so without this probe the producer offers — marked `(Recommended)` — a *"push + open PR"* option that cannot succeed, and the operator learns it only from the raw `git push` error §2.5 reports. That is the state this probe was added for, observed live.
+**The probe is `origin` specifically, because every later step names `origin` literally** — §2.2's `refs/remotes/origin/<name>`, §2.5's `push -u origin`, §2.6.1's `OWNER_REPO` derivation (`owner-repo`), and §3.2's `origin/<default>`. A repository whose only remote is under some other name is therefore `remote: none` for this entry point. **Probing is not optional and no earlier step stands in for it:** §2.1's four existing conditions are all satisfiable on a repository with no remote at all, so without this probe the producer offers — marked `(Recommended)` — a *"push + open PR"* option that cannot succeed, and the operator learns it only from the raw `git push` error §2.5 reports. That is the state this probe was added for, observed live.
 
+<!-- entry: require-on-main -->
 ### 2.2 Branch resolution, and the collision rule
 
 Intended name: `<prefix>/<KEY>-<slug>`, where `<prefix>` is the caller's own (§2.9) and `<KEY>-<slug>` come from **the resolved feature folder the deliverable was written into** — never re-derived from the item title. Folder resolution already tolerates a human-adjusted slug and a stray `-`/`_` after the key, and re-deriving would produce a branch name that disagrees with the directory it commits.
@@ -57,6 +66,7 @@ Collision is normal, not exceptional: `_readiness.md` is overwritten on every `/
 **Where a new branch is cut.** A name rule 2 or rule 4 creates is cut at HEAD where HEAD is the default branch, or a named branch the plugin does not manage (`specs-repo-git.md` §3.3 G2), as it always was. Where HEAD is another plugin branch — the preflight's B3 keeps a run on any unmerged plugin branch its key names (`specs-repo-git.md` §3.5), whatever phase opened it — it is cut at `<default-ref>` (§3.2) instead, `git -C "$SPECS_PATH" switch --no-track -c <name> <default-ref>`, **unless that branch changed a file this run builds on**: a path it declares (§2.9), or a file it read as an input (§2.9's `inputs_read`) — every file under `$SPECS_PATH` outside `specs-repo-git.md` §2.1's session-file shapes that this run or an agent it dispatched read, whatever its kind: a PRD, an ARD, a specification, a design, an Epic, a seed, a register, a ledger, a grounding file, a frame set's files — tested with `git -C "$SPECS_PATH" diff --quiet <default-ref>...HEAD -- <those paths>`. **The three dots are load-bearing**: they compare HEAD with the point it forked from, so the test sees what that branch changed and never what the default branch changed since, which would stack a run on a branch that touched none of its files. **`--no-track` is too**: wherever there is a remote, `<default-ref>` is a remote-tracking branch, and a switch that tracked it would write the default branch into `.git/config` as the new branch's upstream — a push to the wrong branch where that file is writable, and, where a container mounts it read-only, the ordinary case §2.5 names, a switch git refuses after creating the branch. **Where the test exits non-zero the run builds on that branch's work** — `/create-ard` stamping the grounding findings an unmerged `/prd-ground` branch wrote, `/epics` partitioning a PRD whose pull request is still open, `/dev-workflows:design` reading the target an unmerged `/epics` refinement set — so its branch is cut at HEAD, a stack that states the dependency honestly (`specs-repo-git.md` §3.6), and §4.1's *Stacked on another phase's branch* clause says so on the outcome line — merging that pull request lands the other phase's commits too, and the operator meets that before merging it rather than after. **Cutting at HEAD everywhere made a pull request carry another phase's unmerged commits it does not depend on**: a PRD-level `/update-prd` run while `/epics`' pull request was open cut `prd/` from `epics/`, so merging the PRD would have landed the Epic drafts unreviewed with it. The switch carries this run's uncommitted deliverable with it. **Where git refuses it** — a file it would overwrite, such as a session file both this run and that branch's terminal commit appended to — cut at HEAD instead, as before this rule, and append §4.1's *Stacked on another phase's branch* clause to its outcome line, so the operator who opens the pull request sees the stack before merging it.
 
 **In session-branch mode** (`specs-repo-git.md` §8), the switch onto `<name>` — creating it or reusing it — is wrapped in that section's `lift` and `put-back` (§8.3); a `lift` that skips the move refuses the handoff with the reason, as a failed switch does.
+<!-- /entry -->
 
 ### 2.3 Staging the deliverable
 
@@ -101,13 +111,29 @@ Message `<KEY> <summary>`, matching the specs repo's own `<KEY|NOISSUE> <summary
 
 Not reached where §2.1 set `remote: none` — §2.5 pushed nothing, and `gh` has no head branch to open a pull request from.
 
-**First, probe for an existing pull request** — this entry point's §2.2 rule 3 deliberately *reuses* an in-progress branch, and §2.2 says in as many words that collision is normal rather than exceptional, so a branch that already carries a pull request is the ordinary case here:
+**First, derive `$OWNER_REPO`**, by §2.6.1's `owner-repo`; where it finds the remote no `gh` target, skip to §4.2 without calling `gh`.
+
+**Then probe for an existing pull request** — this entry point's §2.2 rule 3 deliberately *reuses* an in-progress branch, and §2.2 says in as many words that collision is normal rather than exceptional, so a branch that already carries a pull request is the ordinary case here:
 
     gh pr list -R "$OWNER_REPO" --head <branch> --state open --json number,url
 
 One already open ⇒ §2.5's push has already updated it. Report it through §4.1's *already existed* row and do **not** call `gh pr create`, which fails on the duplicate and would send the run down §4.2 telling the user to open a pull request that exists. This is the same primitive §3.5 already uses on the consumer side.
 
-Otherwise: derive the repository, run a cheap `gh auth status` pre-check purely to avoid a confusing raw error, then call `gh` with every argument that would otherwise make it prompt — the plugin must never block on an interactive editor:
+Otherwise: run a cheap `gh auth status` pre-check purely to avoid a confusing raw error, then call `gh` with every argument that would otherwise make it prompt — the plugin must never block on an interactive editor:
+
+    gh pr create -R "$OWNER_REPO" --base <default> --head <branch> \
+                 --title '<title>' --body-file <body-path>
+
+**`<title>` is free text, so it goes in single quotes**, each `'` it holds written `'\''`: inside double quotes its backticks and `$(…)` would be command-substituted before `gh` saw it.
+
+**Capability probe, not host classification.** Try the call; on any failure fall back to §4.2's instruction. Push authority and pull-request authority are independent — push runs over SSH with a per-repo key, `gh` runs over the API with a token, and the same account can have write access to one repository and read access to another. No hostname or host-type test can detect that mismatch, so a run can push successfully and still be unable to open the pull request. This is why `docs-workflows:finish-and-handoff` §4's host classification is right for choosing *instructions* and insufficient here.
+
+`gh` wraps the API rather than calling it over HTTPS, which is what the zero-direct-API rule permits — the same allowance `/document` already relies on.
+
+<!-- entry: require-on-main -->
+### 2.6.1 `owner-repo` — deriving $OWNER_REPO
+
+`$OWNER_REPO` is the `[HOST/]OWNER/REPO` value a `gh -R` call names, derived from a repository's `origin` remote — §2.6's calls and §3.5's probe name the specs repo's. This block derives it from `$SPECS_PATH`'s `origin`; a reader that derives it for another repository reads that repository's `origin` in its place:
 
     url=$(git -C "$SPECS_PATH" remote get-url origin)
     host=$(printf '%s' "$url" | sed -E 's#^[a-zA-Z][a-zA-Z0-9+.-]*://##; s#^[^/@]+@##; s#[:/].*$##')
@@ -122,20 +148,12 @@ Otherwise: derive the repository, run a cheap `gh auth status` pre-check purely 
     esac
     case "$host" in github.com) OWNER_REPO="$slug" ;; *) OWNER_REPO="$host/$slug" ;; esac
 
-    gh pr create -R "$OWNER_REPO" --base <default> --head <branch> \
-                 --title '<title>' --body-file <body-path>
-
-**`<title>` is free text, so it goes in single quotes**, each `'` it holds written `'\''`: inside double quotes its backticks and `$(…)` would be command-substituted before `gh` saw it.
-
 **An SSH host alias is resolved before the host is kept.** An scp-like or `ssh://` remote may name a `Host` alias from `~/.ssh/config` — `git@github-ig.com:owner/repo.git`, whose `HostName` is `github.com` — which only ssh knows: `gh` reads `-R` as a real host, so `github-ig.com/owner/repo` failed every `gh` call with `error connecting to github-ig.com` while the push over the same alias succeeded (measured). `ssh -G <host>` prints the configuration ssh would use and connects to nothing; its `hostname` line is the real host, and the host itself where no alias applies. An `http(s)://` remote names a real host and is left alone, and so is `github.com` itself, which GitHub's documented port-443 setup (`Host github.com` / `Hostname ssh.github.com`) would otherwise rename; a resolved `ssh.github.com` reads as `github.com`. Only a plain hostname is passed to `ssh`, so the remote's text can never reach it as an option; and where `ssh` is absent or prints no `hostname`, the host stands as written.
 
-**The host is kept, not stripped** — the same rule as `dev-workflows:code-handoff` §2.6, and for the same reason. `gh -R` accepts `[HOST/]OWNER/REPO`, and `gh auth status` succeeds whenever the user is authenticated to *any* host, so a bare `OWNER/REPO` derived from a GitHub Enterprise remote resolves against **github.com** — silently opening the phase's pull request on an unrelated public repository if one happens to sit at that path, with the capability probe catching nothing because the call succeeded. Only `github.com` may drop the host. Validate the slug against `^[^/]+/[^/]+$` before calling `gh`; anything else (a Bitbucket `scm/proj/repo`, a nested GitLab group) is not a `gh` target — skip to §4.2. §3.5's `gh pr list -R "$OWNER_REPO"` uses the same value and mistargets identically without this.
-
+**The host is kept, not stripped** — the same rule as `dev-workflows:code-handoff` §2.6, and for the same reason. `gh -R` accepts `[HOST/]OWNER/REPO`, and `gh auth status` succeeds whenever the user is authenticated to *any* host, so a bare `OWNER/REPO` derived from a GitHub Enterprise remote resolves against **github.com** — silently opening the phase's pull request on an unrelated public repository if one happens to sit at that path, with §2.6's capability probe catching nothing because the call succeeded. Only `github.com` may drop the host. Validate the slug against `^[^/]+/[^/]+$` before calling `gh`; anything else (a Bitbucket `scm/proj/repo`, a nested GitLab group) is not a `gh` target, and no `gh` call is made against it — `handoff-to-main` skips to §4.2 (§2.6), and §3.5 skips its probe. §3.5's `gh pr list -R "$OWNER_REPO"` uses the same value and mistargets identically without this.
 
 The expressions strip a scheme, a `user@`, and a host with an optional `:port` terminated by `/` or `:` (the scp-like `git@host:Org/repo` form uses a colon), then a trailing slash and `.git`. The earlier two-expression form handled only `git@host:` and `https://host/`, and passed an `ssh://git@host/Org/repo.git` remote through unchanged — `gh` then failed on a repository argument that was a whole URL. Do not simplify it back.
-**Capability probe, not host classification.** Try the call; on any failure fall back to §4.2's instruction. Push authority and pull-request authority are independent — push runs over SSH with a per-repo key, `gh` runs over the API with a token, and the same account can have write access to one repository and read access to another. No hostname or host-type test can detect that mismatch, so a run can push successfully and still be unable to open the pull request. This is why `docs-workflows:finish-and-handoff` §4's host classification is right for choosing *instructions* and insufficient here.
-
-`gh` wraps the API rather than calling it over HTTPS, which is what the zero-direct-API rule permits — the same allowance `/document` already relies on.
+<!-- /entry -->
 
 ### 2.7 Title and body
 
@@ -181,9 +199,10 @@ Every failure is reported and the phase is described as **not handed off**. The 
 | `body_facts` | what §2.7 renders |
 | `inputs_read` | every file under `$SPECS_PATH` outside `specs-repo-git.md` §2.1's session-file shapes that this run or an agent it dispatched read — §2.2's stack test reads it beside `deliverable_paths`. Derived by the run from its own reads rather than declared ahead, and recorded as it reads, so a compacted context still holds it |
 
+<!-- entry: require-on-main -->
 ## 3. `require-on-main` — the consumer entry point
 
-Runs in the caller's Phase 0, immediately after `specs-preflight`, so it reuses that step's best-effort `fetch` (`specs-repo-git.md` §3.2) — no second network call. That fetch runs on a run carrying `specs_git: misrooted` too, which stops only the preflight's writes (`specs-repo-git.md` §3.1).
+Runs in most callers' Phase 0 immediately after `specs-preflight`, and in every caller after it, so it reuses that step's best-effort `fetch` (`specs-repo-git.md` §3.2) — no second network call. That fetch runs on a run carrying `specs_git: misrooted` too, which stops only the preflight's writes (`specs-repo-git.md` §3.1). **It applies rules of two other references, and looks them up:** `workflows-core:specs-repo-git`, §2.1, §3.1, §3.2, §3.3, §3.5 and §8 among them, and `workflows-core:read-only-repos`. Any read of them made in this run serves, since any read in the run serves to look up a rule, and each is loaded whole only where no read of it is in the conversation. That holds for a caller whose check runs a phase or more after its preflight too — `/ready`, `/epics`, `/specify` against an Epic its Step A picks, `/brd-proposal`, and `/brd-reconcile`'s cross-BRD write guard: the preflight's read of `specs-repo-git` serves it while that read is in the conversation.
 
 ### 3.1 Gate
 
@@ -206,7 +225,7 @@ The four primitives, each verified against a real specs repo:
 
 ### 3.3 The state table
 
-First matching row applies.
+First matching row applies. Every stop `require-on-main` makes, on any row, is worded by §4.4's stop contract.
 
 | # | On `<default-ref>` | Worktree | HEAD | Outcome |
 |---|---|---|---|---|
@@ -293,7 +312,7 @@ For rows D and E, after §3.2's ref scan finds a carrying branch:
 
     gh pr list -R "$OWNER_REPO" --head <branch> --state open --json number,url
 
-**Derive `$OWNER_REPO` first (§2.6), and skip this probe when the derivation does not validate.** §2.6's slug test (`^[^/]+/[^/]+$`) is what says whether this remote is a `gh` target at all; running the probe before it means calling `gh` with an unvalidated `-R`. `<branch>` is the bare name §3.2 carried forward, never `origin/`-prefixed. On `gh` failure, use **row E's** wording plus a note that the pull-request state could not be checked — never assert a pull request exists, and never assert one does not.
+**Derive `$OWNER_REPO` first, by §2.6.1's `owner-repo`, and skip this probe when the derivation does not validate.** Its slug test (`^[^/]+/[^/]+$`) is what says whether this remote is a `gh` target at all; running the probe before it means calling `gh` with an unvalidated `-R`. `<branch>` is the bare name §3.2 carried forward, never `origin/`-prefixed. On `gh` failure, use **row E's** wording plus a note that the pull-request state could not be checked — never assert a pull request exists, and never assert one does not.
 
 ### 3.6 Degraded verification
 
@@ -316,10 +335,13 @@ For rows D and E, after §3.2's ref scan finds a carrying branch:
 **`on_main` is defined only when `stopped: false`.** Its four values — `pass` (row A), `pass_amending` (row B), `absent` (row F), `unmanaged` (row H) — map to the four **non**-stopping rows, and the other **eight** (I, B′, C′, C″, C, D, E, G) define none. Every stopping row (I, B′, C′, C″, C, D, E, G) carries no defined `on_main` value; a caller has nothing to read there and must act on `stopped`/`branch`/`pr`/`degraded` instead.
 
 **A caller tests `stopped` before `on_main`.** `on_main: absent` is returned only by row F; every stopping row (I, B′, C′, C″, C, D, E, G — eight of the twelve) returns `stopped: true` regardless of what `on_main` reads. A caller that branches on `on_main == "absent"` before checking `stopped` cannot distinguish row F (never happened — §3.4 applies) from rows D/E (happened, but not handed off — the run must stop).
+<!-- /entry -->
 
 ## 4. Reporting
 
+<!-- entry: require-on-main -->
 ### 4.0 The three downstream classes
+<!-- /entry -->
 
 `<downstream-clause>` (§4.1), `<next-phase-clause>` (§4.1) and the consent array (§4.3) all answer one question about the artifact the producer has just written — **what does not landing it cost?** — and all three must answer it the same way. There are **three** answers, not two — and the **gated** one splits again at reporting time, on §3.4's own column, into the two `<next-phase-clause>` values §4.1 fixes and the two §4.3 arrays that pair with them. **Three is the class count and never the array count**: reading it as both is how §4.3 came to carry three arrays against §4.1's four.
 
@@ -364,11 +386,13 @@ The classes as the tree stands, each derived from the consumer rather than asser
 | `epic.md` | gated | named in §3.4's `/create-ard` `/specify` **(an Epic)** row, which falls back on `absent` — so `/epics`, whose set it lifts to *gated*, presents §4.3's falling-back array, save on a run that edited an `epic.md` the default branch already carries (§4.1) |
 | `_coverage.md` | unread | **looked for, and none found.** `epic-reviewer` and `/epics` Phase 6.1 read it inside the run that wrote it, which as a same-run read does not count, and a later `/epics` run's `epic-writer` recomputes it from `requirements[]` and the Epics' `## Covers` rather than reading the one on file |
 
+<!-- entry: require-on-main -->
 **Never infer an artifact's merged-ness from a sibling's gate.** A consumer may read the worktree and stop on what it finds there — most do, legitimately, and that is not what this rule is about. What is forbidden is the sentence *"every deliverable a `handoff-to-main` run stages lands in one commit, **so** this gated file's presence on `origin/<default>` implies its sibling merged with it."* That inference is true of the run that produced them and is **not a property of the tree**: `/prd-ground --no-code` hands off `design-grounding.md` alone, a hand-committed set can land partially (`/brd-reconcile`'s own §3.4 row says so), and either leaves the sibling on no ref while the gated file is merged.
 
 **The rule was found by the defect, not derived and then applied.** Every command that states the implication must either gate what its stop depends on or carry a clause saying what the implication does not cover. **No count is kept here**: one attempt asserted a number taken from the defects that had been fixed rather than from the tree, and a recipe written to replace it could not reproduce its own result. Read the commands.
 
 **So the test is not "does this command stop", it is "does this command claim".** A command that knowingly reads the worktree — `/epics` on `prd.md`, `/brd-interview` on `coverage-ledger.md`, `/ready` on the PRD it is reporting against — asserts nothing false and needs no gate; promoting every such read into a prerequisite would breach §5 rule 3 in a dozen places and refuse work that is ordinary without such a gate. A command that *states* the implication owes a gate or owes the deletion of the sentence. **This distinction is why the earlier, wider form of this rule was wrong**: written as "a reader that stops gates what it stops on", it condemned eight correct commands and was itself breached by the commit that introduced it.
+<!-- /entry -->
 
 **A handoff whose `deliverable_paths` set spans classes takes the strongest class in it** — **gated** if any one path is gated, otherwise **advisory** if any one is advisory. One array is presented for one handoff, and it has to state the largest thing declining costs: an operator told "no command stops on this" about a set containing a gated artifact will meet the stop anyway. `/brd-reconcile`'s two handoffs are the live case, and they differ: its first hands off the returned review alone (advisory), its second hands that review off together with `decisions.md` and `coverage-ledger.md`, both gated — so the second is gated even though one path in it is not.
 
@@ -503,15 +527,21 @@ The array is not reworded for this, and that is deliberate rather than lazy. The
 
 **What each option means.** Option 1 runs `handoff-to-main` (§2). Options 2 and 3 both decline it: the deliverable stays written and uncommitted, and the producer emits §4.1's "Declined by the user" line either way. They differ only in recorded intent — option 2 states the user will handle git themselves, option 3 states nothing — so a caller must not infer from option 3 that the artifact is unwanted, and must never delete or revert it. **Neither option stops the run's emitter tail**: feedback → follow-ups → cost → `resume.md` → `commit-artifacts` still executes, because that tail commits only `$SPECS_PATH`'s bounded session-artifact paths (`specs-repo-git.md` §2.1), never the deliverable this choice governs.
 
+<!-- entry: require-on-main -->
 ### 4.4 Stop contract
 
 Every `require-on-main` stop carries the same four parts as `specs-repo-git.md` §5, in this order: what was found (the concrete state — the path, the branch, the pull-request number); what the plugin did **not** do, stated as the consequence; the exact commands to resolve it with `$SPECS_PATH` already substituted; and one clause on what happens if it is ignored.
+<!-- /entry -->
 
+<!-- entry: require-on-main -->
 ## 5. Caller contract
 
-Four obligations. Omitting any one is a defect, not a style choice.
+Four obligations: rule 1 binds a producer, rule 2 and rule 3 a consumer, and rule 4 every command that cites this reference. Omitting any one is a defect, not a style choice.
+<!-- /entry -->
 
 1. A command that **produces** a `$SPECS_PATH` deliverable cites and **offers** `handoff-to-main` (§2) in its Handoff phase, behind §4.3's choice, and emits the §4.1 outcome line **on §4.1's own count** — which is that section's to state and not this one's (rule 4), and which *exactly once* got wrong in all three of the directions §4.1 settles.
-2. A command that **consumes** one cites and executes `require-on-main` (§3) in its Phase 0 — before its first subagent dispatch, code scan, docs-grounding retrieval, or grill question. A gate that fires after a scan has already spent what it was meant to save.
+<!-- entry: require-on-main -->
+2. A command that **consumes** one cites and executes `require-on-main` (§3) before its first subagent dispatch, code scan, docs-grounding retrieval, or grill question — in its Phase 0, save where it reaches the artifact it gates only at a later step and runs the gate there: `/ready` in its Phase 1, `/epics` in its Phase 2.6, `/specify` against an Epic its Step A picks, and `/brd-proposal` in its Phase 4, once its readiness walk has settled the included slices. A consumer that departs from that order says where and why. `/brd-reconcile`'s cross-BRD write guard, which runs the gate against another BRD's artifact just before writing into it, beside that command's own Phase 0 gate, is a site §3.7 names, where a stopping row is recorded rather than stopped on. A gate that fires after a scan has already spent what it was meant to save.
 3. A consumer acts on the returned state, and on `absent` applies its own pre-existing behaviour (§3.4). **No consumer turns an optional input into a prerequisite.** A consumer whose gated input shipped with the consumer itself — so there is no pre-existing behaviour and nothing was ever optional — may map `absent` to a stop, and §3.4's table names each one and why.
-4. **Never restate this reference's rules** — cite the section number. A rule copied into a command is a rule that goes stale. **§4.3's choice arrays are the one exception, and they are quoted rather than cited on purpose.** An array is not a rule: it is user-facing text that `AskUserQuestion` renders literally, and `scripts/check-docs.sh` check 12 gates the arity of the arrays it can *see*, so an array a command only cites is an array with no arity gate on it. The exemption is that narrow — the arrays, nothing else — and it carries one obligation in exchange, which falls on the citing form only: **a command that cites the array rather than quoting it names the §4.0 class it cites for — and, where that class is *gated*, which of §4.1's two halves**, because with four variants "present §4.3's consent choice verbatim" identifies none of them and "the gated variant" identifies two. A command that quotes needs no such label: the quoted string *is* the claim, and it is greppable. **§4.0 stays the authority on which artifact is in which class, and §4.1's quantifier on which half of *gated* it lands in.** A command may state the class its own deliverable is in and why — that is a fact about its own output, and stating it is what would have caught the `_readiness.md` defect before it shipped — but §4.0's register is what that statement is checked against, and a command that disagrees with it is the defective half. This exemption is written down because its absence was a defect of exactly the kind `instruction-file-maintenance.md` names: §4.3 said *present this array verbatim* while this rule said *never restate*, both live, both binding, and no reader could follow both.
+<!-- /entry -->
+4. **Never restate this reference's rules** — cite the section number. A rule copied into a command is a rule that goes stale. **One carve-out from the section number, in a file that requests `require-on-main`'s own file** (`args: "phase-handoff require-on-main"`): there a citation of this reference can load the whole of it beside that file, which is the read the file exists to spare, so a pointer that only explains — a reason, a consequence, what another phase does — names the contract in words ("the handoff's consent choice", "the handoff contract") rather than citing a § of it, in three cases. A pointer is to text the file does not hold where it cites a section the file does not hold, a section the file holds in part, for text other than the rules the line under the file's title quotes for it — §4.0 for anything but its *Never infer* rule, §5 for any rule but rules 2 and 3 — or this reference by no section, the request itself aside; and a load of this whole reference is `args: "phase-handoff"`, or a request of an entry point that has no file of its own, which reads the whole reference too. Inside a `##` section that requests that file, a pointer to text the file does not hold is worded, unless a load of this whole reference stands at or before it in that section. Before the first such section in the citing file, any pointer into this reference is worded — one to a section the file holds too — unless its own sentence loads the whole reference. After that section and before the citing file's first load of this whole reference, a pointer to text the file does not hold is worded, unless its own sentence loads the whole reference; one to a section the file holds, for the text it holds, stays cited, a lookup the file already read serves. It restates no rule a step applies: a step that applies such a section's rule cites it by number, with the whole load its case asks for. `scripts/reference-parts.py check-citations` holds all three cases. **§4.3's choice arrays are the one exception to never restating, and they are quoted rather than cited on purpose.** An array is not a rule: it is user-facing text that `AskUserQuestion` renders literally, and `scripts/check-docs.sh` check 12 gates the arity of the arrays it can *see*, so an array a command only cites is an array with no arity gate on it. The exemption is that narrow — the arrays, nothing else — and it carries one obligation in exchange, which falls on the citing form only: **a command that cites the array rather than quoting it names the §4.0 class it cites for — and, where that class is *gated*, which of §4.1's two halves**, because with four variants "present §4.3's consent choice verbatim" identifies none of them and "the gated variant" identifies two. A command that quotes needs no such label: the quoted string *is* the claim, and it is greppable. **§4.0 stays the authority on which artifact is in which class, and §4.1's quantifier on which half of *gated* it lands in.** A command may state the class its own deliverable is in and why — that is a fact about its own output, and stating it is what would have caught the `_readiness.md` defect before it shipped — but §4.0's register is what that statement is checked against, and a command that disagrees with it is the defective half. This exemption is written down because its absence was a defect of exactly the kind `instruction-file-maintenance.md` names: §4.3 said *present this array verbatim* while this rule said *never restate*, both live, both binding, and no reader could follow both.

@@ -100,7 +100,7 @@ set is ever staged.
 
 **`<docs-repo-slug>` is defined here, once, and it is always exactly one path segment.** It is derived in two steps, and two implementations that follow them produce the same directory for the same repository, byte for byte:
 
-1. **The source string.** Read the resolved docs repository's `origin` remote (`git -C <docs-repo-root> remote get-url origin`) and derive `OWNER_REPO` from it exactly as `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §2.6 derives it — the same `host` and `slug` expressions, and the same rule that only `github.com` drops the host — but **not** its SSH-alias resolution, which serves `gh` and `docs-workflows:finish-and-handoff` §4's footer, never a name: the slug is computed from the remote's own text, so a docs repository's folder keeps the name earlier runs gave it. Where the repository has no `origin` remote, **or where that derivation comes out empty** — a nonsense remote such as `https://github.com/` names no owner and no repository — the source is the basename of its git root instead. Where the run's write target is not a git work tree at all, the source is the basename of the target path, resolved to absolute. Three runs' command bodies lead to that last case: `/document` in direct mode pointed at a directory outside any git work tree; `/docs-init` when its operator cancels Phase 0 step 3's offer to create or initialise an absent or empty target — that command's emitter tail still runs, against a path that is not yet a repository; and `/docs-audit` where `resolve-docs-repo` answers with a directory that carries a docs signal and sits in no git work tree, which its own backlog path already provides for.
+1. **The source string.** Read the resolved docs repository's `origin` remote (`git -C <docs-repo-root> remote get-url origin`) and derive `OWNER_REPO` from it exactly as `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §2.6.1's `owner-repo` derives it — the same `host` and `slug` expressions, and the same rule that only `github.com` drops the host — but **not** its SSH-alias resolution, which serves `gh` and `docs-workflows:finish-and-handoff` §4's footer, never a name: the slug is computed from the remote's own text, so a docs repository's folder keeps the name earlier runs gave it. Where the repository has no `origin` remote, **or where that derivation comes out empty** — a nonsense remote such as `https://github.com/` names no owner and no repository — the source is the basename of its git root instead. Where the run's write target is not a git work tree at all, the source is the basename of the target path, resolved to absolute. Three runs' command bodies lead to that last case: `/document` in direct mode pointed at a directory outside any git work tree; `/docs-init` when its operator cancels Phase 0 step 3's offer to create or initialise an absent or empty target — that command's emitter tail still runs, against a path that is not yet a repository; and `/docs-audit` where `resolve-docs-repo` answers with a directory that carries a docs signal and sits in no git work tree, which its own backlog path already provides for.
 2. **The flattening — one substitution, per byte, in the C locale:** `printf '%s' "$source" | LC_ALL=C sed 's/[^A-Za-z0-9._-]/-/g'`. Every byte outside `A–Z`, `a–z`, `0–9`, `.`, `_` and `-` becomes one `-`. `/` is such a byte, so this one substitution is also what flattens `OWNER_REPO`'s separators; there is no second step to order it against. It is per **byte**, not per character: `ñ` is two bytes in UTF-8 and becomes `--`, so `Notes (draft) ñ` gives `Notes--draft----` wherever it is computed, where a per-character rule would give `Notes--draft---` and file one repository's record in two directories.
 
 So `git@github.com:acme/docs.git` gives `acme-docs`, and `ssh://git@git.example.com/team/docs.git` gives `git.example.com-team-docs`. **Every such byte is flattened, not only `/`,** because a directory name is the operator's to choose and may carry a space or a non-ASCII letter, and a substitution that admits no exception is what lets two implementations reproduce this directory byte for byte. **It is no longer flattened to keep the path out of the classifier's quoting, and that half of the reason is retired rather than the rule**: `git status --porcelain` does wrap such a path in double quotes (with a non-ASCII byte octal-escaped), and step 2's classifier, reading the path as reported, would have seen `"documentation/…` and never staged it — but step 1 above now reads `-z`, whose records are never quoted, so that is a form this procedure no longer meets. The flattening stands unnarrowed, because **the one-segment property is the whole point, and it is why the flattening is not cosmetic**: step 2's classifier below admits exactly one segment between `documentation/` and `dev-workflows/` (`^documentation/[^/]+/dev-workflows/`), while an unflattened `OWNER_REPO` is two segments on GitHub and three anywhere else. An entry written under one would be classified OTHER — never staged, left dirty, and firing §3.3's G1 on every later preflight of every caller, which is exactly the failure each of the single-file shapes below was once found to cause. Every site that fills the placeholder — `feedback-emission.md` §2, `cost-emission.md` §8, and the `docs-workflows` commands whose runs emit there — cites this definition rather than restating the derivation; a second derivation is how two sites come to disagree about where one repository's record lives. The flattening can in principle map two remotes to one name (`a-b/c` and `a/b-c` both become `a-b-c`); that is accepted, since the alternative is a second derivation or a path the classifier cannot stage.
@@ -439,7 +439,7 @@ First matching row applies.
 
 **In session-branch mode** (§8), B2's and B4's switch and pull, and the re-run's switch back below, are each wrapped in `lift` and `put-back` (§8.3), and the preflight ends with `put-back`. HEAD on the session branch is not a row's subject: G2 has already kept the run there.
 
-**Merged — `branch-merged <ref>`.** Whether the work on a branch is on the default branch, asked against `<default-ref>` (§3.2). B2 asks it of `HEAD`, `phase-handoff.md` §2.2 rule 3 of the ref it resolves, and §3.4's retry of each branch it lists. The first test that holds answers **merged**; none holding answers **unmerged**:
+**Merged — `branch-merged <ref>`.** Whether the work on a branch is on the default branch, asked against `<default-ref>` (§3.2). B2 asks it of `HEAD`, `phase-handoff.md` §2.2 rule 3 of the ref it resolves, §3.4's retry of each branch it lists, and `session-hygiene.md` §1 of each specs-repository branch an item of the resume pointer it overwrites names. The first test that holds answers **merged**; none holding answers **unmerged**:
 
 1. **A merge or a fast-forward:** `git -C "$SPECS_PATH" merge-base --is-ancestor <ref> <default-ref> 2>/dev/null` exits 0.
 2. **A rebase merge:** `git -C "$SPECS_PATH" cherry <default-ref> <ref>` prints at least one line, every line it prints begins `-`, which marks a commit whose change the default branch already holds under another commit, and `git -C "$SPECS_PATH" rev-list --merges <default-ref>..<ref>` prints nothing. `cherry` passes over merge commits, so a branch whose only change of its own sat in a merge commit would otherwise read merged, and B2 would name `branch -D` on it.
@@ -853,7 +853,18 @@ spend before it is the conversation's.
      retry and never `--no-verify`. The artifacts stay staged, and a later
      run's preflight flushes them (§3.4) once git accepts the commit.
 7. **Emit the §6 outcome line**, plus the full §5 notice repeated verbatim when
-   a guard fired at §3.3.
+   a guard fired at §3.3. **Where the run printed its report before this step,
+   the report is the run's account, and nothing after it restates it.** From
+   the report to the end of the run — or, where a later phase cedes control
+   (the exception at the head of §4), to that hand-off — the run prints only
+   what the command's own steps after the report tell it to print: its
+   maintenance, feedback, follow-up and cost lines, any question one of those
+   steps asks, a context-hygiene line a step places there, and this outcome
+   line with its §5 block and §6's appends, followed by any line the command
+   names to follow it. Never a summary, recap or restatement of the report,
+   and never one of the report's own lines again, its `Code repo:` or
+   `Phase handoff:` line among them: a recap written after the report states
+   its facts a second time, from memory, and is the part the user reads last.
 
 ### 4.1 Where the commit lands
 
@@ -988,7 +999,8 @@ them before its branch and again before its commit, and puts them back after it.
 `commit-artifacts` step 7 emits exactly one of these, prefixed `Specs repo:`.
 The caller places it per its own contract (§7) — inside its final report where
 the report is the run's last output, or as its own terminal block where the
-report was composed earlier.
+report was composed earlier, which holds nothing but what §4 step 7 lets
+follow the report.
 
 | Case | Line |
 |---|---|

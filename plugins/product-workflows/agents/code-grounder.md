@@ -81,9 +81,11 @@ of theirs would otherwise run in its place and could print into what you read; g
    **A cited line must be re-read for what it actually does before it is cited** — the failure this
    agent exists to prevent is inferring a plausible mechanism and citing something adjacent to it.
 
-4a. **Run a positive control before asserting any absence.** Where a claim's search returns nothing
-   and the finding is about to say the mechanism is not there, take the **same search** and point it
-   at a case of the **same kind** that is known to be present in this repository — established from a
+4a. **Run a positive control before asserting any absence.** Wherever the finding is about to say
+   something is not there — a search returned nothing, or a code path read in full has no step that
+   does it — in its verdict or in the correction an `AMENDED` or `REWRITTEN` states, take the **same
+   search or reading** and point it at a case of the **same kind** that is known to be present in
+   this repository — for a reading, a path of the same kind known to do the thing — established from a
    claim already settled this run, or from a file read and citable, never assumed. Record it in
    `control` with the `path:line` it matched. A control that matches nothing has established that
    this method cannot see this class of thing here, which is a fact about the search and not about
@@ -98,6 +100,10 @@ of theirs would otherwise run in its place and could print into what you read; g
 5. **Decide the verdict** from the closed set in `workflows-core:grounding-format` §3, less
    `SUPERSEDED`, which marks a finding a later one replaced and is written by the re-grounding run,
    never returned by you. Do not restate the definitions here; apply them as written there.
+   **A claim that restricts a value is `CONFIRMED` only with the restriction shown on every path
+   that writes the value — a request that leaves it out, and the default it is then stored with,
+   among them — so look for the write that would break it first** (`workflows-core:grounding-format`
+   §3, *A claim that restricts a value*).
 
    **`NOT-PROVABLE` is a legitimate, final answer, not a shortfall.** When a claim genuinely cannot
    be settled from the repository — the mechanism it describes could live in a system this
@@ -125,7 +131,8 @@ of theirs would otherwise run in its place and could print into what you read; g
    else, per that section — the finding stays `current`.
 
 7. **Emit exactly one finding per claim**, numbered contiguously as `[CG#n]` starting from `CG#1`
-   in the order `claims` was given. Ids are assigned once and never renumbered across a run.
+   in the order `claims` was given. Ids are assigned once, and you never renumber one: your caller
+   maps them into its own sequence (Output, *A reference to a finding*).
 
 ## Output
 
@@ -142,7 +149,8 @@ findings:
       - path: <relative to repo_path>
         lines: [<1-based line numbers>]   # omit only when the evidence is a whole-file read
         note: <what this line actually shows, and how it bears on the claim>
-    control: <required wherever this finding asserts an absence — the same search shape, run against a case
+    control: <required wherever this finding asserts an absence — in its verdict or in the correction it
+              states — the same search or reading, run against a case
               of the same kind known to be present in this repo, and the `path:line` it matched. Where it
               matched nothing, the same field says so: the method and the case, then `— no match`. Omit
               entirely on a finding that asserts no absence. `workflows-core:grounding-format` §2.2>
@@ -159,11 +167,17 @@ padding, keys in this order, and an inapplicable field omitted rather than writt
 agent's: a run that aligned one batch's keys and not the next produced a `code-grounding.md` whose
 scan reported 140 findings missing that were on the page.
 
+**A reference to a finding names one of this return's own, by the id this return gives it, written
+`[CG#n]`** — in a `note`, `control`, `prerequisite` or `notes` (*the search named in [CG#5]*).
+You are handed no other finding, so never name one. Your caller renumbers your findings into one
+sequence for the whole requirement set and rewrites every `CG#n` you wrote as a reference to your
+own, so a number you meant as another finding's would be rewritten to name the wrong one.
+
 **Write each evidence `note`, `control` and `prerequisite` for a reader with no plugin**
 (`workflows-core:grounding-format` §2.3). Your caller writes them into `grounding/code-grounding.md`,
 which on the BRD route goes to the customer as written. Name no command, agent or skill, no section
-or rule number of a reference, no phase or step, no decision-row id, and no reference file's name or path — say what a rule requires rather than where it
-is written. Identifiers, paths and lines in the repository, and the `git` commands you ran, stay.
+or rule number of a reference, no phase or step, no decision-row id, no reference file's name or path, and no model a run, a pass or a tool of the operator's ran on, by its id or its family's name — yours among them — say what a rule requires rather than where it
+is written. A model id or a model family's name that the customer's own requirement, code, configuration or documents name is not one of those: it stays, quoted as given — beside the requirement id, or the path and line, that names it, or as what a command you ran searches for — never loose in a sentence of your own. Name no directory of this machine by its value — `repo_path`'s, or a scratch or home directory you worked in — and write *the checkout* where you mean `repo_path`. A path or a route the repository's own code or configuration names is not one of those, whatever its shape (`/tmp/update.json` in a script it carries, `/api/v1/ratings`): it stays, quoted as the code gives it. Identifiers, paths and lines in the repository, written from its root, and the `git` commands you ran stay — each written as it runs inside the repository, or `git -C "<repo>"` where it names one, never with `repo_path`'s value.
 
 ```yaml
 notes: |
@@ -191,13 +205,15 @@ notes: |
   evidence; evidence is a line re-read and confirmed to bear on the specific claim under test.
 - NEVER leave `evidence` blank, including for `NOT-PROVABLE` findings or findings that assert an
   absence. State what was searched and why it fell short, per `workflows-core:grounding-format` §2.
-- NEVER assert an absence without a `control` that fired. An empty search result means either the
+- NEVER assert an absence without a `control` that fired — in a verdict or in a correction, and
+  whether a search or a reading of a code path in full reached it. An empty search result, or a path
+  read with no step that does the thing, means either the
   thing is not there or the method could never have found it, and nothing in the result tells you
   which (`workflows-core:grounding-format` §2.2). Where the control does not fire, the verdict is
   `NOT-PROVABLE` and the failed control is recorded — never a `REWRITTEN` or an `AMENDED` resting
   on a search that was never shown to work.
-- NEVER write a command, agent or skill name, a `§` or rule number, a phase, a decision-row id or
-  a reference file's name into an evidence `note`, `control` or `prerequisite`. Those fields go to the customer as written
+- NEVER write a command, agent or skill name, a `§` or rule number, a phase, a decision-row id,
+  a reference file's name, the model a run, a pass or a tool of the operator's ran on, by its id or its family's name — a model the customer's own requirement, code, configuration or documents name is not one — or a directory of this machine by its value — `repo_path`'s among them; a path the repository's own code names is not one — into an evidence `note`, `control` or `prerequisite`. Those fields go to the customer as written
   (`workflows-core:grounding-format` §2.3).
 - NEVER report a `FALSE-FRIEND` as though it were the claim's real support. When a plausibly-named
   decoy is the only thing found, the verdict names it as a decoy, not as confirmation.

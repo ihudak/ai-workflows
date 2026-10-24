@@ -129,7 +129,7 @@ and there it is **optional and ungated**: nothing in [`/create-ard`](create-ard.
   which is what lets [`/brd-interview`](brd-interview.md) tell a re-grounding that came back as it
   stood from one that moved a decision's ground.
 
-All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 11's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 11's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `workflows-core:docs-grounder`, `code-grounder`, `design-grounder`, `grounding-verifier` (overriding their frontmatter Opus pin), `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; if no Opus resolves, the three grounding agents otherwise degrade to the best-available model and record it, and `ground_tier` records that degraded tier, which does not happen under enforcement since the enforced model is used instead and `ground_tier` records that enforced id — see [Model routing](../reference/model-routing.md).
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 11's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a ceded `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session (`workflows-core:run-flags` §5 step 3) — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 11's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `workflows-core:docs-grounder`, `code-grounder`, `design-grounder`, `grounding-verifier` (overriding their frontmatter Opus pin), `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; if no Opus resolves, the three grounding agents otherwise degrade to the best-available model and record it, and `ground_tier` records that degraded tier, which does not happen under enforcement since the enforced model is used instead and `ground_tier` records that enforced id — see [Model routing](../reference/model-routing.md). `ground_tier` is printed on its own line of the final report, from the run's model-routing record, and nowhere else: no grounding file names the model or the tier its corpus was ground at.
 
 ## How it runs
 
@@ -169,6 +169,11 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   unreadable, or carrying no markdown file is a silent, non-blocking skip. Turned off with
   `--no-docs`, and also off under `--no-code` — a divergence is written into `code-grounding.md`,
   which that mode does not write. **A document is never evidence for a `[CG#n]`** — see the Phase 4.5 gate below.
+- **`python3`** — for two bundled scripts, standard library only: `scripts/bounded.py`, which caps
+  the `git remote` call Phase 1 makes in each clone it lists, and, on the BRD route,
+  `scripts/ledger-evidence.py`, which writes the coverage ledger's `evidence` column in Phase 8.
+  Without it Phase 1 skips every clone whose call fails, and the ledger's column is left as it stood,
+  the final report saying so.
 - **A clean working tree per resolved repository.** The Phase 3 baseline-integrity gate runs
   `rev-parse HEAD`, a `diff --ignore-cr-at-eol --stat`, and a line-count check on anything
   `status --porcelain` reports, **before any finding is written**. Any non-empty content diff stops
@@ -352,7 +357,17 @@ Under the resolved folder — the `PRD-<SLICE-KEY>-<slug>/` slice folder inside 
   run writes.
 - `coverage-ledger.md`'s `evidence` column — **BRD route only**, rebuilt as the last write of Phase
   8 over every row of the slice's ledger: each row takes the id of every `[CG#n]`/`[DG#n]` whose
-  claim names that row's `[BR#n]`, and a row no finding names keeps an empty cell. Nothing else in
+  claim names that row's `[BR#n]` — every `[CG#n]` by number, then every `[DG#n]` — and a row no
+  finding names keeps an empty cell. The run decides which finding names which row, and the bundled
+  `scripts/ledger-evidence.py` writes the cells: it splits each row only on the delimiters the
+  table's cell encoding defines, so an empty cell keeps its column, and changes no other byte of
+  the file. A ledger it cannot read that way — a header that is not the five columns in order, a row
+  whose cell count differs, a duplicate row — it refuses, writing
+  nothing, and the final report gives its reason; the run never repairs the ledger by hand. A map it
+  refuses — the run's own input, malformed or naming a requirement the ledger has no row for — the
+  run rebuilds from its findings and sends once more, and a second refusal is reported the same way.
+  A write that fails part-way leaves the ledger as it was, since the script writes the whole file
+  beside it and renames it into place. Nothing else in
   the row is touched — this command allocates nothing and writes no disposition. It is an index over
   the two grounding files and never a second copy of what they say, which is why a finding marked
   `SUPERSEDED` stays listed: the verdict lives in the file the id resolves to. Without it the
@@ -362,16 +377,38 @@ Under the resolved folder — the `PRD-<SLICE-KEY>-<slug>/` slice folder inside 
 - `brd-link.md` — **BRD route only.** The `depends-on:` list, merged additively across runs. Never
   written on the idea route, since `--depends-on` is refused there before Phase 4 could persist one.
 
-**The three grounding files are written for a reader with no plugin.** On the BRD route they go to
-the customer in the review bundle as written, and [`/brd-package`](brd-package.md) stops on any
-command, agent or skill name, `§` reference or decision-row id it finds in them. So every note,
-heading and lead-in the run writes says what happened in plain words, and before writing, Phase 8
-scans everything it is about to write for those tokens and rewrites a sentence that has one,
-changing no id, verdict, outcome, evidence path or line, or control result. The final report lists
-every rewrite. A token inside naming a finding records rather than prose — a path or command in your
-code repository, a frame path or label, a documentation page's path, the requirement text a finding
-quotes — is left as written, since rewording it would break the record; the final report names it,
-because on the BRD route, `/brd-package` will still stop on it. This covers what the run writes: the notes, opening lines and run headings an earlier run left on file stay as they are, and you can reword their free text by hand.
+**A finding that names another names it by the id the file carries, bracketed — `[CG#4]`.** Each
+grounder numbers its own findings from 1, so when the run merges them into one sequence it rewrites
+every reference to a grounder's own findings through that grounder's own renumbering, all at once,
+so that no rewritten number is rewritten again; a design grounder's references to code findings
+already carry the file's ids. A reference that names no finding of the run or on file is a parse
+failure: the run rewords it out before writing and the final report lists it.
+
+**The three grounding files are written for a reader with no plugin, and name nothing of your
+machine.** On the BRD route they go to the customer in the review bundle as written, and
+[`/brd-package`](brd-package.md) stops on any command, agent or skill name, `§` reference,
+decision-row id or model id it finds in them, save a model id in the naming a finding quotes (below),
+which it puts to you to rule on. So every note, heading and lead-in the run writes says
+what happened in plain words; nothing it writes names the model or the tier the corpus was ground at
+— that goes on its own line of the final report — or a directory of your machine: a command run
+against a repository names its checkout `"<repo>"`, and a path in your code repository is written
+from the repository's root. Before writing, Phase 8 scans everything it is about to write for those
+tokens, and for the paths of the repositories it resolved, `$SPECS_PATH` and the documentation root
+by their literal value, and rewrites a sentence that has one — a local path replaced by `"<repo>"`
+in a command, by the path from the root it lies under where it names a file, so an evidence path
+still names the same file, and by words such as *the checkout* in prose —
+changing no id, verdict, outcome, line or control result. The final report lists every rewrite.
+**Naming that a finding records is left as written**, since rewording it would break the record: a path,
+line or route in your code repository, a command run against your repository
+(`git -C "<repo>" grep …`), a frame path or label, a documentation page's path, the requirement
+text a finding quotes. A path your code names counts as such naming whatever its shape — `/tmp/…`
+in a script, `/api/v1/…` — so the run leaves it alone; only the literal value of one of the run's
+own paths marks a path as your machine's. A model your requirement, code, configuration or documents
+name counts as such naming too — `claude-sonnet-4-6` in a requirement or a configuration line — and
+is quoted as given, beside the requirement or the path it comes from; only a model your own tooling
+ran on — this run's, a pass's or a tool's — and the record of a tier are kept out. Where a plugin token — a `§` or a command name, say — sits inside such naming,
+the final report names it, because on the BRD route `/brd-package` will still stop on it; it names a
+model id there too, as one `/brd-package` will put to you to rule on as the customer's own. This covers what the run writes: the notes, opening lines and run headings an earlier run left on file stay as they are, and you can reword their free text by hand — an earlier run's tier line or local path among them.
 
 Behind Phase 9's consent choice, these are committed, pushed, and a pull request opened against the
 specs repo's default branch — under the shared `brd/<KEY>-<slug>` branch prefix on the BRD route
@@ -438,7 +475,7 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   pinned to a repository whose `HEAD` still matches its recorded pin (none under `--no-code`), but
   never a `[DG#n]` already on file, nor an earlier baseline finding (the run supersedes a
   repository's for the fresh one it records, and any other repository's is not this run's to
-  re-check). A retired finding keeps the outcome it had, and re-deriving it could only bring it back to life beside its successor. It runs in batches of up to 25 findings per repository or frame set, each in two dispatches: a blind re-derivation that is handed each finding's requirement and source and never its verdict, evidence, control or citation — and refuses a dispatch that carries one — then a comparison that runs the original's control and settles the outcome without changing the blind result. A finding whose result comes back incomplete is re-dispatched once in each verification pass and in each second opinion (below) — the first pass, and the class-4 sweep's re-check of a design finding whose cited code finding this run rewrote. The comparison is handed the blind result verbatim, and its copy counts as changed only where a structured value changed — the re-derived verdict, an evidence entry's path or lines, or a control's result — never where a free-text note was reworded. A finding without a
+  re-check). A retired finding keeps the outcome it had, and re-deriving it could only bring it back to life beside its successor. It runs in batches of up to 25 findings per repository or frame set, each in two dispatches: a blind re-derivation that is handed each finding's requirement and source and never its verdict, evidence, control or citation — and refuses a dispatch that carries one — then a comparison that runs the original's control and settles the outcome without changing the blind result. A finding whose result comes back incomplete is re-dispatched once in each verification pass and in each second opinion (below) — the first pass, and the class-4 sweep's re-check of a design finding whose cited code finding this run rewrote. Where a re-dispatch's blind verdict differs from a usable one it replaced — one lacking only the positive control its own absence claim owed — the outcome is the re-dispatch's, and the final report and the finding's notes name both verdicts. The comparison is handed the blind result verbatim, and its copy counts as changed only where a structured value changed — the re-derived verdict, an evidence entry's path or lines, or a control's result — never where a free-text note was reworded. A finding without a
   verifier outcome is never treated as evidence. **The outcome is first reconciled against the verdict
   the verifier re-derived**, which it returns on every outcome: `agree` means *the same verdict* and
   `extend` means *the claim holds*, so either arriving with a differing verdict is a return that
@@ -453,9 +490,9 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   belongs to the `[CG#n]` it cites — then runs
   any control it finds rather than reading it. A control that owed to be
   there and is not, or one that fails on a finding whose verdict **rests on** the absence,
-  normalises to `contradict` even where the verifier's own search also found nothing: two searches
-  sharing one blind spot is the state a control exists to expose. The one exception is a finding
-  already reading `NOT-PROVABLE` with its own failed control recorded — that is what the format tells
+  normalises to `contradict` even where the verifier's own search or reading also found nothing: two
+  searches or readings sharing one blind spot is the state a control exists to expose. The one
+  exception is a finding already reading `NOT-PROVABLE` with its own failed control recorded — that is what the format tells
   a writer to do, and reproducing its result is agreement. **A `contradict` the comparison disputes
   gets a second blind opinion.** The comparison never changes the blind result, but it flags one whose
   own evidence does not establish its own verdict — never one merely because the original's verdict
@@ -464,7 +501,9 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   the control gives the same result on every run. Where the two blind verdicts agree the
   `contradict` stands. Where they disagree the outcome becomes `unprovable`, the finding keeps its
   verdict, its notes record the two verdicts and the dispute, and the report flags it as
-  verification inconclusive, naming both verdicts. The second opinion is not a retry, and its own
+  verification inconclusive, naming both verdicts — and, where the second blind verdict is the
+  finding's own, says so, since the settlement compares the two blind verdicts only and the
+  finding's agreement with one of them is not a vote. The second opinion is not a retry, and its own
   dispatches get one retry of their own. A `contradict` outcome on an own-run
   finding — one this run produced, which nothing outside this run cites yet — rewrites it in place:
   same id, replaced verdict and evidence. On an on-file finding — one an earlier run wrote, which a
@@ -476,7 +515,9 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   command: `--no-code` where the code finding has a successor, and a plain re-run where it has none,
   since that re-grounds a claim nothing on file answers. An `agree`/`extend`/`unprovable` outcome
   is recorded alongside the finding unchanged (`extend` also
-  appends the additional evidence the verifier's own search turned up). Which anchor each finding
+  adds the evidence the verifier's own search turned up that the finding does not already hold: an
+  entry whose lines overlap those of one the finding cites on the same file widens that entry's
+  lines, keeping its note, and any other is appended). Which anchor each finding
   is verified against depends on what it rests on: a `[CG#n]` and a class-4 `[DG#n]` are re-derived
   against the pinned repository, a class-1/2/3 `[DG#n]` against the frame set it was reconciled
   from — see `workflows-core:grounding-format` §8. A verifier that

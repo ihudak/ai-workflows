@@ -28,7 +28,7 @@ key: <the folder's key>
 
 ## Satisfied
 
-- <requirement id, or its quoted text> — <file:line@commit>, one per evidence location
+- <requirement id, or its quoted text> — <file:line@commit>, one per evidence location[ — sibling parts: <EPIC-KEY> (<component id>), one per sibling Epic]
 
 ## Unverified
 
@@ -38,6 +38,8 @@ key: <the folder's key>
 ```
 
 A re-run rewrites the header and both lists. A reader that compares the commit recorded here with the repository's default branch can say how far the code has moved since. An Epic run before the Epic's pull request merges names the Epic's branch under **Code checked**, its commit that branch's tip, which a squash merge leaves out of the default branch's history and a deleted branch out of any clone that never fetched it; a record an Epic run wrote from `dev-workflows` 4.26.0 until 4.28.0 names the default branch alone. **`## Satisfied` lists every requirement the run found satisfied, those whose discrepancy the re-check dropped included, with the evidence that settled it — and it is what a later PRD run's drift check reads**: it re-traces a requirement listed there only where the code at its evidence paths changed between the commit the header names for that repository and the default branch, or where that commit does not resolve in the clone, so a record without the list has every requirement re-traced.
+
+**On an Epic run, a PRD-level `[AD#n]` Rule and a `## Contract` line are judged without a sibling Epic's part** — a part they place on the component of a sibling Epic, another Epic of the PRD whose target is not the Epic's, which is that Epic's to build (`/dev-workflows:conformance` Phase 2). Such a requirement's `## Satisfied` line cites the evidence of every part the run judged — every part but a sibling Epic's — never a location on a sibling's component, and, where the requirement places a part on one, ends `— sibling parts:`, naming each such Epic by key with its component id. The suffix names no location, so the drift check reads the evidence before it. An `[AD#n]` Rule that binds only components other than the Epic's own target is `not-checkable` on that run: counted in the header, listed in no section of the record, and traced in full by a later PRD run. A `## Contract` line's side on the Epic is always the Epic's own.
 
 **`## Unverified` lists every requirement the re-check could settle neither way** — a `satisfied` citing no `file:line` among them — with what would settle it. It is neither satisfied nor an entry: it takes no `[DD#n]`, nobody is asked about it, and a later run of either kind traces it in full, since it is not under `## Satisfied`.
 
@@ -52,6 +54,7 @@ One entry per discrepancy, in id order, under the header's `## Discrepancies` he
 - **verdict:** <partial | missing | contradicts | satisfied (an entry now resolved)>
 - **shipped:** <one sentence on what the code does>
 - **evidence:** <file:line@commit>, one per repository it was found in
+- **sibling parts:** <Epic run only, where the requirement places one (§2): <EPIC-KEY> (<component id>), one per sibling Epic — that Epic's, never this entry's discrepancy>
 - **decision:** <fix-code | amend-document | accept> — **status:** <proposed | final | resolved>
 - **rationale:** <the person's own words>
 - **effect:** <"follow-up proposed: " and the follow-up line, the note's location, or "recorded">

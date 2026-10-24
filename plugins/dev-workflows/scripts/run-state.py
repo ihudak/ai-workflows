@@ -103,7 +103,7 @@ LOCK = ".implement-run.lock"
 KEYS = [
     ("format", 1), ("phase", "Phase 1.4"), ("mode", None), ("key", None), ("source", None),
     ("focus_key", None), ("unit_key", None), ("workitem_key", None), ("unit_folder", None),
-    ("run_flags", None), ("specs_git", None),
+    ("run_flags", None), ("specs_git", None), ("specs_merged_branch", None),
     ("spec_context", {"spec_paths": [], "in_scope_ids": None, "applicable_spec": None,
                       "applicable_ard": None, "ard_paths": [], "companion_run": None,
                       "tasks_only": None}),

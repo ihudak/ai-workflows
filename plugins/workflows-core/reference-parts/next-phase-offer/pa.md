@@ -37,6 +37,7 @@ Every rule name in `next-phase-offer`, with the part that holds it; `core` comes
 - `Surface` → `contract`, `pm`, `brd`, `proposals`, `pa`, `pe`, `dev`, `overflow` or `not-pipeline`
 - `universal minimum` → `contract`, `pm`, `brd`, `proposals`, `pa`, `pe`, `dev`, `overflow` or `not-pipeline`
 - `The routing graph (role-aware)` → `pm`, `brd`, `proposals`, `pa`, `pe`, `dev` or `epics-precondition`
+- `The remaining Epics are named` → `dev`
 
 ---
 

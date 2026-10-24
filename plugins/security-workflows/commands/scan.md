@@ -71,6 +71,8 @@ keeps a `sec` run's role.
 
 1. **Run flags.** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
 
+   **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
+
 2. **Arguments.** What step 1 leaves is one positional address and the command's own flags.
    - **An address that names an existing directory is a repository path**: step 5 takes its repository. **Any other address is a key**, which step 4 reads with `read-key`.
    - `--import <dir>`, `--triage` and `--verify-fixes` exclude one another, and `--import` takes an existing directory.
@@ -420,8 +422,8 @@ stop or a failure included (*Ending early*). Where the worktree holds a report d
 not record — any stop before 7.2 wrote the run's record, Phase 4's *Stop to clean the files* among
 them — first copy that directory to `<repo root>/`, where its own `.gitignore` keeps it out of
 `git status`, and name the copy, which `--import` records. Where the removal fails, name the path in
-the report, and in the resume pointer where 7.6 writes one; the next run's Phase 0 step 7 finds it by
-its prefix.
+the report — its `### Scope`, or the stop message of a run that ends early — and, where 7.6 runs,
+in the feedback, as Agent 4's *Key events*; the next run's Phase 0 step 7 finds it by its prefix.
 
 ### 7.5 The report
 
@@ -451,6 +453,7 @@ SIGNIFICANT — [one-line reason]
 - Scanned: [the kind at <commit> — the Epic's branch over <base>, the whole repository or the area Claude Security's scope question chose, or the files of --verify-fixes in a temporary worktree at <default>'s head — with the effort and the report directory; a tip that differs from the recorded commit; a fast-forward or switch made; after_merge; a dirty tree; or "no scan" on --triage, and the imported folder on --import]
 - Verification: [the stamp's verification.status — verified, or unverified with its verification.reason — and, where verification.researchers_returned is below verification.researchers_dispatched, how many of the dispatched researchers did not return; or "no scan" on --triage]
 - Refs: [each fetch that failed or timed out, read as last fetched; each stale tracking ref removed; a shallow clone, where the merge state may read as open; a tip unit-branch could not compare; a read-only mount — or "fresh"]
+- Worktree left: [the path of the temporary worktree 7.4 failed to remove, which the next run's Phase 0 step 7 offers to remove once it is idle — omit otherwise]
 - Limit: the register records what scans found, never that nothing else is there.
 
 ### Findings
@@ -487,13 +490,26 @@ the preview then cancels stays in this report only (`workflows-core:followup-emi
 
 The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer dev")`, the *Dev — build, verify & deliver* lane:
 - **findings went to fix** → with a key, `/dev-workflows:implement <KEY>` from repository `<repo-slug>`, which reads back the follow-ups the preview writes and continues on the Epic's branch while its pull request is open, starting from each patch a line names — a path under `$SPECS_PATH`, which its Phase 1 reads there, and which it checks with `git apply --check` and applies, each task's in turn, before any other edit; then the pull request's review and merge — where the change scan ran under `after_merge`, whose pull request has merged already, the review and merge of the pull request that run opens. With a path, `/dev-workflows:implement` with the prompt lines, each that names a patch followed by that patch's absolute path, `$SPECS_PATH` joined to it: a direct run reads no follow-up and resolves no path under `$SPECS_PATH` itself;
-- **once the fix has merged** → `/security-workflows:scan <repo-path> --verify-fixes` (Security Engineer), which closes it on evidence;
-- **accepted risks are review due, or decisions await security review** → `/security-workflows:scan <repo-path> --triage` (Security Engineer);
-- **after a change scan** → `/security-workflows:scan <KEY>` (Dev) from each other repository the unit's `implementation.md` names, since the change scan reads the repository it is run from; and, where no finding went to fix, the pull request's review and merge — none under `after_merge`, whose pull request has merged already — then the remaining Epics, then the PE's `/dev-workflows:conformance <PRD-KEY>`;
+- **once the fix has merged** → `/security-workflows:scan <repo-path> --verify-fixes` (Security Engineer; register `security/<repo-slug>/`), which closes it on evidence;
+- **accepted risks are review due, or decisions await security review** → `/security-workflows:scan <repo-path> --triage` (Security Engineer; register `security/<repo-slug>/`);
+- **after a change scan** → `/security-workflows:scan <KEY>` (Dev) from each other repository the unit's `implementation.md` names, since the change scan reads the repository it is run from; and, where no finding went to fix, the pull request's review and merge — none under `after_merge`, whose pull request has merged already — and the remaining Epics, each named by its key and ordered with that pull request by the ARD's landing order, as `workflows-core:next-phase-offer`'s *The remaining Epics are named* says, then the PE's `/dev-workflows:conformance <PRD-KEY>`;
 - otherwise, nothing.
 
 The run hands nothing off by pull request, so no offer carries a `<merge-clause>`. Where more routes
 apply than a prompt can carry, the offer's overflow rule applies.
+
+**Each Security Engineer offer names its register's slug beside its `<repo-path>`**.
+A key run's resume pointer carries the offer until the Security Engineer runs it — where that run
+records in the register and its record reaches the specs checkout of a later run; one that records
+nothing, or whose record is still on another clone or on a session branch whose pull request has not
+merged, leaves the offer carried — and that pointer is shared across machines, where `<repo-path>` —
+this machine's `<repo root>` — can be no repository: `workflows-core:session-hygiene` §1 settles the
+offer only by a Security Engineer run record of the offer's own mode under
+`security/<repo-slug>/runs/` — `role` `sec`, and `kind` `verify` for `--verify-fixes` or `triage`
+for `--triage` (`workflows-core:security-register-format` §2) — later than the offer's waiting
+datetime, as `workflows-core:session-hygiene` §1 defines it, the slug read from the offer. So
+neither this command's next change scan of the unit nor a run of the other mode settles a pending
+offer.
 
 ### 7.6 Maintenance, feedback, follow-ups, cost, resume, commit
 
@@ -520,7 +536,7 @@ Then spawn all four maintenance agents — Agent 4 alone on a run that recorded 
 - **Agent 1 — Documentation** (`subagent_type: "general-purpose"`): given the change summary, check the specs repo's own internal documentation for an index of security registers or per-repository records; apply a minimal edit where one is warranted, and otherwise return "no update required (reason)".
 - **Agent 2 — Knowledge base** (`subagent_type: "general-purpose"`): given the change summary, check `~/.claude/memory/` and the project root's `.claude/memory/` for fitting files and append one entry per recurring or non-obvious pattern this run surfaced — never two lessons in one entry — each titled by its own lesson and appended to the most fitting file, in the `### [Short title]` / Context / Insight / When it applies / Date / Ref format; otherwise return "no update required". It never copies a finding's text, which is scan output.
 - **Agent 3 — Instructions** (`subagent_type: "general-purpose"`): given the change summary, check `CLAUDE.md` in the project root and `~/.claude/CLAUDE.md` for a missing rule this run revealed; apply a minimal, additive, scoped change only where one is warranted.
-- **Agent 4 — Session maintenance** (`subagent_type: "workflows-core:impl-maintenance"`): "Analyse this session and return a Lessons Learned report. Session handoff: Command run: /security-workflows:scan; What was done: [one paragraph]; Key events: [the skill's stops or refusals, skipped repositories, renumbered findings, or 'none']; Workarounds used: [or 'none']; Review verdict: [the findings by severity and the triage decisions]; Test result: N/A (a security scan; no code changed); Project root: $SPECS_PATH."
+- **Agent 4 — Session maintenance** (`subagent_type: "workflows-core:impl-maintenance"`): "Analyse this session and return a Lessons Learned report. Session handoff: Command run: /security-workflows:scan; What was done: [one paragraph]; Key events: [the skill's stops or refusals, skipped repositories, renumbered findings, the path of a worktree 7.4 failed to remove, or 'none']; Workarounds used: [or 'none']; Review verdict: [the findings by severity and the triage decisions]; Test result: N/A (a security scan; no code changed); Project root: $SPECS_PATH."
 
 **Persist plugin feedback (automatic).** After Agent 4 returns, invoke `Skill(skill: "workflows-core:reference", args: "feedback-emission emit-auto")` and call its `emit-auto` entry point (§6) with Agent 4's Lessons Learned report, `command: /scan`, the run's `key` and `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`).
 
@@ -536,7 +552,7 @@ Emit this step's short output — each agent's result, the feedback persisted, a
 
 **Session cost.** **Under `run_flags.skip_costs`**, do not call `emit-cost`: execute `skip-cost` (`Skill(skill: "workflows-core:reference", args: "run-flags skip-cost")`) and surface `Session cost: skipped (--skip-costs)` (or `(WORKFLOWS_SKIP_COSTS)`). Otherwise, invoke `Skill(skill: "workflows-core:reference", args: "cost-emission emit-cost")` and call `emit-cost` with `command: /scan`, `phase: inferred`, `role: inferred`, `run_role`, the run's `key` and `source`, and `plugin_version` (read from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`). §7's `/scan` inference resolves the phase to `security-audit` and the role from `run_role`. A key run files its entry under the unit's PRD folder; a keyless run, on a repository path, files it under `$SPECS_PATH/security/<repo-slug>/` (§8).
 
-**Then write the resume pointer** per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` §1 — not on a run that ended early (*Ending early*), which writes none — naming in its *Carry-forward decisions* line any worktree 7.4 failed to remove. A keyless run has no PRD folder, and §1 writes no file for it. **Then remove the run's scratch directory**, immediately before the terminal commit: `run_dir=<the path>; case "$run_dir" in */security-workflows-run.*) rm -rf -- "$run_dir" ;; esac` — the `mktemp` prefix guards the target, matched as a prefix since BSD `mktemp -t` appends a suffix of its own after the template, and nothing else is removed. **Then commit session artifacts (terminal)**: invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It commits the register, the unit note and the follow-ups with the run's other session files (spec D12), and pushes them as it pushes those; where the default branch takes no push, §8's session-branch mode carries them. Print its §6 outcome line, prefixed `Specs repo:`, as the run's last output, followed only by the line below where it applies.
+**Then write the resume pointer** per `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` §1 — not on a run that ended early (*Ending early*), which writes none. The run writes each Security Engineer offer the pointer takes from the report's `### Next step` as the report writes it, with its register, `security/<repo-slug>/`, beside it. A keyless run has no PRD folder, and §1 writes no file for it. **Then remove the run's scratch directory**, immediately before the terminal commit: `run_dir=<the path>; case "$run_dir" in */security-workflows-run.*) rm -rf -- "$run_dir" ;; esac` — the `mktemp` prefix guards the target, matched as a prefix since BSD `mktemp -t` appends a suffix of its own after the template, and nothing else is removed. **Then commit session artifacts (terminal)**: invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. It commits the register, the unit note and the follow-ups with the run's other session files (spec D12), and pushes them as it pushes those; where the default branch takes no push, §8's session-branch mode carries them. Print its §6 outcome line, prefixed `Specs repo:`, as the run's last output, followed only by the line below where it applies.
 
 **Where that line is §6's *push rejected* row that advises `git pull --rebase --autostash`** — not its session-branch form, which advises no pull — **and the commit it names holds a file under `security/<repo-slug>/`** — `git -C "$SPECS_PATH" diff-tree --root --no-commit-id --name-only -r <its sha7> -- security/<repo-slug>/` prints a path, as it does wherever `register.py commit` ran, and where Phase 5 step 1's `rebuild` rewrote a stale `register.json` or `register.md` on a run that recorded nothing — follow it with one more line, the **settle line**, prefixed `Specs repo:` as §6's own addenda are, so that the two stay the run's last output. Where another clone recorded too before either pushed, both rebuilt `register.json` and `register.md`, so that pull stops on a content conflict in each; the run records, each a file of its own, never conflict, and a rebuild from them settles both. `<plugin root>` is this run's expanded `${CLAUDE_PLUGIN_ROOT}`, and `<SPECS_PATH>` the run's `$SPECS_PATH`, both written out:
 

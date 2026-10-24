@@ -13,6 +13,8 @@ Promote team decisions to organisation ADRs: $ARGUMENTS
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
+These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
+
 Usage: `/product-workflows:promote-decisions [--reconsider] [--max <n>] [--skip-feedback] [--enforce-model=<model>]`
 - `--reconsider` also proposes records marked `declined` or `rejected`;
 - `--max <n>` caps each shortlist (default 10);
@@ -21,6 +23,8 @@ Usage: `/product-workflows:promote-decisions [--reconsider] [--max <n>] [--skip-
 ## Phase 0 — Guards
 
 **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
+
+**Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
 
 1. Parse `--reconsider` and `--max <n>` from what `strip-run-flags` leaves. `<n>` must be a positive integer.
 2. `command -v python3` fails → stop: `/product-workflows:promote-decisions needs python3 — its signals are a bundled script.`

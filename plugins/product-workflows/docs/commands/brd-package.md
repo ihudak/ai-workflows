@@ -57,9 +57,14 @@ prompt is assembled from a named artifact rather than written fresh. The de-Obsi
 renders a copy and never edits a source. And the plugin-free scan runs last, over the *finished*
 text of the prompt, the note and every bundle document — a hit **stops the run and never sanitises**
 (inside the customer's own verbatim content, or a locator naming their own files and headings, it
-is reported for the operator to rule on instead), because a citation that reached the prompt reached
-it from a sentence that assumed a reader who has this plugin, and deleting four characters leaves
-that assumption in place.
+is reported for the operator to rule on instead, as is a model id your customer's requirement,
+code, configuration or documents name, where a grounding finding quotes it, and a model id inside a prerequisite's package,
+which is never rewritten and so reaches your customer as written either way, is named in the final
+report and left), because a citation that reached the
+prompt reached it from a sentence that assumed a reader who has this plugin, and deleting four
+characters leaves that assumption in place. A model id that records what your tooling ran on is
+removed too — by you, in the file it came from, never by the scan in a copy; one your customer's
+own material names is theirs, and is never removed.
 
 ## How it runs
 
@@ -204,7 +209,7 @@ repo's default branch under the shared `brd/<BRD-KEY>-<slug>` branch prefix. The
 serves both delivery routes, and the run settles which one at the delivery note — which is why the
 consent is asked there rather than at the handoff phase that acts on it: the note is one of the
 files the handoff commits, so its route cannot wait on the handoff's outcome. Where the specs repo
-passes the handoff's gate (an existing git repository whose `.git` is writable, on no detached
+passes the gate `handoff-to-main` opens with (an existing git repository whose `.git` is writable, on no detached
 HEAD, and a `$SPECS_PATH` the run has not found misplaced), has an `origin` remote to push to, and
 the operator consents, the run asks, recommending that
 the customer pull the bundle; where any of the three fails — declining the handoff among them, which
@@ -321,15 +326,34 @@ attack.
   an example number against this package's own records — to a requirement or finding nobody meant,
   or to nothing.
 - **Phases 6, 7 and 8 — the plugin-free scan.** Run over the finished prompt, the finished note and
-  every bundle document. A hit stops the run with `BRD_PACKAGE_PROMPT_LEAK`, naming the token, the
-  part it landed in and the artifact it came from — except inside the customer's own verbatim
+  every bundle document. A hit stops the run with `BRD_PACKAGE_PROMPT_LEAK`, naming the token, where
+  it landed — a part of the prompt, the note, or a bundle document and its line — and the artifact it
+  came from. The scan stops on a model id too, which needs no plugin to read but, where it records
+  what your tooling ran on, tells your customer which tooling produced the package: a grounding file
+  an earlier `/prd-ground` run wrote can carry its tier line, and the stop's repair for such a model
+  id is to remove that line or clause from the file it names by hand, commit the edit to the specs
+  repository's default branch, and re-run. A model your customer's own requirement, code,
+  configuration or documents name is theirs, and the stop never asks you to remove it: the scan cannot
+  tell it from yours by the token, so where a grounding finding quotes it — in its claim, or beside
+  the requirement or the path it comes from — it is put to you to rule on with the customer's other
+  content below, and anywhere else the stop asks you to quote it beside that record, or to name the
+  model by it. Two exceptions. A
+  model id inside a prerequisite's package copied in is not a stop: that package is never
+  rewritten, so its text reaches your customer as written whether or not it already has, and the
+  run names each such hit in its final report — the bundled filename and line, *… which is never
+  rewritten — left as packaged* — and packages on, never asking you to rule on it, even where it sits
+  in the customer's own content or naming; every
+  other class stops there as anywhere. And a hit inside the customer's own verbatim
   content (their captured files, and the parts of the transcription, the inventory, the coverage
   ledger and the register that quote them) or a locator naming their own files, headings and links,
-  in the positions where `bundle-packaging.md` §6.3 recognises one; both sets are defined there,
-  once. There a `§ 4.2` or a `D3` is the customer's own and the only fix would falsify it, so the
+  in the positions where `bundle-packaging.md` §6.3 recognises one — and a model id in their naming a
+  grounding finding quotes — does not stop the run by itself;
+  these sets are defined there, once. There a `§ 4.2` or a `D3` is the customer's own and the only fix would falsify it, so the
   hit is reported, grouped as that section fixes, and put to the operator on one question per pass —
   ship it as the customer's own (recommended), or hold the package, which stops with
-  `BRD_PACKAGE_CUSTOMER_CONTENT_HELD` and hands nothing off; a hit an earlier ruling in the run
+  `BRD_PACKAGE_CUSTOMER_CONTENT_HELD` and hands nothing off — a model id the report shows there that
+  records what your own tooling ran on is yours: hold the package over it, and remove it by hand from
+  the file it came from before the re-run; a hit an earlier ruling in the run
   covered is not asked about again, and the report opens its list of them with a
   `Customer content:` line — or, where that section says so, it is no hit at all. The identifiers
   the package's own registers, logs and grounding files mint are **not** in the scan's classes and
@@ -379,7 +403,7 @@ attack.
   ids stops with `BRD_PACKAGE_CORPUS_UNREADABLE` — a corpus holding no record-shaped content at all
   is legitimately empty and passes.
 - **Phase 8 — the set-resolution check.** Run last, and the three passes hunt different failures: a
-  token the reviewer cannot resolve, a token they resolve to the wrong thing, and a **set restated
+  token the reviewer cannot resolve or, a model id, has no use for, a token they resolve to the wrong thing, and a **set restated
   wrongly** — every identifier resolving, every filename real, and the set they compose not being
   the one its source holds. Three relations, all comparing membership rather than counts, because
   two sets of the same size with different members read as correct: a part that enumerates

@@ -2,7 +2,7 @@
 
 Given a resolved item, resolve any applicable **Architecture Requirements/Decision Document(s)** produced by
 `/create-ard` and return a normalized **ARD context** — or **`none`**. Cited by `/create-ard`, `/design`,
-`/implement`, `/specify`, `/epics`, and `/ready` so the resolution logic, the **optional/no-regression** rule, and the deviation-record
+`/implement`, `/specify`, `/epics`, `/ready`, and `/conformance` so the resolution logic, the **optional/no-regression** rule, and the deviation-record
 convention live in ONE place.
 
 ## Inputs
@@ -20,7 +20,7 @@ convention live in ONE place.
    its `SPECS_PATH_INSIDE_TREE` message — never `none`, which would let the caller go on without an
    ARD it should have enforced.
 
-   **This step is the only route by which that resolution reaches an ARD.** All six consumers below
+   **This step is the only route by which that resolution reaches an ARD.** All seven consumers below
    delegate their ARD lookup here, so none of them finds an ARD by resolving its *own* folder —
    `/implement` included, which resolves its own folder on a keyed run and still reaches an ARD
    solely by citing this file.
@@ -31,11 +31,12 @@ convention live in ONE place.
      inherited invariants.
    - **PRD-level** (`epic` null): only the PRD folder's `ard.md`.
 
-   Collect them **in the working tree and on `<default-ref>`** — the ref `phase-handoff.md` §3.2
-   resolves — listing each folder there with `git -C "$SPECS_PATH" ls-tree --name-only
-   "<default-ref>" -- "./<folder>/" 2>/dev/null`, `<folder>` relative to `$SPECS_PATH`: a filename
-   above that the ref holds and the working tree does not is a candidate too. A listing that fails —
-   `$SPECS_PATH` no git repository, or no `<default-ref>` (§3.3 rows H and G there) — adds none. An
+   Collect them **in the working tree and on `<default-ref>`** — the ref `specs-repo-git.md` §3.2
+   resolves for the run's preflight, which `require-on-main` reads too — listing each folder there
+   with `git -C "$SPECS_PATH" ls-tree --name-only "<default-ref>" -- "./<folder>/" 2>/dev/null`,
+   `<folder>` relative to `$SPECS_PATH`: a filename above that the ref holds and the working tree
+   does not is a candidate too. A listing that fails — `$SPECS_PATH` no git repository, or no
+   `<default-ref>`, the states `require-on-main` meets as its rows H and G — adds none. An
    ARD that reached the default branch after the run's own branch was cut is in no working-tree
    listing, so without the ref's the run would resolve `none` and never ask the gate, which stops
    there on row B′. A ref-only candidate goes through `require-on-main` like any other: row B′
@@ -87,7 +88,7 @@ contracts:           # the PRD-level ARD's `## Contracts` (step 4), or null
 
 `status: none` when no ARD file resolves (the common case — `/create-ard` is optional), and `components` is then `[]` and `contracts` `null`.
 
-`status: unmerged` when an ARD file resolves but is **not on the specs repo's default branch** — verified via `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §3 (`require-on-main`), whose rows D and E find it on a plugin branch and return the carrying `branch` and any open `pr`. Both are passed through to the caller.
+`status: unmerged` when an ARD file resolves but is **not on the specs repo's default branch** — verified by `require-on-main` (§3), executed from its own file with `Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, which holds the gate and every rule it applies. The gate's rows D and E find the ARD file on a plugin branch and return the carrying `branch` and any open `pr`; both are passed through to the caller.
 
 **An ARD file no plugin branch carries is not `unmerged`.** There `require-on-main` returns row F — `on_main: absent`, with no branch to pass through — which is the state a declined handoff of a new ARD leaves, or that an ARD committed only on a branch of the person's own leaves, and it is `status: none`, exactly as `phase-handoff.md` §3.4's ARD row records it: the file is not read, and the no-regression rule below applies unchanged. Reading it as `unmerged` would stop every consumer but `/ready`, naming no branch, in a state §3.4 lets them proceed past.
 
@@ -123,7 +124,8 @@ deviation record as *allowed-but-flagged* (the architect adjudicates), **without
 - `/specify` — keep user stories + scope consistent with `AD#N` + scope; deviations → the spec's `### Open questions`.
 - `/epics` — PRD-level only (`epic: null` on a re-refine run as on a draft one, `prd` the PRD folder's key either way); `AD#N` = inherited invariants the drafted Epics must respect; deviations → a `- ARD deviation: …` line in the Epic draft + the Phase 9 report.
 - `/ready` — PRD-level + Epic-level `AD#N` = inherited invariants passed to `readiness-reviewer` as `applicable_ard`; read-only — it never authors a deviation record, only checks the artifacts it reads for an existing one.
+- `/conformance` — Epic-level resolution on either run — an Epic run's own, and on a PRD run each Epic's (its Phase 1 (b)); the `Rule` of each returned `AD#N` is a requirement to trace against the code, and `status: unmerged` stops the run. On an Epic run it also reads each `AD#N`'s `source` and `binds` and the `components` field (its Phase 1 (b) and Phase 2). Read-only — it never authors a deviation record.
 
-`components` and `contracts` are read by `${CLAUDE_PLUGIN_ROOT}/references/components.md` §3 and §6, read directly by `/specify`, `/design` and `/ready`, and passed on by `/epics` to `epic-writer` and `epic-reviewer`, and by `/design` to `design-reviewer` (its interface rows); a caller that reads neither field behaves exactly as it did before they existed.
+`components` and `contracts` are read by `${CLAUDE_PLUGIN_ROOT}/references/components.md` §3 and §6, read directly by `/specify`, `/design` and `/ready` — and `components` alone by `/conformance` — and passed on by `/epics` to `epic-writer` and `epic-reviewer`, and by `/design` to `design-reviewer` (its interface rows); a caller that reads neither field behaves exactly as it did before they existed.
 
-The five consumers listed above other than `/create-ard` pass `invariants` to their reviewer as `applicable_ard`; the reviewer's ARD-conformance dimension is skipped entirely when it is absent. `/create-ard` alone does not: it inherits PRD-level `AD#N` read-only straight into its own grill and drafting (Phase 4), and `ard-reviewer` checks non-contradiction directly against the drafted file, never via that field.
+Of the consumers listed above, `/design`, `/implement`, `/specify`, `/epics` and `/ready` pass `invariants` to their reviewer as `applicable_ard`; the reviewer's ARD-conformance dimension is skipped entirely when it is absent. `/create-ard` does not: it inherits PRD-level `AD#N` read-only straight into its own grill and drafting (Phase 4), and `ard-reviewer` checks non-contradiction directly against the drafted file, never via that field. `/conformance` passes them to no reviewer, since it traces each `Rule` itself.

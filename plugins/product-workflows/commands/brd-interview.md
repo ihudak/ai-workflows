@@ -111,7 +111,7 @@ them is.
 
    **Two further prompts can appear, raised inside shared entry points this command executes rather
    than by the command itself, and neither can carry a question from the set** — because neither
-   entry point is ever handed one: `require-on-main`'s row-C repair offer (`workflows-core:phase-handoff` §3.3),
+   entry point is ever handed one: `require-on-main`'s row-C repair offer,
    which asks whether to switch the specs repo to its default branch, and `emit-cost`'s pending-file
    relocation confirmation (`workflows-core:cost-emission` §9), which asks where a cost entry should land. They
    are named so that "every prompt is enumerated" stays a checkable claim rather than one that
@@ -125,7 +125,11 @@ and nothing downstream can tell the difference afterwards.
 
 ## Phase 0 — Resolve inputs and gate the grounded BRD
 
-1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves. Parse the first token that is neither a flag nor a flag's value — `--round` consumes the token after it (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
+1. **`<BRD-KEY>` (mandatory).** **Strip the run flags first.** Execute `strip-run-flags` (`Skill(skill: "workflows-core:reference", args: "run-flags strip-run-flags")`) on `$ARGUMENTS` before anything else reads a token: it removes `--skip-costs`, `--skip-feedback` and `--enforce-model` (with any `=value`), resolves each against its environment default, and returns the `run_flags` record this run carries to its maintenance, cost and routing steps — or stops with `RUN_FLAGS_BAD_MODEL` / `RUN_FLAGS_MODEL_UNAVAILABLE` before any write. Every later step parses only what it leaves.
+
+   **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
+
+   Parse the first token that is neither a flag nor a flag's value — `--round` consumes the token after it (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
    (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix or a folder's whole name, and carries the bare key from then on. On `needs-tree` (`$SPECS_PATH` unset), take step 3's `$SPECS_PATH` stop now — answered with a path, read the token again from the top of this step. If absent or invalid, stop:
    `BRD_INTERVIEW_NEEDS_KEY: /brd-interview needs a BRD key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) — re-run '/product-workflows:brd-interview <KEY>'.`
 2. **`--round N`.** Optional, consuming the next token, which must be a positive integer. Malformed
@@ -141,7 +145,7 @@ and nothing downstream can tell the difference afterwards.
    ```
 4. **Specs-repo preflight.** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline, **before** the gate below — `require-on-main`
    performs no fetch of its own (`workflows-core:phase-handoff` §3.2) and relies on this step's best-effort one,
-   the same ordering `/prd-ground` uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
+   the same ordering `/prd-ground` uses and for the same reason. Prompt-free, and silent unless it acts, a guard fires, or `workflows-core:specs-repo-git` §3.1 reports a misconfigured `$SPECS_PATH`. If a guard fires, emit its §5 notice; if it returns
    `specs_git: blocked` (§3.3 G0) or `specs_git: misrooted` (§3.1), carry that flag for the whole run.
 5. **Resolve the BRD folder.** `resolve-address <BRD-KEY>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches
    every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus §5's legacy fallback — and so can return any folder kind it finds there: a `BRD-` folder directly under `specifications/`, a `PRD-` folder (a slice inside a BRD, or an idea-route PRD folder), or an `EPIC-` folder inside a `PRD-` folder. Step 5a answers the level question on what it returns. Absent
@@ -208,9 +212,9 @@ and nothing downstream can tell the difference afterwards.
     `BRD_INTERVIEW_NOT_A_SLICE: <KEY> resolves to an idea-route PRD folder (<path> carries no brd-link.md), not a slice carved from a customer's BRD — no gate was run and nothing was written. Interviewing settles a BRD slice's requirements into a decision register the customer reviews, and this folder has no coverage ledger, no requirement inventory and no customer BRD to decide against. The idea route goes on from its PRD: run '/product-workflows:create-ard <KEY>' or '/product-workflows:specify <KEY>' (after '/product-workflows:create-prd <KEY>', its handoff merged, where the folder holds no prd.md yet — each gates prd.md with require-on-main); each reads this folder's grounding/ findings wherever /product-workflows:prd-ground wrote them, and marks the ones it drew on. Re-running this command on this folder stops here again, whatever grounding it holds.`
 6. **Gate the grounding deliverable on main.** This command **consumes** a `$SPECS_PATH` deliverable
    it did not write, so per `workflows-core:phase-handoff` §5 rule 2 it executes
-   `require-on-main` (§3) here, before anything else reads a file. Execute it against the resolved
+   `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) here, before anything else reads a file. Execute it against the resolved
    folder's `grounding/code-grounding.md` — the same file `/brd-split` gates, and for the same reason:
-   every deliverable one `handoff-to-main` run stages lands in a single commit (§2.3), so its presence
+   every deliverable one `handoff-to-main` run stages lands in a single commit, so its presence
    on `origin/<default>` implies `grounding/design-grounding.md` and `brd-link.md` merged with it — **That implication holds for a full `/prd-ground` run and not for a `--no-code` one**, whose `deliverable_paths` is `grounding/design-grounding.md` alone and lands in its own later commit — so a BRD can legitimately have `code-grounding.md` merged and `design-grounding.md` on no ref at all. Anything reading the design findings gates them separately rather than inheriting this sentence. And
    `/prd-ground`'s own gate on `coverage-ledger.md` had already run before those findings existed at
    all. Map the §3.7 return by `stopped` first: any stopping row → stop, naming the concrete branch/PR

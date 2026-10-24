@@ -39,6 +39,8 @@ Usage: `/create-prd <ADDRESS> [@idea.md] [--from-prd <PRD-KEY|path>] [--lean|--h
    this rung the flag is a token like any other and lands in that classification: `--docs` is read as
    the address, or its path is read as the `@idea.md` argument. They were named in the Usage line and
    parsed nowhere, the same defect `/create-ard`, `/specify` and `/release-notes` were found to have.
+
+   **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
 1. **The address (mandatory).** Parse the first token that is neither a flag nor a flag's value — `--from-prd` and `--docs` each consume the token after them (step 0), and a value skipped as "non-flag" would be read as the key and read it with `read-key` (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix (`PRD-<KEY>`) or a folder's whole name, and carries the bare key from then on — where resolution returns `absent`, a whole name, or a prefix other than `PRD-`, stops as that entry point says, since this run creates a `PRD-` folder. On `needs-tree` (`$SPECS_PATH` unset), take step 2b's `$SPECS_PATH` stop now — answered with a path, read the token again from the top of this step. If absent or malformed, **stop gracefully** with the one `CREATE_PRD_NEEDS_KEY` text below — there is one stop for this code, not two. (A key is validated for shape only and checked against nothing: it is the operator's own and names a folder in `$SPECS_PATH`; nothing mints it and nothing verifies it. A whole folder name is matched against that tree's folder names, never against a tracker.)
 
    **The BRD route is detected, not declared.** A folder carrying `brd-link.md` was produced by
@@ -327,9 +329,9 @@ Usage: `/create-prd <ADDRESS> [@idea.md] [--from-prd <PRD-KEY|path>] [--lean|--h
    step 5b's Epic-folder refusal no more than they — and
    that is a fact about where they sit rather than an omission.** All of them are Phase 0 stops, taken before this run has a deliverable, a
    branch or a handoff — so there is no `Phase handoff:` outcome line
-   (`workflows-core:phase-handoff` §4.1) for a clause to resolve from, and every
+   for a clause to resolve from, and every
    command they name either runs no `require-on-main` gate at all (`/product-workflows:brd-intake`
-   consumes nothing — §5's caller table) or gates on artifacts **another** run wrote and already
+   consumes nothing — `workflows-core:phase-handoff` §3.4) or gates on artifacts **another** run wrote and already
    merged. Phase 6 holds this
    command's only two placeholder sites — its choice array and the bullet that resolves it — and
    nothing on this route adds a third.

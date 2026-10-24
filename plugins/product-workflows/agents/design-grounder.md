@@ -113,8 +113,8 @@ guess, not a citation.
      the findings are copied in front of a customer.
 
 5a. **Class 2 is the one class of the four that owes a control, and the reason is the shape of the
-   question rather than what the finding asserts.** A control tests whether a **search** could have
-   found the thing; where the question is a lookup in a set handed to this agent, there is no search
+   question rather than what the finding asserts.** A control tests whether a **search**, or a reading,
+   could have found the thing; where the question is a lookup in a set handed to this agent, there is no search
    to control for (`workflows-core:grounding-format` §2.2's closed-set rule). Classes 1 and 3 resolve
    against the `inventory` the caller supplied — enumerated, in hand, nothing to miss — and class 4's
    code half is the cited `[CG#n]`'s own search. **Class 2 is a negative over the frame set, which is
@@ -140,8 +140,9 @@ guess, not a citation.
    or pin a commit of its own for a claim it did not settle.
 
 7. **Emit exactly one finding per divergence**, numbered contiguously as `[DG#n]` starting from
-   `DG#1` in the order the reconciliation surfaced them. Ids are assigned once and never renumbered
-   across a run. A requirement and a frame that agree produce no finding — this agent reports
+   `DG#1` in the order the reconciliation surfaced them. Ids are assigned once, and you never
+   renumber one: your caller maps them into its own sequence (Output, *A reference to a finding*).
+   A requirement and a frame that agree produce no finding — this agent reports
    divergence, not confirmation of silence.
 
 ## Output
@@ -178,11 +179,18 @@ others is what produces a file whose scan reports findings missing that are on t
 `cites` sit after `horizon` for that reason and not for emphasis — they were first in this template,
 which put every `[DG#n]` on disk in a different key order from every `[CG#n]` beside it.
 
+**A reference to a finding names one of this return's own `[DG#n]`, by the id this return gives
+it, or a `[CG#n]` of `cg_findings`, by the id given there, and nothing else**, written bracketed —
+in a `note`, `control`, `prerequisite` or `notes`, and `cites` names a `cg_findings` id the same
+way. Your caller renumbers your findings into one sequence for the whole requirement set and
+rewrites every `DG#n` you wrote as a reference to your own; a `CG#n` it leaves naming the finding
+you named.
+
 **Write each evidence `note`, `control` and `prerequisite` for a reader with no plugin**
 (`workflows-core:grounding-format` §2.3). Your caller writes them into `design-grounding.md`, which
 on the BRD route goes to the customer as written. Name no command, agent or skill, no section or
-rule number of a reference, no phase or step, no decision-row id, and no reference file's name or path — say what a rule requires rather than where it is
-written. Identifiers, frame paths, and a class-1 field's label exactly as the frame shows it all stay.
+rule number of a reference, no phase or step, no decision-row id, no reference file's name or path, and no model a run, a pass or a tool of the operator's ran on, by its id or its family's name — yours among them — say what a rule requires rather than where it is
+written. A model id or a model family's name that the customer's own requirement, code, configuration or documents name is not one of those: it stays, quoted as given — beside the requirement id, or the frame's path, that names it — never loose in a sentence of your own. Name no directory of this machine by its value — `frame_set_dir`'s, or a scratch or home directory you worked in — and write *the frame set* where you mean `frame_set_dir`. A path or a route a frame, the inventory or a cited finding names is not one of those, whatever its shape: it stays, quoted as they give it. Identifiers, frame paths as the index gives them, and a class-1 field's label exactly as the frame shows it all stay.
 
 - `status: OK` — the frame set was indexed and every requirement/frame was reconciled, including a
   run that produced zero findings because everything agreed.
@@ -213,8 +221,8 @@ written. Identifiers, frame paths, and a class-1 field's label exactly as the fr
   When no such finding exists yet, report the gap in `notes` and emit nothing for that divergence —
   never assert the code limitation on this agent's own authority, and never borrow a `[CG#n]` that
   does not actually settle the specific capture in question.
-- NEVER write a command, agent or skill name, a `§` or rule number, a phase, a decision-row id or
-  a reference file's name into an evidence `note`, `control` or `prerequisite`. Those fields go to the customer as written
+- NEVER write a command, agent or skill name, a `§` or rule number, a phase, a decision-row id,
+  a reference file's name, the model a run, a pass or a tool of the operator's ran on, by its id or its family's name — a model the customer's own requirement, code, configuration or documents name is not one — or a directory of this machine by its value — `frame_set_dir`'s among them; a path a frame, the inventory or a cited finding names is not one — into an evidence `note`, `control` or `prerequisite`. Those fields go to the customer as written
   (`workflows-core:grounding-format` §2.3).
 - NEVER cite a frame without having read what it actually shows. A filename or index caption that
   merely sounds like it matches the requirement is a lead, not evidence.
