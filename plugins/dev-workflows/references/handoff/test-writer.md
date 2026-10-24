@@ -1,6 +1,6 @@
 # test-writer Handoff Format
 
-`/dev-workflows:implement` dispatches `test-writer` once a writer unit's `code-writer` has returned, with `model:` set to the tier the caller assigns it, and hands it the request below in the prompt. It sends each later request for that unit to the same agent with `SendMessage`, a decision's answer included, and, where reaching it again fails, dispatches a fresh `test-writer` carrying `earlier_reports` and `diff_so_far`. Three modes share the request: `write` writes the unit's tests and updates each existing test the code writer reported broken by intent, then runs them; `fix` fixes the failing tests `failure_input` names, in the test files the agent owns, and runs them again; and `review` applies a review's findings to test files.
+`/dev-workflows:implement` dispatches `test-writer` once a writer unit's `code-writer` has returned, with `model:` set to the tier the caller assigns it, and hands it the request below in the prompt. It sends each later request for that unit to the same agent with `SendMessage`, a decision's answer included, and, where reaching it again fails, dispatches a fresh `test-writer` carrying `earlier_reports` and `diff_so_far`. Three modes share the request: `write` writes the unit's tests and updates each existing test the code writer reported broken by intent, then runs them; `fix` fixes the failing tests `failure_input` names, in test files only, and runs them again; and `review` applies a review's findings to test files.
 
 ## Input (`/implement` → `test-writer`)
 
@@ -13,10 +13,11 @@ task_description_file: /tmp/dw-impl-task-AbC123
                            # CONTEXT. The task, verbatim from the user where possible.
 plan_file: /tmp/dw-impl-plan-AbC123
                            # EVIDENCE. The approved plan: its Steps, Files and Review focus, and on
-                           # task_shape: bug its ### Hypotheses (ranked) with the repro it ran. Where the
-                           # user approved a mid-implementation re-plan it holds both plans under two
-                           # headings: every Review focus line in either applies, and the re-plan governs
-                           # only where the two contradict.
+                           # task_shape: bug, where the plan carries one (risk-planner's does), its
+                           # ### Hypotheses (ranked) with the repro it ran. Where the user approved a
+                           # mid-implementation re-plan it holds both plans under two headings: every
+                           # Review focus line in either applies, and the re-plan governs only where the
+                           # two contradict.
 spec_paths:                # CONTEXT, each path on its own. The in-scope specification.md files the plan was
   - /abs/specs/specifications/EPIC-KEY-1-slug/specification.md   # approved against; none where none is.
 design_path: /abs/specs/specifications/EPIC-KEY-1-slug/design.md
@@ -34,7 +35,8 @@ unit_files:                # CONTEXT, each path on its own, relative to repo_roo
   - web/rating.tsx
 code_report: /tmp/dw-impl-code-AbC123
                            # CONTEXT. The unit's code-writer report: its ### Files changed and its ### Tests
-                           # broken by intent are what test-writer reads.
+                           # broken by intent are what test-writer reads, and on task_shape: bug its ### Runs,
+                           # the repro runs made in the scratch checkout of HEAD — output, never code.
 earlier_reports:           # CONTEXT, each report on its own. Each earlier report_file of this unit's test
   - report: /tmp/dw-impl-tests-XyZ789         # writer, in order; none where there is none. They serve
     answer: "Keep the old assertion"          # the caller's fallback: a fresh dispatch where reaching
@@ -87,25 +89,25 @@ report_file: /tmp/dw-impl-tests-AbC123
 - **Degraded inputs**: none    <!-- each context input that could not be read: `<field> at <path>` -->
 
 ### Tests added
-- `[test name]` in `[file:line]` — covers [what behavior, and the spec item, design line or Review focus line it comes from][ — piece <name>, where `pieces` lists two or more][; for a negative DOM assertion, `against [template file:line]`, the line step 5 cites][ — fixed: what a mode: fix change altered in it]
+- `[test name]` in `[file:line]` — covers [what behavior, and the spec item, design line or Review focus line it comes from][ — piece <name>, where `pieces` lists two or more][; for a negative DOM assertion, `against [template file:line]`, the line step 5 cites][ — fixed: what a mode: fix change altered in it][ — regression test: `<the command, narrowed to it>` in `<the directory it runs from>`, on task_shape: bug, for the caller's red-capability check]
 - ...
 - _or_ "none (no new testable behavior in the unit)"
 
 ### Tests updated
-- `[test name]` in `[file:line]` — [what it asserted → what it asserts now] — [the spec line that changed its behavior, `path:line`, quoted; with no spec, the task description's or the plan's][ — fixed: what a mode: fix change altered in it]
+- `[test name]` in `[file:line]` — [what it asserted → what it asserts now] — [the source line that changed its behavior — the spec's, the design's or the plan's, or, with no spec, the task description's — `path:line`, quoted][ — fixed: what a mode: fix change altered in it]
 - _or_ "none"
 
 ### Runs
-- `[the command, as run through the lock]` in `[directory]` — [its result: passed and failed counts and each failing test of this agent's by name, or the `run-lock:` line that ended it]
+- `[the command, as run through the lock]` in `[directory]` — [its result: passed and failed counts and every failing test by name, this agent's and any other, or the `run-lock:` line that ended it]
 - _or_ "none"
 
 ### Disagreements
-- `[test name]` in `[file:line]` — fails: [the assertion's message] — the spec says: [`path:line`, quoted] — the code does: [what the failure shows]
+- `[test name]` in `[file:line]` — fails: [the assertion's message] — the source says: [`path:line`, quoted] — the code does: [what the failure shows]
 - `[symbol]` at `[file:line]` — signature: [the code's] — the design says: [`path:line`, quoted]
 - _or_ "none"
 
 ### Not passing
-- `[test name]` in `[file:line]` — [still failing after its third fix: its last failure | not run: the `run-lock:` line, the missing dependency's or tool's error, or absent from the run's output | its fix lies in `<path>`, a file test-writer does not own]
+- `[test name]` in `[file:line]` — [still failing after its third fix: its last failure | not run: the `run-lock:` line, the missing dependency's or tool's error, or absent from the run's output | its fix lies in `<path>`, a non-test file, the code writer's]
 - _or_ "none"
 
 ### Skipped (pre-existing untested code)
@@ -117,7 +119,7 @@ report_file: /tmp/dw-impl-tests-AbC123
 [anything unusual: untestable-in-isolation behaviors, discovered convention mismatches between test files, flaky-looking existing patterns — or "none"]
 
 ### Decision                   <!-- needs_decision only -->
-Question: <the question, as the user will read it: the test, what it asserts, what the code report says changed, and that nothing read settles which holds>
+Question: <the question, as the user will read it: the test, what it asserts, what the code report says changed (on mode: fix, what failure_input shows), and that nothing read settles which holds>
 Options:
 1. <a complete answer> (Recommended)   <!-- the marker only where one option is clearly superior -->
 2. <a complete answer>
@@ -152,7 +154,7 @@ Unreadable: <field> at <path>
 **The three statuses:**
 
 - `done` — on `mode: write`, every behavior mapped has a test or is named in `### Notes` as untested, and every test written or updated passed in its last run or is listed under `### Disagreements` or `### Not passing`; on `mode: fix`, the same of each failing test handed; on `mode: review`, the `## Fix Report` is written; and the not-detected report is a `done` too, its **Framework** line the caller's to act on. A `### Disagreements` entry is the caller's to decide against the spec and the design, and the user's where neither settles it; a `### Not passing` entry is the caller's to send to the owner of the file it names, or to name in its report as a test left failing or not run.
-- `needs_decision` — a test the code report's `### Tests broken by intent` names whose behavior nothing the agent can read settles: neither the spec nor, with no spec, the task description or the plan says whether the behavior it asserts changed. The agent writes and runs every other test first and leaves that one as it was. `### Decision` carries two to four options, never an *Other* (the harness adds the free-text answer itself). The caller asks, then re-opens the agent with `SendMessage`, its message carrying the answer.
+- `needs_decision` — a pre-existing test, one the code report's `### Tests broken by intent` names or, on `mode: fix`, one `failure_input` names, whose behavior nothing the agent can read settles: its source — the spec, the design or the plan, or, with no spec, the task description — does not settle whether the behavior it asserts changed. The agent writes and runs every other test first and leaves that one as it was. `### Decision` carries two to four options, never an *Other* (the harness adds the free-text answer itself). The caller asks, then sends the answer as the message that reaches the agent again with `SendMessage`, or, on a fresh dispatch, as the `answer:` beside that report in `earlier_reports`; the agent applies it to the test the decision names and runs that test as usual.
 - `blocked` — only an evidence input that could not be read: an orchestrator bug, never a judgement about the tests, and a marker distinct from `Framework: not detected` so the caller stops the run rather than applying its recorded skip decision. The caller surfaces the path and stops; it never prompts for a test command, never offers to skip tests, and never re-derives the input with a tool of its own.
 
-On every status the report says what is already written — `### Tests added`, `### Tests updated` and **Files touched** — so a later request neither redoes nor undoes it.
+On every status the report says what is already written — on `mode: write` and `mode: fix` in `### Tests added`, `### Tests updated` and **Files touched**, on `mode: review` in the `## Fix Report`'s `### Files changed` — so a later request neither redoes nor undoes it.
