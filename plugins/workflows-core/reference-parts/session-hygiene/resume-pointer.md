@@ -94,7 +94,7 @@ log). It is intentionally tiny — one line per item, and an item leaves it once
 - **Artifact:** <relative path to the deliverable just written/committed, or 'none (read-only)'>
 - **Next step:** <the exact next command from ### Next step, or 'PRD fully processed'>
 - **Suggested session name:** <KEY>-<slug>-<role>   (omit this line on a run whose own `### Context hygiene` block carries no `/rename` suggestion — that block is this command's own, so the test is decidable from the command being executed and needs no list to look up; §4 names which commands carry the line and why the rest do not)
-- **Carry-forward decisions:** <0–N one-line items: the decisions the next phase needs that are NOT already in the artifact, and every item the pointer being overwritten carried that is not settled, by the one test *Read the pointer you overwrite first* gives — each of its carry-forward items, and each open item of its Next step that this run's Next step does not name; 'none' if none>
+- **Carry-forward decisions:** <0–N one-line items: the decisions the next phase needs that are NOT already in the artifact, and every item the pointer being overwritten carried that is not settled, by the one test *Read the pointer you overwrite first* gives — each of its carry-forward items, and each open item of its Next step that this run's Next step does not name, each such item that asks for a command to run ending `(waiting since <ISO datetime>)`, its waiting datetime; 'none' if none>
 ```
 
 **Read the pointer you overwrite first.** It is the one `resume.md` its folder holds, written by
@@ -123,7 +123,10 @@ once its check shows every one of them settled:
 - **an item that asks for a follow-up to be done** — its line is ticked in its `follow-ups.md`;
 - **an item that asks for a command to run** — a record that command writes as the item asks it to
   run — in the item's own mode and role, and in or for the repository the item names where it names
-  one — is later than the old pointer's *Last completed* datetime. In the folder the item names,
+  one — is later than the item's **waiting datetime**, the datetime it waits from: the one its line
+  ends with as `(waiting since <ISO datetime>)`, or, for an item of the old pointer's *Next step* or
+  one whose line ends with none — an older pointer's, say — the old pointer's *Last completed*
+  datetime. In the folder the item names,
   that record is an `implementation.md` block, a `_conformance.md` entry, the deliverable itself, or
   a `_security.md` block whose `kind` and role are the item's and whose `repo` is the item's where
   it names one. For `/security-workflows:scan` the record is also a run record under
@@ -140,7 +143,7 @@ once its check shows every one of them settled:
   a scan. A record that holds no mode or role of its own is of the mode and role its command and
   its folder fix. A record is dated by the datetime it records. A block of an append-only record,
   `implementation.md`'s or `_security.md`'s, records a day alone, and is dated by its heading's own
-  day first: one whose day is earlier than the *Last completed* datetime's day, in UTC, is never
+  day first: one whose day is earlier than the waiting datetime's day, in UTC, is never
   later, and one whose day is later always is, whatever commit carried it; only a block of that
   same day is dated by the commit that added its heading line — the commit
   `git -C "$SPECS_PATH" blame -L <n>,<n> --porcelain -- <file>` names for heading line `<n>`
@@ -179,7 +182,14 @@ still open; one a file the next run reads already records — `follow-ups.md`, s
 one line naming that file. An item that waits on a pull request names that pull request's branch
 and its repository, so a later run can make the merged check, and an item that asks for a path to
 be removed, written or committed names the repository it lies in and the path from that
-repository's root, so a later run can make the absence or presence check. **A
+repository's root, so a later run can make the absence or presence check. An item that asks for a
+command to run is carried with its line ending `(waiting since <ISO datetime>)`, its waiting
+datetime copied as the old pointer writes it, and every run that carries the item keeps that
+datetime, never replacing it with the run's own *Last completed* datetime: so a record that reaches
+the checkout only after a later run wrote its pointer — pushed from another clone while a run that
+carried the item was under way, held on another session branch until its pull request merged, or
+kept local by a rejected push until it was pushed — still settles the item. The datetime is all the
+marker adds to the item's one line: no path, and nothing **Redact before writing** removes. **A
 path outside every repository the pointer's readers share** — a scratch worktree, a temporary
 directory — **is never written into the pointer**: the pointer is pushed and shared while such a
 path belongs to one machine, so its absence on one machine cannot be told from its removal on
@@ -197,8 +207,8 @@ fetched here, so it stays carried; an item asking for `/security-workflows:scan`
 nothing in the register, and so wrote no run record, or whose scan a run of another mode recorded —
 an `--import` of its report, say — until a run of the item's own mode and role records and so settles it, for
 good where none can, as no change scan records once `unit-branch` reads its Epic's branch merged
-with no work after it; an item only a block of `implementation.md` or `_security.md` of the *Last
-completed* datetime's own day can settle, in `specs-repo-git` §8's session-branch mode, until the session branch's pull request
+with no work after it; an item only a block of `implementation.md` or `_security.md` of its waiting
+datetime's own day can settle, in `specs-repo-git` §8's session-branch mode, until the session branch's pull request
 merges and the block reaches the branch the checkout stands on; an item asking for `/security-workflows:scan` on a repository path with no
 register slug beside it — a Security Engineer offer an older `/security-workflows:scan` wrote, say
 — until a run on a machine where that path is that repository, a repository with an `origin` that
@@ -206,9 +216,8 @@ register slug beside it — a Security Engineer offer an older `/security-workfl
 derives there as `/security-workflows:scan` does (`workflows-core:components` §1), every other run
 carrying it; and an item an older pointer wrote naming a pull request by its number alone, until a run settles
 it. One can leave sooner than it should: after a squash merge, blame names the squash commit for
-every line it carried, so a block or a `_conformance.md` of the *Last completed* datetime's own day
-is dated by the squash and can settle an item though it was written before the pointer it is
-compared with, and so, on any day, can a whole-file deliverable, whose last commit the squash is.
+every line it carried, so a block or a `_conformance.md` of an item's waiting datetime's own day is
+dated by the squash and can settle the item though it was written before that datetime, and so, on any day, can a whole-file deliverable, whose last commit the squash is.
 Where
 no pointer stands yet, there is nothing to carry.
 
