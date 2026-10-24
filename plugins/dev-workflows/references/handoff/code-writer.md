@@ -2,14 +2,15 @@
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it. `code-writer` loads `workflows-core:model-routing/classification` itself, for §1.1's items alone, when it tests for a trigger; the §4 and §10 citations below are the caller's.
 
-`/dev-workflows:implement` dispatches `code-writer` once for each writer unit, with `model:` set to its `implementation_model`, and hands it the request below in the prompt. It sends each later request for that unit to the same agent with `SendMessage`, a decision's answer included, and, where reaching it again fails, dispatches a fresh `code-writer` carrying `earlier_reports` and `diff_so_far`. Three modes share the request: `write` codes the unit's plan Steps in one dispatch and runs its checks — the build, the nearby tests and any check a Step names; `fix` fixes, in the unit's non-test files, what `failure_input` shows broke, and runs the failing checks again; and `review` applies a review's findings to the unit's non-test files.
+`/dev-workflows:implement` dispatches `code-writer` once for each writer unit, with `model:` set to its `implementation_model`, and hands it the request below in the prompt. It sends each later request for that unit to the same agent with `SendMessage` — a decision's answer, a fix round, a review's fixes — and, where reaching it again fails, dispatches a fresh `code-writer` carrying `earlier_reports` and `diff_so_far`. Where a `done` report marks Steps `not reached`, the agent having run short of room, it dispatches a fresh `code-writer` for those Steps — a continuation dispatch, carrying that report in `earlier_reports` and the diff so far — rather than resuming the one whose room ran out. Three modes share the request: `write` codes the unit's plan Steps in one dispatch and runs its checks — the build, the nearby tests and any check a Step names; `fix` fixes, in the unit's non-test files, what `failure_input` shows broke, and runs the failing checks again, making up to three attempts of its own, so each of the caller's fix rounds may hold up to three; and `review` applies a review's findings to the unit's non-test files.
 
 ## Input (`/implement` → `code-writer`)
 
 ```markdown
 ## Code Writer Request
 mode: write                # write | fix | review. `write` codes the unit's plan Steps and runs its checks.
-                           # `fix` fixes what failure_input shows broke and runs the failing checks again.
+                           # `fix` fixes what failure_input shows broke and runs the failing checks again,
+                           # up to three attempts in the one request.
                            # `review` applies review_file's findings to the unit's non-test files and runs
                            # nothing.
 plan_file: /tmp/dw-impl-plan-AbC123
@@ -32,10 +33,11 @@ pieces:                    # inline. The design's pieces this unit covers, each 
   - name: rating-ui
     files: ["web/rating/**"]
 unit_files: [src/rating.ts, src/rating-cache.ts, "web/rating/**"]
-                           # inline. The files the unit's pieces name, each path or glob as their Files:
-                           # lines write it, relative to repo_root; all where pieces is all, no piece
-                           # bounding the unit. code-writer edits no file outside them, save a new file a
-                           # Step of the unit creates, and no test file at all.
+                           # inline. The files the unit's pieces name: each a path or a glob as their
+                           # Files: lines write it, relative to repo_root, a glob resolved with Glob; or
+                           # all where pieces is all, no piece narrowing the unit to some of the
+                           # repository's files. code-writer edits no file outside them, save a new file
+                           # a Step of the unit creates, and no test file at all.
 spec_paths:                # CONTEXT, each path on its own. The in-scope specification.md, design.md and
   - /abs/specs/specifications/EPIC-KEY-1-slug/specification.md     # ARD, the documents the plan was
   - /abs/specs/specifications/EPIC-KEY-1-slug/design.md            # approved against; none where none
@@ -60,10 +62,12 @@ diff_so_far: /tmp/dw-impl-partial-AbC123
                            # the user's own uncommitted work. none before the run's first edit, and
                            # where the caller passes none.
 earlier_reports:           # CONTEXT, each report on its own. The earlier code-writer reports the caller
-  - report: /tmp/dw-impl-code-XyZ789          # passes, in order: each earlier writer unit's, and, on
-                           # the caller's fallback — a fresh dispatch where reaching this unit's writer
-                           # again with SendMessage failed — that writer's own; none where there is
-                           # none. A helper one of them wrote is reused, never copied, save as
+  - report: /tmp/dw-impl-code-XyZ789          # passes, in order: each earlier writer unit's; on the
+                           # caller's fallback — a fresh dispatch where reaching this unit's writer
+                           # again with SendMessage failed — that writer's own; and on a continuation
+                           # dispatch — a fresh code-writer for the rest of this unit after a done whose
+                           # Steps line marks Steps not reached — that report, whose not-reached Steps
+                           # it codes; none where there is none. A helper one of them wrote is reused, never copied, save as
                            # ### Duplicates says.
     plan: first            # only where plan_file holds two plans: whose Steps the report's Steps line
                            # numbers — first, the plan before the re-plan, or re-plan.
@@ -84,16 +88,15 @@ scratch_checkout: HEAD     # HEAD | none. HEAD on task_shape: bug work: every ru
                            # of HEAD, the tree before the change, on every request of the run, the first
                            # included, before the run has made any edit as after it, and never against
                            # the working tree; a repro the diagnosis writes as a test is written there
-                           # alone. The build and the nearby tests code-writer runs through the run lock
-                           # are no such run: they run in repo_root on every work.
+                           # alone. That one call runs through the run lock too, from repo_root. The
+                           # build and the nearby tests code-writer runs through the run lock are no such
+                           # run: they run in repo_root on every work.
                            # none on any other work: it runs none of them.
 pre_existing_dirty: [src/notes.txt]
                            # inline. The paths /implement recorded as dirty before the run's first edit
                            # (its pre_existing_dirty): the user's own uncommitted work. none where it
-                           # recorded none. Where it names any, a formatter that cannot be limited to
-                           # its paths is not run: that step is left to the caller, or, on mode: fix,
-                           # that failure goes under ### Not fixed; and a repro that does not go red in
-                           # the scratch checkout says, in its ### Blocked, that the checkout lacks them.
+                           # recorded none. Where it names any, a repro that does not go red in the
+                           # scratch checkout says, in its ### Blocked, that the checkout lacks them.
 failure_input: /tmp/dw-impl-failure-AbC123
                            # EVIDENCE on mode: fix; none otherwise. test-baseliner's ## Test Verify
                            # Report, whole or the part of it naming the failures handed to code-writer —
@@ -126,7 +129,7 @@ report_file: /tmp/dw-impl-code-AbC123
 
 ## Output (`code-writer` → `/implement`)
 
-**The reply** is one line, `status: <done | needs_decision | trigger | blocked>`, and nothing else save the untrusted-content notice lines the agent's prompt requires after it. **The report** goes to `report_file`. A message that reaches the agent again with no `## Code Writer Request` in it — a decision's answer, a `continue` — goes on under its last request, and the agent rewrites that request's `report_file` whole.
+**The reply** is one line, `status: <done | needs_decision | trigger | blocked>`, and nothing else save the untrusted-content notice lines the agent's prompt requires after it. **The report** goes to `report_file`. A message that reaches the agent again with no `## Code Writer Request` in it — a decision's answer — goes on under its last request, and the agent rewrites that request's `report_file` whole.
 
 **On `mode: write` and `mode: fix`:**
 
@@ -137,41 +140,35 @@ report_file: /tmp/dw-impl-code-AbC123
 - **Steps**: 1–3 coded; 4 left to the test writer; 5 left to the caller — it runs tests/test_rating.py, which the test writer writes
                                <!-- mode: write — each Step of the unit: coded; stopped (and how far it
                                     got); not reached, where the request ran short of room before it, which
-                                    the caller continues; left to the test writer, a Step that writes or
-                                    changes a test file; or left to the caller, a step the caller keeps — a
-                                    bisect, a patch's application, the repro's re-run against the change,
-                                    the regression test's red-capability check, a step that runs a test this
-                                    run will write, or a formatter not run beside pre_existing_dirty, named
-                                    with why — each with its command and the directory it runs from, and,
-                                    for a test this run will write, that test's path as the step names it
-                                    and whether the step expects it to fail: "5 left to the caller — runs
+                                    a continuation dispatch codes; left to the test writer, a Step that
+                                    writes or changes a test file; or left to the caller, a step the caller
+                                    keeps — a bisect, a patch's application, the repro's re-run against the
+                                    change, the regression test's red-capability check, a step that runs a
+                                    test this run will write or update, or a formatter that could not be
+                                    limited to the step's paths, named with why — each with its command and
+                                    the directory it runs from, and, for a test this run will write or
+                                    update, that test's path as the step names it and whether the step
+                                    expects it to fail: "5 left to the caller — runs
                                     tests/test_x.py by pytest tests/test_x.py::test_empty_x, from the top
                                     level; expects it to fail". A Step that writes a test and runs it is
                                     left to both: "4 left to the test writer, and to the caller — runs …".
                                     The caller runs one that expects a failure as the red-capability check
                                     on task_shape: bug work, and, on any other, expected to pass, at its
                                     test run. mode: fix — n/a -->
-- **Install scripts left to the caller**: none
-                               <!-- mode: write — each of the project's own install scripts an install skipped
-                                    that install-time-code.md runs beside a build (*The project's own install
-                                    scripts*), with the command that runs it; the caller runs them with its
-                                    build. One that reference never runs goes in ### Tool runs' skipped list,
-                                    never here -->
 - **Degraded inputs**: none    <!-- each context input that could not be read: `<field> at <path>` -->
 
 ### Files changed              <!-- never a test file; what a check wrote itself — its build output, its cache — is no change of this request's -->
 - `src/rating.ts` — edited — <what this request changed in it, one line>
 - `src/rating-cache.ts` — created — <one line>
 - `src/legacy-rating.ts` — deleted
-- `src/format-me.ts` — edited — formatter-only   <!-- a file a formatter that could not be limited to the step's paths touched, nothing else changed in it -->
 - _or_ none
 
 ### Checks run                 <!-- every build, nearby-test and other check this request ran, each through the run lock, in the order run -->
 - `<the command, as run through the lock>` in `<the directory it ran from>` — <the build | the nearby tests of `<directory>` | the check step <n> names | a check failure_input names> — <its result: passed; failed, with every failure by name, each marked fixed in a later run, broken by intent, pre-existing or not fixed; or the `run-lock:` line that ended it>
 - _or_ none — <why: a return before the unit's Steps were all coded; no build to run and no suite the baseline marks OK for the directories changed; baseline_file not read>
 
-### Tests broken by intent     <!-- an existing test that fails because the change does what spec_paths or the plan says, and that changed behaviour is what it asserts; never edited — the test writer's to update -->
-- `<test name>` in `<file:line>` — fails: <its assertion's message> — the change: <the line of spec_paths or the plan that changes that behaviour, `path:line`, quoted | no line read settles whether that behaviour changed>
+### Tests broken by intent     <!-- mode: write — each existing test whose fix lies in its own file: it fails, or no longer compiles, because the change does what spec_paths or the plan says, and what the change alters is what it asserts or how it calls the code; never edited — the test writer's to update -->
+- `<test name>` in `<file:line>` — fails: <its assertion's message, or the compile error> — the change: <the line of spec_paths or the plan that makes that change, `path:line`, quoted | no line read settles whether that behaviour changed>
 - _or_ none
 
 ### Settled by the run
@@ -186,11 +183,11 @@ report_file: /tmp/dw-impl-code-AbC123
 - `<the copy, path:symbol>` — duplicates `<the helper, path:symbol>` — <the change reuse needed>
 - _or_ none
 
-### Not fixed                  <!-- mode: write — a check's failure the fix rounds left; mode: fix — a failure failure_input names that this request left -->
-- <the failure, as the check's output or failure_input names it> — <why it was left: still failing after the third fix round, with its last output; not run, the build failing; its fix lies in `<path>`, a test file — the test writer's — the code doing what `<path:line>` says, or no line read settling which holds; not of the code — a missing dependency or tool, the `run-lock:` line that ended the run, or a project install script left to the caller that it needs; failure_input marks it pre-existing — the caller found it on the tree before the change; the CAVEAT: line that accounts for it; or a formatter not run beside pre_existing_dirty>
+### Not fixed                  <!-- mode: write — a check's failure the fix attempts left; mode: fix — a failure failure_input names that this request left -->
+- <the failure, as the check's output or failure_input names it> — <why it was left: still failing after the third fix attempt, with its last output; not run, the build failing; failing again on a second run, which the change does not explain; on mode: fix, its fix lies in `<path>`, a test file — the test writer's — the code doing what `<path:line>` says, or no line read settling which holds; not of the code — a missing dependency or tool, the `run-lock:` line that ended the run, or a project install script it needs that failed or that install-time-code.md never runs; failure_input marks it pre-existing — the caller found it on the tree before the change; the CAVEAT: line that accounts for it; or a formatter that could not be limited to this run's paths>
 - _or_ none
 
-### Tool runs                  <!-- mode: write — an install, code-generation or formatting command a plan step named; mode: fix — the formatter or code generator that fixes a lint failure; each run in repo_root through the run lock -->
+### Tool runs                  <!-- mode: write — an install, code-generation or formatting command a plan step named, and each project install script an install skipped that install-time-code.md runs beside a build, run right after that install; mode: fix — the formatter or code generator that fixes a lint failure; each run in repo_root through the run lock -->
 - `<the command, as run>` — <its result> — <what it wrote: a lockfile, generated files> — skipped: <the dependencies' install-time code, and each project install script that reference never runs, as its *Name what was skipped* names them, or none>
 - _or_ none
 
@@ -223,7 +220,7 @@ Paths: `<path>`, `<path>`
 
 **The four statuses:**
 
-- `done` — on `mode: write`, every Step of the unit is coded, left to the test writer or left to the caller where the caller keeps it — or `not reached`, where the request ran short of room, which the caller continues — and, where none is `not reached`, its checks ran, every failure they showed fixed or listed under `### Tests broken by intent` or `### Not fixed`, or named pre-existing in `### Checks run`; on `mode: fix`, the attempt is made, the failing checks ran again, and `### Not fixed` names every failure it left; on `mode: review`, the `## Fix Report` is written. `### Settled by the run` becomes the Phase 5 report's `### Assumptions & limitations`; `### Tests broken by intent` is the test writer's to act on, its `code_report`; a `### Not fixed` line's reason goes into the Phase 5 report's `### Deferred items` beside the failure it names, where the run keeps that failure, and spares that failure a further round where a `CAVEAT:` line accounts for it or only a formatter not run beside `pre_existing_dirty` would fix it; and `### Out of scope` goes on the follow-up line the caller writes for that repository.
+- `done` — on `mode: write`, every Step of the unit is coded, left to the test writer or left to the caller where the caller keeps it — or `not reached`, where the request ran short of room, which a continuation dispatch codes — and, where none is `not reached`, its checks ran, every failure they showed fixed or listed under `### Tests broken by intent` or `### Not fixed`, or named in `### Checks run` as pre-existing or as passing on its second run; on `mode: fix`, up to three attempts are made, the failing checks ran again after each, and `### Not fixed` names every failure they left, a line whose fix lies in a test file being the caller's to send to the test writer, or to decide where no source settles it; on `mode: review`, the `## Fix Report` is written. `### Settled by the run` becomes the Phase 5 report's `### Assumptions & limitations`; `### Tests broken by intent` is the test writer's to act on, its `code_report`; a `### Not fixed` line's reason goes into the Phase 5 report's `### Deferred items` beside the failure it names, where the run keeps that failure, and spares that failure a further round where a `CAVEAT:` line accounts for it or only a formatter that could not be limited to this run's paths would fix it; and `### Out of scope` goes on the follow-up line the caller writes for that repository.
 - `needs_decision` — Phase 1's test met mid-coding: nothing the run can read settles a question, and its answer changes what the user would notice; or a file outside `unit_files` that the work must edit, another unit's or a pre-existing file no piece names. `### Decision` carries two to four options, never an *Other* (the harness adds the free-text answer itself). The caller settles it — a file outside `unit_files` by moving the file into this unit or merging the units, any other by asking the user — and sends the answer as the message that reaches the agent again with `SendMessage`, or, on a fresh dispatch, as the `answer:` beside this report in `earlier_reports`.
 - `trigger` — `mode: write` at `SIMPLE` or `MODERATE` only: a classification item the approved plan did not state, with the paths that show it. The caller runs its re-classification raise.
 - `blocked` — a step cannot be coded as the plan writes it, because something the plan names is not so — on bug work, a repro a step names that does not go red in the scratch checkout of `HEAD` among them, its `### Blocked` naming the command, its directory, its output, the rate the plan records and the runs made, and, where `pre_existing_dirty` names any path, that the checkout lacks those files — save where the plan's `### Hypotheses (ranked)` reads `Ranking withheld`, the user having chosen to proceed without a repro, where that run is listed under `### Runs` and is never a `blocked`. A `### Blocked` that reads `Unreadable: <field> at <path>` instead names an evidence input the agent could not read: an orchestrator bug, never a plan defect. On `mode: fix` and `mode: review` that form is the only `blocked`, and a failure the attempt found no fix for is a `done` that lists it under `### Not fixed`.

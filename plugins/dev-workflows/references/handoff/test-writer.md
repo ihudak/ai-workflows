@@ -26,13 +26,15 @@ pieces:                    # inline. The design's pieces this unit covers, each 
   - name: rating-api       # ## Pieces section gives them; all where the design draws no pieces.
     files: [src/rating.ts, src/rating-cache.ts]
   - name: rating-ui
-    files: [web/rating.tsx]
+    files: ["web/rating/**"]
 unit: all                  # inline. The writer unit: all where one writer unit covers every piece, else
                            # the name of the piece the design gives writers of its own.
-unit_files:                # CONTEXT, each path on its own, relative to repo_root. The unit's source files,
-  - src/rating.ts          # read for names, signatures and file locations only.
-  - src/rating-cache.ts
-  - web/rating.tsx
+unit_files: [src/rating.ts, src/rating-cache.ts, "web/rating/**"]
+                           # inline. The files the unit's pieces name: each a path or a glob as their
+                           # Files: lines write it, relative to repo_root, a glob resolved with Glob; or
+                           # all where pieces is all, no piece narrowing the unit to some of the
+                           # repository's files. test-writer reads them for names, signatures and file
+                           # locations only.
 code_report: /tmp/dw-impl-code-AbC123
                            # CONTEXT. The unit's code-writer report: its ### Files changed and its ### Tests
                            # broken by intent are what test-writer reads, and on task_shape: bug its ### Runs,
@@ -72,8 +74,8 @@ report_file: /tmp/dw-impl-tests-AbC123
 **The read-failure tiers** follow `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`'s contract, and the agent states them where it takes the request:
 
 - **Evidence** — `plan_file`, `baseline_file` and `repo_root`, and `failure_input` on `mode: fix` or `review_file` on `mode: review`. One that cannot be read, or a `repo_root` that is not a directory, is a hard stop: the agent writes nothing in the repository, writes the blocked shape below, and returns `blocked`. It never reconstructs the input by other means — the plan from the code report, the baseline or a failure by running a suite itself.
-- **Context** — `task_description_file`, `spec_paths`, `design_path`, `unit_files`, `code_report`, `earlier_reports` and `diff_so_far`, each path on its own. One that cannot be read degrades to absent, and the report's **Degraded inputs** line names it with its path. Where `spec_paths` is `none` or every one of them degraded, the task description and the plan's Steps and Review focus stand in for the spec; where `design_path` is `none` or degraded, the plan stands in for the design.
-- **Inline values** — `mode`, `pieces`, `unit` and `task_shape` — are read from the request itself and have no read to fail. `report_file` is written, never read.
+- **Context** — `task_description_file`, `spec_paths`, `design_path`, `code_report`, `earlier_reports` and `diff_so_far`, each path on its own. One that cannot be read degrades to absent, and the report's **Degraded inputs** line names it with its path. Where `spec_paths` is `none` or every one of them degraded, the task description and the plan's Steps and Review focus stand in for the spec; where `design_path` is `none` or degraded, the plan stands in for the design.
+- **Inline values** — `mode`, `pieces`, `unit`, `unit_files` and `task_shape` — are read from the request itself and have no read to fail. `report_file` is written, never read.
 
 ## Output (`test-writer` → `/implement`)
 
