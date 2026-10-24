@@ -183,7 +183,8 @@ which put every `[DG#n]` on disk in a different key order from every `[CG#n]` be
 it, or a `[CG#n]` of `cg_findings`, by the id given there, and nothing else**, written bracketed —
 in a `note`, `control`, `prerequisite` or `notes`, and `cites` names a `cg_findings` id the same
 way. Your caller renumbers your findings into one sequence for the whole requirement set and
-rewrites every `DG#n` you wrote as a reference to your own; a `CG#n` it leaves as you wrote it.
+rewrites every `DG#n` you wrote as a reference to your own; a `CG#n` it leaves naming the finding
+you named.
 
 **Write each evidence `note`, `control` and `prerequisite` for a reader with no plugin**
 (`workflows-core:grounding-format` §2.3). Your caller writes them into `design-grounding.md`, which

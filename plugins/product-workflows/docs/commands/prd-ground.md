@@ -362,9 +362,12 @@ Under the resolved folder — the `PRD-<SLICE-KEY>-<slug>/` slice folder inside 
   `scripts/ledger-evidence.py` writes the cells: it splits each row only on the delimiters the
   table's cell encoding defines, so an empty cell keeps its column, and changes no other byte of
   the file. A ledger it cannot read that way — a header that is not the five columns in order, a row
-  whose cell count differs, a duplicate row, a finding naming a requirement the ledger has no row
-  for — it refuses, writing
-  nothing, and the final report gives its reason; the run never repairs the ledger by hand. Nothing else in
+  whose cell count differs, a duplicate row — it refuses, writing
+  nothing, and the final report gives its reason; the run never repairs the ledger by hand. A map it
+  refuses — the run's own input, malformed or naming a requirement the ledger has no row for — the
+  run rebuilds from its findings and sends once more, and a second refusal is reported the same way.
+  A write that fails part-way leaves the ledger as it was, since the script writes the whole file
+  beside it and renames it into place. Nothing else in
   the row is touched — this command allocates nothing and writes no disposition. It is an index over
   the two grounding files and never a second copy of what they say, which is why a finding marked
   `SUPERSEDED` stays listed: the verdict lives in the file the id resolves to. Without it the
@@ -376,8 +379,9 @@ Under the resolved folder — the `PRD-<SLICE-KEY>-<slug>/` slice folder inside 
 
 **A finding that names another names it by the id the file carries, bracketed — `[CG#4]`.** Each
 grounder numbers its own findings from 1, so when the run merges them into one sequence it rewrites
-every such reference through that grounder's own renumbering, all at once, so that no rewritten
-number is rewritten again. A reference that names no finding of the run or on file is a parse
+every reference to a grounder's own findings through that grounder's own renumbering, all at once,
+so that no rewritten number is rewritten again; a design grounder's references to code findings
+already carry the file's ids. A reference that names no finding of the run or on file is a parse
 failure: the run rewords it out before writing and the final report lists it.
 
 **The three grounding files are written for a reader with no plugin, and name nothing of your

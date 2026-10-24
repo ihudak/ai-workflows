@@ -25,8 +25,12 @@ layout was fixed, its cells padded, is read where its rows still split by the ru
 The row shape and the id order are the plugin's coverage-ledger-format reference, section 2; the
 cell encoding and the split are its brd-format reference, section 2.3. Python standard library only.
 
-Exit 0: it ran -- written or unchanged. Exit 2: it refused or could not run, and wrote nothing; the
-cause is on stderr. No output names a path.
+The ledger is written whole to a temporary file beside it, which then replaces it, so a write that
+fails part-way leaves the ledger as it was and no temporary file behind.
+
+Exit 0: it ran -- written or unchanged. Exit 3: it refused the map -- the caller's own input, which it
+can rebuild and send once more. Exit 2: it refused the ledger, or could not read or write it. A refusal
+writes nothing, and so does a failed write; the cause is one line on stderr. No output names a path.
 """
 
 import argparse
@@ -35,6 +39,7 @@ import io
 import json
 import os
 import re
+import shutil
 import sys
 import tempfile
 
@@ -47,7 +52,11 @@ TABLE_LINE_RE = re.compile(r"[ \t]*\|")
 
 
 class Refused(Exception):
-    """The ledger or the map cannot be written by the rule; main() prints the message and exits 2."""
+    """The ledger cannot be read or written by the rule; main() prints the message and exits 2."""
+
+
+class MapRefused(Refused):
+    """The map is not one the rule can write; main() prints the message and exits 3."""
 
 
 def _read(path):
@@ -60,12 +69,30 @@ def _read(path):
         raise Refused("cannot read the ledger: %s" % (e.strerror or type(e).__name__))
 
 
+def _write_body(fh, text):
+    fh.write(text)
+
+
+_replace = os.replace
+
+
 def _write_text(path, text):
+    """Writes the whole ledger to a temporary file in its own directory, then renames it over the ledger."""
+    target = os.path.realpath(path)
+    tmp = None
     try:
-        with open(path, "w", encoding="utf-8", newline="") as fh:
-            fh.write(text)
+        fd, tmp = tempfile.mkstemp(dir=os.path.dirname(target), prefix=".coverage-ledger.", suffix=".tmp")
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as fh:
+            _write_body(fh, text)
+        shutil.copymode(target, tmp)
+        _replace(tmp, target)
+        tmp = None
     except OSError as e:
         raise Refused("cannot write the ledger: %s" % (e.strerror or type(e).__name__))
+    finally:
+        if tmp is not None:
+            with contextlib.suppress(OSError):
+                os.remove(tmp)
 
 
 def _lines(text):
@@ -114,32 +141,32 @@ def parse_map(text):
         seen = {}
         for key, value in items:
             if key in seen:
-                raise Refused("the map names %s twice" % key)
+                raise MapRefused("the map names %s twice" % key)
             seen[key] = value
         return seen
 
     try:
         mapping = json.loads(text, object_pairs_hook=pairs)
     except ValueError as e:
-        raise Refused("the map on standard input is not JSON: %s" % e)
+        raise MapRefused("the map on standard input is not JSON: %s" % e)
     if not isinstance(mapping, dict):
-        raise Refused("the map on standard input is not a JSON object of [BR#n] to a list of finding ids")
+        raise MapRefused("the map on standard input is not a JSON object of [BR#n] to a list of finding ids")
     return mapping
 
 
 def _check_map(mapping):
     for key, value in mapping.items():
         if not isinstance(key, str) or not ROW_ID_RE.fullmatch(key):
-            raise Refused("the map key %s is not a [BR#n]" % json.dumps(key))
+            raise MapRefused("the map key %s is not a [BR#n]" % json.dumps(key))
         if not isinstance(value, list):
-            raise Refused("the map value for %s is not a list of [CG#n] and [DG#n] ids: %s" % (key, json.dumps(value)))
+            raise MapRefused("the map value for %s is not a list of [CG#n] and [DG#n] ids: %s" % (key, json.dumps(value)))
         for fid in value:
             if not isinstance(fid, str) or not FINDING_RE.fullmatch(fid):
-                raise Refused("the map value for %s holds %s, which is not one well-formed [CG#n] or [DG#n] id"
+                raise MapRefused("the map value for %s holds %s, which is not one well-formed [CG#n] or [DG#n] id"
                               % (key, json.dumps(fid)))
         dupes = sorted({fid for fid in value if value.count(fid) > 1}, key=_order)
         if dupes:
-            raise Refused("the map value for %s names %s more than once" % (key, ", ".join(dupes)))
+            raise MapRefused("the map value for %s names %s more than once" % (key, ", ".join(dupes)))
 
 
 def _table(lines):
@@ -197,7 +224,7 @@ def write(ledger_path, mapping):
         parsed.append((i, rid, delims))
     missing = sorted((key for key in mapping if key not in seen), key=lambda k: int(k[4:-1]))
     if missing:
-        raise Refused("the map names %s, which no row of the ledger holds" % ", ".join(missing))
+        raise MapRefused("the map names %s, which no row of the ledger holds" % ", ".join(missing))
     filled = 0
     for i, rid, delims in parsed:
         ids = sorted(mapping.get(rid, []), key=_order)
@@ -444,7 +471,7 @@ def case_the_cli_writes_reports_and_refuses_with_exit_2(tmp):
     for stdin, code, out_want, err_want in (
         ('{"[BR#1]": ["[CG#1]"]}', 0, '"written": true', ""),
         ('{"[BR#1]": ["[CG#1]"]}', 0, '"written": false', ""),
-        ('{"[BR#2]": ["[CG#1]"]}', 2, "", "ledger-evidence: "),
+        ('{"[BR#2]": ["[CG#1]"]}', 3, "", "ledger-evidence: the map"),
     ):
         out, err = io.StringIO(), io.StringIO()
         real = sys.stdin
@@ -468,6 +495,63 @@ def case_the_cli_writes_reports_and_refuses_with_exit_2(tmp):
     finally:
         sys.stdin = real
     assert got == 2 and "ledger-evidence: " in err.getvalue() and tmp not in err.getvalue(), err.getvalue()
+
+
+def _main_with(argv, stdin):
+    out, err = io.StringIO(), io.StringIO()
+    real = sys.stdin
+    sys.stdin = io.StringIO(stdin)
+    try:
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = main(argv)
+    finally:
+        sys.stdin = real
+    return code, out.getvalue(), err.getvalue()
+
+
+def case_a_refused_map_exits_3_and_anything_else_exits_2(tmp):
+    # Exit 3 is the run's own input, which it can rebuild and send once more; exit 2 is the ledger,
+    # or the script failing to run, which a second try with the same files cannot change.
+    path = _ledger(tmp, ["| [BR#1] | One. | unallocated | | |\n"])
+    before = _get(path)
+    for stdin in ('{"[BR#1]": ["[CG#1]"]', '{"BR#1": ["[CG#1]"]}', '{"[BR#1]": "[CG#1]"}', '{"[BR#9]": ["[CG#1]"]}'):
+        code, out, err = _main_with(["write", "--ledger", path], stdin)
+        assert code == 3 and err.startswith("ledger-evidence: the map") and not out, (stdin, code, out, err)
+    assert _get(path) == before
+    bad = _ledger(tmp, ["| [BR#1] | One. | unallocated | |\n"])
+    code, out, err = _main_with(["write", "--ledger", bad], '{"[BR#1]": ["[CG#1]"]}')
+    assert code == 2 and "4 cells" in err, (code, err)
+    code, out, err = _main_with(["write", "--ledger", os.path.join(tmp, "absent.md")], "{}")
+    assert code == 2 and "cannot read" in err, (code, err)
+
+
+def case_a_failed_write_leaves_the_ledger_untouched(tmp):
+    rows = ["| [BR#1] | One. | unallocated | [DEF#1] | |\n", "| [BR#2] | Two. | unallocated | | |\n"]
+    path = _ledger(tmp, rows)
+    os.chmod(path, 0o640)
+    before = _get(path)
+    names = sorted(os.listdir(tmp))
+
+    def fails_midway(fh, text):
+        fh.write(text[: len(text) // 2])
+        raise OSError(28, "No space left on device")
+
+    def fails_on_replace(src, dst):
+        raise OSError(5, "Input/output error")
+
+    for name, broken in (("_write_body", fails_midway), ("_replace", fails_on_replace)):
+        real = globals()[name]
+        globals()[name] = broken
+        try:
+            code, out, err = _main_with(["write", "--ledger", path], '{"[BR#1]": ["[CG#1]"]}')
+        finally:
+            globals()[name] = real
+        assert code == 2 and "cannot write the ledger" in err and tmp not in err, (name, code, err)
+        assert _get(path) == before, "%s: the ledger changed on a failed write" % name
+        assert sorted(os.listdir(tmp)) == names, "%s: left %s behind" % (name, sorted(set(os.listdir(tmp)) - set(names)))
+    assert write(path, {"[BR#1]": ["[CG#1]"]})["written"] is True
+    assert os.stat(path).st_mode & 0o777 == 0o640, oct(os.stat(path).st_mode)
+    assert sorted(os.listdir(tmp)) == names
 
 
 def selftest():
@@ -495,6 +579,9 @@ def main(argv):
     args = parser.parse_args(argv)
     try:
         print(json.dumps(write(args.ledger, parse_map(sys.stdin.read()))))
+    except MapRefused as e:
+        print("ledger-evidence: %s" % e, file=sys.stderr)
+        return 3
     except Refused as e:
         print("ledger-evidence: %s" % e, file=sys.stderr)
         return 2

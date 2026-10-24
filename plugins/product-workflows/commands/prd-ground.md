@@ -1143,7 +1143,8 @@ a successor — and resolve it against this run's findings and the blocks on fil
 ids by then, the renumbering above having mapped them. Write each reference that resolves
 bracketed. **One that resolves to neither is a parse failure**, as is one the renumbering found its
 dispatch's table does not hold: report it in the Final report by the id of the finding that carries
-it and the reference as written, and never write it — reword the sentence holding it to say what it
+it, or, in a dispatch's `notes`, which belong to no finding, by the repository or frame set that
+dispatch grounded, and by the reference as written; and never write it: reword the sentence holding it to say what it
 says without it, changing no other field, as Phase 8's point 3 rewords a hit. Text a block on file
 already holds is not read: it is an earlier run's record, which this run leaves as it stands.
 
@@ -1989,13 +1990,25 @@ else in the row is touched** — `id`, `text`, `disposition` and `defects`, and 
 that is not a row, keep every byte — and this command allocates nothing and disposes nothing
 (`coverage-ledger-format.md` §3, §4). It prints `{"written": …, "rows": …, "with_evidence": …, "empty": …}`:
 `written` is `false` where no byte changed, and `with_evidence` and `empty` are the Final report's
-figures. **A non-zero exit wrote nothing, and is a parse failure, as a count that disagrees with the
-file is**: report it in the Final report with the line the script printed, and leave the column as
-it stands. The script refuses
+figures. **A non-zero exit wrote nothing** — the script writes the whole file beside the ledger and
+renames it over it only once that write is complete — **and which exit it was decides what follows:**
+
+- **Exit 3 refused the map**, which is this run's own input: not one JSON object, a key that is not
+  a `[BR#n]` or names one the ledger has no row for, or a value that is not a well-formed
+  `[CG#n]`/`[DG#n]` list. Rebuild the map from the parsed findings by the rules above — a quoting
+  slip, a bare id, a mistyped key — and run the script once more. A second refusal is reported as
+  any other non-zero exit is.
+- **Any other non-zero exit** — exit 2, which refused the ledger or could not read or write it, or
+  the shell's own, where `python3` did not run at all — is reported in the Final report with the
+  line the script or the shell printed, and the column is left as it stands. A refusal of the
+  ledger — a header or a row the rule cannot read — is a parse failure, as a count that disagrees
+  with the file is; a failure to read or write it is reported as what its line says.
+
+The script refuses
 a header that is not §2's five columns in their order, a row whose cell count differs from the
-header's, a duplicate row id, a map naming a `[BR#n]` the ledger has no row for, and a map value
-that is not a well-formed `[CG#n]`/`[DG#n]` list, and reads a ledger written before §2's layout was
-fixed wherever its rows still split by that rule. **Never repair the ledger by hand, and never parse
+header's and a duplicate row id, with exit 2, and a map naming a `[BR#n]` the ledger has no row for
+and a map value that is not a well-formed `[CG#n]`/`[DG#n]` list, with exit 3; it reads a ledger
+written before §2's layout was fixed wherever its rows still split by that rule. **Never repair the ledger by hand, and never parse
 it yourself to write around a refusal**: an improvised parse is the defect the script replaces — one
 that splits a row on ` | ` merges an empty `defects` cell with its neighbour and writes the ids into
 `defects`. **Under `--no-code` this write still happens**, over the
@@ -2324,7 +2337,7 @@ re-checked and left standing, and, where it did nothing, which of the three reas
 empty set; a non-empty one over which this phase rewrote no `[CG#n]` at all; or a non-empty one
 where `[CG#n]` **were** rewritten and no finding in the set cites one of them; every class-4
 `[DG#n]` Phase 8's cascade marked `SUPERSEDED`, each with the `[CG#n]` that took it there, the route
-that superseded that `[CG#n]` and the command that replaces it — `/product-workflows:prd-ground <KEY> --no-code` where that `[CG#n]` has a successor, a plain `/product-workflows:prd-ground <KEY>` where it has none — which its note describes in words (Phase 8); every sentence Phase 8 rewrote before writing it, by finding id or by file and section, and every hit it left standing — on `route: brd` each one `/product-workflows:brd-package` will stop on, or, a model id, put to the operator to rule on — by finding id and field, or an explicit "none" for each; every reference *Every reference resolves* (Phase 5) found unresolved and kept out of the record, by the id of the finding that carried it and the reference as written, or an explicit "none"; the `docs grounding:` line from Phase 1 step 0 verbatim, any repository a Phase 4.5 lead added,
+that superseded that `[CG#n]` and the command that replaces it — `/product-workflows:prd-ground <KEY> --no-code` where that `[CG#n]` has a successor, a plain `/product-workflows:prd-ground <KEY>` where it has none — which its note describes in words (Phase 8); every sentence Phase 8 rewrote before writing it, by finding id or by file and section, and every hit it left standing — on `route: brd` each one `/product-workflows:brd-package` will stop on, or, a model id, put to the operator to rule on — by finding id and field, or an explicit "none" for each; every reference *Every reference resolves* (Phase 5) found unresolved and kept out of what this run wrote, by the id of the finding that carried it — or, in a dispatch's `notes`, by the repository or frame set that dispatch grounded — and the reference as written, or an explicit "none"; the `docs grounding:` line from Phase 1 step 0 verbatim, any repository a Phase 4.5 lead added,
 and the count of documentation divergences recorded (each named by the `[CG#n]` it diverges from —
 never by an identifier of its own, because it has none); whether the derivation matrix ran and why; any `design-grounder` class-4 gap deferred for want
 of a settling `[CG#n]`; **on `route: idea`, the claim-exclusion count and prefixes step 8i
@@ -2348,8 +2361,11 @@ disposition cannot change a count. Report the rebuild separately and by number �
 at least one `[CG#n]`/`[DG#n]` id and how many were left with an empty cell, the `with_evidence` and
 `empty` its script printed — because the second
 figure is the one that says which requirements this grounding run did not reach, and it is the
-figure the customer would otherwise have to infer from an empty column. Where the script refused,
-report its line in their place, and that the column was left as it stood.
+figure the customer would otherwise have to infer from an empty column. Where the column was not
+written — a refusal of the map that stood after Phase 8 ran the script once more, or any other
+non-zero exit — report in their place the line the script or the shell printed, and that the
+column was left as it stood; where the map was refused once and the second run wrote, say so
+beside the figures.
 
 **On `route: idea`** — no ledger line at all; there is no `coverage-ledger.md` on this route to read
 one from. **Where every claim this run ground came back a verified absence, say so outright instead
