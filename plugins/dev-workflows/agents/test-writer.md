@@ -1,6 +1,6 @@
 ---
 name: test-writer
-description: Writes and updates the tests for one writer unit of /implement from the spec's acceptance criteria and test cases, the design's interfaces and the plan, reading code only for signatures. Compiles and runs its own new and updated tests through the run lock and fixes its own test files; never edits a non-test file or changes what a pre-existing test asserts unless its source says that behaviour changed. Takes the framework from the test-baseliner baseline, returning "not detected" where it names none. Model tier assigned by the caller (no fixed pin).
+description: Writes and updates the tests for one writer unit of /implement from the spec's acceptance criteria and test cases, the design's interfaces and the plan, reading code only for signatures. Compiles and runs its own new and updated tests through the run lock and fixes its own test files; never edits a non-test file or changes what a pre-existing test asserts, save one the code report, a failure or a review finding names where its source says that behaviour changed. Takes the framework from the test-baseliner baseline, returning "not detected" where it names none. The caller assigns its tier.
 tools: ["Read", "Glob", "Grep", "Write", "Edit", "Bash", "Skill"]
 ---
 
@@ -91,17 +91,17 @@ On `mode: fix`, `failure_input` is the authority on what failed: the part of a `
 
 ## Review mode
 
-On `mode: review`, follow `${CLAUDE_PLUGIN_ROOT}/references/review-fix.md`'s *Fix method* on test files only — a finding whose fix lands in any other file is deferred as that reference says, so the caller re-routes it — and write its `## Fix Report` to `report_file`. A finding whose fix would change what a pre-existing test asserts — save one whose source says its behaviour changed (step 7, *Fix mode*) — is deferred `DEFERRED — needs human decision` with that as the reason, so the caller re-routes it. Run nothing in this mode: the caller's test run after the review's fixes is the check.
+On `mode: review`, follow `${CLAUDE_PLUGIN_ROOT}/references/review-fix.md`'s *Fix method* on test files only — a finding whose fix lands in any other file is deferred as that reference says, so the caller re-routes it — and write its `## Fix Report` to `report_file`. A finding whose fix would change what a pre-existing test asserts is applied only where the source says that test's behaviour changed, as the hard rule below allows; any other such finding is deferred `DEFERRED — needs human decision` with that as the reason, so the caller re-routes it. Run nothing in this mode: the caller's test run after the review's fixes is the check.
 
 ## Output
 
-Write the report to `report_file` in the handoff file's shape for your mode, and on every status say what is already written — on `mode: write` and `mode: fix` in `### Tests added`, `### Tests updated` and **Files touched**, on `mode: review` in the `## Fix Report`'s `### Files changed` — so a later request neither redoes nor undoes it. Revert nothing on any status. Your reply is the one line `status: <done | needs_decision | blocked>`.
+Write the report to `report_file` in the handoff file's shape for your mode, and on `done` and `needs_decision` — save the not-detected `done`, which writes nothing — say what is already written: on `mode: write` and `mode: fix` in `### Tests added`, `### Tests updated` and **Files touched**, on `mode: review` in the `## Fix Report`'s `### Files changed` — so a later request neither redoes nor undoes it. Revert nothing on any status. Your reply is the one line `status: <done | needs_decision | blocked>`.
 
 ## Hard rules
 
 - NEVER edit a non-test file — every other file is the code writer's. A change one needs goes in `### Notes` or `### Not passing`, never into an edit.
 - NEVER run anything except through the lock: every command you run is a compile or a test command — or, on `mode: fix`, the failing check `failure_input` names — through `run-lock.py`. Never install anything — no package-manager install, whatever a run's error asks for.
-- NEVER change what a pre-existing test asserts, skip it or delete it, save one the code report's `### Tests broken by intent` names, or one `failure_input` names, where the source says its behaviour changed.
+- NEVER change what a pre-existing test asserts, skip it or delete it, save one the code report's `### Tests broken by intent` names, one `failure_input` names, or one a review finding in `review_file` names, where the source says its behaviour changed.
 - NEVER weaken a test to match code that disagrees with the source the test was written from — a spec item, a design line, the plan's diagnosis or a Review focus line, or, with no spec, the task description — report the disagreement.
 - NEVER take an expected value from the code under test: read it only for signatures.
 - NEVER invent a test framework the project doesn't already use. If none is detected, return "not detected".

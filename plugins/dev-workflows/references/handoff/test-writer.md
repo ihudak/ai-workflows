@@ -56,8 +56,9 @@ repo_root: /abs/path/to/repo
 task_shape: bug            # inline. bug | none — bug where /implement set task_shape: bug.
 failure_input: /tmp/dw-impl-failure-AbC123
                            # EVIDENCE on mode: fix; none otherwise. The part of test-baseliner's verify
-                           # report that names test-writer's failing tests, or a failing check's command,
-                           # the directory it ran in and its output.
+                           # report that names the failing tests handed to test-writer — those it wrote
+                           # or updated, and any failing pre-existing test — or a failing check's
+                           # command, the directory it ran in and its output.
 review_file: /tmp/dw-impl-review-AbC123
                            # EVIDENCE on mode: review; none otherwise. The review's findings as the caller's
                            # triage left them, with any **Severities to fix**, **User-applied** and **Plan
@@ -157,4 +158,4 @@ Unreadable: <field> at <path>
 - `needs_decision` — a pre-existing test, one the code report's `### Tests broken by intent` names or, on `mode: fix`, one `failure_input` names, whose behavior nothing the agent can read settles: its source — the spec, the design or the plan, or, with no spec, the task description — does not settle whether the behavior it asserts changed. The agent writes and runs every other test first and leaves that one as it was. `### Decision` carries two to four options, never an *Other* (the harness adds the free-text answer itself). The caller asks, then sends the answer as the message that reaches the agent again with `SendMessage`, or, on a fresh dispatch, as the `answer:` beside that report in `earlier_reports`; the agent applies it to the test the decision names and runs that test as usual.
 - `blocked` — only an evidence input that could not be read: an orchestrator bug, never a judgement about the tests, and a marker distinct from `Framework: not detected` so the caller stops the run rather than applying its recorded skip decision. The caller surfaces the path and stops; it never prompts for a test command, never offers to skip tests, and never re-derives the input with a tool of its own.
 
-On every status the report says what is already written — on `mode: write` and `mode: fix` in `### Tests added`, `### Tests updated` and **Files touched**, on `mode: review` in the `## Fix Report`'s `### Files changed` — so a later request neither redoes nor undoes it.
+On `done` and `needs_decision` — save the not-detected `done`, which writes nothing — the report says what is already written: on `mode: write` and `mode: fix` in `### Tests added`, `### Tests updated` and **Files touched**, on `mode: review` in the `## Fix Report`'s `### Files changed` — so a later request neither redoes nor undoes it.
