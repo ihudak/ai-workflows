@@ -105,9 +105,11 @@ open item: each item the old pointer carried — each of its carry-forward items
 of its *Next step* that this run's *Next step* does not name — goes into the new *Carry-forward
 decisions* line, one line each, unless it is settled. **An item is settled where this run settled
 it, or where the check for what the item waits on shows it settled** — each check a read that
-fetches nothing and writes nothing, each settling only the kind of item named beside it; an item
-that names several branches, commands, questions or paths is settled only once that check shows
-every one of them settled:
+fetches nothing and writes nothing, each settling only the kind of item named beside it. An item
+that waits on more than one of these — a push and then its pull request's merge, say — is settled
+only once each of its checks shows it settled, and one naming a pull request waits on that pull
+request's merge; an item that names several branches, commands, questions or paths is settled only
+once its check shows every one of them settled:
 - **an item that waits on a merge** — of a branch, or of the pull request it names — by the merged
   check alone, never by a push. In the specs repository, `specs-repo-git.md` §3.5's
   `branch-merged` answers merged for the ref `phase-handoff.md` §2.2 rule 3 resolves —
@@ -130,22 +132,28 @@ every one of them settled:
   `_*.md` record, never `resume.md` itself or a session file under `dev-workflows/`. This is the
   template's *NOT already in the artifact* test, applied to each of those deliverables rather than
   to this run's own artifact alone;
-- **a path it names** — the path no longer exists.
+- **a path it names** — a run on the host the item records finds the path gone; a run on any
+  other host, or reading a path item that records no host, carries it.
 
 A settled item is dropped. The run that settled an item may keep one line saying so instead, and
 the next run drops that line: a line saying its item is settled is settled. An item not settled —
 by this run or by the check for what it waits on — is carried, without the run having to show it
 still open; one a file the next run reads already records — `follow-ups.md`, say — is carried as
 one line naming that file. An item that waits on a pull request names that pull request's branch
-and its repository, so a later run can make the merged check. These stay longer than they need:
+and its repository, so a later run can make the merged check, and an item naming a path records
+the host it lives on, as `hostname` prints it: the pointer is pushed and shared, a path belongs to
+one machine, and absence on one cannot be told from removal on another. These stay longer than
+they need:
 a code repository's branch merged by a squash or a rebase, until a run applies
 `workflows-core:implementation-format` §5's merged test to it — a run of the Epic the branch
 belongs to, or `/dev-workflows:conformance <PRD>`; a branch in a repository the run holds no ref
 for, or only refs older than the merge — a code repository the run did not open or did not fetch,
-or a branch never fetched here — until a run holding current refs settles it; a specs-repository branch with neither its local nor its `origin/`
-ref left — deleted by an earlier run's preflight that wrote no pointer here, then pruned — which,
-without a fetch, cannot be told from a branch never fetched here, so it stays carried; and an item
-an older pointer wrote naming a pull request by its number alone, until a run settles it. Where
+or a branch never fetched here — until a run holding current refs settles it; a specs-repository
+branch with neither its local nor its `origin/` ref left — deleted and pruned before any run that
+wrote a pointer here saw it merged — which, without a fetch, cannot be told from a branch never
+fetched here, so it stays carried; a path whose host no later run runs on, or whose item records no
+host, which stays carried; and an item an older pointer wrote naming a pull
+request by its number alone, until a run settles it. Where
 no pointer stands yet, there is nothing to carry.
 
 **Redact before writing.** The `Carry-forward decisions` line may summarize
