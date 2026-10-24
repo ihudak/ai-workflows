@@ -27,12 +27,12 @@ Read-only discovery and grounding — each returns a structured digest rather th
 
 ## Writers
 
-Produce artifact content from a structured handoff, and write no git state. `code-writer`, the one of them with `Bash`, uses it to read, to delete a file a step removes, to run the repository's own install, code-generation or formatting command a plan step names, or the formatter or code generator that fixes a lint failure it is handed — an install without any dependency's install-time code — and, on a bug fix, to run the repro, the build it needs and its probes in a scratch checkout of `HEAD` — never a lint, build, type-check or test in your working tree, and never a test the run itself wrote, in any tree.
+Produce artifact content from a structured handoff, and write no git state. Both hold `Bash`. `code-writer` uses it to read, to delete a file a step removes, to run the repository's own install, code-generation or formatting command a plan step names, or the formatter or code generator that fixes a lint failure it is handed — an install without any dependency's install-time code — and, on a bug fix, to run the repro, the build it needs and its probes in a scratch checkout of `HEAD` — never a lint, build, type-check or test in your working tree, and never a test the run itself wrote, in any tree. `test-writer` uses it only to compile and run the tests it wrote or updated, each command through the run lock (`scripts/run-lock.py`), and never to install anything.
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
 | `code-writer` | per routing | Read, Glob, Grep, Write, Edit, Bash, Skill | Codes one group of an approved plan's steps, or one fix attempt from a failing check, in its branched repository; runs no lint, build, type-check or test on its working tree; asks you nothing. | `/implement` |
-| `test-writer` | per routing | Read, Glob, Grep, Write, Edit | Writes tests for new or changed behaviour based on a diff, against every suite the diff touches; does not run them, and reports "not detected" where the baseline names no framework at all. | `/implement` |
+| `test-writer` | per routing | Read, Glob, Grep, Write, Edit, Bash | Writes and updates a writer unit's tests from the spec, the design's interfaces and the plan, reading code only for signatures; runs them through the run lock and fixes its own test files. | `/implement` |
 
 ## Fixers
 

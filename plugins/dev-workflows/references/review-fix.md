@@ -4,7 +4,7 @@
 
 These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
 
-Single source of truth for how a fixer applies the findings of a `code-review` report and what it returns: the *Fix method* and the `## Fix Report` shape. Read by `review-fixer`.
+Single source of truth for how a fixer applies the findings of a `code-review` report and what it returns: the *Fix method* and the `## Fix Report` shape. Read by `review-fixer`, and by `test-writer` on `mode: review`, on test files only.
 
 A writer that applies this method to the files it owns applies it only to those files: a finding whose fix lands in a file it does not own is deferred as `DEFERRED — needs human decision` with that as the reason, so the caller re-routes it. In the method below, "Inputs" and the bold terms **Severities to fix**, **User-applied** and **Plan ruling** name what the dispatching caller passes; where it passes none of them, **Severities to fix** is `BLOCKER` and `MAJOR` (`MINOR` only when the caller names it, never `NIT`), a NIT is fixed only where a **User-applied** line names it, and there is no **Plan ruling**.
 
