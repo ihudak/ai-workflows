@@ -90,7 +90,7 @@ working tree is at it, in the working tree, since no commit holds what that scan
   uses. A component is a repository, or a module inside one that its build declares: a build-system
   module, a workspace package, or a top-level directory with its own build file; where the brief
   carries no **Repository modules**, each repository the design's `Repos` names is one component,
-  however its source directories are split) stated as a shape alone — nothing, in section 4 or against it in section 7, on what a caller
+  however its source directories are split) stated as a shape alone — nothing, in section 4 or against it in section 8, on what a caller
   gets on a failure where it can fail, or, where a request or message has a side effect, on whether a
   repeat repeats it → `MAJOR`. An altered one is judged on the behaviour the change touches.
 - **Seam / test-strategy soundness:** **Test strategy** keys to named seams; a testability claim with
@@ -105,7 +105,7 @@ working tree is at it, in the working tree, since no commit holds what that scan
   `true-external` dependency tested without a mock adapter, → `MAJOR`. A seam with no category on a
   `MODERATE`+ design → `MINOR`.
   A boundary interface with no **producer-side test** in **Test strategy** — one driving the real
-  implementation through the interface, the failure cases sections 4 and 7 state for it included —
+  implementation through the interface, the failure cases sections 4 and 8 state for it included —
   → `MAJOR`; a consumer's stub never stands in for one. A design that only builds a contract artifact
   has no producer-side test to give and is held instead to a check of the artifact itself (it parses
   or compiles; where it changes an artifact consumers already use, it stays compatible with the
@@ -122,7 +122,7 @@ working tree is at it, in the working tree, since no commit holds what that scan
 - **Risk coverage (SIGNIFICANT/HIGH-RISK):** a risky dimension named in the spec/classification with no
   entry in **Risks & mitigations** → `MAJOR` (`SIGNIFICANT`) / `BLOCKER` (`HIGH-RISK`).
 - **Release verification:** for a change to behaviour a deployed system runs (`design-format.md`
-  section 11), **Observability & release verification** absent with no `_N/A — why_`, or marked
+  section 12), **Observability & release verification** absent with no `_N/A — why_`, or marked
   `_N/A_` → `MAJOR` (`MODERATE`+) / `MINOR` (`SIMPLE`).
   Where it is present: a **rollback signal** that names no signal and threshold → `MAJOR`
   (`SIGNIFICANT`/`HIGH-RISK`) / `MINOR` otherwise; a check or rollback signal resting on a signal the
@@ -134,7 +134,7 @@ working tree is at it, in the working tree, since no commit holds what that scan
   puts in place, a configuration change the rollout steps never bring to the process that reads it
   (a workload re-applied unchanged is not restarted) — or whose state another running component, such
   as a scheduled job, a load generator, a sidecar or a reset, changes during its window with no step
-  pausing it → `MAJOR` (`design-format.md` section 11, *Post-release checks*). Read the deploy files
+  pausing it → `MAJOR` (`design-format.md` section 12, *Post-release checks*). Read the deploy files
   and the rollout steps for it, as *Claims about the existing system* reads any claim.
 - **Claims about the existing system:** every statement `design.md` makes about the system its
   repositories hold and deploy today, where a decision, a rollout or release step, a test case, a

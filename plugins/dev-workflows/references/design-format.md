@@ -99,10 +99,13 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
    a unit of review, not of coding: each piece gets its own reviewer, plus one overall review where
    there are two or more. By default one code writer and one test writer cover every piece;
    `Writers: per piece — <reason>` gives each piece its own writers, and is the exception — only
-   where the Epic is too big for one writer to hold well, and its reason is required. Draw pieces
-   only where the pieces' file sets do not overlap and the design fixes the part they share in
-   `## Interfaces / contracts`; otherwise there is one piece — never draw pieces by count. The
-   format, which `/implement` reads:
+   where the Epic is too big for one writer to hold well, and it needs two or more pieces and its
+   reason. Draw pieces only when there are two or more, only where the pieces' file sets do not
+   overlap, and only where the design fixes the part they share in `## Interfaces / contracts`;
+   otherwise there is one piece — never draw pieces by count. One piece is written by omitting the
+   section or writing `_N/A — <why>_` in its place, never as a one-piece section: an omitted section
+   and an `_N/A_` line both mean one piece, named `all`, and one writer unit. The format, which
+   `/implement` reads:
 
    ```
    ## Pieces
@@ -114,10 +117,16 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
    ```
 
    `Writers:` reads `one`, or `per piece — <why one writer could not hold the Epic well>`. Piece
-   names are kebab-case and unique, and no path matches two pieces. A file no piece names belongs to
-   the piece whose plan step creates it. A design with no `## Pieces` section has one piece, named
-   `all`, and one writer unit. `/design` writing this section arrives in a later release; until
-   then it is written by hand.
+   names are kebab-case and unique. `Files:` and `Contract:` entries are comma-separated.
+   **No file may be matched by the `Files:` of two pieces** — a file on disk at the design's commit,
+   or one a planned step creates; a bare path and a glob, or two globs, matching the same file is an
+   overlap. `Contract:` lists the `## Interfaces / contracts` items the piece implements and those
+   it calls that another piece implements. `Builds after:` names only pieces of this section and
+   must be acyclic; where it is `none` for every piece, the order is the order the pieces are
+   listed. A file no piece names belongs to the piece whose plan step creates it; a pre-existing
+   file that no piece names and no step creates is not this Epic's to edit, and a writer that must
+   touch one returns a decision instead. `/design` writing this section arrives in a later release;
+   until then it is written by hand.
 6. **## Seams** (scaled) — where the change is exercised under test; prefer the **highest** seam that
    still isolates the change. Name the seam per component. Judge seam/module quality by: **deep module**
    (a small interface over substantial implementation — prefer depth over many shallow pass-throughs);
