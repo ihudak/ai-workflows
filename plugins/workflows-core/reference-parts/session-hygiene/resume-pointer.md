@@ -127,12 +127,12 @@ once its check shows every one of them settled:
   where it records a day alone or no date, by the commit that added it. For a block of an
   append-only record, `implementation.md`'s or `_security.md`'s, that is the commit
   `git -C "$SPECS_PATH" blame -L <n>,<n> --porcelain -- <file>` names for the block's heading line
-  `<n>` (`<file>` its path from the specs repository's root), at that commit's `committer-time` —
-  never the file's last commit, which a later block of another repository, mode or role moves too —
-  and a heading line not yet committed, for which blame names the all-zero commit, dates nothing;
-  for a whole file, it is the specs repository's last commit touching it. A record that holds no mode or
-  role of its own is of the mode and role its command and its folder fix. In the folder the item
-  names, that record is an `implementation.md` block, a `_conformance.md` entry, the deliverable
+  `<n>` (`<file>` its path from the specs repository's root), at that commit's `author-time`, which a
+  rebase keeps where it moves the committer time — never the file's last commit, which a later block
+  of another repository, mode or role moves too — and a heading line not yet committed, for which
+  blame names the all-zero commit, dates nothing; for a whole file, it is the specs repository's last
+  commit touching it. A record that holds no mode or role of its own is of the mode and role its
+  command and its folder fix. In the folder the item names, that record is an `implementation.md` block, a `_conformance.md` entry, the deliverable
   itself, or a `_security.md` block whose `kind` and role are the item's and whose `repo` is the
   item's where it names one.
   For `/security-workflows:scan` it is also a run record under `security/<repo-slug>/runs/`, written
