@@ -95,7 +95,30 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
    never plausible ("we considered not having an interface") is theatre — see `design-reviewer`.
 4. **## Interfaces / contracts** (core) — exact signatures, API shapes, schemas, events, config keys
    the change introduces or alters. Concrete types, not prose promises. **A boundary interface** is one the change introduces or alters on the producing side, which another component (`workflows-core:components` §1: a repository, or a module inside one) or a consumer outside the system calls or receives the messages of — an endpoint, a published event, a library's public API, a command-line tool's parsed output — and never one that only code inside the same component uses. It also states, here or against it under `## Error handling & edge cases`, the behaviour a schema does not carry, as concretely as the types: what a caller gets on each failure and what state the failure leaves, its side effects, and, wherever they apply, whether a repeated request or a redelivered message repeats a side effect, ordering, and timeouts. A change that introduces one states that behaviour whole; a change that alters one states the behaviour it changes, and that the rest is unchanged. The shape of an order request does not say whether retrying it creates a second order. On a multi-component PRD (`workflows-core:components` §3), also name each interface the Epic's `## Contract` produces — its `[AD#N]`, how this design meets that row's Rule, and, where this design implements its behaviour, its producer-side test in `## Test strategy` — and each it consumes — its `[AD#N]`, and the stub or test double `## Test strategy` uses for it, or, where a contract Epic builds that interface as a code artifact (its ARD row's `Artifact`), that artifact as built, or, where the row's `Status` is `exists`, the interface as it already runs. **A consumer whose repository is not the artifact's** names how it gets the artifact: a published package pinned to a version, or a copy that records its source path and the revision it was taken at. The pin or the revision is recorded when the package is added or the copy taken, usually by `/implement`, since the artifact may not be built yet when this design is written. The copy is never edited in place: it changes only by being taken again from its source at a newer revision, which it records.
-5. **## Seams** (scaled) — where the change is exercised under test; prefer the **highest** seam that
+5. **## Pieces** (scaled) — the Epic's review units, and whether it gets separate writers. A piece is
+   a unit of review, not of coding: each piece gets its own reviewer, plus one overall review where
+   there are two or more. By default one code writer and one test writer cover every piece;
+   `Writers: per piece — <reason>` gives each piece its own writers, and is the exception — only
+   where the Epic is too big for one writer to hold well, and its reason is required. Draw pieces
+   only where the pieces' file sets do not overlap and the design fixes the part they share in
+   `## Interfaces / contracts`; otherwise there is one piece — never draw pieces by count. The
+   format, which `/implement` reads:
+
+   ```
+   ## Pieces
+   Writers: one
+   ### <piece-name>
+   - Files: `<path or glob>`, …
+   - Builds after: <piece-name>, … | none
+   - Contract: <the `## Interfaces / contracts` items it provides or uses> | none
+   ```
+
+   `Writers:` reads `one`, or `per piece — <why one writer could not hold the Epic well>`. Piece
+   names are kebab-case and unique, and no path matches two pieces. A file no piece names belongs to
+   the piece whose plan step creates it. A design with no `## Pieces` section has one piece, named
+   `all`, and one writer unit. `/design` writing this section arrives in a later release; until
+   then it is written by hand.
+6. **## Seams** (scaled) — where the change is exercised under test; prefer the **highest** seam that
    still isolates the change. Name the seam per component. Judge seam/module quality by: **deep module**
    (a small interface over substantial implementation — prefer depth over many shallow pass-throughs);
    the **deletion test** (would removing this module concentrate complexity meaningfully, or merely
@@ -125,16 +148,16 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
      them is "discriminating"; that is the unobservable form this list exists to avoid). `/design`
      Phase 5 records each live candidate as it arises, not only the settled outcome — that is what makes
      this signal countable.
-6. **## Data flow** (scaled) — how data moves through the changed path; state transitions; persistence.
-7. **## Error handling & edge cases** (scaled) — failure modes, boundaries, and the defined behaviour
+7. **## Data flow** (scaled) — how data moves through the changed path; state transitions; persistence.
+8. **## Error handling & edge cases** (scaled) — failure modes, boundaries, and the defined behaviour
    for each.
-8. **## Test strategy** (core) — what is tested and how (unit / integration / e2e), keyed to the seams;
+9. **## Test strategy** (core) — what is tested and how (unit / integration / e2e), keyed to the seams;
    cite existing test prior art in the scanned repos.
    Key each seam's approach to the **dependency category** recorded for it in `## Seams` — a
    remote-but-owned seam tested without a port, or a true-external dependency tested without a mock
    adapter, is a mismatch `design-reviewer` flags.
    **Each boundary interface** (section 4) has a producer-side test: one that drives the real
-   implementation through the interface and checks the behaviour sections 4 and 7 state for it — the
+   implementation through the interface and checks the behaviour sections 4 and 8 state for it — the
    failure cases they state included, and, for an altered interface, the behaviour the change touches.
    A consumer's tests against a stub show that the consumer handles the stated behaviour, never that
    the producer has it. A design that only builds a contract artifact — a contract Epic's OpenAPI or
@@ -144,14 +167,14 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
    A stub or test double for a consumed interface models the failures its `[AD#N]` Rule or section 4
    states, as well as the success shape.
    A test case run against a deployed system, rather than against what the test sets up itself,
-   names the state it relies on and shows the running system provides it, as section 11's
+   names the state it relies on and shows the running system provides it, as section 12's
    *Post-release checks* do.
-9. **## Risks & mitigations** (scaled) — engineering risks (performance, concurrency, data-loss, blast
+10. **## Risks & mitigations** (scaled) — engineering risks (performance, concurrency, data-loss, blast
    radius) and the mitigation or explicit acceptance for each. Each `Architecture deviation:` line (§ Architecture governance) is recorded here. A repository added to a targeted Epic's design at `/design` Phase 3, or another component of the target's own repository the design must change, is recorded here as `- Target span: <component> — <why>`: in another repository `/implement` will plan the change as a companion change, and in the same one it implements it beyond the Epic's target, and the line is what says so before it does.
-10. **## Migration / rollout / backward-compatibility** (scaled) — schema/data migration, feature
+11. **## Migration / rollout / backward-compatibility** (scaled) — schema/data migration, feature
     flags, rollout order, compat guarantees. `_N/A — why_` when the change is additive and
     self-contained.
-11. **## Observability & release verification** (scaled) — how the team will know, once the change
+12. **## Observability & release verification** (scaled) — how the team will know, once the change
     is live, that it works and that nothing around it broke. It is decided here, before the code,
     because a signal the code does not emit cannot be checked after release. It applies to a change
     to behaviour a deployed system runs — a service, a job, an agent, a UI users reach — and is
@@ -175,7 +198,7 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
       configuration the process it calls must hold, the jobs that must not run during its window — and
       the design shows the running system provides it: a fixture can be created through the component
       that owns it, as that component runs, or the check says how it is put in place; a configuration
-      change reaches the process that reads it under the rollout steps section 10 writes, since a
+      change reaches the process that reads it under the rollout steps section 11 writes, since a
       workload re-applied unchanged is not restarted; and nothing else in the deployed system — a
       scheduled job, a load generator, a sidecar, a reset — changes that state during the window, or
       the check says how that is paused and when it is restarted. A check whose state the running
@@ -188,9 +211,9 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
       errors rise" names no threshold, and is not one.
 
     A `SIMPLE` change may need no more than one check and its rollback signal.
-12. **## Out of scope** (core) — what this design deliberately does not cover (bounds the
+13. **## Out of scope** (core) — what this design deliberately does not cover (bounds the
     implementation).
-13. **## Open questions** (core; MUST be empty to hand off) — genuinely unresolved engineering items as
+14. **## Open questions** (core; MUST be empty to hand off) — genuinely unresolved engineering items as
     `- [ ]`. Any present blocks handoff; resolve them in the grill, or push a genuinely undecidable one
     onto the `specification.md` as a spec-level `- [ ]` for the PM (the design then waits on it).
 
@@ -231,7 +254,7 @@ the specification's owner takes it: write the design's answer under the question
 (`Engineering proposal (/design): <answer> — <why>`), leave the `- [ ]` open, and mark the row of the
 requirement it bears on, where it bears on one, `proposed-change` in **Requirements coverage**. The
 design proceeds on its proposal. That differs from an engineering unknown the design cannot settle,
-which is pushed onto the specification and waited on (section 13): here the design has an answer,
+which is pushed onto the specification and waited on (section 14): here the design has an answer,
 and only its adoption is the owner's.
 
 ## Provenance
