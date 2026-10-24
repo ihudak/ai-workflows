@@ -132,33 +132,36 @@ once its check shows every one of them settled:
   `_*.md` record, never `resume.md` itself or a session file under `dev-workflows/`. This is the
   template's *NOT already in the artifact* test, applied to each of those deliverables rather than
   to this run's own artifact alone;
-- **a path it names** — where the item records a host token, a run whose own host token is the
-  same finds the path gone; a run computing another token carries it. A path item with no host
-  token was written before 1.45.0 — by `/security-workflows:scan` 0.2.0 or older, say — and is
-  settled once the path no longer exists, as a pointer before 1.45.0 effectively let it be.
+- **a path it names** — inside a repository the item names with it — is absent from that
+  repository's default ref: in the specs repository the `<default-ref>` this run's preflight
+  resolved (`specs-repo-git.md` §3.2), in a code repository its default branch's tip in the refs
+  the run holds — `git -C <repository> cat-file -e <ref>:<path>` fails where `<ref>` resolves. An
+  item naming a path outside every repository the pointer's readers share, with no repository it
+  lies in — the worktree `/security-workflows:scan` 0.2.0 or older carried where it failed to
+  remove one — is settled at once, as one the pointer never carries.
 
 A settled item is dropped. The run that settled an item may keep one line saying so instead, and
 the next run drops that line: a line saying its item is settled is settled. An item not settled —
 by this run or by the check for what it waits on — is carried, without the run having to show it
 still open; one a file the next run reads already records — `follow-ups.md`, say — is carried as
 one line naming that file. An item that waits on a pull request names that pull request's branch
-and its repository, so a later run can make the merged check. An item naming a path records the
-machine it lives on as a **host token** — the first 8 hex digits of the SHA-256 of `hostname`'s
-output, `hostname | { sha256sum 2>/dev/null || shasum -a 256; } | cut -c1-8`, which takes
-`sha256sum` where it exists, as on Linux, and `shasum -a 256` where it does not, as on macOS —
-and never the hostname itself. The token is there because the pointer is pushed and shared while a
-path belongs to one machine, so absence on one cannot be told from removal on another; it is
-hashed because a hostname can carry an employer's domain or a person's name, and the pointer is
-pushed to a shared repository. These stay longer than they need:
+and its repository, so a later run can make the merged check, and an item naming a path names the
+repository it lies in and the path from that repository's root, so a later run can make the
+absence check. **A
+path outside every repository the pointer's readers share** — a scratch worktree, a temporary
+directory — **is never written into the pointer**: the pointer is pushed and shared while such a
+path belongs to one machine, so its absence on one machine cannot be told from its removal on
+another. A run that leaves one names it in its final report and its feedback instead. These stay
+longer than they need:
 a code repository's branch merged by a squash or a rebase, until a run applies
 `workflows-core:implementation-format` §5's merged test to it — a run of the Epic the branch
-belongs to, or `/dev-workflows:conformance <PRD>`; a branch in a repository the run holds no ref
-for, or only refs older than the merge — a code repository the run did not open or did not fetch,
-or a branch never fetched here — until a run holding current refs settles it; a specs-repository
+belongs to, or `/dev-workflows:conformance <PRD>`; a branch or a path in a repository the run
+holds no ref for, or only refs older than the merge or the removal — a code repository the run did
+not open or did not fetch, or a branch never fetched here — until a run holding current refs
+settles it; a specs-repository
 branch with neither its local nor its `origin/` ref left — deleted and pruned before any run that
 wrote a pointer here saw it merged — which, without a fetch, cannot be told from a branch never
-fetched here, so it stays carried; a path whose host token no later run computes, which stays
-carried; and an item an older pointer wrote naming a pull
+fetched here, so it stays carried; and an item an older pointer wrote naming a pull
 request by its number alone, until a run settles it. Where
 no pointer stands yet, there is nothing to carry.
 
