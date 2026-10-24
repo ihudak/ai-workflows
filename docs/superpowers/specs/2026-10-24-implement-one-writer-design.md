@@ -133,7 +133,7 @@ Everything up to and including Pre-Phase 3 is unchanged. That covers Phase 0 to 
 - **Re-review (Claude's call):**
   - The rules stay as today's `finding-triage` and `escalation-rules` state them, applied to each review.
   - A re-review re-runs each piece review whose piece got fixes, plus the overall review.
-- **After the review's fixes,** the test run runs again with the same three-round cap. Its fixes are not reviewed again, just as today's Phase 3.5 fix delta is not.
+- **After the review's fixes,** the test run runs again with the same three-round cap. Where that run's fixes are non-trivial, the delta gets one more review, as today's Phase 3.5 fix delta does (`implement.md` Phase 3B step 8). A review that stays blocked there stops the run, as today.
 
 **6. Reaching the same writer again.**
 - A writer that has returned keeps its whole context, and the orchestrator can send it a further message: Claude Code's `SendMessage`, which resumes the agent from its transcript.
