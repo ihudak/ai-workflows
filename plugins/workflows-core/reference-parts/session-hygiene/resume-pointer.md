@@ -147,11 +147,13 @@ once its check shows every one of them settled:
   (`<file>` its path from the specs repository's root), at that commit's `author-time`, which a
   rebase keeps where it moves the committer time, never the file's last commit, which a later block
   of another repository, mode or role moves too — and a same-day block whose heading line blame
-  names the all-zero commit for dates nothing: one not yet committed, or, in `specs-repo-git` §8's
-  session-branch mode, one committed on the session branch and not yet on the branch the checkout
-  stands on. A whole file —
-  the deliverable, or `_conformance.md` — is dated by the commit that added it, the specs
-  repository's last commit touching it;
+  names no commit for, or the all-zero commit, dates nothing: one in a file the branch the checkout
+  stands on does not track, one not yet committed, or, in `specs-repo-git` §8's session-branch mode,
+  one committed on the session branch and not yet on the branch the checkout stands on. A
+  `_conformance.md` is dated as a block of an append-only record is, its `Run:` line standing for
+  the heading line: by that line's day first and, on that same day, by the commit blame names for
+  it. A whole file — the deliverable — is dated by the commit that added it, the specs repository's
+  last commit touching it;
 - **a decision or a fact it states, or an open question** — recorded, the question with its
   answer, in a deliverable the next phase reads at the top level of the folder it belongs to:
   `prd.md`, `ard.md`, `epic.md`, `specification.md`, `design.md`, a `decisions.md` register or a
@@ -204,8 +206,10 @@ register slug beside it — a Security Engineer offer an older `/security-workfl
 derives there as `/security-workflows:scan` does (`workflows-core:components` §1), every other run
 carrying it; and an item an older pointer wrote naming a pull request by its number alone, until a run settles
 it. One can leave sooner than it should: after a squash merge, blame names the squash commit for
-every block it carried, so a block of the *Last completed* datetime's own day is dated by the
-squash and can settle an item though it was written before the pointer it is compared with. Where
+every line it carried, so a block or a `_conformance.md` of the *Last completed* datetime's own day
+is dated by the squash and can settle an item though it was written before the pointer it is
+compared with, and so, on any day, can a whole-file deliverable, whose last commit the squash is.
+Where
 no pointer stands yet, there is nothing to carry.
 
 **Redact before writing.** The `Carry-forward decisions` line may summarize
