@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.18.0] — Unreleased
+## [1.18.0] — 2026-10-24
 
 Needs `workflows-core` 1.45.0 for two citations: `finish-and-handoff` and `key-discovery` name the SSH-alias rule as `phase-handoff` §2.6.1's `owner-repo`, a section 1.44.0 does not have — its derivation sits in §2.6 there. The rest runs beside 1.44.0, which serves `escalation-rules core`; `/document`'s invariants on what may follow its report cite `specs-repo-git` §4 step 7, which 1.44.0's step 7 does not say, and state the rule themselves.
 

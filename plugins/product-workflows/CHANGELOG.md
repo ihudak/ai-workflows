@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.36.0] — Unreleased
+## [3.36.0] — 2026-10-24
 
 Needs `workflows-core` 1.45.0 for one citation: `/harvest-decisions` derives `OWNER_REPO` by `phase-handoff` §2.6.1's `owner-repo`, a section 1.44.0 does not have — its derivation sits in §2.6 there. The rest runs beside 1.44.0, which serves `escalation-rules core` and reads the whole `phase-handoff` for `require-on-main`. `/prd-ground`, its three grounding agents, `bundle-packaging.md` §1.2 and `/brd-package`'s stop also cite `grounding-format` §2.3 for keeping the operator's model and machine out of a grounding file, which 1.44.0's §2.3 does not say; they run beside 1.44.0 all the same, since each file carries the rule itself. So do `code-grounder` and `grounding-verifier`, which cite `grounding-format` §3's *A claim that restricts a value*, a subsection 1.44.0 does not have, and state the rule's core beside the citation, as they state that an absence read off a code path owes a control, which 1.44.0's §2.2 frames only as a search's. `/epics`' invariant on what may follow its report cites `specs-repo-git` §4 step 7, which 1.44.0's step 7 does not say, and states the rule itself, so it runs there all the same.
 

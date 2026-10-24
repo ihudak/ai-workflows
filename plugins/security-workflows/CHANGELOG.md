@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [0.3.0] — Unreleased
+## [0.3.0] — 2026-10-24
 
 Needs `workflows-core` 1.45.0: its next step after a change scan names the remaining Epics by key in the ARD's landing order, citing `next-phase-offer`'s *The remaining Epics are named*, which 1.44.0 does not have, while 1.44.0's lane line for this command writes "the remaining Epics" bare, after this Epic's merge — two instructions that disagree. It no longer names a worktree it failed to remove in the resume pointer, which needs nothing of 1.45.0; the reverse pairing is the one that disagrees, since 1.45.0's `session-hygiene` §1 never writes into the pointer a path outside every repository the pointer's readers share, where 0.2.0's `/security-workflows:scan` names that worktree — so take this release with 1.45.0. Its Security Engineer offers name their register's slug beside the repository path, which 1.45.0's §1 reads to settle such an offer a resume pointer carries, and which 1.44.0's §1, overwriting the pointer outright, never read; beside 0.2.0, whose offers name none, 1.45.0's §1 carries such an offer until a run on a machine where its path is that repository derives the slug. Its question-rules step requests `escalation-rules core`, which 1.44.0 serves too.
 

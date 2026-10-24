@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.31.0] — Unreleased
+## [4.31.0] — 2026-10-24
 
 Needs `workflows-core` 1.45.0 for two things: `code-handoff`'s SSH-alias rule names `phase-handoff` §2.6.1's `owner-repo`, a section 1.44.0 does not have — its derivation sits in §2.6 there; and `/implement`'s and `/conformance`'s next step names the remaining Epics by key in the ARD's landing order, citing `next-phase-offer`'s *The remaining Epics are named*, which 1.44.0 does not have, while 1.44.0's lane lines for both write "the remaining Epics" bare, `/conformance`'s after this Epic's merge — two instructions that disagree. `/implement`'s invariant on what may follow its report cites `specs-repo-git` §4 step 7, which 1.44.0's step 7 does not say, but states the rule itself, so it runs there all the same. The rest runs beside 1.44.0, which serves `escalation-rules core` and reads the whole `phase-handoff` for `require-on-main`. `/design` also cites `grilling-technique` for three rules 1.44.0's does not carry — a premise about the existing system read before a question states it, such a statement played back as read or unverified, and an `[AD#N]` Rule read before a recommendation of the outcome it assigns — but states each itself, so it runs there all the same.
 
