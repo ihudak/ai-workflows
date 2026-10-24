@@ -118,7 +118,7 @@ once its check shows every one of them settled:
   `/product-workflows:prd-ground` it is a run's dated heading in `grounding/baselines.md` or
   `grounding/design-grounding.md`, files only that command writes a heading into —
   `/product-workflows:update-prd`, `/product-workflows:create-ard` and `/product-workflows:specify`
-  write only `consumed_by`, inside a finding's block, never a heading: a `baselines.md` one, which every run but `--no-code` writes, for an item
+  write only `consumed_by`, inside a finding's block, never a heading — a `baselines.md` one, which every run but `--no-code` writes, for an item
   asking for a run that grounds code, and a `design-grounding.md` one, which every run writes, for
   an item asking for `--no-code`. Neither settles an item asking for `--rebaseline`, a run they do
   not tell from another, nor, while `design-grounding.md`'s `## Frame sets covered` section, which
@@ -137,8 +137,7 @@ once its check shows every one of them settled:
   key, in the register of the repository the item names or, where it names none, in any — the only
   record a `--triage` on a key leaves, since a run appends to `_security.md` only where it recorded
   a scan. A record that holds no mode or role of its own is of the mode and role its command and
-  its folder fix. A record is dated by the datetime it records, `_readiness.md`'s compared with the
-  waiting datetime directly. A block of an append-only record — `implementation.md`'s or
+  its folder fix. A record is dated by the datetime it records, `_readiness.md`'s compared with the waiting datetime directly. A waiting datetime written with no UTC offset — an older pointer's — is read as UTC, and one with no time as the end of its UTC day, which errs to carrying. A block of an append-only record — `implementation.md`'s or
   `_security.md`'s, or a run's in `grounding/baselines.md` or `grounding/design-grounding.md` —
   records a day alone, and is dated by its heading's own day first: one whose day is earlier than
   the waiting datetime's day, in UTC, is never later, and one whose day is later always is, whatever commit carried it; only a block of that
@@ -155,7 +154,7 @@ once its check shows every one of them settled:
   it. A same-day block or `Run:` line whose blamed commit's `author-time` falls on a later UTC day
   than the line's own day dates nothing either, since a run commits the record it writes on the day
   it writes it, so a later day's commit is a re-write or a late one — a squash, a later run's flush;
-  a run that spans midnight UTC, committing its record on the next day, dates nothing by the same
+  a run that spans midnight UTC, committing its record on the next day, or one whose heading or `Run:` line carries a local date behind UTC, dates nothing by the same
   rule, which errs to carrying;
 - **a decision or a fact it states, or an open question** — recorded, the question with its
   answer, in a deliverable the next phase reads at the top level of the folder it belongs to:
@@ -236,10 +235,9 @@ it. One can leave sooner than it should: blame names the commit that put a line 
 checkout stands on, so a block or a `_conformance.md` of an item's waiting datetime's own day that a
 later commit of that same day carried — a squash merge, a hand commit of a handoff its run
 declined, a later run's flush — is dated by that commit and can settle the item though it was
-written before that datetime; and so can a block whose heading carries a local date ahead of UTC,
+written before that datetime; and so can a block whose heading, or a `_conformance.md` whose `Run:` line, carries a local date ahead of UTC,
 written between local midnight and UTC midnight: its day is later than the UTC day it was written
-on, so the day-first rule reads it as later than a waiting datetime of that UTC day that came after
-it.
+on, so the day-first rule reads it as later than a waiting datetime of that UTC day that came after it; and an item whose waiting datetime an older pointer wrote in a local time behind UTC with no offset can leave sooner too, since that datetime is read as UTC and so as earlier than it was.
 Where
 no pointer stands yet, there is nothing to carry.
 
