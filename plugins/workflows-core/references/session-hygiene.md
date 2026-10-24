@@ -137,7 +137,7 @@ once its check shows every one of them settled:
   key, in the register of the repository the item names or, where it names none, in any — the only
   record a `--triage` on a key leaves, since a run appends to `_security.md` only where it recorded
   a scan. A record that holds no mode or role of its own is of the mode and role its command and
-  its folder fix. A record is dated by the datetime it records, `_readiness.md`'s compared with the waiting datetime directly. A waiting datetime written with no UTC offset — an older pointer's — is read as UTC, and one with no time as the end of its UTC day. A block of an append-only record — `implementation.md`'s or
+  its folder fix. A record is dated by the datetime it records, `_readiness.md`'s compared with the waiting datetime directly. A waiting datetime written with no UTC offset — an older pointer's — is read as UTC, and one with no time as the end of its UTC day; either reading errs to carrying wherever it is no earlier than the pointer was written. A block of an append-only record — `implementation.md`'s or
   `_security.md`'s, or a run's in `grounding/baselines.md` or `grounding/design-grounding.md` —
   records a day alone, and is dated by its heading's own day first: one whose day is earlier than
   the waiting datetime's day, in UTC, is never later, and one whose day is later always is, whatever commit carried it; only a block of that
