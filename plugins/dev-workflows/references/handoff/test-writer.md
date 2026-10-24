@@ -1,6 +1,6 @@
 # test-writer Handoff Format
 
-`/dev-workflows:implement` dispatches `test-writer` once a writer unit's `code-writer` has returned, with `model:` set to the tier the caller assigns it, and hands it the request below in the prompt. It sends each later request for that unit to the same agent with `SendMessage`, a decision's answer included. Three modes share the request: `write` writes the unit's tests and updates each existing test the code writer reported broken by intent, then runs them; `fix` fixes the failing tests `failure_input` names, in the test files the agent owns, and runs them again; and `review` applies a review's findings to test files.
+`/dev-workflows:implement` dispatches `test-writer` once a writer unit's `code-writer` has returned, with `model:` set to the tier the caller assigns it, and hands it the request below in the prompt. It sends each later request for that unit to the same agent with `SendMessage`, a decision's answer included, and, where reaching it again fails, dispatches a fresh `test-writer` carrying `earlier_reports` and `diff_so_far`. Three modes share the request: `write` writes the unit's tests and updates each existing test the code writer reported broken by intent, then runs them; `fix` fixes the failing tests `failure_input` names, in the test files the agent owns, and runs them again; and `review` applies a review's findings to test files.
 
 ## Input (`/implement` → `test-writer`)
 
@@ -35,6 +35,15 @@ unit_files:                # CONTEXT, each path on its own, relative to repo_roo
 code_report: /tmp/dw-impl-code-AbC123
                            # CONTEXT. The unit's code-writer report: its ### Files changed and its ### Tests
                            # broken by intent are what test-writer reads.
+earlier_reports:           # CONTEXT, each report on its own. Each earlier report_file of this unit's test
+  - report: /tmp/dw-impl-tests-XyZ789         # writer, in order; none where there is none. They serve
+    answer: "Keep the old assertion"          # the caller's fallback: a fresh dispatch where reaching
+                           # the same agent again with SendMessage failed. `answer:` stands only beside a
+                           # report that returned needs_decision: the user's answer, verbatim.
+diff_so_far: /tmp/dw-impl-partial-AbC123
+                           # CONTEXT. The working tree against HEAD, captured before a fresh dispatch: what
+                           # this unit's writers have written so far; none where the caller passes none.
+                           # test-writer reads its test files' hunks, and of every other file only the path.
 baseline_file: /tmp/dw-impl-baseline-AbC123
                            # EVIDENCE. The ## Test Baseline block test-baseliner captured before the run's
                            # first edit, verbatim: each suite's framework, command and row, and the tests
@@ -60,7 +69,7 @@ report_file: /tmp/dw-impl-tests-AbC123
 **The read-failure tiers** follow `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`'s contract, and the agent states them where it takes the request:
 
 - **Evidence** — `plan_file`, `baseline_file` and `repo_root`, and `failure_input` on `mode: fix` or `review_file` on `mode: review`. One that cannot be read, or a `repo_root` that is not a directory, is a hard stop: the agent writes nothing in the repository, writes the blocked shape below, and returns `blocked`. It never reconstructs the input by other means — the plan from the code report, the baseline or a failure by running a suite itself.
-- **Context** — `task_description_file`, `spec_paths`, `design_path`, `unit_files` and `code_report`, each path on its own. One that cannot be read degrades to absent, and the report's **Degraded inputs** line names it with its path. Where `spec_paths` is `none` or every one of them degraded, the task description and the plan's Steps and Review focus stand in for the spec; where `design_path` is `none` or degraded, the plan stands in for the design.
+- **Context** — `task_description_file`, `spec_paths`, `design_path`, `unit_files`, `code_report`, `earlier_reports` and `diff_so_far`, each path on its own. One that cannot be read degrades to absent, and the report's **Degraded inputs** line names it with its path. Where `spec_paths` is `none` or every one of them degraded, the task description and the plan's Steps and Review focus stand in for the spec; where `design_path` is `none` or degraded, the plan stands in for the design.
 - **Inline values** — `mode`, `pieces`, `unit` and `task_shape` — are read from the request itself and have no read to fail. `report_file` is written, never read.
 
 ## Output (`test-writer` → `/implement`)

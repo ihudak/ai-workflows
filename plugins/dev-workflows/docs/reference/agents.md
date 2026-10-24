@@ -32,7 +32,7 @@ Produce artifact content from a structured handoff, and write no git state. Both
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
 | `code-writer` | per routing | Read, Glob, Grep, Write, Edit, Bash, Skill | Codes one group of an approved plan's steps, or one fix attempt from a failing check, in its branched repository; runs no lint, build, type-check or test on its working tree; asks you nothing. | `/implement` |
-| `test-writer` | per routing | Read, Glob, Grep, Write, Edit, Bash | Writes and updates a writer unit's tests from the spec, the design's interfaces and the plan, reading code only for signatures; runs them through the run lock and fixes its own test files. | `/implement` |
+| `test-writer` | per routing | Read, Glob, Grep, Write, Edit, Bash, Skill | Writes and updates a writer unit's tests from the spec, the design's interfaces and the plan, reading code only for signatures; runs them through the run lock and fixes its own test files. | `/implement` |
 
 ## Fixers
 
