@@ -123,29 +123,35 @@ once its check shows every one of them settled:
 - **an item that asks for a follow-up to be done** — its line is ticked in its `follow-ups.md`;
 - **an item that asks for a command to run** — a record that command writes as the item asks it to
   run — in the item's own mode and role, and in or for the repository the item names where it names
-  one — is later than the old pointer's *Last completed* datetime, by the datetime it records, or,
-  where it records a day alone or no date, by the commit that added it. For a block of an
-  append-only record, `implementation.md`'s or `_security.md`'s, that is the commit
-  `git -C "$SPECS_PATH" blame -L <n>,<n> --porcelain -- <file>` names for the block's heading line
-  `<n>` (`<file>` its path from the specs repository's root), at that commit's `author-time`, which a
-  rebase keeps where it moves the committer time — never the file's last commit, which a later block
-  of another repository, mode or role moves too — and a heading line not yet committed, for which
-  blame names the all-zero commit, dates nothing; for a whole file, it is the specs repository's last
-  commit touching it. A record that holds no mode or role of its own is of the mode and role its
-  command and its folder fix. In the folder the item names, that record is an `implementation.md` block, a `_conformance.md` entry, the deliverable
-  itself, or a `_security.md` block whose `kind` and role are the item's and whose `repo` is the
-  item's where it names one.
-  For `/security-workflows:scan` it is also a run record under `security/<repo-slug>/runs/`, written
-  where the run changed the register (`workflows-core:security-register-format` §1), whose `kind`
-  and `role` are those that reference's §2 gives the run the item asks for — `kind` `verify` for
-  `--verify-fixes`, `triage` for `--triage`, `import` for `--import` and `scan` for a scan, and
-  `role` `dev` for a key run without `--triage` or `--verify-fixes` and `sec` otherwise — so no run
-  of another mode or role settles it. On a repository path, `<repo-slug>` is the register's slug the
-  item names beside the path, kept with it by every run that carries it, read from the item and
-  never derived from the path on a machine where the path is not that repository; on a key, the
-  record's `unit` is that key, in the register of the repository the item names or, where it names
-  none, in any — the only record a `--triage` on a key leaves, since a run appends to `_security.md`
-  only where it recorded a scan;
+  one — is later than the old pointer's *Last completed* datetime. In the folder the item names,
+  that record is an `implementation.md` block, a `_conformance.md` entry, the deliverable itself, or
+  a `_security.md` block whose `kind` and role are the item's and whose `repo` is the item's where
+  it names one. For `/security-workflows:scan` the record is also a run record under
+  `security/<repo-slug>/runs/`, written where the run changed the register
+  (`workflows-core:security-register-format` §1), whose `kind` and `role` are those that
+  reference's §2 gives the run the item asks for — `kind` `verify` for `--verify-fixes`, `triage`
+  for `--triage`, `import` for `--import` and `scan` for a scan, and `role` `dev` for a key run
+  without `--triage` or `--verify-fixes` and `sec` otherwise — so no run of another mode or role
+  settles it. On a repository path, `<repo-slug>` is the register's slug the item names beside the
+  path, kept with it by every run that carries it, read from the item and never derived from the
+  path on a machine where the path is not that repository; on a key, the record's `unit` is that
+  key, in the register of the repository the item names or, where it names none, in any — the only
+  record a `--triage` on a key leaves, since a run appends to `_security.md` only where it recorded
+  a scan. A record that holds no mode or role of its own is of the mode and role its command and
+  its folder fix. A record is dated by the datetime it records. A block of an append-only record,
+  `implementation.md`'s or `_security.md`'s, records a day alone, and is dated by its heading's own
+  day first: one whose day is earlier than the *Last completed* datetime's day, in UTC, is never
+  later, and one whose day is later always is, whatever commit carried it; only a block of that
+  same day is dated by the commit that added its heading line — the commit
+  `git -C "$SPECS_PATH" blame -L <n>,<n> --porcelain -- <file>` names for heading line `<n>`
+  (`<file>` its path from the specs repository's root), at that commit's `author-time`, which a
+  rebase keeps where it moves the committer time, never the file's last commit, which a later block
+  of another repository, mode or role moves too — and a same-day block whose heading line blame
+  names the all-zero commit for dates nothing: one not yet committed, or, in `specs-repo-git` §8's
+  session-branch mode, one committed on the session branch and not yet on the branch the checkout
+  stands on. A whole file —
+  the deliverable, or `_conformance.md` — is dated by the commit that added it, the specs
+  repository's last commit touching it;
 - **a decision or a fact it states, or an open question** — recorded, the question with its
   answer, in a deliverable the next phase reads at the top level of the folder it belongs to:
   `prd.md`, `ard.md`, `epic.md`, `specification.md`, `design.md`, a `decisions.md` register or a
@@ -188,13 +194,18 @@ wrote a pointer here saw it merged — which, without a fetch, cannot be told fr
 fetched here, so it stays carried; an item asking for `/security-workflows:scan` whose run changed
 nothing in the register, and so wrote no run record, or whose scan a run of another mode recorded —
 an `--import` of its report, say — until a run of the item's own mode and role records and so settles it, for
-good where none can, as no change scan records once its Epic has merged; an item asking for `/security-workflows:scan` on a repository path with no
+good where none can, as no change scan records once `unit-branch` reads its Epic's branch merged
+with no work after it; an item only a block of `implementation.md` or `_security.md` of the *Last
+completed* datetime's own day can settle, in `specs-repo-git` §8's session-branch mode, until the session branch's pull request
+merges and the block reaches the branch the checkout stands on; an item asking for `/security-workflows:scan` on a repository path with no
 register slug beside it — a Security Engineer offer an older `/security-workflows:scan` wrote, say
 — until a run on a machine where that path is that repository, a repository with an `origin` that
 `git -C <path> rev-parse --show-toplevel` names, settles it by the command check, with the slug it
 derives there as `/security-workflows:scan` does (`workflows-core:components` §1), every other run
 carrying it; and an item an older pointer wrote naming a pull request by its number alone, until a run settles
-it. Where
+it. One can leave sooner than it should: after a squash merge, blame names the squash commit for
+every block it carried, so a block of the *Last completed* datetime's own day is dated by the
+squash and can settle an item though it was written before the pointer it is compared with. Where
 no pointer stands yet, there is nothing to carry.
 
 **Redact before writing.** The `Carry-forward decisions` line may summarize
