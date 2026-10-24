@@ -90,7 +90,7 @@ log). It is intentionally tiny — one line per item, and an item leaves it once
 ```markdown
 # Resume — <KEY>[ / <EPIC-KEY>] (<role>)
 
-- **Last completed:** <command> <args> — <phase or 'command complete'> (<ISO datetime>)
+- **Last completed:** <command> <args> — <phase or 'command complete'> (<ISO datetime with its UTC offset>)
 - **Artifact:** <relative path to the deliverable just written/committed, or 'none (read-only)'>
 - **Next step:** <the exact next command from ### Next step, or 'PRD fully processed'>
 - **Suggested session name:** <KEY>-<slug>-<role>   (omit this line on a run whose own `### Context hygiene` block carries no `/rename` suggestion — that block is this command's own, so the test is decidable from the command being executed and needs no list to look up; §4 names which commands carry the line and why the rest do not)
@@ -132,9 +132,8 @@ once its check shows every one of them settled:
   role are the item's and whose `repo` is the item's where it names one. For
   `/product-workflows:prd-ground` it is a run's dated heading in `grounding/baselines.md` or
   `grounding/design-grounding.md`, files only that command writes a heading into —
-  `/product-workflows:create-prd`, `/product-workflows:update-prd`, `/product-workflows:create-ard`
-  and `/product-workflows:specify` write only `consumed_by`, inside a finding's block, never a
-  heading: a `baselines.md` one, which every run but `--no-code` writes, for an item
+  `/product-workflows:update-prd`, `/product-workflows:create-ard` and `/product-workflows:specify`
+  write only `consumed_by`, inside a finding's block, never a heading: a `baselines.md` one, which every run but `--no-code` writes, for an item
   asking for a run that grounds code, and a `design-grounding.md` one, which every run writes, for
   an item asking for `--no-code`. Neither settles an item asking for `--rebaseline`, a run they do
   not tell from another, nor, while `design-grounding.md`'s `## Frame sets covered` section, which
@@ -226,8 +225,14 @@ good where none can, as no change scan records once `unit-branch` reads its Epic
 with no work after it; an item only a block of `implementation.md` or `_security.md` of its waiting
 datetime's own day can settle, in `specs-repo-git` §8's session-branch mode, until the session branch's pull request
 merges — by a merge or a rebase, or by a squash on the block's own day — and the block reaches the
-branch the checkout stands on; an item asking for a command that leaves none of the records this
-check reads — one whose only record is its deliverable, a whole file the check does not read:
+branch the checkout stands on; an item only a day-dated block or `Run:` line can settle whose commit
+falls on a later UTC day than the line's own day — a pull request a squash merged on a later day, a
+later run's flush, a run past midnight UTC, a heading written in a local date behind UTC — until a
+record of a later day settles it, or a run of the item's command writing this pointer settles it
+itself, and for good where that command writes another folder's pointer and nothing runs it again:
+`/product-workflows:prd-ground <CHILD-KEY>` in a root BRD's pointer after a *Ground now* whose pull
+request a squash merged on a later day; an item asking for a command that leaves none of the
+records this check reads — one whose only record is its deliverable, a whole file the check does not read:
 most name no date of their own, and other commands commit into several — or asking for one in a
 mode those records do not tell — `/product-workflows:prd-ground`'s `--rebaseline`, or a run of it
 that grounds design while `design-grounding.md`'s `## Frame sets covered` records a set
@@ -242,10 +247,14 @@ register slug beside it — a Security Engineer offer an older `/security-workfl
 `git -C <path> rev-parse --show-toplevel` names, settles it by the command check, with the slug it
 derives there as `/security-workflows:scan` does (`workflows-core:components` §1), every other run
 carrying it; and an item an older pointer wrote naming a pull request by its number alone, until a run settles
-it. One can leave sooner than it should: blame names a squash commit for every line it carried,
-so a block or a `_conformance.md` of an item's waiting datetime's own day that a squash on that same
-day merged is dated by the squash and can settle the item though it was written before that
-datetime.
+it. One can leave sooner than it should: blame names the commit that put a line on the branch the
+checkout stands on, so a block or a `_conformance.md` of an item's waiting datetime's own day that a
+later commit of that same day carried — a squash merge, a hand commit of a handoff its run
+declined, a later run's flush — is dated by that commit and can settle the item though it was
+written before that datetime; and so can a block whose heading carries a local date ahead of UTC,
+written between local midnight and UTC midnight: its day is later than the UTC day it was written
+on, so the day-first rule reads it as later than a waiting datetime of that UTC day that came after
+it.
 Where
 no pointer stands yet, there is nothing to carry.
 
