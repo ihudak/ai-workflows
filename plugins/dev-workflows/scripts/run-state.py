@@ -31,7 +31,7 @@ calls, never two runs.
                                      members over the ones the file holds: a member it leaves out
                                      keeps its value. A deeper path or a list entry is not checked.
                                      Once the write lands, each path the file named before the call --
-                                     a `files` member, a `step_groups` report or a `patches` path --
+                                     a `files` member, a `writers` report or a `patches` path --
                                      that none of them names after it is removed, where it is a
                                      regular file, not a symlink, whose name begins `dw-impl-`, and
                                      printed `removed: <path>`; one whose removal fails is printed
@@ -43,7 +43,7 @@ calls, never two runs.
                                      one-element list.
   run-state.py remove [--keep <path>] ...
                                      the end-of-run removal: every temp file `files` names, each
-                                     `step_groups` report and each `patches` path marked `temp`
+                                     `writers` report and each `patches` path marked `temp`
                                      -- only a regular file whose name begins `dw-impl-`, and never
                                      a --keep path -- then the file itself, only at the git path.
 
@@ -99,6 +99,13 @@ LOCK = ".implement-run.lock"
 # default is an object, a list, a boolean, an integer or a string must be given as one; one whose
 # default is null takes any JSON value. `init` and `set` both hold what they are given to this list, and
 # `set` merges an object given for an object key over the members the file holds.
+# A list key's entries are not type-checked; the shape each holds, one entry per item:
+#   pieces       {"name", "files": [], "builds_after": []}
+#   writer_units {"name", "pieces": []}
+#   writers      {"unit", "role": "code"|"test", "agent_id", "reports": [], "status", "answer",
+#                 "left_to_caller": [], "resumes": 0, "fresh": 0}
+#   test_runs    {"unit", "stage": "unit"|"post-review", "rounds": 0, "status"}
+#   reviews      {"scope": "piece:<name>"|"overall", "diff_file", "return_file", "verdict"}
 # commands/implement.md quotes this list (KEYS_LINE); the selftest holds the two equal.
 KEYS = [
     ("format", 1), ("phase", "Phase 1.4"), ("mode", None), ("key", None), ("source", None),
@@ -113,10 +120,11 @@ KEYS = [
     ("stash_ref", None), ("pre_existing_dirty", None), ("session_branch_lift", False),
     ("test_decision", None), ("clean_finish", True),
     ("files", {"task_description_file": None, "plan_file": None, "pending_plan_file": None,
-               "summary_file": None, "baseline_file": None, "test_diff_file": None,
+               "summary_file": None, "baseline_file": None,
                "test_report_file": None, "review_diff_file": None, "partial_diff_file": None, "review_return_file": None,
                "review_file": None, "claims_file": None, "failure_file": None}),
-    ("step_groups", []), ("patches", []), ("triage", []),
+    ("pieces", []), ("writer_units", []), ("writers", []), ("test_runs", []), ("reviews", []),
+    ("patches", []), ("triage", []),
     ("conformance", {"summary": None, "annotated": [], "gaps": [], "handoff_line": None}),
     ("other_repo_changes", []), ("assumptions", []), ("deferred", []),
     ("report", {"commands_run": [], "maintenance": [], "notices": [], "phase1_tasks": [],
@@ -408,16 +416,16 @@ def cmd_read(f, args, out):
 
 
 def named(d):
-    """Each path the file names that a set may stop naming: every `files` member's, each `step_groups`
-    entry's report and each `patches` entry's path, in that order, each once."""
+    """Each path the file names that a set may stop naming: every `files` member's, each report a
+    `writers` entry lists and each `patches` entry's path, in that order, each once."""
     out = []
     files = d.get("files")
     if isinstance(files, dict):
         out += [p for p in files.values() if isinstance(p, str)]
-    groups, patches = d.get("step_groups"), d.get("patches")
-    for g in groups if isinstance(groups, list) else []:
-        if isinstance(g, dict) and isinstance(g.get("report"), str):
-            out.append(g["report"])
+    writers, patches = d.get("writers"), d.get("patches")
+    for w in writers if isinstance(writers, list) else []:
+        if isinstance(w, dict) and isinstance(w.get("reports"), list):
+            out += [p for p in w["reports"] if isinstance(p, str)]
     for p in patches if isinstance(patches, list) else []:
         if isinstance(p, dict) and isinstance(p.get("path"), str):
             out.append(p["path"])
@@ -501,9 +509,9 @@ def cmd_remove(f, args, out):
         files = d.get("files")
         if isinstance(files, dict):
             paths += [p for p in files.values() if isinstance(p, str)]
-        for g in d.get("step_groups") or []:
-            if isinstance(g, dict) and isinstance(g.get("report"), str):
-                paths.append(g["report"])
+        for w in d.get("writers") or []:
+            if isinstance(w, dict) and isinstance(w.get("reports"), list):
+                paths += [p for p in w["reports"] if isinstance(p, str)]
         for p in d.get("patches") or []:
             if isinstance(p, dict) and p.get("temp") is True and isinstance(p.get("path"), str):
                 paths.append(p["path"])
@@ -606,7 +614,7 @@ def selftest():
         d = json.load(open(f, encoding="utf-8"))
         check("init keeps the seeded assumptions", d["assumptions"] == ["seeded"])
         check("init holds every key in KEYS, and no other", list(d) == [k for k, _ in KEYS])
-        check("init gives an omitted key its default", d["deferred"] == [] and d["step_groups"] == []
+        check("init gives an omitted key its default", d["deferred"] == [] and d["writers"] == []
               and d["clean_finish"] is True and d["replans_used"] == 0 and d["phase"] == "Phase 1.4"
               and d["session_branch_lift"] is False and d["test_decision"] is None)
         check("init gives an omitted object its members' defaults",
@@ -614,6 +622,32 @@ def selftest():
               and d["report"] == {"commands_run": [], "maintenance": [], "notices": [], "phase1_tasks": [],
                                   "confirmed_cause": None})
         check("init refuses a non-object", call(["init"], "[1]", repo)[0] == 2)
+        new_keys = ("pieces", "writer_units", "writers", "test_runs", "reviews")
+        check("init defaults each one-writer key to an empty list", all(d.get(k) == [] for k in new_keys)
+              and all(dict(KEYS).get(k) == [] for k in new_keys))
+        check("KEYS drops step_groups and files.test_diff_file",
+              "step_groups" not in dict(KEYS) and "test_diff_file" not in dict(KEYS)["files"])
+        check("init refuses step_groups", call(["init"], json.dumps(fresh(step_groups=[])), repo)[0] == 3)
+        check("init refuses files.test_diff_file",
+              call(["init"], json.dumps(fresh(files={"test_diff_file": "x"})), repo)[0] == 3)
+        code, _ = call(["init"], json.dumps(fresh(
+            pieces=[{"name": "p", "files": ["a"], "builds_after": []}],
+            writer_units=[{"name": "u", "pieces": ["p"]}],
+            writers=[{"unit": "u", "role": "code", "agent_id": "a1", "reports": [], "status": None,
+                      "answer": None, "left_to_caller": [], "resumes": 0, "fresh": 0}],
+            test_runs=[{"unit": "u", "stage": "unit", "rounds": 0, "status": None}],
+            reviews=[{"scope": "piece:p", "diff_file": None, "return_file": None, "verdict": None}])), repo)
+        d = json.load(open(f, encoding="utf-8"))
+        check("init accepts each one-writer key", code == 0 and d["writers"][0]["role"] == "code"
+              and d["reviews"][0]["scope"] == "piece:p" and d["pieces"][0]["name"] == "p")
+        check("init refuses a one-writer key given as a string",
+              call(["init"], json.dumps(fresh(writers="x")), repo)[0] == 3)
+        call(["init"], json.dumps(fresh()), repo)
+        check("set refuses step_groups", call(["set", "step_groups", "[]"], repo=repo)[0] == 3)
+        check("append refuses step_groups", call(["append", "step_groups", "{}"], repo=repo)[0] == 3)
+        check("set refuses files.test_diff_file", call(["set", "files.test_diff_file", '"x"'], repo=repo)[0] == 3)
+        check("append accepts a writers entry",
+              call(["append", "writers", '{"unit": "u", "role": "test"}'], repo=repo)[0] == 0)
         check("init refuses a format other than 1", call(["init"], json.dumps(fresh(format=2)), repo)[0] == 2)
 
         # a nested member default: a given object keeps its members and takes the rest's defaults
@@ -794,10 +828,10 @@ def selftest():
         code, out = call(["set", "files.summary_file", "null"], repo=repo)
         check("a replaced file not named dw-impl- is left", code == 0 and os.path.exists(notes) and out == "")
         rep = mk("dw-impl-code-r")
-        call(["set", "step_groups", json.dumps([{"steps": [1], "report": rep}]), "files.failure_file", json.dumps(rep)],
+        call(["set", "writers", json.dumps([{"unit": "u", "reports": [rep]}]), "files.failure_file", json.dumps(rep)],
              repo=repo)
         code, out = call(["set", "files.failure_file", "null"], repo=repo)
-        check("a file a step_groups report still names is kept", code == 0 and os.path.exists(rep) and out == "")
+        check("a file a writers report still names is kept", code == 0 and os.path.exists(rep) and out == "")
         target, link = mk("target-t"), os.path.join(tmp, "dw-impl-link-l")
         os.symlink(target, link)
         call(["set", "files.claims_file", json.dumps(link)], repo=repo)
@@ -884,9 +918,9 @@ def selftest():
         plan, summ, kept = mk("dw-impl-plan-1"), mk("dw-impl-summary-1"), mk("dw-impl-diff-1")
         report, patch, user = mk("dw-impl-step-1"), mk("dw-impl-patch-1"), mk("notes.md")
         files = {m: None for m in dict(KEYS)["files"]}
-        files.update({"plan_file": plan, "summary_file": summ, "test_diff_file": kept, "review_file": user})
+        files.update({"plan_file": plan, "summary_file": summ, "baseline_file": kept, "review_file": user})
         call(["set", "files", json.dumps(files),
-              "step_groups", json.dumps([{"steps": [1], "status": "done", "report": report}]),
+              "writers", json.dumps([{"unit": "u", "status": "done", "reports": [report]}]),
               "patches", json.dumps([{"path": patch, "temp": True, "outcome": "applied"},
                                      {"path": user, "temp": False, "outcome": "refused"}])], repo=repo)
         code, out = call(["remove", "--keep", kept], repo=repo)
@@ -905,13 +939,13 @@ def selftest():
               and "none was moved aside" in a[-1])
 
         # set into a list entry's member
-        call(["set", "step_groups", json.dumps([{"steps": [1], "status": None}, {"steps": [2], "status": None}])],
+        call(["set", "writers", json.dumps([{"unit": "a", "status": None}, {"unit": "b", "status": None}])],
              repo=repo)
-        code, _ = call(["set", "step_groups.-1.status", '"done"'], repo=repo)
+        code, _ = call(["set", "writers.-1.status", '"done"'], repo=repo)
         d = json.load(open(f, encoding="utf-8"))
-        check("set into the last list entry's member", code == 0 and d["step_groups"][-1]["status"] == "done"
-              and d["step_groups"][0]["status"] is None)
-        check("set refuses a list entry the file lacks", call(["set", "step_groups.5.status", '"x"'], repo=repo)[0] == 2)
+        check("set into the last list entry's member", code == 0 and d["writers"][-1]["status"] == "done"
+              and d["writers"][0]["status"] is None)
+        check("set refuses a list entry the file lacks", call(["set", "writers.5.status", '"x"'], repo=repo)[0] == 2)
 
         # remove on an unparseable file: the file still goes
         with open(f, "w", encoding="utf-8") as w:
