@@ -201,6 +201,13 @@ jobs:
         # Fixtures are built at run time.
         run: python3 plugins/product-workflows/scripts/proposal-record.py --selftest
 
+      - name: Self-test the ledger evidence writer
+        # /product-workflows:prd-ground writes the coverage ledger's evidence column with it. Its
+        # failure modes are silent: a row split on " | " merges an empty cell with its neighbour and
+        # writes the ids into another column, and a write that moves another byte rewrites a
+        # customer's requirement text. Fixtures are built at run time.
+        run: python3 plugins/product-workflows/scripts/ledger-evidence.py --selftest
+
       - name: Self-test the security register
         # /security-workflows:scan records Claude Security scans in SPECS with it. Its failure modes
         # are silent: a change scan that closes a finding it never re-checked, a rebuild that

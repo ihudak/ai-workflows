@@ -169,6 +169,11 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   unreadable, or carrying no markdown file is a silent, non-blocking skip. Turned off with
   `--no-docs`, and also off under `--no-code` — a divergence is written into `code-grounding.md`,
   which that mode does not write. **A document is never evidence for a `[CG#n]`** — see the Phase 4.5 gate below.
+- **`python3`** — for two bundled scripts, standard library only: `scripts/bounded.py`, which caps
+  the `git remote` call Phase 1 makes in each clone it lists, and, on the BRD route,
+  `scripts/ledger-evidence.py`, which writes the coverage ledger's `evidence` column in Phase 8.
+  Without it Phase 1 skips every clone whose call fails, and the ledger's column is left as it stood,
+  the final report saying so.
 - **A clean working tree per resolved repository.** The Phase 3 baseline-integrity gate runs
   `rev-parse HEAD`, a `diff --ignore-cr-at-eol --stat`, and a line-count check on anything
   `status --porcelain` reports, **before any finding is written**. Any non-empty content diff stops
@@ -352,7 +357,14 @@ Under the resolved folder — the `PRD-<SLICE-KEY>-<slug>/` slice folder inside 
   run writes.
 - `coverage-ledger.md`'s `evidence` column — **BRD route only**, rebuilt as the last write of Phase
   8 over every row of the slice's ledger: each row takes the id of every `[CG#n]`/`[DG#n]` whose
-  claim names that row's `[BR#n]`, and a row no finding names keeps an empty cell. Nothing else in
+  claim names that row's `[BR#n]` — every `[CG#n]` by number, then every `[DG#n]` — and a row no
+  finding names keeps an empty cell. The run decides which finding names which row, and the bundled
+  `scripts/ledger-evidence.py` writes the cells: it splits each row only on the delimiters the
+  table's cell encoding defines, so an empty cell keeps its column, and changes no other byte of
+  the file. A ledger it cannot read that way — a header that is not the five columns in order, a row
+  whose cell count differs, a duplicate row, a finding naming a requirement the ledger has no row
+  for — it refuses, writing
+  nothing, and the final report gives its reason; the run never repairs the ledger by hand. Nothing else in
   the row is touched — this command allocates nothing and writes no disposition. It is an index over
   the two grounding files and never a second copy of what they say, which is why a finding marked
   `SUPERSEDED` stays listed: the verdict lives in the file the id resolves to. Without it the
@@ -361,6 +373,12 @@ Under the resolved folder — the `PRD-<SLICE-KEY>-<slug>/` slice folder inside 
   requirement and unable to tell a checked one from an unchecked one.
 - `brd-link.md` — **BRD route only.** The `depends-on:` list, merged additively across runs. Never
   written on the idea route, since `--depends-on` is refused there before Phase 4 could persist one.
+
+**A finding that names another names it by the id the file carries, bracketed — `[CG#4]`.** Each
+grounder numbers its own findings from 1, so when the run merges them into one sequence it rewrites
+every such reference through that grounder's own renumbering, all at once, so that no rewritten
+number is rewritten again. A reference that names no finding of the run or on file is a parse
+failure: the run rewords it out before writing and the final report lists it.
 
 **The three grounding files are written for a reader with no plugin, and name nothing of your
 machine.** On the BRD route they go to the customer in the review bundle as written, and
@@ -479,7 +497,9 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   the control gives the same result on every run. Where the two blind verdicts agree the
   `contradict` stands. Where they disagree the outcome becomes `unprovable`, the finding keeps its
   verdict, its notes record the two verdicts and the dispute, and the report flags it as
-  verification inconclusive, naming both verdicts. The second opinion is not a retry, and its own
+  verification inconclusive, naming both verdicts — and, where the second blind verdict is the
+  finding's own, says so, since the settlement compares the two blind verdicts only and the
+  finding's agreement with one of them is not a vote. The second opinion is not a retry, and its own
   dispatches get one retry of their own. A `contradict` outcome on an own-run
   finding — one this run produced, which nothing outside this run cites yet — rewrites it in place:
   same id, replaced verdict and evidence. On an on-file finding — one an earlier run wrote, which a

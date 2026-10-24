@@ -140,8 +140,9 @@ guess, not a citation.
    or pin a commit of its own for a claim it did not settle.
 
 7. **Emit exactly one finding per divergence**, numbered contiguously as `[DG#n]` starting from
-   `DG#1` in the order the reconciliation surfaced them. Ids are assigned once and never renumbered
-   across a run. A requirement and a frame that agree produce no finding — this agent reports
+   `DG#1` in the order the reconciliation surfaced them. Ids are assigned once, and you never
+   renumber one: your caller maps them into its own sequence (Output, *A reference to a finding*).
+   A requirement and a frame that agree produce no finding — this agent reports
    divergence, not confirmation of silence.
 
 ## Output
@@ -177,6 +178,12 @@ this agent returns straight into `design-grounding.md`, so a template that align
 others is what produces a file whose scan reports findings missing that are on the page. `class` and
 `cites` sit after `horizon` for that reason and not for emphasis — they were first in this template,
 which put every `[DG#n]` on disk in a different key order from every `[CG#n]` beside it.
+
+**A reference to a finding names one of this return's own `[DG#n]`, by the id this return gives
+it, or a `[CG#n]` of `cg_findings`, by the id given there, and nothing else**, written bracketed —
+in a `note`, `control`, `prerequisite` or `notes`, and `cites` names a `cg_findings` id the same
+way. Your caller renumbers your findings into one sequence for the whole requirement set and
+rewrites every `DG#n` you wrote as a reference to your own; a `CG#n` it leaves as you wrote it.
 
 **Write each evidence `note`, `control` and `prerequisite` for a reader with no plugin**
 (`workflows-core:grounding-format` §2.3). Your caller writes them into `design-grounding.md`, which

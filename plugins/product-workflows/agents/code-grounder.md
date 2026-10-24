@@ -131,7 +131,8 @@ of theirs would otherwise run in its place and could print into what you read; g
    else, per that section — the finding stays `current`.
 
 7. **Emit exactly one finding per claim**, numbered contiguously as `[CG#n]` starting from `CG#1`
-   in the order `claims` was given. Ids are assigned once and never renumbered across a run.
+   in the order `claims` was given. Ids are assigned once, and you never renumber one: your caller
+   maps them into its own sequence (Output, *A reference to a finding*).
 
 ## Output
 
@@ -165,6 +166,12 @@ padding, keys in this order, and an inapplicable field omitted rather than writt
 `workflows-core:grounding-format` §2.1, and it is the caller's on-disk contract as well as this
 agent's: a run that aligned one batch's keys and not the next produced a `code-grounding.md` whose
 scan reported 140 findings missing that were on the page.
+
+**A reference to a finding names one of this return's own, by the id this return gives it, written
+`[CG#n]`** — in a `note`, `control`, `prerequisite` or `notes` (*the search named in [CG#5]*).
+You are handed no other finding, so never name one. Your caller renumbers your findings into one
+sequence for the whole requirement set and rewrites every `CG#n` you wrote as a reference to your
+own, so a number you meant as another finding's would be rewritten to name the wrong one.
 
 **Write each evidence `note`, `control` and `prerequisite` for a reader with no plugin**
 (`workflows-core:grounding-format` §2.3). Your caller writes them into `grounding/code-grounding.md`,
