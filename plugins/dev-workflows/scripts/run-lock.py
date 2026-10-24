@@ -7,25 +7,34 @@ Two builds or test runs in one work tree trample each other's output directories
 ports. This script lets one at a time through: it takes an exclusive lock on
 `$(git rev-parse --git-path dev-workflows/run.lock)` -- per worktree, inside the git directory, never
 staged; its directory is made when missing -- waits for it when another holder has it, runs the
-command, and lets go when the command ends. The lock is fcntl.flock, which the kernel releases when
-the holder dies however it dies, so no lock goes stale and the file is never removed.
+command, and lets go once the command has been reaped. The lock is fcntl.flock, which the kernel
+releases when the holder dies however it dies, so no lock goes stale and the file is never removed.
 
 Run it from inside the git work tree. The command inherits stdin, stdout, stderr and the working
-directory. While it waits, this script prints one stderr line, `run-lock: waiting for <lock path>`.
-Where `fcntl` is missing (Windows), it says so on stderr and runs the command unlocked.
+directory, but not the lock descriptor, so a daemon the build leaves behind cannot hold the lock. It
+runs in a session of its own; a SIGTERM, SIGHUP or SIGINT sent to this script is passed on to that
+group, and the script keeps the lock until the command has ended. The one gap: a SIGKILL sent to
+this script alone, not to its group, frees the lock while the command still runs. While it waits,
+this script prints one stderr line, `run-lock: waiting for <lock path>`. Where `fcntl` is missing
+(Windows), it says so on stderr and runs the command unlocked.
+
+Every exit of the script's own prints a stderr line starting `run-lock:` -- the usage line
+included. The exit code alone does not tell them from the command's: a test runner may itself exit 2
+or 4, so read the stderr line.
 
 Exit codes:
   126        the command could not be run (not executable)
   127        the command was not found
-  128 + N    signal N ended the command
+  128 + N    signal N ended the command, or was sent to this script and passed on
   2          usage: no `--`, or no command after it
-  4          the lock file could not be reached: not inside a git work tree, git failing to name
-             the path, or an OSError making or opening it
+  4          the lock could not be taken: not inside a git work tree, git failing to name the
+             path, an OSError making or opening the file, or the filesystem refusing flock
   otherwise  the command's own exit code
 
 Standard library only. `python3 run-lock.py --selftest` runs the tests.
 """
 import os
+import signal
 import subprocess
 import sys
 
@@ -35,7 +44,8 @@ except ImportError:  # no fcntl on this platform
     fcntl = None
 
 LOCK_GIT_PATH = "dev-workflows/run.lock"
-USAGE = "usage: run-lock.py -- <command> [args...]"
+USAGE = "run-lock: usage: run-lock.py -- <command> [args...]"
+FORWARDED = (signal.SIGTERM, signal.SIGHUP, signal.SIGINT)
 
 
 def lock_path(cwd=None):
@@ -48,7 +58,9 @@ def lock_path(cwd=None):
     rel = out.stdout.decode("utf-8", "surrogateescape").rstrip("\r\n")
     if not rel:
         return None
-    return os.path.abspath(os.path.join(cwd or os.getcwd(), rel))
+    # git prints the path relative to the directory it ran in; resolve symlinks first so `..`
+    # means what git meant (a symlinked temp directory, as on macOS)
+    return os.path.abspath(os.path.join(os.path.realpath(cwd or os.getcwd()), rel))
 
 
 def run(argv):
@@ -68,26 +80,61 @@ def run(argv):
         return 4
     try:
         try:
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except OSError:
-            sys.stderr.write("run-lock: waiting for %s\n" % path)
-            sys.stderr.flush()
-            fcntl.flock(fd, fcntl.LOCK_EX)
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                sys.stderr.write("run-lock: waiting for %s\n" % path)
+                sys.stderr.flush()
+                fcntl.flock(fd, fcntl.LOCK_EX)
+        except OSError as e:
+            sys.stderr.write("run-lock: cannot lock %s: %s\n" % (path, e))
+            return 4
         return _run_command(argv)
     finally:
-        os.close(fd)  # closing the descriptor releases the lock
+        os.close(fd)  # closing the descriptor releases the lock, after the command is reaped
 
 
 def _run_command(argv):
+    state = {"proc": None, "sig": None}
+
+    def forward(signum, frame):
+        state["sig"] = signum
+        if state["proc"] is not None:
+            _send(state["proc"], signum)
+
+    old = [(n, signal.signal(n, forward)) for n in FORWARDED]
     try:
-        rc = subprocess.run(argv).returncode
-    except FileNotFoundError:
-        sys.stderr.write("run-lock: command not found: %s\n" % argv[0])
-        return 127
-    except OSError as e:
-        sys.stderr.write("run-lock: cannot run %s: %s\n" % (argv[0], e))
-        return 126
-    return 128 - rc if rc < 0 else rc
+        try:
+            state["proc"] = subprocess.Popen(argv, start_new_session=True)
+        except FileNotFoundError:
+            sys.stderr.write("run-lock: command not found: %s\n" % argv[0])
+            return 127
+        except OSError as e:
+            sys.stderr.write("run-lock: cannot run %s: %s\n" % (argv[0], e))
+            return 126
+        if state["sig"] is not None:  # arrived before the command existed
+            _send(state["proc"], state["sig"])
+        while True:  # keep the lock until the command is reaped, whatever signals arrive
+            try:
+                rc = state["proc"].wait()
+                break
+            except KeyboardInterrupt:  # only if SIGINT beat the handler's installation
+                continue
+    finally:
+        for n, h in old:
+            signal.signal(n, h)
+    if rc < 0:
+        return 128 - rc
+    if state["sig"] is not None:  # a signal sent to this script, passed on
+        return 128 + state["sig"]
+    return rc
+
+
+def _send(proc, signum):
+    try:
+        os.killpg(proc.pid, signum)
+    except OSError:
+        pass
 
 
 def main(argv):
@@ -181,15 +228,53 @@ def selftest():
     def test_usage():
         repo = new_repo("usage")
         for argv in ([], ["true"], ["--"], ["x", "--", "true"]):
-            r = subprocess.run([sys.executable, me] + argv, cwd=repo, stderr=subprocess.DEVNULL)
+            r = sh(sys.executable, me, *argv, cwd=repo)
             assert r.returncode == 2, "%r -> %s" % (argv, r.returncode)
+            assert r.stderr.decode().startswith("run-lock: usage:"), r.stderr
 
     def test_outside_repo():
         outside = os.path.join(root, "plain")
         os.makedirs(outside)
         env = dict(os.environ, GIT_CEILING_DIRECTORIES=root)
-        r = subprocess.run(lock_cmd("true"), cwd=outside, env=env, stderr=subprocess.DEVNULL)
+        r = subprocess.run(lock_cmd("true"), cwd=outside, env=env, stderr=subprocess.PIPE)
         assert r.returncode == 4, r.returncode
+        assert r.stderr.decode().startswith("run-lock:"), r.stderr
+
+    def test_lock_path_symlinked():
+        # git prints the path relative to the directory it ran in; a symlinked cwd must not
+        # make the `..` in it climb the wrong tree (macOS /var -> /private/var)
+        repo = new_repo("symrepo")
+        sub = os.path.join(repo, "a", "b")
+        os.makedirs(sub)
+        link = os.path.join(root, "link")
+        os.symlink(sub, link)
+        git_dir = sh("git", "rev-parse", "--absolute-git-dir", cwd=repo).stdout.decode().strip()
+        want = os.path.join(git_dir, "dev-workflows", "run.lock")
+        assert lock_path(link) == want, (lock_path(link), want)
+
+    def test_signal_keeps_lock():
+        repo = new_repo("signal")
+        log = os.path.join(repo, "log")
+        script = 'trap "" TERM; echo up > up; sleep 1; echo endA >> log'
+        a = subprocess.Popen(lock_cmd("sh", "-c", script), cwd=repo)
+        assert wait_for(os.path.join(repo, "up")), "holder never started"
+        a.send_signal(signal.SIGTERM)
+        b = subprocess.Popen(lock_cmd("sh", "-c", "echo startB >> log"), cwd=repo,
+                             stderr=subprocess.DEVNULL)
+        assert b.wait(timeout=10) == 0
+        assert a.wait(timeout=10) == 128 + 15, "wrapper exit after SIGTERM"
+        with open(log) as f:
+            assert f.read().split() == ["endA", "startB"], "second caller ran before the first ended"
+
+    def test_no_fcntl():
+        repo = new_repo("nofcntl")
+        code = ("import sys, runpy; sys.modules['fcntl'] = None; "
+                "sys.argv = [%r, '--', 'sh', '-c', 'echo ran']; "
+                "runpy.run_path(%r, run_name='__main__')" % (me, me))
+        r = sh(sys.executable, "-c", code, cwd=repo)
+        assert r.returncode == 0 and r.stdout.decode().strip() == "ran", (r.returncode, r.stdout)
+        assert b"run-lock: fcntl is not available" in r.stderr, r.stderr
+        assert not os.path.exists(os.path.join(repo, ".git", "dev-workflows", "run.lock"))
 
     def test_lock_path():
         repo = new_repo("path")
@@ -210,7 +295,8 @@ def selftest():
         assert lock_path(wt) != want and os.path.isfile(lock_path(wt))
 
     tests = [test_serialises, test_exit_code_passthrough, test_killed_holder_releases, test_usage,
-             test_outside_repo, test_lock_path]
+             test_outside_repo, test_lock_path, test_lock_path_symlinked, test_signal_keeps_lock,
+             test_no_fcntl]
     try:
         for t in tests:
             try:
