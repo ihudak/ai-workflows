@@ -31,7 +31,8 @@ calls, never two runs.
                                      members over the ones the file holds: a member it leaves out
                                      keeps its value. A deeper path or a list entry is not checked.
                                      Once the write lands, each path the file named before the call --
-                                     a `files` member, a `writers` report or a `patches` path --
+                                     a `files` member, a `writers` report, a `reviews` diff or
+                                     return file or a `patches` path --
                                      that none of them names after it is removed, where it is a
                                      regular file, not a symlink, whose name begins `dw-impl-`, and
                                      printed `removed: <path>`; one whose removal fails is printed
@@ -43,7 +44,7 @@ calls, never two runs.
                                      one-element list.
   run-state.py remove [--keep <path>] ...
                                      the end-of-run removal: every temp file `files` names, each
-                                     `writers` report and each `patches` path marked `temp`
+                                     `writers` report, each `reviews` diff and return file and each `patches` path marked `temp`
                                      -- only a regular file whose name begins `dw-impl-`, and never
                                      a --keep path -- then the file itself, only at the git path.
 
@@ -417,15 +418,19 @@ def cmd_read(f, args, out):
 
 def named(d):
     """Each path the file names that a set may stop naming: every `files` member's, each report a
-    `writers` entry lists and each `patches` entry's path, in that order, each once."""
+    `writers` entry lists, each `reviews` entry's diff and return file and each `patches` entry's
+    path, in that order, each once."""
     out = []
     files = d.get("files")
     if isinstance(files, dict):
         out += [p for p in files.values() if isinstance(p, str)]
-    writers, patches = d.get("writers"), d.get("patches")
+    writers, reviews, patches = d.get("writers"), d.get("reviews"), d.get("patches")
     for w in writers if isinstance(writers, list) else []:
         if isinstance(w, dict) and isinstance(w.get("reports"), list):
             out += [p for p in w["reports"] if isinstance(p, str)]
+    for v in reviews if isinstance(reviews, list) else []:
+        if isinstance(v, dict):
+            out += [v[k] for k in ("diff_file", "return_file") if isinstance(v.get(k), str)]
     for p in patches if isinstance(patches, list) else []:
         if isinstance(p, dict) and isinstance(p.get("path"), str):
             out.append(p["path"])
@@ -512,6 +517,9 @@ def cmd_remove(f, args, out):
         for w in d.get("writers") or []:
             if isinstance(w, dict) and isinstance(w.get("reports"), list):
                 paths += [p for p in w["reports"] if isinstance(p, str)]
+        for v in d.get("reviews") or []:
+            if isinstance(v, dict):
+                paths += [v[k] for k in ("diff_file", "return_file") if isinstance(v.get(k), str)]
         for p in d.get("patches") or []:
             if isinstance(p, dict) and p.get("temp") is True and isinstance(p.get("path"), str):
                 paths.append(p["path"])
@@ -930,6 +938,28 @@ def selftest():
         check("remove leaves a non-temp path", os.path.exists(user) and "left: %s" % user in out)
         check("stale file survives remove", len([n for n in os.listdir(here) if STALE_RE.match(n)]) == 1)
         check("remove with no file is a no-op", call(["remove"], repo=repo)[0] == 0)
+
+        # writers' reports and reviews' diff and return files: set and remove take them like a files member
+        wr1, wr2 = mk("dw-impl-wreport-1"), mk("dw-impl-wreport-2")
+        rd1, rr1, rd2, rr2 = (mk("dw-impl-rdiff-1"), mk("dw-impl-rret-1"),
+                              mk("dw-impl-rdiff-2"), mk("dw-impl-rret-2"))
+        call(["init"], json.dumps(fresh()), repo)
+        call(["set", "writers", json.dumps([{"unit": "u", "reports": [wr1, wr2]}]),
+              "reviews", json.dumps([{"scope": "piece:p", "diff_file": rd1, "return_file": rr1, "verdict": None},
+                                     {"scope": "overall", "diff_file": rd2, "return_file": rr2, "verdict": None}])],
+             repo=repo)
+        code, out = call(["set", "writers", json.dumps([{"unit": "u", "reports": [wr1]}])], repo=repo)
+        check("a set of writers that drops a report removes it", code == 0 and not os.path.exists(wr2)
+              and os.path.exists(wr1) and "removed: %s" % wr2 in out)
+        code, out = call(["set", "reviews", json.dumps([{"scope": "overall", "diff_file": rd2,
+                                                          "return_file": rr2, "verdict": None}])], repo=repo)
+        check("a set of reviews that drops an entry removes its files", code == 0 and not os.path.exists(rd1)
+              and not os.path.exists(rr1) and os.path.exists(rd2) and os.path.exists(rr2)
+              and "removed: %s" % rd1 in out and "removed: %s" % rr1 in out)
+        code, out = call(["remove", "--keep", wr1], repo=repo)
+        check("remove takes a review's files and keeps a writers report named --keep", code == 0
+              and not os.path.exists(rd2) and not os.path.exists(rr2) and os.path.exists(wr1)
+              and "kept: %s" % wr1 in out)
 
         # init --recover with no file: the line it appends says so, and that nothing was moved aside
         code, out = call(["init", "--recover"], json.dumps(fresh()), repo)
