@@ -501,8 +501,11 @@ apply than a prompt can carry, the offer's overflow rule applies.
 **Each Security Engineer offer names its register's slug beside its `<repo-path>`**.
 A key run's resume pointer carries the offer until the Security Engineer runs it, and that pointer is
 shared across machines, where `<repo-path>` — this machine's `<repo root>` — can be no repository:
-`workflows-core:session-hygiene` §1 settles the offer by the run record under
-`security/<repo-slug>/runs/`, its slug read from the item.
+`workflows-core:session-hygiene` §1 settles the offer only by a Security Engineer run record of the
+offer's own mode under `security/<repo-slug>/runs/` — `role` `sec`, and `kind` `verify` for
+`--verify-fixes` or `triage` for `--triage` (`workflows-core:security-register-format` §2) — the
+slug read from the offer. So neither this command's next change scan of the unit nor a run of the
+other mode settles a pending offer.
 
 ### 7.6 Maintenance, feedback, follow-ups, cost, resume, commit
 

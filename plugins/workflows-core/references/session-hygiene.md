@@ -106,15 +106,23 @@ once its check shows every one of them settled:
   branch, shows it merged;
 - **an item that asks for a push** — its `origin/<branch>` ref holds the local branch's tip;
 - **an item that asks for a follow-up to be done** — its line is ticked in its `follow-ups.md`;
-- **an item that asks for a command to run** — the record that command writes in the folder the
-  item names (an `implementation.md` block, a `_conformance.md` or `_security.md` entry, the
-  deliverable itself), or, for `/security-workflows:scan` run on a repository path, the run record
-  it writes under `security/<repo-slug>/runs/` where the run changed the register
-  (`workflows-core:security-register-format` §1) — `<repo-slug>` the register's slug the item names
-  beside the path, kept with it by every run that carries it, read from the item and never derived
-  from the path on a machine where the path is not that repository — is later than the old
-  pointer's *Last completed* datetime, by the datetime it records, or, where it records a day alone
-  or no date, by the specs repository's last commit touching it;
+- **an item that asks for a command to run** — a record that command writes as the item asks it to
+  run — in the item's own mode and role, and in or for the repository the item names where it names
+  one — is later than the old pointer's *Last completed* datetime, by the datetime it records, or,
+  where it records a day alone or no date, by the specs repository's last commit touching it. In
+  the folder the item names, that record is an `implementation.md` block, a `_conformance.md` entry,
+  the deliverable itself, or a `_security.md` block whose `repo`, `kind` and role are the item's.
+  For `/security-workflows:scan` it is also a run record under `security/<repo-slug>/runs/`, written
+  where the run changed the register (`workflows-core:security-register-format` §1), whose `kind`
+  and `role` are those that reference's §2 gives the run the item asks for — `kind` `verify` for
+  `--verify-fixes`, `triage` for `--triage`, `import` for `--import` and `scan` for a scan, and
+  `role` `dev` for a key run without `--triage` or `--verify-fixes` and `sec` otherwise — so no run
+  of another mode or role settles it. On a repository path, `<repo-slug>` is the register's slug the
+  item names beside the path, kept with it by every run that carries it, read from the item and
+  never derived from the path on a machine where the path is not that repository; on a key, the
+  record's `unit` is that key, in the register of the repository the item names or, where it names
+  none, in any — the only record a `--triage` on a key leaves, since a run appends to `_security.md`
+  only where it recorded a scan;
 - **a decision or a fact it states, or an open question** — recorded, the question with its
   answer, in a deliverable the next phase reads at the top level of the folder it belongs to:
   `prd.md`, `ard.md`, `epic.md`, `specification.md`, `design.md`, a `decisions.md` register or a
@@ -155,8 +163,8 @@ current refs settles it; a specs-repository
 branch with neither its local nor its `origin/` ref left — deleted and pruned before any run that
 wrote a pointer here saw it merged — which, without a fetch, cannot be told from a branch never
 fetched here, so it stays carried; an item asking for `/security-workflows:scan` on a repository
-path whose run changed nothing in the register, and so wrote no run record, until a run that
-records settles it; an item asking for `/security-workflows:scan` on a repository path with no
+path whose run changed nothing in the register, and so wrote no run record, until a run of the
+item's own mode and role records and so settles it; an item asking for `/security-workflows:scan` on a repository path with no
 register slug beside it — a Security Engineer offer an older `/security-workflows:scan` wrote, say
 — until a run on a machine where that path is that repository, a repository with an `origin` that
 `git -C <path> rev-parse --show-toplevel` names, settles it by the command check, with the slug it
