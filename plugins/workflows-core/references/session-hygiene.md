@@ -111,11 +111,12 @@ once its check shows every one of them settled:
   one — is later than the item's **waiting datetime**, the datetime it waits from: the one its line
   ends with as `(waiting since <ISO datetime>)`, or, for an item of the old pointer's *Next step* or
   one whose line ends with none — an older pointer's, say — the old pointer's *Last completed*
-  datetime. In the folder the item names,
-  that record is an `implementation.md` block, a `_conformance.md` entry, the deliverable itself, or
-  a `_security.md` block whose `kind` and role are the item's and whose `repo` is the item's where
-  it names one. For `/security-workflows:scan` the record is also a run record under
-  `security/<repo-slug>/runs/`, written where the run changed the register
+  datetime. Where this check cannot tell who wrote what it reads, or when, it settles nothing: the
+  item is carried, never dropped. In the folder the item names, that record is an
+  `implementation.md` block, a `_conformance.md` entry or a `_security.md` block whose `kind` and
+  role are the item's and whose `repo` is the item's where it names one. For
+  `/security-workflows:scan` the record is also a run record under `security/<repo-slug>/runs/`,
+  written where the run changed the register
   (`workflows-core:security-register-format` §1), whose `kind` and `role` are those that
   reference's §2 gives the run the item asks for — `kind` `verify` for `--verify-fixes`, `triage`
   for `--triage`, `import` for `--import` and `scan` for a scan, and `role` `dev` for a key run
@@ -140,8 +141,11 @@ once its check shows every one of them settled:
   one committed on the session branch and not yet on the branch the checkout stands on. A
   `_conformance.md` is dated as a block of an append-only record is, its `Run:` line standing for
   the heading line: by that line's day first and, on that same day, by the commit blame names for
-  it. A whole file — the deliverable — is dated by the commit that added it, the specs repository's
-  last commit touching it;
+  it. A same-day block or `Run:` line whose blamed commit's `author-time` falls on a later UTC day
+  than the line's own day dates nothing either, since a run commits the record it writes on the day
+  it writes it, so a later day's commit is a re-write or a late one — a squash, a later run's flush;
+  a run that spans midnight UTC, committing its record on the next day, dates nothing by the same
+  rule, which errs to carrying;
 - **a decision or a fact it states, or an open question** — recorded, the question with its
   answer, in a deliverable the next phase reads at the top level of the folder it belongs to:
   `prd.md`, `ard.md`, `epic.md`, `specification.md`, `design.md`, a `decisions.md` register or a
@@ -194,15 +198,25 @@ an `--import` of its report, say — until a run of the item's own mode and role
 good where none can, as no change scan records once `unit-branch` reads its Epic's branch merged
 with no work after it; an item only a block of `implementation.md` or `_security.md` of its waiting
 datetime's own day can settle, in `specs-repo-git` §8's session-branch mode, until the session branch's pull request
-merges and the block reaches the branch the checkout stands on; an item asking for `/security-workflows:scan` on a repository path with no
+merges — by a merge or a rebase, or by a squash on the block's own day — and the block reaches the
+branch the checkout stands on; an item asking for a command that leaves no block, `_conformance.md`
+or run record — one whose only record is its deliverable, a whole file the check does not read:
+most name no date of their own, and other commands commit into several — until a run of that
+command writing this pointer settles it itself, so one whose command ran on another clone without
+this pointer in front of it stays until then, and for good where that command writes another
+folder's pointer or none:
+`/product-workflows:prd-ground <CHILD-KEY>` in a root BRD's pointer,
+`/product-workflows:brd-proposal` in a slice's, `/product-workflows:prd-proposal` in its root's or
+a sibling's, and `/workflows-core:frames`, which writes none; an item asking for `/security-workflows:scan` on a repository path with no
 register slug beside it — a Security Engineer offer an older `/security-workflows:scan` wrote, say
 — until a run on a machine where that path is that repository, a repository with an `origin` that
 `git -C <path> rev-parse --show-toplevel` names, settles it by the command check, with the slug it
 derives there as `/security-workflows:scan` does (`workflows-core:components` §1), every other run
 carrying it; and an item an older pointer wrote naming a pull request by its number alone, until a run settles
-it. One can leave sooner than it should: after a squash merge, blame names the squash commit for
-every line it carried, so a block or a `_conformance.md` of an item's waiting datetime's own day is
-dated by the squash and can settle the item though it was written before that datetime, and so, on any day, can a whole-file deliverable, whose last commit the squash is.
+it. One can leave sooner than it should: blame names a squash commit for every line it carried,
+so a block or a `_conformance.md` of an item's waiting datetime's own day that a squash on that same
+day merged is dated by the squash and can settle the item though it was written before that
+datetime.
 Where
 no pointer stands yet, there is nothing to carry.
 
