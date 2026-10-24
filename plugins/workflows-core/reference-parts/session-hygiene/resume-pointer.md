@@ -124,9 +124,17 @@ once its check shows every one of them settled:
 - **an item that asks for a command to run** — a record that command writes as the item asks it to
   run — in the item's own mode and role, and in or for the repository the item names where it names
   one — is later than the old pointer's *Last completed* datetime, by the datetime it records, or,
-  where it records a day alone or no date, by the specs repository's last commit touching it. In
-  the folder the item names, that record is an `implementation.md` block, a `_conformance.md` entry,
-  the deliverable itself, or a `_security.md` block whose `repo`, `kind` and role are the item's.
+  where it records a day alone or no date, by the commit that added it. For a block of an
+  append-only record, `implementation.md`'s or `_security.md`'s, that is the commit
+  `git -C "$SPECS_PATH" blame -L <n>,<n> --porcelain -- <file>` names for the block's heading line
+  `<n>` (`<file>` its path from the specs repository's root), at that commit's `committer-time` —
+  never the file's last commit, which a later block of another repository, mode or role moves too —
+  and a heading line not yet committed, for which blame names the all-zero commit, dates nothing;
+  for a whole file, it is the specs repository's last commit touching it. A record that holds no mode or
+  role of its own is of the mode and role its command and its folder fix. In the folder the item
+  names, that record is an `implementation.md` block, a `_conformance.md` entry, the deliverable
+  itself, or a `_security.md` block whose `kind` and role are the item's and whose `repo` is the
+  item's where it names one.
   For `/security-workflows:scan` it is also a run record under `security/<repo-slug>/runs/`, written
   where the run changed the register (`workflows-core:security-register-format` §1), whose `kind`
   and `role` are those that reference's §2 gives the run the item asks for — `kind` `verify` for
@@ -177,9 +185,10 @@ the run did not open or did not fetch, or a branch never fetched here — until 
 current refs settles it; a specs-repository
 branch with neither its local nor its `origin/` ref left — deleted and pruned before any run that
 wrote a pointer here saw it merged — which, without a fetch, cannot be told from a branch never
-fetched here, so it stays carried; an item asking for `/security-workflows:scan` on a repository
-path whose run changed nothing in the register, and so wrote no run record, until a run of the
-item's own mode and role records and so settles it; an item asking for `/security-workflows:scan` on a repository path with no
+fetched here, so it stays carried; an item asking for `/security-workflows:scan` whose run changed
+nothing in the register, and so wrote no run record, or whose scan a run of another mode recorded —
+an `--import` of its report, say — until a run of the item's own mode and role records and so settles it, for
+good where none can, as no change scan records once its Epic has merged; an item asking for `/security-workflows:scan` on a repository path with no
 register slug beside it — a Security Engineer offer an older `/security-workflows:scan` wrote, say
 — until a run on a machine where that path is that repository, a repository with an `origin` that
 `git -C <path> rev-parse --show-toplevel` names, settles it by the command check, with the slug it
