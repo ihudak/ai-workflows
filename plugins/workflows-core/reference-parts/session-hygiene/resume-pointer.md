@@ -123,9 +123,11 @@ once its check shows every one of them settled:
 - **an item that asks for a follow-up to be done** — its line is ticked in its `follow-ups.md`;
 - **an item that asks for a command to run** — the record that command writes in the folder the
   item names (an `implementation.md` block, a `_conformance.md` or `_security.md` entry, the
-  deliverable itself) is later than the old pointer's *Last completed* datetime, by the datetime
-  it records, or, where it records a day alone or no date, by the specs repository's last commit
-  touching it;
+  deliverable itself), or, for `/security-workflows:scan` run on a repository path, the run record
+  it writes under `security/<repo-slug>/runs/` for that repository where the run changed the
+  register (`workflows-core:security-register-format` §1), is later than the old pointer's *Last
+  completed* datetime, by the datetime it records, or, where it records a day alone or no date, by
+  the specs repository's last commit touching it;
 - **a decision or a fact it states, or an open question** — recorded, the question with its
   answer, in a deliverable the next phase reads at the top level of the folder it belongs to:
   `prd.md`, `ard.md`, `epic.md`, `specification.md`, `design.md`, a `decisions.md` register or a
@@ -139,9 +141,9 @@ once its check shows every one of them settled:
   the run holds — `git -C <repository> cat-file -e <ref>:<path>` fails, or succeeds, where `<ref>`
   resolves. A path an item names for any other reason — a command's argument, the deliverable a
   merge carries, a file a decision is about — is settled with its item, by the check for what the
-  item waits on. An item asking for the removal of a path outside every repository the pointer's
-  readers share — the worktree `/security-workflows:scan` 0.2.0 or older carried where it failed
-  to remove one — is settled at once, as one the pointer never carries.
+  item waits on. An item naming a path outside every repository the pointer's readers share — the
+  worktree `/security-workflows:scan` 0.2.0 or older carried where it failed to remove one — is
+  settled at once, as one the pointer never carries.
 
 A settled item is dropped. The run that settled an item may keep one line saying so instead, and
 the next run drops that line: a line saying its item is settled is settled. An item not settled —
@@ -164,8 +166,10 @@ the run did not open or did not fetch, or a branch never fetched here — until 
 current refs settles it; a specs-repository
 branch with neither its local nor its `origin/` ref left — deleted and pruned before any run that
 wrote a pointer here saw it merged — which, without a fetch, cannot be told from a branch never
-fetched here, so it stays carried; and an item an older pointer wrote naming a pull
-request by its number alone, until a run settles it. Where
+fetched here, so it stays carried; an item asking for `/security-workflows:scan` on a repository
+path whose run changed nothing in the register, and so wrote no run record, until a run that
+records settles it; and an item an older pointer wrote naming a pull request by its number alone, until a run settles
+it. Where
 no pointer stands yet, there is nothing to carry.
 
 **Redact before writing.** The `Carry-forward decisions` line may summarize
