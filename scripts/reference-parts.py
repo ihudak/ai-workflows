@@ -125,16 +125,18 @@ generated file.
 `check-citations` gates the callers: the split list in the loader skill equals the declared
 set; where any entry point is declared, a paragraph of the loader skill opens with `These entry
 points read their own file: `<ref> <entry>`, ...`, the declared pairs alphabetical, as the split
-list is, and names the loader's entry-point rules,
-`${CLAUDE_PLUGIN_ROOT}/skills/reference/entry-files.md` (ENTRY_RULES_REL), which a request on such
-a reference reads first; for each pair a sentence of those rules reads `The file for `<ref>
-<entry>` holds <held>.`, <held> being the generated file's own list led by `the text before §<n>`
-where a region of the entry holds text before its reference's first numbered heading, §<n> -- the
-loader serves a citation of a held section from that file, so the list it names is the
-declaration's, neither more nor less -- and no paragraph of the loader skill holds such a sentence:
-its body comes with every request, so the list is in the rules alone; an entry-point declaration
-check-parts fails stops it before it reads a citation, as a split declaration does; every consumer
-file (commands/, agents/, references/ of the dependent plugins,
+list is, and carries two sentences word for word: ENTRY_PATH, giving each file's path, which the
+entry-point rules do not repeat, and ENTRY_TRIGGER, which has a request on such a reference read
+the loader's entry-point rules, `${CLAUDE_PLUGIN_ROOT}/skills/reference/entry-files.md`
+(ENTRY_RULES_REL), with or before its other reads -- the one sentence that puts them in front of
+the run; for each pair a sentence of those rules reads `The file for `<ref> <entry>` holds
+<held>.`, <held> being the generated file's own list led by `the text before §<n>` where a region
+of the entry holds text before its reference's first numbered heading, §<n> -- the loader serves a
+citation of a held section from that file, so the list it names is the declaration's, neither more
+nor less -- and no paragraph of the loader skill holds such a sentence: its body comes with every
+request, so the list is in the rules alone; an entry-point declaration check-parts fails stops it
+before it reads a citation, as a split declaration does; every consumer file (commands/, agents/,
+references/ of the dependent plugins,
 CHANGELOG.md excluded) that cites a split reference carries the load-by-part preamble as a
 paragraph of its own; every explicit part request -- `args: "<split> <part>"`, or, in
 workflows-core's own files, a read of reference-parts/<split>/<part>.md -- names a requestable
@@ -331,7 +333,7 @@ LOADER_SKILL_REL = "plugins/workflows-core/skills/reference/SKILL.md"
 LOADER_SKILL = "workflows-core:reference"
 # The loader's entry-point rules: what each entry point's file holds and which requests it serves. The
 # loader's body comes with every request, so it names this file, which a request on a reference with an
-# entry-point file reads first, and holds no held list itself.
+# entry-point file reads with or before its other reads, and holds no held list itself.
 ENTRY_RULES_REL = "plugins/workflows-core/skills/reference/entry-files.md"
 ENTRY_RULES_SPAN = "`${CLAUDE_PLUGIN_ROOT}/%s`" % os.path.relpath(ENTRY_RULES_REL, CORE_PLUGIN_REL)
 # A core skill whose call loads one reference, so its `skill:` token cites it: a § reference after it
@@ -353,10 +355,16 @@ PREAMBLE = (
 )
 SKILL_OPENING = "These references load by part: {list}."
 SKILL_OPENING_LEAD = "These references load by part:"
-# {list} is every declared `<ref> <entry>` pair, alphabetical and backticked; the loader skill's paragraph
-# opening with it names ENTRY_RULES_SPAN.
+# {list} is every declared `<ref> <entry>` pair, alphabetical and backticked. The loader skill's paragraph
+# opening with it carries ENTRY_PATH and ENTRY_TRIGGER word for word: the entry-point rules name no path, so
+# ENTRY_PATH is where a run learns where each file is, and ENTRY_TRIGGER is the one sentence that puts every
+# entry-point rule in front of a request on such a reference.
 ENTRY_OPENING = "These entry points read their own file: {list}."
 ENTRY_OPENING_LEAD = "These entry points read their own file:"
+ENTRY_PATH = "Each one's file is `${CLAUDE_PLUGIN_ROOT}/%s/<the reference>/<the entry point>.md`." % PARTS_DIR
+ENTRY_TRIGGER = ("A request on one of their references, with or without a second argument, reads the entry-point rules, "
+                 "%s, with or before its other reads, unless their text is in this conversation word for word, and "
+                 "follows them." % ENTRY_RULES_SPAN)
 # One per declared entry point, in ENTRY_RULES_REL: {pair} is `<ref> <entry>`, {held} what its file holds
 # (held_text).
 ENTRY_HOLDS = "The file for `{pair}` holds {held}."
@@ -1445,9 +1453,13 @@ def cmd_check_citations(root, verbose):
         if pairs:
             refs_with = listing(n for n, r in entries.items() if r.entries)
             opened = next((p for p in paras if p.startswith(ENTRY_OPENING_LEAD)), None)
-            if opened is not None and ENTRY_RULES_SPAN not in opened:
-                problems.append("%s: the paragraph opening with the entry list does not name the entry-point rules, %s "
-                                "-- a request on %s reads them first" % (LOADER_SKILL_REL, ENTRY_RULES_SPAN, refs_with))
+            for sentence, why in ((ENTRY_PATH, "the entry-point rules name no path, so this sentence is where a run "
+                                               "learns where each file is"),
+                                  (ENTRY_TRIGGER, "it is the one sentence that has a request on %s read the entry-point "
+                                                  "rules" % refs_with)):
+                if opened is not None and sentence not in opened:
+                    problems.append("%s: the paragraph opening with the entry list lacks \"%s\" -- %s"
+                                    % (LOADER_SKILL_REL, sentence, why))
             for n, r in entries.items():
                 for e in r.entries:
                     if any(ENTRY_HOLDS_LEAD.format(pair="%s %s" % (n, e)) in p for p in paras):
@@ -1456,8 +1468,8 @@ def cmd_check_citations(root, verbose):
                                         "rules alone" % (LOADER_SKILL_REL, n, e, ENTRY_RULES_REL))
             rules = root / ENTRY_RULES_REL
             if not rules.is_file():
-                problems.append("%s: missing -- a request on %s reads it first, for what each entry point's file "
-                                "holds" % (ENTRY_RULES_REL, refs_with))
+                problems.append("%s: missing -- a request on %s reads it with or before its other reads, for what each "
+                                "entry point's file holds" % (ENTRY_RULES_REL, refs_with))
             else:
                 rule_paras = paragraphs(rules.read_text(encoding="utf-8"))
                 for n, r in entries.items():
@@ -2048,6 +2060,14 @@ G = 'plugins/workflows-core/reference-parts'
 U = 'plugins/dev-workflows/commands/use.md'
 SK = 'plugins/workflows-core/skills/reference/SKILL.md'
 ER = 'plugins/workflows-core/skills/reference/entry-files.md'
+EPATH = (SK + ": the paragraph opening with the entry list lacks \"Each one's file is "
+         "`${CLAUDE_PLUGIN_ROOT}/reference-parts/<the reference>/<the entry point>.md`.\" -- the entry-point rules "
+         "name no path, so this sentence is where a run learns where each file is")
+ETRIGGER = (SK + ': the paragraph opening with the entry list lacks "A request on one of their references, with or '
+            'without a second argument, reads the entry-point rules, '
+            '`${CLAUDE_PLUGIN_ROOT}/skills/reference/entry-files.md`, with or before its other reads, unless their '
+            'text is in this conversation word for word, and follows them." -- it is the one sentence that has a '
+            'request on `gamma` read the entry-point rules')
 E = 'plugins/workflows-core/references/epsilon.md'
 QA = 'plugins/dev-workflows/commands/ask.md'
 QSTEP = ('**Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", '
@@ -2577,14 +2597,22 @@ CASES = [
     # loader skill holding the held list and naming no rules file, and no entry-files.md. Each of the three
     # fails, red beside entry_minimal's green.
     ('entry_rules_missing', "a held list in the loader's body and no entry-point rules file fail", [
-        Step(['check-citations'], 1, [SK + ': the paragraph opening with the entry list does not name the entry-point '
-                                           'rules, `${CLAUDE_PLUGIN_ROOT}/skills/reference/entry-files.md` -- a request '
-                                           'on `gamma` reads them first',
-                                      ER + ': missing -- a request on `gamma` reads it first, for what each entry '
-                                           "point's file holds",
+        Step(['check-citations'], 1, [EPATH, ETRIGGER,
+                                      ER + ': missing -- a request on `gamma` reads it with or before its other '
+                                           "reads, for what each entry point's file holds",
                                       SK + ': names what the file of `gamma check-it` holds, which the entry-point '
                                            'rules, ' + ER + ', name -- the loader\'s body comes with every request, so '
-                                           'the list is in the rules alone'], errors=3),
+                                           'the list is in the rules alone'], errors=4),
+    ]),
+    # entry_minimal's tree, its entry-list paragraph naming the rules file in a reworded trigger, "Its rules are
+    # `...`.", which tells no request to read them: the trigger sentence is pinned word for word, red beside
+    # entry_minimal's green ...
+    ('entry_trigger_reworded', "an entry-list paragraph naming the rules file without the pinned trigger fails", [
+        Step(['check-citations'], 1, [ETRIGGER], errors=1),
+    ]),
+    # ... and the paragraph without the sentence giving each file's path, which the entry-point rules do not repeat.
+    ('entry_path_sentence_missing', "an entry-list paragraph without the pinned file-path sentence fails", [
+        Step(['check-citations'], 1, [EPATH], errors=1),
     ]),
     # The held list, red beside entry_minimal's green: entry_minimal's tree, its entry-point rules naming
     # what check-it's file holds with §2 added, which the declaration does not hold, ...

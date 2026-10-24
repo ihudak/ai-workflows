@@ -58,9 +58,10 @@ These entry points read their own file: `phase-handoff require-on-main`.
 Each one's file is
 `${CLAUDE_PLUGIN_ROOT}/reference-parts/<the reference>/<the entry point>.md`.
 A request on one of their references, with or without a second argument,
-first reads the entry-point rules,
-`${CLAUDE_PLUGIN_ROOT}/skills/reference/entry-files.md`, unless their text
-is in this conversation word for word, and follows them.
+reads the entry-point rules,
+`${CLAUDE_PLUGIN_ROOT}/skills/reference/entry-files.md`, with or before its
+other reads, unless their text is in this conversation word for word, and
+follows them.
 
 To read the whole reference — with no second argument, where the index of a
 reference that loads by part names no part for the rule your step applies,
@@ -74,9 +75,10 @@ the file, read it in consecutive ranges from its first line to its last.
 Where this skill's text is already in this conversation word for word from
 an earlier request in this run, you know the paths it names: make a
 request's Skill call and the reads this text has it make in one turn — a
-file's `wc -l` where a whole read of it needs its length, the entry-point
-rules where the request needs them, and each file's first read, with the
-Read tool, never `cat` — then any further ranges together in one more turn.
+file's line count (`wc -l` where the run has a shell) where a whole read of
+it needs its length, the entry-point rules where the request needs them,
+and each file's first read, with the Read tool, never `cat` — then any
+further ranges together in one more turn.
 No rule of this text is skipped for a read made before it arrives again:
 once it arrives, follow it as written; where it names a different read, make
 that read as well, since a read it does not call for serves no request; and
