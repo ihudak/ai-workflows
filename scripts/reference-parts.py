@@ -125,12 +125,16 @@ generated file.
 `check-citations` gates the callers: the split list in the loader skill equals the declared
 set; where any entry point is declared, a paragraph of the loader skill opens with `These entry
 points read their own file: `<ref> <entry>`, ...`, the declared pairs alphabetical, as the split
-list is, and for each pair a sentence of it reads `The file for `<ref> <entry>` holds <held>.`,
-<held> being the generated file's own list led by `the text before §<n>` where a region of the
-entry holds text before its reference's first numbered heading, §<n> -- the loader serves a
-citation of a held section from that file, so the list it names is the declaration's, neither
-more nor less; an entry-point declaration check-parts fails stops it before it reads a citation, as a
-split declaration does; every consumer file (commands/, agents/, references/ of the dependent plugins,
+list is, and names the loader's entry-point rules,
+`${CLAUDE_PLUGIN_ROOT}/skills/reference/entry-files.md` (ENTRY_RULES_REL), which a request on such
+a reference reads first; for each pair a sentence of those rules reads `The file for `<ref>
+<entry>` holds <held>.`, <held> being the generated file's own list led by `the text before §<n>`
+where a region of the entry holds text before its reference's first numbered heading, §<n> -- the
+loader serves a citation of a held section from that file, so the list it names is the
+declaration's, neither more nor less -- and no paragraph of the loader skill holds such a sentence:
+its body comes with every request, so the list is in the rules alone; an entry-point declaration
+check-parts fails stops it before it reads a citation, as a split declaration does; every consumer
+file (commands/, agents/, references/ of the dependent plugins,
 CHANGELOG.md excluded) that cites a split reference carries the load-by-part preamble as a
 paragraph of its own; every explicit part request -- `args: "<split> <part>"`, or, in
 workflows-core's own files, a read of reference-parts/<split>/<part>.md -- names a requestable
@@ -325,6 +329,11 @@ DEPENDENT_PLUGIN_RELS = (
 )
 LOADER_SKILL_REL = "plugins/workflows-core/skills/reference/SKILL.md"
 LOADER_SKILL = "workflows-core:reference"
+# The loader's entry-point rules: what each entry point's file holds and which requests it serves. The
+# loader's body comes with every request, so it names this file, which a request on a reference with an
+# entry-point file reads first, and holds no held list itself.
+ENTRY_RULES_REL = "plugins/workflows-core/skills/reference/entry-files.md"
+ENTRY_RULES_SPAN = "`${CLAUDE_PLUGIN_ROOT}/%s`" % os.path.relpath(ENTRY_RULES_REL, CORE_PLUGIN_REL)
 # A core skill whose call loads one reference, so its `skill:` token cites it: a § reference after it
 # belongs to that reference. Every other skill's `skill:` token is no citation; a loader call cites
 # by its `args:`.
@@ -344,10 +353,12 @@ PREAMBLE = (
 )
 SKILL_OPENING = "These references load by part: {list}."
 SKILL_OPENING_LEAD = "These references load by part:"
-# {list} is every declared `<ref> <entry>` pair, alphabetical and backticked.
+# {list} is every declared `<ref> <entry>` pair, alphabetical and backticked; the loader skill's paragraph
+# opening with it names ENTRY_RULES_SPAN.
 ENTRY_OPENING = "These entry points read their own file: {list}."
 ENTRY_OPENING_LEAD = "These entry points read their own file:"
-# One per declared entry point: {pair} is `<ref> <entry>`, {held} what its file holds (held_text).
+# One per declared entry point, in ENTRY_RULES_REL: {pair} is `<ref> <entry>`, {held} what its file holds
+# (held_text).
 ENTRY_HOLDS = "The file for `{pair}` holds {held}."
 ENTRY_HOLDS_LEAD = "The file for `{pair}` holds"
 
@@ -1427,19 +1438,39 @@ def cmd_check_citations(root, verbose):
                     "no paragraph opens with \"%s\"" % lead
                 problems.append("%s: no paragraph opens with the %s the declarations give, \"%s\" -- %s"
                                 % (LOADER_SKILL_REL, what, opening, reads))
-        # Each declared entry point's held list, as its declaration and regions give it: the loader
-        # names what the file holds, so a citation of a held section can be served from it.
-        for n, r in entries.items():
-            for e, d in r.entries.items():
-                pair = "%s %s" % (n, e)
-                held = ENTRY_HOLDS.format(pair=pair, held=held_text(d, opening=True))
-                if not any(held in p for p in paras):
-                    lead = ENTRY_HOLDS_LEAD.format(pair=pair)
-                    said = next((p[p.index(lead):] for p in paras if lead in p), None)
-                    reads = ("it reads \"%s\"" % (re.split(r"(?<=\)|\")\.\s|(?<=[0-9])\.\s", said)[0].rstrip(".") + "."))\
-                        if said else "no sentence opens with \"%s\"" % lead
-                    problems.append("%s: the loader names what the file of `%s` holds as its declaration gives it, "
-                                    "\"%s\" -- %s" % (LOADER_SKILL_REL, pair, held, reads))
+        # The entry-point rules: the loader's paragraph opening with the entry list names them, they name
+        # each declared entry point's held list as its declaration and regions give it -- the loader
+        # serves a citation of a held section from the file -- and the loader's body, which comes with
+        # every request, holds none of those lists itself.
+        if pairs:
+            refs_with = listing(n for n, r in entries.items() if r.entries)
+            opened = next((p for p in paras if p.startswith(ENTRY_OPENING_LEAD)), None)
+            if opened is not None and ENTRY_RULES_SPAN not in opened:
+                problems.append("%s: the paragraph opening with the entry list does not name the entry-point rules, %s "
+                                "-- a request on %s reads them first" % (LOADER_SKILL_REL, ENTRY_RULES_SPAN, refs_with))
+            for n, r in entries.items():
+                for e in r.entries:
+                    if any(ENTRY_HOLDS_LEAD.format(pair="%s %s" % (n, e)) in p for p in paras):
+                        problems.append("%s: names what the file of `%s %s` holds, which the entry-point rules, %s, "
+                                        "name -- the loader's body comes with every request, so the list is in the "
+                                        "rules alone" % (LOADER_SKILL_REL, n, e, ENTRY_RULES_REL))
+            rules = root / ENTRY_RULES_REL
+            if not rules.is_file():
+                problems.append("%s: missing -- a request on %s reads it first, for what each entry point's file "
+                                "holds" % (ENTRY_RULES_REL, refs_with))
+            else:
+                rule_paras = paragraphs(rules.read_text(encoding="utf-8"))
+                for n, r in entries.items():
+                    for e, d in r.entries.items():
+                        pair = "%s %s" % (n, e)
+                        held = ENTRY_HOLDS.format(pair=pair, held=held_text(d, opening=True))
+                        if not any(held in p for p in rule_paras):
+                            lead = ENTRY_HOLDS_LEAD.format(pair=pair)
+                            said = next((p[p.index(lead):] for p in rule_paras if lead in p), None)
+                            reads = ("it reads \"%s\"" % (re.split(r"(?<=\)|\")\.\s|(?<=[0-9])\.\s", said)[0].rstrip(".")
+                                                         + ".")) if said else "no sentence opens with \"%s\"" % lead
+                            problems.append("%s: the loader names what the file of `%s` holds as its declaration gives "
+                                            "it, \"%s\" -- %s" % (ENTRY_RULES_REL, pair, held, reads))
 
     preamble = PREAMBLE.format(list=listing(split), loader=LOADER_SKILL)
     plugins_dir, resolved = root / os.path.dirname(CORE_PLUGIN_REL), {}
@@ -2016,6 +2047,7 @@ A = 'plugins/workflows-core/references/alpha.md'
 G = 'plugins/workflows-core/reference-parts'
 U = 'plugins/dev-workflows/commands/use.md'
 SK = 'plugins/workflows-core/skills/reference/SKILL.md'
+ER = 'plugins/workflows-core/skills/reference/entry-files.md'
 E = 'plugins/workflows-core/references/epsilon.md'
 QA = 'plugins/dev-workflows/commands/ask.md'
 QSTEP = ('**Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", '
@@ -2535,28 +2567,37 @@ CASES = [
                                       'it reads "These entry points read their own file: `gamma check-it` and `gamma '
                                       'other`."'], errors=1),
     ]),
-    # entry_minimal's tree, its loader skill carrying no entry list at all, and so no held list either.
+    # entry_minimal's tree, its loader skill carrying no entry list at all; its entry-point rules are right.
     ('entry_skill_list_missing', "a loader skill naming no entry point beside a declared one fails", [
         Step(['check-citations'], 1, [SK + ': no paragraph opens with the entry list the declarations give, "These entry '
                                            'points read their own file: `gamma check-it`." -- no paragraph opens with '
-                                           '"These entry points read their own file:"',
-                                      SK + ': the loader names what the file of `gamma check-it` holds as its declaration '
-                                           'gives it, "The file for `gamma check-it` holds the text before §1, §1 and §3, '
-                                           'and in part §4.0 ("never infer")." -- no sentence opens with "The file for '
-                                           '`gamma check-it` holds"'], errors=2),
+                                           '"These entry points read their own file:"'], errors=1),
     ]),
-    # The held list, red beside entry_minimal's green: entry_minimal's tree, its loader skill naming
+    # The layout before the entry-point rules moved out of the loader's body: entry_minimal's tree, its
+    # loader skill holding the held list and naming no rules file, and no entry-files.md. Each of the three
+    # fails, red beside entry_minimal's green.
+    ('entry_rules_missing', "a held list in the loader's body and no entry-point rules file fail", [
+        Step(['check-citations'], 1, [SK + ': the paragraph opening with the entry list does not name the entry-point '
+                                           'rules, `${CLAUDE_PLUGIN_ROOT}/skills/reference/entry-files.md` -- a request '
+                                           'on `gamma` reads them first',
+                                      ER + ': missing -- a request on `gamma` reads it first, for what each entry '
+                                           "point's file holds",
+                                      SK + ': names what the file of `gamma check-it` holds, which the entry-point '
+                                           'rules, ' + ER + ', name -- the loader\'s body comes with every request, so '
+                                           'the list is in the rules alone'], errors=3),
+    ]),
+    # The held list, red beside entry_minimal's green: entry_minimal's tree, its entry-point rules naming
     # what check-it's file holds with §2 added, which the declaration does not hold, ...
-    ('entry_skill_holds_extra', "a loader held list naming a section the declaration does not hold fails", [
-        Step(['check-citations'], 1, [SK + ': the loader names what the file of `gamma check-it` holds as its declaration '
+    ('entry_skill_holds_extra', "an entry-point rules held list naming a section the declaration does not hold fails", [
+        Step(['check-citations'], 1, [ER + ': the loader names what the file of `gamma check-it` holds as its declaration '
                                            'gives it, "The file for `gamma check-it` holds the text before §1, §1 and §3, '
                                            'and in part §4.0 ("never infer")." -- it reads "The file for `gamma check-it` '
                                            'holds the text before §1, §1, §2 and §3, and in part §4.0 ("never infer")."'],
              errors=1),
     ]),
     # ... and with §4.0's part left out, which the declaration holds.
-    ('entry_skill_holds_short', "a loader held list leaving out a section the declaration holds fails", [
-        Step(['check-citations'], 1, [SK + ': the loader names what the file of `gamma check-it` holds as its declaration '
+    ('entry_skill_holds_short', "an entry-point rules held list leaving out a section the declaration holds fails", [
+        Step(['check-citations'], 1, [ER + ': the loader names what the file of `gamma check-it` holds as its declaration '
                                            'gives it, "The file for `gamma check-it` holds the text before §1, §1 and §3, '
                                            'and in part §4.0 ("never infer")." -- it reads "The file for `gamma check-it` '
                                            'holds the text before §1, §1 and §3."'], errors=1),

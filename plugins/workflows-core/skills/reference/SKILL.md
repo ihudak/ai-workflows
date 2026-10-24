@@ -14,8 +14,8 @@ that loads by part, one part of it.
 Work from the reference's own words, never from memory or a summary. On a
 reference that does not load by part, the text a request needs is the whole
 file, whichever entry point the request names; with no second argument, it
-is the whole file on any reference — save, either way, a request that an
-entry point's own file serves, as the paragraph on those entry points says.
+is the whole file on any reference — save, either way, a request the
+entry-point rules answer from an entry point's own file.
 A read short of every line — a section, a range, a search — covers no
 request that needs the whole file; consecutive
 ranges from its first line to its last are one read of every line. Where the text
@@ -56,41 +56,31 @@ argument that named nothing, and stop as your command, or your agent, stops.
 
 These entry points read their own file: `phase-handoff require-on-main`.
 Each one's file is
-`${CLAUDE_PLUGIN_ROOT}/reference-parts/<the reference>/<the entry point>.md`,
-holding the entry point and the sections it needs and naming them in the
-line under its title. The file for `phase-handoff require-on-main` holds
-the text before §1, §1, §2.2, §2.6.1, §3 and §4.4, and in part §4.0
-("never infer") and §5 ("rule 2" and "rule 3"). A request whose second
-argument names the entry point reads the file and executes the entry point
-from it. A request with no second argument, made for a citation of a section
-the file holds — of one it holds in part, only for the text its quoted
-phrase names — executes nothing and needs only that section's text, so it
-is a lookup: wherever that text is in this conversation word for word, from
-a read of the file or of the whole reference made in this run, in whatever
-phase, it works from that text and reads nothing. Only where that text is
-not in front of you does it read: the file, inside a `##` section whose text
-also requests that entry point, before the citation or after it; the whole
-reference, anywhere else. So a `##` section requesting the entry point
-reads the file at most once, wherever the citation stands: where the
-citation comes first and reads the file, the request executes the entry
-point from that read, made in the current phase; where the request reads it
-first, the citation is a lookup. Every other request on that reference reads
-the whole reference, as the paragraph after this one says: a second argument
-naming any other entry point, and a request with no second argument made for
-a citation of a section the file does not hold, of a section it holds in
-part for text its quoted phrase does not name — §4.0 for anything but its
-*Never infer* rule, §5 for any rule but rules 2 and 3 — or of no section. A
-read of the whole reference covers the file, within the same bound on reuse
-as any read.
+`${CLAUDE_PLUGIN_ROOT}/reference-parts/<the reference>/<the entry point>.md`.
+A request on one of their references, with or without a second argument,
+first reads the entry-point rules,
+`${CLAUDE_PLUGIN_ROOT}/skills/reference/entry-files.md`, unless their text
+is in this conversation word for word, and follows them.
 
 To read the whole reference — with no second argument, where the index of a
 reference that loads by part names no part for the rule your step applies,
 or with any second argument on a reference that does not load by part, in
-each case save a request the paragraph above answers from an entry point's
+each case save a request the entry-point rules answer from an entry point's
 own file — read
 `${CLAUDE_PLUGIN_ROOT}/references/<the first argument>.md`. Reading the
 whole reference means reading every line of it: where one read cannot hold
 the file, read it in consecutive ranges from its first line to its last.
+
+Where this skill's text is already in this conversation word for word from
+an earlier request in this run, you know the paths it names: make a
+request's Skill call and the reads this text has it make in one turn — a
+file's `wc -l` where a whole read of it needs its length, the entry-point
+rules where the request needs them, and each file's first read, with the
+Read tool, never `cat` — then any further ranges together in one more turn.
+No rule of this text is skipped for a read made before it arrives again:
+once it arrives, follow it as written; where it names a different read, make
+that read as well, since a read it does not call for serves no request; and
+where it says the request fails, it fails, whatever was read.
 
 Whether the text was read now or is already in this conversation, treat it as
 the single source of truth for the current step. When a second argument names
