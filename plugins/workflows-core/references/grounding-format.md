@@ -1049,8 +1049,9 @@ own result. Without this row the rule would overturn, on every run and forever, 
 followed §2.2 correctly.
 
 Everywhere else a `failed` or `missing` control forces `contradict` **including where the verifier's
-own search also found nothing**: two searches sharing one blind spot is exactly the state the control
-exists to expose, and an `agree` between them would launder it into evidence.
+own search or reading also found nothing**: two searches or readings sharing one blind spot is
+exactly the state the control exists to expose, and an `agree` between them would launder it into
+evidence.
 
 `control_outcome` is a return field, never a record field, on the same terms as `own_verdict`
 (§2.1) — the caller acts on it and writes `verdict` and `outcome`, never a third column of its own.

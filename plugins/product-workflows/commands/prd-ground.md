@@ -1355,10 +1355,11 @@ one of them.
 
 - **`missing`** — the finding owed a control and carries none. Normalise to `contradict`.
 - **`failed`**, and the finding's verdict is anything **other than** `NOT-PROVABLE` — the absence
-  rests on a search never shown capable of finding the thing it says is missing. Normalise to
-  `contradict` **even where the returned outcome is `agree` and the verifier's own search also found
-  nothing**: that agreement is two searches sharing one blind spot, which is the state the control
-  exists to expose and the one an `agree` would launder into evidence.
+  rests on a search or reading never shown capable of finding the thing it says is missing.
+  Normalise to `contradict` **even where the returned outcome is `agree` and the verifier's own
+  search or reading also found nothing**: that agreement is two searches or readings sharing one
+  blind spot, which is the state the control exists to expose and the one an `agree` would launder
+  into evidence.
 - **`failed`**, and the finding already reads `NOT-PROVABLE` with that failed control recorded —
   **no normalisation.** The finding did exactly what §2.2 tells a writer to do and the verifier
   reproduced its result; overturning it would contradict, on every run and forever, the one finding

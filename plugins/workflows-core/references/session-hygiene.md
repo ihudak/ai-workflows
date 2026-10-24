@@ -109,10 +109,12 @@ once its check shows every one of them settled:
 - **an item that asks for a command to run** — the record that command writes in the folder the
   item names (an `implementation.md` block, a `_conformance.md` or `_security.md` entry, the
   deliverable itself), or, for `/security-workflows:scan` run on a repository path, the run record
-  it writes under `security/<repo-slug>/runs/` for that repository where the run changed the
-  register (`workflows-core:security-register-format` §1), is later than the old pointer's *Last
-  completed* datetime, by the datetime it records, or, where it records a day alone or no date, by
-  the specs repository's last commit touching it;
+  it writes under `security/<repo-slug>/runs/` where the run changed the register
+  (`workflows-core:security-register-format` §1) — `<repo-slug>` the register's slug the item names
+  beside the path, kept with it by every run that carries it, read from the item and never derived
+  from the path on a machine where the path is not that repository — is later than the old
+  pointer's *Last completed* datetime, by the datetime it records, or, where it records a day alone
+  or no date, by the specs repository's last commit touching it;
 - **a decision or a fact it states, or an open question** — recorded, the question with its
   answer, in a deliverable the next phase reads at the top level of the folder it belongs to:
   `prd.md`, `ard.md`, `epic.md`, `specification.md`, `design.md`, a `decisions.md` register or a
@@ -124,10 +126,11 @@ once its check shows every one of them settled:
   repository's default ref: in the specs repository the `<default-ref>` this run's preflight
   resolved (`specs-repo-git.md` §3.2), in a code repository its default branch's tip in the refs
   the run holds — `git -C <repository> cat-file -e <ref>:<path>` fails, or succeeds, where `<ref>`
-  resolves. A path an item names for any other reason — a command's argument, the deliverable a
-  merge carries, a file a decision is about — is settled with its item, by the check for what the
-  item waits on. An item naming a path outside every repository the pointer's readers share — the
-  worktree `/security-workflows:scan` 0.2.0 or older carried where it failed to remove one — is
+  resolves. A path an item names for any other reason — a command's argument (the `<repo-path>` of
+  `/security-workflows:scan`'s Security Engineer offers among them), the deliverable a merge
+  carries, a file a decision is about — is settled with its item, by the check for what the item
+  waits on. An item naming a worktree that `/security-workflows:scan` 0.2.0 or older failed to
+  remove — the line that version's resume-pointer step wrote into *Carry-forward decisions* — is
   settled at once, as one the pointer never carries.
 
 A settled item is dropped. The run that settled an item may keep one line saying so instead, and
@@ -153,7 +156,12 @@ branch with neither its local nor its `origin/` ref left — deleted and pruned 
 wrote a pointer here saw it merged — which, without a fetch, cannot be told from a branch never
 fetched here, so it stays carried; an item asking for `/security-workflows:scan` on a repository
 path whose run changed nothing in the register, and so wrote no run record, until a run that
-records settles it; and an item an older pointer wrote naming a pull request by its number alone, until a run settles
+records settles it; an item asking for `/security-workflows:scan` on a repository path with no
+register slug beside it — a Security Engineer offer an older `/security-workflows:scan` wrote, say
+— until a run on a machine where that path is that repository, a repository with an `origin` that
+`git -C <path> rev-parse --show-toplevel` names, settles it by the command check, with the slug it
+derives there as `/security-workflows:scan` does (`workflows-core:components` §1), every other run
+carrying it; and an item an older pointer wrote naming a pull request by its number alone, until a run settles
 it. Where
 no pointer stands yet, there is nothing to carry.
 

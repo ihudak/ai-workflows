@@ -468,9 +468,9 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   belongs to the `[CG#n]` it cites — then runs
   any control it finds rather than reading it. A control that owed to be
   there and is not, or one that fails on a finding whose verdict **rests on** the absence,
-  normalises to `contradict` even where the verifier's own search also found nothing: two searches
-  sharing one blind spot is the state a control exists to expose. The one exception is a finding
-  already reading `NOT-PROVABLE` with its own failed control recorded — that is what the format tells
+  normalises to `contradict` even where the verifier's own search or reading also found nothing: two
+  searches or readings sharing one blind spot is the state a control exists to expose. The one
+  exception is a finding already reading `NOT-PROVABLE` with its own failed control recorded — that is what the format tells
   a writer to do, and reproducing its result is agreement. **A `contradict` the comparison disputes
   gets a second blind opinion.** The comparison never changes the blind result, but it flags one whose
   own evidence does not establish its own verdict — never one merely because the original's verdict
