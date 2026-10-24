@@ -137,7 +137,7 @@ once its check shows every one of them settled:
   key, in the register of the repository the item names or, where it names none, in any — the only
   record a `--triage` on a key leaves, since a run appends to `_security.md` only where it recorded
   a scan. A record that holds no mode or role of its own is of the mode and role its command and
-  its folder fix. A record is dated by the datetime it records, `_readiness.md`'s compared with the waiting datetime directly. A waiting datetime written with no UTC offset — an older pointer's — is read as UTC, and one with no time as the end of its UTC day, which errs to carrying. A block of an append-only record — `implementation.md`'s or
+  its folder fix. A record is dated by the datetime it records, `_readiness.md`'s compared with the waiting datetime directly. A waiting datetime written with no UTC offset — an older pointer's — is read as UTC, and one with no time as the end of its UTC day. A block of an append-only record — `implementation.md`'s or
   `_security.md`'s, or a run's in `grounding/baselines.md` or `grounding/design-grounding.md` —
   records a day alone, and is dated by its heading's own day first: one whose day is earlier than
   the waiting datetime's day, in UTC, is never later, and one whose day is later always is, whatever commit carried it; only a block of that
@@ -237,7 +237,7 @@ later commit of that same day carried — a squash merge, a hand commit of a han
 declined, a later run's flush — is dated by that commit and can settle the item though it was
 written before that datetime; and so can a block whose heading, or a `_conformance.md` whose `Run:` line, carries a local date ahead of UTC,
 written between local midnight and UTC midnight: its day is later than the UTC day it was written
-on, so the day-first rule reads it as later than a waiting datetime of that UTC day that came after it; and an item whose waiting datetime an older pointer wrote in a local time behind UTC with no offset can leave sooner too, since that datetime is read as UTC and so as earlier than it was.
+on, so the day-first rule reads it as later than a waiting datetime of that UTC day that came after it; and an item whose waiting datetime an older pointer wrote in a local time behind UTC with no offset, or as a date alone written behind UTC after UTC midnight, can leave sooner too, since that datetime is read as UTC, or as the end of its UTC day, and so as earlier than it was.
 Where
 no pointer stands yet, there is nothing to carry.
 
