@@ -66,8 +66,9 @@ earlier_reports:           # CONTEXT, each report on its own. The earlier code-w
                            # caller's fallback — a fresh dispatch where reaching this unit's writer
                            # again with SendMessage failed — that writer's own; and on a continuation
                            # dispatch — a fresh code-writer for the rest of this unit after a done whose
-                           # Steps line marks Steps not reached — that report, whose not-reached Steps
-                           # it codes; none where there is none. A helper one of them wrote is reused, never copied, save as
+                           # Steps line marks Steps not reached — that report. The latest report whose
+                           # **Unit** is this request's unit decides: where it marks Steps not reached,
+                           # code-writer codes exactly those. none where there is none. A helper one of them wrote is reused, never copied, save as
                            # ### Duplicates says.
     plan: first            # only where plan_file holds two plans: whose Steps the report's Steps line
                            # numbers — first, the plan before the re-plan, or re-plan.
@@ -137,6 +138,7 @@ report_file: /tmp/dw-impl-code-AbC123
 ## Code Writer Report
 - **Status**: done             <!-- done | needs_decision | trigger | blocked — the reply's own value -->
 - **Mode**: write              <!-- write | fix; review only in the blocked form below -->
+- **Unit**: all                <!-- the request's unit, as it reads -->
 - **Steps**: 1–3 coded; 4 left to the test writer; 5 left to the caller — it runs tests/test_rating.py, which the test writer writes
                                <!-- mode: write — each Step of the unit: coded; stopped (and how far it
                                     got); not reached, where the request ran short of room before it, which
@@ -213,16 +215,18 @@ Paths: `<path>`, `<path>`
      — rate <the reproduction rate the plan records, or none recorded> — <the runs made> runs
      and, where pre_existing_dirty names any path: the scratch checkout lacks the user's uncommitted
      files at <those paths>, which the working tree holds -->
+<!-- or, on a continuation dispatch that coded none of the Steps it was handed:
+     No progress: Steps <n>, <n> still not reached -->
 <!-- or, for an evidence input that could not be read: Unreadable: <field> at <path> -->
 ```
 
-**On `mode: review`:** `${CLAUDE_PLUGIN_ROOT}/references/review-fix.md`'s `## Fix Report`, its findings applied to the unit's non-test files only — save where an evidence input could not be read, where the report is the `## Code Writer Report` above with **Status** `blocked`, **Mode** `review` and its `### Blocked` reading `Unreadable: <field> at <path>`.
+**On `mode: review`:** `${CLAUDE_PLUGIN_ROOT}/references/review-fix.md`'s `## Fix Report`, its findings applied to the unit's non-test files only — save where an evidence input could not be read, where the report is the `## Code Writer Report` above with **Status** `blocked`, **Mode** `review`, its **Unit** and its `### Blocked` reading `Unreadable: <field> at <path>`.
 
 **The four statuses:**
 
 - `done` — on `mode: write`, every Step of the unit is coded, left to the test writer or left to the caller where the caller keeps it — or `not reached`, where the request ran short of room, which a continuation dispatch codes — and, where none is `not reached`, its checks ran, every failure they showed fixed or listed under `### Tests broken by intent` or `### Not fixed`, or named in `### Checks run` as pre-existing or as passing on its second run; on `mode: fix`, up to three attempts are made, the failing checks ran again after each, and `### Not fixed` names every failure they left, a line whose fix lies in a test file being the caller's to send to the test writer, or to decide where no source settles it; on `mode: review`, the `## Fix Report` is written. `### Settled by the run` becomes the Phase 5 report's `### Assumptions & limitations`; `### Tests broken by intent` is the test writer's to act on, its `code_report`; a `### Not fixed` line's reason goes into the Phase 5 report's `### Deferred items` beside the failure it names, where the run keeps that failure, and spares that failure a further round where a `CAVEAT:` line accounts for it or only a formatter that could not be limited to this run's paths would fix it; and `### Out of scope` goes on the follow-up line the caller writes for that repository.
 - `needs_decision` — Phase 1's test met mid-coding: nothing the run can read settles a question, and its answer changes what the user would notice; or a file outside `unit_files` that the work must edit, another unit's or a pre-existing file no piece names. `### Decision` carries two to four options, never an *Other* (the harness adds the free-text answer itself). The caller settles it — a file outside `unit_files` by moving the file into this unit or merging the units, any other by asking the user — and sends the answer as the message that reaches the agent again with `SendMessage`, or, on a fresh dispatch, as the `answer:` beside this report in `earlier_reports`.
 - `trigger` — `mode: write` at `SIMPLE` or `MODERATE` only: a classification item the approved plan did not state, with the paths that show it. The caller runs its re-classification raise.
-- `blocked` — a step cannot be coded as the plan writes it, because something the plan names is not so — on bug work, a repro a step names that does not go red in the scratch checkout of `HEAD` among them, its `### Blocked` naming the command, its directory, its output, the rate the plan records and the runs made, and, where `pre_existing_dirty` names any path, that the checkout lacks those files — save where the plan's `### Hypotheses (ranked)` reads `Ranking withheld`, the user having chosen to proceed without a repro, where that run is listed under `### Runs` and is never a `blocked`. A `### Blocked` that reads `Unreadable: <field> at <path>` instead names an evidence input the agent could not read: an orchestrator bug, never a plan defect. On `mode: fix` and `mode: review` that form is the only `blocked`, and a failure the attempt found no fix for is a `done` that lists it under `### Not fixed`.
+- `blocked` — a step cannot be coded as the plan writes it, because something the plan names is not so — on bug work, a repro a step names that does not go red in the scratch checkout of `HEAD` among them, its `### Blocked` naming the command, its directory, its output, the rate the plan records and the runs made, and, where `pre_existing_dirty` names any path, that the checkout lacks those files — save where the plan's `### Hypotheses (ranked)` reads `Ranking withheld`, the user having chosen to proceed without a repro, where that run is listed under `### Runs` and is never a `blocked`. A `### Blocked` that reads `No progress:` comes from a continuation dispatch that coded none of the `not reached` Steps it was handed: the caller dispatches no further continuation for that unit, and puts the block as it puts any other. A `### Blocked` that reads `Unreadable: <field> at <path>` instead names an evidence input the agent could not read: an orchestrator bug, never a plan defect. On `mode: fix` and `mode: review` that form is the only `blocked`, and a failure the attempt found no fix for is a `done` that lists it under `### Not fixed`.
 
 On every status the report says what is already coded — on `mode: write` and `mode: fix`, `### Files changed` and the **Steps** line; on `mode: review`, the `## Fix Report`'s `### Files changed`, where one is written — so a later request neither redoes nor undoes it, and nothing is reverted.
