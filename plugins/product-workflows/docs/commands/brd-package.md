@@ -186,13 +186,15 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice
 
 `brd-link.md` also gains any prerequisite this run declared, merged additively.
 
-**The self-review never travels, and the reason is the disposition gate.** A `[SR#n]` disposed
-`rejected-with-reason` has its reason recorded there and it "stays inside the delivery
-organisation"; the `[SR#n]` content the customer may see reaches them **filtered** — `accepted-risk`
-findings under *where to attack us hardest*, quoted as the reviewer wrote them, which it writes for
-a customer to read without this plugin, and `escalated-to-customer` findings under *the decisions
-the customer must make*. Shipping the file would defeat that filter and hand the customer an
-internal disagreement to referee. What the bundle *does* hold is an allow-list, not a deny-list, and
+**The self-review is not in the bundle, and the reason is the disposition gate.** A `[SR#n]`
+disposed `rejected-with-reason` has its reason recorded there, and the prompt never carries it; the
+prompt carries the `[SR#n]` content it puts to the customer **filtered** — `accepted-risk` findings
+under *where to attack us hardest*, quoted as the reviewer wrote them, which it writes for a customer
+to read without this plugin, and `escalated-to-customer` findings under *the decisions the customer
+must make*. Shipping the file would defeat that filter and hand the customer an internal
+disagreement to referee. The self-review is still committed with the folder, so anyone the specs
+repository is shared with can read it — on the repository route, the customer too. What the bundle
+*does* hold is an allow-list, not a deny-list, and
 [`bundle-packaging.md`](../../references/bundle-packaging.md) §1.1 is its authority: the prompt; the
 customer's own source document, every markdown file captured with it, its defect log and — where one
 exists — the transcription of each image (the parent's on a slice); the inventory; the coverage
@@ -387,7 +389,7 @@ attack.
   quotation of a customer's target as written, which sits beside the bundled filename it maps to,
   nor a captured file's own link to another captured file. Its exemptions are `bundle-packaging.md`
   §6.3's: `[SR#n]` is exempt entirely, because the self-review file it would resolve against is
-  excluded from the bundle by rule and its content reaches the customer filtered through the prompt;
+  excluded from the bundle by rule and the prompt carries its content filtered;
   and a hit inside the customer's own verbatim content or a locator naming their files and headings
   — a `[BR#n]` or a filename visible in their screenshot among them, or one they wrote into an
   answer or a reason the register quotes — is reported and put to the operator rather than stopping

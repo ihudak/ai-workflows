@@ -24,7 +24,7 @@ point every bookkeeping write into the specs repo runs through belongs to
 **Consumed by `commands/brd-package.md`**, which builds a bundle against this contract — its
 plugin-free rules, its §1.1 content allow-list, its de-Obsidianising pass, its degradation tiers,
 its delivery-note ceiling, its committed dated directory and its §6 citation-resolution check — and
-cited by `agents/brd-package-reviewer.md` for what the customer will actually be able to open.
+cited by `agents/brd-package-reviewer.md` for what the bundle will actually carry.
 `commands/brd-reconcile.md` reads a review returned against a bundle built this way, and cites §5
 for why nothing inside that committed directory is ever bannered or rewritten afterwards. Commands
 upstream of the package cite it too, for what they write that a bundle will later carry —
@@ -75,6 +75,11 @@ by default and is caught only if somebody remembers to exclude it; under the all
 default and ships only once a prompt part actually cites it. The failure mode is not symmetric — a
 document wrongly withheld produces a reviewer question, and a document wrongly shipped cannot be
 recalled — so the default belongs on the side of withholding.
+
+**The allow-list bounds what the bundle carries; it is not access control.** On the repository route
+the customer reads the specs repository itself, every file committed in the BRD folder included.
+Who can read a specs repository is the configuration of whoever sets it up, never this plugin's:
+expect one customer per repository, and a customer who may own it.
 
 Exactly this, and nothing else:
 
@@ -147,13 +152,15 @@ filename alone:
 - **The delivery note** (§4). It is the covering letter, not a package document.
 - **`self-review-<YYYYMMDD>.md`.** This is the one exclusion that is a *rule* rather than a
   consequence of the allow-list, and it is load-bearing: that file holds every `[SR#n]` the
-  adversarial pass raised, including the ones disposed `rejected-with-reason`, whose reason
-  "stays inside the delivery organisation. Nothing rejected reaches the customer"
-  (`commands/brd-package.md`, *The disposition gate*). The `[SR#n]` content the customer may see is
-  carried into the prompt **filtered** — `accepted-risk` findings under *where to attack us hardest*
-  and `escalated-to-customer` findings under *the decisions the customer must make* — so shipping
-  the file itself would defeat that filter and hand the customer an internal disagreement to
-  referee. It also carries the model the pass actually ran on, which is delivery-side bookkeeping.
+  adversarial pass raised, including the ones disposed `rejected-with-reason`, whose reasons the
+  prompt never carries (`commands/brd-package.md`, *The disposition gate*). The prompt carries the
+  `[SR#n]` content it puts to the customer **filtered** — `accepted-risk` findings under *where to
+  attack us hardest* and `escalated-to-customer` findings under *the decisions the customer must
+  make* — so shipping the file itself would defeat that filter and hand the customer an internal
+  disagreement to referee. The file also carries the model the pass actually ran on, which is
+  delivery-side bookkeeping. Kept out of the bundle, the file is still committed with the folder,
+  so anyone the specs repository is shared with can read it — on the repository route, the
+  customer too.
 - **Every other working record in the BRD folder** — among them `slices.md`, `brd-link.md`, the
   three seed files, `interview/round-<N>.md`, earlier `reconciliation-<YYYYMMDD>.md`, earlier
   `customer-review-<YYYYMMDD>.md`, and `dev-workflows/`. No prompt part sends the reviewer to any of
@@ -161,7 +168,7 @@ filename alone:
 
 **The plugin-free scan does not cover this.** It hunts tokens of the classes §1.2 tabulates —
 plugin-internal ones (§1 rules 1–2), and a model id — and a document can carry none of them and
-still not belong in a customer's hands. Nothing
+still not belong in the bundle. Nothing
 mechanical stands behind this allow-list, which is why it is written out rather than left to
 "the package's own documents".
 
@@ -745,8 +752,8 @@ different things.
 ### 6.3 Exemptions
 
 **`[SR#n]` is exempt entirely.** `self-review-<YYYYMMDD>.md` is excluded from the bundle by §1.1's
-one exclusion that is a *rule* rather than a consequence of the allow-list, while the `[SR#n]`
-content the customer may see reaches them **filtered** — through the prompt's parts 7 and 9, cited
+one exclusion that is a *rule* rather than a consequence of the allow-list, while the prompt
+carries the `[SR#n]` content it puts to the customer **filtered** — through its parts 7 and 9, cited
 by id, never the file itself. So an `[SR#n]` reference is correct content that resolves to nothing
 in the bundle, **by design**, and a check without this exemption fires on every package. The
 distinction a reader needs: naming the self-review *file* is dead — relation 3 catches it — while
@@ -978,7 +985,7 @@ inclusive.
 **The accepted-risk findings are deliberately outside this relation, though the part that surfaces
 them is not.** Their source is the adversarial self-review, which §1.1 excludes from the bundle by
 rule — so inside an assembled package there is nothing to compare that part against, and a relation
-that reached for it would resolve to an absent file on every correct bundle. What reaches the customer
+that reached for it would resolve to an absent file on every correct bundle. What the prompt carries
 about those findings is prose the packaging run wrote, and prose is review's.
 
 **It does not reach every part, and the exclusions are measured rather than cautious.** The review

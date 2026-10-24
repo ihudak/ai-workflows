@@ -6,7 +6,7 @@ The repository's three editions of the family: this public one; an internal Clau
 
 Line numbers below are at the commit each item names; re-locate by content before acting, since the files have moved on.
 
-**Coverage, as of 2026-10-15:** everything the 2026-10-15 review and its re-review found and left unfixed, everything its reviewers saw and did not report, and the work owed the other editions. The older records under `docs/superpowers/` — `verification/`, `harvest/NEXT.md`, `brd-route-follow-ups.md` — have not been swept into this list; a sweep that moves a still-open item of theirs here says so in its commit. E4, L1, L2 and the last two *Accepted* entries were added on 2026-10-24, after lean context D merged (`56a3c842`).
+**Coverage, as of 2026-10-15:** everything the 2026-10-15 review and its re-review found and left unfixed, everything its reviewers saw and did not report, and the work owed the other editions. The older records under `docs/superpowers/` — `verification/`, `harvest/NEXT.md`, `brd-route-follow-ups.md` — have not been swept into this list; a sweep that moves a still-open item of theirs here says so in its commit. E4, L2 and the last two *Accepted* entries were added on 2026-10-24, after lean context D merged (`56a3c842`).
 
 ## Ports to the other editions — the corporate machine
 
@@ -118,9 +118,6 @@ Found by the 2026-10-15 review or its re-review (line numbers at `7c13ce05` unle
 
 Found while D was built and run (`docs/superpowers/verification/2026-10-22-lean-context-handoff-part.md` §7).
 
-- **L1 — the repository-route exposure (pre-existing; the user deferred it to after D on 2026-10-23).**
-  - **The defect.** On `/product-workflows:brd-package`'s repository route, the customer can open every file in the BRD folder, not only the bundle. That includes the self-review's rejected findings, cost entries and model ids (`bundle-packaging` §1.1).
-  - **What it needs.** A small design of its own. Two candidates: a warning at the route choice, or keeping operator-only records out of the customer's reach.
 - **L2 — to verify in the next live run that writes a resume pointer:** that runs write and read back what D's `session-hygiene` §1 adds. That is the `(waiting since …)` marker beside a carried command item, *Last completed* with its UTC offset, and the register slug beside each Security Engineer offer. No gate checks these. Only a live run's `resume.md` and the next run's carry show them working.
 
 ## Accepted — known, not to fix

@@ -692,15 +692,15 @@ re-run (Phase 1 step 2) puts this command over the same folder more than once, a
 gap accumulates several open assumptions — each of which `/brd-package` then puts in front of the
 customer twice.
 
-**The third case is the one this step exists for, and the reason is that `prd.md` reaches nobody who
+**The third case is the one this step exists for, and the reason is that `prd.md` is put to nobody who
 could answer.** A customer-answerable question written only into the PRD is met by every later reader
 as a flat statement in a document full of grounded ones — read as settled, built on, argued from —
-while the one party who could have corrected it in a sentence never sees the file. `[AS#n]` is the
-route back that already exists: `/brd-package` surfaces **every** open assumption, twice, and
-`/brd-reconcile` records the answer as a `[CD#n]` that supersedes it. **Writing the `[AS#n]` is not
-asking the customer anything** — no `[CD#n]` is written here and none may be (D14), and this command
-still never puts a question to a customer directly. It records what the PRD had to assume, and names
-the two runs that carry it: `/product-workflows:brd-package <SLICE-KEY>`, then
+while the one party who could have corrected it in a sentence is never asked to read the file.
+`[AS#n]` is the route back that already exists: `/brd-package` surfaces **every** open assumption,
+twice, and `/brd-reconcile` records the answer as a `[CD#n]` that supersedes it. **Writing the
+`[AS#n]` is not asking the customer anything** — no `[CD#n]` is written here and none may be (D14),
+and this command still never puts a question to a customer directly. It records what the PRD had
+to assume, and names the two runs that carry it: `/product-workflows:brd-package <SLICE-KEY>`, then
 `/product-workflows:brd-reconcile <SLICE-KEY> @<review-file>`.
 
 **`workflows-core:prd-format`'s no-implementation-detail rule is not relaxed** (D4). A gap the grill can only

@@ -521,7 +521,7 @@ and that is not always during an interview: `/create-prd` authoring a slice's PR
 **only PRD authoring surfaces** — a scope boundary the requirement text never drew, a rule the
 acceptance criteria need and nobody stated — and some of them are settled by an authority only the
 customer holds (`interview-tagging.md` §2). Written into the PRD's `## Assumptions & open questions`
-alone, such a question reaches nobody: the customer never receives `prd.md`. Written as an `[AS#n]`,
+alone, such a question is put to nobody: no bundle carries `prd.md`. Written as an `[AS#n]`,
 it reaches them automatically, because `/brd-package` surfaces every open one. **That is the whole
 route back, and it needs no new machinery** — which is the answer to the objection that a PRD-stage
 question has missed the interview: the assumption record was always the mechanism for a thing

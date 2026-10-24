@@ -30,7 +30,7 @@ spellings `blocked_on` takes — which is the record class 6 below checks a clai
 Read `${CLAUDE_PLUGIN_ROOT}/references/interview-tagging.md` for the
 `[G]`/`[V]`/`[C]` tag, who may answer each, and the test to apply to an ambiguous question. Invoke `Skill(skill: "workflows-core:reference", args: "grounding-format")` and read it for the `[CG#n]`/`[DG#n]` finding record, the
 six verdicts and the horizons, and `${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` for what
-the customer will actually be able to open. Follow those references; do not restate them here, and
+the bundle will actually carry. Follow those references; do not restate them here, and
 do not re-derive a rule you can cite.
 
 **Dispatched by `commands/brd-package.md`**, as the first phase of packaging, and again when a
@@ -233,8 +233,8 @@ carrying either could then never ship, since nothing downstream may change its w
 - requirements by `[BR#n]`, and a decision, assumption, finding, question or defect by its bracketed
   id, which the customer's review cites back.
 
-`rests_on`, `passes` and `notes` stay internal — they are written into the self-review file, which
-never ships — and are not bound by this.
+`rests_on`, `passes` and `notes` are not bound by this: they are written into the self-review file,
+which is not in the bundle, and the prompt renders none of them.
 
 ## Hard rules
 

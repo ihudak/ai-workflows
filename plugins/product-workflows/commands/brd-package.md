@@ -700,7 +700,7 @@ Each disposition carries a recorded reason, asked for in plain text once the dis
 | `fixed` | **Admissible only where the named artifact is one this command may change** — the prompt, the delivery note, the self-review, the bundle's own rendered copies, and a `[SR#n]`'s own record. **That list is closed and its complement is not enumerated**: `fixed` is unavailable against every other artifact a finding can name, and the test is membership of the five, never absence from a list of exclusions. Four are worth the reason: a ledger disposition, an `interview/customer-questions.md` entry, a register record and a verified `[CG#n]`/`[DG#n]` — this command mints no `[C]`, writes nothing into the question set (*Render the customer prompt*), changes no ledger disposition (the Final report), and a verified finding is `/prd-ground`'s. A `brd/brd-defect-log.md` entry and `brd/brd-inventory.md`'s `accounts:` record are outside it on the same rule and are named because a live run met both, not because naming them completes anything. Where the artifact is not one of the five, `fixed` is unavailable: the gate asks with its second array, whose first option is the agreed-not-actionable route below. **Two of the five admissible artifacts exist when this gate runs and three do not**, so *corrected* means something different for each half and the row says which: the self-review and an `[SR#n]`'s own record are corrected here, before this phase ends; the prompt, the delivery note and the bundle's own rendered copies are written by *Render the customer prompt*, *Render the delivery note* and *Assemble the bundle*, so the correction is recorded against the finding now, in the words the render must carry, and the phase that writes that artifact carries it out — which is the only point at which it can be, and is why no correction here is ever a write into a package document. A `fixed` disposition whose artifact is unchanged — or whose recorded correction the phase that writes that artifact did not carry out — is not `fixed` |
 | `accepted-risk` | The finding is listed to the customer under *where to attack us hardest*, in the reviewer's own words — which that agent writes for a customer to read, with no plugin token in them (`agents/brd-package-reviewer.md`). There is no drawer this puts it in |
 | `escalated-to-customer` | The finding is put to the customer in the prompt's *decisions the customer must make* part, carried by its own `[SR#n]`. Admissible **only** where `interview-tagging.md` §2's test says so — what would settle it is an authority only the customer holds. Where a delivery-side trade-off would settle it, this is the wrong disposition, and the gate does not offer it (above) |
-| `rejected-with-reason` | The reason is recorded in the self-review and stays inside the delivery organisation. Nothing rejected reaches the customer |
+| `rejected-with-reason` | The reason is recorded in the self-review. Nothing rejected is rendered into the prompt, and the self-review is not in the bundle — but it is committed with the folder, so anyone the specs repository is shared with can read the reason, the customer included on the repository route |
 
 **A finding the team agrees with and cannot act on here takes `accepted-risk` and carries a
 structured marker saying where it is fixed.** The vocabulary is four values and a fifth would be one
@@ -735,7 +735,7 @@ was read as *name a person instead of writing a marker*, and two findings the te
 went to the customer with no sentence beside them, indistinguishable on the page from the eight
 risks that run had genuinely weighed and accepted.
 
-**The marker stays inside the delivery organisation and the customer reads a rendered sentence
+**The marker stays out of the prompt and the customer reads a rendered sentence there
 instead.** `fixed-by:` travels in the disposition's recorded reason, in
 `self-review-<YYYYMMDD>.md` and in the Final report's grouped listing, and **it is never rendered
 into the prompt**: part 9 puts an accepted-risk finding to the customer in the reviewer's own words,
@@ -744,9 +744,9 @@ and hard-stops on a leading-slash command name (`BRD_PACKAGE_PROMPT_LEAK`) rathe
 it. A clause carrying the command name into part 9 would therefore stop the package on the common
 path — the P3 run had eleven of seventeen findings in this state — and the only way past the stop
 would be to strip the clause, which is this rule reverting itself. **A person-valued marker is
-withheld for a reason of its own rather than for that one**: neither the plugin-free scan nor the
-citation check stops a person's name, so nothing downstream would catch it, and an individual
-inside the delivery organisation is not the customer's to be handed. **So part 9 renders a
+kept out of the prompt for a reason of its own rather than for that one**: neither the plugin-free
+scan nor the citation check stops a person's name, so nothing downstream would catch it, and an
+individual inside the delivery organisation is not the customer's to be handed. **So part 9 renders a
 generated, plugin-free sentence from the marker's presence**, to the effect of *"we agree with
 this; it is recorded for repair outside this package rather than accepted as it stands"* — **one
 sentence for both value shapes**, saying only what holds of a command that will write the artifact
@@ -1350,17 +1350,18 @@ see.
 
 **The self-review exclusion is the one that would not survive being left to judgement, so it is
 stated here as well as in §1.1.** That file holds every `[SR#n]` this run raised, including the ones
-the *disposition gate* disposed `rejected-with-reason` — whose reason "stays inside the delivery
-organisation. Nothing rejected reaches the customer." The `[SR#n]` content the customer may see
-reaches them **filtered**, through part 9 and part 7 of the prompt; the file carries the unfiltered
-set, plus the model the adversarial pass actually ran on. It sits in this same folder under the same
-`<BRD-KEY>`-and-date naming as the prompt and the delivery note, so nothing about its filename marks
-it as internal — which is exactly why the rule is written down rather than inferred. **The
-plugin-free scan below is no substitute for this rule**: it hunts tokens, and what makes a
-self-review internal is not a token — it is the unfiltered findings and the reasons the team
-rejected some of them, which can be written without one. The model id its header records is the one
-thing in it the scan is sure to stop on, and a self-review is the most internal document this
-command writes whether or not that line is there.
+the *disposition gate* disposed `rejected-with-reason`, whose reasons the prompt never carries. The
+prompt carries the `[SR#n]` content it puts to the customer **filtered**, through its part 9 and
+part 7; the file carries the unfiltered set, plus the model the adversarial pass actually ran on.
+Kept out of the bundle, the file is still committed with the folder, so anyone the specs repository
+is shared with can read it — on the repository route, the customer too. It sits in this same folder
+under the same `<BRD-KEY>`-and-date naming as the prompt and the delivery note, so nothing about its
+filename marks it as outside the bundle — which is exactly why the rule is written down rather than
+inferred. **The plugin-free scan below is no substitute for this rule**: it hunts tokens, and what
+keeps a self-review out of the bundle is not a token — it is the unfiltered findings and the reasons
+the team rejected some of them, which can be written without one. The model id its header records is
+the one thing in it the scan is sure to stop on, and a self-review stays out of the bundle whether
+or not that line is there.
 
 1. **Name every bundle document distinctively.** Documents are located by **filename search, never
    by path**, because a path is correct exactly once — in the directory layout this machine had —
