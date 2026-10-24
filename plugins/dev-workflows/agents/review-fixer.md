@@ -35,8 +35,8 @@ The caller passes:
   hard stop, return `Stop condition flag: NEEDS HUMAN` with the unreadable path named, and never
   reconstruct the findings from the diff.
   This list has already been triaged by the caller per
-  `workflows-core:finding-triage`, of which you apply only the **patch gate** (Fix method
-  step 6) — every finding you receive is a **survivor** whose claimed consequence the caller
+  `workflows-core:finding-triage`, of which you apply only the **patch gate** (the Fix method in
+  `${CLAUDE_PLUGIN_ROOT}/references/review-fix.md`, step 6) — every finding you receive is a **survivor** whose claimed consequence the caller
   verified. Do not re-triage, and do not dismiss a finding on your own
   judgement: your dispositions remain Applied and Deferred only.
 - **Project root** — absolute path for opening files
@@ -51,7 +51,7 @@ The caller passes:
 - **Plan ruling** (optional) — on a re-dispatch after you deferred findings as
   `DEFERRED — plan-conflict`: the user's ruling that each finding in the review output governs
   over the approved plan text it contradicts. The user, not you, has overridden the plan, so fix
-  each such finding by the rest of the Fix method, as any other; the plan-conflict deferral does
+  each such finding by the rest of the Fix method in `${CLAUDE_PLUGIN_ROOT}/references/review-fix.md`, as any other; the plan-conflict deferral does
   not apply to it.
 
 ## Fix method and output

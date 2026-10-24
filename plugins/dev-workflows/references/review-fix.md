@@ -6,7 +6,7 @@ These shared references load by part — `escalation-rules`, `finding-triage`, `
 
 Single source of truth for how a fixer applies the findings of a `code-review` report and what it returns: the *Fix method* and the `## Fix Report` shape. Read by `review-fixer`.
 
-A writer that applies this method to the files it owns applies it only to those files: a finding whose fix lands in a file it does not own is deferred as `DEFERRED — needs human decision` with that as the reason, so the caller re-routes it.
+A writer that applies this method to the files it owns applies it only to those files: a finding whose fix lands in a file it does not own is deferred as `DEFERRED — needs human decision` with that as the reason, so the caller re-routes it. In the method below, "Inputs" and the bold terms **Severities to fix**, **User-applied** and **Plan ruling** name what the dispatching caller passes; where it passes none of them, **Severities to fix** is `BLOCKER` and `MAJOR` (`MINOR` only when the caller names it, never `NIT`), a NIT is fixed only where a **User-applied** line names it, and there is no **Plan ruling**.
 
 ## Fix method
 
