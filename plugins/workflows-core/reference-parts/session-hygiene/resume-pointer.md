@@ -130,8 +130,19 @@ once its check shows every one of them settled:
   item is carried, never dropped. In the folder the item names, that record is an
   `implementation.md` block, a `_conformance.md` entry or a `_security.md` block whose `kind` and
   role are the item's and whose `repo` is the item's where it names one. For
-  `/security-workflows:scan` the record is also a run record under `security/<repo-slug>/runs/`,
-  written where the run changed the register
+  `/product-workflows:prd-ground` it is a run's dated heading in `grounding/baselines.md` or
+  `grounding/design-grounding.md`, files only that command writes a heading into —
+  `/product-workflows:create-prd`, `/product-workflows:update-prd`, `/product-workflows:create-ard`
+  and `/product-workflows:specify` write only `consumed_by`, inside a finding's block, never a
+  heading: a `baselines.md` one, which every run but `--no-code` writes, for an item
+  asking for a run that grounds code, and a `design-grounding.md` one, which every run writes, for
+  an item asking for `--no-code`. Neither settles an item asking for `--rebaseline`, a run they do
+  not tell from another, nor, while `design-grounding.md`'s `## Frame sets covered` section, which
+  each run rewrites, records a set `skipped: --no-design`, one that does not ask for `--no-design`.
+  For `/dev-workflows:ready` it is `_readiness.md`'s heading,
+  `# Readiness check — <run timestamp, ISO 8601 UTC>`, which only that command writes, overwriting
+  the file on each run. For `/security-workflows:scan` the record is also a run record under
+  `security/<repo-slug>/runs/`, written where the run changed the register
   (`workflows-core:security-register-format` §1), whose `kind` and `role` are those that
   reference's §2 gives the run the item asks for — `kind` `verify` for `--verify-fixes`, `triage`
   for `--triage`, `import` for `--import` and `scan` for a scan, and `role` `dev` for a key run
@@ -142,10 +153,11 @@ once its check shows every one of them settled:
   key, in the register of the repository the item names or, where it names none, in any — the only
   record a `--triage` on a key leaves, since a run appends to `_security.md` only where it recorded
   a scan. A record that holds no mode or role of its own is of the mode and role its command and
-  its folder fix. A record is dated by the datetime it records. A block of an append-only record,
-  `implementation.md`'s or `_security.md`'s, records a day alone, and is dated by its heading's own
-  day first: one whose day is earlier than the waiting datetime's day, in UTC, is never
-  later, and one whose day is later always is, whatever commit carried it; only a block of that
+  its folder fix. A record is dated by the datetime it records, `_readiness.md`'s compared with the
+  waiting datetime directly. A block of an append-only record — `implementation.md`'s or
+  `_security.md`'s, or a run's in `grounding/baselines.md` or `grounding/design-grounding.md` —
+  records a day alone, and is dated by its heading's own day first: one whose day is earlier than
+  the waiting datetime's day, in UTC, is never later, and one whose day is later always is, whatever commit carried it; only a block of that
   same day is dated by the commit that added its heading line — the commit
   `git -C "$SPECS_PATH" blame -L <n>,<n> --porcelain -- <file>` names for heading line `<n>`
   (`<file>` its path from the specs repository's root), at that commit's `author-time`, which a
@@ -214,15 +226,17 @@ good where none can, as no change scan records once `unit-branch` reads its Epic
 with no work after it; an item only a block of `implementation.md` or `_security.md` of its waiting
 datetime's own day can settle, in `specs-repo-git` §8's session-branch mode, until the session branch's pull request
 merges — by a merge or a rebase, or by a squash on the block's own day — and the block reaches the
-branch the checkout stands on; an item asking for a command that leaves no block, `_conformance.md`
-or run record — one whose only record is its deliverable, a whole file the check does not read:
-most name no date of their own, and other commands commit into several — until a run of that
-command writing this pointer settles it itself, so one whose command ran on another clone without
-this pointer in front of it stays until then, and for good where that command writes another
-folder's pointer or none:
-`/product-workflows:prd-ground <CHILD-KEY>` in a root BRD's pointer,
-`/product-workflows:brd-proposal` in a slice's, `/product-workflows:prd-proposal` in its root's or
-a sibling's, and `/workflows-core:frames`, which writes none; an item asking for `/security-workflows:scan` on a repository path with no
+branch the checkout stands on; an item asking for a command that leaves none of the records this
+check reads — one whose only record is its deliverable, a whole file the check does not read:
+most name no date of their own, and other commands commit into several — or asking for one in a
+mode those records do not tell — `/product-workflows:prd-ground`'s `--rebaseline`, or a run of it
+that grounds design while `design-grounding.md`'s `## Frame sets covered` records a set
+`skipped: --no-design` — until a run of that command writing this pointer settles it itself, so
+one whose command ran on another clone without this pointer in front of it stays until then, and
+for good where that command writes another folder's pointer or none:
+`/product-workflows:brd-proposal` in a slice's pointer and `/product-workflows:prd-proposal` in its
+root's or a sibling's, whose `priced-against` record names each input's content and no time, and
+`/workflows-core:frames`, which writes none; an item asking for `/security-workflows:scan` on a repository path with no
 register slug beside it — a Security Engineer offer an older `/security-workflows:scan` wrote, say
 — until a run on a machine where that path is that repository, a repository with an `origin` that
 `git -C <path> rev-parse --show-toplevel` names, settles it by the command check, with the slug it
