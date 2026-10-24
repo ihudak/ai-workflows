@@ -79,7 +79,7 @@ recalled — so the default belongs on the side of withholding.
 **The allow-list bounds what the bundle carries; it is not access control.** On the repository route
 the customer reads the specs repository itself, every file committed in the BRD folder included.
 Who can read a specs repository is the configuration of whoever sets it up, never this plugin's:
-expect one customer per repository, and a customer who may own it.
+expect one customer per repository, and that customer may own it.
 
 Exactly this, and nothing else:
 

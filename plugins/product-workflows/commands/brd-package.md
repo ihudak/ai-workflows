@@ -815,8 +815,9 @@ phase would end → stop:
 `BRD_PACKAGE_UNDISPOSED: N [SR#n] findings are still undisposed — every finding takes one of fixed | accepted-risk | escalated-to-customer | rejected-with-reason before a bundle is built.`
 
 **A `fixed` disposition re-opens the self-review, exactly once, and the trigger is any `fixed`
-whatever its named artifact.** A correction changes what the customer will be shown — the five
-artifacts the row above admits are the ones this command renders for them — and a correction made
+whatever its named artifact.** A correction can change what the customer will be shown — three of
+the five artifacts the row above admits, the prompt, the delivery note and the bundle's own rendered
+copies, are what this command renders for them — and a correction made
 under one finding can break a position another finding left standing. So once every `fixed`
 correction has been made or, for an artifact a later phase writes, recorded against its finding,
 re-dispatch `brd-package-reviewer` once, with the same `model:` as the first dispatch (under §10,
