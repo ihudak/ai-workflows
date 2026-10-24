@@ -14,11 +14,13 @@ Run it from inside the git work tree. The command inherits stdin, stdout, stderr
 directory, but not the lock descriptor, so a daemon the build leaves behind cannot hold the lock. It
 runs in a session of its own, so a Ctrl-Z stops only this script, not the command.
 
-"Ended" is exact in two cases. On a normal exit it is the command itself (the group leader): a
-daemon the build leaves in its group does not hold the lock. After a SIGTERM, SIGHUP, SIGINT or
-SIGQUIT sent to this script, which passes it on to the command's group, it is the whole group: the
-script waits for the leader, then for the rest of the group for up to 2 seconds, then sends SIGKILL
-to whatever is left. The gap, by class: a signal this script does not catch -- SIGKILL above all, but
+"Ended" is exact in two cases. On any exit not after a signal this script passed on -- a normal exit,
+or a leader killed by a signal that did not come through this script -- it is the command itself
+(the group leader): a daemon the build leaves in its group does not hold the lock. Every SIGTERM,
+SIGHUP, SIGINT or SIGQUIT sent to this script is passed on to the command's group as it arrives,
+and after one the lock is held until the whole group is gone: the script waits for the leader, with
+no time limit, then for the rest of the group for up to 2 seconds, then sends SIGKILL to whatever is
+left. The exit is 128 + N for the last signal passed on. The gap, by class: a signal this script does not catch -- SIGKILL above all, but
 also SIGUSR1, SIGALRM and the like -- sent to this script alone, not to its group, frees the lock
 while the command still runs.
 
@@ -105,10 +107,10 @@ def run(argv):
             try:
                 fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
-                sys.stderr.write("run-lock: waiting for %s\n" % path)
-                sys.stderr.flush()
                 old = [(n, signal.signal(n, _raise)) for n in FORWARDED]
                 try:
+                    sys.stderr.write("run-lock: waiting for %s\n" % path)
+                    sys.stderr.flush()
                     fcntl.flock(fd, fcntl.LOCK_EX)
                 except _Signalled as s:
                     sys.stderr.write("run-lock: interrupted while waiting for %s\n" % path)
@@ -125,11 +127,13 @@ def run(argv):
 
 
 def _run_command(argv):
-    state = {"proc": None, "sig": None, "sent": False}
+    state = {"proc": None, "pending": None, "passed": []}
 
     def forward(signum, frame):
-        state["sig"] = signum
-        _flush(state)
+        if state["proc"] is None:  # before the command exists: kept, sent once it does
+            state["pending"] = signum
+        else:
+            _pass_on(state, signum)
 
     old = [(n, signal.signal(n, forward)) for n in FORWARDED]
     try:
@@ -141,31 +145,33 @@ def _run_command(argv):
         except OSError as e:
             sys.stderr.write("run-lock: cannot run %s: %s\n" % (argv[0], e))
             return 126
-        _flush(state)  # a signal that arrived before the command existed
+        early, state["pending"] = state["pending"], None
+        if early is not None:
+            _pass_on(state, early)
         rc = state["proc"].wait()  # the lock is kept until the command is reaped
-        if state["sig"] is not None:
-            for n in FORWARDED:  # a second signal must not cut the group's wait short
+        if state["passed"]:
+            for n in FORWARDED:  # a later signal must not cut the group's wait short
                 signal.signal(n, signal.SIG_IGN)
             _end_group(state["proc"])
     finally:
         for n, h in old:
             signal.signal(n, h)
-    if state["sig"] is not None:
-        code = 128 + state["sig"]
-        sys.stderr.write("run-lock: passed signal %d on to the command; exiting %d\n"
-                         % (state["sig"], code))
+    if state["passed"]:
+        code = 128 + state["passed"][-1]
+        sys.stderr.write("run-lock: passed signal%s %s on to the command; exiting %d\n"
+                         % ("s" if len(state["passed"]) > 1 else "",
+                            ", ".join(str(n) for n in state["passed"]), code))
         return code
     return 128 - rc if rc < 0 else rc
 
 
-def _flush(state):
-    """Pass the signal received on to the command's group, once."""
-    if state["proc"] is not None and state["sig"] is not None and not state["sent"]:
-        state["sent"] = True
-        try:
-            os.killpg(state["proc"].pid, state["sig"])
-        except OSError:
-            pass
+def _pass_on(state, signum):
+    """Pass a signal received on to the command's group."""
+    state["passed"].append(signum)
+    try:
+        os.killpg(state["proc"].pid, signum)
+    except OSError:
+        pass
 
 
 def _end_group(proc):
@@ -339,13 +345,57 @@ def selftest():
         try:
             assert wait_for(os.path.join(repo, "up")), "holder never started"
             w = subprocess.Popen(lock_cmd("true"), cwd=repo, stderr=subprocess.PIPE)
-            time.sleep(0.5)
+            first = w.stderr.readline().decode()  # the handlers are in before this line prints
+            assert first.startswith("run-lock: waiting for "), first
             w.send_signal(signal.SIGINT)
-            err = w.communicate(timeout=10)[1].decode()
+            err = first + w.communicate(timeout=10)[1].decode()
             assert w.returncode == 128 + 2, w.returncode
             assert "run-lock: interrupted while waiting for " in err and "Traceback" not in err, err
         finally:
             holder.wait()
+
+    def test_every_signal_passed_on():
+        repo = new_repo("twosig")
+        log = os.path.join(repo, "log")
+        script = ('trap "echo got-INT >> log" INT; trap "echo got-TERM >> log; exit 0" TERM; '
+                  'echo $$ > pid; echo up > up; while :; do sleep 0.1; done')
+        a = subprocess.Popen(lock_cmd("sh", "-c", script), cwd=repo, stderr=subprocess.PIPE)
+        try:
+            assert wait_for(os.path.join(repo, "up")), "command never started"
+            a.send_signal(signal.SIGINT)
+            end = time.time() + 10
+            while time.time() < end and not (os.path.exists(log) and "got-INT" in open(log).read()):
+                time.sleep(0.02)
+            a.send_signal(signal.SIGTERM)
+            err = a.communicate(timeout=10)[1].decode()
+            with open(log) as f:
+                assert f.read().split() == ["got-INT", "got-TERM"], "the command missed a signal"
+            assert a.returncode == 143 and "passed signals 2, 15 on to the command; exiting 143" in err, \
+                (a.returncode, err)
+        finally:  # a failed case must leave no process behind
+            try:
+                a.kill()
+                with open(os.path.join(repo, "pid")) as f:
+                    os.killpg(int(f.read()), signal.SIGKILL)
+            except (OSError, ValueError):
+                pass
+
+    def test_normal_exit_releases_at_once():
+        repo = new_repo("daemon")
+        a = subprocess.run(lock_cmd("sh", "-c", "sleep 30 >/dev/null 2>&1 & echo $! > pid"), cwd=repo,
+                           timeout=10)
+        try:
+            assert a.returncode == 0
+            t0 = time.time()
+            assert subprocess.run(lock_cmd("true"), cwd=repo, timeout=10).returncode == 0
+            took = time.time() - t0
+            assert took < 1.0, "a daemon in the group held the lock for %.2fs" % took
+        finally:
+            try:
+                with open(os.path.join(repo, "pid")) as f:
+                    os.kill(int(f.read()), signal.SIGKILL)
+            except (OSError, ValueError):
+                pass
 
     def test_no_fcntl():
         repo = new_repo("nofcntl")
@@ -377,7 +427,8 @@ def selftest():
 
     tests = [test_serialises, test_exit_code_passthrough, test_killed_holder_releases, test_usage,
              test_outside_repo, test_lock_path, test_lock_path_symlinked, test_signal_keeps_lock,
-             test_signal_keeps_lock_for_group, test_interrupted_while_waiting, test_no_fcntl]
+             test_signal_keeps_lock_for_group, test_interrupted_while_waiting, test_every_signal_passed_on,
+             test_normal_exit_releases_at_once, test_no_fcntl]
     try:
         for t in tests:
             try:
