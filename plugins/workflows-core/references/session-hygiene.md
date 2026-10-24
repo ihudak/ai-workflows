@@ -117,22 +117,25 @@ once its check shows every one of them settled:
   `_*.md` record, never `resume.md` itself or a session file under `dev-workflows/`. This is the
   template's *NOT already in the artifact* test, applied to each of those deliverables rather than
   to this run's own artifact alone;
-- **a path it names** — inside a repository the item names with it — is absent from that
+- **an item that asks for a path to be removed, or to be written or committed** — a path inside a
+  repository the item names with it — once that path is absent from, or present at, that
   repository's default ref: in the specs repository the `<default-ref>` this run's preflight
   resolved (`specs-repo-git.md` §3.2), in a code repository its default branch's tip in the refs
-  the run holds — `git -C <repository> cat-file -e <ref>:<path>` fails where `<ref>` resolves. An
-  item naming a path outside every repository the pointer's readers share, with no repository it
-  lies in — the worktree `/security-workflows:scan` 0.2.0 or older carried where it failed to
-  remove one — is settled at once, as one the pointer never carries.
+  the run holds — `git -C <repository> cat-file -e <ref>:<path>` fails, or succeeds, where `<ref>`
+  resolves. A path an item names for any other reason — a command's argument, the deliverable a
+  merge carries, a file a decision is about — is settled with its item, by the check for what the
+  item waits on. An item asking for the removal of a path outside every repository the pointer's
+  readers share — the worktree `/security-workflows:scan` 0.2.0 or older carried where it failed
+  to remove one — is settled at once, as one the pointer never carries.
 
 A settled item is dropped. The run that settled an item may keep one line saying so instead, and
 the next run drops that line: a line saying its item is settled is settled. An item not settled —
 by this run or by the check for what it waits on — is carried, without the run having to show it
 still open; one a file the next run reads already records — `follow-ups.md`, say — is carried as
 one line naming that file. An item that waits on a pull request names that pull request's branch
-and its repository, so a later run can make the merged check, and an item naming a path names the
-repository it lies in and the path from that repository's root, so a later run can make the
-absence check. **A
+and its repository, so a later run can make the merged check, and an item that asks for a path to
+be removed, written or committed names the repository it lies in and the path from that
+repository's root, so a later run can make the absence or presence check. **A
 path outside every repository the pointer's readers share** — a scratch worktree, a temporary
 directory — **is never written into the pointer**: the pointer is pushed and shared while such a
 path belongs to one machine, so its absence on one machine cannot be told from its removal on
@@ -141,9 +144,9 @@ longer than they need:
 a code repository's branch merged by a squash or a rebase, until a run applies
 `workflows-core:implementation-format` §5's merged test to it — a run of the Epic the branch
 belongs to, or `/dev-workflows:conformance <PRD>`; a branch or a path in a repository the run
-holds no ref for, or only refs older than the merge or the removal — a code repository the run did
-not open or did not fetch, or a branch never fetched here — until a run holding current refs
-settles it; a specs-repository
+holds no ref for, or only refs older than the merge, the removal or the write — a code repository
+the run did not open or did not fetch, or a branch never fetched here — until a run holding
+current refs settles it; a specs-repository
 branch with neither its local nor its `origin/` ref left — deleted and pruned before any run that
 wrote a pointer here saw it merged — which, without a fetch, cannot be told from a branch never
 fetched here, so it stays carried; and an item an older pointer wrote naming a pull

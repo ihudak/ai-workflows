@@ -453,7 +453,7 @@ SIGNIFICANT — [one-line reason]
 - Scanned: [the kind at <commit> — the Epic's branch over <base>, the whole repository or the area Claude Security's scope question chose, or the files of --verify-fixes in a temporary worktree at <default>'s head — with the effort and the report directory; a tip that differs from the recorded commit; a fast-forward or switch made; after_merge; a dirty tree; or "no scan" on --triage, and the imported folder on --import]
 - Verification: [the stamp's verification.status — verified, or unverified with its verification.reason — and, where verification.researchers_returned is below verification.researchers_dispatched, how many of the dispatched researchers did not return; or "no scan" on --triage]
 - Refs: [each fetch that failed or timed out, read as last fetched; each stale tracking ref removed; a shallow clone, where the merge state may read as open; a tip unit-branch could not compare; a read-only mount — or "fresh"]
-- Worktree left: [the path of the temporary worktree 7.4 failed to remove, which the next run's Phase 0 step 7 offers to remove — omit otherwise]
+- Worktree left: [the path of the temporary worktree 7.4 failed to remove, which the next run's Phase 0 step 7 offers to remove once it is idle — omit otherwise]
 - Limit: the register records what scans found, never that nothing else is there.
 
 ### Findings
