@@ -181,6 +181,10 @@ jobs:
         # Fixtures are built at run time in a temporary repository.
         run: python3 plugins/dev-workflows/scripts/run-state.py --selftest
 
+      - name: Self-test the design pieces reader
+        # /implement splits its review by the design's pieces, and /design checks the section it writes, through this script.
+        run: python3 plugins/dev-workflows/scripts/pieces.py --selftest
+
       - name: Self-test the architecture harvest
         # /product-workflows:harvest-decisions writes the team knowledge base with it. Its
         # failure mode is silent: a rule that stopped matching harvests nothing, or a
