@@ -98,6 +98,10 @@ pre_existing_dirty: [src/notes.txt]
                            # (its pre_existing_dirty): the user's own uncommitted work. none where it
                            # recorded none. Where it names any, a repro that does not go red in the
                            # scratch checkout says, in its ### Blocked, that the checkout lacks them.
+run_tests: yes             # inline. yes | no — no where the caller's run skips its tests (its recorded
+                           # test_decision: skip): on mode: write and mode: fix code-writer runs its
+                           # build and no test, nearby or wider, and a Step that runs one is left to
+                           # the caller.
 failure_input: /tmp/dw-impl-failure-AbC123
                            # EVIDENCE on mode: fix; none otherwise. test-baseliner's ## Test Verify
                            # Report, whole or the part of it naming the failures handed to code-writer —
@@ -126,7 +130,7 @@ report_file: /tmp/dw-impl-code-AbC123
 
 - **Evidence** — `repo_root` and `plan_file`, and `failure_input` on `mode: fix` or `review_file` on `mode: review`. One that cannot be read, or a `repo_root` that is not a directory, is a hard stop: the agent writes nothing in the repository, returns `blocked`, and its `### Blocked` reads `Unreadable: <field> at <path>`. It never reconstructs the input by other means — the plan from the earlier reports, a failure by running the check itself, the findings from the code.
 - **Context** — `spec_paths`, `summary_file`, `baseline_file`, `diff_so_far` and `earlier_reports`, each path on its own, and `model_routing`. One that cannot be read degrades to absent, and the report's **Degraded inputs** line names it with its path. With `baseline_file` absent, no nearby test runs, and `### Checks run` says so.
-- **Inline values** — `mode`, `unit`, `pieces`, `unit_files`, `patches`, `task_shape`, `class`, `scratch_checkout` and `pre_existing_dirty` — are read from the request itself and have no read to fail. `report_file` is written, never read.
+- **Inline values** — `mode`, `unit`, `pieces`, `unit_files`, `patches`, `task_shape`, `class`, `scratch_checkout`, `pre_existing_dirty` and `run_tests` — are read from the request itself and have no read to fail. `report_file` is written, never read.
 
 ## Output (`code-writer` → `/implement`)
 
@@ -146,17 +150,17 @@ report_file: /tmp/dw-impl-code-AbC123
                                     writes or changes a test file; or left to the caller, a step the caller
                                     keeps — a bisect, a patch's application, the repro's re-run against the
                                     change, the regression test's red-capability check, a step that runs a
-                                    test this run will write or update, or a formatter that could not be
-                                    limited to the step's paths, named with why — each with its command and
-                                    the directory it runs from, and, for a test this run will write or
-                                    update, that test's path as the step names it and whether the step
-                                    expects it to fail: "5 left to the caller — runs
-                                    tests/test_x.py by pytest tests/test_x.py::test_empty_x, from the top
-                                    level; expects it to fail". A Step that writes a test and runs it is
-                                    left to both: "4 left to the test writer, and to the caller — runs …".
-                                    The caller runs one that expects a failure as the red-capability check
-                                    on task_shape: bug work, and, on any other, expected to pass, at its
-                                    test run. mode: fix — n/a -->
+                                    test this run will write or update — any test, under run_tests: no —
+                                    or a formatter that could not be limited to the step's paths, named
+                                    with why — each with its command and the directory it runs from, and,
+                                    for a test this run will write or update, that test's path as the step
+                                    names it and whether the step expects it to fail: "5 left to the
+                                    caller — runs tests/test_x.py by pytest tests/test_x.py::test_empty_x,
+                                    from the top level; expects it to fail". A Step that writes a test and
+                                    runs it is left to both: "4 left to the test writer, and to the caller
+                                    — runs …". The caller runs one that expects a failure as the
+                                    red-capability check on task_shape: bug work, and, on any other,
+                                    expected to pass, at its test run. mode: fix — n/a -->
 - **Degraded inputs**: none    <!-- each context input that could not be read: `<field> at <path>` -->
 
 ### Files changed              <!-- never a test file; what a check wrote itself — its build output, its cache — is no change of this request's, and a file a tool run created that git does not ignore is one -->
@@ -167,7 +171,7 @@ report_file: /tmp/dw-impl-code-AbC123
 
 ### Checks run                 <!-- every build, nearby-test and other check this request ran, each through the run lock, in the order run -->
 - `<the command, as run through the lock>` in `<the directory it ran from>` — <the build | the nearby tests of `<directory>` | the check step <n> names | a check failure_input names> — <its result: passed; failed, with every failure by name, each marked fixed in a later run, broken by intent, pre-existing or not fixed; or the `run-lock:` line that ended it>
-- _or_ none — <why: a return before the unit's Steps were all coded; no build to run and no suite the baseline marks OK for the directories changed; baseline_file not read>
+- _or_ none — <why: a return before the unit's Steps were all coded; no build to run and no suite the baseline marks OK for the directories changed, or run_tests: no; baseline_file not read>
 
 ### Tests broken by intent     <!-- mode: write — each existing test whose fix lies in its own file: it fails, or no longer compiles, because the change does what spec_paths or the plan says, and what the change alters is what it asserts or how it calls the code; never edited — the test writer's to update -->
 - `<test name>` in `<file:line>` — fails: <its assertion's message, or the compile error> — the change: <the line of spec_paths or the plan that makes that change, `path:line`, quoted | no line read settles whether that behaviour changed>
