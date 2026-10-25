@@ -37,7 +37,7 @@ Every next-step option a command offers already carries a role label — see [Ro
 
 ## Mid-run suggestions and big non-pipeline commands
 
-`/implement` suggests no `/compact` mid-run: it codes the plan one step group after another with no turn of yours between them, so there is no moment to act on one, and its run-state file carries the run across an automatic compaction (see [`/implement`](../commands/implement.md#the-run-state-file)); a step list too long for one run is split into a unit of its own instead. `/vuln` and `/upgrade` are large, non-pipeline commands with no role transition of their own: each gets a plain end-of-run `/compact` suggestion near its maintenance handoff, and neither writes a `resume.md`, since their durable state already lives in the branch or PR they produced.
+`/implement` suggests no `/compact` mid-run: it dispatches its writers one after another with no checkpoint between them, so there is no moment to act on one, and its run-state file carries the run across an automatic compaction, which a writer it reaches again survives too (see [`/implement`](../commands/implement.md#the-run-state-file)); a writer unit too big for one code writer is finished by a continuation dispatch instead. `/vuln` and `/upgrade` are large, non-pipeline commands with no role transition of their own: each gets a plain end-of-run `/compact` suggestion near its maintenance handoff, and neither writes a `resume.md`, since their durable state already lives in the branch or PR they produced.
 
 ## The `/rename` aid
 

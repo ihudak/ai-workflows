@@ -59,7 +59,7 @@ The `product-workflows` commands' lines of the family workflow map outside the B
 
 ### Key invariants for the PRD-creation flow (`/idea`, `/create-prd`, `/create-ard`, `/specify`)
 
-The flow also runs through `/design` and `/ready`; their own bullets are in `.claude/rules/dev-workflows.md` § Invariants. The ARD-respect rule and the rule that a phase is not finished until its artifact is on the specs repo's default branch are in `CLAUDE.md`.
+The flow also runs through `/design` and `/ready`; their own bullets are in `.claude/rules/dev-workflows-design-ready.md` § Invariants. The ARD-respect rule and the rule that a phase is not finished until its artifact is on the specs repo's default branch are in `CLAUDE.md`.
 
 - Each authoring command is gated by its own Opus reviewer (`prd-reviewer`, `ard-reviewer`, `spec-reviewer`, `design-reviewer`; `/ready` by `readiness-reviewer`); `/idea` has no reviewer — its bounded grill is the gate
 - Only `/idea`'s embedded grill is **bounded** (≤10 questions; `--deep` switches it to relentless), with leftover gaps becoming capped `[NEEDS CLARIFICATION]` markers + logged assumptions; `/create-prd`, `/create-ard`, `/specify`, and `/design` (and `/update-prd`) grill **relentlessly** to convergence with no cap (`workflows-core:grilling-technique`)

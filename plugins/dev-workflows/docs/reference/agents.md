@@ -8,7 +8,7 @@ Opus-gated quality gates, plus the lighter-weight planners that feed or precede 
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
-| `code-review` | opus | Read, Glob, Grep, Skill | Reviews SIGNIFICANT / HIGH-RISK changes, and `/implement`'s MODERATE ones — correctness, security, architecture, edge cases, migration, dependencies, tests, rollback; gates the test run. | `/implement`, `/upgrade`, `/vuln` |
+| `code-review` | opus | Read, Glob, Grep, Skill | Reviews SIGNIFICANT / HIGH-RISK changes, and `/implement`'s MODERATE ones — correctness, security, edge cases, tests, rollback; per piece after `/implement`'s tests, before the others' tests. | `/implement`, `/upgrade`, `/vuln` |
 | `design-reviewer` | opus | Read, Glob, Grep, Bash | Reviews a design against the design-format authority and its specification — any open design question a BLOCKER — and re-derives its claims about the existing system from the code it was grounded on. | `/design` |
 | `readiness-reviewer` | opus | Read, Glob, Grep | Cross-artifact readiness verifier — checks the ARD/spec/design justify the phase derived from them and the next transition; the only reviewer that synthesises a verdict across artifacts. | `/ready` |
 | `risk-planner` | opus | Read, Glob, Grep, Bash, WebFetch, WebSearch, Skill | Risk-weighted planner for SIGNIFICANT / HIGH-RISK tasks; returns a structured plan with an explicit risks section. Never dispatched for SIMPLE / MODERATE work. | `/implement`, `/upgrade` |
@@ -36,11 +36,11 @@ Produce artifact content from a structured handoff, and write no git state. Both
 
 ## Fixers
 
-Apply changes the caller has already decided on, rather than deciding anything themselves. `review-fixer` patches findings a reviewer surfaced, and the caller re-runs the gate afterward (`doc-fixer` does the same for the docs domain, from `workflows-core`); `upgrade-executor` applies an upgrade plan and runs the build, and `vuln-fixer` applies the version change `vuln-research` resolved. Neither commits: the orchestrator does that, because the consent choice behind the push and the pull request is one a subagent cannot ask. Where `upgrade-executor` or `vuln-fixer` undoes its work — a build it could not repair, or a regression you chose to revert — it restores the tree snapshot the orchestrator took before it started (`code-handoff.md` §6), never `HEAD`, so your own uncommitted changes survive.
+Apply changes the caller has already decided on, rather than deciding anything themselves. `review-fixer` patches findings a reviewer surfaced for `/vuln` and `/upgrade`, and the caller re-runs the gate afterward (`doc-fixer` does the same for the docs domain, from `workflows-core`) — `/implement` dispatches no fixer, since each of its fixes goes back to the `code-writer` or `test-writer` that owns the file; `upgrade-executor` applies an upgrade plan and runs the build, and `vuln-fixer` applies the version change `vuln-research` resolved. Neither commits: the orchestrator does that, because the consent choice behind the push and the pull request is one a subagent cannot ask. Where `upgrade-executor` or `vuln-fixer` undoes its work — a build it could not repair, or a regression you chose to revert — it restores the tree snapshot the orchestrator took before it started (`code-handoff.md` §6), never `HEAD`, so your own uncommitted changes survive.
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
-| `review-fixer` | per routing | Read, Glob, Grep, Write, Edit, Skill | Fixes surviving BLOCKER/MAJOR findings of a `code-review` report — on `/implement`, MINOR too and any you choose to apply; the caller re-reviews its fix report, save after the last review. | `/implement`, `/upgrade`, `/vuln` |
+| `review-fixer` | per routing | Read, Glob, Grep, Write, Edit, Skill | Fixes the surviving BLOCKER/MAJOR findings of a `code-review` report; the caller re-reviews its fix report. | `/upgrade`, `/vuln` |
 | `upgrade-executor` | per routing | Read, Glob, Grep, Bash, Edit, Task, Skill | Applies one component's approved upgrade plan, runs the build, verifies tests via `test-baseliner`, and auto-fixes test-code breakage caused by the new version's API changes. | `/upgrade` |
 | `vuln-fixer` | per routing | Read, Glob, Grep, Bash, Edit, Task, Skill | Takes the orchestrator's baseline, creates the fix branch **before** the first edit, applies the version change `vuln-research` produced, rebuilds, and verifies tests — uncommitted, for Step 3.9. | `/vuln` |
 

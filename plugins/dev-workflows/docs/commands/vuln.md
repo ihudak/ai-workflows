@@ -32,7 +32,7 @@ flowchart TD
     tv --> s4["Step 4 — Summarise"]
 ```
 
-Two subagents are dispatched explicitly by name in Step 2 and Step 3: `vuln-research` (Step 2, one instance per valid CVE, single batched message) and `vuln-fixer` (Step 3, one CVE at a time — sequential, to avoid conflicting edits to the same dependency files). Step 3 also dispatches `test-baseliner` once for the run, before the first fix and whatever the classifications are. The `SIGNIFICANT`/`HIGH-RISK` path additionally dispatches `code-review` (Opus, frontmatter-pinned) and, on a surviving finding, `review-fixer` — the same review/triage/fixer machinery `/implement` and `/upgrade` use. Classification (Step 0) is **per CVE**, based on the size of the required repository change from the research report, not the CVE category alone — research starts under a provisional `MODERATE` routing block and the classification is finalized once the fix shape is known, before any fix is applied.
+Two subagents are dispatched explicitly by name in Step 2 and Step 3: `vuln-research` (Step 2, one instance per valid CVE, single batched message) and `vuln-fixer` (Step 3, one CVE at a time — sequential, to avoid conflicting edits to the same dependency files). Step 3 also dispatches `test-baseliner` once for the run, before the first fix and whatever the classifications are. The `SIGNIFICANT`/`HIGH-RISK` path additionally dispatches `code-review` (Opus, frontmatter-pinned) and, on a surviving finding, `review-fixer` — the review and triage `/implement` and `/upgrade` use, and `/upgrade`'s fixer. Classification (Step 0) is **per CVE**, based on the size of the required repository change from the research report, not the CVE category alone — research starts under a provisional `MODERATE` routing block and the classification is finalized once the fix shape is known, before any fix is applied.
 
 ## What it needs
 
@@ -70,7 +70,7 @@ Both CVEs are researched in parallel via `vuln-research`; each `READY` result is
 ## See also
 
 - [`/upgrade`](upgrade.md) — the plugin's other maintenance command outside the PRD pipeline, sharing the same no-cost-attribution fact, the same resume-phase vocabulary, and the same review/triage/fixer/test gate shape for version bumps instead of CVEs.
-- [`/implement`](implement.md) — the pipeline command `/vuln` borrows its review machinery from: `code-review`, `review-fixer`, and `workflows-core:finding-triage`.
+- [`/implement`](implement.md) — the pipeline command whose review machinery `/vuln` shares: `code-review` and `workflows-core:finding-triage`. `/vuln`'s fixes go through `review-fixer`, where `/implement` sends each to the writer that owns the file.
 - [Roles and phases](../roles-and-phases.md#cost-attribution-phases) — the closing note distinguishing the cost-attribution `phase:` vocabulary from the resume-protocol `phase:` vocabulary `/vuln` passes.
 - [Session cost](../reference/session-cost.md) — states plainly that `/vuln` and `/upgrade` emit no cost attribution at all.
 - [Session feedback](../reference/session-feedback.md) — how the terminal `emit-auto` step persists plugin-facing lessons from this run.

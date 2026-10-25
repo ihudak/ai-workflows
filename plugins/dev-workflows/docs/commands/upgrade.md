@@ -72,7 +72,7 @@ Upgrade a framework to its latest stable release and a runtime to its latest LTS
 ## See also
 
 - [`/vuln`](vuln.md) — the plugin's other maintenance command outside the PRD pipeline, sharing the same no-cost-attribution fact, the same resume-phase vocabulary, and the same review/triage/fixer/test gate shape for CVEs instead of version bumps.
-- [`/implement`](implement.md) — the pipeline command `/upgrade` borrows its review machinery from: `risk-planner`, `code-review`, `review-fixer`, and `workflows-core:finding-triage`.
+- [`/implement`](implement.md) — the pipeline command whose planning and review machinery `/upgrade` shares: `risk-planner`, `code-review`, and `workflows-core:finding-triage`. `/upgrade`'s fixes go through `review-fixer`, where `/implement` sends each to the writer that owns the file.
 - [Roles and phases](../roles-and-phases.md#cost-attribution-phases) — the closing note distinguishing the cost-attribution `phase:` vocabulary from the resume-protocol `phase:` vocabulary `/upgrade` passes.
 - [Session cost](../reference/session-cost.md) — states plainly that `/vuln` and `/upgrade` emit no cost attribution at all.
 - [Session feedback](../reference/session-feedback.md) — how the terminal `emit-auto` step persists plugin-facing lessons from this run.

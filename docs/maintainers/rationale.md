@@ -354,6 +354,10 @@ That `marketplace update` leaves installed plugins alone was measured, not assum
 
 An edit that "did not land" is very often a session that has not restarted since the update.
 
+## plugin-updates-1-45-0-reads
+
+`.claude/rules/plugin-updates.md`'s `workflows-core` 1.45.0 bullet names the older dependents that read more of `phase-handoff` beside 1.45.0 than beside 1.44.0: `/product-workflows:create-prd`, `/product-workflows:prd-ground` and `/product-workflows:brd-package` in their Phase 0, and `/dev-workflows:conformance` in its Phase 1 where no ARD resolves. That is measured by running 1.45.0's `check-citations` over the dependents as they stood at 1.44.0 (`11a4fa70`) and reading each of its 24 hits: those four; seven citations ahead of the run's request — `/ready`'s two and `/epics`' first before their first phase, `/epics`' second in its Phase 2, `/brd-proposal`'s in its Phases 0 and 2, and `/brd-split`'s in its Phase 0 step 6 — the first in each command making the run's first read of the reference a whole one, after which the request reads the file in a later phase or nothing in the same one, never more than under 1.44.0; seven section numbers of another reference read by position; and six citations a whole read earlier in the run already serves. The measurement moved here from that bullet when the `workflows-core` 1.46.0 bullet joined it, to keep the rules file under its 20,000-character warning.
+
 ## verify-branch-before-commit
 
 That is not hypothetical: one session branched away from `main` between two commits of another session's run, and the second commit — a fix for a release-gating defect — landed on the unrelated feature branch, where a `git push origin main` would have left it behind.
