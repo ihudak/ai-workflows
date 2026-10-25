@@ -187,6 +187,12 @@ The code-oriented commands' not-clean-finish invariant cites `code-handoff`'s *A
 
 The `/implement` invariant that Phase 3.5 **names what it did not cover rather than assuming it** is the honest form of the "full test suite is verified" that invariant used to claim in `CLAUDE.md`, a claim three reachable completions denied — the three the invariant now lists.
 
+## implement-clean-finish
+
+`/implement` Phase 4.6's `clean_finish` row sets `false` when the call is made from any early stop the *"Every run"* paragraph enumerates — the command's form of the stopped-state condition both siblings carry. Without it the paragraph and the row disagreed on **six** stops that reach Phase 4.6, each of which would have been handed `true` and opened an ordinary mergeable pull request. **Six of the seven that paragraph enumerated when this condition was added, and the arithmetic is worth keeping because a reader who counted the list then got seven**: the seventh — the stop after the one re-review, now *a review that stayed blocked* — was the next condition's own state, so it was already being handed `false` and was never in the disagreement. `NEEDS HUMAN` was, because the run does **not** re-review there, so its review never stays blocked. The settle prompts' **Keep the verdict** and **Cancel** arms joined that paragraph later, and reach `false` through this condition. Derive the number from the set the two lists disagree about, never from the length of either.
+
+The same row once said how many conditions it lists, and that count went stale in the commit that added the fifth condition; the row now argues from its construction — one `finish-code-branch` call per run, every condition settled before it — which a new condition cannot falsify.
+
 ## test-writing-requirement
 
 Changing the tree to meet an unqualified first clause of the test-writing requirement was the alternative and was rejected: it would have to remove **both** escapes a user can choose — *"Accept the remaining failures and proceed"* and Pre-Phase 3.5's *"Skip tests for this run"* — and a gate-failed run that cannot finish is a run that leaves the implementation uncommitted, which `dev-workflows:code-handoff` §1 rule 5 exists to prevent. The completions nobody chooses are not options to remove at all: a suite that will not start is the environment's answer, not the operator's.
