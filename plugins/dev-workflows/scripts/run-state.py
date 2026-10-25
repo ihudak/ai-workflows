@@ -104,7 +104,8 @@ LOCK = ".implement-run.lock"
 #   pieces   {"name", "files": [], "contract": []}
 #   reviews  {"round": "first"|"re-review", "scope": "piece:<name>"|"overall", "paths": [],
 #             "diff_file", "return_file", "verdict"} -- one per review a split round dispatches;
-#            "paths" a piece's matched paths, [] for "overall"; the two files temp files
+#            "paths" a piece's matched paths, or for "overall" the paths no piece matched;
+#            the two files temp files
 # commands/implement.md quotes this list (KEYS_LINE); the selftest holds the two equal.
 KEYS = [
     ("format", 1), ("phase", "Phase 1.4"), ("mode", None), ("key", None), ("source", None),
