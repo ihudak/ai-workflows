@@ -28,8 +28,10 @@ What the script guarantees:
 Signals. From the moment the script has checked its arguments, a SIGTERM, SIGHUP, SIGINT or SIGQUIT
 sent to it is caught. While the command runs, each is passed on to the command's group as it
 arrives. Before the command has started, the last of them is kept and passed on once it starts,
-and dropped where the command is never started -- the lock not taken (exit 4), or the command
-not runnable (exit 126 or 127). While the script waits for the lock, one
+after a wait for the lock too, and dropped where the command is never started -- the lock not
+taken (exit 4), or the command not runnable (exit 126 or 127) -- save where git failed to name the
+lock file with one kept: sent to the whole group, it ended git too, so the script ends with
+`run-lock: interrupted while finding the lock file` and the exit 128 + N. While the script waits for the lock, one
 ends the wait instead, with `run-lock: interrupted while waiting for <lock path>` and the exit
 128 + N, and every one after it is ignored. A signal the group's kill refuses -- the group already
 gone -- is not counted as passed on; the exit after one passed on is 128 + N for the last. Once the
@@ -50,7 +52,8 @@ Exit codes:
   127        the command was not found
   128 + N    signal N ended the command, or was sent to this script and passed on (that line:
              `run-lock: passed signal N on ...`, or `run-lock: passed signals A, B, N on ...`
-             where several were, N the last), or interrupted the wait for the lock
+             where several were, N the last), or interrupted the wait for the lock, or was kept
+             as git failed to name the lock file
   2          usage: no `--`, or no command after it
   4          the lock could not be taken: not inside a git work tree, git failing to name the
              path, an OSError making or opening the file, or the filesystem refusing flock
@@ -151,6 +154,9 @@ def run(argv):
         return _run_command(argv, state)
     path = lock_path()
     if path is None:
+        if state["pending"] is not None:  # sent to the whole group, it ended git too
+            sys.stderr.write("run-lock: interrupted while finding the lock file\n")
+            return 128 + state["pending"]
         sys.stderr.write("run-lock: not inside a git work tree, or git could not name the lock file\n")
         return 4
     try:
@@ -721,7 +727,9 @@ def selftest():
             if os.path.exists(mark):
                 os.remove(mark)
             a = subprocess.Popen(lock_cmd("sh", "-c", "echo x > m"), cwd=repo, stderr=subprocess.PIPE)
-            wait_for(mark, 5)
+            end = time.time() + 5
+            while not os.path.exists(mark) and time.time() < end:  # tight, so the signal lands at
+                time.sleep(0.002)                                  # the exit, not after it
             a.send_signal(signal.SIGTERM)
             err = a.communicate(timeout=10)[1].decode()
             if not (a.returncode == 0 or (a.returncode == 143 and "run-lock: passed signal 15 on" in err)):
@@ -782,6 +790,92 @@ def selftest():
         own = sh("git", "rev-parse", "--absolute-git-dir", cwd=inner).stdout.decode().strip()
         assert not os.path.exists(os.path.join(own, "dev-workflows")), "the submodule took its own lock"
 
+    def slow_git(name, mark, secs):
+        # a PATH whose git, asked for --git-path, writes `mark` and sleeps `secs` before it runs
+        import shlex
+        real = shutil.which("git")
+        d = os.path.join(root, "shim-" + name)
+        os.makedirs(d)
+        shim = os.path.join(d, "git")
+        with open(shim, "w") as f:
+            f.write('#!/bin/sh\ncase "$*" in *--git-path*) echo in > %s; sleep %s;; esac\nexec %s "$@"\n'
+                    % (shlex.quote(mark), secs, shlex.quote(real)))
+        os.chmod(shim, 0o755)
+        return dict(os.environ, PATH=d + os.pathsep + os.environ.get("PATH", ""))
+
+    def test_sigquit_passed_on():
+        repo = new_repo("quit")
+        log = os.path.join(repo, "log")
+        script = ('trap "echo got-QUIT >> log; exit 0" QUIT; echo $$ > pid; echo up > up; '
+                  'while :; do sleep 0.1; done')
+        a = subprocess.Popen(lock_cmd("sh", "-c", script), cwd=repo, stderr=subprocess.PIPE)
+        try:
+            assert wait_for(os.path.join(repo, "up")), "command never started"
+            a.send_signal(signal.SIGQUIT)
+            err = a.communicate(timeout=10)[1].decode()
+            assert a.returncode == 128 + signal.SIGQUIT and "run-lock: passed signal %d on" % signal.SIGQUIT \
+                in err, (a.returncode, err)
+            with open(log) as f:
+                assert f.read().split() == ["got-QUIT"], "the command missed SIGQUIT"
+        finally:  # a failed case must leave no process behind: the command has a session of its own
+            a.kill()
+            try:
+                with open(os.path.join(repo, "pid")) as f:
+                    os.killpg(int(f.read()), signal.SIGKILL)
+            except (OSError, ValueError):
+                pass
+
+    def test_cannot_lock():
+        # the filesystem refusing flock: a launcher hands the script an fcntl whose flock fails so
+        repo = new_repo("nolock")
+        code = ("import sys, types, runpy, errno; m = types.ModuleType('fcntl'); m.LOCK_EX = 2; "
+                "m.LOCK_NB = 4\ndef flock(fd, op): raise OSError(errno.ENOLCK, 'No locks available')\n"
+                "m.flock = flock; sys.modules['fcntl'] = m; sys.argv = [%r, '--', 'true']; "
+                "runpy.run_path(%r, run_name='__main__')" % (me, me))
+        r = sh(sys.executable, "-c", code, cwd=repo)
+        assert r.returncode == 4 and r.stderr.startswith(b"run-lock: cannot lock"), (r.returncode, r.stderr)
+
+    def test_signal_kills_git():
+        # a signal sent to the whole group while git names the lock file kills git too: the exit is
+        # 128 + N with the interrupted line, never exit 4's "not inside a git work tree"
+        repo = new_repo("killgit")
+        mark = os.path.join(root, "killgit-in")
+        a = subprocess.Popen(lock_cmd("true"), cwd=repo, env=slow_git("killgit", mark, 5),
+                             stderr=subprocess.PIPE, start_new_session=True)
+        try:
+            assert wait_for(mark), "git never ran"
+            os.killpg(a.pid, signal.SIGTERM)
+            err = a.communicate(timeout=10)[1].decode()
+            assert a.returncode == 128 + signal.SIGTERM and "run-lock: interrupted while finding the lock file" \
+                in err, (a.returncode, err)
+        finally:
+            try:
+                os.killpg(a.pid, signal.SIGKILL)
+            except OSError:
+                pass
+
+    def test_held_through_the_wait():
+        # a signal held at startup, while git names the lock file, ends the command once it starts
+        # after a wait for the lock
+        repo = new_repo("heldwait")
+        mark = os.path.join(root, "heldwait-in")
+        holder = subprocess.Popen(lock_cmd("sh", "-c", "echo up > up; sleep 1.5"), cwd=repo,
+                                  stderr=subprocess.DEVNULL)
+        try:
+            assert wait_for(os.path.join(repo, "up")), "holder never started"
+            t0 = time.time()
+            a = subprocess.Popen(lock_cmd("sleep", "6"), cwd=repo, env=slow_git("heldwait", mark, 0.5),
+                                 stderr=subprocess.PIPE)
+            assert wait_for(mark), "git never ran"
+            a.send_signal(signal.SIGTERM)  # to the script alone: git finishes, the signal is held
+            err = a.communicate(timeout=15)[1].decode()
+            took = time.time() - t0
+            assert "run-lock: waiting for " in err, err
+            assert a.returncode == 128 + signal.SIGTERM and "run-lock: passed signal 15 on" in err \
+                and took < 4, (a.returncode, err, took)
+        finally:
+            holder.wait()
+
     def test_no_fcntl():
         repo = new_repo("nofcntl")
         code = ("import sys, runpy; sys.modules['fcntl'] = None; "
@@ -816,7 +910,8 @@ def selftest():
              test_normal_exit_releases_at_once, test_pass_on_counts_only_delivered,
              test_signal_after_wait_still_waits_for_group, test_two_signals_while_waiting,
              test_signal_as_the_wait_ends, test_signal_before_the_command, test_grace_ignores_and_kills,
-             test_exit_holds_signals, test_command_starts_unblocked,
+             test_exit_holds_signals, test_command_starts_unblocked, test_sigquit_passed_on,
+             test_cannot_lock, test_signal_kills_git, test_held_through_the_wait,
              test_submodule_shares_lock, test_no_fcntl]
     try:
         for t in tests:
