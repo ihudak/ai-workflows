@@ -103,8 +103,11 @@ LOCK = ".implement-run.lock"
 # A list key's entries are not type-checked; the shape each holds, one entry per item:
 #   pieces       {"name", "files": [], "builds_after": []}
 #   writer_units {"name", "pieces": []}
-#   writers      {"unit", "role": "code"|"test", "agent_id", "reports": [], "status", "answer",
-#                 "left_to_caller": [], "resumes": 0, "fresh": 0}
+#   writers      {"unit", "role": "code"|"test", "agent_id", "model", "reports": [], "status",
+#                 "answer": [{"report", "question", "answer"}], "left_to_caller": [],
+#                 "first_plan_reports", "resumes": 0, "fresh": 0} -- "model" the model its latest
+#                 dispatch ran on; "first_plan_reports" null, or how many of "reports" a re-plan's
+#                 approval found it holding
 #   test_runs    {"unit", "stage": "unit"|"post-review", "rounds": 0, "status"}
 #   reviews      {"scope": "piece:<name>"|"overall", "diff_file", "return_file", "verdict"}
 # commands/implement.md quotes this list (KEYS_LINE); the selftest holds the two equal.
@@ -122,7 +125,7 @@ KEYS = [
     ("test_decision", None), ("clean_finish", True),
     ("files", {"task_description_file": None, "plan_file": None, "pending_plan_file": None,
                "summary_file": None, "baseline_file": None,
-               "test_report_file": None, "review_diff_file": None, "partial_diff_file": None, "review_return_file": None,
+               "review_diff_file": None, "partial_diff_file": None, "review_return_file": None,
                "review_file": None, "claims_file": None, "failure_file": None}),
     ("pieces", []), ("writer_units", []), ("writers", []), ("test_runs", []), ("reviews", []),
     ("patches", []), ("triage", []),
@@ -633,16 +636,20 @@ def selftest():
         new_keys = ("pieces", "writer_units", "writers", "test_runs", "reviews")
         check("init defaults each one-writer key to an empty list", all(d.get(k) == [] for k in new_keys)
               and all(dict(KEYS).get(k) == [] for k in new_keys))
-        check("KEYS drops step_groups and files.test_diff_file",
-              "step_groups" not in dict(KEYS) and "test_diff_file" not in dict(KEYS)["files"])
+        check("KEYS drops step_groups, files.test_diff_file and files.test_report_file",
+              "step_groups" not in dict(KEYS) and "test_diff_file" not in dict(KEYS)["files"]
+              and "test_report_file" not in dict(KEYS)["files"])
+        check("init refuses files.test_report_file",
+              call(["init"], json.dumps(fresh(files={"test_report_file": "x"})), repo)[0] == 3)
         check("init refuses step_groups", call(["init"], json.dumps(fresh(step_groups=[])), repo)[0] == 3)
         check("init refuses files.test_diff_file",
               call(["init"], json.dumps(fresh(files={"test_diff_file": "x"})), repo)[0] == 3)
         code, _ = call(["init"], json.dumps(fresh(
             pieces=[{"name": "p", "files": ["a"], "builds_after": []}],
             writer_units=[{"name": "u", "pieces": ["p"]}],
-            writers=[{"unit": "u", "role": "code", "agent_id": "a1", "reports": [], "status": None,
-                      "answer": None, "left_to_caller": [], "resumes": 0, "fresh": 0}],
+            writers=[{"unit": "u", "role": "code", "agent_id": "a1", "model": "m", "reports": [], "status": None,
+                      "answer": None, "left_to_caller": [], "first_plan_reports": None, "resumes": 0,
+                      "fresh": 0}],
             test_runs=[{"unit": "u", "stage": "unit", "rounds": 0, "status": None}],
             reviews=[{"scope": "piece:p", "diff_file": None, "return_file": None, "verdict": None}])), repo)
         d = json.load(open(f, encoding="utf-8"))

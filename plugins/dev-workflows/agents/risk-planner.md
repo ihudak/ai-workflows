@@ -48,8 +48,8 @@ The caller passes a structured brief:
   degrades to absent, and absent, no register is read.
 - **`Pieces`** (optional, from `/implement`) — the design's pieces, each with
   the files its `## Pieces` section gives it, where the design draws two or
-  more. Each piece is reviewed on its own, and on `/implement` the writer
-  unit holding a piece codes the Steps that name it. Absent → plan normally.
+  more: `/implement` gives each Step to the writer unit holding the piece the
+  Step names. Absent → plan normally.
 - **`task_shape`** (optional) — `bug` when the caller classified the task as a
   defect fix. When `task_shape: bug`, follow
   `${CLAUDE_PLUGIN_ROOT}/references/bug-diagnosis.md`: lead `### Steps` with a
@@ -159,8 +159,9 @@ _or_ "none — checked"
   `### Steps` entry with a `Piece: <name>` line naming the piece whose files
   hold what the step touches: a step that creates a file, the piece whose
   files its path falls in; a step whose files lie in two pieces, split into
-  one step per piece; and a step that touches no file, the piece whose work
-  it serves. Where the brief names no `Pieces`, write no `Piece:` line.
+  one step per piece; and a step that touches no file, the piece of the next
+  step that does, or, where none follows, of the one before it. Where the
+  brief names no `Pieces`, write no `Piece:` line.
 - **Name the rejected alternatives.** A plan without a rejected alternative is
   suspect.
 - **Unambiguous, not complete.** A step is done when the implementer can do

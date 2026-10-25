@@ -35,10 +35,13 @@ unit_files: [src/rating.ts, src/rating-cache.ts, "web/rating/**"]
                            # all where pieces is all, no piece narrowing the unit to some of the
                            # repository's files. test-writer reads them for names, signatures and file
                            # locations only.
-code_report: /tmp/dw-impl-code-AbC123
-                           # CONTEXT. The unit's code-writer report: its ### Files changed and its ### Tests
-                           # broken by intent are what test-writer reads, and on task_shape: bug its ### Runs,
-                           # the repro runs made in the scratch checkout of HEAD — output, never code.
+code_report:               # CONTEXT, each report on its own. The unit's code-writer reports, in order, the
+  - /tmp/dw-impl-code-AbC123   # latest last — more than one where the unit's code writer took more than one
+                           # request (a continuation, a re-plan's), each holding only what its own request
+                           # changed. Read together they are the code report: their ### Files changed and
+                           # ### Tests broken by intent are what test-writer reads, and on task_shape: bug
+                           # their ### Runs, the repro runs made in the scratch checkout of HEAD — output,
+                           # never code.
 earlier_reports:           # CONTEXT, each report on its own. Each earlier report_file of this unit's test
   - report: /tmp/dw-impl-tests-XyZ789         # writer, in order; none where there is none. They serve
     answer: "Keep the old assertion"          # the caller's fallback: a fresh dispatch where reaching
@@ -56,6 +59,8 @@ repo_root: /abs/path/to/repo
                            # EVIDENCE, inline. The top level of the repository the run branched: the one
                            # repository test-writer writes in.
 task_shape: bug            # inline. bug | none — bug where /implement set task_shape: bug.
+run_tests: yes             # inline. yes | no — no where the caller's run skips its tests (its recorded
+                           # test_decision: skip): test-writer writes and updates the tests and runs none.
 failure_input: /tmp/dw-impl-failure-AbC123
                            # EVIDENCE on mode: fix; none otherwise. The part of test-baseliner's verify
                            # report that names the failing tests handed to test-writer — those it wrote
@@ -75,7 +80,7 @@ report_file: /tmp/dw-impl-tests-AbC123
 
 - **Evidence** — `plan_file`, `baseline_file` and `repo_root`, and `failure_input` on `mode: fix` or `review_file` on `mode: review`. One that cannot be read, or a `repo_root` that is not a directory, is a hard stop: the agent writes nothing in the repository, writes the blocked shape below, and returns `blocked`. It never reconstructs the input by other means — the plan from the code report, the baseline or a failure by running a suite itself.
 - **Context** — `task_description_file`, `spec_paths`, `design_path`, `code_report`, `earlier_reports` and `diff_so_far`, each path on its own. One that cannot be read degrades to absent, and the report's **Degraded inputs** line names it with its path. Where `spec_paths` is `none` or every one of them degraded, the task description and the plan's Steps and Review focus stand in for the spec; where `design_path` is `none` or degraded, the plan stands in for the design.
-- **Inline values** — `mode`, `pieces`, `unit`, `unit_files` and `task_shape` — are read from the request itself and have no read to fail. `report_file` is written, never read.
+- **Inline values** — `mode`, `pieces`, `unit`, `unit_files`, `task_shape` and `run_tests` — are read from the request itself and have no read to fail. `report_file` is written, never read.
 
 ## Output (`test-writer` → `/implement`)
 
@@ -110,7 +115,7 @@ report_file: /tmp/dw-impl-tests-AbC123
 - _or_ "none"
 
 ### Not passing
-- `[test name]` in `[file:line]` — [still failing after its third fix: its last failure | not run: the `run-lock:` line, the missing dependency's or tool's error, or absent from the run's output | its fix lies in `<path>`, a non-test file, the code writer's]
+- `[test name]` in `[file:line]` — [still failing after its third fix: its last failure | not run: the `run-lock:` line, the missing dependency's or tool's error, absent from the run's output, or the run skipping its tests (`run_tests: no`) | its fix lies in `<path>`, a non-test file, the code writer's]
 - _or_ "none"
 
 ### Skipped (pre-existing untested code)
