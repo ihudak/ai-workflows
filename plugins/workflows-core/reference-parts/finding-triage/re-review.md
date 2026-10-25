@@ -28,11 +28,12 @@ Every rule name in `finding-triage`, with the part that holds it; `core` comes w
 ---
 
 The step between a reviewer's findings and a fixer's edits. Run by the **orchestrator**, never by the
-fixer: `doc-fixer`, and `review-fixer` on every caller but `/implement`, run on the detection/Sonnet
-chain while `code-review`, `doc-reviewer`, and `epic-reviewer` are Opus-pinned, and a dismissal
-decision must not sit at a weaker station than the one that produced the finding. `/implement`'s
-`review-fixer` runs on its `implementation_model` (`workflows-core:model-routing/classification` §4),
-and the triage stays the orchestrator's there too: one rule for every fixer.
+fixer: `doc-fixer` and `review-fixer` run on the detection/Sonnet chain while `code-review`,
+`doc-reviewer`, and `epic-reviewer` are Opus-pinned, and a dismissal decision must not sit at a
+weaker station than the one that produced the finding. `/implement` dispatches no `review-fixer`:
+each of its fixes is made by the writer owning the file it lands in, its `code-writer` or its
+`test-writer`, on its `implementation_model` (`workflows-core:model-routing/classification` §4), and
+the triage stays the orchestrator's there too: one rule for every fixer.
 
 ## When this runs
 
@@ -40,7 +41,8 @@ Wherever an **Opus reviewer's reasoned findings feed a fixer**:
 
 | Path | Triage |
 |---|---|
-| `code-review` → `review-fixer` (`/implement`, `/vuln`, `/upgrade`) | yes |
+| `code-review` → `review-fixer` (`/vuln`, `/upgrade`) | yes |
+| `code-review` → the writer owning each file, `code-writer` or `test-writer`, in `mode: review` by `dev-workflows:review-fix` (`/implement`) | yes |
 | `doc-reviewer` → `doc-fixer` (`/document`, keyed mode) | yes |
 | `epic-reviewer` → `doc-fixer` (`/epics`) | yes |
 | `docs-scaffold-reviewer` → the orchestrator itself (`/docs-init`, and `/docs-brand` standalone) | yes |
@@ -177,7 +179,9 @@ A **re-review** is any review a run dispatches over an artifact this run has alr
 verdict, whatever that verdict was: the one re-review a caller's cap allows, a re-review the user
 chose at § When triage empties the survivor set, and `/implement`'s review of its Phase 3.5 fix delta.
 For a caller that works unit by unit, the artifact is the unit's own change, never the working tree's
-cumulative diff. A `### Re-classification` return is no verdict: whether the review dispatched after
+cumulative diff. `/implement`, which reviews each piece of its change and then the whole of it, counts
+a row any of its reviews logged at a location the re-review's diff holds as one logged over that
+artifact. A `### Re-classification` return is no verdict: whether the review dispatched after
 the user overrides one is a re-review turns only on whether an earlier review reached a verdict over
 that artifact. A re-review's findings are triaged by § The step, with one check first and three
 rules after.
@@ -195,7 +199,7 @@ reviewer's answer.
 
 **Then:**
 
-1. **No survivor of a re-review is handed to a fixer** — each artifact gets at most one fix cycle, and only before its first re-review. The one exception is a survivor the user chooses to apply, in a caller that fixes inline or in `/implement`, whose `review-fixer` applies it, at `escalation-rules`' *Findings a review leaves open — the offer to apply them*: that is an edit the user asked for, not a fix cycle, no review follows it, and the version line names it. Each survivor is recorded in the triage line at its own severity,
+1. **No survivor of a re-review is handed to a fixer** — each artifact gets at most one fix cycle, and only before its first re-review. The one exception is a survivor the user chooses to apply, in a caller that fixes inline or in `/implement`, whose writer owning the file applies it, at `escalation-rules`' *Findings a review leaves open — the offer to apply them*: that is an edit the user asked for, not a fix cycle, no review follows it, and the version line names it. Each survivor is recorded in the triage line at its own severity,
    and a second verdict that is not `BLOCK` gates nothing further.
 2. **The caller's second-verdict stop or escalation acts on a `BLOCKER` surviving the re-review's
    triage — never on the verdict word.** A `BLOCKER` carried as dismissed or unverified is not one.

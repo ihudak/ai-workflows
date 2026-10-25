@@ -125,7 +125,7 @@ above … There is no fourth disposition and no 'skip on my own judgement' path 
 | the `engagement_model` picker | `time-and-material` / `fixed-price` | `/product-workflows:prd-proposal` Phase 2, over the two shapes `product-workflows:proposal-format` §4 sections 16–18 fixes; `/product-workflows:brd-proposal` re-asks the same question over the same committed profile |
 | the conflicting-answer picker | freeze this candidate / keep the earlier one / ask the customer — the one not frozen set aside as a conflicting answer, never a second freeze | `/product-workflows:brd-reconcile`, *Confirm every candidate* |
 | the `/conformance` decision picker, with its PRD-run confirm form and its stale-entry form | `fix-code` / `amend-document` / `accept`; on the stale-entry form, mark it resolved or keep Dev's decision — never a fourth decision | `/dev-workflows:conformance`, *The walk* |
-| the plan-conflict ruling picker | the finding governs and the plan is revised to it / the fix is applied and the plan text kept, the deviation logged — the two rulings a `review-fixer` `DEFERRED — plan-conflict` finding waits on; never a third | `/dev-workflows:implement`, Phase 3B step 7's review-fixer sub-step |
+| the plan-conflict ruling picker | the finding governs and the plan is revised to it / the fix is applied and the plan text kept, the deviation logged — the two rulings a `DEFERRED — plan-conflict` finding in a writer's Fix Report waits on; never a third | `/dev-workflows:implement`, Phase 3.6 step 3's plan conflict |
 
 **The eighth is the one whose value is re-read as configuration by later runs of the same commands**,
 which is why it is here rather than left to the command: the answer is written to a committed

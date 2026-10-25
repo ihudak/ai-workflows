@@ -1,6 +1,6 @@
 # test-writer Handoff Format
 
-`/dev-workflows:implement` dispatches `test-writer` once a writer unit's `code-writer` has returned, with `model:` set to the tier the caller assigns it, and hands it the request below in the prompt. It sends each later request for that unit to the same agent with `SendMessage`, a decision's answer included, and, where reaching it again fails, dispatches a fresh `test-writer` carrying `earlier_reports` and `diff_so_far`. Three modes share the request: `write` writes the unit's tests and updates each existing test the code writer reported broken by intent, then runs them; `fix` fixes the failing tests `failure_input` names, in test files only, and runs them again; and `review` applies a review's findings to test files.
+`/dev-workflows:implement` dispatches `test-writer` once a writer unit's `code-writer` has returned, with `model:` set to its `implementation_model`, as `code-writer`'s is, and hands it the request below in the prompt. It sends each later request for that unit to the same agent with `SendMessage`, a decision's answer included, and, where reaching it again fails, dispatches a fresh `test-writer` carrying `earlier_reports` and `diff_so_far`. Three modes share the request: `write` writes the unit's tests and updates each existing test the code writer reported broken by intent, then runs them; `fix` fixes the failing tests `failure_input` names, in test files only, and runs them again; and `review` applies a review's findings to test files.
 
 ## Input (`/implement` → `test-writer`)
 

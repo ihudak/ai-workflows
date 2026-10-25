@@ -208,8 +208,11 @@ survivor set, § On re-review) — and before whatever follows it, where it leav
 
 `choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]`
 
-The question lists each with its severity and says whether a re-review remains. **Left open** means
-not applied, not overridden and not dismissed; where the command triages, a finding its triage
+The question lists each with its severity and says whether a re-review remains; `/implement`, whose
+review round holds a review per piece of the change and one over the whole, asks it once per round,
+over every review of the round whose verdict is not `BLOCK`, or is settled as not `BLOCK` at a
+triage settle prompt, naming beside each finding its review. **Left open** means not applied, not
+overridden and not dismissed; where the command triages, a finding its triage
 marked unverified is never applied (`workflows-core:finding-triage` § The step), here as anywhere; and the re-review's offer carries every finding of the first
 review still open beside its own. A finding whose fix needs a decision the run does not have is no
 edit: a command that settles such decisions as it applies (`/create-prd`, `/update-prd`,
@@ -218,18 +221,20 @@ answer naming some of the findings applies those.
 
 - **Taken**, each edit is the orchestrator's own, read against what it overlaps (*An inline fix is
   read against what it overlaps*, below) before anything follows — save in `/implement`, whose
-  orchestrator edits no source: there the edits are `review-fixer`'s, after the first review in that
-  review's one fixer pass and after the re-review in one pass more (its Phase 3B step 7). After the
-  first review the unspent re-review offer (next section) follows; after the re-review no review
-  follows, and the version line above names these edits.
+  orchestrator edits no source: there each edit is the writer's that owns the file it lands in, its
+  `code-writer` or its `test-writer`, after the first review round in that round's one fix pass and
+  after the re-review round in one pass more (its Phase 3.6 step 3). After the first review the
+  unspent re-review offer (next section) follows; after the re-review no review follows, and the
+  version line above names these edits.
 - **Declined**, the findings stay open, listed in the final report and the pull request (above).
 
-**It is not a fix cycle and raises no cap**: it dispatches no review — `/implement`'s `review-fixer`
-pass after the re-review is no second fix cycle, since no review follows it — and what the cap
+**It is not a fix cycle and raises no cap**: it dispatches no review — `/implement`'s pass through
+its writers after the re-review is no second fix cycle, since no review follows it — and what the cap
 allows after it is exactly what it allowed before. Used by the commands that fix inline —
 `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/design`, `/prd-proposal` and
-`/brd-proposal` — and by `/implement`, through `review-fixer`, after its first review and its one
-re-review, never after its review of the Phase 3.5 delta, whose edits would follow its tests.
+`/brd-proposal` — and by `/implement`, through the writers owning the files, after its first review
+round and its re-review round, never after its review of the post-review delta, whose edits would
+follow its last test run.
 
 ## Edits after a verdict that is not BLOCK — the unspent re-review
 
@@ -245,7 +250,7 @@ merged and renumbered, and the text went to its pull request with only the versi
 the verdict predated it.
 
 **So, before the step that follows the review gate, offer it once** — the handoff in most adopters,
-step 7.5 in `/implement`, whose tests still run on either answer:
+Phase 3.6 step 4 in `/implement`, whose post-review test run still follows on either answer:
 
 `choices: ["Re-review the edited <artifact> once (Recommended)", "Go on without it — the report says the verdict predates the edits"]`
 
@@ -276,7 +281,7 @@ allows a re-review, whose verdict that is not `BLOCK` leads to the handoff witho
 edit the reviewed artifact on the way.** The seven commands that fix inline edit it through the offer
 above; `/epics` and `/document` dispatch `doc-fixer` over the findings — `/epics` also folds a
 finding's rewording in itself, under any verdict, where the user takes it for text they chose —
-and `/implement` `review-fixer`, over the findings and over those the user applies at the offer above. The open questions `A finding left open that needs a decision is
+and `/implement` sends the findings, and those the user applies at the offer above, to the writers owning their files. The open questions `A finding left open that needs a decision is
 recorded in the artifact` writes answer no finding, and make no offer. `/vuln` and `/upgrade` re-run their review after the `PASS WITH RECOMMENDATIONS`
 fixer pass, spending the re-review there, so the offer never arises; `/docs-init`, `/docs-brand` and
 `/docs-audit` cap at no re-review, so there is none to offer.

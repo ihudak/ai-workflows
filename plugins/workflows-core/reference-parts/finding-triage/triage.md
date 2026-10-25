@@ -28,11 +28,12 @@ Every rule name in `finding-triage`, with the part that holds it; `core` comes w
 ---
 
 The step between a reviewer's findings and a fixer's edits. Run by the **orchestrator**, never by the
-fixer: `doc-fixer`, and `review-fixer` on every caller but `/implement`, run on the detection/Sonnet
-chain while `code-review`, `doc-reviewer`, and `epic-reviewer` are Opus-pinned, and a dismissal
-decision must not sit at a weaker station than the one that produced the finding. `/implement`'s
-`review-fixer` runs on its `implementation_model` (`workflows-core:model-routing/classification` §4),
-and the triage stays the orchestrator's there too: one rule for every fixer.
+fixer: `doc-fixer` and `review-fixer` run on the detection/Sonnet chain while `code-review`,
+`doc-reviewer`, and `epic-reviewer` are Opus-pinned, and a dismissal decision must not sit at a
+weaker station than the one that produced the finding. `/implement` dispatches no `review-fixer`:
+each of its fixes is made by the writer owning the file it lands in, its `code-writer` or its
+`test-writer`, on its `implementation_model` (`workflows-core:model-routing/classification` §4), and
+the triage stays the orchestrator's there too: one rule for every fixer.
 
 ## When this runs
 
@@ -40,7 +41,8 @@ Wherever an **Opus reviewer's reasoned findings feed a fixer**:
 
 | Path | Triage |
 |---|---|
-| `code-review` → `review-fixer` (`/implement`, `/vuln`, `/upgrade`) | yes |
+| `code-review` → `review-fixer` (`/vuln`, `/upgrade`) | yes |
+| `code-review` → the writer owning each file, `code-writer` or `test-writer`, in `mode: review` by `dev-workflows:review-fix` (`/implement`) | yes |
 | `doc-reviewer` → `doc-fixer` (`/document`, keyed mode) | yes |
 | `epic-reviewer` → `doc-fixer` (`/epics`) | yes |
 | `docs-scaffold-reviewer` → the orchestrator itself (`/docs-init`, and `/docs-brand` standalone) | yes |

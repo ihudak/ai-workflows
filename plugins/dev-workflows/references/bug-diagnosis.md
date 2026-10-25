@@ -6,23 +6,28 @@ Feedback-loop-first discipline for **bug-shaped** SIGNIFICANT / HIGH-RISK tasks.
 Adapted from mattpocock `diagnosing-bugs`; aligns with `superpowers:verification-before-completion`.
 
 **Who runs the repro.** Step 1's completion criterion requires *executing* a command, so it binds
-whoever holds `Bash`: the `/implement` orchestrator; `risk-planner`, which carries `Bash` for this
-purpose alone; and `code-writer`, on a plan step that runs the repro. `risk-planner`'s execution is
-bounded — run the repro and read-only commands, making no file but the scratch checkout the section
-below names where it says the repro runs in one, and never mutate the working tree, the index,
-`HEAD`, or branch state; the caller owns every write. **`code-writer` carries out a plan's diagnosis
-steps** — a run of the repro, a `[DEBUG-xxxx]` probe placed or read, a fixture or a script trimmed
-to minimise the repro — and has `risk-planner`'s exception, held to the scratch checkout: it runs
-each only in the scratch checkout of `HEAD` — the one the section below prescribes once the edits
-have begun — and does so on every dispatch, its first included, before the run's first edit as after
-it, since it never runs one against the working tree; it lists each run with its redacted output. It
-never runs a test the run itself created or changed, in any tree, since that test is unreviewed
-change: a step that runs one is the caller's, after the review (below). Whatever build that repro
-itself needs is part of running it there; in the working tree `code-writer` runs no lint, build,
-type-check or test at any class. A plan's bisect, which moves `HEAD`, and the checks after the
-review gate are the orchestrator's own (below). An agent without `Bash` (`code-review` among them)
-is never held to the completion criterion and must not be asked to satisfy it — it consumes the
-evidence the criterion produced.
+whoever runs the repro, each holding `Bash`: the `/implement` orchestrator; `risk-planner`, which
+carries `Bash` for this purpose alone; and `code-writer`, on a plan step that runs the repro.
+`risk-planner`'s execution is bounded — run the repro and read-only commands, making no file but the
+scratch checkout the section below names where it says the repro runs in one, and never mutate the
+working tree, the index, `HEAD`, or branch state; the caller owns every write. **`code-writer`
+carries out a plan's diagnosis steps** — a run of the repro, a `[DEBUG-xxxx]` probe placed or read,
+a fixture or a script trimmed to minimise the repro — and has `risk-planner`'s exception, held to
+the scratch checkout: it runs each only in the scratch checkout of `HEAD` — the one the section
+below prescribes once the edits have begun — and does so on every dispatch, its first included,
+before the run's first edit as after it, since it never runs one against the working tree; it lists
+each run with its redacted output. A repro it writes as a test is written inside that checkout, in
+the call that runs it, and never in the working tree, where every test the run writes or updates
+is `test-writer`'s, step 4's regression test among them. Whatever build that repro itself needs is
+part of running it there; `code-writer`'s own checks — its build and the tests near its change —
+are no diagnosis step, and run in the working tree through the run lock, as on any other work (the
+section below).
+`test-writer`, which also holds `Bash`, runs no repro: it writes the regression test from the
+diagnosis's output and runs it in the working tree with its other tests. A plan's bisect, which
+moves `HEAD`, the repro's re-run against the change and the regression test's red-capability check
+are the orchestrator's own (below). An agent without `Bash` (`code-review` among them) is never held
+to the completion criterion and must not be asked to satisfy it — it consumes the evidence the
+criterion produced.
 
 ## Principle — build the feedback loop before hypothesizing
 
@@ -40,52 +45,59 @@ the lines that carry the signal, never the whole capture.
 If the redacted output is not enough to diagnose the bug, say so and ask — do not un-redact to make
 the evidence more convenient.
 
-## When a run may happen — the review gate
+## When a run may happen — the first edit and the test run
 
-`/implement` runs this discipline on SIGNIFICANT / HIGH-RISK work, where nothing of the change runs
-before the Opus code review returns a non-BLOCK verdict, or a settle prompt's **Proceed** settles it
-as one (its Phase 3B step 8). **One rule places every run below**, `/implement`'s first edit of the
-change — a scan's patch applied included, a probe's tagged line not — dividing it:
+`/implement` plans by this discipline on SIGNIFICANT / HIGH-RISK work (`risk-planner`) and runs it
+on bug work (`task_shape: bug`) at every class; its tests run before its review — each writer unit's
+test run (its Phase 3.5), then the Opus review (its Phase 3.6). **One rule places every run
+below**, `/implement`'s first edit of the change — a scan's patch applied included, a probe's tagged
+line not — dividing it:
 
-- **Before the first edit**, where no change exists yet to review, the repro runs on the working
-  tree: `risk-planner`'s step 1 repro and its minimisation by its arguments and input. A plan's
-  diagnosis steps do not: `code-writer` carries them out in the scratch checkout of `HEAD` (below)
-  on every dispatch, its first included, so a probe step 3 places is placed and read there too, and
-  the cleanup gate strips any tagged line that reached the working tree all the same.
-- **From the first edit until a non-BLOCK review, nothing runs against the working tree**, which
-  holds the change: no check — a lint, a build, a type-check or a test — and no repro or probe. A
-  command that writes the change rather than checks it, as an install, a code generation or a
-  formatting does, is none of these: what it writes is part of the change, and the review diff
-  carries it. A probe or the repro runs only in the scratch checkout of `HEAD` (below), the tree
-  before the change. That takes a probe placed once the edits have begun and every run of the repro
-  a plan step makes, which `code-writer` carries out there; and step 1's repro **on a re-plan**
-  whose working tree already holds edits (`/implement` Phase 3A step 5's, or a `blocked` return's
-  Revise at its Phase 3A step 1), which `risk-planner` runs there. Neither runs a test the run
-  created or changed, in that checkout or any other: it is unreviewed change. `risk-planner`'s
-  re-plan runs the original repro, and names each such test it left unrun. So a plan carries no step
-  that runs a check, the repro or a probe against the working tree between the first edit and the
-  review.
+- **Before the first edit**, where no change exists yet, the repro runs on the working tree:
+  `risk-planner`'s step 1 repro and its minimisation by its arguments and input. A plan's diagnosis
+  steps do not: `code-writer` carries them out in the scratch checkout of `HEAD` (below) on every
+  dispatch, its first included, so a probe step 3 places is placed and read there too, and the
+  cleanup gate strips any tagged line that reached the working tree all the same.
+- **From the first edit, a check against the working tree runs only through the run lock**
+  (`${CLAUDE_PLUGIN_ROOT}/scripts/run-lock.py`), so no two share the tree, which holds the change:
+  `code-writer`'s build and the tests near its change, `test-writer`'s runs of its own tests, and
+  the orchestrator's unit test run — its lint, its build, every check a step left to it and
+  `test-baseliner`'s verify. A command that writes the change rather than checks it, as an install,
+  a code generation or a formatting does, runs through the lock too: what it writes is part of the
+  change, and the review diff carries it. **The repro stays off the working tree until its re-run
+  at that test run, and a probe never runs there**: each runs only in the scratch checkout of `HEAD`
+  (below), the tree before the change, where the bug still is. That takes a probe placed once the
+  edits have begun and every run of the repro a plan step makes, which `code-writer` carries out
+  there; and step 1's repro **on a re-plan** whose working tree already holds edits (`/implement`
+  Phase 3 step 7's, or a `blocked` return's Revise at its Phase 3 step 2), which `risk-planner` runs
+  there. Neither runs a test of
+  the change — one this run writes or updates in the working tree — in that checkout or any other:
+  such a test is `test-writer`'s, run in the working tree, and its red-capability check is the
+  orchestrator's (below); a repro `code-writer` writes as a test inside the checkout is no test of
+  the change. `risk-planner`'s re-plan
+  runs the original repro, and names each such test it left unrun. So a plan carries no step that
+  runs the repro or a probe against the working tree, and a step that runs a test this run will
+  write or update is left to the caller, which runs it at the test run.
 - **A fixture or script `code-writer` trims** to minimise the repro (step 1) is trimmed and tried in
   the scratch checkout, before the first edit as after it: trimming it in the working tree would be
   an edit no cleanup gate strips.
-- **After the gate, never before it**, and the orchestrator's own (`/implement` Phase 3B step 8, and
-  its Phase 3.5 step 3 for the red-capability check's second path, below), never `code-writer`'s:
-  step 5's re-run of the repro, against the working tree; then the **red-capability check** — the
-  reviewed regression test from step 4, run in a scratch checkout of `HEAD`, the pre-change tree,
-  with that test file copied in at its own path, must fail there on its assertion of this bug's
-  symptom, not on a symbol only the change adds. Two paths reach it, both on bug work
-  (`task_shape: bug`) alone: Phase 3B step 8 on SIGNIFICANT / HIGH-RISK work, and, at every class, a
-  plan step `code-writer` left to the caller that runs a test the run created or changed and expects
-  it to fail — the repro written as a new test, a test-first step — which `/implement` Phase 3.5
-  step 3 runs as this check, the step's own command from its own directory, after the review gate at
-  MODERATE and above and, at SIMPLE, which has none, in Phase 3.5 all the same; the failure the step
-  expects is the assertion it must fail on, and its outcome is this check's on either path. The
-  **green check** is the caller's verify run (`/implement` Phase 3.5), in which the same test must
-  pass. Where the red check passes instead, the test does not show it catches this bug, and the
-  caller's report says so. Where it fails on anything but that assertion — a missing test bootstrap,
-  a submodule's content, a helper only the change adds — the red check is **inconclusive**: the
-  caller's report says so under `### Assumptions & limitations`, naming what it failed on, and the
-  green check is still the caller's verify run.
+- **At the unit's test run, never before it**, and the orchestrator's own (`/implement` Phase 3.5
+  step 2), never a writer's — dropped, both, under a recorded `test_decision: skip`: step 5's re-run
+  of the repro, against the working tree, at the last unit's test run, once the whole change is
+  coded; and the **red-capability check** — the regression test from step 4, which `test-writer`
+  writes and marks, run in a scratch checkout of `HEAD`, the pre-change tree, with that test file
+  copied in at its own path, must fail there on its assertion of this bug's symptom, not on a symbol
+  only the change adds. It runs on bug work at every class, SIMPLE included, before any other check
+  of that test run and so before the review at MODERATE and above. A plan step `code-writer` left
+  to the caller that runs a test the run will write and expects it to fail — the repro written as a
+  new test, a test-first step — is this check, of the test the test writer marked: the failure the
+  step expects is the assertion it must fail on. The **green check** is the caller's verify run
+  (`/implement` Phase 3.5 step 4), in which the same test must pass. Where the red check passes
+  instead, the test does not show it catches this bug, and the caller's report says so. Where it
+  fails on anything but that assertion — a missing test bootstrap, a submodule's content, a helper
+  only the change adds — the red check is **inconclusive**: the caller's report says so under
+  `### Assumptions & limitations`, naming what it failed on, and the green check is still the
+  caller's verify run.
 
 **The scratch checkout** is outside every repository and is removed whatever the run in it exits
 with, a red check's expected failure included. One Bash call makes it, runs in it and removes it, since
@@ -101,6 +113,10 @@ content**, a submodule's directory standing empty there, so a run that needs one
 it. Where the run needs a dependency directory git does not track — `node_modules`, say — link it
 from the working tree inside the same call
 (`ln -s "<top level>/<dir>/node_modules" "$d/tree/<dir>/node_modules"`) rather than installing one.
+Since such a link shares the working tree's state, `code-writer` and the `/implement` orchestrator
+run the whole call through the run lock, from the top level, by the form and the reading of its
+`run-lock:` lines their own rules give (`code-writer`'s *Bug work* and *Your checks*, `/implement`
+Phase 3.5's lead-in).
 
 ## Steps
 
@@ -111,8 +127,8 @@ from the working tree inside the same call
    **Minimise it once it is red.** Cut the command's own inputs — arguments, input data, steps of a
    script — **one at a time**, re-running it after each cut, and keep only what the failure needs. It
    is minimal when removing any remaining element makes it go green. A minimal repro leaves fewer
-   moving parts to suspect at step 2, and becomes the regression test step 4 lands where a correct seam
-   exists. `risk-planner` writes no file: it varies only the command's arguments and standard input,
+   moving parts to suspect at step 2, and is what step 4's regression test is written from where a
+   correct seam exists. `risk-planner` writes no file: it varies only the command's arguments and standard input,
    and trimming a fixture or a script is a plan step `code-writer` carries out in the scratch
    checkout (above).
 
@@ -165,15 +181,18 @@ from the working tree inside the same call
    logs at the boundaries that tell two hypotheses apart; never log everything and grep. Tag every
    temporary probe `[DEBUG-xxxx]` (a short unique token per probe). Every `[DEBUG-xxxx]`
    probe MUST be removed before the change is finalized (`code-writer` places and reads it in the
-   scratch checkout, above, on every dispatch, and the `/implement` Phase 3B cleanup gate strips any
-   that reached the working tree before the review diff is captured). **A probe never writes a secret's value**: one that checks
+   scratch checkout, above, on every dispatch, and the `/implement` Phase 3.6 cleanup gate, its
+   step 1, strips any that reached the working tree before the review diff is captured). **A probe never writes a secret's value**: one that checks
    a credential, token, key or connection string records only whether it is set and whether it is empty —
    `SET`, `EMPTY` or `UNSET`, and its length where that tells hypotheses apart — never the value and
    never a line that echoes it, as `env | grep` does — because what a probe writes
    lands in logs and CI output that outlive the run, where the redaction above never reaches.
 4. **Fix at the correct seam; regression-test there.** Land the fix and its regression test at the
    **correct seam** (see `${CLAUDE_PLUGIN_ROOT}/references/design-format.md` `## Seams` — prefer the
-   highest seam that still isolates the behavior). If **no correct seam exists**, that is itself a
+   highest seam that still isolates the behavior). On `/implement` the fix is `code-writer`'s, and
+   the regression test is `test-writer`'s, written in the working tree from the diagnosis once the
+   code writer has returned and marked for the red-capability check (above); a repro the diagnosis
+   wrote as a test stays inside the scratch checkout. If **no correct seam exists**, that is itself a
    finding — record it (the code needs a seam before it can be safely tested); do NOT bolt a test onto
    the wrong seam to manufacture green.
 5. **Evidence before the claim.** Never report the bug fixed until the repro from step 1 goes green.

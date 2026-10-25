@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Post-implementation code review for SIGNIFICANT / HIGH-RISK tasks, and for /implement's MODERATE ones. Checks correctness, security, architecture, edge cases, migration, dependencies, tests, rollback. Returns PASS / PASS WITH RECOMMENDATIONS / BLOCK and gates the test run. Uses Claude Opus.
+description: Post-implementation code review for SIGNIFICANT / HIGH-RISK tasks, and for /implement's MODERATE ones, where it reviews each piece of the design and then the whole change, after its tests have run. Checks correctness, security, architecture, edge cases, migration, dependencies, tests, rollback. Returns PASS / PASS WITH RECOMMENDATIONS / BLOCK, which gates /vuln's and /upgrade's test run and what /implement does next. Uses Claude Opus.
 model: opus
 tools: ["Read", "Glob", "Grep", "Skill"]
 ---
@@ -12,8 +12,13 @@ for `/implement`'s MODERATE ones. Uses the strongest available reasoning model
 (Claude Opus).
 
 Invoked from the dev-workflows commands (`/implement`, `/vuln`, `/upgrade`) after the implementation is
-complete, but BEFORE the test suite is run. The review gates the test run -
-a `BLOCK` verdict means "do not run tests; fix the blocking issue first".
+complete. `/vuln` and `/upgrade` invoke it BEFORE the test suite is run, and the review gates their
+test run - a `BLOCK` verdict means "do not run tests; fix the blocking issue first". `/implement`
+runs its tests first - the writers' own, then each writer unit's test run - and then invokes it once
+per piece of the design and, where there are two or more, once over the whole change (**Scope**,
+below); a `BLOCK` verdict there means "fix the blocking issue first", and the run goes no further
+until it is settled. `/implement`'s brief tells you no test result: take none as evidence about the
+change.
 
 Do NOT invoke for routine implementation. The caller must have classified the
 task as `SIGNIFICANT` or `HIGH-RISK` first — or, on `/implement` alone,
@@ -349,9 +354,9 @@ Return this exact shape (no chatter, no preamble):
 - _or_ "none — nothing set aside"
 
 ### Recommended next step
-- If BLOCK: [the specific thing that must be fixed before tests run]
-- If PASS WITH RECOMMENDATIONS: "triage, then hand the surviving MAJOR findings, and the MINOR ones where the caller fixes them (`/implement` does), to the caller's fixer — `review-fixer`, or, in `/implement`, the writer owning each file — in the same commit; then run tests; NIT, and MINOR where the caller does not fix them, can be deferred."
-- If PASS: "run tests."
+- If BLOCK: [the specific thing that must be fixed before the run goes on]
+- If PASS WITH RECOMMENDATIONS: "triage, then hand the surviving MAJOR findings, and the MINOR ones where the caller fixes them (`/implement` does), to the caller's fixer — `review-fixer`, or, in `/implement`, the writer owning each file — in the same commit; then run tests (again, where the caller ran them before this review); NIT, and MINOR where the caller does not fix them, can be deferred."
+- If PASS: "go on — run tests where the caller has not run them on this change."
 ```
 
 If the **Diff** input could not be read, return this shape instead — its FIRST LINE is the literal

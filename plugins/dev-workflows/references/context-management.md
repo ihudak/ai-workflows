@@ -41,17 +41,18 @@ without degrading. Apply when the plan/step list is large or the run is nearing 
 
 Prefer the cheapest strategy that fits: checkpoint first; offload parallel steps only when they are
 genuinely independent; decompose only when a single unit still overflows. `/implement` is the
-exception, and its own Phase 3B names its strategies: it codes every step group through
-`code-writer`, one dispatch at a time — *Sub-agent-per-`[P]`* applied to every step, in plan order —
-and decomposes a step list past one run's reach; it never checkpoints by *Scope-to-N*, since it
-commits only at its Phase 4.6, after Phase 4. "Hand off by file" is
+exception, and its own Phase 3 names its strategies: it codes each writer unit through one
+`code-writer` dispatch and writes its tests through one `test-writer`, one writer at a time, in unit
+order — *Sub-agent-per-`[P]`* applied to a whole unit rather than to a step — and finishes a unit
+past one code writer's reach by a continuation dispatch, never decomposing it; it never checkpoints
+by *Scope-to-N*, since it commits only at its Phase 4.6, after Phase 4. "Hand off by file" is
 orthogonal — apply it whenever you dispatch a sub-agent, whichever offload strategy you chose.
 
 At each **checkpoint**, a long-run command may additionally suggest **`/compact`** to free
 context before continuing the next scope/Epic (mid-command → `/compact` only, never `/clear`;
-guidance-only). `/implement`, which has no checkpoint, suggests none: its step groups are
-dispatched back to back, with no user turn between them, and its run-state file carries the run
-across an automatic compaction — see `workflows-core:session-hygiene` §3.
+guidance-only). `/implement`, which has no checkpoint, suggests none: its writers are dispatched
+one after another, with no checkpoint between them, and its run-state file carries the run across an
+automatic compaction — see `workflows-core:session-hygiene` §3.
 
 ## The read-failure contract
 

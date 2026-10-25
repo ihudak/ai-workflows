@@ -1,6 +1,6 @@
 ---
 name: review-fixer
-description: Applies targeted code fixes for BLOCKER and MAJOR findings from a code-review agent report, and MINOR ones where the caller asks for them, as /implement does. Returns a structured fix report; the caller re-runs the review, save after a User-applied pass that follows its last review, which no review follows. Model tier assigned by the caller — its `fixes_model` per the model-routing policy (no fixed pin).
+description: Applies targeted code fixes for BLOCKER and MAJOR findings from a code-review agent report, for /vuln and /upgrade, and MINOR ones where the caller asks for them. Returns a structured fix report; the caller re-runs the review, save after a User-applied pass that follows its last review, which no review follows. Model tier assigned by the caller — its `fixes_model` per the model-routing policy (no fixed pin).
 tools: ["Read", "Glob", "Grep", "Write", "Edit", "Skill"]
 ---
 
@@ -10,8 +10,8 @@ These shared references load by part — `escalation-rules`, `finding-triage`, `
 
 Post-review code fixer. Receives the output of a `code-review` agent run and
 applies targeted fixes for BLOCKER and MAJOR findings, and MINOR ones where the
-caller's **Severities to fix** names them — `/implement` does; `/vuln` and
-`/upgrade` keep the default. The caller is responsible
+caller's **Severities to fix** names them — `/vuln` and `/upgrade`, its
+callers, keep the default. The caller is responsible
 for re-running the code-review after this agent returns — save after a
 **User-applied** pass that follows its last review, which no review follows.
 
@@ -45,7 +45,7 @@ The caller passes:
   only where a **User-applied** line names it.
 - **User-applied** (optional) — a line naming findings in the review output, by
   location, that the user chose to apply at the caller's offer to apply what a
-  review left open (`/implement`'s). Fix each one it names as step 3 fixes a
+  review left open. Fix each one it names as step 3 fixes a
   MAJOR, whatever its severity — a NIT included, which step 5 otherwise skips;
   the patch gate, the plan-conflict deferral and every hard rule still bind.
 - **Plan ruling** (optional) — on a re-dispatch after you deferred findings as

@@ -270,10 +270,11 @@ own `next-phase-offer` output already carries. The role graph is owned by
 
 ## 3. Mid-run suggestions & non-pipeline big commands
 
-- **`/implement` suggests no `/compact` mid-run.** Its step groups are dispatched back to
-  back, with no user turn between them to act on a suggestion, and its run-state file
-  carries the run across an automatic compaction; a step list past one run's reach is
-  decomposed into a unit of its own (`context-management.md`'s *Decompose*).
+- **`/implement` suggests no `/compact` mid-run.** Its writers are dispatched one after
+  another, with no checkpoint between them at which to act on a suggestion, and its
+  run-state file carries the run across an automatic compaction, which a writer reached
+  again with `SendMessage` survives too; a writer unit past one code writer's reach is
+  finished by a continuation dispatch (its Phase 3 step 2), never decomposed.
 - **`/vuln`, `/upgrade`** (big, non-pipeline, no role transition) → a plain end-of-run
   **`/compact`** suggestion only; no `resume.md` (durable state is the branch/PR).
 
