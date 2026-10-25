@@ -91,7 +91,7 @@ Everything up to and including Pre-Phase 3 is unchanged. That covers Phase 0 to 
 - **Writer units.** By default, one code writer and one test writer cover every piece of the Epic: the whole Epic is one *writer unit*. A piece becomes a writer unit of its own only where `design.md` says so, with its reason (part b).
 - Every plan step belongs to one piece; the planner assigns it from the design's file lists **(Claude's call)**.
 - A new file belongs to the piece whose step creates it.
-- If a writer needs to edit a file that belongs to another writer unit, it returns that as a decision. The orchestrator either moves the file or merges the two units into one, and records which **(Claude's call)**.
+- If a writer needs to edit a file that belongs to another writer unit, it returns that as a decision. The orchestrator moves the file into the writer's unit and records the move **(Claude's call)**. *(Corrected after the build: this line also offered merging the two units, which `/implement` never does.)*
 
 **3. Who owns which file (Claude's call, extending the user's "the code writer never edits the test writer's tests").**
 - **The test writer** owns every test file the run writes or changes:

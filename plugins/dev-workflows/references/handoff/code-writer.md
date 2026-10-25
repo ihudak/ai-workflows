@@ -109,6 +109,11 @@ failure_input: /tmp/dw-impl-failure-AbC123
                            # among them — or a failing check's command — a lint, a build, a type-check,
                            # or another check — the directory it ran in and its output, each lint
                            # failure the caller found on the tree before the change marked pre-existing.
+                           # Beside them or alone, a disagreement ruling: a `Disagreement ruled —
+                           # <entry> — the test holds — <source line or answer>` line, which code-writer
+                           # applies by changing the code to do what that test asserts, then runs the
+                           # build and that test again (no test under run_tests: no); one it cannot
+                           # apply goes under ### Not fixed, its line quoted.
 review_file: /tmp/dw-impl-review-AbC123
                            # EVIDENCE on mode: review; none otherwise. The review's findings as the caller's
                            # triage left them, with any **Severities to fix**, **User-applied** and **Plan

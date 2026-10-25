@@ -23,18 +23,19 @@ SIGHUP, SIGINT or SIGQUIT sent to this script while the leader runs is passed on
 group as it arrives, and after one the lock is held until the whole group is gone: the script waits
 for the leader, with no time limit, then for the rest of the group for up to 2 seconds, then sends
 SIGKILL to whatever is left. The exit is 128 + N for the last signal passed on. Not every one is
-passed on: one that arrives once the script holds the leader's exit status -- during that
-2-second grace too -- is ignored; of those that arrive before the command has started, only the last is kept, and
-passed on once the command starts; one kept so is dropped where the command cannot be started
-(exit 126 or 127); and one the group's kill refuses -- the group already gone -- is not counted as
-passed on. The gap, by class: a signal this script does not catch -- SIGKILL above all, but also
-SIGUSR1, SIGALRM and the like -- sent to this script alone, not to its group, frees the lock while
-the command still runs.
+passed on: one that arrives once the script holds the leader's exit status -- during that 2-second
+grace too -- is ignored, from then until the script exits; of those that arrive before the command
+has started, only the last is kept, and passed on once the command starts; one kept so is dropped
+where the command cannot be started (exit 126 or 127); and one the group's kill refuses -- the
+group already gone -- is not counted as passed on. The gap, by class: a signal this script does
+not catch -- SIGKILL above all, but also SIGUSR1, SIGALRM and the like -- sent to this script
+alone, not to its group, frees the lock while the command still runs.
 
 While it waits for the lock, this script prints one stderr line, `run-lock: waiting for <lock
 path>`; a signal that arrives then ends it with `run-lock: interrupted while waiting for <lock
-path>` and the exit 128 + N, and any signal after that one is ignored. Where `fcntl` is missing, on
-a host without it, the script says so on stderr and runs the command unlocked.
+path>` and the exit 128 + N, and any signal after that one is ignored until the script exits. Where
+`fcntl` is missing, on a host without it, the script says so on stderr and runs the command
+unlocked.
 
 Every exit of the script's own prints a stderr line starting `run-lock:` -- the usage line
 included. The exit code alone does not tell them from the command's: a test runner may itself exit 2
@@ -76,20 +77,37 @@ class _Signalled(Exception):
         self.signum = signum
 
 
+def _install(handler):
+    """Give every forwarded signal `handler` at once: one that arrives meanwhile waits, blocked,
+    and meets the new handler. No handler is ever put back: the script exits after its last."""
+    mask = getattr(signal, "pthread_sigmask", None)
+    old = mask(signal.SIG_BLOCK, FORWARDED) if mask else None
+    try:
+        for n in FORWARDED:
+            signal.signal(n, handler)
+    finally:
+        if mask:
+            mask(signal.SIG_SETMASK, old)
+
+
 def _raise(signum, frame):
-    _ignore_forwarded()  # a second signal must not raise inside the handling of this one
+    _install(_ignore)  # a second signal must not raise inside the handling of this one
     raise _Signalled(signum)
 
 
 def _ignore(signum, frame):
-    """A forwarded signal that arrives once this script no longer passes them on: dropped."""
+    """A forwarded signal that arrives once this script no longer passes them on: dropped -- a
+    handler that does nothing rather than SIG_IGN, since CPython reports a signal it has already
+    caught as "ignored due to race condition", with a traceback, once its handler is SIG_IGN."""
 
 
-def _ignore_forwarded():
-    # a handler that does nothing rather than SIG_IGN: CPython reports a signal it has already
-    # caught as "ignored due to race condition", with a traceback, once its handler is SIG_IGN
-    for n in FORWARDED:
-        signal.signal(n, _ignore)
+def _forwarder(state):
+    def forward(signum, frame):
+        if state["proc"] is None:  # before the command exists: kept, sent once it does
+            state["pending"] = signum
+        else:
+            _pass_on(state, signum)
+    return forward
 
 
 def _git(cwd, *args):
@@ -135,61 +153,60 @@ def run(argv):
     except OSError as e:
         sys.stderr.write("run-lock: cannot reach %s: %s\n" % (path, e))
         return 4
+    state = {"proc": None, "pending": None, "passed": []}
     try:
         try:
             try:
                 fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
-                old = [(n, signal.signal(n, _raise)) for n in FORWARDED]
-                try:
-                    sys.stderr.write("run-lock: waiting for %s\n" % path)
-                    sys.stderr.flush()
-                    fcntl.flock(fd, fcntl.LOCK_EX)
-                except _Signalled as s:
-                    sys.stderr.write("run-lock: interrupted while waiting for %s\n" % path)
-                    return 128 + s.signum
-                finally:
-                    for n, h in old:
-                        signal.signal(n, h)
+                code = _wait(fd, path, _forwarder(state))
+                if code is not None:
+                    return code
         except OSError as e:
             sys.stderr.write("run-lock: cannot lock %s: %s\n" % (path, e))
             return 4
-        return _run_command(argv)
+        return _run_command(argv, state)
     finally:
         os.close(fd)  # closing the descriptor releases the lock, after the command is reaped
 
 
-def _run_command(argv):
-    state = {"proc": None, "pending": None, "passed": []}
-
-    def forward(signum, frame):
-        if state["proc"] is None:  # before the command exists: kept, sent once it does
-            state["pending"] = signum
-        else:
-            _pass_on(state, signum)
-
-    old = [(n, signal.signal(n, forward)) for n in FORWARDED]
+def _wait(fd, path, forward):
+    """Wait for the lock: None once it is held, the handlers then `forward`; the exit code where a
+    signal ended the wait. Every handler swap is inside the try, so a signal at any point of it
+    ends in the interrupted line or is kept for the command, never in a traceback."""
     try:
-        try:
-            state["proc"] = subprocess.Popen(argv, start_new_session=True)
-        except FileNotFoundError:
-            sys.stderr.write("run-lock: command not found: %s\n" % argv[0])
-            return 127
-        except OSError as e:
-            sys.stderr.write("run-lock: cannot run %s: %s\n" % (argv[0], e))
-            return 126
-        early, state["pending"] = state["pending"], None
-        if early is not None:
-            _pass_on(state, early)
-        rc = state["proc"].wait()  # the lock is kept until the command is reaped
-        # from here none is passed on, so none can come after `passed` is read, and none can cut
-        # the group's wait short
-        _ignore_forwarded()
-        if state["passed"]:
-            _end_group(state["proc"])
-    finally:
-        for n, h in old:
-            signal.signal(n, h)
+        _install(_raise)
+        sys.stderr.write("run-lock: waiting for %s\n" % path)
+        sys.stderr.flush()
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        _install(forward)  # held: a signal from here is kept for the command, as before it starts
+    except _Signalled as s:
+        sys.stderr.write("run-lock: interrupted while waiting for %s\n" % path)
+        return 128 + s.signum
+    return None
+
+
+def _run_command(argv, state=None):
+    if state is None:
+        state = {"proc": None, "pending": None, "passed": []}
+    _install(_forwarder(state))
+    try:
+        state["proc"] = subprocess.Popen(argv, start_new_session=True)
+    except FileNotFoundError:
+        sys.stderr.write("run-lock: command not found: %s\n" % argv[0])
+        return 127
+    except OSError as e:
+        sys.stderr.write("run-lock: cannot run %s: %s\n" % (argv[0], e))
+        return 126
+    early, state["pending"] = state["pending"], None
+    if early is not None:
+        _pass_on(state, early)
+    rc = state["proc"].wait()  # the lock is kept until the command is reaped
+    # from here to the script's exit none is passed on, so none can come after `passed` is read,
+    # and none can cut the group's wait short
+    _install(_ignore)
+    if state["passed"]:
+        _end_group(state["proc"])
     if state["passed"]:
         code = 128 + state["passed"][-1]
         sys.stderr.write("run-lock: passed signal%s %s on to the command; exiting %d\n"
@@ -470,6 +487,8 @@ def selftest():
         repo = new_repo("afterwait")
         pidfile = os.path.join(repo, "pid")
         real_popen, real_signal, real_end, real_err = subprocess.Popen, signal.signal, _end_group, sys.stderr
+        real_mask = getattr(signal, "pthread_sigmask", None)
+        saved = [(n, signal.getsignal(n)) for n in FORWARDED]
         seen = {"waited": False, "fired": False, "group_waits": 0}
 
         class Hooked(real_popen):
@@ -478,24 +497,36 @@ def selftest():
                 seen["waited"] = True
                 return rc
 
-        def hook(n, h):
+        def fire():
             if seen["waited"] and not seen["fired"]:
                 seen["fired"] = True
                 signal.raise_signal(signal.SIGHUP)  # its handler runs here, before the call
+
+        def hook(n, h):
+            fire()
             return real_signal(n, h)
+
+        def hook_mask(how, mask):
+            fire()
+            return real_mask(how, mask)
 
         def group_wait(proc):
             seen["group_waits"] += 1
 
-        outer = real_signal(signal.SIGHUP, lambda s, f: None)  # this process must outlive a stray one
+        real_signal(signal.SIGHUP, lambda s, f: None)  # this process must outlive a stray one
         try:
             subprocess.Popen, signal.signal, sys.stderr = Hooked, hook, io.StringIO()
+            if real_mask is not None:
+                signal.pthread_sigmask = hook_mask
             globals()["_end_group"] = group_wait
             rc = _run_command(["sh", "-c", "sleep 30 >/dev/null 2>&1 & echo $! > '%s'" % pidfile])
         finally:
             subprocess.Popen, signal.signal, sys.stderr = real_popen, real_signal, real_err
+            if real_mask is not None:
+                signal.pthread_sigmask = real_mask
             globals()["_end_group"] = real_end
-            real_signal(signal.SIGHUP, outer)
+            for n, h in saved:
+                real_signal(n, h)
             kill_pidfile(pidfile)
         assert seen["fired"], "the hook never fired"
         assert rc == 128 + signal.SIGHUP, "the hook's signal did not reach the group: %s" % rc
@@ -522,6 +553,55 @@ def selftest():
         finally:
             holder.terminate()  # passed on to its group, which ends at once
             holder.wait()
+
+    def test_signal_as_the_wait_ends():
+        # a signal that lands as the wait for the lock ends -- while the script swaps the wait's
+        # handlers for the command's -- ends in the run's own exit or a run-lock: line, never in a
+        # traceback: the hook raises SIGTERM at the first signal.signal call after the waiting
+        # flock returns
+        import io
+        repo = new_repo("waitend")
+        holder = subprocess.Popen(lock_cmd("sh", "-c", "echo up > up; sleep 1"), cwd=repo,
+                                  stderr=subprocess.DEVNULL)
+        real_flock, real_signal, real_err = fcntl.flock, signal.signal, sys.stderr
+        saved = [(n, signal.getsignal(n)) for n in FORWARDED]
+        seen = {"held": False, "fired": False}
+
+        def flock(fd, op):
+            got = real_flock(fd, op)
+            if not op & fcntl.LOCK_NB:
+                seen["held"] = True
+            return got
+
+        def hook(n, h):
+            if seen["held"] and not seen["fired"]:
+                seen["fired"] = True
+                signal.raise_signal(signal.SIGTERM)
+            return real_signal(n, h)
+
+        err, raised, rc, cwd = io.StringIO(), None, None, os.getcwd()
+        try:
+            assert wait_for(os.path.join(repo, "up")), "holder never started"
+            for n in FORWARDED:  # this process must outlive a stray one
+                real_signal(n, lambda s, f: None)
+            os.chdir(repo)
+            fcntl.flock, signal.signal, sys.stderr = flock, hook, err
+            try:
+                rc = run(["true"])
+            except BaseException as e:  # the defect: an uncaught _Signalled
+                raised = e
+        finally:
+            fcntl.flock, signal.signal, sys.stderr = real_flock, real_signal, real_err
+            for n, h in saved:
+                real_signal(n, h)
+            os.chdir(cwd)
+            holder.wait()
+        assert raised is None, "uncaught %r; stderr %r" % (raised, err.getvalue())
+        assert seen["fired"], "the hook never fired"
+        out = err.getvalue()
+        assert rc == 0 or (rc == 128 + signal.SIGTERM and ("run-lock: passed signal 15 on" in out
+                                                         or "run-lock: interrupted while waiting" in out)), \
+            (rc, out)
 
     def test_submodule_shares_lock():
         # a suite inside a submodule takes the outermost work tree's lock, through every level
@@ -578,6 +658,7 @@ def selftest():
              test_signal_keeps_lock_for_group, test_interrupted_while_waiting, test_every_signal_passed_on,
              test_normal_exit_releases_at_once, test_pass_on_counts_only_delivered,
              test_signal_after_wait_still_waits_for_group, test_two_signals_while_waiting,
+             test_signal_as_the_wait_ends,
              test_submodule_shares_lock, test_no_fcntl]
     try:
         for t in tests:

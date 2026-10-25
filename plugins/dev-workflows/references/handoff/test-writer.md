@@ -65,7 +65,12 @@ failure_input: /tmp/dw-impl-failure-AbC123
                            # EVIDENCE on mode: fix; none otherwise. The part of test-baseliner's verify
                            # report that names the failing tests handed to test-writer — those it wrote
                            # or updated, and any failing pre-existing test — or a failing check's
-                           # command, the directory it ran in and its output.
+                           # command, the directory it ran in and its output. Beside them or alone, a
+                           # disagreement ruling: a `Disagreement ruled — <entry> — the code holds —
+                           # <source line or answer>` line, which test-writer applies by changing the
+                           # test it names to assert what that line or answer says, then runs it again
+                           # (none under run_tests: no); one it cannot apply goes under ### Not
+                           # passing, its line quoted.
 review_file: /tmp/dw-impl-review-AbC123
                            # EVIDENCE on mode: review; none otherwise. The review's findings as the caller's
                            # triage left them, with any **Severities to fix**, **User-applied** and **Plan
