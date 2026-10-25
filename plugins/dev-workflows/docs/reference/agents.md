@@ -4,7 +4,7 @@
 
 ## Reviewers and planners
 
-Opus-gated quality gates, plus the lighter-weight planners that feed or precede them. `code-review` reviews a change whole, or — where `/implement` splits its review by the design's pieces — one piece per review, then the whole change after the piece reviews, for what none of them can see. On an `/implement` brief with a specification in scope it also asks, of each test named after a specification test case or acceptance criterion, whether the test would fail if the behaviour it names broke.
+Opus-gated quality gates, plus the lighter-weight planners that feed or precede them. `code-review` reviews a change whole, or — where `/implement` splits its review by the design's pieces — one piece per review, which checks that piece's side of the contract the design fixes between the pieces, then the whole change after the piece reviews, for what none of them can see. On an `/implement` brief with a specification in scope it also asks, of each test named after a specification test case or acceptance criterion, whether the test would fail if the behaviour it names broke.
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
