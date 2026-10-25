@@ -31,7 +31,8 @@ calls, never two runs.
                                      members over the ones the file holds: a member it leaves out
                                      keeps its value. A deeper path or a list entry is not checked.
                                      Once the write lands, each path the file named before the call --
-                                     a `files` member, a `step_groups` report or a `patches` path --
+                                     a `files` member, a `step_groups` report, a `reviews` diff or
+                                     return file or a `patches` path --
                                      that none of them names after it is removed, where it is a
                                      regular file, not a symlink, whose name begins `dw-impl-`, and
                                      printed `removed: <path>`; one whose removal fails is printed
@@ -43,7 +44,7 @@ calls, never two runs.
                                      one-element list.
   run-state.py remove [--keep <path>] ...
                                      the end-of-run removal: every temp file `files` names, each
-                                     `step_groups` report and each `patches` path marked `temp`
+                                     `step_groups` report, each `reviews` diff and return file and each `patches` path marked `temp`
                                      -- only a regular file whose name begins `dw-impl-`, and never
                                      a --keep path -- then the file itself, only at the git path.
 
@@ -99,6 +100,11 @@ LOCK = ".implement-run.lock"
 # default is an object, a list, a boolean, an integer or a string must be given as one; one whose
 # default is null takes any JSON value. `init` and `set` both hold what they are given to this list, and
 # `set` merges an object given for an object key over the members the file holds.
+# List shapes, for the entries KEYS does not check (a list entry is not):
+#   pieces   {"name", "files": [], "contract": []}
+#   reviews  {"round": "first"|"re-review", "scope": "piece:<name>"|"overall", "paths": [],
+#             "diff_file", "return_file", "verdict"} -- one per review a split round dispatches;
+#            "paths" a piece's matched paths, [] for "overall"; the two files temp files
 # commands/implement.md quotes this list (KEYS_LINE); the selftest holds the two equal.
 KEYS = [
     ("format", 1), ("phase", "Phase 1.4"), ("mode", None), ("key", None), ("source", None),
@@ -116,7 +122,8 @@ KEYS = [
                "summary_file": None, "baseline_file": None, "test_diff_file": None,
                "test_report_file": None, "review_diff_file": None, "partial_diff_file": None, "review_return_file": None,
                "review_file": None, "claims_file": None, "failure_file": None}),
-    ("step_groups", []), ("patches", []), ("triage", []),
+    ("step_groups", []), ("pieces", []), ("reviews", []), ("patches", []),
+    ("triage", []),
     ("conformance", {"summary": None, "annotated": [], "gaps": [], "handoff_line": None}),
     ("other_repo_changes", []), ("assumptions", []), ("deferred", []),
     ("report", {"commands_run": [], "maintenance": [], "notices": [], "phase1_tasks": [],
@@ -409,15 +416,19 @@ def cmd_read(f, args, out):
 
 def named(d):
     """Each path the file names that a set may stop naming: every `files` member's, each `step_groups`
-    entry's report and each `patches` entry's path, in that order, each once."""
+    entry's report, each `reviews` entry's diff and return file and each `patches` entry's path, in that
+    order, each once."""
     out = []
     files = d.get("files")
     if isinstance(files, dict):
         out += [p for p in files.values() if isinstance(p, str)]
-    groups, patches = d.get("step_groups"), d.get("patches")
+    groups, reviews, patches = d.get("step_groups"), d.get("reviews"), d.get("patches")
     for g in groups if isinstance(groups, list) else []:
         if isinstance(g, dict) and isinstance(g.get("report"), str):
             out.append(g["report"])
+    for v in reviews if isinstance(reviews, list) else []:
+        if isinstance(v, dict):
+            out += [v[k] for k in ("diff_file", "return_file") if isinstance(v.get(k), str)]
     for p in patches if isinstance(patches, list) else []:
         if isinstance(p, dict) and isinstance(p.get("path"), str):
             out.append(p["path"])
@@ -504,6 +515,9 @@ def cmd_remove(f, args, out):
         for g in d.get("step_groups") or []:
             if isinstance(g, dict) and isinstance(g.get("report"), str):
                 paths.append(g["report"])
+        for v in d.get("reviews") or []:
+            if isinstance(v, dict):
+                paths += [v[k] for k in ("diff_file", "return_file") if isinstance(v.get(k), str)]
         for p in d.get("patches") or []:
             if isinstance(p, dict) and p.get("temp") is True and isinstance(p.get("path"), str):
                 paths.append(p["path"])
@@ -613,6 +627,15 @@ def selftest():
               d["files"] == dict((m, None) for m in dict(KEYS)["files"])
               and d["report"] == {"commands_run": [], "maintenance": [], "notices": [], "phase1_tasks": [],
                                   "confirmed_cause": None})
+        check("init defaults pieces and reviews to empty lists", d["pieces"] == [] and d["reviews"] == [])
+        pe = {"name": "p", "files": ["a.py"], "contract": ["c"]}
+        re_ = {"round": "first", "scope": "piece:p", "paths": ["a.py"], "diff_file": None,
+               "return_file": None, "verdict": None}
+        code, _ = call(["init"], json.dumps(fresh(pieces=[pe], reviews=[re_])), repo)
+        d2 = json.load(open(f, encoding="utf-8"))
+        check("init accepts a pieces entry and a reviews entry", code == 0 and d2["pieces"] == [pe]
+              and d2["reviews"] == [re_])
+        check("init refuses pieces given as a string", call(["init"], json.dumps(fresh(pieces="x")), repo)[0] == 3)
         check("init refuses a non-object", call(["init"], "[1]", repo)[0] == 2)
         check("init refuses a format other than 1", call(["init"], json.dumps(fresh(format=2)), repo)[0] == 2)
 
@@ -896,6 +919,27 @@ def selftest():
         check("remove leaves a non-temp path", os.path.exists(user) and "left: %s" % user in out)
         check("stale file survives remove", len([n for n in os.listdir(here) if STALE_RE.match(n)]) == 1)
         check("remove with no file is a no-op", call(["remove"], repo=repo)[0] == 0)
+
+        # reviews' diff and return files: set and remove take them like a files member
+        rd1, rr1, rd2, rr2 = (mk("dw-impl-diff-1"), mk("dw-impl-return-1"),
+                              mk("dw-impl-diff-2"), mk("dw-impl-return-2"))
+        call(["init"], json.dumps(fresh()), repo)
+        call(["set", "reviews", json.dumps([
+            {"round": "first", "scope": "piece:p", "paths": ["a.py"], "diff_file": rd1, "return_file": rr1,
+             "verdict": None},
+            {"round": "first", "scope": "overall", "paths": [], "diff_file": rd2, "return_file": rr2,
+             "verdict": None}])], repo=repo)
+        code, out = call(["set", "reviews", json.dumps([
+            {"round": "first", "scope": "overall", "paths": [], "diff_file": rd2, "return_file": rr2,
+             "verdict": None}])], repo=repo)
+        check("a set of reviews that drops an entry removes its diff and return files", code == 0
+              and not os.path.exists(rd1) and not os.path.exists(rr1)
+              and "removed: %s" % rd1 in out and "removed: %s" % rr1 in out)
+        check("a set of reviews keeps the files of the entry it keeps", os.path.exists(rd2)
+              and os.path.exists(rr2))
+        code, out = call(["remove"], repo=repo)
+        check("remove takes a review's files", code == 0 and not os.path.exists(rd2)
+              and not os.path.exists(rr2) and "removed: %s" % rd2 in out and "removed: %s" % rr2 in out)
 
         # init --recover with no file: the line it appends says so, and that nothing was moved aside
         code, out = call(["init", "--recover"], json.dumps(fresh()), repo)
