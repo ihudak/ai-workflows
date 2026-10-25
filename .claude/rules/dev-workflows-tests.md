@@ -10,7 +10,7 @@ paths:
 
 # dev-workflows — test-writing requirement for code changes
 
-Loaded when `/implement`'s command or docs page, a `test-*` agent or its handoff file, `references/code-handoff.md`, or the test-suite-detection reference page is read. The rest of the `dev-workflows` rules are in `.claude/rules/dev-workflows.md`; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
+Loaded when `/implement`'s command or docs page, a `test-*` agent or its handoff file, `references/code-handoff.md`, or the test-suite-detection reference page is read. The rest of the `dev-workflows` rules are in `.claude/rules/dev-workflows.md`, `.claude/rules/dev-workflows-implement.md` and `.claude/rules/dev-workflows-design-ready.md`; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
 ## Test-writing requirement
 

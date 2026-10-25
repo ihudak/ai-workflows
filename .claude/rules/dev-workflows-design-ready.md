@@ -5,7 +5,7 @@ paths:
 
 # dev-workflows — `/design` and `/ready` invariants
 
-Loaded with `.claude/rules/dev-workflows.md`, whose `paths:` it shares. Split out of `.claude/rules/dev-workflows.md` to keep that file under 20,000 characters; the plugin's other rules are there and in `.claude/rules/dev-workflows-implement.md`; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
+Loaded with `.claude/rules/dev-workflows.md`, whose `paths:` it shares. Split out of `.claude/rules/dev-workflows.md` to keep that file under 20,000 characters; the plugin's other rules are there and in `.claude/rules/dev-workflows-implement.md`, and the test-writing requirement for code changes is in `.claude/rules/dev-workflows-tests.md`; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
 ## Invariants
 

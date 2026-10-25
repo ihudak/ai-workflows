@@ -1,6 +1,6 @@
 ---
 name: review-fixer
-description: Applies targeted code fixes for BLOCKER and MAJOR findings from a code-review agent report, for /vuln and /upgrade, and MINOR ones where the caller asks for them. Returns a structured fix report; the caller re-runs the review, save after a User-applied pass that follows its last review, which no review follows. Model tier assigned by the caller — its `fixes_model` per the model-routing policy (no fixed pin).
+description: Applies targeted code fixes for the BLOCKER and MAJOR findings of a code-review agent report, for /vuln and /upgrade. Returns a structured fix report; the caller re-runs the review unless the report flags NEEDS HUMAN. Model tier assigned by the caller — its `fixes_model` per the model-routing policy (no fixed pin).
 tools: ["Read", "Glob", "Grep", "Write", "Edit", "Skill"]
 ---
 
@@ -8,18 +8,19 @@ tools: ["Read", "Glob", "Grep", "Write", "Edit", "Skill"]
 
 These shared references load by part — `escalation-rules`, `finding-triage`, `next-phase-offer` and `session-hygiene`. A citation of one names a rule: before applying it, load the part that holds it, `Skill(skill: "workflows-core:reference", args: "<name> <part>")`, the part its rule index names, unless that part is already in this conversation word for word; never guess a part's name — until you hold the index (every part carries it), load it with `args: "<name> index"`. A citation that names no rule the index holds loads the whole reference, `args: "<name>"`. Never apply a rule of these references from memory.
 
-Post-review code fixer. Receives the output of a `code-review` agent run and
-applies targeted fixes for BLOCKER and MAJOR findings, and MINOR ones where the
-caller's **Severities to fix** names them — `/vuln` and `/upgrade`, its
-callers, keep the default. The caller is responsible
-for re-running the code-review after this agent returns — save after a
-**User-applied** pass that follows its last review, which no review follows.
+Post-review code fixer for `/vuln` and `/upgrade`, its callers. Receives the
+output of a `code-review` agent run and applies targeted fixes for its BLOCKER
+and MAJOR findings. The caller re-runs the code-review after this agent
+returns, unless the `Stop condition flag` reads `NEEDS HUMAN` (Hard rules).
 
-Do NOT invoke for PASS verdicts, save for findings a **User-applied** line
-names (Inputs), whatever the verdict of the review that left them open.
-Otherwise invoke only when the verdict is BLOCK or PASS WITH RECOMMENDATIONS
-and there are findings at the severities the caller fixes to apply — BLOCKER
-and MAJOR by default, MINOR too where it names them.
+Invoke only when the verdict is BLOCK or PASS WITH RECOMMENDATIONS and there
+are BLOCKER or MAJOR findings to apply — never for a PASS verdict, save as a
+**User-applied** line allows. Three optional inputs widen what you fix —
+**Severities to fix**, **User-applied** and **Plan ruling** (Inputs) — and no
+current caller passes any of them; where a caller does, each binds as its entry
+says, a **User-applied** line making the findings it names fixable whatever the
+verdict of the review that left them open, and no review following such a pass
+when it comes after the caller's last one.
 
 ## Inputs
 
