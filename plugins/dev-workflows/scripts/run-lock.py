@@ -5,10 +5,12 @@
 
 Two builds or test runs in one work tree trample each other's output directories, caches and
 ports. This script lets one at a time through: it takes an exclusive lock on
-`$(git rev-parse --git-path dev-workflows/run.lock)` -- per worktree, inside the git directory, never
-staged; its directory is made when missing -- waits for it when another holder has it, runs the
-command, and lets go when the command has ended. The lock is fcntl.flock, which the kernel
-releases when the holder dies however it dies, so no lock goes stale and the file is never removed.
+`$(git rev-parse --git-path dev-workflows/run.lock)` as git names it in the outermost work tree --
+inside a submodule, its superproject's, and so on to the top, so a suite inside a submodule shares
+the superproject's lock; per worktree, inside the git directory, never staged; its directory is
+made when missing -- waits for it when another holder has it, runs the command, and lets go when
+the command has ended. The lock is fcntl.flock, which the kernel releases when the holder dies
+however it dies, so no lock goes stale and the file is never removed.
 
 Run it from inside the git work tree. The command inherits stdin, stdout, stderr and the working
 directory, but not the lock descriptor, so a daemon the build leaves behind cannot hold the lock. It
@@ -16,18 +18,23 @@ runs in a session of its own, so a Ctrl-Z stops only this script, not the comman
 
 "Ended" is exact in two cases. On any exit not after a signal this script passed on -- a normal exit,
 or a leader killed by a signal that did not come through this script -- it is the command itself
-(the group leader): a daemon the build leaves in its group does not hold the lock. Every SIGTERM,
-SIGHUP, SIGINT or SIGQUIT sent to this script is passed on to the command's group as it arrives,
-and after one the lock is held until the whole group is gone: the script waits for the leader, with
-no time limit, then for the rest of the group for up to 2 seconds, then sends SIGKILL to whatever is
-left. The exit is 128 + N for the last signal passed on. The gap, by class: a signal this script does not catch -- SIGKILL above all, but
-also SIGUSR1, SIGALRM and the like -- sent to this script alone, not to its group, frees the lock
-while the command still runs.
+(the group leader): a daemon the build leaves in its group does not hold the lock. A SIGTERM,
+SIGHUP, SIGINT or SIGQUIT sent to this script while the leader runs is passed on to the command's
+group as it arrives, and after one the lock is held until the whole group is gone: the script waits
+for the leader, with no time limit, then for the rest of the group for up to 2 seconds, then sends
+SIGKILL to whatever is left. The exit is 128 + N for the last signal passed on. Not every one is
+passed on: one that arrives once the script holds the leader's exit status -- during that
+2-second grace too -- is ignored; of those that arrive before the command has started, only the last is kept, and
+passed on once the command starts; one kept so is dropped where the command cannot be started
+(exit 126 or 127); and one the group's kill refuses -- the group already gone -- is not counted as
+passed on. The gap, by class: a signal this script does not catch -- SIGKILL above all, but also
+SIGUSR1, SIGALRM and the like -- sent to this script alone, not to its group, frees the lock while
+the command still runs.
 
 While it waits for the lock, this script prints one stderr line, `run-lock: waiting for <lock
 path>`; a signal that arrives then ends it with `run-lock: interrupted while waiting for <lock
-path>` and the exit 128 + N. Where `fcntl` is missing, on a host without it, the script says so on
-stderr and runs the command unlocked.
+path>` and the exit 128 + N, and any signal after that one is ignored. Where `fcntl` is missing, on
+a host without it, the script says so on stderr and runs the command unlocked.
 
 Every exit of the script's own prints a stderr line starting `run-lock:` -- the usage line
 included. The exit code alone does not tell them from the command's: a test runner may itself exit 2
@@ -37,7 +44,8 @@ Exit codes:
   126        the command could not be run (not executable)
   127        the command was not found
   128 + N    signal N ended the command, or was sent to this script and passed on (that line:
-             `run-lock: passed signal N on ...`), or interrupted the wait for the lock
+             `run-lock: passed signal N on ...`, or `run-lock: passed signals A, B, N on ...`
+             where several were, N the last), or interrupted the wait for the lock
   2          usage: no `--`, or no command after it
   4          the lock could not be taken: not inside a git work tree, git failing to name the
              path, an OSError making or opening the file, or the filesystem refusing flock
@@ -69,22 +77,47 @@ class _Signalled(Exception):
 
 
 def _raise(signum, frame):
+    _ignore_forwarded()  # a second signal must not raise inside the handling of this one
     raise _Signalled(signum)
 
 
-def lock_path(cwd=None):
-    """The absolute lock path for the work tree `cwd` is in, or None when git cannot name it."""
+def _ignore(signum, frame):
+    """A forwarded signal that arrives once this script no longer passes them on: dropped."""
+
+
+def _ignore_forwarded():
+    # a handler that does nothing rather than SIG_IGN: CPython reports a signal it has already
+    # caught as "ignored due to race condition", with a traceback, once its handler is SIG_IGN
+    for n in FORWARDED:
+        signal.signal(n, _ignore)
+
+
+def _git(cwd, *args):
+    """git's stdout in `cwd`, its line end stripped, or None when git fails."""
     try:
-        out = subprocess.run(["git", "rev-parse", "--git-path", LOCK_GIT_PATH], cwd=cwd,
+        out = subprocess.run(["git"] + list(args), cwd=cwd,
                              stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=True)
     except (OSError, subprocess.CalledProcessError):
         return None
-    rel = out.stdout.decode("utf-8", "surrogateescape").rstrip("\r\n")
+    return out.stdout.decode("utf-8", "surrogateescape").rstrip("\r\n")
+
+
+def lock_path(cwd=None):
+    """The absolute lock path for the outermost work tree `cwd` is in -- a submodule's
+    superproject's, to the top -- or None when git cannot name it."""
+    # resolve symlinks first: git prints the lock path relative to the directory it ran in, so
+    # `..` must mean what git meant (a symlinked temp directory, as on macOS)
+    top = os.path.realpath(cwd or os.getcwd())
+    for _ in range(64):  # a chain of superprojects is short; the bound only stops a loop
+        up = _git(top, "rev-parse", "--show-superproject-working-tree")
+        # empty at the top; a git too old for the option echoes it back, which is no directory
+        if not up or not os.path.isdir(up):
+            break
+        top = os.path.realpath(up)
+    rel = _git(top, "rev-parse", "--git-path", LOCK_GIT_PATH)
     if not rel:
         return None
-    # git prints the path relative to the directory it ran in; resolve symlinks first so `..`
-    # means what git meant (a symlinked temp directory, as on macOS)
-    return os.path.abspath(os.path.join(os.path.realpath(cwd or os.getcwd()), rel))
+    return os.path.abspath(os.path.join(top, rel))
 
 
 def run(argv):
@@ -149,9 +182,10 @@ def _run_command(argv):
         if early is not None:
             _pass_on(state, early)
         rc = state["proc"].wait()  # the lock is kept until the command is reaped
+        # from here none is passed on, so none can come after `passed` is read, and none can cut
+        # the group's wait short
+        _ignore_forwarded()
         if state["passed"]:
-            for n in FORWARDED:  # a later signal must not cut the group's wait short
-                signal.signal(n, signal.SIG_IGN)
             _end_group(state["proc"])
     finally:
         for n, h in old:
@@ -166,12 +200,12 @@ def _run_command(argv):
 
 
 def _pass_on(state, signum):
-    """Pass a signal received on to the command's group."""
-    state["passed"].append(signum)
+    """Pass a signal received on to the command's group; count it only where the group took it."""
     try:
         os.killpg(state["proc"].pid, signum)
-    except OSError:
-        pass
+    except OSError:  # the group is gone, or none of it could be signalled: nothing was passed on
+        return
+    state["passed"].append(signum)
 
 
 def _end_group(proc):
@@ -380,22 +414,136 @@ def selftest():
             except (OSError, ValueError):
                 pass
 
-    def test_normal_exit_releases_at_once():
-        repo = new_repo("daemon")
-        a = subprocess.run(lock_cmd("sh", "-c", "sleep 30 >/dev/null 2>&1 & echo $! > pid"), cwd=repo,
-                           timeout=10)
+    def alive(pid):
         try:
-            assert a.returncode == 0
+            os.kill(pid, 0)
+        except OSError:
+            return False
+        try:  # a zombie answers kill(0) too; where /proc exists, read its state
+            with open("/proc/%d/stat" % pid) as f:
+                return f.read().rsplit(")", 1)[1].split()[0] != "Z"
+        except (OSError, IndexError):
+            return True
+
+    def kill_pidfile(path):
+        try:
+            with open(path) as f:
+                os.kill(int(f.read()), signal.SIGKILL)
+        except (OSError, ValueError):
+            pass
+
+    def test_normal_exit_releases_at_once():
+        # the leader exits at once and leaves a daemon in its group: the call itself ends at once
+        # and the daemon is left running, where a wait for the group would take the 2-second grace
+        # and then kill it
+        repo = new_repo("daemon")
+        pidfile = os.path.join(repo, "pid")
+        try:
+            t0 = time.time()
+            a = subprocess.run(lock_cmd("sh", "-c", "sleep 30 >/dev/null 2>&1 & echo $! > pid"),
+                               cwd=repo, timeout=10)
+            took = time.time() - t0
+            assert a.returncode == 0, a.returncode
+            assert took < 1.0, "the call waited %.2fs for a daemon in its group" % took
+            with open(pidfile) as f:
+                assert alive(int(f.read())), "the daemon in the group was killed"
             t0 = time.time()
             assert subprocess.run(lock_cmd("true"), cwd=repo, timeout=10).returncode == 0
             took = time.time() - t0
             assert took < 1.0, "a daemon in the group held the lock for %.2fs" % took
         finally:
-            try:
-                with open(os.path.join(repo, "pid")) as f:
-                    os.kill(int(f.read()), signal.SIGKILL)
-            except (OSError, ValueError):
-                pass
+            kill_pidfile(pidfile)
+
+    def test_pass_on_counts_only_delivered():
+        # a signal the group's kill refuses -- the group already gone -- is not counted as passed on
+        p = subprocess.Popen(["true"], start_new_session=True)
+        p.wait()
+        state = {"proc": p, "pending": None, "passed": []}
+        _pass_on(state, signal.SIGTERM)
+        assert state["passed"] == [], "counted as passed on: %r" % state["passed"]
+
+    def test_signal_after_wait_still_waits_for_group():
+        # a signal passed on after the leader is reaped must still be followed by the wait for the
+        # group: the hook raises SIGHUP at the script's first signal.signal call after wait() has
+        # returned, and records each wait for the group in place of making it
+        import io
+        repo = new_repo("afterwait")
+        pidfile = os.path.join(repo, "pid")
+        real_popen, real_signal, real_end, real_err = subprocess.Popen, signal.signal, _end_group, sys.stderr
+        seen = {"waited": False, "fired": False, "group_waits": 0}
+
+        class Hooked(real_popen):
+            def wait(self, *a, **k):
+                rc = real_popen.wait(self, *a, **k)
+                seen["waited"] = True
+                return rc
+
+        def hook(n, h):
+            if seen["waited"] and not seen["fired"]:
+                seen["fired"] = True
+                signal.raise_signal(signal.SIGHUP)  # its handler runs here, before the call
+            return real_signal(n, h)
+
+        def group_wait(proc):
+            seen["group_waits"] += 1
+
+        outer = real_signal(signal.SIGHUP, lambda s, f: None)  # this process must outlive a stray one
+        try:
+            subprocess.Popen, signal.signal, sys.stderr = Hooked, hook, io.StringIO()
+            globals()["_end_group"] = group_wait
+            rc = _run_command(["sh", "-c", "sleep 30 >/dev/null 2>&1 & echo $! > '%s'" % pidfile])
+        finally:
+            subprocess.Popen, signal.signal, sys.stderr = real_popen, real_signal, real_err
+            globals()["_end_group"] = real_end
+            real_signal(signal.SIGHUP, outer)
+            kill_pidfile(pidfile)
+        assert seen["fired"], "the hook never fired"
+        assert rc == 128 + signal.SIGHUP, "the hook's signal did not reach the group: %s" % rc
+        assert seen["group_waits"] == 1, "signal passed on with %d waits for the group" % seen["group_waits"]
+
+    def test_two_signals_while_waiting():
+        # two signals caught at once while waiting for the lock: the first ends the wait and the
+        # second is ignored -- no traceback, the exit 128 + N and the run-lock: line
+        repo = new_repo("waittwo")
+        holder = subprocess.Popen(lock_cmd("sh", "-c", "echo up > up; sleep 5"), cwd=repo,
+                                  stderr=subprocess.DEVNULL)
+        try:
+            assert wait_for(os.path.join(repo, "up")), "holder never started"
+            w = subprocess.Popen(lock_cmd("true"), cwd=repo, stderr=subprocess.PIPE)
+            first = w.stderr.readline().decode()  # the handlers are in before this line prints
+            assert first.startswith("run-lock: waiting for "), first
+            w.send_signal(signal.SIGSTOP)  # stopped, it takes both before it handles either
+            w.send_signal(signal.SIGINT)
+            w.send_signal(signal.SIGTERM)
+            w.send_signal(signal.SIGCONT)
+            err = first + w.communicate(timeout=10)[1].decode()
+            assert w.returncode in (128 + 2, 128 + 15), (w.returncode, err)
+            assert "run-lock: interrupted while waiting for " in err and "Traceback" not in err, err
+        finally:
+            holder.terminate()  # passed on to its group, which ends at once
+            holder.wait()
+
+    def test_submodule_shares_lock():
+        # a suite inside a submodule takes the outermost work tree's lock, through every level
+        g = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false",
+             "-c", "protocol.file.allow=always"]
+        repos = {}
+        for name in ("sm-src", "sm-inner", "sm-super"):
+            repos[name] = new_repo(name)
+            sh(*(g + ["commit", "-q", "--allow-empty", "-m", "x"]), cwd=repos[name], check=True)
+        sup = repos["sm-super"]
+        sub = os.path.join(sup, "sub")
+        inner = os.path.join(sub, "inner")
+        sh(*(g + ["submodule", "add", "-q", repos["sm-src"], "sub"]), cwd=sup, check=True)
+        sh(*(g + ["submodule", "add", "-q", repos["sm-inner"], "inner"]), cwd=sub, check=True)
+        git_dir = sh("git", "rev-parse", "--absolute-git-dir", cwd=sup).stdout.decode().strip()
+        want = os.path.join(git_dir, "dev-workflows", "run.lock")
+        for d in (sup, sub, inner):
+            assert lock_path(d) == want, (d, lock_path(d), want)
+        assert subprocess.run(lock_cmd("true"), cwd=inner).returncode == 0
+        assert os.path.isfile(want), "no lock file at %s" % want
+        own = sh("git", "rev-parse", "--absolute-git-dir", cwd=inner).stdout.decode().strip()
+        assert not os.path.exists(os.path.join(own, "dev-workflows")), "the submodule took its own lock"
 
     def test_no_fcntl():
         repo = new_repo("nofcntl")
@@ -428,7 +576,9 @@ def selftest():
     tests = [test_serialises, test_exit_code_passthrough, test_killed_holder_releases, test_usage,
              test_outside_repo, test_lock_path, test_lock_path_symlinked, test_signal_keeps_lock,
              test_signal_keeps_lock_for_group, test_interrupted_while_waiting, test_every_signal_passed_on,
-             test_normal_exit_releases_at_once, test_no_fcntl]
+             test_normal_exit_releases_at_once, test_pass_on_counts_only_delivered,
+             test_signal_after_wait_still_waits_for_group, test_two_signals_while_waiting,
+             test_submodule_shares_lock, test_no_fcntl]
     try:
         for t in tests:
             try:
