@@ -1,5 +1,7 @@
 # One writer per Epic, part (a): `/implement` — Implementation Plan
 
+> **Status on 2026-10-25: executed, not merged.** Tasks 0–14 were built on `iv-gu/implement-one-writer` (`ef81409a`) and Task 15's live A/B was run; the result led the user to replace part (a) with `docs/superpowers/specs/2026-10-25-implement-piece-review-design.md`. Do not execute this plan again.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** `/dev-workflows:implement` codes each writer unit through one `code-writer` and one `test-writer`, reached again with `SendMessage` for every fix. It runs each unit's tests before the review, reviews per piece plus overall, and serialises every build and test run through a lock.

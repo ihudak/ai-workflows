@@ -2,6 +2,8 @@
 
 **Date:** 2026-10-24 · **Plugins:** dev-workflows (`/implement`, `/design`, `code-writer`, `test-writer`, `code-review`, `design-reviewer`), product-workflows (`/epics`, `/specify`, `epic-writer`, `epic-reviewer`), workflows-core (`model-routing/classification`, `phase-handoff`, `next-phase-offer`) · **Status:** agreed in conversation; awaiting the user's review of this document
 
+> **Status on 2026-10-25: superseded in part.** Part (a) was built (branch `iv-gu/implement-one-writer`, `ef81409a`) and measured in a live A/B on BOOK-3-01: two blind judges rated it slightly better than today's `/implement`, at 73% more cost, and traced the gain to its extra review scopes, not to the one-writer structure. It is not merged. `docs/superpowers/specs/2026-10-25-implement-piece-review-design.md` replaces part (a) with review by piece on today's coding flow, and carries the one part of part (b) kept: `/design` drawing pieces. The rest of part (b) — `/specify` and `/design` mandatory, the widened *Re-split* exit — and all of part (c) are dropped, by the user's decision. The body below stays as written, as the record of what was decided on 2026-10-24.
+
 **Who decided what.**
 - Everything marked **(Claude's call)** was decided by Claude, not the user, and is open to the user's correction. Everything else is the user's decision.
 - A builder check (a fresh reader planning from this document) raised ten questions. §3 answers each, and those answers are Claude's calls.
