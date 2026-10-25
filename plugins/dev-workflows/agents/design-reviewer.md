@@ -72,8 +72,8 @@ working tree is at it, in the working tree, since no commit holds what that scan
 3. For each section present, apply that section's rules from
    `${CLAUDE_PLUGIN_ROOT}/references/design-format.md`; for each omitted section, confirm a one-line
    `_N/A — why_` is present and the omission is legitimate at this classification — save the optional
-   `## Pieces`, which needs no line: its omission means one piece, is never a finding at this step,
-   and draws at most the *Pieces* check's `MINOR` recommendation.
+   `## Pieces`, which the *Pieces* check (below) alone judges, present or not: its omission needs no
+   line, means one piece and is never a finding at this step.
 4. Apply the cross-cutting checks (below).
 5. Record each finding in the shared severity schema; never fabricate a design — route a genuinely
    undecidable item to **needs engineering input** (but note that an undecided item means the design
@@ -173,7 +173,7 @@ working tree is at it, in the working tree, since no commit holds what that scan
 
 - **Pieces:** run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pieces.py" parse "<Design path>"`, whatever the design holds; it prints one JSON object and reads the section as `design-format.md` `## Pieces` defines it. `status: malformed` → `MAJOR`, naming the `defect` it prints, and nothing else in the section is judged. `status: pieces` → judge the section against `design-format.md` `## Pieces`:
   - **The reason.** A `Reason:` that does not hold — a change one reviewer could review in depth, however clean its internal boundaries — → `MAJOR`, its fix to drop the pieces.
-  - **The boundary**, each → `MAJOR`: two pieces' `Files:` matching one file — a file at the commit the brief's **Repositories** gives (listed as § Reading the repositories says), or one the design creates; a piece whose files depend on another piece's internals rather than on what `## Interfaces / contracts` fixes; a part two pieces share that `## Interfaces / contracts` does not fix; a `Contract:` item `## Interfaces / contracts` does not define.
+  - **The boundary**, each → `MAJOR`: two pieces' `Files:` matching one file — a file at the commit the brief's **Repositories** gives for the repository it is in (listed as § Reading the repositories says), or one the design creates; a piece whose files depend on another piece's internals rather than on what `## Interfaces / contracts` fixes; a part two pieces share that `## Interfaces / contracts` does not fix; a `Contract:` item `## Interfaces / contracts` does not define.
   - **Tests.** A test of one piece's code — at that commit, or one the design creates — that no piece's `Files:` matches → `MINOR`. A test pieces share is named by none, and is no finding.
 
   `status: none` — no section, or an `_N/A_` line — where the change plainly needs pieces, one reviewer being unable to review it in depth and the design fixing a boundary between its parts in `## Interfaces / contracts` → `MINOR` at most, a recommendation to draw them; never `BLOCKER` or `MAJOR`, since one review of the whole change is never a defect. That recommendation is the only finding `status: none` draws. A non-zero exit → read the section against `design-format.md` `## Pieces` yourself and judge it as above, and report the exit and its message as a `NIT` on `## Pieces`.
@@ -201,8 +201,8 @@ If nothing is actionable, say so and state the classification you reviewed again
   scaling rule. Only flag an omission the classification does not license. The exceptions are
   **Observability & release verification** marked `_N/A_` on a change to behaviour a deployed
   system runs, which the Release-verification check grades at every classification, and a design
-  without `## Pieces` for a change that plainly needs them, which the *Pieces* check recommends
-  drawing, at most as a `MINOR`.
+  with no pieces (no `## Pieces`, or one marked `_N/A_`) for a change that plainly needs them,
+  which the *Pieces* check recommends drawing, at most as a `MINOR`.
 - Test-strategy / design steps may describe how the system is built or exercised — that is design
   intent, not a "describes implementation" defect (implementation detail is expected in a design doc,
   unlike a specification).

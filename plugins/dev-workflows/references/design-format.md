@@ -198,10 +198,10 @@ reach.
     `- [ ]`. Any present blocks handoff; resolve them in the grill, or push a genuinely undecidable one
     onto the `specification.md` as a spec-level `- [ ]` for the PM (the design then waits on it).
 14. **## Pieces** (optional — omitted for one piece) — the change's review pieces. A piece is a unit
-    of review, never of coding: where a change touches the files of two or more pieces, `/implement`
-    reviews each touched piece with its own reviewer and then the whole change with an overall one;
-    who writes the code and the tests does not change. Pieces need both of two things, and are
-    never drawn by count:
+    of review, never of coding: a part of the change — its code and its tests — that one reviewer
+    can review in depth on its own, at a boundary the design fixes. How `/implement`'s review gate
+    reviews by piece is its Phase 3B step 5's to say; who writes the code and the tests does not
+    change. Pieces need both of two things, and are never drawn by count:
     - **A reason — whether to split.** The `Reason:` line says why one reviewer could not review the
       whole change in depth: its size, the distinct layers or concerns it spans, the test cases it
       carries — about 1,500 lines of production code in two layers with different test styles,
@@ -234,16 +234,17 @@ reach.
       a comma-separated list of entries, each in backticks, with nothing but commas and spaces
       outside them. A test file pieces share, such as a common test helper, is named by none.
       **No file may be matched by two pieces' `Files:`** — a file on disk at the commit `/design`
-      Phase 4 scanned, or one the design creates; a bare path and a glob, or two globs, matching the
-      same file is an overlap. A file no piece names is reviewed by the overall review, and is not
-      barred from editing.
+      Phase 4 scanned its repository at, or one the design creates; a bare path and a glob, or two
+      globs, matching the same file is an overlap. A file no piece names belongs to no piece: it is
+      reviewed with the whole change, and is not barred from editing.
     - `Contract:` lists, comma-separated, the `## Interfaces / contracts` items the piece implements
       and those it calls that another piece implements, or reads `none`; a piece with no `Contract:`
       line has none.
-    - **Each `Files:` entry is a pattern relative to its repository's top level**, written without a
-      leading `/` or `./`: `*` matches any run of characters except `/`; `**` as a whole path segment
-      matches zero or more segments (`src/a/**` matches everything under `src/a/`, `**/X.java`
-      matches `X.java` at any depth), and inside a segment matches as `*` does; `?` matches one
+    - **Each `Files:` entry is a pattern relative to the top level of the repository its piece's
+      files are in**, one the header's `Repos` names, written without a leading `/` or `./`: `*`
+      matches any run of characters except `/`; `**` as a whole path segment matches zero or more
+      segments (`src/a/**` matches everything under `src/a/`, `**/X.java` matches `X.java` at any
+      depth), and inside a segment matches as `*` does; `?` matches one
       character except `/`; an entry ending in `/` matches everything under that directory; every
       other character is literal — there is no `[…]` and no `{…}`; an entry with no wildcard matches
       that one path.
@@ -258,10 +259,9 @@ reach.
     kebab-case or is used twice; a piece with no `Files:` line, a second one, or one with no entry;
     a `Files:` entry not in backticks, an empty one, an unclosed backtick, a trailing comma, or
     other text outside the backticks; a piece with a second `Contract:` line; the same entry in two
-    pieces' `Files:`; or any other non-blank line — prose, a `Writers:` or `Builds after:` line, or a
-    fenced block inside the section, whose lines are all read as the section's. `pieces.py parse` is
-    the check `/design` runs on the section it writes and `design-reviewer` runs on the section it
-    reviews; `pieces.py assign` is what `/implement` runs, and it also reads the section as
+    pieces' `Files:`; or any other non-blank line — prose, or a fenced block inside the section,
+    whose lines are all read as the section's. `pieces.py parse` is the check `/design` runs on the
+    section it writes and `design-reviewer` runs on the section it reviews; `pieces.py assign` is what `/implement` runs, and it also reads the section as
     malformed where one path of the change is matched by two pieces' patterns — an overlap no
     entry's text shows.
 
