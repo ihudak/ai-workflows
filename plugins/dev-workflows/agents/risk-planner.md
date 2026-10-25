@@ -160,8 +160,13 @@ _or_ "none — checked"
   hold what the step touches: a step that creates a file, the piece whose
   files its path falls in; a step whose files lie in two pieces, split into
   one step per piece; and a step that touches no file, the piece of the next
-  step that does, or, where none follows, of the one before it. Where the
-  brief names no `Pieces`, write no `Piece:` line.
+  step that does, or, where none follows, of the one before it. A step that
+  edits a file the repository already holds that no piece's files name or
+  match ends `Piece: <name> — also edits <path>, which no piece names`, its
+  piece the one its other files fall in, else as for a step that touches no
+  file, so the caller asks about that file when the plan is approved rather
+  than a writer mid-run. Where the brief names no `Pieces`, write no `Piece:`
+  line.
 - **Name the rejected alternatives.** A plan without a rejected alternative is
   suspect.
 - **Unambiguous, not complete.** A step is done when the implementer can do
@@ -216,7 +221,8 @@ _or_ "none — checked"
   `code-writer`; and the repro's re-run after the fix and the regression test's red-capability check
   are the caller's own, at the unit's test run — the re-run at the last unit's — never before it, so
   a step that makes either is left to the caller; the caller reports a red check that fails on
-  anything but the bug's assertion as inconclusive, and its verify run is the green check.
+  anything but the bug's assertion as inconclusive, and its green check is its verify run, or, for
+  a test outside every suite the baseline holds, its own run of that test at the test run.
 - **Flag blockers early.** If a prerequisite is missing (missing tests, unclear
   requirement, incompatible runtime), return a plan whose first step is "ask
   user X" rather than silently assuming.

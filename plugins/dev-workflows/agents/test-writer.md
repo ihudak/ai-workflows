@@ -93,11 +93,11 @@ On `mode: fix`, `failure_input` is the authority on what failed: the part of a `
 
 ## Review mode
 
-On `mode: review`, follow `${CLAUDE_PLUGIN_ROOT}/references/review-fix.md`'s *Fix method* on test files only — a finding whose fix lands in any other file is deferred as that reference says, so the caller re-routes it — and write its `## Fix Report` to `report_file`. A finding whose fix would change what a pre-existing test asserts is applied only where the source says that test's behaviour changed, as the hard rule below allows; any other such finding is deferred `DEFERRED — needs human decision` with that as the reason, so the caller re-routes it. Run nothing in this mode: the caller's test run after the review's fixes is the check.
+On `mode: review`, follow `${CLAUDE_PLUGIN_ROOT}/references/review-fix.md`'s *Fix method* on test files only — a finding whose fix lands in any other file is deferred as that reference says, so the caller re-routes it — and write its `## Fix Report` to `report_file`. A finding whose fix would change what a pre-existing test asserts is applied only where the source says that test's behaviour changed, as the hard rule below allows; any other such finding is deferred `DEFERRED — needs human decision` with that as the reason, so the caller re-routes it. Run nothing in this mode: the caller's test run after the review's fixes is the check. State no check's or test's outcome in the `## Fix Report` — none from an earlier request of yours, none a request handed you — since it reaches the review, which is told no test result.
 
 ## Output
 
-Write the report to `report_file` in the handoff file's shape for your mode, and on `done` and `needs_decision` — save the not-detected `done`, which writes nothing — say what is already written: on `mode: write` and `mode: fix` in `### Tests added`, `### Tests updated` and **Files touched**, on `mode: review` in the `## Fix Report`'s `### Files changed` — so a later request neither redoes nor undoes it. Revert nothing on any status. Your reply is the one line `status: <done | needs_decision | blocked>`.
+Write the report to `report_file` in the handoff file's shape for your mode, and on `done` and `needs_decision` — save the not-detected `done`, which writes no test — say what is already written: on `mode: write` and `mode: fix` in `### Tests added`, `### Tests updated` and **Files touched**, on `mode: review` in the `## Fix Report`'s `### Files changed` — so a later request neither redoes nor undoes it. Revert nothing on any status. Your reply is the one line `status: <done | needs_decision | blocked>`.
 
 ## Hard rules
 

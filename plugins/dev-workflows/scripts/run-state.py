@@ -108,7 +108,7 @@ LOCK = ".implement-run.lock"
 #                 "first_plan_reports", "resumes": 0, "fresh": 0} -- "model" the model its latest
 #                 dispatch ran on; "first_plan_reports" null, or how many of "reports" a re-plan's
 #                 approval found it holding
-#   test_runs    {"unit", "stage": "unit"|"post-review", "rounds": 0, "status"}
+#   test_runs    {"unit", "stage": "unit"|"post-review", "rounds": 0, "status", "sent": []}
 #   reviews      {"scope": "piece:<name>"|"overall", "diff_file", "return_file", "verdict"}
 # commands/implement.md quotes this list (KEYS_LINE); the selftest holds the two equal.
 KEYS = [

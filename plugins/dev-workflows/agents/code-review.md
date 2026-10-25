@@ -57,6 +57,7 @@ The caller passes a structured brief:
   - `overall — pieces: <names> — only here: <paths>` — the diff is the whole change, and **Piece reviews** gives each piece's review. Review each path `only here` names in full, on every dimension: no piece's review saw it — and, where the brief notes the piece reviews predate the post-review fixes, review those fixes in full too, wherever they lie, since only you see them. Read the piece reviews first, then look for what a piece's review cannot see: where the pieces meet — a call, a type or data passed from one to another, the order they build in — helpers duplicated across pieces, conventions the pieces apply differently, and the shared contract the design fixes between them, held against the code on each side. Raise no finding a piece's review raised again; a defect inside one piece that its review missed is still a finding.
 - **Piece reviews** (on an `overall` **Scope** only) — each piece's review, as `<name>: <the absolute path of its return>`; where the brief notes they predate the post-review fixes, judge each of their findings against the code as it now stands. A *context* input under the read-failure contract: one that cannot be read degrades to absent, and the Summary names it.
 - **Project root** - absolute path so files can be opened.
+- **Untracked, unreported** (optional, from `/implement`, on a review whose diff is the whole change) — each untracked file no writer reported, a build or code-generation output say, by its path alone: no diff holds it, and the commit carries it. Open each that bears on the change and judge it as part of it — one the commit should not carry is a finding located in it.
 - **Helper copies** (optional, from `/implement`) — each helper a coding step wrote a second copy of, beside the one it duplicates and the change reusing that one needed. Judge each copy as any other duplication in the diff: where folding it into the helper is the fix, that is a finding located at both sites — the copy's `path:line` as its Location, and the helper's in its observation as `also at path:line` (*Collect findings*) — since the fold edits both files and a fixer edits only a file a finding names.
 - **Security register** (optional, from `/implement`) — the absolute path of the `register.json` `/security-workflows:scan` keeps for this repository, read only to name a finding as *Set nothing aside silently* (Review method step 4) says. A *context* input under the read-failure contract: unreadable, it degrades to absent, and absent, no register is read.
 - **Deferred to another code repository** (optional, from `/implement`) — changes the run records as another code repository's work, never this diff's: each is an explicit deferral note, which dimension 10 honours where a spec is in scope. The deferred change's absence is never a defect of this diff; whether this diff is safe to merge and deploy before that change lands is still this review's to judge.
@@ -74,14 +75,16 @@ Refuse to review without a diff - ask the caller to produce one.
   is a *context* input under the read-failure contract: if it cannot be read, record
   `Claims falsification: NOT RUN — claims_file unreadable at <path>` in the Summary and continue;
   never substitute the brief's own text for it, and never reconstruct it.
-- **Plan ruling** (optional, from `/implement`) — each ruling of the user's
-  that the plan text does not carry: a question the approved plan left open,
-  which the user answered while it was coded, with that answer; and, on a
-  review after a plan conflict, each finding whose fix the user ruled may
-  depart from the approved plan, with the plan text it departs from: a
-  deviation the user sanctioned. Neither is a finding — report no divergence
-  from the plan, in Correctness or any other dimension, where the code follows
-  such a ruling, and do not raise a ruled finding again. The code that carries
+- **Plan ruling** (optional, from `/implement`) — each ruling that the plan
+  text does not carry: a question the approved plan left open, answered while
+  it was coded — by the user, or by `/implement` for a file outside a writer
+  unit's files — with that answer; a ruling on where a test and the code
+  disagreed, naming which of the two holds; and, on a review after a plan
+  conflict, each finding whose fix the user ruled may depart from the approved
+  plan, with the plan text it departs from: a deviation the user sanctioned.
+  None is a finding — report no divergence from the plan, in Correctness or
+  any other dimension, where the code follows such a ruling, and do not raise
+  a ruled finding again. The code that carries
   out a ruling is reviewed like any other change, and a defect it brings is a
   finding.
 

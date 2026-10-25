@@ -96,13 +96,14 @@ line not — dividing it:
   of that test run and so before the review at MODERATE and above. A plan step `code-writer` left
   to the caller that runs a test the run will write and expects it to fail — the repro written as a
   new test, a test-first step — is this check, of the test the test writer marked: the failure the
-  step expects is the assertion it must fail on. The **green check** is the caller's verify run
-  (`/implement` Phase 3.5 step 4), in which the same test must pass. Where the red check passes
-  instead, the test does not show it catches this bug, and the caller's report says so. Where it
-  fails on anything but that assertion — a missing test bootstrap, a submodule's content, a helper
-  only the change adds — the red check is **inconclusive**: the caller's report says so under
-  `### Assumptions & limitations`, naming what it failed on, and the green check is still the
-  caller's verify run.
+  step expects is the assertion it must fail on. The **green check** is the caller's run of the
+  same test on the changed tree, which it must pass: its verify run (`/implement` Phase 3.5 step
+  4), or, for a test outside every suite the baseline holds, which no verify runs, its step 3's run
+  of that test. Where the red check passes instead, the test does not show it catches this bug, and
+  the caller's report says so. Where it fails on anything but that assertion — a missing test
+  bootstrap, a submodule's content, a helper only the change adds — the red check is
+  **inconclusive**: the caller's report says so under `### Assumptions & limitations`, naming what
+  it failed on, and the green check is still the caller's, as above.
 
 **The scratch checkout** is outside every repository and is removed whatever the run in it exits
 with, a red check's expected failure included. One Bash call makes it, runs in it and removes it, since
@@ -203,7 +204,7 @@ top level, since a linked dependency directory shares the working tree's state: 
    the wrong seam to manufacture green.
 5. **Evidence before the claim.** Never report the bug fixed until the repro from step 1 goes green.
 6. **Name the confirmed hypothesis.** Where step 2 produced a ranked list and the fix was verified —
-   the step-1 repro, or the regression test in the caller's verify run, ran green after the fix —
+   the step-1 repro, or the regression test in the caller's green check, ran green after the fix —
    state which hypothesis the fix acted on, or that it acted on none of them, and what showed it — a
    probe's result, or that the repro went green after a fix aimed at that hypothesis alone — in the
    run's report and the pull-request body, so the next person to debug this code learns what the
