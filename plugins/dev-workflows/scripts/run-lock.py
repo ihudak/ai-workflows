@@ -9,37 +9,41 @@ ports. This script lets one at a time through: it takes an exclusive lock on
 inside a submodule, its superproject's, and so on to the top, so a suite inside a submodule shares
 the superproject's lock; per worktree, inside the git directory, never staged; its directory is
 made when missing -- waits for it when another holder has it, runs the command, and lets go when
-the command has ended. The lock is fcntl.flock, which the kernel releases when the holder dies
-however it dies, so no lock goes stale and the file is never removed.
+the command has ended. Run it from inside the git work tree. The command inherits stdin, stdout,
+stderr and the working directory, but not the lock descriptor, and leads a session of its own.
 
-Run it from inside the git work tree. The command inherits stdin, stdout, stderr and the working
-directory, but not the lock descriptor, so a daemon the build leaves behind cannot hold the lock. It
-runs in a session of its own, so a Ctrl-Z stops only this script, not the command.
+What the script guarantees:
+- No two holders overlap: a second caller waits until the first has let go, printing one stderr
+  line, `run-lock: waiting for <lock path>`.
+- The lock is held until the command has ended: the command itself, the group leader, so a daemon
+  the build leaves in its group does not hold it -- and, after a signal this script passed on, the
+  command's whole group: the script waits for the leader with no time limit, then up to 2 seconds
+  for the rest of the group, then sends SIGKILL to whatever is left. The lock is fcntl.flock, which
+  the kernel releases when the holder dies however it dies, so no lock goes stale and the file is
+  never removed.
+- Every exit of the script's own that it reaches prints a stderr line starting `run-lock:` -- the
+  usage line included. The exit code alone does not tell them from the command's: a test runner
+  may itself exit 2 or 4, so read the stderr line.
 
-"Ended" is exact in two cases. On any exit not after a signal this script passed on -- a normal exit,
-or a leader killed by a signal that did not come through this script -- it is the command itself
-(the group leader): a daemon the build leaves in its group does not hold the lock. A SIGTERM,
-SIGHUP, SIGINT or SIGQUIT sent to this script while the leader runs is passed on to the command's
-group as it arrives, and after one the lock is held until the whole group is gone: the script waits
-for the leader, with no time limit, then for the rest of the group for up to 2 seconds, then sends
-SIGKILL to whatever is left. The exit is 128 + N for the last signal passed on. Not every one is
-passed on: one that arrives once the script holds the leader's exit status -- during that 2-second
-grace too -- is ignored, from then until the script exits; of those that arrive before the command
-has started, only the last is kept, and passed on once the command starts; one kept so is dropped
-where the command cannot be started (exit 126 or 127); and one the group's kill refuses -- the
-group already gone -- is not counted as passed on. The gap, by class: a signal this script does
-not catch -- SIGKILL above all, but also SIGUSR1, SIGALRM and the like -- sent to this script
-alone, not to its group, frees the lock while the command still runs.
+Signals. From the moment the script has checked its arguments, a SIGTERM, SIGHUP, SIGINT or SIGQUIT
+sent to it is caught. While the command runs, each is passed on to the command's group as it
+arrives. Before the command has started, the last of them is kept and passed on once it starts,
+and dropped where the command is never started -- the lock not taken (exit 4), or the command
+not runnable (exit 126 or 127). While the script waits for the lock, one
+ends the wait instead, with `run-lock: interrupted while waiting for <lock path>` and the exit
+128 + N, and every one after it is ignored. A signal the group's kill refuses -- the group already
+gone -- is not counted as passed on; the exit after one passed on is 128 + N for the last. Once the
+script has reaped the command it stops passing signals on: one that arrives before it stops is
+passed on, and the group is then waited for; one that arrives after -- through the 2-second grace,
+and to the script's exit -- is ignored.
 
-While it waits for the lock, this script prints one stderr line, `run-lock: waiting for <lock
-path>`; a signal that arrives then ends it with `run-lock: interrupted while waiting for <lock
-path>` and the exit 128 + N, and any signal after that one is ignored until the script exits. Where
-`fcntl` is missing, on a host without it, the script says so on stderr and runs the command
+Where a signal can still end the script without its own exit and line: in the instant at its start
+before it has checked its arguments and set its handlers, where a SIGINT ends it with Python's
+KeyboardInterrupt traceback and a SIGTERM, SIGHUP or SIGQUIT ends it at once; and a signal it does
+not catch -- SIGKILL above all, but also SIGUSR1, SIGALRM and the like -- whenever it comes, which,
+sent to this script alone and not to its group, also frees the lock while the command still runs.
+Where `fcntl` is missing, on a host without it, the script says so on stderr and runs the command
 unlocked.
-
-Every exit of the script's own prints a stderr line starting `run-lock:` -- the usage line
-included. The exit code alone does not tell them from the command's: a test runner may itself exit 2
-or 4, so read the stderr line.
 
 Exit codes:
   126        the command could not be run (not executable)
@@ -140,9 +144,11 @@ def lock_path(cwd=None):
 
 def run(argv):
     """Take the lock, run argv, return the exit code."""
+    state = {"proc": None, "pending": None, "passed": []}
+    _install(_forwarder(state))  # from here a signal is kept for the command, or ends the wait
     if fcntl is None:
         sys.stderr.write("run-lock: fcntl is not available here; running the command unlocked\n")
-        return _run_command(argv)
+        return _run_command(argv, state)
     path = lock_path()
     if path is None:
         sys.stderr.write("run-lock: not inside a git work tree, or git could not name the lock file\n")
@@ -153,7 +159,6 @@ def run(argv):
     except OSError as e:
         sys.stderr.write("run-lock: cannot reach %s: %s\n" % (path, e))
         return 4
-    state = {"proc": None, "pending": None, "passed": []}
     try:
         try:
             try:
@@ -172,8 +177,9 @@ def run(argv):
 
 def _wait(fd, path, forward):
     """Wait for the lock: None once it is held, the handlers then `forward`; the exit code where a
-    signal ended the wait. Every handler swap is inside the try, so a signal at any point of it
-    ends in the interrupted line or is kept for the command, never in a traceback."""
+    signal ended the wait. The handlers on entry are `forward` already (run), and every swap is
+    inside the try, so a signal at any point of it ends in the interrupted line or is kept for the
+    command, never in a traceback."""
     try:
         _install(_raise)
         sys.stderr.write("run-lock: waiting for %s\n" % path)
@@ -248,7 +254,14 @@ def main(argv):
     if len(argv) < 2 or argv[0] != "--":
         sys.stderr.write(USAGE + "\n")
         return 2
-    return run(argv[1:])
+    try:
+        return run(argv[1:])
+    finally:
+        # the interpreter puts the default handlers back as it shuts down, and a signal then would
+        # end the script without its exit and line: blocked, it is dropped when the process exits.
+        # The command was reaped before this, so it started with no signal blocked.
+        if hasattr(signal, "pthread_sigmask"):
+            signal.pthread_sigmask(signal.SIG_BLOCK, FORWARDED)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -308,8 +321,34 @@ def selftest():
         assert subprocess.run(lock_cmd("sh", "-c", "exit 7"), cwd=repo).returncode == 7
         assert subprocess.run(lock_cmd("true"), cwd=repo).returncode == 0
         assert subprocess.run(lock_cmd("sh", "-c", "kill -TERM $$"), cwd=repo).returncode == 128 + 15
-        r = subprocess.run(lock_cmd("run-lock-no-such-command"), cwd=repo, stderr=subprocess.DEVNULL)
-        assert r.returncode == 127, r.returncode
+        r = subprocess.run(lock_cmd("run-lock-no-such-command"), cwd=repo, stderr=subprocess.PIPE)
+        assert r.returncode == 127 and r.stderr.startswith(b"run-lock: command not found"), r
+        noexec = os.path.join(repo, "noexec")
+        with open(noexec, "w") as f:
+            f.write("#!/bin/sh\n")
+        r = subprocess.run(lock_cmd(noexec), cwd=repo, stderr=subprocess.PIPE)
+        assert r.returncode == 126 and r.stderr.startswith(b"run-lock: cannot run"), r
+
+    def test_cannot_reach():
+        repo = new_repo("reach")
+        with open(os.path.join(repo, ".git", "dev-workflows"), "w") as f:  # a file where a directory goes
+            f.write("x")
+        r = subprocess.run(lock_cmd("true"), cwd=repo, stderr=subprocess.PIPE)
+        assert r.returncode == 4 and r.stderr.startswith(b"run-lock: cannot reach"), r
+
+    def test_inherits_and_own_session():
+        # stdin, stdout, stderr and the working directory are the caller's; the command leads a
+        # session of its own
+        repo = new_repo("inherit")
+        sub = os.path.join(repo, "d")
+        os.makedirs(sub)
+        code = ("import os, sys; l = sys.stdin.readline().strip(); print(l, os.getcwd()); "
+                "sys.stderr.write('err\\n'); print(os.getsid(0) == os.getpid())")
+        r = subprocess.run(lock_cmd(sys.executable, "-c", code), cwd=sub, input=b"hi\n",
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10)
+        out = r.stdout.decode().split("\n")
+        assert r.returncode == 0 and out[0] in ("hi " + sub, "hi " + os.path.realpath(sub)), (r, out)
+        assert out[1] == "True" and r.stderr == b"err\n", (out, r.stderr)
 
     def test_killed_holder_releases():
         repo = new_repo("killed")
@@ -564,6 +603,7 @@ def selftest():
         holder = subprocess.Popen(lock_cmd("sh", "-c", "echo up > up; sleep 1"), cwd=repo,
                                   stderr=subprocess.DEVNULL)
         real_flock, real_signal, real_err = fcntl.flock, signal.signal, sys.stderr
+        real_mask = signal.pthread_sigmask
         saved = [(n, signal.getsignal(n)) for n in FORWARDED]
         seen = {"held": False, "fired": False}
 
@@ -573,11 +613,11 @@ def selftest():
                 seen["held"] = True
             return got
 
-        def hook(n, h):
+        def hook(how, mask):  # the first handler swap after the wait, before it blocks anything
             if seen["held"] and not seen["fired"]:
                 seen["fired"] = True
                 signal.raise_signal(signal.SIGTERM)
-            return real_signal(n, h)
+            return real_mask(how, mask)
 
         err, raised, rc, cwd = io.StringIO(), None, None, os.getcwd()
         try:
@@ -585,13 +625,13 @@ def selftest():
             for n in FORWARDED:  # this process must outlive a stray one
                 real_signal(n, lambda s, f: None)
             os.chdir(repo)
-            fcntl.flock, signal.signal, sys.stderr = flock, hook, err
+            fcntl.flock, signal.pthread_sigmask, sys.stderr = flock, hook, err
             try:
                 rc = run(["true"])
             except BaseException as e:  # the defect: an uncaught _Signalled
                 raised = e
         finally:
-            fcntl.flock, signal.signal, sys.stderr = real_flock, real_signal, real_err
+            fcntl.flock, signal.pthread_sigmask, sys.stderr = real_flock, real_mask, real_err
             for n, h in saved:
                 real_signal(n, h)
             os.chdir(cwd)
@@ -599,9 +639,126 @@ def selftest():
         assert raised is None, "uncaught %r; stderr %r" % (raised, err.getvalue())
         assert seen["fired"], "the hook never fired"
         out = err.getvalue()
-        assert rc == 0 or (rc == 128 + signal.SIGTERM and ("run-lock: passed signal 15 on" in out
-                                                         or "run-lock: interrupted while waiting" in out)), \
-            (rc, out)
+        assert rc == 128 + signal.SIGTERM and "run-lock: interrupted while waiting for " in out, (rc, out)
+
+    def test_signal_before_the_command():
+        # a signal that arrives before the command starts -- here while lock_path's git runs -- is
+        # kept, only the last of several, and passed on once the command starts; one kept for a
+        # command that cannot be started is dropped
+        import io
+        repo = new_repo("early")
+        real_git, real_signal, real_err = _git, signal.signal, sys.stderr
+        saved = [(n, signal.getsignal(n)) for n in FORWARDED]
+        seen = {"fired": False}
+
+        def git(cwd, *args):  # SIGINT, then SIGTERM, at the first git call
+            if not seen["fired"]:
+                seen["fired"] = True
+                signal.raise_signal(signal.SIGINT)
+                signal.raise_signal(signal.SIGTERM)
+            return real_git(cwd, *args)
+
+        got, cwd = [], os.getcwd()
+        try:
+            for n in FORWARDED:  # this process must outlive a stray one
+                real_signal(n, lambda s, f: None)
+            os.chdir(repo)
+            for argv in (["sleep", "2"], ["run-lock-no-such-command"]):
+                err = io.StringIO()
+                seen["fired"] = False
+                globals()["_git"], sys.stderr = git, err
+                try:
+                    got.append((run(argv), err.getvalue(), None))
+                except BaseException as e:  # the defect: a KeyboardInterrupt from the default handler
+                    got.append((None, err.getvalue(), e))
+                finally:
+                    globals()["_git"], sys.stderr = real_git, real_err
+        finally:
+            for n, h in saved:
+                real_signal(n, h)
+            os.chdir(cwd)
+        (rc, out, raised), (rc2, out2, raised2) = got
+        assert raised is None and raised2 is None, "uncaught %r / %r" % (raised, raised2)
+        assert rc == 128 + signal.SIGTERM and "run-lock: passed signal 15 on" in out, (rc, out)
+        assert rc2 == 127 and "run-lock: command not found" in out2 and "passed" not in out2, (rc2, out2)
+
+    def test_grace_ignores_and_kills():
+        # after a signal passed on, the leader exits at once and a member that ignores TERM and INT
+        # keeps running: a second signal in the grace is ignored, the member is SIGKILLed once the
+        # 2-second grace is spent, and the exit is 128 + N of the first, with its line
+        repo = new_repo("grace")
+        script = ("(trap '' TERM INT; echo $$ > member; exec sleep 30) & "
+                  "trap 'echo out > leader; exit 0' TERM; echo up > up; wait")
+        a = subprocess.Popen(lock_cmd("sh", "-c", script), cwd=repo, stderr=subprocess.PIPE)
+        member = os.path.join(repo, "member")
+        try:
+            assert wait_for(os.path.join(repo, "up")) and wait_for(member), "holder never started"
+            time.sleep(0.2)
+            a.send_signal(signal.SIGTERM)
+            assert wait_for(os.path.join(repo, "leader")), "the leader never got the signal"
+            time.sleep(0.3)  # the script has reaped the leader and is waiting for the group
+            a.send_signal(signal.SIGINT)
+            err = a.communicate(timeout=10)[1].decode()
+            assert a.returncode == 143 and "run-lock: passed signal 15 on to the command; exiting 143" \
+                in err, (a.returncode, err)
+            with open(member) as f:
+                pid = int(f.read())
+            end = time.time() + 2
+            while time.time() < end and alive(pid):
+                time.sleep(0.02)
+            assert not alive(pid), "the member outlived the grace"
+        finally:
+            a.kill()
+            kill_pidfile(member)
+
+    def test_exit_holds_signals():
+        # a signal that reaches the script as it exits -- after the command, or after an
+        # interrupted wait -- never ends it without its own exit and line: statistical, many runs
+        repo = new_repo("atexit")
+        mark = os.path.join(repo, "m")
+        bad = []
+        for _ in range(15):
+            if os.path.exists(mark):
+                os.remove(mark)
+            a = subprocess.Popen(lock_cmd("sh", "-c", "echo x > m"), cwd=repo, stderr=subprocess.PIPE)
+            wait_for(mark, 5)
+            a.send_signal(signal.SIGTERM)
+            err = a.communicate(timeout=10)[1].decode()
+            if not (a.returncode == 0 or (a.returncode == 143 and "run-lock: passed signal 15 on" in err)):
+                bad.append(("after the command", a.returncode, err))
+        holder = subprocess.Popen(lock_cmd("sh", "-c", "echo up > up; sleep 3"), cwd=repo,
+                                  stderr=subprocess.DEVNULL)
+        try:
+            assert wait_for(os.path.join(repo, "up")), "holder never started"
+            for _ in range(15):
+                w = subprocess.Popen(lock_cmd("true"), cwd=repo, stderr=subprocess.PIPE)
+                first = w.stderr.readline().decode()
+                w.send_signal(signal.SIGINT)
+                w.send_signal(signal.SIGTERM)
+                err = first + w.communicate(timeout=10)[1].decode()
+                if not (w.returncode == 130 and "run-lock: interrupted while waiting" in err):
+                    bad.append(("after the wait", w.returncode, err))
+        finally:
+            holder.terminate()
+            holder.wait()
+        assert not bad, bad[:3]
+
+    def test_command_starts_unblocked():
+        # the command starts with no signal blocked, on both paths: the lock free, and after a wait
+        if not os.path.exists("/proc/self/status"):
+            return
+        repo = new_repo("unblocked")
+        cmd = lock_cmd("sh", "-c", "grep SigBlk /proc/$$/status >> blk")
+        assert subprocess.run(cmd, cwd=repo, timeout=10).returncode == 0
+        holder = subprocess.Popen(lock_cmd("sh", "-c", "echo up > up; sleep 0.5"), cwd=repo)
+        try:
+            assert wait_for(os.path.join(repo, "up")), "holder never started"
+            assert subprocess.run(cmd, cwd=repo, stderr=subprocess.DEVNULL, timeout=10).returncode == 0
+        finally:
+            holder.wait()
+        with open(os.path.join(repo, "blk")) as f:
+            masks = [l.split()[1] for l in f.read().splitlines()]
+        assert len(masks) == 2 and all(int(m, 16) == 0 for m in masks), masks
 
     def test_submodule_shares_lock():
         # a suite inside a submodule takes the outermost work tree's lock, through every level
@@ -653,12 +810,13 @@ def selftest():
         assert subprocess.run(lock_cmd("true"), cwd=wt).returncode == 0
         assert lock_path(wt) != want and os.path.isfile(lock_path(wt))
 
-    tests = [test_serialises, test_exit_code_passthrough, test_killed_holder_releases, test_usage,
+    tests = [test_serialises, test_exit_code_passthrough, test_cannot_reach, test_inherits_and_own_session, test_killed_holder_releases, test_usage,
              test_outside_repo, test_lock_path, test_lock_path_symlinked, test_signal_keeps_lock,
              test_signal_keeps_lock_for_group, test_interrupted_while_waiting, test_every_signal_passed_on,
              test_normal_exit_releases_at_once, test_pass_on_counts_only_delivered,
              test_signal_after_wait_still_waits_for_group, test_two_signals_while_waiting,
-             test_signal_as_the_wait_ends,
+             test_signal_as_the_wait_ends, test_signal_before_the_command, test_grace_ignores_and_kills,
+             test_exit_holds_signals, test_command_starts_unblocked,
              test_submodule_shares_lock, test_no_fcntl]
     try:
         for t in tests:
