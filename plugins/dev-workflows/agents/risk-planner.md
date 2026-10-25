@@ -46,6 +46,10 @@ The caller passes a structured brief:
   ruling* says. A *context* input under the read-failure contract in
   `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`: unreadable, it
   degrades to absent, and absent, no register is read.
+- **`Pieces`** (optional, from `/implement`) — the design's pieces, each with
+  the files its `## Pieces` section gives it, where the design draws two or
+  more. Each piece is reviewed on its own, and on `/implement` the writer
+  unit holding a piece codes the Steps that name it. Absent → plan normally.
 - **`task_shape`** (optional) — `bug` when the caller classified the task as a
   defect fix. When `task_shape: bug`, follow
   `${CLAUDE_PLUGIN_ROOT}/references/bug-diagnosis.md`: lead `### Steps` with a
@@ -95,6 +99,7 @@ _or_ "Ranking withheld — no red-capable repro. Tried: [what you tried, and wha
 
 ### Steps
 1. [concrete, minimal-scope step]
+   Piece: [the piece's name — only where the brief names `Pieces`]
 2. ...
 
 ### Files to create / modify
@@ -150,6 +155,12 @@ _or_ "none — checked"
   the requirement ID(s) it implements — e.g. `1. <step> — implements [AC03],
   [TC07]`. A step that implements no specific requirement needs no tag. When no
   spec/design is in the brief (direct mode), skip this silently.
+- **Place every step in one piece (when the brief names `Pieces`).** End each
+  `### Steps` entry with a `Piece: <name>` line naming the piece whose files
+  hold what the step touches: a step that creates a file, the piece whose
+  files its path falls in; a step whose files lie in two pieces, split into
+  one step per piece; and a step that touches no file, the piece whose work
+  it serves. Where the brief names no `Pieces`, write no `Piece:` line.
 - **Name the rejected alternatives.** A plan without a rejected alternative is
   suspect.
 - **Unambiguous, not complete.** A step is done when the implementer can do
