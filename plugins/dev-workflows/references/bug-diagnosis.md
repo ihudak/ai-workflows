@@ -1,7 +1,9 @@
 # Bug-diagnosis discipline (embedded — shared reference)
 
-Feedback-loop-first discipline for **bug-shaped** SIGNIFICANT / HIGH-RISK tasks. Cited by
-`/implement` (Phase 2B) and followed by `risk-planner` when the caller sets `task_shape: bug`, and by
+Feedback-loop-first discipline for **bug-shaped** tasks: `risk-planner` plans by it on SIGNIFICANT /
+HIGH-RISK work, and `/implement` runs it on bug work (`task_shape: bug`) at every class. Cited by
+`/implement` from its plan (Phase 2B) through its code, test run and review (Phases 3, 3.5 and 3.6) to
+its report, and followed by `risk-planner` when the caller sets `task_shape: bug`, and by
 `code-writer`, `/implement`'s coding subagent, where its request carries `scratch_checkout: HEAD`.
 Adapted from mattpocock `diagnosing-bugs`; aligns with `superpowers:verification-before-completion`.
 
@@ -9,7 +11,8 @@ Adapted from mattpocock `diagnosing-bugs`; aligns with `superpowers:verification
 whoever runs the repro, each holding `Bash`: the `/implement` orchestrator; `risk-planner`, which
 carries `Bash` for this purpose alone; and `code-writer`, on a plan step that runs the repro.
 `risk-planner`'s execution is bounded — run the repro and read-only commands, making no file but the
-scratch checkout the section below names where it says the repro runs in one, and never mutate the
+scratch checkout the section below names where it says the repro runs in one, and the run lock's own
+file inside the git directory, which the lock script makes where it is missing, and never mutate the
 working tree, the index, `HEAD`, or branch state; the caller owns every write. **`code-writer`
 carries out a plan's diagnosis steps** — a run of the repro, a `[DEBUG-xxxx]` probe placed or read,
 a fixture or a script trimmed to minimise the repro — and has `risk-planner`'s exception, held to
@@ -61,23 +64,25 @@ line not — dividing it:
 - **From the first edit, a check against the working tree runs only through the run lock**
   (`${CLAUDE_PLUGIN_ROOT}/scripts/run-lock.py`), so no two share the tree, which holds the change:
   `code-writer`'s build and the tests near its change, `test-writer`'s runs of its own tests, and
-  the orchestrator's unit test run — its lint, its build, every check a step left to it and
-  `test-baseliner`'s verify. A command that writes the change rather than checks it, as an install,
-  a code generation or a formatting does, runs through the lock too: what it writes is part of the
-  change, and the review diff carries it. **The repro stays off the working tree until its re-run
-  at that test run, and a probe never runs there**: each runs only in the scratch checkout of `HEAD`
-  (below), the tree before the change, where the bug still is. That takes a probe placed once the
-  edits have begun and every run of the repro a plan step makes, which `code-writer` carries out
-  there; and step 1's repro **on a re-plan** whose working tree already holds edits (`/implement`
-  Phase 3 step 7's, or a `blocked` return's Revise at its Phase 3 step 2), which `risk-planner` runs
-  there. Neither runs a test of
-  the change — one this run writes or updates in the working tree — in that checkout or any other:
-  such a test is `test-writer`'s, run in the working tree, and its red-capability check is the
-  orchestrator's (below); a repro `code-writer` writes as a test inside the checkout is no test of
-  the change. `risk-planner`'s re-plan
-  runs the original repro, and names each such test it left unrun. So a plan carries no step that
-  runs the repro or a probe against the working tree, and a step that runs a test this run will
-  write or update is left to the caller, which runs it at the test run.
+  the orchestrator's unit test run — its lint, its build, every check a step left to it, the repro's
+  re-run against the change and `test-baseliner`'s verify. A command that writes the change rather
+  than checks it, as an install, a code generation or a formatting does, runs through the lock too:
+  what it writes is part of the change, and the review diff carries it. **The repro and every probe
+  run only in the scratch checkout of `HEAD`** (below), the tree before the change, where the bug
+  still is — save the repro's re-run against the change, which the orchestrator makes against the
+  working tree at the last unit's test run (the last bullet below); a probe never runs on the working
+  tree. That takes a probe placed once the edits have begun and every other run of the repro a plan
+  step makes, which `code-writer` carries out in the checkout, leaving a step that re-runs the repro
+  against the change to the caller; and step 1's repro **on a re-plan** whose working tree already
+  holds edits (`/implement` Phase 3 step 7's, or a `blocked` return's Revise at its Phase 3 step 2),
+  which `risk-planner` runs in the checkout. Neither runs a test of the change — one this run writes
+  or updates in the working tree — in that checkout or any other: such a test is `test-writer`'s, run
+  in the working tree, and its red-capability check is the orchestrator's (below); a repro
+  `code-writer` writes as a test inside the checkout is no test of the change. `risk-planner`'s
+  re-plan runs the original repro, and names each such test it left unrun. So a plan carries no step
+  that runs a probe against the working tree, nor one that runs the repro there save its re-run
+  against the change; that re-run, and a step that runs a test this run will write or update, are
+  left to the caller, which makes them at the unit's test run — the re-run at the last unit's.
 - **A fixture or script `code-writer` trims** to minimise the repro (step 1) is trimmed and tried in
   the scratch checkout, before the first edit as after it: trimming it in the working tree would be
   an edit no cleanup gate strips.
@@ -113,10 +118,11 @@ content**, a submodule's directory standing empty there, so a run that needs one
 it. Where the run needs a dependency directory git does not track — `node_modules`, say — link it
 from the working tree inside the same call
 (`ln -s "<top level>/<dir>/node_modules" "$d/tree/<dir>/node_modules"`) rather than installing one.
-Since such a link shares the working tree's state, `code-writer` and the `/implement` orchestrator
-run the whole call through the run lock, from the top level, by the form and the reading of its
-`run-lock:` lines their own rules give (`code-writer`'s *Bug work* and *Your checks*, `/implement`
-Phase 3.5's lead-in).
+On `/implement` every such call, with a link or without, runs whole through the run lock, from the
+top level, since a linked dependency directory shares the working tree's state: `code-writer`,
+`risk-planner` on a re-plan and the orchestrator each make it so, by the form and the reading of its
+`run-lock:` lines their own rules give (`code-writer`'s *Bug work* and *Your checks*,
+`risk-planner`'s *No implementation*, `/implement` Phase 3.5's lead-in).
 
 ## Steps
 

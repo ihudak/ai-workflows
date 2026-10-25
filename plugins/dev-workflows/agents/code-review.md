@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Post-implementation code review for SIGNIFICANT / HIGH-RISK tasks, and for /implement's MODERATE ones, where it reviews each piece of the design and then the whole change, after its tests have run. Checks correctness, security, architecture, edge cases, migration, dependencies, tests, rollback. Returns PASS / PASS WITH RECOMMENDATIONS / BLOCK, which gates /vuln's and /upgrade's test run and what /implement does next. Uses Claude Opus.
+description: Post-implementation code review for SIGNIFICANT / HIGH-RISK tasks, and for /implement's MODERATE ones. On /implement, at every class it reviews, it runs after the tests, once per piece of the design and, on two or more pieces, once over the whole change. Checks correctness, security, architecture, edge cases, migration, dependencies, tests, rollback. Returns PASS / PASS WITH RECOMMENDATIONS / BLOCK, which gates /vuln's and /upgrade's test run and what /implement does next. Uses Claude Opus.
 model: opus
 tools: ["Read", "Glob", "Grep", "Skill"]
 ---

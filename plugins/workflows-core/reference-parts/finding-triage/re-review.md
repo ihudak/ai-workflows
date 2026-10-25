@@ -177,9 +177,10 @@ finding's own location is in that file.
 
 A **re-review** is any review a run dispatches over an artifact this run has already reviewed to a
 verdict, whatever that verdict was: the one re-review a caller's cap allows, a re-review the user
-chose at § When triage empties the survivor set, and `/implement`'s review of its Phase 3.5 fix delta.
-For a caller that works unit by unit, the artifact is the unit's own change, never the working tree's
-cumulative diff. `/implement`, which reviews each piece of its change and then the whole of it, counts
+chose at § When triage empties the survivor set, and `/implement`'s review of the post-review test
+run's fix delta (its Phase 3.6 step 5). For a caller that works unit by unit — `/vuln` a CVE at a
+time, `/upgrade` a component at a time — the artifact is the unit's own change, never the working
+tree's cumulative diff. `/implement`, which reviews each piece of its change and then the whole of it, counts
 a row any of its reviews logged at a location the re-review's diff holds as one logged over that
 artifact. A `### Re-classification` return is no verdict: whether the review dispatched after
 the user overrides one is a re-review turns only on whether an earlier review reached a verdict over

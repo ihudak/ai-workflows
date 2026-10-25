@@ -495,9 +495,9 @@ survivor set, § On re-review) — and before whatever follows it, where it leav
 `choices: ["Apply them (Recommended)", "Go on without applying them — they stay in the final report and the pull request"]`
 
 The question lists each with its severity and says whether a re-review remains; `/implement`, whose
-review round holds a review per piece of the change and one over the whole, asks it once per round,
-over every review of the round whose verdict is not `BLOCK`, or is settled as not `BLOCK` at a
-triage settle prompt, naming beside each finding its review. **Left open** means not applied, not
+review round holds a review per piece of the change and, on two or more pieces, one over the whole,
+asks it once per round, over every review of the round whose verdict is not `BLOCK`, or is settled
+as not `BLOCK` at a triage settle prompt, naming beside each finding its review. **Left open** means not applied, not
 overridden and not dismissed; where the command triages, a finding its triage
 marked unverified is never applied (`workflows-core:finding-triage` § The step), here as anywhere; and the re-review's offer carries every finding of the first
 review still open beside its own. A finding whose fix needs a decision the run does not have is no

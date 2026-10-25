@@ -156,7 +156,8 @@ rows the `haiku` alias resolves against.
 
 ### 3.2 SIGNIFICANT / HIGH-RISK — mandatory sequence
 
-The orchestrator MUST execute these steps in order:
+The orchestrator MUST execute these steps in order — save `/implement`, which runs step 5 before
+step 4 (step 4 says how):
 
 1. **Classify** the task and record the decision (see §4).
 2. **Plan with Opus.** Delegate planning (or planning critique) to a sub-agent
