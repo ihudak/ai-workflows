@@ -125,7 +125,7 @@ KEYS = [
     ("test_decision", None), ("clean_finish", True),
     ("files", {"task_description_file": None, "plan_file": None, "pending_plan_file": None,
                "summary_file": None, "baseline_file": None,
-               "review_diff_file": None, "partial_diff_file": None, "review_return_file": None,
+               "review_diff_file": None, "partial_diff_file": None,
                "review_file": None, "claims_file": None, "failure_file": None}),
     ("pieces", []), ("writer_units", []), ("writers", []), ("test_runs", []), ("reviews", []),
     ("patches", []), ("triage", []),
@@ -636,9 +636,10 @@ def selftest():
         new_keys = ("pieces", "writer_units", "writers", "test_runs", "reviews")
         check("init defaults each one-writer key to an empty list", all(d.get(k) == [] for k in new_keys)
               and all(dict(KEYS).get(k) == [] for k in new_keys))
-        check("KEYS drops step_groups, files.test_diff_file and files.test_report_file",
+        check("KEYS drops step_groups, files.test_diff_file, files.test_report_file and files.review_return_file",
               "step_groups" not in dict(KEYS) and "test_diff_file" not in dict(KEYS)["files"]
-              and "test_report_file" not in dict(KEYS)["files"])
+              and "test_report_file" not in dict(KEYS)["files"]
+              and "review_return_file" not in dict(KEYS)["files"])
         check("init refuses files.test_report_file",
               call(["init"], json.dumps(fresh(files={"test_report_file": "x"})), repo)[0] == 3)
         check("init refuses step_groups", call(["init"], json.dumps(fresh(step_groups=[])), repo)[0] == 3)
@@ -824,9 +825,9 @@ def selftest():
             p = os.path.join(where, name)
             open(p, "w").close()
             return p
-        ra, rb = mk("dw-impl-return-a"), mk("dw-impl-return-b")
-        call(["set", "files.review_return_file", json.dumps(ra)], repo=repo)
-        code, out = call(["set", "files.review_return_file", json.dumps(rb)], repo=repo)
+        ra, rb = mk("dw-impl-review-a"), mk("dw-impl-review-b")
+        call(["set", "files.review_file", json.dumps(ra)], repo=repo)
+        code, out = call(["set", "files.review_file", json.dumps(rb)], repo=repo)
         check("a replaced file is removed, its replacement kept", code == 0 and not os.path.exists(ra)
               and os.path.exists(rb) and "removed: %s" % ra in out)
         pp = mk("dw-impl-plan-p")

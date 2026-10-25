@@ -18,7 +18,7 @@ a `BLOCK` verdict means "do not run tests; fix the blocking issue first".
 Do NOT invoke for routine implementation. The caller must have classified the
 task as `SIGNIFICANT` or `HIGH-RISK` first — or, on `/implement` alone,
 `MODERATE`: that command reviews its MODERATE work with this gate too (its
-Phase 3A step 6; `workflows-core:model-routing/classification` §3.1).
+Phase 3.6; `workflows-core:model-routing/classification` §3.1).
 
 ## Inputs
 
@@ -47,6 +47,10 @@ The caller passes a structured brief:
   whose Summary states the review could not be performed; never re-derive the diff yourself),
   **Plan**, `applicable_ard`, and
   `applicable_spec` are *context* inputs (degrade to absent, and say so in the Summary).
+- **Scope** (optional, from `/implement`) — the part of the change this review covers. Absent, as from `/vuln` and `/upgrade`, the diff is the whole change.
+  - `piece <name> — files: <list>` — the diff holds one piece of the design: the files listed, the tests mapped to the piece among them. Review it in full on every dimension, reading beyond the diff as *Review method* step 2 says, but locate each finding in a file the list names — save a fix's second site, `also at path:line` — name a defect you meet outside them in `### Declined to judge` as the overall review's, and under dimension 11 test only the claims about those files. `piece all — files: all` is a run of one piece: the diff is the whole change, and no overall review follows.
+  - `overall — pieces: <names>` — the diff is the whole change, and **Piece reviews** gives each piece's review. Read them first, then look for what a piece's review cannot see: where the pieces meet — a call, a type or data passed from one to another, the order they build in — helpers duplicated across pieces, conventions the pieces apply differently, and the shared contract the design fixes between them, held against the code on each side. Raise no finding a piece's review raised again; a defect inside one piece that its review missed is still a finding.
+- **Piece reviews** (on an `overall` **Scope** only) — each piece's review, as `<name>: <the absolute path of its return>`. A *context* input under the read-failure contract: one that cannot be read degrades to absent, and the Summary names it.
 - **Project root** - absolute path so files can be opened.
 - **Helper copies** (optional, from `/implement`) — each helper a coding step wrote a second copy of, beside the one it duplicates and the change reusing that one needed. Judge each copy as any other duplication in the diff: where folding it into the helper is the fix, that is a finding located at both sites — the copy's `path:line` as its Location, and the helper's in its observation as `also at path:line` (*Collect findings*) — since the fold edits both files and a fixer edits only a file a finding names.
 - **Security register** (optional, from `/implement`) — the absolute path of the `register.json` `/security-workflows:scan` keeps for this repository, read only to name a finding as *Set nothing aside silently* (Review method step 4) says. A *context* input under the read-failure contract: unreadable, it degrades to absent, and absent, no register is read.
@@ -57,7 +61,8 @@ Refuse to review without a diff - ask the caller to produce one.
 - **`applicable_ard`** (optional) — the resolved ARD `AD#N` invariants, passed only by `/implement` (keyed mode) when an ARD exists. Absent for `/vuln`, `/upgrade`, `/implement` direct mode, and when no ARD exists — in which case the conditional ARD-conformance dimension (below) does not apply and is not mentioned.
 - **`applicable_spec`** (optional) — the in-scope specification/design context, passed only by `/implement` (keyed mode) when a `specification.md`/`design.md` is in scope: `spec_paths` (absolute paths) + `in_scope_ids` (the in-scope `[Uxx]`/`[ACxx]`/`[TCxx]` list). Absent for `/vuln`, `/upgrade`, `/implement` direct mode, an `/implement` companion run (whose Epic's requirements are implemented in another repository), and when no spec/design exists — in which case the conditional Spec/design-conformance dimension (below) does not apply and is not mentioned.
 - **`claims_file`** (optional) — an absolute path to the change's own narrative: an agent's account
-  of what it changed (a `review-fixer` Fix Report at re-review, a `vuln-fixer` or `upgrade-executor`
+  of what it changed (a Fix Report at re-review — `review-fixer`'s, or, from `/implement`, those of
+  the writers that applied the earlier review's findings — a `vuln-fixer` or `upgrade-executor`
   report at first review). **DO NOT read this file when you read the brief.** It is read once, in the
   Claims falsification dimension, after every other dimension is complete — see `## Review method` step
   3. Absent ⇒ the Claims falsification dimension does not apply and is not mentioned. This input
@@ -143,6 +148,11 @@ review: from `/implement`, `SIMPLE`.
 **Never on a `MODERATE` brief.** `/implement` sends MODERATE work to this gate
 because it reviews that class: a MODERATE review is always the full report,
 whatever level you would assign, and never ends as an implicit pass.
+
+**Never on a Scope other than `piece all`, where the brief gives one.** A
+piece's review sees part of the change, and the overall review follows reviews
+whose findings an implicit pass would leave unread: either returns the full
+report.
 
 Only use this when the over-classification is clear. When in doubt, run the
 full review.
@@ -249,7 +259,7 @@ full review.
     - `exceeds` → `MINOR`; `MAJOR` where it builds something the
       specification's, the plan's or the design's `Out of scope` names. Never
       escalated: no caller writes it onto the spec, and a `MAJOR` one goes
-      through triage and `review-fixer` like any other finding.
+      through triage and the caller's fixer like any other finding.
 11. **Claims falsification** (conditional — only when `claims_file` is provided;
     otherwise this dimension does not apply — omit it silently). **Precondition:
     dimensions 1–10 are complete and their findings recorded.** Only now, for the
@@ -340,7 +350,7 @@ Return this exact shape (no chatter, no preamble):
 
 ### Recommended next step
 - If BLOCK: [the specific thing that must be fixed before tests run]
-- If PASS WITH RECOMMENDATIONS: "triage, then invoke review-fixer for the surviving MAJOR findings, and the MINOR ones where the caller fixes them (`/implement` does), in the same commit; then run tests; NIT, and MINOR where the caller does not fix them, can be deferred."
+- If PASS WITH RECOMMENDATIONS: "triage, then hand the surviving MAJOR findings, and the MINOR ones where the caller fixes them (`/implement` does), to the caller's fixer — `review-fixer`, or, in `/implement`, the writer owning each file — in the same commit; then run tests; NIT, and MINOR where the caller does not fix them, can be deferred."
 - If PASS: "run tests."
 ```
 
@@ -363,7 +373,7 @@ No dimension was assessed.
 ### Findings
 - [BLOCKER] `<path>` - the diff handed to this review could not be read.
   Suggestion: the caller re-captures the diff to a readable path and re-invokes the review. This is an
-  orchestrator-side failure; do NOT triage this finding or hand it to `review-fixer`, which cannot act
+  orchestrator-side failure; do NOT triage this finding or hand it to a fixer, which cannot act
   on it.
 ```
 
