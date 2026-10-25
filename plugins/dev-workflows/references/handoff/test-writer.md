@@ -93,7 +93,7 @@ report_file: /tmp/dw-impl-tests-AbC123
 - **Framework**: [name, or every suite written against, comma-separated | "not detected"]
 - **Command**: `[the matching test command(s) from the baseline, or "n/a" if not detected]`
 - **Tests written**: [N]
-- **Files touched**: [list of paths, relative to project root, or "none"]
+- **Files touched**: [list of paths, relative to project root — each snapshot or other fixture your own run created among them — or "none"]
 - **Degraded inputs**: none    <!-- each context input that could not be read: `<field> at <path>` -->
 
 ### Tests added
