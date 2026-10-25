@@ -47,15 +47,20 @@ The caller passes a structured brief:
   whose Summary states the review could not be performed; never re-derive the diff yourself),
   **Plan**, `applicable_ard`, and
   `applicable_spec` are *context* inputs (degrade to absent, and say so in the Summary).
+- **Scope** (optional, from `/implement`) — the part of the change this review covers, where `/implement` splits its review by the design's pieces. Absent — as from `/vuln` and `/upgrade`, and from every `/implement` review it does not split — the diff is the whole change. It carries no path to read, so the read-failure contract does not reach it.
+  - `piece <name> — files: <paths, comma-separated>` — the diff holds one piece of the design: the files listed, the change's paths that the piece's `Files:` line matches, its tests among them where that line names them. Review those files in full on every dimension, reading beyond the diff as *Review method* step 2 says, and read any other file only to understand them. Locate each finding in a file the list names — an `AD#N` violation under dimension 9 among them — save a fix's second site, `also at path:line` (*Collect findings*); name a defect you meet outside them in `### Declined to judge` as the overall review's; under dimension 1 judge only the plan steps whose work lies in those files, since the overall review judges every step; and under dimension 11 test only the claims about those files.
+  - `overall — pieces: <names> — only here: <paths, comma-separated, or none>` — the diff is the whole change, and **Piece reviews** gives each piece's review. Read the piece reviews before you check any dimension; a defect one leaves in its `### Declined to judge` as the overall review's is yours to judge. Review each path `only here` names in full, on every dimension: no piece's review saw it. Then look for what no piece's review can see: where the pieces meet — a call, a type or data passed from one to another — and the shared contract the design fixes between them, each piece's `Contract:` items in the `## Pieces` section of the `design.md` that `applicable_spec` names, held against the code on both sides; helpers duplicated across pieces; conventions the pieces apply differently; and behaviour that spans pieces, which no one piece's code decides. Whether every plan step is implemented (dimension 1) and, where `applicable_spec` is given, how each requirement is covered (dimension 10) are judged over the whole change, as an unsplit review judges them: no piece's review can. Raise no finding a piece's review raised; a defect inside one piece that its review missed is still a finding.
+- **Piece reviews** (on an `overall` **Scope** only) — each piece's review, as `<name>: <the absolute path of its return>`, comma-separated. A *context* input under the read-failure contract: one that cannot be read degrades to absent, and the Summary names it.
 - **Project root** - absolute path so files can be opened.
 - **Helper copies** (optional, from `/implement`) — each helper a coding step wrote a second copy of, beside the one it duplicates and the change reusing that one needed. Judge each copy as any other duplication in the diff: where folding it into the helper is the fix, that is a finding located at both sites — the copy's `path:line` as its Location, and the helper's in its observation as `also at path:line` (*Collect findings*) — since the fold edits both files and a fixer edits only a file a finding names.
 - **Security register** (optional, from `/implement`) — the absolute path of the `register.json` `/security-workflows:scan` keeps for this repository, read only to name a finding as *Set nothing aside silently* (Review method step 4) says. A *context* input under the read-failure contract: unreadable, it degrades to absent, and absent, no register is read.
-- **Deferred to another code repository** (optional, from `/implement`) — changes the run records as another code repository's work, never this diff's: each is an explicit deferral note, which dimension 10 honours where a spec is in scope. The deferred change's absence is never a defect of this diff; whether this diff is safe to merge and deploy before that change lands is still this review's to judge.
+- **Deferred to another code repository** (optional, from `/implement`) — changes the run records as another code repository's work, never this diff's: each is an explicit deferral note, which dimension 10 honours where it runs. The deferred change's absence is never a defect of this diff; whether this diff is safe to merge and deploy before that change lands is still this review's to judge.
 
 Refuse to review without a diff - ask the caller to produce one.
 
 - **`applicable_ard`** (optional) — the resolved ARD `AD#N` invariants, passed only by `/implement` (keyed mode) when an ARD exists. Absent for `/vuln`, `/upgrade`, `/implement` direct mode, and when no ARD exists — in which case the conditional ARD-conformance dimension (below) does not apply and is not mentioned.
-- **`applicable_spec`** (optional) — the in-scope specification/design context, passed only by `/implement` (keyed mode) when a `specification.md`/`design.md` is in scope: `spec_paths` (absolute paths) + `in_scope_ids` (the in-scope `[Uxx]`/`[ACxx]`/`[TCxx]` list). Absent for `/vuln`, `/upgrade`, `/implement` direct mode, an `/implement` companion run (whose Epic's requirements are implemented in another repository), and when no spec/design exists — in which case the conditional Spec/design-conformance dimension (below) does not apply and is not mentioned.
+- **`applicable_spec`** (optional) — the in-scope specification/design context, passed only by `/implement` (keyed mode) when a `specification.md`/`design.md` is in scope: `spec_paths` (absolute paths) + `in_scope_ids` (the in-scope `[Uxx]`/`[ACxx]`/`[TCxx]` list). Absent for `/vuln`, `/upgrade`, `/implement` direct mode, an `/implement` companion run (whose Epic's requirements are implemented in another repository), a piece review (**Scope**, above: the overall review alone traces requirements), and when no spec/design exists — in which case the conditional Spec/design-conformance dimension (below) does not apply and is not mentioned.
+- **Spec-named tests** (optional, from `/implement` alone) — the in-scope specification and design files, as absolute paths, comma-separated, read for one check: for each test the change adds or changes that is named after a test case or acceptance criterion of those files — within the files a **Scope** reviews in full where the brief gives one, a piece's `files:` or an overall review's `only here` paths — ask whether it would fail if the behaviour it names broke. A test whose assertions hold whatever the code does — a double standing in for the very behaviour under test, an assertion on a value the test itself set — is a finding under dimension 7, graded by its effect (*Grade by effect*, Review method step 4). Reading those files for this makes no requirement trace: dimension 10 runs only where `applicable_spec` is given. A *context* input under the read-failure contract: a file that cannot be read degrades to absent — the tests named after its items are judged as dimension 7 judges any other — and the Summary names it.
 - **`claims_file`** (optional) — an absolute path to the change's own narrative: an agent's account
   of what it changed (a `review-fixer` Fix Report at re-review, a `vuln-fixer` or `upgrade-executor`
   report at first review). **DO NOT read this file when you read the brief.** It is read once, in the
@@ -144,6 +149,10 @@ review: from `/implement`, `SIMPLE`.
 because it reviews that class: a MODERATE review is always the full report,
 whatever level you would assign, and never ends as an implicit pass.
 
+**Never on a brief with a `Scope:`.** A piece review sees part of the
+change, and the overall review follows reviews whose findings an implicit
+pass would leave unread: either returns the full report.
+
 Only use this when the over-classification is clear. When in doubt, run the
 full review.
 
@@ -212,7 +221,8 @@ full review.
    transitive size, maintenance status; version range correctness.
 7. **Test adequacy** - are there tests? Do they cover the risky path (not just
    the happy path)? Are they deterministic? Mocks that hide real behaviour?
-   Missing regression test for the original bug / CVE?
+   Missing regression test for the original bug / CVE? Where the brief gives
+   **Spec-named tests**, make its check (*Inputs*) here.
 8. **Rollback considerations** - how do we revert this? Reversible or not?
    Any irreversible side effects (data deletion, external calls, cache
    invalidation, schema drop)? If it fails in prod, what's the undo?

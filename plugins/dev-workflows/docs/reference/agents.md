@@ -4,11 +4,11 @@
 
 ## Reviewers and planners
 
-Opus-gated quality gates, plus the lighter-weight planners that feed or precede them.
+Opus-gated quality gates, plus the lighter-weight planners that feed or precede them. `code-review` reviews a change whole, or — where `/implement` splits its review by the design's pieces — one piece per review, then the whole change after the piece reviews, for what none of them can see. On an `/implement` brief with a specification in scope it also asks, of each test named after a specification test case or acceptance criterion, whether the test would fail if the behaviour it names broke.
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
-| `code-review` | opus | Read, Glob, Grep, Skill | Reviews SIGNIFICANT / HIGH-RISK changes, and `/implement`'s MODERATE ones — correctness, security, architecture, edge cases, migration, dependencies, tests, rollback; gates the test run. | `/implement`, `/upgrade`, `/vuln` |
+| `code-review` | opus | Read, Glob, Grep, Skill | Reviews SIGNIFICANT / HIGH-RISK changes, and `/implement`'s MODERATE ones, whole or by piece — correctness, security, architecture, edge cases, migration, dependencies, tests, rollback; gates tests. | `/implement`, `/upgrade`, `/vuln` |
 | `design-reviewer` | opus | Read, Glob, Grep, Bash | Reviews a design against design-format and its specification — any open question a BLOCKER — re-derives its claims about the existing system from the scanned code, and checks its review pieces. | `/design` |
 | `readiness-reviewer` | opus | Read, Glob, Grep | Cross-artifact readiness verifier — checks the ARD/spec/design justify the phase derived from them and the next transition; the only reviewer that synthesises a verdict across artifacts. | `/ready` |
 | `risk-planner` | opus | Read, Glob, Grep, Bash, WebFetch, WebSearch, Skill | Risk-weighted planner for SIGNIFICANT / HIGH-RISK tasks; returns a structured plan with an explicit risks section. Never dispatched for SIMPLE / MODERATE work. | `/implement`, `/upgrade` |
