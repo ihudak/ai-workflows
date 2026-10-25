@@ -159,7 +159,7 @@ report_file: /tmp/dw-impl-code-AbC123
                                     test run. mode: fix — n/a -->
 - **Degraded inputs**: none    <!-- each context input that could not be read: `<field> at <path>` -->
 
-### Files changed              <!-- never a test file; what a check wrote itself — its build output, its cache — is no change of this request's -->
+### Files changed              <!-- never a test file; what a check wrote itself — its build output, its cache — is no change of this request's, and a file a tool run created that git does not ignore is one -->
 - `src/rating.ts` — edited — <what this request changed in it, one line>
 - `src/rating-cache.ts` — created — <one line>
 - `src/legacy-rating.ts` — deleted
