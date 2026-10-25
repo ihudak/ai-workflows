@@ -91,7 +91,7 @@ Everything before the review is unchanged. The change is confined to the review 
 - It is `/implement`'s brief that carries it, never `code-review`'s own dimensions, so `/vuln` and `/upgrade`, which pass no specification, are unchanged.
 - It is the one change an unsplit run sees. No live run is added for it: Run C carries it, and the rule-by-rule reading covers the unsplit path (Claude's call).
 
-**7. The report.** The Phase 5 report and the implementation record name the scopes reviewed and each one's verdict, so a reader can see which reviewer found what. The run's cost section counts every review as today.
+**7. The report.** The Phase 5 report names the scopes reviewed and each one's verdict, so a reader can see which reviewer found what. The run's cost section counts every review as today. The implementation record is unchanged: `workflows-core:implementation-format` keeps it to refs, never a summary (corrected while planning; the first version of this document also put the scopes there).
 
 ### 3.2 The pieces section, `/design` and `design-reviewer`
 
