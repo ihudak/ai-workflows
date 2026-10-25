@@ -25,7 +25,8 @@ The caller passes:
 - **Classification** — `SIMPLE` / `MODERATE` / `SIGNIFICANT` / `HIGH-RISK`. Scales section-inclusion
   expectations (a `SIMPLE` design legitimately omits scaled sections with a one-line `_N/A — why_`; a
   `HIGH-RISK` design must cover them thoroughly). Never flag a section that `${CLAUDE_PLUGIN_ROOT}/references/design-format.md` says is
-  legitimately omittable at this classification.
+  legitimately omittable at this classification — save the *Pieces* check's recommendation, below,
+  for a change that plainly needs pieces.
 - **Repositories** — one line per implementation repository the design's `Repos` header names:
   `<absolute path> @ <commit> — working tree at it` or `… — working tree not at it`, `<commit>`
   being the id of the commit `/design` Phase 4 scanned that repository at, and the line followed by
@@ -57,7 +58,7 @@ checkout stands on another commit or carries uncommitted changes, or a checkout 
 
 `<commit>` in each is the line's commit id alone, never the `with uncommitted changes` mark after it.
 
-Those three commands are your only use of Bash: never another command, never one that writes a file, the
+Those three commands, and the *Pieces* check's `pieces.py parse`, are your only use of Bash: never another command, never one that writes a file, the
 index, a ref or `HEAD`, and never `fetch`, `pull`, `switch`, `checkout` or `stash`. Every
 `file:line` a finding cites is at that commit — or, on a line marked `with uncommitted changes` whose
 working tree is at it, in the working tree, since no commit holds what that scan read.
@@ -70,7 +71,9 @@ working tree is at it, in the working tree, since no commit holds what that scan
    `design.md` → `BLOCKER`).
 3. For each section present, apply that section's rules from
    `${CLAUDE_PLUGIN_ROOT}/references/design-format.md`; for each omitted section, confirm a one-line
-   `_N/A — why_` is present and the omission is legitimate at this classification.
+   `_N/A — why_` is present and the omission is legitimate at this classification — save the optional
+   `## Pieces`, which needs no line: its omission means one piece, is never a finding at this step,
+   and draws at most the *Pieces* check's `MINOR` recommendation.
 4. Apply the cross-cutting checks (below).
 5. Record each finding in the shared severity schema; never fabricate a design — route a genuinely
    undecidable item to **needs engineering input** (but note that an undecided item means the design
@@ -168,6 +171,13 @@ working tree is at it, in the working tree, since no commit holds what that scan
 
 - **Target & contract (conditional — only when the design's header carries `- **Target**:`; otherwise skip silently):** the design's implementation stays inside its target component — the repository the id names before any `:`, and within it the brief's **Target paths** — else the module path after the `:`, or the whole repository for a bare slug. Exempt: a change to deployment or configuration files of the same repository that exists only to deploy or configure the target — a ride-along, which the brief's **Ride-along lines** name — and, where the target is a module and the brief's **Repository modules** lists its repository's modules and deploy directories, a change made for the target's sake to that repository's shared ground — any path inside none of them. Work inside one of them other than the target is beyond the target; a bare-slug target's paths are its whole repository. Implementation beyond the target with **no** matching `- Target span:` line under `## Risks & mitigations` → **BLOCKER**; with one → allowed-but-flagged (name it in the Summary). Where `## Interfaces / contracts` names a consumed `[AD#N]` with no stub or test double for it in `## Test strategy`, and names it neither as a code artifact a contract Epic builds nor as an interface that already exists → **MAJOR**. Where the brief carries **Contract lines**, an `[AD#N]` one of them names that `## Interfaces / contracts` does not → **MAJOR**: the design dropped an interface its Epic produces or consumes. Where a **Contract rows** entry the design consumes has an `artifact` and a `producer` whose repository (the id before any `:`) is not the target's, a design that names neither a package pinned to a version nor a copy recording its source path and revision as the way it gets the artifact → **MINOR**; a design that edits such a copy in place, rather than taking it again from its source → **MAJOR**. A produced interface that breaks its `AD#N` Rule is the ARD-conformance dimension's BLOCKER, not this one's.
 
+- **Pieces:** run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pieces.py" parse "<Design path>"`, whatever the design holds; it prints one JSON object and reads the section as `design-format.md` `## Pieces` defines it. `status: malformed` → `MAJOR`, naming the `defect` it prints, and nothing else in the section is judged. `status: pieces` → judge the section against `design-format.md` `## Pieces`:
+  - **The reason.** A `Reason:` that does not hold — a change one reviewer could review in depth, however clean its internal boundaries — → `MAJOR`, its fix to drop the pieces.
+  - **The boundary**, each → `MAJOR`: two pieces' `Files:` matching one file — a file at the commit the brief's **Repositories** gives (listed as § Reading the repositories says), or one the design creates; a piece whose files depend on another piece's internals rather than on what `## Interfaces / contracts` fixes; a part two pieces share that `## Interfaces / contracts` does not fix; a `Contract:` item `## Interfaces / contracts` does not define.
+  - **Tests.** A test of one piece's code — at that commit, or one the design creates — that no piece's `Files:` matches → `MINOR`. A test pieces share is named by none, and is no finding.
+
+  `status: none` — no section, or an `_N/A_` line — where the change plainly needs pieces, one reviewer being unable to review it in depth and the design fixing a boundary between its parts in `## Interfaces / contracts` → `MINOR` at most, a recommendation to draw them; never `BLOCKER` or `MAJOR`, since one review of the whole change is never a defect. That recommendation is the only finding `status: none` draws. A non-zero exit → read the section against `design-format.md` `## Pieces` yourself and judge it as above, and report the exit and its message as a `NIT` on `## Pieces`.
+
 ## Output contract
 
 Return only findings, no preamble, ordered `BLOCKER` → `MAJOR` → `MINOR` → `NIT`:
@@ -188,9 +198,11 @@ If nothing is actionable, say so and state the classification you reviewed again
 ## Gotchas
 
 - A section shown as `_N/A — why_` at `SIMPLE`/`MODERATE` is **not** a defect — it is the format's
-  scaling rule. Only flag an omission the classification does not license. The one exception is
+  scaling rule. Only flag an omission the classification does not license. The exceptions are
   **Observability & release verification** marked `_N/A_` on a change to behaviour a deployed
-  system runs, which the Release-verification check grades at every classification.
+  system runs, which the Release-verification check grades at every classification, and a design
+  without `## Pieces` for a change that plainly needs them, which the *Pieces* check recommends
+  drawing, at most as a `MINOR`.
 - Test-strategy / design steps may describe how the system is built or exercised — that is design
   intent, not a "describes implementation" defect (implementation detail is expected in a design doc,
   unlike a specification).
