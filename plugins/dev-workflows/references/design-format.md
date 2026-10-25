@@ -71,7 +71,10 @@ tolerated. `Classification` matches the Phase 1.5 result and governs section inc
 ## Sections (in order)
 
 Each section header is `## <name>`. Inclusion: **core** = always present (even `SIMPLE`); **scaled** =
-present for `MODERATE`+ or whenever the change touches that concern, else a one-line `_N/A — why_`.
+present for `MODERATE`+ or whenever the change touches that concern, else a one-line `_N/A — why_`;
+**optional** = present only where its own rule calls for it, its absence meaning what that rule says
+and needing no `_N/A_` line at any classification — `## Pieces` alone, which the scaled rule does not
+reach.
 
 1. **## Context & problem** (core) — 2–5 sentences from the spec: who is affected, what the change
    delivers. Reference, don't restate, the spec.
@@ -95,7 +98,7 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
    never plausible ("we considered not having an interface") is theatre — see `design-reviewer`.
 4. **## Interfaces / contracts** (core) — exact signatures, API shapes, schemas, events, config keys
    the change introduces or alters. Concrete types, not prose promises. **A boundary interface** is one the change introduces or alters on the producing side, which another component (`workflows-core:components` §1: a repository, or a module inside one) or a consumer outside the system calls or receives the messages of — an endpoint, a published event, a library's public API, a command-line tool's parsed output — and never one that only code inside the same component uses. It also states, here or against it under `## Error handling & edge cases`, the behaviour a schema does not carry, as concretely as the types: what a caller gets on each failure and what state the failure leaves, its side effects, and, wherever they apply, whether a repeated request or a redelivered message repeats a side effect, ordering, and timeouts. A change that introduces one states that behaviour whole; a change that alters one states the behaviour it changes, and that the rest is unchanged. The shape of an order request does not say whether retrying it creates a second order. On a multi-component PRD (`workflows-core:components` §3), also name each interface the Epic's `## Contract` produces — its `[AD#N]`, how this design meets that row's Rule, and, where this design implements its behaviour, its producer-side test in `## Test strategy` — and each it consumes — its `[AD#N]`, and the stub or test double `## Test strategy` uses for it, or, where a contract Epic builds that interface as a code artifact (its ARD row's `Artifact`), that artifact as built, or, where the row's `Status` is `exists`, the interface as it already runs. **A consumer whose repository is not the artifact's** names how it gets the artifact: a published package pinned to a version, or a copy that records its source path and the revision it was taken at. The pin or the revision is recorded when the package is added or the copy taken, usually by `/implement`, since the artifact may not be built yet when this design is written. The copy is never edited in place: it changes only by being taken again from its source at a newer revision, which it records.
-5. **## Pieces** (scaled) — the Epic's review units, and whether it gets separate writers. A piece is
+5. **## Pieces** (optional — omitted for one piece) — the Epic's review units, and whether it gets separate writers. A piece is
    a unit of review, not of coding: each piece gets its own reviewer, plus one overall review where
    there are two or more. By default one code writer and one test writer cover every piece;
    `Writers: per piece — <reason>` gives each piece its own writers, and is the exception — only
@@ -124,9 +127,10 @@ present for `MODERATE`+ or whenever the change touches that concern, else a one-
    it calls that another piece implements. `Builds after:` names only pieces of this section and
    must be acyclic; where it is `none` for every piece, the order is the order the pieces are
    listed. A file no piece names belongs to the piece whose plan step creates it; a pre-existing
-   file that no piece names and no step creates is not this Epic's to edit, and a writer that must
-   touch one returns a decision instead. `/design` writing this section arrives in a later release;
-   until then it is written by hand.
+   file that no piece names and no step creates is not this Epic's to edit: `/implement`'s plan
+   flags a step that edits one, so approving the plan decides it, and a writer that must touch one
+   the plan did not flag returns a decision instead. `/design` writing this section arrives in a
+   later release; until then it is written by hand.
 6. **## Seams** (scaled) — where the change is exercised under test; prefer the **highest** seam that
    still isolates the change. Name the seam per component. Judge seam/module quality by: **deep module**
    (a small interface over substantial implementation — prefer depth over many shallow pass-throughs);

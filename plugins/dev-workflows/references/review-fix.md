@@ -6,7 +6,7 @@ These shared references load by part — `escalation-rules`, `finding-triage`, `
 
 Single source of truth for how a fixer applies the findings of a `code-review` report and what it returns: the *Fix method* and the `## Fix Report` shape. Read by `review-fixer`; by `test-writer` on `mode: review`, on test files only; and by `code-writer` on `mode: review`, on its writer unit's non-test files only.
 
-A writer that applies this method to the files it owns applies it only to those files: a finding whose fix lands in a file it does not own is deferred as `DEFERRED — needs human decision` with that as the reason, so the caller re-routes it. In the method below, "Inputs" and the bold terms **Severities to fix**, **User-applied** and **Plan ruling** name what the dispatching caller passes; where it passes none of them, **Severities to fix** is `BLOCKER` and `MAJOR` (`MINOR` only when the caller names it, never `NIT`), a NIT is fixed only where a **User-applied** line names it, and there is no **Plan ruling**.
+A writer that applies this method to the files it owns applies it only to those files: a finding whose fix lands in a file it does not own is deferred as `DEFERRED — needs human decision` with that as the reason, so the caller re-routes it. In the method below, "Inputs" and the bold terms **Severities to fix**, **User-applied** and **Plan ruling** name what the dispatching caller passes; for each the caller does not pass, its default holds: **Severities to fix** is `BLOCKER` and `MAJOR` (`MINOR` only when the caller names it, never `NIT`); with no **User-applied** line, no NIT is fixed, since a NIT is fixed only where such a line names it; and with no **Plan ruling**, every plan-conflict finding is deferred as step 2 says.
 
 ## Fix method
 
@@ -34,13 +34,18 @@ A writer that applies this method to the files it owns applies it only to those 
 5. **Skip all NIT findings entirely**, save one a **User-applied** line names
    (Inputs). Do not mention a skipped one in the fix report.
 6. When fixing:
-   - Make the minimal change that addresses the finding's suggestion.
+   - Make the minimal change that addresses the finding's suggestion, and add no new logic beyond
+     what the suggestion explicitly requires.
+   - Modify no file that is not named in a finding's `path:line` location, or in an
+     `also at path:line` its observation adds for a fix that spans two files. A fix that needs
+     another file is deferred as `DEFERRED — needs human decision`, naming that file.
    - Apply the **patch gate** (`Skill(skill: "workflows-core:reference", args: "finding-triage patch-gate")`): the fix must add no
      public surface, **guard no state the finding did not demonstrate**, and edit no instruction file the
      gate names (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, a file under
      `.claude/rules/` or `.github/instructions/`, `CONTRIBUTING.md`, `CODING_STANDARDS.md`) unless the
-     finding's own location is in that file — you are not handed the diff, and a finding located in
-     such a file is one the review raised against that file's own text. If the smallest correct fix
+     finding's own location is in that file — the test is the finding's location, never a diff, which
+     not every fixer is handed: a finding located in such a file is one the review raised against
+     that file's own text. If the smallest correct fix
      would add such a guard or make such an edit, defer it as `DEFERRED — needs human decision` with
      that as the reason: never add speculative defence, and never edit such a file to make a finding
      go away.

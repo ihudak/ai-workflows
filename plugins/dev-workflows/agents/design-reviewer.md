@@ -70,7 +70,8 @@ working tree is at it, in the working tree, since no commit holds what that scan
    `design.md` → `BLOCKER`).
 3. For each section present, apply that section's rules from
    `${CLAUDE_PLUGIN_ROOT}/references/design-format.md`; for each omitted section, confirm a one-line
-   `_N/A — why_` is present and the omission is legitimate at this classification.
+   `_N/A — why_` is present and the omission is legitimate at this classification — save the optional
+   `## Pieces`, whose omission means one piece, needs no line and is never a finding.
 4. Apply the cross-cutting checks (below).
 5. Record each finding in the shared severity schema; never fabricate a design — route a genuinely
    undecidable item to **needs engineering input** (but note that an undecided item means the design
