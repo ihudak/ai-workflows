@@ -101,6 +101,6 @@ Every unit carries a rank and a written reason for it. Four signals feed the ran
 
 Documentation work has no natural end, so this family defines one:
 
-> **Done** = every backlog unit at or above a priority threshold you choose has a published page, and every claim on those pages is either evidence-backed or visibly marked.
+> **Done** = every backlog unit whose priority number is at or below a threshold you choose has a published page, and every claim on those pages is either evidence-backed or visibly marked.
 
 The backlog reports coverage as a fraction per audience-and-type cell — specifically, how many of that cell's units have reached `published`, not how many have a page — which is what makes that sentence checkable. A unit whose page is written but whose claims nobody has walked is `drafted`, and a `drafted` unit adds nothing to the number: that is deliberate, and it is why the figure moves later than you might expect. "We wrote a lot of docs" is not a completion criterion. A coverage grid with a threshold is.

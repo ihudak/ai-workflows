@@ -151,7 +151,7 @@ Typical gaps:
   ```
 - **Branch-naming convention** when none was documented (drives Phase 5):
   ```
-  choices: ["Use repo convention if detected, else `<prefix>/NOISSUE-docs-profile` (Recommended)", "Enter a different pattern (you'll be prompted)"]
+  choices: ["Use repo convention if detected, else `<prefix>/docs-profile` (Recommended)", "Enter a different pattern (you'll be prompted)"]
   ```
 
 Each `(you'll be prompted…)` option above asks for its value in plain text — the command, the prerequisite, the space's `id` and `base_path`, the pattern — and records the answer as `user-supplied`.
@@ -190,7 +190,7 @@ Produce a reviewable PR in the **target repo** (never the plugin). **Never push 
 1. **Resolve the branch name.** **Inline mode** (`--inline`): skip the prompt and the confirmation entirely — use the deterministic name `dev-workflows/docs-profile-bootstrap`; `/document` (keyed mode) Phase 6.2 renames it to the docs-branch convention. Phase 0 step 2 has already stopped the run where a branch of that name exists (`DOCS_PROFILE_BOOTSTRAP_BRANCH_EXISTS`), so step 2 below cuts it fresh. **Standalone** (default):
    - If the repo documents a branch-naming convention (detected in Phase 2 / confirmed in Phase 4), fill its placeholders and use it.
    - If the convention has an **identity** placeholder, fill it from the §2 ladder in `Skill(skill: "workflows-core:reference", args: "branch-naming")` (`$GIT_USER_INITIALS` → `git config user.initials` → inference from existing branches → the §2.5 prompt); its issue-key segment takes the documented no-issue literal, since profiling has no ticket.
-   - Else (no convention documented, §1.4) use `<prefix>/NOISSUE-docs-profile`, where `<prefix>` comes from the same §2 ladder with fallback `docs/`. If the ladder yields nothing, run its §2.5 escalation:
+   - Else (no convention documented, §1.4) use `<prefix>/docs-profile` — §1.4's keyless form, `docs-profile` being its §3 slug — where `<prefix>` comes from the same §2 ladder with fallback `docs/`. If the ladder yields nothing, run its §2.5 escalation:
      ```
      "I couldn't infer a branch prefix from $GIT_USER_INITIALS, `git config user.initials`, or existing branches. This command's default is `docs/`. What prefix should I use?"
      choices: ["Use `docs/` (default for this command)", "Use my initials (you'll be prompted for them)"]

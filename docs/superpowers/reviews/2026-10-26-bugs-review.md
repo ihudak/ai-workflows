@@ -2099,7 +2099,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 <!-- from part C -->
 
-### DOC-C-B1 — MAJOR — Writing a page by the route page's step 4 breaks the scaffold's `--strict` builds, because nothing regenerates the "never hand-edited" `nav:`
+### DOC-C-B1 — MAJOR — Writing a page by the route page's step 4 breaks the scaffold's `--strict` builds, because nothing regenerates the "never hand-edited" `nav:` — **Fixed in docs-workflows 1.22.0 (batch B14)**
 - **Also found as:** DOC-D-B1 (merged here)
 - **Where:** `plugins/docs-workflows/references/docs-workflow/scaffold-tree.md:458`, `:464`, `:493-496`, `:640`; `plugins/docs-workflows/docs/docs-workflow.md:95-106`
 - **What is wrong:** The scaffold's `mkdocs.yml` sets `strict: true` and `validation: nav: omitted_files: warn` (`scaffold-tree.md:493-496`). It also says "**`nav:` is generated, never hand-maintained.**" (`:458`), and the hard rule is "NEVER hand-edit a generated `nav:`. Change `order:` or `title:` and regenerate (§4)" (`:640`). Only one thing regenerates it: "today that is `/docs-init` when it scaffolds, and `/docs-write`, a later command, is to regenerate it whenever it adds or renames a page" (`:464`). `/docs-write` does not ship. The route page's step 4, "Write the next unit — by hand", says "Create the page under the section its surface belongs to…" and then lists the frontmatter, `unit:`, `evidence:`, `review_by` and the marker (`docs-workflow.md:95-106`). It never says to add the page to either config's `nav:`.
@@ -2109,7 +2109,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high on the prose. Medium-high on the MkDocs behaviour; a 2-page mkdocs build would confirm it.
 
-### DOC-C-B2 — MAJOR — `/docs-init` and standalone `/docs-brand` stops after the specs preflight skip the emitter tail, against `specs-repo-git` §4
+### DOC-C-B2 — MAJOR — `/docs-init` and standalone `/docs-brand` stops after the specs preflight skip the emitter tail, against `specs-repo-git` §4 — **Fixed in docs-workflows 1.22.0 (batch B14)**
 - **Where:** `plugins/docs-workflows/commands/docs-init.md:36`, `:43`, `:45`, `:86`, `:213`, `:330`; `plugins/docs-workflows/commands/docs-brand.md:19` ("On a standalone run each stop ends the run exactly as written below"), `:89`, `:139`, `:246`, `:364`
 - **What is wrong:** `workflows-core:specs-repo-git` §4 (`plugins/workflows-core/references/specs-repo-git.md:567-600`) says: "A run that refuses before it has written anything still runs this tail". The cost entry is written and `commit-artifacts` runs, and "A refusal that skipped the tail would break §11 silently". In `/docs-init`, the specs preflight runs at Phase 0 step 2 (`:32`). After it come `DOCS_INIT_TARGET_NOT_WRITEABLE`, `DOCS_INIT_NOT_A_GIT_WORKTREE`, `DOCS_INIT_TARGET_BELOW_TOPLEVEL`, `DOCS_INIT_EXISTING_DOCS_REPO`, `DOCS_INIT_TOOLCHAIN_INCOMPLETE` and `DOCS_INIT_UNRESOLVED_BLOCKER`. Each is only "stop:". None routes to Phase 8.5 or to the tail (Phases 9–11). Only the Cancels say "the emitter tail (Phases 9–11) still runs" (`:42`, `:98`, `:211`). Phase 11 says "Cost ALWAYS runs — including a run that cancelled at Phase 2.5, and including one whose Phase 7 verification failed" (`:330`) and does not mention the stops. Standalone `/docs-brand` has the same gap: its preflight is at the end of Phase 0, and after it come `DOCS_BRAND_NO_CODE_REPO` (Phase 2), `DOCS_BRAND_NOTHING_TO_APPLY` (Phase 4) and `DOCS_BRAND_UNRESOLVED_BLOCKER` (Phase 9). `/docs-audit` is the counter-example: it routes every stop through the tail explicitly (`docs-audit.md:18`).
 - **Failure scenario:** `/docs-init /workspace/docs` is run on a repository that already has `mkdocs.yml`. The specs preflight runs, then `DOCS_INIT_EXISTING_DOCS_REPO` ends the run: no cost entry, no `commit-artifacts`, no `Specs repo:` line. Worse, a run that scaffolded, verified and Opus-reviewed, then hit `DOCS_INIT_UNRESOLVED_BLOCKER` or `DOCS_BRAND_UNRESOLVED_BLOCKER`, records none of that spend.
@@ -2127,7 +2127,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### DOC-C-B4 — MINOR — `docs-audit-reviewer` is told to read the site's `docs_dir` from the profile, a field the profile schema does not have
+### DOC-C-B4 — MINOR — `docs-audit-reviewer` is told to read the site's `docs_dir` from the profile, a field the profile schema does not have — **Fixed in docs-workflows 1.22.0 (batch B14)**
 - **Where:** `plugins/docs-workflows/agents/docs-audit-reviewer.md:25` ("**`profile`** — the resolved `docs-profile.yml`, read for the site's `docs_dir`, which is what fixes where the internal tree is for dimension 2's second half.")
 - **What is wrong:** `docs-profile-schema.md` has no `docs_dir`. The profile records `spaces[].content_root` (and `builds[].config`), and `grep -n docs_dir references/docs-profiles/docs-profile-schema.md` returns nothing. `docs_dir` is a key in the MkDocs config, not in the profile. Dimension 2's BLOCKER check (`visibility: internal` on a `page_path` outside the internal tree) therefore depends on a value the input cannot supply.
 - **Failure scenario:** The reviewer looks for `docs_dir` in the profile and finds none. It may then report dimension 2's second half as "not checked", which silently drops a BLOCKER-class check, or it may guess `docs/`. Either way it does not use the `content_root` that the scaffold records.
@@ -2136,7 +2136,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DOC-C-B5 — MINOR — Live contradiction on branch names: the commands' no-convention form is `<prefix>/NOISSUE-<slug>`, but `branch-naming` §1.4 builds `<prefix>/<slug>`
+### DOC-C-B5 — MINOR — Live contradiction on branch names: the commands' no-convention form is `<prefix>/NOISSUE-<slug>`, but `branch-naming` §1.4 builds `<prefix>/<slug>` — **Fixed in docs-workflows 1.22.0 (batch B14)**
 - **Where:** `plugins/docs-workflows/commands/docs-init.md:94` (`<prefix>/NOISSUE-docs-init`), `docs-brand.md:184` (`<prefix>/NOISSUE-docs-brand`), `docs-profile.md:154`, `:193` (`<prefix>/NOISSUE-docs-profile`, "Else (no convention documented, §1.4)"); against `plugins/workflows-core/references/branch-naming.md:67` ("Only when §1.1 finds nothing: build **`<prefix>/<key>-<slug>`** on a keyed run … or `<prefix>/<slug>` where there is no key") and `:161-163` (the slugs `docs-profile`, `docs-init`, `docs-brand`)
 - **What is wrong:** All three commands cite `branch-naming` and its §1.4, but name a different branch from the one §1.4 builds. `/docs-profile` labels its form "§1.4" outright.
 - **Failure scenario:** An agent holding both texts gets two answers, `docs/NOISSUE-docs-profile` or `docs/docs-profile`. Different runs, or `/document`'s Phase 6.2 rename logic, can disagree about which branch the command owns. The resume case is one example: `/docs-profile`'s "switch `<name>` if it already exists".
@@ -2145,7 +2145,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium. The commands may mean to override; if so, they should say so rather than cite §1.4.
 
-### DOC-C-B6 — MINOR — The `/docs-init` docs page says the domain vocabulary is "a later command's job", but the authority says no command writes it
+### DOC-C-B6 — MINOR — The `/docs-init` docs page says the domain vocabulary is "a later command's job", but the authority says no command writes it — **Fixed in docs-workflows 1.22.0 (batch B14)**
 - **Where:** `plugins/docs-workflows/docs/commands/docs-init.md:51` ("that seed is only what the scaffold needs to pass its own gate, and the product's domain vocabulary is a later command's job.")
 - **What is wrong:** `scaffold-tree.md:632` says "**The domain seed — nobody's, and added by hand.** **No command of this family extracts a product's domain nouns, and nothing adds to this file after `/docs-init` writes the seed above**, `/docs-audit` included". The command body (`commands/docs-init.md:128`, `:283`) and `docs-scaffold-reviewer.md:55` say the same. The docs page promises a command that does not exist. This is a claim-expiry leftover: the intended "later command" (`/docs-audit`) shipped without the behaviour.
 - **Failure scenario:** A reader waits for, or looks for, a command to seed `accept.txt` instead of adding terms by hand, and Vale flags every product noun as a spelling error.
@@ -2154,7 +2154,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DOC-C-B7 — MINOR — The `/docs-profile` docs page claims detection of "cross-space override manifests" and "shared registries", which the command never scans
+### DOC-C-B7 — MINOR — The `/docs-profile` docs page claims detection of "cross-space override manifests" and "shared registries", which the command never scans — **Fixed in docs-workflows 1.22.0 (batch B14)**
 - **Where:** `plugins/docs-workflows/docs/commands/docs-profile.md:27` ("a Sonnet-tier detection pass (mechanical repo scanning — package scripts, cross-space override manifests, shared registries, templating tokens, …)")
 - **What is wrong:** The command's Phase 2 brief (`commands/docs-profile.md:92-98`) lists seven items: package.json scripts, templating tokens, content/snippet roots, branch-naming and internal-link conventions, image policy, prerequisites, and announcement pages. It has no override manifest or registry item, and neither does the schema. CLAUDE.md requires each docs-page claim to be derived from the thing that runs it.
 - **Failure scenario:** An operator expects the profile to capture override manifests or registries, and nothing records them.
@@ -2163,7 +2163,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DOC-C-B8 — MINOR — `/docs-init`'s Phase 6 leaves `spaces[].id` and `dev_servers.servers[].space` unstated
+### DOC-C-B8 — MINOR — `/docs-init`'s Phase 6 leaves `spaces[].id` and `dev_servers.servers[].space` unstated — **Fixed in docs-workflows 1.22.0 (batch B14)**
 - **Where:** `plugins/docs-workflows/commands/docs-init.md:159` ("**`spaces[]`** — exactly one entry, `content_root: docs`, `snippet_root: docs/_snippets`."), `:161`
 - **What is wrong:** The schema's `spaces[]` entry carries `id` (and `base_path`): see the template at `docs-profile-schema.md:31`, `/docs-profile` Phase 3's "(`id`, `content_root`, `snippet_root`, `base_path`)" at `docs-profile.md:118`, and the default profile. `dev_servers.servers[]` entries key on `space`, and `commands.per_space`, `frontmatter.owners_spaces` and `/docs-serve`'s lookup (`docs-serve.md:243`) all key on the space id. Phase 6 fixes every other value of the scaffolded profile but leaves the id to whatever the agent invents. So two scaffolds can differ, and the two server entries could even carry different `space` values.
 - **Failure scenario:** One run writes `id: docs`, another `id: main`. A two-server profile whose servers name different `space` values breaks `/docs-serve`'s lookup filter, which keys on `space` and `visibility` (Phase 7, step 1).
@@ -2172,7 +2172,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### DOC-C-B10 — NIT — `/docs-serve`'s invariant lists its `workflows-core` citations as "`epic-picker` and `next-phase-offer`", omitting `run-flags` and the new `escalation-rules core` load
+### DOC-C-B10 — NIT — `/docs-serve`'s invariant lists its `workflows-core` citations as "`epic-picker` and `next-phase-offer`", omitting `run-flags` and the new `escalation-rules core` load — **Fixed in docs-workflows 1.22.0 (batch B14)**
 - **Where:** `plugins/docs-workflows/commands/docs-serve.md:300` ("every `workflows-core:<name>` citation — `epic-picker` and `next-phase-offer` — is loaded through … `next-phase-offer` by part"); against `:22` (`run-flags strip-run-flags`) and `:24` (`escalation-rules core`, added in 1.18.0)
 - **What is wrong:** The list is exhaustive in form but incomplete, and it says that only `next-phase-offer` loads by part, while `escalation-rules` is also requested by part at `:24`. This is a claim-sweep miss from the 1.18.0 **Load the question rules.** change.
 - **Failure scenario:** A maintainer or agent trusts the list. Cosmetic in effect.
@@ -2181,7 +2181,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DOC-C-B11 — NIT — The backlog page reads `threshold` as "at or above", where the schema and the route say "at or below" the priority number
+### DOC-C-B11 — NIT — The backlog page reads `threshold` as "at or above", where the schema and the route say "at or below" the priority number — **Fixed in docs-workflows 1.22.0 (batch B14)**
 - **Where:** `plugins/docs-workflows/docs/reference/docs-backlog.md:24` ("`threshold` | The priority at or above which "done" applies")
 - **What is wrong:** `backlog-format.md` uses "done = every unit with priority <= threshold", and the route page says "Every unit whose `priority` number is at or below the backlog's `threshold`" (`docs/docs-workflow.md:226`). "At or above" can only be squared with that by reading priority as rank, the inverse of the number the file stores.
 - **Failure scenario:** A reader sets `--threshold` the wrong way.
@@ -2189,7 +2189,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### DOC-C-B12 — NIT — The workflow page says `/docs-serve` writes "only a pid/port record", but the command writes three things
+### DOC-C-B12 — NIT — The workflow page says `/docs-serve` writes "only a pid/port record", but the command writes three things — **Fixed in docs-workflows 1.22.0 (batch B14)**
 - **Where:** `plugins/docs-workflows/docs/workflow.md:83` ("`/docs-serve` writes only a pid/port record under that same `.dev-workflows/`")
 - **What is wrong:** The command says "The only things it writes itself are three": the state file, one line in the repository's local `info/exclude`, and a `dw-serve-*` log per start (`commands/docs-serve.md:32`). The command page states the exclude line (`docs/commands/docs-serve.md:24`).
 - **Suggested fix:** Add "and, where nothing ignores it, one line in the repository's local `.git/info/exclude`".
@@ -3017,7 +3017,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki
 
-### DQW-B1 — MAJOR — The docs-workflows Update block leaves out `workflows-core`, which every recent docs-workflows release has to be updated with
+### DQW-B1 — MAJOR — The docs-workflows Update block leaves out `workflows-core`, which every recent docs-workflows release has to be updated with — **Fixed in docs-workflows 1.22.0 (batch B14)**
 - **Where:** `plugins/docs-workflows/docs/getting-started.md:27-33`
 - **What is wrong:** The block is `claude plugin marketplace update shipwright` / `claude plugin update docs-workflows@shipwright` / `claude plugin update prose-style@shipwright`, and the text after it says only "**Update `prose-style` with it**". It never mentions `workflows-core`. But `.claude/rules/plugin-updates.md` pairs `docs-workflows` 1.15.0, 1.16.0, 1.17.0 and 1.18.0 with a matching `workflows-core` release (1.39.0, 1.40.0, 1.44.0 and 1.45.0). For 1.17.0 it explains that an older loader reads `args: "escalation-rules review"` as an entry point and "may run a section whose heading merely contains the word". The page also says `claude plugin update` "re-fetches exactly one plugin" (plugin-updates.md: "An update re-fetches exactly one plugin").
 - **Failure scenario:** A user on docs-workflows 1.16 / workflows-core 1.43 follows this page. They end up with docs-workflows 1.18.0 beside workflows-core 1.43. Every `/document`, `/docs-audit` and `/release-notes` run then asks an older loader for reference parts it cannot serve, or meets a `next-phase-offer` that disagrees with it (the 1.44.0 and 1.45.0 bullets).
@@ -3035,7 +3035,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium. The README misstatement is certain. Whether the per-turn firing counts as MAJOR depends on how often users have a vault and the plugin installed while working elsewhere.
 
-### DQW-B3 — MINOR — getting-started's "no docs yet" path sends the new user to `/document` and never mentions `/docs-audit` or the route page
+### DQW-B3 — MINOR — getting-started's "no docs yet" path sends the new user to `/document` and never mentions `/docs-audit` or the route page — **Fixed in docs-workflows 1.22.0 (batch B14)**
 - **Where:** `plugins/docs-workflows/docs/getting-started.md:83`, and the whole page (no occurrence of `docs-audit` or `docs-workflow.md`)
 - **What is wrong:** After `/docs-init` the page says: "Then `/docs-workflows:docs-serve` serves the result … and `/document` starts filling it in." That disagrees with three other sources:
   - The route page says that after serving comes `/docs-audit`, then writing units by hand. It also says `/document` "reads no backlog" (`docs-workflow.md:67-81`, `:111`).
@@ -3047,7 +3047,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQW-B4 — MINOR — `/docs-serve`'s next-step offer and its docs page name `/document` as the next step, which contradicts the route
+### DQW-B4 — MINOR — `/docs-serve`'s next-step offer and its docs page name `/document` as the next step, which contradicts the route — **Fixed in docs-workflows 1.22.0 (batch B14)**
 - **Where:** `plugins/docs-workflows/commands/docs-serve.md:272`; `plugins/docs-workflows/docs/commands/docs-serve.md:68`; against `plugins/docs-workflows/docs/docs-workflow.md:9-17` (`SERVE --> AUDIT`), `:57-73`, and `plugins/docs-workflows/commands/docs-init.md:285`
 - **What is wrong:** The command says "On a successful serve, recommend reviewing the site at the reported URL, then `/docs-workflows:document <address>` to write or update pages once satisfied". The docs page says "[`/document`](document.md) — the natural next step once the served site looks right". On the route page, step 2 (`/docs-serve`) leads to step 3 (`/docs-audit`), and `/document` is only an optional prose aid in step 4. `/docs-init`'s own offer also puts `/docs-audit` after `/docs-serve`.
 - **Failure scenario:** A user follows the route: `/docs-init`, then `/docs-serve`. The serve run tells them to run `/document <address>`. That needs a PRD key they do not have, and it skips the audit that the route and `/docs-init` both name. The workflow diagram (`workflow.md:48-52`) draws no edge from `docsserve` to `document` either, so the offer matches no diagram.
@@ -3056,7 +3056,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQW-B5 — MINOR — The plugin README draws a third version of the documentation route, and it disagrees with the route page
+### DQW-B5 — MINOR — The plugin README draws a third version of the documentation route, and it disagrees with the route page — **Fixed in docs-workflows 1.22.0 (batch B14)**
 - **Where:** `plugins/docs-workflows/README.md:21-32`; against `plugins/docs-workflows/docs/docs-workflow.md:9-39`
 - **What is wrong:** The README's diagram:
   - draws `WRITE --> CAPTURE --> VERIFY` unconditionally;
@@ -3072,7 +3072,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQW-B6 — MINOR — The split between `workflow.md` and `docs-workflow.md` is unclear: the file names invert the titles, and one command page calls the route "The documentation workflow"
+### DQW-B6 — MINOR — The split between `workflow.md` and `docs-workflow.md` is unclear: the file names invert the titles, and one command page calls the route "The documentation workflow" — **Fixed in docs-workflows 1.22.0 (batch B14)**
 - **Where:** `plugins/docs-workflows/docs/commands/docs-audit.md:7`, `:11`; `plugins/docs-workflows/commands/docs-audit.md:344`; `plugins/docs-workflows/docs/README.md:6-7`
 - **What is wrong:** `workflow.md` is titled "Workflow overview" and `docs-workflow.md` is titled "The documentation route". The `/docs-audit` page links `../workflow.md` as "Workflow overview" in one sentence. In the next sentence it links `../docs-workflow.md` as "[The documentation workflow]", and again at `:11`. The command's own Next step names the route only by path ("this plugin's route page, `docs/docs-workflow.md`"), which is a path in a repository the user may not have.
 - **Failure scenario:** A reader sees "Workflow overview" and "The documentation workflow" side by side, takes them for the same page, and does not follow the second link. That is the only link to the manual procedure this command's backlog needs. Opening `docs/` by file name, `docs-workflow.md` reads as the plugin's workflow page and `workflow.md` as a generic one.

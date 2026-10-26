@@ -104,7 +104,7 @@ Path 5 is a normal act rather than a workaround, and the backlog is a tracked fi
 
 Documentation work has no natural end, so this family defines one:
 
-> **Done** = every backlog unit at or above a chosen priority threshold has a published page, and every claim on those pages is either evidence-backed or visibly marked.
+> **Done** = every backlog unit whose priority number is at or below a chosen threshold has a published page, and every claim on those pages is either evidence-backed or visibly marked.
 
 `coverage` in the backlog reports, per `(audience, type)` cell, the fraction of that cell's units which have reached `published` — which is what makes that sentence checkable, and what makes a cell's figure move only when a page has actually been verified and shipped rather than merely drafted. "We wrote a lot of docs" is not a completion criterion; a coverage grid with a threshold is.
 

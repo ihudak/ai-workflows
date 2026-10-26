@@ -18,20 +18,9 @@ Seven slash commands for a product's documentation and release notes: `/docs-ini
 
 Four of those commands stand a portal up and keep it honest about what it is still missing, and the work between them is done by hand. The cold-start trio — `/docs-init`, `/docs-brand`, `/docs-serve` — shipped first, and `/docs-audit` followed with the coverage grid and the backlog. **The iteration stage has not shipped**: turning a unit of that backlog into a published page is a manual procedure today. Writing the page, capturing what it shows and walking its claims are each specified for a later command, and each is written out step by step in [The documentation route](docs/docs-workflow.md), which is the page to read next.
 
-```mermaid
-flowchart TD
-    INIT["/docs-init — scaffold the repository"] --> BRAND["/docs-brand — logo and colours (inline)"]
-    BRAND --> SERVE["/docs-serve — look at it"]
-    SERVE --> AUDIT["/docs-audit — the coverage grid and the backlog"]
-    AUDIT --> WRITE["write the next unit — by hand"]
-    WRITE --> CAPTURE["capture what the page shows — by hand"]
-    CAPTURE --> VERIFY["verify the marked claims — by hand"]
-    VERIFY --> WRITE
-    VERIFY --> REFRESH["/docs-audit --refresh — the product grew a surface"]
-    REFRESH --> WRITE
-```
+That page draws the route: its eight steps, which of them a command runs and which you do by hand, and the cadence that keeps a portal current.
 
-`/document`, `/release-notes` and `/docs-profile` sit outside that loop: the first two work against a delta once a feature has shipped, and the third describes a documentation repository this plugin did not scaffold. [Workflow overview](docs/workflow.md) draws all seven together.
+`/document`, `/release-notes` and `/docs-profile` sit outside that route: the first two work against a delta once a feature has shipped, and the third describes a documentation repository this plugin did not scaffold. [Workflow overview](docs/workflow.md) draws all seven together.
 
 Eleven agents and twenty-two reference pages carry the docs-repo discovery, diff summarising, doc planning, doc writing and doc review that `/document` and `/release-notes` draw from; the `docs-scaffold-reviewer` that `/docs-init` and `/docs-brand` share reviews a scaffold diff, never a page, and the three `/docs-audit` dispatches — `docs-auditor`, `ia-planner` and `docs-audit-reviewer` — enumerate surfaces, plan the backlog and then review it. `/docs-profile` and `/docs-serve` dispatch none of these eleven agents: each executes the reference pages it needs directly — `repo-resolution.md` and the profile schema for both, plus `render-verification.md`, `toolchain-preflight.md` and `scaffold-tree.md` for `/docs-serve` — and `/docs-profile`'s repository scan runs on general-purpose subagents of its own. Those twenty-two markdown pages plus two bundled data files — `default-owners.txt` and `docs-profile.default.yml`, which the commands, the skill and a hook read as data rather than open as prose — are the **twenty-four files** under `references/`; that is the whole of the difference between the page count and the file count, and [References](docs/reference/references.md) does the arithmetic file by file. Alongside them ship the `docs-frontmatter` skill `/docs-profile` points a repository at, and two advisory hooks — one injecting specs context on a `/document` or `/release-notes` prompt, one reminding about a docs page's changelog and owners frontmatter.
 
