@@ -63,12 +63,17 @@ Derive from `cwd` and the current session (Claude Code's project-slug rule):
   `/workspace/my_service` -> `-workspace-my-service`). Where no directory of that
   name exists, the project directory is the one under `~/.claude/projects/` whose
   transcripts' `cwd` field equals the absolute `cwd`.
-- **Main transcript** — the newest `*.jsonl` directly under
-  `~/.claude/projects/<cwd-slug>/` **that holds this run's own invocation**: the
-  `<command-name>` record of the command now running, with the arguments it was
-  given. The newest file alone is not enough, since another session may be
-  running in the same directory and have written last. Its basename minus
-  `.jsonl` is `session_id`. Where no file holds the invocation, there is no main
+- **Main transcript** — the `*.jsonl` directly under `~/.claude/projects/<cwd-slug>/`
+  **holding this run's own invocation as its newest such record**. The invocation is
+  the `<command-name>` record of the command now running with the arguments it was
+  given, or — for a command another run started through the Skill tool, as
+  `/brd-split`'s *Ground now* starts `/product-workflows:prd-ground` — the `Skill`
+  `tool_use` whose `input.skill` names that command, with the same `input.args`.
+  Among the files holding such a record, take the one whose matching record is the
+  newest by its `timestamp`: neither the newest file nor the newest file holding
+  the invocation is enough, since another session in the same directory may have
+  written last, or run the same command earlier. Its basename minus `.jsonl` is
+  `session_id`. Where no file holds the invocation, there is no main
   transcript: the cost phase prints one line, `cost not measured — no transcript
   under ~/.claude/projects/<cwd-slug>/ holds this run's invocation`, writes no
   entry, advances no checkpoint (the newest file's checkpoint may be another
