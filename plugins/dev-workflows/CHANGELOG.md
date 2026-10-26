@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.36.1] — 2026-10-26
+
+### Fixed
+- **4.35.1 is reverted: the gap it closed was not reachable.** Its entry said a `MODERATE` `/implement` run's review received no specification, because only Phase 2B extracted the in-scope IDs into `applicable_spec`. No run took that path. A specification reaches `spec_context.spec_paths`, from which `applicable_spec` is built, only through a folder: the resolved Epic or PRD folder of a keyed run, or a spec folder on a direct one. An `@specification.md` file token is read as the description and is never in scope. Phase 1.6 floors every folder input at `SIGNIFICANT`. So a run with a specification in scope always plans in Phase 2B, which extracts the IDs before any later lowering to `MODERATE` or `SIMPLE` at plan approval. Phase 2A's copy of the extraction only repeated 2B's, and it is removed. A `MODERATE` run's review did get the specification, and from 4.32.0 on a split by the design's pieces could happen at `MODERATE`, before 4.35.1 as after it.
+- **`/implement`'s tasks-only definition** said "Phase 2B and 3B check the change against" the unit's specification and design. It now says what each step does: Phase 2B extracts the in-scope IDs, and the review gate checks the change from `MODERATE` up. A run lowered to `SIMPLE` has no review gate.
+
 ## [4.36.0] — 2026-10-26
 
 Take with `workflows-core` 1.53.0, whose merged test the PRD run below reads; beside 1.52.0 the PRD run's extra fetch is harmless and the test keeps its old two legs.
