@@ -81,7 +81,10 @@ back in review because the two products differ here.
   Suggested improvement: **User prompt** (the user's corrective request,
   verbatim save §1.1's redactions) and **Resolution** (what the AI actually did).
 - `id` — stable: `<KEY>-<command>-<short-slug>` (drop the leading `/` from the
-  command; use `manual` / `prompt` when `command` is `n/a`).
+  command; use `manual` / `prompt` when `command` is `n/a`). `<KEY>` is the run's
+  resolved key, or the literal `NOKEY` where none resolved (`key: null`) — never `null`,
+  `n/a` or an empty segment, since §3 deduplicates auto entries by exact `id` and a keyless signal
+  logged twice under two placeholders is two entries.
 
 ### 1.1 Redaction — while the entry is rendered
 

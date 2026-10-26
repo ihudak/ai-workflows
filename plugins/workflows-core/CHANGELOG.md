@@ -5,13 +5,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.55.0] — 2026-10-26
+## [1.56.0] — 2026-10-26
 
 **Take with `docs-workflows` 1.24.0** (`.claude/rules/plugin-updates-coupling.md`): `/document` carries its own copy of the per-discrepancy array changed below, and `/release-notes` presents it. Post-merge review 87.3, recorded as to-fix D23 and settled with the maintainer.
 
 ### Changed
 - **`source-truth` §7.3 recommends *Document as actual (code)*, and *Document as intended (spec)* holds the release.** Published text, a documentation page or a release note alike, should describe what ships. Documenting the intended behaviour while the code lags drafts the bug report as before, and now the caller warns at once that the release and the publication of what the run wrote are held until the defect is fixed. It repeats the hold in its final report and on whatever carries the output toward publication (§7.5, *A `document-as-spec` gap holds the release*); the gap's *Docs status* says so too. §1 orders the choices to match, and §7.1's `SPEC-VS-PRD` row recommends neither where the code matches the spec, since both then write the same phrasing.
 - **§7.7: a row whose code could not be read takes its own array**, recommending *Document as intended (spec)*, which there draws no marker, no gap and no hold, since nothing shows the code lagging; *Document as actual (code)* is left out, having nothing to write.
+
+## [1.55.0] — 2026-10-26
+
+Nothing here needs another plugin updated with it.
+
+### Fixed
+- **`test-notify` reports counts again.** It read `tool_response.output`, a key the Bash tool's result does not carry — the result is `stdout`, `stderr` and `interrupted` — so every test run notified `Test run: tests completed`, a red suite included. It now reads `stdout`, which carries the command's error output too, and `stderr` in case a harness keeps the two apart, and keeps `output` as a fallback (SCR-B1).
+- **`test-notify` notifies a single Gradle module's tests**, `./gradlew :<module>:test`, the form `dev-workflows`' `/vuln` and `/upgrade` references prescribe, which matched none of its entries. The new entry is a pattern — a whole argument ending in `:test`, after any flags or other tasks — so `./gradlew -q :api:test` matches and `:api:testClasses` does not (CORE-B14).
+- **`/prompt-brainstorm` checks for `superpowers:brainstorming` before it logs.** It recorded "Handed off to superpowers:brainstorming" and then handed off to a skill that might not be installed, and `dependencies` promised an embedded fallback technique that does not exist. It tests the session's skill listing, since invoking the skill to probe it would cede the session. Where the skill is absent, the Resolution now says the correction was not explored, Phase 3 invokes nothing and names `/prompt-grill-me` and `/prompt`, and `dependencies` says so (CORE-B5).
+- **A keyless feedback entry's `id` starts with `NOKEY`**, the form already in use; `feedback-emission` §1 named no key segment for a run with none, so two runs could log one signal under two ids (CORE-B8).
+- **`model-routing/classification` §4 names the two research agents** — `vuln-research` and `upgrade-planner` — where "Both agents this parenthetical names" pointed at a parenthetical naming steps (CORE-B12).
+- **`read-only-repos` gives the recipe for its consumers** instead of a list of five that was short of its rules file by two agents and several commands (GIT-B7).
+
 ## [1.54.1] — 2026-10-26
 
 ### Removed

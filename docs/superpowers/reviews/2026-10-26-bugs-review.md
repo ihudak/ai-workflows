@@ -496,7 +496,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Suggested fix:** drop the two "mirror" pointers. The rules they point at are already stated in place.
 - **Confidence:** high
 
-### GIT-B7 — NIT — read-only-repos' own consumer list is short of its rules file
+### GIT-B7 — NIT — read-only-repos' own consumer list is short of its rules file — **Fixed in workflows-core 1.55.0 (batch B17)**
 - **Where:** `read-only-repos.md:5` names `code-scanner`, `diff-summarizer`, `docs-grounder`, `code-grounder` and `grounding-verifier`. `.claude/rules/workflows-core-read-only.md` also names `docs-auditor`, `conformance-tracer`, `/implement`, `/security-workflows:scan` and others, and `grep -l read-only-repos plugins/*/agents/*.md` returns `docs-auditor.md` and `conformance-tracer.md` as well.
 - **Suggested fix:** replace the list with the re-derive recipe, or add the two agents.
 - **Confidence:** high
@@ -543,7 +543,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### CORE-B5 — MINOR — `/prompt-brainstorm` has no absent-companion path, though `dependencies.md` says the run probes for `superpowers` and falls back to an "embedded technique"
+### CORE-B5 — MINOR — `/prompt-brainstorm` has no absent-companion path, though `dependencies.md` says the run probes for `superpowers` and falls back to an "embedded technique" — **Fixed in workflows-core 1.55.0 (batch B17)**
 - **Where:** `plugins/workflows-core/references/dependencies.md:21-23`; `plugins/workflows-core/commands/prompt-brainstorm.md:45` (Phase 2 Resolution), `:95-99` (Phase 3)
 - **What is wrong:** `dependencies.md` defines an optional companion as "convention + runtime-resolve + graceful fallback: nothing declares it, the run probes for it, and a miss degrades exactly one feature", and its row for `superpowers` (skill `brainstorming`) says the fallback when absent is "Embedded technique; no hard dependency." `/prompt-brainstorm` does no probing. It writes the feedback entry's Resolution as the literal `Handed off to superpowers:brainstorming to redesign the correction.` in Phase 2, commits it, writes the deferred cost record, and only then, in Phase 3, "invokes the skill if present". No embedded brainstorming technique exists anywhere in the family. Only `/prompt-grill-me` has one (`grilling-technique.md`).
 - **Failure scenario:** a user without `superpowers` installed runs `/workflows-core:prompt-brainstorm "…"`. A committed, pushed feedback entry then says the correction was handed off to brainstorming, which never happened. The Phase 3 hand-off has no defined behaviour, so the run ends with nothing explored, or the agent improvises. The reference's promised fallback does not exist.
@@ -570,7 +570,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### CORE-B8 — MINOR — the feedback entry `id` has no defined key segment for a keyless run
+### CORE-B8 — MINOR — the feedback entry `id` has no defined key segment for a keyless run — **Fixed in workflows-core 1.55.0 (batch B17)**
 - **Where:** `plugins/workflows-core/references/feedback-emission.md:83-84` (`id` rule). Dedupe relies on it at `:144-147`.
 - **What is wrong:** "`id` — stable: `<KEY>-<command>-<short-slug>` (drop the leading `/` from the command; use `manual` / `prompt` when `command` is `n/a`)". There is no rule for `<KEY>` when `key` is `null`. Keyless runs are routine: `/feedback`, `/prompt*`, `/diagnose-session`, `/security-workflows:scan <repo-path>`, `/docs-*` and `/document` direct mode all reach tier 2 or tier 3. §1 defines only the file-level `prd: n/a`. §3's auto-entry dedupe is "skip any [id] that already exist", so it works only if every run invents the same placeholder.
 - **Failure scenario:** the demo specs repo's `dev-workflows-feedback/2026-10-16.md` carries `id: NOKEY-scan-verify-scope-ignores-later-test`. Nothing in the reference says `NOKEY`. Another run could write `n/a-scan-…`, `null-scan-…` or `scan-…`, and the same signal is then logged twice, which is the duplication §1.1 says a stable id exists to prevent.
@@ -602,7 +602,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review (live pricing page fetched 2026-10-26)
 - **Confidence:** high
 
-### CORE-B12 — NIT — `classification.md` §4's "Both agents this parenthetical names" names no agents
+### CORE-B12 — NIT — `classification.md` §4's "Both agents this parenthetical names" names no agents — **Fixed in workflows-core 1.55.0 (batch B17)**
 - **Where:** `plugins/workflows-core/references/model-routing/classification.md:249-253`
 - **What is wrong:** the parenthetical is "(NVD lookup, detect, compatibility checks)": three steps, no agents. "Both agents" means `vuln-research` and `upgrade-planner`, which are named only later in the bullet. This is a pointer-face defect.
 - **Suggested fix:** name the two agents in the parenthetical.
@@ -618,7 +618,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### CORE-B14 — NIT — `test-notify` misses the single-module Gradle form the family itself prescribes
+### CORE-B14 — NIT — `test-notify` misses the single-module Gradle form the family itself prescribes — **Fixed in workflows-core 1.55.0 (batch B17)**
 - **Where:** `plugins/workflows-core/hooks/test-notify.sh` (the `grep -qE '(mvnw test|…)'` gate); `plugins/workflows-core/docs/reference/hooks.md` (`test-notify` paragraph)
 - **What is wrong:** `cleanTest test` got its own entries "because `dev-workflows`' `test-baseliner` runs" it. `dev-workflows/references/fix-vuln/build-systems.md:57` and `references/upgrade/ecosystems.md:74` prescribe `./gradlew :<module>:test` for a single module, and that form contains neither `gradlew test` nor `gradle test`, so it never notifies. The hooks page lists the forms that do not match (`mvn clean test`, `npm run test` …) but not this one, which the family itself runs.
 - **Failure scenario:** a `/vuln` or `/upgrade` run testing one Gradle module gives no test notification.
@@ -646,7 +646,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## scripts, gates and hooks
 
-### SCR-B1 — MINOR — `test-notify` reads `tool_response.output`, which a Bash payload does not carry, so it never reports a count
+### SCR-B1 — MINOR — `test-notify` reads `tool_response.output`, which a Bash payload does not carry, so it never reports a count — **Fixed in workflows-core 1.55.0 (batch B17)**
 - **Where:** `plugins/workflows-core/hooks/test-notify.sh:26` (`out = (d.get('tool_response') or {}).get('output', '') or d.get('output', '')`); docs `plugins/workflows-core/docs/reference/hooks.md:8`, `:22`
 - **What is wrong:** Claude Code's Bash tool result is `{"stdout": …, "stderr": …, "interrupted": …}`. The `toolUseResult` records in this session's own transcript (`~/.claude/projects/…/38f385e9-….jsonl`) have that shape, with `stdout` as the first key, and the hook's `tool_response` is that object. Nothing in it is named `output`, so `$output` is always empty. The parser therefore matches nothing, and every test run notifies the literal `Test run: tests completed`. A red suite also notifies only "tests completed". The docs page says the hook "parses its pass/fail counts". The window's own gradle-sum fix (the comment at `:103-109`, "a red build could be notified as green") tunes a parser that never receives any input.
 - **Failure scenario:** `pytest` reports `3 failed, 10 passed` → the notification says `Test run: tests completed`.

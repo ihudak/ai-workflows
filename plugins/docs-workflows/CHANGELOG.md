@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.24.0] — 2026-10-26
 
-**Take with `workflows-core` 1.55.0** (`.claude/rules/plugin-updates-coupling.md`). Post-merge review 87.3 (to-fix D23), settled with the maintainer: a documentation page and a release note are both public, so both recommend documenting what shipped, and both hold the release on the other answer.
+**Take with `workflows-core` 1.56.0** (`.claude/rules/plugin-updates-coupling.md`). Post-merge review 87.3 (to-fix D23), settled with the maintainer: a documentation page and a release note are both public, so both recommend documenting what shipped, and both hold the release on the other answer.
 
 ### Changed
 - **`/document` and `/release-notes` recommend *Document as actual (code)* per discrepancy**, and on *Document as intended (spec)* where the code lags they warn at once that the release, and the publication of the pages or the note, must wait for the defect's fix. `/document` repeats the hold in its Phase 9 report and in the pull-request draft, under the DO-NOT-MERGE banner. `/release-notes` repeats it in a new *Implementation gaps* report line, the handoff's pull-request body and the paste reminder.

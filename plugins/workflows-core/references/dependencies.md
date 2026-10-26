@@ -20,7 +20,7 @@ A companion outside the family is **convention + runtime-resolve + graceful fall
 
 | Companion | Used by | Relationship | Fallback when absent |
 |-----------|---------|--------------|----------------------|
-| `superpowers` (skill `brainstorming`) | `/prompt-brainstorm` | Recommended | Embedded technique; no hard dependency. |
+| `superpowers` (skill `brainstorming`) | `/prompt-brainstorm` | Recommended | None embedded: the run logs the correction, says the skill is absent, and names `/prompt-grill-me` and `/prompt`. |
 | `prose-style` (a marketplace sibling) | planning-doc style checks in `product-workflows`, documentation style checks in `docs-workflows` | **Declared dependency** of both | Neither has an absent case: an unsatisfied dependency disables the plugin. `dev-workflows` has no tie to it at all since `/epics`, `/create-prd` and `/update-prd` moved out. |
 
 ## External tools and services
