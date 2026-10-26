@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.35.1] — 2026-10-26
+
+### Fixed
+- **A `MODERATE` `/implement` run's review now receives the specification.** Only Phase 2B, the `SIGNIFICANT` and `HIGH-RISK` planning phase, extracted the in-scope `[Uxx]`/`[ACxx]`/`[TCxx]` IDs into `applicable_spec`, so the review gate a `MODERATE` run passes (Phase 3A step 6) got none, though the invariant says it does. That review traced no requirement and carried no `Spec-named tests:` line, step 7.5's conformance escalation had nothing to act on, and since a split needs a `design.md` in `applicable_spec`, a review by the design's pieces could not happen below `SIGNIFICANT`. Phase 2A now extracts them as Phase 2B does, at `SIMPLE` too, so a run whose class rises later carries them. The fix was first written on the shelved one-writer branch (`bf393023`, tag `archive/implement-one-writer-a`) and never reached main.
+
 ## [4.35.0] — 2026-10-26
 
 With `workflows-core` 1.52.0 (fix batch B16). It runs beside 1.45.0 too: the one change is a copy of `epic-picker`'s cap brought into line with 1.52.0's.
