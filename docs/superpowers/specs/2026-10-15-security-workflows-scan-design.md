@@ -474,7 +474,7 @@ The batch choice is **Accept the suggestions** · **Change some** · **Decide al
 
 They never carry a finding's free text. `register.md` puts free text under a heading that marks it as scan output, and sub-project E's agents read it as data.
 
-The fix commit is linked when a covering codebase scan, usually `--verify-fixes`, moves the finding to `fixed`.
+The scan that closed it is linked, as `links.fixed_in_scan`, when a covering codebase scan, usually `--verify-fixes`, moves the finding to `fixed`; its commit bounds the fix. (Amended 2026-10-26: this read "the fix commit is linked", which nothing records.)
 
 ### D11. The unit note
 
@@ -676,7 +676,7 @@ On the bookstore demo, the Dev's `/implement BOOK-2-01-02` (storefront ratings) 
 5. **Patches.** Phase 6 gets `F1.patch` from the plugin.
 6. **Close.** Phase 7 fast-forwards SPECS, and `register.py commit` records `[SEC#1]` (`fixing`, with its follow-up line and patch) and `[SEC#2]` (`false-positive`, awaiting security review). The run emits the follow-up into the Epic's `follow-ups.md`, and appends `_security.md`. `commit-artifacts` commits and pushes the register with the session files. The run offers `/dev-workflows:implement BOOK-2-01-02`.
 7. **The fix.** That run reads the follow-up back. HEAD is the Epic's branch, so it asks D17's question, and the Dev continues on `feat/BOOK-2-01-02-storefront-ratings`. It takes `F1.patch` as its starting point and goes through its own baseline and Opus review. Its push updates the open pull request, which is reviewed and merged as usual. Nobody waited for the Security Engineer.
-8. **Verification.** After the merge, the PE's `/conformance BOOK-2` settles the whole PRD on the default branches, the fix included. `/security-workflows:scan /workspace/bookstore --verify-fixes` runs a codebase scan scoped to the changed file, at `medium`, in a temporary worktree at `master`'s head. The scan covers the file and does not report `[SEC#1]`, and the file has changed since `eb694d0`, so `[SEC#1]` becomes `fixed`, linked to the fix commit.
+8. **Verification.** After the merge, the PE's `/conformance BOOK-2` settles the whole PRD on the default branches, the fix included. `/security-workflows:scan /workspace/bookstore --verify-fixes` runs a codebase scan scoped to the changed file, at `medium`, in a temporary worktree at `master`'s head. The scan covers the file and does not report `[SEC#1]`, and the file has changed since `eb694d0`, so `[SEC#1]` becomes `fixed`, linked to the scan that closed it.
 9. **The review.** The Security Engineer's `--triage` shows `[SEC#2]` awaiting security review, and confirms it. It moves to the false-positive log as confirmed.
 
 ## Verification
