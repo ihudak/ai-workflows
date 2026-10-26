@@ -1,6 +1,6 @@
 # Getting started
 
-This page takes you from zero to your first successful run — install the plugin, set the environment variables it reads, and run `/document` end to end. If the project you want to document has no documentation repository at all, start with [Your first run on a project with no docs](#your-first-run-on-a-project-with-no-docs) instead. Once you have done this once, [Workflow overview](workflow.md) shows how the seven commands fit together.
+This page takes you from zero to your first successful run — install the plugin, set the environment variables it reads, and run `/document` end to end. If the project you want to document has no documentation repository at all, start with [Your first run on a project with no docs](#your-first-run-on-a-project-with-no-docs) instead, and follow [The documentation route](docs-workflow.md) from there. Once you have done this once, [Workflow overview](workflow.md) shows how the seven commands fit together.
 
 ## Install
 
@@ -27,10 +27,11 @@ Two other plugins arrive with it, because they are **declared dependencies** rat
 ```bash
 claude plugin marketplace update shipwright
 claude plugin update docs-workflows@shipwright
+claude plugin update workflows-core@shipwright
 claude plugin update prose-style@shipwright
 ```
 
-**Both kinds of step are needed, and the `plugin update` lines are the ones that change what runs.** `marketplace update` refreshes the catalogue — what the marketplace advertises — while an already-installed plugin stays at the version you installed. `claude plugin update` upgrades it, and **requires restarting Claude Code to apply.** The interactive `/plugins` interface does the same with a picker. This page used to say the first line alone was enough; it is not, and the symptom is quiet — `claude plugins list` keeps reporting the old version while the catalogue advertises the new one. **Update `prose-style` with it**: 0.4.0 is the release whose checker applies the specs repository's house-style rules to `/release-notes`' draft, and beside an older one that command records its style check `DEGRADED` and says to update `prose-style`.
+**Both kinds of step are needed, and the `plugin update` lines are the ones that change what runs.** `marketplace update` refreshes the catalogue — what the marketplace advertises — while an already-installed plugin stays at the version you installed. `claude plugin update` upgrades it, and **requires restarting Claude Code to apply.** The interactive `/plugins` interface does the same with a picker. This page used to say the first line alone was enough; it is not, and the symptom is quiet — `claude plugins list` keeps reporting the old version while the catalogue advertises the new one. **Update `workflows-core` with it**: every command here loads the shared references, and the loader that serves them, from that plugin at runtime, and recent releases of the two are made to be installed together — a newer `docs-workflows` beside an older `workflows-core` asks its loader for parts of a reference it cannot serve, or follows a rule that loader's copy does not carry. **Update `prose-style` with it too**: 0.4.0 is the release whose checker applies the specs repository's house-style rules to `/release-notes`' draft, and beside an older one that command records its style check `DEGRADED` and says to update `prose-style`.
 
 ## What you set on your machine
 
@@ -80,7 +81,7 @@ If there is no documentation repository yet, `/docs-init` makes one:
 
 `/docs-init` resolves the target (and refuses outright if that directory already looks like a documentation repository — pointing you at `/docs-profile` instead, which is the command for one that already exists), offers to `git init` an empty or absent directory outside every git work tree (a target below a work tree's top level, existing or not, stops the run), confirms which code repositories the portal will document, branches, then writes the page skeleton, both build configs, `.vale.ini` with a project vocabulary seeded with the product name and the few technical words the scaffold's own pages use (so the scaffold passes its own lint gate, locally and in CI alike), a CI workflow carrying the visibility gates, and `.dev-workflows/docs-profile.yml`. It runs `/docs-brand --inline` to pick up a logo and colours from the product's own code, verifies that both builds and the linter actually work, gates the whole diff on an Opus review, and leaves it on a branch with a drafted pull request. It never pushes and never merges.
 
-Then `/docs-workflows:docs-serve` serves the result and reports a URL you can open in your browser — it opens nothing itself — and `/document` starts filling it in. Skip straight to the next section if your documentation repository already exists.
+Then `/docs-workflows:docs-serve` serves the result and reports a URL you can open in your browser — it opens nothing itself — and `/docs-workflows:docs-audit` then finds what the portal is still missing and writes a prioritised backlog of it. From there, [The documentation route](docs-workflow.md) is the procedure that turns that backlog into pages — which of its steps a command runs, and which you do by hand. Skip straight to the next section if your documentation repository already exists.
 
 ## Your first run
 

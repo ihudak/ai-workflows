@@ -34,6 +34,8 @@ Every extracted value is printed with its source before Phase 8 applies anything
 
 ## Failure modes
 
+On a standalone run every stop below, and a Cancel at one of the extraction, confirmation or contrast prompts, still ends with the report — naming the stop — and the session bookkeeping: the cost entry is recorded and the terminal bookkeeping commit runs. Only an `--enforce-model` value that names no model, or one this session cannot use, ends the run before that.
+
 - `DOCS_BRAND_NOT_A_GIT_WORKTREE` — the resolved docs repo is not inside a git work tree.
 - `DOCS_BRAND_REPO_NOT_WRITEABLE` — the resolved docs repo is not writeable.
 - `DOCS_BRAND_NOT_MKDOCS` — no MkDocs config was found (none of the configs the profile's `builds[]` records or, where it records none, neither `mkdocs.yml` nor `mkdocs.internal.yml` in the resolved directory), or a config found resolves to a theme other than Material (the effective `theme.name`, `INHERIT` followed, must be `material` in every config found). Scaffold one with `/docs-workflows:docs-init` first, or point this run at a repo that already runs Material.

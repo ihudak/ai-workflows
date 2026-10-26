@@ -21,7 +21,7 @@ The backlog sits at **the git top level of your docs repository**, in `.dev-work
 | `units` | One entry per page: what it is about, who for, what type, what priority, what state | The audit, then you |
 | `tutorial_candidates` | Proposed first journeys, one per role. **You pick** by setting `picked: true` | Proposed by the audit, picked by you |
 | `coverage` | A fraction per audience-and-type cell | The audit, derived from `units` |
-| `threshold` | The priority at or above which "done" applies | Seeded at 2 by the first run, yours thereafter |
+| `threshold` | The priority number at or below which "done" applies — 1 is the highest priority | Seeded at 2 by the first run, yours thereafter |
 
 Two things in that table are worth reading twice. **`sources` records a commit, not just a path** — that is what later makes it possible to say the code has moved since a page was written, rather than only that the code exists. And **`tutorial_candidates` is the one block the audit will not decide for you**: which journey a role should learn first is a judgement no scan can make, so the audit proposes and you pick by editing the file.
 

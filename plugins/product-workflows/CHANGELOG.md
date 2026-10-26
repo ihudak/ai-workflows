@@ -18,6 +18,14 @@ The 2026-10-26 post-merge review of #82–#85 and #87: its `product-workflows` f
 - **`/prd-proposal` and `/brd-proposal` archive a lone brief, one standing without a `proposal.md`, on any run, but declared archives only on a revision**, so the handoff left it untracked; both now declare it on any run, and both docs pages say so. (82.1)
 - **The attribution re-check ran only after the last edit to `proposal.md`**, so a later fix to `proposal-brief.md` alone was never re-checked; it now runs after the last inline edit to either. (82.3)
 - **Docs**: `brd-workflow.md`'s flag table lists `/brd-reconcile`'s `--free-text` (83.3); `docs/commands/brd-package.md` states both conditions that stop a same-dated run where a bundle was moved or renamed, as does 3.41.0's entry below (84.2), and its artifact table says each prerequisite's own files (84.5); `docs/commands/brd-proposal.md` gives checks 6 and 10 their umbrella forms (82.2); and both proposal pages name the profile among what the handoff commits (82.4).
+
+## [3.44.0] — 2026-10-26
+
+Finding 83.1 of the 2026-10-26 post-merge review of #82–#85 and #87, with `workflows-core` 1.54.0. Either runs beside the other.
+
+### Fixed
+- **`docs/roles-and-phases.md` said `/brd-reconcile` reads a stopping row without stopping at two sites and never at its ordinary Phase 0 gate.** Since 3.42.0 that gate, on the most recent prompt while the package the review answers is undetermined, tries each older prompt, newest first, and stops only where none passes; the page now names it as the third site (`workflows-core:phase-handoff` §3.7). (83.1)
+
 ## [3.43.0] — 2026-10-26
 
 Fix batch B16 of the 2026-10-26 review, with `workflows-core` 1.52.0, whose `escalation-rules` names `/epics` among the commands making the offer below (`.claude/rules/plugin-updates.md`).

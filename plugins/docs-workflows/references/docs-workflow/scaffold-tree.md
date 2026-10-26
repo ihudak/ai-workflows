@@ -463,9 +463,11 @@ The rule: **sort each section's pages on frontmatter `order`, then on `title`.**
 
 Regenerated on every write that goes through the family: today that is `/docs-init` when it scaffolds, and `/docs-write`, a later command, is to regenerate it whenever it adds or renames a page. One source of truth, no extra plugin, and no state that can drift: the block is derived from the tree each time rather than edited.
 
+**Until that command ships, a page added or renamed any other way is placed by hand, by this rule** — a page the documentation route's step 4 has you write, and a page `/docs-workflows:document` adds or renames, since `/document` maintains no `nav:` by this rule: direct mode never touches it, and keyed mode may add an index or sidebar entry with no regard to the sort, so after a keyed run check whether it added one and move it to where the sort places it. Put its entry into each `nav:` block that lists its section — a public page into both, a page under `internal/` into the internal one only — exactly where the sort above places it, and remove the old entry of a renamed page. That is regeneration by hand, not a hand-edit: the block stays what the rule derives from the tree, so the next generated write reproduces it rather than undoing it. **Leaving the page out is not the safe alternative**: `validation.nav.omitted_files: warn` under `strict: true` (§5) makes a page missing from the public `nav:` a failure of the public build, which is gate 1, locally and in CI.
+
 Both configs' `nav:` blocks are generated. The internal one is the public nav plus the `internal/` sections, in the same order by the same rule.
 
-A hand-edit to a generated `nav:` survives until the next write and then vanishes, which is worse than being rejected. The block therefore carries the comment shown in §5 and §6, so the next person to open the file is told before they edit rather than after.
+A hand-edit to a generated `nav:` that departs from the rule — an entry out of its sorted place, a page grouped where its section is not — survives until the next write and then vanishes, which is worse than being rejected. The block therefore carries the comment shown in §5 and §6, so the next person to open the file is told before they edit rather than after.
 
 ---
 
@@ -497,7 +499,8 @@ validation:
 extra_css:
   - stylesheets/extra.css
 nav:
-  # generated — see §4; do not hand-edit
+  # generated: each section's pages sorted by frontmatter order, then title.
+  # Add a page where that sort places it; never reorder by hand.
 ```
 
 `strict: true` plus the `validation.nav.*` settings are gate 1 (`visibility.md` §4): a public page linking into `internal/` becomes a build failure rather than a broken link a reader finds. Dropping either one retires that gate while the CI step still appears to run.
@@ -519,7 +522,8 @@ site_dir: site-internal
 exclude_docs: |
   _snippets/
 nav:
-  # generated — the public nav plus the internal/ sections; see §4
+  # generated: the public nav plus the internal/ sections, in the same order.
+  # Add a page where that sort places it; never reorder by hand.
 ```
 
 ### The invariant, stated as a content rule
@@ -637,7 +641,7 @@ The file is created on every `/docs-init` run. An absent `accept.txt` beside a `
 
 ## 8. Hard rules
 
-- NEVER hand-edit a generated `nav:`. Change `order:` or `title:` and regenerate (§4).
+- NEVER hand-edit a generated `nav:` away from §4's rule. Change `order:` or `title:` and regenerate (§4); a page added or renamed outside a regenerating command is placed by hand where that rule puts it, never left out (§4).
 - NEVER let the two configs differ in their content source — `docs_dir`, `markdown_extensions`, `theme`, `extra_css`, `validation`, or the nav-generation rule. `exclude_docs`, `site_name`, `site_dir` and the generated `nav:` are the four that may differ, and §6's table is the list (§6).
 - NEVER omit `site_dir: site-internal` from the internal config — without it both builds write to `site/` and gate 2 greps the wrong tree (§6).
 - NEVER remove `_snippets/` from either config's `exclude_docs`, and never remove `base_path: [docs/_snippets]` to "match" it — the pairing is what makes fragments includable without rendering them (§5).

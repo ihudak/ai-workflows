@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.54.0] — 2026-10-26
+
+Finding 83.1 (MAJOR) and NIT 82.5 of the 2026-10-26 post-merge review of #82–#85 and #87. Either version runs beside any `product-workflows` from 3.42.0, whose `/brd-reconcile` already takes the third exception below; this release stops the reference contradicting it.
+
+### Fixed
+- **`phase-handoff` §3.7 said `/brd-reconcile` reads a stopping row without stopping at two sites, "never at its ordinary Phase 0 gate", and that no other caller may take either exception.** Since `product-workflows` 3.42.0 that gate, run on the folder's most recent prompt while the package the review answers is undetermined, tests each older prompt, newest first, and stops on the most recent prompt's return only where none passes. A run loaded both instructions, and following this one re-created BRD3-B19. §3.7 now names that gate as the third site, and the generated `reference-parts/phase-handoff/require-on-main.md` with it. (83.1)
+- **1.49.0's entry said the proposal profile's producer set holds "a stronger class beside"**; for `/brd-proposal` the umbrella `proposal.md` is advisory, the profile's own class, so it now reads "an equal or stronger class". (82.5)
+
 ## [1.53.0] — 2026-10-26
 
 **Take with `dev-workflows` 4.36.0 and `docs-workflows` 1.21.0**: `/dev-workflows:conformance`'s PRD run fetches each Epic's branch for the merged test below from 4.35.0 on, and `/docs-workflows:release-notes` reads the note boundary below from 1.21.0 on. Each states what it needs beside its citation, so an older one still runs. Closes to-fix C2 and C9, and DOC-B-B1 of the 2026-10-26 bugs review.
@@ -42,7 +50,7 @@ Fix batch B16 of the 2026-10-26 review: `escalation-rules`, `next-phase-offer` a
 ## [1.49.0] — 2026-10-26
 
 ### Fixed
-- `phase-handoff` §4.0 classifies `.dev-workflows/proposal-profile.yml` as advisory, and §2.9's `deliverable_paths` row says the proposal commands declare it on every run: `product-workflows` 3.39.0's proposal commands now hand it off with their proposal. `addressing` §5 notes that `/prd-proposal`'s stop on a pre-rename PRD names the rename. Either version runs beside the other — the row only names the reader of a path the producer's set already holds a stronger class beside.
+- `phase-handoff` §4.0 classifies `.dev-workflows/proposal-profile.yml` as advisory, and §2.9's `deliverable_paths` row says the proposal commands declare it on every run: `product-workflows` 3.39.0's proposal commands now hand it off with their proposal. `addressing` §5 notes that `/prd-proposal`'s stop on a pre-rename PRD names the rename. Either version runs beside the other — the row only names the reader of a path the producer's set already holds an equal or stronger class beside.
 
 ## [1.48.0] — 2026-10-26
 

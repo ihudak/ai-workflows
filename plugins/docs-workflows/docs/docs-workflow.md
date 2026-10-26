@@ -101,6 +101,8 @@ Take the highest-priority unit whose `status` is `missing` **and whose `blocked_
 
 Mark every claim you could not ground with `[NEEDS CLARIFICATION: why]`, in the prose, where a reader meets it — a marked claim is never quietly smoothed into a fact, and a page ships with its markers showing rather than being held back over one unresolved sentence.
 
+**Add the page to the navigation.** The scaffold's configs list every page in a `nav:` block, sorted in each section by the pages' frontmatter `order`, then `title`, and the public build runs in strict mode with a page missing from that list reported — so a page left out fails `mkdocs build --strict`, locally and in CI. Nothing on this route regenerates the block for you yet, so place the page's entry yourself, exactly where that sort puts it: a public page into `mkdocs.yml` and, where the scaffold has one, `mkdocs.internal.yml`; an internal page into `mkdocs.internal.yml` alone. Placed by the rule, the entry is what a later generated block would hold anyway; placed anywhere else, it is overwritten the first time one is generated.
+
 **Watch `visibility` against `page_path`.** The two-build split decides by path: a page is internal because it sits under `docs/internal/`, and nothing in either build reads the `visibility` value. So a unit marked `visibility: internal` whose `page_path` is outside that tree describes a page that **ships publicly**, with both build gates green. Set the pair in one edit. [Documentation visibility](reference/docs-visibility.md) is the model behind it.
 
 **Then update the unit**: `page_path` to where you put the page, and `status: drafted`. Do this now rather than later — the two costs of not doing it are real, and both are yours to carry:
@@ -108,9 +110,9 @@ Mark every claim you could not ground with `[NEEDS CLARIFICATION: why]`, in the 
 - **The loop re-selects the unit.** Step 4 picks on `status: missing`, so a unit left `missing` with a page already written is the unit this step hands you again on the next pass, and again after that, until a `--refresh` reconciles it. Nothing on this route runs a refresh between iterations; step 7 is on a cadence.
 - **It routes past step 6.** A `--refresh` that finds a page carrying the unit's id reads the page first, and lands the unit on `drafted` where it carries a marker — but straight on `published` where it carries none, without anybody having walked a claim. The schema allows that edge deliberately, and states what it rests on: your tag that the page is done, and no walkthrough. A coverage figure raised that way is only as good as that tag.
 
-**What helps today.** [`/document`](commands/document.md) in direct mode will apply a described edit to pages and run the style check over them, which is real work off your hands — but it reads no backlog: it does not open the unit, does not write the `unit:` key, and does not move a `status`. The prose is its half; the unit is yours.
+**What helps today.** [`/document`](commands/document.md) in direct mode will apply a described edit to pages and run the style check over them, which is real work off your hands — but it reads no backlog: it does not open the unit, does not write the `unit:` key, does not move a `status`, and does not add the page to the `nav:` blocks. The prose is its half; the unit is yours.
 
-*Later: `/docs-write` is specified to take the highest-priority missing unit and draft it, leaving it `drafted` with its unresolved claims marked. It is not part of this release.*
+*Later: `/docs-write` is specified to take the highest-priority missing unit and draft it, leaving it `drafted` with its unresolved claims marked, and to regenerate both `nav:` blocks whenever it adds or renames a page. It is not part of this release.*
 
 ### 5. Capture what the page shows — by hand
 
