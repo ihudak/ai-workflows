@@ -159,10 +159,14 @@ tier or flag that excuses it.
 
 The tier printed in §4 section 1's header block is the tier §5's ladder actually supports on
 disk — re-grade the folder against §5's own conditions (for tier 2, verified grounding **plus a
-`decisions.md` that is present and every interview round it names settled**; `ard.md` for tier 3;
-`specification.md` for tier 4) rather than trusting the printed grade. **Re-grade the presence of the
-register, not only the settledness of its rounds:** a folder holding none names no round, so the
-settled half alone passes vacuously and this check would confirm a tier-2 grade §5 caps at 1. A tier
+`decisions.md` that is present, an `interview/` holding at least one `round-<N>.md` record, and
+every round settled**; `ard.md` for tier 3; `specification.md` for tier 4) rather than trusting the
+printed grade. **Re-grade the presence of the register and of a round, not only the settledness of
+the rounds:** a folder holding no register has no round, and neither has one whose register
+`/create-prd` created holding only an open `[AS#n]` before any interview, so the settled half alone
+passes vacuously and this check would confirm a tier-2 grade §5 caps at 1. Read the round off
+`interview/`, never off what the register lists: a register holding its header line alone after an
+interview whose every question a finding settled is settled (§5). A tier
 claimed that the folder's own evidence does not support, in either direction, is a
 **BLOCKER**: a customer is told the wrong grade of evidence behind the number either way. **The
 brief is absent below tier 2, irrespective of any flag** (§5) — its presence there, or its absence
@@ -171,9 +175,13 @@ at tier ≥ 2 for a reason other than the operator's own `--no-brief`, is a **BL
 **On an umbrella the ladder is not re-graded at all** (§5 grades no `BRD-` container off it) —
 decided by the same folder-kind test as check 9, the directory prefix. Read instead the tier in
 each included slice's own `proposal.md` header — the included slices being those the umbrella's row
-set names — and confirm the umbrella's printed tier is their minimum and that it prints the mix
-behind it (§14); then apply the brief rule above against that minimum. A printed tier other than
-the minimum, a missing mix, or a brief present while the minimum is tier 1 is a **BLOCKER**. A
+set names, each an immediate subdirectory of the reviewed folder whose `brd-link.md` names this BRD
+as `parent:` (the positive test `commands/brd-proposal.md` Phase 2 enumerates by — never a name
+match), matched to its row by the `key:` that `brd-link.md` records — and confirm the umbrella's
+printed tier is their minimum and that it prints the mix behind it (§14); then apply the brief rule
+above against that minimum. A printed tier other than the minimum, a missing mix, a brief present
+while the minimum is tier 1, or a brief absent while the minimum is tier 2 or higher for a reason
+other than `--no-brief`, is a **BLOCKER**. A
 slice proposal you cannot open, or whose header carries no tier, is reported as such and never
 guessed at.
 

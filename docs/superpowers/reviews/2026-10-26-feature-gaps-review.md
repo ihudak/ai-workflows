@@ -382,7 +382,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Source:** feedback `create-prd-contradicted-cd-already-happened` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B10 — MINOR — Gap: no check that a decision is attributed to whoever made it in proposal prose
+### FBB-B10 — MINOR — Gap: no check that a decision is attributed to whoever made it in proposal prose — **Done in product-workflows 3.39.0 (batch B09)**
 - **Where:** `plugins/product-workflows/commands/prd-proposal.md` (Phases 7 and 9); `agents/proposal-reviewer.md`.
 - **What is wrong:** The rule that `[VD#n]` belongs to the delivery team and `[CD#n]` to the customer is mechanical to check, but nothing checks it. After manual fix notes on a BLOCK, nothing re-checks it either.
 - **Failure scenario:** `[ED#9]` credited the customer with a `[VD#6]` decision. It shipped under unreviewed manual fix notes.
@@ -391,7 +391,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Source:** feedback `prd-proposal-attribution-unchecked-before-review` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B11 — NIT — Gap: the defect sweep does not quote conflicts with out-of-scope items or decided records
+### FBB-B11 — NIT — Gap: the defect sweep does not quote conflicts with out-of-scope items or decided records — **Done in product-workflows 3.39.0 (batch B09)**
 - **Where:** `plugins/product-workflows/commands/prd-proposal.md` Phase 4 step 3.
 - **What is wrong:** A source-2 or source-3 candidate is put to the operator with no check against the PRD's out-of-scope list or the `[VD#n]`/`[CD#n]` records.
 - **Failure scenario:** The operator confirmed `[SR#6]` as mandatory scope against `[VD#5]`, then reversed it.
@@ -400,7 +400,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Source:** feedback `prd-proposal-source3-conflict-not-surfaced` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B12 — NIT — Gap: nothing requires success measures to be traced in a proposal
+### FBB-B12 — NIT — Gap: nothing requires success measures to be traced in a proposal — **Done in product-workflows 3.39.0 (batch B09)**
 - **Where:** `plugins/product-workflows/references/proposal-format.md` §4 section 21; `agents/proposal-reviewer.md`.
 - **What is wrong:** Nothing requires every live `[SM#n]`/`[SMC#n]` to trace to a `[WP#n]` or an exclusion.
 - **Evidence:** A grep for `SM#n|SMC#` in both files returns nothing.

@@ -8,7 +8,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ## [1.49.0] — 2026-10-26
 
 ### Fixed
-- `phase-handoff` §4.0 classifies `.dev-workflows/proposal-profile.yml` as advisory: `product-workflows` 3.39.0's proposal commands now hand it off with their proposal. Either version runs beside the other — the row only names the reader of a path the producer's set already holds a stronger class beside.
+- `phase-handoff` §4.0 classifies `.dev-workflows/proposal-profile.yml` as advisory, and §2.9's `deliverable_paths` row says the proposal commands declare it on every run: `product-workflows` 3.39.0's proposal commands now hand it off with their proposal. `addressing` §5 notes that `/prd-proposal`'s stop on a pre-rename PRD names the rename. Either version runs beside the other — the row only names the reader of a path the producer's set already holds a stronger class beside.
 
 ## [1.48.0] — 2026-10-26
 

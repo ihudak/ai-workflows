@@ -146,15 +146,18 @@ refusal on readiness is the absence of the caller's own gated input, which that 
 
 **Both tier conditions reuse rules that already exist.** *Verified grounding* means every finding
 carries a verifier outcome — `workflows-core:grounding-format`'s rule that a finding without an
-outcome is not evidence. *A settled register* means **a `decisions.md` is present, it names at least
-one interview round, and every round it names is settled**, the test `commands/brd-package.md`
-already applies, a torn write (`references/decision-register-format.md` §8) naming no round. **The
-presence half and the round half are not redundant**: a folder holding no register at all names no
-round, and neither does a register `commands/create-prd.md` created holding only an open `[AS#n]`
-for a customer-authority gap, before any interview — so a condition worded only as *every round is
+outcome is not evidence. *A settled register* means **a `decisions.md` is present, `interview/`
+holds at least one `round-<N>.md` record, and every round is settled** — the tests
+`commands/brd-package.md` already applies, its `BRD_PACKAGE_NOT_INTERVIEWED` stop for the middle
+one, a torn write (`references/decision-register-format.md` §8) naming no round. **The presence half
+and the round half are not redundant**: a folder holding no register has no round to settle, and
+neither has a register `commands/create-prd.md` created holding only an open `[AS#n]` for a
+customer-authority gap, before any interview — so a condition worded only as *every round is
 settled* is vacuously true on both, and combined with grounding, which is reachable on either route,
-it would grade a folder whose register settles nothing at tier 2 and unlock the brief this section's
-own floor withholds.
+it would grade a never-interviewed folder at tier 2 and unlock the brief this section's own floor
+withholds. **The round is read off `interview/`, never off what the register lists**: a round whose
+every question a verified finding settled leaves a register holding its header line alone
+(`references/decision-register-format.md` §1), an ordinary interviewed state that grades tier 2.
 
 **The tier caps confidence; it never sets it.** Range width is computed bottom-up from per-package
 confidence (§6). The tier is a ceiling: evidence can only push a package lower.
@@ -248,9 +251,11 @@ of the grade it left, which is drift no author notices and no reader can see.
 **Low and High are rendered to one decimal place of an hour**, so a band edge sits at most 0.05 h
 from its exact value. **Both comparisons carry a tolerance of
 one percentage point, or the rounding a rendered figure actually carries where that is larger** —
-50 ÷ the package's expected hours, in points, for a figure rendered in whole hours, which on a 38 h
-package is 1.3 points (a −20 % edge of 30.4 h rendered as 30 h reads −21.05 %). Without the
-tolerance the rule fires on arithmetic rather than on judgement.
+50 ÷ the package's expected hours, in points, for a figure rendered in whole hours, as a proposal
+written before this precision rule, an anchor revision among them, may carry: on a 38 h package
+that is 1.3 points (a −20 % edge of 30.4 h rendered as 30 h reads −21.05 %). The band is measured
+against the Expected figure as rendered. Without the tolerance the rule fires on arithmetic rather
+than on judgement.
 
 **Confidence is stated per package with a reason, and the document says in as many words that the low
 and high figures describe a credible range rather than best and worst cases.**

@@ -191,10 +191,15 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
    **Row F splits into two stops on a test the gate cannot make**, exactly as `/prd-ground`'s
    idea-route row does — *never produced* and *produced, handoff declined* name different fixes. Test
    whether a `prd.md` is in the worktree at all. Where none is but the folder holds a legacy
-   `<KEY>_<slug>.md` PRD — a top-level `.md` file whose name is the resolved key followed by `_` —
-   other than `<KEY>_ARD.md`, the `<remedy>` is that file's rename and nothing else: `This folder's PRD is <name>, written
-   before the artifact filenames lost their keys: rename it to prd.md (git mv), land the rename, and
-   re-run.` Otherwise:
+   `<KEY>_<slug>.md` PRD — a top-level `.md` file whose name is the resolved key followed by `_`,
+   other than `<KEY>_ARD.md` — stop with the same code and its own message, naming no other remedy:
+
+   ```
+   PRD_PROPOSAL_NEEDS_PRD: <KEY>'s PRD is <path>/<name>, written before the artifact filenames lost their keys, and this command reads prd.md alone.
+     Rename it to prd.md (git mv), land the rename, and re-run.
+   ```
+
+   Otherwise:
 
    ```
    PRD_PROPOSAL_NEEDS_PRD: no prd.md on any ref for <KEY>, and none in <path> either — there is nothing to estimate yet.
@@ -364,9 +369,9 @@ stops:
 **The profile is committed by this run's handoff, not by `commit-artifacts`.** It is not one of
 `workflows-core:specs-repo-git` §2.1's bookkeeping paths, so Phase 10 declares it among the
 deliverable paths on every run, as `.dev-workflows/proposal-profile.yml` relative to `$SPECS_PATH`:
-`workflows-core:phase-handoff` §2.3 stages it where this run wrote or corrected it, or where it was
-never committed, and accounts for it silently where the branch already carries it unchanged. A
-declined handoff leaves it uncommitted with the proposal, and a teammate's clone then holds none.
+the handoff stages it where this run wrote or corrected it, or where it was never committed, and
+accounts for it silently where the branch already carries it unchanged. A declined handoff leaves it
+uncommitted with the proposal, and a teammate's clone then holds none.
 
 **No rates, no currency, no money in this file** — the same rule that binds both artifacts
 (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §1). A profile carrying one is reported and
@@ -404,14 +409,16 @@ folder does not meet:
    exist and neither is re-expressed here: *verified grounding* is `workflows-core:grounding-format`'s
    rule that a finding carrying no verifier outcome is not evidence, applied to every finding in
    `grounding/code-grounding.md` and `grounding/design-grounding.md`; *a settled register* is
-   **`decisions.md` present, naming at least one `interview/round-<N>.md`, and every round it names
-   settled** — the test `commands/brd-package.md` already applies, counting no record that
+   **`decisions.md` present, `interview/` holding at least one `round-<N>.md` record, and every round
+   settled** — the tests `commands/brd-package.md` already applies, counting no record that
    `${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §8 calls a torn write, and neither
    do the drivers and the defect sweep below. **Test the presence and the round first, and do not
-   collapse the three** (§5): a folder holding no register names no round, and neither does the
-   register `/product-workflows:create-prd` creates holding only an open `[AS#n]` before any
+   collapse the three** (§5): a folder holding no register has no round, and neither has one where
+   `/product-workflows:create-prd` created the register holding only an open `[AS#n]` before any
    interview, so the settled half alone is vacuously true on both and this step would grade either
-   tier 2 on grounding alone. Tier **2 · Grounded**.
+   tier 2 on grounding alone. Read the round off `interview/`, never off what the register lists — a
+   register holding its header line alone after an interview whose every question a finding settled
+   is settled (§5). Tier **2 · Grounded**.
 3. **`ard.md` in the resolved folder.** Tier **3 · Architected**.
 4. **`specification.md` in the resolved folder.** Tier **4 · Specified**.
 

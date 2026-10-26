@@ -1377,7 +1377,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 <!-- /prd-proposal and /brd-proposal -->
 
-### PRD2-PROP-B1 — MINOR — Tier 2's "settled register" is met by a register `/create-prd` created holding only open `[AS#n]`, the vacuous case §5 says its presence test exists to prevent
+### PRD2-PROP-B1 — MINOR — Tier 2's "settled register" is met by a register `/create-prd` created holding only open `[AS#n]`, the vacuous case §5 says its presence test exists to prevent — **Fixed in product-workflows 3.39.0 (batch B09)**
 - **Where:**
   - `plugins/product-workflows/commands/prd-proposal.md:391-397` (*"a settled register is `decisions.md` present, and every `interview/round-<N>.md` it names settled … Test the presence first and do not collapse the two"*);
   - `references/proposal-format.md:149-155` (*"The presence half is not redundant: a folder holding no register at all names no round, so a condition worded only as every round is settled is vacuously true there"*);
@@ -1395,7 +1395,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### PRD2-PROP-B2 — MINOR — `/brd-proposal` Phase 7 classifies coverage from "Phase 3's membership list", missing a slice that Phase 6 step 1 excluded
+### PRD2-PROP-B2 — MINOR — `/brd-proposal` Phase 7 classifies coverage from "Phase 3's membership list", missing a slice that Phase 6 step 1 excluded — **Fixed in product-workflows 3.39.0 (batch B09)**
 - **Where:**
   - `plugins/product-workflows/commands/brd-proposal.md:592-595` (*"Which slices count as included is this run's own input to that, and it is Phase 3's decision … Carry Phase 3's membership list into the classification"*);
   - against `:521-530` (Phase 6 step 1's exclusion *"would reach the coverage statement Phase 7 computes … it is named in the final report and enumerated in the coverage statement"*) and `:647-649` (stamp `--excluded` *"in the walk, and in Phase 6 step 1"*).
@@ -1406,7 +1406,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD2-PROP-B3 — MINOR — `proposal-reviewer` check 6 has no umbrella form, so an umbrella's tier claim and its brief floor are checked by nothing, or checked wrongly
+### PRD2-PROP-B3 — MINOR — `proposal-reviewer` check 6 has no umbrella form, so an umbrella's tier claim and its brief floor are checked by nothing, or checked wrongly — **Fixed in product-workflows 3.39.0 (batch B09)**
 - **Where:**
   - `plugins/product-workflows/agents/proposal-reviewer.md:152-163` (check 6 re-grades "the folder" against §5's ladder: `decisions.md`, `ard.md`, `specification.md`);
   - `:314-319` (*"check 6 re-grades against `proposal-format.md` §5, which grades no umbrella off its ladder at all"*);
@@ -1422,7 +1422,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### PRD2-PROP-B4 — MINOR — The proposal pair reads a legacy `<KEY>_*.md` PRD "through `addressing` §5's legacy fallback", which §5 says covers folder names only, with no command carrying a filename fallback
+### PRD2-PROP-B4 — MINOR — The proposal pair reads a legacy `<KEY>_*.md` PRD "through `addressing` §5's legacy fallback", which §5 says covers folder names only, with no command carrying a filename fallback — **Fixed in product-workflows 3.39.0 (batch B09)**
 - **Where:**
   - `plugins/product-workflows/commands/prd-proposal.md:180-181` (*"`prd.md` on a current tree, a `<KEY>_*.md` entry only through `workflows-core:addressing` §5's legacy fallback"*);
   - `references/proposal-format.md:533` (*"or, where none exists, the `<KEY>_<slug>.md` PRD `workflows-core:addressing` §5's legacy fallback accepts"*);
@@ -1442,7 +1442,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### PRD2-PROP-B5 — NIT — The `/prd-proposal` docs example says the tier-2 next-step array offers `/create-ard` "first"; the command's array puts it third
+### PRD2-PROP-B5 — NIT — The `/prd-proposal` docs example says the tier-2 next-step array offers `/create-ard` "first"; the command's array puts it third — **Fixed in product-workflows 3.39.0 (batch B09)**
 - **Where:** `plugins/product-workflows/docs/commands/prd-proposal.md:92` (*"Its next-step array offers `/product-workflows:create-ard PRODUCT-1234-01` first"*), against `commands/prd-proposal.md:714`.
 - **What is wrong:** The tier-2 array is `["Stop here …", "Roll it into the programme umbrella …", "Raise the tier first — /product-workflows:create-ard <KEY> …", "Price the next sibling slice …"]`. The example is a BRD slice, so it has a parent and the umbrella option stays. `/create-ard` is therefore the third option, and it is not marked Recommended.
 - **Failure scenario:** A reader expects a different menu from the one the run presents verbatim.
@@ -1451,7 +1451,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD2-PROP-B6 — NIT — A folder holding a `proposal-brief.md` but no `proposal.md` counts as a revision, so the run looks for an anchor and archives a proposal that do not exist
+### PRD2-PROP-B6 — NIT — A folder holding a `proposal-brief.md` but no `proposal.md` counts as a revision, so the run looks for an anchor and archives a proposal that do not exist — **Fixed in product-workflows 3.39.0 (batch B09)**
 - **Where:** `plugins/product-workflows/commands/prd-proposal.md:239-241` (*"whether `proposal.md` and `proposal-brief.md` already exist … Where either does, Phase 6 treats the prior as the anchor (§8) unless `--redo` was given, Phase 7 archives it (§2), and §4's section 23 renders (§12)"*); the same wording is at `commands/brd-proposal.md:161-163`.
 - **What is wrong:** "Either" makes a leftover brief alone enough to start the stability anchor, the proposal archive and the changelog section. All three need a prior `proposal.md`.
 - **Failure scenario:** A brief is left after a hand-deleted `proposal.md`. The run:
@@ -2284,7 +2284,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## field feedback — BOOK-2-01 runs
 
-### FBB-B1 — MAJOR — `/prd-proposal` writes `proposal-profile.yml` and calls it committed, but nothing ever stages it
+### FBB-B1 — MAJOR — `/prd-proposal` writes `proposal-profile.yml` and calls it committed, but nothing ever stages it — **Fixed in product-workflows 3.39.0 / workflows-core 1.49.0 (batch B09)**
 - **Where:** `plugins/product-workflows/commands/prd-proposal.md:290`, `:345` (calls it "a committed `proposal-profile.yml`"); `:693` (`deliverable_paths` = `proposal.md`, `proposal-brief.md`, archived priors only); `plugins/workflows-core/references/specs-repo-git.md` §2.1 (no `.dev-workflows/` path; `grep -n '\.dev-workflows' specs-repo-git.md` returns nothing); `brd-proposal.md:447`.
 - **What is wrong:** The profile is read back by every later `/prd-proposal` and `/brd-proposal`, and the prose calls it committed. However, neither the handoff nor `commit-artifacts` stages it.
 - **Failure scenario:** A first proposal run grills a profile into `$SPECS_PATH/.dev-workflows/proposal-profile.yml`. The handoff commits only the proposal, and `commit-artifacts` treats the profile as outside its bounded paths. The profile stays untracked, so a teammate's clone has none and their `/brd-proposal` stops with `BRD_PROPOSAL_NEEDS_PROFILE`.
@@ -2338,7 +2338,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `create-prd-phase1-confirm-no-choices` in `BOOK-2-01-feedback.md`
 - **Confidence:** high
 
-### FBB-B9 — MINOR — `proposal-format` §6 makes a false claim about rounding
+### FBB-B9 — MINOR — `proposal-format` §6 makes a false claim about rounding — **Fixed in product-workflows 3.39.0 (batch B09)**
 - **Where:** `plugins/product-workflows/references/proposal-format.md:246-247` ("Whole-hour rounding moves a band by up to a point").
 - **What is wrong:** On a 38 h Medium package, the low end of 30.4 rounds to 30, which is −21.05 %. That is more than a point off the band, so the rule fires on arithmetic alone. The rendering precision of Low and High is unstated.
 - **Failure scenario:** A default band on a small package fails the one-point tolerance.

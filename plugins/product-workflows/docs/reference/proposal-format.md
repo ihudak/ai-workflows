@@ -32,7 +32,7 @@ You do not need an ARD, a specification, or anything beyond the PRD to get a pro
 | 3 · Architected | \+ an ARD | discovery becomes translating an architecture, not authoring one |
 | 4 · Specified | \+ a specification | QA is sized from the authored test cases |
 
-A register is **settled** when `decisions.md` names at least one interview round and every round it names is settled — so a register holding only an open assumption `/create-prd` wrote, before any interview, settles nothing and leaves the folder at tier 1.
+A register is **settled** when `decisions.md` is present, the folder's `interview/` holds at least one round record, and every round is settled — so a register holding only an open assumption `/create-prd` wrote, before any interview, settles nothing and leaves the folder at tier 1, while an interview whose every question a finding answered, leaving the register empty, still counts.
 
 The tier is a **ceiling on confidence**, never the confidence itself: tier 1 caps every package at Low, tier 2 at Medium, tier 4 at High, and tier 3 at High only for a package an `[AD#n]` covers. Evidence can push a package lower; nothing pushes it above its tier.
 

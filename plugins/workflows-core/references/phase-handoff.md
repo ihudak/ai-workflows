@@ -194,7 +194,7 @@ Every failure is reported and the phase is described as **not handed off**. The 
 |---|---|
 | `prefix` | one of `idea`, `prd`, `ard`, `spec`, `epics`, `design`, `ready`, `brd` (shared by every `/brd-*` command and, on the BRD route, `/prd-ground`, the way `prd` is shared by `/create-prd`, `/update-prd`, `/prd-proposal`, `/docs-workflows:release-notes` and, on the idea route, `/prd-ground`), `frames`, `kb`, `conformance` (`/dev-workflows:conformance`, for its `_conformance.md` record and the `## Engineering review` notes it writes) |
 | `feature_folder` | the resolved directory the deliverable was written into — none for `kb` (§2.2's keyless form) |
-| `deliverable_paths` | the literal repo-relative paths this phase wrote — authored or copied in — one file each, never a directory (§2.3) |
+| `deliverable_paths` | the literal repo-relative paths this phase wrote — authored or copied in — one file each, never a directory (§2.3); the proposal commands also declare the shared proposal profile on every run, written or not, which §2.3 step 4 accounts for where the branch already carries it unchanged (§4.0) |
 | `title` | the commit subject and pull-request title |
 | `body_facts` | what §2.7 renders |
 | `inputs_read` | every file under `$SPECS_PATH` outside `specs-repo-git.md` §2.1's session-file shapes that this run or an agent it dispatched read — §2.2's stack test reads it beside `deliverable_paths`. Derived by the run from its own reads rather than declared ahead, and recorded as it reads, so a compacted context still holds it |

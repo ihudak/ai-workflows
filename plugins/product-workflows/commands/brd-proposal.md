@@ -492,8 +492,7 @@ profile from here on.
 **The profile is committed by this run's handoff, not by `commit-artifacts`**, as in
 `/prd-proposal` Phase 2: it is not one of `workflows-core:specs-repo-git` §2.1's bookkeeping paths,
 so Phase 11 declares `.dev-workflows/proposal-profile.yml` among the deliverable paths on every run,
-and `workflows-core:phase-handoff` §2.3 stages it only where it is not already on the branch
-unchanged.
+and the handoff stages it only where it is not already on the branch unchanged.
 
 **No rates, no currency, no money in this file** — the same rule that binds both artifacts
 (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §1). A profile carrying one is reported and
@@ -646,6 +645,11 @@ them and this run executes them:
   own form. The `[WP#n]` and `[ED#n]` namespaces this run mints are the plugin's own and stay
   bracketed. A conversion in either direction is the defect the reviewer looks for.
 
+**Attribute every decision to the side that made it** (§8): a `[VD#n]` is the delivery team's and a
+`[CD#n]` the customer's (`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md`), so no
+sentence credits the customer with a `[VD#n]` or the delivery team with a `[CD#n]`. Phase 10's
+pre-lint checks it over both artifacts.
+
 Write the whole file as prose that is never hard-wrapped (`workflows-core:prose-formatting`).
 
 **Then end it with the `priced-against` record, through the script and only through it** (§15.3):
@@ -704,7 +708,10 @@ that file describes the archived revision and not this one.
    mechanical ones, and proceed; the reviewer is the gate. **The `priced-against` record is checked
    here too** (§15.3): re-run Phase 8's `stamp`, with the same record file and `--excluded`. `{"written": false}` passes;
    `{"written": true}` means the record was missing, altered or no longer last — a pre-lint finding,
-   already fixed by that run from Phase 5's ids, never from a fresh hash.
+   already fixed by that run from Phase 5's ids, never from a fresh hash. **Decision attribution is
+   checked here too** (§8): for every `[VD#n]` and `[CD#n]` either artifact cites, read the sentence
+   citing it, and inline-fix any that names the customer as the decider of a `[VD#n]` or the delivery
+   team as the decider of a `[CD#n]`.
 2. **The review gate.** Dispatch `proposal-reviewer` (Opus, frontmatter-pinned; recorded as `review_model`, no override unless §10 enforces a model). **It is the same reviewer the sibling dispatches, unchanged** — its
    check 9 (Coverage) applies on this run and is `N/A` on a slice's, its check 2 carries an
    umbrella-totals relation for the same reason, its check 6 reads the included slices' tiers in
@@ -751,7 +758,9 @@ that file describes the archived revision and not this one.
 
 **After the last inline edit to `proposal.md` — a triage fix, or an edit a later prompt asked for —
 run Phase 8's `stamp` once more** with the same record file and `--excluded`, so no edit carries a damaged record into the
-handoff; `{"written": true}` there is reported beside the edit that caused it.
+handoff; `{"written": true}` there is reported beside the edit that caused it. **Re-run step 1's
+decision-attribution check too**, over every sentence an inline edit wrote or changed in either
+artifact — an edit made after the review is read by no reviewer, so this is the only check it gets.
 
 **The recorded verdict names the version it was taken against** — where any edit followed it, the final report says so and names the edits, per the `A recorded verdict names the version it was taken against` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules version-line")`. Where none did, it says that too.
 
