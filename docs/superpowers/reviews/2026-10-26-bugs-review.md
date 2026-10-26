@@ -490,7 +490,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### GIT-B6 — NIT — followup-emission says it mirrors nothing, then says twice to mirror another plugin's command
+### GIT-B6 — NIT — followup-emission says it mirrors nothing, then says twice to mirror another plugin's command — **Fixed in workflows-core 1.54.1 (batch B15)**
 - **Where:** `followup-emission.md:11-14` ("**Self-contained, and no longer mirroring anything.** … no dependency — runtime or editorial — on any other plugin") against `:77` ("mirrors `/wiki-tasks-extract` Step 5") and `:111` ("Mirror `/wiki-tasks-extract`: NO mid-run interruption").
 - **What is wrong:** two live claims contradict each other. `/wiki-tasks-extract` ships in `obsidian-llm-wiki`, which is not a dependency of any family plugin, so the "mirror" pointers send a reader to a file a run cannot load.
 - **Suggested fix:** drop the two "mirror" pointers. The rules they point at are already stated in place.
@@ -2637,7 +2637,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQS-B11 — MINOR — obsidian-llm-wiki README: the local-install command is `cc`, not `claude`, and the marketplace step gives no command
+### DQS-B11 — MINOR — obsidian-llm-wiki README: the local-install command is `cc`, not `claude`, and the marketplace step gives no command — **Retired — obsidian-llm-wiki removed from the marketplace (batch B15)**
 - **Also found as:** DQW-B16 (merged here)
 - **Where:** `plugins/obsidian-llm-wiki/README.md:100` (`cc --plugin-dir /path/to/obsidian-llm-wiki`); `:86-92` ("add it once via Claude Code settings or the `/plugin` command, then install: `/plugin install obsidian-llm-wiki@shipwright`")
 - **What is wrong:** `cc` is the C compiler on Linux and macOS. Claude Code's executable is `claude` (CLAUDE.md, the root README, `.claude/rules/plugin-updates.md`), so a user who pastes the line runs `cc` on a directory. The marketplace step names the action but gives no command. The command (`claude plugin marketplace add ihudak/ai-workflows`) sits behind the `../../README.md` link, which is broken in the cache (DQS-B5).
@@ -2647,7 +2647,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium (`cc` may be a personal alias of the author, but a reader does not have it)
 
-### DQS-B12 — MINOR — The READMEs of the three plugins without a `docs/` tree leave out what a user needs
+### DQS-B12 — MINOR — The READMEs of the three plugins without a `docs/` tree leave out what a user needs — **Fixed in prose-style 0.8.0 and acli 0.1.4; the obsidian-llm-wiki part retired with the plugin (batch B15)**
 - **Where:** `plugins/prose-style/README.md`, `plugins/acli/README.md`, `plugins/obsidian-llm-wiki/README.md`
 - **What is wrong:** Each README is the plugin's only user documentation.
   - **prose-style** (407 lines) documents its commands, agents, skill and overlay well. Its *Installation* section (`:402-407`) has no install command, only "Install it through Claude Code's plugin system" and the broken-in-cache root link. *How it fits* (`:383-400`) cites `/document` "Phase 6.4" and `/epics` "Phase 6.2" with no explanation of what a phase number is (both are accurate at HEAD: `docs-workflows/commands/document.md:890`, `product-workflows/commands/epics.md:713`). It has no diagram of the overlay resolution order, which is the plugin's one non-obvious mechanism (`:40-96`).
@@ -3026,7 +3026,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQW-B2 — MAJOR — obsidian-llm-wiki README says the Stop hook updates `hot.md` "at session end", but the hook blocks Claude at the end of every turn
+### DQW-B2 — MAJOR — obsidian-llm-wiki README says the Stop hook updates `hot.md` "at session end", but the hook blocks Claude at the end of every turn — **Retired — obsidian-llm-wiki removed from the marketplace (batch B15)**
 - **Where:** `plugins/obsidian-llm-wiki/README.md:95`, `:224-225`; `plugins/obsidian-llm-wiki/hooks/hooks.json` (the `Stop` entry); also `plugins/obsidian-llm-wiki/CLAUDE.md:77-78`
 - **What is wrong:** The README says "Hooks activate automatically: session start reads `hot.md`, session end updates it" and "auto-updated at session end (Stop hook)". The `Stop` hook fires each time the main agent finishes a response. It prints `{"decision":"block","reason":"Read …/skills/wiki-hot/SKILL.md fully, then update wiki/hot.md …"}` whenever `${VAULT_PATH:-$HOME/obsidian_vault}/wiki` exists, and it is suppressed only on the immediate re-stop (`stop_hook_active`). Its own reason text even handles a turn with no wiki activity ("If nothing wiki-related happened this session, update Last Updated…").
 - **Failure scenario:** A user installs the plugin, and their machine has `~/obsidian_vault/wiki`. From then on, in every Claude Code session in any repository, each answered prompt is followed by a forced extra cycle: read the skill, then rewrite the vault's `hot.md`. That costs tokens and time and rewrites a file in another repository. The README tells them nothing of this. It also goes against the marketplace convention "Hook scripts must exit 0 — they must never block Claude" (`CLAUDE.md` § Conventions). The plugin keeps its own `CLAUDE.md`, but that file repeats the same "session end" claim.
@@ -3081,7 +3081,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQW-B8 — MINOR — The `/api-guideline-reviewer` page hides that five bundled Spectral rules ship with placeholder literals that fail every real spec at `error`
+### DQW-B8 — MINOR — The `/api-guideline-reviewer` page hides that five bundled Spectral rules ship with placeholder literals that fail every real spec at `error` — **Fixed in guideline-reviewers 1.2.4 (batch B15)**
 - **Where:** `plugins/guideline-reviewers/docs/commands/api-guideline-reviewer.md:25`, `:47`, `:53`; `plugins/guideline-reviewers/references/api-guidelines/spectral/ruleset.yaml:33-45`, `:525-539`, `:870-885`
 - **What is wrong:** The page says the ruleset pins "the single org-wide tenant-header spelling and the org-wide security-scheme name … as literals". It then says organization-specific rules "deliberately do not ship". It never says that the literals are placeholders: `Example-Tenant`, the `Example-` custom-header prefix, the `oauth2` scheme id, and an open verb list. The ruleset's header names five such rules that "an organization is expected to replace exactly once". Two of them, `api-tenant-header-canonical-spelling` and `api-security-scheme-name-consistent`, are `severity: error`, and errors land under "Mistakes (MUST violations)" (`:47`).
 - **Failure scenario:** A user runs the documented example on their real spec, which uses a tenant header such as `Acme-Tenant` and a scheme named `bearerAuth`. They get MUST-level "Mistakes" for both, with no word in the docs that these are placeholders they must override in their own `.spectral.yaml`. The ruleset header holds the explanation, but no docs page points to it. Getting-started even says the command needs no configuration (`docs/getting-started.md:61`).
@@ -3090,7 +3090,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQW-B9 — MINOR — The `/guideline-reviewer` page says it needs "nothing else", but the agent runs a bundled Python scanner that getting-started says needs `python3` 3.11
+### DQW-B9 — MINOR — The `/guideline-reviewer` page says it needs "nothing else", but the agent runs a bundled Python scanner that getting-started says needs `python3` 3.11 — **Fixed in guideline-reviewers 1.2.4 (batch B15)**
 - **Where:** `plugins/guideline-reviewers/docs/commands/guideline-reviewer.md:19-24`; against `plugins/guideline-reviewers/agents/guideline-reviewer.md:75-85` and `plugins/guideline-reviewers/docs/getting-started.md:61`
 - **What is wrong:** The page's "What it needs" says "Nothing else — no `$SPECS_PATH`…". It describes only the ESLint and axe detection as the deterministic step. The agent's "Automated Checks" says "Run automated checks before manual review: `python3 ${CLAUDE_PLUGIN_ROOT}/references/guidelines/check_guidelines.py …`" and calls it "this plugin's own heuristic scanner". Getting-started says "`/guideline-reviewer`'s automated checks need `python3` 3.11". So the command page and getting-started disagree, and the command page never mentions the scanner.
 - **Failure scenario:** A user without Python 3.11 reads the command page, expects a pure LLM-plus-ESLint review, and cannot tell why a scanner step fails or produces findings, or where those findings come from.
@@ -3134,7 +3134,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQW-B14 — MINOR — prose-style README is stale about which family uses it, and gives no install command
+### DQW-B14 — MINOR — prose-style README is stale about which family uses it, and gives no install command — **Fixed in prose-style 0.8.0 (batch B15)**
 - **Where:** `plugins/prose-style/README.md:383`, `:398`, `:402-407`
 - **What is wrong:** The section heading says "How it fits with the dev-workflows family", `:398` says "without going through the `dev-workflows` pipeline", and `:405` says "Install it through Claude Code's plugin system — it will be available alongside `dev-workflows`." Per `CLAUDE.md`, `dev-workflows` "does not use `prose-style` at all". The consumers are `docs-workflows` and `product-workflows`, which the section body itself names (`/document`, `/epics`, `/create-prd`, `/release-notes`). The Installation section has no `claude plugin install prose-style@shipwright` line, unlike the acli README (`plugins/acli/README.md:28-31`).
 - **Failure scenario:** A user who only wants the standalone reviewers looks for the install command and finds none. A user of `dev-workflows` expects prose-style to come with it, but it does not: dev-workflows declares only `workflows-core`.
@@ -3143,7 +3143,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQW-B15 — MINOR — The acli README does not say how to use the skill or how to authenticate headless, though it says both are documented
+### DQW-B15 — MINOR — The acli README does not say how to use the skill or how to authenticate headless, though it says both are documented — **Fixed in acli 0.1.4 (batch B15)**
 - **Where:** `plugins/acli/README.md:8`, `:16-18`, `:26-31`
 - **What is wrong:** `:8` says it "authenticates via `acli … auth login`", with an ellipsis where the command should be. `:16-18` says that "the token-on-stdin form is documented instead" but shows no command. The README never says that the plugin is a model-invoked skill with no slash command, so the way to use it is to ask in prose (for example "list my open work items in project X"). It shows no example and no update command.
 - **Failure scenario:** A user installs the plugin, looks for a `/acli` command, and finds none. In a container they also do not know the headless auth form; the README's only hint, `--web`, is the form it says fails there. The working form (`acli jira auth login --site … --email … --token` with the token on stdin) appears only in `skills/acli/SKILL.md:328`.

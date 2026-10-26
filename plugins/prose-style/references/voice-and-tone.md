@@ -4,7 +4,7 @@ How the writing should sound: clear, direct, and on the reader's side.
 
 **Baseline.** These are the shipped, vendor-neutral defaults. A repo-local or env-var
 overlay layers on top of them and wins on conflict — see `prose-style-checker` step 1
-("Resolve the active rule set") and the plugin README. Voice is the most
+("Resolve the active rule set") and the plugin's `docs/reference/overlay.md`. Voice is the most
 organization-specific topic in this plugin: if your brand voice differs, override this
 file first.
 

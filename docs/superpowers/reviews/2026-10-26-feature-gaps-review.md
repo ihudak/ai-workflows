@@ -308,7 +308,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 
 ## field feedback — BOOK-1, BOOK-2, BOOK-2-02 runs
 
-### FBA-G1 — prose-style baseline flags British spelling and spaced dashes in a British-English specs tree with no overlay
+### FBA-G1 — prose-style baseline flags British spelling and spaced dashes in a British-English specs tree with no overlay — **Fixed in prose-style 0.8.0 (batch B15)**
 - **Designed in:** feedback `BOOK-1-epics-style-check-baseline-dialect-noise` in F1 (the `fixed_headings` half of that entry is fixed: `plugins/product-workflows/commands/epics.md:723` adds `## Contract`)
 - **Current state:** `plugins/prose-style/references/word-list.md:199-219` says "The baseline is **American English**", with only an *Overlay point*. `/epics` Phase 6.2 (`epics.md:713-740`) passes no dialect and does not skip dialect or dash rules where no overlay exists. On BOOK-1 that produced 19 mostly-noise NITs.
 - **Still worth doing?:** yes, cheaply. Every specs tree written in British English gets this noise on every `/epics`, `/create-prd` and `/specify` style pass.
@@ -556,7 +556,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 
 ## documentation quality — docs-workflows, guideline-reviewers, prose-style, acli, obsidian-llm-wiki
 
-### DQW-G1 — The small plugins that a family plugin depends on have no `docs/` tree
+### DQW-G1 — The small plugins that a family plugin depends on have no `docs/` tree — **Fixed in prose-style 0.8.0 (batch B15)**
 - **Designed in:** No design spec covers it. The parity expectation comes from `BRIEF-DOCS.md` and `CLAUDE.md`'s docs-tree hard constraint, which binds only `PLUGIN_RELS`. `prose-style` is a declared dependency of `docs-workflows` and `product-workflows` (`plugins/docs-workflows/.claude-plugin/plugin.json`), and `scripts/check-docs.sh:93-95` already treats it as family for check 20.
 - **Current state:** `prose-style`, `acli` and `obsidian-llm-wiki` ship a README only. The prose-style README is about 400 lines and holds the command, agent, overlay and schema documentation that siblings split into `docs/commands/*` and `docs/reference/*`. Its `/prose-style-refresh` `source.yml` schema is reachable only by pointing the reader at the command prompt itself (`README.md:206`).
 - **Still worth doing?:** Yes for `prose-style`, which every docs-workflows and product-workflows user installs. Optional for `acli` and `obsidian-llm-wiki`, which are standalone and have their own upstream shape.

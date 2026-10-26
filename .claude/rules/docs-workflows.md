@@ -22,7 +22,7 @@ The subagents are `diff-summarizer`, `doc-location-finder`, `doc-planner`, `doc-
 
 `docs-workflows` declares `workflows-core` and `prose-style` as dependencies, both by bare name, as `workflows-core:dependencies` requires — `/release-notes` hands `prose-style-checker` the `repo_root` input 0.4.0 added and checks the checker's echo of it, so an older `prose-style` gives a stated `DEGRADED` style check rather than a silent one.
 
-`docs-style-checker` **always dispatches `prose-style-checker`**, in one of three roles its own step 5 names — *complementary* beside a primary linter that produced a result, *FALLBACK* where rungs were detected and every one failed, and *SOLE* where the repository configures none. What stays genuinely conditional is the **repo linter**, never `prose-style-checker` itself. `plugins/prose-style/README.md` says the same in as many words, and `docs-style-checker`'s own step 5 is the authority. ([why](../../docs/maintainers/rationale.md#prose-style-roles))
+`docs-style-checker` **always dispatches `prose-style-checker`**, in one of three roles its own step 5 names — *complementary* beside a primary linter that produced a result, *FALLBACK* where rungs were detected and every one failed, and *SOLE* where the repository configures none. What stays genuinely conditional is the **repo linter**, never `prose-style-checker` itself. `plugins/prose-style/docs/workflow.md` says the same in as many words, and `docs-style-checker`'s own step 5 is the authority. ([why](../../docs/maintainers/rationale.md#prose-style-roles))
 
 ## Docs tree
 

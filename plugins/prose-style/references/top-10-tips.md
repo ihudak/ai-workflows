@@ -5,7 +5,7 @@ this directory; this file is the pass you make before you publish.
 
 **Baseline.** These are the shipped, vendor-neutral defaults. A repo-local or env-var
 overlay layers on top of them and wins on conflict — see `prose-style-checker` step 1
-("Resolve the active rule set") and the plugin README.
+("Resolve the active rule set") and the plugin's `docs/reference/overlay.md`.
 
 **Grounded in:** Microsoft Writing Style Guide ("Top 10 tips for Microsoft style and
 voice"); Google developer documentation style guide ("Highlights"); plainlanguage.gov

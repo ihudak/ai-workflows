@@ -8,7 +8,7 @@ and inventing them would be wrong. What it ships is the set of *rules* that gove
 naming, plus the [Terminology schema](#terminology-schema) for declaring your own terms
 so the checker can enforce them. A repo-local or env-var overlay layers on top of this
 file and wins on conflict — see `prose-style-checker` step 1 ("Resolve the active rule
-set") and the plugin README.
+set") and the plugin's `docs/reference/overlay.md`.
 
 **Grounded in:** Microsoft Writing Style Guide ("Names of Microsoft products",
 "Trademarks", "Terminology"); Google developer documentation style guide ("Product
@@ -120,8 +120,8 @@ rules:
 
 ## Terminology schema
 
-Create a `terminology.md` in your overlay directory (see the README's "Overlay"
-section). The checker reads these tables structurally, so the column headers matter.
+Create a `terminology.md` in your overlay directory (see the plugin's
+`docs/reference/overlay.md`). The checker reads these tables structurally, so the column headers matter.
 Every section is optional; ship only what you have.
 
 ### Canonical terms

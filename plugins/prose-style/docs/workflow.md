@@ -17,6 +17,6 @@ flowchart TD
 - [`/prose-review-docs`](commands/prose-review-docs.md) reviews the files or directories you name, and with `--fix` applies the safe fixes and checks again.
 - [`/prose-style-refresh`](commands/prose-style-refresh.md) regenerates your overlay from the style-guide source you configure. It never writes into the shipped baseline.
 
-**Where the family runs it.** `docs-workflows`' `docs-style-checker` runs `prose-style-checker` on every style check, beside a repository's own linter or in its place where the repository has none; its `/release-notes` runs the checker on its draft directly. `product-workflows`' `/epics`, `/create-prd` and `/update-prd` run it on their drafts, which live in a specs tree where no repository linter runs. Those runs take the same baseline and overlay as yours.
+**Where the family runs it.** `docs-workflows`' `docs-style-checker` runs `prose-style-checker` on every style check, in one of three roles: *complementary* beside a repository's own linter that produced a result, *fallback* where every linter the repository configures failed, and *sole* checker where it configures none; its `/release-notes` runs the checker on its draft directly. `product-workflows`' `/epics`, `/create-prd` and `/update-prd` run it on their drafts, which live in a specs tree where no repository linter runs. Those runs take the same baseline and overlay as yours.
 
 See the [documentation index](README.md) for everything else.

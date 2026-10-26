@@ -32,7 +32,7 @@ Before any LLM pass, the subagent lints the spec files with [Spectral](https://g
 
 ### Before your first real run
 
-**Five bundled rules carry a placeholder, and two of them fail every real specification at `error`.** The ruleset pins the organization-wide spellings the guidelines call "the organization's single declared" value — and ships them with the placeholders the bundled template uses, so that template lints clean, not with your organization's values:
+**Five bundled rules carry a placeholder, and two of them fail at `error` on any real specification that declares a tenant header or a security scheme.** The ruleset pins the organization-wide spellings the guidelines call "the organization's single declared" value — and ships them with the placeholders the bundled template uses, so that template lints clean, not with your organization's values:
 
 | Rule | Severity | Placeholder | What you replace it with |
 |---|---|---|---|
@@ -42,7 +42,7 @@ Before any LLM pass, the subagent lints the spec files with [Spectral](https://g
 | `api-response-header-org-prefix` | `warn` | `Example-` | the same prefix, on response headers |
 | `api-operation-id-verb-first` | `warn` | an open verb list | the verbs your operation ids start with |
 
-Left as shipped, a specification that sends `Acme-Tenant` and names its scheme `bearerAuth` gets both as **Mistakes** — MUST violations — on its first run. Override the five once, in a `.spectral.yaml` at the root of the API repository that `extends` the bundled ruleset; the ruleset's own header comment, at the top of `references/api-guidelines/spectral/ruleset.yaml`, carries the snippet. The review then uses your file, as **Resolution** above says.
+Left as shipped, a specification that sends `Acme-Tenant` and names its scheme `bearerAuth` gets both as **Mistakes** — MUST violations — on its first run. Override the five once, in a `.spectral.yaml` at the root of the API repository that `extends` the bundled ruleset. The ruleset's own header comment, at the top of `references/api-guidelines/spectral/ruleset.yaml`, shows the override for the tenant header, both header prefixes and the verb list; the scheme id, which it does not show, is the `values` list of `api-security-scheme-name-consistent`. The review then uses your file, as **Resolution** above says.
 
 **What stays with the LLM passes**, whether or not Spectral ran:
 

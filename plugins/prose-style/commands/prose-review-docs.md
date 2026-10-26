@@ -83,13 +83,13 @@ with:
 files:      [<absolute paths>]
 doc_type:   <doc_type>
 rules_path: <rules_path, when provided>
-dialect:    <the first batch's `dialect` block — on every batch after the first only>
+dialect_files: [<every file step 2 resolved — passed whether or not the review is batched>]
 ```
 
 If there are more than 20 files, batch them in groups of 20 to avoid overloading
-the agent context, and pass every batch after the first the `dialect` block the first
-returned, as its `dialect` input — the checker infers the dialect from the files it is
-given, and one review holds every file to one dialect. Combine all results. The
+the agent context, and pass every batch the whole resolved file list as `dialect_files` —
+the checker infers the dialect from the files it is told to, so every batch infers it from
+the same set and one review holds every file to one dialect. Combine all results. The
 `rules_source` and the `dialect` are the same for every batch; report each once.
 
 Collect the violation report.

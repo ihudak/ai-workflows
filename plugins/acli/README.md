@@ -45,7 +45,7 @@ Confluence. For example:
 
 - "List my open work items in project PROJ, newest first."
 - "Show PROJ-123 with its comments, then move it to In Review."
-- "Find the Confluence page titled *Release checklist* in space ENG and summarise it."
+- "Show Confluence page 123456789 and summarise it." — the skill opens a page by its id.
 
 Anything that is not a read — creating, editing, transitioning, deleting, commenting — is a
 write, and the skill asks you to approve the exact set in the conversation before it runs.

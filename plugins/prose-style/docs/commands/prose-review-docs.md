@@ -31,7 +31,7 @@ With no path, it asks for one. A directory search leaves out `node_modules/`, `.
 ## What it does
 
 1. Resolves every path to its markdown files, and says how many it is about to review — warning above fifty.
-2. Runs `prose-style-checker` on them, twenty at a time. The first batch's dialect — the spelling and dash style the checker settled on — is handed to every later batch, so one review holds every file to one dialect.
+2. Runs `prose-style-checker` on them, twenty at a time. Every batch infers the dialect — the spelling and dash style — from the whole set of files, so one review holds every file to one dialect.
 3. Runs Vale from the directory holding its configuration, where there is one and `vale` is installed, and merges its findings, reporting a line flagged by both once.
 4. Drops violations below `--severity`, and reports the rest by file.
 5. With `--fix`, has `prose-fixer` apply the fixable violations, then runs the checker again on the changed files, with the same dialect, and reports what was fixed and what remains. Without it, the report ends by naming the `--fix` command to run.

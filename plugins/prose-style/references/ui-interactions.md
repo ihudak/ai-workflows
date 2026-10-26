@@ -4,7 +4,7 @@ The verbs used to describe what a reader does in an interface.
 
 **Baseline.** These are the shipped, vendor-neutral defaults. A repo-local or env-var
 overlay layers on top of them and wins on conflict — see `prose-style-checker` step 1
-("Resolve the active rule set") and the plugin README. This file applies to product
+("Resolve the active rule set") and the plugin's `docs/reference/overlay.md`. This file applies to product
 documentation and UI copy; it is calibrated down to NIT for planning documents.
 
 **Grounded in:** Microsoft Writing Style Guide ("Describing interactions with UI",

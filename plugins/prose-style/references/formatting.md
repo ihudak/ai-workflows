@@ -4,7 +4,7 @@ Headings, numbers, punctuation, lists, dates, acronyms, link text, code, and emo
 
 **Baseline.** These are the shipped, vendor-neutral defaults. A repo-local or env-var
 overlay layers on top of them and wins on conflict — see `prose-style-checker` step 1
-("Resolve the active rule set") and the plugin README. Where two public authorities
+("Resolve the active rule set") and the plugin's `docs/reference/overlay.md`. Where two public authorities
 disagree, the split is named below so an overlay can pick the other side deliberately.
 
 **Grounded in:** Microsoft Writing Style Guide (headings, capitalization, numbers,
@@ -131,8 +131,8 @@ Chicago, Microsoft, and Google all require it; AP omits it.
   spaces) — Chicago's convention. AP and several house styles space them.
   - ✅ Processes are host-scoped—usually tied to one machine—while services are not.
   - *Overlay point:* flip to spaced em dashes, or to spaced en dashes, in your overlay.
-    With no overlay restating this rule, the checker infers spaced or closed from the
-    files it checks and flags the minority (`prose-style-checker` step 1e).
+    With no overlay settling it, the checker infers spaced or closed from the files it
+    checks (`prose-style-checker` step 1e).
 - **En dash (–)** for ranges and for compound adjectives with an open element.
 - **Hyphen (-)** for compound modifiers only. See `grammar.md` for hyphenation.
 

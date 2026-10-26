@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.0 — 2026-10-26
+
+### Changed
+- **The checker infers the dialect where no overlay sets it.** The baseline's American spelling and closed em dash were applied to every file with no overlay, so a specs tree written in British English drew a `SpellingVariant` NIT on every British word on every style pass. Where no overlay settles either rule — by restating its section, replacing its file, or, for spelling, carrying an entry that turns one spelling of a pair into the other — `prose-style-checker` step 1e now counts the files' own two-spelling words (never one spelled alike on both sides, and never an `-ise`/`-ize` pair, which it never flags under an inferred side either) and their dashes, and holds them to the majority; fewer than three counted, or a tie, settles nothing and raises nothing. It returns a `dialect` block, which `/prose-review-pr` and `/prose-review-docs` print on their `Rules:` line, and takes a `dialect` input for a re-check and a `dialect_files` input to infer from: `/prose-review-docs` passes every batch the whole file list, so one review holds every file to one dialect. The `prose-style-rules` skill tells a writer adding to a document to match its dialect (FBA-G1).
+
+### Added
+- **A `docs/` tree** — an index, getting started with the install and update commands and `$PROSE_STYLE_PATH`, the workflow, a page per command, and the overlay, agents, references and environment as reference pages — gated by `check-docs.sh` from now on. The README, which held all of it, is now a summary pointing there, and the baseline files point at `docs/reference/overlay.md` instead of it; it no longer calls this a `dev-workflows` companion, which does not use it (DQW-G1, DQW-B14, DQS-B12).
+
 ## 0.7.0 — 2026-10-07
 
 ### Added

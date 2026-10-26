@@ -36,9 +36,11 @@ repo_root:    <optional absolute path to the repository whose rules apply — fo
                derivation of <repo-root>>
 fixed_headings: [<optional heading texts, each as the file writes it after its `#` marks,
                that a format the caller writes to requires verbatim — never checked (step 3)>]
-dialect:      <optional — the `dialect` block an earlier dispatch of this checker returned,
-               for a caller that splits one review across several dispatches; replaces
-               step 1e's inference, so every dispatch of the review applies the same one>
+dialect:      <optional — a `dialect` block this checker returned earlier in the same review,
+               for a re-check of files the review already settled; replaces step 1e's
+               inference for both sides>
+dialect_files: [<optional absolute paths step 1e infers the dialect from, in place of
+               `files` — the whole set of a review split across several dispatches>]
 ```
 
 `doc_type` affects severity calibration (see step 5). Default: `general`.
@@ -116,28 +118,44 @@ overlay:<absolute path>       # an overlay resolved, from any of orders 1–3
 side of a split that the writing itself may have settled the other way: the *Spelling
 variant* section of `word-list.md` (American English) and the closed em dash of
 `formatting.md`'s *Dashes*. Each is an overlay point, and an organization that writes
-otherwise says so in its overlay. Where the merged rule set leaves one of them as the
-baseline states it — no overlay file restates or replaces that section — do not apply the
-baseline's side blindly; infer it from the files being checked, so a specs tree written in
-British English with no overlay is not flagged on every British spelling:
+otherwise says so in its overlay.
 
-- **Spelling.** Count the occurrences, in prose only (never code, inline code, URLs, paths
-  or frontmatter), of the words in either column of the *Spelling variant* table and of the
-  same pattern in other words (`-our`/`-or`, `-tre`/`-ter`, `-ogue`/`-og`, a doubled `l`
-  before `-ed`/`-ing`). The side with more occurrences is the files' dialect — `american`
-  or `british` — and `Prose.WordList.SpellingVariant` then flags the **other** side, the
-  same switch an overlay makes. A tie, or no occurrence at all, is `undetermined`, and the
-  rule raises nothing: there is no evidence of which side the writer chose, and the
-  baseline's default is not evidence. An `-ise`/`-ize` ending is never counted, since
-  Oxford spelling writes `-ize` in British English.
+**What fixes a side, so that nothing is inferred for it** — record it with its `_from`:
+
+- **The caller's `dialect` input** fixes both, as it reads (`caller`).
+- **The overlay** fixes the spelling side where an overlay file restates the *Spelling
+  variant* section, replaces `word-list.md`, or carries any entry that turns one spelling of
+  a variant pair into the other (`behavior → behaviour` fixes `british`); and the dash side
+  where it restates *Dashes* or replaces `formatting.md` (`overlay`). Where the overlay
+  replaced the file and states no rule for that side, the side is `undetermined`, from
+  `overlay`, and its rule raises nothing — the overlay took the rule away and gave none back.
+
+**Otherwise infer it from the files**, never taking the baseline's side on trust, so a specs
+tree written in British English with no overlay is not flagged on every British spelling.
+Count over the files named in `dialect_files` where the caller passed it — the whole set of
+a review it splits across several dispatches — else the files of this dispatch. **Count the
+`dialect_files` with `Grep`**, for the pair words and the dashes, rather than reading them
+whole: a review is split so that no dispatch holds every file, and reading the whole set
+for this step would undo that.
+
+- **Spelling.** Count, in prose only (never code, inline code, URLs, paths or frontmatter),
+  each occurrence of a word that has **two standard spellings, one per side** — the pairs of
+  the *Spelling variant* table and others like them (`colour`/`color`, `centre`/`center`,
+  `catalogue`/`catalog`, `travelled`/`traveled`). A word with one spelling on both sides is
+  never counted, whatever its ending — `error`, `author`, `after`, `water`, `blog` — and
+  neither is `dialogue` outside software, which American English writes too. **An
+  `-ise`/`-ize` pair is never counted and never flagged under an inferred side**, since
+  Oxford spelling writes `-ize` in British English: under an inferred `british`, `organize`
+  is not a violation. The side with more occurrences is the files' dialect — `american` or
+  `british` — and `Prose.WordList.SpellingVariant` flags the **other** side, the same switch
+  an overlay makes.
 - **Dashes.** Count the em and en dashes used as a break in a sentence, spaced
   (`word — word`, `word – word`) and closed (`word—word`). The majority is the files'
-  style — `spaced` or `closed` — and the dash rule flags the minority; a tie or no such
-  dash is `undetermined`, and the rule raises nothing.
+  style — `spaced` or `closed` — and the dash rule flags the minority.
 
-An overlay that restates either section fixes it, and nothing is inferred for it: record
-it as `overlay`. A `dialect` input from the caller fixes both, as it reads, and nothing is
-inferred. Inference reads only the files of this dispatch.
+**Fewer than three counted occurrences in all for a rule, or a tie, is `undetermined`**, and
+that rule raises nothing: a short draft or a one-paragraph change carries too little
+evidence to say which side its writer chose, and the baseline's default is not evidence.
 
 Do not print a warning, a note, or a question about the resolution outcome. Its
 whole report is three fields of the output block (step 6), and nothing else:
@@ -240,7 +258,8 @@ field.
 
 `dialect` is step 1e's result: each side, and whether the overlay fixed it, the files'
 own writing settled it, or the caller handed it in. Always return it, save with `status: ERROR`; a caller that
-splits one review across several dispatches passes it to the next as the `dialect` input.
+re-checks files the review already settled passes it back as the `dialect` input, and one
+that splits a review across several dispatches passes every dispatch the whole set as `dialect_files`.
 
 - `status: OK` — all files checked, zero violations found.
 - `status: VIOLATIONS_FOUND` — at least one violation found.

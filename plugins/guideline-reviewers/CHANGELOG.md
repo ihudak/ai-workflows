@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.2.4] — 2026-10-26
+
+### Fixed
+- **The `/api-guideline-reviewer` page says which bundled Spectral rules ship placeholders.** Five rules pin an organization-wide value as a placeholder — `Example-Tenant`, the `Example-` header prefix, the `oauth2` scheme id and an open verb list — and two of them fail at `error` on any real specification that declares a tenant header or a security scheme. A *Before your first real run* section names the five and points at the override snippet in the ruleset's header; getting started links it; the ruleset's own "one of the four" now reads "one of the five" (DQW-B8).
+- **The `/guideline-reviewer` page names its scanner and its `python3` 3.11 prerequisite.** It said the command needs "nothing else", while the agent runs the bundled `check_guidelines.py` before its review passes (DQW-B9).
+
 ## [1.2.3] — 2026-10-12
 
 ### Changed

@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.54.1] — 2026-10-26
+
+### Removed
+- **`obsidian-llm-wiki` left the marketplace**, so `scripts/command-namespaces.json` no longer lists its ten commands, `dependencies` names three siblings rather than four, and `followup-emission` §5 and §7 no longer point at its `/wiki-tasks-extract` — each states its rule on its own (batch B15).
+
 ## [1.54.0] — 2026-10-26
 
 Finding 83.1 (MAJOR) and NIT 82.5 of the 2026-10-26 post-merge review of #82–#85 and #87. Either version runs beside any `product-workflows` from 3.42.0, whose `/brd-reconcile` already takes the third exception below; this release stops the reference contradicting it.

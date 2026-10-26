@@ -36,15 +36,15 @@ Only `.md` files in the overlay directory are rules; a `source.yml`, a README or
 
 ## The dialect, where the overlay says nothing
 
-Two baseline rules pick a side of a split: the spelling variant (American English: *behavior*, *color*, *catalog*) and the em dash (closed: *word—word*). Each is meant to be flipped by an overlay, and an overlay that restates either settles it.
+Two baseline rules pick a side of a split: the spelling variant (American English: *behavior*, *color*, *catalog*) and the em dash (closed: *word—word*). Each is meant to be flipped by an overlay. An overlay settles the spelling side where it restates the *Spelling variant* section, replaces `word-list.md`, or carries any entry turning one spelling of a pair into the other — `behavior → behaviour` settles British — and the dash side where it restates *Dashes* or replaces `formatting.md`. An overlay that replaces the file and states no rule for that side leaves it unchecked.
 
-**Where no overlay restates them, the checker infers each from the files it checks** rather than taking the baseline's side on trust. It counts the British and American spellings in the prose — never in code, links or frontmatter, and never an `-ise`/`-ize` ending, which British Oxford spelling writes with a `z` — and the spaced and closed dashes, and holds the files to the majority: a specs tree written in British English with spaced dashes is flagged only where it departs from that. Where the files give no evidence, or a tie, nothing is raised for that rule. The `Rules:` line reports what was settled and how:
+**Where no overlay settles them, the checker infers each from the files it checks** rather than taking the baseline's side on trust. It counts the words with one standard spelling on each side — *colour* and *color*, *centre* and *center*; never *error* or *after*, spelled alike on both — in the prose, never in code, links or frontmatter, and the spaced and closed dashes, and holds the files to the majority: a specs tree written in British English with spaced dashes is flagged only where it departs from that. An `-ise`/`-ize` pair is neither counted nor flagged, since British Oxford spelling writes it with a `z`. **Fewer than three counted words, or a tie, settles nothing**, and that rule raises nothing. The `Rules:` line reports what was settled and how:
 
 ```
 Rules: baseline; dialect: british spelling (inferred), spaced dashes (inferred)
 ```
 
-An overlay is still the way to fix the dialect once for every file, and the only way where a document is too short to show one.
+**Inference sees only the files under review.** `/prose-review-pr` infers from the files a pull request changed, so a wholly British page added to an American repository is held to its own British; `/prose-review-docs` infers from every file you name; a plugin that checks one short draft usually finds too little evidence and raises nothing. An overlay is the way to fix the dialect once for every file, whatever is under review.
 
 ## A worked example
 
@@ -100,11 +100,12 @@ We follow AP style, not Chicago.
 - ❌ ingest, transform, and query
 ```
 
-Now `/prose-review-docs docs/` opens with `Rules: overlay: /repo/.prose-style/rules`, and:
+Now `/prose-review-docs docs/` opens with `Rules: overlay: /repo/.prose-style/rules; dialect: british spelling (overlay), undetermined dashes (overlay)`, and:
 
 - "tenant" is a MAJOR `Prose.Terminology.WrongTerm` violation — an overlay rule;
 - "click" is **not** flagged, though the baseline flags it — the `## Allowed` entry suppresses it;
-- "behaviour" is **not** flagged — the overlay's own table reverses the direction, and the dialect reads `(overlay)`;
+- "behaviour" is **not** flagged — the overlay's `behavior → behaviour` entry settles British spelling, and the dialect reads `(overlay)`;
+- no dash is flagged either way — `formatting.md` replaces the baseline's and states no dash rule, so the dashes read `undetermined (overlay)`;
 - "ingest, transform, and query" is flagged — `formatting.md` replaces the baseline's, so the baseline's serial-comma rule was never loaded;
 - everything the overlay says nothing about — voice and tone, grammar, accessibility, UI verbs — is still checked against the baseline.
 

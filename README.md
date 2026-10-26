@@ -14,7 +14,7 @@ Ivan Gudak's open-source Claude Code plugin marketplace, **Shipwright**: plugins
 | [workflows-core](plugins/workflows-core/) | Shared foundation for the workflow plugin family — addressing, git handoff, model routing, emission — plus seven utility commands. [Docs](plugins/workflows-core/docs/README.md) |
 | [docs-workflows](plugins/docs-workflows/) | Seven commands: scaffold, brand and serve a docs portal, audit its coverage, write pages, profile, release notes. Needs `workflows-core`, `prose-style`. [Docs](plugins/docs-workflows/docs/README.md) |
 | [security-workflows](plugins/security-workflows/) | One command: a Claude Security audit of an Epic before it merges, or of a repository, kept in the specs repo. Needs `workflows-core`, Claude Security. [Docs](plugins/security-workflows/docs/README.md) |
-| [prose-style](plugins/prose-style/) | Pluggable prose style enforcement: `/prose-review-pr`, `/prose-review-docs`, `/prose-style-refresh`, plus sub-agents `product-workflows` and `docs-workflows` use. Vendor-neutral, overridable baseline. [Docs](plugins/prose-style/docs/README.md) |
+| [prose-style](plugins/prose-style/) | Prose style checks: review a PR or docs, refresh your overlay; the checker the docs and product plugins run. Overridable baseline. [Docs](plugins/prose-style/docs/README.md) |
 | [acli](plugins/acli/) | Atlassian CLI (`acli`) skill for Jira and Confluence — search, work items, comments, attachments, boards, sprints, pages. From [pi-skill-acli](https://github.com/ziegenberg/pi-skill-acli) (MIT). |
 
 ## How the plugins fit together
@@ -129,6 +129,8 @@ claude plugin update workflows-core@shipwright
 claude plugin update docs-workflows@shipwright
 claude plugin update security-workflows@shipwright
 ```
+
+**`obsidian-llm-wiki` left this marketplace on 2026-10-26**, and an installed copy gets no further update. If you installed it, remove it with `claude plugin uninstall obsidian-llm-wiki@shipwright`.
 
 **The `/plugins` interface is the easiest route, and it does update installed plugins.** Run `/plugins` inside Claude Code and update the marketplace from there: unlike the CLI's `marketplace update`, that path upgrades what you already have. You can also turn on **AutoUpdate** per plugin there, after which they keep themselves current and none of the above is needed.
 
