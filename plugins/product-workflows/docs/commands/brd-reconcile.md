@@ -18,7 +18,8 @@ same review itself in three cases: to finish a run cancelled or stopped partway,
 skips what the earlier pass already froze and offers the rest — a run that stopped after freezing
 leaves its pass open in `reconciliation-<date>.md`, listing what it froze, and the re-run adopts
 that pass, finishing its corrections, banners, defect resolutions, ledger moves and sweep without
-freezing anything twice (a re-run over a *different* review stops with
+freezing anything twice — the records a pass that finished freezing superseded or reopened counting
+as the re-run's own (a re-run over a *different* review stops with
 `BRD_RECONCILE_INTERRUPTED_PASS` until the unfinished one is finished); to sweep a dependent it could
 only record, once that dependent has its own register on the default branch, against the changed ids
 the earlier pass recorded; and, on a slice reconciled
@@ -170,7 +171,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
 - **A package already handed off to the specs repo's default branch — or `--sent` in its place.**
   `require-on-main` runs against
   the `customer-review-prompt-<date>.md` of the package the review answers — read from the review's
-  `Package reviewed:` line where it can be — before anything else is read, and an unmerged pull
+  `Package reviewed:` line where it can be — before anything else is read, that line excepted, and an unmerged pull
   request stops the run naming the branch/PR state. Where the package is not yet known it gates the
   most recent prompt, but a newer package not yet landed does not stop a review of an older one: the
   run tries each older prompt, and gates the package it resolves once it has read the review. The gate is the prompt rather than the
@@ -327,8 +328,11 @@ command removes none of them; the next `/brd-interview` run does.
   record a date the review does not carry. Only declining to name a suffix stops the run
   (`BRD_RECONCILE_REVIEW_EXISTS`).
 - **Phase 6 — a section-12 row instructs an edit; it does not authorise a field this command may not
-  write.** Prose, `slices.md` and the seed files are corrected in place — with two exceptions whose
-  prose is not corrected in place either: `code-defect-log.md`, and an effort proposal
+  write.** Prose, `slices.md` and the seed files are corrected in place — with exceptions whose
+  prose is not corrected in place either: `code-defect-log.md`; every file under `grounding/`,
+  `interview/customer-questions.md` and the BRD defect log (the parent's, on a slice), each another
+  command's or phase's to write, and any other document a bundled filename resolves to that no rule
+  lets the phase write, each refused and carried into *what still needs a human*; and an effort proposal
   (`proposal.md` or `proposal-brief.md`, a slice's or the umbrella's, reachable only where a
   `--sent` package carried one, since a package [`/brd-package`](brd-package.md) builds carries
   none). A row asking to change a coverage-ledger `disposition`, an inventory row's

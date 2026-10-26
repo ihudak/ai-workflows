@@ -757,7 +757,8 @@ that file describes the archived revision and not this one.
 
 **After the last inline edit to `proposal.md` — a triage fix, or an edit a later prompt asked for —
 run Phase 8's `stamp` once more** with the same record file and `--excluded`, so no edit carries a damaged record into the
-handoff; `{"written": true}` there is reported beside the edit that caused it. **Re-run step 1's
+handoff; `{"written": true}` there is reported beside the edit that caused it. **After the last
+inline edit to either artifact — `proposal.md` or `proposal-brief.md` — re-run step 1's
 decision-attribution check too**, over every sentence an inline edit wrote or changed in either
 artifact — an edit made after the review is read by no reviewer, so this is the only check it gets.
 
@@ -801,7 +802,9 @@ Phase 0, `deliverable_paths` = `proposal.md`, `proposal-brief.md` where this run
 every run), and, on
 a revision, the archived prior under `revisions/` at the name §2's first-free rule actually wrote —
 `<KEY>_proposal_<YYYYMMDD>.md`, or the first free `-2`, `-3` form where that was taken — and the brief
-archived beside it, where one was, at the name the same rule wrote for it,
+archived beside it, where one was, at the name the same rule wrote for it — and, on any run, a
+revision or not, a brief Phase 9 archived that stood without a `proposal.md` (Phase 0 step 5), at the
+name that rule wrote for it —
 `title: <BRD-KEY> Programme effort proposal <YYYYMMDD>`, and `body_facts` = the slices included and
 the slices excluded, each by key; the umbrella tier with the slice that set it and the tier mix; the
 `[WP#n]` count and the total expected hours with its summed range; every named adjustment and what it

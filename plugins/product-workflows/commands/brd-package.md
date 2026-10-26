@@ -1488,9 +1488,9 @@ or not that line is there.
    review, nor its manifest, which lists files this bundle does not hold; **what that manifest held
    for the files copied comes across in this bundle's manifest instead** (rule 6). **Its own
    prerequisites are the keys of the files under other keys in that bundle**, each resolved against
-   that prerequisite's `brd-link.md` `depends-on:` and never parsed from a name alone — a key that
-   list does not hold is named in part 2 all the same, and reported in the Final report as
-   unresolved; one is in
+   that prerequisite's `brd-link.md` `depends-on:` and never parsed from a name alone — a file whose
+   name begins with no key that list holds names no key in part 2, and is reported in the Final report as
+   unresolved, by its bundled filename in that prerequisite's bundle; one resolved is in
    this bundle only where this run declares it too, and then from its own latest bundle, and where
    it is not, part 2 names it, beside the prerequisite that rested on it, as context this package
    does not include. **The marking is in the manifest and in part 2, never in the files**: a
@@ -1857,7 +1857,10 @@ full because those are the ones the customer will read; whether a second reviewe
 could still move***, with whether it resolved, whether its decisions are customer-reviewed, and whether a
 package of its own was copied in — and every model id *Assemble the bundle* rule 7 left standing in
 a copied-in package, by bundled filename and line, as *in `<PREREQ-KEY>`'s `bundle-<YYYYMMDD>/`,
-which is never rewritten — left as packaged*; every artifact written, by path — the self-review, the customer
+which is never rewritten — left as packaged*; every file in a copied-in prerequisite's bundle whose
+name begins with no key of that prerequisite's `depends-on:`, as unresolved, by bundled filename (rule 5);
+every reference inside a copied-in document to a package, or to that prerequisite's prompt or
+manifest, this bundle does not include, by document (rule 8); every artifact written, by path — the self-review, the customer
 prompt, the delivery note and the bundle, and `brd-link.md` where this run added a prerequisite to
 it; **the citation check's
 outcome** — how many identifier references resolved, across how many source packages, how many

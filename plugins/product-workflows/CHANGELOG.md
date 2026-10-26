@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.45.0] — 2026-10-26
+
+The 2026-10-26 post-merge review of #82–#85 and #87: its `product-workflows` findings against batches B09 (3.39.0), B10 (3.40.0) and B11 (3.41.0), all but 83.1, which `workflows-core` 1.54.0 and 3.44.0 fix. No `workflows-core` change is needed.
+
+### Fixed
+- **`/brd-reconcile` adopting a `frozen` pass counted the adopted records as its own, but not the records that pass's freeze superseded or reopened because of them.** They were missing from the changed-id set, from the reconciliation record's and the Final report's *reopened or superseded here*, and from *Next steps*' reopened trigger, so a dependent `conditional_on` a superseded `[CD#n]` could only take `inherited-unchanged`, and `advance_ready` could read `yes` over a record the stopped run reopened. The run now reads `decisions.md` for every `Superseded` or `Reopened` paragraph dated the adopted pass's date and naming an adopted id, and counts each such record as this run's. (83.2)
+- **`/brd-reconcile` Phase 6 resolves a bundled filename to its working document, and class 1 had no row for some of them**: the grounding files, `interview/customer-questions.md` and the BRD defect log (the parent's, on a slice) fell to *Corrected in place*, so a customer row could rewrite a verified `[CG#n]` or write the parent's log. Each is now `refused-with-reason`, naming its owner, and any other document a bundled filename resolves to that no row names is refused too. (84.1)
+- **`/brd-reconcile` Phase 12 said that where the day's reconciliation file exists this run adds a pass under its own heading**; Phase 5 now opens the pass, so a literal reading wrote a second heading. Phase 12 says Phase 5's append is that pass. (83.4)
+- **`/brd-reconcile`'s ordinary gate runs "before anything else reads a file"**, though it first reads the review's `Package reviewed:` line; the command, its page and the BRD-route map name that read as the one exception. (83.5)
+- **`/brd-package` rule 5 named in part 2 a prerequisite's prerequisite whose key its `depends-on:` does not hold**, a key parsed from a filename alone. Such a file now names no key; it is reported as unresolved. Rules 5 and 8's Final-report items, an unresolved file and a reference to a package not included, are in the Final report's list. (84.3, 84.4)
+- **`/prd-proposal` and `/brd-proposal` archive a lone brief, one standing without a `proposal.md`, on any run, but declared archives only on a revision**, so the handoff left it untracked; both now declare it on any run, and both docs pages say so. (82.1)
+- **The attribution re-check ran only after the last edit to `proposal.md`**, so a later fix to `proposal-brief.md` alone was never re-checked; it now runs after the last inline edit to either. (82.3)
+- **Docs**: `brd-workflow.md`'s flag table lists `/brd-reconcile`'s `--free-text` (83.3); `docs/commands/brd-package.md` states both conditions that stop a same-dated run where a bundle was moved or renamed, as does 3.41.0's entry below (84.2), and its artifact table says each prerequisite's own files (84.5); `docs/commands/brd-proposal.md` gives checks 6 and 10 their umbrella forms (82.2); and both proposal pages name the profile among what the handoff commits (82.4).
+
 ## [3.44.0] — 2026-10-26
 
 Finding 83.1 of the 2026-10-26 post-merge review of #82–#85 and #87, with `workflows-core` 1.54.0. Either runs beside the other.
@@ -33,7 +47,7 @@ Take with `workflows-core` 1.51.0, whose *What a requirement overlaps* these cha
 
 ### Fixed
 - `/brd-package` copies from a prerequisite's bundle only that prerequisite's own files, images included — never its rendered prompt, its manifest (whose entries for the copied files move into this bundle's manifest), or a package it carried in itself — so a prerequisite chain no longer brings in documents under a key the partition set lacks (BRD3-B4) or a second review prompt (BRD3-B10). Part 2 names a prerequisite's own prerequisite as context not included, and rule 8 names, without stopping, a reference in a copied document to such a package. The *not for re-review* marking is in the manifest and part 2 only, never written into the never-rewritten copies (BRD3-B11).
-- A same-dated self-review, prompt or delivery note beside no bundle is that date's scratch from a run that stopped before assembling: it is overwritten whole, never read as a prior review, and the run says the disposition walk starts again (BRD3-B12).
+- A same-dated self-review, prompt or delivery note beside no bundle is that date's scratch from a run that stopped before assembling where the self-review is on no ref and no directory in the folder holds a prompt naming this key and date; either of those means a bundle was built and moved or renamed, and the run stops with `BRD_PACKAGE_BUNDLE_EXISTS`. Scratch is overwritten whole, never read as a prior review, and the run says the disposition walk starts again (BRD3-B12).
 - `bundle-packaging` §7 relation 1 covers part 6's `in-scope` `[CDF#n]` list (BRD3-B14), and no longer calls part 7's escalated-finding fraction testable (BRD3-B15).
 - The reviewer's `INPUT_MISSING` maps to `BRD_PACKAGE_REVIEWER_CONTRACT`, which captures feedback at the block (BRD3-B16).
 - The docs page describes the `<part>.1`–`<part>.5` heading renumbering (BRD3-B18) and says a `fixed` correction *can* change what the customer is shown (BRD-B1); agent examples use a slice key and `questions` is optional in the dispatch (BRD2-B8).
