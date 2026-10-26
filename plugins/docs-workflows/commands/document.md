@@ -764,7 +764,7 @@ the row `DEGRADED`, with `not_run:` naming what did not run (e.g.
    ```
    | # | Claim | PRD phrasing | Spec phrasing | Source (code) phrasing | Source location | Verdict |
    ```
-   One row per warning. The **Spec phrasing** cell reads `(no spec)` when no spec was provided. Use `Source (code) phrasing: "(not verifiable)"` for `no-source-evidence` entries. The **Verdict** carries the §4.2 finding (`CONTRADICTED`, `NOT_FOUND`, `AMBIGUOUS`) or `SPEC-VS-PRD` (the spec differs from the PRD narrative; recommended action "Document as intended (spec)").
+   One row per warning. The **Spec phrasing** cell reads `(no spec)` when no spec was provided. Use `Source (code) phrasing: "(not verifiable)"` for `no-source-evidence` entries. The **Verdict** carries the §4.2 finding (`CONTRADICTED`, `NOT_FOUND`, `AMBIGUOUS`) or `SPEC-VS-PRD` (the spec differs from the PRD narrative; where the code matches the spec, both documenting choices write the same phrasing and the PRD is what to update).
 
 2. **Batch decision:**
    ```
@@ -774,9 +774,13 @@ the row `DEGRADED`, with `not_run:` naming what did not run (e.g.
 
 3. **Per-discrepancy** (if "Decide per discrepancy"): for each warning, show claim + PRD phrasing + Spec phrasing + Source (code) phrasing + location, then:
    ```
-   choices: ["Document as intended (spec) (Recommended) — describe the agreed contract (spec phrasing; PRD phrasing when no spec); the orchestrator drafts a bug-report so you can file a defect when the code lags", "Document as actual (code) — match what shipped; users see what's there", "Skip & report — the docs leave this paragraph out; the bug-report draft still records the gap (drafts a bug)", "Cancel the whole run"]
+   choices: ["Document as actual (code) (Recommended) — match what shipped; users see what's there", "Document as intended (spec) — describe the agreed contract (spec phrasing; PRD phrasing when no spec); drafts a bug report, and the release and this publication are held until it is fixed", "Skip & report — the docs leave this paragraph out; the bug-report draft still records the gap (drafts a bug)", "Cancel the whole run"]
    ```
-   "Document as intended (spec)" describes the agreed contract — the `spec_phrasing` (or the PRD phrasing when it is `(no spec)`) — and, when the code lags the intended phrasing, adds an intentional-discrepancy marker + bug-report draft. "Document as actual (code)" matches what shipped, and when it is a qualifying `document-as-code` case per §7.5, also records the gap in the bug-report draft. "Skip & report" omits the claim but still records the gap in the bug-report draft. "Cancel the whole run" stops the run; where Phase 0 step 4(c) committed a generated profile, it ends with that step's left-on-a-branch notice.
+   For a `no-source-evidence` warning, whose code cell reads `(not verifiable)`, ask this array in that one's place (`workflows-core:source-truth` §7.7):
+   ```
+   choices: ["Document as intended (spec) (Recommended) — describe the agreed contract; the code could not be read, so no bug is drafted and nothing is held", "Skip & report — the docs leave this paragraph out; the bug-report draft still records the gap (drafts a bug)", "Cancel the whole run"]
+   ```
+   "Document as intended (spec)" describes the agreed contract — the `spec_phrasing` (or the PRD phrasing when it is `(no spec)`) — and, when the code lags the intended phrasing, adds an intentional-discrepancy marker + bug-report draft, and **holds the release**: on that answer, and once for every lagging warning on "Document as intended (spec) for ALL", tell the user at once that the code does not do what the pages will say, that the bug-report draft records the defect, and that the release and the publication of these pages must wait until it is fixed (`workflows-core:source-truth` §7.3, §7.5); the Phase 9 report and Phase 8.5's pull-request draft say it again. On a `no-source-evidence` warning nothing shows the code lagging, so it adds neither and holds nothing. "Document as actual (code)" matches what shipped, and when it is a qualifying `document-as-code` case per §7.5, also records the gap in the bug-report draft. "Skip & report" omits the claim but still records the gap in the bug-report draft. "Cancel the whole run" stops the run; where Phase 0 step 4(c) committed a generated profile, it ends with that step's left-on-a-branch notice.
 
 4. **Record `discrepancy_decisions[]`** keyed by `number` (claim, prd_phrasing, spec_phrasing, source_phrasing, source_location, decision ∈ {document-as-spec, document-as-code, skip-and-report}, rationale). `spec_phrasing` is recorded verbatim (`(no spec)` when none was provided). Set `bug_report_destination` to the resolved PRD folder (ask if none) when any decision is `document-as-spec` (where the code lags the intended phrasing), `skip-and-report`, or a qualifying `document-as-code` per `workflows-core:source-truth` §7.5.
 
@@ -1377,7 +1381,8 @@ SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 
 ### Implementation gaps (PRD vs source)
 [Populated when Phase 5.8 produced any `document-as-spec` / `skip-and-report` decision, **or** any qualifying `document-as-code` decision (per `workflows-core:source-truth` §7.5 — the PRD phrasing asserts a specific value that contradicts the source). All three write the same bug-report draft, so all three are listed here; the status line differs by decision:
-- `document-as-spec` / `skip-and-report` → "Bug-report draft written to <path>. If docs were branched, DO NOT merge the PR until these gaps are resolved."
+- `document-as-spec` → "Bug-report draft written to <path>. The pages describe behaviour the code does not have yet: hold the release, and the publication of these pages, until each of these gaps is fixed. If docs were branched, DO NOT merge the PR until then."
+- `skip-and-report` → "Bug-report draft written to <path>. If docs were branched, DO NOT merge the PR until these gaps are resolved."
 - qualifying `document-as-code` → "Bug-report draft written to <path>. Documented as shipped; the source ticket carries an incorrect claim — correct the ticket, no PR block."
 
 List each gap (claim, decision) with its own status line — never print the DO-NOT-MERGE sentence for a `document-as-code` gap, and never print it at all on a run whose only gaps are `document-as-code`: the docs describe what shipped, the PR is mergeable, and Phase 8.5 deliberately withholds the PR banner for exactly this case. Omit the section when there were no discrepancies.]

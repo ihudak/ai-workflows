@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.56.0] — 2026-10-26
+
+**Take with `docs-workflows` 1.24.0** (`.claude/rules/plugin-updates-coupling.md`): `/document` carries its own copy of the per-discrepancy array changed below, and `/release-notes` presents it. Post-merge review 87.3, recorded as to-fix D23 and settled with the maintainer.
+
+### Changed
+- **`source-truth` §7.3 recommends *Document as actual (code)*, and *Document as intended (spec)* holds the release.** Published text, a documentation page or a release note alike, should describe what ships. Documenting the intended behaviour while the code lags drafts the bug report as before, and now the caller warns at once that the release and the publication of what the run wrote are held until the defect is fixed. It repeats the hold in its final report and on whatever carries the output toward publication (§7.5, *A `document-as-spec` gap holds the release*); the gap's *Docs status* says so too. §1 orders the choices to match, and §7.1's `SPEC-VS-PRD` row recommends neither where the code matches the spec, since both then write the same phrasing.
+- **§7.7: a row whose code could not be read takes its own array**, recommending *Document as intended (spec)*, which there draws no marker, no gap and no hold, since nothing shows the code lagging; *Document as actual (code)* is left out, having nothing to write.
+
 ## [1.55.0] — 2026-10-26
 
 Nothing here needs another plugin updated with it.
