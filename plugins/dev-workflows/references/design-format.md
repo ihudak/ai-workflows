@@ -200,8 +200,8 @@ reach.
 14. **## Pieces** (optional — omitted for one piece) — the change's review pieces. A piece is a unit
     of review, never of coding: a part of the change — its code and its tests — that one reviewer
     can review in depth on its own, at a boundary the design fixes. How `/implement`'s review gate
-    reviews by piece is its Phase 3B step 5's to say; who writes the code and the tests does not
-    change. Pieces need both of two things, and are never drawn by count:
+    reviews by piece is for its Phase 3B steps 5–8 to say; who writes the code and the tests does
+    not change. Pieces need both of two things, and are never drawn by count:
     - **A reason — whether to split.** The `Reason:` line says why one reviewer could not review the
       whole change in depth: its size, the distinct layers or concerns it spans, the test cases it
       carries — about 1,500 lines of production code in two layers with different test styles,
