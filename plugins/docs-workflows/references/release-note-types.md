@@ -69,7 +69,11 @@ The file is one per PRD and a note may be drafted for one Epic, so without the c
 file says whose work a note described or what it saw, and the comment is what `/release-notes` takes
 its boundary from, for the blocks it reads and the commits its scan keeps alike: a PRD's note covers
 every implementation record under the PRD and an Epic's that Epic's record alone, and a note covers
-exactly the commits its `read:` lines name (`workflows-core:implementation-format` §4). An HTML
+exactly the commits its `read:` lines name (`workflows-core:implementation-format` §4) — save a note
+that bounds nothing there: one marked superseded, by a line opening `<!-- superseded by` above it, and, for
+a run whose draft is filed under `# Unreleased`, every note there whose scope names that run's own
+`<KEY>`, which the run supersedes, so its draft reads those commits again and its `read:` lines
+name them. An HTML
 comment renders as nothing and is not a heading, so it moves none of the boundaries above, and it is
 **not part of the draft**: every rule below binds the draft beneath it, and the operator's paste
 starts there. **A note that records no read set falls back to its date**, which `implementation-format`
