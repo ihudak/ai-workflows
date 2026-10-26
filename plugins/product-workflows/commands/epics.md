@@ -313,7 +313,7 @@ Ask about:
   When "auto-derived" is chosen, inspect the sibling/parent Epics' `implementation.md` records (if any) for repo references; Phase 4 adds the repositories of an ARD's components, and asks the user to list repos only if the list is still empty.
   *Let me list the repos manually* is followed at once by one plain-text question for the repo short names to scan (one per line or space-separated). Take them as typed — Phase 2's plan shows them, and Phase 4 resolves each against the `$REPOS_PATH` slug→clone map without asking for the list again.
 
-- **Repo refresh policy** (only if code scan is ON):
+- **Repo refresh policy** (only if code scan is ON) — asked **after** the `$REPOS_PATH` step below has settled the base, and only where that step left code scan ON, since its *Turn code scan off* means nothing is scanned and so nothing is refreshed:
   ```
   choices: ["fetch + pull default branch (Recommended)", "fetch only", "no refresh"]
   ```
@@ -323,7 +323,7 @@ Ask about:
   ```
   choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Turn code scan off — produce Epic drafts from PRD content alone", "Cancel"]
   ```
-  *Turn code scan off* answers the code-examination question above again, as its own option of that name does, and the refresh policy answered above goes unused.
+  *Turn code scan off* answers the code-examination question above again, as its own option of that name does, and the refresh policy above is then not asked.
   *Set REPOS_PATH* asks for the path in plain text and records the answer as `$REPOS_PATH` once an entry of it is an existing directory. A base named at Phase 2's *Revise plan* replaces it the same way. Individual clones are located in Phase 4 by matching their `git remote` against each repo slug — not by assuming a `<base>/<slug>` directory name.
 
 Also display (for user context):
@@ -540,7 +540,7 @@ choices: ["Refine these N (partition the PRD across them) (Recommended)", "Gener
 ```
 choices: ["<adaptive default> (Recommended)", "<the other setting>", "Keep my Phase 1 choice"]
 ```
-with a one-line rationale ("2+ refinement targets → code context helps draw the boundary" / "single Epic → no boundary to draw; scan off is faster" — save a focus run that splits (Phase 2), which has a boundary to draw, so its default is ON). This runs ONLY in the refine branch, so the generate / no-candidate path never sees it (no-regression). **Where Phase 1 turned the scan off through its `$REPOS_PATH` question's *Turn code scan off*, this question is not put** — no base resolved, so there is nothing to scan — and the scan stays off. **Where this question turns the scan on and Phase 1 had it off**, resolve `$REPOS_PATH` here as Phase 1 does — its `Repos:` line, and its question only where no entry is an existing directory, whose *Turn code scan off* turns the scan off again — and ask Phase 1's repo refresh policy, which Phase 1 skipped.
+with a one-line rationale ("2+ refinement targets → code context helps draw the boundary" / "single Epic → no boundary to draw; scan off is faster" — save a focus run that splits (Phase 2), which has a boundary to draw, so its default is ON). This runs ONLY in the refine branch, so the generate / no-candidate path never sees it (no-regression). **Where Phase 1 turned the scan off through its `$REPOS_PATH` question's *Turn code scan off*, this question is not put** — no base resolved, so there is nothing to scan — and the scan stays off. **Where this question turns the scan on and Phase 1 had it off**, resolve `$REPOS_PATH` here as Phase 1 does — its `Repos:` line, and its question only where no entry is an existing directory, whose *Turn code scan off* turns the scan off again — and, only where that resolution leaves the scan on, ask Phase 1's repo refresh policy, which Phase 1 skipped.
 
 ---
 
