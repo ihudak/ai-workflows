@@ -15,15 +15,20 @@ decision sends the slice back to [`/brd-interview`](brd-interview.md), a questio
 customer to [`/brd-package`](brd-package.md), and a challenged code claim to
 [`/prd-ground --rebaseline`](prd-ground.md), each of which leads back here. It runs again on the
 same review itself in three cases: to finish a run cancelled or stopped partway, where the re-run
-skips what the earlier pass already froze and offers the rest; to sweep a dependent it could only
-record, once that dependent has its own register on the default branch; and, on a slice reconciled
+skips what the earlier pass already froze and offers the rest — a run that stopped after freezing
+leaves its pass open in `reconciliation-<date>.md`, listing what it froze, and the re-run adopts
+that pass, finishing its corrections, banners, defect resolutions, ledger moves and sweep without
+freezing anything twice (a re-run over a *different* review stops with
+`BRD_RECONCILE_INTERRUPTED_PASS` until the unfinished one is finished); to sweep a dependent it could
+only record, once that dependent has its own register on the default branch, against the changed ids
+the earlier pass recorded; and, on a slice reconciled
 before 3.33.1, to close the questions raised only about the defects of a requirement the customer
 withdrew.
 
 ## Synopsis
 
 ```
-/brd-reconcile <BRD-KEY> [@<review-file>] [--sent <path>…] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
+/brd-reconcile <BRD-KEY> [@<review-file>] [--sent <path>…] [--free-text] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 - **`<BRD-KEY>`** (mandatory) — the slice this review answers. `resolve-address` searches every
@@ -47,6 +52,9 @@ withdrew.
   merged. Either way you say which file is
   the review — by naming it, or by confirming the one found — and a committed review is moved to its
   canonical name rather than copied, so the folder holds it once. `--sent` needs the path.
+- **`--free-text`** (optional) — you are telling the run the review is prose, so the reader reads it
+  in free-text mode rather than detecting the mode. It never forces a schema parse. It is the
+  remedy `BRD_RECONCILE_EMPTY_DIGEST` names for a prose review the schema pass could not see.
 - **`--sent <path>`** (optional, repeatable) — the material the customer was *actually* sent, for a
   review that answers a package this plugin did not build: one authored by hand before the route
   existed, or sent out of band. Each path may be a file or a directory and may sit anywhere. The
@@ -89,7 +97,7 @@ record that a sentence of prose was read into it by an agent.
   free-text decision comes back a `candidate` with `confirmed: false`, and its hard rules forbid it
   any identifier in the delivery side's namespaces.
 - The command **never widens that agent's mode**. It passes `auto`, or `free-text` where the operator
-  says the file is prose, and never `schema`. There is no second dispatch to get a different answer.
+  says the file is prose with `--free-text`, and never `schema`. There is no second dispatch to get a different answer.
 - Confirmation runs to completion **before** the freeze phase opens, and the freeze phase reads the
   confirmed set and nothing else.
 - Every candidate is put **one at a time, with its verbatim quotation**. There is no bulk
@@ -161,8 +169,11 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   `BRD_RECONCILE_EMPTY_DIGEST`.
 - **A package already handed off to the specs repo's default branch — or `--sent` in its place.**
   `require-on-main` runs against
-  the most recent `customer-review-prompt-<date>.md` before anything else is read, and an unmerged
-  pull request stops the run naming the branch/PR state. The gate is the prompt rather than the
+  the `customer-review-prompt-<date>.md` of the package the review answers — read from the review's
+  `Package reviewed:` line where it can be — before anything else is read, and an unmerged pull
+  request stops the run naming the branch/PR state. Where the package is not yet known it gates the
+  most recent prompt, but a newer package not yet landed does not stop a review of an older one: the
+  run tries each older prompt, and gates the package it resolves once it has read the review. The gate is the prompt rather than the
   register because the committed package is what makes a quotation in the returned review checkable
   against the version the customer actually received. Where the gate reports the prompt is on no ref
   at all, the run **splits a state the gate cannot**: no prompt in the folder means no package was
@@ -195,7 +206,7 @@ Under the BRD folder:
 | Artifact | What it is |
 |---|---|
 | `customer-review-<date>.md` | The returned review, copied in byte for byte and committed **before** anything reads it. Stamped with the **customer's** date, not the run's; a second review of that date takes a `-<suffix>` |
-| `reconciliation-<date>.md` | What changed, why, which ids, and what still needs a human. Stamped with the run's date; a second pass on the same day appends rather than overwriting |
+| `reconciliation-<date>.md` | What changed, why, which ids, and what still needs a human. Stamped with the run's date; a same-day pass appends. Each pass opens before the first freeze, listing what it freezes |
 
 A **customer decision that overturns an earlier customer decision** is handled like any other
 overturn, not left to mint a rival answer: the earlier `[CD#n]` is `superseded` where the new answer
@@ -577,7 +588,8 @@ written down.
   named as needing a `/prd-ground` pass — a finding is not evidence until independently re-derived
   by a different agent, and this command re-derives nothing.
 - **It never supersedes a `will-change` finding.** One whose prerequisite decision this run froze is
-  named with `--rebaseline` as the fix; a supersession written here would have nothing on the other
+  named with `/prd-ground <DEPENDENT-KEY> --rebaseline` as the fix, the dependent BRD whose grounding
+  holds the finding; a supersession written here would have nothing on the other
   side of it.
 - **It never allocates.** It may move a ledger row to `deferred-to`, `rejected` or `superseded-by`
   on a customer decision that reads `decided` — a withdrawn requirement is `rejected`, citing the

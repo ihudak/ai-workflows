@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.50.0] — 2026-10-26
+
+### Fixed
+- `phase-handoff` §3.4's `/brd-reconcile` row names the prompt of the package the review answers, not the most recent one, as `product-workflows` 3.40.0 now gates it.
+
 ## [1.49.0] — 2026-10-26
 
 ### Fixed

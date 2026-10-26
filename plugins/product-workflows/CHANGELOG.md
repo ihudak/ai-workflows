@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.40.0] — 2026-10-26
+
+### Fixed
+- `/brd-reconcile` opens its pass in `reconciliation-<YYYYMMDD>.md` before the freeze writes anything — the pass heading, `- **Status:** freezing`, and a `- **Frozen:**` list of every record it is about to freeze, complete or re-decide, with what each answers — sets it `frozen` when the freeze lands, and `complete` when *Write the reconciliation record* finishes it. A run that stops after the freeze (a `BRD_RECONCILE_UNDISPOSED_CORRECTION` or `BRD_RECONCILE_UNSWEPT` stop, a lost session) no longer leaves frozen `[CD#n]`s nothing can find:
+  - a re-run over the same review reads the list, so it never mints a second `[CD#n]` for a question the stopped run answered (BRD3-B1);
+  - it adopts every unfinished pass over that review, counting its records as its own, so their corrections, banners, defect resolutions, ledger moves and sweep are made, each already on file reported and never written twice (BRD3-B2). The adopting pass records the adoption on its own `- **Adopts:**` line, naming any listed entry the stopped run never wrote; the stopped pass, in a dated record another run wrote, is never edited, and counts as finished only once that adopting pass completes;
+  - a run over a different review stops with `BRD_RECONCILE_INTERRUPTED_PASS` until the unfinished pass is finished.
+- A re-run sweeping a dependent an earlier pass over the same review could only record carries that pass's changed-id set in beside its own, so the recorded dispositions can be written, not just `inherited-unchanged` (BRD3-B3).
+- The rebaseline fix for a dependent's `will-change` finding names the dependent BRD, not this run's (BRD3-B5).
+- New `--free-text` flag: the operator's statement that the review is prose, passed to `customer-review-reader` as `mode: free-text`; `BRD_RECONCILE_EMPTY_DIGEST` names it (BRD3-B13).
+- The package gate runs against the package the review answers — its `Package reviewed:` line where `@<review-file>` carries one — and a newer package not yet landed no longer stops a review of an older one; the package the run resolves is gated before the reader is dispatched (BRD3-B19). Pairs with `workflows-core` 1.50.0, whose `phase-handoff` §3.4 row describes it; either runs beside the other.
+
 ## [3.39.0] — 2026-10-26
 
 ### Fixed

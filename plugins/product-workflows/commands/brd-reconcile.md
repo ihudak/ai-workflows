@@ -20,7 +20,7 @@ the customer answered and an operator confirmed the answer** (D14,
 `${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §1). This command exists to make that
 happen, not to restate it.
 
-Usage: `/brd-reconcile <BRD-KEY> [@<review-file>] [--sent <path>…] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
+Usage: `/brd-reconcile <BRD-KEY> [@<review-file>] [--sent <path>…] [--free-text] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
 `<BRD-KEY>` still resolves through `resolve-address`, which searches every level
 `workflows-core:addressing` §3 bounds — three below `specifications/` — and so returns a BRD that owns
@@ -75,7 +75,8 @@ them is.
    `[CD#n]` arrives from the dispatch — the *Freeze the customer decisions* phase is the only writer
    of that prefix in this plugin, and it reads only what the phase before it confirmed.
 2. **This command never widens the reader's mode.** It passes `auto`, or `free-text` where the
-   operator has told it the file is prose, and it **never passes `schema`**. That agent fails closed
+   operator has told it the file is prose — by `--free-text` (*Resolve inputs and gate the sent
+   package*, step 2) — and it **never passes `schema`**. That agent fails closed
    to free text on a partial match by its own rule, and a caller that forced a parse would convert
    exactly the material the rule was protecting. There is also no re-dispatch to get a different
    answer: one dispatch, and the mode it reports is the mode the run works in.
@@ -145,8 +146,8 @@ the default branch's newer entries meeting it when the branch's pull request mer
 was declined, on the checkout step 6c has just passed, which nothing before the write touches the
 log in — so a second test would rarely stop — and
 where it did, the stop would come after the *Freeze the customer decisions* phase, leaving records
-frozen that no reconciliation record names: a re-run would find each re-affirmed, freeze nothing,
-and resolve no defect for it.
+frozen under a pass this run opened and never finished, which a re-run over the same review adopts
+and completes (*Confirm every candidate*, *A pass an interrupted run left is adopted*).
 
 **Why every path is guarded, and not only one.** Writing over a register, a defect log or a value
 document that is sitting on somebody else's branch silently overwrites an in-flight run, and the
@@ -167,7 +168,7 @@ write would re-ask a question already answered.
 
    **Load the question rules.** Load `escalation-rules core` now, with `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, before this run asks the user anything: every question it asks follows them — two to four options, presented verbatim with the `(Recommended)` marker where one is recommended, and a selection that carries no text.
 
-   Parse the first token that is neither a flag nor a flag's value — `--sent` consumes the token after it (step 2), and a value skipped as "non-flag" would be read as the key; read it with `read-key`
+   Parse the first token that is neither a flag nor a flag's value — `--sent` consumes the token after it (step 2), `--free-text` consumes none, and a value skipped as "non-flag" would be read as the key; read it with `read-key`
    (`workflows-core:addressing` §1), which also takes the key behind a typed folder prefix or a folder's whole name, and carries the bare key from then on. On `needs-tree` (`$SPECS_PATH` unset), take step 3's `$SPECS_PATH` stop now — answered with a path, read the token again from the top of this step. If absent or invalid, stop:
    `BRD_RECONCILE_NEEDS_KEY: /brd-reconcile needs a BRD key (shape ^[A-Z][A-Z0-9_]*(-\d+)+$) — re-run '/product-workflows:brd-reconcile <KEY>', adding @<review-file> where the review came back as a file.`
 2. **`@<review-file>` (optional).** The file the customer sent back, **at whatever path it arrived
@@ -184,6 +185,11 @@ write would re-ask a question already answered.
    **`--sent` needs `@<review-file>`**: a package this plugin did not build came with no note telling
    the customer where to commit a review, so step 6a has nothing to find. `--sent` without it → stop:
    `BRD_RECONCILE_SENT_NEEDS_REVIEW: --sent names what the customer was sent, and the review answering it has to be named too — re-run '/product-workflows:brd-reconcile <KEY> @<review-file> --sent <path>…' with the path the customer's file sits at.`
+
+   **`--free-text` (optional, boolean).** The operator's statement that the review is prose: the
+   *Ingest the review* phase dispatches the reader with `mode: free-text` in place of `auto`. It is
+   the narrowing rule 2 of *How no inferred decision becomes a `[CD#n]`* allows, and the remedy
+   `BRD_RECONCILE_EMPTY_DIGEST` names; it never forces a parse.
 
    **`--sent <path>` (optional, repeatable), each consuming the next token.** The material the
    customer was *actually sent* — the other half of the pair this command reconciles. It is for a
@@ -316,9 +322,18 @@ write would re-ask a question already answered.
 
    **The ordinary gate, where `--sent` was not given.** This command **consumes** `$SPECS_PATH` deliverables it did not
    write, so per `workflows-core:phase-handoff` §5 rule 2 it executes
-   `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) here, before anything else reads a file. Execute it against the resolved
-   folder's **most recent `customer-review-prompt-<YYYYMMDD>.md`** — the artifact whose presence
-   proves a package was actually built and handed off. Every deliverable one `handoff-to-main` run
+   `require-on-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3) here, before anything else reads a file. Execute it against the
+   `customer-review-prompt-<YYYYMMDD>.md` of **the package the review answers**, where it can be
+   told now — `@<review-file>` was given and its section 1 carries a `Package reviewed: <BRD-KEY>
+   <YYYYMMDD>` line whose key is this BRD's and whose date names exactly one prompt on file, read
+   from that file without writing anything — and otherwise against the folder's **most recent**
+   prompt: the artifact whose presence proves a package was actually built and handed off. **A gate on
+   the most recent prompt does not stop the run on its own account while the package is still
+   undetermined**: a review may answer an older package, and a newer one built later and not yet
+   landed is nobody's answer. Where it returns a stopping row or row F, test each older prompt in
+   turn, newest first, and proceed on the first that passes — the *Ingest the review* phase gates the
+   package it resolves where that is another — and stop as below, on the most recent prompt's return,
+   only where none passes. Every deliverable one `handoff-to-main` run
    stages lands in a single commit, so on that path its presence on `origin/<default>` implies
    `self-review-<YYYYMMDD>.md`, `customer-delivery-note-<YYYYMMDD>.md` and the whole
    `bundle-<YYYYMMDD>/` merged with it — the artifacts `/brd-package`'s handoff stages together —
@@ -533,7 +548,8 @@ write would re-ask a question already answered.
    neither;
    `brd/brd-inventory.md`'s `[BR#n]` rows; `coverage-ledger.md`; `brd-link.md`; every verified
    `[CG#n]`/`[DG#n]` with its `horizon`; and, when this is not the first reconciliation, every
-   earlier `reconciliation-<YYYYMMDD>.md` and every earlier canonicalised review. Every one of those
+   `reconciliation-<YYYYMMDD>.md` on file, this run's date included — a same-day re-run finds a
+   stopped run's pass there — and every earlier canonicalised review. Every one of those
    is an input, never scratch: nothing below deletes, renames or rewrites a dated artifact another
    run wrote — save the customer's committed `<BRD-KEY> Customer Review <YYYYMMDD>.md`, which no run
    wrote and which the *Canonicalise the returned review* phase moves to its canonical name (its
@@ -602,7 +618,7 @@ path nobody else can reproduce; the copy is the record.
    2. **A `<YYYYMMDD>` in the review's filename**, supplied or found by Phase 0 step 6a — the schema asks the reviewer to name the file
       for the date they finished, so a file that came back unrenamed carries it. **Reject this rung
       where that date matches the date on *any* `customer-review-prompt-<YYYYMMDD>.md` in this
-      folder**, and fall through to rung 3 — *any*, not only the most recent one this run gated on,
+      folder**, and fall through to rung 3 — *any*, not only the one this run gated on,
       because a review may legitimately answer an earlier package and would then echo that package's
       stamp rather than the latest: the two matching is the signature of a reviewer echoing the
       package's own stamp rather than dating their work, and a filename that merely repeats the
@@ -691,7 +707,9 @@ path nobody else can reproduce; the copy is the record.
    source document, so `decisions.md` read alone cannot distinguish an answer frozen from a
    corrected resend from one frozen from the file it replaced. What distinguishes them is the
    *Write the reconciliation record* phase: each pass sits under its own heading naming the review
-   file that caused it, and lists the `[CD#n]` ids that pass froze. Say that plainly rather than
+   file that caused it, and lists the `[CD#n]` ids that pass froze — a list the *Freeze the customer
+   decisions* phase writes when it opens the pass, before it writes anything else, so a run that
+   stops later leaves it on file. Say that plainly rather than
    claiming the register carries it — the *Confirm every candidate* phase's same-review skip keys on
    "an earlier pass over **this same review**", and the only place that mapping exists is the
    record this phase's canonical name feeds into.
@@ -787,7 +805,7 @@ Dispatch `customer-review-reader` **once**, at `detection_model`:
   >   questions:   [path to interview/customer-questions.md, when one is on file]
   >   assumptions: [path to decisions.md, when one is on file]
   >   self_review: [path to the self-review of the package this review answers, resolved below — omitted where it cannot be determined]
-  > mode: auto"
+  > mode: [auto, or free-text where --free-text was given]"
 
 **Resolve the self-review of the package this review answers, before the dispatch.** An `[SR#n]` is
 scoped to one dated self-review, and every package numbers its findings from `[SR#1]` again
@@ -818,6 +836,15 @@ the package is resolved against it, reading section 1 as this command reads it f
    resolved only against the dated prompts on file, never parsed into a date that names none; one
    that names no package on file, or declines, leaves the package undetermined.
 
+**Gate the resolved package where the *Resolve inputs and gate the sent package* phase did not.**
+Where the package resolved above is not the one whose prompt that phase's `require-on-main` passed,
+execute `require-on-main` against the resolved package's `customer-review-prompt-<YYYYMMDD>.md` now,
+before the dispatch, and map its return and verify its siblings exactly as that phase does, with the
+same stops. **Where the package stays undetermined and that phase's gate passed only on an older
+prompt** — the most recent having stopped — nothing shows the review does not answer the most recent
+package, which is not landed: stop with the most recent prompt's return, as that phase would have.
+Not on a `--sent` run, which gates no package.
+
 **Where nothing determines it** — the operator could not tell — `self_review` is omitted, so every
 `[SR#n]` answer in the review comes back `unmatched`, and each is listed under *what still needs a
 human* as an answer to a finding of an undetermined package, never matched against another
@@ -833,11 +860,11 @@ defects in this dispatch rather than in the review, and proceeding past one woul
 nothing:
 `BRD_RECONCILE_READER_CONTRACT: customer-review-reader returned <status> — the dispatch, not the review, is at fault; the canonicalised copy is at <path>.`
 
-**`mode: auto`, and never `mode: schema`.** That agent treats anything short of a positive,
+**`mode: auto` — `free-text` under `--free-text` — and never `mode: schema`.** That agent treats anything short of a positive,
 in-order, twelve-section match with a row-shaped section 7 as free text, by its own fail-closed rule,
 and a caller that overrode it to `schema` would be asking for the one conversion this whole command
 is built to prevent. The only override this command may pass is `free-text`, and only where the
-operator has said outright that the file is prose — a narrowing, never a widening. **There is no
+operator has said outright that the file is prose, by `--free-text` — a narrowing, never a widening. **There is no
 second dispatch.** Re-dispatching a review that came back free-text, hoping for a parse, is the same
 override taken slowly.
 
@@ -856,7 +883,9 @@ The discriminator is **the verdict written in section 2** — read from that sec
 1. **Any of the three sets is non-empty** → ordinary run. Nothing below applies.
 2. **All three empty, and section 2's verdict reads `approved`** → the customer approved the package and asked for nothing. That is a real answer and an ordinary outcome: proceed, and record it as an approval in the reconciliation record. A review that changes nothing is a review, and refusing it would make "we accept it as it stands" unrecordable.
 3. **All three empty, and anything else** — section 2 reading `approved-with-required-changes` or `not-approved`, or `state: absent`, or `state: stated-none`, or a value outside the three → stop. A `stated-none` section 2 is a review that declined to give a verdict at all. A verdict that says something is required, beside three empty sets, is the review contradicting itself or the parse failing; a section 2 that is absent, `stated-none`, or outside the three values is a review with no usable verdict. Neither is a customer who agreed:
-   `BRD_RECONCILE_EMPTY_DIGEST: customer-review-reader returned no decisions, no required changes and no challenges, while section 2 reads <verdict | absent | stated-none>. An approval says so in section 2; this does not, so this is a read that failed or a review that contradicts itself. The canonicalised review is at <path>; open it, and re-run '/product-workflows:brd-reconcile <KEY> @<review-file>' — telling the run the file is prose, so the reader takes free-text mode, where the schema pass could not see it.`
+   `BRD_RECONCILE_EMPTY_DIGEST: customer-review-reader returned no decisions, no required changes and no challenges, while section 2 reads <verdict | absent | stated-none>. An approval says so in section 2; this does not, so this is a read that failed or a review that contradicts itself. The canonicalised review is at <path>; open it, and, where it is prose the schema pass could not see, re-run '/product-workflows:brd-reconcile <KEY> @<review-file> --free-text', so the reader takes free-text mode.`
+   On a run already given `--free-text`, the stop's last sentence says instead that the free-text
+   reading found nothing either, so the review needs reading by a person — never the flag again.
 
 **Why the verdict and not the section markers.** Two earlier attempts at this test failed on the same schema fact. The first asked whether every "substantive" section was `stated-none` — a word this file defines nowhere. The second asked whether **all twelve** were `stated-none`, which **can never be true**: sections 1, 2, 9 and 11 carry content by their own definitions in `${CLAUDE_PLUGIN_ROOT}/references/customer-review-schema.md` §4 — who reviewed and when, the verdict, ownership, the readiness sentence — so a customer who approves everything still returns four `present` sections, and every clean approval fell into the stop. Section 2's verdict is a closed vocabulary the schema guarantees, it is what the customer asserts rather than what they omit, and `approved` beside three empty sets is *coherent* where the other two verdicts beside three empty sets are not. Keying on a field that must exist is what makes the test decidable at all.
 
@@ -1064,8 +1093,8 @@ offer is the operator writing the reason themselves. A supplied reason is the de
 argument recorded as the customer's, and it will be defended later as theirs — the exact failure the
 mandatory field exists to prevent, arriving through the one door the field cannot close.
 
-**A re-run never re-asks what an earlier pass over the same review already settled.** Every earlier
-`reconciliation-<YYYYMMDD>.md` was read in the *Resolve inputs and gate the sent package* phase, and
+**A re-run never re-asks what an earlier pass over the same review already settled.** Every
+`reconciliation-<YYYYMMDD>.md` on file, this run's date included, was read in the *Resolve inputs and gate the sent package* phase, and
 each pass in one sits under a heading naming the review file it reconciled — or, in an older record,
 is the text above its first pass heading (*Write the reconciliation record*) and lists the `[CD#n]`
 ids it froze, completed or re-decided in place (*Canonicalise the returned review*, step 3). A
@@ -1088,7 +1117,44 @@ keeps the rule working on a reconciliation record written before passes named th
 file. The rule compares nothing — it keys on the review's name and the record's id — so it is taken
 before the candidate is shown. A candidate whose target no pass over this review froze anything for
 — every
-candidate onto it was rejected or sent back to the customer — is offered again.
+candidate onto it was rejected or sent back to the customer — is offered again. **A pass's list, here
+and wherever an earlier reconciliation record's list is read** — the chain starts below among them —
+**excludes every entry a later pass's `- **Adopts:**` line names as not written**, whatever either
+pass's status: that id may since name another target's record (*A pass an interrupted run left is
+adopted*, below).
+
+**A pass an interrupted run left is adopted, never re-run.** A pass is **finished** where its
+`- **Status:**` line reads `complete`, where it carries no such line (written before passes carried
+one), or where a later pass that itself reads `complete` names it on its `- **Adopts:**` line — a
+pass that adopted it and then stopped too finishes nothing, and its own list holds only what it
+froze, so the next run adopts both; any other pass — `freezing` or `frozen`
+— was opened by a run that stopped before *Write the reconciliation record* finished it: a gate stop
+in the *Apply the required corrections* or *The propagation sweep* phase, a cancelled question, a
+lost session (*Freeze the customer decisions* opens every pass so). Look in every
+`reconciliation-<YYYYMMDD>.md` on file, this run's date included. **Where an unfinished pass is over
+another review**, stop before any candidate is shown, because that review's corrections and sweep
+are its own and this run would never put them:
+`BRD_RECONCILE_INTERRUPTED_PASS: <path> holds a pass over <review file> that a run left unfinished (status <freezing | frozen>) — re-run '/product-workflows:brd-reconcile <BRD-KEY> @<that review>' first, which adopts and finishes it, then reconcile this review.`
+**Every unfinished pass over this same review is adopted** — there can be more than one, where a run
+that adopted one stopped too. Its `- **Frozen:**` list is that pass's list for the same-review rule
+above — no candidate it names is offered again, and the chain starts that name an earlier record's
+list (an answer frozen `open`, an `[SR#n]`'s answer) find their records on it, less what a later
+pass names as not written (the same-review rule above). **A listed entry was not written** where `decisions.md` does not carry the id, or, for a record
+listed as completed from `open`, where it still reads `open` for want of its reason: the run
+stopped inside the freeze, so its target is reconciled afresh, and an unwritten new id is free for
+this run's `id` rule, which continues from the register. Every other listed record counts, for
+every later phase, as one this run froze, completed or re-decided in place: the *Freeze the customer
+decisions* phase writes each step-1 *answered by the customer* line the round record and
+`interview/customer-questions.md` still lack for one; it joins the changed-id set (*The propagation
+sweep*); and the corrections, banners, defect resolutions, ledger moves and sweep writes it causes
+are made, each one already on file — written by the run that stopped — reported as already made and
+never written twice. On a pass reading `freezing` the freeze itself was interrupted, so beyond step
+1's lines this run cannot tell which of that phase's step-3 writes on the record an adopted one
+answered landed: each adopted record is named under *what still needs a human* for an operator to
+check its step-3 effect in `decisions.md`. **An adopted pass is never edited** — it sits in a dated
+record this run did not write, which nothing here rewrites (*Resolve inputs and gate the sent
+package*, step 8). This run's own pass records the adoption instead, on its `- **Adopts:**` line
+(*Freeze the customer decisions*), and lists every adopted record under *What changed*.
 
 **Every target resolves to its question's live record before any candidate is shown.** Start from
 the earliest record frozen against the target:
@@ -1101,7 +1167,8 @@ the earliest record frozen against the target:
   or, where an answer to
   it was frozen `open` for want of its reason before any answer closed it — step 1 of the *Freeze
   the customer decisions* phase leaves such an entry held and writes nothing on it — that record,
-  found where an earlier reconciliation record lists it, as *What changed* does every `[CD#n]`
+  found where an earlier reconciliation record lists it (less what a later pass names as not written,
+  the same-review rule above), as *What changed* does every `[CD#n]`
   frozen, against the entry's round and position; or, on an entry holding neither, the record its `-
   **Re-puts:**` line names. An entry whose last recorded state is another terminal disposition,
   *split* or *re-tagged* (`/product-workflows:brd-interview`), is no longer a question anybody
@@ -1117,7 +1184,8 @@ the earliest record frozen against the target:
   *Ingest the
   review* phase resolved it — an `[SR#n]` answer reaches this phase only where that file was
   determined, and is `unmatched` otherwise — to the `[CD#n]` an earlier pass's reconciliation
-  record lists as answering that `[SR#n]` of that same file (*Write the reconciliation record* names
+  record lists as answering that `[SR#n]` of that same file, less what a later pass names as not
+  written (the same-review rule above) (*Write the reconciliation record* names
   the file each pass resolved against). **Where no earlier pass answered it and its entry in that
   file carries a `- **Re-escalates:** <earlier self-review file> [SR#k]` line**
   (`/product-workflows:brd-package`, *The disposition gate*) — a line written only where the operator
@@ -1297,6 +1365,24 @@ earlier and that has no record of its own, takes record-for-a-human | reject lik
 
 ## Phase 5 — Freeze the customer decisions as `[CD#n]`
 
+**Open this run's pass first, before this phase writes anything else.** Append to
+`<BRD-dir>/reconciliation-<YYYYMMDD>.md`, this run's date, creating it where absent, this run's pass
+heading (*Write the reconciliation record*) naming the canonicalised review, and beneath it these
+lines. Where this run adopts an unfinished pass (*Confirm every candidate*, *A pass an interrupted
+run left is adopted*), first `- **Adopts:**`, naming each adopted pass by its file and heading and,
+for each, every listed entry that was not written — written here, before any id is assigned, so an
+id this run reuses is never read as the adopted pass's. Then `- **Status:** freezing`, and
+`- **Frozen:**`, listing every record this phase is about to
+freeze, complete from `open` or re-decide in place, each with what it answers — a `[C]` by round and
+position, an `[AS#n]`, or an `[SR#n]` with the self-review file named — new ids assigned now by the
+`id` row below, or `none`. **This is the commit point a re-run reads**: it lands before the register,
+the round records and every later phase's writes, so a run that stops anywhere after it leaves its
+freezes findable by the same-review rule and its pass adoptable (*Confirm every candidate*, *A pass
+an interrupted run left is adopted*). Once this phase's last write lands, set the line to
+`- **Status:** frozen`; *Write the reconciliation record* finishes the pass. These are the only
+lines of a pass written before *Write the reconciliation record*, and the status line the only one
+rewritten — in this run's own pass, in a file this run is writing.
+
 Write one `[CD#n]` per confirmed candidate **that is not completing a record that already exists**,
 none for one that re-affirms its question's live record, and none for one the *Confirm every
 candidate* phase set aside as a conflicting answer.
@@ -1326,7 +1412,7 @@ built by this route, the register is on file here** — `/product-workflows:brd-
 on every run that records a round, as its header line alone where no round recorded a decision (§1),
 and `/product-workflows:brd-package` gated on it — so a `[CD#n]` is added after whatever records it
 holds, and the first one in a header-only register is `[CD#1]`. **Where no register is on file,
-this phase creates it before anything else**, as §1's header line alone,
+this phase creates it before anything else but the pass it opens**, as §1's header line alone,
 `# Decision register: <BRD-KEY>`, whether or not it then freezes a record. Only a `--sent` run
 reaches that: a slice never interviewed holds none (Phase 0 step 2), and nor does one whose rounds,
 interviewed before 3.7.0, recorded no decision. A `[CD#n]` frozen there is `[CD#1]`, and a run
@@ -1711,8 +1797,13 @@ pass whose record the operator did not point to. That is what makes re-running a
 recorded-not-written dependent, or to close the questions the *Resolve the defects the review
 settled* phase's last step closes — an ordinary step.
 
+**A run adopting an interrupted pass** (*Confirm every candidate*) finds no dispositions recorded for
+it — the pass stopped before its record was written — so every row is put again, and one whose
+target already carries the correction, written by the run that stopped, is disposed `applied` and
+reported so, never applied twice.
+
 Any row still undisposed when this phase would end → stop:
-`BRD_RECONCILE_UNDISPOSED_CORRECTION: N required changes from the review are still undisposed — every row takes applied | applied-with-deviation | refused-with-reason | deferred-to-next-round.`
+`BRD_RECONCILE_UNDISPOSED_CORRECTION: N required changes from the review are still undisposed — every row takes applied | applied-with-deviation | refused-with-reason | deferred-to-next-round. The records this run froze stay frozen under the pass it opened in reconciliation-<YYYYMMDD>.md; re-run '/product-workflows:brd-reconcile <BRD-KEY> @<review-file>' on this same review to adopt that pass and finish it.`
 
 **Three classes of target, and they are not treated alike:**
 
@@ -2115,7 +2206,15 @@ Two consequences bind this phase:
 `[CD#n]` frozen, completed from `open`, re-decided in place, reopened or superseded this run
 (*Freeze the customer decisions*: its mint rule, and its step 3); every `[VD#n]` this
 run reopened or superseded; every `[AS#n]` superseded; every `[SR#n]`
-answered; every `[BR#n]` whose ledger row moved; and every `[DEF#n]` that gained a resolution. A set
+answered; every `[BR#n]` whose ledger row moved; and every `[DEF#n]` that gained a resolution —
+each of those counting a record an adopted pass froze, completed or re-decided as this run's
+(*Confirm every candidate*, *A pass an interrupted run left is adopted*). **For a dependent an earlier
+pass over this same review recorded not written**, that pass's changed-id set, as its *The sweeps*
+recorded it, is carried in beside this run's for that dependent's sweep alone, and an id carried so
+counts as moved by this run for every disposition below, its cause written as that pass's: this
+run's own set holds none of those ids — the same-review rule skipped every candidate that pass
+froze — so without it every position the earlier pass recorded would meet a prerequisite this run
+"did not move" and could take `inherited-unchanged` alone. A set
 that grows while the sweep runs makes the sweep's own coverage unknowable — some items were checked
 against three ids and some against six, and afterwards nobody can say which.
 
@@ -2333,8 +2432,10 @@ into it**. It is never a stop of the whole run, for the reason that section give
 named prerequisite decision this run has just frozen is exactly the shape the horizon exists to make
 visible (`workflows-core:grounding-format` §5) — but a `will-change` finding is never deleted and is superseded
 only by a *later finding at a later commit*, which only a `/prd-ground` run produces. Every one the
-sweep reaches is recorded with the concrete fix — `/product-workflows:prd-ground <BRD-KEY> --rebaseline`
-— and carried into *what still needs a human*. A finding this command marked `SUPERSEDED` would be a
+sweep reaches is recorded with the concrete fix — `/product-workflows:prd-ground <DEPENDENT-KEY> --rebaseline`,
+`<DEPENDENT-KEY>` the dependent BRD whose grounding holds the finding, never this run's own, whose
+decision the finding names (`workflows-core:grounding-format` §5) — and carried into *what still
+needs a human*. A finding this command marked `SUPERSEDED` would be a
 supersession with nothing on the other side of it.
 
 **A re-run re-sweeps what was recorded and not written, and only that.** An item an earlier pass
@@ -2342,10 +2443,15 @@ over this same review **disposed and wrote** is skipped and reported as already 
 BRD that pass could only **record** — its register was in flight — is swept again in full, because
 nothing was ever written into it. Collapsing the two would make the recorded-not-written state
 permanent: the operator merges the dependent's pull request exactly so the sweep can land, and a
-re-run that skipped it would silently refuse to.
+re-run that skipped it would silently refuse to. It is swept against the earlier pass's changed-id
+set carried in beside this run's (*Fix the changed-id set first*), the dispositions that pass
+recorded for it shown beside each item as what it would have written. **On a run adopting an
+interrupted pass**, an item whose record already carries the closing paragraph a disposition writes,
+naming the same changed id, was written by the run that stopped: it is reported as already swept,
+and never written twice.
 
 **The gate.** Any swept item still undisposed when this phase would end → stop:
-`BRD_RECONCILE_UNSWEPT: N positions in dependent BRDs are still undisposed — every one takes inherited-unchanged | reverted | reopened | withdrawn.`
+`BRD_RECONCILE_UNSWEPT: N positions in dependent BRDs are still undisposed — every one takes inherited-unchanged | reverted | reopened | withdrawn. The records this run froze stay frozen under the pass it opened in reconciliation-<YYYYMMDD>.md; re-run '/product-workflows:brd-reconcile <BRD-KEY> @<review-file>' on this same review to adopt that pass and finish it.`
 
 ---
 
@@ -2472,7 +2578,11 @@ exactly the write two other rules forbid.
 
 ## Phase 12 — Write the reconciliation record
 
-Write `<BRD-dir>/reconciliation-<YYYYMMDD>.md`, stamped with **this run's** date. It says what
+Write `<BRD-dir>/reconciliation-<YYYYMMDD>.md`, stamped with **this run's** date — **finishing the
+pass the *Freeze the customer decisions* phase opened in it**: everything below is written beneath
+that pass's heading and its `- **Frozen:**` list, and its `- **Status:**` line is set to `complete`
+last, once the rest is written. An adopted pass is not touched: this pass's `- **Adopts:**` line,
+written when the pass opened, is what marks it finished (*Confirm every candidate*). It says what
 changed, why, which ids, and what still needs a human:
 
 - **What the review was reconciled against** — a package `/brd-package` built and handed off, or,
@@ -2501,7 +2611,8 @@ changed, why, which ids, and what still needs a human:
   *already reconciled* by the same-review rule, with the record in its chain that pass wrote and,
   where it is no longer the live record, the successor or withdrawal since; every candidate recorded
   as *already reconciled, re-affirmed by* `<review file>`, with the live `[CD#n]` it re-affirms
-  (*Confirm every candidate*); every candidate the operator
+  (*Confirm every candidate*); every record adopted from an interrupted pass, with that pass's
+  file and heading, and every listed entry it did not write (*Confirm every candidate*); every candidate the operator
   re-pointed onto a question the package put, with the target the reader returned and the question
   named (*Confirm every candidate*); every row taken through *Correct it*, with the row the reader
   returned, the corrected `chosen` and reason, and where in the canonicalised review each copied
@@ -2514,7 +2625,8 @@ changed, why, which ids, and what still needs a human:
   *already disposed* by an earlier pass over this review, by its position, with that pass's
   disposition and, where the operator matched it, the listing the operator pointed to; every banner added; every defect
   resolution, with the log's path; every ledger row moved.
-- **The sweeps** — the changed-id set as fixed; per dependent BRD, every `conditional_on` position
+- **The sweeps** — the changed-id set as fixed, and, per dependent it was carried for, the earlier
+  pass's set carried in beside it; per dependent BRD, every `conditional_on` position
   and every citing item with its disposition and reason, each id in the qualified prose form the
   propagation sweep fixes, and every dependent recorded-not-written
   with its state; per stale-reference hit, the file, what was found, and its outcome.
@@ -2533,7 +2645,10 @@ changed, why, which ids, and what still needs a human:
   behind the `[C]` questions that were; every candidate not frozen; every correction deferred or
   refused, a refused correction to an effort proposal with the proposal re-run the *Apply the
   required corrections* phase names as its fix; every code and design challenge, with `/prd-ground`
-  as the fix; every `will-change` finding needing a rebaseline; every `[CD#n]` the will-change rule
+  as the fix; every `will-change` finding needing a rebaseline, with
+  `/product-workflows:prd-ground <DEPENDENT-KEY> --rebaseline` naming the dependent BRD whose
+  grounding holds it (*The propagation sweep*); every record adopted from a pass reading `freezing`,
+  for its step-3 effect to be checked (*Confirm every candidate*); every `[CD#n]` the will-change rule
   (*Freeze the customer decisions*) wrote conditional or held open, with its findings, the
   prerequisite decision or decisions they name, the resolution taken, and, for one held open, the
   sequence that rule names as what closes it — and, where it was held open because a finding's
@@ -2997,12 +3112,15 @@ id or heading, with `/product-workflows:brd-interview` as the run that removes i
 carried `unmatched` because it cited one; **every `[CD#n]` frozen**, with what it answers and its
 status — naming, for each the will-change rule bound, the `conditional_on` it wrote or that it held
 the record open — every candidate rejected or sent back to the customer with its reason, and every candidate
-the operator re-pointed onto a question, with the target the reader returned; the `[C]`
+the operator re-pointed onto a question, with the target the reader returned; every unfinished
+pass this run adopted, by file and heading, with every record adopted from it and every listed entry
+it had not written (*Confirm every candidate*); the `[C]`
 questions closed and every one still open, with the round each sits in; every `[AS#n]` superseded and
 every `[VD#n]` or `[CD#n]` reopened or superseded here, and every `[CD#n]` re-decided in place; the corrections grouped by disposition, with every refusal's reason
 stated in full; every dated artifact bannered, and every overturned bundle document named rather than
 bannered; the defect resolutions with the log's path; the ledger rows moved; **the propagation
-sweep** — per dependent BRD, the `conditional_on` positions first, then the citing items, each with
+sweep** — the changed-id set as fixed, and, per dependent it was carried for, the earlier pass's
+set carried in beside it; per dependent BRD, the `conditional_on` positions first, then the citing items, each with
 its disposition, plus every dependent recorded-not-written with its concrete state; **the
 stale cross-reference sweep** — the hit counts by outcome and every `needs-a-human` hit named;
 **what still needs a human**, in full; the artifacts written, by path; the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line) and cost path (or, under `--skip-costs`, the `Session cost: …` line);
