@@ -447,7 +447,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## workflows-core — git, handoff, resume pointer
 
-### GIT-B1 — MAJOR — `branch-merged`'s squash test misses a squash merge when the default branch changed lines near the branch's hunks
+### GIT-B1 — MAJOR — `branch-merged`'s squash test misses a squash merge when the default branch changed lines near the branch's hunks — **Fixed in workflows-core 1.58.0 (batch B01)**
 - **Where:** `plugins/workflows-core/references/specs-repo-git.md:446` (test 3). Its consumers are `specs-repo-git.md:436` (B2), `:437` (B3), `:414` (§3.4 retry), `phase-handoff.md:59-61` (§2.2 rule 3) and `session-hygiene.md:98-102` (§1's merged check).
 - **What is wrong:** the squash test is "the patch id of the branch's whole change, … `git diff --no-renames <base> <ref> | git patch-id --stable`, is the first field of a line of `git log -p --no-renames --no-merges <base>..<default-ref> | git patch-id --stable`". A patch id hashes the hunks' context lines. So when any commit that lands on the default branch after the fork changes a line within three lines of one of the branch's hunks, the squash commit's diff carries different context. Its patch id then differs, and the test reads **unmerged**. Ancestry fails and `cherry` prints `+`, so all three tests read unmerged, for good. No text records this limit (`docs/maintainers/rationale.md:421` states only the design).
 - **Failure scenario:** a `prd/K-1-x` pull request is squash-merged with *delete branch on merge*. Between the fork and the squash, another merged pull request changed a nearby line of a file the branch touched. Plausible cases are `/conformance` ticking a `follow-ups.md` line near the end where the branch appended, or an annotation in `prd.md` next to the branch's edit. The next run keyed K-1 on that branch then gets B3 rather than B2, and stays on a merged branch, which is never cleaned up. Its handoff reuses the branch (§2.2 rule 3 sees "not merged"). §2.5's `git push -u origin <branch>` then recreates the branch the host deleted (§4 step 5's deleted-branch guard applies only to session commits). `gh pr list --state open` finds nothing, so `gh pr create` opens a second pull request whose head carries the already-squashed commits. `session-hygiene` §1 also carries that branch's merge item indefinitely.
@@ -456,7 +456,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high on the git behaviour; medium on how often the state is reached.
 
-### GIT-B2 — MINOR — §3.4's flush commits leftovers onto a merged plugin branch before §3.5 can see it merged, and strands them
+### GIT-B2 — MINOR — §3.4's flush commits leftovers onto a merged plugin branch before §3.5 can see it merged, and strands them — **Fixed in workflows-core 1.58.0 (batch B01)**
 - **Where:** `specs-repo-git.md:375-384` (stage 2 runs first and commits "onto the current branch"), `:436` (B2 asks `branch-merged HEAD` afterwards), `:448`, `:739-757` (deleted-branch push refusal), `:409-418` (the retry skips it silently).
 - **What is wrong:** stage 2 flushes dirty session files from an interrupted earlier run onto HEAD before stage 3 classifies HEAD. Suppose HEAD is a plugin branch whose pull request has merged and whose remote was deleted on merge. The new commit makes all three `branch-merged` tests read unmerged ("a commit made on it after its pull request merged makes it read unmerged again", `:448`), so B2's cleanup never fires. The flush's push then meets "the remote deleted the branch" and pushes nothing. The run then goes to B3 (it stays on a dead branch, and the handoff recreates it, as in GIT-B1) or to B4 (it switches away). After that, §3.4's retry of other branches fails step 5's deleted-branch condition and prints nothing. The session files are therefore committed on a local branch no run will ever push. B4's report even says "a later run's preflight retries them wherever §4 step 5 lets it", which it never will.
 - **Failure scenario:** a session is killed after its run wrote cost or feedback but before `commit-artifacts`. The operator merges that run's `prd/` pull request on the host (delete-on-merge). The next run starts on the same checkout. Its cost and feedback commit lands on the dead branch and never reaches the maintainer.
@@ -483,7 +483,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### GIT-B5 — NIT — phase-handoff §3.6 misquotes the offline note it says it reuses
+### GIT-B5 — NIT — phase-handoff §3.6 misquotes the offline note it says it reuses — **Fixed in workflows-core 1.58.0 (batch B01)**
 - **Where:** `phase-handoff.md:319` versus `specs-repo-git.md:309-310`.
 - **What is wrong:** §3.6 says "the precedent `specs-repo-git.md` §3.2 already sets: `offline — checked against the last-fetched ref`". §3.2's note is `offline — ancestry checked against the last-fetched ref`. One run can print two wordings for one degraded state.
 - **Suggested fix:** quote §3.2 exactly, or say the wording differs on purpose.
@@ -703,7 +703,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### IMP-B3 — NIT — Phase 4.5's reason for the falling-back array lists the §3.4 rows naming `design.md` without `/conformance`
+### IMP-B3 — NIT — Phase 4.5's reason for the falling-back array lists the §3.4 rows naming `design.md` without `/conformance` — **Fixed in workflows-core 1.58.0 and dev-workflows 4.39.1 (batch B01)**
 - **Where:** `plugins/dev-workflows/commands/implement.md:1142`; `plugins/workflows-core/references/phase-handoff.md` §3.4 table (`:273–:298`); `plugins/dev-workflows/commands/conformance.md:63`
 - **What is wrong:** "Where the set is an annotated `design.md` **alone**, present §4.3's **gated — falling back** array … because the only §3.4 rows naming `design.md` are this command's own in-scope-only gate and `/dev-workflows:ready`'s coverage gap, neither of which stops". Since 2026-10-12 `/conformance` — the very next step `/implement`'s `### Next step` offers on an Epic — runs `require-on-main` on the Epic's `design.md` too (`conformance.md:63`), and `phase-handoff` §3.4's row-F table has no `/conformance` row at all. The conclusion still holds (`/conformance` falls back on `absent`: "An `absent` document falls back per §3.4"), so no wrong array is shown, but the stated reason is a stale exclusivity claim (claim-sweep refinement 3).
 - **Failure scenario:** none behavioural today; a maintainer extending §3.4 or `/conformance`'s gate reasons from a false census.
@@ -2200,7 +2200,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## field feedback — BOOK-1, BOOK-2, BOOK-2-02 runs
 
-### FBA-B1 — MINOR — A stale remote-tracking ref forces a `-2` suffix on every handoff branch whose earlier PR merged with delete-on-merge
+### FBA-B1 — MINOR — A stale remote-tracking ref forces a `-2` suffix on every handoff branch whose earlier PR merged with delete-on-merge — **Fixed in workflows-core 1.58.0 (batch B01)**
 - **Also found as:** FBB-B42 (merged here)
 - **Where:** `plugins/workflows-core/references/phase-handoff.md:57-64` (§2.2 rules 1, 3, 4), `plugins/workflows-core/references/specs-repo-git.md:307` (the only fetch)
 - **What is wrong:** Rule 1 tests "`git -C "$SPECS_PATH" rev-parse --verify --quiet refs/heads/<name>` and `… refs/remotes/origin/<name>`". Rule 3 finds such a ref merged and refuses to reuse it, and rule 4 then "append[s] the lowest free integer suffix, starting at `-2`". The preflight's only fetch is "`fetch origin <default>`" (specs-repo-git.md:307), with no `--prune` and no probe of the host. So a `refs/remotes/origin/<name>` whose remote branch GitHub deleted on merge stays in the clone indefinitely and counts as "exists".
@@ -2210,7 +2210,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `BOOK-2-02-brd-split-stale-tracking-ref-branch-suffix` in F3
 - **Confidence:** high
 
-### FBA-B2 — MINOR — Merged local plugin branches the run is not standing on are never deleted, so they pile up and force suffixes
+### FBA-B2 — MINOR — Merged local plugin branches the run is not standing on are never deleted, so they pile up and force suffixes — **Fixed in workflows-core 1.58.0 (batch B01)**
 - **Where:** `plugins/workflows-core/references/specs-repo-git.md:409-420` (§3.4 retry walk), `:436` (B2 deletes only `HEAD`'s branch)
 - **What is wrong:** B2 runs `branch -d` only on the plugin branch `HEAD` stands on. §3.4's walk over "every other local plugin branch" runs `branch-merged` only as a reason not to push: "`branch-merged` (§3.5) does not find it merged … Where a test fails, nothing is pushed and nothing is printed". No row deletes a merged plugin branch that `HEAD` is not on.
 - **Failure scenario:** Over a pipeline (idea → prd → ard → spec), each merged `idea/…` or `prd/…` branch stays local unless a later run happened to start on it. On BOOK-2, the merged `brd/<KEY>-<slug>` stayed because the preflight started on main (row B1). Rule 4 of phase-handoff §2.2 then named the next run's branch `…-2`, and every later `/brd-*` handoff on that BRD will need a suffix until someone deletes the ref by hand.
@@ -2273,7 +2273,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `BOOK-2-02-prd-ground-vacuous-surface-verdict` in F3
 - **Confidence:** medium (the fix is a design choice; the gap is certain)
 
-### FBA-B9 — NIT — A re-asked handoff consent choice leaves two contradictory `Phase handoff:` outcome lines
+### FBA-B9 — NIT — A re-asked handoff consent choice leaves two contradictory `Phase handoff:` outcome lines — **Fixed in workflows-core 1.58.0 (batch B01)**
 - **Where:** `plugins/workflows-core/references/phase-handoff.md` §4.1
 - **What is wrong:** Nothing in §4.1 says that a consent choice asked again in the same run supersedes the outcome line already printed for that offer. `grep -i "supersede\|re-ask\|asked again"` in phase-handoff.md finds nothing on the subject.
 - **Failure scenario:** The user picks "Just write the files", interrupts, and on the re-ask picks the branch+PR option. The transcript and the final report then carry both *Declined by the user* and the pushed outcome for one offer.
@@ -2466,7 +2466,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `implement-post-review-design-departures-unrecorded` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B39 — NIT — Session files pushed straight to the default branch are not called out
+### FBB-B39 — NIT — Session files pushed straight to the default branch are not called out — **Fixed in workflows-core 1.58.0 (batch B01)**
 - **Where:** `plugins/workflows-core/references/specs-repo-git.md:1006` (the outcome line reads `committed … on main — pushed`, with no "no PR" wording and no pointer to session-branch mode).
 - **What is wrong:** A user used to pull-request landings missed a direct push to `main`, twice.
 - **Suggested fix:** Add a default-branch variant of the outcome line that says no pull request was opened. Name session-branch mode (§8) once where the history shows deliverables landing through pull requests.

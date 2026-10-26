@@ -231,8 +231,8 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   on a slice the inventory was written and then lost: its remedy turns on the slice's `claims:` and
   the parent's ledger — a slice claiming nothing gets the empty-inventory remedy; a slice whose
   ledger is on the default branch but missing from the working tree — on the default branch since
-  before the run's own branch was cut — is told to restore it from there (a ledger that arrived
-  after the cut stops at the gate, which tells you to merge the default branch in); and otherwise the inventory is restored from the ref that carried it, or reported, since a parent `/brd-split` writes nothing into a slice
+  before the run's own branch was cut, and unchanged there since — is told to restore it from there (a ledger that arrived
+  or changed after the cut stops at the gate, which tells you to merge the default branch in); and otherwise the inventory is restored from the ref that carried it, or reported, since a parent `/brd-split` writes nothing into a slice
   with a file missing and never re-creates one — and on a folder naming no
   parent it names a fresh intake under a new key, and also `/create-prd` on the same key where the
   folder holds an `idea.md` and no `prd.md`. An inventory in the folder and on no ref, with a `coverage-ledger.md` there too, stops with

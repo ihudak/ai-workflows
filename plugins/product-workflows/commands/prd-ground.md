@@ -276,10 +276,10 @@ behaviour, not the behaviour.
      `coverage-ledger.md` in it, save in one state: this stop prints only where the ledger's gate
      passed or under the gate order's one exception, where the ledger is in the folder and on no ref,
      and the only pass that leaves no ledger in the folder is `require-on-main`'s row B — the ledger
-     on the default branch since before the branch this run reuses was cut, and missing from its
+     on the default branch since before the branch this run reuses was cut, unchanged there since, and missing from its
      working tree (`workflows-core:phase-handoff` §3.3). Every other state with no ledger in the
-     folder reaches the ledger's own row F first, or, where the ledger reached the default branch
-     only after that branch was cut, its row B′, which stops. Either way the ledger was written, so on a slice the inventory
+     folder reaches the ledger's own row F first, or, where the ledger reached or changed on the default branch
+     after that branch was cut, its row B′, which stops. Either way the ledger was written, so on a slice the inventory
      was written and lost —
      `/brd-split` writes a slice's inventory before its ledger (`commands/brd-split.md` Phase 3). Read the resolved folder's
      `brd-link.md` and branch on its `parent:` field: 5a's own legacy-fallback test lets a folder
@@ -308,7 +308,7 @@ behaviour, not the behaviour.
        | State | `<remedy>` |
        |---|---|
        | This slice's `claims:` names no `[BR#n]` | It claims nothing — the standing-empty-child state step 8's `PRD_GROUND_EMPTY_INVENTORY` reports — so give that stop's remedy unchanged, which already names the `/brd-split` form by the parent's ledger |
-       | It claims rows, and its folder holds no `coverage-ledger.md` — reached only through `require-on-main`'s row B above — the ledger on the default branch since before this run's branch was cut, and missing from this working tree — since the gate order sends every other no-ledger state to the ledger's own row F or stops it at row B′ | `This slice's coverage-ledger.md is on the specs repo's default branch but missing from this working tree, and its brd/brd-inventory.md is missing too. Restore coverage-ledger.md from the default branch. No command re-creates the inventory — /product-workflows:brd-split's reconcile step writes nothing into a slice with a file missing — so restore it from the ref that carried it, or report it; then re-run '/product-workflows:prd-ground <BRD-KEY>'.` |
+       | It claims rows, and its folder holds no `coverage-ledger.md` — reached only through `require-on-main`'s row B above — the ledger on the default branch since before this run's branch was cut, unchanged there since, and missing from this working tree — since the gate order sends every other no-ledger state to the ledger's own row F or stops it at row B′ | `This slice's coverage-ledger.md is on the specs repo's default branch but missing from this working tree, and its brd/brd-inventory.md is missing too. Restore coverage-ledger.md from the default branch. No command re-creates the inventory — /product-workflows:brd-split's reconcile step writes nothing into a slice with a file missing — so restore it from the ref that carried it, or report it; then re-run '/product-workflows:prd-ground <BRD-KEY>'.` |
        | It claims rows, and `<PARENT-KEY>`'s ledger still holds an `unallocated` row | `A parent re-run will not repair this file. '/product-workflows:brd-split <PARENT-KEY> "<how to cut it>"' still has rows to walk, but its reconcile step writes nothing into a slice with a file missing, and never re-creates one. The file was lost after it was written, and no command re-creates the rows it held — restore it from the ref that carried it, or report it.` |
        | It claims rows, and `<PARENT-KEY>`'s ledger holds no `unallocated` row | `A parent re-run carves nothing here: the bare '/product-workflows:brd-split <PARENT-KEY>' writes nothing into this slice — its reconcile step leaves a slice with a file missing untouched — and an instructed one's reconcile step leaves it untouched too, whatever that run re-cuts. The file was lost after it was written, and no command re-creates the rows it held — restore it from the ref that carried it, or report it.` |
        | `<PARENT-KEY>`'s ledger cannot be read | Report it by path and name no `/brd-split` form: which one runs is that ledger's to say |
@@ -445,7 +445,7 @@ behaviour, not the behaviour.
     **First, both files must be in this working tree.** A gate passes a file on the default branch
     that is missing from the worktree where this run reuses a branch of its own cut while the file
     was already there — `require-on-main`'s row B (`workflows-core:phase-handoff` §3.3; a file that
-    reached the default branch after the cut stops the gate at row B′) — and this step, like Phase 8's
+    reached or changed on the default branch after the cut stops the gate at row B′) — and this step, like Phase 8's
     `evidence` rebuild, reads the worktree. A missing inventory would read as set (b) empty and print
     the stop below, whose remedy names `/brd-split`, which writes nothing into a slice with a file
     missing (`commands/brd-split.md` Phase 4 Step 3), so that remedy would loop. Where

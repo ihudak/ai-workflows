@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.46.1] — 2026-10-26
+
+Take with `workflows-core` 1.58.0, whose row B′ also stops where the run's own branch changed the path (batch B01).
+
+### Changed
+- **The `*_REGISTER_NOT_ON_MAIN` B′ forms of `/create-prd`, `/create-ard` and `/specify` name the branch's own change** as a third state, and their remedy gloss covers the merge's push and the forms that name no merge. `/epics`, `/brd-reconcile`, `/prd-ground` and the docs pages describe B′ the same way, and `/idea` counts *Push refused for access* among the non-landing handoff rows.
+
 ## [3.46.0] — 2026-10-26
 
 Take with `workflows-core` 1.57.0 (its `consumed_by` list, `baselines.md` layout and scanner coupling field).

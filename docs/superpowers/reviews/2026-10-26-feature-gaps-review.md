@@ -139,7 +139,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** yes. The worse-cost investigation measured the whole Phase-0 read of `specs-repo-git` as "the largest single reference cost, $1.0–1.6 a run". A script would also make edge cases such as GIT-B1 and GIT-B2 self-testable, as `session-branch.py --selftest` does for §8.
 - **Suggested scope:** script `branch-merged`, `branch-key`, `push-scope` and §2.1's classifier first. These are pure, testable functions behind many prose call sites. Then decide `specs-preflight` and `commit-artifacts`.
 
-### GIT-G2 — The generated `require-on-main` file does not carry its line count (worse-cost M3's optional extra)
+### GIT-G2 — The generated `require-on-main` file does not carry its line count (worse-cost M3's optional extra) — **Fixed in workflows-core 1.58.0 (batch B01)**
 - **Designed in:** `verification/2026-10-22-lean-context-handoff-part-worse-cost.md` M3: "have the generator write the file's line count in the line under its title, so that both ranges go out at once without `wc -l` … low priority".
 - **Current state:** `reference-parts/phase-handoff/require-on-main.md:5`'s header names the sections and no line count. The file is 229 lines and 69,819 bytes, over one Read.
 - **Still worth doing?:** low (about $0.06 a run by that record's own estimate).
@@ -453,7 +453,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Source:** feedback `conformance-shared-cause-grouping` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B30 — NIT — Gap: after a push refused for permissions, the handoff offers no next step
+### FBB-B30 — NIT — Gap: after a push refused for permissions, the handoff offers no next step — **Fixed in workflows-core 1.58.0 (batch B01)**
 - **Where:** `plugins/workflows-core/references/phase-handoff.md:102-108` (§2.5 Push; it has no permission-denied handling beyond "not handed off").
 - **What is wrong:** When the SSH identity can fetch but not push, a local commit is left for the operator to push by hand.
 - **Suggested fix:** Name the branch and commit left behind, and offer a consented retry or a push through `gh`'s credentials.
