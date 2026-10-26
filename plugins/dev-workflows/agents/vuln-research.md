@@ -29,10 +29,12 @@ For each CVE in the input handoff:
    Extract: description, affected package name, ecosystem, vulnerable version range.
    On failure: record `status: LOOKUP_FAILED` with the error, continue to next CVE.
 
-3. **Detect library** — Search the repo for the affected package (see `${CLAUDE_PLUGIN_ROOT}/references/fix-vuln/build-systems.md`).
-   If not found: record `status: NOT_IN_REPO`, continue.
+3. **Detect library** — Search the repo for the affected package (see `${CLAUDE_PLUGIN_ROOT}/references/fix-vuln/build-systems.md`): its manifests, and every lockfile *Resolving the dependency tree* there lists for the ecosystem, which name transitive dependencies as well as direct ones.
+   - Where the request's `dependency_tree_files:` carries a file for this ecosystem, the orchestrator has resolved the tree for you: read it. A library the tree holds is used, transitively where no manifest names it — record `introduced_by:`, the direct dependency the tree shows bringing it in, its `current_version` from the tree, and in `files` the manifest that declares that direct dependency, with the change *Transitive dependency strategy* there prefers. A library the tree does not hold is `NOT_IN_REPO`.
+   - Otherwise, where nothing names the library and the ecosystem pulls dependencies in transitively with no lockfile on file that would list it — wherever that section's table names a tree command for the case: Maven, Gradle without dependency locking, and .NET without `packages.lock.json` — record `status: NEEDS_TREE` with the ecosystem, and continue: an absence a grep cannot see is not an absence. The orchestrator resolves the tree and dispatches you again.
+   - Otherwise, if not found: record `status: NOT_IN_REPO`, continue.
 
-4. **Current version** — Read the current pinned version from the detected build file(s).
+4. **Current version** — Read the current pinned version from the detected build file(s), or, for a library `introduced_by:` another, from the tree.
 
 5. **Safe version** — Determine the minimum version that falls outside the vulnerable range:
    - Check the package registry for the lowest available version ≥ the patched boundary.

@@ -108,7 +108,7 @@ reconstruct it.
      status this agent returns, and reads the same marks off its own capture besides.
 
 2. **Create the fix branch — before any file is touched** — first check the request carries `branch:`
-   and `pre_edit_tree:` (below), then run `git checkout -b <the branch name the
+   and `pre_edit_tree:`, and that the report still describes the tree (both below), then run `git checkout -b <the branch name the
    orchestrator supplied>`. The name is **always** supplied in the input (`branch:`); never derive
    one yourself, because `/vuln` Step 3.9 pushes the name *it* resolved and a name you invented
    would fail that step's gate on the mismatch. A missing `branch:` is an orchestrator bug: return
@@ -116,6 +116,16 @@ reconstruct it.
    the snapshot the orchestrator took before this CVE's first dispatch
    (`${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.1): it is what "Build failure" reverts to, and
    without it the only revert left would discard the user's own changes in any file this fix touches.
+
+   **Then check the report still describes the tree**, before the branch is cut. For every entry in the
+   report's `files` whose `change` edits an existing pin of `library`, read the file at its `path`: it
+   must pin `library` at the report's `current_version`. A file that pins another version, or no longer
+   exists, returns `status: BLOCKED` naming the file, the version the report expected and the one the file
+   holds (or that it is gone), and changes nothing — no branch either. The report was read off a tree this
+   one is not, and applying "bump X from A to B" where X is not at A is a downgrade, or an edit to a line
+   that no longer exists. An entry that adds what the file does not hold yet — an override, a constraint
+   or a `dependencyManagement` entry for a transitive library, a version a parent or BOM manages, a file
+   the change creates — pins nothing to compare: check only that a file it edits exists.
 
    **A rerun is the one exception.** When the branch already exists and points at HEAD itself
    (`git rev-parse <branch>` prints what `git rev-parse HEAD` prints) — an earlier run's `BUILD_FAILED`
@@ -219,15 +229,21 @@ granted, so this agent can never ask the user directly. The orchestrator owns th
 
 1. Inspect failures — are they caused by the version bump (API change, renamed class)?
 2. If fixable automatically (import rename, trivial API migration — never by running a dependency's
-   install-time code, `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): fix and note in output, then proceed to step 6 (Output).
+   install-time code, `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): fix it, describe every change
+   in `notes`, then **run step 5 (Verify) once more** — the same whole `baseline_block`, the same
+   `Project root:` and the same `command_hint:` — and return by that verify's arms, never by the one before
+   the fix: `OK` or `PARTIAL` returns `SUCCESS`, `RUN_FAILED` or `COMMAND_NOT_FOUND` returns `TESTS_NOT_RUN`,
+   and `REGRESSIONS` that remain go to step 3 with the auto-fix still described in `notes` — this step is not
+   taken a second time. An auto-fix is an edit no verify has seen until this one runs, so `SUCCESS`, which
+   says no regression was found, is earned by the second verify alone.
 3. If not fixable: **stop here.** Return `status: TEST_REGRESSION` with the full list of
    newly-failing tests and a one-line diagnosis of the likely cause. The branch already exists
    (step 2) and the fix is on it, uncommitted — leave it that way; the orchestrator decides.
    It asks the user (see `/vuln` "Handling Test Failures") and
    re-invokes this agent with `phase: regression-resume` + `regression_decision`.
 4. **On `phase: regression-resume`:** honor `regression_decision`:
-   - `keep-anyway` → proceed to step 6, recording the failures in `notes`; the orchestrator carries
-     them into Step 3.9's `body_facts` and sets `clean_finish: false`.
+   - `keep-anyway` → set `status: TEST_REGRESSION_KEPT` and proceed to step 6, recording the failures in
+     `notes`; the orchestrator carries them into Step 3.9's `body_facts` and sets `clean_finish: false`.
    - `revert` → revert by running `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §6.2's script
      from the request's `pre_edit_tree:` — then restore `node_modules` as `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`'s "After a revert" says — every edit since this CVE's first dispatch, `review-fixer`'s
      and any test fix of step 2 included, and nothing older — set `status: REVERTED`, and return what

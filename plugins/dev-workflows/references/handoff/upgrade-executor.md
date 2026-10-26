@@ -132,11 +132,14 @@ model_routing:           # echoed back when present in input
 **status values:**
 - `OK` — all changes applied, all previously-green tests still green. A `PARTIAL`
   verify is still `OK`: every suite the baseline covered is green, and `notes`
-  names the ones it does not cover
+  names the ones it does not cover. Where the agent auto-fixed a regression ("Test
+  regression" step 2), it is the verify run after that fix that found all green, and
+  `notes` explains the fix
 - `BUILD_FAILED` — build failed, all changes for this component reverted to `pre_edit_tree` (§6.2),
   every path named in `reverted:`
 - `SKIPPED` — component was NOT_FOUND or user chose to skip
-- `TEST_REGRESSION` — regressions present, not auto-fixable, awaiting a user
+- `TEST_REGRESSION` — regressions present, not auto-fixable or still present after one
+  auto-fix (which stays in the tree, explained in `notes`), awaiting a user
   decision. This agent cannot ask the user (subagents have no interactive
   tools), so it stops here — see `notes` for the failing-test list and
   diagnosis. The orchestrator asks the user (per `/upgrade` "Handling Test
@@ -158,8 +161,9 @@ model_routing:           # echoed back when present in input
   The orchestrator must perform the Opus code review, then re-invoke this
   agent with `phase: verify-resume` to continue from the Verify step.
 - `BLOCKED` — this call could not use an input, and names it: the upgrade plan could not be read
-  at the path the orchestrator supplied, or the request lacked `pre_edit_tree:` (`phase: full` and
-  `phase: regression-resume`). This call changed nothing; on a resume, the changes an earlier call
+  at the path the orchestrator supplied, the request lacked `pre_edit_tree:` (`phase: full` and
+  `phase: regression-resume`), or a file in the plan's `files` does not pin the plan's `from`, or a
+  `related` entry's (`phase: full`, the agent's step 1 — named with both versions). This call changed nothing; on a resume, the changes an earlier call
   applied are still in the tree. Per the read-failure contract
   (`${CLAUDE_PLUGIN_ROOT}/references/context-management.md`), the orchestrator must not
   re-run upgrade-planner to reconstruct the plan — surface what the agent names to the user

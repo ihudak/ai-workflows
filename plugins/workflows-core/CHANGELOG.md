@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.56.1] — 2026-10-26
+
+Either version runs beside `dev-workflows` 4.39.0 or older: the change is to what this reference says of `/upgrade`.
+
+### Fixed
+- **`implementation-format` §3 said all three code-changing commands write the `[<key>]` convention.** `/upgrade` takes no address and is keyless, which `dev-workflows` 4.39.0 states; the table and the sentence below it now say it writes the subject with no key (batch B06, VU-B10's sweep).
+
 ## [1.56.0] — 2026-10-26
 
 **Take with `docs-workflows` 1.24.0** (`.claude/rules/plugin-updates-coupling.md`): `/document` carries its own copy of the per-discrepancy array changed below, and `/release-notes` presents it. Post-merge review 87.3, recorded as to-fix D23 and settled with the maintainer.

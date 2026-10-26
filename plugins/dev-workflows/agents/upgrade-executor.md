@@ -43,6 +43,15 @@ reconstruct it.
    A missing one is an orchestrator bug: return `status: BLOCKED` naming it, and change nothing — it is
    what "Build failure" reverts to, and without it the only revert left would discard the user's own
    changes in any file this upgrade touches.
+   Next check the plan still describes the tree: for every entry in the plan's `files`, read the file at
+   its `path` and find the version it pins for the component — it must be the plan's `from` — and, where it
+   pins a component a `related` entry names, that entry's `from`. A pin already at the plan's `to` (or the
+   `related` entry's) is not stale: an earlier component's `related` change in this batch applied it, so
+   leave it and say so in `notes`. An entry whose change creates the file, or adds what it does not hold
+   yet, pins nothing to compare. Any other file that pins another version, or no longer exists, returns
+   `status: BLOCKED` naming the file, the version the plan expected and the one the file holds (or that it
+   is gone), and changes nothing: the plan was made against a tree this one is not, and applying it could
+   downgrade what the tree already carries, or edit a line that no longer exists.
    Then update every file listed in the plan's `files` array.
    For each related upgrade in `related`, apply those version changes too.
    Use ecosystem-appropriate commands (see `${CLAUDE_PLUGIN_ROOT}/references/upgrade/ecosystems.md`).
@@ -122,7 +131,13 @@ granted, so this agent can never ask the user directly. The orchestrator owns th
 
 1. Determine whether failures are caused by the upgraded component (API rename, removed annotation, changed behaviour).
 2. **Auto-fix** if straightforward: rename imports, update assertion syntax, adjust config — never by
-   running a dependency's install-time code (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). Explain every change in the output, then proceed to step 4 (Output).
+   running a dependency's install-time code (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). Explain
+   every change in `notes`, then **run step 3 (Verify) once more** — the same whole `baseline_block`, the same
+   `Project root:` and the same `command_hint:` — and return by that verify's arms, never by the one before
+   the fix: `OK` or `PARTIAL` returns `OK`, `RUN_FAILED` or `COMMAND_NOT_FOUND` returns `TESTS_NOT_RUN`, and
+   `REGRESSIONS` that remain go to step 3 here with the auto-fix still explained in `notes` — this step is
+   not taken a second time. An auto-fix is an edit no verify has seen until this one runs, so `OK`, which
+   says every previously-green test is still green, is earned by the second verify alone.
 3. If not auto-fixable: **stop here.** Return `status: TEST_REGRESSION` with the full list of
    newly-failing tests and a one-line diagnosis of the likely cause. The orchestrator asks the
    user (see `/upgrade` "Handling Test Failures") and re-invokes this agent with

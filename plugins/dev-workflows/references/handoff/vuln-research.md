@@ -12,6 +12,8 @@ cves:
     address: PROJ-2423     # optional folder key; omit when the token carried none
   - id: CVE-2024-12345    # bare CVE, no address
 ecosystem_hint: java      # optional; helps when auto-detection is ambiguous
+dependency_tree_files:    # optional; on every dispatch after a NEEDS_TREE, for those CVEs: each ecosystem's
+  Maven: /tmp/dw-vuln-tree-AbC123   # dependency tree, under its name, written by /vuln Step 2
 model_routing:            # optional; if present, echo back in output.
   classification: SIGNIFICANT      # See `workflows-core:model-routing/classification` for the full model-routing schema.
   # The orchestrator MUST re-invoke this agent under Opus for HIGH-RISK
@@ -27,7 +29,7 @@ model_routing:            # optional; if present, echo back in output.
 ## Vuln Research Report
 
 ### CVE-2023-46604
-status: READY             # READY | NOT_IN_REPO | LOOKUP_FAILED | SKIP_NON_CVE
+status: READY             # READY | NEEDS_TREE | NOT_IN_REPO | LOOKUP_FAILED | SKIP_NON_CVE
 address: PROJ-2423
 description: "Apache ActiveMQ RCE via ClassInfo deserialization"
 library: activemq-broker
@@ -35,6 +37,7 @@ ecosystem: Maven
 vulnerable_range: "<5.15.16"
 current_version: "5.15.5"
 safe_version: "5.15.16"
+introduced_by: null       # for a transitive library: the direct dependency that brings it in, from the tree
 files:
   - path: pom.xml
     change: "bump activemq-broker.version from 5.15.5 to 5.15.16"
@@ -48,6 +51,10 @@ error: "Library 'some-other-lib' not detected in repo"
 
 **status values:**
 - `READY` — research complete, safe to hand off to vuln-fixer
+- `NEEDS_TREE` — no manifest or lockfile names the library, and the ecosystem pulls dependencies in
+  transitively with no lockfile that would list it (`build-systems.md` *Resolving the dependency tree*):
+  whether the repo uses it is not yet known. The orchestrator resolves the tree and dispatches again with
+  `dependency_tree_files:`, which settles it as `READY` or `NOT_IN_REPO`; never terminal
 - `NOT_IN_REPO` — library not used in this repo; skip fix
 - `LOOKUP_FAILED` — NVD API unavailable or CVE not found
 - `SKIP_NON_CVE` — ID was CWE or OWASP, not a CVE

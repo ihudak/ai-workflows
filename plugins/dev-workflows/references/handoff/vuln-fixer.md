@@ -78,6 +78,7 @@ ecosystem: Maven
 vulnerable_range: "<5.15.16"
 current_version: "5.15.5"
 safe_version: "5.15.16"
+introduced_by: null       # a transitive library: the direct dependency that brings it in (vuln-research)
 files:
   - path: pom.xml
     change: "bump activemq-broker.version from 5.15.5 to 5.15.16"
@@ -99,7 +100,7 @@ files:
 
 ```markdown
 ## Vuln Fix Result: CVE-2023-46604
-status: SUCCESS         # SUCCESS | BUILD_FAILED | TEST_REGRESSION | TESTS_NOT_RUN | REVERTED | SKIPPED_BY_USER | AWAITING_REVIEW | BLOCKED
+status: SUCCESS         # SUCCESS | BUILD_FAILED | TEST_REGRESSION | TEST_REGRESSION_KEPT | TESTS_NOT_RUN | REVERTED | SKIPPED_BY_USER | AWAITING_REVIEW | BLOCKED
 branch: fix/PROJ-2423-CVE-2023-46604
                         # no `pr_url` and no commit sha: this agent creates the branch and stops.
                         # The commit, the push, and the pull request are the orchestrator's, in
@@ -142,16 +143,22 @@ model_routing:           # echoed back when present in input
 **status values:**
 - `SUCCESS` — fix applied, no regression found, branch created with the change on it,
   uncommitted. A `PARTIAL` verify is still `SUCCESS`: every suite the baseline
-  covered is green, and `notes` names the ones it does not cover
+  covered is green, and `notes` names the ones it does not cover. Where the agent
+  auto-fixed a regression ("Test regression" step 2), it is the verify run after that
+  fix that found none, and `notes` describes the fix
 - `BUILD_FAILED` — build failed after fix, changes reverted to `pre_edit_tree` (§6.2), every path
   named in `reverted:`
-- `TEST_REGRESSION` — previously-green tests failed and were not auto-fixable;
+- `TEST_REGRESSION` — previously-green tests failed and were not auto-fixable, or still
+  failed after one auto-fix, which stays in the tree and is described in `notes`;
   the fix is applied and built on the fix branch, uncommitted. This
   agent cannot ask the user (subagents have no interactive tools), so it
   stops here — see `notes` for the failing-test list and diagnosis. The
   orchestrator asks the user (per `/vuln` "Handling Test Failures"), then
   re-invokes this agent with `phase: regression-resume` +
   `regression_decision: keep-anyway | revert`.
+- `TEST_REGRESSION_KEPT` — the `regression-resume` call's `regression_decision` was `keep-anyway`:
+  the fix stays on the branch with the failing tests named in `notes`, and the orchestrator
+  hands it off with `clean_finish: false`
 - `TESTS_NOT_RUN` — `test-baseliner` verify returned `RUN_FAILED` or
   `COMMAND_NOT_FOUND`: no comparison was possible, so nothing is known about
   this CVE's tests either way. The fix is applied and built on the fix branch,
@@ -180,8 +187,10 @@ model_routing:           # echoed back when present in input
   orchestrator-side stop here still has somewhere to commit the work
   (`/vuln` Step 3.9 with `clean_finish: false`).
 - `BLOCKED` — this call could not use an input, and names it: the research report could not be
-  read at the path the orchestrator supplied, or the request lacked `branch:` (`phase: full`) or
-  `pre_edit_tree:` (`phase: full` and `phase: regression-resume`). This call changed nothing; on a
+  read at the path the orchestrator supplied, the request lacked `branch:` (`phase: full`) or
+  `pre_edit_tree:` (`phase: full` and `phase: regression-resume`), or a file in the report's `files`
+  does not pin the report's `current_version` (`phase: full`, the agent's step 2 — named with both
+  versions). This call changed nothing; on a
   resume, the fix an earlier call applied is still on the branch. Per the read-failure contract
   (`${CLAUDE_PLUGIN_ROOT}/references/context-management.md`), the orchestrator must not
   re-run vuln-research to reconstruct the report — surface what the agent names to the user

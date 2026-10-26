@@ -770,7 +770,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## dev-workflows — /vuln, /upgrade
 
-### VU-B1 — MAJOR — An auto-fixed test regression is returned as a pass without verify being run again
+### VU-B1 — MAJOR — An auto-fixed test regression is returned as a pass without verify being run again — **Fixed in dev-workflows 4.39.0 (batch B06)**
 - **Where:** `plugins/dev-workflows/agents/vuln-fixer.md:221-222`, `plugins/dev-workflows/agents/upgrade-executor.md:124-125`. Consumers: `commands/vuln.md:318`, `references/handoff/vuln-fixer.md:143`, `references/handoff/upgrade-executor.md:133`.
 - **What is wrong:** on `REGRESSIONS`, "If fixable automatically (import rename, trivial API migration …): fix and note in output, then proceed to step 6 (Output)". `upgrade-executor` says the same: "Auto-fix if straightforward … Explain every change in the output, then proceed to step 4 (Output)". Neither runs `test-baseliner` verify after its own edit. The only status that fits what follows is `SUCCESS` / `OK`. Those are defined as "no regression found" / "all previously-green tests still green". `/vuln` Step 4 says "`OK` in this column means the comparison happened and found no regression; nothing else earns it."
 - **Failure scenario:** a MODERATE CVE bump breaks two tests. The fixer renames an import, never re-runs the suite, and returns `SUCCESS`. The table then shows `OK`, and `clean_finish` is `true`. Step 3.9 pushes and opens a mergeable pull request, which carries no DO-NOT-MERGE banner. On the gated path the auto-fix may also be a "trivial API migration" in source code, made after the Opus review. That edit is both unreviewed and untested.
@@ -779,7 +779,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### VU-B2 — MAJOR — Research and planning read the tree before the run moves onto the base, so the fix is computed against a different tree
+### VU-B2 — MAJOR — Research and planning read the tree before the run moves onto the base, so the fix is computed against a different tree — **Fixed in dev-workflows 4.39.0 (batch B06)**
 - **Where:** `commands/vuln.md:52-88` (Step 2 research) against `:100` (Step 3's §2.8.1 move); `commands/upgrade.md:38-102` (Phase 1 inventory and planning) against `:113-117` (Phase 2 prep's move). Also `agents/vuln-fixer.md:146-147` and `agents/upgrade-executor.md:46-48`, which apply the plan's `files` changes without re-reading the current version.
 - **What is wrong:** `vuln-research` reads `current_version` and the `files` to change from the working tree at Step 2. `upgrade-planner` and Phase 1's inventory do the same. Only afterwards does the run switch to `<base>`, or detach at `origin/<base>` where the local base is strictly behind (`code-handoff.md` §2.8.1 step 3). That is the ordinary case of a clone that has not been pulled, and it also covers the *Switch to `<base>`* answer from a feature branch. The fixer and the executor then apply "bump X from A to B" to a tree where X may no longer be at A. `/implement` has the opposite invariant: "The branch is settled before the first read of the code" (`.claude/rules/dev-workflows-implement.md`).
 - **Failure scenario:** the local `main` sits at `activemq 5.15.5` and `origin/main` has already moved to `5.18.3`. Research reports READY with `safe_version: 5.15.16`. Step 3 detaches at `origin/main`, and the fixer "updates the version pin" to `5.15.16`, which is a downgrade, or it edits a line that no longer exists. The commit body's "installed version inside the vulnerable range before" is false either way. A CVE that `origin/main` has already fixed is still worked, and a library added only on `origin/main` is reported `NOT_IN_REPO`. `/upgrade` likewise plans `from:` against the stale tree, so its "never silently downgrade" check (`upgrade.md:253`) was made against the wrong versions.
@@ -788,7 +788,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium. The ordering is certain. Whether an executing model notices the mismatch on its own is not.
 
-### VU-B3 — MAJOR — `vuln-research` cannot detect a transitive-only vulnerable library in Maven or Gradle, and reports it `NOT_IN_REPO`
+### VU-B3 — MAJOR — `vuln-research` cannot detect a transitive-only vulnerable library in Maven or Gradle, and reports it `NOT_IN_REPO` — **Fixed in dev-workflows 4.39.0 (batch B06)**
 - **Where:** `agents/vuln-research.md` (tools `["Read","Glob","Grep","WebFetch","Skill"]`; "No files are written, no commands are run"; step 3 "Search the repo for the affected package … If not found: record `status: NOT_IN_REPO`"); `references/fix-vuln/build-systems.md:273-279` ("Identify which direct dependency introduces it (using `./gradlew dependencies`, `./mvnw dependency:tree`, `npm ls`, etc.)").
 - **What is wrong:** the reference the research agent is told to follow resolves transitive dependencies by running build-tool commands. The agent has no Bash and is forbidden to run commands. Maven and Gradle builds usually carry no lockfile, so grep over `pom.xml` and `*.gradle` cannot find a library that only arrives transitively.
 - **Failure scenario:** `/vuln CVE-2020-36518` (jackson-databind) in a Spring Boot Maven project that pulls jackson in only through `spring-boot-starter-web`. Grep finds no `jackson-databind` in any `pom.xml`, so research returns `NOT_IN_REPO`. Step 2 says "notify and skip", and the vulnerable library ships unfixed with a SKIP row.
@@ -797,7 +797,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### VU-B4 — MINOR — A `keep-anyway` regression has no return status; `/vuln` names one, `REGRESSION_KEPT`, that nothing defines
+### VU-B4 — MINOR — A `keep-anyway` regression has no return status; `/vuln` names one, `REGRESSION_KEPT`, that nothing defines — **Fixed in dev-workflows 4.39.0 (batch B06)**
 - **Where:** `agents/vuln-fixer.md:229-230`; `commands/vuln.md:377`, `:318`; `references/handoff/vuln-fixer.md:102`.
 - **What is wrong:** on `regression_decision: keep-anyway` the fixer is told only to "proceed to step 6, recording the failures in `notes`". It sets no status. `upgrade-executor` sets `TEST_REGRESSION_KEPT` in the same place. `vuln.md:377` lists "`OK`, `TESTS_NOT_RUN` and `REGRESSION_KEPT`" as committed statuses, but `REGRESSION_KEPT` appears nowhere else in the plugin (`grep -rn REGRESSION_KEPT plugins/dev-workflows` hits only that line and the executor's `TEST_REGRESSION_KEPT`). It is not in the fixer's status list, and it is not in Step 4's fixed `Result` vocabulary (`:318`).
 - **Failure scenario:** the user keeps a regression. The fixer returns `SUCCESS` (the only "proceed to output" status), so Step 4 writes `OK`, which the column defines as "the comparison happened and found no regression". Alternatively it repeats `TEST_REGRESSION`, which reads as an unresolved state. Either way the table misreports a CVE the user knowingly shipped with failing tests. `clean_finish` is still right, because it keys on the user's choice.
@@ -842,7 +842,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### VU-B9 — MINOR — `/upgrade`'s `clean_finish` flips on a component that never reached the repository
+### VU-B9 — MINOR — `/upgrade`'s `clean_finish` flips on a component that never reached the repository — **Fixed in dev-workflows 4.39.0 (batch B06)**
 - **Where:** `commands/upgrade.md:225` against `:213` and `code-handoff.md` §2.9 (third bullet)
 - **What is wrong:** step 6.5 says step 3a's `BLOCKED` (an unreadable `plan_file`, a missing `pre_edit_tree:`, a snapshot git could not write) "does **not** set `clean_finish: false`". Step 7.5, which is where the flag is computed, says "`clean_finish: false` when any component ended `BLOCKED` …" with no qualifier. §2.9 limits it to a unit "**that reached the repository**". These are two live instructions that disagree, and the one that does the computing is the wrong one.
 - **Failure scenario:** a snapshot write fails for one component, and three others pass every gate. Step 7.5 opens the batch's pull request as a draft carrying the DO-NOT-MERGE banner for a component that changed nothing.
@@ -851,7 +851,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### VU-B10 — MINOR — `/upgrade` writes keys and a resolved folder it can never have
+### VU-B10 — MINOR — `/upgrade` writes keys and a resolved folder it can never have — **Fixed in dev-workflows 4.39.0 (batch B06)**
 - **Where:** `commands/upgrade.md:10` (Usage: no address), `:112` ("an **issue-key** segment from the run's own resolved key when it has one"), `:209` ("the subject ends with `[<key>]` where the run resolved one and carries a `Work-Item:` trailer where the folder has one"), `:225` ("`key` and `workitem_key` from the resolved folder … `upgrade <first> and <N> more [<key>]`"), `:243`, `:245`; `:32` (Phase 0 names no run key set)
 - **What is wrong:** `/upgrade` takes component tokens only. It reads no address, resolves no folder and states no run key set for `specs-preflight` (`specs-repo-git` §3 runs "once the run key set (§3.2) is known"). Yet four steps tell it to use "the run's" key and folder.
 - **Failure scenario:** an agent looking for the key it was told to use derives one from the current branch name, which CLAUDE.md § Editing discipline forbids ("never parse one out of free text"). The result is a commit `[KEY]` suffix and a `Work-Item:` trailer that no folder backs. At best the prose is dead and misleads a maintainer about a capability that does not exist.
@@ -860,7 +860,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### VU-B11 — MINOR — `/vuln`'s Step 0 reads `--allow-install-scripts`' value as an `ADDRESS:CVE-ID` token
+### VU-B11 — MINOR — `/vuln`'s Step 0 reads `--allow-install-scripts`' value as an `ADDRESS:CVE-ID` token — **Fixed in dev-workflows 4.39.0 (batch B06)**
 - **Where:** `commands/vuln.md:38` (Step 0: the run key set "is the key each token of `$ARGUMENTS` carries as its optional address, read with `read-key`"), against `:44` (Step 1 is where `--allow-install-scripts <name>[,<name>…]` is first taken out)
 - **What is wrong:** `strip-run-flags` removes only `--skip-costs`, `--skip-feedback` and `--enforce-model`. At Step 0 the `--allow-install-scripts` option and its value are still tokens. Its documented values include `project:<hook>` and `project:<member path>:<hook>` (`install-time-code.md:53`), which have exactly the `ADDRESS:CVE-ID` shape.
 - **Failure scenario:** `/vuln CVE-2024-1234 --allow-install-scripts project:postinstall`. Step 0 reads `project` as the address of a token and passes it to `read-key`. That returns `invalid` (or `needs-tree`), and Step 0 defines no outcome for it. It may stop the run, or put a bogus key in the preflight's key set, before Step 1 ever removes the option.
@@ -869,7 +869,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### VU-B12 — MINOR — "Branch each CVE from `<current>` instead" gives later CVEs no instruction to switch back to `<current>`
+### VU-B12 — MINOR — "Branch each CVE from `<current>` instead" gives later CVEs no instruction to switch back to `<current>` — **Fixed in dev-workflows 4.39.0 (batch B06)**
 - **Where:** `commands/vuln.md:106` (and `:100`, `:102`)
 - **What is wrong:** the rule for later CVEs is "On later CVEs the branch HEAD sits on is one this run created, so switch without asking". That rule is written for the move onto `<base>`. For *Branch each CVE from `<current>` instead* the text says only that it "stays the user's choice and changes nothing else". No step records `<current>` and switches back to it before each later CVE. The exhausted-ladder paragraph (`:102`) does spell this out for its own case: record the position, then `git switch <that branch>` before each later CVE.
 - **Failure scenario:** on CVE 2 HEAD is on CVE 1's fix branch. The agent either switches to `<base>`, overriding the user's choice, or makes no switch. In the second case CVE 2 branches off CVE 1 and ships CVE 1's fix in its own diff and pull request, which is the contamination `:100` exists to prevent.
@@ -878,7 +878,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### VU-B13 — MINOR — The `/vuln` commit template both follows the project's style and is used verbatim
+### VU-B13 — MINOR — The `/vuln` commit template both follows the project's style and is used verbatim — **Fixed in dev-workflows 4.39.0 (batch B06)**
 - **Where:** `commands/vuln.md:394` ("Use the project's existing style.") against `:274` ("`/vuln` is the one caller with a full template of its own, so §2.3 uses it verbatim rather than deriving a subject from the repo's log"), `:423` and `code-handoff.md:101` ("A caller with a full template of its own overrides this paragraph")
 - **What is wrong:** these are two live instructions about the same subject line. One says to adapt it to the log; three say to use it verbatim.
 - **Failure scenario:** in a repository whose log has no conventional-commit prefixes, one run writes `fix(deps): upgrade …` and another writes `Upgrade …`, depending on which sentence the model weighs.
@@ -903,7 +903,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### VU-B16 — NIT — `/upgrade`'s executor dispatch names no model for `SIGNIFICANT`
+### VU-B16 — NIT — `/upgrade`'s executor dispatch names no model for `SIGNIFICANT` — **Fixed in dev-workflows 4.39.0 (batch B06)**
 - **Where:** `commands/upgrade.md:161` (`<detection_model — §2.1 Sonnet chain — for SIMPLE/MODERATE; planning_model — §2 Opus chain — only if HIGH-RISK>`), compared with `commands/vuln.md:212` (`<detection_model for SIGNIFICANT; planning_model … only if HIGH-RISK>`)
 - **What is wrong:** `SIGNIFICANT` falls between the two arms, and the `model_routing` comment on `:182` names `upgrade-executor` only under `SIMPLE/MODERATE` too.
 - **Suggested fix:** use `/vuln`'s wording ("detection_model for SIMPLE/MODERATE/SIGNIFICANT").
