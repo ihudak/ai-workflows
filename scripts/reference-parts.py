@@ -95,8 +95,10 @@ plugins/workflows-core/reference-parts/<ref>/<entry>.md for each entry point: th
 and the `${CLAUDE_PLUGIN_ROOT}` sentence a part file carries; the title `# <H1> — entry point
 <entry>`; under it the line `This file holds entry point `check-it` of `gamma`: §1 and §3, and
 in part §4.0 ("never infer"). Any other section is in the whole reference: `Skill(skill:
-"workflows-core:reference", args: "gamma")`.` -- each list in source order, phrases as
-declared; then the regions' text in source order. Its deletion of every file no declaration
+"workflows-core:reference", args: "gamma")`. This file is <N> lines long.` -- each list in
+source order, phrases as declared, <N> the generated file's own line count, so a run reading it in
+ranges knows where it ends; then the regions' text in source order. check-parts' byte-for-byte
+freshness compare covers the count. Its deletion of every file no declaration
 produces counts these files as produced.
 
 `check-parts` is the gate on the sources and the tree: declarations, regions, coverage, index
@@ -1114,10 +1116,12 @@ def held_text(decl, opening=False):
     return text
 
 
-def entry_line(ref, entry, decl):
-    """The line under an entry-point file's title: held_text, and the whole reference's load."""
+def entry_line(ref, entry, decl, count):
+    """The line under an entry-point file's title: held_text, the whole reference's load, and the file's
+    own line count, so a run reading it in ranges knows where it ends without `wc -l`."""
     return "This file holds entry point `%s` of `%s`: %s. Any other section is in the whole reference: " \
-           "`Skill(skill: \"%s\", args: \"%s\")`." % (entry, ref.name, held_text(decl), LOADER_SKILL, ref.name)
+           "`Skill(skill: \"%s\", args: \"%s\")`. This file is %d lines long." \
+           % (entry, ref.name, held_text(decl), LOADER_SKILL, ref.name, count)
 
 
 def entry_tree(entries):
@@ -1129,10 +1133,15 @@ def entry_tree(entries):
             continue
         for entry, decl in ref.entries.items():
             text = joined([(first, ref.lines[first - 1:last]) for first, last in decl.regions])
-            blocks = [header(ref), "# %s — entry point %s" % (ref.title, entry), entry_line(ref, entry, decl),
-                      ROOT_SENTENCE, text]
+            def build(count):
+                blocks = [header(ref), "# %s — entry point %s" % (ref.title, entry),
+                          entry_line(ref, entry, decl, count), ROOT_SENTENCE, text]
+                return "\n\n".join(b for b in blocks if b) + "\n"
+            # The count line is one line whatever its number, so the count of a build with any number
+            # is the count of the file it names.
+            body = build(0)
             out["%s/%s/%s/%s.md" % (CORE_PLUGIN_REL, PARTS_DIR, ref.name, entry)] = (
-                "\n\n".join(b for b in blocks if b) + "\n", ref.rel)
+                build(body.count("\n")), ref.rel)
     return out
 
 
@@ -2523,7 +2532,8 @@ CASES = [
             _order(G + '/gamma/check-it.md',
                    ['# Gamma steps — entry point check-it',
                     'This file holds entry point `check-it` of `gamma`: §1 and §3, and in part §4.0 ("never infer"). Any '
-                    'other section is in the whole reference: `Skill(skill: "workflows-core:reference", args: "gamma")`.',
+                    'other section is in the whole reference: `Skill(skill: "workflows-core:reference", args: "gamma")`. '
+                    'This file is 36 lines long.',
                     '`${CLAUDE_PLUGIN_ROOT}` in this file', 'Scope: the steps', '## 1. Hard rules',
                     '## 3. `check-it` — the entry point', '## 4. Not a heading', '### 4.0 The downstream classes',
                     '*Never infer'],

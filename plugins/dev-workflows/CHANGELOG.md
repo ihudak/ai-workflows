@@ -22,6 +22,13 @@ Fix batch B22 of the 2026-10-26 review: the references `/vuln` and `/upgrade` co
 - **Both docs pages said a revert leaves `node_modules` as the upgrade left it**; since 4.14.0 the run puts it back to the lockfile without install scripts and names each package it put back unbuilt. (VU-B5)
 - **The `/vuln` and `/upgrade` diagrams left out the commit, the push and pull request, and the loop**; both now draw the per-unit commit, the loop to the next unit, the stop where a commit does not land, and the consent-gated push. (DQD-B8)
 
+## [4.39.1] — 2026-10-26
+
+Take with `workflows-core` 1.58.0 (batch B01).
+
+### Changed
+- **`/implement` Phase 4.5 states its reason for the falling-back array without a stale census**: no consumer of `design.md` stops on row F, which now includes `/conformance` (IMP-B3).
+- **`/conformance` and `/ready` describe `branch-merged` and row B′ as `workflows-core` 1.58.0 has them**: a squash read unmerged only where merging the branch would still change the default branch, and B′ stopping a branch that changed the document too; `/ready` names B′'s merge only where its message names one.
 ## [4.39.0] — 2026-10-26
 
 Fix batch B06 of the 2026-10-26 review: `/vuln` and `/upgrade` orchestration and agents. Needs nothing newer than `workflows-core` 1.56.0; `workflows-core` 1.57.1 corrects one sentence about `/upgrade` and either runs beside the other.

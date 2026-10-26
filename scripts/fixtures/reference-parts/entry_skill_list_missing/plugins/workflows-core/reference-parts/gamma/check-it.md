@@ -2,7 +2,7 @@
 
 # Gamma steps — entry point check-it
 
-This file holds entry point `check-it` of `gamma`: §1 and §3, and in part §4.0 ("never infer"). Any other section is in the whole reference: `Skill(skill: "workflows-core:reference", args: "gamma")`.
+This file holds entry point `check-it` of `gamma`: §1 and §3, and in part §4.0 ("never infer"). Any other section is in the whole reference: `Skill(skill: "workflows-core:reference", args: "gamma")`. This file is 36 lines long.
 
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 

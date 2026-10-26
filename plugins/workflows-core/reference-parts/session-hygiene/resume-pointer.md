@@ -114,7 +114,8 @@ once its check shows every one of them settled:
   check alone, never by a push. In the specs repository, `specs-repo-git.md` §3.5's
   `branch-merged` answers merged for the ref `phase-handoff.md` §2.2 rule 3 resolves —
   `refs/remotes/origin/<name>` where it exists, else `refs/heads/<name>` — or this run's
-  preflight found that branch merged (§3.5 B2), as the block it printed says, or, in a command
+  preflight found that branch merged (§3.5 B2), as the block it printed says, or deleted it as
+  merged (§3.4, its `Specs preflight: deleted merged <branch>` line), or, in a command
   that keeps its run state in a file, as that file records. In a code repository, the branch's
   tip is an ancestor of the default branch's tip in the refs the run holds, or
   `workflows-core:implementation-format` §5's merged test, where the run applied it to that
