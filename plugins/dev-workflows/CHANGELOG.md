@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.35.0] — 2026-10-26
+
+Take with `workflows-core` 1.52.0, whose merged test the PRD run below reads; beside 1.51.0 the PRD run's extra fetch is harmless and the test keeps its old two legs.
+
+### Fixed
+- **`/implement` writes no implementation record on a run that committed nothing.** Phase 4.7 appended a block with `commit: null` under `--no-commit` or where Phase 4.6's commit did not land, which marked the unit implemented to the Epic picker, `/ready` and `unit-branch` and handed `/document` and `/release-notes` a ref that does not exist. It now writes nothing and says so in the report's `### Branch`. (IMP-B2)
+- **`/conformance`'s PRD run fetches each Epic's branch before the merged test**, as the Epic run does, since the test now reads the branch's tip: an Epic whose squash lost its key no longer reads as unmerged to the PRD run alone, and a teammate's `[<key>]` commit no longer passes an open Epic — where the clone holds the recorded commit or the branch, and the Epic's work does not conflict with that commit (`implementation-format` §5's two misses). Its docs page no longer says the two runs can disagree. (C2, C9)
+- `/implement`'s note when the tip could not be compared says the merge state rests on ancestry and the commit subject alone.
+
 ## [4.34.0] — 2026-10-26
 
 Take with `workflows-core` 1.51.0, whose *What a requirement overlaps* both changes cite.

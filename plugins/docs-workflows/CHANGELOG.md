@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.21.0] — 2026-10-26
+
+Take with `workflows-core` 1.52.0, whose `implementation-format` §4 states the boundary rule below; this command states it too, so it runs beside 1.51.0.
+
+### Fixed
+- **A superseding `# Unreleased` note reads the whole of the work.** A re-draft was bounded by the very note it was about to supersede, so its writer saw only what changed since, and the only note that had read the rest was marked superseded yet still bounded every later run. A note marked superseded, and every `# Unreleased` note for this run's key that the run will supersede, now bound nothing, so their commits are read again and the new note's `read:` lines name them. (DOC-B-B1)
+- **One supersede trigger**: a note with the same key anywhere under `# Unreleased`, whatever its Change Type section. Phase 8 had said "in a section that already holds" one in one sentence and "the same key under `# Unreleased`" in the next, so a re-draft filed under another Change Type left the stale note live. The report counts every note it marks. (DOC-B-B2)
+
 ## [1.20.0] — 2026-10-26
 
 Runs beside `workflows-core` 1.45.0 and later; nothing here needs a newer one.
