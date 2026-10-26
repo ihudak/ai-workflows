@@ -213,9 +213,11 @@ reach.
       no such boundary stays one piece, since a reviewer cut off at a fuzzy line misses what it
       needs.
 
-    One piece, the default, is written by omitting the section, or by writing `_N/A — <why>_` as its
-    only line — never as a section with one piece. The heading is `## Pieces` exactly, and every line
-    of the section starts at the beginning of its line:
+    A design whose change spans more than one repository — its header's `Repos` naming two or more —
+    draws no pieces, since one `/implement` run changes one repository. One piece, the default, is
+    written by omitting the section, or by writing `_N/A — <why>_` as its only line — never as a
+    section with one piece. The heading is `## Pieces` exactly, and every line of the section starts
+    at the beginning of its line:
 
     ```
     ## Pieces
@@ -233,21 +235,21 @@ reach.
     - **`Files:` names the piece's tests as well as its code**, so its reviewer reviews them with it:
       a comma-separated list of entries, each in backticks, with nothing but commas and spaces
       outside them. A test file pieces share, such as a common test helper, is named by none.
-      **No file may be matched by two pieces' `Files:`** — a file on disk at the commit `/design`
-      Phase 4 scanned its repository at, or one the design creates; a bare path and a glob, or two
-      globs, matching the same file is an overlap. A file no piece names belongs to no piece: it is
-      reviewed with the whole change, and is not barred from editing.
+      **No file may be matched by two pieces' `Files:`** — a file on disk in the design's target
+      repository (below) at the commit `/design` Phase 4 scanned it at, or one the design creates; a
+      bare path and a glob, or two globs, matching the same file is an overlap. A file no piece names
+      belongs to no piece: it is reviewed with the whole change, and is not barred from editing.
     - `Contract:` lists, comma-separated, the `## Interfaces / contracts` items the piece implements
       and those it calls that another piece implements, or reads `none`; a piece with no `Contract:`
       line has none.
-    - **Each `Files:` entry is a pattern relative to the top level of the repository its piece's
-      files are in**, one the header's `Repos` names, written without a leading `/` or `./`: `*`
-      matches any run of characters except `/`; `**` as a whole path segment matches zero or more
-      segments (`src/a/**` matches everything under `src/a/`, `**/X.java` matches `X.java` at any
-      depth), and inside a segment matches as `*` does; `?` matches one
-      character except `/`; an entry ending in `/` matches everything under that directory; every
-      other character is literal — there is no `[…]` and no `{…}`; an entry with no wildcard matches
-      that one path.
+    - **Each `Files:` entry is a pattern relative to the top level of the design's target
+      repository** — the one its `- **Target**:` line names (the id before any `:`), else the one
+      repository its `Repos` line names — written without a leading `/` or `./`: `*` matches any run
+      of characters except `/`; `**` as a whole path segment matches zero or more segments
+      (`src/a/**` matches everything under `src/a/`, `**/X.java` matches `X.java` at any depth), and
+      inside a segment matches as `*` does; `?` matches one character except `/`; an entry ending in
+      `/` matches everything under that directory; every other character is literal — there is no
+      `[…]` and no `{…}`; an entry with no wildcard matches that one path.
 
     `scripts/pieces.py` reads the section exactly so. It starts at a line `## Pieces` outside any
     fenced block and ends at the next `## ` heading outside one, or the end of the file, so it is
