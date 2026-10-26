@@ -96,6 +96,11 @@ Validation:
   timestamp, failure message, acting user, identifier, change type).
 - No implementation *how*; split any criterion with `and` between two verbs; `While` for runtime
   state, `Where` for static/data conditions.
+- An exact-message criterion for one fault states its scope — *with no other fault present* — or the
+  order the faults are checked in, so a test can tell which message wins when two apply.
+- A loading, empty or waiting state states how a bounded wait ends it (the result arriving, a timeout
+  and what it shows); a control's state (disabled, hidden, read-only) states its inverse — when it is
+  enabled, shown or editable again.
 - AC-level `##### Open questions` under the criterion; story-level `#### Open questions` after the last AC.
 
 ## Stage 5 — Test cases
@@ -108,6 +113,8 @@ outcome asserting the *parent* AC's behaviour, reusing the AC's exact terms). Va
 - ≥ 1 happy-path AND ≥ 1 negative/boundary per AC; add state/lifecycle, security/privacy,
   audit/observability where the criterion warrants.
 - Self-contained (own preconditions/data; never depends on another test's outcome).
+- Asserts only what its parent AC states: an expected result that checks a behaviour the criterion
+  does not name needs that behaviour added to the criterion (or a criterion of its own) first.
 - Ordered within an AC by criticality (primary success first).
 - Open questions: `- *Open questions:* [q]` on a test, or an `Open questions` sub-heading for broader
   items.
@@ -128,3 +135,9 @@ person scanning the spec:
 `[Uxx]` unique+contiguous document-wide; `[ACxx]` unique+contiguous within each story; `[TCxx]`
 unique+contiguous within each AC. After `Published: yes`, IDs are contracts — never silently
 change/remove; changes are traced via the specs repo's change-management (human-run).
+
+**Renumbering a large specification.** Where a fix cycle has to renumber a whole story's ACs or TCs —
+a story split, or criteria reordered before the spec is published — rewrite that story as one section,
+renumbering it top to bottom, rather than patching IDs one by one across a long file, then re-run the
+structural pre-lint's ID checks (`/specify` Phase 5.5) over the whole file. Never renumber an ID a
+published specification carries.

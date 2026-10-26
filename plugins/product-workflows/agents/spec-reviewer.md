@@ -21,6 +21,7 @@ The caller passes:
   stage that legitimately does not exist yet.
 
 - **`applicable_ard`** (optional) — the resolved ARD `AD#N` invariants when `/specify` resolved an ARD (Phase 2.5); absent when no ARD exists. Enables the conditional ARD-conformance check below.
+- **`contracts`** (optional) — the PRD-level ARD's `## Contracts` rows and its `components`, passed on a PRD-level spec of a multi-component PRD only. Enables the conditional contract-citation check below.
 
 ## Review method
 
@@ -59,6 +60,8 @@ The caller passes:
   + **needs product input**.
 
 - **ARD conformance (conditional — only when `applicable_ard` is provided; otherwise skip silently):** no user story / scope item / AC may contradict an `AD#N` `rule`. A contradiction with **no** recorded `### Open questions` ARD-deviation entry → `BLOCKER`; **with** one → `MINOR` flagged note.
+
+- **Contract citation (conditional — only when `contracts` is provided; otherwise skip silently):** an acceptance criterion or test case whose behaviour spans two components names, in its own text, the `[AD#N]` interface row it crosses, so `/epics` can split it per side (`/specify` Phase 5) → a crossing criterion naming none → `MAJOR`; one naming an `[AD#N]` that is no row of `contracts` → `MAJOR`.
 
 ## Output contract
 
