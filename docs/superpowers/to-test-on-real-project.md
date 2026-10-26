@@ -33,16 +33,6 @@ Install all three together: `/epics`' offer and the `/specify` and `/implement` 
 - **433-2 — `/implement`'s split round verifies before it collapses** (F1). Setup: run C's — `/implement BOOK-3-01` on a design drawing two pieces at the parser contract, from the code start state of `docs/superpowers/verification/2026-10-25-implement-piece-review.md` §3. Expect two piece reviews and the overall review. In the run-state `triage` entries and the Phase 5 report, every finding of every review is verified on its own; a finding the overall review repeats at a piece review's location with the same claim is collapsed only where both got the same disposition, its triage line naming both reviews; where the two differ, each keeps its own. Compare cost with run C's $84.51: this change should move it little.
 - **433-3 — `pieces.py` output stays valid UTF-8** (F4). Setup: in a scratch clone, a file whose name holds a byte that is not UTF-8, changed on a run whose design draws no pieces. Expect one review and no `## Pieces unusable` line.
 
-## `dev-workflows` 4.35.1 — a `MODERATE` `/implement` run's review receives the specification (#91)
-
-- **4351-1 — the review gate of a `MODERATE` keyed run carries `applicable_spec`, and splits by the design's pieces.** Setup: a small test-only Epic in the e2e copies whose `specification.md` and `design.md` are merged, its design drawing two pieces with a stated `Reason:` (written by hand is fine: this tests `/implement`'s split, not `/design`'s drawing), and a change `/implement` classifies `MODERATE` that touches the files of both pieces. Expect:
-  - run-state `spec_context.applicable_spec` written in Phase 2A, before the plan;
-  - the review brief carrying `applicable_spec:` and `Spec-named tests:`;
-  - two piece reviews and the overall review, the overall review alone tracing requirements and writing `conformance.summary`;
-  - the Phase 5 report listing each scope's verdict.
-
-  Before 4.35.1 this run made one review with no `applicable_spec`, so a review brief without that line, in the session's transcript, means the fix did not take.
-
 ## Live checks kept in `to-fix.md`
 
 These stay in `docs/superpowers/to-fix.md`, which holds their detail; they are named here so a test session sees every live check in one place.
