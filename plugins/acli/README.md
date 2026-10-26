@@ -5,7 +5,7 @@ An Agent Skill teaching AI agents to drive the official Atlassian CLI
 items, comments, links, attachments, watchers, projects, sprints, boards, filters, and Confluence
 spaces, pages, and blog posts.
 
-The skill only needs the `acli` binary on `PATH`; it authenticates via `acli … auth login`.
+The skill only needs the `acli` binary on `PATH`, authenticated — see [Authenticate](#authenticate) below.
 
 ## Derived from upstream
 
@@ -29,3 +29,39 @@ top of upstream:
 claude plugin marketplace add ihudak/ai-workflows
 claude plugin install acli@shipwright
 ```
+
+To pick up later changes, then restart Claude Code:
+
+```bash
+claude plugin marketplace update shipwright
+claude plugin update acli@shipwright
+```
+
+## Use
+
+**There is no slash command.** The plugin ships one model-invoked skill, `acli`, and no
+command: ask Claude in prose, and the skill loads when the request is about Jira or
+Confluence. For example:
+
+- "List my open work items in project PROJ, newest first."
+- "Show PROJ-123 with its comments, then move it to In Review."
+- "Find the Confluence page titled *Release checklist* in space ENG and summarise it."
+
+Anything that is not a read — creating, editing, transitioning, deleting, commenting — is a
+write, and the skill asks you to approve the exact set in the conversation before it runs.
+A bulk change by JQL or filter is counted first, so you see how many items it touches.
+
+## Authenticate
+
+On a desktop, `acli auth login` (Jira and Confluence together) opens a browser for OAuth.
+**In a container or over SSH that cannot work** — the OAuth callback needs a browser and a
+loopback port — so use an API token instead, and pass it **on standard input**, never as a
+command-line argument, where it would land in your shell history and the process list:
+
+```bash
+acli jira auth login --site yoursite.atlassian.net --email you@example.com --token < ~/.atlassian-api-token
+acli jira auth status
+```
+
+Create the token in your Atlassian account settings, under *Security → API tokens*, and keep
+the file readable by you alone (`chmod 600`).

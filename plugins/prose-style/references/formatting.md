@@ -131,6 +131,8 @@ Chicago, Microsoft, and Google all require it; AP omits it.
   spaces) — Chicago's convention. AP and several house styles space them.
   - ✅ Processes are host-scoped—usually tied to one machine—while services are not.
   - *Overlay point:* flip to spaced em dashes, or to spaced en dashes, in your overlay.
+    With no overlay restating this rule, the checker infers spaced or closed from the
+    files it checks and flags the minority (`prose-style-checker` step 1e).
 - **En dash (–)** for ranges and for compound adjectives with an open element.
 - **Hyphen (-)** for compound modifiers only. See `grammar.md` for hyphenation.
 

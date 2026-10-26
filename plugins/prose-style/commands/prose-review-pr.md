@@ -143,7 +143,7 @@ doc_type:   <doc_type from arguments>
 rules_path: <rules_path from arguments, when provided>
 ```
 
-Collect the violation report, including its `rules_source` field.
+Collect the violation report, including its `rules_source` and `dialect` fields.
 
 ### 6. Run Vale (optional)
 
@@ -246,7 +246,7 @@ Output a structured report:
 
 ### Summary
 - Files changed: X documentation files (Y deleted, skipped)
-- Rules: <rules_source — "baseline" or "overlay: <path>">
+- Rules: <rules_source — "baseline" or "overlay: <path>">; dialect: <spelling> spelling, <dashes> dashes, each with where it came from — "(overlay)", "(inferred)">
 - Style violations: X (MAJOR: N, MINOR: N, NIT: N)
 - Vale findings: X (error: N, warning: N, suggestion: N)  — or "N/A (Vale not available)"
 
@@ -273,7 +273,7 @@ Output a structured report:
 <Top 3 most impactful things to fix, prioritised by severity>
 ```
 
-The `Rules:` line is the only place the overlay is reported. Do not warn when no overlay
+The `Rules:` line is the only place the overlay and the dialect are reported. Do not warn when no overlay
 resolved — the baseline is a valid, complete rule set.
 
 ### 9. Offer to fix

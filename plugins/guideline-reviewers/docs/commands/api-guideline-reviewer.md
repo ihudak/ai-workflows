@@ -30,6 +30,20 @@ Before any LLM pass, the subagent lints the spec files with [Spectral](https://g
 
 **Merge, not duplication.** Spectral's findings are authoritative for the rules it covers, and the LLM passes do not restate them. Each finding in the verdict is attributed — `spectral:<rule-id>` for a machine-checked one, `review` for a reasoned one.
 
+### Before your first real run
+
+**Five bundled rules carry a placeholder, and two of them fail every real specification at `error`.** The ruleset pins the organization-wide spellings the guidelines call "the organization's single declared" value — and ships them with the placeholders the bundled template uses, so that template lints clean, not with your organization's values:
+
+| Rule | Severity | Placeholder | What you replace it with |
+|---|---|---|---|
+| `api-tenant-header-canonical-spelling` | `error` | `Example-Tenant` | your tenant header's spelling |
+| `api-security-scheme-name-consistent` | `error` | `oauth2` | your security scheme's id |
+| `api-custom-header-org-prefix` | `warn` | `Example-` | your custom request-header prefix |
+| `api-response-header-org-prefix` | `warn` | `Example-` | the same prefix, on response headers |
+| `api-operation-id-verb-first` | `warn` | an open verb list | the verbs your operation ids start with |
+
+Left as shipped, a specification that sends `Acme-Tenant` and names its scheme `bearerAuth` gets both as **Mistakes** — MUST violations — on its first run. Override the five once, in a `.spectral.yaml` at the root of the API repository that `extends` the bundled ruleset; the ruleset's own header comment, at the top of `references/api-guidelines/spectral/ruleset.yaml`, carries the snippet. The review then uses your file, as **Resolution** above says.
+
 **What stays with the LLM passes**, whether or not Spectral ran:
 
 | Check | Why a linter cannot make it |

@@ -139,6 +139,9 @@ restates the *baseline*, which an organization's overlay is entitled to override
 
 ### Spelling
 - American English by default: behavior, color, center, catalog, analyze, license.
+- Where you are adding to an existing document and no overlay sets the dialect, match the
+  spelling and dash style that document already uses — British spelling, spaced dashes —
+  which is what the checker infers from it and holds the rest of it to.
 
 ---
 

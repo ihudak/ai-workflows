@@ -36,6 +36,9 @@ repo_root:    <optional absolute path to the repository whose rules apply — fo
                derivation of <repo-root>>
 fixed_headings: [<optional heading texts, each as the file writes it after its `#` marks,
                that a format the caller writes to requires verbatim — never checked (step 3)>]
+dialect:      <optional — the `dialect` block an earlier dispatch of this checker returned,
+               for a caller that splits one review across several dispatches; replaces
+               step 1e's inference, so every dispatch of the review applies the same one>
 ```
 
 `doc_type` affects severity calibration (see step 5). Default: `general`.
@@ -109,10 +112,37 @@ baseline                      # no overlay resolved
 overlay:<absolute path>       # an overlay resolved, from any of orders 1–3
 ```
 
+**Step 1e — the dialect, where the rule set leaves it open.** Two baseline rules pick a
+side of a split that the writing itself may have settled the other way: the *Spelling
+variant* section of `word-list.md` (American English) and the closed em dash of
+`formatting.md`'s *Dashes*. Each is an overlay point, and an organization that writes
+otherwise says so in its overlay. Where the merged rule set leaves one of them as the
+baseline states it — no overlay file restates or replaces that section — do not apply the
+baseline's side blindly; infer it from the files being checked, so a specs tree written in
+British English with no overlay is not flagged on every British spelling:
+
+- **Spelling.** Count the occurrences, in prose only (never code, inline code, URLs, paths
+  or frontmatter), of the words in either column of the *Spelling variant* table and of the
+  same pattern in other words (`-our`/`-or`, `-tre`/`-ter`, `-ogue`/`-og`, a doubled `l`
+  before `-ed`/`-ing`). The side with more occurrences is the files' dialect — `american`
+  or `british` — and `Prose.WordList.SpellingVariant` then flags the **other** side, the
+  same switch an overlay makes. A tie, or no occurrence at all, is `undetermined`, and the
+  rule raises nothing: there is no evidence of which side the writer chose, and the
+  baseline's default is not evidence. An `-ise`/`-ize` ending is never counted, since
+  Oxford spelling writes `-ize` in British English.
+- **Dashes.** Count the em and en dashes used as a break in a sentence, spaced
+  (`word — word`, `word – word`) and closed (`word—word`). The majority is the files'
+  style — `spaced` or `closed` — and the dash rule flags the minority; a tie or no such
+  dash is `undetermined`, and the rule raises nothing.
+
+An overlay that restates either section fixes it, and nothing is inferred for it: record
+it as `overlay`. A `dialect` input from the caller fixes both, as it reads, and nothing is
+inferred. Inference reads only the files of this dispatch.
+
 Do not print a warning, a note, or a question about the resolution outcome. Its
-whole report is two fields of the output block (step 6), and nothing else:
-`rules_source`, the rule set that applied, and `repo_root`, the `<repo-root>` step 1b
-took.
+whole report is three fields of the output block (step 6), and nothing else:
+`rules_source`, the rule set that applied, `repo_root`, the `<repo-root>` step 1b
+took, and `dialect`, what step 1e settled.
 
 **Only when step 1a itself fails** — the baseline directory is missing or empty and no
 overlay resolved either — return:
@@ -176,7 +206,7 @@ Applies to baseline rules and to overlay rules that declare no severity of their
 | **UI interaction terms**: click instead of select, navigate instead of go to | MINOR | NIT for epic/prd/ard (less relevant outside product docs) |
 | **Contractions**: awkward contraction, negative contraction in a warning | NIT | — |
 | **Word choice**: confusables, "e.g.", "once" for "after" | NIT | — |
-| **Spelling variant**: wrong side of the configured variant | NIT | — |
+| **Spelling variant**: wrong side of the configured or inferred variant (step 1e) | NIT | — |
 | **Numbers**: spelled-out number ≥10, numeral <10 in prose | NIT | — |
 
 ### 6. Output
@@ -187,6 +217,11 @@ checker:        prose-style
 checker_source: prose-style-checker
 rules_source:   baseline | overlay:<absolute path> | none
 repo_root:      <absolute path> | none
+dialect:
+  spelling:     american | british | undetermined
+  spelling_from: overlay | inferred | caller
+  dashes:       closed | spaced | undetermined
+  dashes_from:  overlay | inferred | caller
 violations:     [<array of violation records>]
 error:          <only when status == ERROR: one-line reason>
 ```
@@ -202,6 +237,10 @@ step 1b derives none, since order 2 is never reached, and the field reads `none`
 return it. It is how a caller that handed `repo_root` knows its input was
 honoured: a checker from before this input existed ignores the input and returns no such
 field.
+
+`dialect` is step 1e's result: each side, and whether the overlay fixed it, the files'
+own writing settled it, or the caller handed it in. Always return it, save with `status: ERROR`; a caller that
+splits one review across several dispatches passes it to the next as the `dialect` input.
 
 - `status: OK` — all files checked, zero violations found.
 - `status: VIOLATIONS_FOUND` — at least one violation found.

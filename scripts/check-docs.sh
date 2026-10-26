@@ -48,7 +48,7 @@ set -uo pipefail
 # check function below is unchanged and still reads a single PLUGIN_REL. A one-element
 # list behaves exactly as the old scalar did, which is what keeps this body portable to
 # editions that ship one plugin.
-PLUGIN_RELS="plugins/dev-workflows plugins/guideline-reviewers plugins/workflows-core plugins/docs-workflows plugins/product-workflows plugins/security-workflows"   # copilot: dev-workflows
+PLUGIN_RELS="plugins/dev-workflows plugins/guideline-reviewers plugins/workflows-core plugins/docs-workflows plugins/product-workflows plugins/security-workflows plugins/prose-style"   # copilot: dev-workflows
 CMD_DIR="commands"                   # copilot: skills
 CMD_SUFFIX=".md"                     # copilot: /SKILL.md
 CMD_EXCLUDE=""                       # copilot: _shared
@@ -90,10 +90,10 @@ NS_MAP_REL="plugins/workflows-core/scripts/command-namespaces.json"
 # trigger got both directions wrong at once (see those two functions).
 COST_PLUGIN_RELS="plugins/dev-workflows plugins/docs-workflows plugins/workflows-core plugins/product-workflows plugins/security-workflows"        # copilot: dev-workflows
 HANDOFF_PLUGIN_RELS="plugins/product-workflows"  # copilot: dev-workflows
-# Which plugins check 20 holds to the untrusted-content guard: every docs-gated plugin plus
-# prose-style, which ships agents and dispatching commands but no docs/ tree. Declared, like
-# the lists above, never inferred from a directory listing.
-GUARD_PLUGIN_RELS="$PLUGIN_RELS plugins/prose-style"   # copilot: dev-workflows dt-style-guide
+# Which plugins check 20 holds to the untrusted-content guard: every docs-gated plugin,
+# prose-style among them since it gained a docs/ tree. Declared, like the lists above,
+# never inferred from a directory listing.
+GUARD_PLUGIN_RELS="$PLUGIN_RELS"   # copilot: dev-workflows dt-style-guide
 # Which plugin check 21 reads for the install references /vuln and /upgrade follow: the one
 # that ships those two commands. Declared, like the lists above.
 ITC_PLUGIN_REL="plugins/dev-workflows"   # copilot: dev-workflows

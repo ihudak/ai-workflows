@@ -20,18 +20,6 @@
     "api-guideline-reviewer",
     "guideline-reviewer"
   ],
-  "obsidian-llm-wiki": [
-    "wiki-hot",
-    "wiki-ingest",
-    "wiki-init",
-    "wiki-lint",
-    "wiki-query",
-    "wiki-save",
-    "wiki-scan",
-    "wiki-tags-refresh",
-    "wiki-task",
-    "wiki-tasks-extract"
-  ],
   "product-workflows": [
     "prd-ground",
     "prd-proposal",

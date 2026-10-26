@@ -526,7 +526,7 @@ rules:
     description: >-
       OpenAPI.md § Authentication Context: "The security scheme name must be the
       same across every API in the organization. This template uses `oauth2`."
-      The literal below is one of the four an adopting organization replaces
+      The literal below is one of the five an adopting organization replaces
       once, in its own ruleset.
     message: "Security scheme is named `{{property}}`; the organization's single declared scheme name is `oauth2`."
     severity: error

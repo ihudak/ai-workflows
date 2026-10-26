@@ -218,6 +218,11 @@ The baseline is **American English** (Microsoft and Google both default to it).
 overrides this whole section in its own `word-list.md`. Doing so also switches the
 `Prose.WordList.SpellingVariant` rule to flag the opposite set.
 
+*With no overlay restating this section*, the checker does not take American English on
+trust: it infers the side from the files it checks, flags the minority spelling, and
+raises nothing where the files give no evidence either way (`prose-style-checker` step 1e).
+An overlay is still the way to fix the dialect once for every file.
+
 ---
 
 ## Entry schema

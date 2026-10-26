@@ -2,7 +2,7 @@
 
 Reviews app code and UI against the bundled UI design-system and accessibility guidelines, distilled from public standards (Apple HIG, Material Design 3, Microsoft Fluent 2, W3C WCAG 2.2 and the ARIA Authoring Practices Guide).
 
-Accessibility findings are reported in a machine-checkable vocabulary: each rule in the bundled accessibility guideline that has one cites an axe-core `ruleId` and the W3C ACT rule id it maps to, alongside the WCAG success criterion. Before its review passes, the subagent also detects and wraps whatever accessibility tooling the target repo already configures — see [Deterministic accessibility check](#deterministic-accessibility-check).
+Accessibility findings are reported in a machine-checkable vocabulary: each rule in the bundled accessibility guideline that has one cites an axe-core `ruleId` and the W3C ACT rule id it maps to, alongside the WCAG success criterion. Before its review passes, the subagent runs this plugin's own heuristic scanner, `check_guidelines.py` (which needs `python3`), and detects and wraps whatever accessibility tooling the target repo already configures — see [Deterministic accessibility check](#deterministic-accessibility-check).
 
 ## Who runs it
 
@@ -19,6 +19,7 @@ Accessibility findings are reported in a machine-checkable vocabulary: each rule
 ## What it needs
 
 - One or more file or component paths (or a description of what to review).
+- **`python3` 3.11 on your `PATH`.** Before its review passes, the subagent runs this plugin's own heuristic scanner, `references/guidelines/check_guidelines.py`, over the code it reviews; its findings come from the bundled guidelines, not from your repository's tooling.
 - Nothing else — no `$SPECS_PATH`, no branch, no specs-repo preflight.
 
 The accessibility tooling below is **optional**. Nothing is installed, and a repo that configures none of it is reviewed exactly as it was before the step existed.

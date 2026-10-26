@@ -20,7 +20,7 @@ claude plugin install product-workflows@shipwright
 
 **What you also need, and it is not a plugin.** Claude Code itself — no other agent runs these plugins — with a session started on Opus 5.5 or later, on macOS, Linux or WSL2 rather than native Windows, and `git`, `bash` 5 and `python3` 3.11 on your `PATH`, plus `jq` for the status line and `/workflows-core:diagnose-session`; the repo-root [Prerequisites](../../../README.md#prerequisites) give each one's minimum version and the reason for it. Beyond those, `gh`, when present, opens the pull requests it drafts — without it a run reports the branch it pushed and leaves the pull request to you. The specs repo is the one markdown tree the pipeline *writes*; it also reads your product-docs clone under `$DOCS_PATH` and, where a command grounds on code, the clones under `$REPOS_PATH`, which are no markdown tree at all. If you keep your work in a tracker as well, syncing the two is yours to arrange; no command here learns whether one exists.
 
-**What you do not need for this plugin.** The marketplace also ships `obsidian-llm-wiki`, `acli` and `guideline-reviewers` — none of them is used by `product-workflows`. Install them if you want them for their own sake; see the [marketplace README](../../../README.md).
+**What you do not need for this plugin.** The marketplace also ships `acli` and `guideline-reviewers` — none of them is used by `product-workflows`. Install them if you want them for their own sake; see the [marketplace README](../../../README.md).
 
 ## Update
 
