@@ -4,7 +4,7 @@ Sentence structure, verbs, pronouns, and agreement.
 
 **Baseline.** These are the shipped, vendor-neutral defaults. A repo-local or env-var
 overlay layers on top of them and wins on conflict — see `prose-style-checker` step 1
-("Resolve the active rule set") and the plugin README.
+("Resolve the active rule set") and the plugin's `docs/reference/overlay.md`.
 
 **Grounded in:** The Chicago Manual of Style (general-English rules — agreement,
 restrictive vs. non-restrictive clauses, fragments); Microsoft Writing Style Guide

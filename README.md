@@ -14,8 +14,7 @@ Ivan Gudak's open-source Claude Code plugin marketplace, **Shipwright**: plugins
 | [workflows-core](plugins/workflows-core/) | Shared foundation for the workflow plugin family — addressing, git handoff, model routing, emission — plus seven utility commands. [Docs](plugins/workflows-core/docs/README.md) |
 | [docs-workflows](plugins/docs-workflows/) | Seven commands: scaffold, brand and serve a docs portal, audit its coverage, write pages, profile, release notes. Needs `workflows-core`, `prose-style`. [Docs](plugins/docs-workflows/docs/README.md) |
 | [security-workflows](plugins/security-workflows/) | One command: a Claude Security audit of an Epic before it merges, or of a repository, kept in the specs repo. Needs `workflows-core`, Claude Security. [Docs](plugins/security-workflows/docs/README.md) |
-| [prose-style](plugins/prose-style/) | Pluggable prose style enforcement: `/prose-review-pr`, `/prose-review-docs`, `/prose-style-refresh`, plus sub-agents `product-workflows` and `docs-workflows` use. Vendor-neutral, overridable baseline. |
-| [obsidian-llm-wiki](plugins/obsidian-llm-wiki/) | Ten slash commands for compiling Obsidian vault knowledge into a persistent, cross-referenced wiki with task management; supports Claude Code and GitHub Copilot. |
+| [prose-style](plugins/prose-style/) | Prose style checks: review a PR or docs, refresh your overlay; the checker the docs and product plugins run. Overridable baseline. [Docs](plugins/prose-style/docs/README.md) |
 | [acli](plugins/acli/) | Atlassian CLI (`acli`) skill for Jira and Confluence — search, work items, comments, attachments, boards, sprints, pages. From [pi-skill-acli](https://github.com/ziegenberg/pi-skill-acli) (MIT). |
 
 ## How the plugins fit together
@@ -36,10 +35,10 @@ Check these before you install. Claude Code checks none of them when it installs
 
 ### Platform
 
-- **Claude Code, and no other agent.** Every plugin here is built on Claude Code's plugin system — its slash commands, subagents, skills, hooks and `${CLAUDE_PLUGIN_ROOT}` — and none of them runs under another coding agent. The one exception is `obsidian-llm-wiki`, some of whose commands also support GitHub Copilot.
+- **Claude Code, and no other agent.** Every plugin here is built on Claude Code's plugin system — its slash commands, subagents, skills, hooks and `${CLAUDE_PLUGIN_ROOT}` — and none of them runs under another coding agent.
 - **A session started on Opus — Opus 5.5 or later.** The model your session runs on is the orchestrator of every `workflows-core`, `dev-workflows`, `product-workflows`, `docs-workflows` and `security-workflows` command: it runs the command's phases itself, decides what each subagent is handed, and triages what the reviewers return. Its reviewers and Opus planning steps run on Opus whatever the session model, but nothing upgrades the orchestrator, so start Claude Code with `claude --model opus`, or switch with `/model` before the first command. Claude Security's scan agents, which `security-workflows` runs, take the session model too, so on Sonnet or below `/security-workflows:scan` asks before it scans. `/dev-workflows:implement` asks too on a session below Opus, before it reads an address, the specs repository or any code: the session classifies the task, and so decides whether the Opus review runs. Where no Opus model is available at all, a significant or high-risk task runs on Sonnet and says so in its routing record rather than stopping.
 - **A paid Claude plan that includes Opus in Claude Code, or Anthropic API billing.** Not every paid plan does — on the Pro plan, picking Opus gets *Claude Opus is not available with the Claude Pro plan*. `/model` lists the models your account can use.
-- **macOS, Linux, or Windows through WSL2.** Native Windows — PowerShell or CMD — is not supported, even though Claude Code itself runs there: every hook of the workflow plugins and the status line are `bash` scripts, the commands run POSIX shell steps over POSIX paths, and `REPOS_PATH` is a colon-separated list, which a `C:\` path cannot be written into. On Windows, run Claude Code inside WSL2. `obsidian-llm-wiki` documents its own setup, a Windows one among them, in its README.
+- **macOS, Linux, or Windows through WSL2.** Native Windows — PowerShell or CMD — is not supported, even though Claude Code itself runs there: every hook of the workflow plugins and the status line are `bash` scripts, the commands run POSIX shell steps over POSIX paths, and `REPOS_PATH` is a colon-separated list, which a `C:\` path cannot be written into. On Windows, run Claude Code inside WSL2.
 - **Recommended environment: [`ihudak/ai-containers`](https://github.com/ihudak/ai-containers)** — mounts every repository and your specs repo under one `/workspace` umbrella (repos at `/workspace/<repo>`, the specs repo at `/workspace/specs`), so the default `$REPOS_PATH` (`/workspace`) and an exported `SPECS_PATH` just work; it also installs `gh` and mounts the host `gh` auth. Outside a container the commands still work — set `$REPOS_PATH` yourself and manage `gh` login.
 - **Dynamic workflows, for `security-workflows`.** Claude Security runs its scan as a dynamic workflow, which needs the `Workflow` tool: turn on the *Dynamic workflows* row in `/config` (on Pro it is off by default). Without it, a `/security-workflows:scan` run that scans stops at setup with `SECURITY_PREREQ_WORKFLOWS`; `--import` and `--triage`, which scan nothing, do not need it.
 - **`superpowers`** *(recommended)* — the Claude Code plugin `workflows-core` leans on for `/prompt-brainstorm`, and that the whole family uses for its brainstorm → plan → subagent-driven-development flow. No hard dependency; commands degrade gracefully without it.
@@ -70,7 +69,6 @@ claude plugin marketplace add ihudak/ai-workflows
 claude plugin install dev-workflows@shipwright
 claude plugin install product-workflows@shipwright
 claude plugin install prose-style@shipwright
-claude plugin install obsidian-llm-wiki@shipwright
 claude plugin install acli@shipwright
 claude plugin install guideline-reviewers@shipwright
 claude plugin install workflows-core@shipwright
@@ -125,13 +123,14 @@ claude plugin marketplace update shipwright
 claude plugin update dev-workflows@shipwright
 claude plugin update product-workflows@shipwright
 claude plugin update prose-style@shipwright
-claude plugin update obsidian-llm-wiki@shipwright
 claude plugin update acli@shipwright
 claude plugin update guideline-reviewers@shipwright
 claude plugin update workflows-core@shipwright
 claude plugin update docs-workflows@shipwright
 claude plugin update security-workflows@shipwright
 ```
+
+**`obsidian-llm-wiki` left this marketplace on 2026-10-26**, and an installed copy gets no further update. If you installed it, remove it with `claude plugin uninstall obsidian-llm-wiki@shipwright`.
 
 **The `/plugins` interface is the easiest route, and it does update installed plugins.** Run `/plugins` inside Claude Code and update the marketplace from there: unlike the CLI's `marketplace update`, that path upgrades what you already have. You can also turn on **AutoUpdate** per plugin there, after which they keep themselves current and none of the above is needed.
 

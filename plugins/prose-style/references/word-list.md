@@ -5,8 +5,8 @@ forms, and spelling. Not a glossary of product terms — those live in `terminol
 
 **Baseline.** These are the shipped, vendor-neutral defaults, chosen because they hold
 across organizations. A repo-local or env-var overlay layers on top of them and wins on
-conflict — see `prose-style-checker` step 1 ("Resolve the active rule set") and the
-plugin README. The [Entry schema](#entry-schema) at the end of this file shows how to
+conflict — see `prose-style-checker` step 1 ("Resolve the active rule set") and the plugin's
+`docs/reference/overlay.md`. The [Entry schema](#entry-schema) at the end of this file shows how to
 add your own.
 
 **Grounded in:** Microsoft Writing Style Guide (A–Z word list); Google developer
@@ -218,12 +218,17 @@ The baseline is **American English** (Microsoft and Google both default to it).
 overrides this whole section in its own `word-list.md`. Doing so also switches the
 `Prose.WordList.SpellingVariant` rule to flag the opposite set.
 
+*With no overlay settling the dialect*, the checker does not take American English on
+trust: it infers the side from the files it checks (`prose-style-checker` step 1e, which
+says what settles it, what is counted, and when nothing is raised).
+An overlay is still the way to fix the dialect once for every file.
+
 ---
 
 ## Entry schema
 
 Add your organization's own general-usage entries by creating a `word-list.md` in your
-overlay directory (see the README's "Overlay" section). Use these table shapes — the
+overlay directory (see the plugin's `docs/reference/overlay.md`). Use these table shapes — the
 checker reads them structurally, so the column headers matter.
 
 ### Replacement table

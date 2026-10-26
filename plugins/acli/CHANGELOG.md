@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4 — 2026-10-26
+
+### Fixed
+
+- **The README says how to use and authenticate the skill.** A *Use* section says there is no slash command — ask in prose and the skill loads — with example requests and what it asks approval for, and an *Authenticate* section gives the headless form, an API token on standard input, which the README had only described as a change from upstream. The update commands are there too (DQW-B15, DQS-B12).
+
 ## 0.1.3 — 2026-10-04
 
 ### Fixed

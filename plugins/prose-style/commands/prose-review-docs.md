@@ -83,11 +83,14 @@ with:
 files:      [<absolute paths>]
 doc_type:   <doc_type>
 rules_path: <rules_path, when provided>
+dialect_files: [<every file step 2 resolved — passed whether or not the review is batched>]
 ```
 
 If there are more than 20 files, batch them in groups of 20 to avoid overloading
-the agent context. Combine all results. The `rules_source` is the same for every batch;
-report it once.
+the agent context, and pass every batch the whole resolved file list as `dialect_files` —
+the checker infers the dialect from the files it is told to, so every batch infers it from
+the same set and one review holds every file to one dialect. Combine all results. The
+`rules_source` and the `dialect` are the same for every batch; report each once.
 
 Collect the violation report.
 
@@ -142,7 +145,7 @@ Output a structured report:
 
 ### Summary
 - Files reviewed: N
-- Rules: <rules_source — "baseline" or "overlay: <path>">
+- Rules: <rules_source — "baseline" or "overlay: <path>">; dialect: <spelling> spelling, <dashes> dashes, each with where it came from — "(overlay)", "(inferred)">
 - Style violations: X (MAJOR: N, MINOR: N, NIT: N)
 - Vale findings: X (error: N, warning: N, suggestion: N) — or "N/A"
 
@@ -167,7 +170,7 @@ Output a structured report:
 3. <Third priority>
 ```
 
-The `Rules:` line is the only place the overlay is reported. Do not warn when no overlay
+The `Rules:` line is the only place the overlay and the dialect are reported. Do not warn when no overlay
 resolved — the baseline is a valid, complete rule set.
 
 ### 8. Fix mode
@@ -182,7 +185,7 @@ If `fix_mode` is `true`:
 3. Invoke the `prose-fixer` agent (`subagent_type: prose-style:prose-fixer`) with:
    - The violation list (filtered to fixable categories).
    - The file paths.
-4. After fixing, re-run `prose-style-checker` on the modified files to verify.
+4. After fixing, re-run `prose-style-checker` on the modified files to verify, passing the review's `dialect` block as its `dialect` input — a re-check of the modified files alone could infer another.
 5. Report the final state:
    "**Fixed:** N violations. **Remaining:** M violations (require manual review)."
    Then print, under **Untrusted-content notices**, every notice line `prose-fixer` and the

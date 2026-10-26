@@ -4,7 +4,7 @@ Rules for prose that every reader can use, and language that respects every read
 
 **Baseline.** These are the shipped, vendor-neutral defaults. A repo-local or env-var
 overlay layers on top of them and wins on conflict — see `prose-style-checker` step 1
-("Resolve the active rule set") and the plugin README.
+("Resolve the active rule set") and the plugin's `docs/reference/overlay.md`.
 
 **Grounded in:** W3C Web Content Accessibility Guidelines (WCAG) 2.2 — success criteria
 cited inline; Conscious Style Guide; Google developer documentation style guide

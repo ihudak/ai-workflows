@@ -40,7 +40,7 @@ plugins/
 
 `plugins/workflows-core/` carries the family's shared foundation — reference corpus, agents, skills, two session-wide hooks, and seven family-meta commands (listed, with detail, in `.claude/rules/workflows-core.md`). **All four of `dev-workflows`, `product-workflows`, `docs-workflows` and `security-workflows` name it in `dependencies`**; an unsatisfied dependency disables the plugin that named it rather than letting it half-run, and there is no degraded mode to fall back to.
 
-The catalog also ships `prose-style`, `guideline-reviewers`, `acli` and `obsidian-llm-wiki`; none has a rules file of its own, and `obsidian-llm-wiki` carries its own `CLAUDE.md`.
+The catalog also ships `prose-style`, `guideline-reviewers` and `acli`; none has a rules file of its own.
 
 The workflow map is in the `## Workflow map` sections of `.claude/rules/*.md`, one per plugin or split-out area.
 

@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.45.1] — 2026-10-26
+
+### Changed
+- **Getting started no longer names `obsidian-llm-wiki`**, which left the marketplace (batch B15).
+
 ## [3.45.0] — 2026-10-26
 
 The 2026-10-26 post-merge review of #82–#85 and #87: its `product-workflows` findings against batches B09 (3.39.0), B10 (3.40.0) and B11 (3.41.0), all but 83.1, which `workflows-core` 1.54.0 and 3.44.0 fix. No `workflows-core` change is needed.
