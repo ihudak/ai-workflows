@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.21.0] — 2026-10-26
 
-Take with `workflows-core` 1.52.0, whose `implementation-format` §4 states the boundary rule below; this command states it too, so it runs beside 1.51.0.
+Take with `workflows-core` 1.53.0, whose `implementation-format` §4 states the boundary rule below; this command states it too, so it runs beside 1.52.0.
 
 ### Fixed
 - **A superseding `# Unreleased` note reads the whole of the work.** A re-draft was bounded by the very note it was about to supersede, so its writer saw only what changed since, and the only note that had read the rest was marked superseded yet still bounded every later run. A note marked superseded, and every `# Unreleased` note for this run's key that the run will supersede, now bound nothing, so their commits are read again and the new note's `read:` lines name them. (DOC-B-B1)

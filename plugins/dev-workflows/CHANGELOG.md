@@ -5,14 +5,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.35.0] — 2026-10-26
+## [4.36.0] — 2026-10-26
 
-Take with `workflows-core` 1.52.0, whose merged test the PRD run below reads; beside 1.51.0 the PRD run's extra fetch is harmless and the test keeps its old two legs.
+Take with `workflows-core` 1.53.0, whose merged test the PRD run below reads; beside 1.52.0 the PRD run's extra fetch is harmless and the test keeps its old two legs.
 
 ### Fixed
 - **`/implement` writes no implementation record on a run that committed nothing.** Phase 4.7 appended a block with `commit: null` under `--no-commit` or where Phase 4.6's commit did not land, which marked the unit implemented to the Epic picker, `/ready` and `unit-branch` and handed `/document` and `/release-notes` a ref that does not exist. It now writes nothing and says so in the report's `### Branch`. (IMP-B2)
 - **`/conformance`'s PRD run fetches each Epic's branch before the merged test**, as the Epic run does, since the test now reads the branch's tip: an Epic whose squash lost its key no longer reads as unmerged to the PRD run alone, and a teammate's `[<key>]` commit no longer passes an open Epic — where the clone holds the recorded commit or the branch, and the Epic's work does not conflict with that commit (`implementation-format` §5's two misses). Its docs page no longer says the two runs can disagree. (C2, C9)
 - `/implement`'s note when the tip could not be compared says the merge state rests on ancestry and the commit subject alone.
+
+## [4.35.1] — 2026-10-26
+
+### Fixed
+- **A `MODERATE` `/implement` run's review now receives the specification.** Only Phase 2B, the `SIGNIFICANT` and `HIGH-RISK` planning phase, extracted the in-scope `[Uxx]`/`[ACxx]`/`[TCxx]` IDs into `applicable_spec`, so the review gate a `MODERATE` run passes (Phase 3A step 6) got none, though the invariant says it does. That review traced no requirement and carried no `Spec-named tests:` line, step 7.5's conformance escalation had nothing to act on, and since a split needs a `design.md` in `applicable_spec`, a review by the design's pieces could not happen below `SIGNIFICANT`. Phase 2A now extracts them as Phase 2B does, at `SIMPLE` too, so a run whose class rises later carries them. The fix was first written on the shelved one-writer branch (`bf393023`, tag `archive/implement-one-writer-a`) and never reached main.
+
+## [4.35.0] — 2026-10-26
+
+With `workflows-core` 1.52.0 (fix batch B16). It runs beside 1.45.0 too: the one change is a copy of `epic-picker`'s cap brought into line with 1.52.0's.
+
+### Changed
+- **`/implement`'s Epic picker carries every Epic where they fit in four beside its broad-slice option, or without it**, and the cap applies only otherwise, as `epic-picker`'s *The cap* now says.
 
 ## [4.34.0] — 2026-10-26
 

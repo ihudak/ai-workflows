@@ -465,7 +465,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high on the mechanics; medium on frequency.
 
-### GIT-B3 — MINOR — `<merge-clause>`'s table has no row for §4.1's *Commit failed*, while it claims to resolve every outcome row
+### GIT-B3 — MINOR — `<merge-clause>`'s table has no row for §4.1's *Commit failed*, while it claims to resolve every outcome row — **Fixed in workflows-core 1.52.0 (batch B16)**
 - **Where:** `plugins/workflows-core/references/next-phase-offer.md:112-124`; `phase-handoff.md:447`.
 - **What is wrong:** §4.1 gained `| Commit failed | Phase handoff: NOT handed off — the commit failed (…). The deliverable is staged on <branch>, not committed.` in `9c8f3e8b` (2026-10-05). The resolution table still lists eight outcomes with no *Commit failed* row, and says "**The table resolves every one of §4.1's eight outcome rows, and the catch-all is for a line that could not be read at all** — never for an outcome §4.1 defines". §4.1 now has nine non-append outcome rows. Its two newer appends (*Declaration unaccounted for*, *Record unreadable*) are also missing from the "are appends" sentence. A run that hit a commit failure therefore takes the catch-all, `(once this phase's artifacts are on the default branch)`, which never names the branch the deliverable is staged on. That breaks the paragraph's own rule that a row which leaves something on a branch names it.
 - **Failure scenario:** a `pre-commit` hook in the specs repo rejects `/specify`'s deliverable commit. The `### Next step` offer of `/dev-workflows:design` then carries the vague catch-all clause rather than "commit what is staged on `<branch>`, push it and merge it".
@@ -474,7 +474,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### GIT-B4 — MINOR — epic-picker's cap: the worked example and the "four or fewer" rule disagree, and the rule overlaps `/specify`'s cap
+### GIT-B4 — MINOR — epic-picker's cap: the worked example and the "four or fewer" rule disagree, and the rule overlaps `/specify`'s cap — **Fixed in workflows-core 1.52.0 (batch B16)**
 - **Where:** `plugins/workflows-core/references/epic-picker.md:68-74` (example), `:80` ("Four or fewer Epics need none of this: the array carries them all"), `:86`, `:89`.
 - **What is wrong:** the example lists **four** Epics (02, 03, 05, 01) and still uses three Epic rows plus "Another Epic from the list above…". The rule two lines later says four or fewer need no remainder option. The rule is also unconditional, but `/specify` always appends an option: it "carries at most **two** Epic rows plus that option plus the remainder option". Under the first rule, three Epics means all three plus `/specify`'s option (four options); under the second, it means two plus the option plus the remainder. A run copying the example adds a needless free-text step on an ordinary four-Epic PRD.
 - **Failure scenario:** `/implement` on a PRD with exactly four Epics follows the example and shows a remainder option, so the fourth Epic needs a typed key. `/specify` with three Epics can render either array.
@@ -694,7 +694,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium (an agent may well read through the contradiction; the text itself is contradictory)
 
-### IMP-B2 — MINOR — Phase 4.7 appends an implementation record on a run that committed nothing, a block shape `implementation-format` §1 does not define — **Fixed in dev-workflows 4.35.0 / workflows-core 1.52.0 (batch B03)**
+### IMP-B2 — MINOR — Phase 4.7 appends an implementation record on a run that committed nothing, a block shape `implementation-format` §1 does not define — **Fixed in dev-workflows 4.36.0 / workflows-core 1.53.0 (batch B03)**
 - **Where:** `plugins/dev-workflows/commands/implement.md:1192–1201`, `:1182`, `:32`; `plugins/workflows-core/references/implementation-format.md` §1 (`:15–:108`)
 - **What is wrong:** Phase 4.7 is "Skipped entirely when `mode: direct`" — and nowhere else. Under `--no-commit` Phase 4.6 writes `code_repo_outcome` "its `commit` `null` and `pushed` `false`" (`:1182`), and on a §2.1 gate failure, a hook rejection or a secret-scan stop there is no commit either; Phase 4.7 still appends a block naming `repo`, `branch`, `base`, `commit` and `pushed` from that state. `implementation-format` §1 defines a block as recording "the one commit `/implement` Phase 4.6 made for the run" and says nothing about a block with no commit; "A record is present only where it holds a block" is what the Epic picker's ● marker, `/ready`'s inventory and `unit-branch` read.
 - **Failure scenario:** `/dev-workflows:implement EPIC-BOOK-1-01 --no-commit` → the work stays in the working tree, yet `EPIC-BOOK-1-01/implementation.md` gains a block with `commit: null`. The next `/implement` on the PRD shows the Epic ● (greyed, "implement anyway"), `/ready` derives *In Progress* for it, `/conformance`/§5's merged test is asked about a null commit, and `/document`/`/release-notes` are handed a ref that does not exist — while line 32 tells the user only that "`/document` and `/release-notes` will not find it later".
@@ -1859,7 +1859,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### BRD3-B24 — NIT — The shared lane offers `/brd-reconcile <BRD-KEY> @<review-file>` after `/brd-package` unconditionally; Phase 10 writes no path on the repository route
+### BRD3-B24 — NIT — The shared lane offers `/brd-reconcile <BRD-KEY> @<review-file>` after `/brd-package` unconditionally; Phase 10 writes no path on the repository route — **Fixed in workflows-core 1.52.0 (batch B16)**
 - **Where:** `plugins/workflows-core/reference-parts/next-phase-offer/brd.md:161-164` (source `references/next-phase-offer.md`), against `plugins/product-workflows/commands/brd-package.md:1675-1682` (`<review-clause>`: on the repository route "(once you merge the customer's pull request — or @<review-file> where they sent it back instead)").
 - **What is wrong:** Phase 10 loads that lane "before anything below is printed". On the repository route the two live instructions disagree on the offered command line.
 - **Failure scenario:** An agent printing the lane's form tells a repository-route operator to pass a file path they do not have.
@@ -2016,7 +2016,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 <!-- from part B -->
 
-### DOC-B-B1 — MAJOR — A re-draft under `# Unreleased` is bounded by the note it is about to supersede, so the superseding note never reads the earlier commits — **Fixed in docs-workflows 1.21.0 / workflows-core 1.52.0 (batch B03)**
+### DOC-B-B1 — MAJOR — A re-draft under `# Unreleased` is bounded by the note it is about to supersede, so the superseding note never reads the earlier commits — **Fixed in docs-workflows 1.21.0 / workflows-core 1.53.0 (batch B03)**
 - **Where:** `plugins/docs-workflows/commands/release-notes.md:270`, `:284-288`, `:545-548`; `plugins/workflows-core/references/implementation-format.md` §4 (*`/release-notes` reads only what no earlier note covering it read*); `plugins/docs-workflows/references/release-note-types.md:68-75`
 - **What is wrong:** Phase 3 skips every block, and drops every scan commit, in "the read set of an earlier note covering its record" (`:270`, `:285-286`). Phase 8 then says a same-key note under `# Unreleased` "supersedes rather than accumulates". It marks the old note `<!-- superseded by the note below … -->` and "leave[s] its own scope comment and text intact" (`:547`). Nothing in the command, `release-note-types` §1 or `implementation-format` §4 takes a superseded note, or a same-key `# Unreleased` note this run will supersede, out of the boundary (`grep -i supersed` over the three files finds only the Phase 8 rule and unrelated deprecation text).
 - **Failure scenario:** Run 1, with diff grounding on and the version declined, drafts ACME-7 under `# Unreleased` and reads commits A and B. The PRD changes and new commit C lands. Run 2 re-drafts. Its boundary skips A and B because run 1's note read them, so the writer is grounded on C alone. Run 2 then marks run 1's note superseded and appends a note whose `read:` line names only C. The live note was never grounded in A and B, and the only note that read them is marked superseded. Its scope comment still bounds every later run, so no later run reads A or B either. `Blocks used` lists only C's block, so the loss is hard to see.
@@ -2357,7 +2357,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Confidence:** high
 - **Part (3), not in that fix — left for batch B18 (pre-lint):** a pre-lint list of cross-criterion imports would not have caught the measured case, whose import named no id ("under every rule of a change in this story"), so it is dropped; the per-AC Happy-path and Negative coverage checks are a coverage check, not an overlap read, and belong with pre-lint's other spec checks.
 
-### FBB-B15 — MINOR — The version line after a verdict names no requirement whose Rule changed after the verdict
+### FBB-B15 — MINOR — The version line after a verdict names no requirement whose Rule changed after the verdict — **Fixed in workflows-core 1.52.0 (batch B16)**
 - **Where:** `plugins/workflows-core/references/escalation-rules.md:444-460` (*A recorded verdict names the version it was taken against*: "names the edits", with no requirement to list changed `[AD#N]`/contract rows or `[Uxx] [ACxx]` ids apart from rewording); `plugins/product-workflows/commands/create-ard.md:712`; `/specify` Phase 6; `/design`.
 - **What is wrong:** A pull-request reviewer cannot tell which decisions or criteria changed after the last verdict without diffing.
 - **Failure scenario:** In `/create-ard`, `[AD#2]`'s lookup changed after the capped re-review. In `/specify`, ten edits were applied after a PASS WITH RECOMMENDATIONS. In `/design`, post-review MINOR edits were made. Each shipped only with "the current text has not been reviewed".

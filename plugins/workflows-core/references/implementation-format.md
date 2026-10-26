@@ -93,7 +93,7 @@ stays where it is and stays the PRD folder's** — a block moved on a guess attr
 Epic that did not get it, and every Epic-level reader then reports it as that Epic's.
 
 **Branch for convenience, commit for durability.** A merged branch is usually deleted, so the record
-names the commit as well — the one commit `/implement` Phase 4.6 made for the run. A run that committed nothing — `--no-commit`, or a commit that did not land — writes no block (from `dev-workflows` 4.35.0; an earlier `/implement` appended one with `commit: null`, which no reader here defines and which the operator may delete by hand, as the move below is a hand edit too). After a merge
+names the commit as well — the one commit `/implement` Phase 4.6 made for the run. A run that committed nothing — `--no-commit`, or a commit that did not land — writes no block (from `dev-workflows` 4.36.0; an earlier `/implement` appended one with `commit: null`, which no reader here defines and which the operator may delete by hand, as the move below is a hand edit too). After a merge
 commit or a fast-forward that commit is reachable from the base; after a squash or a rebase merge the
 base holds a copy of the change rather than the commit, so once the branch is deleted no branch
 reaches it and it survives only while a clone still holds it — which is why `diff-summarizer` falls

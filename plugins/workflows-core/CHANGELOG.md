@@ -5,15 +5,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.52.0] — 2026-10-26
+## [1.53.0] — 2026-10-26
 
-**Take with `dev-workflows` 4.35.0 and `docs-workflows` 1.21.0**: `/dev-workflows:conformance`'s PRD run fetches each Epic's branch for the merged test below from 4.35.0 on, and `/docs-workflows:release-notes` reads the note boundary below from 1.21.0 on. Each states what it needs beside its citation, so an older one still runs. Closes to-fix C2 and C9, and DOC-B-B1 of the 2026-10-26 bugs review.
+**Take with `dev-workflows` 4.36.0 and `docs-workflows` 1.21.0**: `/dev-workflows:conformance`'s PRD run fetches each Epic's branch for the merged test below from 4.35.0 on, and `/docs-workflows:release-notes` reads the note boundary below from 1.21.0 on. Each states what it needs beside its citation, so an older one still runs. Closes to-fix C2 and C9, and DOC-B-B1 of the 2026-10-26 bugs review.
 
 ### Changed
 - **`implementation-format` §5's merged test has three legs, and its subject leg is corroborated by content.** A default-branch commit carrying `[<key>]` used to count as the merge whatever it held, so a teammate's commit following §3's convention, or an earlier run's pull request merging after a later block, read an open pull request as merged. That leg now counts only where the block's recorded commit, or the branch's tip, adds nothing to that commit or to `<ref>` (the existing `merge-tree` content test). It fails only where every call adds work cleanly; a conflict — a squash whose review commits rewrote what the recorded commit wrote — leaves it passing on the subject alone, as does a call that compared nothing or a clone holding neither commit nor tip. Two misses that err toward merged are named: a clone holding neither, and an open pull request whose work conflicts with the key-carrying commit (to-fix C10). The content leg — a tip that adds nothing to `<ref>`, a squash whose subject lost the key — moves from `unit-branch` step 2 into the merged test itself, so `/conformance`'s PRD run, which reads that test, sees the merge `unit-branch` sees (C9). `unit-branch`'s states and `after_merge` are read from the same calls, never run twice. (C2, C9)
 - **§4's note boundary: two kinds of note bound nothing** — one marked superseded, and, on a run filing under `# Unreleased`, every note there for the run's own key, which it supersedes. A re-drafted note used to read only what changed since the note it replaced, while that note, marked superseded, still bounded every later run. (DOC-B-B1)
-- **§1: a run that committed nothing writes no block** (`dev-workflows` 4.35.0's `/implement`), and a `commit: null` block an earlier one wrote may be deleted by hand. (IMP-B2)
+- **§1: a run that committed nothing writes no block** (`dev-workflows` 4.36.0's `/implement`), and a `commit: null` block an earlier one wrote may be deleted by hand. (IMP-B2)
 - **`security-register-format` §5** calls the register's squash leg the shape of the merged test's subject leg, held to the sighting instead of corroborated by content.
+
+## [1.52.0] — 2026-10-26
+
+Fix batch B16 of the 2026-10-26 review: `escalation-rules`, `next-phase-offer` and `epic-picker`. Install it with `product-workflows` 3.43.0 and `dev-workflows` 4.35.0 (`.claude/rules/plugin-updates.md`).
+
+### Changed
+- **`next-phase-offer`'s `<merge-clause>` table resolves `phase-handoff` §4.1's *Commit failed*** to `(once the deliverable staged on <branch> is committed, pushed and its pull request merged)`, where it fell to the catch-all, which named no branch. The paragraph under the table names all four appends and resolves every outcome row of §4.1 that is not an append, counting none, and the rows that name a branch are those that left something on one — committed or staged.
+- **`epic-picker`'s *The cap*: the array carries every Epic where the Epics and the command's own option fit in four**, and the cap — at most three Epic rows plus the remainder option, fewer beside a command's own option — applies only otherwise. Its example now lists five Epics, where it listed four under the cap that the rule two lines later said four need not take.
+- **The BRD lane offers `/product-workflows:brd-reconcile <BRD-KEY> [@<review-file>]`** after `/product-workflows:brd-package`, the path optional, as `/brd-package`'s own `<review-clause>` is: on the repository route the review is committed beside the bundle and `/brd-reconcile` takes no path.
+- **The PE lane's `/dev-workflows:design <PRD>` on a PRD holding Epics** is offered only where an Epic's `specification.md` is on the default branch, as the PA lane states for `/dev-workflows:design <EPIC>`: `/dev-workflows:design` stops with `DESIGN_NO_SPEC` without one.
+- **`escalation-rules`' version line names by id what an edit after the verdict changed in substance** — an `[AD#N]` decision or its Rule, a contract row, a criterion or test case, a PRD's `[FR#N]` or `[AC#N]` — as *"Changed in substance since: <each id>"*, an edit to text with no id naming its section, so a pull-request reviewer need not diff the whole artifact.
+- **`escalation-rules`' offer to apply what a review leaves open names `/epics`** among its users, its edits the orchestrator's own since `doc-fixer` takes no `NIT`, and *An inline fix is read against what it overlaps* names it at those edits.
 
 ## [1.51.0] — 2026-10-26
 
