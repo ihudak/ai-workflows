@@ -103,6 +103,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `workflows-core-read-only.md` | as `workflows-core-git.md` | the read-only-repos authority |
 | `claim-sweep.md` | `**` (any file) | the claim-expiry sweep's refinements |
 | `plugin-updates.md` | `**` (any file) | updating installed plugins after editing |
+| `plugin-updates-coupling.md` | `*/.claude-plugin/plugin.json`, `*/CHANGELOG.md`; `.claude-plugin/marketplace.json` (repo root) | which plugins to update together, one bullet per release pair |
 
 The evidence behind the rules — measured cases, refused widenings, history — is in `docs/maintainers/rationale.md`, reached by each rule's `why` link. It is never auto-loaded; read a rule's section before proposing to change the rule.
 
