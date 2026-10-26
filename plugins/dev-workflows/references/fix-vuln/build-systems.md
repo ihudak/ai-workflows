@@ -270,11 +270,25 @@ bundle exec rspec          # or rake test / bundle exec minitest
 
 ---
 
+## Resolving the dependency tree
+
+A library can be on the classpath or in the bundle without any manifest naming it, because a direct dependency brings it in. Where the ecosystem keeps a lockfile, the lockfile lists every resolved package, transitive ones included, and reading it is enough. Where it keeps none, only the build tool can say, and `vuln-research` runs no command: it returns `NEEDS_TREE`, and `/vuln` Step 2 runs the tree command below and hands the output back to it.
+
+| Ecosystem | Lockfile that lists transitive dependencies | Tree command, where there is none (from the repository's top level) |
+|---|---|---|
+| Maven | none | `./mvnw -B dependency:tree -DoutputType=text -DoutputFile=<absolute path> -DappendOutput=true` (the whole reactor, every module's tree appended to that file; never `-q`, which keeps only errors, and the plugin logs the tree at INFO) |
+| Gradle | `gradle.lockfile` and `*.lockfile` under `gradle/dependency-locks/`, where dependency locking is on | `./gradlew -q dependencies`, which covers the root project only; in a multi-project build run `./gradlew -q :<project>:dependencies` for each project `./gradlew -q projects` lists |
+| npm / yarn / pnpm | `package-lock.json`, `npm-shrinkwrap.json`, `yarn.lock`, `pnpm-lock.yaml` | not needed |
+| Python | `poetry.lock`, `Pipfile.lock`, `uv.lock`, a fully pinned `requirements*.txt` | not needed where one is on file; otherwise none is run, and the library is searched for in the manifests alone |
+| Go | `go.sum`, `go.mod` | not needed |
+| .NET / NuGet | `packages.lock.json` | not needed where one is on file; otherwise `dotnet list package --include-transitive` |
+| Ruby / Bundler | `Gemfile.lock` | not needed |
+
 ## Transitive dependency strategy
 
 When the vulnerable library is **not** a direct dependency but pulled in transitively:
 
-1. Identify which direct dependency introduces it (using `./gradlew dependencies`, `./mvnw dependency:tree`, `npm ls`, etc.).
+1. Identify which direct dependency introduces it — from the tree *Resolving the dependency tree* above says how to obtain, which is `vuln-research`'s input and never its command, or from the lockfile.
 2. **First choice**: upgrade the direct dependency to a version that already uses the safe transitive version.
 3. **Second choice**: force/override the transitive version using the ecosystem mechanism (Gradle `resolutionStrategy`, Maven `dependencyManagement`, npm `overrides`, etc.).
 4. Document the override clearly in the commit message.

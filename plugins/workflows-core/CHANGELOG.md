@@ -24,6 +24,12 @@ Take with `product-workflows` 3.46.1, whose register stops state row B′'s new 
 - **The `require-on-main` file names its own line count** in the line under its title, which `check-parts` holds fresh (GIT-G2).
 
 D15 (row B′ on a git-ignored copy) stays open: no case was measured.
+## [1.57.1] — 2026-10-26
+
+Either version runs beside `dev-workflows` 4.39.0 or older: the change is to what this reference says of `/upgrade`.
+
+### Fixed
+- **`implementation-format` §3 said all three code-changing commands write the `[<key>]` convention.** `/upgrade` takes no address and is keyless, which `dev-workflows` 4.39.0 states; the table and the sentence below it now say it writes the subject with no key (batch B06, VU-B10's sweep).
 
 ## [1.57.0] — 2026-10-26
 
