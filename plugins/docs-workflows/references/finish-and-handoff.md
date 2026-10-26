@@ -90,6 +90,8 @@ Compose the draft and BOTH write and show it:
 - **DO-NOT-MERGE banner** at the very top WHEN Phase 5.8 recorded any
   `document-as-spec` / `skip-and-report` decision:
   `> ⚠ DO NOT MERGE until <KEY>-implementation-gaps.md is resolved.`
+  WHEN any of those is `document-as-spec`, a second line beneath it:
+  `> ⚠ These pages describe behaviour the code does not have yet (gaps <n>, …): hold the release until each is fixed.`
 - **host footer**:
   - Bitbucket (Cloud / Server) → "Open a pull request in the web UI and paste
     the title + body above." (No API.)

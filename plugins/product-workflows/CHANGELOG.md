@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [3.46.0] — 2026-10-26
 
-Take with `workflows-core` 1.56.0 (its `consumed_by` list, `baselines.md` layout and scanner coupling field).
+Take with `workflows-core` 1.57.0 (its `consumed_by` list, `baselines.md` layout and scanner coupling field).
 
 ### Changed
 - **`/create-prd`, `/update-prd`, `/create-ard` and `/specify` add their name to `consumed_by`**, beside any earlier consumer, and the decision register's field follows the same rule, save its own return to `none` when a decision's position is replaced (FBB-B2).

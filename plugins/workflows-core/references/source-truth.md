@@ -54,14 +54,17 @@ The authoritative file set, when a spec is provided:
 
 The user might decide:
 
+- **"Document as actual (code)"** — the implementation is the spec in practice;
+  update the spec or the PRD separately. The recommended choice: what is
+  published describes what ships, and often the implementer found extra value
+  or the intended phrasing was simplified for stakeholder consumption.
 - **"Document as intended (spec)"** — describe the agreed contract. When a
   spec is present this is the spec phrasing; when it is absent it is the PRD
-  phrasing. Often the right call: the spec is the current agreement and the
-  code can be brought into line.
-- **"Document as actual (code)"** — the implementation is the spec in practice;
-  update the spec or the PRD separately. Often the right call: the implementer found
-  extra value or the intended phrasing was simplified for stakeholder
-  consumption.
+  phrasing. Right where the spec is the current agreement and the code must be
+  brought into line — but what is published then states behaviour the code does
+  not have, so the run drafts the defect and **the release, and the publication
+  of what the run wrote, are held until it is fixed** (§7.5, *A
+  `document-as-spec` gap holds the release*).
 - **"Skip this claim and report"** — neither side is wrong, but the discrepancy
   is too subtle to ship docs around; flag it for the team and leave the
   paragraph out for now.
@@ -373,8 +376,10 @@ The **Verdict** column carries the §4.2 finding (`CONTRADICTED`, `NOT_FOUND`,
 `AMBIGUOUS`) and one additional verdict: **`SPEC-VS-PRD`** — the spec differs
 from the PRD narrative (regardless of whether code matches the spec). The
 spec is authoritative, so a `SPEC-VS-PRD` row is surfaced to flag that the
-PRD should be updated to match the spec; the recommended action for it
-is "Document as intended (spec)". When no spec was provided the **Spec** cell
+PRD should be updated to match the spec. Where the code matches the spec,
+"Document as intended (spec)" and "Document as actual (code)" write the same
+phrasing and neither drafts a defect or holds anything; where it does not, the
+row is a lag like any other. When no spec was provided the **Spec** cell
 reads `(no spec)` and `SPEC-VS-PRD` cannot occur.
 
 This table is informational — display it before asking decisions.
@@ -393,7 +398,9 @@ ask_user(
 ```
 
 (When no spec was provided, "Document as intended (spec)" uses the PRD
-phrasing — the original two-way behaviour.)
+phrasing — the original two-way behaviour.) **"Document as intended (spec)
+for ALL"** gives §7.3's warning once, for every discrepancy where the code
+lags.
 
 ### 7.3 Per-discrepancy decision (if user chose "Decide per discrepancy")
 
@@ -403,8 +410,8 @@ For each discrepancy in turn:
 ask_user(
   question: "Discrepancy #<n>: <claim>\n  - PRD: <prd_phrasing>\n  - Spec: <spec_phrasing>\n  - Code: <source_phrasing>\n  - Source location: <file:line>\n\nHow would you like to handle this one?",
   choices: [
-    "Document as intended (spec) (Recommended) — describe the agreed contract (spec phrasing; PRD phrasing when no spec); the orchestrator drafts a bug-report so you can file a defect when the code lags",
-    "Document as actual (code) — match what shipped; users see what's there",
+    "Document as actual (code) (Recommended) — match what shipped; users see what's there",
+    "Document as intended (spec) — describe the agreed contract (spec phrasing; PRD phrasing when no spec); drafts a bug report, and the release and this publication are held until it is fixed",
     "Skip & report — the docs leave this paragraph out; the bug-report draft still records the gap (drafts a bug)",
     "Cancel the whole run"]
 )
@@ -412,6 +419,14 @@ ask_user(
 
 (When no spec was provided, "Document as intended (spec)" uses the PRD
 phrasing.)
+
+**On "Document as intended (spec)" where the code lags, warn at once**, before
+the next discrepancy: the code does not do what the published text will say,
+the bug-report draft (§7.5) records the defect, and the release — and the
+publication of what this run writes — must be held until it is fixed. The
+warning is repeated where the hold must be seen (§7.5, *A `document-as-spec`
+gap holds the release*). A row whose code could not be read takes §7.7's
+array in this one's place.
 
 ### 7.4 Record decisions
 
@@ -482,7 +497,9 @@ team (or amend the PRD if the gap is intentional).
 - **Source state**: <source_phrasing>
 - **Source location**: <file:line>
 - **User decision in docs**: <decision>
-- **Docs status**: <"described as intended (spec), awaiting implementation"
+- **Docs status**: <"described as intended (spec), awaiting implementation —
+                    hold the release and the publication of these docs
+                    until this defect is fixed"
                     | "omitted from docs"
                     | "documented as shipped; the source ticket carries an
                     incorrect claim">
@@ -497,6 +514,16 @@ team (or amend the PRD if the gap is intentional).
 
 The bug-report draft uses the same hard-rule for destination as the
 release-notes draft (the PRD folder, never `/tmp/`, never inside the docs repo).
+
+**A `document-as-spec` gap holds the release.** Where the code lags the
+intended phrasing, what the run wrote states behaviour the release does not
+have, so the release and the publication of that text wait for the defect's
+fix. The caller says so when the decision is taken (§7.3), and again in its
+final report and on everything that carries the run's output toward
+publication — a pull request's body, a paste-and-publish reminder — each time
+naming the gaps file and the gap numbers. The person who answered the prompt is
+often not the one who publishes, which is why the hold travels with the output.
+A `document-as-code` gap holds nothing: what it documents is what ships.
 
 ### 7.6 Intentional-discrepancy marker format (for the writer)
 
@@ -522,6 +549,21 @@ empty/unreachable: doc-planner emits a single `verification_warnings`
 entry per user-visible claim with `finding: NOT_FOUND`,
 `technique: "no-source-evidence"`. The orchestrator presents the same
 §7.1 table (with the **Code** cell `"(not verifiable)"`, and the **Spec**
-cell `(no spec)` when no spec was provided) and the same §7.2/§7.3 prompts;
+cell `(no spec)` when no spec was provided) and the same §7.2 prompt.
 "Document as intended (spec)" is then the natural default since no source-side
-phrasing is available to contradict it.
+phrasing is available to contradict it, and "Document as actual (code)" has
+nothing to write, so such a row's per-discrepancy question takes this array in
+§7.3's place:
+
+```
+ask_user(
+  question: "Discrepancy #<n>: <claim>\n  - PRD: <prd_phrasing>\n  - Spec: <spec_phrasing>\n  - Code: (not verifiable)\n\nHow would you like to handle this one?",
+  choices: [
+    "Document as intended (spec) (Recommended) — describe the agreed contract; the code could not be read, so no bug is drafted and nothing is held",
+    "Skip & report — the docs leave this paragraph out; the bug-report draft still records the gap (drafts a bug)",
+    "Cancel the whole run"]
+)
+```
+
+Nothing shows the code lagging, so that choice draws no §7.6 marker and no
+§7.5 gap, and holds nothing.

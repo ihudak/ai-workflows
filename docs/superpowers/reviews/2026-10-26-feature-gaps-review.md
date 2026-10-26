@@ -336,7 +336,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Suggested scope:** Add a Phase 2.5/5 step that diffs the scanned cross-component calls against the contract rows, passes the result to the writer and reviewer as `contract_omissions`, and names `/create-ard <PRD>` refine in the report.
 - **Source:** feedback `BOOK-1-epics-ard-contract-omission-handling` in F1
 
-### FBA-G5 — The `code-scanner` brief asks for no dependency-coupling list for `/specify` and `/design` — **Fixed in workflows-core 1.56.0 (batch B18)**
+### FBA-G5 — The `code-scanner` brief asks for no dependency-coupling list for `/specify` and `/design` — **Fixed in workflows-core 1.57.0 (batch B18)**
 - **Designed in:** feedback `BOOK-1-specify-scan-dependency-coupling` in F1
 - **Current state:** `plugins/workflows-core/agents/code-scanner.md` returns capabilities and gaps per theme. `grep -i "coupling\|which other services"` across code-scanner.md, specify.md and design.md finds nothing. `grilling-technique.md:14`'s premise-read rule covers premises in questions, options and rationales, not test-case setups written afterwards.
 - **Still worth doing?:** yes, small. A fault-isolation TC (one dependency fails while another succeeds) is invalid wherever the "other" calls the first, and that was found only by hand on BOOK-1.
@@ -350,7 +350,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Suggested scope:** Add a note in Phases 5/6: rewrite a renumbered story as a whole section, then re-run Phase 5.5's ID checks. Optionally add a `renumber.py` that reports the mapping.
 - **Source:** feedback `BOOK-1-specify-large-spec-renumbering` in F1
 
-### FBA-G7 — The design pre-lint has no advisory for an unscoped `kubectl` operational command — **Fixed in workflows-core 1.56.0 (batch B18)**
+### FBA-G7 — The design pre-lint has no advisory for an unscoped `kubectl` operational command — **Fixed in workflows-core 1.57.0 (batch B18)**
 - **Designed in:** feedback `BOOK-1-design-prelint-unscoped-kubectl` in F1
 - **Current state:** The pre-lint design block (`plugins/workflows-core/references/pre-lint.md:102-112`) checks only headings and the open-question count. `grep -i "kubectl\|namespace\|selector"` finds nothing in pre-lint, `design-reviewer` or `design-format`. The overlap-read rule now covers operational steps (`escalation-rules.md:589-593`, see Dropped), but that rule is judgement, not a grep.
 - **Still worth doing?:** yes. It is cheap and the defect class is grep-expressible.
@@ -488,7 +488,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Source:** feedback `implement-design-markup-vs-css-framework` in `BOOK-2-01-feedback.md`
 - **Confidence:** low
 
-### FBB-B40 — MINOR — Gap: `grounding/baselines.md` has no canonical entry layout — **Fixed in workflows-core 1.56.0 (batch B18)**
+### FBB-B40 — MINOR — Gap: `grounding/baselines.md` has no canonical entry layout — **Fixed in workflows-core 1.57.0 (batch B18)**
 - **Where:** `plugins/workflows-core/references/grounding-format.md:491-510` (§4 step 1 names the fields in prose); `plugins/product-workflows/commands/prd-ground.md:895-898`, `:1725`.
 - **What is wrong:** The file is parsed by later runs (Phase 3's pin test, Phase 8's supersession, and `/brd-interview:1028`), but its layout (YAML block or table, and the field names) is improvised by each run.
 - **Failure scenario:** Two runs write different shapes, and a later reader misparses the pin.
