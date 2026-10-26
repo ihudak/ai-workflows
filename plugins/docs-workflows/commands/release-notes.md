@@ -509,9 +509,9 @@ On the first choice, correct the claim to match the cited criterion. On the seco
    ```
    choices: ["Decide per discrepancy (Recommended)", "Document as intended (spec) for ALL", "Document as actual (code) for ALL", "Skip & report for ALL (drafts a bug report; no claims documented)"]
    ```
-   These are `workflows-core:source-truth` §7.2's choices, word for word, as the per-claim prompt is §7.3's. This flow has no spec, so "intended (spec)" is the PRD phrasing, by §7.2's own no-spec rule.
+   These are `workflows-core:source-truth` §7.2's choices, word for word, as the per-claim prompt is §7.3's. This flow has no spec, so "intended (spec)" is the PRD phrasing, by §7.2's own no-spec rule. Every gap here carries a verified code location, so §7.7's array never applies. **On "Document as intended (spec)"**, and once for every gap on its *for ALL* form, tell the user at once that the shipped code does not do what the note will say, that the bug-report draft records the defect, and that the release and the publication of this note must wait until it is fixed (`workflows-core:source-truth` §7.3, §7.5) — the report and the handoff say it again (Phase 8).
 3. Apply the decision to the draft prose and re-render `combined_rendered`: `document-as-code` → use source phrasing; `document-as-spec` → use PRD phrasing supported by the PRD (no marker in release notes prose — the gap is recorded only in the gaps file); `skip-and-report` → omit the claim.
-4. For `document-as-spec` or `skip-and-report`: resolve `bug_report_destination` to the resolved PRD folder. Write/append `<bug_report_destination>/<KEY>-implementation-gaps.md` using the §7.5 format from `Skill(skill: "workflows-core:reference", args: "source-truth")`, setting `Spec phrasing:` to `(no spec)` (this flow has no spec).
+4. For `document-as-spec`, `skip-and-report`, or a `document-as-code` decision whose PRD phrasing asserts a specific value the source contradicts (§7.5's test, which also says when to emit on an arguable one): resolve `bug_report_destination` to the resolved PRD folder. Write/append `<bug_report_destination>/<KEY>-implementation-gaps.md` using the §7.5 format from `Skill(skill: "workflows-core:reference", args: "source-truth")`, setting `Spec phrasing:` to `(no spec)` (this flow has no spec).
 
 Pass `code_repos` (the Phase-4 resolved map) to the writer when diff-grounding is on.
 
@@ -585,7 +585,9 @@ Outside that one case there is no question to ask and no option that replaces th
    in it, its one literal path; `title: <KEY> Release-notes draft <version | Unreleased>`, `<KEY>`
    being `focus_key` where it is set and the PRD's key where it is null; and `body_facts` = the
    version and Change Type section the draft was filed under, its shape, and whether it superseded
-   an earlier `# Unreleased` note. **Options 2 and 3 decline the handoff and nothing else**: the draft
+   an earlier `# Unreleased` note, and, where Phase 6 recorded any `document-as-spec` gap, a first
+   line `⚠ Hold the release and the publication of this note until <KEY>-implementation-gaps.md
+   gaps <n>, … are fixed — the note describes behaviour the code does not have yet.` **Options 2 and 3 decline the handoff and nothing else**: the draft
    stays appended in the PRD folder, uncommitted, and the terminal `commit-artifacts` step never
    stages it (`workflows-core:specs-repo-git` §2.1) — so it costs what any path outside the bounded
    artifact set does, that reference's §3.3 G1 advisory, as the line above the array said; the report does not
@@ -611,6 +613,7 @@ Outside that one case there is no question to ask and no option that replaces th
    - Takes effect: <in the release it is filed under | the later release the prose names | the deprecation's end-of-life date | TODO marker left in the draft | — (not a breaking note)>
    - Action plan: <from the PRD | supplied by you | TODO marker left in the draft | — (not a breaking note)>
    - Deprecation: <EOL <date> (end-of-support <date | —>) | none>
+   - Implementation gaps: <<path> — per gap its number, claim and decision; for `document-as-spec`: hold the release and the publication of this note until it is fixed; for `skip-and-report`: omitted from the note, raise the defect; for `document-as-code`: documented as shipped, correct the PRD | none>
    - Diff grounding: <on (repos: …) | off>
    - Blocks used: <each block by its record and heading date | none>; dropped by §4's date fallback: <each block by its record and heading date, and each commit the date rule dropped by its own date, by SHA, date and subject — a commit dropped with a block recording it is accounted for by that block's listing | none> — on a run with diff grounding on
    - Not read: <per repository whose commits Phase 5 dropped from the read set, the repository and why — skipped at Phase 4, no clone resolved, `unresolved_prs`, a `resolved_via: key_commits` fallback that opened nothing this run had carried (unreachable while Phase 5 passes no keys), or an escalation that ended without a summary — and each commit by SHA | none — every provisional commit was read> — on a run with diff grounding on; nothing listed here is written into the scope comment, so the next grounded run reads it again, and on the `unresolved_prs` cause — usually a ref whose commits have left the clone — that means its block, or its scan commit, returns next release, unread again
@@ -619,7 +622,7 @@ Outside that one case there is no question to ask and no option that replaces th
    - Style check: <applied N safe fixes | report only (M findings) | skipped — you chose "Skip style check"> — rules: <the checker's rules_source, where it ran><; DEGRADED — Phase 7's reason, where Phase 7 recorded it>
    - Model routing: <under `run_flags.enforced_model`: `Model routing: bypassed — enforced <id> (flag|env)` — every dispatch above already carries the enforced id, per `workflows-core:model-routing/classification` §10 | "MODERATE — detection chain throughout, no degradation (Phase 1.5)">
    - Run flags: [the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6) — omit this line otherwise. The `Session feedback: …` skip line is Phase 9's own output; the `Session cost: …` skip line is Phase 11's own output, printed after this report and not restated in it.]
-   - Reminder: paste the draft just appended to <the resolved PRD folder>/release-notes.md, under <version | Unreleased> → <## Breaking changes | ## Feature updates | ## Fixes>, wherever your release notes are published — the docs automation adds the {{#internal-note}} metadata and emits it into example-docs.
+   - Reminder: paste the draft just appended to <the resolved PRD folder>/release-notes.md, under <version | Unreleased> → <## Breaking changes | ## Feature updates | ## Fixes>, wherever your release notes are published — but not before every `document-as-spec` gap above is fixed, where there is one, since the note describes behaviour the code does not have yet; the docs automation adds the {{#internal-note}} metadata and emits it into example-docs.
 
    ### Next step
    [leaf/closure per the whole of `workflows-core:next-phase-offer`, whose Dev node for this command continues any pending PA or PE phase, which the other lanes define — guidance only, never auto-invoked: the release note is drafted. If earlier pipeline phases remain, continue — hand to PA → `/product-workflows:create-ard <PRD>` or PE → `/product-workflows:epics <PRD>`; if the change is already built and documented, the PRD is fully processed.]
