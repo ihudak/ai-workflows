@@ -9,8 +9,8 @@
 # over 100,000 tokens pays higher prices". A `long_context:` block inside a model's rates
 # carries `above:` (the prompt length, in tokens, that a message must exceed) and the rates
 # that message then bills at, on ALL its tokens. The engine classes each message by its own
-# prompt -- input + cache read + cache write; the page does not say which tokens count, and
-# this reading is the one that never prices a long prompt low. A `long_context:` block with
+# prompt -- input + cache read + cache write, as the page states it ("a request's prompt
+# length counts all of its input tokens, including cache reads and cache writes"). A `long_context:` block with
 # no numeric `above:` is reported `unpriced-long-context`, null cost.
 #
 # FAST MODE AND DATA RESIDENCY are priced, because the transcript records both and they change
@@ -61,8 +61,8 @@
 # Override without editing this file: set $DEV_WORKFLOWS_COST_PRICES to a path, or
 # drop a repo-local cost-prices.yaml. Cache multipliers follow Anthropic's model
 # (cache_read = input * 0.1, cache_write_5m = input * 1.25, cache_write_1h = input * 2.0),
-# except Opus 5.5 and Sonnet 5.5, whose cache reads bill at input * 0.05, and Fable 5.1,
-# whose bill at input * 0.025 -- which is why every rate below is keyed explicitly rather than derived
+# except Opus 5.5 and Sonnet 5.5, whose cache reads bill at input * 0.05, and Fable 5.1 and
+# Mythos 5.1, whose bill at input * 0.025 -- which is why every rate below is keyed explicitly rather than derived
 # from `input`.
 models:
   # Opus chain (§2). Opus 5.5 bills at $4 / $20 with cache reads at 0.05x ($0.20);

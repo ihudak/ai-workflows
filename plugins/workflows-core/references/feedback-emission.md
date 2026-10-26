@@ -111,8 +111,12 @@ capture, §5). Walk the ladder top-down and stop at the first tier that applies:
 
 **Before tier 1: the run carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1, or `addressing.md` §3 `specs-root-check`'s stop) → **report-only**, as in tier 4, whatever else would apply. `$SPECS_PATH` is set but misplaced, so any write under it lands where `specs-repo-git.md` §2.1's classifier puts it in OTHER, or takes it for an artifact that cannot be staged from `$SPECS_PATH` and that the first run after the variable is fixed would commit in the wrong place. Every entry point below resolves its target here, so this covers them all.
 
-1. **`$SPECS_PATH` resolvable + writable + the PRD dir exists** — the dir matched
-   by `$SPECS_PATH/{specs|specifications|vis}/…/<KEY>{-|_}<slug>/…` →
+1. **`$SPECS_PATH` resolvable + writable + the PRD dir exists** — the folder
+   the run's own `resolve-address` found for `<KEY>` (`workflows-core:addressing` §3) — or,
+   where the run resolved none, the one `resolve-key <KEY>` returns as `found`, its
+   kind-prefixed name or §5's legacy fallback alike; `absent` or `ambiguous` is no
+   match here, never a stop — placed by §4.1: a `PRD-` or `BRD-` folder is
+   the PRD dir itself, an `EPIC-` folder's is the folder above it →
    `<PRD-dir>/dev-workflows/<KEY>-feedback.md`. *[primary — the whole point]*
 2. **`$SPECS_PATH` writable but no PRD dir matched** (no `key`, or no
    matching spec dir) — two destinations, and the documentation branch is tried

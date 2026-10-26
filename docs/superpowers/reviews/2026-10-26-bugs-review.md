@@ -503,7 +503,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## workflows-core — routing, cost, feedback, loader, family commands, instruction tiers
 
-### CORE-B1 — MAJOR — the cost path resolves "the current session" as the newest transcript, which is another session's whenever two share a working directory
+### CORE-B1 — MAJOR — the cost path resolves "the current session" as the newest transcript, which is another session's whenever two share a working directory — **Fixed in workflows-core 1.46.0 (batch B02)**
 - **Where:** `plugins/workflows-core/references/cost-emission.md:63-64`, `plugins/workflows-core/references/run-flags.md:102` (the `skip-cost` copy)
 - **What is wrong:** "**Main transcript** — the newest `*.jsonl` directly under `~/.claude/projects/<cwd-slug>/`. Its basename minus `.jsonl` is `session_id`." Nothing checks that the newest file is this run's own session. The sibling reference already knows this is wrong: `session-diagnosis.md:22` says the current session is "the newest `*.jsonl` there **whose last records hold this run's own invocation** … the newest file alone is not enough, since another session may be running in the same directory."
 - **Failure scenario:** two Claude Code sessions are open in the same cwd. That is a supported state: `CLAUDE.md` § Git says "This checkout can be shared by more than one agent session at once". Session A runs `/specify` while session B wrote its transcript last. A's `emit-cost` reads B's transcript from B's checkpoint (`cost-state/<B>.json`), files B's spend under A's `/specify` labels in `cost/<B-sid8>.md`, and advances B's checkpoint. B's next command then loses that window. Under `--skip-costs`, `skip-cost` advances the wrong session's checkpoint and drops the wrong session's deferred file (`deferred-<B>.json`).
@@ -512,7 +512,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high (text); medium on how often it is reached
 
-### CORE-B2 — MAJOR — `<cwd-slug>` replaces only `/` and `.`, but Claude Code replaces every non-alphanumeric character
+### CORE-B2 — MAJOR — `<cwd-slug>` replaces only `/` and `.`, but Claude Code replaces every non-alphanumeric character — **Fixed in workflows-core 1.46.0 (batch B02)**
 - **Where:** `plugins/workflows-core/references/cost-emission.md:61-62`, `plugins/workflows-core/references/run-flags.md:101`, `plugins/workflows-core/references/session-diagnosis.md:22`
 - **What is wrong:** "`<cwd-slug>` — the absolute `cwd` with every `/` and `.` replaced by `-`".
 - **Failure scenario:** with a cwd containing `_`, a space or `@`, such as `/workspace/my_service`, the rule yields `-workspace-my_service`. Claude Code stores that session under `-workspace-my-service`. The cost phase finds no transcript, so `session-cost.py` exits on `--transcript is not a readable file`, no cost entry is written, and the checkpoint never advances. `skip-cost` and `/diagnose-session` miss the same way.
@@ -521,7 +521,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium-high
 
-### CORE-B3 — MINOR — the model-onboarding checklist names two files; a new generation touches more, and a Haiku one touches neither the way it says
+### CORE-B3 — MINOR — the model-onboarding checklist names two files; a new generation touches more, and a Haiku one touches neither the way it says — **Fixed in workflows-core 1.46.0 (batch B02)**
 - **Where:** `plugins/workflows-core/references/cost-emission.md:724-748` (§12)
 - **What is wrong:** "A new model generation … touches **two** files that must change together": `classification.md` §2 and `cost-prices.yaml`. Chain-head ids are also written literally in three other places:
   - `run-flags.md:58`, the unpriced check for a family-only harness: "it prices that family's newest chain row (`claude-opus-5-5`, `claude-sonnet-5-5`, and `claude-haiku-5-5` …)";
@@ -535,7 +535,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### CORE-B4 — MINOR — §6.1 cites "§8 tier 5", which does not exist
+### CORE-B4 — MINOR — §6.1 cites "§8 tier 5", which does not exist — **Fixed in workflows-core 1.46.0 (batch B02)**
 - **Where:** `plugins/workflows-core/references/cost-emission.md:346`
 - **What is wrong:** "in every persistence tier, including report-only (§8 tier 5)". §8 has tiers 1–4, and report-only is tier 4 (`:592`). The two other references to it say "as in tier 4" (`:559`, `:567`).
 - **Failure scenario:** an agent looking for tier 5 finds nothing. Low impact.
@@ -561,7 +561,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### CORE-B7 — MINOR — the feedback ladder's tier 1 matches the PRD folder only by the legacy unprefixed name `<KEY>{-|_}<slug>`
+### CORE-B7 — MINOR — the feedback ladder's tier 1 matches the PRD folder only by the legacy unprefixed name `<KEY>{-|_}<slug>` — **Fixed in workflows-core 1.46.0 (batch B02)**
 - **Where:** `plugins/workflows-core/references/feedback-emission.md:114-116`. The same text is in `plugins/workflows-core/references/cost-emission.md:561-563`, which is outside this sub-slice: flag it to whoever owns cost-emission.
 - **What is wrong:** tier 1 is "the dir matched by `$SPECS_PATH/{specs|specifications|vis}/…/<KEY>{-|_}<slug>/…` → `<PRD-dir>/dev-workflows/<KEY>-feedback.md`". Since the kind prefixes landed, every folder the family creates is `<KIND>-<KEY>-<slug>` (`addressing.md:190-193`), and `<KEY>{-|_}<slug>` is §5's *legacy-layout* fallback form (`addressing.md:637-643`). Read literally, `PRD-BOOK-1-back-in-stock-alerts/` does not match `…/<KEY>{-|_}<slug>/`, so tier 1 never fires for a prefixed folder and the entry falls to tier 2's "unfiled" bucket. The reference does not say to resolve the folder through `resolve-address`, which is the one resolver `CLAUDE.md` § Hard constraints mandates.
 - **Failure scenario:** an agent following tier 1 as written on a current specs tree finds no PRD dir and writes `$SPECS_PATH/dev-workflows-feedback/<KEY>.md` with the notice "unfiled — move under the PRD dir". Cost does the same and lands in the pending file, where §9's reconciliation is then needed. The demo specs repo (`/home/ihudak/dev/demo/bookstore-specs`) shows that live runs so far interpreted the glob loosely and filed entries under `PRD-`/`BRD-` folders correctly. That is why the severity is MINOR: the text is false, and an agent obeys it at the agent's discretion.
@@ -579,21 +579,21 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### CORE-B9 — NIT — "the twenty-eight commands that measure themselves (§1)" points at a section that does not list them
+### CORE-B9 — NIT — "the twenty-eight commands that measure themselves (§1)" points at a section that does not list them — **Fixed in workflows-core 1.46.0 (batch B02)**
 - **Where:** `plugins/workflows-core/references/cost-emission.md:649`, `:853`
 - **What is wrong:** §1 is session-artifact resolution. The set of 28 is stated in the preamble (`:3-9`) and §7, so "(§1)" is a stale pointer.
 - **Suggested fix:** cite §7 or the preamble.
 - **Source:** review
 - **Confidence:** high
 
-### CORE-B10 — NIT — a stale "pending check" sits beside the live measurement that settles it
+### CORE-B10 — NIT — a stale "pending check" sits beside the live measurement that settles it — **Fixed in workflows-core 1.46.0 (batch B02)**
 - **Where:** `plugins/workflows-core/references/cost-emission.md:264-266`
 - **What is wrong:** "Pending a one-line implementation check that `.cost.total_cost_usd` is present on the statusline stdin … if absent, B is simply unavailable". The same section's compaction caveat (`:261-263`) reports a live `/specify` window whose B figure differed from A by $3.23, so B demonstrably works. This is a claim with an expiry date (`CLAUDE.md` § Editing discipline).
 - **Suggested fix:** drop the bullet, or restate it as "where a Claude Code version omits the field, B is unavailable".
 - **Source:** review
 - **Confidence:** medium
 
-### CORE-B11 — NIT — two comments in `cost-prices.yaml` are behind the page they cite
+### CORE-B11 — NIT — two comments in `cost-prices.yaml` are behind the page they cite — **Fixed in workflows-core 1.46.0 (batch B02)**
 - **Where:** `plugins/workflows-core/references/cost-prices.yaml:12`, `:63-66`
 - **What is wrong:**
   - `:12` says "the page does not say which tokens count". The pricing page now says: "A request's prompt length counts all of its input tokens, including cache reads and cache writes". The engine's reading matches it, so only the comment is wrong.

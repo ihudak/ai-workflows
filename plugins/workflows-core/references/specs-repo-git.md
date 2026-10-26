@@ -581,7 +581,7 @@ is each member's own rather than a new condition here:
 - **Follow-ups are a no-op.** No signal qualifies, so that phase resolves no
   target, writes nothing and ends silently (`followup-emission.md` §6).
 
-- **The cost entry is written, unless `--skip-costs`, in which case `workflows-core:run-flags` `skip-cost` advances the checkpoint and writes nothing, or unless the run carries `specs_git: misrooted` (§3.1), in which case `cost-emission.md` §8 reports it in the run's output and writes nothing** — and on the one stop that is no run at all, named below, none of this tail runs. `cost-emission.md` §11 settles it already —
+- **The cost entry is written, unless `--skip-costs`, in which case `workflows-core:run-flags` `skip-cost` advances the checkpoint and writes nothing, or unless the run carries `specs_git: misrooted` (§3.1), in which case `cost-emission.md` §8 reports it in the run's output and writes nothing, or unless no transcript holds the run's own invocation, in which case `cost-emission.md` §1 says so in one line and measures nothing** — and on the one stop that is no run at all, named below, none of this tail runs. `cost-emission.md` §11 settles it already —
   *Cost runs unless the user skipped it* — and it is the member that makes this tail matter on a
   refusal: the run spent the session's tokens whether or not it wrote a file,
   and a keyless one has a home too: that file's §9 pending file, save where its §8 tier 2 files it per docs or code repository, or reports it only. A refusal
