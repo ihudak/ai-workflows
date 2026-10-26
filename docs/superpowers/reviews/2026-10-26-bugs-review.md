@@ -1598,7 +1598,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## product-workflows — BRD route (third pass)
 
-### BRD3-B1 — MAJOR — A run stopped after Phase 5 wrote the register but before Phase 12 wrote the reconciliation record leaves `[CD#n]`s the re-run cannot reach, so the re-run mints a second `[CD#n]` for the same question
+### BRD3-B1 — MAJOR — A run stopped after Phase 5 wrote the register but before Phase 12 wrote the reconciliation record leaves `[CD#n]`s the re-run cannot reach, so the re-run mints a second `[CD#n]` for the same question — **Fixed in product-workflows 3.40.0 (batch B10)**
 - **Where:** `plugins/product-workflows/commands/brd-reconcile.md:1096-1106` (`[C]` chain start), `:1114-1121` (`[SR#n]` chain start), `:1067-1091` (same-review rule), `:1441-1452` (step 1 writes the *answered by the customer* line after the mint), `:1487-1491` (a record frozen `open` for want of its reason leaves its question held, with no *answered by* line), `:2473-2516` (Phase 12, the only place a pass's `[CD#n]` list is written); `plugins/product-workflows/references/decision-register-format.md:581-582` (§8: "A `[CD#n]`" is never a torn write).
 - **What is wrong:** Phase 4 finds an existing `[CD#n]` for a target in only three ways:
   - the `[CD#n]` named by the target's first *answered by the customer* line, which Phase 5 step 1 writes;
@@ -1616,7 +1616,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high for the `open`-for-want-of-reason and `[SR#n]` paths (the prose names the reconciliation record as their only locator); medium for the `decided` `[C]` path, which needs a stop inside Phase 5.
 
-### BRD3-B2 — MAJOR — A stop or interruption after Phase 5 loses the run's defect resolutions, ledger moves and sweep: the re-run reads its own frozen [CD#n] as re-affirmations
+### BRD3-B2 — MAJOR — A stop or interruption after Phase 5 loses the run's defect resolutions, ledger moves and sweep: the re-run reads its own frozen [CD#n] as re-affirmations — **Fixed in product-workflows 3.40.0 (batch B10)**
 - **Where:** commands/brd-reconcile.md:689-697 (which review froze a [CD#n] lives only in the reconciliation record), :1067-1083 (same-review rule keys on a pass in an earlier reconciliation record; "Without this rule a run cancelled halfway and restarted would mint a second [CD#n]"), :1162-1185 (re-affirmation: "mints no [CD#n] ... and adds nothing to the propagation sweep's changed-id set"), :1714-1715 (BRD_RECONCILE_UNDISPOSED_CORRECTION stop at the end of Phase 6), :2347-2348 (BRD_RECONCILE_UNSWEPT stop at the end of Phase 10), :2473-2475 (the record is written only in Phase 12), :146-149 (the command already states this outcome for one case: "leaving records frozen that no reconciliation record names: a re-run would find each re-affirmed, freeze nothing, and resolve no defect for it").
 - **What is wrong:** decisions.md carries no review provenance (§1's 13 fields), and the pass heading that every same-review rule keys on is written in Phase 12, after Phases 5–11 have written decisions.md, the corrections, banners, defect log, ledger and dependents. Two of the command's own gates stop between those writes and Phase 12. So does a lost session or exhausted context in the long interactive Phases 4–10.
 - **Failure scenario:** Phase 5 freezes [CD#4]. Phase 6 ends with one row undisposed and stops UNDISPOSED_CORRECTION. No reconciliation record exists. The re-run on the same review finds no pass, so the candidate is shown again. On Confirm it re-affirms [CD#4]: it freezes nothing and adds nothing to the changed-id set. Then:
@@ -1631,7 +1631,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Confidence:** high on the mechanism (every sentence quoted). Medium on how reachable it is: it needs a gate stop or an interruption after Phase 5.
 - **Also found independently by** sub-review C (its B2). It adds that Phases 7, 8 and 9 and the sweep each act only on records this run froze, completed or re-decided (`brd-reconcile.md:1794-1797`, `:1829`, `:1929-1931`, `:2014-2016`), so banners are lost too, and Phase 8's closing of fully-withdrawn held questions never fires.
 
-### BRD3-B3 — MAJOR — The documented remedy for a recorded-not-written dependent cannot write anything: the re-run's changed-id set is empty for the earlier pass's ids
+### BRD3-B3 — MAJOR — The documented remedy for a recorded-not-written dependent cannot write anything: the re-run's changed-id set is empty for the earlier pass's ids — **Fixed in product-workflows 3.40.0 (batch B10)**
 - **Where:** commands/brd-reconcile.md:2114-2118 (the changed-id set is what was frozen, completed, re-decided, reopened or superseded "this run"), :1067-1076 (a re-run skips the earlier pass's candidates as *already reconciled*, so they are frozen nothing this run), :2232-2239 and :2300 (a conditional_on position "this run did not move" "takes this disposition [inherited-unchanged] and no other"), :2340-2345 (the recorded-not-written dependent "is swept again in full ... the operator merges the dependent's pull request exactly so the sweep can land"), :2557-2559 (the fix named: re-run `/brd-reconcile <BRD-KEY> @<review-file>` on this same review); Phase 14 offers the same (docs/commands/brd-reconcile.md:125).
 - **What is wrong:** on that re-run, every candidate of the earlier pass is skipped by the same-review rule, so the changed-id set holds none of the ids that reached the dependent. The citation pass then matches nothing. The conditional_on pass presents each position with "this run did not move it", and that case admits only inherited-unchanged. So the reopened/reverted/withdrawn dispositions that were recorded for the dependent cannot be written. Nothing says the re-run reads the dispositions the earlier pass recorded (:2328-2329 "the dispositions this run would have written").
 - **Failure scenario:** dependent D's register is on an open PR, so pass 1 records "reopen D [VD#2]". The operator merges D's PR and re-runs as told. The sweep reaches D [VD#2] by conditional_on. It is told the prerequisite did not move this run, and can only take inherited-unchanged. D [VD#2] stays decided on a moved prerequisite, and the run records the sweep as landed.
@@ -1648,7 +1648,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium (the wholesale copy is stated; whether a live chain of length 2 exists in any user tree is not measured)
 
-### BRD3-B5 — MINOR — Phase 10 names the wrong BRD in the rebaseline fix for a dependent's will-change finding
+### BRD3-B5 — MINOR — Phase 10 names the wrong BRD in the rebaseline fix for a dependent's will-change finding — **Fixed in product-workflows 3.40.0 (batch B10)**
 - **Where:** commands/brd-reconcile.md:2332-2337 ("A [CG#n] or [DG#n] carrying horizon: will-change whose named prerequisite decision this run has just frozen ... recorded with the concrete fix — `/product-workflows:prd-ground <BRD-KEY> --rebaseline`").
 - **What is wrong:** a finding whose prerequisite decision is one of this BRD's decisions sits in a dependent BRD's grounding. It is set there by prd-ground Phase 6 from that dependent's declared prerequisite, and grounding-format §5 says a horizon names *another* BRD's decision. Throughout the command, `<BRD-KEY>` is this run's own slice (compare BRD2-B5). The fix therefore tells the operator to re-ground the slice just reconciled, which has no such finding, and not the dependent that does.
 - **Suggested fix:** `/product-workflows:prd-ground <DEPENDENT-KEY> --rebaseline`, naming the dependent the finding sits in. The same applies to the *what still needs a human* line (:2536).
@@ -1750,7 +1750,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### BRD3-B13 — MINOR — `/brd-reconcile`'s `BRD_RECONCILE_EMPTY_DIGEST` tells the operator to re-run "telling the run the file is prose", but the command gives them no way to say so
+### BRD3-B13 — MINOR — `/brd-reconcile`'s `BRD_RECONCILE_EMPTY_DIGEST` tells the operator to re-run "telling the run the file is prose", but the command gives them no way to say so — **Fixed in product-workflows 3.40.0 (batch B10)**
 - **Where:** `plugins/product-workflows/commands/brd-reconcile.md:859` (the stop text), `:790` (the dispatch hard-codes `mode: auto`), `:77-78` and `:839-840` ("`free-text` where the operator has told it the file is prose"), `:164-200` (Phase 0 parses `<BRD-KEY>`, `@<review-file>`, `--sent` and the run flags, and nothing else).
 - **What is wrong:** There is no flag, no question and no step that sets the reader's mode to `free-text`. The dispatch's mode is the literal `auto`.
 - **Failure scenario:** A schema-looking review parses to three empty sets with section 2 reading `approved-with-required-changes`. The run stops. The operator re-runs as told, with `@<review-file>`. The dispatch is `auto` again, the reader returns the same digest, and the same stop fires. There is no exit except editing the review, which breaks the one-new-file rule.
@@ -1804,7 +1804,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### BRD3-B19 — MINOR — `/brd-reconcile` gates on the folder's *most recent* prompt, before it knows which package the review answers
+### BRD3-B19 — MINOR — `/brd-reconcile` gates on the folder's *most recent* prompt, before it knows which package the review answers — **Fixed in product-workflows 3.40.0 / workflows-core 1.50.0 (batch B10)**
 - **Where:** `plugins/product-workflows/commands/brd-reconcile.md:319-325` ("Execute it against the resolved folder's **most recent `customer-review-prompt-<YYYYMMDD>.md`**"), `:345-351` (`BRD_RECONCILE_PACKAGE_NOT_HANDED_OFF`: "Commit and merge the package's files…"), against `:792-819` (Phase 3 resolves the answered package later, by the `Package reviewed` line).
 - **What is wrong:** The gate is about "what the customer saw", but it tests the newest package, not the one the review answers.
 - **Failure scenario:** Package D1 is sent and merged. Package D2 is built later with its handoff declined, abandoned or not yet merged. The customer returns a review of D1, whose `Package reviewed:` line names D1. `/brd-reconcile` stops on D2 with `PACKAGE_NOT_HANDED_OFF` and tells the operator to land D2's files, a package nobody reviewed, before D1's answers can be reconciled.
