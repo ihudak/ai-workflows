@@ -12,20 +12,26 @@ check the section they write, through this script.
       parse's four fields, each piece also carrying "paths" (the paths it matches, in input order),
       plus "unassigned" (the paths no piece matches) and "split" (true exactly when status is
       "pieces" and two or more pieces have a non-empty "paths"). <paths-file> holds NUL-separated
-      paths, as `git diff --name-only -z` writes them; an empty file is no paths. A path two pieces
-      both match makes the status "malformed", the defect naming the path and both pieces. On
-      "none" or "malformed", every path is unassigned and "split" is false.
+      paths, as `git diff --name-only -z` writes them; an empty file is no paths. Each path comes
+      back byte for byte as given. A path two pieces both match makes the status "malformed", the
+      defect naming the path and both pieces; so does a path that is not valid UTF-8, the defect
+      naming it with each such byte written \\xNN, since a caller reading the output as text could
+      not name that file again. On "none" or "malformed", every path is unassigned and "split" is
+      false.
 
 The format read (design-format's section on pieces):
   The section starts at a line `## Pieces` outside any fenced code block and ends at the next `## `
-  heading outside one, or the end of the file. It is `none` when there is no such heading, or the
-  section's first non-blank line begins `_N/A`. Otherwise it holds only blank lines, one
+  heading outside one, or the end of the file; as in CommonMark, a backtick fence's info string holds
+  no backtick, so a line like ```x``` y opens no fence. It is `none` when there is no such heading, or
+  the section's first non-blank line begins `_N/A`. Otherwise it holds only blank lines, one
   `Reason: <text>` line before the first piece, and pieces, each a `### <name>` line (kebab-case,
-  unique) followed by one `- Files: ...` line and an optional `- Contract: ...` line. CRLF is accepted.
-  `Files:` is a comma-separated list of backtick-quoted entries, nothing else but commas and spaces.
-  `Contract:` is comma-separated plain text, or `none`.
+  unique) followed by one `- Files: ...` line and an optional `- Contract: ...` line; any other line
+  is malformed, a fenced block inside the section among them, its lines read as the section's. CRLF
+  is accepted. `Files:` is a comma-separated list of backtick-quoted entries, nothing else but commas
+  and spaces. `Contract:` is comma-separated plain text, or `none`.
 
-Each Files entry is a pattern relative to the repository's top level: `*` matches any run of
+Each Files entry is a pattern relative to the repository's top level, beginning with neither `/` nor
+`./` (one that does is malformed): `*` matches any run of
 characters except `/`; `**` as a whole path segment matches zero or more segments; `?` matches one
 character except `/`; an entry ending in `/` matches everything under that directory; every other
 character is literal; an entry with no wildcard matches that one path. No entry may appear in two
@@ -57,6 +63,25 @@ def show(s):
     return s.encode("utf-8", "surrogateescape").decode("utf-8", "replace")
 
 
+def escaped(s):
+    """A path with each byte that is not UTF-8 written as \\xNN."""
+    return s.encode("utf-8", "surrogateescape").decode("utf-8", "backslashreplace")
+
+
+def fence_of(line):
+    """(char, length) of the fence run a line starts with, or None where it starts none.
+
+    As in CommonMark, a backtick fence's info string holds no backtick: ```x``` y is no fence.
+    """
+    m = FENCE_RE.match(line)
+    if not m:
+        return None
+    run = m.group(1)
+    if run[0] == "`" and "`" in line[m.end():]:
+        return None
+    return run[0], len(run)
+
+
 def section_lines(text):
     """The lines of the `## Pieces` section (without line ends), or None where there is none."""
     lines = text.split("\n")
@@ -65,16 +90,15 @@ def section_lines(text):
     out = []
     for raw in lines:
         line = raw[:-1] if raw.endswith("\r") else raw
-        m = FENCE_RE.match(line)
+        f = fence_of(line)
         if fence is not None:
-            if m and m.group(1)[0] == fence[0] and len(m.group(1)) >= fence[1] \
-                    and line.strip() == m.group(1):
+            if f and f[0] == fence[0] and f[1] >= fence[1] and line.strip() == f[0] * f[1]:
                 fence = None
             if inside:
                 out.append(line)
             continue
-        if m:
-            fence = (m.group(1)[0], len(m.group(1)))
+        if f:
+            fence = f
             if inside:
                 out.append(line)
             continue
@@ -111,6 +135,9 @@ def parse_files(rest):
         entry = rest[i + 1:j]
         if not entry.strip():
             return None, "a Files entry is empty"
+        if entry.startswith("/") or entry.startswith("./"):
+            return None, ("the Files entry %s begins with / or ./; an entry is relative to the "
+                          "repository's top level" % show(entry))
         entries.append(entry)
         i = j + 1
         expecting = False
@@ -243,6 +270,12 @@ def assign(parsed, paths):
         out["pieces"] = []
         out["unassigned"] = list(paths)
         return out
+    for path in paths:
+        try:
+            path.encode("utf-8")
+        except UnicodeEncodeError:
+            return {"status": "malformed", "defect": "the path %s is not UTF-8" % escaped(path),
+                    "reason": parsed["reason"], "pieces": [], "unassigned": list(paths), "split": False}
     rxs = [[glob_to_regex(e) for e in p["files"]] for p in parsed["pieces"]]
     for path in paths:
         hit = [i for i, rs in enumerate(rxs) if any(r.fullmatch(path) for r in rs)]
@@ -361,9 +394,10 @@ def selftest():
         check("parse_crlf", parse(TWO, crlf=True) == r)
         check("parse_section_ends_at_next_h2", len(r["pieces"]) == 2)
 
-        def bad(name, text):
+        def bad(name, text, want=None):
             r = parse(text)
-            check(name, r["status"] == "malformed" and bool(r["defect"]) and r["pieces"] == [])
+            check(name, r["status"] == "malformed" and bool(r["defect"]) and r["pieces"] == []
+                  and (want is None or want in r["defect"]))
             return r
 
         bad("parse_no_reason", TWO.replace("Reason: the parser and the runs change apart\n", ""))
@@ -383,6 +417,25 @@ def selftest():
         check("parse_ignores_fenced", r["status"] == "none")
         r = parse("# D\n\n~~~md\n## Pieces\n~~~\n")
         check("parse_ignores_tilde_fenced", r["status"] == "none")
+        r = parse(TWO.replace("# Design\n\n", "# Design\n\n```code``` text\n\n"))
+        check("parse_backtick_info_string_opens_no_fence", r["status"] == "pieces" and len(r["pieces"]) == 2)
+        r = parse("# D\n\n~~~ a`b\n## Pieces\n~~~\n")
+        check("parse_tilde_info_string_backtick_still_fence", r["status"] == "none")
+        bad("parse_second_reason", TWO.replace("### parser", "Reason: again\n\n### parser"), "second Reason")
+        bad("parse_reason_after_first_piece", TWO.replace("### runs", "Reason: late\n\n### runs"),
+            "after the first piece")
+        bad("parse_second_files", TWO.replace("- Contract: none", "- Files: `src/other/**`\n- Contract: none"),
+            "second Files")
+        bad("parse_second_contract", TWO.replace("- Contract: none", "- Contract: none\n- Contract: A"),
+            "second Contract")
+        bad("parse_unclosed_backtick", TWO.replace("`src/Lexer.java`", "`src/Lexer.java"), "never closes")
+        bad("parse_empty_entry", TWO.replace("`src/Lexer.java`", "` `"), "is empty")
+        bad("parse_fence_in_section", TWO.replace("\n### runs", "\n```\nexample\n```\n\n### runs"),
+            "does not allow: ```")
+        bad("parse_entry_leading_slash", TWO.replace("`src/Lexer.java`", "`/src/Lexer.java`"),
+            "/src/Lexer.java begins with")
+        bad("parse_entry_leading_dot_slash", TWO.replace("`src/Lexer.java`", "`./src/Lexer.java`"),
+            "./src/Lexer.java begins with")
 
         # glob grammar, through assign
         def matched(entry, path):
@@ -403,6 +456,8 @@ def selftest():
               and not matched("a[1]", "a1"))
         check("glob_trailing_slash", matched("src/a/", "src/a/X.java") and matched("src/a/", "src/a/b/X.java")
               and not matched("src/a/", "src/ab/X.java") and not matched("src/a/", "src/a"))
+        check("glob_double_star_inside_segment", matched("src/a**.java", "src/aX.java")
+              and matched("src/a**.java", "src/a.java") and not matched("src/a**.java", "src/a/X.java"))
 
         # assign
         r = assign_(TWO, ["src/parser/P.java", "src/Lexer.java", "src/runs/R.java", "README.md"])
@@ -415,10 +470,14 @@ def selftest():
         r = assign_(TWO, ["src/parser/P.java", "src/runs/R.java", "test/parser/PTest.java", "test/runs/RTest.java"])
         check("assign_unassigned_tests", r["unassigned"] == ["test/parser/PTest.java", "test/runs/RTest.java"]
               and r["split"] is True)
-        odd = ["x/a b.txt", "x/it's.txt", "x/café.txt", "x/bad\udcff.txt", "x/new\nline.txt"]
+        odd = ["x/a b.txt", "x/it's.txt", "x/café.txt", "x/new\nline.txt"]
         r = assign_(pieces_doc("`x/*`", "`zz-never/**`"), odd)
         check("assign_odd_paths", r["status"] == "pieces" and r["pieces"][0]["paths"] == odd
               and r["unassigned"] == [])
+        r = assign_(pieces_doc("`x/*`", "`zz-never/**`"), ["x/ok.txt", "x/bad\udcff.txt"])
+        check("assign_non_utf8_path_malformed", r["status"] == "malformed" and r["split"] is False
+              and r["pieces"] == [] and "x/bad\\xff.txt" in r["defect"] and "not UTF-8" in r["defect"]
+              and r["unassigned"] == ["x/ok.txt", "x/bad\udcff.txt"])
         r = assign_(TWO, ["src/parser/Old.java", "src/runs/New.java"])
         check("assign_rename_touches_both", r["split"] is True)
         r = assign_(pieces_doc("`src/**`", "`src/a/X.java`"), ["src/a/X.java"])
@@ -441,6 +500,8 @@ def selftest():
         check("missing_design_exit_4", code == 4 and "nope.md" in err)
         code, _, err = cli("assign", d, os.path.join(tmp, "nopaths"))
         check("missing_paths_exit_4", code == 4 and "nopaths" in err)
+        code, _, err = cli("assign", os.path.join(tmp, "nope2.md"), e)
+        check("assign_missing_design_exit_4", code == 4 and "nope2.md" in err)
         check("usage_exit_2", cli()[0] == 2 and cli("frob")[0] == 2 and cli("parse")[0] == 2
               and cli("assign", d)[0] == 2 and cli("parse", d, e)[0] == 2)
 
