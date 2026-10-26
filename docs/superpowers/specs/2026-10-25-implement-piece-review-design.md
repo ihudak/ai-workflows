@@ -2,6 +2,8 @@
 
 **Date:** 2026-10-25 · **Plugins:** dev-workflows (`/implement`, `/design`, `code-review`, `design-reviewer`, `design-format`) · **Status:** approved by the user on 2026-10-25 · **Replaces:** part (a) of `docs/superpowers/specs/2026-10-24-implement-one-writer-design.md`, and narrows its parts (b) and (c) to the one thing kept (§5)
 
+> **Status on 2026-10-26: built and verified** (`docs/superpowers/verification/2026-10-25-implement-piece-review.md`). One premise below did not hold: §3.2 and §4 name BOOK-1-01 as a change one reviewer can review in depth, which no one had measured. A live `/design BOOK-1-01` drew four pieces with a reason that holds under §3.2's own model — its specification carries 150 test cases against BOOK-3-01's 85 — and ruling P22 of the record finds the expectation, not the format's wording, wrong. The body stays as written, as the record of what was decided on 2026-10-25.
+
 **Who decided what.**
 - Everything marked **(Claude's call)** was decided by Claude, not the user, and is open to the user's correction. Everything else is the user's decision.
 - The user chose this design ("option 1") over merging part (a), reworking it, or shelving the sub-project, after the A/B in §1.
