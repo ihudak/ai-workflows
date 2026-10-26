@@ -5,7 +5,7 @@
 The mechanics for Phase 6.2's inline-profiling-branch handling and Phase 8.5's
 finish & handoff (squash → opt-in push → copy-paste PR draft). Generic git +
 PR-draft logic; the command cites this so it stays lean. Read repo specifics
-from the resolved `profile`. This flow does not open the pull request itself: docs repos here are Bitbucket-hosted, and Bitbucket offers no CLI that can create one. Where a host does, the family opens one via `gh` — `workflows-core:phase-handoff` §2.6 in `$SPECS_PATH`, `dev-workflows:code-handoff` §2.6 in a code repo — but no command of this plugin opens one anywhere.
+from the resolved `profile`. This flow does not open the pull request itself: docs repos here are Bitbucket-hosted, and Bitbucket offers no CLI that can create one. Where a host does, the family opens one via `gh` — `workflows-core:phase-handoff` §2.6 in `$SPECS_PATH`, `dev-workflows:code-handoff` §2.6 in a code repo — and no command of this plugin opens one in a docs repository. Its one pull request is `/docs-workflows:release-notes`' own, in `$SPECS_PATH`, for its draft, through `handoff-to-main`.
 
 ## 1. The branch entering Phase 8.5
 
@@ -99,4 +99,4 @@ Compose the draft and BOTH write and show it:
     quotes its backticks and `$(…)` would be command-substituted.
   - other → "Open a pull request in your host and paste the title + body above."
 
-For a Bitbucket-hosted docs repo there is no CLI to open the pull request with, so this flow writes the draft and the user opens it. This is a host capability limit, not a policy: the family does open one where a host offers a CLI (`workflows-core:phase-handoff` §2.6 in `$SPECS_PATH`, `dev-workflows:code-handoff` §2.6 in a code repo), and no command of this plugin opens one anywhere, this docs repo included.
+For a Bitbucket-hosted docs repo there is no CLI to open the pull request with, so this flow writes the draft and the user opens it. This is a host capability limit, not a policy: the family does open one where a host offers a CLI (`workflows-core:phase-handoff` §2.6 in `$SPECS_PATH`, `dev-workflows:code-handoff` §2.6 in a code repo), and no command of this plugin opens one in a docs repository — `/docs-workflows:release-notes` opens one in `$SPECS_PATH` alone, for its draft, through `handoff-to-main`.

@@ -358,7 +358,7 @@ Example consequence line:
 The line names a linter or a build CI runs on the pull request only where the repository's CI runs
 it, as a `ci_still_checks` line does (`gate-ledger.md` §6).
 
-- **"Cancel"** → stop the run. Nothing has been written.
+- **"Cancel"** → stop the run. This check has written nothing; where `/document`'s inline profiling wrote before it, committing a generated profile on a branch, `/document`'s own stop says what it left.
 - **"Continue anyway"** → for each gate named in the consequence line, **pre-seed** its ledger row's
   expected outcome and carry the user's choice verbatim, so that when the gate is reached its row
   records `SKIPPED_BY_USER` (or `DEGRADED` where a fallback does run) with `user_decision` already
