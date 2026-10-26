@@ -214,9 +214,9 @@ reconstruct it.
 ## Build failure
 
 1. Read the full error; attempt an obvious automatic fix (wrong API, missing plugin). Running a
-   dependency's install-time code by any route — dropping `--ignore-scripts` or `--only-binary=:all:`, a
-   rebuild, a `--no-binary` install, a configuration that enables scripts — is never one: a failure
-   after such an install is what `skipped_install_scripts:` names for the user (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A package pip refused for want of a
+   dependency's install-time code by any route — dropping `--ignore-scripts`, `--only-binary=:all:`, uv's `--no-build` or
+   Composer's `--no-scripts` or `--no-plugins`, a rebuild, a `--no-binary` install, a configuration that enables scripts — is never one: a failure
+   after such an install is what `skipped_install_scripts:` names for the user (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`). A package pip or uv refused for want of a
    wheel is a build failure here, with that package in the list.
 2. If unfixable in one attempt: revert by running `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md`
    §6.2's script from the request's `pre_edit_tree:`, then restore `node_modules` as `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`'s "After a revert" says, set `status: BUILD_FAILED`, report clearly, and

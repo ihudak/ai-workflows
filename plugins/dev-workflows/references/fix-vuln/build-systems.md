@@ -13,7 +13,7 @@ Inspect the repo root (and common subdirectories) for these indicator files in p
 | `go.mod` | Go modules |
 | `*.csproj` or `*.sln` | .NET / NuGet |
 | `Gemfile` | Ruby / Bundler |
-| `Cargo.toml` | Rust / Cargo |
+| `Cargo.toml` | Rust / Cargo (see its section below) |
 
 Multiple ecosystems may coexist (e.g., a Java backend + npm frontend). Check all of them.
 
@@ -89,7 +89,7 @@ Edit the version in the appropriate `pom.xml`. Prefer updating `<properties>` to
 
 ## npm / yarn / pnpm
 
-**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below — npm, yarn, pnpm, pip, pipenv — skips the scripts and source builds a new release ships, and the agent names what it skipped.
+**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install in this section, npm's, yarn's and pnpm's alike, skips the scripts a new release ships, and the agent names what it skipped.
 
 ### Detect library
 
@@ -150,9 +150,9 @@ CI=true npm test
 
 ---
 
-## Python (pip)
+## Python (pip / uv)
 
-**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below — npm, yarn, pnpm, pip, pipenv — skips the scripts and source builds a new release ships, and the agent names what it skipped.
+**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below — pip, pipenv and uv — skips the source builds a new release ships, and the agent names what it skipped; Poetry, PDM and Hatch install unchanged (`install-time-code.md`: not yet covered, and why).
 
 ### Detect library
 
@@ -164,7 +164,7 @@ grep -ri "requests" requirements.txt Pipfile pyproject.toml
 
 - **`requirements.txt`**: change `requests==2.28.0` to `requests==<safe-version>` (use `==` for pinned, `>=` for minimum).
 - **`Pipfile`**: edit `[packages]` section and run `PIP_ONLY_BINARY=:all: pipenv install`.
-- **`pyproject.toml`**: edit `[project.dependencies]` or `[tool.poetry.dependencies]`, then install it — with pip, `pip install --only-binary=:all: -e .`; with Poetry, uv, PDM or Hatch, by its own command, unchanged (`install-time-code.md` says why).
+- **`pyproject.toml`**: edit `[project.dependencies]` or `[tool.poetry.dependencies]`, then install it — with pip, `pip install --only-binary=:all: -e .`; with uv (a `uv.lock`), `uv lock --no-build` then `uv sync --no-build`, or `uv add --no-build <package>==<safe-version>` in one step; with Poetry, PDM or Hatch, by its own command, unchanged (`install-time-code.md`: not yet covered, and why).
 
 ### Verify
 
@@ -270,6 +270,35 @@ bundle exec rspec          # or rake test / bundle exec minitest
 
 ---
 
+## Rust / Cargo
+
+Cargo runs no dependency code at install time; a crate's `build.rs` runs when it is built, as the build step runs any code.
+
+### Detect library
+
+```bash
+grep -n '"<crate>"\|^<crate> =\|^\[dependencies\.<crate>\]\|name = "<crate>"' Cargo.toml Cargo.lock
+```
+
+`Cargo.lock` lists every resolved crate, transitive ones included, as a `[[package]]` entry with its `name` and `version`; `Cargo.toml` names only the direct ones.
+
+### Update
+
+```bash
+cargo update -p <crate>@<current-version> --precise <safe-version>
+```
+
+`<crate>@<current-version>` names the one entry to move where `Cargo.lock` holds two versions of the crate, which a bare `-p <crate>` rejects as ambiguous. That moves the pin in `Cargo.lock`, a transitive crate's included, within what `Cargo.toml` allows; editing `Cargo.toml` alone moves no transitive pin. Where the requirement in `Cargo.toml` excludes the safe version, raise it there first, then run the same command.
+
+### Verify build
+
+```bash
+cargo build
+cargo test
+```
+
+---
+
 ## Resolving the dependency tree
 
 A library can be on the classpath or in the bundle without any manifest naming it, because a direct dependency brings it in. Where the ecosystem keeps a lockfile, the lockfile lists every resolved package, transitive ones included, and reading it is enough. Where it keeps none, only the build tool can say, and `vuln-research` runs no command: it returns `NEEDS_TREE`, and `/vuln` Step 2 runs the tree command below and hands the output back to it.
@@ -283,6 +312,7 @@ A library can be on the classpath or in the bundle without any manifest naming i
 | Go | `go.sum`, `go.mod` | not needed |
 | .NET / NuGet | `packages.lock.json` | not needed where one is on file; otherwise `dotnet list package --include-transitive` |
 | Ruby / Bundler | `Gemfile.lock` | not needed |
+| Rust / Cargo | `Cargo.lock` | not needed |
 
 ## Transitive dependency strategy
 
@@ -309,4 +339,16 @@ npm ls <package>
 
 # Go
 go list -m all | grep <module>
+
+# Cargo
+cargo tree -i <crate>
+
+# pip / uv
+pip show <package>          # or: uv pip show <package>
+
+# NuGet
+dotnet list package --include-transitive | grep -i <package>
+
+# Bundler
+bundle list | grep <gem_name>
 ```

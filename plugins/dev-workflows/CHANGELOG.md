@@ -5,6 +5,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.40.0] — 2026-10-26
+
+Fix batch B22 of the 2026-10-26 review: the references `/vuln` and `/upgrade` consult, install-time code, and the two docs pages. Needs nothing newer than `workflows-core` 1.57.1.
+
+### Changed
+- **uv and Composer install without their install-time code** (VU-G1). `install-time-code.md` gains a row for each: uv's `add`, `lock` and `sync` carry `--no-build`, and `uv sync --locked --no-build` installs exactly the lockfile; its `pip` interface carries `--only-binary :all:`. Measured on uv 0.13.5, `--no-build` refuses every source distribution, a git URL and a local path outside the project included, and builds only the project and its workspace members, so pip's "What the flags do not stop" does not apply to uv's project commands; its `pip` interface builds every editable requirement and follows pip's rule. Composer's `install`, `update` and `require` carry `--no-scripts --no-plugins`; the root `composer.json`'s scripts for the install's events then run as the project's own commands (`composer run-script --no-plugins <event>`), and each new `composer-plugin` package is named as skipped. Composer's rules follow its documentation and are not measured here. The allow forms: `uv pip install --only-binary :all: --no-binary <names>`, measured; nothing for uv's project commands, which have no per-package exception; `composer run-script <event>` for a root script; nothing for a plugin. `build-systems.md` and `ecosystems.md` write every uv and Composer install that way. **Poetry stays uncovered**: its only setting that refuses a source build, `installer.only-binary`, exists from Poetry 2.0.0 on, so on an older Poetry it would hold back nothing and say nothing; Bundler, PDM and Hatch stay uncovered too, and the reference says why for each. Check 21 now holds uv's project commands and Composer's installs to those flags.
+
+### Fixed
+- **`nvd-api.md`'s worked example contradicted its own range rule**, concluding `5.16.7` for the ranges whose rule above it gives `5.15.16` for a `5.15.x` project; the safe version now depends on the current version's range. (VU-B6)
+- **`nvd-api.md`'s Maven Central query had no `core=gav`**, so it returned one document per artifact with only `latestVersion`, and its CPE vendor examples were Maven groupIds; it now lists versions, and the vendors read `apache` and `fasterxml`. (VU-B7)
+- **`build-systems.md` detected Cargo but had no Cargo section**; it gains one (`Cargo.lock` detection, `cargo update -p <crate> --precise <version>`, which moves a transitive pin as editing `Cargo.toml` does not), and *Confirming the fix* gains Cargo, pip and uv, NuGet and Bundler lines. (VU-B14)
+- **The GitHub Actions SHA-pin update wrote an annotated tag's object id**, which is not a commit; it now queries the peeled `^{}` ref and takes its commit. (VU-B8)
+- **`ecosystems.md` said NuGet's last version is the latest stable**; prereleases sort after it, so the latest stable is the last entry with no prerelease suffix. (VU-B15)
+- **The install references said `install-time-code.md` "says why" Poetry and the others install unchanged**, where it gave no reason; they now say "not yet covered, and why", and the reference gives each reason. (VU-B17)
+- **Both docs pages said a revert leaves `node_modules` as the upgrade left it**; since 4.14.0 the run puts it back to the lockfile without install scripts and names each package it put back unbuilt. (VU-B5)
+- **The `/vuln` and `/upgrade` diagrams left out the commit, the push and pull request, and the loop**; both now draw the per-unit commit, the loop to the next unit, the stop where a commit does not land, and the consent-gated push. (DQD-B8)
+
 ## [4.39.0] — 2026-10-26
 
 Fix batch B06 of the 2026-10-26 review: `/vuln` and `/upgrade` orchestration and agents. Needs nothing newer than `workflows-core` 1.56.0; `workflows-core` 1.57.1 corrects one sentence about `/upgrade` and either runs beside the other.

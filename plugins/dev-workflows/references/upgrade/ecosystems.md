@@ -109,7 +109,7 @@ Or the `spring-boot.version` property if using the BOM without a parent.
 
 ## npm / yarn / pnpm (Node.js)
 
-**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below — npm, yarn, pnpm, pip, pipenv — skips the scripts and source builds a new release ships, and the agent names what it skipped.
+**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install in this section, npm's, yarn's and pnpm's alike, skips the scripts a new release ships, and the agent names what it skipped.
 
 ### Detecting a package
 
@@ -168,9 +168,9 @@ CI=true npm test
 
 ---
 
-## Python (pip / poetry / pipenv)
+## Python (pip / poetry / pipenv / uv)
 
-**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below — npm, yarn, pnpm, pip, pipenv — skips the scripts and source builds a new release ships, and the agent names what it skipped.
+**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every install below — pip, pipenv and uv — skips the source builds a new release ships, and the agent names what it skipped; Poetry, PDM and Hatch install unchanged (`install-time-code.md`: not yet covered, and why).
 
 ### Detecting a package
 
@@ -181,7 +181,8 @@ grep -i "<package>" requirements.txt Pipfile pyproject.toml setup.cfg
 ### Upgrading
 
 - **requirements.txt**: edit the pinned version, then `pip install --only-binary=:all: -r requirements.txt`
-- **poetry**: `poetry add <package>@<version>` or edit `pyproject.toml` then `poetry lock` (`poetry lock --no-update` on Poetry 1) then `poetry install` — Poetry installs unchanged (`install-time-code.md` says why)
+- **poetry**: `poetry add <package>@<version>` or edit `pyproject.toml` then `poetry lock` (`poetry lock --no-update` on Poetry 1) then `poetry install` — Poetry installs unchanged, its source builds included (`install-time-code.md`: not yet covered, and why)
+- **uv** (a `uv.lock`): `uv add --no-build <package>==<version>`, or edit `pyproject.toml` then `uv lock --no-build` and `uv sync --no-build`; for the `pip` interface, `uv pip install --only-binary :all: -r requirements.txt`
 - **pipenv**: `PIP_ONLY_BINARY=:all: pipenv install <package>==<version>`
 
 ### Querying PyPI
@@ -252,7 +253,7 @@ dotnet add package <PackageName> --version <version>
 ```
 GET https://api.nuget.org/v3-flatcontainer/<package_lower>/index.json
 ```
-`.versions` — list of all versions (last is latest stable).
+`.versions` — every published version in SemVer order, prereleases included, so the latest stable is the last entry with no `-` prerelease suffix (`8.0.8`, not a later `9.0.0-preview.7`).
 
 ### SDK / runtime version
 
@@ -343,16 +344,18 @@ composer show <package> 2>/dev/null | head -5
 
 ### Upgrading
 
+**Install without install-time code** (`${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`): every Composer install, update or require carries `--no-scripts --no-plugins`, and the agent names what it skipped.
+
 ```bash
-composer require <package>:<version>        # direct dependency, exact
-composer require "<package>:^<version>"     # allow patch/minor updates
-composer update <package>                   # update within constraint
+composer require --no-scripts --no-plugins <package>:<version>        # direct dependency, exact
+composer require --no-scripts --no-plugins "<package>:^<version>"     # allow patch/minor updates
+composer update --no-scripts --no-plugins <package>                   # update within constraint
 ```
 
 Or edit `composer.json` manually and run:
 
 ```bash
-composer update <package>
+composer update --no-scripts --no-plugins <package>
 ```
 
 ### Querying Packagist
@@ -365,7 +368,7 @@ GET https://packagist.org/packages/<vendor>/<package>.json
 ### Build & test
 
 ```bash
-composer install
+composer install --no-scripts --no-plugins
 vendor/bin/phpunit        # or php artisan test for Laravel
 ```
 
@@ -424,10 +427,11 @@ GET https://api.github.com/repos/<owner>/<repo>/releases/latest
 
 Replace `@oldref` with `@newref` in the workflow YAML file.
 
-If pinned to a SHA (`uses: actions/checkout@abc1234`), also update the SHA to the commit at the new tag:
+If pinned to a SHA (`uses: actions/checkout@abc1234`), also update the SHA to the **commit** at the new tag:
 ```bash
-git ls-remote https://github.com/<owner>/<repo>.git refs/tags/<tag>
+git ls-remote https://github.com/<owner>/<repo>.git 'refs/tags/<tag>' 'refs/tags/<tag>^{}'
 ```
+Take the `refs/tags/<tag>^{}` line where it prints one: an annotated tag's own line carries the tag object's id, which is not a commit, and only the peeled `^{}` line carries the commit it points at. A lightweight tag prints only its own line, which is the commit.
 
 ### Validation
 

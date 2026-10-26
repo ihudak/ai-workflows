@@ -34,7 +34,7 @@ cpe:2.3:a:<vendor>:<product>:<version>:...
 ```
 
 - Part `a` = application, `o` = OS, `h` = hardware
-- `vendor` and `product` together identify the library (e.g., `org.apache.activemq` / `activemq`, `com.fasterxml.jackson.core` / `jackson-databind`)
+- `vendor` and `product` together identify the library (e.g., `apache` / `activemq`, `fasterxml` / `jackson-databind`). The vendor is NVD's name for the publisher, not a Maven groupId: match the product against the artifact, never the vendor against the groupId
 
 ## Deriving the safe version
 
@@ -76,7 +76,7 @@ cpe:2.3:a:<vendor>:<product>:<version>:...
 }
 ```
 
-Safe version: `5.16.7` (or the latest 5.x patch release >= that bound).
+Safe version: by the range holding the current version (step 4 above) — `5.15.16` for a `5.15.x` project, `5.16.7` for a `5.16.x` one, or the latest patch release of that line at or above the bound.
 
 ## Fallback: NVD web page
 
@@ -92,7 +92,7 @@ Use `web_fetch` to retrieve the page and extract the affected software table.
 
 Once the safe version floor is known, confirm the version exists and find the latest patch in that line:
 
-- **Maven/Gradle**: `https://search.maven.org/solrsearch/select?q=g:<groupId>+AND+a:<artifactId>&rows=20&wt=json`
+- **Maven/Gradle**: `https://search.maven.org/solrsearch/select?q=g:<groupId>+AND+a:<artifactId>&core=gav&rows=200&wt=json` (`core=gav` lists one document per version; without it the default core returns one per artifact, carrying only `latestVersion`)
 - **npm**: `https://registry.npmjs.org/<package>`  (`.versions` keys list all published versions)
 - **PyPI**: `https://pypi.org/pypi/<package>/json`  (`.releases` keys)
 - **Go**: `https://proxy.golang.org/<module>/@v/list`
