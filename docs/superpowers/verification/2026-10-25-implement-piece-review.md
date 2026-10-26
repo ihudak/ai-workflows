@@ -268,3 +268,17 @@ Two findings the ledger settles without a P-number:
 ## 9. The ledger
 
 The SDD ledger is copied verbatim beside this file as `2026-10-25-implement-piece-review-ledger.md`.
+
+## 10. Addendum — after the merge (2026-10-26)
+
+Written after the review of the merged release (`docs/superpowers/reviews/2026-10-26-piece-review-a980e58-review.md`), in the fix batch for it. Sections 1 to 9 stand as written, and the ledger is unchanged: it is a verbatim copy.
+
+**The merge and the merged tree (the review's N8).** §1 to §9 were measured at `7c436653`, before the branch took `main`: `8f96c887` merged `origin/main` into the branch (#76 B02, #77 B04, #78 B07 and the 2026-10-26 reviews — `workflows-core` 1.47.0, `security-workflows` 0.4.0, `product-workflows` 3.37.0), `dd11ef27` dated the CHANGELOG, and `a980e585` merged the branch into `main`, its tree equal to its second parent's. No file under `plugins/dev-workflows` changed between `7c436653` and `a980e585`, so no value in §2 moved. On the merged tree, the full chain of `.github/workflows/validate-catalog.yml`'s `run:` steps, run as one `&&` chain on a worktree at `a980e585`, exits 0, `pieces.py --selftest` printing PASS (52 checks) and `run-state.py --selftest` PASS (97 checks). That 4.32.0 runs beside `workflows-core` 1.45.0 holds at the merge too: no `plugins/workflows-core` file is in `a980e585`'s diff against its first parent, and every `workflows-core` rule the release cites exists at 1.45.0.
+
+**The to-fix entry design §5 asked for (the review's F6).** Design §5 put the mocked-writer test-strategy finding into `docs/superpowers/to-fix.md` as "one instance, recorded, not ruled on"; P21 instead found `/design`'s own strategy sound in one run and wrote none, and the ledger still names "the to-fix entry Task 9 writes". The entry is now `to-fix.md` PR4, written with this addendum. P21 stands as evidence of where the defect was seen, not as a ruling that closes it.
+
+**Rulings added after the merge.**
+
+| Ruling | Decided | Cost if wrong |
+|---|---|---|
+| P23 | Design §3.1 point 2 says `design-reviewer` *refuses* a section `/implement` cannot use; the build grades a malformed section `MAJOR` (plan Task 2 step 3), which `/design` Phase 6 offers to apply and the user may decline. The `MAJOR` stays: Phase 5.5 fixes or removes a malformed section, or an overlap among existing files, before the review, so only an overlap among files the design creates reaches it unfixed, and a section that reaches `/implement` malformed falls back to one review with its line printed and recorded, which is today's review. | A declined `MAJOR` leaves a design whose `## Pieces` `/implement` reads as one piece — the review it would have made without pieces. |
