@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.38.0] — 2026-10-26
+
+`/specify` never overwrites a specification silently, and `/create-ard` and `/specify` ask their questions in an order that never asks about something already moot. Batch B08 of the 2026-10-26 review; take it with 3.37.0, which it builds on.
+
+### Fixed
+- **`/specify` never overwrites a specification silently** (PRD2-SPEC-B2). Before the run's first write to a folder, every existing copy of its `specification.md` — the one on the default branch, and a working-tree one that differs from it, a resumed run's own draft included — is archived under `revisions/` once the operator confirms, an identical archive already there standing for it, and a `Published: yes` copy stops the run with `SPECIFY_PUBLISHED`, since its IDs are contracts (`SPECIFY_ARCHIVE_FAILED` where a copy cannot be made). The guard infers nothing from `_session.md`, and resume behaves as before. Revising a specification in place is not built yet: it needs a design of its own (to-fix D19). Phase 5.5's pre-lint renumbers only a duplicate ID this run introduced (PRD2-SPEC-B7), and an unplaceable folder stops with `SPECIFY_UNPLACED`.
+- **`/specify` settles `$SPECS_PATH` before it resolves the address**, reads a key with `read-key`, and stops a malformed one with `SPECIFY_NEEDS_KEY` (PRD2-SPEC-B5).
+- **The refresh question waits on the code scan** (to-fix D6): `/specify` and `/epics` — Phase 1 and Phase 3.5 alike — ask it only once `$REPOS_PATH` is settled and only where the scan stays on, and `/create-ard` skips it where Phase 1 grounds no listed repository.
+- **`/create-ard`'s optionality advisory** counts only the repositories the folder itself names, never every clone under `$REPOS_PATH`, gauges an Epic by its `epic.md`, and fires only where the item is small by a stated test — one such repository, at most three user stories (or three architecture decisions with no PRD) and five architecture findings — and says outright that two or more code components in one repository are multi-component, with no optionality offer (PRD2-ARD-B7, FBA-B3).
+- **`/create-ard` finds an Epic's per-area ARDs** — never a slice's `ard-seed.md` — as prior ARDs and pre-lints each one (PRD2-ARD-B8); takes the stopping handoff array whenever the default branch already carries an ARD file, *Start fresh* included (PRD2-ARD-B4); and gives its three unnamed stops codes — `CREATE_ARD_UNPLACED`, `CREATE_ARD_ARD_NOT_ON_MAIN` for any stopping state of the inherited ARD, with that state's own remedy — classed as operator stops (PRD2-ARD-B11).
+- **Docs pages**: the `/brd-split` remedy's real conditions, repository discovery adding to the PRD themes rather than replacing them, seven `[AD#N]` consumers with `/conformance`, `architecture-grounder` among the `--enforce-model` pins, and a slice two levels under `specifications/` (PRD2-ARD-B9, PRD2-ARD-B10, PRD2-SPEC-B10).
+
+### Added
+- **`specification-format`** names three recurring shapes — a test asserting only what its criterion states, an exact-message criterion's fault scope or check order, and a waiting state's bounded end and a control state's inverse — and how to renumber a large spec (FBB-B14, FBA-G6).
+- **`spec-reviewer` checks contract citations** on a multi-component PRD: `/specify` passes the PRD's `## Contracts` rows and components, and on a PRD-level spec, the run whose grill states the rule, a criterion crossing components that names no `[AD#N]` row is a MAJOR (PRD2-SPEC-G1).
+
 ## [3.37.0] — 2026-10-26
 
 `/create-ard` and `/specify` handle an Epic under a BRD slice as an Epic, file their cost and feedback under the resolved folder's key, re-resolve the ARD for every Epic the *Next Epic* loop takes, and offer only next steps that can run. Fixes batch B07 of the 2026-10-26 review (`docs/superpowers/reviews/2026-10-26-fix-batches.md`). No other plugin changes with it.

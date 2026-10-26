@@ -244,7 +244,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 
 ## product-workflows — /create-prd, /create-ard, /specify, proposals (second pass)
 
-### PRD2-SPEC-G1 — `spec-reviewer` is given no contract input, so the multi-component rule that a crossing criterion names its `[AD#N]` is unreviewed
+### PRD2-SPEC-G1 — `spec-reviewer` is given no contract input, so the multi-component rule that a crossing criterion names its `[AD#N]` is unreviewed — **Done in product-workflows 3.38.0 (batch B08)**
 - **Designed in:** the multi-component-epics design (D-series, product side), as shipped into `/specify` Phase 5 at `specify.md:886`: *"An acceptance criterion or test case that crosses components names, in its own text, the `[AD#N]` interface it crosses, so `/epics` can split it per side"*. The docs page restates it at `docs/commands/specify.md:62`.
 - **Current state:**
   - Phase 6 passes `spec-reviewer` only the path, the maturity and `applicable_ard` (`specify.md:966-970`).
@@ -343,7 +343,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Suggested scope:** Add an optional `dependency_coupling: true` brief field. For each consumed or changed endpoint, the scanner lists the services it calls on reads and on writes, and the grill checks fault-isolation setups against that list.
 - **Source:** feedback `BOOK-1-specify-scan-dependency-coupling` in F1
 
-### FBA-G6 — No guidance or helper for renumbering ACs/TCs in a large specification
+### FBA-G6 — No guidance or helper for renumbering ACs/TCs in a large specification — **Done in product-workflows 3.38.0 (batch B08)**
 - **Designed in:** feedback `BOOK-1-specify-large-spec-renumbering` in F1
 - **Current state:** `specify.md:956` only "inline-fix[es] the mechanical ones (renumber a duplicate …)". There is no note for a fix cycle that renumbers a whole story in a 60–80 KB spec, and no helper script.
 - **Still worth doing?:** marginal. It is a manual workaround with polish impact.
@@ -408,7 +408,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Source:** feedback `prd-proposal-success-metrics-untraced` in `BOOK-2-01-feedback.md`
 - **Confidence:** medium
 
-### FBB-B14 — MINOR — Gap: `specification-format` does not name three recurring shapes
+### FBB-B14 — MINOR — Gap: `specification-format` does not name three recurring shapes — **Done in product-workflows 3.38.0 (batch B08)**
 - **Where:** `plugins/product-workflows/references/specification-format.md:106`, `:123` (test-case expected result); `:62` (the paired-state rule covers only state-changing behaviour).
 - **What is wrong:** (a) A test may assert something its criterion does not state. (b) The spec does not require a single-fault exact-message criterion to be scoped "with no other fault", or the check order to be stated. (c) Loading and empty states need not say how a bounded wait ends them, and a control's state (disabled or hidden) need not state its inverse.
 - **Failure scenario:** BLOCKERs and re-review findings repeat on the BOOK-2-01-01 and -02 specs.

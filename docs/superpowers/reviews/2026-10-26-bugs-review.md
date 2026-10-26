@@ -1142,7 +1142,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### PRD2-ARD-B4 — MINOR — The Phase 6 array selection falls through on *Start fresh* over an ARD the default branch carries
+### PRD2-ARD-B4 — MINOR — The Phase 6 array selection falls through on *Start fresh* over an ARD the default branch carries — **Fixed in product-workflows 3.38.0 (batch B08)**
 - **Where:** `plugins/product-workflows/commands/create-ard.md:740`.
 - **What is wrong:** The two branches are:
   - *"Where that set is the ARD file(s) **alone** and the ARD is new — `<default-ref>` carries none of them"* → the falling-back array;
@@ -1170,7 +1170,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium (the shared `pa` lane, `next-phase-offer/pa.md:147-148`, names the same route unconditionally)
 
-### PRD2-ARD-B7 — MINOR — Phase 0 step 5 gauges `$REPOS_PATH` and runs `enumerate-components` before Phase 1 step 3 resolves `$REPOS_PATH`
+### PRD2-ARD-B7 — MINOR — Phase 0 step 5 gauges `$REPOS_PATH` and runs `enumerate-components` before Phase 1 step 3 resolves `$REPOS_PATH` — **Fixed in product-workflows 3.38.0 (batch B08)**
 - **Where:**
   - `plugins/product-workflows/commands/create-ard.md:229-237` (*"on a PRD-level run where `enumerate-components` … finds two or more code components in that one repository"*; *"the number of candidate repos, always"*);
   - against `:353` (*"Repos search base (`$REPOS_PATH`) — resolved, never asked. Resolve `${REPOS_PATH:-/workspace}` … carry it as `$REPOS_PATH`"*);
@@ -1181,7 +1181,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### PRD2-ARD-B8 — MINOR — A per-area split writes only `ard-<area>.md`, but the prior-ARD test and the pre-lint look only at `ard.md`
+### PRD2-ARD-B8 — MINOR — A per-area split writes only `ard-<area>.md`, but the prior-ARD test and the pre-lint look only at `ard.md` — **Fixed in product-workflows 3.38.0 (batch B08)**
 - **Where:**
   - `plugins/product-workflows/commands/create-ard.md:675` (*"On per-area, author one `ard-<area>.md` per area"*);
   - `:228` (*"Prior ARD. If the target `ard.md` exists → Phase 1 offers refine-vs-fresh"*);
@@ -1197,7 +1197,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium (`ard-format.md:15` says the area files sit *"beside the folder's `ard.md`"*, which may mean an `ard.md` always exists too; the command does not say so)
 
-### PRD2-ARD-B9 — MINOR — The docs page misstates the conditions on the `/brd-split` remedy and on repository discovery
+### PRD2-ARD-B9 — MINOR — The docs page misstates the conditions on the `/brd-split` remedy and on repository discovery — **Fixed in product-workflows 3.38.0 (batch B08)**
 - **Where:**
   - `plugins/product-workflows/docs/commands/create-ard.md:64` (*"with that command's own two conditions stated in the offer: it gates on verified grounding findings, and it is a no-op on a ledger with no `unallocated` row"*);
   - against `commands/create-ard.md:165-171` (the two conditions are that the slicing instruction is mandatory, since *"a root is never ground"*, with `BRD_SPLIT_NEEDS_INSTRUCTION`, and the no-op), and `:851-852` (a root `/brd-split` *"skips that gate entirely"*).
@@ -1208,7 +1208,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD2-ARD-B10 — NIT — Smaller disagreements between the docs page and the command or its references
+### PRD2-ARD-B10 — NIT — Smaller disagreements between the docs page and the command or its references — **Fixed in product-workflows 3.38.0 (batch B08)**
 - **Where:** `plugins/product-workflows/docs/commands/create-ard.md`:
   - `:82` and `:120`: *"`[AD#N]` decisions bind six downstream commands"*. The list omits `/conformance`, which `ard-resolution.md:5` and `:127` name as a consumer that traces each Rule. That makes seven.
   - `:19`: the `--enforce-model` list of pinned agents omits `workflows-core:architecture-grounder`, which `:37` and the command (`create-ard.md:369`, `:586`) dispatch.
@@ -1218,7 +1218,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD2-ARD-B11 — NIT — Three stops carry no stop code and are missing from Phase 8's `emit-block` classification
+### PRD2-ARD-B11 — NIT — Three stops carry no stop code and are missing from Phase 8's `emit-block` classification — **Fixed in product-workflows 3.38.0 (batch B08)**
 - **Where:**
   - `plugins/product-workflows/commands/create-ard.md:89-90` (an unplaceable unprefixed folder: *"stop, naming the folder and what it carries"*);
   - `:415` and `:524` (`ard-resolution` `status: unmerged` → *"**stop**, naming the returned `branch` and any `pr`"*);
@@ -1246,7 +1246,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD2-SPEC-B2 — MAJOR — An existing `specification.md` (even `Published: yes`) is silently re-authored and overwritten with `Published: no`; the picker's *revise* is never defined
+### PRD2-SPEC-B2 — MAJOR — An existing `specification.md` (even `Published: yes`) is silently re-authored and overwritten with `Published: no`; the picker's *revise* is never defined — **Fixed in product-workflows 3.38.0 (batch B08)**
 - **Where:**
   - `specify.md:293-295` (Phase 0 step 4 detects only `_session.md`);
   - `:561-562` (*"● done — `specification.md` exists there → shown greyed … selecting it offers *revise*"*);
@@ -1300,7 +1300,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### PRD2-SPEC-B5 — MINOR — Phase 0 resolves the address in step 1 before step 2 checks `$SPECS_PATH`, against its own "resolve only after `$SPECS_PATH` is settled" paragraph, and maps no `status: invalid`
+### PRD2-SPEC-B5 — MINOR — Phase 0 resolves the address in step 1 before step 2 checks `$SPECS_PATH`, against its own "resolve only after `$SPECS_PATH` is settled" paragraph, and maps no `status: invalid` — **Fixed in product-workflows 3.38.0 (batch B08)**
 - **Where:**
   - `specify.md:141-142` (step 1: *"resolve it with `resolve-address`"*);
   - `:190-194` (*"**Resolve the address only after `$SPECS_PATH` is settled.** … this command resolves **once**"*);
@@ -1336,7 +1336,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium (whether `emit-cost` would otherwise resolve the folder from `null` is not stated; §8 tier 1 needs a key)
 
-### PRD2-SPEC-B7 — MINOR — Phase 5.5 lets pre-lint renumber any duplicate ID, where `pre-lint` restricts that to one this run introduced
+### PRD2-SPEC-B7 — MINOR — Phase 5.5 lets pre-lint renumber any duplicate ID, where `pre-lint` restricts that to one this run introduced — **Fixed in product-workflows 3.38.0 (batch B08)**
 - **Where:** `specify.md:956` (*"inline-fix the mechanical ones (renumber a duplicate `[Uxx]`/`[ACxx]`/`[TCxx]` …)"*), against `workflows-core/references/pre-lint.md:13-14` (*"renumber a duplicate ID this run introduced, never one the artifact already carried"*).
 - **What is wrong:** These are two live instructions with different scope. On a re-run over an existing spec (B2), `/specify`'s wording licenses renumbering IDs the artifact already carried, which become contracts after `Published: yes` (`specification-format.md:129`).
 - **Failure scenario:** A spec edited by hand holds two `[TC02]` under one AC. A `/specify` re-run's pre-lint renumbers the downstream TCs that `/implement`'s tests already cite.
@@ -1366,7 +1366,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### PRD2-SPEC-B10 — NIT — The docs page's BRD-route example puts a slice "one level under `specifications/`", and its `--enforce-model` list omits `architecture-grounder`
+### PRD2-SPEC-B10 — NIT — The docs page's BRD-route example puts a slice "one level under `specifications/`", and its `--enforce-model` list omits `architecture-grounder` — **Fixed in product-workflows 3.38.0 (batch B08)**
 - **Where:**
   - `docs/commands/specify.md:120` (*"The run resolves `EPIC-008-01`'s folder one level under `specifications/`"*), against `workflows-core/references/addressing.md` §6 (`specifications/BRD-<PARENT>-<slug>/PRD-<CHILD>-<slug>/`, so a slice is two levels down);
   - `docs/commands/specify.md:29` (the agents `--enforce-model` pins: docs-grounder, code-scanner, spec-reviewer, impl-maintenance and defect-reporter), against `:58` and command `:470` (`architecture-grounder` is dispatched on `review_model`, which §10 overrides).
@@ -2219,7 +2219,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** feedback `BOOK-1-epics-preflight-stale-merged-branches` in F1; feedback `BOOK-2-brd-split-merged-local-branch-forces-suffix` in F2
 - **Confidence:** high
 
-### FBA-B3 — MINOR — `/create-ard`'s optionality advisory fires "for a small single-repo item" with "small" never defined
+### FBA-B3 — MINOR — `/create-ard`'s optionality advisory fires "for a small single-repo item" with "small" never defined — **Fixed in product-workflows 3.38.0 (batch B08)**
 - **Where:** `plugins/product-workflows/commands/create-ard.md:229-237`
 - **What is wrong:** The text says: "Gauge size and, for a small single-repo item, note 'an ARD may be optional here' and offer — adding, on a PRD-level run where `enumerate-components` … finds two or more code components in that one repository, that a PRD touching two of them is multi-component…". The step defines the gauge (the union of user stories, decisions, findings and repositories) but sets no threshold on it. The multi-component sentence hangs off the advisory, so it prints only when the undefined "small" test passes.
 - **Failure scenario:** A single-repo PRD with 6 stories and 17 ACs reaching six code components of one repository: the orchestrator has to judge whether the advisory fires. If it judges "not small", it never says that the PRD is multi-component and that `/epics` will require the ARD.
