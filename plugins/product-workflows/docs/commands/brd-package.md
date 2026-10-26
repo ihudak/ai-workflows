@@ -28,7 +28,7 @@ questions it held, are what this command gates on and packages.
 - **`--depends-on <BRD-KEY>`** (optional, repeatable) — declares a prerequisite BRD. Persisted
   additively to `brd-link.md`, never replacing what is already there. Any key at any level is
   admissible as the value, so a slice depending on a source-owning BRD and a slice depending on a
-  sibling express identically; the declarer is always the slice being packaged. Each resolved prerequisite's own package is copied into the bundle and marked *not
+  sibling express identically; the declarer is always the slice being packaged. Each resolved prerequisite's own files are copied into the bundle and marked *not
   for re-review*, and each one whose decisions are not yet customer-reviewed is named to the
   customer under *what could still move*.
 
@@ -199,7 +199,7 @@ repository is shared with can read it — on the repository route, the customer 
 customer's own source document, every markdown file captured with it, its defect log and — where one
 exists — the transcription of each image (the parent's on a slice); the inventory; the coverage
 ledger; the three grounding files; the decision register; the code-defect log where the folder holds
-one; the `[C]` question set; each prerequisite package; the images those reference and every image
+one; the `[C]` question set; each prerequisite's own files; the images those reference and every image
 the transcription covers — one the latest intake did not capture only where a requirement still
 anchors on it; and the manifest, which maps each captured file's path — the form a transcription,
 an anchor or a question names it by — to its bundled filename. The customer's own files go in byte
@@ -234,7 +234,7 @@ Assembled from the package, never hand-written, in a fixed order that is not re-
 | # | Part | Filled from |
 |---|---|---|
 | 1 | Setup | the tier, the assumed capability set, the route-neutral locating instruction, the OS note, and the one-new-file rule |
-| 2 | What each package in the bundle is for | this BRD, plus each prerequisite package, marked *not for re-review* |
+| 2 | What each package in the bundle is for | this BRD, plus each prerequisite package, marked *not for re-review*, and any prerequisite of one that this bundle does not hold, named as context not included |
 | 3 | Documents to review | the manifest, by its bundled filename, then every other document the bundle admits, by the bundled filename it carries — the names the manifest lists |
 | 4 | Code baselines and the verification procedure | `baselines.md`, with the three pin commands written out |
 | 5 | The single most important claim to verify first | the finding the most decisions rest on, else the most-relied-on open assumption, else the finding the most held `[C]` questions bear on — or a statement that none rests on one |
@@ -270,7 +270,11 @@ attack.
 - **Phase 0 — a dated bundle is never rewritten.** A `bundle-<date>/` that already exists stops the
   run with `BRD_PACKAGE_BUNDLE_EXISTS`. Rewriting it destroys the only evidence of what the reviewer
   of that date was looking at, and the command cannot tell whether the existing directory was already
-  sent — the operator can.
+  sent — the operator can. A same-dated self-review, prompt or delivery note beside no bundle of that
+  date is left by a run that stopped before assembling where the self-review is on no ref — a
+  committed one means the bundle was built and moved, and the run stops. The next run that day overwrites a stopped
+  run's files whole, never reads its self-review as a prior review, and says the disposition walk
+  starts again.
 - **Phase 4 — the disposition gate.** No bundle is built while any `[SR#n]` is undisposed. The gate
   is keyed on **every finding carrying a non-`undisposed` value**, and on nothing else: the reviewer
   agent returns no severity and no PASS/BLOCK verdict by design, so the disposition is the only gate
@@ -296,7 +300,7 @@ attack.
   runs; the other three are written by later phases, so a correction against one of those is
   recorded against the finding at the gate and carried out when that phase writes the artifact.
 - **Phase 4 — a `fixed` correction re-opens the review, exactly once, whatever artifact it named.**
-  The correction changes what the customer will be shown, and one made under one finding can break a
+  A correction can change what the customer is shown — the prompt, the delivery note and the bundle's rendered copies — and one made under one finding can break a
   position another left standing — so the reviewer runs again, with this run's self-review, the
   corrections recorded in it, in `prior_reviews`. Once, not until clean: an unbounded loop trades
   the customer's review for the delivery team's.
@@ -319,8 +323,8 @@ attack.
   landing on none of the three re-asks rather than inventing one.
 - **Phase 6 — the render boundary.** The schema is rendered from section 2 onward, and the run stops
   with `BRD_PACKAGE_SCHEMA_BOUNDARY` if that file no longer declares where its boundary falls. The
-  rendered headings are renumbered so the customer's copy runs from 1 rather than visibly beginning
-  at 2; that is safe because the schema refers to its own sections by name and never by number, which
+  rendered headings are renumbered under the part they are rendered into (`10.1`–`10.5`), so the
+  copy neither visibly begins at 2 nor restarts at 1; that is safe because the schema refers to its own sections by name and never by number, which
   the render verifies by requiring the extracted body to contain no `§` at all. It verifies, too,
   that the body holds no identifier with a number in it, and stops with
   `BRD_PACKAGE_SCHEMA_EXAMPLE_ID` on one: the schema writes every example as a placeholder,
@@ -412,8 +416,9 @@ attack.
   identified records names exactly what its filter selects; the manifest and the bundle name the
   same review documents; and the delivery note's repositories and pins are the bundle's baselines'.
   **Each is narrower than its obvious form, and every narrowing was measured against assembled
-  packages** — the review-scope part renders prose rather than identifiers, save the requirements it
-  names as another BRD's, which the check leaves to review; a part writes `[AS#1]`–`[AS#4]` as a
+  packages** — the review-scope part renders prose rather than identifiers, save its `in-scope`
+  defect entries, which it names by id and the check tests, and the requirements it names as another
+  BRD's, which the check leaves to review; a part writes `[AS#1]`–`[AS#4]` as a
   range rather than naming each; a manifest writes filenames with or without the extension and names
   images only sometimes; and a delivery note abbreviates its commits, against a baselines document
   that records one entry per repository *per run* and so may hold the same commit twice. The obvious
@@ -456,7 +461,7 @@ being held for the customer, dispatches the adversarial reviewer, walks each `[S
 disposition, asks which tier the customer can be given, renders the prompt, asks whether to branch,
 commit, push and open a pull request — and, on a yes where the specs repo can take the commit and
 has a remote to push to, how the customer gets the bundle — renders the note, assembles
-`bundle-<date>/` with the prerequisite's package copied in and marked *not for re-review*, and hands
+`bundle-<date>/` with the prerequisite's own documents copied in — never its prompt, its manifest or a package it carried in itself — and marked *not for re-review* in the manifest and the prompt, and hands
 it off as answered. The next-step phase prints the delivery note in full and, directly after it and
 before its offer, the delivery route and why — the archive command with an absolute path on the
 archive route, or a line saying none was produced because the customer pulls the committed bundle,
