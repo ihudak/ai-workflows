@@ -23,8 +23,20 @@ output=$(echo "$input" | python3 -c "
 import sys, json
 try:
     d = json.load(sys.stdin)
-    out = (d.get('tool_response') or {}).get('output', '') or d.get('output', '')
-    print(out)
+    # The Bash tool's result is {stdout, stderr, interrupted, ...}: there is no
+    # 'output' key, and reading only that one left this empty on every run, so
+    # every test run notified 'tests completed'. Today's Bash result merges the
+    # command's stderr into stdout, and its stderr carries only the harness's own
+    # notes; stderr is read too in case a harness keeps the streams apart. A
+    # summary must reach the parser on one stream only: the Maven and Gradle
+    # branches sum every summary line, so one printed on both would count twice.
+    # 'output' stays as a fallback for a payload shaped otherwise.
+    r = d.get('tool_response') or {}
+    if isinstance(r, dict):
+        out = '\n'.join(x for x in (r.get('stdout') or '', r.get('stderr') or '') if x) or r.get('output', '')
+    else:
+        out = str(r)
+    print(out or d.get('output', ''))
 except Exception:
     print('')
 " 2>/dev/null) || true
@@ -37,7 +49,14 @@ except Exception:
 # holds for a task listed ahead of "test": dev-workflows' test-baseliner runs
 # ./gradlew cleanTest test --no-build-cache, which contains neither
 # "gradlew test" nor "gradle test", so that form has an alternation of its own.
-if ! echo "$command" | grep -qE '(mvnw test|mvn test|gradlew test|gradle test|gradlew cleanTest test|gradle cleanTest test|npm test|yarn test|pytest|make test)'; then
+# So does the single-module form dev-workflows' /vuln and /upgrade references
+# prescribe, ./gradlew :<module>:test: a regex rather than a substring, matching
+# a task path ending in ":test" as a whole argument, after any flags or other
+# tasks -- so ./gradlew -q :api:test and the root project's :test match, and
+# :api:testClasses does not. The arguments it skips stop at a shell operator,
+# and "gradle" must start a word, so a later "docker tag app:test" after &&, or
+# "build.gradle x:test", is not read as a Gradle task.
+if ! echo "$command" | grep -qE '(mvnw test|mvn test|gradlew test|gradle test|gradlew cleanTest test|gradle cleanTest test|(^|[ /])gradlew?( [^ |&;]+)* (:|[^ :|&;]+:)([^ :|&;]+:)*test( |$)|npm test|yarn test|pytest|make test)'; then
     exit 0
 fi
 
