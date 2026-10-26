@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.4.0] — 2026-10-26
+
+**Update `workflows-core` to 1.47.0 with this release**: its `security-register-format` states the checks and the follow-up clause `register.py` now applies. Fixes batch B04 of the 2026-10-26 review (`docs/superpowers/reviews/2026-10-26-fix-batches.md`).
+
+### Fixed
+- **A moved register never puts an answer on another finding.** On `REGISTER_MOVED` the run re-planned and committed the same decisions file, whose `id:<n>` and `matches[].id` are the numbers the person saw; where the records that moved the register renumbered an existing finding, the answer landed on whichever finding now held that number. Phase 5 keeps the plan the person answered as `answered-plan.json`, `register.py commit --answered-plan` translates every number through that plan's origins, and the new `register.py rebase` moves the decisions file to a re-plan's numbering before any new row is asked (SEC-B1).
+- **`register.py commit` refuses what no person decides**: `fixing` or `reopened`, `fixed` on a finding the plan does not propose closed, and, in a `dev` run, a closure marked `via: moved` — checked on the `commit` subcommand, the path the command takes (SEC-B2) — and an empty `--by`; the run asks for the name where the specs repository has no `user.name` (SEC-B3).
+- **Phase 3 finds the report in the session's working directory too**, where the session is open in a subdirectory of the repository: Claude Security makes the report folder with a relative path (SEC-B4; from the recipes, not yet from a live run).
+- The roles page says a fix nobody queued is offered again unless the scan closes it **or proposes it fixed** (SEC-B5); the workflow diagram draws `/dev-workflows:conformance` as a node, before the scan and as the PE's PRD check after the merge (DQD-B9).
+
+### Added
+- **A follow-up line says when its patch was verified on review only**, where the patch's own record in Claude Security's `patches.jsonl` says `untested: true` — a boolean read, written as a fixed clause, never text (SEC-G5).
+- **False-positive evidence is shown beside the finding's own `file:line`**, with one plain sentence where the cited line is in another file or more than 10 lines away — a fact about the two locations, never a verdict (SEC-G4).
+
 ## [0.3.0] — 2026-10-24
 
 Needs `workflows-core` 1.45.0: its next step after a change scan names the remaining Epics by key in the ARD's landing order, citing `next-phase-offer`'s *The remaining Epics are named*, which 1.44.0 does not have, while 1.44.0's lane line for this command writes "the remaining Epics" bare, after this Epic's merge — two instructions that disagree. It no longer names a worktree it failed to remove in the resume pointer, which needs nothing of 1.45.0; the reverse pairing is the one that disagrees, since 1.45.0's `session-hygiene` §1 never writes into the pointer a path outside every repository the pointer's readers share, where 0.2.0's `/security-workflows:scan` names that worktree — so take this release with 1.45.0. Its Security Engineer offers name their register's slug beside the repository path, which 1.45.0's §1 reads to settle such an offer a resume pointer carries, and which 1.44.0's §1, overwriting the pointer outright, never read; beside 0.2.0, whose offers name none, 1.45.0's §1 carries such an offer until a run on a machine where its path is that repository derives the slug. Its question-rules step requests `escalation-rules core`, which 1.44.0 serves too.

@@ -52,7 +52,7 @@ One JSON object per record — a run that changes the register writes one, and a
 - `decisions`: each status change, with `id`, `status`, `reason`, `evidence`, `owner`, `review_by`, `confirmed`, `links` and `default` (true only on the `open` a run records for a new finding nobody decided).
 - `renumbered`: the moves of other records' allocations that this run reported and no earlier record holds, so this run is the first to record them (below).
 
-Every entry that names a finding (in `allocated`, `matched`, `again`, `not_reported` and `decisions`) carries the finding's `origin` (§3) beside the `[SEC#n]` the run saw. The replay finds a finding by its `origin`, never by its number, so a renumbering can never point a record's decisions at another finding.
+Every entry that names a finding (in `allocated`, `matched`, `again`, `not_reported` and `decisions`) carries the finding's `origin` (§3) beside the `[SEC#n]` the run saw. The replay finds a finding by its `origin`, never by its number, so a renumbering can never point a record's decisions at another finding. The decisions file a run writes names an existing finding by the `[SEC#n]` its plan showed the person; `register.py commit --answered-plan` translates each through that plan's origins into the plan it commits against, and `register.py rebase` does the same for a run that plans again before it commits, so a renumbering between the two plans never points an answer at another finding either.
 
 A record is written once and never edited.
 
@@ -87,7 +87,7 @@ A finding holds these fields:
 - the `[SEC#n]`;
 - a CWE number;
 - a `path:line` of plain characters, or else a pointer to `register.md`;
-- the patch path.
+- the patch path, and whether that patch was verified on review only — the `untested: true` of the patch's own record in the `patches.jsonl` beside it, read as a boolean and written as a fixed clause.
 
 It is never built from a finding's text. `register.md` shows that text under a heading that labels it scan output, and every reader of the register reads it the same way.
 
@@ -99,8 +99,10 @@ It is never built from a finding's text. `register.md` shows that text under a h
 | `open` | Decide later |
 | `fix` | To be fixed, with no follow-up written: a decision of `fix` clears the finding's `links.followup` |
 | `fixing` | Its follow-up, or its `/implement` prompt, is written |
-| `fixed` | Closed on evidence (§5 rule 2), or confirmed in triage |
+| `fixed` | Closed on evidence (§5 rule 2), or confirmed in triage where the scan proposes the closure (§5) |
 | `reopened` | Reported again after `fixed` |
+
+`fixing` and `reopened` are `register.py`'s own: a person's decisions file sets neither, nor `fixed` on a finding the plan does not propose closed, nor, in a `dev` run, one marked `via: moved` (§5); `commit` refuses each with `TRIAGE_INVALID`, and refuses an empty `--by`, the person deciding.
 | `false-positive` | "This is not exploitable." `evidence` names the `file:line` of the guard that defeats the exploit scenario |
 | `accepted-risk` | "This is exploitable, and we accept it." `owner` and `review_by` (`YYYY-MM-DD`) are set; past that date it returns to triage as review due |
 

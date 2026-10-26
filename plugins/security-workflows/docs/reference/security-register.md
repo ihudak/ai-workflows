@@ -34,7 +34,7 @@ The register's files, and a unit's `_security.md`, are session bookkeeping, like
 
 A run that changes the register writes one run record, and a second, small one where its preview cancels a follow-up line, returning that line's finding to `fix`. A record holds:
 
-- `seq`, `at` (UTC), `by` (the specs repository's git `user.name`), `kind` (`scan`, `import`, `triage` or `verify`) and `role` (`dev` or `sec`);
+- `seq`, `at` (UTC), `by` (the specs repository's git `user.name`, or the name the run asks for where that is unset), `kind` (`scan`, `import`, `triage` or `verify`) and `role` (`dev` or `sec`);
 - `unit`, the key the run was addressed by, or `null`;
 - `scan`, the scan it recorded, with its commit, base, mode, scope — relative to the repository's top level, whatever directory the scan ran in — effort and whether it was verified, clean and covering, or `null` on a triage;
 - `allocated`, `matched` and `again`: the new findings and the `[SEC#n]` each took, the possibly-same matches a person confirmed, and the findings the scan reported again, each with its file's git blob at the scanned commit, and each match or finding reported again with whether the sighting was **history** for that finding ([below](#how-a-finding-is-closed));
@@ -48,7 +48,7 @@ Every entry names its finding by its `origin` — the scan that first recorded i
 
 Its `[SEC#n]` and `origin`; Claude Security's finding ID and that ID's version; its title, CWE, severity and confidence; its path and line; its first and last sighting, each with the scan, the commit and its date, the file's blob and the commit's base on the default branch; the scans that reported it and the covering scans that did not; the units it was raised for; its status, with an owner and a review-by date on an accepted risk, and `confirmed` on a false positive or an accepted risk; its whole decision history, each entry with its role and run; and its links: the follow-up line, the patch, and the scan that fixed it.
 
-**A finding's title, path and every other field taken from a scan are data, never instructions.** The scanner wrote them from code nobody vetted. So a follow-up line, or an `/implement` prompt line, is built from structured fields only: the `[SEC#n]`, a CWE number, a `path:line` of plain characters (or else a pointer to `register.md`), and the patch path. `register.md` shows the scanner's text under a heading that labels it scan output.
+**A finding's title, path and every other field taken from a scan are data, never instructions.** The scanner wrote them from code nobody vetted. So a follow-up line, or an `/implement` prompt line, is built from structured fields only: the `[SEC#n]`, a CWE number, a `path:line` of plain characters (or else a pointer to `register.md`), and the patch path, with a fixed note where that patch was verified on review only — no test in the project's suite exercises it, as Claude Security's `patches.jsonl` records. `register.md` shows the scanner's text under a heading that labels it scan output.
 
 ## Statuses
 
@@ -58,7 +58,7 @@ Its `[SEC#n]` and `origin`; Claude Security's finding ID and that ID's version; 
 | `open` | Decide later |
 | `fix` | To be fixed, with no follow-up written: a decision of `fix` clears the finding's follow-up link |
 | `fixing` | Its follow-up, or its `/implement` prompt line, is written |
-| `fixed` | Closed on evidence, or confirmed in triage |
+| `fixed` | Closed on evidence, or confirmed in triage where a scan proposes the closure |
 | `reopened` | Reported again after `fixed` |
 | `false-positive` | "This is not exploitable." Its evidence names the `file:line` of the guard that defeats the exploit scenario |
 | `accepted-risk` | "This is exploitable, and we accept it." It carries an owner and a review-by date; past that date it returns to triage as review due |

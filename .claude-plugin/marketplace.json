@@ -70,7 +70,7 @@
     },
     {
       "name": "workflows-core",
-      "version": "1.46.0",
+      "version": "1.47.0",
       "description": "Shared foundation for the dev-workflows plugin family: the addressing grammar and specs-repo git entry points, phase handoff, model routing, escalation and finding-triage rules, documentation and architecture grounding, cost/feedback/follow-up emission, and the reference loader skill that lets a dependent plugin read them. Also carries the family-meta utility commands — /feedback, /prompt, /prompt-brainstorm, /prompt-grill-me, /statusline — /frames for indexing design frame sets, and /diagnose-session for reading a session's transcripts to report, with evidence, why a run went wrong.",
       "author": {
         "name": "Ivan Gudak",
@@ -106,7 +106,7 @@
     },
     {
       "name": "security-workflows",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "description": "A security audit role for the plugin family. /security-workflows:scan runs Anthropic's Claude Security plugin on the branch a PRD or Epic was implemented on, before it merges, or on a whole repository, and records what it finds in the specs repository: a findings register per code repository, matched across scans by Claude Security's own finding ID, with every finding triaged in one batch — fix, decide later, false positive with its evidence, or an accepted risk with an owner and a review-by date. A Dev's decisions take effect at once and a Security Engineer reviews them afterwards. A fix goes to /dev-workflows:implement as a follow-up carrying Claude Security's verified patch, and is closed only once a later covering scan no longer reports it. Installs workflows-core and Claude Security with it.",
       "author": {
         "name": "Ivan Gudak",
