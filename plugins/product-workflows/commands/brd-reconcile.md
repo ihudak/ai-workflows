@@ -899,6 +899,15 @@ operator who meets them after confirming twelve candidates has already confirmed
 wrong reading. Nothing here is a stop: an anomalous review is still the customer's answer, and the
 anomalies travel into the reconciliation record and into the final report.
 
+**One anomaly is this command's own, since it is no departure from the schema**: the review saying
+that its answers or reasons were drafted by someone other than the customer — an agent, a consultant,
+the delivery team — anywhere in the review, its section 1 (who reviewed it) and section 9 (ownership)
+most often, or in a `notes` line the reader returned. Record it with the review's own words, present it with the rest, and at
+confirmation show it beside every candidate whose reason it covers: the operator confirms a reason
+the customer submitted knowing who wrote it, and the record says so. It changes no rule — a reason
+the customer returned is the customer's to stand behind — but a register that quietly freezes a
+drafted reason as the customer's own is the failure this flag exists to prevent.
+
 **Section 7 of a returned review carries three id shapes, and the matcher accepts all three —
 which is why all three question sets are supplied above.** Passing only the first two would leave
 the third unmatchable however plainly this command asserts the matcher accepts it: a contract the
@@ -940,6 +949,23 @@ the operator, **one at a time, never batched**, with:
 - the reason the customer gave, or `not stated` as the plain fact it is;
 - in free-text mode, the agent's own `confidence`, and every `conflict` flag naming the other
   candidate this one pulls against.
+
+**An answer to an escalated `[SR#n]` maps onto its fixed pair by what it says of the finding's
+attack, never by its tone.** The package states a position and the finding argues against it, so:
+`as the package states` where the answer affirms the position the finding attacked, or answers the
+question the finding raised the way the package already had it; `as the finding argues` where it
+agrees with the attack, or answers that question the finding's way; and the outside-the-options
+marker (`decision-register-format.md` §1) where it gives a third answer neither side held. A purely
+factual reply is mapped by which side's statement it makes true. **Worked examples** — the package
+states *the export runs nightly*, and the finding argues *the reconciliation needs it hourly*: *"nightly
+is fine, nobody reads it before 9am"* is `as the package states`; *"it has to be hourly — finance
+closes at noon"* is `as the finding argues`; *"weekly is enough"* is `chosen: "outside the options:
+weekly is enough"`; and *"the job finishes at 02:00"*, which settles neither side's claim, is
+mapped to neither — a fact the question did not ask for chooses nothing — so the row is shown with
+no `chosen`, and *Ask the customer* is the answer to it, never a freeze — a *Confirm* on it is
+answered with why nothing can be frozen, and the question is asked again. Where the operator cannot
+tell which side an answer takes, that too is *Ask the customer*; *Correct it* only where the operator
+can tell the reader mapped it to the wrong side.
 
 ```
 choices: ["Confirm — this is what the customer decided; freeze it", "Correct it — the row does not match the quotation; freeze the row that does (you'll be prompted for it)", "Reject — no decision to freeze: the customer declined to answer, or the row is not an answer (context, thanks, scheduling) (you'll be prompted for why)", "Ask the customer — the answer is not clear enough to freeze; the question is left as it stands"]
@@ -1425,7 +1451,7 @@ every field `decision-register-format.md` §1 defines:
 | `id` | `[CD#n]`, contiguous within its own prefix, continuing from the highest `[CD#n]` on file, **never renumbered and never reused** — a re-run continues the sequence and never restarts it |
 | `statement` | the decision, one sentence, as confirmed |
 | `options_considered` | what the package actually put in front of the customer, taken from the `[C]` question, the `[AS#n]`, or the escalated `[SR#n]` — never reconstructed from the answer, and never widened to take in an answer outside it. A `[C]` question put as yes or no, listing no options, records `["yes", "no"]`; an `[AS#n]`, which puts no options, records `["as assumed", "not as assumed"]`; and an escalated `[SR#n]` records `["as the package states", "as the finding argues"]` (`decision-register-format.md` §1) |
-| `chosen` | the customer's answer: one member of `options_considered`, or, where the customer answered outside them (*Confirm every candidate*), their answer quoted after the fixed marker `decision-register-format.md` §1 gives that case, in the quoting form it fixes for an answer spanning lines or carrying a `"` or a `\` |
+| `chosen` | the customer's answer as the confirmed row maps it — an escalated `[SR#n]`'s by *Confirm every candidate*'s mapping rule: one member of `options_considered`, or, where the customer answered outside them (*Confirm every candidate*), their answer quoted after the fixed marker `decision-register-format.md` §1 gives that case, in the quoting form it fixes for an answer spanning lines or carrying a `"` or a `\` |
 | `argumentation` | **the customer's own reason, quoted**, never paraphrased and never supplied |
 | `evidence` | the `[CG#n]`/`[DG#n]` the question was put against, as the question set recorded them — for a `[C]` candidate, the ids on the answered question's `- **Findings:**` line in `interview/customer-questions.md` and nothing else in the entry, whose context may name other findings (`/product-workflows:brd-interview`, *Hold every `[C]`*); an entry written before 3.7.0 carries no such line, and its findings are read from its prose where it names them. `evidence: []` where what is read recorded none, never omitted (`decision-register-format.md` §1), and never `[]` because a line that was there could not be parsed |
 | `defects` | the `[CDF#n]` the answered position turns on, as the `[C]` question, the `[AS#n]` or the escalated `[SR#n]` recorded them; omitted when none. Never in `evidence` (§1), and **never minted here** — `${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md` makes `/product-workflows:brd-interview` the log's only writer, so this phase carries an existing id forward and writes no entry |
@@ -1804,6 +1830,21 @@ reported so, never applied twice.
 
 Any row still undisposed when this phase would end → stop:
 `BRD_RECONCILE_UNDISPOSED_CORRECTION: N required changes from the review are still undisposed — every row takes applied | applied-with-deviation | refused-with-reason | deferred-to-next-round. The records this run froze stay frozen under the pass it opened in reconciliation-<YYYYMMDD>.md; re-run '/product-workflows:brd-reconcile <BRD-KEY> @<review-file>' on this same review to adopt that pass and finish it.`
+
+**Resolve a bundle filename first.** A section-12 row names a document as the customer saw it — by
+its bundled filename, such as `<BRD-KEY>-decisions.md` (`/product-workflows:brd-package`, *Assemble
+the bundle* rule 1). That is not a request to edit the dated copy: resolve it to the working document
+the copy was rendered from — the answered package's manifest line for it, which says what the
+document is, or, where that line does not say, the file whose basename the bundled name carries
+after its `<BRD-KEY>-` prefix, searched in this slice's folder and its `grounding/`, `brd/` and
+`interview/`, then one hop up in the parent's (the defect log, the figures file and the source live
+there, `${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §2.1) — and dispose the row against that
+document under the classes below. A search finding two candidates, or a name rule 1 disambiguated
+with a folder or a `-2`, goes to the operator with the candidates, never to a guess. A bundled name
+carrying another BRD's key is a prerequisite's copy and that BRD's document, refused naming it; the
+rendered prompt and the manifest themselves are class 2; and a name that resolves to nothing is
+`refused-with-reason`, naming that the package held no such document, and carried to *what still
+needs a human*. The bundle copy is never rewritten either way.
 
 **Three classes of target, and they are not treated alike:**
 

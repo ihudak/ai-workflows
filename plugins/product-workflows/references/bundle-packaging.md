@@ -97,7 +97,7 @@ Exactly this, and nothing else:
 | `grounding/baselines.md` | *code baselines and the verification procedure* |
 | `decisions.md` | *the single most important claim to verify first*, *the decisions the customer must make*, *what could still move* |
 | `interview/customer-questions.md` | *the decisions the customer must make* |
-| every prerequisite package copied in, marked *not for re-review* | *what each package in the bundle is for* |
+| each prerequisite's own files, documents and images — those in its latest bundle whose bundled name begins `<PREREQ-KEY>-`, save its rendered prompt and its manifest, and never a package it carried in itself (`commands/brd-package.md`, *Assemble the bundle* rule 5) — marked *not for re-review* in the manifest and the prompt | *what each package in the bundle is for* |
 | every image the documents above reference, and every image `brd/brd-figures.md` holds a section for — save one whose section carries the marker `references/brd-format.md` §1.2 fixes and whose *Rows* line yields no row | the documents embed them (§2), and a figures section sends the reviewer to the picture it transcribes — as does an image anchor or a question naming the image. A marked image is one the latest intake did not capture, so it ships only where a preserved row still anchors on it: the customer needs the picture to check that row |
 | the manifest | *documents to review* |
 
@@ -480,8 +480,9 @@ package over a hit in the customer's own words, on the question §6.3 fixes. Des
 
 ### 6.1 The corpus is built per source package, and never crossed
 
-A prerequisite package is copied into the bundle wholesale (§1.1), carrying its own grounding files,
-its own inventory and its own register — each numbered from 1 in its own corpus. So one bundle can
+A prerequisite's own files are copied into the bundle (§1.1), carrying its own grounding files,
+its own inventory and its own register — each numbered from 1 in its own corpus — and never a
+package it carried in itself, whose key this run's set need not hold. So one bundle can
 hold two different `[CG#7]`s. Bundle documents therefore **partition on the `<BRD-KEY>` each one's
 own filename carries**: `commands/brd-package.md`'s *Assemble the bundle* rule 1 gives every bundle
 document a filename carrying its `<BRD-KEY>`, unique within the bundle, precisely so documents are
@@ -956,7 +957,8 @@ somebody already paid for.
 **Relation 1 — a part that enumerates a set of identified records names exactly that set.** Its scope
 is the prompt parts whose source is a set of records carrying identifiers, which render them as an
 enumeration, **and whose source is itself in the bundle**: the open assumptions, the conditional
-positions and conditional defect entries, and the out-of-scope defect entries. **For each part in that
+positions and conditional defect entries, the in-scope defect entries the review scope part names by
+id, and the out-of-scope defect entries. **For each part in that
 scope**, the identifiers it names are exactly those its own stated filter selects from its source
 file, both directions — an identifier in the part and not in the filtered source is an invention, one
 in the filtered source and not in the part is an omission, and the omission is the dangerous half
@@ -991,11 +993,15 @@ about those findings is prose the packaging run wrote, and prose is review's.
 **It does not reach every part, and the exclusions are measured rather than cautious.** The review
 scope part renders what the package answers for as **prose in the customer's own vocabulary** — the
 scope areas a customer recognises, not the requirement ids behind them — so a relation demanding
-identifiers there fires on a correct package. The requirements it names as another BRD's do carry
+identifiers there fires on a correct package. **Its `in-scope` `[CDF#n]` list is the exception, and
+inside the scope above**: it names records by id, filtered on their `disposition`, from
+`code-defect-log.md`, which the bundle carries — the same slice of the same log the conditional and
+out-of-scope parts restate, and the delivery boundary itself. The requirements it names as another BRD's do carry
 ids, each `<PARENT-KEY> [BR#n]` (`commands/brd-package.md`'s part 6), and that list is outside this
 relation too (§7.2). The decisions part is mostly the interview's own questions, which carry **no
-minted identifier at all**, so only the assumption and escalated-finding fractions of it are
-testable and the part as a whole is not. A part built from prose has no set to compare.
+minted identifier at all**, so only the assumption fraction of it is testable and the part as a
+whole is not — the escalated findings come from the self-review, outside the bundle, and are outside
+this relation for the accepted-risk findings' reason above. A part built from prose has no set to compare.
 
 **Relation 2 — the manifest and the bundle name the same review documents.** Every markdown review
 document in the assembled bundle carries a manifest line, and every manifest line names a document in
@@ -1041,7 +1047,7 @@ because that is a read failure wearing the shape of a discrepancy.
 ### 7.2 What §7 cannot see
 
 - **A part whose source is prose**, which relation 1's own scope already concedes: the review scope,
-  and the question half of the decisions part. Those are review's.
+  save its `in-scope` `[CDF#n]` list (§7.1), and the question half of the decisions part. Those are review's.
 - **The review scope part's list of requirements another BRD holds.** It names identified records,
   each qualified with the parent's key, from a ledger the bundle carries, but relation 1's scope is
   the closed list §7.1 opens with and does not name it, so a row left off that list, or named there

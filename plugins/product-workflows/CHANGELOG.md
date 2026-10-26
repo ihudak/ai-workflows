@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.41.0] — 2026-10-26
+
+### Fixed
+- `/brd-package` copies from a prerequisite's bundle only that prerequisite's own files, images included — never its rendered prompt, its manifest (whose entries for the copied files move into this bundle's manifest), or a package it carried in itself — so a prerequisite chain no longer brings in documents under a key the partition set lacks (BRD3-B4) or a second review prompt (BRD3-B10). Part 2 names a prerequisite's own prerequisite as context not included, and rule 8 names, without stopping, a reference in a copied document to such a package. The *not for re-review* marking is in the manifest and part 2 only, never written into the never-rewritten copies (BRD3-B11).
+- A same-dated self-review, prompt or delivery note beside no bundle is that date's scratch from a run that stopped before assembling: it is overwritten whole, never read as a prior review, and the run says the disposition walk starts again (BRD3-B12).
+- `bundle-packaging` §7 relation 1 covers part 6's `in-scope` `[CDF#n]` list (BRD3-B14), and no longer calls part 7's escalated-finding fraction testable (BRD3-B15).
+- The reviewer's `INPUT_MISSING` maps to `BRD_PACKAGE_REVIEWER_CONTRACT`, which captures feedback at the block (BRD3-B16).
+- The docs page describes the `<part>.1`–`<part>.5` heading renumbering (BRD3-B18) and says a `fixed` correction *can* change what the customer is shown (BRD-B1); agent examples use a slice key and `questions` is optional in the dispatch (BRD2-B8).
+- FBB-B45: the disposition walk shows each finding and its question in one message; rule 1 covers prose references to bundle documents; `/brd-reconcile` resolves a section-12 row naming a bundle filename to the working document it was rendered from, flags a review saying its reasons were drafted by another author, and maps an escalated `[SR#n]` answer onto its fixed pair by a stated rule with worked examples. The shipped scan script is to-fix D21.
+
 ## [3.40.0] — 2026-10-26
 
 ### Fixed

@@ -41,7 +41,7 @@ disposition.
 ## Inputs
 
 ```yaml
-brd_key:    <BRD-KEY>              # e.g. EPIC-008
+brd_key:    <BRD-KEY>              # e.g. EPIC-008-01
 brd_dir:    <absolute path to the BRD folder>
 package:
   decisions:        <path to decisions.md — the [VD#n] / [AS#n] register>
