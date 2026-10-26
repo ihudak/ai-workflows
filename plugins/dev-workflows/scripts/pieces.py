@@ -406,6 +406,8 @@ def selftest():
         bad("parse_duplicate_name", TWO.replace("### runs", "### parser"))
         bad("parse_bad_name", TWO.replace("### parser", "### Parser"))
         bad("parse_no_files", TWO.replace("- Files: `src/runs/*.java`\n", ""))
+        bad("parse_files_line_no_entry", TWO.replace("- Files: `src/runs/*.java`", "- Files:"),
+            "has a Files line with no entry")
         bad("parse_unquoted_entry", TWO.replace("`src/runs/*.java`", "src/runs/*.java"))
         r = bad("parse_writers_line", TWO.replace("- Contract: none", "- Contract: none\n- Writers: one"))
         check("parse_writers_line quotes the line", "Writers: one" in r["defect"])
