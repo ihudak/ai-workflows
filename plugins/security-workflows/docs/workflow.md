@@ -6,8 +6,10 @@
 flowchart TD
     subgraph DEV["Dev — one Epic, on its branch, before the merge"]
         implement["/dev-workflows:implement"]:::dev
+        conformance["/dev-workflows:conformance KEY"]:::dev
         scan["/security-workflows:scan KEY"]:::sec
     end
+    prdconf["/dev-workflows:conformance PRD-KEY — the PE, after the merge"]:::dev
     subgraph SEC["Security Engineer — audit"]
         repo["/security-workflows:scan repo-path"]:::sec
         verify["/security-workflows:scan --verify-fixes"]:::sec
@@ -20,7 +22,10 @@ flowchart TD
         register["security/repo-slug/ — register, run records, scans"]:::store
         note["_security.md in the PRD or Epic folder"]:::store
     end
-    implement -.->|"action: offered after /dev-workflows:conformance, before the merge"| scan
+    implement -.->|"action: offered, before the merge"| conformance
+    implement -.->|"action: offered after conformance, before the merge"| scan
+    conformance -.->|"action: offered where it decided no fix"| scan
+    scan -.->|"action: after the merge"| prdconf
     scan -->|"call"| cs
     repo -->|"call"| cs
     cs -->|"report, JSONL, SARIF, stamp, patches"| scan
@@ -42,7 +47,7 @@ flowchart TD
     classDef store fill:#f3f4f6,stroke:#6b7280,color:#1f2937
 ```
 
-**Two nodes are not this plugin's.** `/dev-workflows:implement` ships in the companion `dev-workflows` plugin and is documented there. The dashed box is Claude Security's own three jobs, from Anthropic's `claude-security` plugin: this command runs its *Scan changes* job for a key, its *Scan codebase* job for a path or `--verify-fixes`, and its *Suggest patches* job for the findings marked fix, and skips each job's closing offer, since this command triages, routes and never applies a patch.
+**Four nodes are not this plugin's.** `/dev-workflows:implement` and `/dev-workflows:conformance` — drawn twice, once on the Epic before its merge and once as the PE's check of the whole PRD after it — ship in the companion `dev-workflows` plugin and are documented there. The dashed box is Claude Security's own three jobs, from Anthropic's `claude-security` plugin: this command runs its *Scan changes* job for a key, its *Scan codebase* job for a path or `--verify-fixes`, and its *Suggest patches* job for the findings marked fix, and skips each job's closing offer, since this command triages, routes and never applies a patch.
 
 **The command is drawn once per role**, the way the family map draws `/dev-workflows:conformance`: on a key, the Dev's change scan of their own Epic; on a repository path, the Security Engineer's whole-repository scan. `--verify-fixes` and `--triage` are the Security Engineer's whichever address they take. [Roles and phases](roles-and-phases.md) says what each role decides.
 
@@ -55,7 +60,7 @@ flowchart TD
 ## Where the command writes
 
 - **`$SPECS_PATH`** — the code repository's register under `security/<repo-slug>/`: the scan's folder, the run record, and the rebuilt `register.json` and `register.md`. With a key, one block in the unit's `_security.md` and the follow-ups in its `follow-ups.md`. The run's cost entry and session feedback. All of it is bookkeeping: the run's terminal commit carries it with the run's other session files and pushes it as it pushes those, never by a pull request of its own, and on a specs repository whose default branch takes no push it travels on your session branch ([Security register](reference/security-register.md)).
-- **The code repository** — only what a scan needs: Claude Security's report directory at the scan root, which carries its own `.gitignore`; on a change scan, a fast-forward or a switch to the Epic's branch, the switch only after you agree; for `--verify-fixes`, a temporary worktree, removed on every path; and a report folder copied out of a temporary worktree to the repository's root, where the run did not record that report, or where you chose to remove an idle worktree a crashed run left, so that `--import` can record it.
+- **The code repository** — only what a scan needs: Claude Security's report directory at the scan root (or in the session's working directory, where the session is open in a subdirectory of it), which carries its own `.gitignore`; on a change scan, a fast-forward or a switch to the Epic's branch, the switch only after you agree; for `--verify-fixes`, a temporary worktree, removed on every path; and a report folder copied out of a temporary worktree to the repository's root, where the run did not record that report, or where you chose to remove an idle worktree a crashed run left, so that `--import` can record it.
 - **Nowhere else.** It never applies a patch: on a key run, `/dev-workflows:implement` reads it in the specs repository and starts from it where it still applies; on a path, the report names each patch by its absolute path beside its prompt line. It never runs anything against a deployed system, and never writes exploit code.
 
 ## Sources of truth

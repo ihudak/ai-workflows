@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.47.0] — 2026-10-26
+
+**Update `security-workflows` to 0.4.0 with this release**: `security-register-format` states what its `register.py` now does. Batch B04 of the 2026-10-26 review.
+
+### Changed
+- **`security-register-format`** says how a decisions file's numbers reach the plan a run commits against — `commit --answered-plan` and `rebase` translate them through each finding's origin (§2) — that `fixing` and `reopened` are `register.py`'s own, that `fixed` is confirmed only where a scan proposes the closure, and that `commit` refuses an empty `--by` (§4), and that a follow-up line carries a fixed clause where its patch was verified on review only (§3).
+
 ## [1.46.0] — 2026-10-26
 
 The cost path finds this run's own transcript, under the folder name Claude Code actually uses, and the cost and feedback ladders find a kind-prefixed folder. Fixes batch B02 of the 2026-10-26 review (`docs/superpowers/reviews/2026-10-26-fix-batches.md`). No dependent plugin changes with it.

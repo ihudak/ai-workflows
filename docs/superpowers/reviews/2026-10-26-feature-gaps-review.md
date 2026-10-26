@@ -106,13 +106,13 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** yes — the renumbering race is the hardest part of `register.py` and is evidenced only by selftests.
 - **Suggested scope:** write the record from the Task 12 session's notes; where route 7 or the clean install was not run, run them.
 
-### SEC-G4 — False-positive evidence is never compared with the finding's own location
+### SEC-G4 — False-positive evidence is never compared with the finding's own location — **Done in security-workflows 0.4.0 (batch B04)**
 - **Designed in:** user feedback `NOKEY-scan-fp-evidence-path-not-matched-to-finding` (`/home/ihudak/dev/demo/bookstore-specs/dev-workflows-feedback/2026-10-16.md`) and the part of `BOOK-2-01-scan-false-positive-evidence-unchecked` (`…/PRD-BOOK-2-01-verified-ratings/dev-workflows/BOOK-2-01-feedback.md`) asking to show the cited line "beside the finding's own `file:line`".
 - **Current state:** `scan.md:326` checks that the cited `<path>:<line>` exists in the evidence commit and shows that line, then records the evidence "as given". It never shows the finding's own `file:line` beside it, nor notes a different file or a distant line. A citation of an unrelated file is accepted silently.
 - **Still worth doing?:** yes — it is a mechanical comparison, not the judgement the command deliberately declines ("the run judges nothing").
 - **Suggested scope:** in step 5 (and in step 4's unconfirmed-row display), print the finding's `path:line` beside the cited line, and where the path differs or the line is more than `NEAR` (10) lines away, say so in one plain sentence before recording; no new picker needed.
 
-### SEC-G5 — A patch verified on review alone reaches `/implement` with no caveat
+### SEC-G5 — A patch verified on review alone reaches `/implement` with no caveat — **Done in security-workflows 0.4.0 (batch B04)**
 - **Designed in:** user feedback `BOOK-2-01-scan-untested-patch-not-in-followup` (`BOOK-2-01-feedback.md`).
 - **Current state:** Phase 6 copies `<report dir>/patches/` (with `patches.jsonl`, which carries `untested`) into the scan folder (`scan.md:358`), but `register.py`'s `_followup_line` (register.py:458-466) builds only "starting from `<patch>`", and `/implement`'s read-back (implement.md:247) does not read the patch header's coverage notice. `grep -rn untested plugins/security-workflows` finds nothing.
 - **Still worth doing?:** yes, cheap — `/implement` still runs its own tests, but the planner should know the patch was never test-run.
@@ -124,7 +124,7 @@ A goal, requirement or promised follow-up that a design, plan or verification re
 - **Still worth doing?:** low priority — a one-sentence note; the same pattern is family-wide (`dw-impl-*` in `/implement`), so fix it once in a shared place.
 - **Suggested scope:** say the `-t` form honours `$TMPDIR`, and that where the session names a scratchpad the call sets `TMPDIR` to it, keeping the templates.
 
-### SEC-G7 — "linked to the fix commit" is not recorded
+### SEC-G7 — "linked to the fix commit" is not recorded — **Closed in batch B04 by correcting the spec: D10 and the worked example now say the closing scan is linked, which is what the register records**
 - **Designed in:** spec D10 ("The fix commit is linked when a covering codebase scan, usually `--verify-fixes`, moves the finding to `fixed`") and § Worked example step 8 ("`[SEC#1]` becomes `fixed`, linked to the fix commit").
 - **Current state:** a closure records only `links.fixed_in_scan` (the scan id; register.py:1148-1149, `:1167`), and `register.md`'s *Fixed* table shows "Closed by scan". No fix commit is ever derived or stored. (D7's field list says "the scan that fixed it", so the spec is internally inconsistent.)
 - **Still worth doing?:** marginal — the scan's commit bounds the fix; deriving the fix commit would need the `[<key>]` subject search.

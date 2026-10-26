@@ -400,7 +400,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 
 ## security-workflows
 
-### SEC-B1 — MAJOR — after `REGISTER_MOVED`, a re-plan rebinds the person's `id:<n>` decisions to a different finding
+### SEC-B1 — MAJOR — after `REGISTER_MOVED`, a re-plan rebinds the person's `id:<n>` decisions to a different finding — **Fixed in security-workflows 0.4.0 / workflows-core 1.47.0 (batch B04)**
 - **Where:** `plugins/security-workflows/commands/scan.md:342`, `:392`; `plugins/security-workflows/scripts/register.py:1077-1090` (`resolve`), `:1062-1072` (`allocate`, `matches[].id`), `:1131-1132`
 - **What is wrong:** The decisions file names every existing finding by its number: "a match or an existing finding by `id:<n>`, the number the plan shows" (scan.md:342), and `matches[].id` is "the `[SEC#n]` chosen". `commit` resolves `id:<n>` through whatever plan it is handed (`by_num = _plan_origins(p)`). On `REGISTER_MOVED`, scan.md:392 says "re-plan with the same arguments and commit again, asking nothing already answered". But the records that moved the register can renumber existing findings (§2's give-way and collision rules: a record from another clone that sorts earlier and published the same number takes it, and the local finding moves). The new plan's `origins` then maps the same `<n>` to a different origin, and the unchanged decisions file applies the person's answer to that other finding. The register's own invariant is "a renumbering cannot point a record's decisions at another finding" (`.claude/rules/security-workflows.md`, *A finding is named by its origin*); the run's own decisions file breaks it on exactly the path built for a moving register.
 - **Failure scenario:** Clone B records finding `bb` (CWE-79, `src/b.py`) as `[SEC#1]` at 08:00; clone A records finding `aa` (CWE-89, `src/a.py`) as `[SEC#1]` at 09:00, both seq 1. A `--triage` run on clone A shows `[SEC#1]` = `aa`, and the Security Engineer marks it a false positive (`id:1`). Before 7.2, B's record reaches A's checkout (another session's pull or `commit-artifacts` fast-forward on the shared checkout). `commit` stops `REGISTER_MOVED`; the run re-plans; `[SEC#1]` is now `bb` and `aa` moved to `[SEC#2]`; the commit records `bb` as a false positive and leaves `aa` open. Reproduced: `probe2.py` prints `plan seen by person: {'1': 'sA:v3:aa'}`, `re-plan origins: {'1': 'sB:v3:bb', '2': 'sA:v3:aa'}`, final state `1 sB:v3:bb CWE-79 src/b.py false-positive` / `2 sA:v3:aa CWE-89 src/a.py open`. A *Confirm fixed*, *Accept the risk* or a possibly-same `Same as [SEC#n]` answer misroutes the same way.
@@ -409,7 +409,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### SEC-B2 — MINOR — `register.py commit` takes any status from the decisions file, so "closed only on evidence" is enforced by prose alone
+### SEC-B2 — MINOR — `register.py commit` takes any status from the decisions file, so "closed only on evidence" is enforced by prose alone — **Fixed in security-workflows 0.4.0 / workflows-core 1.47.0 (batch B04)**
 - **Where:** `plugins/security-workflows/scripts/register.py:1091-1103` (`resolve`), `:1162-1167`; `plugins/workflows-core/references/security-register-format.md:11`, `:116`; `scan.md:346` ("each decision's target, status, evidence and date are `commit`'s to check")
 - **What is wrong:** `resolve` checks only that a status is one of `STATUSES`, that a false positive's evidence matches `\S+:\d+`, and that an accepted risk has a reason and a date. It accepts `fixed` on a finding the plan neither closes nor proposes (no `closable`/`gone` entry), on a change scan, and in a `dev` run for a `via: moved` row; and it accepts `fixing` with no follow-up link, or `reopened` by hand. The format reference says `register.py` "implements this file" and §5 rule 2 says a finding is "never closed on absence alone, and never by a change scan"; scan.md:346 says those checks are `commit`'s.
 - **Failure scenario:** A run that writes a decisions file wrongly (a mis-mapped row, a free-text answer written through) records `fixed` on an open finding after a change scan, with no `fixed_in_scan`; `register.md` lists it under *Fixed* as "confirmed in triage". Probe: a change-scan plan plus `{"target":"plugin:v3:aa","status":"fixed"}` commits, and a later triage `{"target":"id:1","status":"fixing"}` commits with `links: {}`.
@@ -418,7 +418,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium (reachable only through a defective decisions file; the command's mapping never writes these)
 
-### SEC-B3 — MINOR — an empty `--by` is accepted, so an accepted risk can be recorded with no owner
+### SEC-B3 — MINOR — an empty `--by` is accepted, so an accepted risk can be recorded with no owner — **Fixed in security-workflows 0.4.0 / workflows-core 1.47.0 (batch B04)**
 - **Where:** `plugins/security-workflows/commands/scan.md:380` (`--by "$(git -C "$SPECS_PATH" config user.name)"`), `:546`; `plugins/security-workflows/scripts/register.py:1118-1165`
 - **What is wrong:** Where the specs repository has no `user.name` (git can still commit with an auto-detected identity), `--by ""` is passed. `commit` never checks it, sets `owner = by` on every accepted risk and `by` on every history entry. The format says an accepted risk has "`owner` and `review_by` (`YYYY-MM-DD`) are set" (§4) and D9 "The owner of an accepted risk is the person deciding".
 - **Failure scenario:** A Dev on a fresh container accepts a risk: the register records `owner: ''`, `register.md`'s *Risk register* and *Awaiting security review* show an empty *Owner* / *Decided by*.
@@ -427,7 +427,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### SEC-B4 — MINOR — Phase 3 looks for the report only at the scan root, while Claude Security creates it with a cwd-relative `mkdir`
+### SEC-B4 — MINOR — Phase 3 looks for the report only at the scan root, while Claude Security creates it with a cwd-relative `mkdir` — **Fixed in security-workflows 0.4.0 / workflows-core 1.47.0 (batch B04)**
 - **Where:** `plugins/security-workflows/commands/scan.md:231` ("the scan root is `<repo root>`"), `:252` ("the newest `CLAUDE-SECURITY-2*` folder at the scan root"); Claude Security 0.12.0 `skills/claude-security/jobs/scan-changes.md:91` and `scan-codebase.md:69` (`mkdir -p CLAUDE-SECURITY-<UTC YYYYMMDD-HHMMSS>/.claude-security-run`, "in the repository")
 - **What is wrong:** Phase 0 step 5 takes `<repo root>` as `git rev-parse --show-toplevel`, and Phase 3 step 3 searches only there. Claude Security's recipes make the report directory with a relative path. Where the session is open in a subdirectory of the repository (a monorepo package), the change job's report can land in that subdirectory, and the run stops with `SECURITY_NO_REPORT` and "nothing is recorded" after a paid scan; the user is not told where the report went.
 - **Failure scenario:** Session cwd `/work/mono/web`; `/security-workflows:scan ACME-7-01` scans; the report is `/work/mono/web/CLAUDE-SECURITY-…`; Phase 3 looks in `/work/mono/` → `SECURITY_NO_REPORT`.
@@ -436,7 +436,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** low — a live change scan from a subdirectory would confirm. (The same question for `--verify-fixes`, whose scan root `$wt` is not the cwd, is apparently answered by the spike's item 8 and Task 12's route 4, which ran; not reported.)
 
-### SEC-B5 — NIT — the roles page understates which unwritten fixes are offered again
+### SEC-B5 — NIT — the roles page understates which unwritten fixes are offered again — **Fixed in security-workflows 0.4.0 / workflows-core 1.47.0 (batch B04)**
 - **Where:** `plugins/security-workflows/docs/roles-and-phases.md:26`
 - **What is wrong:** "each finding marked fix whose follow-up was never written … unless the scan closes it by itself". `register.py plan` (register.py:976-985) and scan.md (`pending_fix`, "save a finding the scan closes or proposes fixed") also leave out a finding the scan only *proposes* fixed; `docs/commands/scan.md:110` says so correctly ("the scan neither closing it nor proposing it fixed").
 - **Failure scenario:** A Security Engineer reading the roles page expects a to-fix row for a finding the scan proposed closed, and gets a *Confirm fixed* row instead.
@@ -2847,7 +2847,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** high
 
-### DQD-B9 — NIT — The security workflow diagram draws `/dev-workflows:conformance` as an edge label, not a node, and omits the scan's own next step to the PE's `/conformance <PRD>`
+### DQD-B9 — NIT — The security workflow diagram draws `/dev-workflows:conformance` as an edge label, not a node, and omits the scan's own next step to the PE's `/conformance <PRD>` — **Fixed in security-workflows 0.4.0 / workflows-core 1.47.0 (batch B04)**
 - **Where:** `plugins/security-workflows/docs/workflow.md:23`, `:5-38`
 - **What is wrong:** `implement -.->|"action: offered after /dev-workflows:conformance, before the merge"| scan`. `/dev-workflows:conformance` has no node, so its own offer of the scan ("where it decided no fix", stated at `:49`) cannot be drawn. The lane's offers after a change scan — the remaining Epics, then "the PE's `/dev-workflows:conformance <PRD>`" (`next-phase-offer.md:322`; `docs/commands/scan.md:165`), and a change scan from each other repository the Epic names — have no edge either.
 - **Failure scenario:** A Dev reading only the diagram sees `/implement` hand straight to the scan. They do not learn that `/conformance` comes first, or that the PE's PRD check follows the merge. The ASCII block on `getting-started.md:68-79` shows both, so the two pages differ.
@@ -2856,7 +2856,7 @@ Each still-present entry names its feedback `id` and file under *Source*. A fixe
 - **Source:** review
 - **Confidence:** medium
 
-### DQD-B10 — NIT — The register's status diagram has no `reopened → open` edge, though triage suggests *decide later* for a reopened finding
+### DQD-B10 — NIT — The register's status diagram has no `reopened → open` edge, though triage suggests *decide later* for a reopened finding — **Dropped in batch B04: not a defect — *Decide later* on a reopened row writes no decision and the finding stays `reopened` (`scan.md` Phase 5 step 5), so the diagram is right to draw no `reopened → open` edge**
 - **Where:** `plugins/security-workflows/docs/reference/security-register.md:66-101`
 - **What is wrong:** The diagram's edges out of `reopened` are `fix`, `false_positive`, `accepted_risk` and `fixed`. The scan page's triage says the suggested decision is "**decide later** for the rest, on a new, reopened or open row" (`docs/commands/scan.md:110`), and decide later records `open` (status table, `:58`). The suggestion `/security-workflows:scan` makes for a reopened MEDIUM or LOW finding is therefore a move the diagram does not draw.
 - **Failure scenario:** A Security Engineer checking the diagram thinks a reopened finding cannot go back to *decide later*.
